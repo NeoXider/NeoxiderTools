@@ -1,0 +1,43 @@
+ManifestFileVersion: 0
+CRC: 3411537373
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 437ce84772c1aa4721b35718fa422777
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 5d607e002d61b0c09dbcbe793704aec3
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 437ce84772c1aa4721b35718fa422777
+HashAppended: 0
+ClassTypes:
+- Class: 1
+  Script: {instanceID: 0}
+- Class: 4
+  Script: {instanceID: 0}
+- Class: 21
+  Script: {instanceID: 0}
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 48
+  Script: {instanceID: 0}
+- Class: 114
+  Script: {fileID: 11500000, guid: 57c008f954fe54a8bb972de1018a2cb8, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: 5bf7c34a0dc4e6348bea04faa70406ee, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 212
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers:
+- AssemblyName: Unity.2D.Animation.Runtime
+  ClassName: UnityEngine.U2D.Animation.SpriteCategoryEntry
+- AssemblyName: Unity.2D.Animation.Runtime
+  ClassName: UnityEngine.U2D.Animation.SpriteLibCategory
+Assets:
+- Assets/Samples/2D Animation/9.1.0/Samples/4 SpriteSwap/Sprite Library/Skeleton.spriteLib
+- Assets/Samples/2D Animation/9.1.0/Samples/4 SpriteSwap/Sprites/Skeleton.psb
+Dependencies: []

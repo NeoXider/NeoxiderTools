@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be08ab6288f455e43bc0ebd6e547860a, type: 3}
+  m_Name: shopItemData
+  m_EditorClassIdentifier: 
+  _isSinglePurchase: 1
+  _nameKey: Demo
+  _price: 000000000a0000003200000064000000e8030000
+  _spritesShop:
+  - {fileID: 1127569699, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  - {fileID: -2120184961, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  - {fileID: -1056704597, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  - {fileID: -344407113, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  - {fileID: 1620105851, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  curentPrice: 
