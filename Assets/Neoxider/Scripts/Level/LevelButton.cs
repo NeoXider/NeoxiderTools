@@ -1,7 +1,7 @@
 using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace Neoxider
 {
@@ -9,7 +9,10 @@ namespace Neoxider
     {
         public class LevelButton : MonoBehaviour
         {
+            [SerializeField] private Button _button;
             [SerializeField] private LevelManager _levelManager;
+
+            [Space]
             [SerializeField] private GameObject[] _closes, _opens;
             [SerializeField] private TextMeshProUGUI _textLvl;
 
@@ -23,6 +26,19 @@ namespace Neoxider
             public UnityEvent OnDisableVisual;
             public UnityEvent OnEnableVisual;
             public UnityEvent OnCurrentVisual;
+
+            private void Start()
+            {
+                if (_button != null)
+                    _button.onClick.AddListener(Click);
+
+            }
+
+            private void OnDestroy()
+            {
+                if (_button != null)
+                    _button.onClick.RemoveListener(Click);
+            }
 
             public void Click()
             {
@@ -69,7 +85,7 @@ namespace Neoxider
 
             private void OnValidate()
             {
-
+                _button ??= GetComponent<Button>();
             }
         }
     }
