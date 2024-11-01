@@ -5,8 +5,8 @@ namespace Neoxider
 {
     public class TextureMaxSizeChanger : EditorWindow
     {
-        private int maxSize = 1024; // Новое значение Max Size
-        private TextureImporterType textureType = TextureImporterType.Default; // Тип текстуры
+        private int maxSizeTrxture = 1024;
+        private TextureImporterType textureType = TextureImporterType.Default;
 
         [MenuItem("Tools/Neoxider/" + "Change Texture Max Size")]
         public static void ShowWindow()
@@ -17,7 +17,7 @@ namespace Neoxider
         private void OnGUI()
         {
             GUILayout.Label("Change Max Size for Textures", EditorStyles.boldLabel);
-            maxSize = EditorGUILayout.IntField("Max Size", maxSize);
+            maxSizeTrxture = EditorGUILayout.IntField("Max Size", maxSizeTrxture);
             textureType = (TextureImporterType)EditorGUILayout.EnumPopup("Texture Type", textureType);
 
             if (GUILayout.Button("Apply"))
@@ -37,7 +37,7 @@ namespace Neoxider
 
                 if (importer != null && importer.textureType == textureType)
                 {
-                    importer.maxTextureSize = maxSize;
+                    importer.maxTextureSize = maxSizeTrxture;
                     importer.SaveAndReimport();
                 }
             }

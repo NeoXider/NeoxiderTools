@@ -12,9 +12,8 @@ namespace Neoxider
 
             public int idComplexity;
             public int countLevels;
-            public LevelSetting[] levelSetting;
 
-            void Start()
+            private void Awake()
             {
                 Load();
             }
@@ -37,10 +36,7 @@ namespace Neoxider
 
             public void OnValidate()
             {
-                if (levelSetting.Length > 0)
-                {
-                    countLevels = levelSetting.Length;
-                }
+
             }
         }
     }

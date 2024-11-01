@@ -73,10 +73,10 @@ namespace Neoxider
             var script = Create<Page>("Prefabs/UI/Page.prefab");
         }
 
-        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(Roulette), false, 0)]
+        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(WheelFortune), false, 0)]
         public static void CreateRoulette()
         {
-            var script = Create<Roulette>("Prefabs/UI/" + nameof(Roulette) + ".prefab");
+            var script = Create<WheelFortune>("Prefabs/UI/" + nameof(WheelFortune) + ".prefab");
         }
 
         [MenuItem("GameObject/Neoxider/UI/" + nameof(UIReady), false, 0)]

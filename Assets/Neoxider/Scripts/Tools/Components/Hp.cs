@@ -3,66 +3,70 @@ using UnityEngine.Events;
 
 namespace Neoxider
 {
-    public class Hp : MonoBehaviour
+    namespace Tools
     {
-        [SerializeField] private int _maxHp = 10;
-        private int _hp;
-
-        public int maxHp => _maxHp;
-        public int hp
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Hp))]
+        public class Hp : MonoBehaviour
         {
-            get => _hp;
-            set
+            [SerializeField] private int _maxHp = 10;
+            private int _hp;
+
+            public int maxHp => _maxHp;
+            public int hp
             {
-                _hp = Mathf.Clamp(value, 0, _maxHp);
-                OnChange?.Invoke(hp);
+                get => _hp;
+                set
+                {
+                    _hp = Mathf.Clamp(value, 0, _maxHp);
+                    OnChange?.Invoke(hp);
+                }
             }
-        }
 
-        public UnityEvent<int> OnChange;
-        public UnityEvent OnDeath;
+            public UnityEvent<int> OnChange;
+            public UnityEvent OnDeath;
 
-        public UnityEvent<int> OnChangeMaxHp;
+            public UnityEvent<int> OnChangeMaxHp;
 
-        private void Start()
-        {
-            Restore();
-        }
-
-        public void SetMaxHp(int count, bool restore = false)
-        {
-            _maxHp = count;
-
-            if (restore)
+            private void Start()
+            {
                 Restore();
+            }
 
-            OnChangeMaxHp?.Invoke(count);
-        }
+            public void SetMaxHp(int count, bool restore = false)
+            {
+                _maxHp = count;
 
-        public void Restore()
-        {
-            hp = _maxHp;
-        }
+                if (restore)
+                    Restore();
 
-        public void TakeDamage(int damage)
-        {
-            hp -= damage;
-            if (!IsAlive()) Die();
-        }
+                OnChangeMaxHp?.Invoke(count);
+            }
 
-        public void Heal(int amount)
-        {
-            hp += amount;
-        }
+            public void Restore()
+            {
+                hp = _maxHp;
+            }
 
-        public void Die()
-        {
-            OnDeath.Invoke();
-        }
+            public void TakeDamage(int damage)
+            {
+                hp -= damage;
+                if (!IsAlive()) Die();
+            }
 
-        public bool IsAlive()
-        {
-            return _hp > 0;
+            public void Heal(int amount)
+            {
+                hp += amount;
+            }
+
+            public void Die()
+            {
+                OnDeath.Invoke();
+            }
+
+            public bool IsAlive()
+            {
+                return _hp > 0;
+            }
         }
     }
 }

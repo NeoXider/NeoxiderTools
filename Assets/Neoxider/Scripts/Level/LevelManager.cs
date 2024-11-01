@@ -1,6 +1,6 @@
 using System.Collections.Generic;
-using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neoxider
 {
@@ -9,7 +9,7 @@ namespace Neoxider
         public class LevelManager : MonoBehaviour
         {
             [SerializeField] private Transform _parentLevel;
-            [SerializeField] private LevelButton[] lvlBtns;
+            [SerializeField] private LevelButton[] _lvlBtns;
 
             public int complexity;
             public Level[] levels;
@@ -17,9 +17,17 @@ namespace Neoxider
             public int currentLevel;
             public bool isLoopLevel = false;
 
-            private void OnEnable()
+            [Space]
+            public UnityEvent<int> OnSetLevel;
+
+            private void Start()
             {
-                UpdateVisuals();
+                for (int i = 0; i < _lvlBtns.Length; i++)
+                {
+                    _lvlBtns[i].SetLevelManager(this);
+                }
+
+                UpdateVisual();
             }
 
             public void SetComplexity(int id)
@@ -32,39 +40,49 @@ namespace Neoxider
                 SetLevel(currentLevel + 1);
             }
 
+            public void Restart()
+            {
+                SetLevel(currentLevel);
+            }
+
             public void SaveLevel()
             {
                 if (CurrentLevel().level == currentLevel)
+                {
                     CurrentLevel().SaveLevel();
+                    UpdateVisual();
+                }
+
             }
 
-            private Level CurrentLevel()
+            public Level CurrentLevel()
             {
                 return levels[complexity];
             }
 
-            private void UpdateVisuals()
+            private void UpdateVisual()
             {
                 Level curLevel = CurrentLevel();
 
-                foreach (var item in lvlBtns)
+                foreach (var item in _lvlBtns)
                 {
-                    item.transform.parent.gameObject.SetActive(false);
+                    item.transform.gameObject.SetActive(false);
                 }
 
-                for (int i = 0; i < lvlBtns.Length && i < curLevel.countLevels; i++)
+                for (int i = 0; i < _lvlBtns.Length && i < curLevel.countLevels; i++)
                 {
-                    lvlBtns[i].transform.parent.gameObject.SetActive(true);
+                    _lvlBtns[i].transform.gameObject.SetActive(true);
 
                     int idVisual = i < curLevel.level ? 1 : (i == curLevel.level ? 2 : 0);
-                    lvlBtns[i].SetVisual(idVisual, i);
+                    _lvlBtns[i].SetVisual(idVisual, i);
                 }
             }
 
             internal void SetLevel(int idLevel)
             {
                 Level curLvl = CurrentLevel();
-                currentLevel = isLoopLevel ? GetLoopLevel(idLevel, curLvl.countLevels) : math.min(idLevel, curLvl.countLevels - 1);
+                currentLevel = isLoopLevel ? GetLoopLevel(idLevel, curLvl.countLevels) : Mathf.Min(idLevel, curLvl.countLevels - 1);
+                OnSetLevel?.Invoke(currentLevel);
             }
 
             private static int GetLoopLevel(int idLevel, int count)
@@ -76,21 +94,24 @@ namespace Neoxider
             {
                 HashSet<LevelButton> btns = new HashSet<LevelButton>();
 
-                foreach (var par in _parentLevel.GetComponentsInChildren<Transform>(true))
+                if (_parentLevel != null)
                 {
-                    foreach (var child in par.GetComponentsInChildren<Transform>(true))
+                    foreach (var par in _parentLevel.GetComponentsInChildren<Transform>(true))
                     {
-                        if (child.TryGetComponent(out LevelButton levelButton))
-                            btns.Add(levelButton);
+                        foreach (var child in par.GetComponentsInChildren<Transform>(true))
+                        {
+                            if (child.TryGetComponent(out LevelButton levelButton))
+                                btns.Add(levelButton);
+                        }
                     }
-                }
 
-                lvlBtns = new LevelButton[btns.Count];
-                btns.CopyTo(lvlBtns);
+                    _lvlBtns = new LevelButton[btns.Count];
+                    btns.CopyTo(_lvlBtns);
 
-                for (int i = 0; i < levels.Length; i++)
-                {
-                    levels[i].idComplexity = i;
+                    for (int i = 0; i < levels.Length; i++)
+                    {
+                        levels[i].idComplexity = i;
+                    }
                 }
             }
         }

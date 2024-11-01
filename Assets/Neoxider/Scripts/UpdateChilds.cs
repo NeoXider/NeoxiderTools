@@ -1,12 +1,18 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public class UpdateChilds : MonoBehaviour
+namespace Neoxider
 {
-    public UnityEvent OnChangeChildsCount;
-
-    private void OnTransformChildrenChanged()
+    namespace Tools
     {
-        OnChangeChildsCount?.Invoke();
+        public class UpdateChilds : MonoBehaviour
+        {
+            public UnityEvent OnChangeChildsCount;
+
+            private void OnTransformChildrenChanged()
+            {
+                OnChangeChildsCount?.Invoke();
+            }
+        }
     }
 }
