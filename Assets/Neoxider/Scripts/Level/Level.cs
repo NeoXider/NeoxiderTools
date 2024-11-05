@@ -4,39 +4,24 @@ namespace Neoxider
 {
     namespace Level
     {
-        public class Level : MonoBehaviour
+        [System.Serializable]
+        public struct Map
         {
-
             [SerializeField] private int _level;
             public int level => _level;
 
-            public int idComplexity;
+            public int idMap;
             public int countLevels;
 
-            private void Awake()
+            public void Load()
             {
-                Load();
-            }
-
-            private void Load()
-            {
-                _level = PlayerPrefs.GetInt(idComplexity + nameof(_level), 0);
-            }
-
-            public void SetLevel()
-            {
-
+                _level = PlayerPrefs.GetInt(idMap + nameof(_level), 0);
             }
 
             public void SaveLevel()
             {
                 _level++;
-                PlayerPrefs.SetInt(idComplexity + nameof(_level), _level);
-            }
-
-            public void OnValidate()
-            {
-
+                PlayerPrefs.SetInt(idMap + nameof(_level), _level);
             }
         }
     }
