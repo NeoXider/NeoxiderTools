@@ -60,10 +60,12 @@ namespace Neoxider
 
                 yield return new WaitForSeconds(_timeAnim);
 
-                if (_animator != null) _animator.gameObject.SetActive(false);
-
                 if (one) SetOnePage(id);
                 else SetPage(id);
+
+                yield return new WaitForSeconds(_timeAnim);
+
+                if (_animator != null) _animator.gameObject.SetActive(false);
             }
 
             private void OnValidate()

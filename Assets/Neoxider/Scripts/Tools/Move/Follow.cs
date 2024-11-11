@@ -17,7 +17,13 @@ namespace Neoxider
             [SerializeField] private float _smoothSpeed = 0.125f;
             [SerializeField] private Vector3 _offset;
 
+            // Новые переменные для ограничения поворота
+            [Space, Header("Rotation Limits")]
+            [SerializeField] private Vector2 _rotationLimitX = new Vector2(0, 0);
+            [SerializeField] private Vector2 _rotationLimitY = new Vector2(0, 0);
 
+            [Space, Header("Rotation Limits 2D")]
+            [SerializeField] private Vector2 _rotationLimitZ = new Vector2(0, 0);
             [Space, Header("Rotation")]
             [SerializeField] private bool _followRotation = true;
             [SerializeField] private float _rotationSpeed = 5;
@@ -57,17 +63,38 @@ namespace Neoxider
                 {
                     Quaternion targetRotation = Quaternion.LookRotation(_target.position - transform.position);
                     targetRotation *= Quaternion.Euler(_rotationOffset3D);
-                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
+
+                    Quaternion targetRotationLimited;
+
+                    if (_rotationLimitX != Vector2.zero)
+                    {
+                        float xAngle = Mathf.Clamp(targetRotation.eulerAngles.x, _rotationLimitX.x, _rotationLimitX.y);
+                        float yAngle = Mathf.Clamp(targetRotation.eulerAngles.y, _rotationLimitY.x, _rotationLimitY.y);
+
+                        targetRotationLimited = Quaternion.Euler(xAngle, yAngle, targetRotation.eulerAngles.z);
+                    }
+                    else
+                    {
+                        targetRotationLimited = targetRotation;
+                    }
+
+                    transform.rotation = Quaternion.Slerp(transform.rotation, targetRotationLimited, _rotationSpeed * Time.deltaTime);
+
                 }
                 else if (_followMode == FollowMode.TwoD)
                 {
                     Vector3 direction = _target.position - transform.position;
                     float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
                     angle += _rotationOffset2D;
+
+                    if (_rotationLimitZ != Vector2.zero)
+                        angle = Mathf.Clamp(angle, _rotationLimitZ.x, _rotationLimitZ.y);
+
                     Quaternion targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
                     transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, _rotationSpeed * Time.deltaTime);
                 }
             }
+
             private void OnValidate()
             {
             }

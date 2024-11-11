@@ -23,6 +23,7 @@ namespace Neoxider
             [SerializeField] private bool _changeDebug = true;
 
             public UnityEvent<int> OnSelectionChanged;
+            public UnityEvent OnFinished;
 
             private void Start()
             {
@@ -42,9 +43,11 @@ namespace Neoxider
             public void SelectNext()
             {
                 _currentIndex++;
+
                 if (_currentIndex >= _items.Length)
                 {
                     _currentIndex = _loop ? 0 : _items.Length - 1;
+                    OnFinished?.Invoke();
                 }
 
                 UpdateSelection();

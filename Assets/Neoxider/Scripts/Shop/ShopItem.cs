@@ -147,8 +147,6 @@ namespace Neoxider
                 if (_imageItem != null)
                     _imageItem.sprite = _shopItemData.spritesShop[_id];
             }
-
-
         }
     }
 }

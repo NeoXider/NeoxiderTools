@@ -57,6 +57,7 @@ namespace Neoxider
             {
                 if (CurrentMap().level == currentLevel)
                 {
+                    print("save level");
                     CurrentMap().SaveLevel();
                     UpdateVisual();
                 }

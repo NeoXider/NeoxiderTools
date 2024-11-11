@@ -10,7 +10,7 @@ public class SwipeTextAudio : MonoBehaviour, ISwipeSubscriber
 
         public void SubscribeToSwipe(SwipeData swipeData)
         {
-            AudioManager.PlaySound(ClipType.jump);
+            AudioManager.PlaySound(ClipType.click);
             text.text = swipeData.Direction.ToString();
         }
 

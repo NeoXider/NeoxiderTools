@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 
 
 namespace Neoxider
@@ -36,6 +37,10 @@ namespace Neoxider
             [SerializeField] private string _customSeparator = ".";
 
             [SerializeField] private bool _editorView = true;
+
+            [SerializeField] private UnityEvent OnBuy;
+            [SerializeField] private UnityEvent OnSelect;
+            [SerializeField] private UnityEvent OnSelected;
 
 
             public void SetAutoVisual(int price, ButtonType type = ButtonType.Buy)
@@ -95,6 +100,13 @@ namespace Neoxider
                 {
                     _textPrice.text = _price.FormatWithSeparator(_customSeparator);
                 }
+
+                if (id == 0)
+                    OnBuy?.Invoke();
+                else if (id == 1)
+                    OnSelect?.Invoke();
+                else if (id == 2)
+                    OnSelected?.Invoke();
             }
 
             private void OnValidate()

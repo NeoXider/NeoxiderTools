@@ -5,7 +5,7 @@ namespace Neoxider
     namespace Level
     {
         [System.Serializable]
-        public struct Map
+        public class Map
         {
             [SerializeField] private int _level;
             public int level => _level;
@@ -20,7 +20,7 @@ namespace Neoxider
 
             public void SaveLevel()
             {
-                _level++;
+                _level = _level + 1;
                 PlayerPrefs.SetInt(idMap + nameof(_level), _level);
             }
         }
