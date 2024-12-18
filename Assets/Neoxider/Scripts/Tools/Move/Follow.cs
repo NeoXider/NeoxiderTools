@@ -14,7 +14,6 @@ namespace Neoxider
 
             [Space, Header("Move")]
             [SerializeField] private bool _followPosition = true;
-<<<<<<< HEAD
             [SerializeField] 
             [Range(0,1)]private float _smoothSpeed = 0.125f;
             [SerializeField] private Vector3 _offset;
@@ -24,11 +23,6 @@ namespace Neoxider
             [SerializeField] private Vector2 _positionLimitY = new Vector2(0, 0);
             [SerializeField] private Vector2 _positionLimitZ = new Vector2(0, 0);
 
-=======
-            [SerializeField] private float _smoothSpeed = 0.125f;
-            [SerializeField] private Vector3 _offset;
-
->>>>>>> cd70dbfa19a493705dc2252ca7235db4219e024a
             // Новые переменные для ограничения поворота
             [Space, Header("Rotation Limits")]
             [SerializeField] private Vector2 _rotationLimitX = new Vector2(0, 0);
@@ -63,7 +57,6 @@ namespace Neoxider
                 Vector3 desiredPosition = _target.position + _offset;
 
                 if (_followMode == FollowMode.TwoD)
-<<<<<<< HEAD
                     desiredPosition.z = _offset.z;
 
                 if (_positionLimitX != Vector2.zero)
@@ -72,9 +65,6 @@ namespace Neoxider
                     desiredPosition.y = Mathf.Clamp(desiredPosition.y, _positionLimitY.x, _positionLimitY.y);
                 if (_positionLimitZ != Vector2.zero)
                     desiredPosition.z = Mathf.Clamp(desiredPosition.z, _positionLimitZ.x, _positionLimitZ.y);
-=======
-                    desiredPosition.z = transform.position.z;
->>>>>>> cd70dbfa19a493705dc2252ca7235db4219e024a
 
                 Vector3 smoothedPosition = Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed);
                 transform.position = smoothedPosition;
