@@ -2,67 +2,104 @@ using System.Collections.Generic;
 using System;
 using UnityEngine;
 using Component = UnityEngine.Component;
+using System.Collections;
+using System.Linq;
 
 namespace Neoxider
 {
     public static class GameObjectArrayExtensions
     {
-        public static GameObject[] SetActiveAll(this GameObject[] gameObjects, bool activ)
+        public static IEnumerable<T> SetActiveAll<T>(this IEnumerable<T> components, bool active) where T : MonoBehaviour
         {
+            List<T> componentList = components.ToList();
+
+            componentList.SetActiveAll(active);
+
+            return components;
+        }
+
+        public static GameObject[] SetActiveAll(this GameObject[] gameObjects, bool active)
+        {
+            if (gameObjects == null) return null;
+
+
             foreach (var gameObject in gameObjects)
             {
                 if (gameObject != null)
                 {
-                    gameObject.SetActive(activ);
+                    gameObject.SetActive(active);
                 }
             }
             return gameObjects;
         }
 
-        public static GameObject SetActiveId(this GameObject[] gameObjects, int id, bool activ)
+        public static GameObject[] SetActiveAll(this GameObject[] gameObjects, int upToIndex, bool active)
         {
+            if (gameObjects == null) return null;
+
+            for (int i = 0; i < upToIndex && i < gameObjects.Length; i++)
+            {
+                if (gameObjects[i] != null)
+                {
+                    gameObjects[i].SetActive(active);
+                }
+            }
+            return gameObjects;
+        }
+
+        public static GameObject SetActiveId(this GameObject[] gameObjects, int id, bool active)
+        {
+            if (gameObjects == null) return null;
+
             if (id >= 0 && id < gameObjects.Length)
             {
                 if (gameObjects[id] != null)
                 {
-                    gameObjects[id].SetActive(activ);
+                    gameObjects[id].SetActive(active);
                     return gameObjects[id];
                 }
             }
             else
             {
-                Debug.LogWarning($"ID {id} вне диапазона массива.");
+                Debug.LogWarning($"ID {id} .");
             }
 
             return null;
         }
 
-        public static T[] SetActiveAll<T>(this T[] components, bool activ) where T : MonoBehaviour
+        public static T[] SetActiveAll<T>(this T[] components, bool active) where T : MonoBehaviour
         {
             foreach (var component in components)
             {
                 if (component != null)
                 {
-                    component.gameObject.SetActive(activ);
+                    component.gameObject.SetActive(active);
                 }
             }
 
             return components;
         }
 
-        public static GameObject SetActiveId<T>(this T[] components, int id, bool activ) where T : MonoBehaviour
+        public static GameObject SetActiveById<T>(this IEnumerable<T> components, int id, bool active) where T : MonoBehaviour
+        {
+            List<T> componentList = components.ToList();
+
+            return componentList.SetActiveById(id, active);
+        }
+
+        public static GameObject SetActiveId<T>(this T[] components, int id, bool active) where T : MonoBehaviour
         {
             if (id >= 0 && id < components.Length)
             {
                 if (components[id] != null)
                 {
-                    components[id].gameObject.SetActive(activ);
+                    components[id].gameObject.SetActive(active);
                     return components[id].gameObject;
                 }
             }
             else
             {
-                Debug.LogWarning($"ID {id} вне диапазона массива.");
+                Debug.LogWarning($"ID {id} .");
             }
 
             return null;

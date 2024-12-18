@@ -1,0 +1,36 @@
+using UnityEngine;
+using UnityEngine.Events;
+
+namespace Neoxider.Tools
+{
+    public class DistanceChecker : MonoBehaviour
+    {
+        [GetComponent] public Transform currentObject;
+        public Transform targetObject;
+        public float distanceThreshold = 5.0f;
+
+        public UnityEvent onApproach;
+        public UnityEvent onDepart;
+
+        private bool isWithinDistance = false;
+
+        void Update()
+        {
+            if (currentObject == null || targetObject == null)
+                return;
+
+            float distance = Vector3.Distance(currentObject.position, targetObject.position);
+
+            if (distance < distanceThreshold && !isWithinDistance)
+            {
+                isWithinDistance = true;
+                onApproach?.Invoke();
+            }
+            else if (distance >= distanceThreshold && isWithinDistance)
+            {
+                isWithinDistance = false;
+                onDepart?.Invoke();
+            }
+        }
+    }
+}

@@ -1,5 +1,8 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.Linq;
+using System;
+using Random = UnityEngine.Random;
 
 namespace Neoxider
 {
@@ -20,21 +23,21 @@ namespace Neoxider
         public static bool Chance(this float probability)
         {
             if (probability < 0f || probability > 1f)
-                throw new System.ArgumentOutOfRangeException("Probability must be between 0 and 1.");
+                throw new ArgumentOutOfRangeException("Probability must be between 0 and 1.");
 
             return Random.value < probability;
         }
 
-        public static void Shuffle<T>(this T[] array)
+        public static IList<T> Shuffle<T>(this T[] array)
         {
             ValidateArray(array);
-            ShuffleCollection(array);
+            return ShuffleCollection(array);
         }
 
-        public static void Shuffle<T>(this List<T> list)
+        public static IList<T> Shuffle<T>(this List<T> list)
         {
             ValidateList(list);
-            ShuffleCollection(list);
+            return ShuffleCollection(list);
         }
 
         public static Color RandomColor()
@@ -52,7 +55,22 @@ namespace Neoxider
             return GetRandomIndex(array.Length);
         }
 
-        private static void ShuffleCollection<T>(IList<T> collection)
+        public static IList<T> GetRandomElements<T>(this T[] array, int count)
+        {
+            if (array.Length < count)
+            {
+                throw new ArgumentException("Array length is less than required count");
+            }
+
+            return array.Shuffle().Take(count).ToArray();
+        }
+
+        public static IList<T> GetRandomElements<T>(this List<T> array, int count)
+        {
+            return array.ToArray().GetRandomElements(count);
+        }
+
+        private static IList<T> ShuffleCollection<T>(IList<T> collection)
         {
             for (int i = collection.Count - 1; i > 0; i--)
             {
@@ -61,6 +79,8 @@ namespace Neoxider
                 collection[i] = collection[j];
                 collection[j] = temp;
             }
+
+            return collection;
         }
 
         private static void ValidateArray<T>(T[] array)

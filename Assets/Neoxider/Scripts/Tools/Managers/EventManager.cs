@@ -1,28 +1,59 @@
+using Neoxider.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neoxider
 {
-    public class EventManager : MonoBehaviour
+    public class EventManager : Singleton<EventManager>
     {
-        public static EventManager Instance { get; private set; }
 
         [Header("Game Events")]
         public UnityEvent OnGameStart;
+        public UnityEvent OnWin;
         public UnityEvent OnGameOver;
-        public UnityEvent OnPlayerDeath;
-        public UnityEvent OnLevelComplete;
 
-        [Space, Header("Pause")]
+        [Space]
+        [Header("Other")]
+        public UnityEvent OnPlayerDeath;
+
+
+        [Space]
+        [Header("Pause")]
         public UnityEvent OnPause;
         public UnityEvent OnResume;
 
-        private void Awake()
+        [Space]
+        [Header("Unity")]
+        public UnityEvent OnAwake;
+        public UnityEvent<bool> OnFocusApplication;
+        public UnityEvent<bool> OnPauseApplication;
+        public UnityEvent OnQuitApplication;
+
+        #region Unity Callbacks
+        protected override void Initialize()
         {
-            Instance = this;
+            base.Initialize();
+            OnAwake?.Invoke();
         }
 
-        public static void GameStarted()
+        private void OnApplicationFocus(bool focusStatus)
+        {
+            OnFocusApplication?.Invoke(focusStatus);
+
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            OnPauseApplication?.Invoke(pauseStatus);
+        }
+
+        private void OnApplicationQuit()
+        {
+            OnQuitApplication?.Invoke();
+        }
+        #endregion
+
+        public static void GameStart()
         {
             Instance.OnGameStart?.Invoke();
         }
@@ -32,14 +63,14 @@ namespace Neoxider
             Instance.OnGameOver?.Invoke();
         }
 
+        public static void Win()
+        {
+            Instance.OnWin?.Invoke();
+        }
+
         public static void PlayerDied()
         {
             Instance.OnPlayerDeath?.Invoke();
-        }
-
-        public static void LevelCompleted()
-        {
-            Instance.OnLevelComplete?.Invoke();
         }
 
         public static void Pause()

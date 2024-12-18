@@ -9,10 +9,15 @@ namespace Neoxider
         public class WheelFortune : MonoBehaviour
         {
             [SerializeField] private bool _useOne = true;
+            [SerializeField] private bool _canUse = true;
+
+            [Header("Time to stop rolling (if 0, stop manually)")]
             [SerializeField] private float _timeStop = 0;
 
             [Space]
             [SerializeField] private CanvasGroup _canvasGroup;
+
+            [Header("Rotate transform")]
             [SerializeField] private RectTransform _wheelTransform;
             [SerializeField] private RectTransform _arrow;
 
@@ -20,8 +25,8 @@ namespace Neoxider
             [SerializeField] private bool _leftDir = true;
             [SerializeField] private float _speedZVelosity = 45;
             [SerializeField] private float _slowDown = 5;
-            private float zVelocity;
-            private int mode = 0;
+            private float _zVelocity;
+            private int _mode = 0;
 
             [Space]
             [SerializeField] private bool _autoSetItems = true;
@@ -35,13 +40,17 @@ namespace Neoxider
             [Space]
             public UnityEvent<int> OnWinIdVariant;
 
-            private bool _isUse;
+            public bool canUse
+            {
+                get => _canUse;
+                set => _canUse = value;
+            }
 
             private void OnEnable()
             {
                 _wheelTransform.rotation = Quaternion.identity;
 
-                mode = 0;
+                _mode = 0;
             }
 
             private void Update()
@@ -51,17 +60,17 @@ namespace Neoxider
 
             private void Rotate()
             {
-                if (mode > 0)
+                if (_mode > 0)
                 {
-                    _wheelTransform.Rotate(Vector3.back * (_leftDir ? zVelocity : -zVelocity) * Time.deltaTime);
+                    _wheelTransform.Rotate(Vector3.back * (_leftDir ? _zVelocity : -_zVelocity) * Time.deltaTime);
 
-                    if (mode == 2)
+                    if (_mode == 2)
                     {
-                        zVelocity -= Time.deltaTime * _slowDown;
+                        _zVelocity -= Time.deltaTime * _slowDown;
 
-                        if (zVelocity <= 0f)
+                        if (_zVelocity <= 0f)
                         {
-                            mode = 0;
+                            _mode = 0;
 
                             if (_canvasGroup != null)
                                 _canvasGroup.interactable = true;
@@ -96,13 +105,13 @@ namespace Neoxider
             {
                 if (_prizeItems.Length == 0) return;
 
-                if (mode == 0 && (!_useOne || (_useOne && !_isUse)))
+                if (_mode == 0 && (!_useOne || (_useOne && _canUse)))
                 {
-                    _isUse = true;
+                    _canUse = false;
 
-                    mode = 1;
+                    _mode = 1;
 
-                    zVelocity = _speedZVelosity;
+                    _zVelocity = _speedZVelosity;
                 }
 
                 if (_timeStop > 0)
@@ -113,12 +122,12 @@ namespace Neoxider
 
             public void Stop()
             {
-                if (mode == 0) return;
+                if (_mode == 0) return;
 
                 if (_canvasGroup != null)
                     _canvasGroup.interactable = false;
 
-                mode = 2;
+                _mode = 2;
             }
 
             private void ArrangePrizes()

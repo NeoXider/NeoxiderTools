@@ -6,6 +6,12 @@ namespace Neoxider
 {
     public static class StructExtensions
     {
+        public static float RoundToDecimal(this float value, int places)
+        {
+            float multiplier = Mathf.Pow(10.0f, places);
+            return Mathf.Round(value * multiplier) / multiplier;
+        }
+
         public static int ToInt(this bool value)
         {
             return value ? 1 : 0;

@@ -15,7 +15,7 @@ namespace Neoxider
             [SerializeField] private bool _setChild = false;
 
             [Space]
-            [SerializeField] private bool _start0;
+            [SerializeField, Min(-1)] private int _startId = -1;
             [SerializeField] private bool _loop = true;
 
             [Space]
@@ -23,12 +23,16 @@ namespace Neoxider
             [SerializeField] private bool _changeDebug = true;
 
             public UnityEvent<int> OnSelectionChanged;
+            public UnityEvent OnFinished;
+
+            private void Awake()
+            {
+                if (_startId != -1)
+                    _currentIndex = _startId;
+            }
 
             private void Start()
             {
-                if (_start0)
-                    _currentIndex = 0;
-
                 UpdateSelection();
             }
 
@@ -42,9 +46,11 @@ namespace Neoxider
             public void SelectNext()
             {
                 _currentIndex++;
+
                 if (_currentIndex >= _items.Length)
                 {
                     _currentIndex = _loop ? 0 : _items.Length - 1;
+                    OnFinished?.Invoke();
                 }
 
                 UpdateSelection();
@@ -95,7 +101,9 @@ namespace Neoxider
             private void OnValidate()
             {
                 if (_items == null)
-                    Debug.LogError("items null");
+                {
+                    Debug.LogWarning("items null");
+                }
 
                 if (_setChild)
                 {
@@ -113,7 +121,7 @@ namespace Neoxider
                     _items = childs.ToArray();
                 }
 
-                if (_changeDebug)
+                if (_changeDebug && _items != null)
                     UpdateSelection();
             }
         }

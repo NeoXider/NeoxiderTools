@@ -13,8 +13,21 @@ namespace Neoxider
         [SerializeField] private bool _shakeY = true;
         [SerializeField] private bool _shakeZ = false;
 
+        private Vector3 startPos;
+
+        private void Awake() 
+        {
+            startPos= transform.localPosition;
+        }
+
+        public void StartShake(float duration)
+        {
+            StartShake(duration, _shakeMagnitude);
+        }
+
         public void StartShake(float duration, float magnitude)
         {
+            StopAllCoroutines();
             StartCoroutine(Shake(duration, magnitude));
         }
 
@@ -25,8 +38,6 @@ namespace Neoxider
 
         private IEnumerator Shake(float duration, float magnitude)
         {
-            Vector3 originalPosition = transform.localPosition;
-
             float elapsed = 0f;
             while (elapsed < duration)
             {
@@ -34,13 +45,13 @@ namespace Neoxider
                 float y = _shakeY ? Random.Range(-1f, 1f) * magnitude : 0f;
                 float z = _shakeZ ? Random.Range(-1f, 1f) * magnitude : 0f;
 
-                transform.localPosition = new Vector3(originalPosition.x + x, originalPosition.y + y, originalPosition.z + z);
+                transform.localPosition = new Vector3(startPos.x + x, startPos.y + y, startPos.z + z);
 
                 elapsed += Time.deltaTime;
                 yield return null;
             }
 
-            transform.localPosition = originalPosition;
+            transform.localPosition = startPos;
         }
     }
 }

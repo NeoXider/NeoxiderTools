@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
@@ -19,6 +20,14 @@ namespace Neoxider
             }
 
             [System.Serializable]
+            public class ImageColor
+            {
+                public Image image;
+                public Color start = Color.white;
+                public Color end = Color.white;
+            }
+
+            [System.Serializable]
             public class TmpColorTextVariant
             {
                 public TextMeshProUGUI tmp;
@@ -37,6 +46,7 @@ namespace Neoxider
             }
 
             public ImageVariant[] imageV = new ImageVariant[0];
+            public ImageColor[] imageC = new ImageColor[0];
             public TmpColorTextVariant[] textColor = new TmpColorTextVariant[0];
             public GameObjectVariant variants;
 
@@ -59,11 +69,22 @@ namespace Neoxider
                 if (imageV != null)
                     ImageVisual();
 
+                if (imageC != null)
+                    ImageColorVisual();
+
                 if (textColor != null)
                     TextColorVisual();
 
                 if (variants != null)
                     VariantVisual();
+            }
+
+            private void ImageColorVisual()
+            {
+                foreach (var c in imageC)
+                {
+                    c.image.color = end ? c.end : c.start;
+                }
             }
 
             public void Visual(bool activ)
@@ -137,5 +158,4 @@ namespace Neoxider
             }
         }
     }
-
 }

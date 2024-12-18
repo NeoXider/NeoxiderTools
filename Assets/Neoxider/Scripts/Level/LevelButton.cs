@@ -1,7 +1,7 @@
 using TMPro;
-using Unity.VisualScripting.Antlr3.Runtime;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace Neoxider
 {
@@ -9,7 +9,10 @@ namespace Neoxider
     {
         public class LevelButton : MonoBehaviour
         {
+            [SerializeField] private Button _button;
             [SerializeField] private LevelManager _levelManager;
+
+            [Space]
             [SerializeField] private GameObject[] _closes, _opens;
             [SerializeField] private TextMeshProUGUI _textLvl;
 
@@ -24,6 +27,19 @@ namespace Neoxider
             public UnityEvent OnEnableVisual;
             public UnityEvent OnCurrentVisual;
 
+            private void Start()
+            {
+                if (_button != null)
+                    _button.onClick.AddListener(Click);
+
+            }
+
+            private void OnDestroy()
+            {
+                if (_button != null)
+                    _button.onClick.RemoveListener(Click);
+            }
+
             public void Click()
             {
                 if (activ)
@@ -35,7 +51,7 @@ namespace Neoxider
                 _levelManager = levelManager;
             }
 
-            public void SetVisual(int idVisual, int level) // 0 закрыт. 1 открыт 2. текущий
+            public void SetVisual(int idVisual, int level) // 0 пїЅпїЅпїЅпїЅпїЅпїЅ. 1 пїЅпїЅпїЅпїЅпїЅпїЅ 2. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             {
                 this.activ = idVisual != 0;
                 this.level = level;
@@ -50,7 +66,8 @@ namespace Neoxider
                     _opens[i].SetActive(activ);
                 }
 
-                _textLvl.text = (level + 1).ToString();
+                if(_textLvl != null)
+                    _textLvl.text = (level + 1).ToString();
 
                 Events(idVisual);
             }
@@ -69,7 +86,7 @@ namespace Neoxider
 
             private void OnValidate()
             {
-
+                _button ??= GetComponent<Button>();
             }
         }
     }

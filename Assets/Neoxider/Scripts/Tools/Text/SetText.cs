@@ -36,7 +36,6 @@ namespace Neoxider
             public void Set(string value)
             {
                 string text = startAdd + value + endAdd;
-                print(startAdd);
                 _text.text = text;
             }
 

@@ -1,20 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public class FakeLoad : MonoBehaviour
 {
-    public float timeLoad = 2;
-    public GameObject pageLoad;
+    [SerializeField] private Vector2 timeLoad = new Vector2(1.5f, 2);
+    [SerializeField] private bool isLoadOne = true;
 
-    void Start()
+    public UnityEvent OnStart;
+    public UnityEvent OnFinisLoad;
+
+    private static bool isInitialized = false;
+
+    private void Awake()
     {
-        pageLoad.SetActive(true);
-        Invoke(nameof(EndLoad), timeLoad);
+        if (!isLoadOne || (isLoadOne && !isInitialized))
+        {
+            float time = Random.Range(timeLoad.x, timeLoad.y);
+            OnStart?.Invoke();
+            Invoke(nameof(EndLoad), time);
+            isInitialized = true;
+        }
     }
 
     private void EndLoad()
     {
-        pageLoad.SetActive(false);
+        OnFinisLoad?.Invoke();
     }
 }

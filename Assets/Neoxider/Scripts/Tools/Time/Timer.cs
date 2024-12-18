@@ -7,9 +7,9 @@ namespace Neoxider
 {
     public interface ITimerSubscriber
     {
-        void OnTimerStart();
-        void OnTimerEnd();
-        void OnTimerUpdate(float remainingTime, float progress);
+        public void OnTimerStart();
+        public void OnTimerEnd();
+        public void OnTimerUpdate(float remainingTime, float progress);
     }
 
     public class Timer
@@ -31,81 +31,62 @@ namespace Neoxider
         public event Action OnTimerEnd;
         public event Action<float, float> OnTimerUpdate;
 
-        public float duration;
-        private float updateInterval = 0.1f;
+        private float duration;
+        private float updateInterval = 0.05f;
         private bool isRunning;
-
-        public bool allowEventsInEditor = true;
 
         private CancellationTokenSource cancellationTokenSource;
 
-        public Timer(float duration, float updateInterval = 0.1f)
+        public Timer(float duration, float updateInterval = 0.05f)
         {
             this.duration = duration;
             this.updateInterval = updateInterval;
         }
 
-        public void ResetTimer(float newDuration, float newUpdateInterval = 0.1f)
+        public void ResetTimer(float newDuration, float newUpdateInterval = 0.05f)
         {
             StopTimer();
             duration = newDuration;
             updateInterval = newUpdateInterval;
         }
 
-        public async void StartTimer()
+        public async Task StartTimer()
         {
-            if (isRunning)
-            {
-                await Task.Delay(100);
-            }
+            if (isRunning) return;
 
-            if (!isRunning)
-            {
-                isRunning = true;
-#if !UNITY_EDITOR
+            isRunning = true;
             OnTimerStart?.Invoke();
-#else
-                if (allowEventsInEditor)
-                {
-                    OnTimerStart?.Invoke();
-                }
-#endif
-                cancellationTokenSource = new CancellationTokenSource();
-                try
-                {
-                    await TimerCoroutine(cancellationTokenSource.Token);
-#if !UNITY_EDITOR
+
+            cancellationTokenSource = new CancellationTokenSource();
+            try
+            {
+                await TimerCoroutine(cancellationTokenSource.Token);
                 OnTimerEnd?.Invoke();
-#else
-                    if (allowEventsInEditor)
-                    {
-                        OnTimerEnd?.Invoke();
-                    }
-#endif
-                }
-                catch (OperationCanceledException)
-                {
-                    // Timer was cancelled
-                }
+            }
+            catch (OperationCanceledException)
+            {
+                // Таймер был отменен
+            }
+            finally
+            {
                 isRunning = false;
             }
         }
 
         public void StopTimer()
         {
-            if (isRunning)
+            if (isRunning && cancellationTokenSource != null)
             {
                 cancellationTokenSource.Cancel();
+                cancellationTokenSource.Dispose();
+                cancellationTokenSource = null;
             }
         }
 
-        public async void RestartTimer()
+        public async Task RestartTimer()
         {
-
             StopTimer();
-            await Task.Delay(100);
-            cancellationTokenSource = null;
-            StartTimer();
+            await StartTimer();
         }
 
         public bool IsTimerRunning()
@@ -116,21 +97,13 @@ namespace Neoxider
         private async Task TimerCoroutine(CancellationToken cancellationToken)
         {
             float remainingTime = duration;
-            var wait = Task.Delay(TimeSpan.FromSeconds(updateInterval), cancellationToken);
 
-            while (remainingTime > 0)
+            while (remainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
-                await wait;
+                await Task.Delay(TimeSpan.FromSeconds(updateInterval), cancellationToken);
                 remainingTime -= updateInterval;
-                float progress = (remainingTime / duration);
-#if !UNITY_EDITOR
-            OnTimerUpdate?.Invoke(remainingTime, progress);
-#else
-                if (allowEventsInEditor)
-                {
-                    OnTimerUpdate?.Invoke(remainingTime, progress);
-                }
-#endif
+                float progress = (duration - remainingTime) / duration;
+                OnTimerUpdate?.Invoke(remainingTime, progress);
             }
         }
     }

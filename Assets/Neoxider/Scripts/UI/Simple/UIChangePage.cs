@@ -11,11 +11,22 @@ namespace Neoxider
             [SerializeField] private Image _imageTarget;
             [SerializeField] private int _idPage;
             [SerializeField] private bool _onePage = false;
+            [SerializeField] private bool _useAnim = true;
 
             public void OnPointerClick(PointerEventData eventData)
             {
                 if (_onePage) SimpleUI.Instance?.SetOnePage(_idPage);
-                else SimpleUI.Instance?.SetPage(_idPage);
+                else
+                {
+                    if (_useAnim)
+                    {
+                        SimpleUI.Instance.SetPageAnim(_idPage);
+                    }
+                    else
+                    {
+                        SimpleUI.Instance?.SetPage(_idPage);
+                    }
+                }
             }
 
             private void OnValidate()

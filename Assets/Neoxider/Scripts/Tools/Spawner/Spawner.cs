@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Neoxider.Tools;
 using UnityEngine;
 
 namespace Neoxider
@@ -8,43 +9,46 @@ namespace Neoxider
     public class Spawner : MonoBehaviour
     {
         [Header("Spawn Setting")]
-        [SerializeField] private GameObject[] prefabs;
+        [SerializeField] private GameObject[] _prefabs;
+        [SerializeField] private ChanceData _chanceData;
 
         [Space, Header("If spawnLimit is zero then infinite spawn")]
-        [SerializeField] private int spawnLimit = 0;
-        [SerializeField] private float minSpawnDelay = 0.5f;
-        [SerializeField] private float maxSpawnDelay = 2f;
+        public int spawnLimit = 0;
+        [SerializeField] private float _minSpawnDelay = 0.5f;
+        [SerializeField] private float _maxSpawnDelay = 2f;
 
         [Space, Header("Other Settings")]
-        [SerializeField] private Transform spawnTransform;
-        [SerializeField] private bool spawnOnAwake;
+        [SerializeField] private Transform _spawnTransform;
+        [SerializeField] private bool _spawnOnAwake;
 
         [Space, Header("if have ObjectPool")]
-        [SerializeField] private ObjectPool<GameObject>[] objectPools;
+        [SerializeField] private ObjectPool<GameObject>[] _objectPools;
 
 
         [Header("Spawn Area")]
-        [SerializeField] private Collider spawnAreaCollider;
-        [SerializeField] private Collider2D spawnAreaCollider2D;
+        [SerializeField] private Collider _spawnAreaCollider;
+        [SerializeField] private Collider2D _spawnAreaCollider2D;
 
         public bool isSpawning;
 
-        private List<GameObject> spawnedObjects = new List<GameObject>();
+        private List<GameObject> _spawnedObjects = new List<GameObject>();
         private int _spawnedCount = 0;
 
         void Start()
         {
-            for (int i = 0; i < prefabs.Length; i++)
+            for (int i = 0; i < _objectPools.Length; i++)
             {
-                objectPools[i].Init(prefabs[i]);
+                _objectPools[i].Init(_prefabs[i]);
             }
 
-            if (spawnOnAwake)
+            if (_spawnOnAwake)
                 StartSpawn();
         }
 
-        private void StartSpawn()
+        public void StartSpawn()
         {
+            _spawnedCount = 0;
+
             if (!isSpawning)
             {
                 StartCoroutine(SpawnObjects());
@@ -53,7 +57,6 @@ namespace Neoxider
 
         private IEnumerator SpawnObjects()
         {
-            _spawnedCount = 0;
             isSpawning = true;
             float timer = 0f;
 
@@ -65,7 +68,7 @@ namespace Neoxider
                 {
                     SpawnRandomObject();
                     _spawnedCount++;
-                    timer = Random.Range(minSpawnDelay, maxSpawnDelay);
+                    timer = Random.Range(_minSpawnDelay, _maxSpawnDelay);
                 }
 
                 yield return null;
@@ -76,51 +79,90 @@ namespace Neoxider
 
         private void SpawnRandomObject()
         {
-            if (prefabs.Length == 0) return;
+            if (_prefabs.Length == 0) return;
 
-            int randomIndex = Random.Range(0, prefabs.Length);
-            GameObject prefabToSpawn = prefabs[randomIndex];
+            int randomIndex = 0;
+
+            if (_chanceData == null)
+            {
+                randomIndex = Random.Range(0, _prefabs.Length);
+            }
+            else
+            {
+                randomIndex = _chanceData.GenerateId();
+            }
+
+            GameObject prefabToSpawn = _prefabs[randomIndex];
             GameObject spawnedObject;
 
-            if (randomIndex < objectPools.Length && objectPools[randomIndex] != null)
+            if (randomIndex < _objectPools.Length && _objectPools[randomIndex] != null)
             {
-                spawnedObject = objectPools[randomIndex].GetObject(GetSpawnPosition(), Quaternion.identity);
+                spawnedObject = _objectPools[randomIndex].GetObject(GetSpawnPosition(), Quaternion.identity);
                 if (spawnedObject != null)
                 {
-                    spawnedObject.transform.SetParent(spawnTransform);
-                    spawnedObjects.Add(spawnedObject);
+                    spawnedObject.transform.SetParent(_spawnTransform);
+                    _spawnedObjects.Add(spawnedObject);
                 }
             }
             else
             {
-                spawnedObject = Instantiate(prefabToSpawn, GetSpawnPosition(), Quaternion.identity, spawnTransform);
-                spawnedObjects.Add(spawnedObject);
+                spawnedObject = Instantiate(prefabToSpawn, GetSpawnPosition(), Quaternion.identity, _spawnTransform);
+                _spawnedObjects.Add(spawnedObject);
             }
         }
 
-        private Vector3 GetSpawnPosition()
+        public GameObject SpawnObject(Vector3? pos = null, int id = 0, Transform transform = null)
+        {
+            if (id == -1)
+                id = _prefabs.GetRandomIndex();
+
+            Transform transformParent = transform ?? _spawnTransform;
+
+            GameObject obj = Instantiate(_prefabs[id], pos ?? transformParent.position, Quaternion.identity, transformParent);
+            _spawnedObjects.Add(obj);
+
+            return obj;
+        }
+
+        public GameObject SpawnObjectWithCollider(int id = 0)
+        {
+            GameObject obj = Instantiate(_prefabs[id], GetSpawnPosition(), Quaternion.identity, _spawnTransform);
+            _spawnedObjects.Add(obj);
+
+            return obj;
+        }
+
+        public GameObject SpawnObjectWithCollider(GameObject prefab)
+        {
+            GameObject obj = Instantiate(prefab, GetSpawnPosition(), Quaternion.identity, _spawnTransform);
+            _spawnedObjects.Add(obj);
+
+            return obj;
+        }
+
+        public Vector3 GetSpawnPosition()
         {
             Vector3 spawnPosition = transform.position;
 
-            if (spawnAreaCollider != null)
-                spawnPosition = GetRandomPointInCollider(spawnAreaCollider);
-            else if (spawnAreaCollider2D != null)
-                spawnPosition = GetRandomPointInCollider2D(spawnAreaCollider2D);
+            if (_spawnAreaCollider != null)
+                spawnPosition = GetRandomPointInCollider(_spawnAreaCollider);
+            else if (_spawnAreaCollider2D != null)
+                spawnPosition = GetRandomPointInCollider2D(_spawnAreaCollider2D);
             return spawnPosition;
         }
 
-        public void RemoveAllSpawnedObjects()
+        public void Clear()
         {
             isSpawning = false;
 
-            foreach (GameObject obj in spawnedObjects)
+            foreach (GameObject obj in _spawnedObjects)
             {
                 if (obj != null)
                 {
-                    int index = System.Array.IndexOf(prefabs, obj);
-                    if (index >= 0 && objectPools[index] != null)
+                    int index = System.Array.IndexOf(_prefabs, obj);
+                    if (index >= 0 && _objectPools[index] != null)
                     {
-                        objectPools[index].ReturnObject(obj);
+                        _objectPools[index].ReturnObject(obj);
                     }
                     else
                     {
@@ -129,12 +171,12 @@ namespace Neoxider
                 }
             }
 
-            spawnedObjects.Clear();
+            _spawnedObjects.Clear();
         }
 
         public int GetActiveObjectCount()
         {
-            return spawnedObjects.Count(obj => obj != null);
+            return _spawnedObjects.Count(obj => obj != null);
         }
 
         private Vector3 GetRandomPointInCollider2D(Collider2D collider)
@@ -163,7 +205,7 @@ namespace Neoxider
             else
             {
                 Debug.LogWarning("Unsupported collider type for spawning.");
-                return spawnTransform.position;
+                return _spawnTransform.position;
             }
         }
 
@@ -205,14 +247,13 @@ namespace Neoxider
             else
             {
                 Debug.LogWarning("Unsupported collider type for spawning.");
-                return spawnTransform.position;
+                return _spawnTransform.position;
             }
         }
 
         private void OnValidate()
         {
-            if (spawnTransform == null)
-                spawnTransform = transform;
+            _spawnTransform ??= transform;
         }
     }
 }

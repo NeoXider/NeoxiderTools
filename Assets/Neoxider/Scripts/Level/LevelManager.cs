@@ -11,17 +11,23 @@ namespace Neoxider
             [SerializeField] private Transform _parentLevel;
             [SerializeField] private LevelButton[] _lvlBtns;
 
-            public int complexity;
-            public Level[] levels;
+            public int mapId;
+            public Map[] maps;
 
             public int currentLevel;
             public bool isLoopLevel = false;
 
             [Space]
-            public UnityEvent<int> OnSetLevel;
+            public UnityEvent<int> OnChangeLevel;
+            public UnityEvent<int> OnChangeMap;
 
             private void Start()
             {
+                for (var i = 0; i < maps.Length; i++)
+                {
+                    maps[i].Load();
+                }
+
                 for (int i = 0; i < _lvlBtns.Length; i++)
                 {
                     _lvlBtns[i].SetLevelManager(this);
@@ -32,12 +38,19 @@ namespace Neoxider
 
             public void SetComplexity(int id)
             {
-                complexity = id;
+                mapId = id;
+                OnChangeMap?.Invoke(currentLevel);
+                UpdateVisual();
             }
 
             public void NextLevel()
             {
                 SetLevel(currentLevel + 1);
+            }
+
+            public void SetLastLevel()
+            {
+                SetLevel(CurrentMap().level);
             }
 
             public void Restart()
@@ -47,22 +60,23 @@ namespace Neoxider
 
             public void SaveLevel()
             {
-                if (CurrentLevel().level == currentLevel)
+                if (CurrentMap().level == currentLevel)
                 {
-                    CurrentLevel().SaveLevel();
+                    print("save level");
+                    CurrentMap().SaveLevel();
                     UpdateVisual();
                 }
 
             }
 
-            public Level CurrentLevel()
+            public Map CurrentMap()
             {
-                return levels[complexity];
+                return maps[mapId];
             }
 
             private void UpdateVisual()
             {
-                Level curLevel = CurrentLevel();
+                Map curLevel = CurrentMap();
 
                 foreach (var item in _lvlBtns)
                 {
@@ -80,9 +94,9 @@ namespace Neoxider
 
             internal void SetLevel(int idLevel)
             {
-                Level curLvl = CurrentLevel();
+                Map curLvl = CurrentMap();
                 currentLevel = isLoopLevel ? GetLoopLevel(idLevel, curLvl.countLevels) : Mathf.Min(idLevel, curLvl.countLevels - 1);
-                OnSetLevel?.Invoke(currentLevel);
+                OnChangeLevel?.Invoke(currentLevel);
             }
 
             private static int GetLoopLevel(int idLevel, int count)
@@ -108,9 +122,9 @@ namespace Neoxider
                     _lvlBtns = new LevelButton[btns.Count];
                     btns.CopyTo(_lvlBtns);
 
-                    for (int i = 0; i < levels.Length; i++)
+                    for (int i = 0; i < maps.Length; i++)
                     {
-                        levels[i].idComplexity = i;
+                        maps[i].idMap = i;
                     }
                 }
             }

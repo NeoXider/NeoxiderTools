@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Events;
 
 
 namespace Neoxider
@@ -26,16 +27,22 @@ namespace Neoxider
             }
 
             [SerializeField] private TMP_Text _textPrice;
+            [SerializeField] private TMP_Text _textButton;
             [SerializeField, Min(0)] private int _price = 0;
             [Space]
             [SerializeField] private bool _textPrice_0 = false;
             [SerializeField] private ButtonType _type = ButtonType.Buy;
             [SerializeField] private GameObject[] _visuals;
+            [SerializeField] private string _textBuy = "Buy";
             [SerializeField] private string _textSelect = "Select";
             [SerializeField] private string _textSelected = "Selected";
             [SerializeField] private string _customSeparator = ".";
 
             [SerializeField] private bool _editorView = true;
+
+            [SerializeField] private UnityEvent OnBuy;
+            [SerializeField] private UnityEvent OnSelect;
+            [SerializeField] private UnityEvent OnSelected;
 
 
             public void SetAutoVisual(int price, ButtonType type = ButtonType.Buy)
@@ -75,6 +82,14 @@ namespace Neoxider
                 SetVisualId((int)type);
             }
 
+            public void TrySetVisualId(int id)
+            {
+                var type = CheckAutoType(_price, (ButtonType)id);
+
+                SetVisual(_price, type);
+            }
+
+
             public void SetVisualId(int id)
             {
                 _type = (ButtonType)id;
@@ -86,15 +101,39 @@ namespace Neoxider
                         _visuals[i].SetActive(i == id);
                     }
                 }
+                
+                if(_textButton != null)
+                switch (_type)
+                    {
+                        case ButtonType.Buy:
+                            _textButton.text = _textBuy;
+                            break;
+                        case ButtonType.Select:
+                            _textButton.text = _textSelect;
+                            break;
+                        case ButtonType.Selected:
+                            _textButton.text = _textSelected;
+                            break;
+                        default:
+                            _textButton.text = "";
+                            break;
+                    }
 
                 if (_price == 0 && !_textPrice_0)
                 {
-                    _textPrice.text = _type == ButtonType.Selected ? _textSelected : _textSelect;
+                    _textPrice.text = _type == ButtonType.Selected ? "" : _price.FormatWithSeparator(_customSeparator);
                 }
                 else
                 {
                     _textPrice.text = _price.FormatWithSeparator(_customSeparator);
                 }
+
+                if (id == 0)
+                    OnBuy?.Invoke();
+                else if (id == 1)
+                    OnSelect?.Invoke();
+                else if (id == 2)
+                    OnSelected?.Invoke();
             }
 
             private void OnValidate()

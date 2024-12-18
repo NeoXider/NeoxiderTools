@@ -10,15 +10,18 @@ namespace Neoxider
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(Toggle))]
         public class Toggle : MonoBehaviour
         {
-            public bool activ;
+            [SerializeField] private UnityEngine.UI.Toggle _toggle;
+            [SerializeField] private Sprite[] _sprites;
+            [SerializeField] private GameObject[] _visuals;
 
-            public UnityEvent<bool> OnChange;
+            public bool activ;
             public UnityEvent On;
             public UnityEvent Off;
 
-            [SerializeField] private Button _button;
-            [SerializeField] private Sprite[] _sprites;
-            [SerializeField] private GameObject[] _visuals;
+            private void Start() 
+            {
+                Set(_toggle.isOn);    
+            }
 
             public void Switch()
             {
@@ -35,8 +38,6 @@ namespace Neoxider
 
             private void Actions(bool activ)
             {
-                OnChange?.Invoke(activ);
-
                 if (activ)
                     On?.Invoke();
                 else
@@ -48,7 +49,7 @@ namespace Neoxider
                 int id = activ ? 1 : 0;
 
                 if (_sprites != null && _sprites.Length == 2)
-                    _button.image.sprite = _sprites[id];
+                    _toggle.image.sprite = _sprites[id];
 
                 if (_visuals != null && _visuals.Length == 2)
                     for (int i = 0; i < _visuals.Length; i++)
@@ -57,25 +58,29 @@ namespace Neoxider
                     }
             }
 
-            private void OnEnable()
+            private void Awake()
             {
-                _button?.onClick.AddListener(Switch);
+                _toggle?.onValueChanged.AddListener(Set);
+                Actions(_toggle.isOn);
             }
 
-            private void OnDisable()
+            private void OnDestroy()
             {
-                _button?.onClick.RemoveListener(Switch);
+                _toggle?.onValueChanged.RemoveListener(Set);
             }
 
             private void OnValidate()
             {
+                if(_toggle != null)
+                    activ = _toggle.isOn;
+                else
+                {
+                    _toggle = GetComponent<UnityEngine.UI.Toggle>();
+                    _toggle.onValueChanged.AddListener(Set);
+                }
+
                 Visual(activ);
-
-                if (_button == null)
-                    _button = GetComponent<Button>();
             }
-
-
         }
     }
 }
