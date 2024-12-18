@@ -1,5 +1,9 @@
 fileFormatVersion: 2
+<<<<<<< HEAD:Assets/Neoxider/Scripts/Level/Map.cs.meta
 guid: 028d2489d59b9eb46b59e45c1b4c1e9d
+=======
+guid: 3c0fb4fd33a5e0c4da8c7e2b431fcc0d
+>>>>>>> cd70dbfa19a493705dc2252ca7235db4219e024a:Assets/Neoxider/Scripts/Tools/Move/MoveControll.cs.meta
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2

@@ -79,6 +79,97 @@ namespace Neoxider.Shop
 
                 OnDeselectItem?.Invoke();
             }
+<<<<<<< HEAD
+=======
+
+            public void AddId()
+            {
+                ChangeId(_id + 1);
+            }
+
+            public void RemoveId()
+            {
+                ChangeId(_id - 1);
+            }
+
+            public void ChangeId(int id)
+            {
+                _id = Mathf.Clamp(id, 0, _shopItemData.curentPrice.Length - 1);
+
+                UpdateVisual();
+
+                if (_saveUseId)
+                {
+                    if (_useId == _id && _shopItemData.isSinglePurchase)
+                    {
+                        Used();
+                    }
+                }
+            }
+
+            public void SetItem()
+            {
+                int price = _shopItemData.curentPrice[_id];
+
+                if (price > 0)
+                {
+                    Buy(price);
+                }
+                else // is selected
+                {
+                    Used();
+                }
+            }
+
+            private void Buy(int price)
+            {
+                if (_money.Spend(price))
+                {
+                    _shopItemData.Save(_id);
+                    UpdateVisual();
+
+                    if (_purchasedUsed)
+                        Used();
+                    else
+                        Select();
+
+                    OnPurchased?.Invoke();
+                }
+                else
+                {
+                    OnPurchaseFailed?.Invoke();
+                }
+            }
+
+            private void Select()
+            {
+                OnSelect?.Invoke(_id);
+            }
+
+            private void Used()
+            {
+                _useId = _id;
+                OnUse?.Invoke(_id);
+            }
+
+            public void UpdateVisual()
+            {
+                if (_imageItem != null)
+                    _imageItem.sprite = _shopItemData.spritesShop[_id];
+
+                OnChangePrice?.Invoke(_shopItemData.curentPrice[_id]);
+                OnChangeId?.Invoke(_id);
+            }
+
+            private void OnValidate()
+            {
+                if (_shopItemData != null)
+                    _id = Mathf.Clamp(_id, 0, _shopItemData.price.Length - 1);
+
+                if (_imageItem != null)
+                    _imageItem.sprite = _shopItemData.spritesShop[_id];
+            }
+>>>>>>> cd70dbfa19a493705dc2252ca7235db4219e024a
         }
     }
 }

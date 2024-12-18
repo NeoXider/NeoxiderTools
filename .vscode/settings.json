@@ -56,6 +56,7 @@
         "temp/": true,
         "Temp/": true
     },
-    "dotnet.defaultSolution": "NeoxiderTools.sln",
-    "commentTranslate.targetLanguage": "ru"
+    "<<<<<<<HEADdotnet.defaultSolution": "NeoxiderTools.sln",
+    "ru=======dotnet.defaultSolution": "NeoxiderTools.sln>>>>>>>cd70dbfa19a493705dc2252ca7235db4219e024a",
+    "dotnet.defaultSolution": "NeoxiderTools.sln"
 }
