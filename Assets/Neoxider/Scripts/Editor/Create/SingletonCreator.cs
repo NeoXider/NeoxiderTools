@@ -8,7 +8,8 @@ public static class SingletonCreator
     public static void CreateSingletonTemplate()
     {
         string template =
-@"using UnityEngine;
+@"//=== By Neoxider ===
+using UnityEngine;
 using Neoxider;
 using Neoxider.Tools;
 
