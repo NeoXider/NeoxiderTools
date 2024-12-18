@@ -1,5 +1,4 @@
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -17,13 +16,13 @@ namespace Neoxider
             private PageType _pageType = PageType.Menu;
 
             /// <summary>
-            /// меняет одну на другую или выкключает все и включает только одну
+            /// пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
             /// </summary>
             [SerializeField]
             private bool _change = true;
 
             /// <summary>
-            /// Вернуть на предыдущую страницу
+            /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             /// </summary>
             [SerializeField]
             private bool _switchLastPage = false;
@@ -104,7 +103,7 @@ namespace Neoxider
 #endif
 
 #if UNITY_EDITOR
-                if (!AssetDatabase.Contains(this))
+                if (!UnityEditor.AssetDatabase.Contains(this))
                 {
                     if (_pagesManager == null)
                     {

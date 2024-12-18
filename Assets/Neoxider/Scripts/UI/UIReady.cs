@@ -1,6 +1,5 @@
 using System.Collections;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -100,7 +99,7 @@ namespace Neoxider
                 if (ALS.animator != null)
                     ALS.animator.enabled = false;
 
-                Debug.Log("Сцена загружена и активирована!");
+                Debug.Log("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ!");
             }
 
             private void OnValidate()

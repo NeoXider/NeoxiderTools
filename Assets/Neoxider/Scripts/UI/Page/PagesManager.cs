@@ -1,9 +1,7 @@
 //v.1.0.5
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -21,7 +19,7 @@ namespace Neoxider
         {
             public static PagesManager instance;
 
-            //активные страницы
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             [Header("Pages Used")]
             public Page activPage;
             public Page lastPage;
@@ -32,12 +30,12 @@ namespace Neoxider
 
             [Space]
 
-            //игнорирование страницы (всегда включена или всегда выключена)
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
             [Header("Ignore Page Type")]
             private PageType[] _ignorePageTypes;
             private bool _ignorePageActiv;
 
-            //при включение определенной страницы что будет с предыдущей
+            //пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             [Header("Page last with Change")]
             [SerializeField]
             private PageType[] _onePageTypes;
@@ -45,17 +43,17 @@ namespace Neoxider
             [SerializeField]
             private bool _lastPageActiv = true;
 
-            //включение только 1 страницы и выключение остальных
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ 1 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             [Header("Page with Only Set")]
 
             [SerializeField]
             private PageType[] _setPageTypes;
 
-            //одновременное включение страниц
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             [Header("Pages Together")]
-            // не сделано
+            // пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-            //начальные настройки
+            //пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             [Header("Start Settings")]
 
             [SerializeField]
@@ -292,7 +290,7 @@ namespace Neoxider
                         var page = PagesActivate(_activPageEditor, true, new PageType[] { PageType.None }, true, false);
 #if UNITY_EDITOR
                         if (_selectPage)
-                            Selection.activeGameObject = page.gameObject;
+                            UnityEditor.Selection.activeGameObject = page.gameObject;
 #endif
                     }
                 }
