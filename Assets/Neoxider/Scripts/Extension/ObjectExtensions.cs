@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Component = UnityEngine.Component;
 
-namespace Neoxider
+namespace Neo
 {
     public static class ObjectExtensions
     {

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Audio;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Audio
     {

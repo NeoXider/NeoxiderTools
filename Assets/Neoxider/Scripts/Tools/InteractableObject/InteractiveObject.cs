@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Bonus
     {

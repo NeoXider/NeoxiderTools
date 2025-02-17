@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 
-namespace Neoxider
+namespace Neo
 {
     public class TextureMaxSizeChanger : EditorWindow
     {

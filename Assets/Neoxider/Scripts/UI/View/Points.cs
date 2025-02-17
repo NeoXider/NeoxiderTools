@@ -4,7 +4,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {

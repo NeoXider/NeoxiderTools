@@ -1,10 +1,10 @@
-using Neoxider.UI;
+using Neo.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Neoxider.Shop
+namespace Neo.Shop
 {
 
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(ShopItem))]

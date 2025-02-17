@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using Neoxider.Tools;
+using Neo.Tools;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     public class Spawner : MonoBehaviour
     {
@@ -53,6 +53,11 @@ namespace Neoxider
             {
                 StartCoroutine(SpawnObjects());
             }
+        }
+
+        public void SetSpawning(bool active)
+        {
+            isSpawning = active;
         }
 
         private IEnumerator SpawnObjects()

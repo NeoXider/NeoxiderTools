@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(FPS))] 
     public class FPS : MonoBehaviour

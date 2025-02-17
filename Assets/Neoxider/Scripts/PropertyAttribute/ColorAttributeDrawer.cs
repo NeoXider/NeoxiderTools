@@ -3,7 +3,7 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 
-namespace Neoxider
+namespace Neo
 {
     [CustomPropertyDrawer(typeof(ColorAttribute))]
     public class ColorAttributeDrawer : PropertyDrawer

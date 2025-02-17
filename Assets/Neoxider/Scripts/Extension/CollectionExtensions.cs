@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace Neoxider
+namespace Neo
 {
     public static class CollectionExtensions
     {

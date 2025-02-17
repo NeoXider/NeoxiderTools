@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Neoxider.Bonus
+namespace Neo.Bonus
 {
     public class ItemCollectionInfo : MonoBehaviour
     {

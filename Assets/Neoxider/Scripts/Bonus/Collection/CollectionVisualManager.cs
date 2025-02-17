@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider.Bonus
+namespace Neo.Bonus
 {
     public class CollectionVisualManager : MonoBehaviour
     {

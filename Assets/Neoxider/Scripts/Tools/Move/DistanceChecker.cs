@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     public class DistanceChecker : MonoBehaviour
     {

@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 
-namespace Neoxider
+namespace Neo
 {
     public struct SwipeData
     {

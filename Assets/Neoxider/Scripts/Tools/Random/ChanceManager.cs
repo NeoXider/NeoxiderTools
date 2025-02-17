@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     [System.Serializable]
     public class ChanceManager

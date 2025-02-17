@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour

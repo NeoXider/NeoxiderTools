@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-namespace Neoxider.UI
+namespace Neo.UI
 {
     public class ButtonShake : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {

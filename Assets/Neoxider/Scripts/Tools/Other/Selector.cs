@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Tools
     {
@@ -15,19 +15,22 @@ namespace Neoxider
             [SerializeField] private bool _setChild = false;
 
             [Space]
-            [SerializeField, Min(-1)] private int _startId = -1;
+            [SerializeField, Min(-1)] private int _startId = 0;
             [SerializeField] private bool _loop = true;
 
             [Space]
             [SerializeField] private int _currentIndex = 0;
             [SerializeField] private bool _changeDebug = true;
 
+            public GameObject[] Items => _items;
+            public int CurrentId => _currentIndex;
+
             public UnityEvent<int> OnSelectionChanged;
             public UnityEvent OnFinished;
 
             private void Awake()
             {
-                if (_startId != -1)
+                if (_startId >= -1)
                     _currentIndex = _startId;
             }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Neoxider.Bonus
+namespace Neo.Bonus
 {
     public class Box : MonoBehaviour
     {

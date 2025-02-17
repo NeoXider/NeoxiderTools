@@ -1,12 +1,15 @@
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Tools
     {
         public class Singleton<T> : MonoBehaviour where T : Singleton<T>
         {
             [SerializeField] protected bool _dontDestroyOnLoad = false;
+            [SerializeField] protected static bool _createInstance = false;
+            [SerializeField] protected bool _setInstanceOnAwake = true;
+
 
             private static T _instance;
 
@@ -16,16 +19,22 @@ namespace Neoxider
                 {
                     if (_instance == null)
                     {
-                        _instance = FindFirstObjectByType<T>();
+                        _instance = FindFirstObjectByType<T>(FindObjectsInactive.Include);
 
-                        if (_instance == null)
+                        if (_instance == null && _createInstance)
                         {
                             var obj = new GameObject(typeof(T).Name);
                             _instance = obj.AddComponent<T>();
                             _instance.OnInstanceCreated();
                         }
 
-                        _instance.Initialize();
+                        if (_instance != null)
+                        {
+                            if (_instance._dontDestroyOnLoad)
+                                DontDestroyOnLoad(_instance.gameObject);
+
+                            _instance.Init();
+                        }
                     }
                     return _instance;
                 }
@@ -35,10 +44,9 @@ namespace Neoxider
 
             protected virtual void OnInstanceCreated() { }
 
-            protected virtual void Initialize()
+            protected virtual void Init()
             {
-                if (_dontDestroyOnLoad)
-                    DontDestroyOnLoad(gameObject);
+
             }
 
             public static void DestroyInstance()
@@ -52,14 +60,17 @@ namespace Neoxider
 
             protected virtual void Awake()
             {
-                if (_instance == null)
+                if (_setInstanceOnAwake)
                 {
-                    _instance = this as T;
-                    Initialize();
-                }
-                else if (_instance != this)
-                {
-                    Destroy(gameObject);
+                    if (_instance == null)
+                    {
+                        _instance = this as T;
+                        Init();
+                    }
+                    else if (_instance != this)
+                    {
+                        Destroy(gameObject);
+                    }
                 }
             }
         }

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     public class RequireInterface : PropertyAttribute
     {

@@ -5,7 +5,7 @@ using Component = UnityEngine.Component;
 using System.Collections;
 using System.Linq;
 
-namespace Neoxider
+namespace Neo
 {
     public static class GameObjectArrayExtensions
     {
@@ -47,7 +47,7 @@ namespace Neoxider
             return gameObjects;
         }
 
-        public static GameObject SetActiveId(this GameObject[] gameObjects, int id, bool active)
+        public static GameObject SetActiveId(this GameObject[] gameObjects, int id, bool active = true)
         {
             if (gameObjects == null) return null;
 
@@ -84,7 +84,20 @@ namespace Neoxider
         {
             List<T> componentList = components.ToList();
 
-            return componentList.SetActiveById(id, active);
+            if (id >= 0 && id < componentList.Count)
+            {
+                if (componentList[id] != null)
+                {
+                    componentList[id].gameObject.SetActive(active);
+                    return componentList[id].gameObject;
+                }
+            }
+            else
+            {
+                Debug.LogWarning($"ID {id} .");
+            }
+
+            return null;
         }
 
         public static GameObject SetActiveId<T>(this T[] components, int id, bool active) where T : MonoBehaviour

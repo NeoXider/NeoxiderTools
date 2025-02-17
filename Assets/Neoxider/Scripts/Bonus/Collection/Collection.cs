@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider.Bonus
+namespace Neo.Bonus
 {
     public class Collection : MonoBehaviour
     {

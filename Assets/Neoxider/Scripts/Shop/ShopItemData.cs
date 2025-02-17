@@ -1,7 +1,7 @@
-using Neoxider.UI;
+using Neo.UI;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Shop
     {

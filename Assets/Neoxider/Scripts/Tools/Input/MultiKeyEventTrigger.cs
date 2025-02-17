@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using System.Collections.Generic;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     public class MultiKeyEventTrigger : MonoBehaviour
     {

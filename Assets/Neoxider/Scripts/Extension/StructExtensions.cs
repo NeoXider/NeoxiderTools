@@ -1,8 +1,8 @@
 using System;
-using Neoxider.Tools;
+using Neo.Tools;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     public static class StructExtensions
     {
@@ -19,7 +19,7 @@ namespace Neoxider
 
         public static bool ToBool(this int value)
         {
-            return value > 0;
+            return value != 0;
         }
 
         public static string FormatTime(this float timeSeconds, TimeFormat format = TimeFormat.Seconds, string separator = ":")

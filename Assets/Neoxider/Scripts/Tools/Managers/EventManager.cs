@@ -1,14 +1,15 @@
-using Neoxider.Tools;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider
+namespace Neo
 {
     public class EventManager : Singleton<EventManager>
     {
 
         [Header("Game Events")]
         public UnityEvent OnGameStart;
+        public UnityEvent OnStopGame;
         public UnityEvent OnWin;
         public UnityEvent OnGameOver;
 
@@ -30,9 +31,9 @@ namespace Neoxider
         public UnityEvent OnQuitApplication;
 
         #region Unity Callbacks
-        protected override void Initialize()
+        protected override void Init()
         {
-            base.Initialize();
+            base.Init();
             OnAwake?.Invoke();
         }
 
@@ -55,32 +56,44 @@ namespace Neoxider
 
         public static void GameStart()
         {
-            Instance.OnGameStart?.Invoke();
+            if (Instance != null)
+                Instance.OnGameStart?.Invoke();
         }
 
         public static void GameOver()
         {
-            Instance.OnGameOver?.Invoke();
+            if (Instance != null)
+                Instance.OnGameOver?.Invoke();
         }
 
         public static void Win()
         {
-            Instance.OnWin?.Invoke();
+            if (Instance != null)
+                Instance.OnWin?.Invoke();
         }
 
         public static void PlayerDied()
         {
-            Instance.OnPlayerDeath?.Invoke();
+            if (Instance != null)
+                Instance.OnPlayerDeath?.Invoke();
         }
 
         public static void Pause()
         {
-            Instance.OnPause?.Invoke();
+            if (Instance != null)
+                Instance.OnPause?.Invoke();
         }
 
         public static void Resume()
         {
-            Instance.OnResume?.Invoke();
+            if (Instance != null)
+                Instance.OnResume?.Invoke();
+        }
+
+        public static void StopGame()
+        {
+            if (Instance != null)
+                Instance.OnStopGame?.Invoke();
         }
     }
 }

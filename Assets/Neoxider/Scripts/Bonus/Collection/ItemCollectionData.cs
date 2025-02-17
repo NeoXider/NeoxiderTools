@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Neoxider.Bonus
+namespace Neo.Bonus
 {
     [CreateAssetMenu(fileName = "ItemClnData", menuName = "Neoxider/ItemCollectionData")]
     public class ItemCollectionData : ScriptableObject

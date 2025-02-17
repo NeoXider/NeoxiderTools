@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AttackExecution))]
     public class AttackExecution : MonoBehaviour

@@ -1,9 +1,10 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {
@@ -25,8 +26,8 @@ namespace Neoxider
                 public GameObject[] selected;
             }
 
-            [SerializeField] private TMP_Text _textPrice;
-            [SerializeField] private TMP_Text _textButton;
+            [SerializeField] private TMP_Text[] _textPrice;
+            [SerializeField] private TMP_Text[] _textButton;
             [SerializeField, Min(0)] private int _price = 0;
             [Space]
             [SerializeField] private bool _textPrice_0 = false;
@@ -105,26 +106,26 @@ namespace Neoxider
                 switch (_type)
                     {
                         case ButtonType.Buy:
-                            _textButton.text = _textBuy;
+                            SetButtonText(_textBuy);
                             break;
                         case ButtonType.Select:
-                            _textButton.text = _textSelect;
+                            SetButtonText(_textSelect);
                             break;
                         case ButtonType.Selected:
-                            _textButton.text = _textSelected;
+                            SetButtonText(_textSelected);
                             break;
                         default:
-                            _textButton.text = "";
+                            SetButtonText("");
                             break;
                     }
 
                 if (_price == 0 && !_textPrice_0)
                 {
-                    _textPrice.text = _type == ButtonType.Selected ? "" : _price.FormatWithSeparator(_customSeparator);
+                    SetPriceText("");
                 }
                 else
                 {
-                    _textPrice.text = _price.FormatWithSeparator(_customSeparator);
+                    SetPriceText(_price.FormatWithSeparator(_customSeparator));
                 }
 
                 if (id == 0)
@@ -133,6 +134,22 @@ namespace Neoxider
                     OnSelect?.Invoke();
                 else if (id == 2)
                     OnSelected?.Invoke();
+            }
+
+            private void SetButtonText(string textBuy)
+            {
+                foreach (var item in _textButton)
+                {
+                    item.text = textBuy;
+                }
+            }
+
+            private void SetPriceText(string textPrice)
+            {
+                foreach (var item in _textPrice)
+                {
+                    item.text = textPrice;
+                }
             }
 
             private void OnValidate()

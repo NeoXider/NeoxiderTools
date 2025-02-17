@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     public class CameraShake : MonoBehaviour
     {

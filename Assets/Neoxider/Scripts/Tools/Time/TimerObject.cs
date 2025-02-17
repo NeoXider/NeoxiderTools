@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider
+namespace Neo
 {
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour

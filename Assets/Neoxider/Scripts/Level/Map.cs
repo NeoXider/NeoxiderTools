@@ -1,6 +1,7 @@
+using System;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Level
     {
@@ -10,20 +11,36 @@ namespace Neoxider
             public int countLevels;
 
             [Space]
-            [SerializeField] private int _level;
+            [SerializeField]
+            private int _level;
             public int level => _level;
 
             public int idMap;
 
-            public void Load()
+            private string _saveKey;
+
+            public void Load(int i, string saveKey)
             {
-                _level = PlayerPrefs.GetInt(idMap + nameof(_level), 0);
+                idMap = i;
+                _saveKey = saveKey;
+
+                _level = PlayerPrefs.GetInt(GetSaveKey() + nameof(_level), 0);
+            }
+
+            private string GetSaveKey()
+            {
+                return $"Map_{_saveKey}_{idMap}_";
             }
 
             public void SaveLevel()
             {
                 _level = _level + 1;
-                PlayerPrefs.SetInt(idMap + nameof(_level), _level);
+                PlayerPrefs.SetInt(GetSaveKey() + nameof(_level), _level);
+            }
+
+            public bool GetCoplete()
+            {
+                return _level >= countLevels;
             }
         }
     }

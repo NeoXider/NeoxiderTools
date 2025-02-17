@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 
-namespace Neoxider
+namespace Neo
 {
     [System.Serializable]
     public class ObjectPool<T> where T : Object

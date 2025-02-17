@@ -1,9 +1,9 @@
-using Neoxider;
+using Neo;
 using TMPro;
 using UnityEngine;
 
 
-namespace Neoxider
+namespace Neo
 {
     namespace Tools
     {
@@ -11,13 +11,13 @@ namespace Neoxider
         public class SetText : MonoBehaviour
         {
             [SerializeField]
-            private TMP_Text _text;
+            protected TMP_Text _text;
 
             [SerializeField]
-            private string _separator = ".";
+            protected string _separator = ".";
 
             [SerializeField]
-            private int _decimal = 2;
+            protected int _decimal = 2;
 
             public string startAdd = "";
             public string endAdd = "";

@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {
@@ -91,6 +91,13 @@ namespace Neoxider
             private static void MoneyLayout()
             {
                 string nameGameObject = "Money Layout";
+                CreatePrefab(nameGameObject, "");
+            }
+
+            [MenuItem(createPatch + "Page", false, 1)]
+            private static void Page()
+            {
+                string nameGameObject = "Page";
                 CreatePrefab(nameGameObject, "");
             }
             #endregion

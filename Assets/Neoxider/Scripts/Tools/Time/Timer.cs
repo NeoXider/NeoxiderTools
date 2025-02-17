@@ -3,7 +3,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Neoxider
+namespace Neo
 {
     public interface ITimerSubscriber
     {

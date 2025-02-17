@@ -1,8 +1,8 @@
-using Neoxider.Audio;
+using Neo.Audio;
 using TMPro;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
 public class SwipeTextAudio : MonoBehaviour, ISwipeSubscriber
 {
@@ -10,7 +10,6 @@ public class SwipeTextAudio : MonoBehaviour, ISwipeSubscriber
 
         public void SubscribeToSwipe(SwipeData swipeData)
         {
-            AudioManager.PlaySound(ClipType.click);
             text.text = swipeData.Direction.ToString();
         }
 

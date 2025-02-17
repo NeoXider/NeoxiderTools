@@ -1,7 +1,7 @@
 using UnityEngine;
 
 
-namespace Neoxider
+namespace Neo
 {
     public static class TransformExtensions
     {

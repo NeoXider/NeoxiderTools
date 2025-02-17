@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider.Shop
+namespace Neo.Shop
 {
     public class Shop : MonoBehaviour
     {
@@ -16,7 +16,7 @@ namespace Neoxider.Shop
         private bool _useSetItem = true;
 
         [SerializeField]
-        private int[] _prices;
+        private bool _autoSubscribe = true;
 
         [SerializeField]
         private string _keySave = "Shop";
@@ -30,6 +30,11 @@ namespace Neoxider.Shop
         public UnityEvent<int> OnPurchased;
         public UnityEvent<int> OnPurchaseFailed;
         public UnityEvent OnLoad;
+
+        [Space]
+        [Header("Debug")]
+        [SerializeField]
+        private int[] _prices;
 
         private IMoneySpend _money;
 
@@ -59,11 +64,13 @@ namespace Neoxider.Shop
 
                 if (subscribe)
                 {
-                    _shopItems[i].buttonBuySet.onClick.AddListener(() => Buy(id));
+                    if (_autoSubscribe)
+                        _shopItems[i].buttonBuySet.onClick.AddListener(() => Buy(id));
                 }
                 else
                 {
-                    _shopItems[i].buttonBuySet.onClick.RemoveListener(() => Buy(id));
+                    if (_autoSubscribe)
+                        _shopItems[i].buttonBuySet.onClick.RemoveListener(() => Buy(id));
                 }
             }
         }
@@ -102,7 +109,7 @@ namespace Neoxider.Shop
             if (_prices[id] == 0 && _shopItemDatas[id].isSinglePurchase)
             {
                 Visual();
-                
+
                 Select(id);
             }
             else if (_money.Spend(_prices[id]))

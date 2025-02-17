@@ -1,38 +1,39 @@
+using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Shop
     {
         [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
-        public class Money : MonoBehaviour, IMoneySpend, IMoneyAdd
+        public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
-            public static Money Instance;
+            public float levelMoney => _levelMoney;
+            public float money => _money;
+            public float allMoney => _allMoney;
 
-            public int levelMoney => _levelMoney;
-            public int money => _money;
-            public int allMoney => _allMoney;
-
-            [SerializeField, Color(ColorEnum.SoftGreen)] private int _money;
-            [SerializeField, Color(ColorEnum.SoftBlue)] private int _levelMoney;
+            [SerializeField, Color(ColorEnum.SoftGreen)] private float _money;
+            [SerializeField, Color(ColorEnum.SoftBlue)] private float _levelMoney;
 
             [SerializeField] private string _moneySave = "Money";
 
             [Space, Header("Text")]
+            [SerializeField] private int _roundToDecimal = 2;
             [SerializeField] private TMP_Text[] t_money;
             [SerializeField] private TMP_Text[] t_levelMoney;
 
             [Space, Header("Events")]
-            public UnityEvent<int> OnChangedLevelMoney;
-            public UnityEvent<int> OnChangedMoney;
+            public UnityEvent<float> OnChangedLevelMoney;
+            public UnityEvent<float> OnChangedMoney;
 
-            private int _allMoney;
+            private float _allMoney;
 
-            private void Awake()
+            protected override void Init()
             {
-                Instance = this;
+                base.Init();
+
             }
 
             void Start()
@@ -44,33 +45,33 @@ namespace Neoxider
 
             private void Load()
             {
-                _money = PlayerPrefs.GetInt(_moneySave, _money);
-                _allMoney = PlayerPrefs.GetInt(_moneySave + nameof(_allMoney), 0);
+                _money = PlayerPrefs.GetFloat(_moneySave, _money);
+                _allMoney = PlayerPrefs.GetFloat(_moneySave + nameof(_allMoney), 0);
             }
 
             private void Save()
             {
-                PlayerPrefs.SetInt(_moneySave, _money);
-                PlayerPrefs.SetInt(_moneySave + nameof(_allMoney), _allMoney);
+                PlayerPrefs.SetFloat(_moneySave, _money);
+                PlayerPrefs.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
             }
 
-            public void AddLevelMoney(int count)
+            public void AddLevelMoney(float count)
             {
                 _levelMoney += count;
                 ChangeLevelMoneyEvent();
             }
 
-            public int SetLevelMoney(int count = 0)
+            public float SetLevelMoney(float count = 0)
             {
-                int levelMoney = _levelMoney;
+                float levelMoney = _levelMoney;
                 _levelMoney = count;
                 ChangeLevelMoneyEvent();
                 return levelMoney;
             }
 
-            public int SetMoneyForLevel(bool resetLevelMoney = true)
+            public float SetMoneyForLevel(bool resetLevelMoney = true)
             {
-                int count = _levelMoney;
+                float count = _levelMoney;
                 _money += _levelMoney;
 
                 if (resetLevelMoney)
@@ -83,14 +84,14 @@ namespace Neoxider
                 return count;
             }
 
-            public bool CheckSpend(int count)
+            public bool CanSpend(float count)
             {
                 return _money >= count;
             }
 
-            public bool Spend(int count)
+            public bool Spend(float count)
             {
-                if (CheckSpend(count))
+                if (CanSpend(count))
                 {
                     _money -= count;
                     ChangeMoneyEvent();
@@ -101,7 +102,7 @@ namespace Neoxider
                 return false;
             }
 
-            public void Add(int count)
+            public void Add(float count)
             {
                 _money += count;
                 _allMoney += count;
@@ -123,11 +124,11 @@ namespace Neoxider
                 OnChangedLevelMoney?.Invoke(_levelMoney);
             }
 
-            private void SetText(TMP_Text[] text, int count)
+            private void SetText(TMP_Text[] text, float count)
             {
                 foreach (var item in text)
                 {
-                    item.text = count.ToString();
+                    item.text = count.RoundToDecimal(_roundToDecimal).ToString();
                 }
             }
         }

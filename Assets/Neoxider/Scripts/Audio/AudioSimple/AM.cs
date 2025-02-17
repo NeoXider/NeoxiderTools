@@ -1,7 +1,7 @@
-using Neoxider.Tools;
+using Neo.Tools;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Audio
     {
@@ -18,9 +18,12 @@ namespace Neoxider
             [SerializeField] private float _startVolumeEfx = 1;
             [SerializeField] private float _startVolumeMusic = 0.5f;
 
-            protected override void Initialize()
+            public AudioSource Efx => _efx;
+            public AudioSource Music => _music;
+
+            protected override void Init()
             {
-                base.Initialize();
+                base.Init();
 
                 PlayMusic(0);
             }

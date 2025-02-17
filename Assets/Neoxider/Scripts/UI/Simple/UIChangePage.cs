@@ -1,30 +1,78 @@
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {
-        public class UIChangePage : MonoBehaviour, IPointerClickHandler
+        public class UIChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {
+            public bool intecactable = true;
             [SerializeField] private Image _imageTarget;
+
+            [Space]
+            [SerializeField]
+            private bool _canSwitchPage = true;
             [SerializeField] private int _idPage;
             [SerializeField] private bool _onePage = false;
-            [SerializeField] private bool _useAnim = true;
+            [SerializeField] private bool _useAnimPage = false;
+
+            [Space]
+            [SerializeField] private bool _useAnimImage = true;
+            [SerializeField] private float _timeAnimImage = 0.3f;
+            [SerializeField] private float _scaleAnim = 0.85f;
+
+
+            private Vector3 startScale;
+
+            private void Awake()
+            {
+                startScale = transform.localScale;
+            }
+
+            private void OnEnable()
+            {
+                transform.localScale = startScale;
+            }
 
             public void OnPointerClick(PointerEventData eventData)
             {
-                if (_onePage) SimpleUI.Instance?.SetOnePage(_idPage);
-                else
+                if (!intecactable) return;
+
+                if (_canSwitchPage)
                 {
-                    if (_useAnim)
-                    {
-                        SimpleUI.Instance.SetPageAnim(_idPage);
-                    }
+                    if (_onePage) UI.Instance?.SetOnePage(_idPage);
                     else
                     {
-                        SimpleUI.Instance?.SetPage(_idPage);
+                        if (_useAnimPage)
+                        {
+                            UI.Instance.SetPageAnim(_idPage);
+                        }
+                        else
+                        {
+                            UI.Instance?.SetPage(_idPage);
+                        }
+                    }
+                }
+            }
+
+            public void OnPointerUp(PointerEventData eventData)
+            {
+                if (intecactable && _useAnimImage)
+                {
+                    transform.DOScale(startScale, _timeAnimImage);
+                }
+            }
+
+            public void OnPointerDown(PointerEventData eventData)
+            {
+                if (intecactable && _useAnimImage)
+                {
+                    if (intecactable && _useAnimImage)
+                    {
+                        transform.DOScale(transform.localScale * _scaleAnim, _timeAnimImage);
                     }
                 }
             }

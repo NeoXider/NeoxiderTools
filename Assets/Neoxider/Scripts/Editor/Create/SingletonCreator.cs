@@ -10,8 +10,8 @@ public static class SingletonCreator
         string template =
 @"//=== By Neoxider ===
 using UnityEngine;
-using Neoxider;
-using Neoxider.Tools;
+using Neo;
+using Neo.Tools;
 
 public class NewSingleton : Singleton<NewSingleton>
 {
@@ -22,9 +22,9 @@ public class NewSingleton : Singleton<NewSingleton>
     }
 
     // Initialization logic here
-    protected override void Initialize()
+    protected override void Init()
     {
-        base.Initialize();
+        base.Init();
 
     }
 

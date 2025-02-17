@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     public class SimpleSpawner : MonoBehaviour
     {

@@ -1,5 +1,5 @@
 
-namespace Neoxider
+namespace Neo
 {
     public enum ColorHTML
     {

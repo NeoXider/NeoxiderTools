@@ -2,24 +2,32 @@
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {
-        [AddComponentMenu("Neoxider/" + "UI/" + nameof(Toggle))]
-        public class Toggle : MonoBehaviour
+        [AddComponentMenu("Neoxider/" + "UI/" + nameof(ToggleView))]
+        public class ToggleView : MonoBehaviour
         {
-            [SerializeField] private UnityEngine.UI.Toggle _toggle;
+            [SerializeField] private Toggle _toggle;
             [SerializeField] private Sprite[] _sprites;
             [SerializeField] private GameObject[] _visuals;
 
             public bool activ;
             public UnityEvent On;
             public UnityEvent Off;
+            public UnityEvent<bool> OnValueChanged;
 
-            private void Start() 
+            private void Start()
             {
-                Set(_toggle.isOn);    
+                if(_toggle != null)
+                    Set(_toggle.isOn);
+            }
+
+            void OnEnable()
+            {
+                if(_toggle != null)
+                    _toggle.isOn = activ;
             }
 
             public void Switch()
@@ -29,10 +37,17 @@ namespace Neoxider
 
             public void Set(bool activ)
             {
-                this.activ = activ;
-                Visual(activ);
+                if (activ != this.activ)
+                {
+                    this.activ = activ;
+                    
+                    if(_toggle != null)
+                        _toggle.isOn = activ;
 
-                Actions(activ);
+                    Actions(activ);
+                }
+
+                Visual(activ);
             }
 
             private void Actions(bool activ)
@@ -41,6 +56,8 @@ namespace Neoxider
                     On?.Invoke();
                 else
                     Off?.Invoke();
+
+                OnValueChanged?.Invoke(activ);
             }
 
             private void Visual(bool activ)
@@ -59,23 +76,33 @@ namespace Neoxider
 
             private void Awake()
             {
-                _toggle?.onValueChanged.AddListener(Set);
-                Actions(_toggle.isOn);
+                if (_toggle != null)
+                {
+                    _toggle?.onValueChanged.AddListener(Set);
+                    Actions(_toggle.isOn);
+                }
             }
 
             private void OnDestroy()
             {
-                _toggle?.onValueChanged.RemoveListener(Set);
+                if (_toggle != null)
+                {
+                    _toggle?.onValueChanged.RemoveListener(Set);
+                }
             }
 
             private void OnValidate()
             {
-                if(_toggle != null)
+                if (_toggle != null)
                     activ = _toggle.isOn;
                 else
                 {
                     _toggle = GetComponent<UnityEngine.UI.Toggle>();
-                    _toggle.onValueChanged.AddListener(Set);
+
+                    if (_toggle != null)
+                    {
+                        _toggle.onValueChanged.AddListener(Set);
+                    }
                 }
 
                 Visual(activ);

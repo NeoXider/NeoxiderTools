@@ -3,7 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {

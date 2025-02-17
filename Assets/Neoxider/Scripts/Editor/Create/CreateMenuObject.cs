@@ -1,12 +1,12 @@
 using UnityEditor;
 using UnityEngine;
 
-using Neoxider.Audio;
-using Neoxider.Shop;
-using Neoxider.UI;
-using Neoxider.Bonus;
+using Neo.Audio;
+using Neo.Shop;
+using Neo.UI;
+using Neo.Bonus;
 
-namespace Neoxider
+namespace Neo
 {
     public class CreateMenuObject 
     {
@@ -52,7 +52,7 @@ namespace Neoxider
         [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(ErrorLogger), false, 0)]
         public static void CreateErrorLogger()
         {
-            var script = Create<ErrorLogger>("Prefabs/UI/" + nameof(ErrorLogger) + ".prefab");
+            var script = Create<ErrorLogger>("Prefabs/Tools/" + nameof(ErrorLogger) + ".prefab");
         }
 
         [MenuItem("GameObject/Neoxider/" + "Shop/" + nameof(Money), false, 0)]
@@ -92,10 +92,10 @@ namespace Neoxider
             var script = Create<ButtonPrice>("Prefabs/UI/ButtonPrice.prefab");
         }
 
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(SimpleUI), false, 0)]
+        [UnityEditor.MenuItem("GameObject/Neoxider/" + "UI/" + nameof(UI.UI), false, 0)]
         public static void CreateSimpleUI()
         {
-            var script = Create<SimpleUI>();
+            var script = Create<UI.UI>();
         }
 
         [MenuItem("GameObject/Neoxider/" + "UI/" + "Page/" + nameof(ButtonPageSwitch), false, 0)]
@@ -110,22 +110,16 @@ namespace Neoxider
             var script = Create<ShopItem>();
         }
 
-        [MenuItem("GameObject/Neoxider/" + "Audio/" + nameof(AudioManager), false, 0)]
-        public static void CreateAudioManager()
-        {
-            var script = Create<AudioManager>("Prefabs/AudioManager.prefab");
-        }
-
         [MenuItem("GameObject/Neoxider/" + "Audio/" + nameof(AM), false, 0)]
         public static void CreateAM()
         {
             var script = Create<AM>();
         }
 
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(Toggle), false, 0)]
+        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(ToggleView), false, 0)]
         public static void CreateToggle()
         {
-            var script = Create<Toggle>("Prefabs/UI/" + nameof(Toggle) + ".prefab");
+            var script = Create<ToggleView>("Prefabs/UI/" + nameof(ToggleView) + ".prefab");
         }
 
         [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(SwipeController), false, 0)]

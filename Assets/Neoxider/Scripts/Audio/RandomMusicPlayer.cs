@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     public class RandomMusicPlayer : MonoBehaviour
     {
@@ -29,7 +29,7 @@ namespace Neoxider
         {
             if (musicTracks.Length == 0)
             {
-                Debug.LogWarning("Музыкальные треки не добавлены.");
+                Debug.LogWarning("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.");
                 return;
             }
 

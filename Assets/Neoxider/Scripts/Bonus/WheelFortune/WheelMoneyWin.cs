@@ -1,8 +1,8 @@
-using Neoxider.Shop;
+using Neo.Shop;
 using TMPro;
 using UnityEngine;
 
-namespace Neoxider
+namespace Neo
 {
     namespace Bonus
     {

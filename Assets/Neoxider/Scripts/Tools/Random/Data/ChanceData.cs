@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Neoxider.Tools
+namespace Neo.Tools
 {
     [CreateAssetMenu(fileName = "ChanceData", menuName = "Neoxider/ChanceData")]
     public class ChanceData : ScriptableObject

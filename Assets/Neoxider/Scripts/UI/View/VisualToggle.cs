@@ -2,7 +2,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Neoxider
+namespace Neo
 {
     namespace UI
     {
@@ -12,6 +12,7 @@ namespace Neoxider
             [System.Serializable]
             public class ImageVariant
             {
+                public bool setNativeSize = false;
                 public Image image;
                 public Sprite start;
                 public Sprite end;
@@ -49,6 +50,12 @@ namespace Neoxider
             public GameObjectVariant variants;
 
             public bool end;
+
+            private void Awake()
+            {
+                if (TryGetComponent(out UnityEngine.UI.Toggle toggle))
+                    Visual(toggle.isOn);
+            }
 
             public void Press()
             {
@@ -96,6 +103,11 @@ namespace Neoxider
                 foreach (ImageVariant v in imageV)
                 {
                     v.image.sprite = end ? v.end : v.start;
+
+                    if (v.setNativeSize)
+                    {
+                        v.image.SetNativeSize();
+                    }
                 }
             }
 
