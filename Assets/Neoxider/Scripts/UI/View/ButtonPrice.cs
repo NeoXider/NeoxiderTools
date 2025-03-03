@@ -148,7 +148,8 @@ namespace Neo
             {
                 foreach (var item in _textPrice)
                 {
-                    item.text = textPrice;
+                    if(item != null)
+                        item.text = textPrice;
                 }
             }
 

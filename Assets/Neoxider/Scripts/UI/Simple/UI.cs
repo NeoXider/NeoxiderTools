@@ -14,6 +14,7 @@ namespace Neo
 
             [Header("ButtonAutoSetChilds")]
             [SerializeField] private bool _setChild = false;
+            [SerializeField] private Transform _parentPages;
 
             [Header("Current page (-1 = None, 0 - StartPage)")]
             [Min(-1)] public int id;
@@ -22,6 +23,8 @@ namespace Neo
             [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
             public static UI Instance;
+
+
 
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
@@ -108,7 +111,9 @@ namespace Neo
 
                     List<GameObject> childs = new List<GameObject>();
 
-                    foreach (Transform child in transform)
+                    Transform parent = _parentPages != null ? _parentPages.transform : transform;
+
+                    foreach (Transform child in parent)
                     {
                         if (child.gameObject != gameObject)
                         {
@@ -118,6 +123,8 @@ namespace Neo
 
                     _pages = childs.ToArray();
                 }
+
+
             }
         }
     }

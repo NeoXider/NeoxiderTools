@@ -1,5 +1,3 @@
-using System.Collections;
-using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,7 +7,7 @@ public class LeaderboardMove : MonoBehaviour
     public bool useMove = true;
     public float delayTime = 0.5f;
     public float timeMove = 0.5f;
-    public float offsetY = 0;
+    public float offsetY = 300;
 
 
     [Space]
@@ -29,7 +27,8 @@ public class LeaderboardMove : MonoBehaviour
         }
 
         if (useSortEnable)
-            Leaderboard.Instance.Sort();
+            if (Leaderboard.Instance != null)
+                Leaderboard.Instance.Sort();
     }
 
     public void Move()

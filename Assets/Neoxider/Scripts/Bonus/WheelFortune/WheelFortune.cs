@@ -16,6 +16,7 @@ namespace Neo.Bonus
         [SerializeField] private CanvasGroup _canvasGroup;
 
         [Header("Transforms")]
+        [Range(-360, 360)]
         [SerializeField] private float _offsetZ = 0;
         [SerializeField] private RectTransform _wheelTransform;
         [SerializeField] private RectTransform _arrow;
@@ -35,11 +36,14 @@ namespace Neo.Bonus
         public SpinState State => _spinState;
 
         [Space]
+        [Header("Prize Items")]
         [SerializeField] private bool _autoArrangePrizes = true;
+        [SerializeField] private bool _setPrizes;
         [SerializeField] private GameObject[] _prizes;
         [SerializeField] private float _prizeDistance = 200f;
 
         [Space]
+        [Header("Debug")]
         [SerializeField] private bool _debugLogId = false;
         [SerializeField, Range(0, 360)] private float _wheelAngleInspector = 0f;
 
@@ -48,8 +52,9 @@ namespace Neo.Bonus
         private float _alignmentTargetAngle;
         private float _currentAngularVelocity;
 
-
         public UnityEvent<int> OnWinIdVariant;
+        public GameObject[] Prizes => _prizes;
+
         public bool canUse
         {
             get => _canUse; set
@@ -137,7 +142,7 @@ namespace Neo.Bonus
         private int GetResultId()
         {
             float sectorAngle = 360f / _prizes.Length;
-            float wheelAngle = _wheelTransform.rotation.eulerAngles.z + _offsetZ;
+            float wheelAngle = _wheelTransform.rotation.eulerAngles.z - _offsetZ;
             float arrowAngle = (_arrow != null) ? _arrow.transform.eulerAngles.z : 0f;
             float relativeAngle = (wheelAngle - arrowAngle + 360f) % 360f;
             int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
@@ -182,13 +187,30 @@ namespace Neo.Bonus
             }
         }
 
+        public GameObject GetPrize(int id)
+        {
+            return _prizes[id];
+        }
+
         private void OnValidate()
         {
             _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
             if (_debugLogId)
                 Debug.Log("Wheel Id: " + GetResultId());
             _canvasGroup ??= GetComponent<CanvasGroup>();
-            if (_autoArrangePrizes)
+
+            if (_setPrizes && _wheelTransform != null)
+            {
+                _prizes = new GameObject[_wheelTransform.childCount];
+                for (int i = 0; i < _prizes.Length; i++)
+                {
+                    _prizes[i] = _wheelTransform.GetChild(i).gameObject;
+                }
+
+                _setPrizes = false;
+            }
+
+            if (_autoArrangePrizes && _wheelAngleInspector == 0)
                 ArrangePrizes();
         }
     }

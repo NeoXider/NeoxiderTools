@@ -13,7 +13,6 @@ GameObject:
   - component: {fileID: 952754716820127554}
   - component: {fileID: 6307314498368953008}
   - component: {fileID: 3056310165287716294}
-  - component: {fileID: 7661783574056369713}
   m_Layer: 5
   m_Name: TimeReward
   m_TagString: Untagged
@@ -148,6 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _secondsToWaitForReward: 5
+  _startTakeReward: 0
   _lastRewardTimeStr: 
   _updateTime: 1
   _addKey: Bonus 24
@@ -155,7 +155,7 @@ MonoBehaviour:
   OnTimeUpdated:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 7661783574056369713}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Neoxider.VisualReward, Assembly-CSharp
         m_MethodName: SetText
         m_Mode: 0
@@ -197,21 +197,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 1
         m_CallState: 2
---- !u!114 &7661783574056369713
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2547346836659317239}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8945a20d6c046844481e39d09971fa82, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _text: {fileID: 1203529165546182066}
-  _timeFormat: 3
-  _textGet: Get 10
 --- !u!1 &7931850939256614294
 GameObject:
   m_ObjectHideFlags: 0

@@ -7,7 +7,7 @@ namespace Neo
 {
     namespace UI
     {
-        public class UIChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
+        public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {
             public bool intecactable = true;
             [SerializeField] private Image _imageTarget;
@@ -22,7 +22,7 @@ namespace Neo
             [Space]
             [SerializeField] private bool _useAnimImage = true;
             [SerializeField] private float _timeAnimImage = 0.3f;
-            [SerializeField] private float _scaleAnim = 0.85f;
+            [SerializeField] private float _scaleAnim = -0.15f;
 
 
             private Vector3 startScale;
@@ -72,7 +72,8 @@ namespace Neo
                 {
                     if (intecactable && _useAnimImage)
                     {
-                        transform.DOScale(transform.localScale * _scaleAnim, _timeAnimImage);
+                        float scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
+                        transform.DOScale(scale, _timeAnimImage);
                     }
                 }
             }

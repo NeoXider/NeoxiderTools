@@ -706,11 +706,8 @@ MonoBehaviour:
   - {fileID: 6258744118122425247}
   - {fileID: 5987797717848207369}
   sprites:
-  - {fileID: 1127569699, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: -2120184961, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: -1056704597, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: 1620105851, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: 2059601153, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
+  - {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 10913, guid: 0000000000000000f000000000000000, type: 0}
   speed: 200
   timeRoll: 3
   slowDownTime: 0.5

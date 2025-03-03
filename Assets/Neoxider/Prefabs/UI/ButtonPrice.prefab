@@ -335,17 +335,15 @@ MonoBehaviour:
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_TextWrappingMode: 1
+  m_enableWordWrapping: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 0
-  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
-  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -726,7 +724,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4c11c1bbcf2734649a84411db4d7cb01, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _textPrice: {fileID: 5232020972114488347}
+  _textPrice:
+  - {fileID: 5232020972114488347}
+  _textButton: []
   _price: 1000
   _textPrice_0: 0
   _type: 0
@@ -734,7 +734,17 @@ MonoBehaviour:
   - {fileID: 925143920598821898}
   - {fileID: 2219923682453002357}
   - {fileID: 4606200363883759095}
+  _textBuy: Buy
   _textSelect: Select
   _textSelected: Selected
   _customSeparator: .
   _editorView: 0
+  OnBuy:
+    m_PersistentCalls:
+      m_Calls: []
+  OnSelect:
+    m_PersistentCalls:
+      m_Calls: []
+  OnSelected:
+    m_PersistentCalls:
+      m_Calls: []
