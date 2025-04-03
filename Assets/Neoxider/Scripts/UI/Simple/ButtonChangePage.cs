@@ -1,5 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
@@ -12,18 +13,16 @@ namespace Neo
             public bool intecactable = true;
             [SerializeField] private Image _imageTarget;
 
-            [Space]
-            [SerializeField]
-            private bool _canSwitchPage = true;
+            [Space] [SerializeField] private bool _canSwitchPage = true;
             [SerializeField] private int _idPage;
             [SerializeField] private bool _onePage = false;
             [SerializeField] private bool _useAnimPage = false;
 
-            [Space]
-            [SerializeField] private bool _useAnimImage = true;
+            [Space] [SerializeField] private bool _useAnimImage = true;
             [SerializeField] private float _timeAnimImage = 0.3f;
             [SerializeField] private float _scaleAnim = -0.15f;
 
+            public UnityEvent OnClick;
 
             private Vector3 startScale;
 
@@ -43,19 +42,36 @@ namespace Neo
 
                 if (_canSwitchPage)
                 {
-                    if (_onePage) UI.Instance?.SetOnePage(_idPage);
+                    if (_onePage) SetOnePage(_idPage);
                     else
                     {
                         if (_useAnimPage)
                         {
-                            UI.Instance.SetPageAnim(_idPage);
+                            SetPageAnim(_idPage);
                         }
                         else
                         {
-                            UI.Instance?.SetPage(_idPage);
+                            SetPage(_idPage);
                         }
                     }
                 }
+
+                OnClick?.Invoke();
+            }
+
+            public void SetOnePage(int id)
+            {
+                UI.Instance?.SetOnePage(id);
+            }
+
+            public void SetPage(int id)
+            {
+                UI.Instance?.SetPage(id);
+            }
+
+            public void SetPageAnim(int id)
+            {
+                UI.Instance.SetPageAnim(id);
             }
 
             public void OnPointerUp(PointerEventData eventData)

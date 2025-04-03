@@ -37,7 +37,7 @@ namespace Neo.Tools
 
         public void StartEvade()
         {
-            if (_reloadTimer.IsTimerRunning())
+            if (_reloadTimer.IsRunning)
                 return;
 
             isEvade = true;
@@ -47,7 +47,7 @@ namespace Neo.Tools
 
             if (reloadImmediately)
             {
-                _reloadTimer.StartTimer();
+                _reloadTimer.Start();
             }
         }
 
@@ -58,7 +58,7 @@ namespace Neo.Tools
 
             if (!reloadImmediately)
             {
-                _reloadTimer.StartTimer();
+                _reloadTimer.Start();
             }
         }
 

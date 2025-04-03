@@ -1,13 +1,15 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Neo.Audio
 {
     public class AMSettingChange : MonoBehaviour
     {
+        [FormerlySerializedAs("_settingsAudio")]
         [FindAllInScene]
         [SerializeField]
-        private SettingsAudio _settingsAudio;
+        private AMSettings amSettings;
 
         [Space]
         [SerializeField]
@@ -31,7 +33,7 @@ namespace Neo.Audio
 
         private void Awake()
         {
-            if (_settingsAudio != null)
+            if (amSettings != null)
             {
                 SubscribeToggles();
                 SubscribeSliders();
@@ -76,34 +78,34 @@ namespace Neo.Audio
 
         private void SyncValues()
         {
-            foreach (var toggle in _toggleEfx) toggle.isOn = !_settingsAudio.efx.mute;
-            foreach (var toggle in _toggleMusic) toggle.isOn = !_settingsAudio.music.mute;
+            foreach (var toggle in _toggleEfx) toggle.isOn = !amSettings.efx.mute;
+            foreach (var toggle in _toggleMusic) toggle.isOn = !amSettings.music.mute;
             foreach (var toggle in _toggleAll)
-                toggle.isOn = !(_settingsAudio.efx.mute && _settingsAudio.music.mute);
+                toggle.isOn = !(amSettings.efx.mute && amSettings.music.mute);
 
             foreach (var slider in _sliderVolumeEfx)
-                slider.value = _settingsAudio.startEfxVolume;
+                slider.value = amSettings.startEfxVolume;
             foreach (var slider in _sliderVolumeMusic)
-                slider.value = _settingsAudio.startMusicVolume;
+                slider.value = amSettings.startMusicVolume;
             foreach (var slider in _sliderVolumeAll)
-                slider.value = (!_settingsAudio.efx.mute && !_settingsAudio.music.mute) ? 1f : 0f;
+                slider.value = (!amSettings.efx.mute && !amSettings.music.mute) ? 1f : 0f;
         }
 
         private void SetSliderVolumeEfx(float arg0)
         {
-            _settingsAudio.SetEfxVolume(arg0);
+            amSettings.SetEfxVolume(arg0);
             foreach (var slider in _sliderVolumeEfx) slider.value = arg0;
         }
 
         private void SetSliderVolumeMusic(float arg0)
         {
-            _settingsAudio.SetMusicVolume(arg0);
+            amSettings.SetMusicVolume(arg0);
             foreach (var slider in _sliderVolumeMusic) slider.value = arg0;
         }
 
         private void SetSliderVolumeAll(float arg0)
         {
-            _settingsAudio.SetMusicAndEfxVolume(arg0);
+            amSettings.SetMusicAndEfxVolume(arg0);
 
             foreach (var slider in _sliderVolumeEfx) slider.value = arg0;
             foreach (var slider in _sliderVolumeMusic) slider.value = arg0;
@@ -111,14 +113,14 @@ namespace Neo.Audio
 
         private void SetToggleEfx(bool arg0)
         {
-            _settingsAudio.SetEfx(arg0);
+            amSettings.SetEfx(arg0);
 
             foreach (var toggle in _toggleEfx) toggle.isOn = arg0;
         }
 
         private void SetToggleMusic(bool arg0)
         {
-            _settingsAudio.SetMusic(arg0);
+            amSettings.SetMusic(arg0);
 
             foreach (var toggle in _toggleMusic) toggle.isOn = arg0;
         }
@@ -132,7 +134,7 @@ namespace Neo.Audio
                 foreach (var slider in _sliderVolumeEfx) slider.value = 1f;
                 foreach (var slider in _sliderVolumeMusic) slider.value = 1f;
 
-                _settingsAudio.SetMusicAndEfx(true);
+                amSettings.SetMusicAndEfx(true);
             }
             else
             {
@@ -141,7 +143,7 @@ namespace Neo.Audio
                 foreach (var slider in _sliderVolumeEfx) slider.value = 0f;
                 foreach (var slider in _sliderVolumeMusic) slider.value = 0f;
 
-                _settingsAudio.SetMusicAndEfx(false);
+                amSettings.SetMusicAndEfx(false);
             }
         }
     }

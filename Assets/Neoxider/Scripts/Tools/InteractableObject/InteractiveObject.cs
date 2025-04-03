@@ -4,7 +4,7 @@ using UnityEngine.EventSystems;
 
 namespace Neo
 {
-    namespace Bonus
+    namespace Tools
     {
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
         [RequireComponent(typeof(Collider))]

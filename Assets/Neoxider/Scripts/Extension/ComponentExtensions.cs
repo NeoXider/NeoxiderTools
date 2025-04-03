@@ -2,12 +2,18 @@ using UnityEngine;
 
 namespace Neo
 {
+    /// <summary>
+    /// Extension methods for Unity Component class
+    /// </summary>
     public static class ComponentExtensions
     {
         /// <summary>
-        ///receives a component or adds it if it is not on the object.    
+        /// Gets an existing component or adds it if it doesn't exist
         /// </summary>
-        public static T GetOrAddComponent<T>(this Component component) where T : Component
+        /// <typeparam name="T">Type of component</typeparam>
+        /// <param name="component">Source component</param>
+        /// <returns>Existing or new component of type T</returns>
+        public static T GetOrAdd<T>(this Component component) where T : Component
         {
             T comp = component.GetComponent<T>();
             if (comp == null)
@@ -15,6 +21,34 @@ namespace Neo
                 comp = component.gameObject.AddComponent<T>();
             }
             return comp;
+        }
+
+
+        /// <summary>
+        /// Gets the full hierarchy path of this component's GameObject
+        /// </summary>
+        /// <param name="component">Source component</param>
+        /// <returns>Full path in format "Parent/Child/GameObject"</returns>
+        public static string GetPath(this Component component)
+        {
+            if (component == null || component.gameObject == null)
+                return string.Empty;
+
+            return GetGameObjectPath(component.gameObject);
+        }
+
+        private static string GetGameObjectPath(GameObject obj)
+        {
+            string path = obj.name;
+            Transform parent = obj.transform.parent;
+
+            while (parent != null)
+            {
+                path = parent.name + "/" + path;
+                parent = parent.parent;
+            }
+
+            return path;
         }
     }
 } 

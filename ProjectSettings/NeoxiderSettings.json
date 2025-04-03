@@ -1,0 +1,17 @@
+{
+    "enableAttributeSearch": true,
+    "rootFolder": "_source",
+    "folders": [
+        "Audio",
+        "Prefabs",
+        "Scripts",
+        "Animations",
+        "Sprites",
+        "Materials",
+        "Scenes",
+        "Resources",
+        "Settings",
+        "Editor"
+    ],
+    "validateFoldersOnStart": true
+}

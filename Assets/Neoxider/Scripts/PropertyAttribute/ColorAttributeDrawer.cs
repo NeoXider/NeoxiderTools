@@ -5,19 +5,34 @@ using UnityEditor;
 
 namespace Neo
 {
+    /// <summary>
+    /// Custom property drawer for ColorAttribute.
+    /// Colors the background of fields in the Unity Inspector.
+    /// </summary>
     [CustomPropertyDrawer(typeof(ColorAttribute))]
     public class ColorAttributeDrawer : PropertyDrawer
     {
+        /// <summary>
+        /// Draws the property with the specified color in the Unity Inspector
+        /// </summary>
+        /// <param name="position">Rectangle on the screen to use for the property GUI</param>
+        /// <param name="property">The SerializedProperty to make the custom GUI for</param>
+        /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            ColorAttribute colorAttribute = (ColorAttribute)attribute;
+            // Get the color attribute
+            var colorAttribute = (ColorAttribute)attribute;
 
+            // Store the original GUI color to restore it later
             Color originalColor = GUI.color;
 
+            // Set the color from the attribute
             GUI.color = colorAttribute.color;
 
+            // Draw the property field with the custom color
             EditorGUI.PropertyField(position, property, label);
 
+            // Restore the original GUI color
             GUI.color = originalColor;
         }
     }

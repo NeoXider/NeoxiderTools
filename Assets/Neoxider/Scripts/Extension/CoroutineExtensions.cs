@@ -6,83 +6,311 @@ namespace Neo
 {
     public static class CoroutineExtensions
     {
-        /// <summary>
-        /// Запускает корутину с заданной задержкой, после чего выполняется действие.
-        /// </summary>
-        public static IEnumerator WaitAndExecute(this MonoBehaviour monoBehaviour, float delay, Action action)
+        private static CoroutineHelper instance;
+        
+        private static CoroutineHelper Instance
         {
-            yield return new WaitForSeconds(delay);
-            action?.Invoke();
+            get
+            {
+                if (instance == null)
+                {
+                    GameObject go = new GameObject("[CoroutineHelper]");
+                    instance = go.AddComponent<CoroutineHelper>();
+                    GameObject.DontDestroyOnLoad(go);
+                }
+                return instance;
+            }
+        }
+
+        #region Extension Methods
+
+        /// <summary>
+        /// Executes an action after a specified delay in seconds
+        /// </summary>
+        public static CoroutineHandle Delay(this MonoBehaviour monoBehaviour, float seconds, Action action, bool useUnscaledTime = false)
+        {
+            return StartDelayedCoroutine(monoBehaviour, DelayedAction(seconds, action, useUnscaledTime));
         }
 
         /// <summary>
-        /// Ждет до тех пор, пока условие (predicate) не станет истинным, затем выполняет действие.
+        /// Waits until a condition is true, then executes an action
         /// </summary>
-        public static IEnumerator WaitUntilAndExecute(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
+        public static CoroutineHandle WaitUntil(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
+        {
+            return StartDelayedCoroutine(monoBehaviour, WaitUntilAction(predicate, action));
+        }
+
+        /// <summary>
+        /// Waits while a condition is true, then executes an action
+        /// </summary>
+        public static CoroutineHandle WaitWhile(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
+        {
+            return StartDelayedCoroutine(monoBehaviour, WaitWhileAction(predicate, action));
+        }
+
+        /// <summary>
+        /// Executes an action after a specified number of frames
+        /// </summary>
+        public static CoroutineHandle DelayFrames(this MonoBehaviour monoBehaviour, int frameCount, Action action, bool useFixedUpdate = false)
+        {
+            return StartDelayedCoroutine(monoBehaviour, DelayedFramesAction(frameCount, action, useFixedUpdate));
+        }
+
+        /// <summary>
+        /// Executes an action on the next frame
+        /// </summary>
+        public static CoroutineHandle NextFrame(this MonoBehaviour monoBehaviour, Action action)
+        {
+            return DelayFrames(monoBehaviour, 1, action);
+        }
+
+        /// <summary>
+        /// Executes an action at the end of the current frame
+        /// </summary>
+        public static CoroutineHandle EndOfFrame(this MonoBehaviour monoBehaviour, Action action)
+        {
+            return StartDelayedCoroutine(monoBehaviour, EndOfFrameAction(action));
+        }
+
+        /// <summary>
+        /// Repeats an action every frame until a condition is met
+        /// </summary>
+        public static CoroutineHandle RepeatUntil(this MonoBehaviour monoBehaviour, Func<bool> condition, Action action)
+        {
+            return StartDelayedCoroutine(monoBehaviour, RepeatUntilAction(condition, action));
+        }
+
+        #region GameObject Extensions
+
+        public static CoroutineHandle Delay(this GameObject gameObject, float seconds, Action action, bool useUnscaledTime = false)
+        {
+            var owner = GetOrAddCoroutineComponent(gameObject);
+            return owner.Delay(seconds, action, useUnscaledTime);
+        }
+
+        public static CoroutineHandle WaitUntil(this GameObject gameObject, Func<bool> predicate, Action action)
+        {
+            var owner = GetOrAddCoroutineComponent(gameObject);
+            return owner.WaitUntil(predicate, action);
+        }
+
+        public static CoroutineHandle WaitWhile(this GameObject gameObject, Func<bool> predicate, Action action)
+        {
+            var owner = GetOrAddCoroutineComponent(gameObject);
+            return owner.WaitWhile(predicate, action);
+        }
+
+        public static CoroutineHandle DelayFrames(this GameObject gameObject, int frameCount, Action action, bool useFixedUpdate = false)
+        {
+            var owner = GetOrAddCoroutineComponent(gameObject);
+            return owner.DelayFrames(frameCount, action, useFixedUpdate);
+        }
+
+        #endregion
+
+        #region Global Methods
+
+        public static CoroutineHandle Delay(float seconds, Action action, bool useUnscaledTime = false)
+        {
+            return Instance.Delay(seconds, action, useUnscaledTime);
+        }
+
+        public static CoroutineHandle WaitUntil(Func<bool> predicate, Action action)
+        {
+            return Instance.WaitUntil(predicate, action);
+        }
+
+        public static CoroutineHandle WaitWhile(Func<bool> predicate, Action action)
+        {
+            return Instance.WaitWhile(predicate, action);
+        }
+
+        public static CoroutineHandle DelayFrames(int frameCount, Action action, bool useFixedUpdate = false)
+        {
+            return Instance.DelayFrames(frameCount, action, useFixedUpdate);
+        }
+
+        #endregion
+
+        #endregion
+
+        #region Helper Methods
+
+        private static CoroutineHandle StartDelayedCoroutine(MonoBehaviour owner, IEnumerator routine)
+        {
+            if (owner == null)
+            {
+                Debug.LogWarning("Attempting to start coroutine on null MonoBehaviour. Falling back to CoroutineHelper instance.");
+                owner = Instance;
+            }
+
+            var handle = new CoroutineHandle(owner);
+            handle.Coroutine = owner.StartCoroutine(WrapCoroutine(routine, handle));
+            return handle;
+        }
+
+        private static IEnumerator WrapCoroutine(IEnumerator routine, CoroutineHandle handle)
+        {
+            yield return routine;
+            handle.Complete();
+        }
+
+        private static MonoBehaviour GetOrAddCoroutineComponent(GameObject gameObject)
+        {
+            var runner = gameObject.GetComponent<CoroutineRunner>();
+            if (runner == null)
+            {
+                runner = gameObject.AddComponent<CoroutineRunner>();
+            }
+            return runner;
+        }
+
+        private static IEnumerator DelayedAction(float seconds, Action action, bool useUnscaledTime)
+        {
+            if (useUnscaledTime)
+                yield return new WaitForSecondsRealtime(seconds);
+            else
+                yield return new WaitForSeconds(seconds);
+
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error executing delayed action: {e}");
+            }
+        }
+
+        private static IEnumerator DelayedFramesAction(int frameCount, Action action, bool useFixedUpdate)
+        {
+            if (useFixedUpdate)
+            {
+                for (int i = 0; i < frameCount; i++)
+                    yield return new WaitForFixedUpdate();
+            }
+            else
+            {
+                for (int i = 0; i < frameCount; i++)
+                    yield return null;
+            }
+
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error executing delayed frames action: {e}");
+            }
+        }
+
+        private static IEnumerator WaitUntilAction(Func<bool> predicate, Action action)
         {
             yield return new WaitUntil(predicate);
-            action?.Invoke();
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error executing WaitUntil action: {e}");
+            }
         }
 
-        /// <summary>
-        /// Ждет до тех пор, пока условие (predicate) не станет ложным, затем выполняет действие.
-        /// </summary>
-        public static IEnumerator WaitWhileAndExecute(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
+        private static IEnumerator WaitWhileAction(Func<bool> predicate, Action action)
         {
             yield return new WaitWhile(predicate);
-            action?.Invoke();
-        }
-
-        /// <summary>
-        /// Выполняет действие через заданное количество кадров.
-        /// </summary>
-        public static IEnumerator ExecuteAfterFrames(this MonoBehaviour monoBehaviour, int frameCount, Action action)
-        {
-            for (int i = 0; i < frameCount; i++)
+            try
             {
-                yield return null;
+                action?.Invoke();
             }
-            action?.Invoke();
+            catch (Exception e)
+            {
+                Debug.LogError($"Error executing WaitWhile action: {e}");
+            }
         }
 
-        /// <summary>
-        /// Выполняет действие на следующем кадре.
-        /// </summary>
-        public static IEnumerator ExecuteNextFrame(this MonoBehaviour monoBehaviour, Action action)
-        {
-            yield return null;
-            action?.Invoke();
-        }
-
-        /// <summary>
-        /// Выполняет действие в конце текущего кадра.
-        /// </summary>
-        public static IEnumerator ExecuteAtEndOfFrame(this MonoBehaviour monoBehaviour, Action action)
+        private static IEnumerator EndOfFrameAction(Action action)
         {
             yield return new WaitForEndOfFrame();
-            action?.Invoke();
+            try
+            {
+                action?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Error executing EndOfFrame action: {e}");
+            }
         }
 
-        /// <summary>
-        /// Ждет указанное время в реальном времени (игнорируя timeScale) и выполняет действие.
-        /// </summary>
-        public static IEnumerator WaitAndExecuteRealTime(this MonoBehaviour monoBehaviour, float delay, Action action)
-        {
-            yield return new WaitForSecondsRealtime(delay);
-            action?.Invoke();
-        }
-
-        /// <summary>
-        /// Повторно выполняет действие каждый кадр до тех пор, пока условие не станет истинным.
-        /// Например, использовать для опроса состояния до момента, когда оно изменится.
-        /// </summary>
-        public static IEnumerator RepeatUntil(this MonoBehaviour monoBehaviour, Func<bool> condition, Action action)
+        private static IEnumerator RepeatUntilAction(Func<bool> condition, Action action)
         {
             while (!condition())
             {
-                action?.Invoke();
+                try
+                {
+                    action?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Error executing RepeatUntil action: {e}");
+                    yield break;
+                }
                 yield return null;
             }
         }
+
+        #endregion
+
+        public class CoroutineHandle
+        {
+            private readonly MonoBehaviour owner;
+            private Coroutine coroutine;
+            private bool isRunning;
+
+            public Coroutine Coroutine
+            {
+                get => coroutine;
+                internal set
+                {
+                    coroutine = value;
+                    isRunning = true;
+                }
+            }
+
+            public bool IsRunning => isRunning;
+
+            internal CoroutineHandle(MonoBehaviour owner)
+            {
+                this.owner = owner;
+                this.isRunning = false;
+            }
+
+            public void Stop()
+            {
+                if (!isRunning || owner == null) return;
+
+                if (coroutine != null)
+                {
+                    owner.StopCoroutine(coroutine);
+                    coroutine = null;
+                }
+                isRunning = false;
+            }
+
+            internal void Complete()
+            {
+                coroutine = null;
+                isRunning = false;
+            }
+        }
     }
+
+    // Helper component for running coroutines on GameObjects
+    [AddComponentMenu("")]
+    public class CoroutineRunner : MonoBehaviour { }
+
+    // Helper class for managing global coroutines
+    public class CoroutineHelper : MonoBehaviour { }
 } 

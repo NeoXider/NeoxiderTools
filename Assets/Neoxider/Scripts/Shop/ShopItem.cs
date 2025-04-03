@@ -32,9 +32,11 @@ namespace Neo.Shop
         [SerializeField]
         private Image _imageIco;
 
+        [GetComponent(true)]
         [SerializeField]
         private ButtonPrice buttonPrice;
 
+        [GetComponent(true)]
         public Button buttonBuySet;
 
         [Space]

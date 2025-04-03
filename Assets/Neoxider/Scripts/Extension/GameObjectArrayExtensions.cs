@@ -7,37 +7,44 @@ using System.Linq;
 
 namespace Neo
 {
+    /// <summary>
+    /// Extension methods for arrays and collections of GameObjects and Components
+    /// </summary>
     public static class GameObjectArrayExtensions
     {
+        /// <summary>
+        /// Sets the active state of all GameObjects with the specified components
+        /// </summary>
         public static IEnumerable<T> SetActiveAll<T>(this IEnumerable<T> components, bool active) where T : MonoBehaviour
         {
-            List<T> componentList = components.ToList();
-
-            componentList.SetActiveAll(active);
-
+            if (components == null) return null;
+            foreach (var component in components.Where(c => c != null))
+            {
+                component.gameObject.SetActive(active);
+            }
             return components;
         }
 
+        /// <summary>
+        /// Sets the active state of all GameObjects in the array
+        /// </summary>
         public static GameObject[] SetActiveAll(this GameObject[] gameObjects, bool active)
         {
             if (gameObjects == null) return null;
-
-
-            foreach (var gameObject in gameObjects)
+            foreach (var gameObject in gameObjects.Where(go => go != null))
             {
-                if (gameObject != null)
-                {
-                    gameObject.SetActive(active);
-                }
+                gameObject.SetActive(active);
             }
             return gameObjects;
         }
 
-        public static GameObject[] SetActiveAll(this GameObject[] gameObjects, int upToIndex, bool active)
+        /// <summary>
+        /// Sets the active state of GameObjects up to a specified index
+        /// </summary>
+        public static GameObject[] SetActiveRange(this GameObject[] gameObjects, int upToIndex, bool active)
         {
             if (gameObjects == null) return null;
-
-            for (int i = 0; i < upToIndex && i < gameObjects.Length; i++)
+            for (int i = 0; i < Mathf.Min(upToIndex, gameObjects.Length); i++)
             {
                 if (gameObjects[i] != null)
                 {
@@ -47,147 +54,121 @@ namespace Neo
             return gameObjects;
         }
 
-        public static GameObject SetActiveId(this GameObject[] gameObjects, int id, bool active = true)
+        /// <summary>
+        /// Sets the active state of a GameObject at the specified index
+        /// </summary>
+        public static GameObject SetActiveAtIndex(this GameObject[] gameObjects, int index, bool active = true)
         {
-            if (gameObjects == null) return null;
-
-            if (id >= 0 && id < gameObjects.Length)
+            if (gameObjects == null || !IsValidIndex(gameObjects, index)) 
             {
-                if (gameObjects[id] != null)
-                {
-                    gameObjects[id].SetActive(active);
-                    return gameObjects[id];
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"ID {id} .");
+                Debug.LogWarning($"Invalid index {index} for GameObject array.");
+                return null;
             }
 
-            return null;
+            var gameObject = gameObjects[index];
+            if (gameObject != null)
+            {
+                gameObject.SetActive(active);
+            }
+            return gameObject;
         }
 
+        /// <summary>
+        /// Sets the active state of all GameObjects with the specified components
+        /// </summary>
         public static T[] SetActiveAll<T>(this T[] components, bool active) where T : MonoBehaviour
         {
-            foreach (var component in components)
+            if (components == null) return null;
+            foreach (var component in components.Where(c => c != null))
             {
-                if (component != null)
-                {
-                    component.gameObject.SetActive(active);
-                }
+                component.gameObject.SetActive(active);
             }
-
             return components;
         }
 
-        public static GameObject SetActiveById<T>(this IEnumerable<T> components, int id, bool active) where T : MonoBehaviour
+        /// <summary>
+        /// Sets the active state of a GameObject with component at the specified index
+        /// </summary>
+        public static GameObject SetActiveAtIndex<T>(this IEnumerable<T> components, int index, bool active) where T : MonoBehaviour
         {
-            List<T> componentList = components.ToList();
-
-            if (id >= 0 && id < componentList.Count)
+            if (components == null) return null;
+            
+            var componentList = components.ToList();
+            if (!IsValidIndex(componentList, index))
             {
-                if (componentList[id] != null)
-                {
-                    componentList[id].gameObject.SetActive(active);
-                    return componentList[id].gameObject;
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"ID {id} .");
+                Debug.LogWarning($"Invalid index {index} for component collection.");
+                return null;
             }
 
+            var component = componentList[index];
+            if (component != null)
+            {
+                component.gameObject.SetActive(active);
+                return component.gameObject;
+            }
             return null;
         }
 
-        public static GameObject SetActiveId<T>(this T[] components, int id, bool active) where T : MonoBehaviour
-        {
-            if (id >= 0 && id < components.Length)
-            {
-                if (components[id] != null)
-                {
-                    components[id].gameObject.SetActive(active);
-                    return components[id].gameObject;
-                }
-            }
-            else
-            {
-                Debug.LogWarning($"ID {id} .");
-            }
-
-            return null;
-        }
-
+        /// <summary>
+        /// Destroys all GameObjects in the array
+        /// </summary>
         public static void DestroyAll(this GameObject[] gameObjects)
         {
-            if (gameObjects != null)
+            if (gameObjects == null) return;
+            foreach (var gameObject in gameObjects.Where(go => go != null))
             {
-                for (int i = 0; i < gameObjects.Length; i++)
-                {
-                    if (gameObjects[i] != null)
-                    {
-                        GameObject.Destroy(gameObjects[i]);
-                    }
-                }
+                GameObject.Destroy(gameObject);
             }
         }
 
+        /// <summary>
+        /// Gets all active GameObjects from the array
+        /// </summary>
         public static GameObject[] GetActiveObjects(this GameObject[] gameObjects)
         {
-            return Array.FindAll(gameObjects, obj => obj != null && obj.activeSelf);
+            return gameObjects?.Where(obj => obj != null && obj.activeSelf).ToArray() ?? new GameObject[0];
         }
 
+        /// <summary>
+        /// Gets components of type T from all GameObjects in the array
+        /// </summary>
         public static T[] GetComponentsFromAll<T>(this GameObject[] gameObjects) where T : Component
         {
-            if (gameObjects == null || gameObjects.Length == 0) return new T[0];
-
-            List<T> list = new List<T>();
-
-            foreach (var obj in gameObjects)
-            {
-                if (obj != null)
-                {
-                    T component = obj.GetComponent<T>();
-
-                    if (component != null)
-                    {
-                        list.Add(component);
-                    }
-                }
-            }
-
-            return list.ToArray();
+            if (gameObjects == null) return new T[0];
+            return gameObjects
+                .Where(obj => obj != null)
+                .Select(obj => obj.GetComponent<T>())
+                .Where(component => component != null)
+                .ToArray();
         }
 
+        /// <summary>
+        /// Gets the first component of type T from the GameObject array
+        /// </summary>
         public static T GetFirstComponentFromAll<T>(this GameObject[] gameObjects) where T : Component
         {
-            foreach (var obj in gameObjects)
-            {
-                if (obj != null)
-                {
-                    T component = obj.GetComponent<T>();
-
-                    if (component != null)
-                    {
-                        return component;
-                    }
-                }
-            }
-            return null;
+            return gameObjects?
+                .Where(obj => obj != null)
+                .Select(obj => obj.GetComponent<T>())
+                .FirstOrDefault(component => component != null);
         }
 
+        /// <summary>
+        /// Sets the position of all GameObjects in the array
+        /// </summary>
         public static void SetPositionAll(this GameObject[] gameObjects, Vector3 position)
         {
-            if (gameObjects != null)
+            if (gameObjects == null) return;
+            foreach (var gameObject in gameObjects.Where(go => go != null))
             {
-                for (int i = 0; i < gameObjects.Length; i++)
-                {
-                    if (gameObjects[i] != null)
-                    {
-                        gameObjects[i].transform.position = position;
-                    }
-                }
+                gameObject.transform.position = position;
             }
+        }
+
+        // Helper method for index validation
+        private static bool IsValidIndex<T>(IList<T> collection, int index)
+        {
+            return collection != null && index >= 0 && index < collection.Count;
         }
     }
 }

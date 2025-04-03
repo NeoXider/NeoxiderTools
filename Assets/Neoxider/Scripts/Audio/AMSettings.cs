@@ -1,30 +1,37 @@
-using Neo.Audio;
 using UnityEngine;
 
 namespace Neo.Audio
 {
-    public class SettingsAudio : MonoBehaviour
+    public class AMSettings : MonoBehaviour
     {
-        [SerializeField]
-        [FindAllInScene]
-        private AM _am;
+        [SerializeField] private AM _am;
+
         public AudioSource efx;
         public AudioSource music;
 
-        private float _startEfxVolume;
-        private float _startMusicVolume;
+        public float startEfxVolume { get; private set; }
 
-        public float startEfxVolume => _startEfxVolume;
-        public float startMusicVolume => _startMusicVolume;
+        public float startMusicVolume { get; private set; }
 
 
         private void Start()
         {
-            _startEfxVolume = efx.volume;
-            _startMusicVolume = music.volume;
+            startEfxVolume = efx.volume;
+            startMusicVolume = music.volume;
 
             SetEfx(true);
             SetMusic(true);
+        }
+
+        private void OnValidate()
+        {
+            _am = FindFirstObjectByType<AM>();
+
+            if (_am != null)
+            {
+                efx = _am.Efx;
+                music = _am.Music;
+            }
         }
 
         public void SetEfx(bool active)
@@ -51,12 +58,12 @@ namespace Neo.Audio
 
         public void SetMusicVolume(float percent)
         {
-            music.volume = Mathf.Lerp(0, _startMusicVolume, percent);
+            music.volume = Mathf.Lerp(0, startMusicVolume, percent);
         }
 
         public void SetEfxVolume(float percent)
         {
-            efx.volume = Mathf.Lerp(0, _startEfxVolume, percent);
+            efx.volume = Mathf.Lerp(0, startEfxVolume, percent);
         }
 
         public void ToggleMusic()
@@ -73,15 +80,6 @@ namespace Neo.Audio
         {
             SetEfx(music.mute);
             SetMusic(music.mute);
-        }
-
-        private void OnValidate()
-        {
-            if (_am != null)
-            {
-                efx = _am.Efx;
-                music = _am.Music;
-            }
         }
     }
 }

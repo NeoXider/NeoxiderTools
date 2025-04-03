@@ -16,9 +16,15 @@ namespace Neo
             [SerializeField] private bool _setChild = false;
             [SerializeField] private Transform _parentPages;
 
-            [Header("Current page (-1 = None, 0 - StartPage)")]
+            [Header("Current page (-1 = None, ActivePage)")]
             [Min(-1)] public int id;
 
+            public bool is_debug_change;
+
+            [Space]
+            [Header("On Load Active Page (-1 = None, StartPage)")]
+            [Min(-1)] public int startId;
+            
             [Space]
             [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
@@ -32,7 +38,9 @@ namespace Neo
             private void Awake()
             {
                 Instance = this;
-                SetPage(0);
+                
+                if(id >= 0)
+                    SetPage(startId);
             }
 
             public void SetPage()
@@ -43,7 +51,7 @@ namespace Neo
             public void SetPage(int id)
             {
                 this.id = id;
-                _pages.SetActiveAll(false).SetActiveId(id, true);
+                _pages.SetActiveAll(false).SetActiveAtIndex(id, true);
 
                 OnChangePage?.Invoke(id);
 
@@ -55,8 +63,8 @@ namespace Neo
 
             public void SetOnePage(int id)
             {
-                _pages.SetActiveId(id, false);
-                _pages.SetActiveId(id, true);
+                _pages.SetActiveAtIndex(id, false);
+                _pages.SetActiveAtIndex(id, true);
 
                 OnChangePage?.Invoke(id);
             }
@@ -102,7 +110,7 @@ namespace Neo
 
             private void OnValidate()
             {
-                if(!Application.isPlaying)
+                if(!Application.isPlaying && is_debug_change)
                     SetPage(id);
 
                 if (_setChild)

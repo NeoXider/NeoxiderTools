@@ -132,7 +132,7 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
     {
         users.Clear();
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count - 1; i++)
         {
             int score = rangeScore.RandomRange();
             string num = useNum ? (formatNum ? FormatText(i+1) : (i+1).ToString()) : "";

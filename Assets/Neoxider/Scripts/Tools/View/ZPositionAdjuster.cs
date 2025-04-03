@@ -20,7 +20,7 @@ namespace Neo.Tools
         {
             Vector3 position = transform.position;
 
-            float newY = _useNormalizeToUnit ? position.y.NormalizeToUnit() : position.y.NormalizeToRangeMinusOneToOne();
+            float newY = _useNormalizeToUnit ? position.y.NormalizeToUnit() : position.y.NormalizeToRange();
 
             position.z = newY * _ratio;
             transform.position = position;

@@ -14,7 +14,7 @@ namespace Neo.Shop
 
         [SerializeField]
         private bool _useSetItem = true;
-
+        
         [SerializeField]
         private bool _autoSubscribe = true;
 
@@ -106,10 +106,10 @@ namespace Neo.Shop
 
         public void Buy(int id)
         {
-            if (_prices[id] == 0 && _shopItemDatas[id].isSinglePurchase)
+            if (_prices[id] == 0)
             {
                 Visual();
-
+                
                 Select(id);
             }
             else if (_money.Spend(_prices[id]))
@@ -118,15 +118,19 @@ namespace Neo.Shop
                     _prices[id] = 0;
 
                 Save();
+                
+                Visual();
+                
+                Select(id);
 
                 OnPurchased?.Invoke(id);
-
-                Visual();
             }
             else
             {
                 OnPurchaseFailed?.Invoke(id);
             }
+            
+
         }
 
         private void Select(int id)

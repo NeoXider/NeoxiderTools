@@ -6,59 +6,97 @@ using UnityEditor;
 
 namespace Neo
 {
+    /// <summary>
+    /// Custom property drawer for RequireInterface attribute.
+    /// Ensures that assigned objects implement the required interface.
+    /// </summary>
     [CustomPropertyDrawer(typeof(RequireInterface))]
     public class RequireInterfaceDrawer : PropertyDrawer
     {
+        /// <summary>
+        /// Draws the property field and validates the assigned value
+        /// </summary>
+        /// <param name="position">Rectangle on the screen to use for the property GUI</param>
+        /// <param name="property">The SerializedProperty to make the custom GUI for</param>
+        /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            RequireInterface requireInterface = attribute as RequireInterface;
+            var requireInterface = attribute as RequireInterface;
             Type requireType = requireInterface.RequireType;
 
+            // Validate property type and interface
             if (IsValid(property, requireType))
             {
-                label.tooltip = "Require " + requireInterface.RequireType + " interface";
+                // Add tooltip showing required interface
+                label.tooltip = $"Requires {requireType.Name} interface";
+                
+                // Check if current value implements interface
                 CheckProperty(property, requireType);
             }
 
+            // Draw the property field with a green tint to indicate interface requirement
             Color originalColor = GUI.color;
-            GUI.color = Color.green;
+            GUI.color = new Color(0.7f, 1f, 0.7f); // Lighter green tint
             EditorGUI.PropertyField(position, property, label);
             GUI.color = originalColor;
         }
 
+        /// <summary>
+        /// Validates that the property can hold object references and the required type is an interface
+        /// </summary>
+        /// <param name="property">The property to validate</param>
+        /// <param name="targetType">The required interface type</param>
+        /// <returns>True if the property is valid for interface checking</returns>
         private bool IsValid(SerializedProperty property, Type targetType)
         {
             return targetType.IsInterface && property.propertyType == SerializedPropertyType.ObjectReference;
         }
 
+        /// <summary>
+        /// Checks if the assigned object implements the required interface
+        /// </summary>
+        /// <param name="property">The property containing the object reference</param>
+        /// <param name="targetType">The required interface type</param>
         private void CheckProperty(SerializedProperty property, Type targetType)
         {
             if (property.objectReferenceValue == null)
                 return;
-            if (property.objectReferenceValue as GameObject)
-                CheckGameObject(property, targetType);
-            else if (property.objectReferenceValue as ScriptableObject)
-                CheckScriptableObject(property, targetType);
+
+            // Handle different types of Unity objects
+            if (property.objectReferenceValue is GameObject gameObject)
+                CheckGameObject(property, targetType, gameObject);
+            else if (property.objectReferenceValue is ScriptableObject scriptableObject)
+                CheckScriptableObject(property, targetType, scriptableObject);
         }
 
-        private void CheckGameObject(SerializedProperty property, Type targetType)
+        /// <summary>
+        /// Validates that a GameObject has a component implementing the required interface
+        /// </summary>
+        /// <param name="property">The property containing the GameObject reference</param>
+        /// <param name="targetType">The required interface type</param>
+        /// <param name="gameObject">The GameObject to check</param>
+        private void CheckGameObject(SerializedProperty property, Type targetType, GameObject gameObject)
         {
-            GameObject field = property.objectReferenceValue as GameObject;
-            if (field.GetComponent(targetType) == null)
+            if (gameObject.GetComponent(targetType) == null)
             {
                 property.objectReferenceValue = null;
-                Debug.LogError("GameObject must contain component implemented " + targetType + " interface");
+                Debug.LogError($"GameObject must have a component that implements {targetType.Name} interface");
             }
         }
 
-        private void CheckScriptableObject(SerializedProperty property, Type targetType)
+        /// <summary>
+        /// Validates that a ScriptableObject implements the required interface
+        /// </summary>
+        /// <param name="property">The property containing the ScriptableObject reference</param>
+        /// <param name="targetType">The required interface type</param>
+        /// <param name="scriptableObject">The ScriptableObject to check</param>
+        private void CheckScriptableObject(SerializedProperty property, Type targetType, ScriptableObject scriptableObject)
         {
-            ScriptableObject field = property.objectReferenceValue as ScriptableObject;
-            Type fieldType = field.GetType();
-            if (targetType.IsAssignableFrom(fieldType) == false)
+            Type objectType = scriptableObject.GetType();
+            if (!targetType.IsAssignableFrom(objectType))
             {
                 property.objectReferenceValue = null;
-                Debug.LogError("ScriptableObject must implement " + targetType + " interface");
+                Debug.LogError($"ScriptableObject must implement {targetType.Name} interface");
             }
         }
     }

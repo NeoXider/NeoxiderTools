@@ -25,10 +25,6 @@ namespace Neo.Tools
         protected override void Init()
         {
             base.Init();
-        }
-
-        private void Start()
-        {
             _bestScore = PlayerPrefs.GetInt(_keySave, 0);
             _currentScore = 0;
             OnValueChange?.Invoke(_currentScore);
@@ -37,8 +33,13 @@ namespace Neo.Tools
             SetScoreText();
         }
 
+        private void Start()
+        {
+
+        }
+
         /// <summary>
-        /// Прибавляем очки и проверяем лучший рекорд
+        /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         /// </summary>
         public void AddScore(int amount, bool updateBestScore = false)
         {
@@ -46,7 +47,18 @@ namespace Neo.Tools
             SetScoreText();
             OnValueChange?.Invoke(_currentScore);
 
-            if (updateBestScore && _currentScore > _bestScore)
+            if (updateBestScore)
+            {
+                SetBestScore();
+            }
+        }
+
+        public void SetBestScore(int? score = 0)
+        {
+            if (score != null)
+                score = _currentScore;
+            
+            if (score > _bestScore)
             {
                 _bestScore = _currentScore;
                 PlayerPrefs.SetInt(_keySave, _bestScore);
@@ -56,7 +68,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить текст Лучшего счета
+        /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         /// </summary>
         private void SetBestScoreText()
         {
@@ -68,7 +80,7 @@ namespace Neo.Tools
 
 
         /// <summary>
-        /// Установить текст счета
+        /// пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         /// </summary>
         private void SetScoreText()
         {
@@ -79,11 +91,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Сброс счёта (например, при переходе на новый уровень или рестарте)
+        /// пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
         /// </summary>
         public void ResetScore()
         {
             _currentScore = 0;
+            SetScoreText();
         }
     }
 }
