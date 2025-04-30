@@ -121,21 +121,20 @@ namespace Neo.Tools
         /// пример {1, 2500, 5000}, 3500 => 2
         /// возвращает количество звезд
         /// </summary>
-        public int GetCountStars(int[] starScores, int? score = null)
-        {
-            if (score == null)
-                score = _currentScore;
+public int GetCountStars(int[] starScores, int? score = null)
+{
+    if (score == null)
+        score = _currentScore;
 
-            if (score < starScores[0])
-                return 0;
-
-            for (int i = 1; i < starScores.Length; i++)
-            {
-                if (score < starScores[i])
-                    return i;
-            }
-
-            return starScores.Length - 1;
-        }
+    int stars = 0;
+    for (int i = 0; i < starScores.Length; i++)
+    {
+        if (score >= starScores[i])
+            stars++;
+        else
+            break;
+    }
+    return stars;
+}
     }
 }
