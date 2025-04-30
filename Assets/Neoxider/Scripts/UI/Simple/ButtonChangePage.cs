@@ -71,7 +71,7 @@ namespace Neo
 
             public void SetPageAnim(int id)
             {
-                UI.Instance.SetPageAnim(id);
+                UI.Instance?.SetPageAnim(id);
             }
 
             public void OnPointerUp(PointerEventData eventData)

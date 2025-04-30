@@ -41,30 +41,23 @@ public class {0} : Singleton<{0}>
     }}
     
     #endregion
-
     #region Unity Lifecycle
 
     private void Start()
     {{
-        // Start logic here
+
     }}
 
     private void Update()
     {{
-        // Update logic here
+
     }}
 
     #endregion
-
     #region Public Methods
 
-    // Add your public methods here
-
     #endregion
-
     #region Private Methods
-
-    // Add your private methods here
 
     #endregion
 }}";

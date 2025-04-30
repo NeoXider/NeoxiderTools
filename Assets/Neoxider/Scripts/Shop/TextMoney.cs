@@ -36,7 +36,7 @@ namespace Neo.Shop
         private void GetMoney()
         {
             if (_money == null)
-                _money = Money.Instance;
+                _money = Money.I;
         }
 
         private void SetAmount(float count)

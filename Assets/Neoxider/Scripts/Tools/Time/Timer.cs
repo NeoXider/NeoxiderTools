@@ -1,8 +1,10 @@
-//v.1.0.1
+//v.1.0.4
+
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo
 {
@@ -11,54 +13,148 @@ namespace Neo
     /// </summary>
     public interface ITimerSubscriber
     {
-        void OnTimerStart();
-        void OnTimerEnd();
-        void OnTimerUpdate(float remainingTime, float progress);
+        void TimerStart();
+        void TimerEnd();
+        void TimerUpdate(float remainingTime, float progress);
     }
 
     /// <summary>
     /// Async timer implementation with events and looping support
     /// </summary>
+    /// <example>
+    /// <code>
+    /// // Create a timer that runs for 5 seconds, updates every 0.1 seconds
+    /// Timer timer = new Timer(5f, 0.1f);
+    /// 
+    /// // Subscribe to events
+    /// timer.OnTimerStart.AddListener(() => Debug.Log("Timer started"));
+    /// timer.OnTimerEnd.AddListener(() => Debug.Log("Timer ended"));
+    /// timer.OnTimerUpdate.AddListener((time, progress) => {
+    ///     Debug.Log($"Time left: {time:F1}s, Progress: {progress:P0}");
+    /// });
+    /// 
+    /// // Start the timer
+    /// await timer.Start();
+    /// 
+    /// // Pause and resume
+    /// timer.Pause();
+    /// timer.Resume();
+    /// 
+    /// // Add or subtract time
+    /// timer.AddTime(2f); // Add 2 seconds
+    /// timer.AddTime(-1f); // Subtract 1 second
+    /// 
+    /// // Stop the timer
+    /// timer.Stop();
+    /// </code>
+    /// </example>
+    [System.Serializable]
     public class Timer
     {
-        ///by   Neoxider
         /// <summary>
+        /// Event triggered when the timer starts
         /// </summary>
-        ///<example>
-        ///<code>
-        /// <![CDATA[
-        ///     NewTimer timer = new NewTimer(1, 0.05f);
-        ///     timer.OnTimerStart  += ()            => Debug.Log("Timer started");
-        ///     timer.OnTimerUpdate += remainingTime => Debug.Log("Remaining time: " + remainingTime);
-        ///     timer.OnTimerEnd    += ()            => Debug.Log("Timer ended");
-        /// ]]>
-        ///</code>
-        ///</example>
-        public event Action OnTimerStart;                    // Called when timer starts
-        public event Action OnTimerEnd;                      // Called when timer completes
-        public event Action<float, float> OnTimerUpdate;     // Called on each update with (remainingTime, progress)
+        public UnityEvent OnTimerStart = new UnityEvent();
 
         /// <summary>
-        /// Gets the current running state
+        /// Event triggered when the timer ends
+        /// </summary>
+        public UnityEvent OnTimerEnd = new UnityEvent();
+
+        /// <summary>
+        /// Event triggered on each update with remaining time and progress
+        /// </summary>
+        public UnityEvent<float, float> OnTimerUpdate = new UnityEvent<float, float>();
+
+        /// <summary>
+        /// Event triggered when the timer is paused
+        /// </summary>
+        public UnityEvent OnTimerPause = new UnityEvent();
+
+        /// <summary>
+        /// Event triggered when the timer is resumed
+        /// </summary>
+        public UnityEvent OnTimerResume = new UnityEvent();
+
+        /// <summary>
+        /// Gets the current running state of the timer
         /// </summary>
         public bool IsRunning => isRunning;
 
         /// <summary>
-        /// Gets whether the timer is in looping mode
+        /// Gets or sets whether the timer is in looping mode
         /// </summary>
-        public bool IsLooping => isLooping;
+        public bool IsLooping
+        {
+            get => isLooping;
+            set => isLooping = value;
+        }
 
         /// <summary>
-        /// Gets whether the timer uses unscaled time
+        /// Gets or sets whether the timer uses unscaled time
         /// </summary>
-        public bool UseUnscaledTime => useUnscaledTime;
+        public bool UseUnscaledTime
+        {
+            get => useUnscaledTime;
+            set => useUnscaledTime = value;
+        }
 
-        private float duration;                              // Total duration in seconds
-        private float updateInterval;                        // How often the timer updates in seconds
-        private bool isRunning;                             // Current running state
-        private bool isLooping;                             // Whether timer should loop after completion
-        private bool useUnscaledTime;                       // Whether to use unscaled time
-        private float lastUpdateTime;                       // Time since last update
+        /// <summary>
+        /// Gets whether the timer is currently paused
+        /// </summary>
+        public bool IsPaused => isPaused;
+
+        /// <summary>
+        /// Gets the current remaining time in seconds
+        /// </summary>
+        public float RemainingTime => remainingTime;
+
+        /// <summary>
+        /// Gets the current progress of the timer (0 to 1)
+        /// </summary>
+        public float Progress => 1f - (remainingTime / duration);
+
+        /// <summary>
+        /// Gets or sets the total duration of the timer in seconds
+        /// </summary>
+        public float Duration
+        {
+            get => duration;
+            set
+            {
+                if (value < 0) value = 0;
+                float difference = value - duration;
+                duration = value;
+                if (isRunning) remainingTime += difference;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the update interval in seconds
+        /// </summary>
+        public float UpdateInterval
+        {
+            get => updateInterval;
+            set
+            {
+                if (value < 0) value = 0;
+                updateInterval = value;
+            }
+        }
+
+        [SerializeField] private float duration;
+
+        [SerializeField] private float updateInterval;
+
+        [SerializeField] private bool isRunning;
+
+        [SerializeField] private bool isLooping;
+
+        [SerializeField] private bool useUnscaledTime;
+
+        [SerializeField] private bool isPaused;
+        private float lastUpdateTime;
+        private float remainingTime;
         private CancellationTokenSource cancellationTokenSource;
 
         /// <summary>
@@ -70,35 +166,40 @@ namespace Neo
         /// <param name="useUnscaledTime">Whether to ignore timeScale</param>
         public Timer(float duration, float updateInterval = 0.05f, bool looping = false, bool useUnscaledTime = false)
         {
-            this.duration = duration;
-            this.updateInterval = updateInterval;
-            this.isLooping = looping;
-            this.useUnscaledTime = useUnscaledTime;
-            this.lastUpdateTime = 0f;
+            Duration = duration;
+            UpdateInterval = updateInterval;
+            IsLooping = looping;
+            UseUnscaledTime = useUnscaledTime;
+            lastUpdateTime = 0f;
+            remainingTime = Duration;
         }
 
         /// <summary>
         /// Resets timer with new parameters
         /// </summary>
-        public void Reset(float newDuration, float newUpdateInterval = 0.05f, bool? looping = null, bool? useUnscaledTime = null)
+        public void Reset(float newDuration, float newUpdateInterval = 0.05f, bool? looping = null,
+            bool? useUnscaledTime = null)
         {
             Stop();
-            duration = newDuration;
-            updateInterval = newUpdateInterval;
-            if (looping.HasValue) isLooping = looping.Value;
-            if (useUnscaledTime.HasValue) this.useUnscaledTime = useUnscaledTime.Value;
+            Duration = newDuration;
+            UpdateInterval = newUpdateInterval;
+            if (looping.HasValue) IsLooping = looping.Value;
+            if (useUnscaledTime.HasValue) UseUnscaledTime = useUnscaledTime.Value;
             lastUpdateTime = 0f;
+            remainingTime = Duration;
         }
 
         /// <summary>
         /// Starts or resumes the timer
         /// </summary>
+        [Button]
         public async Task Start()
         {
             if (isRunning) return;
 
             isRunning = true;
-            OnTimerStart?.Invoke();
+            isPaused = false;
+            OnTimerStart.Invoke();
 
             cancellationTokenSource = new CancellationTokenSource();
             try
@@ -106,9 +207,8 @@ namespace Neo
                 do
                 {
                     await RunTimerCycle(cancellationTokenSource.Token);
-                    if (!isLooping) OnTimerEnd?.Invoke();
-                } 
-                while (isLooping && isRunning);
+                    if (!IsLooping) OnTimerEnd.Invoke();
+                } while (IsLooping && isRunning);
             }
             catch (OperationCanceledException)
             {
@@ -123,6 +223,7 @@ namespace Neo
         /// <summary>
         /// Stops the timer
         /// </summary>
+        [Button]
         public void Stop()
         {
             if (!isRunning) return;
@@ -133,8 +234,35 @@ namespace Neo
                 cancellationTokenSource.Dispose();
                 cancellationTokenSource = null;
             }
+
             isRunning = false;
+            isPaused = false;
             lastUpdateTime = 0f;
+            remainingTime = Duration;
+        }
+
+        /// <summary>
+        /// Pauses the timer
+        /// </summary>
+        [Button]
+        public void Pause()
+        {
+            if (!isRunning || isPaused) return;
+
+            isPaused = true;
+            OnTimerPause.Invoke();
+        }
+
+        /// <summary>
+        /// Resumes the timer from pause
+        /// </summary>
+        [Button]
+        public void Resume()
+        {
+            if (!isRunning || !isPaused) return;
+
+            isPaused = false;
+            OnTimerResume.Invoke();
         }
 
         /// <summary>
@@ -147,37 +275,34 @@ namespace Neo
         }
 
         /// <summary>
-        /// Sets whether the timer should loop
+        /// Adds time to the current timer duration
         /// </summary>
-        public void SetLooping(bool looping)
+        /// <param name="seconds">Seconds to add (can be negative)</param>
+        public void AddTime(float seconds)
         {
-            isLooping = looping;
-        }
-
-        /// <summary>
-        /// Sets whether the timer should use unscaled time
-        /// </summary>
-        public void SetUnscaledTime(bool useUnscaledTime)
-        {
-            this.useUnscaledTime = useUnscaledTime;
+            remainingTime = Mathf.Max(0, remainingTime + seconds);
+            Duration = Mathf.Max(0, Duration + seconds);
         }
 
         private async Task RunTimerCycle(CancellationToken cancellationToken)
         {
-            float remainingTime = duration;
+            remainingTime = Duration;
             lastUpdateTime = 0f;
 
             while (remainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
-                float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                lastUpdateTime += deltaTime;
-
-                if (lastUpdateTime >= updateInterval)
+                if (!isPaused)
                 {
-                    remainingTime -= lastUpdateTime;
-                    float progress = 1f - (remainingTime / duration); // Progress from 0 to 1
-                    OnTimerUpdate?.Invoke(remainingTime, progress);
-                    lastUpdateTime = 0f;
+                    float deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    lastUpdateTime += deltaTime;
+
+                    if (lastUpdateTime >= UpdateInterval)
+                    {
+                        remainingTime -= lastUpdateTime;
+                        float progress = 1f - (remainingTime / Duration);
+                        OnTimerUpdate.Invoke(remainingTime, progress);
+                        lastUpdateTime = 0f;
+                    }
                 }
 
                 await Task.Yield();

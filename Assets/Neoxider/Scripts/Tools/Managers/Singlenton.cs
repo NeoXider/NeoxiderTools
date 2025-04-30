@@ -7,13 +7,12 @@ namespace Neo
         public class Singleton<T> : MonoBehaviour where T : Singleton<T>
         {
             [SerializeField] protected bool _dontDestroyOnLoad = false;
-            [SerializeField] protected static bool _createInstance = false;
             [SerializeField] protected bool _setInstanceOnAwake = true;
-
+            public static bool CreateInstance = false;
 
             private static T _instance;
 
-            public static T Instance
+            public static T I
             {
                 get
                 {
@@ -21,7 +20,7 @@ namespace Neo
                     {
                         _instance = FindFirstObjectByType<T>(FindObjectsInactive.Include);
 
-                        if (_instance == null && _createInstance)
+                        if (_instance == null && CreateInstance)
                         {
                             var obj = new GameObject(typeof(T).Name);
                             _instance = obj.AddComponent<T>();

@@ -10,6 +10,7 @@ public class FakeLoad : MonoBehaviour
 
     public UnityEvent OnStart;
     public UnityEvent OnFinisLoad;
+    public UnityEvent<int> OnChangePercent;
     public UnityEvent<float> OnChange;
 
     private static bool isInitialized = false;
@@ -41,7 +42,7 @@ public class FakeLoad : MonoBehaviour
         {
             float percent = timer / time;
             OnChange?.Invoke(percent);
-
+            OnChangePercent?.Invoke((int)(percent*100));
             yield return null;
 
             timer += Time.deltaTime;
@@ -52,7 +53,6 @@ public class FakeLoad : MonoBehaviour
 
     public void EndLoad()
     {
-        CancelInvoke();
         OnFinisLoad?.Invoke();
     }
 }

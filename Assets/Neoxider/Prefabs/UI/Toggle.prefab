@@ -60,15 +60,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _toggle: {fileID: 1320971502863625611}
-  _sprites:
-  - {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
-  - {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
+  _image: {fileID: 2138068519642393075}
   _visuals: []
+  _setNativeSize: 0
+  sprites:
+  - {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
+  - {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
   activ: 1
   On:
     m_PersistentCalls:
       m_Calls: []
   Off:
+    m_PersistentCalls:
+      m_Calls: []
+  OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
 --- !u!114 &2138068519642393075
@@ -91,7 +96,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
+  m_Sprite: {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

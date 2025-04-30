@@ -6,22 +6,40 @@ namespace Neo
     {
         public class PausePage : MonoBehaviour
         {
-            private float timeScale;
+            [SerializeField]
+            private bool useTimeScale = true;
+
+            [SerializeField]
+            private float timeScale = 0;
+
+            [SerializeField]
+            private bool sendPause = true;
+
+            private float lastTimeScale;
 
             private void OnEnable()
             {
-                timeScale = Time.timeScale;
-                Time.timeScale = 0f;
+                lastTimeScale = Time.timeScale;
+
+                if (useTimeScale)
+                    Time.timeScale = 0f;
+
+                if (sendPause)
+                    GM.I?.Pause();
             }
 
             private void OnDisable()
             {
-                Time.timeScale = timeScale;
+                if (useTimeScale)
+                    Time.timeScale = lastTimeScale;
+
+                if (sendPause)
+                    GM.I?.Resume();
             }
 
             private void OnValidate()
             {
-                if(TryGetComponent(out Animator animator))
+                if (TryGetComponent(out Animator animator))
                 {
                     animator.updateMode = AnimatorUpdateMode.UnscaledTime;
                 }

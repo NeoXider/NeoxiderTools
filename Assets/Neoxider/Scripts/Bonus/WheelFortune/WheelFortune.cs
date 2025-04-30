@@ -149,6 +149,7 @@ namespace Neo.Bonus
             return (id + _prizes.Length) % _prizes.Length;
         }
 
+        [Button]
         public void Spin()
         {
             if (_prizes.Length == 0)
@@ -163,6 +164,7 @@ namespace Neo.Bonus
                 Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
         }
 
+        [Button]
         public void Stop()
         {
             if (_spinState == SpinState.Idle)

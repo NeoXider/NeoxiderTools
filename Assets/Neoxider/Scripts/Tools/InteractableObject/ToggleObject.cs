@@ -17,11 +17,13 @@ namespace Neo
             public UnityEvent ON;
             public UnityEvent OFF;
 
+            [Button]
             public void Toggle()
             {
                 Set(!value);
             }
 
+            [Button]
             public void Set(bool value)
             {
                 this.value = value;

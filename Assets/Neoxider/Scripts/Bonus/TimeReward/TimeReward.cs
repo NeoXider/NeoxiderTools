@@ -75,6 +75,7 @@ namespace Neo
                 return 0;
             }
 
+            [Button]
             public bool TakeReward()
             {
                 if (CanTakeReward())

@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace Neo
@@ -8,7 +7,9 @@ namespace Neo
         [System.Serializable]
         public class Map
         {
+            public bool isInfinity = true;
             public int countLevels;
+            public bool isLoopLevel;
 
             [Space]
             [SerializeField]
@@ -38,9 +39,12 @@ namespace Neo
                 PlayerPrefs.SetInt(GetSaveKey() + nameof(_level), _level);
             }
 
-            public bool GetCoplete()
+            public bool GetCopmplete()
             {
-                return _level >= countLevels;
+                if (!isInfinity)
+                    return _level >= countLevels;
+                else
+                    return false;
             }
         }
     }

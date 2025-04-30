@@ -27,18 +27,18 @@ public class LeaderboardMove : MonoBehaviour
         }
 
         if (useSortEnable)
-            if (Leaderboard.Instance != null)
-                Leaderboard.Instance.Sort();
+            if (Leaderboard.I != null)
+                Leaderboard.I.Sort();
     }
 
     public void Move()
     {
-        int idPlayer = Leaderboard.Instance.GetIdPlayer();
+        int idPlayer = Leaderboard.I.GetIdPlayer();
 
         if (idPlayer >= 0)
         {
             print("move to " + idPlayer.ToString() + " pos");
-            LeaderboardItem targetItem = Leaderboard.Instance.leaderboardItems[idPlayer];
+            LeaderboardItem targetItem = Leaderboard.I.leaderboardItems[idPlayer];
             Vector3 targetPos = transform.position - targetItem.transform.position;
 
             transform.DOMoveY(targetPos.y + offsetY, timeMove)

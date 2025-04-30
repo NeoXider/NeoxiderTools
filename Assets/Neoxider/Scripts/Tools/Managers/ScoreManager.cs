@@ -7,14 +7,15 @@ namespace Neo.Tools
 {
     public class ScoreManager : Singleton<ScoreManager>
     {
-        [SerializeField]
-        private string _keySave = "BestScore";
+        [SerializeField] private string _keySave = "BestScore";
 
         public TMP_Text[] textScores;
         public TMP_Text[] textBestScores;
+        public SetText[] setTextScore;
+        public SetText[] setTextBestScores;
 
-        public UnityEvent<int> OnValueChange;
-        public UnityEvent<int> OnBestValueChanged;
+        public UnityEvent<int> OnValueChange = new();
+        public UnityEvent<int> OnBestValueChanged = new();
 
         private int _currentScore;
         private int _bestScore;
@@ -35,12 +36,12 @@ namespace Neo.Tools
 
         private void Start()
         {
-
         }
 
         /// <summary>
         /// ���������� ���� � ��������� ������ ������
         /// </summary>
+        [Button]
         public void AddScore(int amount, bool updateBestScore = false)
         {
             _currentScore += amount;
@@ -57,7 +58,7 @@ namespace Neo.Tools
         {
             if (score != null)
                 score = _currentScore;
-            
+
             if (score > _bestScore)
             {
                 _bestScore = _currentScore;
@@ -72,10 +73,17 @@ namespace Neo.Tools
         /// </summary>
         private void SetBestScoreText()
         {
-            foreach (var text in textBestScores)
-            {
-                text.text = _bestScore.ToString();
-            }
+            if (textBestScores != null)
+                foreach (var text in textBestScores)
+                {
+                    text.text = _bestScore.ToString();
+                }
+
+            if (setTextBestScores != null)
+                foreach (var text in setTextBestScores)
+                {
+                    text.Set(_bestScore);
+                }
         }
 
 
@@ -84,10 +92,17 @@ namespace Neo.Tools
         /// </summary>
         private void SetScoreText()
         {
-            foreach (var text in textScores)
-            {
-                text.text = _currentScore.ToString();
-            }
+            if (textScores != null)
+                foreach (var text in textScores)
+                {
+                    text.text = _currentScore.ToString();
+                }
+
+            if (setTextScore != null)
+                foreach (var text in setTextScore)
+                {
+                    text.Set(_currentScore);
+                }
         }
 
         /// <summary>
@@ -96,7 +111,31 @@ namespace Neo.Tools
         public void ResetScore()
         {
             _currentScore = 0;
+            OnValueChange?.Invoke(_currentScore);
             SetScoreText();
+        }
+
+        /// <summary>
+        /// Получение количества звезд по количеству очков
+        /// параметры:
+        /// пример {1, 2500, 5000}, 3500 => 2
+        /// возвращает количество звезд
+        /// </summary>
+        public int GetCountStars(int[] starScores, int? score = null)
+        {
+            if (score == null)
+                score = _currentScore;
+
+            if (score < starScores[0])
+                return 0;
+
+            for (int i = 1; i < starScores.Length; i++)
+            {
+                if (score < starScores[i])
+                    return i;
+            }
+
+            return starScores.Length - 1;
         }
     }
 }

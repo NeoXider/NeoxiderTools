@@ -226,11 +226,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _toggle: {fileID: 6412646606042333101}
-  _sprites: []
+  _image: {fileID: 5288619961030331835}
   _visuals:
   - {fileID: 5015771941849145726}
   - {fileID: 6145903468858056350}
   _setNativeSize: 0
+  sprites: []
   activ: 1
   On:
     m_PersistentCalls:

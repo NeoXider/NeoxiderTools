@@ -7,29 +7,36 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/AdvancedAttackCollider")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Настройки атаки")]
-        [SerializeField] private int attackDamage = 1; // Урон от атаки
+        [Header("Настройки атаки")] [SerializeField]
+        private int attackDamage = 10; // Урон от атаки
+
         [SerializeField] private float triggerDuration = 0.2f; // Длительность активации триггера
 
-        [Header("Настройки коллайдера")]
-        [SerializeField] private Collider2D collider2D; // 2D коллайдер
+        [Header("Настройки коллайдера")] [SerializeField]
+        private Collider2D collider2D; // 2D коллайдер
+
         [SerializeField] private Collider collider3D; // 3D коллайдер
 
-        [Header("Применение силы")]
-        [SerializeField] private bool applyForceOnHit = false; // Применять силу при попадании
+        [Header("Применение силы")] [SerializeField]
+        private bool applyForceOnHit = false; // Применять силу при попадании
+
         [SerializeField] private float forceMagnitude = 20f; // Величина силы
         [SerializeField] private float forceDuration = 0.3f; // Длительность действия силы
 
-        [Header("Эффекты")]
-        [SerializeField] private GameObject attackEffectPrefab; // Префаб эффекта атаки
+        [Header("Эффекты")] [SerializeField] private GameObject attackEffectPrefab; // Префаб эффекта атаки
 
-        [Header("События")]
-        public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D
+        [Header("События")] public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D
         public UnityEvent OnDeactivateTrigger; // Событие при деактивации триггера
 
         private HashSet<Collider2D> hitColliders2D = new HashSet<Collider2D>(); // Отслеживание 2D попаданий
         private HashSet<Collider> hitColliders3D = new HashSet<Collider>(); // Отслеживание 3D попаданий
+
+        public int AttackDamage
+        {
+            get => attackDamage;
+            set => attackDamage = value;
+        }
 
         private void Start()
         {

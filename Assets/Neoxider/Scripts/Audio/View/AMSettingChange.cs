@@ -91,18 +91,21 @@ namespace Neo.Audio
                 slider.value = (!amSettings.efx.mute && !amSettings.music.mute) ? 1f : 0f;
         }
 
+        [Button]
         private void SetSliderVolumeEfx(float arg0)
         {
             amSettings.SetEfxVolume(arg0);
             foreach (var slider in _sliderVolumeEfx) slider.value = arg0;
         }
 
+        [Button]
         private void SetSliderVolumeMusic(float arg0)
         {
             amSettings.SetMusicVolume(arg0);
             foreach (var slider in _sliderVolumeMusic) slider.value = arg0;
         }
 
+        [Button]
         private void SetSliderVolumeAll(float arg0)
         {
             amSettings.SetMusicAndEfxVolume(arg0);
@@ -111,6 +114,7 @@ namespace Neo.Audio
             foreach (var slider in _sliderVolumeMusic) slider.value = arg0;
         }
 
+        [Button]
         private void SetToggleEfx(bool arg0)
         {
             amSettings.SetEfx(arg0);
@@ -118,6 +122,7 @@ namespace Neo.Audio
             foreach (var toggle in _toggleEfx) toggle.isOn = arg0;
         }
 
+        [Button]
         private void SetToggleMusic(bool arg0)
         {
             amSettings.SetMusic(arg0);
@@ -125,6 +130,7 @@ namespace Neo.Audio
             foreach (var toggle in _toggleMusic) toggle.isOn = arg0;
         }
 
+        [Button]
         private void SetToggleAll(bool arg0)
         {
             if (arg0)

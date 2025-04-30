@@ -6,22 +6,24 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/AdvancedForceApplier")]
     public class AdvancedForceApplier : MonoBehaviour
     {
-        [Header("Компоненты")]
-        [SerializeField] private Rigidbody rigidbody3D;
+        [Header("Компоненты")] [SerializeField]
+        private Rigidbody rigidbody3D;
+
         [SerializeField] private Rigidbody2D rigidbody2D;
 
-        [Header("Настройки силы")]
-        [SerializeField] private float defaultForce = 10f;
+        [Header("Настройки силы")] [SerializeField]
+        private float defaultForce = 10f;
+
         [SerializeField] private ForceMode forceMode3D = ForceMode.Impulse;
         [SerializeField] private ForceMode2D forceMode2D = ForceMode2D.Impulse;
 
-        [Header("Направление силы")]
-        [SerializeField] private bool useVelocityDirection = true; // Использовать направление скорости
-        [SerializeField] private bool isDirectionForward = true;   // Применять силу вперёд или назад
+        [Header("Направление силы")] [SerializeField]
+        private bool useVelocityDirection = true; // Использовать направление скорости
+
+        [SerializeField] private bool isDirectionForward = true; // Применять силу вперёд или назад
         [SerializeField] private Vector3 customDirection = Vector3.forward; // Пользовательское направление
 
-        [Header("События")]
-        public UnityEvent OnApplyForce;
+        [Header("События")] public UnityEvent OnApplyForce;
 
         private void Awake()
         {
@@ -59,12 +61,13 @@ namespace Neo.Tools
         {
             if (useVelocityDirection)
             {
-                Vector3 velocity = rigidbody3D != null ? rigidbody3D.velocity : (Vector3)rigidbody2D.velocity;
+                Vector3 velocity = rigidbody3D != null ? rigidbody3D.velocity : rigidbody2D.velocity;
                 if (velocity != Vector3.zero)
                 {
                     return isDirectionForward ? velocity.normalized : -velocity.normalized;
                 }
             }
+
             return customDirection.normalized;
         }
     }

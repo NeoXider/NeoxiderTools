@@ -9,42 +9,46 @@ namespace Neo
     [AddComponentMenu("Neoxider/Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour
     {
-        [Header("Timer Settings")]
-        [Tooltip("Duration in seconds")]
-        public float duration = 1f;                         // Total duration of the timer
+        [Header("Timer Settings")] [Tooltip("Total duration of the timer in seconds")]
+        public float duration = 1f;
 
-        [Tooltip("How often the timer updates")]
-        [Min(0.015f)]
-        public float updateInterval = 0.015f;               // Update frequency in seconds
+        [Tooltip("Update frequency in seconds")] [Min(0.015f)]
+        public float updateInterval = 0.015f;
 
         [Tooltip("If true, time counts up; if false, counts down")]
-        public bool countUp = true;                         // Direction of counting
+        public bool countUp = true;
 
         [Tooltip("Use unscaled time (ignores time scale)")]
-        public bool useUnscaledTime = false;               // Whether to ignore time scale
+        public bool useUnscaledTime = false;
 
         [Tooltip("Automatically restart when complete")]
-        public bool looping = false;                       // Whether to loop the timer
+        public bool looping = false;
 
-        [Header("Initial State")]
-        [Tooltip("Start timer automatically")]
-        public bool autoStart = true;                      // Whether to start on Enable
+        [Header("Initial State")] [Tooltip("Start timer automatically on enable")]
+        public bool autoStart = true;
 
-        [Tooltip("Current active state")]
-        public bool isActive = false;                      // Whether timer is running
+        [Tooltip("Current active state of the timer")]
+        public bool isActive = false;
 
-        [Tooltip("Current time value")]
-        [SerializeField] 
-        private float currentTime = 0f;                    // Current timer value
+        [Tooltip("Current time value of the timer")] [SerializeField]
+        private float currentTime = 0f;
 
-        [Header("Events")]
-        public UnityEvent OnTimerStarted;                 // Called when timer starts
-        public UnityEvent OnTimerPaused;                  // Called when timer is paused
-        public UnityEvent<float> OnTimeChanged;           // Called with current time value
-        public UnityEvent<float> OnProgressChanged;       // Called with progress (0-1)
-        public UnityEvent OnTimerCompleted;               // Called when timer completes
+        [Header("Events")] [Tooltip("Called when timer starts")]
+        public UnityEvent OnTimerStarted;
 
-        private float timeSinceLastUpdate;                // Time accumulator for updates
+        [Tooltip("Called when timer is paused")]
+        public UnityEvent OnTimerPaused;
+
+        [Tooltip("Called with current time value on each update")]
+        public UnityEvent<float> OnTimeChanged;
+
+        [Tooltip("Called with progress (0-1) on each update")]
+        public UnityEvent<float> OnProgressChanged;
+
+        [Tooltip("Called when timer completes")]
+        public UnityEvent OnTimerCompleted;
+
+        private float timeSinceLastUpdate;
 
         private void Start()
         {
@@ -55,11 +59,9 @@ namespace Neo
         {
             if (!isActive) return;
 
-            // Use appropriate time delta based on settings
             float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             timeSinceLastUpdate += deltaTime;
 
-            // Check if it's time to update
             if (timeSinceLastUpdate >= updateInterval)
             {
                 UpdateTimer(timeSinceLastUpdate);
@@ -71,10 +73,8 @@ namespace Neo
         {
             if (!isActive) return;
 
-            // Update current time
             currentTime += deltaTime;
 
-            // Check for completion
             if (currentTime >= duration)
             {
                 currentTime = duration;
@@ -83,7 +83,7 @@ namespace Neo
 
                 if (looping)
                 {
-                    Play(); // Restart if looping
+                    Play();
                 }
                 else
                 {
@@ -114,9 +114,10 @@ namespace Neo
         /// <summary>
         /// Starts or restarts timer with optional new parameters
         /// </summary>
+        /// <param name="newDuration">New duration in seconds. If negative, keeps current duration</param>
+        /// <param name="newUpdateInterval">New update interval in seconds. If negative, keeps current interval</param>
         public void StartTimer(float newDuration = -1f, float newUpdateInterval = -1f)
         {
-            // Update parameters if provided
             if (newDuration >= 0) duration = newDuration;
             if (newUpdateInterval >= 0) updateInterval = newUpdateInterval;
 
@@ -127,23 +128,26 @@ namespace Neo
         /// <summary>
         /// Starts or resumes the timer
         /// </summary>
+        [Button]
         public void Play()
         {
             currentTime = 0f;
             isActive = true;
             timeSinceLastUpdate = 0f;
-            
+
             OnTimerStarted?.Invoke();
-            InvokeEvents(); // Immediate update for UI responsiveness
+            InvokeEvents();
         }
 
         /// <summary>
         /// Pauses or resumes the timer
         /// </summary>
+        /// <param name="paused">True to pause, false to resume</param>
+        [Button]
         public void Pause(bool paused = true)
         {
-            if (isActive == !paused) return; // No state change
-            
+            if (isActive == !paused) return;
+
             isActive = !paused;
             if (paused)
             {
@@ -163,6 +167,7 @@ namespace Neo
         /// <summary>
         /// Stops and resets the timer
         /// </summary>
+        [Button]
         public void Stop()
         {
             isActive = false;
@@ -181,6 +186,7 @@ namespace Neo
         /// <summary>
         /// Sets the current time value
         /// </summary>
+        /// <param name="time">New time value in seconds</param>
         public void SetTime(float time)
         {
             currentTime = Mathf.Clamp(time, 0f, duration);
@@ -190,11 +196,13 @@ namespace Neo
         /// <summary>
         /// Gets current progress (0-1)
         /// </summary>
+        /// <returns>Progress value from 0 to 1</returns>
         public float GetProgress() => countUp ? currentTime / duration : 1f - (currentTime / duration);
 
         /// <summary>
         /// Gets current time value
         /// </summary>
+        /// <returns>Current time in seconds</returns>
         public float GetCurrentTime() => countUp ? currentTime : duration - currentTime;
 
         /// <summary>

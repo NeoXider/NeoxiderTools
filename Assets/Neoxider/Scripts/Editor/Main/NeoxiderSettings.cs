@@ -29,10 +29,13 @@ namespace Neo
                 "Animations",
                 "Sprites",
                 "Materials",
+                "Textures",
+                "Models",
                 "Scenes",
                 "Resources",
                 "Settings",
-                "Editor"
+                "Editor",
+                "TTF",
             };
             public bool validateFoldersOnStart = true;
         }

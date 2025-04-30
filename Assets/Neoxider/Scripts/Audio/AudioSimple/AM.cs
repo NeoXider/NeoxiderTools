@@ -33,6 +33,7 @@ namespace Neo
             /// </summary>
             /// <param name="id">The ID of the clip in the array to play.</param>
             /// <param name="volume">The volume level for playback, default is 1.</param>
+            [Button]
             public void Play(int id, float volume = -1f)
             {
                 if (volume < 0)
@@ -48,6 +49,7 @@ namespace Neo
                 }
             }
 
+            [Button]
             public void PlayMusic(int id, float volume = -1f)
             {
                 if (volume < 0)
@@ -67,12 +69,12 @@ namespace Neo
 
             public static void Play(int id)
             {
-                Instance.Play(id);
+                I.Play(id);
             }
 
             public static void PlayMusic(int id)
             {
-                Instance.PlayMusic(id);
+                I.PlayMusic(id);
             }
 
             /// <summary>

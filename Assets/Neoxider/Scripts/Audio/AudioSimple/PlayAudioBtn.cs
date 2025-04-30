@@ -29,7 +29,7 @@ namespace Neo
 
             public void AudioPlay()
             {
-                AM.Instance.Play(_idClip);
+                AM.I.Play(_idClip);
             }
         }
     }

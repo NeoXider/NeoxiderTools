@@ -35,9 +35,9 @@ RectTransform:
   m_Father: {fileID: 2449359897912767634}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 0}
+  m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 800}
+  m_SizeDelta: {x: 0, y: -200}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &2489827732989133331
 CanvasRenderer:
@@ -259,11 +259,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _toggle: {fileID: 102410208763197699}
-  _sprites:
-  - {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
-  - {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
+  _image: {fileID: 0}
   _visuals: []
   _setNativeSize: 0
+  sprites: []
   activ: 0
   On:
     m_PersistentCalls:

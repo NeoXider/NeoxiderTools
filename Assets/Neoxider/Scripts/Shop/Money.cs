@@ -23,6 +23,8 @@ namespace Neo
             [SerializeField] private int _roundToDecimal = 2;
             [SerializeField] private TMP_Text[] t_money;
             [SerializeField] private TMP_Text[] t_levelMoney;
+            [SerializeField] private SetText[] st_money;
+            [SerializeField] private SetText[] st_levelMoney;
 
             [Space, Header("Events")]
             public UnityEvent<float> OnChangedLevelMoney;
@@ -89,6 +91,7 @@ namespace Neo
                 return _money >= count;
             }
 
+            [Button]
             public bool Spend(float count)
             {
                 if (CanSpend(count))
@@ -102,6 +105,7 @@ namespace Neo
                 return false;
             }
 
+            [Button]
             public void Add(float count)
             {
                 _money += count;
@@ -113,14 +117,24 @@ namespace Neo
             private void ChangeMoneyEvent()
             {
                 SetText(t_money, _money);
-
+                
+                foreach (var item in st_money)
+                {
+                    item.Set(_money);
+                }
+                
                 OnChangedMoney?.Invoke(_money);
             }
 
             private void ChangeLevelMoneyEvent()
             {
                 SetText(t_levelMoney, _levelMoney);
-
+                
+                foreach (var item in st_levelMoney)
+                {
+                    item.Set(_levelMoney);
+                }
+                
                 OnChangedLevelMoney?.Invoke(_levelMoney);
             }
 
@@ -130,6 +144,8 @@ namespace Neo
                 {
                     item.text = count.RoundToDecimal(_roundToDecimal).ToString();
                 }
+                
+
             }
         }
     }

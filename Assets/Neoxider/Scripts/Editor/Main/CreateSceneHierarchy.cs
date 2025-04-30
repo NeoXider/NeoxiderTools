@@ -25,6 +25,9 @@ namespace Neo
         [SerializeField]
         private bool sortAlphabetically = true;
 
+        [SerializeField]
+        private string separatorSymbols = "--";
+
         /// <summary>
         /// Creates the scene hierarchy with the configured structure
         /// </summary>
@@ -39,10 +42,11 @@ namespace Neo
                 {
                     if (string.IsNullOrEmpty(objectName)) continue;
 
-                    GameObject obj = GameObject.Find(objectName);
+                    string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                    GameObject obj = GameObject.Find(decoratedName);
                     if (obj == null)
                     {
-                        obj = new GameObject(objectName);
+                        obj = new GameObject(decoratedName);
                         Undo.RegisterCreatedObjectUndo(obj, "Create Hierarchy Object");
                         
                         // Always reset transform for new objects
@@ -81,7 +85,8 @@ namespace Neo
             
             foreach (string objectName in hierarchyObjects)
             {
-                var obj = GameObject.Find(objectName);
+                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                var obj = GameObject.Find(decoratedName);
                 if (obj != null)
                 {
                     objectsToSort.Add((obj, obj.transform.GetSiblingIndex()));
@@ -131,9 +136,10 @@ namespace Neo
             {
                 if (string.IsNullOrEmpty(objectName)) continue;
 
-                if (GameObject.Find(objectName) == null)
+                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                if (GameObject.Find(decoratedName) == null)
                 {
-                    Debug.LogError($"Failed to find hierarchy object: {objectName}");
+                    Debug.LogError($"Failed to find hierarchy object: {decoratedName}");
                     isValid = false;
                 }
             }

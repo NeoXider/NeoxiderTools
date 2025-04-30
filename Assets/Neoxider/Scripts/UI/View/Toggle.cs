@@ -9,11 +9,16 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(ToggleView))]
         public class ToggleView : MonoBehaviour
         {
+            [GetComponent]
             [SerializeField] private Toggle _toggle;
-            [SerializeField] private Sprite[] _sprites;
+            [GetComponent]
+            [SerializeField] private Image _image;
             [SerializeField] private GameObject[] _visuals;
             [SerializeField] private bool _setNativeSize;
 
+            public Sprite[] sprites;
+
+            
             public bool activ;
             public UnityEvent On;
             public UnityEvent Off;
@@ -61,11 +66,13 @@ namespace Neo
                 Visual(activ);
             }
 
+            [Button]
             public void Switch()
             {
                 Set(!activ);
             }
 
+            [Button]
             public void Set(bool activ)
             {
                 if (activ != this.activ)
@@ -95,12 +102,15 @@ namespace Neo
             {
                 var id = activ ? 1 : 0;
 
-                if (_sprites != null && _sprites.Length == 2)
+                if (sprites != null && sprites.Length == 2)
                 {
-                    _toggle.image.sprite = _sprites[id];
+                    if (_image != null)
+                    {
+                        _image.sprite = sprites[id];
 
-                    if (_setNativeSize)
-                        _toggle.image.SetNativeSize();
+                        if (_setNativeSize)
+                            _image.SetNativeSize();
+                    }
                 }
 
                 if (_visuals != null && _visuals.Length == 2)

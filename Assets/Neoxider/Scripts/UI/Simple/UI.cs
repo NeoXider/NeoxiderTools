@@ -29,9 +29,7 @@ namespace Neo
             [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
             public static UI Instance;
-
-
-
+            
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
 
@@ -48,6 +46,7 @@ namespace Neo
                 SetPage(id);
             }
 
+            [Button]
             public void SetPage(int id)
             {
                 this.id = id;
@@ -61,6 +60,7 @@ namespace Neo
                 }
             }
 
+            [Button]
             public void SetOnePage(int id)
             {
                 _pages.SetActiveAtIndex(id, false);
@@ -103,7 +103,7 @@ namespace Neo
                 if (_animator != null) _animator.gameObject.SetActive(false);
             }
 
-            public void SetLastPage(bool active)
+            public void SetCurrtentPage(bool active)
             {
                 _pages[id].SetActive(active);
             }

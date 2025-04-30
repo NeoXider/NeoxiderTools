@@ -24,7 +24,7 @@ namespace Neo
 
             public void AudioPlay()
             {
-                AM.Instance.Play(_clipType, _volume);
+                AM.I.Play(_clipType, _volume);
             }
         }
     }

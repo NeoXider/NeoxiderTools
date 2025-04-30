@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using Neo.Tools;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -15,16 +15,14 @@ namespace Neo
 
             [SerializeField] private LevelButton[] _lvlBtns;
 
-            [Space] [SerializeField] private int _mapId;
+            [Space][SerializeField] private int _mapId;
 
             [SerializeField] private Map[] _maps = { new() };
 
             [SerializeField] private bool _onAwakeNextMap;
             [SerializeField] private bool _onAwakeNextLevel;
 
-            [Space] [SerializeField] private int _currentLevel;
-
-            [SerializeField] private bool _isLoopLevel;
+            [Space][SerializeField] private int _currentLevel;
 
             [Space] public UnityEvent<int> OnChangeLevel;
 
@@ -45,7 +43,7 @@ namespace Neo
                 if (_onAwakeNextLevel) SetLastLevel();
 
                 OnLoadLevel?.Invoke(map.level);
-                
+
                 UpdateVisual();
             }
 
@@ -56,9 +54,9 @@ namespace Neo
                     var btns = new HashSet<LevelButton>();
 
                     foreach (var par in _parentLevel.GetComponentsInChildren<Transform>(true))
-                    foreach (var child in par.GetComponentsInChildren<Transform>(true))
-                        if (child.TryGetComponent(out LevelButton levelButton))
-                            btns.Add(levelButton);
+                        foreach (var child in par.GetComponentsInChildren<Transform>(true))
+                            if (child.TryGetComponent(out LevelButton levelButton))
+                                btns.Add(levelButton);
 
                     _lvlBtns = new LevelButton[btns.Count];
                     btns.CopyTo(_lvlBtns);
@@ -79,7 +77,7 @@ namespace Neo
             public int GetLastIdMap()
             {
                 for (var i = 0; i < _maps.Length; i++)
-                    if (!_maps[i].GetCoplete())
+                    if (!_maps[i].GetCopmplete())
                         return i;
 
                 return -1;
@@ -104,7 +102,7 @@ namespace Neo
 
             public void SetLastLevel()
             {
-                if (_isLoopLevel && map.countLevels >= map.level)
+                if (map.isLoopLevel && map.countLevels >= map.level)
                     NextLevel();
                 else
                     SetLevel(map.level);
@@ -152,9 +150,13 @@ namespace Neo
 
             internal void SetLevel(int idLevel)
             {
-                _currentLevel = _isLoopLevel
+                _currentLevel = map.isLoopLevel
                     ? GetLoopLevel(idLevel, map.countLevels)
-                    : Mathf.Min(idLevel, map.countLevels - 1);
+                    : Mathf.Min(idLevel,
+                        map.isInfinity || map.countLevels == 0
+                        ? map.level + 1
+                        : map.countLevels - 1);
+                    
                 OnChangeLevel?.Invoke(_currentLevel);
             }
 

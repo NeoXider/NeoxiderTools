@@ -13,7 +13,7 @@ namespace Neo
 
             public void Win(int id)
             {
-                Money.Instance.Add(wins[id]);
+                Money.I.Add(wins[id]);
 
                 if (prize != null)
                     prize.text = wins[id].ToString();

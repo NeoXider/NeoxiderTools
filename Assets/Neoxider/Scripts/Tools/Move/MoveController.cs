@@ -1,121 +1,133 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-public abstract class MovementController : MonoBehaviour
+public enum MovementType
+{
+    DirectionBased,
+    PositionBased
+}
+
+public class MovementController : MonoBehaviour
 {
     [Header("Movement Settings")]
-    public float moveSpeed = 5f;              // Speed of movement
-    public bool inputMouse = false;           // Enable mouse input
-    public bool inputKeyboard = false;        // Enable keyboard input
-    public bool isNormalized = true;          // Normalize combined inputs for consistent speed
-    public Transform target = null;           // Target to move toward
-    public float stopDistance = 0f;           // Distance at which to stop when approaching target
+    [SerializeField] private MovementType movementType = MovementType.DirectionBased;
+    [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private bool useNormalization = true;
+    [SerializeField] private Vector3 positionOffset;
 
-    [Header("Movement Limits (Non-Physics Only)")]
-    public AxisLimit xLimit = new AxisLimit(true, false, new Vector2(-10f, 10f));
-    public AxisLimit yLimit = new AxisLimit(true, false, new Vector2(-10f, 10f));
-    public AxisLimit zLimit = new AxisLimit(false, false, new Vector2(-10f, 10f));
+    [Header("Constraints")]
+    [SerializeField] private AxisConstraint xConstraint = new AxisConstraint();
+    [SerializeField] private AxisConstraint yConstraint = new AxisConstraint();
+    [SerializeField] private AxisConstraint zConstraint = new AxisConstraint();
 
     [Header("Events")]
-    public UnityEvent OnMove;                 // Invoked when movement starts
-    public UnityEvent OnStop;                 // Invoked when movement stops
+    public UnityEvent OnMovementStart;
+    public UnityEvent OnMovementStop;
 
-    [Header("Input Keys")]
-    [SerializeField] private KeyCode moveUpKey = KeyCode.W;
-    [SerializeField] private KeyCode moveDownKey = KeyCode.S;
-    [SerializeField] private KeyCode moveLeftKey = KeyCode.A;
-    [SerializeField] private KeyCode moveRightKey = KeyCode.D;
+    private IMovementInputProvider _inputProvider;
+    private Vector3 _referencePosition;
+    private bool _isMoving;
 
-    protected bool isMoving = false;          // Tracks movement state
-
-    protected virtual void Update()
+    private void Awake()
     {
-        // Calculate velocity based on inputs or target
-        Vector3 velocity = CalculateVelocity();
+        _inputProvider = GetComponent<IMovementInputProvider>();
+        InitializeReferencePosition();
+    }
 
-        // Apply movement (implemented by derived classes)
-        ApplyMovement(velocity);
+    private void Update()
+    {
+        UpdateMovementState();
+        HandleMovement();
+    }
 
-        // Trigger movement events
-        if (velocity != Vector3.zero && !isMoving)
+    private void InitializeReferencePosition()
+    {
+        _referencePosition = transform.position - positionOffset;
+    }
+
+    private void UpdateMovementState()
+    {
+        bool isMovingNow = _inputProvider.IsInputActive();
+
+        if (isMovingNow != _isMoving)
         {
-            isMoving = true;
-            OnMove?.Invoke();
-        }
-        else if (velocity == Vector3.zero && isMoving)
-        {
-            isMoving = false;
-            OnStop?.Invoke();
+            _isMoving = isMovingNow;
+            RaiseMovementEvents();
         }
     }
 
-    /// <summary>
-    /// Calculates desired velocity based on enabled input sources or target.
-    /// </summary>
-    public Vector3 CalculateVelocity()
+    private void RaiseMovementEvents()
     {
-        // Prioritize target-following movement
-        if (target != null)
-        {
-            Vector3 targetDirection = (target.position - transform.position).normalized;
-            float distance = Vector3.Distance(transform.position, target.position);
-            if (distance > stopDistance)
-            {
-                return targetDirection * moveSpeed;
-            }
-            return Vector3.zero;
-        }
-
-        Vector3 velocity = Vector3.zero;
-
-        // Accumulate keyboard input
-        if (inputKeyboard)
-        {
-            if (Input.GetKey(moveUpKey)) velocity += Vector3.up;
-            if (Input.GetKey(moveDownKey)) velocity += Vector3.down;
-            if (Input.GetKey(moveLeftKey)) velocity += Vector3.left;
-            if (Input.GetKey(moveRightKey)) velocity += Vector3.right;
-        }
-
-        // Add mouse input (move toward click position)
-        if (inputMouse && Input.GetMouseButton(0))
-        {
-            Vector3 mousePosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            mousePosition.z = 0; // Assuming 2D; adjust for 3D if needed
-            Vector3 mouseDirection = (mousePosition - transform.position).normalized;
-            velocity += mouseDirection;
-        }
-
-        // Apply speed and normalization
-        if (isNormalized && velocity != Vector3.zero)
-        {
-            velocity = velocity.normalized * moveSpeed;
-        }
-        else
-        {
-            velocity *= moveSpeed;
-        }
-
-        return velocity;
+        if (_isMoving) OnMovementStart?.Invoke();
+        else OnMovementStop?.Invoke();
     }
 
-    /// <summary>
-    /// Abstract method to apply the calculated velocity. Implemented by derived classes.
-    /// </summary>
-    protected abstract void ApplyMovement(Vector3 velocity);
+    private void HandleMovement()
+    {
+        if (!_isMoving) return;
+
+        switch (movementType)
+        {
+            case MovementType.DirectionBased:
+                MoveByDirection(_inputProvider.GetDirection());
+                break;
+            
+            case MovementType.PositionBased:
+                MoveToPosition(_inputProvider.GetTargetPosition());
+                break;
+        }
+
+        ApplyConstraints();
+        UpdateTransformPosition();
+    }
+
+    private void MoveByDirection(Vector3 direction)
+    {
+        if (useNormalization && direction != Vector3.zero)
+            direction.Normalize();
+
+        _referencePosition += direction * (moveSpeed * Time.deltaTime);
+    }
+
+    private void MoveToPosition(Vector3 targetPosition)
+    {
+        _referencePosition = Vector3.MoveTowards(
+            _referencePosition,
+            targetPosition - positionOffset,
+            moveSpeed * Time.deltaTime
+        );
+    }
+
+    private void ApplyConstraints()
+    {
+        if (xConstraint.enabled)
+            _referencePosition.x = Mathf.Clamp(_referencePosition.x, xConstraint.min, xConstraint.max);
+        
+        if (yConstraint.enabled)
+            _referencePosition.y = Mathf.Clamp(_referencePosition.y, yConstraint.min, yConstraint.max);
+        
+        if (zConstraint.enabled)
+            _referencePosition.z = Mathf.Clamp(_referencePosition.z, zConstraint.min, zConstraint.max);
+    }
+
+    private void UpdateTransformPosition()
+    {
+        transform.position = _referencePosition + positionOffset;
+    }
 }
 
 [System.Serializable]
-public class AxisLimit
+public class AxisConstraint
 {
-    public bool move;        // Whether movement is allowed on this axis
-    public bool useLimit;    // Whether to clamp movement within limits
-    public Vector2 limit;    // Min and max values for the axis
-
-    public AxisLimit(bool move, bool useLimit, Vector2 limit)
-    {
-        this.move = move;
-        this.useLimit = useLimit;
-        this.limit = limit;
-    }
+    public bool enabled = false;
+    public float min = -10f;
+    public float max = 10f;
 }
+
+public interface IMovementInputProvider
+{
+    bool IsInputActive();
+    Vector3 GetDirection();
+    Vector3 GetTargetPosition();
+}
+

@@ -1,0 +1,29 @@
+using UnityEngine;
+using System;
+
+namespace Neo
+{
+    /// <summary>
+    /// Attribute to create a button in the inspector that can call a method
+    /// </summary>
+    /// <remarks>
+    /// Can be used with methods that have parameters. Parameters will be displayed as input fields in the inspector.
+    /// </remarks>
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
+    public class ButtonAttribute : PropertyAttribute
+    {
+        /// <summary>
+        /// Name to display on the button. If null, method name will be used
+        /// </summary>
+        public string ButtonName { get; private set; }
+
+        /// <summary>
+        /// Creates a button attribute with optional custom name
+        /// </summary>
+        /// <param name="buttonName">Custom name for the button. If null, method name will be used</param>
+        public ButtonAttribute(string buttonName = null)
+        {
+            ButtonName = buttonName;
+        }
+    }
+} 
