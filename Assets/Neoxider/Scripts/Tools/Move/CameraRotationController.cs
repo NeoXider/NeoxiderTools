@@ -31,30 +31,30 @@ namespace Neo
 
         public class CameraRotationController : MonoBehaviour
         {
-            public AxisRotationSettings xAxisSettings = new AxisRotationSettings(true, 10);
-            public AxisRotationSettings yAxisSettings = new AxisRotationSettings(true, 10);
-            public AxisRotationSettings zAxisSettings = new AxisRotationSettings(false);
+            public AxisRotationSettings xAxisSettings = new(true, 10);
+            public AxisRotationSettings yAxisSettings = new(true, 10);
+            public AxisRotationSettings zAxisSettings = new(false);
 
             private Vector3 currentRotation;
             private Vector3 lastMousePosition;
 
-            void Start()
+            private void Start()
             {
                 currentRotation = transform.localEulerAngles;
             }
 
-            void Update()
+            private void Update()
             {
                 if (Input.GetMouseButtonDown(0))
                     lastMousePosition = Input.mousePosition;
 
                 if (Input.GetMouseButton(0))
                 {
-                    Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+                    var mouseDelta = Input.mousePosition - lastMousePosition;
                     lastMousePosition = Input.mousePosition;
 
-                    float mouseX = mouseDelta.x;
-                    float mouseY = mouseDelta.y;
+                    var mouseX = mouseDelta.x;
+                    var mouseY = mouseDelta.y;
 
                     if (xAxisSettings.isEnabled)
                     {
@@ -70,7 +70,7 @@ namespace Neo
 
                     if (zAxisSettings.isEnabled)
                     {
-                        float mouseZ = (mouseX + mouseY) * 0.5f;
+                        var mouseZ = (mouseX + mouseY) * 0.5f;
                         currentRotation.z += mouseZ * zAxisSettings.rotationSpeed * Time.deltaTime;
                         currentRotation.z = zAxisSettings.ClampAngle(currentRotation.z);
                     }

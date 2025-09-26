@@ -8,8 +8,12 @@ namespace Neo.UI
     public class ButtonScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         #region Sub-Classes
+
         [System.Serializable]
-        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton> { }
+        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
+        {
+        }
+
         #endregion
 
         [SerializeField] private RectTransform _rectTransform;
@@ -48,7 +52,7 @@ namespace Neo.UI
         private IEnumerator ResizeButton(Vector2 targetSize)
         {
             Vector2 initialSize = _rectTransform.localScale;
-            float elapsedTime = 0f;
+            var elapsedTime = 0f;
 
             while (elapsedTime < resizeDuration)
             {

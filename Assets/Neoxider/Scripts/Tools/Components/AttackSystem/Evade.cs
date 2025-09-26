@@ -9,18 +9,16 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/EvadeManager")]
     public class Evade : MonoBehaviour
     {
-        [Header("Evade Settings")]
-        [Tooltip("Duration of the evade action in seconds")]
-        [SerializeField] private float evadeDuration = 1f;
+        [Header("Evade Settings")] [Tooltip("Duration of the evade action in seconds")] [SerializeField]
+        private float evadeDuration = 1f;
 
-        [Tooltip("Cooldown time between evades in seconds")]
-        [SerializeField] private float reloadTime = 2f;
+        [Tooltip("Cooldown time between evades in seconds")] [SerializeField]
+        private float reloadTime = 2f;
 
-        [Tooltip("If true, cooldown starts immediately with evade")]
-        [SerializeField] private bool reloadImmediately = true;
+        [Tooltip("If true, cooldown starts immediately with evade")] [SerializeField]
+        private bool reloadImmediately = true;
 
-        [Header("Events")]
-        [Tooltip("Called when evade action starts")]
+        [Header("Events")] [Tooltip("Called when evade action starts")]
         public UnityEvent OnEvadeStarted;
 
         [Tooltip("Called with evade progress (0-1)")]
@@ -68,10 +66,7 @@ namespace Neo.Tools
 
         private void OnDestroy()
         {
-            if (reloadTimer != null)
-            {
-                reloadTimer.Stop();
-            }
+            if (reloadTimer != null) reloadTimer.Stop();
         }
 
         /// <summary>
@@ -85,10 +80,7 @@ namespace Neo.Tools
             isEvading = true;
             OnEvadeStarted.Invoke();
 
-            if (reloadImmediately)
-            {
-                reloadTimer.Start();
-            }
+            if (reloadImmediately) reloadTimer.Start();
 
             Invoke(nameof(CompleteEvade), evadeDuration);
         }
@@ -98,20 +90,23 @@ namespace Neo.Tools
             isEvading = false;
             OnEvadeCompleted.Invoke();
 
-            if (!reloadImmediately)
-            {
-                reloadTimer.Start();
-            }
+            if (!reloadImmediately) reloadTimer.Start();
         }
 
         /// <summary>
         /// Gets whether evade can be performed
         /// </summary>
-        public bool CanEvade() => !IsOnCooldown && !IsEvading;
+        public bool CanEvade()
+        {
+            return !IsOnCooldown && !IsEvading;
+        }
 
         /// <summary>
         /// Gets remaining cooldown time in seconds
         /// </summary>
-        public float GetRemainingCooldown() => reloadTimer.RemainingTime;
+        public float GetRemainingCooldown()
+        {
+            return reloadTimer.RemainingTime;
+        }
     }
 }

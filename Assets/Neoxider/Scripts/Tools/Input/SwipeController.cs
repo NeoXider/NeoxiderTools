@@ -1,4 +1,5 @@
 //v.1.0.4
+
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -43,17 +44,15 @@ namespace Neo
         /// If true, swipes are only detected after the user has released the touch or mouse button. This can be useful
         /// for games or applications where swipes are meant to be deliberate actions rather than continuous inputs.
         /// </summary>
-        [SerializeField]
-        public bool detectSwipeOnlyAfterRelease = false;
+        [SerializeField] public bool detectSwipeOnlyAfterRelease = false;
 
         /// <summary>
         /// The minimum distance (in screen pixels) that the user must move their finger or the mouse for a movement
         /// to be considered a swipe. This helps differentiate between swipes and taps or clicks.
         /// </summary>
-        [SerializeField]
-        private float minDistanceForSwipeX = 20f;
-        [SerializeField]
-        private float minDistanceForSwipeY = 20f;
+        [SerializeField] private float minDistanceForSwipeX = 20f;
+
+        [SerializeField] private float minDistanceForSwipeY = 20f;
         public bool ignoreLastSwipe = false;
 
         private Vector2 fingerUpPosition;
@@ -63,7 +62,7 @@ namespace Neo
         private SwipeDirection lastSwipeDirection;
         private static SwipeController instance;
 
-        public UnityEvent<SwipeData> OnSwipe = new UnityEvent<SwipeData>();
+        public UnityEvent<SwipeData> OnSwipe = new();
 
         private bool swipeDetected = false;
 
@@ -78,8 +77,8 @@ namespace Neo
             {
                 if (instance == null)
                 {
-
                 }
+
                 return instance;
             }
         }
@@ -87,13 +86,9 @@ namespace Neo
         private void Update()
         {
             if (Input.touchSupported && Input.touchCount > 0)
-            {
                 HandleTouch();
-            }
             else
-            {
                 HandleMouse();
-            }
         }
 
         public static bool GetSwipeDirection(out SwipeDirection direction)
@@ -101,16 +96,16 @@ namespace Neo
             direction = Instance.lastSwipeDirection;
             if (Instance.swipeDetected)
             {
-                Instance.swipeDetected = false; 
+                Instance.swipeDetected = false;
                 return true;
             }
+
             return false;
         }
 
         private void HandleTouch()
         {
-            foreach (Touch touch in Input.touches)
-            {
+            foreach (var touch in Input.touches)
                 switch (touch.phase)
                 {
                     case TouchPhase.Began:
@@ -124,6 +119,7 @@ namespace Neo
                             fingerUpPosition = touch.position;
                             DetectSwipe();
                         }
+
                         break;
 
                     case TouchPhase.Ended:
@@ -132,7 +128,6 @@ namespace Neo
                         swipeCompleted = true;
                         break;
                 }
-            }
         }
 
         private void HandleMouse()
@@ -163,7 +158,9 @@ namespace Neo
             {
                 if (IsVerticalSwipe())
                 {
-                    var direction = fingerUpPosition.y - fingerDownPosition.y > 0 ? SwipeDirection.Up : SwipeDirection.Down;
+                    var direction = fingerUpPosition.y - fingerDownPosition.y > 0
+                        ? SwipeDirection.Up
+                        : SwipeDirection.Down;
                     if (swipeCompleted || lastSwipeDirection != direction || ignoreLastSwipe)
                     {
                         swipeCompleted = false;
@@ -173,7 +170,9 @@ namespace Neo
                 }
                 else
                 {
-                    var direction = fingerUpPosition.x - fingerDownPosition.x > 0 ? SwipeDirection.Right : SwipeDirection.Left;
+                    var direction = fingerUpPosition.x - fingerDownPosition.x > 0
+                        ? SwipeDirection.Right
+                        : SwipeDirection.Left;
                     if (swipeCompleted || lastSwipeDirection != direction || ignoreLastSwipe)
                     {
                         swipeCompleted = false;
@@ -181,13 +180,14 @@ namespace Neo
                         SendSwipe(direction);
                     }
                 }
+
                 fingerDownPosition = fingerUpPosition;
             }
         }
 
-        void SendSwipe(SwipeDirection direction)
+        private void SendSwipe(SwipeDirection direction)
         {
-            SwipeData swipeData = new SwipeData()
+            var swipeData = new SwipeData
             {
                 Direction = direction,
                 StartPosition = fingerUpPosition,
@@ -206,7 +206,7 @@ namespace Neo
         private bool SwipeDistanceCheckMet()
         {
             return VerticalMovementDistance() > minDistanceForSwipeY
-                || HorizontalMovementDistance() > minDistanceForSwipeX;
+                   || HorizontalMovementDistance() > minDistanceForSwipeX;
         }
 
         private float VerticalMovementDistance()

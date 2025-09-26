@@ -20,7 +20,6 @@ namespace Neo
     /// </example>
     public class FindInSceneAttribute : PropertyAttribute
     {
-
         // This attribute's behavior is implemented in CustomAttributeDrawer
     }
 }

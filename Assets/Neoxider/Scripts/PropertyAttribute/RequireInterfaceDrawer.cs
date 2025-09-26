@@ -22,20 +22,20 @@ namespace Neo
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var requireInterface = attribute as RequireInterface;
-            Type requireType = requireInterface.RequireType;
+            var requireType = requireInterface.RequireType;
 
             // Validate property type and interface
             if (IsValid(property, requireType))
             {
                 // Add tooltip showing required interface
                 label.tooltip = $"Requires {requireType.Name} interface";
-                
+
                 // Check if current value implements interface
                 CheckProperty(property, requireType);
             }
 
             // Draw the property field with a green tint to indicate interface requirement
-            Color originalColor = GUI.color;
+            var originalColor = GUI.color;
             GUI.color = new Color(0.7f, 1f, 0.7f); // Lighter green tint
             EditorGUI.PropertyField(position, property, label);
             GUI.color = originalColor;
@@ -90,9 +90,10 @@ namespace Neo
         /// <param name="property">The property containing the ScriptableObject reference</param>
         /// <param name="targetType">The required interface type</param>
         /// <param name="scriptableObject">The ScriptableObject to check</param>
-        private void CheckScriptableObject(SerializedProperty property, Type targetType, ScriptableObject scriptableObject)
+        private void CheckScriptableObject(SerializedProperty property, Type targetType,
+            ScriptableObject scriptableObject)
         {
-            Type objectType = scriptableObject.GetType();
+            var objectType = scriptableObject.GetType();
             if (!targetType.IsAssignableFrom(objectType))
             {
                 property.objectReferenceValue = null;

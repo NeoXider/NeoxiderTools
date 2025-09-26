@@ -27,16 +27,14 @@ namespace Neo
         {
             public UnityEvent OnChangeContent;
             public Sprite sprite;
-            [TextArea(3, 7)]
-            public string sentence;
+            [TextArea(3, 7)] public string sentence;
         }
 
         public class DialogueManager : MonoBehaviour
         {
             public Dialogue[] dialogues;
 
-            [Space]
-            public TMP_Text _characterText;
+            [Space] public TMP_Text _characterText;
             public TMP_Text _dialogueText;
             public Image _imageCharacter;
             public bool _setNativeSize = true;
@@ -106,7 +104,7 @@ namespace Neo
 
             private void UpdateCharacter(Monolog currentMonolog)
             {
-                string characterName = currentMonolog.characterName;
+                var characterName = currentMonolog.characterName;
                 if (characterName != _lastCharacterName)
                 {
                     _characterText.text = characterName;
@@ -123,10 +121,7 @@ namespace Neo
                 if (_imageCharacter != null && content.sprite != null)
                 {
                     _imageCharacter.sprite = content.sprite;
-                    if (_setNativeSize)
-                    {
-                        _imageCharacter.SetNativeSize();
-                    }
+                    if (_setNativeSize) _imageCharacter.SetNativeSize();
                 }
             }
 
@@ -135,10 +130,7 @@ namespace Neo
                 _dialogueText.text = "";
                 OnMonologEnd.Invoke();
 
-                if (autoNextMonolog)
-                {
-                    NextMonolog();
-                }
+                if (autoNextMonolog) NextMonolog();
             }
 
             public void NextSentence()

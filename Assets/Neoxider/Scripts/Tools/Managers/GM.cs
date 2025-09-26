@@ -1,6 +1,8 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using Neo.Extensions;
+using UnityEngine.Events;
 using UnityEngine.Serialization;
 
 namespace Neo.Tools
@@ -18,32 +20,40 @@ namespace Neo.Tools
         public enum GameState
         {
             NotStarted,
+            Menu,
             Preparing,
-            Playing,
+            Game,
             Win,
             Lose,
+            End,
             Pause,
-            Other,
+            Other
         }
 
         public GameState State
         {
             get => _state;
-            set => _state = value;
+            set
+            {
+                _lastState = _state;
+                _state = value;
+                EM.I.OnStateChange?.Invoke(_state);
+                Debug.Log("[GM]".SetColor(Color.yellow)
+                          + $": {State}".Gradient(Color.cyan, Color.blue));
+            }
         }
 
-        public bool IsPlaying => _state == GameState.Playing;
-        public bool IsNotPlaying => _state != GameState.Playing;
-
-
-        [SerializeField] [RequireInterface(typeof(IGameState))]
-        private GameObject[] _iGameInstallers;
+        public bool startOnAwake = true;
+        public bool IsPlaying => State == GameState.Game;
+        public bool IsNotPlaying => State != GameState.Game;
 
         #endregion
 
-        [SerializeField] private GameState _state;
-
-        public List<IGameState> IGameInstallers = new List<IGameState>();
+        [SerializeField] private GameState _state = GameState.Menu;
+        [SerializeField] private GameState _lastState;
+        public bool useTimeScalePause = true;
+        [Space] public int fps = 60;
+        private float lastTimeScale = 1;
 
         #region Initialization Methods
 
@@ -55,124 +65,152 @@ namespace Neo.Tools
         protected override void Init()
         {
             print("GameManager Init");
-            for (int i = 0; i < _iGameInstallers.Length; i++)
-            {
-                IGameInstallers.Add(_iGameInstallers[i].GetComponent<IGameState>());
-            }
+
+            if (startOnAwake)
+                State = _state;
+
+            Application.targetFrameRate = fps;
         }
 
         #endregion
 
         #region Core Game Methods
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
+        public virtual void Menu()
+        {
+            StopGame();
+            State = GameState.Menu;
+            EM.Menu();
+        }
+
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public virtual void Preparing()
         {
-            _state = GameState.Preparing;
+            State = GameState.Preparing;
             EM.Preparing();
-
-            foreach (var iGameInstaller in IGameInstallers)
-            {
-                iGameInstaller?.Prepare();
-            }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
-        public virtual void StartGame()
+#endif
+        public virtual void StartGame(bool restart = false)
         {
-            _state = GameState.Playing;
-            EM.GameStart();
+            if (State == GameState.Pause)
+                Resume();
 
-            foreach (var iGameInstaller in IGameInstallers)
-            {
-                iGameInstaller?.StartGame();
-            }
+            State = GameState.Game;
+            if (restart)
+                EM.Restart();
+            else
+                EM.GameStart();
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public virtual void StopGame()
         {
-            if (_state == GameState.NotStarted) return;
+            if (State == GameState.NotStarted) return;
 
-            _state = GameState.NotStarted;
+            State = GameState.NotStarted;
             EM.StopGame();
-
-            foreach (var iGameInstaller in IGameInstallers)
-            {
-                iGameInstaller?.StopGame();
-            }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public virtual void Lose()
         {
-            if (_state != GameState.Playing) return;
+            if (State != GameState.Game) return;
 
-            _state = GameState.Lose;
+            State = GameState.Lose;
             EM.StopGame();
             EM.Lose();
-
-            foreach (var iGameInstaller in IGameInstallers)
-            {
-                iGameInstaller?.Lose();
-            }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public virtual void Win()
         {
-            if (_state != GameState.Playing) return;
+            if (State != GameState.Game) return;
 
-            _state = GameState.Win;
+            State = GameState.Win;
             EM.StopGame();
             EM.Win();
-
-            foreach (var iGameInstaller in IGameInstallers)
-            {
-                iGameInstaller?.Win();
-            }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
+        public virtual void End()
+        {
+            if (State != GameState.Game) return;
+
+            State = GameState.End;
+            EM.StopGame();
+            EM.End();
+        }
+
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public virtual void Pause()
         {
-            _state = GameState.Pause;
+            if (State == GameState.Pause) return;
+
+            State = GameState.Pause;
             EM.Pause();
-            
-            foreach (var iGameInstaller in IGameInstallers)
+
+            if (useTimeScalePause)
             {
-                iGameInstaller?.Pause();
+                lastTimeScale = Time.timeScale;
+                Time.timeScale = 0;
             }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public virtual void Resume()
         {
-            _state = GameState.Playing;
+            if (State != GameState.Pause) return;
+
+            State = _lastState;
             EM.Resume();
-            
-            foreach (var iGameInstaller in IGameInstallers)
+
+            if (useTimeScalePause)
             {
-                iGameInstaller?.Resume();
+                if (lastTimeScale <= 0)
+                    lastTimeScale = 1;
+
+                Time.timeScale = lastTimeScale;
             }
         }
 
         #endregion
-
-        public void AddInstaller(IGameState gameState)
-        {
-            if (!IGameInstallers.Contains(gameState))
-            {
-                IGameInstallers.Add(gameState);
-            }
-        }
-
-        public void RemoveInstaller(IGameState gameState)
-        {
-            if (IGameInstallers.Contains(gameState))
-            {
-                IGameInstallers.Remove(gameState);
-            }
-        }
     }
 }

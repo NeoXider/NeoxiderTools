@@ -6,44 +6,39 @@ namespace Neo.Tools
     /// <summary>
     /// Component that handles health system with damage, healing and auto-healing capabilities
     /// </summary>
-    [AddComponentMenu("Neoxider/Tools/" + nameof(Hp))]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(Health))]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {
-        [Header("Health Settings")]
-        [Tooltip("Maximum health points")]
-        [SerializeField] private int maxHp = 10;
+        [Header("Health Settings")] [Tooltip("Maximum health points")] [SerializeField]
+        private int maxHp = 10;
 
-        [Tooltip("Current health points")]
-        [SerializeField] private int hp;
+        [Tooltip("Current health points")] [SerializeField]
+        private int hp;
 
-        [Header("Auto-Heal Settings")]
-        [Tooltip("Amount of health restored per auto-heal")]
-        [SerializeField] private int healAmount = 0;
+        [Header("Auto-Heal Settings")] [Tooltip("Amount of health restored per auto-heal")] [SerializeField]
+        private int healAmount = 0;
 
-        [Tooltip("Delay between auto-heals in seconds")]
-        [SerializeField] private float healDelay = 1f;
+        [Tooltip("Delay between auto-heals in seconds")] [SerializeField]
+        private float healDelay = 1f;
 
-        [Tooltip("If true, can heal even when not alive")]
-        [SerializeField] private bool ignoreIsAlive = false;
+        [Tooltip("If true, can heal even when not alive")] [SerializeField]
+        private bool ignoreIsAlive = false;
 
         [Header("Damage & Heal Limits")]
         [Tooltip("Maximum damage that can be taken at once (-1 for no limit)")]
         [Min(-1)]
         public int maxDamageAmount = -1;
 
-        [Tooltip("Maximum healing that can be received at once (-1 for no limit)")]
-        [Min(-1)]
+        [Tooltip("Maximum healing that can be received at once (-1 for no limit)")] [Min(-1)]
         public int maxHealAmount = -1;
 
-        [Header("Events")]
-        [Tooltip("Called when health changes")]
+        [Header("Events")] [Tooltip("Called when health changes")]
         public UnityEvent<int> OnChange;
 
         [Tooltip("Called when health changes (0-1)")]
         public UnityEvent<float> OnChangePercent;
 
-        [Tooltip("Called when taking damage")]
-        public UnityEvent<int> OnDamage;
+        [Tooltip("Called when taking damage")] public UnityEvent<int> OnDamage;
 
         [Tooltip("Called when receiving healing")]
         public UnityEvent<int> OnHeal;
@@ -105,18 +100,12 @@ namespace Neo.Tools
 
         private void OnDestroy()
         {
-            if (healTimer != null)
-            {
-                healTimer.Stop();
-            }
+            if (healTimer != null) healTimer.Stop();
         }
 
         private void OnHealTimerEnd()
         {
-            if (CanHeal && NeedHeal && healAmount > 0)
-            {
-                Heal(healAmount);
-            }
+            if (CanHeal && NeedHeal && healAmount > 0) Heal(healAmount);
         }
 
         /// <summary>
@@ -178,7 +167,7 @@ namespace Neo.Tools
         [Button]
         public void TakeDamage(int count)
         {
-            int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
+            var damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
             Hp -= damage;
             OnDamage?.Invoke(count);
 
@@ -192,7 +181,7 @@ namespace Neo.Tools
         [Button]
         public void Heal(int count)
         {
-            int heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
+            var heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
             Hp += heal;
 
             OnHeal?.Invoke(count);

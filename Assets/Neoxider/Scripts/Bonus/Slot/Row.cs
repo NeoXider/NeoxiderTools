@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,128 +6,199 @@ using Random = UnityEngine.Random;
 
 namespace Neo.Bonus
 {
-
     public class Row : MonoBehaviour
     {
         public int countSlotElement = 3;
         [Header("SlotElement x2")] public SlotElement[] SlotElements;
-        public bool is_spinning { get => _isSpinning; }
-        public SpeedControll speedControll = new();
+        public bool is_spinning => _isSpinning;
+        [SerializeField] public SpeedControll speedControll = new();
         public float spaceY = 1;
+        public float offsetY = 0;
 
-        [SerializeField] private float _resetPosition;
-        [SerializeField] private float[] yPositions;
-        [SerializeField] private Sprite[] _sprites;
-        [SerializeField] private Sprite[] _spritesEnd;
+        private float[] _yPositions;
+        private float _resetPositionY;
 
-        [SerializeField] private float _timerSpin;
-        [SerializeField] private float _positionTolerance = 0.5f;
+        private SpritesData _allSpritesData;
+        private SlotVisualData[] _finalVisuals;
+        private bool _isSpinning;
 
-        public bool _isSpinning = false;
+        public UnityEvent OnStop = new();
 
-        public UnityEvent OnStop = new UnityEvent();
-
-        void Update() { }
-
-        private IEnumerator SpinCoroutine()
+        private void Awake()
         {
-            _isSpinning = true;
-            _timerSpin = 0;
-
-            // Initial spin phase
-            while (_timerSpin < speedControll.timeSpin)
-            {
-                _timerSpin += Time.deltaTime;
-                MoveSlots(speedControll.speed);
-                yield return null;
-            }
-
-            SetSpriteEnd();
-            float newSpeed = speedControll.speed;
-
-            // Deceleration phase
-            while (((newSpeed > speedControll.minSpeed) || speedControll.minSpeed == 0) && speedControll.changeEndSpeed != 0)
-            {
-                MoveSlots(newSpeed, false);
-                newSpeed = Mathf.Max(newSpeed - speedControll.changeEndSpeed * Time.deltaTime, speedControll.minSpeed);
-                yield return null;
-            }
-
-            // Final adjustment phase
-            while (Mathf.Abs(SlotElements[0].transform.position.y - yPositions[0]) > _positionTolerance)
-            {
-                MoveSlots(newSpeed, false);
-                yield return null;
-            }
-
-            SetStartPositions();
-            _isSpinning = false;
-            OnStop?.Invoke();
+            ApplyLayout();
         }
 
-        private bool ShouldStopSpinning()
+        private void OnValidate()
         {
-            return _timerSpin >= speedControll.timeSpin
-                && SlotElements[countSlotElement - 1].transform.position.y > yPositions[SlotElements.Length - 2];
+            ApplyLayout();
         }
 
-        private void MoveSlots(float speed, bool resetSprites = true)
+        /// <summary>
+        /// Расставляет дочерние элементы в правильные локальные позиции.
+        /// </summary>
+        public void ApplyLayout()
         {
-            foreach (var slot in SlotElements)
-            {
-                slot.transform.Translate(Vector3.down * speed * Time.deltaTime);
+            SlotElements = GetComponentsInChildren<SlotElement>(true);
+            if (SlotElements == null || SlotElements.Length == 0) return;
 
-                if (slot.transform.position.y <= _resetPosition)
+            _yPositions = new float[SlotElements.Length];
+            _resetPositionY = offsetY - spaceY;
+
+            for (var i = 0; i < SlotElements.Length; i++)
+            {
+                var yPos = offsetY + spaceY * i;
+                _yPositions[i] = yPos;
+
+                var element = SlotElements[i];
+                var elementTransform = element.transform;
+
+                if (element.TryGetComponent<RectTransform>(out var rectTransform))
                 {
-                    float spawnY = GetLastY() + spaceY;
-                    slot.transform.position = new Vector3(slot.transform.position.x, spawnY, slot.transform.position.z);
-
-                    if (resetSprites)
-                    {
-                        if (_sprites != null)
-                            slot.Sprite = GetRandomSprite();
-                    }
+                    rectTransform.anchoredPosition = new Vector2(0, yPos);
+                }
+                else
+                {
+                    elementTransform.localPosition = new Vector3(0, yPos, 0);
                 }
             }
         }
 
-        private float GetLastY()
+        private IEnumerator SpinCoroutine()
         {
-            return SlotElements.Max(slotElement => slotElement.transform.position.y);
+            _isSpinning = true;
+
+            // 1. Фаза вращения
+            float timerSpin = 0;
+            while (timerSpin < speedControll.timeSpin)
+            {
+                timerSpin += Time.deltaTime;
+                MoveSlots(speedControll.speed * Time.deltaTime);
+                yield return null;
+            }
+
+            SetFinalVisuals();
+
+            // 2. Фаза замедления
+            var decelerationTimer = 0f;
+            var initialSpeed = speedControll.speed;
+            while (decelerationTimer < speedControll.decelerationTime)
+            {
+                decelerationTimer += Time.deltaTime;
+                var t = decelerationTimer / speedControll.decelerationTime;
+                var currentSpeed = Mathf.Lerp(initialSpeed, speedControll.minSpeed, t);
+                MoveSlots(currentSpeed * Time.deltaTime, false);
+                yield return null;
+            }
+
+            // 3. Фаза финального выравнивания
+            var sortedSlots = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
+            var firstSlot = sortedSlots.First();
+            var targetY = _yPositions.First();
+            var currentY = GetLocalY(firstSlot.transform);
+
+            var travelDistance = 0f;
+            var maxTravel = spaceY * 2; // Максимальное расстояние для избежания вечного цикла
+
+            while (currentY > targetY && travelDistance < maxTravel)
+            {
+                var moveDelta = speedControll.minSpeed * Time.deltaTime;
+                MoveSlots(moveDelta, false);
+                travelDistance += moveDelta;
+                currentY = GetLocalY(firstSlot.transform);
+                yield return null;
+            }
+
+            // Финальная доводка и расстановка всех элементов по местам
+            var finalOffset = targetY - GetLocalY(firstSlot.transform);
+            foreach (var slot in SlotElements)
+            {
+                MoveSlot(slot.transform, finalOffset);
+            }
+
+            // Пересортировка и финальное выравнивание по эталонным позициям
+            sortedSlots = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
+            for (var i = 0; i < sortedSlots.Length; i++)
+            {
+                SetLocalY(sortedSlots[i].transform, _yPositions[i]);
+            }
+
+            _isSpinning = false;
+            OnStop?.Invoke();
         }
 
-        private void SetSpriteEnd()
+        private void MoveSlots(float delta, bool resetVisuals = true)
         {
-            for (int i = 0; i < countSlotElement; i++)
+            foreach (var slot in SlotElements)
             {
-                SlotElements[i].Sprite = _spritesEnd[i];
+                MoveSlot(slot.transform, -delta);
+
+                if (GetLocalY(slot.transform) <= _resetPositionY)
+                {
+                    var highestY = SlotElements.Max(s => GetLocalY(s.transform));
+                    SetLocalY(slot.transform, highestY + spaceY);
+
+                    if (resetVisuals) slot.SetVisuals(GetRandomVisualData());
+                }
             }
         }
 
-        private void SetStartPositions()
+        private void MoveSlot(Transform t, float yDelta)
         {
-            for (int j = 0; j < SlotElements.Length; j++)
+            if (t is RectTransform rt)
             {
-                SlotElements[j].transform.position = new Vector2(transform.position.x, yPositions[j]);
+                rt.anchoredPosition += new Vector2(0, yDelta);
+            }
+            else
+            {
+                t.localPosition += new Vector3(0, yDelta, 0);
             }
         }
 
-        private Sprite GetRandomSprite()
+        private float GetLocalY(Transform t)
         {
-            return _sprites[Random.Range(0, _sprites.Length)];
+            return (t is RectTransform rt) ? rt.anchoredPosition.y : t.localPosition.y;
         }
 
-        public void Spin(Sprite[] allSprites, Sprite[] spritesEnd)
+        private void SetLocalY(Transform t, float y)
         {
-            SetStartPositions();
-            _sprites = allSprites;
-            _spritesEnd = spritesEnd;
-
-            for (int i = SlotElements.Length - 1; i >= countSlotElement; i--)
+            if (t is RectTransform rt)
             {
-                if (_sprites != null)
-                    SlotElements[i].Sprite = GetRandomSprite();
+                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
             }
+            else
+            {
+                t.localPosition = new Vector3(t.localPosition.x, y, t.localPosition.z);
+            }
+        }
+
+        private void SetFinalVisuals()
+        {
+            // Сортируем слоты по их текущей позиции, чтобы правильно назначить финальные спрайты
+            var sortedByY = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
+            for (var i = 0; i < sortedByY.Length; i++)
+            {
+                var visualIndex = i % countSlotElement;
+                if (visualIndex < _finalVisuals.Length)
+                {
+                    sortedByY[i].SetVisuals(_finalVisuals[visualIndex]);
+                }
+            }
+        }
+
+        private SlotVisualData GetRandomVisualData()
+        {
+            if (_allSpritesData == null || _allSpritesData.visuals.Length == 0) return null;
+            var randomIndex = Random.Range(0, _allSpritesData.visuals.Length);
+            return _allSpritesData.visuals[randomIndex];
+        }
+
+        public void Spin(SpritesData allSpritesData, SlotVisualData[] finalVisuals)
+        {
+            _allSpritesData = allSpritesData;
+            _finalVisuals = finalVisuals;
+
+            foreach (var slot in SlotElements) slot.SetVisuals(GetRandomVisualData());
 
             StartCoroutine(SpinCoroutine());
         }
@@ -138,30 +208,9 @@ namespace Neo.Bonus
             _isSpinning = false;
         }
 
-        public void SetSprites(Sprite sprite)
+        public void SetVisuals(SlotVisualData data)
         {
-            foreach (var s in SlotElements)
-            {
-                s.Sprite = sprite;
-            }
-        }
-
-        public void OnValidate()
-        {
-            yPositions = new float[countSlotElement * 2];
-            _resetPosition = transform.position.y - spaceY;
-
-            if (_spritesEnd.Length != countSlotElement)
-                _spritesEnd = new Sprite[countSlotElement];
-
-            SlotElements = GetComponentsInChildren<SlotElement>(true);
-
-            for (int i = 0; i < SlotElements.Length; i++)
-            {
-                yPositions[i] = transform.position.y + spaceY * i;
-            }
-
-            SetStartPositions();
+            foreach (var s in SlotElements) s.SetVisuals(data);
         }
     }
 }

@@ -379,14 +379,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c3f5252abb85c24b8d4c0cee5aea9cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _chanceManager:
-    chances:
-    - value: 0.5052138
-    - value: 0.3035118
-    - value: 0.17465742
-    - value: 0.01661697
-    preserveFirstChance: 1
-  _chanceData: {fileID: 0}
+  manager:
+    entries: []
+    autoNormalize: 1
+    normalizeTarget: 1
+    distributeEvenlyWhenZero: 1
+  chanceData: {fileID: 0}
+  logDebugOnce: 0
   OnIdGenerated:
     m_PersistentCalls:
       m_Calls:
@@ -752,12 +751,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _text: {fileID: 2009571022}
+  text: {fileID: 2009571022}
   _separator: .
   _decimal: 2
   startAdd: 'Prize: <color=red>'
   endAdd: </color>
   _indexOffset: 0
+  _timeAnim: 0.25
+  _ease: 6
+  _onEnableAnim: 1
+  currentNum: 0
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2009571022
 MonoBehaviour:
   m_ObjectHideFlags: 0

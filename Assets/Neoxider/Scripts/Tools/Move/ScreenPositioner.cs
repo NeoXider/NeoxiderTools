@@ -2,23 +2,27 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Neo;
+using Neo.Extensions;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Neo.Tools
 {
     public class ScreenPositioner : MonoBehaviour
     {
-        [Header("Position Settings")]
-        [SerializeField] private ScreenEdge _screenEdge = ScreenEdge.TopLeft;
-        [SerializeField] private Vector2 _offset = Vector2.zero;
+        [Header("Position Settings")] public bool _useScreenPosition = false;
+        public Vector2 _positionScreen = Vector2.zero;
+
+        [Space] public ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
+
+        [Space] public Vector2 _offsetScreen = Vector2.zero;
+        public Vector2 _offset = Vector2.zero;
+
         [SerializeField] private bool _useDepth;
         [SerializeField] private float _depth = 10f;
-    
-        [Header("Rotation Settings")]
-        [SerializeField] private float _angle = 0;
 
-        [Header("References")]
-        [SerializeField] private Camera _targetCamera;
+        [Header("References")] [SerializeField]
+        private Camera _targetCamera;
 
         private void Start()
         {
@@ -42,25 +46,29 @@ namespace Neo.Tools
             }
 
             ApplyScreenPosition();
-            ApplyRotation();
         }
 
         private void ApplyScreenPosition()
         {
-            float z = transform.position.z;
-            transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
-                _screenEdge,
-                _offset,
-                _depth
-            );
-            
-            if(!_useDepth)
+            var z = transform.position.z;
+
+            if (_useScreenPosition)
+                transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
+                    ScreenEdge.BottomLeft,
+                    _positionScreen,
+                    _depth
+                );
+            else
+                transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
+                    _screenEdge,
+                    _offsetScreen,
+                    _depth
+                );
+
+            if (!_useDepth)
                 transform.SetPosition(z: z);
-        }
-        
-        private void ApplyRotation()
-        {
-            transform.rotation = Quaternion.Euler(0, 0, _angle);
+
+            transform.AddPosition(_offset);
         }
 
         private void OnValidate()
@@ -72,7 +80,7 @@ namespace Neo.Tools
         public void Configure(ScreenEdge edge, Vector2 offset, float depth)
         {
             _screenEdge = edge;
-            _offset = offset;
+            _offsetScreen = offset;
             _depth = depth;
             UpdatePositionAndRotation();
         }

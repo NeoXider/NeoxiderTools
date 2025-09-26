@@ -1,5 +1,8 @@
+using System.Linq;
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Neo.Bonus
 {
@@ -8,44 +11,57 @@ namespace Neo.Bonus
         [SerializeField] private bool _singleUse = true;
         [SerializeField] private bool _canUse = true;
 
-        [Header("Stop Timing")]
-        [SerializeField] private float _autoStopTime = 0;
+        [Header("Stop Timing")] [SerializeField]
+        private float _autoStopTime = 0;
+
         [SerializeField] private float _extraSpinTime = 1f;
 
-        [Space]
-        [SerializeField] private CanvasGroup _canvasGroup;
+        [Space] [SerializeField] private CanvasGroup _canvasGroup;
 
-        [Header("Transforms")]
-        [Range(-360, 360)]
-        [SerializeField] private float _offsetZ = 0;
+        [Header("Transforms")] [Range(-360, 360)] [SerializeField]
+        private float _offsetZ = 0;
+
+        [Header("Transforms")] [Range(-360, 360)] [SerializeField]
+        private float _wheelOffsetZ = 0;
+
+
         [SerializeField] private RectTransform _wheelTransform;
         [SerializeField] private RectTransform _arrow;
 
-        [Space]
-        [Header("Spin Settings")]
-        [SerializeField] private bool _rotateLeft = true;
+        [Space] [Header("Spin Settings")] [SerializeField]
+        private bool _rotateLeft = true;
+
         [SerializeField] private float _initialAngularVelocity = 450f;
         [SerializeField] private float _angularDeceleration = 50f;
 
-        [Header("Alignment")]
-        [SerializeField] private bool _enableAlignment = false;
+        [Header("Alignment")] [SerializeField] private bool _enableAlignment = false;
         [SerializeField] private float _alignmentDuration = 0.5f;
 
-        public enum SpinState { Idle, Spinning, Decelerating, Aligning }
+        public enum SpinState
+        {
+            Idle,
+            Spinning,
+            Decelerating,
+            Aligning
+        }
+
         private SpinState _spinState = SpinState.Idle;
         public SpinState State => _spinState;
 
-        [Space]
-        [Header("Prize Items")]
-        [SerializeField] private bool _autoArrangePrizes = true;
+        [Space] [Header("Prize Items")] [SerializeField]
+        private bool _autoArrangePrizes = true;
+
         [SerializeField] private bool _setPrizes;
-        [SerializeField] private GameObject[] _prizes;
+
+        [FormerlySerializedAs("_prizes")] [SerializeField]
+        private GameObject[] items;
+
         [SerializeField] private float _prizeDistance = 200f;
 
-        [Space]
-        [Header("Debug")]
-        [SerializeField] private bool _debugLogId = false;
-        [SerializeField, Range(0, 360)] private float _wheelAngleInspector = 0f;
+        [Space] [Header("Debug")] [SerializeField]
+        private bool _debugLogId = false;
+
+        [SerializeField] [Range(0, 360)] private float _wheelAngleInspector = 0f;
 
         private float _alignmentElapsed;
         private float _alignmentStartAngle;
@@ -53,11 +69,12 @@ namespace Neo.Bonus
         private float _currentAngularVelocity;
 
         public UnityEvent<int> OnWinIdVariant;
-        public GameObject[] Prizes => _prizes;
+        public GameObject[] Items => items;
 
         public bool canUse
         {
-            get => _canUse; set
+            get => _canUse;
+            set
             {
                 _canUse = value;
                 if (_canvasGroup != null)
@@ -83,7 +100,8 @@ namespace Neo.Bonus
 
         private void RotateWheel()
         {
-            _wheelTransform.Rotate(Vector3.back * ((_rotateLeft) ? _currentAngularVelocity : -_currentAngularVelocity) * Time.deltaTime);
+            _wheelTransform.Rotate(Vector3.back * (_rotateLeft ? _currentAngularVelocity : -_currentAngularVelocity) *
+                                   Time.deltaTime);
             if (_spinState == SpinState.Decelerating)
             {
                 _currentAngularVelocity -= Time.deltaTime * _angularDeceleration;
@@ -100,8 +118,8 @@ namespace Neo.Bonus
         private void AlignWheel()
         {
             _alignmentElapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
-            float angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle, t);
+            var t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
+            var angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle - _wheelOffsetZ, t);
             _wheelTransform.rotation = Quaternion.Euler(0, 0, angle);
             if (t >= 1f)
                 EndRotation();
@@ -117,13 +135,13 @@ namespace Neo.Bonus
 
         private float CalculateTargetAngle()
         {
-            int resultId = GetResultId();
-            float sectorAngle = 360f / _prizes.Length;
-            float arrowAngle = (_arrow != null) ? _arrow.transform.eulerAngles.z : 0f;
-            float currentWheelAngle = _wheelTransform.rotation.eulerAngles.z;
-            float currentRelative = (currentWheelAngle - arrowAngle + 360f) % 360f;
-            float targetRelative = resultId * sectorAngle;
-            float diff = targetRelative - currentRelative;
+            var resultId = GetResultId();
+            var sectorAngle = 360f / items.Length;
+            var arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
+            var currentWheelAngle = _wheelTransform.rotation.eulerAngles.z;
+            var currentRelative = (currentWheelAngle - arrowAngle + 360f) % 360f;
+            var targetRelative = resultId * sectorAngle;
+            var diff = targetRelative - currentRelative;
             if (diff > 180f)
                 diff -= 360f;
             else if (diff < -180f)
@@ -141,18 +159,22 @@ namespace Neo.Bonus
 
         private int GetResultId()
         {
-            float sectorAngle = 360f / _prizes.Length;
-            float wheelAngle = _wheelTransform.rotation.eulerAngles.z - _offsetZ;
-            float arrowAngle = (_arrow != null) ? _arrow.transform.eulerAngles.z : 0f;
-            float relativeAngle = (wheelAngle - arrowAngle + 360f) % 360f;
-            int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
-            return (id + _prizes.Length) % _prizes.Length;
+            var sectorAngle = 360f / items.Length;
+            var wheelAngle = _wheelTransform.rotation.eulerAngles.z - _offsetZ;
+            var arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
+            var relativeAngle = (wheelAngle - arrowAngle + 360f) % 360f;
+            var id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
+            return (id + items.Length) % items.Length;
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public void Spin()
         {
-            if (_prizes.Length == 0)
+            if (items.Length == 0)
                 return;
             if (_spinState == SpinState.Idle && (!_singleUse || (_singleUse && _canUse)))
             {
@@ -160,11 +182,16 @@ namespace Neo.Bonus
                 _spinState = SpinState.Spinning;
                 _currentAngularVelocity = _initialAngularVelocity;
             }
+
             if (_autoStopTime > 0)
                 Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
         [Button]
+#endif
         public void Stop()
         {
             if (_spinState == SpinState.Idle)
@@ -176,38 +203,31 @@ namespace Neo.Bonus
 
         private void ArrangePrizes()
         {
-            if (_prizes == null || _prizes.Length == 0)
+            if (items == null || items.Length == 0)
                 return;
-            int count = _prizes.Length;
-            float angleStep = 360f / count;
-            for (int i = 0; i < count; i++)
-            {
-                float angle = (count - i) * angleStep + 90f + _offsetZ;
-                float rad = angle * Mathf.Deg2Rad;
-                _prizes[i].transform.localPosition = new Vector2(Mathf.Cos(rad) * _prizeDistance, Mathf.Sin(rad) * _prizeDistance);
-                _prizes[i].transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
-            }
+
+            items.Select(t => t.transform)
+                .ArrangeInCircle(transform.position,
+                    _prizeDistance,
+                    _offsetZ);
         }
 
         public GameObject GetPrize(int id)
         {
-            return _prizes[id];
+            return items[id];
         }
 
         private void OnValidate()
         {
-            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
+            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector - _wheelOffsetZ);
             if (_debugLogId)
                 Debug.Log("Wheel Id: " + GetResultId());
             _canvasGroup ??= GetComponent<CanvasGroup>();
 
             if (_setPrizes && _wheelTransform != null)
             {
-                _prizes = new GameObject[_wheelTransform.childCount];
-                for (int i = 0; i < _prizes.Length; i++)
-                {
-                    _prizes[i] = _wheelTransform.GetChild(i).gameObject;
-                }
+                items = new GameObject[_wheelTransform.childCount];
+                for (var i = 0; i < items.Length; i++) items[i] = _wheelTransform.GetChild(i).gameObject;
 
                 _setPrizes = false;
             }

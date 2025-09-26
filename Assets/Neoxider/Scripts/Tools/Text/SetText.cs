@@ -1,9 +1,9 @@
 using System;
 using DG.Tweening;
+using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Neo
 {
@@ -42,6 +42,7 @@ namespace Neo
             [SerializeField] private Ease _ease = Ease.OutQuad;
             [SerializeField] private bool _onEnableAnim = true;
             private Tween _tween;
+            public float currentNum = 0;
 
             #endregion
 
@@ -72,13 +73,9 @@ namespace Neo
                     _separator = value;
                     // Update text if it's currently displaying a number
                     if (text != null && !string.IsNullOrEmpty(text.text))
-                    {
                         // Try to parse the current text as a number and update it
-                        if (float.TryParse(text.text.Replace(_separator, ""), out float currentValue))
-                        {
+                        if (float.TryParse(text.text.Replace(_separator, ""), out var currentValue))
                             Set(currentValue);
-                        }
-                    }
                 }
             }
 
@@ -93,13 +90,9 @@ namespace Neo
                     _decimal = Mathf.Clamp(value, 0, 10);
                     // Update text if it's currently displaying a number
                     if (text != null && !string.IsNullOrEmpty(text.text))
-                    {
                         // Try to parse the current text as a number and update it
-                        if (float.TryParse(text.text.Replace(_separator, ""), out float currentValue))
-                        {
+                        if (float.TryParse(text.text.Replace(_separator, ""), out var currentValue))
                             Set(currentValue);
-                        }
-                    }
                 }
             }
 
@@ -111,8 +104,6 @@ namespace Neo
                 get => _indexOffset;
                 set => _indexOffset = value;
             }
-
-            public float currentNum;
 
             #endregion
 
@@ -169,9 +160,12 @@ namespace Neo
 
                 if (_tween != null && _tween.IsActive())
                     _tween.Kill();
-                
-                float startValue = currentNum;
-                float endValue = value;
+
+                if (_onEnableAnim && !gameObject.activeSelf)
+                    currentNum = 0;
+
+                var startValue = currentNum;
+                var endValue = value;
 
                 _tween = DOTween.To(() => startValue, x =>
                 {
@@ -179,17 +173,18 @@ namespace Neo
                     Set(x.FormatWithSeparator(_separator, _decimal));
                 }, endValue, _timeAnim).SetEase(_ease);
 
-                if (_onEnableAnim && !gameObject.activeSelf)
-                {
-                    _tween?.Pause();
-                }
+                if (_onEnableAnim && !gameObject.activeSelf) _tween?.Pause();
             }
 
             /// <summary>
             /// Sets the text to display a string value
             /// </summary>
             /// <param name="value">The string value to display</param>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void Set(string value = "0")
             {
                 if (this.text == null)
@@ -220,7 +215,7 @@ namespace Neo
                 value = Mathf.Clamp(value, 0, 100);
 
                 // Format with decimal places
-                string formattedValue = value.FormatWithSeparator(_separator, _decimal);
+                var formattedValue = value.FormatWithSeparator(_separator, _decimal);
 
                 // Add percent sign if requested
                 if (addPercentSign)
@@ -243,7 +238,7 @@ namespace Neo
                 }
 
                 // Format with decimal places
-                string formattedValue = value.FormatWithSeparator(_separator, _decimal);
+                var formattedValue = value.FormatWithSeparator(_separator, _decimal);
 
                 // Add currency symbol
                 Set(currencySymbol + formattedValue);

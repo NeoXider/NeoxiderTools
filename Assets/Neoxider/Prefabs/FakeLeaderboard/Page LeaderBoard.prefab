@@ -370,6 +370,9 @@ MonoBehaviour:
   timeMove: 0.5
   offsetY: 500
   useAnimPlayer: 1
+  scale: 1.2
+  durationAnimPlayer: 0.3
+  useAnimStartScale: 0
   useSortEnable: 1
   Enable:
     m_PersistentCalls:

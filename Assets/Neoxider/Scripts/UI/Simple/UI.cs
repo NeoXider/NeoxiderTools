@@ -1,6 +1,7 @@
 using Neo;
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,32 +13,31 @@ namespace Neo
         {
             [SerializeField] private GameObject[] _pages;
 
-            [Header("ButtonAutoSetChilds")]
-            [SerializeField] private bool _setChild = false;
+            [Header("ButtonAutoSetChilds")] [SerializeField]
+            private bool _setChild = false;
+
             [SerializeField] private Transform _parentPages;
 
-            [Header("Current page (-1 = None, ActivePage)")]
-            [Min(-1)] public int id;
+            [Header("Current page (-1 = None, ActivePage)")] [Min(-1)]
+            public int id;
 
             public bool is_debug_change;
 
-            [Space]
-            [Header("On Load Active Page (-1 = None, StartPage)")]
-            [Min(-1)] public int startId;
-            
-            [Space]
-            [SerializeField] private float _timeDelay = 1.5f;
+            [Space] [Header("On Load Active Page (-1 = None, StartPage)")] [Min(-1)]
+            public int startId;
+
+            [Space] [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
-            public static UI Instance;
-            
+            public static UI I;
+
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
 
             private void Awake()
             {
-                Instance = this;
-                
-                if(id >= 0)
+                I = this;
+
+                if (id >= 0)
                     SetPage(startId);
             }
 
@@ -54,10 +54,7 @@ namespace Neo
 
                 OnChangePage?.Invoke(id);
 
-                if(id == 0)
-                {
-                    OnStartPage?.Invoke(); 
-                }
+                if (id == 0) OnStartPage?.Invoke();
             }
 
             [Button]
@@ -110,29 +107,23 @@ namespace Neo
 
             private void OnValidate()
             {
-                if(!Application.isPlaying && is_debug_change)
+                if (!Application.isPlaying && is_debug_change)
                     SetPage(id);
 
                 if (_setChild)
                 {
                     _setChild = false;
 
-                    List<GameObject> childs = new List<GameObject>();
+                    var childs = new List<GameObject>();
 
-                    Transform parent = _parentPages != null ? _parentPages.transform : transform;
+                    var parent = _parentPages != null ? _parentPages.transform : transform;
 
                     foreach (Transform child in parent)
-                    {
                         if (child.gameObject != gameObject)
-                        {
                             childs.Add(child.gameObject);
-                        }
-                    }
 
                     _pages = childs.ToArray();
                 }
-
-
             }
         }
     }

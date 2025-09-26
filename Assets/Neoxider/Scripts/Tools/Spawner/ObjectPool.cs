@@ -7,8 +7,9 @@ namespace Neo
     [System.Serializable]
     public class ObjectPool<T> where T : Object
     {
-        [Header("Object Pool Settings")]
-        [SerializeField] private T _item;
+        [Header("Object Pool Settings")] [SerializeField]
+        private T _item;
+
         [SerializeField] private int _initialPoolSize = 10;
         [SerializeField] private bool _expandPool = true;
 
@@ -25,10 +26,7 @@ namespace Neo
 
         private void InitializePool()
         {
-            for (int i = 0; i < _initialPoolSize; i++)
-            {
-                CreateNewObject();
-            }
+            for (var i = 0; i < _initialPoolSize; i++) CreateNewObject();
         }
 
         public T GetObject(Vector3 position = default, Quaternion rotation = default)
@@ -36,17 +34,11 @@ namespace Neo
             T obj;
 
             if (pool.Count > 0)
-            {
                 obj = pool.Dequeue();
-            }
             else if (_expandPool)
-            {
                 obj = CreateNewObject();
-            }
             else
-            {
                 return null;
-            }
 
             if (obj is GameObject gameObject)
             {
@@ -63,20 +55,14 @@ namespace Neo
         public void ReturnObject(T obj)
         {
             items.Remove(obj);
-            if (obj is GameObject gameObject)
-            {
-                gameObject.SetActive(false);
-            }
+            if (obj is GameObject gameObject) gameObject.SetActive(false);
             pool.Enqueue(obj);
         }
 
         private T CreateNewObject()
         {
-            T obj = Object.Instantiate(_item);
-            if (obj is GameObject gameObject)
-            {
-                gameObject.SetActive(false);
-            }
+            var obj = Object.Instantiate(_item);
+            if (obj is GameObject gameObject) gameObject.SetActive(false);
             pool.Enqueue(obj);
             return obj;
         }
@@ -90,10 +76,7 @@ namespace Neo
 
         public void ClearPool()
         {
-            while (items.Count > 0)
-            {
-                ReturnObject(items[0]);
-            }
+            while (items.Count > 0) ReturnObject(items[0]);
         }
 
         public int GetPoolSize()
@@ -102,4 +85,3 @@ namespace Neo
         }
     }
 }
-

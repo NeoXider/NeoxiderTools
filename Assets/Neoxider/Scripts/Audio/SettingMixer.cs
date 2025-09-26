@@ -1,3 +1,5 @@
+using System;
+using Neo.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -8,11 +10,16 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
         public class SettingMixer : MonoBehaviour
         {
+            public string nameMixer = "Master";
             public AudioMixer audioMixer;
 
-            public void SetVolume(float volume)
+            public readonly float Min = -80;
+            public readonly float Max = 20;
+
+            public void SetVolume(string name = "", float volume = 0)
             {
-                audioMixer.SetFloat("Master", volume);
+                name = string.IsNullOrEmpty(name) ? nameMixer : name;
+                audioMixer.SetFloat(name, volume);
             }
         }
     }

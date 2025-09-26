@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,8 +13,7 @@ namespace Neo.Bonus
         public ItemCollectionData[] itemCollectionDatas;
         public bool[] enabledItems;
 
-        [Space]
-        public UnityEvent<int> OnGetItem;
+        [Space] public UnityEvent<int> OnGetItem;
         public UnityEvent OnLoadItems;
 
         private void Awake()
@@ -27,21 +27,24 @@ namespace Neo.Bonus
         {
             enabledItems = new bool[itemCollectionDatas.Length];
 
-            for (int i = 0; i < itemCollectionDatas.Length; i++)
-            {
+            for (var i = 0; i < itemCollectionDatas.Length; i++)
                 enabledItems[i] = PlayerPrefs.GetInt($"skin_{i}", 0) == 1;
-            }
 
             OnLoadItems?.Invoke();
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public ItemCollectionData GetPrize()
         {
             var uniqs = itemCollectionDatas.Where(x => !enabledItems[Array.IndexOf(itemCollectionDatas, x)]).ToArray();
 
             if (uniqs.Length == 0) return null;
 
-            int prizeId = Array.IndexOf(itemCollectionDatas, randomPrize ? uniqs.GetRandomElement() : uniqs.First());
+            var prizeId = Array.IndexOf(itemCollectionDatas, randomPrize ? uniqs.GetRandomElement() : uniqs.First());
 
             SaveCollection(prizeId);
 

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Neo.UI
 {
-    [AddComponentMenu("Neoxider/UI" +nameof(VariantView))]
+    [AddComponentMenu("Neoxider/UI/" + nameof(VariantView))]
     public class VariantView : MonoBehaviour
     {
         #region NESTED_CLASSES
@@ -48,33 +48,24 @@ namespace Neo.UI
 
         #region FIELDS
 
-        [Header("Image / Sprite Variants")]
-        [SerializeField]
+        [Header("Image / Sprite Variants")] [SerializeField]
         private ImageVariant[] _imageVariants = new ImageVariant[0];
 
-        [Header("Image / Color Variants")]
-        [SerializeField]
+        [Header("Image / Color Variants")] [SerializeField]
         private ImageColor[] _imageColors = new ImageColor[0];
 
-        [Header("TMP_Text / Color / Text Variants")]
-        [SerializeField]
+        [Header("TMP_Text / Color / Text Variants")] [SerializeField]
         private TmpColorTextVariant[] _textColorVariants = new TmpColorTextVariant[0];
 
-        [Space]
-        [Header("GameObject Variants (Array)")]
-        [SerializeField]
+        [Space] [Header("GameObject Variants (Array)")] [SerializeField]
         private GameObjectVariant[] _objectVariants = new GameObjectVariant[0];
 
-        [Space]
-        [Header("State Index / Build Settings")]
-        [SerializeField]
+        [Space] [Header("State Index / Build Settings")] [SerializeField]
         private int _currentStateIndex = 0;
 
-        [SerializeField]
-        private bool _isBuildPhase = false;
+        [SerializeField] private bool _isBuildPhase = false;
 
-        [SerializeField]
-        private int _maxStates = 0;
+        [SerializeField] private int _maxStates = 0;
 
         #endregion
 
@@ -164,9 +155,7 @@ namespace Neo.UI
             {
                 Array.Resize(ref gv.objects, newStateCount);
                 if (_currentStateIndex < gv.objects.Length && gv.objects[_currentStateIndex] != null)
-                {
                     gv.objects[newStateCount - 1] = gv.objects[_currentStateIndex];
-                }
             }
 
             _maxStates = newStateCount;
@@ -193,10 +182,7 @@ namespace Neo.UI
                     t.texts = new string[0];
             }
 
-            foreach (var gv in _objectVariants)
-            {
-                gv.objects = new GameObject[0];
-            }
+            foreach (var gv in _objectVariants) gv.objects = new GameObject[0];
 
             _maxStates = 0;
         }
@@ -228,29 +214,20 @@ namespace Neo.UI
         private void ImageVisual()
         {
             foreach (var v in _imageVariants)
-            {
                 if (_currentStateIndex < v.sprites.Length && v.image != null && v.sprites[_currentStateIndex] != null)
-                {
                     v.image.sprite = v.sprites[_currentStateIndex];
-                }
-            }
         }
 
         private void ImageColorVisual()
         {
             foreach (var c in _imageColors)
-            {
                 if (_currentStateIndex < c.colors.Length && c.image != null)
-                {
                     c.image.color = c.colors[_currentStateIndex];
-                }
-            }
         }
 
         private void TextColorVisual()
         {
             foreach (var t in _textColorVariants)
-            {
                 if (t.tmp != null)
                 {
                     if (_currentStateIndex < t.colors.Length)
@@ -259,7 +236,6 @@ namespace Neo.UI
                     if (t.use_text && _currentStateIndex < t.texts.Length)
                         t.tmp.text = t.texts[_currentStateIndex];
                 }
-            }
         }
 
         private void VariantVisual()
@@ -268,13 +244,9 @@ namespace Neo.UI
             // у нас массив objects длиной _maxStates.
             // На _currentStateIndex включаем, остальные отключаем.
             foreach (var gv in _objectVariants)
-            {
-                for (int i = 0; i < gv.objects.Length; i++)
-                {
+                for (var i = 0; i < gv.objects.Length; i++)
                     if (gv.objects[i] != null)
                         gv.objects[i].SetActive(i == _currentStateIndex);
-                }
-            }
         }
 
         private void OnValidate()
@@ -300,10 +272,7 @@ namespace Neo.UI
 
             // 4) GameObjectVariant[] – 
             // у каждого gv один массив gv.objects
-            foreach (var gv in _objectVariants)
-            {
-                _maxStates = Math.Max(_maxStates, gv.objects.Length);
-            }
+            foreach (var gv in _objectVariants) _maxStates = Math.Max(_maxStates, gv.objects.Length);
 
             // Ресайзим массивы до _maxStates
             foreach (var v in _imageVariants)
@@ -319,31 +288,20 @@ namespace Neo.UI
                     ResizeArray(ref t.texts, _maxStates);
             }
 
-            foreach (var gv in _objectVariants)
-            {
-                ResizeArray(ref gv.objects, _maxStates);
-            }
+            foreach (var gv in _objectVariants) ResizeArray(ref gv.objects, _maxStates);
 
             // Если BuildPhase включён, сохраняем текущее значение в последний слот
             if (_isBuildPhase && _maxStates > 0)
             {
-                int lastIndex = _maxStates - 1;
+                var lastIndex = _maxStates - 1;
 
                 foreach (var v in _imageVariants)
-                {
                     if (v.sprites.Length > lastIndex && v.image != null)
-                    {
                         v.sprites[lastIndex] = v.image.sprite;
-                    }
-                }
 
                 foreach (var c in _imageColors)
-                {
                     if (c.colors.Length > lastIndex && c.image != null)
-                    {
                         c.colors[lastIndex] = c.image.color;
-                    }
-                }
 
                 foreach (var t in _textColorVariants)
                 {
@@ -365,14 +323,10 @@ namespace Neo.UI
             if (newSize < 0) return;
 
             var newArray = new T[newSize];
-            for (int i = 0; i < Math.Min(array.Length, newSize); i++)
-            {
-                newArray[i] = array[i];
-            }
+            for (var i = 0; i < Math.Min(array.Length, newSize); i++) newArray[i] = array[i];
             array = newArray;
         }
     }
+
     #endregion
-
 }
-

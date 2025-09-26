@@ -13,7 +13,8 @@ namespace Neo.Tools
         public void Spawn()
         {
             print("Spawn");
-            Instantiate(prefab, transform.position + ofset, Quaternion.Euler(eulerAngle), useParent ? transform : transform.root);
+            Instantiate(prefab, transform.position + ofset, Quaternion.Euler(eulerAngle),
+                useParent ? transform : transform.root);
         }
     }
 }

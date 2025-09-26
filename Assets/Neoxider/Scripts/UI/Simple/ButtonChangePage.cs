@@ -42,17 +42,16 @@ namespace Neo
 
                 if (_canSwitchPage)
                 {
-                    if (_onePage) SetOnePage(_idPage);
+                    if (_onePage)
+                    {
+                        SetOnePage(_idPage);
+                    }
                     else
                     {
                         if (_useAnimPage)
-                        {
                             SetPageAnim(_idPage);
-                        }
                         else
-                        {
                             SetPage(_idPage);
-                        }
                     }
                 }
 
@@ -61,37 +60,32 @@ namespace Neo
 
             public void SetOnePage(int id)
             {
-                UI.Instance?.SetOnePage(id);
+                UI.I?.SetOnePage(id);
             }
 
             public void SetPage(int id)
             {
-                UI.Instance?.SetPage(id);
+                UI.I?.SetPage(id);
             }
 
             public void SetPageAnim(int id)
             {
-                UI.Instance?.SetPageAnim(id);
+                UI.I?.SetPageAnim(id);
             }
 
             public void OnPointerUp(PointerEventData eventData)
             {
-                if (intecactable && _useAnimImage)
-                {
-                    transform.DOScale(startScale, _timeAnimImage);
-                }
+                if (intecactable && _useAnimImage) transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
             }
 
             public void OnPointerDown(PointerEventData eventData)
             {
                 if (intecactable && _useAnimImage)
-                {
                     if (intecactable && _useAnimImage)
                     {
-                        float scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
-                        transform.DOScale(scale, _timeAnimImage);
+                        var scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
+                        transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
                     }
-                }
             }
 
             private void OnValidate()

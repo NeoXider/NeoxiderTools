@@ -32,13 +32,9 @@ namespace Neo
                 OnChangeFlip?.Invoke(!value);
 
                 if (value)
-                {
                     ON?.Invoke();
-                }
                 else
-                {
                     OFF?.Invoke();
-                }
             }
 
             private void OnValidate()

@@ -23,58 +23,86 @@ using UnityEngine.Events;
 public class MouseMover3D : MonoBehaviour
 {
     // ── PUBLIC CONFIG ───────────────────────────────────────────────
-    public enum MoveMode  { DeltaNormalized, DeltaRaw, MoveToPointHold, ClickToPoint, Direction }
-    public enum AxisPlane { XZ, XY, YZ, X, Y, Z }
+    public enum MoveMode
+    {
+        DeltaNormalized,
+        DeltaRaw,
+        MoveToPointHold,
+        ClickToPoint,
+        Direction
+    }
 
-    [Header("Mode")]          [SerializeField] MoveMode  mode      = MoveMode.DeltaNormalized;
-    [Header("Plane / Axis")]  [SerializeField] AxisPlane plane     = AxisPlane.XZ;
-    [Header("Speed (u/s)")]   [SerializeField] float     speed     = 6f;
-    [Header("Δ-sensitivity")] [SerializeField] float     pxToWorld = 0.01f;   // 1 px → m
-    [Header("Raycast mask (optional ground)")]
-    [SerializeField] LayerMask groundMask;
+    public enum AxisPlane
+    {
+        XZ,
+        XY,
+        YZ,
+        X,
+        Y,
+        Z
+    }
 
-    [Header("Events")]  public UnityEvent OnMoveStart; public UnityEvent OnMoveStop;
+    [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
+
+    [Header("Plane / Axis")] [SerializeField]
+    private AxisPlane plane = AxisPlane.XZ;
+
+    [Header("Speed (u/s)")] [SerializeField]
+    private float speed = 6f;
+
+    [Header("Δ-sensitivity")] [SerializeField]
+    private float pxToWorld = 0.01f; // 1 px → m
+
+    [Header("Raycast mask (optional ground)")] [SerializeField]
+    private LayerMask groundMask;
+
+    [Header("Events")] public UnityEvent OnMoveStart;
+    public UnityEvent OnMoveStop;
 
     // ── STATE ───────────────────────────────────────────────────────
     public bool IsMoving { get; private set; }
 
-    Camera      cam;
-    Rigidbody   rb;
+    private Camera cam;
+    private Rigidbody rb;
 
-    Vector3     desiredVel;       // m/s (только Delta-режимы)
-    Vector3     clickPoint;       // Direction-mode
-    Vector3     targetPoint;      // ClickToPoint-mode
-    bool        hasTarget;
-    Vector3     lastMousePos;     // px
-    bool        wasMoving;
+    private Vector3 desiredVel; // m/s (только Delta-режимы)
+    private Vector3 clickPoint; // Direction-mode
+    private Vector3 targetPoint; // ClickToPoint-mode
+    private bool hasTarget;
+    private Vector3 lastMousePos; // px
+    private bool wasMoving;
 
     // ── UNITY ───────────────────────────────────────────────────────
-    void Awake()
+    private void Awake()
     {
-        cam          = Camera.main;
-        rb           = GetComponent<Rigidbody>();
+        cam = Camera.main;
+        rb = GetComponent<Rigidbody>();
         lastMousePos = Input.mousePosition;
     }
 
-    void Update()
+    private void Update()
     {
-        ReadInput();              // не двигаемся здесь
+        ReadInput(); // не двигаемся здесь
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        Vector3 step = ComputeStep(Time.fixedDeltaTime);
+        var step = ComputeStep(Time.fixedDeltaTime);
         ApplyStep(step);
     }
 
     // ── INPUT --------------------------------------------------------
-    void ReadInput()
+    private void ReadInput()
     {
         if (Input.GetMouseButtonDown(0))
         {
             if (mode == MoveMode.ClickToPoint)
             {
-                if (RaycastCursor(out var pt)) { targetPoint = pt; hasTarget = true; }
+                if (RaycastCursor(out var pt))
+                {
+                    targetPoint = pt;
+                    hasTarget = true;
+                }
             }
             else if (mode == MoveMode.Direction)
             {
@@ -84,11 +112,11 @@ public class MouseMover3D : MonoBehaviour
 
         if (mode == MoveMode.DeltaNormalized || mode == MoveMode.DeltaRaw)
         {
-            Vector3 cur = Input.mousePosition;
-            Vector2 px  = (cur - lastMousePos);
+            var cur = Input.mousePosition;
+            Vector2 px = cur - lastMousePos;
             lastMousePos = cur;
 
-            Vector3 vel = PxToWorld(px) / Time.deltaTime;   // m/s
+            var vel = PxToWorld(px) / Time.deltaTime; // m/s
             if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-4f)
                 vel = vel.normalized * speed;
             desiredVel = RestrictAxes(vel);
@@ -96,7 +124,7 @@ public class MouseMover3D : MonoBehaviour
     }
 
     // ── STEP CALCULATION --------------------------------------------
-    Vector3 ComputeStep(float dt)
+    private Vector3 ComputeStep(float dt)
     {
         switch (mode)
         {
@@ -113,7 +141,7 @@ public class MouseMover3D : MonoBehaviour
             case MoveMode.ClickToPoint:
             {
                 if (!hasTarget) return Vector3.zero;
-                Vector3 d = MoveTowards(targetPoint, dt);
+                var d = MoveTowards(targetPoint, dt);
                 if (d == Vector3.zero) hasTarget = false;
                 return d;
             }
@@ -121,88 +149,95 @@ public class MouseMover3D : MonoBehaviour
             case MoveMode.Direction:
             {
                 if (!Input.GetMouseButton(0) || !RaycastCursor(out var cur)) return Vector3.zero;
-                Vector3 dir = RestrictAxes(cur - clickPoint);
+                var dir = RestrictAxes(cur - clickPoint);
                 if (dir.sqrMagnitude < 1e-4f) return Vector3.zero;
                 return dir.normalized * speed * dt;
             }
         }
+
         return Vector3.zero;
     }
 
     // ── APPLY STEP ---------------------------------------------------
-    void ApplyStep(Vector3 delta)
+    private void ApplyStep(Vector3 delta)
     {
-        bool movingNow = delta.sqrMagnitude > 1e-4f;
+        var movingNow = delta.sqrMagnitude > 1e-4f;
         if (movingNow && !wasMoving) OnMoveStart?.Invoke();
         if (!movingNow && wasMoving) OnMoveStop?.Invoke();
 
-        IsMoving  = movingNow;
+        IsMoving = movingNow;
         wasMoving = movingNow;
 
         if (!movingNow) return;
 
         if (rb) rb.MovePosition(rb.position + delta);
-        else    transform.Translate(delta, Space.World);
+        else transform.Translate(delta, Space.World);
     }
 
     // ── HELPERS ------------------------------------------------------
-    Vector3 MoveTowards(Vector3 target, float dt)
+    private Vector3 MoveTowards(Vector3 target, float dt)
     {
-        Vector3 diff = RestrictAxes(target - transform.position);
+        var diff = RestrictAxes(target - transform.position);
         if (diff.magnitude < 0.05f) return Vector3.zero;
 
-        float step = speed * dt;
+        var step = speed * dt;
         return diff.normalized * Mathf.Min(step, diff.magnitude);
     }
 
-    Vector3 PxToWorld(Vector2 px)
+    private Vector3 PxToWorld(Vector2 px)
     {
         return plane switch
         {
             AxisPlane.XZ => new Vector3(px.x, 0, px.y) * pxToWorld,
             AxisPlane.XY => new Vector3(px.x, px.y, 0) * pxToWorld,
             AxisPlane.YZ => new Vector3(0, px.x, px.y) * pxToWorld,
-            AxisPlane.X  => new Vector3(px.x, 0, 0)   * pxToWorld,
-            AxisPlane.Y  => new Vector3(0, px.y, 0)   * pxToWorld,
-            AxisPlane.Z  => new Vector3(0, 0, px.y)   * pxToWorld,
-            _            => Vector3.zero
+            AxisPlane.X => new Vector3(px.x, 0, 0) * pxToWorld,
+            AxisPlane.Y => new Vector3(0, px.y, 0) * pxToWorld,
+            AxisPlane.Z => new Vector3(0, 0, px.y) * pxToWorld,
+            _ => Vector3.zero
         };
     }
 
-    Vector3 RestrictAxes(Vector3 v) => plane switch
+    private Vector3 RestrictAxes(Vector3 v)
     {
-        AxisPlane.XZ => new Vector3(v.x, 0, v.z),
-        AxisPlane.XY => new Vector3(v.x, v.y, 0),
-        AxisPlane.YZ => new Vector3(0,  v.y, v.z),
-        AxisPlane.X  => new Vector3(v.x, 0,   0),
-        AxisPlane.Y  => new Vector3(0,   v.y, 0),
-        AxisPlane.Z  => new Vector3(0,   0,   v.z),
-        _            => v
-    };
+        return plane switch
+        {
+            AxisPlane.XZ => new Vector3(v.x, 0, v.z),
+            AxisPlane.XY => new Vector3(v.x, v.y, 0),
+            AxisPlane.YZ => new Vector3(0, v.y, v.z),
+            AxisPlane.X => new Vector3(v.x, 0, 0),
+            AxisPlane.Y => new Vector3(0, v.y, 0),
+            AxisPlane.Z => new Vector3(0, 0, v.z),
+            _ => v
+        };
+    }
 
-    bool RaycastCursor(out Vector3 world)
+    private bool RaycastCursor(out Vector3 world)
     {
-        Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+        var ray = cam.ScreenPointToRay(Input.mousePosition);
 
         // 1) Physics raycast, если указан mask
         if (groundMask.value != 0 && Physics.Raycast(ray, out var hit, 1000f, groundMask))
         {
-            world = hit.point; return true;
+            world = hit.point;
+            return true;
         }
 
         // 2) Пересекаем геометрическую плоскость
-        Plane pl = plane switch
+        var pl = plane switch
         {
             AxisPlane.XZ => new Plane(Vector3.up, transform.position),
             AxisPlane.XY => new Plane(Vector3.forward, transform.position),
             AxisPlane.YZ => new Plane(Vector3.right, transform.position),
-            _            => new Plane(Vector3.up, transform.position)
+            _ => new Plane(Vector3.up, transform.position)
         };
-        if (pl.Raycast(ray, out float t))
+        if (pl.Raycast(ray, out var t))
         {
-            world = ray.GetPoint(t); return true;
+            world = ray.GetPoint(t);
+            return true;
         }
 
-        world = Vector3.zero; return false;
+        world = Vector3.zero;
+        return false;
     }
 }

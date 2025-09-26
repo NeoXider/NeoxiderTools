@@ -7,18 +7,19 @@ namespace Neo
     namespace Tools
     {
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
-        [RequireComponent(typeof(Collider))]
         public class InteractiveObject : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
         {
             public bool interactable = true;
-            public UnityEvent onHoverEnter;
+
+            [SerializeField] private float doubleClickThreshold = 0.3f;
+
+            [Space] public UnityEvent onHoverEnter;
             public UnityEvent onHoverExit;
             public UnityEvent onClick;
             public UnityEvent onDoubleClick;
             public UnityEvent onRightClick;
 
             private float clickTime = 0f;
-            private float doubleClickThreshold = 0.3f;
 
             public void OnPointerEnter(PointerEventData eventData)
             {
@@ -39,13 +40,9 @@ namespace Neo
                 if (eventData.button == PointerEventData.InputButton.Left)
                 {
                     if (Time.time - clickTime < doubleClickThreshold)
-                    {
                         onDoubleClick.Invoke();
-                    }
                     else
-                    {
                         onClick.Invoke();
-                    }
 
                     clickTime = Time.time;
                 }

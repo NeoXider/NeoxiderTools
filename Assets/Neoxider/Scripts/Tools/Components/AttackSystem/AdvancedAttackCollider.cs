@@ -29,8 +29,8 @@ namespace Neo.Tools
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D
         public UnityEvent OnDeactivateTrigger; // Событие при деактивации триггера
 
-        private HashSet<Collider2D> hitColliders2D = new HashSet<Collider2D>(); // Отслеживание 2D попаданий
-        private HashSet<Collider> hitColliders3D = new HashSet<Collider>(); // Отслеживание 3D попаданий
+        private HashSet<Collider2D> hitColliders2D = new(); // Отслеживание 2D попаданий
+        private HashSet<Collider> hitColliders3D = new(); // Отслеживание 3D попаданий
 
         public int AttackDamage
         {
@@ -80,22 +80,13 @@ namespace Neo.Tools
         private void HandleAttack(GameObject target, Vector3 contactPosition)
         {
             // Нанесение урона
-            if (target.TryGetComponent(out IDamageable damageable))
-            {
-                damageable.TakeDamage(attackDamage);
-            }
+            if (target.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(attackDamage);
 
             // Применение силы, если включено
-            if (applyForceOnHit)
-            {
-                ApplyForceToTarget(target);
-            }
+            if (applyForceOnHit) ApplyForceToTarget(target);
 
             // Проигрывание эффекта
-            if (attackEffectPrefab != null)
-            {
-                Instantiate(attackEffectPrefab, contactPosition, Quaternion.identity);
-            }
+            if (attackEffectPrefab != null) Instantiate(attackEffectPrefab, contactPosition, Quaternion.identity);
         }
 
         /// <summary>
@@ -103,11 +94,9 @@ namespace Neo.Tools
         /// </summary>
         private void ApplyForceToTarget(GameObject target)
         {
-            Vector3 direction = (target.transform.position - transform.position).normalized;
+            var direction = (target.transform.position - transform.position).normalized;
             if (target.TryGetComponent(out AdvancedForceApplier forceApplier))
-            {
                 forceApplier.ApplyForce(forceMagnitude, direction);
-            }
         }
 
         /// <summary>

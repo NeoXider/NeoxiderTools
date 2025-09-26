@@ -1,4 +1,3 @@
-
 using UnityEngine;
 
 namespace Neo.Bonus
@@ -10,17 +9,17 @@ namespace Neo.Bonus
 
         public void LineActiv(int[] idList)
         {
-            foreach (GameObject item in lines)
+            foreach (var item in lines)
                 item.SetActive(false);
 
-            foreach (int id in idList)
+            foreach (var id in idList)
                 if (id >= 0 && id < lines.Length)
                     lines[id].SetActive(true);
         }
 
         public void LineActiv(bool activ)
         {
-            foreach (GameObject item in lines)
+            foreach (var item in lines)
                 item.SetActive(activ);
         }
     }

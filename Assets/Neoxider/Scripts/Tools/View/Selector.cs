@@ -1,5 +1,5 @@
+using System;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -16,6 +16,14 @@ namespace Neo
         {
             #region Serialized Fields
 
+            [Tooltip("Sets the initial index when appearing")]
+            public bool startOnAwake = false;
+
+            [Header("Count Mode")]
+            [Tooltip("If set > 0 and items array is empty, selector will work with this count as virtual items")]
+            [SerializeField]
+            private int _count = -1; // -1 means disabled, >0 enables count mode
+
             [Header("Items")] [Tooltip("Array of GameObjects to be selected between")] [SerializeField]
             private GameObject[] _items;
 
@@ -25,8 +33,8 @@ namespace Neo
             private bool _setChild;
 
             [Header("Selection Settings")]
-
-            [Tooltip("Whether to loop back to the beginning when reaching the end")] [SerializeField]
+            [Tooltip("Whether to loop back to the beginning when reaching the end")]
+            [SerializeField]
             private bool _loop = true;
 
             [Header("Fill Settings")]
@@ -42,6 +50,32 @@ namespace Neo
 
             [Tooltip("Update selection in editor when values change")] [SerializeField]
             private bool _changeDebug = true;
+
+            private int _startIndex = 0;
+
+
+            /// <summary>
+            /// Returns the number of selectable items (GameObjects or virtual count)
+            /// </summary>
+            public int Count
+            {
+                get
+                {
+                    if (_items != null && _items.Length > 0 && _count == 0)
+                        return _items.Length;
+                    return _count > 0 ? _count : 0;
+                }
+                set
+                {
+                    _count = value;
+                    UpdateSelection();
+                }
+            }
+
+            /// <summary>
+            /// Returns true if selector is working with GameObjects
+            /// </summary>
+            public bool HasItems => _items != null && _items.Length > 0;
 
             #endregion
 
@@ -69,7 +103,11 @@ namespace Neo
             /// <summary>
             /// Gets the current selection index
             /// </summary>
-            public int CurrentId => _currentIndex;
+            public int Value
+            {
+                get => _currentIndex;
+                set => Set(value);
+            }
 
             /// <summary>
             /// Gets or sets the fill mode
@@ -100,7 +138,7 @@ namespace Neo
             /// <summary>
             /// Gets whether the selector has reached the end of the items array
             /// </summary>
-            public bool IsAtEnd => _currentIndex >= _items.Length - 1;
+            public bool IsAtEnd => _currentIndex >= Count - 1;
 
             /// <summary>
             /// Gets whether the selector is at the beginning of the items array
@@ -109,19 +147,34 @@ namespace Neo
 
             public int IndexWithOffset => _currentIndex + _indexOffset;
 
+            public GameObject Item
+            {
+                get
+                {
+                    if (Value >= 0 && Value < Count)
+                        return _items[Value];
+                    return null;
+                }
+            }
+
             #endregion
 
             #region Unity Methods
 
             private void Awake()
             {
-
+                _startIndex = _currentIndex;
             }
 
             private void Start()
             {
                 // Ensure selection is applied at start
                 UpdateSelection();
+            }
+
+            private void OnEnable()
+            {
+                if (startOnAwake) Set(_startIndex);
             }
 
             private void OnValidate()
@@ -140,10 +193,8 @@ namespace Neo
                     var childs = new List<GameObject>();
 
                     foreach (Transform child in transform)
-                    {
                         if (child.gameObject != gameObject)
                             childs.Add(child.gameObject);
-                    }
 
                     _items = childs.ToArray();
 
@@ -168,37 +219,37 @@ namespace Neo
             /// </summary>
             private void UpdateSelection()
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot update selection - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
-                // Calculate the effective index with offset
                 var effectiveIndex = _currentIndex + _indexOffset;
-
-                // Ensure effective index is within bounds
                 if (effectiveIndex < -1)
                     effectiveIndex = -1;
-                else if (effectiveIndex >= _items.Length)
-                    effectiveIndex = _items.Length - 1;
+                else if (effectiveIndex >= total)
+                    effectiveIndex = total - 1;
 
-                if (_fillMode)
+                if (HasItems)
                 {
-                    // In fill mode, activate all items up to and including the current index
-                    for (var i = 0; i < _items.Length; i++)
+                    // Update GameObject active state based on selection
+                    if (_fillMode)
                     {
-                        if (_items[i] != null)
-                            _items[i].SetActive(i <= effectiveIndex);
+                        for (var i = 0; i < _items.Length; i++)
+                            if (_items[i] != null)
+                                _items[i].SetActive(i <= effectiveIndex);
+                    }
+                    else
+                    {
+                        for (var i = 0; i < _items.Length; i++)
+                            if (_items[i] != null)
+                                _items[i].SetActive(i == effectiveIndex);
                     }
                 }
-                else
-                {
-                    // In normal mode, activate only the current item
-                    _items.SetActiveAll(false).SetActiveAtIndex(effectiveIndex);
-                }
 
-                // Notify listeners of selection change
+                // In count-only mode, just invoke the event
                 OnSelectionChanged?.Invoke(_currentIndex);
             }
 
@@ -209,28 +260,29 @@ namespace Neo
             /// <summary>
             /// Moves to the next item in the selection
             /// </summary>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void Next()
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot move to next - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
                 _currentIndex++;
 
-                // Handle reaching the end of the array
-                if (_currentIndex >= _items.Length)
+                // Handle reaching the end of the array or count
+                if (_currentIndex >= total)
                 {
                     if (_loop)
-                    {
                         _currentIndex = 0;
-                    }
                     else
-                    {
-                        _currentIndex = _items.Length - 1;
-                    }
+                        _currentIndex = total - 1;
 
                     // Notify that we've reached the end
                     OnFinished?.Invoke();
@@ -242,28 +294,29 @@ namespace Neo
             /// <summary>
             /// Moves to the previous item in the selection
             /// </summary>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void Previous()
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot move to previous - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
                 _currentIndex--;
 
-                // Handle reaching the beginning of the array
+                // Handle reaching the beginning
                 if (_currentIndex < 0)
                 {
                     if (_loop)
-                    {
-                        _currentIndex = _items.Length - 1;
-                    }
+                        _currentIndex = total - 1;
                     else
-                    {
                         _currentIndex = 0;
-                    }
                 }
 
                 UpdateSelection();
@@ -284,52 +337,69 @@ namespace Neo
             /// <returns>The number of items</returns>
             public int GetCount()
             {
-                return _items != null ? _items.Length : 0;
+                return Count;
             }
 
             /// <summary>
             /// Sets the current selection index
             /// </summary>
             /// <param name="index">The index to set</param>
-            [Button]
-            public void SetIndex(int index)
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
+            public void Set(int index)
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set index - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
-                // Clamp index to valid range
-                _currentIndex = Mathf.Clamp(index, 0, _items.Length - 1);
+                if (_loop)
+                    _currentIndex = (index % total + total) % total;
+                else
+                    _currentIndex = Mathf.Clamp(index, 0, total - 1);
                 UpdateSelection();
             }
 
             /// <summary>
             /// Sets the selection to the last item
             /// </summary>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void SetLast()
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set to last - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
-                _currentIndex = _items.Length - 1;
+                _currentIndex = total - 1;
                 UpdateSelection();
             }
 
             /// <summary>
             /// Sets the selection to the first item
             /// </summary>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void SetFirst()
             {
-                if (_items == null || _items.Length == 0)
+                var total = Count;
+                if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set to first - items array is null or empty");
+                    Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
@@ -352,10 +422,12 @@ namespace Neo
             /// <returns>The selected GameObject or null if none is selected</returns>
             public GameObject GetSelectedItem()
             {
-                if (_items == null || _items.Length == 0 || _currentIndex < 0 || _currentIndex >= _items.Length)
+                if (!HasItems || _currentIndex < 0 || _currentIndex >= _items.Length)
                     return null;
-
-                return _items[_currentIndex + _indexOffset];
+                var idx = _currentIndex + _indexOffset;
+                if (idx < 0 || idx >= _items.Length || _items[idx] == null)
+                    return null;
+                return _items[idx];
             }
 
             /// <summary>
@@ -365,7 +437,8 @@ namespace Neo
             /// <returns>True if the index is valid, false otherwise</returns>
             public bool IsValidIndex(int index)
             {
-                return _items != null && _items.Length > 0 && index >= 0 && index < _items.Length;
+                var total = Count;
+                return total > 0 && index >= 0 && index < total;
             }
 
             /// <summary>
@@ -382,30 +455,28 @@ namespace Neo
             /// </summary>
             /// <param name="index">Index to toggle</param>
             /// <param name="state">Optional state to set (true to enable, false to disable, null to toggle)</param>
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public void ToggleIndex(int index, bool? state = null)
             {
-                if (_items == null || _items.Length == 0)
+                if (!HasItems)
                 {
-                    Debug.LogWarning("Selector: Cannot toggle index - items array is null or empty");
+                    Debug.LogWarning("Selector: No GameObjects to toggle");
                     return;
                 }
 
-                // Calculate effective index with offset
                 var effectiveIndex = index + _indexOffset;
-
-                // Ensure effective index is within bounds
                 if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
                 {
                     Debug.LogWarning($"Selector: Index {index} with offset {_indexOffset} is out of bounds");
                     return;
                 }
 
-                // Toggle or set specific state
                 if (_items[effectiveIndex] != null)
-                {
                     _items[effectiveIndex].SetActive(state ?? !_items[effectiveIndex].activeSelf);
-                }
             }
 
             #endregion

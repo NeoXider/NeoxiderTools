@@ -21,10 +21,7 @@ namespace Neo
 
             private void Start()
             {
-                if (targetCamera == null)
-                {
-                    targetCamera = Camera.main;
-                }
+                if (targetCamera == null) targetCamera = Camera.main;
             }
 
             private void LateUpdate()
@@ -36,13 +33,10 @@ namespace Neo
             {
                 if (targetCamera == null) return;
 
-                Vector3 direction = GetDirection();
+                var direction = GetDirection();
                 if (ignoreY) direction.y = 0;
 
-                if (direction != Vector3.zero)
-                {
-                    transform.rotation = Quaternion.LookRotation(direction);
-                }
+                if (direction != Vector3.zero) transform.rotation = Quaternion.LookRotation(direction);
             }
 
             private Vector3 GetDirection()

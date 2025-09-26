@@ -1,3 +1,4 @@
+using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,72 +8,6 @@ namespace Neo
     namespace Tools
     {
         /// <summary>
-        /// Defines different time format options for displaying time values
-        /// </summary>
-        public enum TimeFormat
-        {
-            /// <summary>
-            /// Display time in milliseconds (e.g., 1234)
-            /// </summary>
-            Milliseconds,
-            
-            /// <summary>
-            /// Display time in seconds (e.g., 1)
-            /// </summary>
-            Seconds,
-            
-            /// <summary>
-            /// Display time in seconds with milliseconds (e.g., 1.234)
-            /// </summary>
-            SecondsMilliseconds,
-            
-            /// <summary>
-            /// Display time in minutes (e.g., 1)
-            /// </summary>
-            Minutes,
-            
-            /// <summary>
-            /// Display time in minutes and seconds (e.g., 1:23)
-            /// </summary>
-            MinutesSeconds,
-            
-            /// <summary>
-            /// Display time in hours (e.g., 1)
-            /// </summary>
-            Hours,
-            
-            /// <summary>
-            /// Display time in hours and minutes (e.g., 1:23)
-            /// </summary>
-            HoursMinutes,
-            
-            /// <summary>
-            /// Display time in hours, minutes, and seconds (e.g., 1:23:45)
-            /// </summary>
-            HoursMinutesSeconds,
-            
-            /// <summary>
-            /// Display time in days (e.g., 1)
-            /// </summary>
-            Days,
-            
-            /// <summary>
-            /// Display time in days and hours (e.g., 1:23)
-            /// </summary>
-            DaysHours,
-            
-            /// <summary>
-            /// Display time in days, hours, and minutes (e.g., 1:23:45)
-            /// </summary>
-            DaysHoursMinutes,
-            
-            /// <summary>
-            /// Display time in days, hours, minutes, and seconds (e.g., 1:23:45:67)
-            /// </summary>
-            DaysHoursMinutesSeconds,
-        }
-
-        /// <summary>
         /// A component that formats and displays time values on a TMP_Text component.
         /// Useful for countdown timers, elapsed time displays, or any time-based UI elements.
         /// </summary>
@@ -80,46 +15,50 @@ namespace Neo
         public class TimeToText : MonoBehaviour
         {
             #region Serialized Fields
-            [Header("Text Component")]
-            [Tooltip("The TextMeshPro text component to update")]
-            [SerializeField] private TMP_Text text;
-            
-            [Header("Time Format")]
-            [Tooltip("Whether to display text when time is zero")]
-            [SerializeField] private bool _zeroText = true;
-            
-            [Tooltip("The format to use when displaying time")]
-            [SerializeField] private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
-            
-            [Header("Text Formatting")]
-            [Tooltip("Text to add before the time value")]
-            [SerializeField] private string startAddText = "";
-            
-            [Tooltip("Text to add after the time value")]
-            [SerializeField] private string endAddText = "";
-            
-            [Tooltip("Character to use as separator between time units")]
-            [SerializeField] private string separator = ":";
+
+            [Header("Text Component")] [Tooltip("The TextMeshPro text component to update")] [SerializeField]
+            private TMP_Text text;
+
+            [Header("Time Format")] [Tooltip("Whether to display text when time is zero")] [SerializeField]
+            private bool _zeroText = true;
+
+            [Tooltip("The format to use when displaying time")] [SerializeField]
+            private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
+
+            [Header("Text Formatting")] [Tooltip("Text to add before the time value")] [SerializeField]
+            private string startAddText = "";
+
+            [Tooltip("Text to add after the time value")] [SerializeField]
+            private string endAddText = "";
+
+            [Tooltip("Character to use as separator between time units")] [SerializeField]
+            private string separator = ":";
+
             #endregion
-            
+
             #region Events
+
             /// <summary>
             /// Invoked when the time value reaches zero
             /// </summary>
             public UnityEvent OnEnd;
-            
+
             /// <summary>
             /// Invoked when the time value changes
             /// </summary>
             public UnityEvent<float> OnTimeChanged;
+
             #endregion
-            
+
             #region Private Fields
+
             private float lastTime;
             private float currentTime;
+
             #endregion
-            
+
             #region Properties
+
             /// <summary>
             /// Gets or sets the time format
             /// </summary>
@@ -132,7 +71,7 @@ namespace Neo
                     UpdateDisplay();
                 }
             }
-            
+
             /// <summary>
             /// Gets or sets whether to display text when time is zero
             /// </summary>
@@ -145,7 +84,7 @@ namespace Neo
                     UpdateDisplay();
                 }
             }
-            
+
             /// <summary>
             /// Gets or sets the separator character
             /// </summary>
@@ -158,14 +97,16 @@ namespace Neo
                     UpdateDisplay();
                 }
             }
-            
+
             /// <summary>
             /// Gets the current time value
             /// </summary>
             public float CurrentTime => currentTime;
+
             #endregion
 
             #region Unity Methods
+
             private void Awake()
             {
                 // Ensure text component is assigned
@@ -179,48 +120,43 @@ namespace Neo
                 if (text == null)
                     text = GetComponent<TMP_Text>();
             }
+
             #endregion
 
             #region Public Methods
+
             /// <summary>
             /// Sets the text to display the specified time value
             /// </summary>
             /// <param name="time">The time value in seconds</param>
-            public void SetText(float time = 0)
+            public void Set(float time = 0)
             {
                 if (text == null)
                 {
                     Debug.LogWarning("TimeToText: Text component is not assigned");
                     return;
                 }
-                
+
                 // Store current time
                 currentTime = time;
-                
+
                 // Check if time has changed
                 if (lastTime != time)
                 {
                     OnTimeChanged?.Invoke(time);
                     lastTime = time;
                 }
-                
+
                 // Display text based on zero text setting
                 if ((time == 0 && _zeroText) || time > 0)
-                {
                     text.text = startAddText + FormatTime(time, timeFormat, separator) + endAddText;
-                }
                 else
-                {
                     text.text = "";
-                }
 
                 // Check if time has reached zero
-                if (lastTime != time && time == 0)
-                {
-                    OnEnd?.Invoke();
-                }
+                if (lastTime != time && time == 0) OnEnd?.Invoke();
             }
-            
+
             /// <summary>
             /// Updates the display with the current time value
             /// </summary>
@@ -228,12 +164,14 @@ namespace Neo
             {
                 if (text == null)
                     return;
-                
-                SetText(currentTime);
+
+                Set(currentTime);
             }
+
             #endregion
 
             #region Static Methods
+
             /// <summary>
             /// Formats a time value according to the specified format
             /// </summary>
@@ -245,6 +183,7 @@ namespace Neo
             {
                 return time.FormatTime(format, separator);
             }
+
             #endregion
         }
     }

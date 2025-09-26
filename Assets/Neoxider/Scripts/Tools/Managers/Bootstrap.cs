@@ -30,15 +30,13 @@ namespace Neo
     /// </remarks>
     public class Bootstrap : MonoBehaviour
     {
-        [SerializeField] 
-        [Tooltip("List of components to initialize manually")]
-        private List<MonoBehaviour> _manualInitializables = new List<MonoBehaviour>();
+        [SerializeField] [Tooltip("List of components to initialize manually")]
+        private List<MonoBehaviour> _manualInitializables = new();
 
-        [SerializeField] 
-        [Tooltip("If true, automatically finds and initializes all IInit components in the scene")]
+        [SerializeField] [Tooltip("If true, automatically finds and initializes all IInit components in the scene")]
         private bool _autoFindComponents = false;
-        
-        private List<IInit> _initializables = new List<IInit>();
+
+        private List<IInit> _initializables = new();
 
         private void Awake()
         {
@@ -57,32 +55,21 @@ namespace Neo
         {
             // First initialize manual components
             foreach (var component in _manualInitializables)
-            {
                 if (component is IInit initializable)
-                {
                     _initializables.Add(initializable);
-                }
-            }
 
             // Then find other components if auto-find is enabled
             if (_autoFindComponents)
             {
                 var components = FindObjectsOfType<MonoBehaviour>();
                 foreach (var component in components)
-                {
                     if (component is IInit initializable && !_initializables.Contains(initializable))
-                    {
                         _initializables.Add(initializable);
-                    }
-                }
             }
 
             // Sort by priority and initialize
             var sortedInitializables = _initializables.OrderByDescending(x => x.InitPriority).ToList();
-            foreach (var initializable in sortedInitializables)
-            {
-                initializable.Init();
-            }
+            foreach (var initializable in sortedInitializables) initializable.Init();
         }
 
         /// <summary>

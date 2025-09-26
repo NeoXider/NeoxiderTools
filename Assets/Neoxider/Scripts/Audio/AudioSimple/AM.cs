@@ -5,18 +5,23 @@ namespace Neo
 {
     namespace Audio
     {
-        [RequireComponent(typeof(AudioSource))]
+        [System.Serializable]
+        public class Sound
+        {
+            public AudioClip clip;
+            [Range(0f, 1f)] public float volume = 1;
+        }
+
+        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AM))]
         public class AM : Singleton<AM>
         {
             [SerializeField] private AudioSource _efx;
-            [SerializeField] private AudioClip[] _clips;
-            [Space]
-            [SerializeField] private AudioSource _music;
+            [SerializeField] private Sound[] _sounds;
+            [Space] [SerializeField] private AudioSource _music;
             [SerializeField] private AudioClip[] _musicClips;
-            [Space]
-            [Header("Settings")]
-            [SerializeField] private float _startVolumeEfx = 1;
-            [SerializeField] private float _startVolumeMusic = 0.5f;
+
+            public float startVolumeEfx { get; set; } = 1f;
+            public float startVolumeMusic { get; set; } = 1f;
 
             public AudioSource Efx => _efx;
             public AudioSource Music => _music;
@@ -25,36 +30,37 @@ namespace Neo
             {
                 base.Init();
 
-                PlayMusic(0);
+                if (_musicClips.Length > 0)
+                    PlayMusic(0);
             }
 
-            /// <summary>
-            /// Play audio by ID from the clips array with a specified volume.
-            /// </summary>
-            /// <param name="id">The ID of the clip in the array to play.</param>
-            /// <param name="volume">The volume level for playback, default is 1.</param>
             [Button]
-            public void Play(int id, float volume = -1f)
+            public void Play(int id, float volume)
             {
-                if (volume < 0)
-                    volume = _startVolumeEfx;
+                if (id >= 0 && id < _sounds.Length)
+                    _efx.PlayOneShot(_sounds[id].clip, Mathf.Clamp(volume, 0f, 1f));
+                else
+                    Debug.LogWarning($"Sound ID {id} is out of range.");
+            }
 
-                if (id >= 0 && id < _clips.Length)
+            [Button]
+            public void Play(int id)
+            {
+                if (id >= 0 && id < _sounds.Length)
                 {
-                    _efx.PlayOneShot(_clips[id], Mathf.Clamp(volume, 0f, 1f));
+                    var soundMultiplier = _sounds[id].volume;
+                    soundMultiplier = soundMultiplier == 0 ? 1 : soundMultiplier;
+                    Play(id, soundMultiplier);
                 }
                 else
                 {
-                    Debug.LogWarning("Clip ID out of range.");
+                    Debug.LogWarning($"Sound ID {id} is out of range.");
                 }
             }
 
             [Button]
-            public void PlayMusic(int id, float volume = -1f)
+            public void PlayMusic(int id, float volume)
             {
-                if (volume < 0)
-                    volume = _startVolumeMusic;
-
                 if (id >= 0 && id < _musicClips.Length)
                 {
                     _music.clip = _musicClips[id];
@@ -63,24 +69,16 @@ namespace Neo
                 }
                 else
                 {
-                    Debug.LogWarning("Music clip ID out of range.");
+                    Debug.LogWarning($"Music clip ID {id} is out of range.");
                 }
             }
 
-            public static void Play(int id)
+            [Button]
+            public void PlayMusic(int id)
             {
-                I.Play(id);
+                PlayMusic(id, 1f); // Используем базовую громкость, стартовая применяется через AMSettings
             }
 
-            public static void PlayMusic(int id)
-            {
-                I.PlayMusic(id);
-            }
-
-            /// <summary>
-            /// Set the volume of the audio source.
-            /// </summary>
-            /// <param name="volume">Volume value between 0 and 1.</param>
             public void SetVolume(float volume, bool efx)
             {
                 if (efx)
@@ -89,27 +87,46 @@ namespace Neo
                     _music.volume = Mathf.Clamp(volume, 0f, 1f);
             }
 
+            /// <summary>
+            /// Применяет стартовые громкости к AudioSource'ам
+            /// </summary>
+            public void ApplyStartVolumes()
+            {
+                if (_efx != null)
+                    _efx.volume = startVolumeEfx;
+                if (_music != null)
+                    _music.volume = startVolumeMusic;
+            }
+
 
             private void OnValidate()
             {
-                _efx ??= GetComponent<AudioSource>();
-                _efx.playOnAwake = false;
+                if (_music == null) CreateMusic();
 
-                if (_music == null)
-                {
-                    CreateMusic();
-                }
+                if (_efx == null) CreateEfx();
             }
 
             private void CreateMusic()
             {
-                GameObject obj = new GameObject("Music");
+                var obj = new GameObject("Music");
                 obj.transform.SetParent(transform, false);
 
                 _music = obj.AddComponent<AudioSource>();
                 _music.loop = true;
                 _music.volume = .7f;
                 _music.priority = 126;
+            }
+
+            private void CreateEfx()
+            {
+                var obj = new GameObject("Efx");
+                obj.transform.SetParent(transform, false);
+
+                _efx = obj.AddComponent<AudioSource>();
+                _efx.playOnAwake = false;
+                _efx.loop = false;
+                _efx.volume = 1;
+                _efx.priority = 127;
             }
         }
     }

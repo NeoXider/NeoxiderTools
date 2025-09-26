@@ -1,337 +1,454 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Manages a collection of chances and provides methods for random selection based on probability.
+    /// Probability helper that works both in-editor and at runtime. Stores a list of weighted entries,
+    /// provides normalization with support for locked items, and can generate random indices using any random source.
     /// </summary>
-    /// <remarks>
-    /// Usage examples:
-    /// 
-    /// 1. Using ChanceSystemBehaviour in a scene:
-    /// <code>
-    /// // Attach ChanceSystemBehaviour to a GameObject
-    /// public class LootSystem : MonoBehaviour
-    /// {
-    ///     [SerializeField] private ChanceSystemBehaviour chanceSystem;
-    ///     
-    ///     private void Start()
-    ///     {
-    ///         // Setup drop chances
-    ///         chanceSystem.AddChance(0.7f);  // Common item: 70%
-    ///         chanceSystem.AddChance(0.25f); // Rare item: 25%
-    ///         chanceSystem.AddChance(0.05f); // Epic item: 5%
-    ///         
-    ///         // Listen for random drops
-    ///         chanceSystem.OnIdGenerated.AddListener(OnItemDropped);
-    ///     }
-    ///     
-    ///     private void OnItemDropped(int itemRarityId)
-    ///     {
-    ///         switch(itemRarityId)
-    ///         {
-    ///             case 0: DropCommonItem(); break;
-    ///             case 1: DropRareItem(); break;
-    ///             case 2: DropEpicItem(); break;
-    ///         }
-    ///     }
-    ///     
-    ///     public void TryDropItem()
-    ///     {
-    ///         chanceSystem.GenerateId(); // This will trigger OnItemDropped
-    ///     }
-    /// }
-    /// </code>
-    /// 
-    /// 2. Using ChanceData ScriptableObject:
-    /// <code>
-    /// // Create ChanceData asset: Right click > Create > Neoxider > Random > ChanceData
-    /// // Then in your script:
-    /// public class CardSystem : MonoBehaviour
-    /// {
-    ///     [SerializeField] private ChanceData cardChances;
-    ///     
-    ///     private void Start()
-    ///     {
-    ///         // Setup card draw chances in inspector or code
-    ///         cardChances.AddChance(0.6f);  // Common card: 60%
-    ///         cardChances.AddChance(0.3f);  // Rare card: 30%
-    ///         cardChances.AddChance(0.1f);  // Legendary card: 10%
-    ///         
-    ///         // Draw a random card
-    ///         int cardRarity = cardChances.GenerateId();
-    ///         Debug.Log($"Drew a card with rarity level {cardRarity}");
-    ///     }
-    /// }
-    /// </code>
-    /// 
-    /// 3. Using ChanceManager directly:
-    /// <code>
-    /// public class EnemySpawner
-    /// {
-    ///     private ChanceManager spawnChances = new ChanceManager();
-    ///     
-    ///     public void SetupSpawnChances()
-    ///     {
-    ///         // Chances will be automatically normalized to sum to 1
-    ///         spawnChances.AddChance(50f); // Weak enemy: ~45%
-    ///         spawnChances.AddChance(40f); // Normal enemy: ~36%
-    ///         spawnChances.AddChance(20f); // Strong enemy: ~18%
-    ///         
-    ///         // Get spawn type
-    ///         int enemyType = spawnChances.GetChanceId();
-    ///     }
-    /// }
-    /// </code>
-    /// </remarks>
     [Serializable]
     public class ChanceManager
     {
-        /// <summary>
-        /// List of chances with their probability values
-        /// </summary>
-        [SerializeField]
-        [Tooltip("List of chances. Values will be automatically normalized to sum to 1")]
-        public List<Chance> chances = new List<Chance>();
-
-        /// <summary>
-        /// Determines whether to preserve the first (true) or last (false) chance value during normalization
-        /// </summary>
-        [SerializeField]
-        [Tooltip("If true, preserves the first chance value. If false, preserves the last chance value")]
-        public bool preserveFirstChance = false;
-
-        /// <summary>
-        /// Adds a new chance with the specified probability value.
-        /// The new value is preserved based on preserveFirstChance setting.
-        /// </summary>
-        /// <param name="chance">Probability value between 0 and 1</param>
-        /// <returns>Index of the newly added chance</returns>
-        public int AddChance(float chance)
+        [Serializable]
+        public class Entry
         {
-            chance = Mathf.Clamp01(chance);
-            chances.Add(new Chance(chance));
-            NormalizeChances();
-            return chances.Count - 1;
+            [SerializeField, Range(0f, 1f)] private float weight = 1f;
+            [SerializeField] private bool locked;
+            [SerializeField] private int id = -1;
+            [SerializeField] private string label = "Chance";
+            [SerializeField, TextArea] private string notes;
+
+            public Entry() { }
+
+            public Entry(float weight, bool locked, int customId = -1, string label = "Chance")
+            {
+                this.weight = Mathf.Max(0f, weight);
+                this.locked = locked;
+                this.id = customId;
+                this.label = label;
+            }
+
+            public Entry(Entry other)
+            {
+                label = other.label;
+                weight = Mathf.Max(0f, other.weight);
+                locked = other.locked;
+                id = other.id;
+                notes = other.notes;
+            }
+
+            public string Label
+            {
+                get => label;
+                set => label = value;
+            }
+
+            public float Weight
+            {
+                get => weight;
+                set => weight = Mathf.Max(0f, value);
+            }
+
+            public bool Locked
+            {
+                get => locked;
+                set => locked = value;
+            }
+
+            public int CustomId
+            {
+                get => id;
+                set => id = value;
+            }
+
+            public string Notes
+            {
+                get => notes;
+                set => notes = value;
+            }
         }
 
-        /// <summary>
-        /// Normalizes chances while preserving either first or last value based on preserveFirstChance setting
-        /// </summary>
-        private void NormalizeChances()
-        {
-            if (chances.Count <= 1) return;
+        [SerializeField] private List<Entry> entries = new();
+        [SerializeField] private bool autoNormalize = true;
+        [SerializeField, Min(0.001f)] private float normalizeTarget = 1f;
+        [SerializeField] private bool distributeEvenlyWhenZero = true;
 
-            // Get the preserved value (first or last)
-            int preservedIndex = preserveFirstChance ? 0 : chances.Count - 1;
-            float preservedValue = chances[preservedIndex].value;
-            
-            // Calculate remaining probability for other elements
-            float remainingProbability = 1f - preservedValue;
-            
-            // Early exit if no probability left for others
-            if (remainingProbability <= 0)
+        private Func<float> randomProvider;
+
+        public ChanceManager(params float[] weights)
+        {
+            if (weights != null)
             {
-                // Set all other values to 0
-                for (int i = 0; i < chances.Count; i++)
+                foreach (var weight in weights)
                 {
-                    if (i != preservedIndex)
-                    {
-                        chances[i].value = 0;
-                    }
+                    entries.Add(new Entry(Mathf.Max(0f, weight), false));
                 }
-                chances[preservedIndex].value = 1f;
+            }
+
+            Sanitize();
+        }
+
+        public IReadOnlyList<Entry> Entries => entries;
+        public int Count => entries.Count;
+        public bool AutoNormalize
+        {
+            get => autoNormalize;
+            set
+            {
+                autoNormalize = value;
+                if (autoNormalize)
+                {
+                    Normalize();
+                }
+            }
+        }
+
+        public float NormalizeTarget
+        {
+            get => normalizeTarget;
+            set
+            {
+                normalizeTarget = Mathf.Max(0.001f, value);
+                if (autoNormalize)
+                {
+                    Normalize();
+                }
+            }
+        }
+
+        public bool DistributeEvenlyWhenZero
+        {
+            get => distributeEvenlyWhenZero;
+            set => distributeEvenlyWhenZero = value;
+        }
+
+        public Func<float> RandomProvider
+        {
+            get => randomProvider;
+            set => randomProvider = value;
+        }
+
+        public float TotalWeight
+        {
+            get
+            {
+                float sum = 0f;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    sum += Mathf.Max(0f, entries[i].Weight);
+                }
+
+                return sum;
+            }
+        }
+
+        public float GetNormalizedWeight(int index)
+        {
+            if (!IsValidIndex(index))
+            {
+                return 0f;
+            }
+
+            var total = TotalWeight;
+            return total <= 0f ? 0f : Mathf.Max(0f, entries[index].Weight) / total;
+        }
+
+        public Entry AddEntry(float weight = 1f, string label = null, bool locked = false, int customId = -1)
+        {
+            if (entries == null)
+            {
+                entries = new List<Entry>();
+            }
+
+            var entry = new Entry(Mathf.Max(0f, weight), locked, customId, label ?? $"Chance {entries.Count + 1}");
+
+            if (entry.CustomId < 0)
+            {
+                var used = new HashSet<int>();
+                for (var i = 0; i < entries.Count; i++) used.Add(entries[i].CustomId);
+                entry.CustomId = GenerateFreeId(used);
+            }
+
+            entries.Add(entry);
+            OnCollectionChanged();
+            return entry;
+        }
+
+        public int AddChance(float chance)
+        {
+            return entries.IndexOf(AddEntry(chance));
+        }
+
+        public void AddChances(IEnumerable<float> weights)
+        {
+            if (weights == null)
+            {
                 return;
             }
 
-            // Calculate sum of other probabilities
-            float otherSum = 0f;
-            for (int i = 0; i < chances.Count; i++)
+            foreach (var weight in weights)
             {
-                if (i != preservedIndex)
-                {
-                    otherSum += chances[i].value;
-                }
+                entries.Add(new Entry(Mathf.Max(0f, weight), false));
             }
 
-            // If other sum is 0, we can't preserve proportions
-            if (Mathf.Approximately(otherSum, 0f))
-            {
-                // Distribute remaining probability based on position relative to preserved value
-                int count = chances.Count - 1; // number of values to distribute
-                if (preserveFirstChance)
-                {
-                    // Distribute with increasing weights from start
-                    float total = 0f;
-                    for (int i = 1; i < chances.Count; i++)
-                    {
-                        float weight = i / (float)chances.Count;
-                        chances[i].value = remainingProbability * weight;
-                        total += chances[i].value;
-                    }
-                    
-                    // Normalize to exactly match remaining probability
-                    if (total > 0f)
-                    {
-                        float normalizer = remainingProbability / total;
-                        for (int i = 1; i < chances.Count; i++)
-                        {
-                            chances[i].value *= normalizer;
-                        }
-                    }
-                }
-                else
-                {
-                    // Distribute with decreasing weights from end
-                    float total = 0f;
-                    for (int i = 0; i < chances.Count - 1; i++)
-                    {
-                        float weight = (chances.Count - 1 - i) / (float)chances.Count;
-                        chances[i].value = remainingProbability * weight;
-                        total += chances[i].value;
-                    }
-                    
-                    // Normalize to exactly match remaining probability
-                    if (total > 0f)
-                    {
-                        float normalizer = remainingProbability / total;
-                        for (int i = 0; i < chances.Count - 1; i++)
-                        {
-                            chances[i].value *= normalizer;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                // Scale other values to fit remaining probability while preserving proportions
-                float scale = remainingProbability / otherSum;
-                for (int i = 0; i < chances.Count; i++)
-                {
-                    if (i != preservedIndex)
-                    {
-                        chances[i].value *= scale;
-                    }
-                }
-            }
-
-            // Ensure preserved value maintains its exact value
-            chances[preservedIndex].value = preservedValue;
-
-            // Validate that sum is exactly 1
-            float finalSum = 0f;
-            for (int i = 0; i < chances.Count; i++)
-            {
-                finalSum += chances[i].value;
-            }
-            
-            if (!Mathf.Approximately(finalSum, 1f))
-            {
-                float diff = 1f - finalSum;
-                // Distribute any tiny floating-point error to the largest non-preserved value
-                float maxVal = 0f;
-                int maxIdx = -1;
-                for (int i = 0; i < chances.Count; i++)
-                {
-                    if (i != preservedIndex && chances[i].value > maxVal)
-                    {
-                        maxVal = chances[i].value;
-                        maxIdx = i;
-                    }
-                }
-                if (maxIdx >= 0)
-                {
-                    chances[maxIdx].value += diff;
-                }
-            }
+            OnCollectionChanged();
         }
 
-        /// <summary>
-        /// Removes a chance at the specified index
-        /// </summary>
-        /// <param name="index">Index of the chance to remove</param>
         public void RemoveChance(int index)
         {
-            if (index >= 0 && index < chances.Count)
+            if (!IsValidIndex(index))
             {
-                chances.RemoveAt(index);
-                NormalizeChances();
+                return;
             }
+
+            entries.RemoveAt(index);
+            OnCollectionChanged();
         }
 
-        /// <summary>
-        /// Gets the index based on a specific random value
-        /// </summary>
-        /// <param name="randomValue">Random value between 0 and 1</param>
-        /// <returns>Selected index based on probabilities, or -1 if no valid selection</returns>
+        public void Clear()
+        {
+            entries.Clear();
+        }
+
+        public Entry GetEntry(int index)
+        {
+            return IsValidIndex(index) ? entries[index] : null;
+        }
+
+        public float GetChanceValue(int index)
+        {
+            return IsValidIndex(index) ? entries[index].Weight : 0f;
+        }
+
+        public void SetChanceValue(int index, float weight)
+        {
+            if (!IsValidIndex(index))
+            {
+                return;
+            }
+
+            entries[index].Weight = Mathf.Max(0f, weight);
+            OnCollectionChanged();
+        }
+
+        public void SetLocked(int index, bool locked)
+        {
+            if (!IsValidIndex(index))
+            {
+                return;
+            }
+
+            entries[index].Locked = locked;
+            OnCollectionChanged();
+        }
+
+        public int GetChanceId()
+        {
+            var total = TotalWeight;
+            if (entries.Count == 0 || total <= 0f)
+            {
+                return -1;
+            }
+
+            var value = randomProvider != null ? Mathf.Clamp01(randomProvider()) : UnityEngine.Random.value;
+            return GetId(value);
+        }
+
         public int GetId(float randomValue)
         {
-            if (chances.Count == 0) return -1;
-            
-            float cumulative = 0f;
-            for (int i = 0; i < chances.Count; i++)
+            if (entries.Count == 0)
             {
-                cumulative += chances[i].value;
-                if (randomValue <= cumulative)
+                return -1;
+            }
+
+            var total = TotalWeight;
+            if (total <= 0f)
+            {
+                return -1;
+            }
+
+            var value = Mathf.Clamp01(randomValue) * total;
+            var cumulative = 0f;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                cumulative += Mathf.Max(0f, entries[i].Weight);
+                if (value <= cumulative)
                 {
                     return i;
                 }
             }
-            return chances.Count - 1; // Fallback to last item
+
+            return entries.Count - 1;
         }
 
-        /// <summary>
-        /// Gets a random index based on the configured probabilities
-        /// </summary>
-        /// <returns>Randomly selected index based on probabilities</returns>
-        public int GetChanceId()
+        public Entry Evaluate()
         {
-            return GetId(UnityEngine.Random.Range(0f, 1f));
+            var index = GetChanceId();
+            return index >= 0 ? entries[index] : null;
         }
 
-        /// <summary>
-        /// Gets the probability value at the specified index
-        /// </summary>
-        /// <param name="index">Index of the chance</param>
-        /// <returns>Probability value, or 0 if index is invalid</returns>
-        public float GetChanceValue(int index)
+        public Entry Evaluate(float randomValue)
         {
-            return index >= 0 && index < chances.Count ? chances[index].value : 0f;
+            var index = GetId(randomValue);
+            return index >= 0 ? entries[index] : null;
         }
 
-        /// <summary>
-        /// Sets the probability value at the specified index
-        /// </summary>
-        /// <param name="index">Index of the chance</param>
-        /// <param name="value">New probability value</param>
-        public void SetChanceValue(int index, float value)
+        public void Normalize()
         {
-            if (index >= 0 && index < chances.Count)
+            Normalize(normalizeTarget);
+        }
+
+        public void Normalize(float targetSum)
+        {
+            targetSum = Mathf.Max(0f, targetSum);
+            if (entries.Count == 0)
             {
-                chances[index].value = Mathf.Clamp01(value);
-                NormalizeChances();
+                return;
+            }
+
+            var lockedEntries = new List<Entry>();
+            var unlockedEntries = new List<Entry>();
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                entry.Weight = Mathf.Max(0f, entry.Weight);
+                if (entry.Locked)
+                {
+                    lockedEntries.Add(entry);
+                }
+                else
+                {
+                    unlockedEntries.Add(entry);
+                }
+            }
+
+            var lockedSum = lockedEntries.Sum(e => e.Weight);
+            var remaining = targetSum - lockedSum;
+
+            if (unlockedEntries.Count == 0)
+            {
+                return;
+            }
+
+            if (remaining <= 0f)
+            {
+                foreach (var entry in unlockedEntries)
+                {
+                    entry.Weight = 0f;
+                }
+
+                return;
+            }
+
+            var unlockedSum = unlockedEntries.Sum(e => e.Weight);
+            if (unlockedSum <= 0f)
+            {
+                if (!distributeEvenlyWhenZero)
+                {
+                    return;
+                }
+
+                var even = remaining / unlockedEntries.Count;
+                foreach (var entry in unlockedEntries)
+                {
+                    entry.Weight = even;
+                }
+
+                return;
+            }
+
+            var scale = remaining / unlockedSum;
+            foreach (var entry in unlockedEntries)
+            {
+                entry.Weight *= scale;
             }
         }
-    }
 
-    /// <summary>
-    /// Represents a single chance with a probability value
-    /// </summary>
-    [Serializable]
-    public class Chance
-    {
-        /// <summary>
-        /// Probability value between 0 and 1
-        /// </summary>
-        [Range(0, 1)]
-        [Tooltip("Probability value between 0 and 1")]
-        public float value;
-
-        public Chance(float value)
+        public void CopyFrom(ChanceManager source)
         {
-            this.value = Mathf.Clamp01(value);
+            if (source == null)
+            {
+                return;
+            }
+
+            entries.Clear();
+            foreach (var entry in source.entries)
+            {
+                entries.Add(new Entry(entry));
+            }
+
+            autoNormalize = source.autoNormalize;
+            normalizeTarget = source.normalizeTarget;
+            distributeEvenlyWhenZero = source.distributeEvenlyWhenZero;
+
+            Sanitize();
+        }
+
+        public void Sanitize()
+        {
+            if (entries == null)
+            {
+                entries = new List<Entry>();
+            }
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                entry.Weight = Mathf.Max(0f, entry.Weight);
+                if (string.IsNullOrEmpty(entry.Label))
+                {
+                    entry.Label = $"Chance {i + 1}";
+                }
+            }
+
+            if (autoNormalize)
+            {
+                Normalize();
+            }
+        }
+
+        public void EnsureUniqueIds()
+        {
+            var usedIds = new HashSet<int>();
+            foreach (var entry in entries)
+            {
+                if (entry.CustomId < 0 || usedIds.Contains(entry.CustomId))
+                {
+                    entry.CustomId = GenerateFreeId(usedIds);
+                }
+
+                usedIds.Add(entry.CustomId);
+            }
+        }
+
+        private void OnCollectionChanged()
+        {
+            if (autoNormalize)
+            {
+                Normalize();
+            }
+
+            EnsureUniqueIds();
+        }
+
+        private static int GenerateFreeId(HashSet<int> used)
+        {
+            var id = 0;
+            while (used.Contains(id))
+            {
+                id++;
+            }
+
+            return id;
+        }
+
+        private bool IsValidIndex(int index)
+        {
+            return index >= 0 && index < entries.Count;
         }
     }
 }

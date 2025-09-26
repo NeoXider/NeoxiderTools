@@ -2,30 +2,32 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo;
+using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 
-[System.Serializable]
+[Serializable]
 public class LeaderboardUser
 {
+    public int num;
     public string name;
     public int score;
     public string id;
 
-    public LeaderboardUser(string name, int score = 0)
+    public LeaderboardUser(string name, int score = 0, int num = 0)
     {
-        this.id = Guid.NewGuid().ToString();
+        id = Guid.NewGuid().ToString();
         this.name = name;
         this.score = score;
+        this.num = num;
     }
 }
 
 public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
 {
-    public LeaderboardUser player = new LeaderboardUser("PlayerName");
+    public LeaderboardUser player = new("PlayerName");
 
-    [Space]
-    public Vector2Int rangeScore = new Vector2Int(1, 3495);
+    [Space] public Vector2Int rangeScore = new(1, 3495);
     public int count = 345;
     public bool useZero = true;
     public string[] names = { "nickname" };
@@ -33,32 +35,24 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
     public bool useNum = true;
     public bool formatNum = true;
 
-    [Space]
-    [Header("OtherSetting")]
-    public bool onAwakeSort = true;
+    [Space] [Header("OtherSetting")] public bool onAwakeSort = true;
 
-    [Space]
-    public List<LeaderboardUser> users = new List<LeaderboardUser>();
+    [Space] public List<LeaderboardUser> users = new();
 
-    [Space]
-    public List<LeaderboardUser> sortUsers;
+    [Space] public List<LeaderboardUser> sortUsers;
 
-    [Space]
-    public LeaderboardItem prefab;
+    [Space] public LeaderboardItem prefab;
     public bool generateLeaderboardOnAwake = true;
     public bool generateLeaderboardItemsOnValidate;
     public Transform container;
-    public List<LeaderboardItem> leaderboardItems = new List<LeaderboardItem>();
+    public List<LeaderboardItem> leaderboardItems = new();
+    public LeaderboardItem leaderboardItemPlayer;
 
-    [Space]
-    public UnityEvent OnSort;
+    [Space] public UnityEvent OnSort;
 
     private void Start()
     {
-        if (generateLeaderboardOnAwake && prefab != null)
-        {
-            GenerateLeaderboardItems();
-        }
+        if (generateLeaderboardOnAwake && prefab != null) GenerateLeaderboardItems();
 
         if (onAwakeSort)
             Sort();
@@ -80,7 +74,7 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
 
     private void SyncPlayer()
     {
-        int idx = users.FindIndex(u => u.id == player.id);
+        var idx = users.FindIndex(u => u.id == player.id);
         if (idx >= 0)
         {
             users[idx].score = player.score;
@@ -96,10 +90,7 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
     {
         if (Application.isPlaying) return;
 
-        if(users.Count > count)
-        {
-            users = users.Take(count).ToList();
-        }
+        if (users.Count > count) users = users.Take(count).ToList();
 
         if (users.Count < count)
         {
@@ -119,11 +110,11 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
         if (sortUsers == null || sortUsers.Count == 0)
             Sort();
 
-        int countAdd = sortUsers.Count - leaderboardItems.Count;
+        var countAdd = sortUsers.Count - leaderboardItems.Count;
 
-        for (int i = 0; i < countAdd; i++)
+        for (var i = 0; i < countAdd; i++)
         {
-            var obj = GameObject.Instantiate(prefab, container);
+            var obj = Instantiate(prefab, container);
             leaderboardItems.Add(obj);
         }
     }
@@ -132,17 +123,14 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
     {
         users.Clear();
 
-        for (int i = 0; i < count - 1; i++)
+        for (var i = 0; i < count - 1; i++)
         {
-            int score = rangeScore.RandomRange();
-            string num = useNum ? (formatNum ? FormatText(i+1) : (i+1).ToString()) : "";
+            var score = rangeScore.RandomRange();
+            var num = useNum ? formatNum ? FormatText(i + 1) : (i + 1).ToString() : "";
             users.Add(new LeaderboardUser(names.GetRandomElement() + sep + num, score));
         }
 
-        if (!users.Exists(u => u.id == player.id))
-        {
-            users.Add(player);
-        }
+        if (!users.Exists(u => u.id == player.id)) users.Add(player);
     }
 
     public void Sort()
@@ -156,17 +144,20 @@ public class Leaderboard : Neo.Tools.Singleton<Leaderboard>
 
     private void SetItems()
     {
-        for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
+        for (var i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
         {
-            leaderboardItems[i].Set(sortUsers[i], i, sortUsers[i].id == player.id);
+            sortUsers[i].num = i;
+            leaderboardItems[i].Set(sortUsers[i], sortUsers[i].id == player.id);
         }
+
+        if (leaderboardItemPlayer != null) leaderboardItemPlayer.Set(sortUsers[GetIdPlayer()], true);
     }
 
     public string FormatText(int num)
     {
         if (useZero)
         {
-            int digitsCount = count.ToString().Length;
+            var digitsCount = count.ToString().Length;
             return num.ToString("D" + digitsCount);
         }
         else

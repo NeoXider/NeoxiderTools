@@ -48,33 +48,33 @@ namespace Neo
     /// timer.Stop();
     /// </code>
     /// </example>
-    [System.Serializable]
+    [Serializable]
     public class Timer
     {
         /// <summary>
         /// Event triggered when the timer starts
         /// </summary>
-        public UnityEvent OnTimerStart = new UnityEvent();
+        public UnityEvent OnTimerStart = new();
 
         /// <summary>
         /// Event triggered when the timer ends
         /// </summary>
-        public UnityEvent OnTimerEnd = new UnityEvent();
+        public UnityEvent OnTimerEnd = new();
 
         /// <summary>
         /// Event triggered on each update with remaining time and progress
         /// </summary>
-        public UnityEvent<float, float> OnTimerUpdate = new UnityEvent<float, float>();
+        public UnityEvent<float, float> OnTimerUpdate = new();
 
         /// <summary>
         /// Event triggered when the timer is paused
         /// </summary>
-        public UnityEvent OnTimerPause = new UnityEvent();
+        public UnityEvent OnTimerPause = new();
 
         /// <summary>
         /// Event triggered when the timer is resumed
         /// </summary>
-        public UnityEvent OnTimerResume = new UnityEvent();
+        public UnityEvent OnTimerResume = new();
 
         /// <summary>
         /// Gets the current running state of the timer
@@ -112,7 +112,7 @@ namespace Neo
         /// <summary>
         /// Gets the current progress of the timer (0 to 1)
         /// </summary>
-        public float Progress => 1f - (remainingTime / duration);
+        public float Progress => 1f - remainingTime / duration;
 
         /// <summary>
         /// Gets or sets the total duration of the timer in seconds
@@ -123,7 +123,7 @@ namespace Neo
             set
             {
                 if (value < 0) value = 0;
-                float difference = value - duration;
+                var difference = value - duration;
                 duration = value;
                 if (isRunning) remainingTime += difference;
             }
@@ -293,13 +293,13 @@ namespace Neo
             {
                 if (!isPaused)
                 {
-                    float deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                    var deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
                     lastUpdateTime += deltaTime;
 
                     if (lastUpdateTime >= UpdateInterval)
                     {
                         remainingTime -= lastUpdateTime;
-                        float progress = 1f - (remainingTime / Duration);
+                        var progress = 1f - remainingTime / Duration;
                         OnTimerUpdate.Invoke(remainingTime, progress);
                         lastUpdateTime = 0f;
                     }

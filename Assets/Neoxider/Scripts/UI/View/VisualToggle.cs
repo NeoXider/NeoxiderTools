@@ -53,7 +53,7 @@ namespace Neo
 
             private void Awake()
             {
-                if (TryGetComponent(out UnityEngine.UI.Toggle toggle))
+                if (TryGetComponent(out Toggle toggle))
                     Visual(toggle.isOn);
             }
 
@@ -86,73 +86,53 @@ namespace Neo
 
             private void ImageColorVisual()
             {
-                foreach (var c in imageC)
-                {
-                    c.image.color = end ? c.end : c.start;
-                }
+                foreach (var c in imageC) c.image.color = end ? c.end : c.start;
             }
 
             public void Visual(bool activ)
             {
-                this.end = activ;
+                end = activ;
                 Visual();
             }
 
             private void ImageVisual()
             {
-                foreach (ImageVariant v in imageV)
+                foreach (var v in imageV)
                 {
                     v.image.sprite = end ? v.end : v.start;
 
-                    if (v.setNativeSize)
-                    {
-                        v.image.SetNativeSize();
-                    }
+                    if (v.setNativeSize) v.image.SetNativeSize();
                 }
             }
 
             private void TextColorVisual()
             {
-                foreach (TmpColorTextVariant t in textColor)
-                {
+                foreach (var t in textColor)
                     if (t.tmp != null)
                     {
                         t.tmp.color = end ? t.end : t.start;
 
-                        if (t.use_text)
-                        {
-                            t.tmp.text = end ? t.end_t : t.start_t;
-                        }
+                        if (t.use_text) t.tmp.text = end ? t.end_t : t.start_t;
                     }
-                }
             }
 
             private void VariantVisual()
             {
-                for (int i = 0; i < variants.starts.Length; i++)
-                {
-                    variants.starts[i].SetActive(!end);
-                }
+                for (var i = 0; i < variants.starts.Length; i++) variants.starts[i].SetActive(!end);
 
-                for (int i = 0; i < variants.ends.Length; i++)
-                {
-                    variants.ends[i].SetActive(end);
-                }
+                for (var i = 0; i < variants.ends.Length; i++) variants.ends[i].SetActive(end);
             }
 
             private void OnValidate()
             {
                 if (!end)
                 {
-                    foreach (ImageVariant v in imageV)
-                    {
+                    foreach (var v in imageV)
                         if (v.image != null)
                             if (v.start == null)
                                 v.start = v.image.sprite;
-                    }
 
-                    foreach (TmpColorTextVariant t in textColor)
-                    {
+                    foreach (var t in textColor)
                         if (t.tmp != null)
                         {
                             if (t.start == null)
@@ -161,7 +141,6 @@ namespace Neo
                             if (!t.use_text)
                                 t.start_t = t.tmp.text;
                         }
-                    }
                 }
 
                 Visual();

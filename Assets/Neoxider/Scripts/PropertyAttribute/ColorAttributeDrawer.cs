@@ -24,7 +24,7 @@ namespace Neo
             var colorAttribute = (ColorAttribute)attribute;
 
             // Store the original GUI color to restore it later
-            Color originalColor = GUI.color;
+            var originalColor = GUI.color;
 
             // Set the color from the attribute
             GUI.color = colorAttribute.color;

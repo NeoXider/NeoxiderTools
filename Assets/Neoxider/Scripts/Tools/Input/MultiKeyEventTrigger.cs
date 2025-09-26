@@ -14,32 +14,30 @@ namespace Neo.Tools
 
             public KeyEventPair(KeyCode k)
             {
-                this.key = k;
-                this.onKeyPressed = new UnityEvent();
+                key = k;
+                onKeyPressed = new UnityEvent();
             }
         }
 
-        public KeyEventPair[] keyEventPairs = {
-            new KeyEventPair(KeyCode.Escape),
-            new KeyEventPair(KeyCode.Space),
-            new KeyEventPair(KeyCode.E),
-            new KeyEventPair(KeyCode.R),
-            new KeyEventPair(KeyCode.I),
-            new KeyEventPair(KeyCode.T),
-            new KeyEventPair(KeyCode.W),
-            new KeyEventPair(KeyCode.A),
-            new KeyEventPair(KeyCode.S),
-            new KeyEventPair(KeyCode.D)};
+        public KeyEventPair[] keyEventPairs =
+        {
+            new(KeyCode.Escape),
+            new(KeyCode.Space),
+            new(KeyCode.E),
+            new(KeyCode.R),
+            new(KeyCode.I),
+            new(KeyCode.T),
+            new(KeyCode.W),
+            new(KeyCode.A),
+            new(KeyCode.S),
+            new(KeyCode.D)
+        };
 
-        void Update()
+        private void Update()
         {
             foreach (var pair in keyEventPairs)
-            {
                 if (Input.GetKeyDown(pair.key))
-                {
                     pair.onKeyPressed?.Invoke();
-                }
-            }
         }
     }
 }

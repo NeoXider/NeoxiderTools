@@ -6,8 +6,7 @@ namespace Neo.Bonus
     public class ItemCollectionData : ScriptableObject
     {
         [SerializeField] private string _itemName;
-        [TextArea(1, 5)]
-        [SerializeField] private string _description;
+        [TextArea(1, 5)] [SerializeField] private string _description;
         [SerializeField] private Sprite _sprite;
         [SerializeField] private int _itemType = 0;
 

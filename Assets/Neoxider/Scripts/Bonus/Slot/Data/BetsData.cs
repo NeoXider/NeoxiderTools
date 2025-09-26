@@ -10,4 +10,3 @@ namespace Neo.Bonus
         public int[] bets => _bets;
     }
 }
-

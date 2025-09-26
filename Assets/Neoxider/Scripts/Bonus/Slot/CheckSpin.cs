@@ -6,190 +6,133 @@ using Random = UnityEngine.Random;
 
 namespace Neo.Bonus
 {
-    [System.Serializable]
+    [Serializable]
     public class CheckSpin
     {
         public bool isActive = true;
         [SerializeField] private LinesData _linesData;
         [SerializeField] private SpriteMultiplayerData _spritesMultiplierData;
 
-        //�������� ��� ���������
-        public float[] GetMultiplayers(Sprite[,] mass, int countLine, int[] lines = null)
+        // Получение множителей для выигрышных линий
+        public float[] GetMultiplayers(int[,] elementIds, int countLine, int[] lines = null)
         {
-            List<float> multiplayes = new List<float>();
+            var multiplayes = new List<float>();
+            if (lines == null) lines = GetWinningLines(elementIds, countLine);
 
-            if (lines == null)
+            foreach (var lineIndex in lines)
             {
-                lines = GetWinningLines(mass, countLine);
-            }
-
-            for (int i = 0; i < lines.Length; i++)
-            {
-                float mult = GetMaxMultiplierForLine(mass, _linesData.lines[lines[i]]);
+                var mult = GetMaxMultiplierForLine(elementIds, _linesData.lines[lineIndex]);
                 multiplayes.Add(mult);
             }
 
             return multiplayes.ToArray();
         }
 
-        //�������� ��� ������ ���������� �����
-        public int[] GetWinningLines(Sprite[,] mass, int countLine, LinesData.InnerArray[] lines = null, int sequenceLength = 3)
+        // Получение индексов всех выигрышных линий
+        public int[] GetWinningLines(int[,] elementIds, int countLine, int sequenceLength = 3)
         {
-            List<int> winningLines = new List<int>();
-
-            if (lines == null)
-                lines = _linesData.lines;
-
-            foreach (var currentLine in lines)
+            var winningLines = new List<int>();
+            for (var i = 0; i < _linesData.lines.Length && i < countLine; i++)
             {
-                Dictionary<Sprite, int> lineSpriteCounts = GetInfoInSequenceLine(mass, currentLine, sequenceLength);
-
-                if (lineSpriteCounts.Count > 0)
-                {
-                    winningLines.Add(Array.IndexOf(lines, currentLine));
-                }
+                var lineSpriteCounts = GetInfoInSequenceLine(elementIds, _linesData.lines[i], sequenceLength);
+                if (lineSpriteCounts.Count > 0) winningLines.Add(i);
             }
-
-            winningLines = winningLines.Where(item => item < countLine).ToList();
 
             return winningLines.ToArray();
         }
 
-        //�������� ������� � �� ���������� � ���
-        private Dictionary<Sprite, int> GetInfoInSequenceLine(Sprite[,] mass, LinesData.InnerArray currentLine, int sequenceLength)
+        // Получение информации о последовательностях одинаковых ID в линии
+        private Dictionary<int, int> GetInfoInSequenceLine(int[,] elementIds, LinesData.InnerArray currentLine,
+            int sequenceLength)
         {
-            Dictionary<Sprite, int> spriteCounts = new Dictionary<Sprite, int>();
+            var idCounts = new Dictionary<int, int>();
+            if (elementIds.GetLength(0) < currentLine.corY.Length) return idCounts;
 
-            for (int x = 1; x < currentLine.corY.Length; x++)
+            for (var x = 1; x < currentLine.corY.Length; x++)
             {
-                int last = x - 1;
+                var lastY = currentLine.corY[x - 1];
+                var currentY = currentLine.corY[x];
 
-                if (mass[last, currentLine.corY[last]] == mass[x, currentLine.corY[x]])
+                if (elementIds[x - 1, lastY] == elementIds[x, currentY])
                 {
-                    if (spriteCounts.ContainsKey(mass[last, currentLine.corY[last]]))
-                    {
-                        spriteCounts[mass[last, currentLine.corY[last]]]++;
-                    }
+                    var elementId = elementIds[x, currentY];
+                    if (idCounts.ContainsKey(elementId))
+                        idCounts[elementId]++;
                     else
-                    {
-                        spriteCounts[mass[last, currentLine.corY[last]]] = 2;
-                    }
+                        idCounts[elementId] = 2;
                 }
             }
 
-            // ��������� ������ �������, � ������� ���������� � ���� ������ ��� ����� sequenceLength
-            Dictionary<Sprite, int> filteredSpriteCounts =
-                spriteCounts.Where(kv => kv.Value >= sequenceLength)
-                .ToDictionary(kv => kv.Key, kv => kv.Value);
-
-            return filteredSpriteCounts;
+            return idCounts.Where(kv => kv.Value >= sequenceLength).ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
-        //������� ��������
-        public void SetWin(Sprite[,] spritesEnd, Sprite[] _allSprites, int countLine)
+        // Генерация выигрышной комбинации
+        public void SetWin(int[,] elementIds, int totalIdCount, int countLine)
         {
-            if (GetWinningLines(spritesEnd, countLine).Length == 0)
+            if (GetWinningLines(elementIds, countLine).Length == 0)
             {
-                int randWinLine = Random.Range(0, countLine);
-
-                SetWinLine(spritesEnd, _linesData.lines[randWinLine], _allSprites);
+                var randWinLineIndex = Random.Range(0, countLine);
+                SetWinLine(elementIds, _linesData.lines[randWinLineIndex], totalIdCount);
             }
         }
 
-        //������� ����� ����������
-        private void SetWinLine(Sprite[,] spritesEnd, LinesData.InnerArray innerArray, Sprite[] allSprites)
+        // Установка выигрышной линии
+        private void SetWinLine(int[,] elementIds, LinesData.InnerArray innerArray, int totalIdCount)
         {
-            int randStart = Random.Range(0, spritesEnd.GetLength(0) - 3);
-            Sprite sprite = GetRandomSprite(allSprites);
+            var randStart = Random.Range(0, elementIds.GetLength(0) - 2); // -2 to ensure we can place 3 items
+            var winId = Random.Range(0, totalIdCount);
 
-            for (int x = randStart; x < randStart + 3; x++)
-            {
-                spritesEnd[x, innerArray.corY[x]] = sprite;
-            }
+            for (var x = randStart; x < randStart + 3; x++) elementIds[x, innerArray.corY[x]] = winId;
         }
 
-        //������� ���������
-        public void SetLose(Sprite[,] spritesEnd, int[] lineWin, Sprite[] _allSprites, int countLine)
+        // Превращение выигрышной комбинации в проигрышную
+        public void SetLose(int[,] elementIds, int[] lineWin, int totalIdCount, int countLine)
         {
-            for (int i = 0; i < lineWin.Length; i++)
-            {
-                LinesData.InnerArray currentLine = _linesData.lines[lineWin[i]];
-                SetLoseLine(spritesEnd, _allSprites, currentLine);
-            }
+            foreach (var lineIndex in lineWin) SetLoseLine(elementIds, _linesData.lines[lineIndex], totalIdCount);
 
-            int[] countWinLine = GetWinningLines(spritesEnd, countLine);
-
-            if (countWinLine.Length > 0)
-                SetLose(spritesEnd, countWinLine, _allSprites, countLine);
+            var countWinLine = GetWinningLines(elementIds, countLine);
+            if (countWinLine.Length > 0) SetLose(elementIds, countWinLine, totalIdCount, countLine);
         }
 
-        //������� ����� �����������
-        private void SetLoseLine(Sprite[,] mass, Sprite[] _allSprites, LinesData.InnerArray currentLine)
+        // "Ломаем" выигрышную линию
+        private void SetLoseLine(int[,] elementIds, LinesData.InnerArray currentLine, int totalIdCount)
         {
-            for (int x = 1; x < currentLine.corY.Length; x++)
-            {
-                int last = x - 1;
-
-                if (mass[last, currentLine.corY[last]] == mass[x, currentLine.corY[x]])
+            for (var x = 1; x < currentLine.corY.Length; x++)
+                if (elementIds[x - 1, currentLine.corY[x - 1]] == elementIds[x, currentLine.corY[x]])
                 {
-                    Sprite curSprite = mass[last, currentLine.corY[last]];
-                    List<Sprite> newSprites = new List<Sprite>(_allSprites);
-                    newSprites.Remove(curSprite);
-                    mass[last, currentLine.corY[last]] = GetRandomSprite(newSprites.ToArray());
+                    var currentId = elementIds[x, currentLine.corY[x]];
+                    var newId = currentId;
+                    while (newId == currentId) newId = Random.Range(0, totalIdCount);
+                    elementIds[x, currentLine.corY[x]] = newId;
+                    return; // Достаточно сломать в одном месте
                 }
-            }
-
-            Dictionary<Sprite, int> sppriteCount = GetInfoInSequenceLine(mass, currentLine, 3);
-
-            if (sppriteCount.Count >= 1)
-            {
-                SetLoseLine(mass, _allSprites, currentLine);
-            }
         }
 
-        //�������� ������������ ����������� � �����
-        private float GetMaxMultiplierForLine(Sprite[,] mass, LinesData.InnerArray currentLine)
+        // Получение максимального множителя для линии
+        private float GetMaxMultiplierForLine(int[,] elementIds, LinesData.InnerArray currentLine)
         {
-            Dictionary<Sprite, int> spriteCount = GetInfoInSequenceLine(mass, currentLine, 3);
+            var spriteCount = GetInfoInSequenceLine(elementIds, currentLine, 3);
             float maxMultiplier = 0;
 
             foreach (var item in spriteCount)
             {
-                float multSprite = GetMultiplayer(_spritesMultiplierData.spritesMultiplier, item.Key, item.Value);
-
-                if (multSprite > maxMultiplier)
-                {
-                    maxMultiplier = multSprite;
-                }
+                var multSprite = GetMultiplayer(item.Key, item.Value);
+                if (multSprite > maxMultiplier) maxMultiplier = multSprite;
             }
 
             return maxMultiplier;
         }
 
-        //�������� �����������
-        private float GetMultiplayer(SpriteMultiplayerData.SpritesMultiplier spritesMultiplier, Sprite sprite, int count)
+        // Получение множителя для конкретного ID и количества
+        private float GetMultiplayer(int id, int count)
         {
-            foreach (var spriteMult in spritesMultiplier.spriteMults)
-            {
-                if (spriteMult.sprite == sprite)
-                {
+            foreach (var spriteMult in _spritesMultiplierData.spritesMultiplier.spriteMults)
+                if (spriteMult.id == id)
                     foreach (var countMultiplayer in spriteMult.countMult)
-                    {
                         if (countMultiplayer.count == count)
-                        {
                             return countMultiplayer.mult;
-                        }
-                    }
-                }
-            }
 
             return 0;
-        }
-
-        //�������� ��������� ��������
-        private Sprite GetRandomSprite(Sprite[] newSprites)
-        {
-            return newSprites[Random.Range(0, newSprites.Length)];
         }
     }
 }

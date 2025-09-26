@@ -26,31 +26,23 @@ namespace Neo
             [SerializeField] private float space;
             [SerializeField] private float resetX;
 
-            [Space]
-            public UnityEvent<int> OnWin;
+            [Space] public UnityEvent<int> OnWin;
 
-            [Space, Header("Update Visual for all images")]
-
+            [Space] [Header("Update Visual for all images")]
             public bool updateSetting;
 
-            void Start()
+            private void Start()
             {
                 UpdateVisual();
 
-                for (int i = 0; i < images.Length; i++)
-                {
-                    images[i].sprite = GetRandomSprite();
-                }
+                for (var i = 0; i < images.Length; i++) images[i].sprite = GetRandomSprite();
             }
 
             public void StartRolling()
             {
                 idWin = -1;
 
-                if (rollCoroutine != null)
-                {
-                    StopCoroutine(rollCoroutine);
-                }
+                if (rollCoroutine != null) StopCoroutine(rollCoroutine);
 
                 rollCoroutine = StartCoroutine(Roll());
             }
@@ -77,13 +69,13 @@ namespace Neo
 
             private void Move(float speed)
             {
-                for (int i = 0; i < images.Length; i++)
+                for (var i = 0; i < images.Length; i++)
                 {
                     images[i].transform.position += speed * Time.deltaTime * Vector3.left;
 
                     if (images[i].transform.position.x < resetX)
                     {
-                        Vector3 pos = images[i].transform.position;
+                        var pos = images[i].transform.position;
                         pos.x = GetLastPos().x + space;
                         images[i].transform.position = pos;
                         images[i].sprite = GetRandomSprite();
@@ -95,11 +87,11 @@ namespace Neo
             {
                 slowDownTime = 2f;
                 float elapsedTime = 0;
-                float speed = this.speed;
+                var speed = this.speed;
 
                 while (elapsedTime < slowDownTime)
                 {
-                    float t = elapsedTime / slowDownTime;
+                    var t = elapsedTime / slowDownTime;
                     speed = Mathf.Lerp(speed, 0, t);
 
                     Move(speed);
@@ -115,13 +107,11 @@ namespace Neo
 
             private Vector3 GetLastPos()
             {
-                Vector3 last = images[0].transform.position;
+                var last = images[0].transform.position;
 
-                for (int i = 0; i < images.Length; i++)
-                {
+                for (var i = 0; i < images.Length; i++)
                     if (images[i].transform.position.x > last.x)
                         last = images[i].transform.position;
-                }
 
                 return last;
             }
@@ -129,11 +119,11 @@ namespace Neo
             private void DetermineWinningImage()
             {
                 winningImage = null;
-                float minDistance = float.MaxValue;
+                var minDistance = float.MaxValue;
 
                 foreach (var image in images)
                 {
-                    float distance = Mathf.Abs(image.transform.position.x - arrow.position.x);
+                    var distance = Mathf.Abs(image.transform.position.x - arrow.position.x);
 
                     if (distance < minDistance)
                     {
@@ -153,21 +143,16 @@ namespace Neo
 
             private int CheckSpriteId(Sprite sprite)
             {
-                for (int i = 0; i < sprites.Length; i++)
-                {
+                for (var i = 0; i < sprites.Length; i++)
                     if (sprites[i] == sprite)
                         return i;
-                }
 
                 return -1;
             }
 
             private void OnValidate()
             {
-                if (updateSetting)
-                {
-                    UpdateVisual();
-                }
+                if (updateSetting) UpdateVisual();
             }
 
             private void UpdateVisual()
@@ -177,9 +162,9 @@ namespace Neo
                 space = images[1].transform.position.x - images[0].transform.position.x;
                 resetX = images[1].transform.position.x;
 
-                for (int i = 1; i < images.Length; i++)
+                for (var i = 1; i < images.Length; i++)
                 {
-                    Vector3 pos = images[i - 1].transform.position;
+                    var pos = images[i - 1].transform.position;
                     pos.x += space;
                     images[i].transform.position = pos;
                     images[i].sprite = GetRandomSprite();

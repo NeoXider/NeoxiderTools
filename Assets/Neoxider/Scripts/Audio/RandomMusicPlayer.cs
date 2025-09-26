@@ -1,7 +1,11 @@
+using Neo.Extensions;
+using System.Collections;
 using UnityEngine;
 
 namespace Neo
 {
+    [AddComponentMenu("Neoxider/" + "Audio/" + nameof(RandomMusicPlayer))]
+    [RequireComponent(typeof(AudioSource))]
     public class RandomMusicPlayer : MonoBehaviour
     {
         public AudioClip[] musicTracks;
@@ -9,47 +13,35 @@ namespace Neo
         private AudioSource audioSource;
         private int lastTrackIndex = -1;
 
-        void Start()
+        private void Start()
         {
-            if (playOnStart && musicTracks.Length > 0)
-            {
-                PlayRandomTrack();
-            }
+            audioSource = GetComponent<AudioSource>();
+            if (playOnStart) StartCoroutine(PlayMusicLoop());
         }
 
-        void Update()
+        private IEnumerator PlayMusicLoop()
         {
-            if (!audioSource.isPlaying)
+            while (true)
             {
-                PlayRandomTrack();
+                if (musicTracks.Length == 0)
+                {
+                    Debug.LogWarning("Музыкальные треки не назначены в RandomMusicPlayer.");
+                    yield break; // Stop the coroutine if there are no tracks
+                }
+
+                int newTrackIndex;
+                do
+                {
+                    newTrackIndex = musicTracks.GetRandomIndex();
+                } while (newTrackIndex == lastTrackIndex && musicTracks.Length > 1);
+
+                lastTrackIndex = newTrackIndex;
+                audioSource.clip = musicTracks[newTrackIndex];
+                audioSource.Play();
+
+                // Wait for the current clip to finish playing before choosing the next one
+                yield return new WaitForSeconds(audioSource.clip.length);
             }
-        }
-
-        void PlayRandomTrack()
-        {
-            if (musicTracks.Length == 0)
-            {
-                Debug.LogWarning("����������� ����� �� ���������.");
-                return;
-            }
-
-            int newTrackIndex;
-
-            do
-            {
-                newTrackIndex = musicTracks.GetRandomIndex();
-            }
-            while (newTrackIndex == lastTrackIndex && musicTracks.Length > 1);
-
-            audioSource.clip = musicTracks[newTrackIndex];
-            audioSource.Play();
-
-            lastTrackIndex = newTrackIndex;
-        }
-
-        private void OnValidate()
-        {
-            audioSource ??= GetComponent<AudioSource>();
         }
     }
 }

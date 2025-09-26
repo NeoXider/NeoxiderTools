@@ -14,8 +14,8 @@ public class ImageFillAmountAnimator : MonoBehaviour
         _anim = _image.DOFillAmount(value, _duration);
     }
 
-    private void OnValidate() 
+    private void OnValidate()
     {
-        _image ??= GetComponent<Image>();    
+        _image ??= GetComponent<Image>();
     }
 }

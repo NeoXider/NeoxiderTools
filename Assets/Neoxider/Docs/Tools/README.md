@@ -1,0 +1,106 @@
+# Инструменты (Tools)
+
+Этот раздел содержит различные инструменты и утилиты, которые могут быть использованы в вашем проекте.
+
+## Оглавление
+
+### Файлы
+
+- [CameraAspectRatioScaler](./CameraAspectRatioScaler.md)
+- [UpdateChilds](./UpdateChilds.md)
+
+### Модули
+
+- **Components**
+  - [DialogueManager](./Components/DialogueManager.md)
+  - [Loot](./Components/Loot.md)
+  - [README](./Components/README.md)
+  - **AttackSystem**
+    - [AdvancedAttackCollider](./Components/AttackSystem/AdvancedAttackCollider.md)
+    - [AttackExecution](./Components/AttackSystem/AttackExecution.md)
+    - [Evade](./Components/AttackSystem/Evade.md)
+    - [Health](./Components/AttackSystem/Health.md)
+    - [README](./Components/AttackSystem/README.md)
+  - **Interface**
+    - [InterfaceAttack](./Components/Interface/InterfaceAttack.md)
+    - [README](./Components/Interface/README.md)
+- **Debug**
+  - [ErrorLogger](./Debug/ErrorLogger.md)
+  - [FPS](./Debug/FPS.md)
+  - [README](./Debug/README.md)
+- **Draw**
+  - [Drawer](./Draw/Drawer.md)
+  - [README](./Draw/README.md)
+- **FakeLeaderboard**
+  - [Leaderboard](./FakeLeaderboard/Leaderboard.md)
+  - [LeaderboardItem](./FakeLeaderboard/LeaderboardItem.md)
+  - [LeaderboardMove](./FakeLeaderboard/LeaderboardMove.md)
+  - [README](./FakeLeaderboard/README.md)
+- **Input**
+  - [MouseEffect](./Input/MouseEffect.md)
+  - [MouseInputManager](./Input/MouseInputManager.md)
+  - [MultiKeyEventTrigger](./Input/MultiKeyEventTrigger.md)
+  - [SwipeController](./Input/SwipeController.md)
+  - [README](./Input/README.md)
+- **InteractableObject**
+  - [InteractiveObject](./InteractableObject/InteractiveObject.md)
+  - [PhysicsEvents2D](./InteractableObject/PhysicsEvents2D.md)
+  - [PhysicsEvents3D](./InteractableObject/PhysicsEvents3D.md)
+  - [ToggleObject](./InteractableObject/ToggleObject.md)
+  - [README](./InteractableObject/README.md)
+- **Managers**
+  - [Bootstrap](./Managers/Bootstrap.md)
+  - [EM](./Managers/EM.md)
+  - [GM](./Managers/GM.md)
+  - [ScoreManager](./Managers/ScoreManager.md)
+  - [Singleton](./Managers/Singleton.md)
+  - [README](./Managers/README.md)
+- **Move**
+  - [AdvancedForceApplier](./Move/AdvancedForceApplier.md)
+  - [CameraConstraint](./Move/CameraConstraint.md)
+  - [CameraRotationController](./Move/CameraRotationController.md)
+  - [DirectionAlignedObject](./Move/DirectionAlignedObject.md)
+  - [DistanceChecker](./Move/DistanceChecker.md)
+  - [Follow](./Move/Follow.md)
+  - [MoveController](./Move/MoveController.md)
+  - [ScreenPositioner](./Move/ScreenPositioner.md)
+  - [README](./Move/README.md)
+  - **MovementToolkit**
+    - [IMover](./Move/MovementToolkit/IMover.md)
+    - [KeyboardMover2D](./Move/MovementToolkit/KeyboardMover2D.md)
+    - [MouseMover2D](./Move/MovementToolkit/MouseMover2D.md)
+    - [MouseMover3D](./Move/MovementToolkit/MouseMover3D.md)
+    - [README](./Move/MovementToolkit/README.md)
+- **Other**
+  - [AiNavigation](./Other/AiNavigation.md)
+  - [BillboardUniversal](./Other/BillboardUniversal.md)
+  - [CameraShake](./Other/CameraShake.md)
+  - [RewertAmount](./Other/RewertAmount.md)
+  - [SpineController](./Other/SpineController.md)
+  - [README](./Other/README.md)
+- **Random**
+  - [ChanceManager](./Random/ChanceManager.md)
+  - [ChanceSystemBehaviour](./Random/ChanceSystemBehaviour.md)
+  - [README](./Random/README.md)
+  - **Data**
+    - [ChanceData](./Random/Data/ChanceData.md)
+    - [README](./Random/Data/README.md)
+- **Spawner**
+  - [ObjectPool](./Spawner/ObjectPool.md)
+  - [SimpleSpawner](./Spawner/SimpleSpawner.md)
+  - [Spawner](./Spawner/Spawner.md)
+  - [README](./Spawner/README.md)
+- **Text**
+  - [SetText](./Text/SetText.md)
+  - [TimeToText](./Text/TimeToText.md)
+  - [README](./Text/README.md)
+- **Time**
+  - [Timer](./Time/Timer.md)
+  - [TimerObject](./Time/TimerObject.md)
+  - [README](./Time/README.md)
+- **View**
+  - [ImageFillAmountAnimator](./View/ImageFillAmountAnimator.md)
+  - [Selector](./View/Selector.md)
+  - [StarView](./View/StarView.md)
+  - [ZPositionAdjuster](./View/ZPositionAdjuster.md)
+  - [README](./View/README.md)

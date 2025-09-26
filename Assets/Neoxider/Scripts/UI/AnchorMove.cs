@@ -5,11 +5,9 @@ using UnityEngine.UI;
 
 public class AnchorMove : MonoBehaviour
 {
-    [Range(0, 1)]
-    public float x = 0.5f;
+    [Range(0, 1)] public float x = 0.5f;
 
-    [Range(0, 1)]
-    public float y = 0.5f;
+    [Range(0, 1)] public float y = 0.5f;
 
     private RectTransform rect;
 
@@ -22,12 +20,8 @@ public class AnchorMove : MonoBehaviour
 
         rect.anchoredPosition = Vector2.zero;
 
-    
-
-
 
         rect.anchoredPosition = Vector2.zero;
-
 
 
         print(rect.localPosition);

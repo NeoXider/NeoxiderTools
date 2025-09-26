@@ -14,12 +14,12 @@ namespace Neo.Tools
 
         private bool isWithinDistance = false;
 
-        void Update()
+        private void Update()
         {
             if (currentObject == null || targetObject == null)
                 return;
 
-            float distance = Vector3.Distance(currentObject.position, targetObject.position);
+            var distance = Vector3.Distance(currentObject.position, targetObject.position);
 
             if (distance < distanceThreshold && !isWithinDistance)
             {

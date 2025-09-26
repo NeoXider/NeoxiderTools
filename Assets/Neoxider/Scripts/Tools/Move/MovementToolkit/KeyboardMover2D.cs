@@ -37,12 +37,16 @@ public class KeyboardMover2D : MonoBehaviour, IMover
     public bool IsMoving { get; private set; }
 
     /// <inheritdoc/>
-    public void MoveDelta(Vector2 delta) =>
+    public void MoveDelta(Vector2 delta)
+    {
         transform.Translate(delta, Space.World);
+    }
 
     /// <inheritdoc/>
-    public void MoveToPoint(Vector2 worldPoint) =>
+    public void MoveToPoint(Vector2 worldPoint)
+    {
         transform.position = worldPoint;
+    }
 
     #endregion
 
@@ -60,7 +64,10 @@ public class KeyboardMover2D : MonoBehaviour, IMover
 
     #region === unity callbacks ===
 
-    private void Awake() => _rb = GetComponent<Rigidbody2D>();
+    private void Awake()
+    {
+        _rb = GetComponent<Rigidbody2D>();
+    }
 
     private void Update()
     {
@@ -74,7 +81,7 @@ public class KeyboardMover2D : MonoBehaviour, IMover
     {
         if (!_rb) return;
 
-        float k = Time.fixedDeltaTime / Time.deltaTime;
+        var k = Time.fixedDeltaTime / Time.deltaTime;
         ApplyDelta(_cachedDelta * k); // preserves speed in physics step
     }
 
@@ -86,9 +93,9 @@ public class KeyboardMover2D : MonoBehaviour, IMover
 
     private Vector2 ComputeDelta(float dt)
     {
-        float h = Input.GetAxisRaw("Horizontal");
-        float v = Input.GetAxisRaw("Vertical");
-        Vector2 dir = new Vector2(h, v);
+        var h = Input.GetAxisRaw("Horizontal");
+        var v = Input.GetAxisRaw("Vertical");
+        var dir = new Vector2(h, v);
 
         if (axisMode == AxisMode.AxisNormalized && dir.sqrMagnitude > 0.001f)
             dir.Normalize();
@@ -98,7 +105,7 @@ public class KeyboardMover2D : MonoBehaviour, IMover
 
     private void ApplyDelta(Vector2 delta)
     {
-        bool movingNow = delta.sqrMagnitude > 0.0001f;
+        var movingNow = delta.sqrMagnitude > 0.0001f;
 
         if (movingNow && !_wasMovingLast) OnMoveStart?.Invoke();
         if (!movingNow && _wasMovingLast) OnMoveStop?.Invoke();

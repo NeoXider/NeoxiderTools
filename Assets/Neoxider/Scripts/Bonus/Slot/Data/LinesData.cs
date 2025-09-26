@@ -11,13 +11,12 @@ namespace Neo.Bonus
             public int[] corY;
         }
 
-        [SerializeField]
-        private InnerArray[] _lines =
+        [SerializeField] private InnerArray[] _lines =
         {
-        new InnerArray { corY = new int[] { 0, 0, 0 } },
-        new InnerArray { corY = new int[] { 1, 1, 1 } },
-        new InnerArray { corY = new int[] { 2, 2, 2 } }
-    };
+            new() { corY = new int[] { 0, 0, 0 } },
+            new() { corY = new int[] { 1, 1, 1 } },
+            new() { corY = new int[] { 2, 2, 2 } }
+        };
 
         public InnerArray[] lines => _lines;
     }

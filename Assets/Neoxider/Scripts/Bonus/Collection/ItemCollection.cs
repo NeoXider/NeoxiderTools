@@ -18,13 +18,9 @@ namespace Neo.Bonus
             OnChangeEnabled.Invoke(active);
 
             if (active)
-            {
                 OnActive?.Invoke();
-            }
             else
-            {
                 OnDeactivated?.Invoke();
-            }
         }
 
         public void SetSprite(Sprite sprite)

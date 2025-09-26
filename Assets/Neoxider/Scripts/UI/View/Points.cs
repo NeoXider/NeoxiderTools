@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-
 namespace Neo
 {
     namespace UI
@@ -14,32 +13,39 @@ namespace Neo
             [SerializeField] private Button[] _points;
             [SerializeField] private bool _findChildPoints = true;
 
-            [Header("Setting points")]
-            [SerializeField] private bool _interactablePoints = true;
+            [Header("Setting points")] [SerializeField]
+            private bool _interactablePoints = true;
+
             [SerializeField] private bool _imageSetNativeSize = true;
 
-            [Space, Header("Visual")]
-            [SerializeField] private Sprite _spritesOff;
+            [Space] [Header("Visual")] [SerializeField]
+            private Sprite _spritesOff;
+
             [SerializeField] private Sprite[] _spritesPoints;
             [SerializeField] private bool useOneSprite = true;
             [SerializeField] private Color[] _colors_off_on = { Color.white, Color.white };
 
-            [Space, Header("Main settings")]
-            [SerializeField] private bool _fill;
+            [Space] [Header("Main settings")] [SerializeField]
+            private bool _fill;
+
             [SerializeField] private bool _flip;
             [SerializeField] private bool _zeroPoints;
 
-            [Space, SerializeField] private bool _visualClick = true;
+            [Space] [SerializeField] private bool _visualClick = true;
 
-            [Space, Header("point")]
-            [SerializeField, Min(-1)] private int _id;
-            [SerializeField] private bool _looping = false;
-            [SerializeField] private bool useMaxInt = false;
+            [Space] [Header("point")] [SerializeField] [Min(-1)]
+            private int _id;
+
+            [SerializeField] private bool _looping;
+            [SerializeField] private bool useMaxInt;
             [SerializeField] private int _maxCount = 3;
+
+            [Space] public UnityEvent<int> OnChangeId;
+            public UnityEvent<int> OnClickPoint;
 
             public int id
             {
-                get { return _id; }
+                get => _id;
                 set
                 {
                     _id = value;
@@ -47,15 +53,11 @@ namespace Neo
                 }
             }
 
-            [Space]
-            public UnityEvent<int> OnChangeId;
-            public UnityEvent<int> OnClickPoint;
-
             private void Awake()
             {
-                for (int i = 0; i < _points.Length; i++)
+                for (var i = 0; i < _points.Length; i++)
                 {
-                    int index = i;
+                    var index = i;
                     _points[i].onClick.AddListener(() => Click(index));
                 }
             }
@@ -67,18 +69,28 @@ namespace Neo
 
             private void OnDestroy()
             {
-                for (int i = 0; i < _points.Length; i++)
+                for (var i = 0; i < _points.Length; i++)
                 {
-                    int index = i;
+                    var index = i;
                     _points[i].onClick.RemoveAllListeners();
                 }
+            }
+
+            private void OnTransformChildrenChanged()
+            {
+                UpdatePoints();
+            }
+
+            private void OnValidate()
+            {
+                UpdatePoints();
             }
 
             public void SetPoint(int value)
             {
                 this.id = SafeId(value);
 
-                int id = _id;
+                var id = _id;
 
                 if (_zeroPoints)
                     id -= 1;
@@ -87,13 +99,12 @@ namespace Neo
                     id = _points.Length - 1 - id;
 
                 if (_spritesOff != null && _spritesPoints.Length > 0)
-                {
-                    for (int j = 0; j < _points.Length; j++)
+                    for (var j = 0; j < _points.Length; j++)
                     {
-                        int i = j;
-                        bool activ = _fill ? (_flip ? id <= i : i <= id) : i == id;
+                        var i = j;
+                        var activ = _fill ? _flip ? id <= i : i <= id : i == id;
 
-                        int currentId = activ ? 1 : 0;//.ToInt();
+                        var currentId = activ ? 1 : 0; //.ToInt();
                         Sprite sprite = null;
 
                         if (useOneSprite)
@@ -102,7 +113,7 @@ namespace Neo
                             sprite = activ ? _spritesPoints[j] : _spritesOff;
 
 
-                        Color color = _colors_off_on[currentId];
+                        var color = _colors_off_on[currentId];
                         _points[i].image.color = color;
 
                         if (sprite != null)
@@ -113,13 +124,12 @@ namespace Neo
                                 _points[i].image.SetNativeSize();
                         }
                     }
-                }
             }
 
             public void SetPoint(float floatValue)
             {
-                int maxIndex = _points.Length;
-                int intValue = Mathf.RoundToInt(floatValue * maxIndex);
+                var maxIndex = _points.Length;
+                var intValue = Mathf.RoundToInt(floatValue * maxIndex);
                 if (floatValue == 1f)
                     intValue = maxIndex;
 
@@ -128,31 +138,23 @@ namespace Neo
 
             public void IncreaseId()
             {
-                int count = GetCount();
+                var count = GetCount();
 
                 if (_looping)
-                {
                     _id = (_id + 1) % count;
-                }
                 else
-                {
                     _id = Mathf.Min(_id + 1, count);
-                }
                 SetPoint(_id);
             }
 
             public void DecreaseId()
             {
-                int count = GetCount();
+                var count = GetCount();
 
                 if (_looping)
-                {
                     _id = (_id - 1 + count) % count;
-                }
                 else
-                {
                     _id = Mathf.Max(_id - 1, 0);
-                }
                 SetPoint(_id);
             }
 
@@ -165,7 +167,7 @@ namespace Neo
 
             private int GetCount()
             {
-                int count = 0;
+                var count = 0;
 
                 if (useMaxInt)
                     count = _zeroPoints ? _maxCount : _maxCount - 1;
@@ -180,27 +182,19 @@ namespace Neo
                 _interactablePoints = interactable;
 
                 if (_points != null)
-                    for (int i = 0; i < _points.Length; i++)
-                    {
+                    for (var i = 0; i < _points.Length; i++)
                         _points[i].enabled = interactable;
-                    }
             }
 
             public void Click(int id)
             {
                 if (_interactablePoints)
                 {
-                    int currentId = id;
+                    var currentId = id;
 
-                    if (_flip)
-                    {
-                        currentId = _points.Length - 1 - currentId;
-                    }
+                    if (_flip) currentId = _points.Length - 1 - currentId;
 
-                    if (_zeroPoints)
-                    {
-                        currentId += 1;
-                    }
+                    if (_zeroPoints) currentId += 1;
 
                     OnClickPoint?.Invoke(currentId);
 
@@ -215,8 +209,8 @@ namespace Neo
                 {
                     if (_spritesPoints != null && _spritesPoints.Length > 0 && _spritesPoints[0] != null)
                     {
-                        Sprite sprite = _spritesPoints[0];
-                        _spritesPoints = new Sprite[] { sprite };
+                        var sprite = _spritesPoints[0];
+                        _spritesPoints = new[] { sprite };
                     }
                     else
                     {
@@ -233,24 +227,17 @@ namespace Neo
 
             private void CheckAndSetButtons()
             {
-                List<Button> list = new List<Button>();
-                int pointId = 0;
+                var list = new List<Button>();
+                var pointId = 0;
 
 
-                for (int i = 0; i < transform.childCount; i++)
-                {
+                for (var i = 0; i < transform.childCount; i++)
                     if (transform.GetChild(i).TryGetComponent(out Button button))
-                    {
                         if (pointId < _points.Length)
                         {
                             list.Add(button);
                             pointId++;
                         }
-                        else
-                        {
-                        }
-                    }
-                }
 
                 _points = list.ToArray();
             }
@@ -259,16 +246,6 @@ namespace Neo
             {
                 _id = SafeId(_id);
                 SetPoint(_id);
-            }
-
-            private void OnTransformChildrenChanged()
-            {
-                UpdatePoints();
-            }
-
-            private void OnValidate()
-            {
-                UpdatePoints();
             }
         }
     }

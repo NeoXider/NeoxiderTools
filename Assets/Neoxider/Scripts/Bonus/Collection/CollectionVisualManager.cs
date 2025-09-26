@@ -7,7 +7,7 @@ namespace Neo.Bonus
     public class CollectionVisualManager : MonoBehaviour
     {
         public static CollectionVisualManager Instance;
-        [SerializeField, GetComponents(true)]private ItemCollection[] _items;
+        [SerializeField] [GetComponents(true)] private ItemCollection[] _items;
 
         [SerializeField] private bool enableSetItem = true;
         public UnityEvent<int> OnSetItem;
@@ -21,24 +21,20 @@ namespace Neo.Bonus
 
         private void Subscriber(bool subscribe)
         {
-            for (int i = 0; i < _items.Length; i++)
+            for (var i = 0; i < _items.Length; i++)
             {
-                int id = i;
+                var id = i;
 
                 if (subscribe)
-                {
                     _items[i].button.onClick.AddListener(() => SetItem(id));
-                }
                 else
-                {
                     _items[i].button.onClick.RemoveListener(() => SetItem(id));
-                }
             }
         }
 
-        private void OnDestroy() 
+        private void OnDestroy()
         {
-            Subscriber(false);    
+            Subscriber(false);
         }
 
         private void OnEnable()
@@ -48,10 +44,7 @@ namespace Neo.Bonus
 
         public void Visual()
         {
-            for (int i = 0; i < _items.Length; i++)
-            {
-                UpdateItemVisibility(i);
-            }
+            for (var i = 0; i < _items.Length; i++) UpdateItemVisibility(i);
         }
 
         public void UpdateItemVisibility(int id)
@@ -65,15 +58,12 @@ namespace Neo.Bonus
 
         public void SetItem(int id)
         {
-            if (!enableSetItem || (enableSetItem && Collection.Instance.enabledItems[id]))
-            {
-                OnSetItem?.Invoke(id);
-            }
+            if (!enableSetItem || (enableSetItem && Collection.Instance.enabledItems[id])) OnSetItem?.Invoke(id);
         }
 
         public void SetItem(ItemCollection itemCollection)
         {
-            int id = Array.IndexOf(_items, itemCollection);
+            var id = Array.IndexOf(_items, itemCollection);
             SetItem(id);
         }
     }

@@ -3,20 +3,23 @@ using UnityEngine;
 
 namespace Neo.Bonus
 {
-    [CreateAssetMenu(fileName = "SpritesMultipliersDafualt", menuName = "Neoxider/Slot/SpritesMult")]
+    [CreateAssetMenu(fileName = "SpritesMultipliersDefault", menuName = "Neoxider/Slot/SpritesMult")]
     public class SpriteMultiplayerData : ScriptableObject
     {
         #region structs
+
         [System.Serializable]
         public class SpritesMultiplier
         {
-            public SpriteMult[] spriteMults;
+            public IdMult[] spriteMults;
         }
 
         [System.Serializable]
-        public struct SpriteMult
+        public struct IdMult
         {
-            public Sprite sprite;
+            [Tooltip("ID элемента из SpritesData")]
+            public int id;
+
             public CountMultiplayer[] countMult;
         }
 
@@ -26,13 +29,15 @@ namespace Neo.Bonus
             public int count;
             public float mult;
         }
+
         #endregion
 
         [SerializeField] private SpritesMultiplier _spritesMultiplier;
         public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
 
-        [Space, Header("Auto Generate")]
-        [SerializeField] private bool _generate;
+        [Space] [Header("Auto Generate")] [SerializeField]
+        private bool _generate;
+
         [SerializeField] private int _minCount = 3;
         [SerializeField] private int _maxCount = 3;
         [SerializeField] private int defaultMultiplayer = 1;
@@ -45,31 +50,28 @@ namespace Neo.Bonus
             {
                 _generate = false;
 
-                if (_spritesData != null)
-                {
-                    AutoGenerateSpriteMultiplayer();
-                }
+                if (_spritesData != null) AutoGenerateSpriteMultiplayer();
             }
         }
 
         private void AutoGenerateSpriteMultiplayer()
         {
-            List<SpriteMult> list = new List<SpriteMult>();
+            var list = new List<IdMult>();
 
-            for (int s = 0; s < _spritesData.sprites.Length; s++)
+            if (_spritesData.visuals == null) return;
+
+            for (var s = 0; s < _spritesData.visuals.Length; s++)
             {
-                List<CountMultiplayer> countList = new List<CountMultiplayer>();
+                var countList = new List<CountMultiplayer>();
 
-                for (int i = _minCount; i <= _maxCount; i++)
-                {
+                for (var i = _minCount; i <= _maxCount; i++)
                     countList.Add(new CountMultiplayer { count = i, mult = defaultMultiplayer });
-                }
 
-                list.Add(new SpriteMult { sprite = _spritesData.sprites[s], countMult = countList.ToArray() });
+                // Используем ID из SpritesData
+                list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });
             }
 
             _spritesMultiplier.spriteMults = list.ToArray();
-
         }
     }
 }

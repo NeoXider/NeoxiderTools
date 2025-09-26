@@ -8,12 +8,17 @@ namespace Neo.UI
     public class ButtonShake : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         #region Sub-Classes
+
         [System.Serializable]
-        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton> { }
+        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
+        {
+        }
+
         #endregion
 
-        [Header("Shake Settings")]
-        [SerializeField] private RectTransform _rectTransform;
+        [Header("Shake Settings")] [SerializeField]
+        private RectTransform _rectTransform;
+
         [SerializeField] private float _shakeDuration = 0;
         [SerializeField] private float _shakeMagnitude = 3;
 
@@ -34,35 +39,24 @@ namespace Neo.UI
         {
             _rectTransform.localPosition = _startPositions;
 
-            if (_shakeOnStart)
-            {
-                StartShaking();
-            }
+            if (_shakeOnStart) StartShaking();
         }
 
         private void OnDisable()
         {
-
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
             if (_shakeOnStart)
-            {
                 StopShaking();
-            }
             else
-            {
                 StartShaking();
-            }
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (!_shakeOnEnd)
-            {
-                StopShaking();
-            }
+            if (!_shakeOnEnd) StopShaking();
         }
 
         private void StartShaking()
@@ -90,13 +84,13 @@ namespace Neo.UI
 
         private IEnumerator ShakeButton()
         {
-            Vector3 originalPosition = _rectTransform.localPosition;
-            float elapsed = 0f;
+            var originalPosition = _rectTransform.localPosition;
+            var elapsed = 0f;
 
             while (elapsed < _shakeDuration || _shakeDuration == 0)
             {
-                float x = Random.Range(-1f, 1f) * _shakeMagnitude;
-                float y = Random.Range(-1f, 1f) * _shakeMagnitude;
+                var x = Random.Range(-1f, 1f) * _shakeMagnitude;
+                var y = Random.Range(-1f, 1f) * _shakeMagnitude;
 
                 _rectTransform.localPosition = originalPosition + new Vector3(x, y, 0);
                 elapsed += Time.deltaTime;
@@ -109,10 +103,7 @@ namespace Neo.UI
 
         private void OnValidate()
         {
-            if (_rectTransform == null)
-            {
-                _rectTransform = GetComponent<RectTransform>();
-            }
+            if (_rectTransform == null) _rectTransform = GetComponent<RectTransform>();
         }
     }
 }

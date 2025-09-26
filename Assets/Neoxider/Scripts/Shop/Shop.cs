@@ -1,76 +1,118 @@
 using System;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections.Generic;
 
 namespace Neo.Shop
 {
+    [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Shop))]
     public class Shop : MonoBehaviour
     {
-        [SerializeField]
-        private ShopItemData[] _shopItemDatas;
+        [Header("Price if null shopItemDatas")] [SerializeField]
+        private int[] _prices;
 
-        [SerializeField]
-        private ShopItem[] _shopItems;
+        [SerializeField] private ShopItemData[] _shopItemDatas;
 
-        [SerializeField]
+        [SerializeField] private ShopItem _shopItemPreview;
+
+        [SerializeField] private ShopItem[] _shopItems;
+
+        [Space] [Header("Settings")] [SerializeField]
         private bool _useSetItem = true;
-        
-        [SerializeField]
-        private bool _autoSubscribe = true;
 
-        [SerializeField]
-        private string _keySave = "Shop";
+        [SerializeField] private bool _autoSubscribe = true;
 
-        [Space]
-        [SerializeField, RequireInterface(typeof(IMoneySpend))]
+        [SerializeField] private string _keySave = "Shop";
+
+        [Space] [Header("Spawn Shop Items")] [SerializeField]
+        private Transform _container;
+
+        [SerializeField] private ShopItem _prefab;
+
+        [Space] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _IMoneySpend;
 
-        [Space]
-        public UnityEvent<int> OnSelect;
+        public int[] Prices => _prices;
+
+        public ShopItemData[] ShopItemDatas => _shopItemDatas;
+
+        [Space] public UnityEvent<int> OnSelect;
         public UnityEvent<int> OnPurchased;
         public UnityEvent<int> OnPurchaseFailed;
         public UnityEvent OnLoad;
 
-        [Space]
-        [Header("Debug")]
-        [SerializeField]
-        private int[] _prices;
-
-        private IMoneySpend _money;
+        [Space] [Header("Debug")] private IMoneySpend _money;
 
         private bool load = false;
+        private int _previewId;
+        private int _id;
+
+        public int PreviewId => _previewId;
+
+        public int Id
+        {
+            get => _id;
+            set => Select(value);
+        }
 
         private void Awake()
         {
+            Load();
+            Spawn();
             Subscriber(true);
+            ShowPreview(_previewId);
         }
 
-        void Start()
+        private void Spawn()
         {
-            Load();
-            _money = _IMoneySpend.GetComponent<IMoneySpend>();
+            if (_prefab == null) return;
 
-            if (_useSetItem)
+            var shopItemsList = _shopItems?.ToList() ?? new List<ShopItem>();
+            var parent = _container != null ? _container : transform;
+
+            for (var i = shopItemsList.Count; i < _prices.Length; i++)
             {
-                Select(0);
+                var newShopItem = Instantiate(_prefab, parent);
+                newShopItem.gameObject.SetActive(true);
+                shopItemsList.Add(newShopItem);
             }
+
+            _shopItems = shopItemsList.ToArray();
+
+            if (_prefab.gameObject.scene.IsValid()) _prefab.gameObject.SetActive(false);
+        }
+
+        private void Start()
+        {
+            if (_IMoneySpend != null)
+                _money = _IMoneySpend?.GetComponent<IMoneySpend>() ?? Money.I;
+            else
+                _money = Money.I;
+
+            Visual();
+
+            if (_useSetItem) Select(0);
+
+            load = true;
+            OnLoad?.Invoke();
         }
 
         private void Subscriber(bool subscribe)
         {
-            for (int i = 0; i < _shopItems.Length; i++)
+            for (var i = 0; i < _shopItems.Length; i++)
             {
-                int id = i;
+                var id = i;
 
                 if (subscribe)
                 {
                     if (_autoSubscribe)
-                        _shopItems[i].buttonBuySet.onClick.AddListener(() => Buy(id));
+                        _shopItems[i].buttonBuy.onClick.AddListener(() => Buy(id));
                 }
                 else
                 {
                     if (_autoSubscribe)
-                        _shopItems[i].buttonBuySet.onClick.RemoveListener(() => Buy(id));
+                        _shopItems[i].buttonBuy.onClick.RemoveListener(() => Buy(id));
                 }
             }
         }
@@ -82,26 +124,34 @@ namespace Neo.Shop
 
         private void Load()
         {
-            _prices = new int[_shopItemDatas.Length];
+            var prices = new int[NotNullDatas() ? _shopItemDatas.Length : _prices.Length];
 
-            for (int i = 0; i < _prices.Length; i++)
-            {
-                _prices[i] = PlayerPrefs.GetInt(_keySave + i, _shopItemDatas[i].price);
-            }
+            for (var i = 0; i < _prices.Length; i++)
+                prices[i] = PlayerPrefs.GetInt(_keySave + i, NotNullDatas() ? _shopItemDatas[i].price : _prices[i]);
 
-            load = true;
-
-            Visual();
-
-            OnLoad?.Invoke();
+            _prices = prices;
         }
 
         private void Save()
         {
-            for (int i = 0; i < _prices.Length; i++)
-            {
-                PlayerPrefs.SetInt(_keySave + i, _prices[i]);
-            }
+            for (var i = 0; i < _prices.Length; i++) PlayerPrefs.SetInt(_keySave + i, _prices[i]);
+        }
+
+        public void ShowPreview(int id)
+        {
+            _previewId = id;
+            VisualPreview();
+        }
+
+        private void VisualPreview()
+        {
+            var data = _previewId < _shopItemDatas.Length ? _shopItemDatas[_previewId] : null;
+            _shopItemPreview?.Visual(data, _prices[_previewId], _previewId);
+        }
+
+        public void Buy()
+        {
+            Buy(_previewId);
         }
 
         public void Buy(int id)
@@ -109,7 +159,7 @@ namespace Neo.Shop
             if (_prices[id] == 0)
             {
                 Visual();
-                
+
                 Select(id);
             }
             else if (_money.Spend(_prices[id]))
@@ -118,9 +168,9 @@ namespace Neo.Shop
                     _prices[id] = 0;
 
                 Save();
-                
+
                 Visual();
-                
+
                 Select(id);
 
                 OnPurchased?.Invoke(id);
@@ -129,21 +179,18 @@ namespace Neo.Shop
             {
                 OnPurchaseFailed?.Invoke(id);
             }
-            
 
+            ShowPreview(id);
         }
 
         private void Select(int id)
         {
+            _id = id;
             OnSelect?.Invoke(id);
 
             if (_useSetItem)
-            {
-                for (int i = 0; i < _shopItems.Length; i++)
-                {
+                for (var i = 0; i < _shopItems.Length; i++)
                     _shopItems[i].Select(i == id);
-                }
-            }
         }
 
         private void OnEnable()
@@ -154,10 +201,20 @@ namespace Neo.Shop
 
         public void Visual()
         {
-            for (int i = 0; i < _shopItems.Length; i++)
-            {
-                _shopItems[i].Visual(_shopItemDatas[i], _prices[i]);
-            }
+            for (var i = 0; i < _shopItems.Length; i++) _shopItems[i].Visual(_shopItemDatas[i], _prices[i], i);
+        }
+
+        public void OnValidate()
+        {
+            _shopItems ??= GetComponentsInChildren<ShopItem>(true);
+
+            if (NotNullDatas())
+                _prices = _shopItemDatas.Select(p => p.price).ToArray();
+        }
+
+        private bool NotNullDatas()
+        {
+            return _shopItemDatas != null && _shopItemDatas.Length > 0;
         }
     }
 }

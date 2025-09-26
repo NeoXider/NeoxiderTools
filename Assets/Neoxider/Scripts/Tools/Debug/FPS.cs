@@ -10,30 +10,26 @@ namespace Neo
     [AddComponentMenu("Neoxider/Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {
-        [Header("UI Settings")]
-        [Tooltip("Text component to display FPS")]
-        [SerializeField] private TMP_Text text;
+        [Header("UI Settings")] [Tooltip("Text component to display FPS")] [SerializeField]
+        private TMP_Text text;
 
-        [Header("Update Settings")]
-        [Tooltip("How often to update the FPS display (in seconds)")]
-        [SerializeField] private float updateInterval = 0.2f;
-        
-        [Tooltip("Number of samples to average FPS over")]
-        [SerializeField] private int sampleSize = 60;
+        [Header("Update Settings")] [Tooltip("How often to update the FPS display (in seconds)")] [SerializeField]
+        private float updateInterval = 0.2f;
 
-        [Header("Color Settings")]
-        [Tooltip("FPS threshold for good performance (green)")]
-        [SerializeField] private float goodFpsThreshold = 50f;
-        
-        [Tooltip("FPS threshold for warning performance (yellow)")]
-        [SerializeField] private float warningFpsThreshold = 30f;
+        [Tooltip("Number of samples to average FPS over")] [SerializeField]
+        private int sampleSize = 60;
 
-        [Header("Format Settings")]
-        [Tooltip("Show decimal places in FPS")]
-        [SerializeField] private bool showDecimals = false;
-        
-        [Tooltip("Show 'FPS' suffix in display")]
-        [SerializeField] private bool showSuffix = true;
+        [Header("Color Settings")] [Tooltip("FPS threshold for good performance (green)")] [SerializeField]
+        private float goodFpsThreshold = 50f;
+
+        [Tooltip("FPS threshold for warning performance (yellow)")] [SerializeField]
+        private float warningFpsThreshold = 30f;
+
+        [Header("Format Settings")] [Tooltip("Show decimal places in FPS")] [SerializeField]
+        private bool showDecimals = false;
+
+        [Tooltip("Show 'FPS' suffix in display")] [SerializeField]
+        private bool showSuffix = true;
 
         private float[] fpsBuffer;
         private int bufferIndex;
@@ -78,7 +74,7 @@ namespace Neo
         private void Update()
         {
             // Update the FPS buffer
-            float currentFps = 1f / Time.deltaTime;
+            var currentFps = 1f / Time.deltaTime;
             accumulatedFps -= fpsBuffer[bufferIndex];
             fpsBuffer[bufferIndex] = currentFps;
             accumulatedFps += currentFps;
@@ -87,13 +83,13 @@ namespace Neo
 
         private void UpdateFpsDisplay()
         {
-            float averageFps = accumulatedFps / sampleSize;
-            
+            var averageFps = accumulatedFps / sampleSize;
+
             // Format the FPS text
-            string fpsText = showDecimals 
-                ? averageFps.ToString("F1") 
+            var fpsText = showDecimals
+                ? averageFps.ToString("F1")
                 : Mathf.RoundToInt(averageFps).ToString();
-            
+
             if (showSuffix)
                 fpsText += " FPS";
 

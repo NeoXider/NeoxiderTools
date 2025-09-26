@@ -5,6 +5,5 @@ namespace Neo.Save
     [Serializable]
     public class GlobalData
     {
-        
     }
 }

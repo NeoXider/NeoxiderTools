@@ -5,19 +5,22 @@ namespace Neo.Save.Examples
 {
     public class PlayerData : MonoBehaviour, ISaveableComponent
     {
-        [SaveField(nameof(playerScore))]
-        [SerializeField]
+        public bool IsLoad { get; private set; }
+
+        [SaveField(nameof(playerScore))] [SerializeField]
         private int playerScore;
 
-        [SaveField(nameof(playerPosition))]
-        [SerializeField]
+        [SaveField(nameof(playerPosition))] [SerializeField]
         private Vector3 playerPosition;
 
-        private void Start()
+        [SaveField("Money")] [SerializeField] private float _money;
+
+        // The Start method is no longer needed for setting position
+        public void OnDataLoaded()
         {
-            playerPosition = transform.position;
+            transform.position = playerPosition;
+            Debug.Log($"PlayerData for {gameObject.name} loaded. Position set to {playerPosition}");
+            IsLoad = true;
         }
     }
-
-    public interface ISaveableComponent { }
 }

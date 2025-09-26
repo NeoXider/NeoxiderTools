@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,18 +11,18 @@ namespace Neo.Bonus
     {
         [SerializeField] private string _saveName = "BoxPrize";
 
-        [Space]
-        [Header("View")]
-        [SerializeField] private Image _boxImage;
+        [Space] [Header("View")] [SerializeField]
+        private Image _boxImage;
+
         [SerializeField] private Sprite[] _boxSpritesCloseOpen = new Sprite[2];
         [SerializeField] private Image _bar;
         [SerializeField] private TMP_Text _textProgress;
         [SerializeField] private TMP_Text _textMaxProgress;
         [SerializeField] private TMP_Text _textProgressMaxProgress;
 
-        [Space]
-        [Header("Animation and prize")]
-        [SerializeField] private GameObject _animItem;
+        [Space] [Header("Animation and prize")] [SerializeField]
+        private GameObject _animItem;
+
         [SerializeField] private Ease _ease = Ease.InCubic;
         [SerializeField] private Image _itemPrize;
 
@@ -41,8 +42,7 @@ namespace Neo.Bonus
 
         public bool CheckProgress => progress >= maxProgress;
 
-        [Space]
-        public UnityEvent OnTakePrize;
+        [Space] public UnityEvent OnTakePrize;
         public UnityEvent OnProgressReached;
         public UnityEvent OnProgressNotReached;
         public UnityEvent<bool> OnChangeProgress;
@@ -57,11 +57,21 @@ namespace Neo.Bonus
             AddProgress(addProgress);
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public void AddProgress(float amount)
         {
             ChangeProgress(amount);
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public void ChangeProgress(float amount)
         {
             progress += amount;
@@ -70,18 +80,14 @@ namespace Neo.Bonus
 
         private void Events()
         {
-            bool progressOpen = CheckProgress;
+            var progressOpen = CheckProgress;
 
             OnChangeProgress?.Invoke(progressOpen);
 
             if (progressOpen)
-            {
                 OnProgressReached?.Invoke();
-            }
             else
-            {
                 OnProgressNotReached?.Invoke();
-            }
         }
 
         private void OnEnable()
@@ -93,11 +99,16 @@ namespace Neo.Bonus
             Events();
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         public void TakePrize()
         {
             if (CheckProgress)
             {
-                ItemCollectionData itemData = Collection.Instance.GetPrize();
+                var itemData = Collection.Instance.GetPrize();
 
                 if (_itemPrize != null)
                     _itemPrize.sprite = itemData.sprite;
@@ -111,12 +122,14 @@ namespace Neo.Bonus
             }
         }
 
+#if ODIN_INSPECTOR
+        [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
         private void Visual(bool openBox = false)
         {
-            if (_bar != null)
-            {
-                _bar.fillAmount = progress / maxProgress;
-            }
+            if (_bar != null) _bar.fillAmount = progress / maxProgress;
 
             if (_boxImage != null)
             {
@@ -124,20 +137,12 @@ namespace Neo.Bonus
                 _boxImage.SetNativeSize();
             }
 
-            if (_textProgress != null)
-            {
-                _textProgress.text = $"{progress.RoundToDecimal(0)}";
-            }
+            if (_textProgress != null) _textProgress.text = $"{progress.RoundToDecimal(0)}";
 
-            if (_textMaxProgress != null)
-            {
-                _textMaxProgress.text = $"{maxProgress.RoundToDecimal(0)}";
-            }
+            if (_textMaxProgress != null) _textMaxProgress.text = $"{maxProgress.RoundToDecimal(0)}";
 
             if (_textProgressMaxProgress != null)
-            {
                 _textProgressMaxProgress.text = $"{progress.RoundToDecimal(0)}/{maxProgress.RoundToDecimal(0)}";
-            }
         }
     }
 }

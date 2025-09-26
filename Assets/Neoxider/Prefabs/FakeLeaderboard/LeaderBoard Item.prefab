@@ -92,6 +92,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   user:
+    num: 0
     name: User_174
     score: 1161
     id: f6938585-1924-420c-8f8f-987975784028

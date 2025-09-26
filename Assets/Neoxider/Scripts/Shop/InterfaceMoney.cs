@@ -1,9 +1,9 @@
 public interface IMoneySpend
 {
-    public bool Spend(float count);
+    public bool Spend(float amount);
 }
 
 public interface IMoneyAdd
 {
-    public void Add(float count);
+    public void Add(float amount);
 }

@@ -8,19 +8,18 @@ namespace Neo.Tools
     public class AttackExecution : MonoBehaviour
     {
         [SerializeField] private float _attackSpeed = 2;
+
         public float AttackSpeed
         {
-            get
-            {
-                return _attackSpeed;
-            }
+            get => _attackSpeed;
             set
             {
                 _attackSpeed = value;
                 UpdateAttackTime(false);
             }
         }
-        public Vector2 minMaxSpeedAttack = new Vector2(0, 10);
+
+        public Vector2 minMaxSpeedAttack = new(0, 10);
         public float multiplayAttackSpeed = 1;
 
         public float attackСooldown;
@@ -29,39 +28,35 @@ namespace Neo.Tools
         public float delayTimeAttack = 0.2f;
 
         [SerializeField] private bool _isAutoAttack = false;
-        [SerializeField] public bool isAutoAttack
+
+        [SerializeField]
+        public bool isAutoAttack
         {
-            get { return _isAutoAttack; }
-            set
-            {
-                _isAutoAttack = value;
-            }
+            get => _isAutoAttack;
+            set => _isAutoAttack = value;
         }
 
-        [Space]
-        [SerializeField] private bool _canAttackTime = true;
+        [Space] [SerializeField] private bool _canAttackTime = true;
         [SerializeField] private bool _canAttack = true;
         public bool canAttackTime => canAttackTime;
         public bool canAttack => _canAttack && _canAttackTime;
 
-        [Space]
-
-        public UnityEvent OnStartAttack;
+        [Space] public UnityEvent OnStartAttack;
         public UnityEvent OnAttack;
         public UnityEvent OnEndAttack;
 
         private float time = -100;
 
-        void Start()
+        private void Start()
         {
             UpdateAttackTime();
         }
 
-        void Update()
+        private void Update()
         {
             if (!_canAttackTime)
             {
-                bool canAttackTime = Time.time > time;
+                var canAttackTime = Time.time > time;
 
                 if (canAttackTime)
                 {
@@ -71,10 +66,7 @@ namespace Neo.Tools
             }
             else
             {
-                if(_isAutoAttack)
-                {
-                    Attack();
-                }
+                if (_isAutoAttack) Attack();
             }
         }
 
@@ -87,18 +79,18 @@ namespace Neo.Tools
 
         public void SetCanAttack(bool active)
         {
-            this._canAttack = active;
+            _canAttack = active;
         }
 
         public void SetCanAttack(bool canAttack, bool canAttackTime)
         {
-            this._canAttack = canAttack;
-            this._canAttackTime = canAttackTime;
+            _canAttack = canAttack;
+            _canAttackTime = canAttackTime;
         }
 
         public void SetCanAttackTimer(bool active)
         {
-            this._canAttackTime = active;
+            _canAttackTime = active;
         }
 
         public void UpdateAttackTime(bool updateTime = false)
@@ -142,4 +134,3 @@ namespace Neo.Tools
         }
     }
 }
-

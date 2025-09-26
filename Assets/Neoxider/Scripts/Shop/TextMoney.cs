@@ -1,3 +1,4 @@
+using Neo.Extensions;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
@@ -6,8 +7,7 @@ namespace Neo.Shop
 {
     public class TextMoney : SetText
     {
-        [SerializeField]
-        private bool _levelMoney = false;
+        [SerializeField] private bool _levelMoney = false;
 
         public float amount;
         private Money _money;
@@ -48,13 +48,9 @@ namespace Neo.Shop
         private void OnDisable()
         {
             if (_levelMoney)
-            {
                 _money.OnChangedLevelMoney.RemoveListener(SetAmount);
-            }
             else
-            {
                 _money.OnChangedMoney.RemoveListener(SetAmount);
-            }
         }
     }
 }

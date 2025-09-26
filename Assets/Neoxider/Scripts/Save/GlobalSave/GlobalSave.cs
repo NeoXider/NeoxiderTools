@@ -12,10 +12,7 @@ namespace Neo.Save
         {
             get
             {
-                if (_data == null)
-                {
-                    LoadingData();
-                }
+                if (_data == null) LoadingData();
                 return _data;
             }
             set
@@ -28,10 +25,7 @@ namespace Neo.Save
         public static bool IsReady
         {
             get => _isReady;
-            set
-            {
-                _isReady = value;
-            }
+            set => _isReady = value;
         }
 
         private static string saveData = "SavesData";
@@ -40,11 +34,8 @@ namespace Neo.Save
         {
             try
             {
-                string jsonData = PlayerPrefs.GetString(saveData, string.Empty);
-                if (!string.IsNullOrEmpty(jsonData))
-                {
-                    _data = JsonUtility.FromJson<GlobalData>(jsonData);
-                }
+                var jsonData = PlayerPrefs.GetString(saveData, string.Empty);
+                if (!string.IsNullOrEmpty(jsonData)) _data = JsonUtility.FromJson<GlobalData>(jsonData);
                 IsReady = true;
             }
             catch (Exception e)
@@ -57,7 +48,7 @@ namespace Neo.Save
         {
             try
             {
-                string jsonData = JsonUtility.ToJson(_data);
+                var jsonData = JsonUtility.ToJson(_data);
                 PlayerPrefs.SetString(saveData, jsonData);
             }
             catch (Exception e)

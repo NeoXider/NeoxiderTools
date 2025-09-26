@@ -59,7 +59,7 @@ namespace Neo
         {
             if (!isActive) return;
 
-            float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            var deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             timeSinceLastUpdate += deltaTime;
 
             if (timeSinceLastUpdate >= updateInterval)
@@ -82,13 +82,9 @@ namespace Neo
                 OnTimerCompleted?.Invoke();
 
                 if (looping)
-                {
                     Play();
-                }
                 else
-                {
                     isActive = false;
-                }
             }
             else
             {
@@ -105,9 +101,9 @@ namespace Neo
             }
             else
             {
-                float remainingTime = duration - currentTime;
+                var remainingTime = duration - currentTime;
                 OnTimeChanged?.Invoke(remainingTime);
-                OnProgressChanged?.Invoke(1f - (currentTime / duration));
+                OnProgressChanged?.Invoke(1f - currentTime / duration);
             }
         }
 
@@ -150,19 +146,18 @@ namespace Neo
 
             isActive = !paused;
             if (paused)
-            {
                 OnTimerPaused?.Invoke();
-            }
             else
-            {
                 OnTimerStarted?.Invoke();
-            }
         }
 
         /// <summary>
         /// Toggles between paused and running states
         /// </summary>
-        public void TogglePause() => Pause(!isActive);
+        public void TogglePause()
+        {
+            Pause(!isActive);
+        }
 
         /// <summary>
         /// Stops and resets the timer
@@ -197,13 +192,19 @@ namespace Neo
         /// Gets current progress (0-1)
         /// </summary>
         /// <returns>Progress value from 0 to 1</returns>
-        public float GetProgress() => countUp ? currentTime / duration : 1f - (currentTime / duration);
+        public float GetProgress()
+        {
+            return countUp ? currentTime / duration : 1f - currentTime / duration;
+        }
 
         /// <summary>
         /// Gets current time value
         /// </summary>
         /// <returns>Current time in seconds</returns>
-        public float GetCurrentTime() => countUp ? currentTime : duration - currentTime;
+        public float GetCurrentTime()
+        {
+            return countUp ? currentTime : duration - currentTime;
+        }
 
         /// <summary>
         /// Gets whether timer is currently running

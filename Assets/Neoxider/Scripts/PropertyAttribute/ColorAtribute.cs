@@ -9,18 +9,25 @@ namespace Neo
     {
         /// <summary>Soft red color (R: 1.0, G: 0.5, B: 0.5)</summary>
         SoftRed,
+
         /// <summary>Soft green color (R: 0.5, G: 1.0, B: 0.5)</summary>
         SoftGreen,
+
         /// <summary>Soft blue color (R: 0.5, G: 0.5, B: 1.0)</summary>
         SoftBlue,
+
         /// <summary>Soft yellow color (R: 1.0, G: 1.0, B: 0.5)</summary>
         SoftYellow,
+
         /// <summary>Soft gray color (R: 0.5, G: 0.5, B: 0.5)</summary>
         SoftGray,
+
         /// <summary>Soft purple color (R: 0.5, G: 0.0, B: 0.5)</summary>
         SoftPurple,
+
         /// <summary>Soft cyan color (R: 0.5, G: 1.0, B: 1.0)</summary>
         SoftCyan,
+
         /// <summary>Soft orange color (R: 1.0, G: 0.5, B: 0.0)</summary>
         SoftOrange
     }

@@ -11,6 +11,7 @@ namespace Neo
         public class UIReady : MonoBehaviour
         {
             public int s = 10;
+
             [System.Serializable]
             public class AsyncLoadScene
             {
@@ -23,16 +24,13 @@ namespace Neo
                 public bool isProgressLoad = false;
             }
 
-            [Header("Async Load Scene")]
-            public AsyncLoadScene ALS;
+            [Header("Async Load Scene")] public AsyncLoadScene ALS;
 
             private void Update()
             {
                 if (Input.GetKeyDown(KeyCode.Space)
                     || Input.GetKeyDown(KeyCode.KeypadEnter))
-                {
                     ProceedScene();
-                }
             }
 
             public void Quit()
@@ -42,7 +40,7 @@ namespace Neo
 
             public void Restart()
             {
-                int idScene = SceneManager.GetActiveScene().buildIndex;
+                var idScene = SceneManager.GetActiveScene().buildIndex;
                 LoadScene(idScene);
             }
 
@@ -109,8 +107,6 @@ namespace Neo
 #else
 #endif
             }
-
-
         }
     }
 }

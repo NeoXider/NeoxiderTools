@@ -9,19 +9,20 @@ public enum MovementType
 
 public class MovementController : MonoBehaviour
 {
-    [Header("Movement Settings")]
-    [SerializeField] private MovementType movementType = MovementType.DirectionBased;
+    [Header("Movement Settings")] [SerializeField]
+    private MovementType movementType = MovementType.DirectionBased;
+
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private bool useNormalization = true;
     [SerializeField] private Vector3 positionOffset;
 
-    [Header("Constraints")]
-    [SerializeField] private AxisConstraint xConstraint = new AxisConstraint();
-    [SerializeField] private AxisConstraint yConstraint = new AxisConstraint();
-    [SerializeField] private AxisConstraint zConstraint = new AxisConstraint();
+    [Header("Constraints")] [SerializeField]
+    private AxisConstraint xConstraint = new();
 
-    [Header("Events")]
-    public UnityEvent OnMovementStart;
+    [SerializeField] private AxisConstraint yConstraint = new();
+    [SerializeField] private AxisConstraint zConstraint = new();
+
+    [Header("Events")] public UnityEvent OnMovementStart;
     public UnityEvent OnMovementStop;
 
     private IMovementInputProvider _inputProvider;
@@ -47,7 +48,7 @@ public class MovementController : MonoBehaviour
 
     private void UpdateMovementState()
     {
-        bool isMovingNow = _inputProvider.IsInputActive();
+        var isMovingNow = _inputProvider.IsInputActive();
 
         if (isMovingNow != _isMoving)
         {
@@ -71,7 +72,7 @@ public class MovementController : MonoBehaviour
             case MovementType.DirectionBased:
                 MoveByDirection(_inputProvider.GetDirection());
                 break;
-            
+
             case MovementType.PositionBased:
                 MoveToPosition(_inputProvider.GetTargetPosition());
                 break;
@@ -102,10 +103,10 @@ public class MovementController : MonoBehaviour
     {
         if (xConstraint.enabled)
             _referencePosition.x = Mathf.Clamp(_referencePosition.x, xConstraint.min, xConstraint.max);
-        
+
         if (yConstraint.enabled)
             _referencePosition.y = Mathf.Clamp(_referencePosition.y, yConstraint.min, yConstraint.max);
-        
+
         if (zConstraint.enabled)
             _referencePosition.z = Mathf.Clamp(_referencePosition.z, zConstraint.min, zConstraint.max);
     }
@@ -130,4 +131,3 @@ public interface IMovementInputProvider
     Vector3 GetDirection();
     Vector3 GetTargetPosition();
 }
-

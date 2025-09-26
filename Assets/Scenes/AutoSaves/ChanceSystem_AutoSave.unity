@@ -150,7 +150,7 @@ RectTransform:
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 741668135}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -179,7 +179,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Button
+  m_text: 'Chance
+
+'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -377,14 +379,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0c3f5252abb85c24b8d4c0cee5aea9cc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _chanceManager:
-    chances:
-    - value: 0.5052138
-    - value: 0.30187503
-    - value: 0.17371555
-    - value: 0.019195648
-    preserveFirstChance: 1
-  _chanceData: {fileID: 0}
+  manager:
+    entries: []
+    autoNormalize: 1
+    normalizeTarget: 1
+    distributeEvenlyWhenZero: 1
+  chanceData: {fileID: 0}
+  logDebugOnce: 0
   OnIdGenerated:
     m_PersistentCalls:
       m_Calls:
@@ -443,15 +444,15 @@ RectTransform:
   m_GameObject: {fileID: 741668134}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children:
   - {fileID: 301049514}
   m_Father: {fileID: 782758259}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -200}
+  m_AnchoredPosition: {x: 0, y: -350}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &741668136
@@ -497,7 +498,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 741668137}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 356245230}
+        m_TargetAssemblyTypeName: Neo.Tools.ChanceSystemBehaviour, Assembly-CSharp
+        m_MethodName: GenerateId
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &741668137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -738,12 +751,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _text: {fileID: 2009571022}
+  text: {fileID: 2009571022}
   _separator: .
   _decimal: 2
-  startAdd: 'Prize: '
-  endAdd: 
+  startAdd: 'Prize: <color=red>'
+  endAdd: </color>
   _indexOffset: 0
+  _timeAnim: 0.25
+  _ease: 6
+  _onEnableAnim: 1
+  currentNum: 0
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &2009571022
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -764,17 +784,25 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: New Text
+  m_text: 'Chances
+
+    0 - 50%
+
+    1 - 30%
+
+    2 -17%
+
+    3 - 1.5%'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: e73a58f6e2794ae7b1b7e50b7fb811b0, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4287022591
+  m_fontColor: {r: 1, g: 0.7708022, b: 0.5254902, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -791,15 +819,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 72
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
-  m_fontStyle: 0
+  m_fontStyle: 1
   m_HorizontalAlignment: 2
-  m_VerticalAlignment: 256
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -850,15 +878,15 @@ RectTransform:
   m_GameObject: {fileID: 2009571020}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.5, y: 1.5, z: 1.5}
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 782758259}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 200, y: 50}
+  m_SizeDelta: {x: 500, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:

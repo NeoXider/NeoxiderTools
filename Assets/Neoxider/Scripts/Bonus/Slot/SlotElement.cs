@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -7,30 +8,54 @@ namespace Neo.Bonus
     {
         [SerializeField] private Image _image;
         [SerializeField] private SpriteRenderer _spriteRenderer;
-        [SerializeField] private Sprite _sprite;
+        [SerializeField] private TMP_Text _textDescription;
 
-        public Sprite Sprite
+        public int id { get; private set; }
+
+        /// <summary>
+        /// Устанавливает визуальное представление элемента на основе данных.
+        /// </summary>
+        public void SetVisuals(SlotVisualData data)
         {
-            get => _sprite; set
+            if (data == null)
             {
-                _sprite = value;
-
-                SetSprite(value);
+                // Скрываем элемент, если нет данных
+                if (_image) _image.enabled = false;
+                if (_spriteRenderer) _spriteRenderer.enabled = false;
+                if (_textDescription) _textDescription.gameObject.SetActive(false);
+                return;
             }
-        }
 
-        private void SetSprite(Sprite value)
-        {
-            if (_spriteRenderer != null)
-                _spriteRenderer.sprite = value;
+            // Устанавливаем ID
+            id = data.id;
 
+            // Устанавливаем спрайт
             if (_image != null)
-                _image.sprite = value;
+            {
+                _image.enabled = true;
+                _image.sprite = data.sprite;
+            }
+
+            if (_spriteRenderer != null)
+            {
+                _spriteRenderer.enabled = true;
+                _spriteRenderer.sprite = data.sprite;
+            }
+
+            // Устанавливаем описание
+            if (_textDescription != null)
+            {
+                var hasDescription = !string.IsNullOrEmpty(data.description);
+                _textDescription.gameObject.SetActive(hasDescription);
+                if (hasDescription) _textDescription.text = data.description;
+            }
         }
 
         private void OnValidate()
         {
             _spriteRenderer ??= GetComponent<SpriteRenderer>();
+            _image ??= GetComponent<Image>();
+            if (_textDescription == null) _textDescription = GetComponentInChildren<TMP_Text>();
         }
     }
 }

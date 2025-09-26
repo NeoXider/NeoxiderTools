@@ -12,15 +12,15 @@ namespace Neo
             [SerializeField] private int _secondsToWaitForReward = 60 * 60; //1 hours
             [SerializeField] private bool _startTakeReward = false;
             [SerializeField] private string _lastRewardTimeStr;
-            [SerializeField, Min(0)] private float _updateTime = 1;
+            [SerializeField] [Min(0)] private float _updateTime = 1;
             [SerializeField] private string _addKey = "Bonus1";
             [SerializeField] private const string _lastRewardTimeKey = "LastRewardTime";
 
             public float timeLeft;
 
-            public UnityEvent<float> OnTimeUpdated = new UnityEvent<float>();
-            public UnityEvent OnRewardClaimed = new UnityEvent();
-            public UnityEvent OnRewardAvailable = new UnityEvent();
+            public UnityEvent<float> OnTimeUpdated = new();
+            public UnityEvent OnRewardClaimed = new();
+            public UnityEvent OnRewardAvailable = new();
 
             private bool canTakeReward = false;
 
@@ -28,10 +28,7 @@ namespace Neo
             {
                 InvokeRepeating(nameof(GetTime), 0, _updateTime);
 
-                if(_startTakeReward)
-                {
-                    TakeReward();
-                }
+                if (_startTakeReward) TakeReward();
             }
 
             private void GetTime()
@@ -44,12 +41,11 @@ namespace Neo
                     OnRewardAvailable?.Invoke();
                     canTakeReward = true;
                 }
-
             }
 
             public static string FormatTime(int seconds)
             {
-                TimeSpan time = TimeSpan.FromSeconds(seconds);
+                var time = TimeSpan.FromSeconds(seconds);
                 return time.ToString(@"hh\:mm\:ss");
             }
 
@@ -63,10 +59,10 @@ namespace Neo
 
                     if (DateTime.TryParse(_lastRewardTimeStr, out lastRewardTime))
                     {
-                        DateTime currentTime = DateTime.UtcNow;
-                        TimeSpan timeSinceLastReward = currentTime - lastRewardTime;
-                        float secondsPassed = (float)timeSinceLastReward.TotalSeconds;
-                        float secondsUntilReward = _secondsToWaitForReward - secondsPassed;
+                        var currentTime = DateTime.UtcNow;
+                        var timeSinceLastReward = currentTime - lastRewardTime;
+                        var secondsPassed = (float)timeSinceLastReward.TotalSeconds;
+                        var secondsUntilReward = _secondsToWaitForReward - secondsPassed;
 
                         return secondsUntilReward > 0 ? secondsUntilReward : 0;
                     }
@@ -75,7 +71,11 @@ namespace Neo
                 return 0;
             }
 
-            [Button]
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
             public bool TakeReward()
             {
                 if (CanTakeReward())

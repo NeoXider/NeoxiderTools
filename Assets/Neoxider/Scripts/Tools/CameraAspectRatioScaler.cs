@@ -40,7 +40,7 @@ namespace Neo
         private bool useTargetResolution = true;
 
         [Tooltip("The resolution (in pixels) that the camera should be optimized for.")] [SerializeField]
-        private Vector2 targetResolution = new Vector2(1920, 1080);
+        private Vector2 targetResolution = new(1920, 1080);
 
         [Tooltip("Additional scaling factor applied to the calculated camera size.")]
         [Range(0.1f, 10f)]
@@ -75,13 +75,9 @@ namespace Neo
         {
             _camera = GetComponent<Camera>();
             if (_camera.orthographic)
-            {
                 _defaultSize = _camera.orthographicSize;
-            }
             else
-            {
                 _defaultFOV = _camera.fieldOfView;
-            }
         }
 
         /// <summary>
@@ -98,9 +94,7 @@ namespace Neo
         private void Update()
         {
             if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
-            {
                 UpdateCameraScale();
-            }
         }
 
         /// <summary>
@@ -111,17 +105,13 @@ namespace Neo
         {
             if (_camera == null) return;
 
-            float targetAspect = useTargetResolution ? targetResolution.x / targetResolution.y : 16f / 9f;
-            float currentAspect = (float)Screen.width / Screen.height;
+            var targetAspect = useTargetResolution ? targetResolution.x / targetResolution.y : 16f / 9f;
+            var currentAspect = (float)Screen.width / Screen.height;
 
             if (_camera.orthographic)
-            {
                 UpdateOrthographicCamera(targetAspect, currentAspect);
-            }
             else
-            {
                 UpdatePerspectiveCamera(targetAspect, currentAspect);
-            }
         }
 
         /// <summary>
@@ -131,7 +121,7 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdateOrthographicCamera(float targetAspect, float currentAspect)
         {
-            float newSize = _defaultSize;
+            var newSize = _defaultSize;
 
             switch (scaleMode)
             {
@@ -160,7 +150,7 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdatePerspectiveCamera(float targetAspect, float currentAspect)
         {
-            float newFOV = _defaultFOV;
+            var newFOV = _defaultFOV;
 
             switch (scaleMode)
             {
@@ -187,10 +177,7 @@ namespace Neo
         /// </summary>
         private void OnValidate()
         {
-            if (_camera == null)
-            {
-                _camera = GetComponent<Camera>();
-            }
+            if (_camera == null) _camera = GetComponent<Camera>();
 
             UpdateCameraScale();
         }

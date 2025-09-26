@@ -7,14 +7,11 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {
-            [SerializeField]
-            private int _clipType;
+            [SerializeField] private int _clipType;
 
-            [SerializeField]
-            private bool _playOnAwake = false;
+            [SerializeField] private bool _playOnAwake = false;
 
-            [SerializeField]
-            private float _volume = 1;
+            [SerializeField] private float _volume = 1;
 
             private void Start()
             {

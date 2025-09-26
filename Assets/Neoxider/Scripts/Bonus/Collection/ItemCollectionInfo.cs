@@ -9,8 +9,7 @@ namespace Neo.Bonus
         [SerializeField] private Collection _colllection;
         [SerializeField] private TMP_Text _textName;
         [SerializeField] private TMP_Text _textDescription;
-        [TextArea(1,4)]
-        [SerializeField] private string _textDefaultValue;
+        [TextArea(1, 4)] [SerializeField] private string _textDefaultValue;
         [SerializeField] private Image _imageItem;
         [SerializeField] private bool _setNativeSize = true;
 
@@ -22,13 +21,9 @@ namespace Neo.Bonus
             if (_textDescription != null)
             {
                 if (itemCollectionData.description != string.Empty)
-                {
                     _textDescription.text = itemCollectionData.description;
-                }
                 else
-                {
                     _textDescription.text = _textDefaultValue;
-                }
             }
 
             if (_imageItem != null)

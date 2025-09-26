@@ -6,11 +6,12 @@ namespace Neo
     {
         public class Singleton<T> : MonoBehaviour where T : Singleton<T>
         {
+            public static bool CreateInstance = false;
             [SerializeField] protected bool _dontDestroyOnLoad = false;
             [SerializeField] protected bool _setInstanceOnAwake = true;
-            public static bool CreateInstance = false;
 
             private static T _instance;
+            private bool _isInitialized = false;
 
             public static T I
             {
@@ -28,24 +29,28 @@ namespace Neo
                         }
 
                         if (_instance != null)
-                        {
-                            if (_instance._dontDestroyOnLoad)
-                                DontDestroyOnLoad(_instance.gameObject);
-
-                            _instance.Init();
-                        }
+                            if (!_instance._isInitialized)
+                                _instance.Init();
                     }
+
                     return _instance;
                 }
             }
 
             public static bool IsInitialized => _instance != null;
 
-            protected virtual void OnInstanceCreated() { }
+            protected virtual bool DontDestroyOnLoadEnabled => _dontDestroyOnLoad;
+
+            protected virtual bool SetInstanceOnAwakeEnabled => _setInstanceOnAwake;
+
+            protected virtual void OnInstanceCreated()
+            {
+            }
 
             protected virtual void Init()
             {
-
+                if (_isInitialized) return;
+                _isInitialized = true;
             }
 
             public static void DestroyInstance()
@@ -59,11 +64,12 @@ namespace Neo
 
             protected virtual void Awake()
             {
-                if (_setInstanceOnAwake)
+                if (SetInstanceOnAwakeEnabled)
                 {
                     if (_instance == null)
                     {
                         _instance = this as T;
+                        if (DontDestroyOnLoadEnabled) DontDestroyOnLoad(gameObject);
                         Init();
                     }
                     else if (_instance != this)

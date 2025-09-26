@@ -1,7 +1,9 @@
+using Neo.Extensions;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Neo
 {
@@ -14,31 +16,38 @@ namespace Neo
             public float money => _money;
             public float allMoney => _allMoney;
 
-            [SerializeField, Color(ColorEnum.SoftGreen)] private float _money;
-            [SerializeField, Color(ColorEnum.SoftBlue)] private float _levelMoney;
+            public float LastChangeMoney => _lastChangeMoney;
 
-            [SerializeField] private string _moneySave = "Money";
+            [SerializeField] [Color(ColorEnum.SoftGreen)]
+            private float _money;
 
-            [Space, Header("Text")]
-            [SerializeField] private int _roundToDecimal = 2;
+            [SerializeField] [Color(ColorEnum.SoftBlue)]
+            private float _levelMoney;
+
+            [SerializeField] private float _allMoney;
+            [SerializeField] private float _lastChangeMoney;
+            [Space] [SerializeField] private string _moneySave = "Money";
+
+            [Space] [Header("Text")] [SerializeField]
+            private int _roundToDecimal = 2;
+
             [SerializeField] private TMP_Text[] t_money;
             [SerializeField] private TMP_Text[] t_levelMoney;
             [SerializeField] private SetText[] st_money;
             [SerializeField] private SetText[] st_levelMoney;
 
-            [Space, Header("Events")]
-            public UnityEvent<float> OnChangedLevelMoney;
+            [Space] [Header("Events")] public UnityEvent<float> OnChangedLevelMoney;
             public UnityEvent<float> OnChangedMoney;
+            public UnityEvent<float> OnChangeLastMoney;
+            public UnityEvent<float> OnChangeAllMoney;
 
-            private float _allMoney;
 
             protected override void Init()
             {
                 base.Init();
-
             }
 
-            void Start()
+            private void Start()
             {
                 Load();
                 SetLevelMoney(0);
@@ -65,7 +74,7 @@ namespace Neo
 
             public float SetLevelMoney(float count = 0)
             {
-                float levelMoney = _levelMoney;
+                var levelMoney = _levelMoney;
                 _levelMoney = count;
                 ChangeLevelMoneyEvent();
                 return levelMoney;
@@ -73,13 +82,10 @@ namespace Neo
 
             public float SetMoneyForLevel(bool resetLevelMoney = true)
             {
-                float count = _levelMoney;
+                var count = _levelMoney;
                 _money += _levelMoney;
 
-                if (resetLevelMoney)
-                {
-                    SetLevelMoney(0);
-                }
+                if (resetLevelMoney) SetLevelMoney(0);
 
                 ChangeMoneyEvent();
                 Save();
@@ -91,12 +97,17 @@ namespace Neo
                 return _money >= count;
             }
 
-            [Button]
-            public bool Spend(float count)
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
+            public bool Spend(float amount)
             {
-                if (CanSpend(count))
+                if (CanSpend(amount))
                 {
-                    _money -= count;
+                    _money -= amount;
+                    _lastChangeMoney = amount;
                     ChangeMoneyEvent();
                     Save();
                     return true;
@@ -105,11 +116,16 @@ namespace Neo
                 return false;
             }
 
-            [Button]
-            public void Add(float count)
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
+            public void Add(float amount)
             {
-                _money += count;
-                _allMoney += count;
+                _money += amount;
+                _allMoney += amount;
+                _lastChangeMoney = amount;
                 Save();
                 ChangeMoneyEvent();
             }
@@ -117,35 +133,26 @@ namespace Neo
             private void ChangeMoneyEvent()
             {
                 SetText(t_money, _money);
-                
-                foreach (var item in st_money)
-                {
-                    item.Set(_money);
-                }
-                
+
+                foreach (var item in st_money) item.Set(_money);
+
                 OnChangedMoney?.Invoke(_money);
+                OnChangeLastMoney?.Invoke(_lastChangeMoney);
+                OnChangeAllMoney?.Invoke(_allMoney);
             }
 
             private void ChangeLevelMoneyEvent()
             {
                 SetText(t_levelMoney, _levelMoney);
-                
-                foreach (var item in st_levelMoney)
-                {
-                    item.Set(_levelMoney);
-                }
-                
+
+                foreach (var item in st_levelMoney) item.Set(_levelMoney);
+
                 OnChangedLevelMoney?.Invoke(_levelMoney);
             }
 
             private void SetText(TMP_Text[] text, float count)
             {
-                foreach (var item in text)
-                {
-                    item.text = count.RoundToDecimal(_roundToDecimal).ToString();
-                }
-                
-
+                foreach (var item in text) item.text = count.RoundToDecimal(_roundToDecimal).ToString();
             }
         }
     }

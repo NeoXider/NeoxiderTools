@@ -5,8 +5,9 @@ namespace Neo
 {
     public class CameraShake : MonoBehaviour
     {
-        [Header("Shake Settings")]
-        [SerializeField] private float _shakeDuration = 0.5f;
+        [Header("Shake Settings")] [SerializeField]
+        private float _shakeDuration = 0.5f;
+
         [SerializeField] private float _shakeMagnitude = 0.5f;
 
         [SerializeField] private bool _shakeX = true;
@@ -15,9 +16,9 @@ namespace Neo
 
         private Vector3 startPos;
 
-        private void Awake() 
+        private void Awake()
         {
-            startPos= transform.localPosition;
+            startPos = transform.localPosition;
         }
 
         public void StartShake(float duration)
@@ -38,12 +39,12 @@ namespace Neo
 
         private IEnumerator Shake(float duration, float magnitude)
         {
-            float elapsed = 0f;
+            var elapsed = 0f;
             while (elapsed < duration)
             {
-                float x = _shakeX ? Random.Range(-1f, 1f) * magnitude : 0f;
-                float y = _shakeY ? Random.Range(-1f, 1f) * magnitude : 0f;
-                float z = _shakeZ ? Random.Range(-1f, 1f) * magnitude : 0f;
+                var x = _shakeX ? Random.Range(-1f, 1f) * magnitude : 0f;
+                var y = _shakeY ? Random.Range(-1f, 1f) * magnitude : 0f;
+                var z = _shakeZ ? Random.Range(-1f, 1f) * magnitude : 0f;
 
                 transform.localPosition = new Vector3(startPos.x + x, startPos.y + y, startPos.z + z);
 

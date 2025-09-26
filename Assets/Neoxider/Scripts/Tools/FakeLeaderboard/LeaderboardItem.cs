@@ -8,20 +8,18 @@ public class LeaderboardItem : MonoBehaviour
     public int id;
     public bool isPlayer;
 
-    [Space]
-    public TMP_Text textScore;
+    [Space] public TMP_Text textScore;
     public TMP_Text textId;
     public TMP_Text textName;
 
-    [Space]
-    public UnityEvent OnUserTrue;
+    [Space] public UnityEvent OnUserTrue;
     public UnityEvent OnuserFalse;
     public UnityEvent<bool> OnUser;
 
-    public void Set(LeaderboardUser user, int id, bool isPlayer)
+    public void Set(LeaderboardUser user, bool isPlayer)
     {
         this.user = user;
-        this.id = id;
+        id = user.num;
         this.isPlayer = isPlayer;
 
         textName.text = user.name;
