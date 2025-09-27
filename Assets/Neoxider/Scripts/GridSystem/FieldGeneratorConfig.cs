@@ -1,5 +1,5 @@
-using UnityEngine;
 using System;
+using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
@@ -7,7 +7,7 @@ using Sirenix.OdinInspector;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Конфигуратор генератора поля: размер, тип сетки, точка отсчёта, правила движения и т.д.
+    ///     Конфигуратор генератора поля: размер, тип сетки, точка отсчёта, правила движения и т.д.
     /// </summary>
     [Serializable]
     public class FieldGeneratorConfig

@@ -3,14 +3,14 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for generating random points within or on various shapes.
+    ///     Extension methods for generating random points within or on various shapes.
     /// </summary>
     public static class RandomShapeExtensions
     {
         #region Bounds
 
         /// <summary>
-        /// Gets a random point within the given bounds.
+        ///     Gets a random point within the given bounds.
         /// </summary>
         public static Vector3 RandomPointInBounds(this Bounds bounds)
         {
@@ -22,7 +22,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets a random point on the surface of the given bounds.
+        ///     Gets a random point on the surface of the given bounds.
         /// </summary>
         public static Vector3 RandomPointOnBounds(this Bounds bounds)
         {
@@ -38,7 +38,7 @@ namespace Neo.Extensions
         #region Circle
 
         /// <summary>
-        /// Gets a random point within a 2D circle.
+        ///     Gets a random point within a 2D circle.
         /// </summary>
         public static Vector2 RandomPointInCircle(this Circle circle)
         {
@@ -49,7 +49,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets a random point on the circumference of a 2D circle.
+        ///     Gets a random point on the circumference of a 2D circle.
         /// </summary>
         public static Vector2 RandomPointOnCircle(this Circle circle)
         {
@@ -62,7 +62,7 @@ namespace Neo.Extensions
         #region Sphere
 
         /// <summary>
-        /// Gets a random point within a sphere.
+        ///     Gets a random point within a sphere.
         /// </summary>
         public static Vector3 RandomPointInSphere(this Sphere sphere)
         {
@@ -70,7 +70,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets a random point on the surface of a sphere.
+        ///     Gets a random point on the surface of a sphere.
         /// </summary>
         public static Vector3 RandomPointOnSphere(this Sphere sphere)
         {
@@ -82,7 +82,7 @@ namespace Neo.Extensions
         #region Collider Extensions
 
         /// <summary>
-        /// Gets a random point within the bounds of a 3D collider.
+        ///     Gets a random point within the bounds of a 3D collider.
         /// </summary>
         public static Vector3 RandomPointInBounds(this Collider collider)
         {
@@ -90,7 +90,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets a random point within the bounds of a 2D collider.
+        ///     Gets a random point within the bounds of a 2D collider.
         /// </summary>
         public static Vector2 RandomPointInBounds(this Collider2D collider)
         {

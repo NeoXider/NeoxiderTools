@@ -4,15 +4,12 @@ using UnityEngine;
 namespace Neo
 {
     /// <summary>
-    /// Displays and monitors FPS (Frames Per Second) in the game.
-    /// Provides visual feedback about performance with color coding.
+    ///     Displays and monitors FPS (Frames Per Second) in the game.
+    ///     Provides visual feedback about performance with color coding.
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {
-        [Header("UI Settings")] [Tooltip("Text component to display FPS")] [SerializeField]
-        private TMP_Text text;
-
         [Header("Update Settings")] [Tooltip("How often to update the FPS display (in seconds)")] [SerializeField]
         private float updateInterval = 0.2f;
 
@@ -26,25 +23,26 @@ namespace Neo
         private float warningFpsThreshold = 30f;
 
         [Header("Format Settings")] [Tooltip("Show decimal places in FPS")] [SerializeField]
-        private bool showDecimals = false;
+        private bool showDecimals;
 
         [Tooltip("Show 'FPS' suffix in display")] [SerializeField]
         private bool showSuffix = true;
 
-        private float[] fpsBuffer;
-        private int bufferIndex;
-        private float accumulatedFps;
+        private readonly Color criticalColor = Color.red;
         private readonly Color goodColor = Color.green;
         private readonly Color warningColor = Color.yellow;
-        private readonly Color criticalColor = Color.red;
+        private float accumulatedFps;
+        private int bufferIndex;
 
-        private void OnValidate()
-        {
-            if (updateInterval < 0.1f) updateInterval = 0.1f;
-            if (sampleSize < 1) sampleSize = 1;
-            if (warningFpsThreshold >= goodFpsThreshold)
-                warningFpsThreshold = goodFpsThreshold - 10f;
-        }
+        private float[] fpsBuffer;
+
+        [Header("UI Settings")] [Tooltip("Text component to display FPS")]
+        private TMP_Text text;
+
+        /// <summary>
+        ///     Gets the current average FPS
+        /// </summary>
+        public float CurrentFps => accumulatedFps / sampleSize;
 
         private void Awake()
         {
@@ -81,6 +79,14 @@ namespace Neo
             bufferIndex = (bufferIndex + 1) % sampleSize;
         }
 
+        private void OnValidate()
+        {
+            if (updateInterval < 0.1f) updateInterval = 0.1f;
+            if (sampleSize < 1) sampleSize = 1;
+            if (warningFpsThreshold >= goodFpsThreshold)
+                warningFpsThreshold = goodFpsThreshold - 10f;
+        }
+
         private void UpdateFpsDisplay()
         {
             var averageFps = accumulatedFps / sampleSize;
@@ -108,12 +114,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Gets the current average FPS
-        /// </summary>
-        public float CurrentFps => accumulatedFps / sampleSize;
-
-        /// <summary>
-        /// Sets the target framerate. Use -1 for unlimited.
+        ///     Sets the target framerate. Use -1 for unlimited.
         /// </summary>
         public void SetTargetFramerate(int target)
         {
@@ -121,7 +122,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Enables or disables VSync
+        ///     Enables or disables VSync
         /// </summary>
         public void SetVSync(bool enabled)
         {

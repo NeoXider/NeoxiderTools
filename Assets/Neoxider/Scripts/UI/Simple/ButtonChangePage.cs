@@ -15,8 +15,8 @@ namespace Neo
 
             [Space] [SerializeField] private bool _canSwitchPage = true;
             [SerializeField] private int _idPage;
-            [SerializeField] private bool _onePage = false;
-            [SerializeField] private bool _useAnimPage = false;
+            [SerializeField] private bool _onePage;
+            [SerializeField] private bool _useAnimPage;
 
             [Space] [SerializeField] private bool _useAnimImage = true;
             [SerializeField] private float _timeAnimImage = 0.3f;
@@ -34,6 +34,11 @@ namespace Neo
             private void OnEnable()
             {
                 transform.localScale = startScale;
+            }
+
+            private void OnValidate()
+            {
+                _imageTarget ??= GetComponent<Image>();
             }
 
             public void OnPointerClick(PointerEventData eventData)
@@ -58,6 +63,21 @@ namespace Neo
                 OnClick?.Invoke();
             }
 
+            public void OnPointerDown(PointerEventData eventData)
+            {
+                if (intecactable && _useAnimImage)
+                    if (intecactable && _useAnimImage)
+                    {
+                        var scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
+                        transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
+                    }
+            }
+
+            public void OnPointerUp(PointerEventData eventData)
+            {
+                if (intecactable && _useAnimImage) transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
+            }
+
             public void SetOnePage(int id)
             {
                 UI.I?.SetOnePage(id);
@@ -71,26 +91,6 @@ namespace Neo
             public void SetPageAnim(int id)
             {
                 UI.I?.SetPageAnim(id);
-            }
-
-            public void OnPointerUp(PointerEventData eventData)
-            {
-                if (intecactable && _useAnimImage) transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
-            }
-
-            public void OnPointerDown(PointerEventData eventData)
-            {
-                if (intecactable && _useAnimImage)
-                    if (intecactable && _useAnimImage)
-                    {
-                        var scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
-                        transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
-                    }
-            }
-
-            private void OnValidate()
-            {
-                _imageTarget ??= GetComponent<Image>();
             }
         }
     }

@@ -1,12 +1,14 @@
+using System;
 using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Editor
 {
     /// <summary>
-    /// Editor utility for creating Singleton class templates
+    ///     Editor utility for creating Singleton class templates
     /// </summary>
     public static class SingletonCreator
     {
@@ -92,7 +94,7 @@ public class {0} : Singleton<{0}>
 
                 Debug.Log($"Singleton script created at {GetRelativePath(filePath)}");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to create singleton template: {e.Message}\nStack trace: {e.StackTrace}");
             }
@@ -140,28 +142,12 @@ public class {0} : Singleton<{0}>
 
     public class EditorInputDialog : EditorWindow
     {
-        private string input = "";
-        private string title = "";
-        private string message = "";
+        private Action<string> callback;
         private string defaultName = "";
-        private bool initialized = false;
-        private System.Action<string> callback;
-
-        public static string Show(string title, string message, string defaultName = "")
-        {
-            var result = defaultName;
-
-            var window = CreateInstance<EditorInputDialog>();
-            window.title = title;
-            window.message = message;
-            window.defaultName = defaultName;
-            window.callback = (value) => result = value;
-            window.position = new Rect(Screen.currentResolution.width / 2, Screen.currentResolution.height / 2, 300,
-                100);
-            window.ShowModal();
-
-            return result;
-        }
+        private bool initialized;
+        private string input = "";
+        private string message = "";
+        private string title = "";
 
         private void OnGUI()
         {
@@ -196,6 +182,22 @@ public class {0} : Singleton<{0}>
                 }
             }
             EditorGUILayout.EndHorizontal();
+        }
+
+        public static string Show(string title, string message, string defaultName = "")
+        {
+            var result = defaultName;
+
+            var window = CreateInstance<EditorInputDialog>();
+            window.title = title;
+            window.message = message;
+            window.defaultName = defaultName;
+            window.callback = value => result = value;
+            window.position = new Rect(Screen.currentResolution.width / 2, Screen.currentResolution.height / 2, 300,
+                100);
+            window.ShowModal();
+
+            return result;
         }
 
         private void Submit()

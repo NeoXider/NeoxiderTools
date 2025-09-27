@@ -1,11 +1,10 @@
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
 
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Компонент для размещения игровых объектов на поле. Не зависит от структуры поля.
+    ///     Компонент для размещения игровых объектов на поле. Не зависит от структуры поля.
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
     public class FieldSpawner : MonoBehaviour
@@ -22,7 +21,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Спавнит объект на указанной ячейке
+        ///     Спавнит объект на указанной ячейке
         /// </summary>
         public GameObject SpawnAt(Vector3Int cellPos, int prefabIndex = 0)
         {
@@ -35,7 +34,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Спавнит объекты на всех проходимых ячейках (пример массового спавна)
+        ///     Спавнит объекты на всех проходимых ячейках (пример массового спавна)
         /// </summary>
         public void SpawnOnAllWalkable(int prefabIndex = 0)
         {

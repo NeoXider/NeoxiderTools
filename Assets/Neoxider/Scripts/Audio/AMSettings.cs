@@ -8,8 +8,13 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
+        private AM _am;
+
         [Tooltip("Опциональный микшер для управления громкостью.")]
         public AudioMixer audioMixer;
+
+        [Tooltip("Имя параметра для громкости эффектов в микшере.")]
+        public string EfxVolume = "EfxVolume";
 
         [Header("Mixer Parameters")] [Tooltip("Имя параметра для общей громкости в микшере.")]
         public string MasterVolume = "MasterVolume";
@@ -17,23 +22,17 @@ namespace Neo.Audio
         [Tooltip("Имя параметра для громкости музыки в микшере.")]
         public string MusicVolume = "MusicVolume";
 
-        [Tooltip("Имя параметра для громкости эффектов в микшере.")]
-        public string EfxVolume = "EfxVolume";
-
-        public AudioSource efx { get; private set; }
-        public AudioSource music { get; private set; }
-
         public UnityEvent<bool> OnMuteEfx;
         public UnityEvent<bool> OnMuteMusic;
 
         public float startEfxVolume = 1;
         public float startMusicVolume = 0.5f;
 
+        public AudioSource efx { get; private set; }
+        public AudioSource music { get; private set; }
+
         public bool IsActiveEfx => efx != null && !efx.mute;
         public bool IsActiveMusic => music != null && !music.mute;
-
-
-        private AM _am;
 
 
         private void Start()

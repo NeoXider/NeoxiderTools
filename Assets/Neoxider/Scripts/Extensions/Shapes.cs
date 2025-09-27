@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Defines a 2D Circle with a center and radius.
+    ///     Defines a 2D Circle with a center and radius.
     /// </summary>
     public struct Circle
     {
@@ -18,7 +18,7 @@ namespace Neo.Extensions
     }
 
     /// <summary>
-    /// Defines a 3D Sphere with a center and radius.
+    ///     Defines a 3D Sphere with a center and radius.
     /// </summary>
     public struct Sphere
     {

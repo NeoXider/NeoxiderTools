@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,14 +8,14 @@ namespace Neo
 {
     namespace Tools
     {
-        [System.Serializable]
+        [Serializable]
         public class Dialogue
         {
             public UnityEvent<int> OnChangeDialog;
             public Monolog[] monologues;
         }
 
-        [System.Serializable]
+        [Serializable]
         public class Monolog
         {
             public UnityEvent<int> OnChangeMonolog;
@@ -22,7 +23,7 @@ namespace Neo
             public DialogueContent[] contents;
         }
 
-        [System.Serializable]
+        [Serializable]
         public class DialogueContent
         {
             public UnityEvent OnChangeContent;
@@ -33,20 +34,8 @@ namespace Neo
         public class DialogueManager : MonoBehaviour
         {
             public Dialogue[] dialogues;
-
-            [Space] public TMP_Text _characterText;
-            public TMP_Text _dialogueText;
             public Image _imageCharacter;
             public bool _setNativeSize = true;
-
-            public int currentDialogueId => _currentDialogueIndex;
-            public int currentMonologId => _currentMonologIndex;
-            public int currentSentenceId => _currentSentenceIndex;
-
-            private int _currentDialogueIndex = 0;
-            private int _currentMonologIndex = 0;
-            private int _currentSentenceIndex = 0;
-            private string _lastCharacterName = string.Empty;
 
             public UnityEvent OnSentenceEnd;
             public UnityEvent OnMonologEnd;
@@ -55,35 +44,46 @@ namespace Neo
 
             public bool autoNextMonolog = true;
 
+            [Space] public TMP_Text _characterText;
+
+            public TMP_Text _dialogueText;
+            private string _lastCharacterName = string.Empty;
+
+            public int currentDialogueId { get; private set; }
+
+            public int currentMonologId { get; private set; }
+
+            public int currentSentenceId { get; private set; }
+
             public void StartDialogue(int index = 0, int monolog = 0, int sentence = 0)
             {
-                _currentDialogueIndex = index;
-                _currentMonologIndex = monolog;
-                _currentSentenceIndex = sentence;
+                currentDialogueId = index;
+                currentMonologId = monolog;
+                currentSentenceId = sentence;
                 _lastCharacterName = string.Empty;
                 UpdateDialogueText();
             }
 
             public void StartDialogue(int index)
             {
-                StartDialogue(index, 0, 0);
+                StartDialogue(index, 0);
             }
 
             private void UpdateDialogueText()
             {
-                if (_currentDialogueIndex < dialogues.Length)
+                if (currentDialogueId < dialogues.Length)
                 {
-                    var currentDialogue = dialogues[_currentDialogueIndex];
-                    currentDialogue.OnChangeDialog.Invoke(_currentDialogueIndex);
+                    var currentDialogue = dialogues[currentDialogueId];
+                    currentDialogue.OnChangeDialog.Invoke(currentDialogueId);
 
-                    if (_currentMonologIndex < currentDialogue.monologues.Length)
+                    if (currentMonologId < currentDialogue.monologues.Length)
                     {
-                        var currentMonolog = currentDialogue.monologues[_currentMonologIndex];
-                        currentMonolog.OnChangeMonolog.Invoke(_currentMonologIndex);
+                        var currentMonolog = currentDialogue.monologues[currentMonologId];
+                        currentMonolog.OnChangeMonolog.Invoke(currentMonologId);
 
-                        if (_currentSentenceIndex < currentMonolog.contents.Length)
+                        if (currentSentenceId < currentMonolog.contents.Length)
                         {
-                            var content = currentMonolog.contents[_currentSentenceIndex];
+                            var content = currentMonolog.contents[currentSentenceId];
                             content.OnChangeContent.Invoke();
 
                             UpdateCharacter(currentMonolog);
@@ -115,7 +115,7 @@ namespace Neo
 
             private void UpdateContent(Monolog currentMonolog)
             {
-                var content = currentMonolog.contents[_currentSentenceIndex];
+                var content = currentMonolog.contents[currentSentenceId];
                 _dialogueText.text = content.sentence;
 
                 if (_imageCharacter != null && content.sprite != null)
@@ -135,29 +135,29 @@ namespace Neo
 
             public void NextSentence()
             {
-                _currentSentenceIndex++;
+                currentSentenceId++;
                 UpdateDialogueText();
             }
 
             public void NextMonolog()
             {
-                _currentMonologIndex++;
-                _currentSentenceIndex = 0;
+                currentMonologId++;
+                currentSentenceId = 0;
                 UpdateDialogueText();
             }
 
             public void NextDialogue()
             {
-                _currentDialogueIndex++;
-                _currentMonologIndex = 0;
-                _currentSentenceIndex = 0;
+                currentDialogueId++;
+                currentMonologId = 0;
+                currentSentenceId = 0;
                 UpdateDialogueText();
             }
 
             public void RestartDialogue()
             {
-                _currentMonologIndex = 0;
-                _currentSentenceIndex = 0;
+                currentMonologId = 0;
+                currentSentenceId = 0;
                 _lastCharacterName = string.Empty;
                 UpdateDialogueText();
             }

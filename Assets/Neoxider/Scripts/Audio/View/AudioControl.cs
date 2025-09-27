@@ -26,9 +26,10 @@ namespace Neo.Audio
         [Tooltip("Тип UI элемента. 'Auto' определит автоматически.")] [SerializeField]
         private UIType uiType = UIType.Auto;
 
-        private Toggle toggle;
-        private Slider slider;
         private AMSettings settings;
+        private Slider slider;
+
+        private Toggle toggle;
 
         private void Awake()
         {
@@ -38,18 +39,11 @@ namespace Neo.Audio
             if (uiType == UIType.Auto)
             {
                 if (toggle != null)
-                {
                     uiType = UIType.Toggle;
-                }
                 else if (slider != null)
-                {
                     uiType = UIType.Slider;
-                }
                 else
-                {
                     Debug.LogError("[AudioControl] Не найден компонент Toggle или Slider!", this);
-                    return;
-                }
             }
         }
 

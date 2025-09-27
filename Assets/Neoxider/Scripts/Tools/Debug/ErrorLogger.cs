@@ -9,14 +9,14 @@ namespace Neo
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
-        [Header("Main Settings")] public TextMeshProUGUI textMesh;
         public LogType[] logTypesToDisplay = { LogType.Error, LogType.Exception };
         public bool addText = true;
         public bool checkExistingErrors = true;
 
         public string errorText;
 
-        private List<string> errorList = new();
+        private readonly List<string> errorList = new();
+        [Header("Main Settings")] public TextMeshProUGUI textMesh;
 
         private void OnEnable()
         {

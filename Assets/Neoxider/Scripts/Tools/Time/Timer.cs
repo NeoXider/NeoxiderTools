@@ -3,13 +3,14 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo
 {
     /// <summary>
-    /// Interface for objects that need to subscribe to timer events
+    ///     Interface for objects that need to subscribe to timer events
     /// </summary>
     public interface ITimerSubscriber
     {
@@ -19,10 +20,10 @@ namespace Neo
     }
 
     /// <summary>
-    /// Async timer implementation with events and looping support
+    ///     Async timer implementation with events and looping support
     /// </summary>
     /// <example>
-    /// <code>
+    ///     <code>
     /// // Create a timer that runs for 5 seconds, updates every 0.1 seconds
     /// Timer timer = new Timer(5f, 0.1f);
     /// 
@@ -52,95 +53,29 @@ namespace Neo
     public class Timer
     {
         /// <summary>
-        /// Event triggered when the timer starts
+        ///     Event triggered when the timer starts
         /// </summary>
         public UnityEvent OnTimerStart = new();
 
         /// <summary>
-        /// Event triggered when the timer ends
+        ///     Event triggered when the timer ends
         /// </summary>
         public UnityEvent OnTimerEnd = new();
 
         /// <summary>
-        /// Event triggered on each update with remaining time and progress
+        ///     Event triggered on each update with remaining time and progress
         /// </summary>
         public UnityEvent<float, float> OnTimerUpdate = new();
 
         /// <summary>
-        /// Event triggered when the timer is paused
+        ///     Event triggered when the timer is paused
         /// </summary>
         public UnityEvent OnTimerPause = new();
 
         /// <summary>
-        /// Event triggered when the timer is resumed
+        ///     Event triggered when the timer is resumed
         /// </summary>
         public UnityEvent OnTimerResume = new();
-
-        /// <summary>
-        /// Gets the current running state of the timer
-        /// </summary>
-        public bool IsRunning => isRunning;
-
-        /// <summary>
-        /// Gets or sets whether the timer is in looping mode
-        /// </summary>
-        public bool IsLooping
-        {
-            get => isLooping;
-            set => isLooping = value;
-        }
-
-        /// <summary>
-        /// Gets or sets whether the timer uses unscaled time
-        /// </summary>
-        public bool UseUnscaledTime
-        {
-            get => useUnscaledTime;
-            set => useUnscaledTime = value;
-        }
-
-        /// <summary>
-        /// Gets whether the timer is currently paused
-        /// </summary>
-        public bool IsPaused => isPaused;
-
-        /// <summary>
-        /// Gets the current remaining time in seconds
-        /// </summary>
-        public float RemainingTime => remainingTime;
-
-        /// <summary>
-        /// Gets the current progress of the timer (0 to 1)
-        /// </summary>
-        public float Progress => 1f - remainingTime / duration;
-
-        /// <summary>
-        /// Gets or sets the total duration of the timer in seconds
-        /// </summary>
-        public float Duration
-        {
-            get => duration;
-            set
-            {
-                if (value < 0) value = 0;
-                var difference = value - duration;
-                duration = value;
-                if (isRunning) remainingTime += difference;
-            }
-        }
-
-        /// <summary>
-        /// Gets or sets the update interval in seconds
-        /// </summary>
-        public float UpdateInterval
-        {
-            get => updateInterval;
-            set
-            {
-                if (value < 0) value = 0;
-                updateInterval = value;
-            }
-        }
 
         [SerializeField] private float duration;
 
@@ -153,12 +88,11 @@ namespace Neo
         [SerializeField] private bool useUnscaledTime;
 
         [SerializeField] private bool isPaused;
-        private float lastUpdateTime;
-        private float remainingTime;
         private CancellationTokenSource cancellationTokenSource;
+        private float lastUpdateTime;
 
         /// <summary>
-        /// Creates a new timer instance
+        ///     Creates a new timer instance
         /// </summary>
         /// <param name="duration">Duration in seconds</param>
         /// <param name="updateInterval">Update frequency in seconds</param>
@@ -171,11 +105,77 @@ namespace Neo
             IsLooping = looping;
             UseUnscaledTime = useUnscaledTime;
             lastUpdateTime = 0f;
-            remainingTime = Duration;
+            RemainingTime = Duration;
         }
 
         /// <summary>
-        /// Resets timer with new parameters
+        ///     Gets the current running state of the timer
+        /// </summary>
+        public bool IsRunning => isRunning;
+
+        /// <summary>
+        ///     Gets or sets whether the timer is in looping mode
+        /// </summary>
+        public bool IsLooping
+        {
+            get => isLooping;
+            set => isLooping = value;
+        }
+
+        /// <summary>
+        ///     Gets or sets whether the timer uses unscaled time
+        /// </summary>
+        public bool UseUnscaledTime
+        {
+            get => useUnscaledTime;
+            set => useUnscaledTime = value;
+        }
+
+        /// <summary>
+        ///     Gets whether the timer is currently paused
+        /// </summary>
+        public bool IsPaused => isPaused;
+
+        /// <summary>
+        ///     Gets the current remaining time in seconds
+        /// </summary>
+        public float RemainingTime { get; private set; }
+
+        /// <summary>
+        ///     Gets the current progress of the timer (0 to 1)
+        /// </summary>
+        public float Progress => 1f - RemainingTime / duration;
+
+        /// <summary>
+        ///     Gets or sets the total duration of the timer in seconds
+        /// </summary>
+        public float Duration
+        {
+            get => duration;
+            set
+            {
+                if (value < 0) value = 0;
+                var difference = value - duration;
+                duration = value;
+                if (isRunning) RemainingTime += difference;
+            }
+        }
+
+        /// <summary>
+        ///     Gets or sets the update interval in seconds
+        /// </summary>
+        public float UpdateInterval
+        {
+            get => updateInterval;
+            set
+            {
+                if (value < 0) value = 0;
+                updateInterval = value;
+            }
+        }
+
+        /// <summary>
+        ///     Resets timer with new parameters
         /// </summary>
         public void Reset(float newDuration, float newUpdateInterval = 0.05f, bool? looping = null,
             bool? useUnscaledTime = null)
@@ -186,11 +186,11 @@ namespace Neo
             if (looping.HasValue) IsLooping = looping.Value;
             if (useUnscaledTime.HasValue) UseUnscaledTime = useUnscaledTime.Value;
             lastUpdateTime = 0f;
-            remainingTime = Duration;
+            RemainingTime = Duration;
         }
 
         /// <summary>
-        /// Starts or resumes the timer
+        ///     Starts or resumes the timer
         /// </summary>
         [Button]
         public async Task Start()
@@ -221,7 +221,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Stops the timer
+        ///     Stops the timer
         /// </summary>
         [Button]
         public void Stop()
@@ -238,11 +238,11 @@ namespace Neo
             isRunning = false;
             isPaused = false;
             lastUpdateTime = 0f;
-            remainingTime = Duration;
+            RemainingTime = Duration;
         }
 
         /// <summary>
-        /// Pauses the timer
+        ///     Pauses the timer
         /// </summary>
         [Button]
         public void Pause()
@@ -254,7 +254,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Resumes the timer from pause
+        ///     Resumes the timer from pause
         /// </summary>
         [Button]
         public void Resume()
@@ -266,7 +266,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Restarts the timer from the beginning
+        ///     Restarts the timer from the beginning
         /// </summary>
         public async Task Restart()
         {
@@ -275,21 +275,21 @@ namespace Neo
         }
 
         /// <summary>
-        /// Adds time to the current timer duration
+        ///     Adds time to the current timer duration
         /// </summary>
         /// <param name="seconds">Seconds to add (can be negative)</param>
         public void AddTime(float seconds)
         {
-            remainingTime = Mathf.Max(0, remainingTime + seconds);
+            RemainingTime = Mathf.Max(0, RemainingTime + seconds);
             Duration = Mathf.Max(0, Duration + seconds);
         }
 
         private async Task RunTimerCycle(CancellationToken cancellationToken)
         {
-            remainingTime = Duration;
+            RemainingTime = Duration;
             lastUpdateTime = 0f;
 
-            while (remainingTime > 0 && !cancellationToken.IsCancellationRequested)
+            while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
                 if (!isPaused)
                 {
@@ -298,9 +298,9 @@ namespace Neo
 
                     if (lastUpdateTime >= UpdateInterval)
                     {
-                        remainingTime -= lastUpdateTime;
-                        var progress = 1f - remainingTime / Duration;
-                        OnTimerUpdate.Invoke(remainingTime, progress);
+                        RemainingTime -= lastUpdateTime;
+                        var progress = 1f - RemainingTime / Duration;
+                        OnTimerUpdate.Invoke(RemainingTime, progress);
                         lastUpdateTime = 0f;
                     }
                 }

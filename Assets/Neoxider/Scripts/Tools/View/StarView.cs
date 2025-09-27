@@ -1,16 +1,14 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
+using Neo.UI;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Neo.Tools
 {
     public class StarView : MonoBehaviour
     {
-        [FindInScene] public ScoreManager scoreManager;
-        [Space] [Header("ToggleView")] public Neo.UI.ToggleView[] stars;
-
         [Header("GameObjects")] public GameObject[] starObjects;
+        [FindInScene] public ScoreManager scoreManager;
+        [Space] [Header("ToggleView")] public ToggleView[] stars;
 
         public void Awake()
         {
@@ -19,7 +17,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif

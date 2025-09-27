@@ -3,7 +3,6 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Neo
 {
@@ -12,34 +11,68 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
+            [Space] [SerializeField] private readonly string _moneySave = "Money";
+
+            [Space] [Header("Text")] [SerializeField]
+            private readonly int _roundToDecimal = 2;
+
+            [SerializeField] private float _allMoney;
+            [SerializeField] private float _lastChangeMoney;
+
+            [SerializeField] [Color(ColorEnum.SoftBlue)]
+            private float _levelMoney;
+
+            [SerializeField] [Color(ColorEnum.SoftGreen)]
+            private float _money;
+
+            public UnityEvent<float> OnChangeAllMoney;
+
+            [Space] [Header("Events")] public UnityEvent<float> OnChangedLevelMoney;
+            public UnityEvent<float> OnChangedMoney;
+            public UnityEvent<float> OnChangeLastMoney;
+            [SerializeField] private SetText[] st_levelMoney;
+            [SerializeField] private SetText[] st_money;
+            [SerializeField] private TMP_Text[] t_levelMoney;
+
+            [SerializeField] private TMP_Text[] t_money;
             public float levelMoney => _levelMoney;
             public float money => _money;
             public float allMoney => _allMoney;
 
             public float LastChangeMoney => _lastChangeMoney;
 
-            [SerializeField] [Color(ColorEnum.SoftGreen)]
-            private float _money;
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
+            public void Add(float amount)
+            {
+                _money += amount;
+                _allMoney += amount;
+                _lastChangeMoney = amount;
+                Save();
+                ChangeMoneyEvent();
+            }
 
-            [SerializeField] [Color(ColorEnum.SoftBlue)]
-            private float _levelMoney;
+#if ODIN_INSPECTOR
+            [Sirenix.OdinInspector.Button]
+#else
+        [Button]
+#endif
+            public bool Spend(float amount)
+            {
+                if (CanSpend(amount))
+                {
+                    _money -= amount;
+                    _lastChangeMoney = amount;
+                    ChangeMoneyEvent();
+                    Save();
+                    return true;
+                }
 
-            [SerializeField] private float _allMoney;
-            [SerializeField] private float _lastChangeMoney;
-            [Space] [SerializeField] private string _moneySave = "Money";
-
-            [Space] [Header("Text")] [SerializeField]
-            private int _roundToDecimal = 2;
-
-            [SerializeField] private TMP_Text[] t_money;
-            [SerializeField] private TMP_Text[] t_levelMoney;
-            [SerializeField] private SetText[] st_money;
-            [SerializeField] private SetText[] st_levelMoney;
-
-            [Space] [Header("Events")] public UnityEvent<float> OnChangedLevelMoney;
-            public UnityEvent<float> OnChangedMoney;
-            public UnityEvent<float> OnChangeLastMoney;
-            public UnityEvent<float> OnChangeAllMoney;
+                return false;
+            }
 
 
             protected override void Init()
@@ -50,7 +83,7 @@ namespace Neo
             private void Start()
             {
                 Load();
-                SetLevelMoney(0);
+                SetLevelMoney();
                 ChangeMoneyEvent();
             }
 
@@ -85,7 +118,7 @@ namespace Neo
                 var count = _levelMoney;
                 _money += _levelMoney;
 
-                if (resetLevelMoney) SetLevelMoney(0);
+                if (resetLevelMoney) SetLevelMoney();
 
                 ChangeMoneyEvent();
                 Save();
@@ -95,39 +128,6 @@ namespace Neo
             public bool CanSpend(float count)
             {
                 return _money >= count;
-            }
-
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-            public bool Spend(float amount)
-            {
-                if (CanSpend(amount))
-                {
-                    _money -= amount;
-                    _lastChangeMoney = amount;
-                    ChangeMoneyEvent();
-                    Save();
-                    return true;
-                }
-
-                return false;
-            }
-
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-            public void Add(float amount)
-            {
-                _money += amount;
-                _allMoney += amount;
-                _lastChangeMoney = amount;
-                Save();
-                ChangeMoneyEvent();
             }
 
             private void ChangeMoneyEvent()

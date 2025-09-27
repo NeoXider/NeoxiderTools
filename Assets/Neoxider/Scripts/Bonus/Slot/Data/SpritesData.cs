@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Bonus
 {
-    [System.Serializable]
+    [Serializable]
     public class SlotVisualData
     {
         [Tooltip("ID элемента, присваивается автоматически на основе его индекса в массиве.")]

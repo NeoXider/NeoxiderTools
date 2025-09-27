@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Object = UnityEngine.Object;
 
 namespace Neo
 {
-    [System.Serializable]
+    [Serializable]
     public class ObjectPool<T> where T : Object
     {
         [Header("Object Pool Settings")] [SerializeField]
@@ -12,9 +13,9 @@ namespace Neo
 
         [SerializeField] private int _initialPoolSize = 10;
         [SerializeField] private bool _expandPool = true;
+        public List<T> items;
 
         private Queue<T> pool;
-        public List<T> items;
 
         public void Init(T item)
         {

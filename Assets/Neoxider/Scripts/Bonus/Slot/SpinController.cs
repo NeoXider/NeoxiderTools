@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -21,8 +20,6 @@ namespace Neo.Bonus
         [SerializeField] private int _countVerticalElements = 3;
         [SerializeField] private Row[] _rows;
 
-        private SlotVisualData[,] _finalVisuals;
-
         [SerializeField] private bool _isSingleSpeed = true;
         [Range(0f, 1f)] public float chanseWin = 0.5f;
 
@@ -32,7 +29,7 @@ namespace Neo.Bonus
         [SerializeField] private SpeedControll _speedControll = new();
         [SerializeField] private bool _setSpace;
         [SerializeField] private Vector2 _space = Vector2.one;
-        [SerializeField] private float offsetY = 0;
+        [SerializeField] private float offsetY;
         [SerializeField] private VisualSlotLines _lineSlot = new();
 
         [Space] [Header("Text")] [Space] [SerializeField]
@@ -52,15 +49,17 @@ namespace Neo.Bonus
         public UnityEvent<string> OnChangeMoneyWin;
 
         [Space] [Header("Debug")] [SerializeField]
-        private bool _firstWin = false;
+        private bool _firstWin;
 
         [SerializeField] [Min(1)] private int _countLine = 1;
-        [SerializeField] [Min(0)] private int _betsId = 0;
-
-        private int price;
+        [SerializeField] [Min(0)] private int _betsId;
 
         private SlotElement[,] _elements;
+
+        private SlotVisualData[,] _finalVisuals;
         public IMoneySpend moneySpend;
+
+        private int price;
 
         public int[,] FinalElementIDs
         {
@@ -135,7 +134,7 @@ namespace Neo.Bonus
             for (var x = 0; x < _rows.Length; x++)
             {
                 var rowVisuals = new SlotVisualData[_countVerticalElements];
-                for (var y = 0; y < _countVerticalElements; y++) 
+                for (var y = 0; y < _countVerticalElements; y++)
                     rowVisuals[y] = _finalVisuals[x, y];
 
                 _rows[x].Spin(_allSpritesData, rowVisuals);
@@ -319,13 +318,10 @@ namespace Neo.Bonus
                 {
                     var prevRow = _rows[i - 1];
                     if (isUI && row.transform is RectTransform rt && prevRow.transform is RectTransform prevRt)
-                    {
                         rt.anchoredPosition = new Vector2(prevRt.anchoredPosition.x + _space.x, rt.anchoredPosition.y);
-                    }
                     else
-                    {
-                        row.transform.localPosition = new Vector3(prevRow.transform.localPosition.x + _space.x, row.transform.localPosition.y, row.transform.localPosition.z);
-                    }
+                        row.transform.localPosition = new Vector3(prevRow.transform.localPosition.x + _space.x,
+                            row.transform.localPosition.y, row.transform.localPosition.z);
                 }
 
                 row.spaceY = _space.y;

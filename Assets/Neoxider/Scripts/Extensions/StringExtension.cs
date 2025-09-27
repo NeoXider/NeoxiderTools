@@ -1,13 +1,15 @@
-using UnityEngine;
+using System;
 using System.Linq;
 using System.Text;
+using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Neo.Extensions
 {
     public static class StringExtension
     {
         /// <summary>
-        /// Splits camelCase string into spaced words.
+        ///     Splits camelCase string into spaced words.
         /// </summary>
         public static string SplitCamelCase(this string input)
         {
@@ -26,7 +28,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if string is null or empty after trimming whitespace.
+        ///     Checks if string is null or empty after trimming whitespace.
         /// </summary>
         public static bool IsNullOrEmptyAfterTrim(this string input)
         {
@@ -34,7 +36,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Converts HEX string to Unity Color.
+        ///     Converts HEX string to Unity Color.
         /// </summary>
         public static Color ToColor(this string hex)
         {
@@ -43,7 +45,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Converts string to camelCase format.
+        ///     Converts string to camelCase format.
         /// </summary>
         public static string ToCamelCase(this string input)
         {
@@ -52,7 +54,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Truncates string to max length with ellipsis.
+        ///     Truncates string to max length with ellipsis.
         /// </summary>
         public static string Truncate(this string input, int maxLength)
         {
@@ -61,7 +63,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if string contains only digits.
+        ///     Checks if string contains only digits.
         /// </summary>
         public static bool IsNumeric(this string input)
         {
@@ -70,7 +72,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Generates a random string with specified length.
+        ///     Generates a random string with specified length.
         /// </summary>
         public static string RandomString(int length, string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         {
@@ -80,18 +82,18 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Reverses the string.
+        ///     Reverses the string.
         /// </summary>
         public static string Reverse(this string input)
         {
             if (string.IsNullOrEmpty(input)) return input;
             var arr = input.ToCharArray();
-            System.Array.Reverse(arr);
+            Array.Reverse(arr);
             return new string(arr);
         }
 
         /// <summary>
-        /// Converts string to boolean (case insensitive).
+        ///     Converts string to boolean (case insensitive).
         /// </summary>
         public static bool ToBool(this string input)
         {
@@ -106,7 +108,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Safely parses a string to an integer.
+        ///     Safely parses a string to an integer.
         /// </summary>
         /// <returns>The parsed integer, or the default value if parsing fails.</returns>
         public static int ToInt(this string input, int defaultValue = 0)
@@ -116,7 +118,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Safely parses a string to a float.
+        ///     Safely parses a string to a float.
         /// </summary>
         /// <returns>The parsed float, or the default value if parsing fails.</returns>
         public static float ToFloat(this string input, float defaultValue = 0f)
@@ -128,7 +130,7 @@ namespace Neo.Extensions
         #region Rich Text
 
         /// <summary>
-        /// Wraps the string in <b></b> tags.
+        ///     Wraps the string in <b></b> tags.
         /// </summary>
         public static string Bold(this string input)
         {
@@ -136,7 +138,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Wraps the string in <i></i> tags.
+        ///     Wraps the string in <i></i> tags.
         /// </summary>
         public static string Italic(this string input)
         {
@@ -144,7 +146,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Wraps the string in <size=></size> tags.
+        ///     Wraps the string in <size=></size> tags.
         /// </summary>
         public static string Size(this string input, int size)
         {
@@ -152,7 +154,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Wraps the string in <color=></color> tags.
+        ///     Wraps the string in <color=></color> tags.
         /// </summary>
         public static string SetColor(this string input, Color color)
         {
@@ -161,7 +163,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Applies a rainbow effect to the text, coloring each character differently.
+        ///     Applies a rainbow effect to the text, coloring each character differently.
         /// </summary>
         public static string Rainbow(this string input)
         {
@@ -177,7 +179,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Applies a gradient to the text between two colors.
+        ///     Applies a gradient to the text between two colors.
         /// </summary>
         public static string Gradient(this string input, Color startColor, Color endColor)
         {
@@ -193,7 +195,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Applies a random color to each character of the text.
+        ///     Applies a random color to each character of the text.
         /// </summary>
         public static string RandomColors(this string input)
         {

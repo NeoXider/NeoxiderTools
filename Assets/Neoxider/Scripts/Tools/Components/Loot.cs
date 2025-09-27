@@ -13,7 +13,7 @@ namespace Neo
             private int _minCount = 1;
 
             [SerializeField] [Min(0)] private int _maxCount = 3;
-            [SerializeField] private float _dropRadius = 0f;
+            [SerializeField] private float _dropRadius;
 
             public void DropLoot()
             {
@@ -39,15 +39,10 @@ namespace Neo
             {
                 if (_lootItems.Length > 0)
                 {
-                    if (_lootItems.Length == 1)
-                    {
-                        return _lootItems[0];
-                    }
-                    else
-                    {
-                        var randId = Random.Range(0, _lootItems.Length);
-                        return _lootItems[randId];
-                    }
+                    if (_lootItems.Length == 1) return _lootItems[0];
+
+                    var randId = Random.Range(0, _lootItems.Length);
+                    return _lootItems[randId];
                 }
 
                 return null;

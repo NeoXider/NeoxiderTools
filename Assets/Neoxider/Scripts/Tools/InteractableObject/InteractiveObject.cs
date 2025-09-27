@@ -19,19 +19,7 @@ namespace Neo
             public UnityEvent onDoubleClick;
             public UnityEvent onRightClick;
 
-            private float clickTime = 0f;
-
-            public void OnPointerEnter(PointerEventData eventData)
-            {
-                if (interactable)
-                    onHoverEnter.Invoke();
-            }
-
-            public void OnPointerExit(PointerEventData eventData)
-            {
-                if (interactable)
-                    onHoverExit.Invoke();
-            }
+            private float clickTime;
 
             public void OnPointerClick(PointerEventData eventData)
             {
@@ -50,6 +38,18 @@ namespace Neo
                 {
                     onRightClick.Invoke();
                 }
+            }
+
+            public void OnPointerEnter(PointerEventData eventData)
+            {
+                if (interactable)
+                    onHoverEnter.Invoke();
+            }
+
+            public void OnPointerExit(PointerEventData eventData)
+            {
+                if (interactable)
+                    onHoverExit.Invoke();
             }
         }
     }

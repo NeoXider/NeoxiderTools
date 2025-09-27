@@ -29,6 +29,12 @@ namespace Neo
                 SetRotation();
             }
 
+            private void OnValidate()
+            {
+                targetCamera ??= Camera.main;
+                SetRotation();
+            }
+
             private void SetRotation()
             {
                 if (targetCamera == null) return;
@@ -68,12 +74,6 @@ namespace Neo
             public void SetTargetCamera(Camera camera)
             {
                 targetCamera = camera;
-            }
-
-            private void OnValidate()
-            {
-                targetCamera ??= Camera.main;
-                SetRotation();
             }
         }
     }

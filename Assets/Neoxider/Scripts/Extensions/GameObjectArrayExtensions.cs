@@ -5,12 +5,12 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for collections of GameObjects and Components for batch operations.
+    ///     Extension methods for collections of GameObjects and Components for batch operations.
     /// </summary>
     public static class GameObjectArrayExtensions
     {
         /// <summary>
-        /// Sets the active state of all GameObjects in the collection.
+        ///     Sets the active state of all GameObjects in the collection.
         /// </summary>
         public static IEnumerable<GameObject> SetActiveAll(this IEnumerable<GameObject> gameObjects, bool active)
         {
@@ -20,7 +20,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of all GameObjects containing the components in the collection.
+        ///     Sets the active state of all GameObjects containing the components in the collection.
         /// </summary>
         public static IEnumerable<T> SetActiveAll<T>(this IEnumerable<T> components, bool active)
             where T : Component
@@ -31,7 +31,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of GameObjects up to a specified index in a list or array.
+        ///     Sets the active state of GameObjects up to a specified index in a list or array.
         /// </summary>
         public static IList<GameObject> SetActiveRange(this IList<GameObject> gameObjects, int upToIndex, bool active)
         {
@@ -44,7 +44,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of a GameObject at the specified index in a list or array.
+        ///     Sets the active state of a GameObject at the specified index in a list or array.
         /// </summary>
         public static GameObject SetActiveAtIndex(this IList<GameObject> gameObjects, int index, bool active = true)
         {
@@ -60,7 +60,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of a GameObject with a component at the specified index in a list or array.
+        ///     Sets the active state of a GameObject with a component at the specified index in a list or array.
         /// </summary>
         public static GameObject SetActiveAtIndex<T>(this IList<T> components, int index, bool active)
             where T : Component
@@ -82,7 +82,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of a GameObject with a component at the specified index in any enumerable collection.
+        ///     Sets the active state of a GameObject with a component at the specified index in any enumerable collection.
         /// </summary>
         /// <remarks>Note: This method may be inefficient on large collections as it calls .ToList().</remarks>
         public static GameObject SetActiveAtIndex<T>(this IEnumerable<T> components, int index, bool active)
@@ -92,7 +92,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the active state of a GameObject at the specified index in any enumerable collection.
+        ///     Sets the active state of a GameObject at the specified index in any enumerable collection.
         /// </summary>
         /// <remarks>Note: This method may be inefficient on large collections as it calls .ToList().</remarks>
         public static GameObject SetActiveAtIndex(this IEnumerable<GameObject> gameObjects, int index,
@@ -102,7 +102,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Destroys all GameObjects in the collection.
+        ///     Destroys all GameObjects in the collection.
         /// </summary>
         public static void DestroyAll(this IEnumerable<GameObject> gameObjects)
         {
@@ -112,7 +112,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Destroys all GameObjects containing the components in the collection.
+        ///     Destroys all GameObjects containing the components in the collection.
         /// </summary>
         public static void DestroyAll<T>(this IEnumerable<T> components) where T : Component
         {
@@ -122,7 +122,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets all active GameObjects from the collection.
+        ///     Gets all active GameObjects from the collection.
         /// </summary>
         public static IEnumerable<GameObject> GetActiveObjects(this IEnumerable<GameObject> gameObjects)
         {
@@ -130,7 +130,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets components of type T from all GameObjects in the collection.
+        ///     Gets components of type T from all GameObjects in the collection.
         /// </summary>
         public static IEnumerable<T> GetComponentsFromAll<T>(this IEnumerable<GameObject> gameObjects)
             where T : Component
@@ -143,7 +143,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets the first component of type T found in the GameObject collection.
+        ///     Gets the first component of type T found in the GameObject collection.
         /// </summary>
         public static T GetFirstComponentFromAll<T>(this IEnumerable<GameObject> gameObjects) where T : Component
         {
@@ -155,7 +155,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the position of all GameObjects in the collection.
+        ///     Sets the position of all GameObjects in the collection.
         /// </summary>
         public static void SetPositionAll(this IEnumerable<GameObject> gameObjects, Vector3 position)
         {
@@ -164,7 +164,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Finds the GameObject in the collection closest to a given position.
+        ///     Finds the GameObject in the collection closest to a given position.
         /// </summary>
         /// <param name="gameObjects">The collection of GameObjects to search through.</param>
         /// <param name="position">The world position to measure distance from.</param>
@@ -190,7 +190,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Finds the Component in the collection whose GameObject is closest to a given position.
+        ///     Finds the Component in the collection whose GameObject is closest to a given position.
         /// </summary>
         /// <param name="components">The collection of Components to search through.</param>
         /// <param name="position">The world position to measure distance from.</param>
@@ -216,7 +216,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Filters the collection to GameObjects that are within a specified distance from a point.
+        ///     Filters the collection to GameObjects that are within a specified distance from a point.
         /// </summary>
         /// <returns>A new collection of GameObjects within the specified distance.</returns>
         public static IEnumerable<GameObject> WithinDistance(this IEnumerable<GameObject> gameObjects, Vector3 position,
@@ -231,7 +231,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Filters the collection to Components whose GameObjects are within a specified distance from a point.
+        ///     Filters the collection to Components whose GameObjects are within a specified distance from a point.
         /// </summary>
         /// <returns>A new collection of Components within the specified distance.</returns>
         public static IEnumerable<T> WithinDistance<T>(this IEnumerable<T> components, Vector3 position, float distance)
@@ -246,7 +246,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the parent for all GameObjects in the collection.
+        ///     Sets the parent for all GameObjects in the collection.
         /// </summary>
         /// <param name="worldPositionStays">If true, the world position of the child is preserved.</param>
         public static void SetParentAll(this IEnumerable<GameObject> gameObjects, Transform parent,
@@ -257,7 +257,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the parent for all GameObjects of the components in the collection.
+        ///     Sets the parent for all GameObjects of the components in the collection.
         /// </summary>
         /// <param name="worldPositionStays">If true, the world position of the child is preserved.</param>
         public static void SetParentAll<T>(this IEnumerable<T> components, Transform parent,
@@ -269,7 +269,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Calculates the average position (center of mass) of all GameObjects in the collection.
+        ///     Calculates the average position (center of mass) of all GameObjects in the collection.
         /// </summary>
         /// <returns>The average world position, or Vector3.zero if the collection is empty.</returns>
         public static Vector3 GetAveragePosition(this IEnumerable<GameObject> gameObjects)
@@ -289,7 +289,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Calculates the average position (center of mass) of all GameObjects of the components in the collection.
+        ///     Calculates the average position (center of mass) of all GameObjects of the components in the collection.
         /// </summary>
         /// <returns>The average world position, or Vector3.zero if the collection is empty.</returns>
         public static Vector3 GetAveragePosition<T>(this IEnumerable<T> components) where T : Component
@@ -309,7 +309,8 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Calculates a single Bounding Box that encapsulates all Renderers in the collection of GameObjects (including children).
+        ///     Calculates a single Bounding Box that encapsulates all Renderers in the collection of GameObjects (including
+        ///     children).
         /// </summary>
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
         public static Bounds GetCombinedBounds(this IEnumerable<GameObject> gameObjects)
@@ -330,7 +331,8 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Calculates a single Bounding Box that encapsulates all Renderers in the GameObjects of the components in the collection (including children).
+        ///     Calculates a single Bounding Box that encapsulates all Renderers in the GameObjects of the components in the
+        ///     collection (including children).
         /// </summary>
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
         public static Bounds GetCombinedBounds<T>(this IEnumerable<T> components) where T : Component

@@ -4,13 +4,14 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    /// ScriptableObject wrapper over <see cref="ChanceManager"/>. Stores reusable chance configurations
-    /// that can be referenced across scenes and assets.
+    ///     ScriptableObject wrapper over <see cref="ChanceManager" />. Stores reusable chance configurations
+    ///     that can be referenced across scenes and assets.
     /// </summary>
     [CreateAssetMenu(fileName = "ChanceData", menuName = "Neoxider/Random/ChanceData")]
     public class ChanceData : ScriptableObject
     {
-        [SerializeField] [Tooltip("Chance configuration")] private ChanceManager manager = new();
+        [SerializeField] [Tooltip("Chance configuration")]
+        private ChanceManager manager = new();
 
         public UnityEvent<int> OnIdGenerated;
 
@@ -18,10 +19,7 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            if (manager == null)
-            {
-                manager = new ChanceManager();
-            }
+            if (manager == null) manager = new ChanceManager();
 
             manager.Sanitize();
             manager.EnsureUniqueIds();

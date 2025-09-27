@@ -1,24 +1,31 @@
+using System;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Editor window for Neoxider global settings
+    ///     Editor window for Neoxider global settings
     /// </summary>
     public class NeoxiderSettingsWindow : EditorWindow
     {
         private const string MenuPath = "Tools/Neoxider/Settings";
         private const string WindowTitle = "Neoxider Settings";
+        private bool isDirty;
 
         private Vector2 scrollPosition;
+        private SerializedObject serializedHierarchy;
         private bool showFolderSettings = true;
         private bool showHierarchySettings = true;
-        private bool isDirty = false;
-        private SerializedObject serializedHierarchy;
+
+        private void ResetToDefaults()
+        {
+            NeoxiderSettings.ResetToDefaults();
+            serializedHierarchy = null;
+            isDirty = true;
+        }
 
         #region Window Management
 
@@ -212,7 +219,7 @@ namespace Neo
                 AssetDatabase.Refresh();
                 Debug.Log("Created missing folders successfully");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to create folders: {e.Message}");
             }
@@ -249,12 +256,5 @@ namespace Neo
         }
 
         #endregion
-
-        private void ResetToDefaults()
-        {
-            NeoxiderSettings.ResetToDefaults();
-            serializedHierarchy = null;
-            isDirty = true;
-        }
     }
 }

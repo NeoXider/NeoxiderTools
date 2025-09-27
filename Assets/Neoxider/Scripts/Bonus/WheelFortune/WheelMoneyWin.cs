@@ -1,3 +1,4 @@
+using Neo.Shop;
 using TMPro;
 using UnityEngine;
 
@@ -12,7 +13,7 @@ namespace Neo
 
             public void Win(int id)
             {
-                Shop.Money.I.Add(wins[id]);
+                Money.I.Add(wins[id]);
 
                 if (prize != null)
                     prize.text = wins[id].ToString();

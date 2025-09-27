@@ -2,11 +2,11 @@
 using UnityEngine.Events;
 
 /// <summary>
-/// Moves a 2‑D object based on keyboard / joystick axes.
-/// If a Rigidbody2D is present the script moves in <c>FixedUpdate</c>
-/// via <c>MovePosition</c>; otherwise it translates the Transform in
-/// <c>Update</c>.  Fires UnityEvents when motion begins or ends and
-/// implements <see cref="IMover"/> for external control.
+///     Moves a 2‑D object based on keyboard / joystick axes.
+///     If a Rigidbody2D is present the script moves in <c>FixedUpdate</c>
+///     via <c>MovePosition</c>; otherwise it translates the Transform in
+///     <c>Update</c>.  Fires UnityEvents when motion begins or ends and
+///     implements <see cref="IMover" /> for external control.
 /// </summary>
 public class KeyboardMover2D : MonoBehaviour, IMover
 {
@@ -33,16 +33,16 @@ public class KeyboardMover2D : MonoBehaviour, IMover
 
     #region === IMover ===
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public bool IsMoving { get; private set; }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void MoveDelta(Vector2 delta)
     {
         transform.Translate(delta, Space.World);
     }
 
-    /// <inheritdoc/>
+    /// <inheritdoc />
     public void MoveToPoint(Vector2 worldPoint)
     {
         transform.position = worldPoint;

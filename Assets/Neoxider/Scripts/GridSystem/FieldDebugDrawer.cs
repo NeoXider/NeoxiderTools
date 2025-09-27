@@ -1,6 +1,5 @@
-using UnityEngine;
 using System.Collections.Generic;
-
+using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -8,7 +7,7 @@ using UnityEditor;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Компонент для визуализации сетки, путей и информации о ячейках через Gizmos и UnityEngine.Grid.
+    ///     Компонент для визуализации сетки, путей и информации о ячейках через Gizmos и UnityEngine.Grid.
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(FieldGenerator))]
@@ -20,7 +19,7 @@ namespace Neo.GridSystem
         public Color WalkableCellColor = new(0f, 1f, 0f, 0.3f); // полупрозрачный зелёный
         public Color CoordinatesColor = Color.white;
         public bool DrawCoordinates = true;
-        public bool DrawPath = false;
+        public bool DrawPath;
         public List<Vector3Int> DebugPath = new();
         public Color TextColor = Color.white; // Новый параметр для цвета текста
         public int TextFontSize = 14; // Новый параметр для размера текста

@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using Neo.Extensions;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -7,11 +9,11 @@ using UnityEngine.Serialization;
 namespace Neo.Tools
 {
     /// <summary>
-    /// ✏️  Universal line-drawing component.
-    /// • Draws a <see cref="LineRenderer"/> with the mouse / first touch,  
-    /// • Chaikin-smooths the polyline *live* as you draw,  
-    /// • Optional 2-D collider & timed self-destruct,  
-    /// • Can clone most settings from a “template” <see cref="LineRenderer"/>.  
+    ///     ✏️  Universal line-drawing component.
+    ///     • Draws a <see cref="LineRenderer" /> with the mouse / first touch,
+    ///     • Chaikin-smooths the polyline *live* as you draw,
+    ///     • Optional 2-D collider & timed self-destruct,
+    ///     • Can clone most settings from a “template” <see cref="LineRenderer" />.
     /// </summary>
     public sealed class Drawer : MonoBehaviour
     {
@@ -25,7 +27,7 @@ namespace Neo.Tools
         [Header("Template (Optional)")]
         [Tooltip("When ON and a template is assigned, most visual parameters "
                  + "will be copied from that LineRenderer.")]
-        public bool useTemplateSettings = false;
+        public bool useTemplateSettings;
 
         public LineRenderer templateRenderer;
 
@@ -56,7 +58,7 @@ namespace Neo.Tools
         };
 
         [Header("Width")] [Min(0f)] public float lineWidth = 0.1f;
-        public bool useWidthCurve = false;
+        public bool useWidthCurve;
         public AnimationCurve widthCurve = AnimationCurve.Linear(0, 1, 1, 1);
 
         [Header("Renderer Extras")] public LineTextureMode textureMode = LineTextureMode.Stretch;
@@ -64,9 +66,9 @@ namespace Neo.Tools
         public LineAlignment alignment = LineAlignment.View;
         [Range(0, 90)] public int cornerVerts = 10;
         [Range(0, 90)] public int capVerts = 90;
-        public bool loop = false;
+        public bool loop;
         public string sortingLayerName = "Default";
-        public int sortingOrder = 0;
+        public int sortingOrder;
 
         /* ───────── ALGORITHMS ──────────────────────────────────────────── */
 
@@ -75,11 +77,11 @@ namespace Neo.Tools
         [Tooltip("Chaikin smoothing passes each frame.")] [Range(0, 10)]
         public int smoothing = 2;
 
-        public float fixedZ = 0;
+        public float fixedZ;
 
         [Min(0)] public int maxPoints = 1000;
 
-        [Min(0)] public float fixedLength = 0;
+        [Min(0)] public float fixedLength;
         //[Min(0.05f)] public float tresholdFixLength = 0.1f;
 
         [Tooltip("Minimum distance (world units) between raw points.")] [Min(0f)]
@@ -95,16 +97,17 @@ namespace Neo.Tools
 
         [Min(0)] public float minDistanceCreate = 0.2f;
 
-        [Min(0)] public float maxDistanceCreate = 0;
+        [Min(0)] public float maxDistanceCreate;
 
-        [Min(0)] public float deleteAfterRelease = 0f;
+        [Min(0)] public float deleteAfterRelease;
 
         [Tooltip("0 = keep forever; otherwise the finished line is after N seconds.")] [Min(0)]
-        public float drawRelease = 0f;
+        public float drawRelease;
 
 
-        [Header("Physics")] public bool addCollider = false;
-        public bool colliderAfterCreation = false;
+        [Header("Physics")] public bool addCollider;
+
+        public bool colliderAfterCreation;
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
         [Header("Events")] public LineCreatedEvent OnLineCreated = new();
@@ -119,10 +122,13 @@ namespace Neo.Tools
         [Tooltip("Событие: начало рисования линии (точка старта)")]
         public UnityEvent<Vector3> OnLineStarted = new();
 
-        [System.Serializable]
-        public class LineCreatedEvent : UnityEvent<LineRenderer>
-        {
-        }
+        public List<LineRenderer> lines = new();
+
+        private LineRenderer _currentLR;
+        private float _distance;
+        private EdgeCollider2D _liveCol;
+        private float _timer;
+        private Camera cam;
 
         /* ───────── INTERNAL ────────────────────────────────────────────── */
 
@@ -136,7 +142,7 @@ namespace Neo.Tools
             }
         }
 
-        public int CountPoints => _rawPoints.Count;
+        public int CountPoints => rawPoints.Count;
 
         public float Timer
         {
@@ -154,16 +160,7 @@ namespace Neo.Tools
             }
         }
 
-        public List<Vector3> rawPoints => _rawPoints;
-
-        public List<LineRenderer> lines = new();
-
-        private readonly List<Vector3> _rawPoints = new();
-        private EdgeCollider2D _liveCol;
-        private LineRenderer _currentLR;
-        private Camera cam;
-        private float _timer;
-        private float _distance;
+        public List<Vector3> rawPoints { get; } = new();
 
         /* ───────── UNITY LIFECYCLE ─────────────────────────────────────── */
 
@@ -211,7 +208,7 @@ namespace Neo.Tools
         /* ───────── CORE LOGIC ──────────────────────────────────────────── */
 
         /// <summary>
-        /// Initializes a new line by creating the LineRenderer and setting up initial conditions.
+        ///     Initializes a new line by creating the LineRenderer and setting up initial conditions.
         /// </summary>
         /// <param name="position">The starting world position of the line.</param>
         public void BeginLine(Vector3 position)
@@ -229,19 +226,19 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Clears any existing points and resets the LineRenderer's position count.
+        ///     Clears any existing points and resets the LineRenderer's position count.
         /// </summary>
         public void ResetPoints()
         {
             Distance = 0;
-            _rawPoints.Clear();
+            rawPoints.Clear();
             _currentLR.positionCount = 0;
             OnPointChanged?.Invoke(CountPoints);
         }
 
         /// <summary>
-        /// Creates and configures a LineRenderer. The source of settings depends on the
-        /// flag <see cref="useTemplateSettings"/>.
+        ///     Creates and configures a LineRenderer. The source of settings depends on the
+        ///     flag <see cref="useTemplateSettings" />.
         /// </summary>
         public LineRenderer CreateLineRenderer()
         {
@@ -293,7 +290,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Applies settings defined in the inspector to a LineRenderer when no template is used.
+        ///     Applies settings defined in the inspector to a LineRenderer when no template is used.
         /// </summary>
         public void ApplyFallbackSettings(LineRenderer lr)
         {
@@ -312,7 +309,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Adds a new point to the line, applying smoothing if configured.
+        ///     Adds a new point to the line, applying smoothing if configured.
         /// </summary>
         /// <param name="worldPos">The world position of the point to add.</param>
         public void AppendPoint(Vector3 worldPos)
@@ -325,13 +322,13 @@ namespace Neo.Tools
 
             if (CountPoints == 0)
             {
-                _rawPoints.Add(pos);
-                OnPointChanged?.Invoke(_rawPoints.Count);
+                rawPoints.Add(pos);
+                OnPointChanged?.Invoke(rawPoints.Count);
                 return;
             }
 
             // 2. Вычисляем конечную позицию с учётом fixedLength
-            var last = _rawPoints[^1];
+            var last = rawPoints[^1];
 
             if (fixedLength > 0)
             {
@@ -349,12 +346,12 @@ namespace Neo.Tools
             }
 
             // 3. Добавляем точку
-            _rawPoints.Add(pos);
-            OnPointChanged?.Invoke(_rawPoints.Count);
+            rawPoints.Add(pos);
+            OnPointChanged?.Invoke(rawPoints.Count);
             Distance += Vector3.Distance(last, pos);
 
             // 4. Сглаживаем, ограничиваем, перезаписываем
-            var processed = LimitPoints(Smooth(_rawPoints, smoothing, fixedZ), maxPoints);
+            var processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
             _currentLR.positionCount = processed.Count;
             _currentLR.SetPositions(processed.ToArray());
 
@@ -377,8 +374,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Evenly selects ≤ Max points from the list.
-        /// 0 or 1 → returns the source list (without restriction).
+        ///     Evenly selects ≤ Max points from the list.
+        ///     0 or 1 → returns the source list (without restriction).
         /// </summary>
         public static List<Vector3> LimitPoints(List<Vector3> pts, int max)
         {
@@ -400,13 +397,13 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Finalizes and processes the line, including optional collider generation.
+        ///     Finalizes and processes the line, including optional collider generation.
         /// </summary>
         public void EndLine()
         {
             if (_currentLR == null) return;
 
-            if (_rawPoints.Count < minCountCreate ||
+            if (rawPoints.Count < minCountCreate ||
                 (minDistanceCreate > 0 && Distance < minDistanceCreate)) // too short – discard
             {
                 Destroy(_currentLR.gameObject);
@@ -426,7 +423,7 @@ namespace Neo.Tools
             }
 
             _currentLR = null;
-            _rawPoints.Clear();
+            rawPoints.Clear();
         }
 
         public EdgeCollider2D CreateCollider()
@@ -434,7 +431,7 @@ namespace Neo.Tools
             _liveCol = _currentLR.gameObject.AddComponent<EdgeCollider2D>();
             var pts2D = GetCurrentLinePositions();
             _liveCol.points = pts2D;
-            _liveCol.edgeRadius = (useWidthCurve ? widthCurve.Evaluate(_rawPoints.Count - 1) : lineWidth) * 0.5f;
+            _liveCol.edgeRadius = (useWidthCurve ? widthCurve.Evaluate(rawPoints.Count - 1) : lineWidth) * 0.5f;
             return _liveCol;
         }
 
@@ -447,7 +444,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Destroys the provided LineRenderer and removes it from the list of lines.
+        ///     Destroys the provided LineRenderer and removes it from the list of lines.
         /// </summary>
         /// <param name="lr">The LineRenderer to delete.</param>
         public void Delete(LineRenderer lr)
@@ -458,7 +455,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Deletes the first line in the list, if any exist.
+        ///     Deletes the first line in the list, if any exist.
         /// </summary>
         public void DeleteFirst()
         {
@@ -467,7 +464,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Deletes the last line in the list, if any exist.
+        ///     Deletes the last line in the list, if any exist.
         /// </summary>
         public void DeleteLast()
         {
@@ -476,10 +473,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Destroys all lines and clears the list of LineRenderers.
+        ///     Destroys all lines and clears the list of LineRenderers.
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -496,13 +493,13 @@ namespace Neo.Tools
                 _currentLR = null;
             }
 
-            _rawPoints.Clear();
+            rawPoints.Clear();
         }
 
         /* ───────── HELPERS ──────────────────────────────────────────────── */
 
         /// <summary>
-        /// Converts a screen position to world coordinates based on the main camera's Z position.
+        ///     Converts a screen position to world coordinates based on the main camera's Z position.
         /// </summary>
         /// <param name="screen">The screen space coordinates.</param>
         /// <returns>The converted world space position.</returns>
@@ -513,7 +510,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Applies the Chaikin smoothing algorithm to a list of points over multiple passes.
+        ///     Applies the Chaikin smoothing algorithm to a list of points over multiple passes.
         /// </summary>
         /// <param name="points">The original list of points to smooth.</param>
         /// <param name="passes">Number of smoothing passes to apply.</param>
@@ -565,6 +562,11 @@ namespace Neo.Tools
             for (var i = 1; i < points.Count; i++) distance += Vector3.Distance(points[i - 1], points[i]);
 
             return distance;
+        }
+
+        [Serializable]
+        public class LineCreatedEvent : UnityEvent<LineRenderer>
+        {
         }
     }
 }

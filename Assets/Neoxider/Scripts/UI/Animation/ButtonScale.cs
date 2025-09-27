@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,15 +8,6 @@ namespace Neo.UI
 {
     public class ButtonScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
-        #region Sub-Classes
-
-        [System.Serializable]
-        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
-        {
-        }
-
-        #endregion
-
         [SerializeField] private RectTransform _rectTransform;
         [SerializeField] private Vector2 _pressedSize = new(0.85f, 0.85f);
         [SerializeField] private float resizeDuration = 0.15f;
@@ -26,6 +18,16 @@ namespace Neo.UI
         private void Awake()
         {
             _currentSize = _rectTransform.localScale;
+        }
+
+        private void OnEnable()
+        {
+            _rectTransform.localScale = _currentSize;
+        }
+
+        private void OnValidate()
+        {
+            _rectTransform ??= GetComponent<RectTransform>();
         }
 
         void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
@@ -44,11 +46,6 @@ namespace Neo.UI
             _resizeCoroutine = StartCoroutine(ResizeButton(_currentSize));
         }
 
-        private void OnEnable()
-        {
-            _rectTransform.localScale = _currentSize;
-        }
-
         private IEnumerator ResizeButton(Vector2 targetSize)
         {
             Vector2 initialSize = _rectTransform.localScale;
@@ -64,9 +61,13 @@ namespace Neo.UI
             _rectTransform.localScale = targetSize;
         }
 
-        private void OnValidate()
+        #region Sub-Classes
+
+        [Serializable]
+        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
         {
-            _rectTransform ??= GetComponent<RectTransform>();
         }
+
+        #endregion
     }
 }

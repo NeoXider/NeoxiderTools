@@ -1,12 +1,33 @@
-using UnityEngine;
 using Sirenix.OdinInspector;
-
+using UnityEditor;
+using UnityEngine;
 
 namespace Neo.Tools
 {
     [AddComponentMenu("Neo/Tools/UniversalRotator")]
     public class UniversalRotator : MonoBehaviour
     {
+        public enum AimSource
+        {
+            None,
+            Transform,
+            WorldPoint,
+            Mouse
+        }
+
+        public enum Axis
+        {
+            X,
+            Y,
+            Z
+        }
+
+        public enum Mouse3DMode
+        {
+            PlaneThroughObject,
+            PhysicsRaycast
+        }
+
         public enum RotationMode
         {
             Mode3D,
@@ -20,27 +41,6 @@ namespace Neo.Tools
             LateUpdate
         }
 
-        public enum Axis
-        {
-            X,
-            Y,
-            Z
-        }
-
-        public enum AimSource
-        {
-            None,
-            Transform,
-            WorldPoint,
-            Mouse
-        }
-
-        public enum Mouse3DMode
-        {
-            PlaneThroughObject,
-            PhysicsRaycast
-        }
-
         // ========== РЕЖИМЫ ==========
         [Tooltip("Режим вращения: 3D (по forward) или 2D (в плоскости XY, поворот по Z).")]
         [LabelText("Режим вращения")]
@@ -51,7 +51,7 @@ namespace Neo.Tools
         public UpdateMode updateMode = UpdateMode.Update;
 
         [Tooltip("Использовать нескалированное время.")]
-        public bool useUnscaledTime = false;
+        public bool useUnscaledTime;
 
         // ========== СКОРОСТЬ И ОФСЕТ ==========
         [Tooltip("Скорость вращения (град/сек).")] [Min(0f)] [LabelText("Скорость (°/сек)")]
@@ -61,18 +61,6 @@ namespace Neo.Tools
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
         [LabelText("Офсет (Euler)")]
         public Vector3 rotationOffsetEuler = Vector3.zero;
-
-        // В 2D показываем отдельный слайдер для Z, который мапится на rotationOffsetEuler.z
-        [ShowInInspector]
-        [Tooltip("Офсет по Z для 2D (спрайтов).")]
-        [ShowIf("@rotationMode == RotationMode.Mode2D")]
-        [LabelText("Офсет Z (2D)")]
-        [PropertyRange(-180, 180)]
-        public float rotationOffsetZ2D
-        {
-            get => rotationOffsetEuler.z;
-            set => rotationOffsetEuler.z = value;
-        }
 
         // ========== ОГРАНИЧЕНИЯ ==========
         [FoldoutGroup("Ограничения")]
@@ -94,7 +82,7 @@ namespace Neo.Tools
         [ToggleLeft]
         [LabelText("Использовать мировые координаты мыши")]
         [OnValueChanged(nameof(OnUseMouseToggled))]
-        public bool useMouseWorld = false;
+        public bool useMouseWorld;
 
         [FoldoutGroup("Наведение")] [ShowIf("@!useMouseWorld")] [LabelText("Цель (Transform)")]
         public Transform target;
@@ -127,13 +115,80 @@ namespace Neo.Tools
         [Tooltip("Up-вектор для LookRotation в 3D.")]
         public Vector3 worldUp = Vector3.up;
 
+        private Transform cachedParent;
+
         // ========== ВНУТРЕННЕЕ СОСТОЯНИЕ ==========
         [ShowInInspector] [ReadOnly] [FoldoutGroup("Отладка")] [LabelText("Текущий источник наведения")]
         private AimSource currentAim = AimSource.None;
 
-        private Vector3 manualWorldPoint;
         private Vector3 initialLocalEuler;
-        private Transform cachedParent;
+
+        private Vector3 manualWorldPoint;
+
+        // В 2D показываем отдельный слайдер для Z, который мапится на rotationOffsetEuler.z
+        [ShowInInspector]
+        [Tooltip("Офсет по Z для 2D (спрайтов).")]
+        [ShowIf("@rotationMode == RotationMode.Mode2D")]
+        [LabelText("Офсет Z (2D)")]
+        [PropertyRange(-180, 180)]
+        public float rotationOffsetZ2D
+        {
+            get => rotationOffsetEuler.z;
+            set => rotationOffsetEuler.z = value;
+        }
+
+        private void Awake()
+        {
+            cachedParent = transform.parent;
+            initialLocalEuler = transform.localEulerAngles;
+
+            TryAssignMainCameraIfNull();
+
+            currentAim = useMouseWorld ? AimSource.Mouse
+                : target != null ? AimSource.Transform
+                : AimSource.None;
+        }
+
+        // ========= ЖИЗНЕННЫЙ ЦИКЛ =========
+        private void Reset()
+        {
+            TryAssignMainCameraIfNull(); // сразу заполним в инспекторе
+        }
+
+        private void Update()
+        {
+            if (updateMode == UpdateMode.Update) Tick(GetDeltaTime());
+        }
+
+        private void FixedUpdate()
+        {
+            if (updateMode == UpdateMode.FixedUpdate) Tick(GetDeltaTime());
+        }
+
+        private void LateUpdate()
+        {
+            if (updateMode == UpdateMode.LateUpdate) Tick(GetDeltaTime());
+        }
+
+#if UNITY_EDITOR
+        private void OnDrawGizmosSelected()
+        {
+            if (rotationMode == RotationMode.Mode3D && useMouseWorld && mouse3DMode == Mouse3DMode.PlaneThroughObject)
+            {
+                var n = AxisToWorldVector(planeAxis);
+                Handles.color = new Color(0.2f, 0.7f, 1f, 0.3f);
+                Handles.DrawSolidDisc(transform.position, n, 0.5f);
+            }
+        }
+#endif
+
+        private void OnValidate()
+        {
+            TryAssignMainCameraIfNull();
+            // Нормализуем диапазон (исправляем NaN/Inf)
+            limitRange.x = Mathf.Clamp(limitRange.x, -360f, 360f);
+            limitRange.y = Mathf.Clamp(limitRange.y, -360f, 360f);
+        }
 
         // ========== КНОПКИ ==========
         [FoldoutGroup("Наведение")]
@@ -151,47 +206,6 @@ namespace Neo.Tools
         {
             SetTarget(target);
             if (target != null) RotateTo(target.position, true);
-        }
-
-        // ========= ЖИЗНЕННЫЙ ЦИКЛ =========
-        private void Reset()
-        {
-            TryAssignMainCameraIfNull(); // сразу заполним в инспекторе
-        }
-
-        private void Awake()
-        {
-            cachedParent = transform.parent;
-            initialLocalEuler = transform.localEulerAngles;
-
-            TryAssignMainCameraIfNull();
-
-            currentAim = useMouseWorld ? AimSource.Mouse
-                : target != null ? AimSource.Transform
-                : AimSource.None;
-        }
-
-        private void OnValidate()
-        {
-            TryAssignMainCameraIfNull();
-            // Нормализуем диапазон (исправляем NaN/Inf)
-            limitRange.x = Mathf.Clamp(limitRange.x, -360f, 360f);
-            limitRange.y = Mathf.Clamp(limitRange.y, -360f, 360f);
-        }
-
-        private void Update()
-        {
-            if (updateMode == UpdateMode.Update) Tick(GetDeltaTime());
-        }
-
-        private void FixedUpdate()
-        {
-            if (updateMode == UpdateMode.FixedUpdate) Tick(GetDeltaTime());
-        }
-
-        private void LateUpdate()
-        {
-            if (updateMode == UpdateMode.LateUpdate) Tick(GetDeltaTime());
         }
 
         // ========= ПУБЛИЧНЫЕ API =========
@@ -285,7 +299,7 @@ namespace Neo.Tools
                 case AimSource.Mouse:
                     return rotationMode == RotationMode.Mode2D ? GetMouseWorldPoint2D() : GetMouseWorldPoint3D();
                 case AimSource.Transform:
-                    return target ? (Vector3?)target.position : null;
+                    return target ? target.position : null;
                 case AimSource.WorldPoint:
                     return manualWorldPoint;
                 default:
@@ -311,23 +325,22 @@ namespace Neo.Tools
                 desiredLocalBeforeLimits = Quaternion.Euler(0f, 0f, z);
                 return ToWorld(desiredLocalBeforeLimits);
             }
-            else // 3D
+
+            // 3D
+            var dir = aimPoint - transform.position;
+            if (dir.sqrMagnitude < 1e-10f)
             {
-                var dir = aimPoint - transform.position;
-                if (dir.sqrMagnitude < 1e-10f)
-                {
-                    desiredLocalBeforeLimits = transform.localRotation;
-                    return transform.rotation;
-                }
-
-                var look = Quaternion.LookRotation(dir.normalized,
-                    worldUp.sqrMagnitude > 0.0001f ? worldUp.normalized : Vector3.up);
-                var offset = Quaternion.Euler(rotationOffsetEuler);
-                var worldDesired = look * offset;
-
-                desiredLocalBeforeLimits = ToLocal(worldDesired);
-                return worldDesired;
+                desiredLocalBeforeLimits = transform.localRotation;
+                return transform.rotation;
             }
+
+            var look = Quaternion.LookRotation(dir.normalized,
+                worldUp.sqrMagnitude > 0.0001f ? worldUp.normalized : Vector3.up);
+            var offset = Quaternion.Euler(rotationOffsetEuler);
+            var worldDesired = look * offset;
+
+            desiredLocalBeforeLimits = ToLocal(worldDesired);
+            return worldDesired;
         }
 
         private Quaternion ApplyAxisLimit(Quaternion desiredLocal)
@@ -488,17 +501,5 @@ namespace Neo.Tools
         {
             return Mathf.Abs(a - b) <= 0.0001f;
         }
-
-#if UNITY_EDITOR
-        private void OnDrawGizmosSelected()
-        {
-            if (rotationMode == RotationMode.Mode3D && useMouseWorld && mouse3DMode == Mouse3DMode.PlaneThroughObject)
-            {
-                var n = AxisToWorldVector(planeAxis);
-                UnityEditor.Handles.color = new Color(0.2f, 0.7f, 1f, 0.3f);
-                UnityEditor.Handles.DrawSolidDisc(transform.position, n, 0.5f);
-            }
-        }
-#endif
     }
 }

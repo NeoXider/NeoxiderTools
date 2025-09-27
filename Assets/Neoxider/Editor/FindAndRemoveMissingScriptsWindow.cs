@@ -6,11 +6,10 @@ using UnityEngine.SceneManagement;
 
 public class FindAndRemoveMissingScriptsWindow : EditorWindow
 {
+    private readonly List<MissingScriptInfo> objectsWithMissing = new();
     private int currentPrefab;
     private int currentScene;
     private string initialScenePath;
-
-    private readonly List<MissingScriptInfo> objectsWithMissing = new();
     private string[] prefabPaths;
     private string[] scenePaths;
     private Vector2 scroll;

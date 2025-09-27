@@ -3,9 +3,10 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    /// Visual mouse effects driven by MouseInputManager.
-    /// • TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="holdInterval"/> seconds.  
-    /// • Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
+    ///     Visual mouse effects driven by MouseInputManager.
+    ///     • TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="holdInterval" />
+    ///     seconds.
+    ///     • Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
     /// </summary>
     public class MouseEffect : MonoBehaviour
     {
@@ -38,12 +39,12 @@ namespace Neo.Tools
         [Header("Follow Settings")] [Tooltip("Depth (world Z) used to place the trail / follower")]
         public float followDepth = 10f;
 
-        private float _lastHoldSpawn;
-        private float _lastFollowUpdate;
+        private Camera _cam;
         private bool _holdSingleSpawned;
         private bool _isFollowing;
+        private float _lastFollowUpdate;
 
-        private Camera _cam;
+        private float _lastHoldSpawn;
         private MouseInputManager _mim;
 
         private void Awake()
@@ -63,15 +64,6 @@ namespace Neo.Tools
             if (followObject) followObject.SetActive(false);
         }
 
-        private void OnDestroy()
-        {
-            if (_mim == null) return;
-            _mim.OnPress -= OnPress;
-            _mim.OnRelease -= OnRelease;
-            _mim.OnClick -= OnClick;
-            _mim.OnHold -= OnHold;
-        }
-
         private void Update()
         {
             if (!_isFollowing) return;
@@ -82,6 +74,15 @@ namespace Neo.Tools
             if (followObject && followObject.activeSelf) followObject.transform.position = wp;
 
             _lastFollowUpdate = Time.time;
+        }
+
+        private void OnDestroy()
+        {
+            if (_mim == null) return;
+            _mim.OnPress -= OnPress;
+            _mim.OnRelease -= OnRelease;
+            _mim.OnClick -= OnClick;
+            _mim.OnHold -= OnHold;
         }
 
         private bool TryGetCursorWorld(out Vector3 worldPos)

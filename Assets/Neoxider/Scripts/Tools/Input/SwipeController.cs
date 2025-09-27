@@ -3,7 +3,6 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-
 namespace Neo
 {
     public struct SwipeData
@@ -27,49 +26,46 @@ namespace Neo
     }
 
     /// <summary>
-    /// SwipeController is responsible for detecting swipe gestures on both touch devices and PCs.
-    /// It can differentiate between swipes in all four cardinal directions and trigger events accordingly.
+    ///     SwipeController is responsible for detecting swipe gestures on both touch devices and PCs.
+    ///     It can differentiate between swipes in all four cardinal directions and trigger events accordingly.
     /// </summary>
-    ///     ///<example>
-    ///<code>
-    /// <![CDATA[
-    ///public void SubscribeToSwipe(SwipeData swipeData) => Debug.Log(swipeData.Direction);
-    /// ]]>
-    ///</code>
-    ///</example>
+    /// ///
+    /// <example>
+    ///     <code>
+    ///  <![CDATA[
+    /// public void SubscribeToSwipe(SwipeData swipeData) => Debug.Log(swipeData.Direction);
+    ///  ]]>
+    /// </code>
+    /// </example>
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SwipeController))]
     public class SwipeController : MonoBehaviour
     {
-        /// <summary>
-        /// If true, swipes are only detected after the user has released the touch or mouse button. This can be useful
-        /// for games or applications where swipes are meant to be deliberate actions rather than continuous inputs.
-        /// </summary>
-        [SerializeField] public bool detectSwipeOnlyAfterRelease = false;
+        private static SwipeController instance;
 
         /// <summary>
-        /// The minimum distance (in screen pixels) that the user must move their finger or the mouse for a movement
-        /// to be considered a swipe. This helps differentiate between swipes and taps or clicks.
+        ///     If true, swipes are only detected after the user has released the touch or mouse button. This can be useful
+        ///     for games or applications where swipes are meant to be deliberate actions rather than continuous inputs.
+        /// </summary>
+        [SerializeField] public bool detectSwipeOnlyAfterRelease;
+
+        /// <summary>
+        ///     The minimum distance (in screen pixels) that the user must move their finger or the mouse for a movement
+        ///     to be considered a swipe. This helps differentiate between swipes and taps or clicks.
         /// </summary>
         [SerializeField] private float minDistanceForSwipeX = 20f;
 
         [SerializeField] private float minDistanceForSwipeY = 20f;
-        public bool ignoreLastSwipe = false;
-
-        private Vector2 fingerUpPosition;
-        private Vector2 fingerDownPosition;
-
-        private bool swipeCompleted = true;
-        private SwipeDirection lastSwipeDirection;
-        private static SwipeController instance;
+        public bool ignoreLastSwipe;
 
         public UnityEvent<SwipeData> OnSwipe = new();
+        private Vector2 fingerDownPosition;
 
-        private bool swipeDetected = false;
+        private Vector2 fingerUpPosition;
+        private SwipeDirection lastSwipeDirection;
 
-        private void Awake()
-        {
-            instance = this;
-        }
+        private bool swipeCompleted = true;
+
+        private bool swipeDetected;
 
         public static SwipeController Instance
         {
@@ -81,6 +77,11 @@ namespace Neo
 
                 return instance;
             }
+        }
+
+        private void Awake()
+        {
+            instance = this;
         }
 
         private void Update()

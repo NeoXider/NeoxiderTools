@@ -1,14 +1,15 @@
 using Neo.Tools;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 
-namespace Neo
+namespace Neo.Tools
 {
-    /// <summary>
-    /// EventManager GameStates
-    /// </summary>
-    public class EM : Singleton<EM>
+        /// <summary>
+        ///     EventManager GameStates
+        /// </summary>
+        public class EM : Singleton<EM>
     {
         [FormerlySerializedAs("OnMenuState")] [Header("Game Events")]
         public UnityEvent OnMenu;
@@ -36,6 +37,116 @@ namespace Neo
         public UnityEvent<bool> OnPauseApplication;
         public UnityEvent OnQuitApplication;
 
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Preparing()
+        {
+            I?.OnPreparing?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void GameStart()
+        {
+            I?.OnGameStart?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Lose()
+        {
+            I?.OnLose?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Win()
+        {
+            I?.OnWin?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void End()
+        {
+            I?.OnEnd?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void StopGame()
+        {
+            I?.OnStopGame?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void PlayerDied()
+        {
+            I?.OnPlayerDeath?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Pause()
+        {
+            I?.OnPause?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Resume()
+        {
+            I?.OnResume?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Menu()
+        {
+            I?.OnMenu?.Invoke();
+        }
+
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [Button]
+#endif
+        public static void Restart()
+        {
+            I?.OnRestart?.Invoke();
+        }
+
         #region Unity Callbacks
 
         protected override void Init()
@@ -60,115 +171,5 @@ namespace Neo
         }
 
         #endregion
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Preparing()
-        {
-            I?.OnPreparing?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void GameStart()
-        {
-            I?.OnGameStart?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Lose()
-        {
-            I?.OnLose?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Win()
-        {
-            I?.OnWin?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void End()
-        {
-            I?.OnEnd?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void StopGame()
-        {
-            I?.OnStopGame?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void PlayerDied()
-        {
-            I?.OnPlayerDeath?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Pause()
-        {
-            I?.OnPause?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Resume()
-        {
-            I?.OnResume?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Menu()
-        {
-            I?.OnMenu?.Invoke();
-        }
-
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
-        public static void Restart()
-        {
-            I?.OnRestart?.Invoke();
-        }
     }
 }

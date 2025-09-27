@@ -1,9 +1,7 @@
-using System;
 using Neo.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Neo.Shop
@@ -30,6 +28,11 @@ namespace Neo.Shop
 
         [Space] public UnityEvent OnSelectItem;
         public UnityEvent OnDeselectItem;
+
+        private void OnValidate()
+        {
+            buttonBuy ??= GetComponentInChildren<Button>(true);
+        }
 
 
         public void Visual(ShopItemData shopItemData, int price, int id)
@@ -72,11 +75,6 @@ namespace Neo.Shop
 
                 OnDeselectItem?.Invoke();
             }
-        }
-
-        private void OnValidate()
-        {
-            buttonBuy ??= GetComponentInChildren<Button>(true);
         }
     }
 }

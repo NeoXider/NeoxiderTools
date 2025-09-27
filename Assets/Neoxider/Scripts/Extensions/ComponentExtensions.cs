@@ -3,12 +3,12 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for Unity Component class
+    ///     Extension methods for Unity Component class
     /// </summary>
     public static class ComponentExtensions
     {
         /// <summary>
-        /// Gets an existing component or adds it if it doesn't exist
+        ///     Gets an existing component or adds it if it doesn't exist
         /// </summary>
         /// <typeparam name="T">Type of component</typeparam>
         /// <param name="component">Source component</param>
@@ -22,7 +22,7 @@ namespace Neo.Extensions
 
 
         /// <summary>
-        /// Gets the full hierarchy path of this component's GameObject
+        ///     Gets the full hierarchy path of this component's GameObject
         /// </summary>
         /// <param name="component">Source component</param>
         /// <returns>Full path in format "Parent/Child/GameObject"</returns>

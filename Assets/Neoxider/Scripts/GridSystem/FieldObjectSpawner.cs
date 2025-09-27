@@ -1,16 +1,16 @@
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
 
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Информация о заспавненном объекте на поле
+    ///     Информация о заспавненном объекте на поле
     /// </summary>
     public class SpawnedObjectInfo
     {
-        public GameObject GameObject;
         public FieldCell Cell;
+        public GameObject GameObject;
         public bool OccupiesSpace;
 
         public SpawnedObjectInfo(GameObject go, FieldCell cell, bool occupiesSpace)
@@ -22,7 +22,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Универсальный спавнер для работы с сеткой. Хранит объекты по ячейкам, поддерживает флаг "занимает место".
+    ///     Универсальный спавнер для работы с сеткой. Хранит объекты по ячейкам, поддерживает флаг "занимает место".
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
     public class FieldObjectSpawner : MonoBehaviour
@@ -34,13 +34,13 @@ namespace Neo.GridSystem
         public UnityEvent<FieldCell> OnCellOccupied = new();
         public UnityEvent<FieldCell> OnCellFreed = new();
 
-        private FieldGenerator generator;
-
         // Для каждой ячейки — список объектов
-        private Dictionary<FieldCell, List<SpawnedObjectInfo>> cellObjects = new();
+        private readonly Dictionary<FieldCell, List<SpawnedObjectInfo>> cellObjects = new();
 
         // Для быстрого поиска по объекту
-        private Dictionary<GameObject, SpawnedObjectInfo> objectLookup = new();
+        private readonly Dictionary<GameObject, SpawnedObjectInfo> objectLookup = new();
+
+        private FieldGenerator generator;
 
         private void Awake()
         {
@@ -48,7 +48,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Спавнит объект в ячейку
+        ///     Спавнит объект в ячейку
         /// </summary>
         public SpawnedObjectInfo SpawnAt(Vector3Int cellPos, int prefabIndex = 0, bool occupiesSpace = true,
             string layer = "Default")
@@ -68,7 +68,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Получить все объекты в ячейке
+        ///     Получить все объекты в ячейке
         /// </summary>
         public List<SpawnedObjectInfo> GetObjectsInCell(Vector3Int cellPos)
         {
@@ -78,7 +78,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Проверить, занята ли ячейка (учитывая только объекты, которые занимают место)
+        ///     Проверить, занята ли ячейка (учитывая только объекты, которые занимают место)
         /// </summary>
         public bool IsCellOccupied(Vector3Int cellPos)
         {
@@ -88,7 +88,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Удалить объект с поля
+        ///     Удалить объект с поля
         /// </summary>
         public void RemoveObject(GameObject go)
         {
@@ -104,7 +104,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Получить все объекты на поле
+        ///     Получить все объекты на поле
         /// </summary>
         public List<SpawnedObjectInfo> GetAllObjects()
         {

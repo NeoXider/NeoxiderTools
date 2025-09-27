@@ -1,18 +1,17 @@
-using UnityEngine;
 using System;
-using System.Reflection;
 using System.Collections.Generic;
+using System.Reflection;
+using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
 #if UNITY_EDITOR
-    using UnityEditor;
-
     [CustomPropertyDrawer(typeof(ButtonAttribute))]
     public class ButtonAttributeDrawer : PropertyDrawer
     {
-        private Dictionary<string, object> _parameterValues = new();
-        private Dictionary<string, Type> _parameterTypes = new();
+        private readonly Dictionary<string, Type> _parameterTypes = new();
+        private readonly Dictionary<string, object> _parameterValues = new();
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
@@ -98,17 +97,17 @@ namespace Neo
         {
             if (type == typeof(int))
                 return EditorGUI.IntField(position, label, (int)value);
-            else if (type == typeof(float))
+            if (type == typeof(float))
                 return EditorGUI.FloatField(position, label, (float)value);
-            else if (type == typeof(string))
+            if (type == typeof(string))
                 return EditorGUI.TextField(position, label, (string)value);
-            else if (type == typeof(bool))
+            if (type == typeof(bool))
                 return EditorGUI.Toggle(position, label, (bool)value);
-            else if (type == typeof(GameObject))
+            if (type == typeof(GameObject))
                 return EditorGUI.ObjectField(position, label, (GameObject)value, typeof(GameObject), true);
-            else if (typeof(MonoBehaviour).IsAssignableFrom(type))
+            if (typeof(MonoBehaviour).IsAssignableFrom(type))
                 return EditorGUI.ObjectField(position, label, (MonoBehaviour)value, type, true);
-            else if (type.IsEnum) return EditorGUI.EnumPopup(position, label, (Enum)value);
+            if (type.IsEnum) return EditorGUI.EnumPopup(position, label, (Enum)value);
 
             return value;
         }

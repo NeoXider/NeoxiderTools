@@ -12,7 +12,7 @@ namespace Neo
 
         [SerializeField] private bool _shakeX = true;
         [SerializeField] private bool _shakeY = true;
-        [SerializeField] private bool _shakeZ = false;
+        [SerializeField] private bool _shakeZ;
 
         private Vector3 startPos;
 

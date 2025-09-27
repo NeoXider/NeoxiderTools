@@ -28,15 +28,15 @@ namespace Neo.UI
         public class TmpColorTextVariant
         {
             public TMP_Text tmp;
-            public bool use_text = false;
+            public bool use_text;
             public Color[] colors = new Color[0];
             public string[] texts = new string[0];
         }
 
         /// <summary>
-        /// Каждый GameObjectVariant имеет один массив objects,
-        /// длина которого = количеству состояний (_maxStates).
-        /// На индекс i включается objects[i], все остальные выключены.
+        ///     Каждый GameObjectVariant имеет один массив objects,
+        ///     длина которого = количеству состояний (_maxStates).
+        ///     На индекс i включается objects[i], все остальные выключены.
         /// </summary>
         [Serializable]
         public class GameObjectVariant
@@ -61,23 +61,23 @@ namespace Neo.UI
         private GameObjectVariant[] _objectVariants = new GameObjectVariant[0];
 
         [Space] [Header("State Index / Build Settings")] [SerializeField]
-        private int _currentStateIndex = 0;
+        private int _currentStateIndex;
 
-        [SerializeField] private bool _isBuildPhase = false;
+        [SerializeField] private bool _isBuildPhase;
 
-        [SerializeField] private int _maxStates = 0;
+        [SerializeField] private int _maxStates;
 
         #endregion
 
         #region PROPERTIES
 
         /// <summary>
-        /// Текущий индекс состояния.
+        ///     Текущий индекс состояния.
         /// </summary>
         public int currentStateIndex => _currentStateIndex;
 
         /// <summary>
-        /// Общее максимальное число состояний (автоматически вычисляется в OnValidate).
+        ///     Общее максимальное число состояний (автоматически вычисляется в OnValidate).
         /// </summary>
         public int MaxStates => _maxStates;
 
@@ -86,7 +86,7 @@ namespace Neo.UI
         #region PUBLIC_METHODS
 
         /// <summary>
-        /// Переход к следующему состоянию (currentStateIndex + 1).
+        ///     Переход к следующему состоянию (currentStateIndex + 1).
         /// </summary>
         public void NextState()
         {
@@ -94,7 +94,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        /// Переход к предыдущему состоянию (currentStateIndex - 1).
+        ///     Переход к предыдущему состоянию (currentStateIndex - 1).
         /// </summary>
         public void PreviousState()
         {
@@ -102,7 +102,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        /// Установить текущее состояние по индексу.
+        ///     Установить текущее состояние по индексу.
         /// </summary>
         public void SetCurrentState(int index)
         {
@@ -114,7 +114,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        /// Добавить (расширить) количество состояний до newStateCount (если оно больше current).
+        ///     Добавить (расширить) количество состояний до newStateCount (если оно больше current).
         /// </summary>
         public void AddState(int newStateCount)
         {
@@ -163,7 +163,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        /// Полностью очистить все варианты (сделать массивы длины 0), index=0.
+        ///     Полностью очистить все варианты (сделать массивы длины 0), index=0.
         /// </summary>
         public void ClearAllStates()
         {
@@ -201,7 +201,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        /// Применяет визуальное состояние ко всем компонентам (Image, Color, TMP, GameObject).
+        ///     Применяет визуальное состояние ко всем компонентам (Image, Color, TMP, GameObject).
         /// </summary>
         private void Visual()
         {

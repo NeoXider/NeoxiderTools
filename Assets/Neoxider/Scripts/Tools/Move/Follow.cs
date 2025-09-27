@@ -41,7 +41,7 @@ namespace Neo.Tools
 
         [SerializeField] private float _rotationSpeed = 5f;
         [SerializeField] private Vector3 _rotationOffset3D;
-        [SerializeField] private float _rotationOffset2D = 0f;
+        [SerializeField] private float _rotationOffset2D;
 
         private void LateUpdate()
         {
@@ -55,8 +55,12 @@ namespace Neo.Tools
                 FollowRotation();
         }
 
+        private void OnValidate()
+        {
+        }
+
         /// <summary>
-        /// Плавное следование за позицией таргета с учетом смещения и ограничений.
+        ///     Плавное следование за позицией таргета с учетом смещения и ограничений.
         /// </summary>
         private void FollowPosition()
         {
@@ -80,8 +84,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Плавное вращение объекта по направлению на таргет.
-        /// Для 3D используется LookRotation, для 2D — вычисление угла через Atan2 с компенсацией поворота.
+        ///     Плавное вращение объекта по направлению на таргет.
+        ///     Для 3D используется LookRotation, для 2D — вычисление угла через Atan2 с компенсацией поворота.
         /// </summary>
         private void FollowRotation()
         {
@@ -117,10 +121,6 @@ namespace Neo.Tools
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
                     _rotationSpeed * Time.smoothDeltaTime);
             }
-        }
-
-        private void OnValidate()
-        {
         }
     }
 }

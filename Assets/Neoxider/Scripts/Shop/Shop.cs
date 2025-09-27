@@ -1,8 +1,7 @@
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
 
 namespace Neo.Shop
 {
@@ -33,22 +32,21 @@ namespace Neo.Shop
         [Space] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _IMoneySpend;
 
-        public int[] Prices => _prices;
-
-        public ShopItemData[] ShopItemDatas => _shopItemDatas;
-
         [Space] public UnityEvent<int> OnSelect;
         public UnityEvent<int> OnPurchased;
         public UnityEvent<int> OnPurchaseFailed;
         public UnityEvent OnLoad;
+        private int _id;
 
         [Space] [Header("Debug")] private IMoneySpend _money;
 
-        private bool load = false;
-        private int _previewId;
-        private int _id;
+        private bool load;
 
-        public int PreviewId => _previewId;
+        public int[] Prices => _prices;
+
+        public ShopItemData[] ShopItemDatas => _shopItemDatas;
+
+        public int PreviewId { get; private set; }
 
         public int Id
         {
@@ -61,7 +59,41 @@ namespace Neo.Shop
             Load();
             Spawn();
             Subscriber(true);
-            ShowPreview(_previewId);
+            ShowPreview(PreviewId);
+        }
+
+        private void Start()
+        {
+            if (_IMoneySpend != null)
+                _money = _IMoneySpend?.GetComponent<IMoneySpend>() ?? Money.I;
+            else
+                _money = Money.I;
+
+            Visual();
+
+            if (_useSetItem) Select(0);
+
+            load = true;
+            OnLoad?.Invoke();
+        }
+
+        private void OnEnable()
+        {
+            if (load)
+                Visual();
+        }
+
+        private void OnDestroy()
+        {
+            Subscriber(false);
+        }
+
+        public void OnValidate()
+        {
+            _shopItems ??= GetComponentsInChildren<ShopItem>(true);
+
+            if (NotNullDatas())
+                _prices = _shopItemDatas.Select(p => p.price).ToArray();
         }
 
         private void Spawn()
@@ -83,21 +115,6 @@ namespace Neo.Shop
             if (_prefab.gameObject.scene.IsValid()) _prefab.gameObject.SetActive(false);
         }
 
-        private void Start()
-        {
-            if (_IMoneySpend != null)
-                _money = _IMoneySpend?.GetComponent<IMoneySpend>() ?? Money.I;
-            else
-                _money = Money.I;
-
-            Visual();
-
-            if (_useSetItem) Select(0);
-
-            load = true;
-            OnLoad?.Invoke();
-        }
-
         private void Subscriber(bool subscribe)
         {
             for (var i = 0; i < _shopItems.Length; i++)
@@ -117,11 +134,6 @@ namespace Neo.Shop
             }
         }
 
-        private void OnDestroy()
-        {
-            Subscriber(false);
-        }
-
         private void Load()
         {
             var prices = new int[NotNullDatas() ? _shopItemDatas.Length : _prices.Length];
@@ -139,19 +151,19 @@ namespace Neo.Shop
 
         public void ShowPreview(int id)
         {
-            _previewId = id;
+            PreviewId = id;
             VisualPreview();
         }
 
         private void VisualPreview()
         {
-            var data = _previewId < _shopItemDatas.Length ? _shopItemDatas[_previewId] : null;
-            _shopItemPreview?.Visual(data, _prices[_previewId], _previewId);
+            var data = PreviewId < _shopItemDatas.Length ? _shopItemDatas[PreviewId] : null;
+            _shopItemPreview?.Visual(data, _prices[PreviewId], PreviewId);
         }
 
         public void Buy()
         {
-            Buy(_previewId);
+            Buy(PreviewId);
         }
 
         public void Buy(int id)
@@ -193,23 +205,9 @@ namespace Neo.Shop
                     _shopItems[i].Select(i == id);
         }
 
-        private void OnEnable()
-        {
-            if (load)
-                Visual();
-        }
-
         public void Visual()
         {
             for (var i = 0; i < _shopItems.Length; i++) _shopItems[i].Visual(_shopItemDatas[i], _prices[i], i);
-        }
-
-        public void OnValidate()
-        {
-            _shopItems ??= GetComponentsInChildren<ShopItem>(true);
-
-            if (NotNullDatas())
-                _prices = _shopItemDatas.Select(p => p.price).ToArray();
         }
 
         private bool NotNullDatas()

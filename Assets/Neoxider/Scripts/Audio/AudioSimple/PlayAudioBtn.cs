@@ -8,7 +8,7 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudioBtn))]
         public class PlayAudioBtn : MonoBehaviour
         {
-            [SerializeField] private int _idClip = 0;
+            [SerializeField] private int _idClip;
 
             [SerializeField] [GetComponent] private Button _button;
 

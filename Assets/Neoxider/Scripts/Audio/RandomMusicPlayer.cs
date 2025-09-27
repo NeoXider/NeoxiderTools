@@ -1,5 +1,5 @@
-using Neo.Extensions;
 using System.Collections;
+using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo

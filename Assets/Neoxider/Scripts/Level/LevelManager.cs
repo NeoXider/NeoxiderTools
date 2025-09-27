@@ -1,5 +1,5 @@
-using Neo.Tools;
 using System.Collections.Generic;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -9,25 +9,24 @@ namespace Neo
     {
         public class LevelManager : Singleton<LevelManager>
         {
-            [SerializeField] private string _saveKey = "LevelManager";
+            [SerializeField] private readonly Map[] _maps = { new() };
+            [SerializeField] private readonly string _saveKey = "LevelManager";
 
-            [SerializeField] private Transform _parentLevel;
+            [Space] [SerializeField] private int _currentLevel;
 
             [SerializeField] private LevelButton[] _lvlBtns;
 
             [Space] [SerializeField] private int _mapId;
-
-            [SerializeField] private Map[] _maps = { new() };
-
-            [SerializeField] private bool _onAwakeNextMap;
             [SerializeField] private bool _onAwakeNextLevel;
 
-            [Space] [SerializeField] private int _currentLevel;
+            [SerializeField] private bool _onAwakeNextMap;
+
+            [SerializeField] private Transform _parentLevel;
 
             [Space] public UnityEvent<int> OnChangeLevel;
-            [Space] public UnityEvent<int> OnChangeMaxLevel;
 
             public UnityEvent<int> OnChangeMap;
+            [Space] public UnityEvent<int> OnChangeMaxLevel;
 
             public int MaxLevel => Map.level;
             public int MapId => _mapId;

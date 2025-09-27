@@ -1,10 +1,11 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Component that handles evade mechanics with cooldown system
+    ///     Component that handles evade mechanics with cooldown system
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/EvadeManager")]
     public class Evade : MonoBehaviour
@@ -34,26 +35,30 @@ namespace Neo.Tools
         public UnityEvent OnReloadCompleted;
 
         private Timer reloadTimer;
-        private bool isEvading;
 
         /// <summary>
-        /// Gets whether evade action is currently active
+        ///     Gets whether evade action is currently active
         /// </summary>
-        public bool IsEvading => isEvading;
+        public bool IsEvading { get; private set; }
 
         /// <summary>
-        /// Gets whether evade is on cooldown
+        ///     Gets whether evade is on cooldown
         /// </summary>
         public bool IsOnCooldown => reloadTimer.IsRunning;
 
         /// <summary>
-        /// Gets current cooldown progress (0-1)
+        ///     Gets current cooldown progress (0-1)
         /// </summary>
         public float CooldownProgress => reloadTimer.Progress;
 
         private void Awake()
         {
             InitializeTimer();
+        }
+
+        private void OnDestroy()
+        {
+            if (reloadTimer != null) reloadTimer.Stop();
         }
 
         private void InitializeTimer()
@@ -64,20 +69,15 @@ namespace Neo.Tools
             reloadTimer.OnTimerUpdate.AddListener((_, progress) => OnEvadeProgress.Invoke(progress));
         }
 
-        private void OnDestroy()
-        {
-            if (reloadTimer != null) reloadTimer.Stop();
-        }
-
         /// <summary>
-        /// Starts the evade action if not on cooldown
+        ///     Starts the evade action if not on cooldown
         /// </summary>
         [Button]
         public void StartEvade()
         {
             if (IsOnCooldown) return;
 
-            isEvading = true;
+            IsEvading = true;
             OnEvadeStarted.Invoke();
 
             if (reloadImmediately) reloadTimer.Start();
@@ -87,14 +87,14 @@ namespace Neo.Tools
 
         private void CompleteEvade()
         {
-            isEvading = false;
+            IsEvading = false;
             OnEvadeCompleted.Invoke();
 
             if (!reloadImmediately) reloadTimer.Start();
         }
 
         /// <summary>
-        /// Gets whether evade can be performed
+        ///     Gets whether evade can be performed
         /// </summary>
         public bool CanEvade()
         {
@@ -102,7 +102,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Gets remaining cooldown time in seconds
+        ///     Gets remaining cooldown time in seconds
         /// </summary>
         public float GetRemainingCooldown()
         {

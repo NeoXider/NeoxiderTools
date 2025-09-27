@@ -1,15 +1,14 @@
 using System;
-using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using System.Reflection;
+using Object = UnityEngine.Object;
 
 namespace Neo.Editor
 {
     /// <summary>
-    /// Base class for custom editors that provides common functionality
+    ///     Base class for custom editors that provides common functionality
     /// </summary>
     public abstract class CustomEditorBase : UnityEditor.Editor
     {
@@ -19,34 +18,35 @@ namespace Neo.Editor
             BindingFlags.NonPublic |
             BindingFlags.Instance;
 
-        protected Dictionary<string, object> _buttonParameterValues = new();
         protected Dictionary<string, bool> _buttonFoldouts = new();
+
+        protected Dictionary<string, object> _buttonParameterValues = new();
         protected Dictionary<string, bool> _isFirstRun = new();
 
         // Track if Reset was pressed
-        private bool _wasResetPressed = false;
+        private bool _wasResetPressed;
 
         // Utility methods for finding objects
-        protected static T FindFirstObjectByType<T>() where T : UnityEngine.Object
+        protected static T FindFirstObjectByType<T>() where T : Object
         {
-            return UnityEngine.Object.FindFirstObjectByType<T>();
+            return Object.FindFirstObjectByType<T>();
         }
 
         protected static T[] FindObjectsByType<T>(FindObjectsSortMode sortMode = FindObjectsSortMode.None)
-            where T : UnityEngine.Object
+            where T : Object
         {
-            return UnityEngine.Object.FindObjectsByType<T>(sortMode);
+            return Object.FindObjectsByType<T>(sortMode);
         }
 
-        protected static UnityEngine.Object FindFirstObjectByType(Type type)
+        protected static Object FindFirstObjectByType(Type type)
         {
-            return UnityEngine.Object.FindFirstObjectByType(type);
+            return Object.FindFirstObjectByType(type);
         }
 
-        protected static UnityEngine.Object[] FindObjectsByType(Type type,
+        protected static Object[] FindObjectsByType(Type type,
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
-            return UnityEngine.Object.FindObjectsByType(type, sortMode);
+            return Object.FindObjectsByType(type, sortMode);
         }
 
         public override void OnInspectorGUI()

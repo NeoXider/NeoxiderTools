@@ -8,7 +8,7 @@ namespace Neo.Bonus
         [SerializeField] private string _itemName;
         [TextArea(1, 5)] [SerializeField] private string _description;
         [SerializeField] private Sprite _sprite;
-        [SerializeField] private int _itemType = 0;
+        [SerializeField] private int _itemType;
 
         public string itemName => _itemName;
         public string description => _description;

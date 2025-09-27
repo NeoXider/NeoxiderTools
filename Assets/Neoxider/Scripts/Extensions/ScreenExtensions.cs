@@ -5,7 +5,7 @@ namespace Neo.Extensions
     public static class ScreenExtensions
     {
         /// <summary>
-        /// Checks if a point is on screen.
+        ///     Checks if a point is on screen.
         /// </summary>
         /// <param name="position">Position to check.</param>
         /// <param name="camera">Camera to check with (if null, uses Camera.main).</param>
@@ -22,7 +22,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if a point is out of screen bounds.
+        ///     Checks if a point is out of screen bounds.
         /// </summary>
         /// <param name="position">Position to check.</param>
         /// <param name="camera">Camera to check with (if null, uses Camera.main).</param>
@@ -33,7 +33,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if a point is out of screen bounds on a specific side.
+        ///     Checks if a point is out of screen bounds on a specific side.
         /// </summary>
         /// <param name="position">Position to check.</param>
         /// <param name="side">Screen side to check.</param>
@@ -59,7 +59,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets the closest point on screen edge to the specified position.
+        ///     Gets the closest point on screen edge to the specified position.
         /// </summary>
         /// <param name="position">Source position.</param>
         /// <param name="camera">Camera to check with (if null, uses Camera.main).</param>
@@ -81,7 +81,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets a world position at a specified edge of the screen.
+        ///     Gets a world position at a specified edge of the screen.
         /// </summary>
         /// <param name="camera">The camera to use.</param>
         /// <param name="edge">The screen edge to get the position from.</param>
@@ -105,7 +105,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets the world-space bounds of the camera's viewport at a specific distance.
+        ///     Gets the world-space bounds of the camera's viewport at a specific distance.
         /// </summary>
         /// <param name="camera">The camera to get the bounds from.</param>
         /// <param name="distance">The distance from the camera to calculate the bounds at.</param>

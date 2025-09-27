@@ -1,33 +1,26 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using Random = UnityEngine.Random;
 
 namespace Neo.UI
 {
     public class ButtonShake : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
-        #region Sub-Classes
-
-        [System.Serializable]
-        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
-        {
-        }
-
-        #endregion
-
         [Header("Shake Settings")] [SerializeField]
         private RectTransform _rectTransform;
 
-        [SerializeField] private float _shakeDuration = 0;
+        [SerializeField] private float _shakeDuration;
         [SerializeField] private float _shakeMagnitude = 3;
 
         [SerializeField] private bool _enableShake = true;
-        [SerializeField] private bool _shakeOnStart = false;
+        [SerializeField] private bool _shakeOnStart;
         [SerializeField] private bool _shakeOnEnd;
+        private Coroutine _shakeCoroutine;
 
         private Vector2 _startPositions;
-        private Coroutine _shakeCoroutine;
 
 
         private void Awake()
@@ -44,6 +37,11 @@ namespace Neo.UI
 
         private void OnDisable()
         {
+        }
+
+        private void OnValidate()
+        {
+            if (_rectTransform == null) _rectTransform = GetComponent<RectTransform>();
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -101,9 +99,13 @@ namespace Neo.UI
             _shakeCoroutine = null;
         }
 
-        private void OnValidate()
+        #region Sub-Classes
+
+        [Serializable]
+        public class UIButtonEvent : UnityEvent<PointerEventData.InputButton>
         {
-            if (_rectTransform == null) _rectTransform = GetComponent<RectTransform>();
         }
+
+        #endregion
     }
 }

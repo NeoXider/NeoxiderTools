@@ -18,11 +18,6 @@ namespace Neo
             [SerializeField] private float timeRoll = 3;
             [SerializeField] private float slowDownTime = 0.5f;
 
-            private Coroutine rollCoroutine;
-
-            private int idWin;
-            private Image winningImage;
-
             [SerializeField] private float space;
             [SerializeField] private float resetX;
 
@@ -31,11 +26,21 @@ namespace Neo
             [Space] [Header("Update Visual for all images")]
             public bool updateSetting;
 
+            private int idWin;
+
+            private Coroutine rollCoroutine;
+            private Image winningImage;
+
             private void Start()
             {
                 UpdateVisual();
 
                 for (var i = 0; i < images.Length; i++) images[i].sprite = GetRandomSprite();
+            }
+
+            private void OnValidate()
+            {
+                if (updateSetting) UpdateVisual();
             }
 
             public void StartRolling()
@@ -148,11 +153,6 @@ namespace Neo
                         return i;
 
                 return -1;
-            }
-
-            private void OnValidate()
-            {
-                if (updateSetting) UpdateVisual();
             }
 
             private void UpdateVisual()

@@ -1,0 +1,17 @@
+{
+    "name": "Neo.Tools.Spawner",
+    "rootNamespace": "",
+    "references": [
+        "GUID:e39216118ba4530449063f6f478fa729",
+        "GUID:699bb923824f1724b91c66f5ba9ace74"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

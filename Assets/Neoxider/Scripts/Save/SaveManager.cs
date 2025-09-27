@@ -12,9 +12,25 @@ namespace Neo.Save
 {
     public class SaveManager : Singleton<SaveManager>
     {
-        public static bool IsLoad { get; private set; } = false;
-
         private const string DefaultJson = "{\"AllSavedComponents\":[]}";
+
+        private const string saveDataKeyPrefix = "SaveData_";
+
+        private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
+            = new();
+
+        public static bool IsLoad { get; private set; }
+
+        private void OnApplicationQuit()
+        {
+            Save();
+            Debug.Log("[SaveManager] Game Quit & Saved");
+        }
+
+        protected virtual void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
 
         #region Singleton Pattern
 
@@ -69,17 +85,6 @@ namespace Neo.Save
         }
 
         #endregion
-
-        private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
-            = new();
-
-        private const string saveDataKeyPrefix = "SaveData_";
-
-        private void OnApplicationQuit()
-        {
-            Save();
-            Debug.Log("[SaveManager] Game Quit & Saved");
-        }
 
         #region Registration
 
@@ -444,10 +449,5 @@ namespace Neo.Save
         }
 
         #endregion
-
-        protected virtual void OnDestroy()
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
     }
 }

@@ -1,12 +1,12 @@
-using UnityEngine;
 using System;
 using System.Linq;
+using UnityEngine;
 
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Provides utility methods for saving and loading arrays using PlayerPrefs.
-    /// Note: You must call PlayerPrefs.Save() manually after using the Set methods.
+    ///     Provides utility methods for saving and loading arrays using PlayerPrefs.
+    ///     Note: You must call PlayerPrefs.Save() manually after using the Set methods.
     /// </summary>
     public static class PlayerPrefsUtils
     {
@@ -15,7 +15,7 @@ namespace Neo.Extensions
         #region Int Array
 
         /// <summary>
-        /// Saves an array of integers to PlayerPrefs.
+        ///     Saves an array of integers to PlayerPrefs.
         /// </summary>
         public static void SetIntArray(string key, int[] array)
         {
@@ -29,7 +29,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Loads an array of integers from PlayerPrefs.
+        ///     Loads an array of integers from PlayerPrefs.
         /// </summary>
         public static int[] GetIntArray(string key, int[] defaultValue = null)
         {
@@ -54,7 +54,7 @@ namespace Neo.Extensions
         #region Float Array
 
         /// <summary>
-        /// Saves an array of floating-point numbers to PlayerPrefs.
+        ///     Saves an array of floating-point numbers to PlayerPrefs.
         /// </summary>
         public static void SetFloatArray(string key, float[] array)
         {
@@ -68,7 +68,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Loads an array of floating-point numbers from PlayerPrefs.
+        ///     Loads an array of floating-point numbers from PlayerPrefs.
         /// </summary>
         public static float[] GetFloatArray(string key, float[] defaultValue = null)
         {
@@ -93,7 +93,7 @@ namespace Neo.Extensions
         #region String Array
 
         /// <summary>
-        /// Saves an array of strings to PlayerPrefs.
+        ///     Saves an array of strings to PlayerPrefs.
         /// </summary>
         public static void SetStringArray(string key, string[] array)
         {
@@ -107,7 +107,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Loads an array of strings from PlayerPrefs.
+        ///     Loads an array of strings from PlayerPrefs.
         /// </summary>
         public static string[] GetStringArray(string key, string[] defaultValue = null)
         {
@@ -124,7 +124,7 @@ namespace Neo.Extensions
         #region Bool Array
 
         /// <summary>
-        /// Saves an array of booleans to PlayerPrefs.
+        ///     Saves an array of booleans to PlayerPrefs.
         /// </summary>
         public static void SetBoolArray(string key, bool[] array)
         {
@@ -139,7 +139,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Loads an array of booleans from PlayerPrefs.
+        ///     Loads an array of booleans from PlayerPrefs.
         /// </summary>
         public static bool[] GetBoolArray(string key, bool[] defaultValue = null)
         {

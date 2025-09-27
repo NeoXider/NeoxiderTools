@@ -1,18 +1,15 @@
-using System;
-using System.Collections.Generic;
 using UnityEngine;
-using Component = UnityEngine.Component;
 using Object = UnityEngine.Object;
 
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for UnityEngine.Object
+    ///     Extension methods for UnityEngine.Object
     /// </summary>
     public static class ObjectExtensions
     {
         /// <summary>
-        /// Safely destroys an object, handling both play mode and edit mode
+        ///     Safely destroys an object, handling both play mode and edit mode
         /// </summary>
         /// <param name="obj">Object to destroy</param>
         /// <param name="immediate">Whether to destroy immediately (use with caution)</param>
@@ -34,7 +31,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if the object is not null and not destroyed
+        ///     Checks if the object is not null and not destroyed
         /// </summary>
         /// <param name="obj">Object to check</param>
         /// <returns>True if object is valid</returns>
@@ -44,7 +41,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets the name of the object safely (handles null)
+        ///     Gets the name of the object safely (handles null)
         /// </summary>
         /// <param name="obj">Object to get name from</param>
         /// <returns>Object name or empty string if null</returns>
@@ -54,7 +51,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Sets the object's name if it exists
+        ///     Sets the object's name if it exists
         /// </summary>
         /// <param name="obj">Object to rename</param>
         /// <param name="newName">New name to set</param>

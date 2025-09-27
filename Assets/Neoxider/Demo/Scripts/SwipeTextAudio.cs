@@ -1,4 +1,3 @@
-using Neo.Audio;
 using TMPro;
 using UnityEngine;
 
@@ -10,14 +9,14 @@ namespace Neo
         {
             public TextMeshProUGUI text;
 
-            public void SubscribeToSwipe(SwipeData swipeData)
-            {
-                text.text = swipeData.Direction.ToString();
-            }
-
             private void OnValidate()
             {
                 text = GetComponent<TextMeshProUGUI>();
+            }
+
+            public void SubscribeToSwipe(SwipeData swipeData)
+            {
+                text.text = swipeData.Direction.ToString();
             }
         }
     }

@@ -1,3 +1,4 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,12 +11,21 @@ namespace Neo
         {
             public bool value;
 
-            public bool toggleDebug = false;
+            public bool toggleDebug;
 
             public UnityEvent<bool> OnChange;
             public UnityEvent<bool> OnChangeFlip;
             public UnityEvent ON;
             public UnityEvent OFF;
+
+            private void OnValidate()
+            {
+                if (toggleDebug)
+                {
+                    toggleDebug = false;
+                    Toggle();
+                }
+            }
 
             [Button]
             public void Toggle()
@@ -35,15 +45,6 @@ namespace Neo
                     ON?.Invoke();
                 else
                     OFF?.Invoke();
-            }
-
-            private void OnValidate()
-            {
-                if (toggleDebug)
-                {
-                    toggleDebug = false;
-                    Toggle();
-                }
             }
         }
     }

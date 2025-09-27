@@ -3,8 +3,6 @@ using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
-
 
 namespace Neo
 {
@@ -20,19 +18,11 @@ namespace Neo
                 Selected
             }
 
-            [Serializable]
-            public class Visual
-            {
-                public GameObject[] buy;
-                public GameObject[] select;
-                public GameObject[] selected;
-            }
-
             [SerializeField] private TMP_Text[] _textPrice;
             [SerializeField] private TMP_Text[] _textButton;
-            [SerializeField] [Min(0)] private int _price = 0;
-            [Space] [SerializeField] private bool _textPrice_0 = false;
-            [SerializeField] private bool _textButtonAndPrice = false;
+            [SerializeField] [Min(0)] private int _price;
+            [Space] [SerializeField] private bool _textPrice_0;
+            [SerializeField] private bool _textButtonAndPrice;
             [SerializeField] private ButtonType _type = ButtonType.Buy;
             [SerializeField] private Visual _visual;
             [SerializeField] private string _textBuy = "Buy";
@@ -45,6 +35,14 @@ namespace Neo
             [SerializeField] private UnityEvent OnBuy;
             [SerializeField] private UnityEvent OnSelect;
             [SerializeField] private UnityEvent OnSelected;
+
+            private void OnValidate()
+            {
+                if (_editorView)
+                    SetVisual(_price, _type);
+                else
+                    SetAutoVisual(_price, _type);
+            }
 
 
             public void SetAutoVisual(int price, ButtonType type = ButtonType.Buy)
@@ -148,12 +146,12 @@ namespace Neo
                         item.text = textPrice;
             }
 
-            private void OnValidate()
+            [Serializable]
+            public class Visual
             {
-                if (_editorView)
-                    SetVisual(_price, _type);
-                else
-                    SetAutoVisual(_price, _type);
+                public GameObject[] buy;
+                public GameObject[] select;
+                public GameObject[] selected;
             }
         }
     }

@@ -12,7 +12,7 @@ namespace Neo.Tools
         public UnityEvent onApproach;
         public UnityEvent onDepart;
 
-        private bool isWithinDistance = false;
+        private bool isWithinDistance;
 
         private void Update()
         {

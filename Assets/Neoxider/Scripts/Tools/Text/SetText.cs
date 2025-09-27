@@ -1,6 +1,6 @@
-using System;
 using DG.Tweening;
 using Neo.Extensions;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,12 +10,26 @@ namespace Neo
     namespace Tools
     {
         /// <summary>
-        /// A component that sets text on a TMP_Text component with formatting options.
-        /// Useful for displaying numeric values with separators and decimal places.
+        ///     A component that sets text on a TMP_Text component with formatting options.
+        ///     Useful for displaying numeric values with separators and decimal places.
         /// </summary>
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SetText))]
         public class SetText : MonoBehaviour
         {
+            #region Events
+
+            /// <summary>
+            ///     Invoked when the text is updated
+            /// </summary>
+            public UnityEvent<string> OnTextUpdated;
+
+            #endregion
+
+            private void OnEnable()
+            {
+                _tween?.Play();
+            }
+
             #region Serialized Fields
 
             [Header("Text Component")] [Tooltip("The TextMeshPro text component to update")]
@@ -25,7 +39,7 @@ namespace Neo
             protected string _separator = ".";
 
             [Tooltip("Number of decimal places to display for float values")] [SerializeField] [Range(0, 10)]
-            protected int _decimal = 0;
+            protected int _decimal;
 
             [Tooltip("Text to add before the value")] [SerializeField]
             protected string startAdd = "";
@@ -42,28 +56,14 @@ namespace Neo
             [SerializeField] private Ease _ease = Ease.OutQuad;
             [SerializeField] private bool _onEnableAnim = true;
             private Tween _tween;
-            public float currentNum = 0;
+            public float currentNum;
 
             #endregion
-
-            #region Events
-
-            /// <summary>
-            /// Invoked when the text is updated
-            /// </summary>
-            public UnityEvent<string> OnTextUpdated;
-
-            #endregion
-
-            private void OnEnable()
-            {
-                _tween?.Play();
-            }
 
             #region Properties
 
             /// <summary>
-            /// Gets or sets the separator character
+            ///     Gets or sets the separator character
             /// </summary>
             public string Separator
             {
@@ -80,7 +80,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets or sets the number of decimal places
+            ///     Gets or sets the number of decimal places
             /// </summary>
             public int DecimalPlaces
             {
@@ -97,7 +97,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets or sets the index offset
+            ///     Gets or sets the index offset
             /// </summary>
             public int IndexOffset
             {
@@ -131,7 +131,7 @@ namespace Neo
             #region Public Methods
 
             /// <summary>
-            /// Sets the text to display an integer value with separator
+            ///     Sets the text to display an integer value with separator
             /// </summary>
             /// <param name="value">The integer value to display</param>
             public void Set(int value)
@@ -146,7 +146,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the text to display a float value with separator and decimal places
+            ///     Sets the text to display a float value with separator and decimal places
             /// </summary>
             /// <param name="value">The float value to display</param>
             [Button(nameof(Set) + "float")]
@@ -177,11 +177,11 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the text to display a string value
+            ///     Sets the text to display a string value
             /// </summary>
             /// <param name="value">The string value to display</param>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -199,7 +199,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the text to display a percentage value
+            ///     Sets the text to display a percentage value
             /// </summary>
             /// <param name="value">The percentage value (0-100)</param>
             /// <param name="addPercentSign">Whether to add a % sign</param>
@@ -225,7 +225,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the text to display a currency value
+            ///     Sets the text to display a currency value
             /// </summary>
             /// <param name="value">The currency value</param>
             /// <param name="currencySymbol">The currency symbol to use</param>
@@ -245,7 +245,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Clears the text
+            ///     Clears the text
             /// </summary>
             public void Clear()
             {

@@ -1,9 +1,9 @@
-using UnityEditor;
-using UnityEngine;
 using Neo.Audio;
+using Neo.Bonus;
 using Neo.Shop;
 using Neo.UI;
-using Neo.Bonus;
+using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
@@ -102,7 +102,7 @@ namespace Neo
         {
             var script = Create<AM>();
         }
-        
+
 
         [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(SwipeController), false, 0)]
         public static void CreateSwipeController()

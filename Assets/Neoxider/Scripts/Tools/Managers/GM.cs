@@ -1,21 +1,24 @@
-using UnityEngine;
-using System;
-using System.Collections.Generic;
 using Neo.Extensions;
-using UnityEngine.Events;
-using UnityEngine.Serialization;
+using Sirenix.OdinInspector;
+using UnityEngine;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// GameManager
+    ///     GameManager
     /// </summary>
     public class GM : Singleton<GM>
     {
+        [SerializeField] private GameState _state = GameState.Menu;
+        [SerializeField] private GameState _lastState;
+        public bool useTimeScalePause = true;
+        [Space] public int fps = 60;
+        private float lastTimeScale = 1;
+
         #region Public Properties
 
         /// <summary>
-        /// Possible states of the game.
+        ///     Possible states of the game.
         /// </summary>
         public enum GameState
         {
@@ -49,12 +52,6 @@ namespace Neo.Tools
 
         #endregion
 
-        [SerializeField] private GameState _state = GameState.Menu;
-        [SerializeField] private GameState _lastState;
-        public bool useTimeScalePause = true;
-        [Space] public int fps = 60;
-        private float lastTimeScale = 1;
-
         #region Initialization Methods
 
         protected override void OnInstanceCreated()
@@ -77,7 +74,7 @@ namespace Neo.Tools
         #region Core Game Methods
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -89,7 +86,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -100,7 +97,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -117,7 +114,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -130,7 +127,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -144,7 +141,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -158,7 +155,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -172,7 +169,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -191,7 +188,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif

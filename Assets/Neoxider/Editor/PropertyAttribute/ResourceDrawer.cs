@@ -1,15 +1,16 @@
 using System;
-using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
-using System.Reflection;
+using Object = UnityEngine.Object;
 
 namespace Neo.Editor
 {
     /// <summary>
-    /// Handles resource-related functionality in the custom editor
+    ///     Handles resource-related functionality in the custom editor
     /// </summary>
     public static class ResourceDrawer
     {
@@ -53,7 +54,7 @@ namespace Neo.Editor
 
             var resourcePath = attribute.ResourcePath;
             var resourceType = field.FieldType;
-            UnityEngine.Object resource = null;
+            Object resource = null;
 
             if (!string.IsNullOrEmpty(resourcePath))
                 resource = Resources.Load(resourcePath, resourceType);

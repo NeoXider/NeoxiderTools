@@ -1,35 +1,31 @@
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
-using System;
 
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Генератор и управляющий класс для универсального поля (2D/3D) на базе UnityEngine.Grid. Singleton.
+    ///     Генератор и управляющий класс для универсального поля (2D/3D) на базе UnityEngine.Grid. Singleton.
     /// </summary>
     [RequireComponent(typeof(Grid))]
     public class FieldGenerator : MonoBehaviour
     {
-        public static FieldGenerator I { get; private set; }
-
         [Header("Конфиг поля")] public FieldGeneratorConfig Config = new();
 
         [Header("Debug/Визуализация")] public bool DebugEnabled = true;
 
         public UnityEvent OnFieldGenerated = new();
 
-        [Serializable]
-        public class CellChangedEvent : UnityEvent<FieldCell>
-        {
-        }
-
         public CellChangedEvent OnCellChanged = new();
+
+        private Grid unityGrid;
+        public static FieldGenerator I { get; private set; }
 
         public FieldCell[,,] Cells { get; private set; }
 
         /// <summary>
-        /// Удобный доступ к двумерному массиву (z=0)
+        ///     Удобный доступ к двумерному массиву (z=0)
         /// </summary>
         public FieldCell[,] Cells2D
         {
@@ -44,8 +40,6 @@ namespace Neo.GridSystem
                 return arr;
             }
         }
-
-        private Grid unityGrid;
 
         public Grid UnityGrid
         {
@@ -66,8 +60,18 @@ namespace Neo.GridSystem
                 GenerateField();
         }
 
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+            {
+                if (unityGrid == null)
+                    unityGrid = GetComponent<Grid>();
+                GenerateField();
+            }
+        }
+
         /// <summary>
-        /// Генерирует поле по текущему или переданному конфигу
+        ///     Генерирует поле по текущему или переданному конфигу
         /// </summary>
         public void GenerateField(FieldGeneratorConfig config = null)
         {
@@ -242,7 +246,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Получить мировую позицию центра ячейки через UnityEngine.Grid с учётом Origin
+        ///     Получить мировую позицию центра ячейки через UnityEngine.Grid с учётом Origin
         /// </summary>
         public Vector3 GetCellWorldCenter(Vector3Int cellPos)
         {
@@ -261,14 +265,9 @@ namespace Neo.GridSystem
             return GetCellCornerWorld(new Vector3Int(cellPos.x, cellPos.y, 0));
         }
 
-        private void OnValidate()
+        [Serializable]
+        public class CellChangedEvent : UnityEvent<FieldCell>
         {
-            if (!Application.isPlaying)
-            {
-                if (unityGrid == null)
-                    unityGrid = GetComponent<Grid>();
-                GenerateField();
-            }
         }
     }
 }

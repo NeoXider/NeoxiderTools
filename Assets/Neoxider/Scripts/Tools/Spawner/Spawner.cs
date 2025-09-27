@@ -1,9 +1,11 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
 using Neo.Tools;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Neo
 {
@@ -12,10 +14,8 @@ namespace Neo
         [Header("Spawn Setting")] [SerializeField]
         private GameObject[] _prefabs;
 
-        [SerializeField] private ChanceData _chanceData;
-
         [Space] [Header("If spawnLimit is zero then infinite spawn")]
-        public int spawnLimit = 0;
+        public int spawnLimit;
 
         [SerializeField] private float _minSpawnDelay = 0.5f;
         [SerializeField] private float _maxSpawnDelay = 2f;
@@ -36,8 +36,10 @@ namespace Neo
 
         public bool isSpawning;
 
-        private List<GameObject> _spawnedObjects = new();
-        private int _spawnedCount = 0;
+        private readonly List<GameObject> _spawnedObjects = new();
+
+        private ChanceData _chanceData;
+        private int _spawnedCount;
 
         private void Start()
         {
@@ -45,6 +47,11 @@ namespace Neo
 
             if (_spawnOnAwake)
                 StartSpawn();
+        }
+
+        private void OnValidate()
+        {
+            _spawnTransform ??= transform;
         }
 
         public void StartSpawn()
@@ -158,7 +165,7 @@ namespace Neo
             foreach (var obj in _spawnedObjects)
                 if (obj != null)
                 {
-                    var index = System.Array.IndexOf(_prefabs, obj);
+                    var index = Array.IndexOf(_prefabs, obj);
                     if (index >= 0 && _objectPools[index] != null)
                         _objectPools[index].ReturnObject(obj);
                     else
@@ -187,7 +194,8 @@ namespace Neo
 
                 return boxCollider.transform.TransformPoint(randomPoint);
             }
-            else if (collider is CircleCollider2D circleCollider)
+
+            if (collider is CircleCollider2D circleCollider)
             {
                 var center = circleCollider.offset;
                 var radius = circleCollider.radius;
@@ -196,11 +204,9 @@ namespace Neo
 
                 return circleCollider.transform.TransformPoint(randomPoint);
             }
-            else
-            {
-                Debug.LogWarning("Unsupported collider type for spawning.");
-                return _spawnTransform.position;
-            }
+
+            Debug.LogWarning("Unsupported collider type for spawning.");
+            return _spawnTransform.position;
         }
 
         private Vector3 GetRandomPointInCollider(Collider collider)
@@ -218,7 +224,8 @@ namespace Neo
 
                 return boxCollider.transform.TransformPoint(randomPoint);
             }
-            else if (collider is SphereCollider sphereCollider)
+
+            if (collider is SphereCollider sphereCollider)
             {
                 var center = sphereCollider.center;
                 var radius = sphereCollider.radius;
@@ -227,7 +234,8 @@ namespace Neo
 
                 return sphereCollider.transform.TransformPoint(randomPoint);
             }
-            else if (collider is CapsuleCollider capsuleCollider)
+
+            if (collider is CapsuleCollider capsuleCollider)
             {
                 var center = capsuleCollider.center;
                 var radius = capsuleCollider.radius;
@@ -238,16 +246,9 @@ namespace Neo
 
                 return capsuleCollider.transform.TransformPoint(randomPoint);
             }
-            else
-            {
-                Debug.LogWarning("Unsupported collider type for spawning.");
-                return _spawnTransform.position;
-            }
-        }
 
-        private void OnValidate()
-        {
-            _spawnTransform ??= transform;
+            Debug.LogWarning("Unsupported collider type for spawning.");
+            return _spawnTransform.position;
         }
     }
 }

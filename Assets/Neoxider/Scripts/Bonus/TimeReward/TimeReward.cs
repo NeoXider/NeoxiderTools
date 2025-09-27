@@ -9,12 +9,12 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(TimeReward))]
         public class TimeReward : MonoBehaviour
         {
+            private const string _lastRewardTimeKey = "LastRewardTime";
             [SerializeField] private int _secondsToWaitForReward = 60 * 60; //1 hours
-            [SerializeField] private bool _startTakeReward = false;
+            [SerializeField] private bool _startTakeReward;
             [SerializeField] private string _lastRewardTimeStr;
             [SerializeField] [Min(0)] private float _updateTime = 1;
             [SerializeField] private string _addKey = "Bonus1";
-            [SerializeField] private const string _lastRewardTimeKey = "LastRewardTime";
 
             public float timeLeft;
 
@@ -22,7 +22,7 @@ namespace Neo
             public UnityEvent OnRewardClaimed = new();
             public UnityEvent OnRewardAvailable = new();
 
-            private bool canTakeReward = false;
+            private bool canTakeReward;
 
             private void Start()
             {

@@ -1,5 +1,5 @@
-using System;
 using System.Collections.Generic;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,16 +8,59 @@ namespace Neo
     namespace Tools
     {
         /// <summary>
-        /// A component that manages selection between multiple GameObjects, with support for different selection modes.
-        /// Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
+        ///     A component that manages selection between multiple GameObjects, with support for different selection modes.
+        ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
         /// </summary>
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
         public class Selector : MonoBehaviour
         {
+            #region Private Methods
+
+            /// <summary>
+            ///     Updates the active state of items based on current selection
+            /// </summary>
+            private void UpdateSelection()
+            {
+                var total = Count;
+                if (total == 0)
+                {
+                    Debug.LogWarning("Selector: No items to select");
+                    return;
+                }
+
+                var effectiveIndex = _currentIndex + _indexOffset;
+                if (effectiveIndex < -1)
+                    effectiveIndex = -1;
+                else if (effectiveIndex >= total)
+                    effectiveIndex = total - 1;
+
+                if (HasItems)
+                {
+                    // Update GameObject active state based on selection
+                    if (_fillMode)
+                    {
+                        for (var i = 0; i < _items.Length; i++)
+                            if (_items[i] != null)
+                                _items[i].SetActive(i <= effectiveIndex);
+                    }
+                    else
+                    {
+                        for (var i = 0; i < _items.Length; i++)
+                            if (_items[i] != null)
+                                _items[i].SetActive(i == effectiveIndex);
+                    }
+                }
+
+                // In count-only mode, just invoke the event
+                OnSelectionChanged?.Invoke(_currentIndex);
+            }
+
+            #endregion
+
             #region Serialized Fields
 
             [Tooltip("Sets the initial index when appearing")]
-            public bool startOnAwake = false;
+            public bool startOnAwake;
 
             [Header("Count Mode")]
             [Tooltip("If set > 0 and items array is empty, selector will work with this count as virtual items")]
@@ -51,11 +94,11 @@ namespace Neo
             [Tooltip("Update selection in editor when values change")] [SerializeField]
             private bool _changeDebug = true;
 
-            private int _startIndex = 0;
+            private int _startIndex;
 
 
             /// <summary>
-            /// Returns the number of selectable items (GameObjects or virtual count)
+            ///     Returns the number of selectable items (GameObjects or virtual count)
             /// </summary>
             public int Count
             {
@@ -73,7 +116,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Returns true if selector is working with GameObjects
+            ///     Returns true if selector is working with GameObjects
             /// </summary>
             public bool HasItems => _items != null && _items.Length > 0;
 
@@ -82,12 +125,12 @@ namespace Neo
             #region Events
 
             /// <summary>
-            /// Invoked when the selection changes, providing the new index
+            ///     Invoked when the selection changes, providing the new index
             /// </summary>
             public UnityEvent<int> OnSelectionChanged;
 
             /// <summary>
-            /// Invoked when reaching the end of the items array (only if loop is disabled)
+            ///     Invoked when reaching the end of the items array (only if loop is disabled)
             /// </summary>
             public UnityEvent OnFinished;
 
@@ -96,12 +139,12 @@ namespace Neo
             #region Properties
 
             /// <summary>
-            /// Gets the array of selectable items
+            ///     Gets the array of selectable items
             /// </summary>
             public GameObject[] Items => _items;
 
             /// <summary>
-            /// Gets the current selection index
+            ///     Gets the current selection index
             /// </summary>
             public int Value
             {
@@ -110,7 +153,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets or sets the fill mode
+            ///     Gets or sets the fill mode
             /// </summary>
             public bool FillMode
             {
@@ -123,7 +166,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets or sets the index offset
+            ///     Gets or sets the index offset
             /// </summary>
             public int IndexOffset
             {
@@ -136,12 +179,12 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets whether the selector has reached the end of the items array
+            ///     Gets whether the selector has reached the end of the items array
             /// </summary>
             public bool IsAtEnd => _currentIndex >= Count - 1;
 
             /// <summary>
-            /// Gets whether the selector is at the beginning of the items array
+            ///     Gets whether the selector is at the beginning of the items array
             /// </summary>
             public bool IsAtStart => _currentIndex <= 0;
 
@@ -212,56 +255,13 @@ namespace Neo
 
             #endregion
 
-            #region Private Methods
-
-            /// <summary>
-            /// Updates the active state of items based on current selection
-            /// </summary>
-            private void UpdateSelection()
-            {
-                var total = Count;
-                if (total == 0)
-                {
-                    Debug.LogWarning("Selector: No items to select");
-                    return;
-                }
-
-                var effectiveIndex = _currentIndex + _indexOffset;
-                if (effectiveIndex < -1)
-                    effectiveIndex = -1;
-                else if (effectiveIndex >= total)
-                    effectiveIndex = total - 1;
-
-                if (HasItems)
-                {
-                    // Update GameObject active state based on selection
-                    if (_fillMode)
-                    {
-                        for (var i = 0; i < _items.Length; i++)
-                            if (_items[i] != null)
-                                _items[i].SetActive(i <= effectiveIndex);
-                    }
-                    else
-                    {
-                        for (var i = 0; i < _items.Length; i++)
-                            if (_items[i] != null)
-                                _items[i].SetActive(i == effectiveIndex);
-                    }
-                }
-
-                // In count-only mode, just invoke the event
-                OnSelectionChanged?.Invoke(_currentIndex);
-            }
-
-            #endregion
-
             #region Public Methods
 
             /// <summary>
-            /// Moves to the next item in the selection
+            ///     Moves to the next item in the selection
             /// </summary>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -292,10 +292,10 @@ namespace Neo
             }
 
             /// <summary>
-            /// Moves to the previous item in the selection
+            ///     Moves to the previous item in the selection
             /// </summary>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -323,7 +323,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets the current selection index
+            ///     Gets the current selection index
             /// </summary>
             /// <returns>The current index</returns>
             public int GetCurrentIndex()
@@ -332,7 +332,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets the total number of items
+            ///     Gets the total number of items
             /// </summary>
             /// <returns>The number of items</returns>
             public int GetCount()
@@ -341,11 +341,11 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the current selection index
+            ///     Sets the current selection index
             /// </summary>
             /// <param name="index">The index to set</param>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -366,10 +366,10 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the selection to the last item
+            ///     Sets the selection to the last item
             /// </summary>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -387,10 +387,10 @@ namespace Neo
             }
 
             /// <summary>
-            /// Sets the selection to the first item
+            ///     Sets the selection to the first item
             /// </summary>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif
@@ -408,7 +408,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Toggles between fill mode and normal mode
+            ///     Toggles between fill mode and normal mode
             /// </summary>
             public void ToggleFillMode()
             {
@@ -417,7 +417,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets the currently selected GameObject
+            ///     Gets the currently selected GameObject
             /// </summary>
             /// <returns>The selected GameObject or null if none is selected</returns>
             public GameObject GetSelectedItem()
@@ -431,7 +431,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Checks if a specific index is valid
+            ///     Checks if a specific index is valid
             /// </summary>
             /// <param name="index">The index to check</param>
             /// <returns>True if the index is valid, false otherwise</returns>
@@ -442,7 +442,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Resets the selection to the start index
+            ///     Resets the selection to the start index
             /// </summary>
             public void Reset()
             {
@@ -451,12 +451,12 @@ namespace Neo
             }
 
             /// <summary>
-            /// Toggles the active state of a specific index (with offset)
+            ///     Toggles the active state of a specific index (with offset)
             /// </summary>
             /// <param name="index">Index to toggle</param>
             /// <param name="state">Optional state to set (true to enable, false to disable, null to toggle)</param>
 #if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
+            [Button]
 #else
         [Button]
 #endif

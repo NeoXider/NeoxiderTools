@@ -10,19 +10,18 @@ namespace Neo.Bonus
     {
         public int countSlotElement = 3;
         [Header("SlotElement x2")] public SlotElement[] SlotElements;
-        public bool is_spinning => _isSpinning;
         [SerializeField] public SpeedControll speedControll = new();
         public float spaceY = 1;
-        public float offsetY = 0;
+        public float offsetY;
 
-        private float[] _yPositions;
-        private float _resetPositionY;
+        public UnityEvent OnStop = new();
 
         private SpritesData _allSpritesData;
         private SlotVisualData[] _finalVisuals;
-        private bool _isSpinning;
+        private float _resetPositionY;
 
-        public UnityEvent OnStop = new();
+        private float[] _yPositions;
+        public bool is_spinning { get; private set; }
 
         private void Awake()
         {
@@ -35,7 +34,7 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        /// Расставляет дочерние элементы в правильные локальные позиции.
+        ///     Расставляет дочерние элементы в правильные локальные позиции.
         /// </summary>
         public void ApplyLayout()
         {
@@ -54,19 +53,15 @@ namespace Neo.Bonus
                 var elementTransform = element.transform;
 
                 if (element.TryGetComponent<RectTransform>(out var rectTransform))
-                {
                     rectTransform.anchoredPosition = new Vector2(0, yPos);
-                }
                 else
-                {
                     elementTransform.localPosition = new Vector3(0, yPos, 0);
-                }
             }
         }
 
         private IEnumerator SpinCoroutine()
         {
-            _isSpinning = true;
+            is_spinning = true;
 
             // 1. Фаза вращения
             float timerSpin = 0;
@@ -111,19 +106,13 @@ namespace Neo.Bonus
 
             // Финальная доводка и расстановка всех элементов по местам
             var finalOffset = targetY - GetLocalY(firstSlot.transform);
-            foreach (var slot in SlotElements)
-            {
-                MoveSlot(slot.transform, finalOffset);
-            }
+            foreach (var slot in SlotElements) MoveSlot(slot.transform, finalOffset);
 
             // Пересортировка и финальное выравнивание по эталонным позициям
             sortedSlots = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            for (var i = 0; i < sortedSlots.Length; i++)
-            {
-                SetLocalY(sortedSlots[i].transform, _yPositions[i]);
-            }
+            for (var i = 0; i < sortedSlots.Length; i++) SetLocalY(sortedSlots[i].transform, _yPositions[i]);
 
-            _isSpinning = false;
+            is_spinning = false;
             OnStop?.Invoke();
         }
 
@@ -146,30 +135,22 @@ namespace Neo.Bonus
         private void MoveSlot(Transform t, float yDelta)
         {
             if (t is RectTransform rt)
-            {
                 rt.anchoredPosition += new Vector2(0, yDelta);
-            }
             else
-            {
                 t.localPosition += new Vector3(0, yDelta, 0);
-            }
         }
 
         private float GetLocalY(Transform t)
         {
-            return (t is RectTransform rt) ? rt.anchoredPosition.y : t.localPosition.y;
+            return t is RectTransform rt ? rt.anchoredPosition.y : t.localPosition.y;
         }
 
         private void SetLocalY(Transform t, float y)
         {
             if (t is RectTransform rt)
-            {
                 rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
-            }
             else
-            {
                 t.localPosition = new Vector3(t.localPosition.x, y, t.localPosition.z);
-            }
         }
 
         private void SetFinalVisuals()
@@ -179,10 +160,7 @@ namespace Neo.Bonus
             for (var i = 0; i < sortedByY.Length; i++)
             {
                 var visualIndex = i % countSlotElement;
-                if (visualIndex < _finalVisuals.Length)
-                {
-                    sortedByY[i].SetVisuals(_finalVisuals[visualIndex]);
-                }
+                if (visualIndex < _finalVisuals.Length) sortedByY[i].SetVisuals(_finalVisuals[visualIndex]);
             }
         }
 
@@ -205,7 +183,7 @@ namespace Neo.Bonus
 
         public void Stop()
         {
-            _isSpinning = false;
+            is_spinning = false;
         }
 
         public void SetVisuals(SlotVisualData data)

@@ -1,5 +1,5 @@
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
@@ -8,12 +8,6 @@ namespace Neo
         private int maxSizeTrxture = 1024;
         private TextureImporterType textureType = TextureImporterType.Default;
 
-        [MenuItem("Tools/Neoxider/" + "Change Texture Max Size")]
-        public static void ShowWindow()
-        {
-            GetWindow<TextureMaxSizeChanger>("Change Texture Max Size");
-        }
-
         private void OnGUI()
         {
             GUILayout.Label("Change Max Size for Textures", EditorStyles.boldLabel);
@@ -21,6 +15,12 @@ namespace Neo
             textureType = (TextureImporterType)EditorGUILayout.EnumPopup("Texture Type", textureType);
 
             if (GUILayout.Button("Apply")) ChangeMaxSize();
+        }
+
+        [MenuItem("Tools/Neoxider/" + "Change Texture Max Size")]
+        public static void ShowWindow()
+        {
+            GetWindow<TextureMaxSizeChanger>("Change Texture Max Size");
         }
 
         private void ChangeMaxSize()

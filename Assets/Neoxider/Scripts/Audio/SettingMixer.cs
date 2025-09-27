@@ -1,5 +1,3 @@
-using System;
-using Neo.Audio;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -12,9 +10,9 @@ namespace Neo
         {
             public string nameMixer = "Master";
             public AudioMixer audioMixer;
+            public readonly float Max = 20;
 
             public readonly float Min = -80;
-            public readonly float Max = 20;
 
             public void SetVolume(string name = "", float volume = 0)
             {

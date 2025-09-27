@@ -1,32 +1,32 @@
-using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
-namespace Neo
+namespace Neo.Tools
 {
     /// <summary>
-    /// Interface for components that require initialization in a specific order
+    ///     Interface for components that require initialization in a specific order
     /// </summary>
     public interface IInit
     {
         /// <summary>
-        /// Called when the component should initialize itself
-        /// </summary>
-        void Init();
-
-        /// <summary>
-        /// Priority of initialization. Components with higher priority are initialized first
+        ///     Priority of initialization. Components with higher priority are initialized first
         /// </summary>
         /// <value>Integer value representing initialization priority</value>
         int InitPriority { get; }
+
+        /// <summary>
+        ///     Called when the component should initialize itself
+        /// </summary>
+        void Init();
     }
 
     /// <summary>
-    /// Manages initialization of game components in a specific order
+    ///     Manages initialization of game components in a specific order
     /// </summary>
     /// <remarks>
-    /// This class handles both manual and automatic component initialization.
-    /// Components can be added manually through the inspector or found automatically in the scene.
+    ///     This class handles both manual and automatic component initialization.
+    ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
     public class Bootstrap : MonoBehaviour
     {
@@ -34,9 +34,9 @@ namespace Neo
         private List<MonoBehaviour> _manualInitializables = new();
 
         [SerializeField] [Tooltip("If true, automatically finds and initializes all IInit components in the scene")]
-        private bool _autoFindComponents = false;
+        private bool _autoFindComponents;
 
-        private List<IInit> _initializables = new();
+        private readonly List<IInit> _initializables = new();
 
         private void Awake()
         {
@@ -45,11 +45,11 @@ namespace Neo
         }
 
         /// <summary>
-        /// Initializes all components in priority order
+        ///     Initializes all components in priority order
         /// </summary>
         /// <remarks>
-        /// First initializes manual components, then finds and initializes automatic components if enabled.
-        /// Components are sorted by priority before initialization.
+        ///     First initializes manual components, then finds and initializes automatic components if enabled.
+        ///     Components are sorted by priority before initialization.
         /// </remarks>
         private void InitializeComponents()
         {
@@ -73,11 +73,11 @@ namespace Neo
         }
 
         /// <summary>
-        /// Registers a component for initialization
+        ///     Registers a component for initialization
         /// </summary>
         /// <param name="initializable">Component implementing IInit interface</param>
         /// <remarks>
-        /// If the component is not already registered, adds it to the initialization list and initializes it immediately
+        ///     If the component is not already registered, adds it to the initialization list and initializes it immediately
         /// </remarks>
         public void Register(IInit initializable)
         {

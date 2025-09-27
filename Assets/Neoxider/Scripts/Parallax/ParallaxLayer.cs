@@ -6,8 +6,8 @@ using Random = UnityEngine.Random;
 namespace Neo
 {
     /// <summary>
-    /// Universal parallax tiler that keeps a small pool of sprites aligned with the camera.
-    /// Tiles recycle seamlessly as the camera moves, optionally randomising their appearance.
+    ///     Universal parallax tiler that keeps a small pool of sprites aligned with the camera.
+    ///     Tiles recycle seamlessly as the camera moves, optionally randomising their appearance.
     /// </summary>
     [DisallowMultipleComponent]
     public class ParallaxLayer : MonoBehaviour
@@ -36,7 +36,7 @@ namespace Neo
         private bool tileHorizontally = true;
 
         [Tooltip("Enable vertical tiling and recycling.")] [SerializeField]
-        private bool tileVertically = false;
+        private bool tileVertically;
 
         [Tooltip("Extra tile rows/columns to keep off-screen for smooth recycling (per axis).")] [SerializeField]
         private Vector2Int paddingTiles = new(1, 1);
@@ -50,7 +50,7 @@ namespace Neo
         private bool randomiseOnInit = true;
 
         [Tooltip("Randomise sprite when tile is recycled onto the opposite side.")] [SerializeField]
-        private bool randomiseOnRecycle = false;
+        private bool randomiseOnRecycle;
 
         [Tooltip(
             "Scale sprites so every tile matches the largest sprite bounds. Keep enabled to avoid gaps when sprites have different sizes.")]
@@ -58,26 +58,26 @@ namespace Neo
         private bool fitToMaxSpriteSize = true;
 
         private readonly List<Tile> tiles = new();
-        private Vector3 initialLayerPosition;
-        private Vector3 initialCameraPosition;
+        private Vector2 accumulatedScroll;
+        private Sprite[] availableSprites = Array.Empty<Sprite>();
 
         private Vector2 cellSizeLocal;
         private Vector2 cellSizeWorld;
-        private int tilesX = 1;
-        private int tilesY = 1;
-        private float gridWidthWorld;
         private float gridHeightWorld;
-        private Vector3 templateBaseScale;
+        private float gridWidthWorld;
+        private bool hasTemplateSnapshot;
+        private Vector3 initialCameraPosition;
+        private Vector3 initialLayerPosition;
         private bool isInitialised;
-        private Sprite templateInitialSprite;
+        private Vector2 spacingLocal;
+        private Vector2 spacingWorld;
+        private Vector3 templateBaseScale;
         private Vector3 templateInitialLocalPosition;
         private Quaternion templateInitialLocalRotation;
         private Vector3 templateInitialLocalScale;
-        private bool hasTemplateSnapshot;
-        private Sprite[] availableSprites = Array.Empty<Sprite>();
-        private Vector2 accumulatedScroll;
-        private Vector2 spacingLocal;
-        private Vector2 spacingWorld;
+        private Sprite templateInitialSprite;
+        private int tilesX = 1;
+        private int tilesY = 1;
 
         private void Awake()
         {
@@ -87,10 +87,7 @@ namespace Neo
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                if (generateInEditor)
-                {
-                    Initialise();
-                }
+                if (generateInEditor) Initialise();
 
                 return;
             }
@@ -99,24 +96,28 @@ namespace Neo
             Initialise();
         }
 
+        private void LateUpdate()
+        {
+            if (!isInitialised) return;
+
+            if (targetCamera == null) return;
+
+            UpdateParallaxOffset();
+            RecycleTiles();
+        }
+
         private void OnEnable()
         {
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                if (generateInEditor && !isInitialised)
-                {
-                    Initialise();
-                }
+                if (generateInEditor && !isInitialised) Initialise();
 
                 return;
             }
 #endif
 
-            if (!isInitialised)
-            {
-                Initialise();
-            }
+            if (!isInitialised) Initialise();
         }
 
         private void OnDisable()
@@ -129,10 +130,7 @@ namespace Neo
             }
 #endif
 
-            if (Application.isPlaying)
-            {
-                Cleanup();
-            }
+            if (Application.isPlaying) Cleanup();
         }
 
         private void OnValidate()
@@ -152,43 +150,29 @@ namespace Neo
                 }
 
                 if (generateInEditor)
-                {
                     Initialise();
-                }
                 else
-                {
                     Cleanup(true);
-                }
 
                 return;
             }
 #endif
 
-            if (Application.isPlaying && isActiveAndEnabled)
-            {
-                Initialise();
-            }
+            if (Application.isPlaying && isActiveAndEnabled) Initialise();
         }
 
         private void Initialise()
         {
-            Vector3 currentPosition = transform.position;
+            var currentPosition = transform.position;
 
             hasTemplateSnapshot = false;
 
             if (isInitialised)
-            {
                 Cleanup(!Application.isPlaying);
-            }
             else
-            {
                 tiles.Clear();
-            }
 
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
+            if (targetCamera == null) targetCamera = Camera.main;
 
             if (targetCamera == null)
             {
@@ -196,10 +180,7 @@ namespace Neo
                 return;
             }
 
-            if (templateRenderer == null)
-            {
-                templateRenderer = GetComponent<SpriteRenderer>();
-            }
+            if (templateRenderer == null) templateRenderer = GetComponent<SpriteRenderer>();
 
             if (templateRenderer == null)
             {
@@ -234,50 +215,38 @@ namespace Neo
 
         private void ComputeCellSize()
         {
-            Vector2 maxLocalSize = Vector2.zero;
+            var maxLocalSize = Vector2.zero;
 
             Vector2 SampleSize(Sprite sprite)
             {
-                if (sprite == null)
-                {
-                    return Vector2.zero;
-                }
+                if (sprite == null) return Vector2.zero;
 
-                if (templateRenderer.drawMode == SpriteDrawMode.Simple)
-                {
-                    return sprite.bounds.size;
-                }
+                if (templateRenderer.drawMode == SpriteDrawMode.Simple) return sprite.bounds.size;
 
                 if (templateRenderer.drawMode == SpriteDrawMode.Sliced ||
                     templateRenderer.drawMode == SpriteDrawMode.Tiled)
-                {
                     return templateRenderer.size;
-                }
 
                 return sprite.bounds.size;
             }
 
-            Vector2 size = SampleSize(templateInitialSprite);
+            var size = SampleSize(templateInitialSprite);
             maxLocalSize = new Vector2(
                 Mathf.Max(maxLocalSize.x, size.x),
                 Mathf.Max(maxLocalSize.y, size.y));
             if (spriteVariants != null)
-            {
-                foreach (Sprite sprite in spriteVariants)
+                foreach (var sprite in spriteVariants)
                 {
                     size = SampleSize(sprite);
                     maxLocalSize.x = Mathf.Max(maxLocalSize.x, size.x);
                     maxLocalSize.y = Mathf.Max(maxLocalSize.y, size.y);
                 }
-            }
 
             if (maxLocalSize == Vector2.zero)
-            {
-                maxLocalSize = templateInitialSprite != null ? (Vector2)templateInitialSprite.bounds.size : Vector2.one;
-            }
+                maxLocalSize = templateInitialSprite != null ? templateInitialSprite.bounds.size : Vector2.one;
 
             cellSizeLocal = maxLocalSize;
-            Vector3 lossy = transform.lossyScale;
+            var lossy = transform.lossyScale;
             cellSizeWorld = new Vector2(
                 cellSizeLocal.x * Mathf.Abs(lossy.x),
                 cellSizeLocal.y * Mathf.Abs(lossy.y));
@@ -290,11 +259,11 @@ namespace Neo
 
         private void ComputeTileCounts()
         {
-            Camera cam = targetCamera;
+            var cam = targetCamera;
             if (cam.orthographic)
             {
-                float halfHeight = cam.orthographicSize;
-                float halfWidth = halfHeight * cam.aspect;
+                var halfHeight = cam.orthographicSize;
+                var halfWidth = halfHeight * cam.aspect;
 
                 tilesX = tileHorizontally
                     ? Mathf.Max(3,
@@ -324,26 +293,24 @@ namespace Neo
 
             templateRenderer.transform.localScale = templateBaseScale;
 
-            int anchorX = (tilesX - 1) / 2;
-            int anchorY = (tilesY - 1) / 2;
+            var anchorX = (tilesX - 1) / 2;
+            var anchorY = (tilesY - 1) / 2;
             Vector2 origin = new(
                 templateInitialLocalPosition.x - anchorX * (cellSizeLocal.x + spacingLocal.x),
                 templateInitialLocalPosition.y - anchorY * (cellSizeLocal.y + spacingLocal.y));
 
-            for (int y = 0; y < tilesY; y++)
+            for (var y = 0; y < tilesY; y++)
+            for (var x = 0; x < tilesX; x++)
             {
-                for (int x = 0; x < tilesX; x++)
-                {
-                    Tile tile = CreateTile();
-                    Vector3 localPos = new(
-                        origin.x + x * (cellSizeLocal.x + spacingLocal.x),
-                        origin.y + y * (cellSizeLocal.y + spacingLocal.y),
-                        templateInitialLocalPosition.z);
-                    tile.Transform.localPosition = localPos;
+                var tile = CreateTile();
+                Vector3 localPos = new(
+                    origin.x + x * (cellSizeLocal.x + spacingLocal.x),
+                    origin.y + y * (cellSizeLocal.y + spacingLocal.y),
+                    templateInitialLocalPosition.z);
+                tile.Transform.localPosition = localPos;
 
-                    AssignSprite(tile, randomiseOnInit);
-                    tiles.Add(tile);
-                }
+                AssignSprite(tile, randomiseOnInit);
+                tiles.Add(tile);
             }
 
             templateRenderer.enabled = false;
@@ -358,21 +325,15 @@ namespace Neo
             List<Transform> toRemove = new();
             foreach (Transform child in transform)
             {
-                if (templateRenderer != null && child == templateRenderer.transform)
-                {
-                    continue;
-                }
+                if (templateRenderer != null && child == templateRenderer.transform) continue;
 
                 toRemove.Add(child);
             }
 
-            for (int i = 0; i < toRemove.Count; i++)
+            for (var i = 0; i < toRemove.Count; i++)
             {
-                Transform child = toRemove[i];
-                if (child == null)
-                {
-                    continue;
-                }
+                var child = toRemove[i];
+                if (child == null) continue;
 
                 if (Application.isPlaying && !immediate)
                 {
@@ -393,16 +354,13 @@ namespace Neo
         {
             GameObject go = new($"Tile_{tiles.Count}");
             go.transform.SetParent(transform, false);
-            SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
+            var renderer = go.AddComponent<SpriteRenderer>();
             CopyRendererSettings(templateRenderer, renderer);
             renderer.transform.localRotation = templateInitialLocalRotation;
             renderer.transform.localScale = templateInitialLocalScale;
             renderer.enabled = true;
 
-            if (templateInitialSprite != null)
-            {
-                renderer.sprite = templateInitialSprite;
-            }
+            if (templateInitialSprite != null) renderer.sprite = templateInitialSprite;
 
             return new Tile(go.transform, renderer);
         }
@@ -431,42 +389,25 @@ namespace Neo
         private void BuildSpritePool()
         {
             List<Sprite> pool = new();
-            if (templateInitialSprite != null)
-            {
-                pool.Add(templateInitialSprite);
-            }
+            if (templateInitialSprite != null) pool.Add(templateInitialSprite);
 
             if (spriteVariants != null)
-            {
-                foreach (Sprite sprite in spriteVariants)
-                {
+                foreach (var sprite in spriteVariants)
                     if (sprite != null && !pool.Contains(sprite))
-                    {
                         pool.Add(sprite);
-                    }
-                }
-            }
 
             availableSprites = pool.Count > 0 ? pool.ToArray() : Array.Empty<Sprite>();
         }
 
         private void AssignSprite(Tile tile, bool allowRandom)
         {
-            Sprite sprite = templateInitialSprite;
+            var sprite = templateInitialSprite;
 
             if (allowRandom && availableSprites.Length > 0)
-            {
                 sprite = availableSprites[Random.Range(0, availableSprites.Length)];
-            }
-            else if (sprite == null && availableSprites.Length > 0)
-            {
-                sprite = availableSprites[0];
-            }
+            else if (sprite == null && availableSprites.Length > 0) sprite = availableSprites[0];
 
-            if (sprite == null)
-            {
-                return;
-            }
+            if (sprite == null) return;
 
             tile.Renderer.sprite = sprite;
 
@@ -484,13 +425,10 @@ namespace Neo
             }
 
             Vector2 spriteSize = sprite.bounds.size;
-            if (spriteSize == Vector2.zero)
-            {
-                spriteSize = Vector2.one;
-            }
+            if (spriteSize == Vector2.zero) spriteSize = Vector2.one;
 
-            float scaleX = spriteSize.x <= 0f ? 1f : cellSizeLocal.x / spriteSize.x;
-            float scaleY = spriteSize.y <= 0f ? 1f : cellSizeLocal.y / spriteSize.y;
+            var scaleX = spriteSize.x <= 0f ? 1f : cellSizeLocal.x / spriteSize.x;
+            var scaleY = spriteSize.y <= 0f ? 1f : cellSizeLocal.y / spriteSize.y;
 
             tile.Transform.localScale = new Vector3(
                 templateBaseScale.x * scaleX,
@@ -511,33 +449,14 @@ namespace Neo
                 templateRenderer.transform.localRotation = templateInitialLocalRotation;
                 templateRenderer.transform.localScale = templateInitialLocalScale;
                 templateRenderer.enabled = true;
-                if (templateInitialSprite != null)
-                {
-                    templateRenderer.sprite = templateInitialSprite;
-                }
+                if (templateInitialSprite != null) templateRenderer.sprite = templateInitialSprite;
             }
-        }
-
-        private void LateUpdate()
-        {
-            if (!isInitialised)
-            {
-                return;
-            }
-
-            if (targetCamera == null)
-            {
-                return;
-            }
-
-            UpdateParallaxOffset();
-            RecycleTiles();
         }
 
         private void UpdateParallaxOffset()
         {
-            Vector3 camPos = targetCamera.transform.position;
-            Vector3 delta = camPos - initialCameraPosition;
+            var camPos = targetCamera.transform.position;
+            var delta = camPos - initialCameraPosition;
             accumulatedScroll += scrollSpeed * Time.deltaTime;
             Vector3 offset = new(
                 delta.x * -parallaxMultiplier.x + accumulatedScroll.x,
@@ -548,21 +467,21 @@ namespace Neo
 
         private void RecycleTiles()
         {
-            Vector3 camPos = targetCamera.transform.position;
-            float halfWidth = targetCamera.orthographic ? targetCamera.orthographicSize * targetCamera.aspect : 10f;
-            float halfHeight = targetCamera.orthographic ? targetCamera.orthographicSize : 10f;
+            var camPos = targetCamera.transform.position;
+            var halfWidth = targetCamera.orthographic ? targetCamera.orthographicSize * targetCamera.aspect : 10f;
+            var halfHeight = targetCamera.orthographic ? targetCamera.orthographicSize : 10f;
 
-            float thresholdX = tileHorizontally ? halfWidth + cellSizeWorld.x + spacingWorld.x : float.PositiveInfinity;
-            float thresholdY = tileVertically ? halfHeight + cellSizeWorld.y + spacingWorld.y : float.PositiveInfinity;
+            var thresholdX = tileHorizontally ? halfWidth + cellSizeWorld.x + spacingWorld.x : float.PositiveInfinity;
+            var thresholdY = tileVertically ? halfHeight + cellSizeWorld.y + spacingWorld.y : float.PositiveInfinity;
 
-            for (int i = 0; i < tiles.Count; i++)
+            for (var i = 0; i < tiles.Count; i++)
             {
-                Tile tile = tiles[i];
-                Vector3 tilePos = tile.Transform.position;
+                var tile = tiles[i];
+                var tilePos = tile.Transform.position;
 
                 if (tileHorizontally)
                 {
-                    float deltaX = camPos.x - tilePos.x;
+                    var deltaX = camPos.x - tilePos.x;
                     while (deltaX > thresholdX)
                     {
                         ShiftTile(tile, Vector3.right * gridWidthWorld);
@@ -580,7 +499,7 @@ namespace Neo
 
                 if (tileVertically)
                 {
-                    float deltaY = camPos.y - tilePos.y;
+                    var deltaY = camPos.y - tilePos.y;
                     while (deltaY > thresholdY)
                     {
                         ShiftTile(tile, Vector3.up * gridHeightWorld);
@@ -601,10 +520,7 @@ namespace Neo
         private void ShiftTile(Tile tile, Vector3 worldOffset)
         {
             tile.Transform.position += worldOffset;
-            if (randomiseOnRecycle)
-            {
-                AssignSprite(tile, true);
-            }
+            if (randomiseOnRecycle) AssignSprite(tile, true);
         }
 
         private readonly struct Tile

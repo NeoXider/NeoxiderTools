@@ -8,7 +8,7 @@ namespace Neo
         {
             [SerializeField] private bool useTimeScale = true;
 
-            [SerializeField] private float timeScale = 0;
+            [SerializeField] private float timeScale;
 
             [SerializeField] private bool sendPause = true;
 

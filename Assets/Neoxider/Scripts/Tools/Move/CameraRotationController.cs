@@ -1,10 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace Neo
 {
     namespace Tools
     {
-        [System.Serializable]
+        [Serializable]
         public class AxisRotationSettings
         {
             public bool isEnabled = true;

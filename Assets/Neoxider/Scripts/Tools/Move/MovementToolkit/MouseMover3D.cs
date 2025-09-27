@@ -22,16 +22,6 @@ using UnityEngine.Events;
 [RequireComponent(typeof(Transform))]
 public class MouseMover3D : MonoBehaviour
 {
-    // ── PUBLIC CONFIG ───────────────────────────────────────────────
-    public enum MoveMode
-    {
-        DeltaNormalized,
-        DeltaRaw,
-        MoveToPointHold,
-        ClickToPoint,
-        Direction
-    }
-
     public enum AxisPlane
     {
         XZ,
@@ -40,6 +30,16 @@ public class MouseMover3D : MonoBehaviour
         X,
         Y,
         Z
+    }
+
+    // ── PUBLIC CONFIG ───────────────────────────────────────────────
+    public enum MoveMode
+    {
+        DeltaNormalized,
+        DeltaRaw,
+        MoveToPointHold,
+        ClickToPoint,
+        Direction
     }
 
     [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
@@ -59,18 +59,18 @@ public class MouseMover3D : MonoBehaviour
     [Header("Events")] public UnityEvent OnMoveStart;
     public UnityEvent OnMoveStop;
 
-    // ── STATE ───────────────────────────────────────────────────────
-    public bool IsMoving { get; private set; }
-
     private Camera cam;
-    private Rigidbody rb;
+    private Vector3 clickPoint; // Direction-mode
 
     private Vector3 desiredVel; // m/s (только Delta-режимы)
-    private Vector3 clickPoint; // Direction-mode
-    private Vector3 targetPoint; // ClickToPoint-mode
     private bool hasTarget;
     private Vector3 lastMousePos; // px
+    private Rigidbody rb;
+    private Vector3 targetPoint; // ClickToPoint-mode
     private bool wasMoving;
+
+    // ── STATE ───────────────────────────────────────────────────────
+    public bool IsMoving { get; private set; }
 
     // ── UNITY ───────────────────────────────────────────────────────
     private void Awake()

@@ -1,20 +1,24 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Provides automatic camera scaling functionality to maintain consistent view proportions across different screen resolutions.
+    ///     Provides automatic camera scaling functionality to maintain consistent view proportions across different screen
+    ///     resolutions.
     /// </summary>
     /// <remarks>
-    /// This component supports both orthographic and perspective cameras, offering multiple scaling modes to handle various aspect ratios.
-    /// It automatically adjusts the camera's view to match the target resolution while maintaining the desired aspect ratio.
+    ///     This component supports both orthographic and perspective cameras, offering multiple scaling modes to handle
+    ///     various aspect ratios.
+    ///     It automatically adjusts the camera's view to match the target resolution while maintaining the desired aspect
+    ///     ratio.
     /// </remarks>
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {
         /// <summary>
-        /// Specifies the strategy used to scale the camera view when the screen resolution changes.
+        ///     Specifies the strategy used to scale the camera view when the screen resolution changes.
         /// </summary>
         public enum ScaleMode
         {
@@ -65,11 +69,11 @@ namespace Neo
         private bool updateInEditor = true;
 
         private Camera _camera;
-        private float _defaultSize;
         private float _defaultFOV;
+        private float _defaultSize;
 
         /// <summary>
-        /// Initializes the component and stores the camera's default values.
+        ///     Initializes the component and stores the camera's default values.
         /// </summary>
         private void Awake()
         {
@@ -81,7 +85,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Applies the initial camera scaling when the game starts.
+        ///     Applies the initial camera scaling when the game starts.
         /// </summary>
         private void Start()
         {
@@ -89,7 +93,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Updates the camera scale based on the current screen resolution and settings.
+        ///     Updates the camera scale based on the current screen resolution and settings.
         /// </summary>
         private void Update()
         {
@@ -98,7 +102,17 @@ namespace Neo
         }
 
         /// <summary>
-        /// Calculates and applies the appropriate camera scale based on current settings.
+        ///     Validates and updates camera settings when values are modified in the Unity Inspector.
+        /// </summary>
+        private void OnValidate()
+        {
+            if (_camera == null) _camera = GetComponent<Camera>();
+
+            UpdateCameraScale();
+        }
+
+        /// <summary>
+        ///     Calculates and applies the appropriate camera scale based on current settings.
         /// </summary>
         [Button]
         private void UpdateCameraScale()
@@ -115,7 +129,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Updates the orthographic camera size based on the current aspect ratio and settings.
+        ///     Updates the orthographic camera size based on the current aspect ratio and settings.
         /// </summary>
         /// <param name="targetAspect">The target aspect ratio to maintain.</param>
         /// <param name="currentAspect">The current screen aspect ratio.</param>
@@ -144,7 +158,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Updates the perspective camera field of view based on the current aspect ratio and settings.
+        ///     Updates the perspective camera field of view based on the current aspect ratio and settings.
         /// </summary>
         /// <param name="targetAspect">The target aspect ratio to maintain.</param>
         /// <param name="currentAspect">The current screen aspect ratio.</param>
@@ -170,16 +184,6 @@ namespace Neo
             newFOV *= scaleMultiplier;
             newFOV = Mathf.Clamp(newFOV, minSize, maxSize);
             _camera.fieldOfView = newFOV;
-        }
-
-        /// <summary>
-        /// Validates and updates camera settings when values are modified in the Unity Inspector.
-        /// </summary>
-        private void OnValidate()
-        {
-            if (_camera == null) _camera = GetComponent<Camera>();
-
-            UpdateCameraScale();
         }
     }
 }

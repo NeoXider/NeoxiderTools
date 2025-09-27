@@ -1,10 +1,11 @@
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Component that handles health system with damage, healing and auto-healing capabilities
+    ///     Component that handles health system with damage, healing and auto-healing capabilities
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/" + nameof(Health))]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
@@ -16,13 +17,13 @@ namespace Neo.Tools
         private int hp;
 
         [Header("Auto-Heal Settings")] [Tooltip("Amount of health restored per auto-heal")] [SerializeField]
-        private int healAmount = 0;
+        private int healAmount;
 
         [Tooltip("Delay between auto-heals in seconds")] [SerializeField]
         private float healDelay = 1f;
 
         [Tooltip("If true, can heal even when not alive")] [SerializeField]
-        private bool ignoreIsAlive = false;
+        private bool ignoreIsAlive;
 
         [Header("Damage & Heal Limits")]
         [Tooltip("Maximum damage that can be taken at once (-1 for no limit)")]
@@ -52,12 +53,12 @@ namespace Neo.Tools
         private Timer healTimer;
 
         /// <summary>
-        /// Gets the maximum health points
+        ///     Gets the maximum health points
         /// </summary>
         public int MaxHp => maxHp;
 
         /// <summary>
-        /// Gets or sets current health points
+        ///     Gets or sets current health points
         /// </summary>
         public int Hp
         {
@@ -71,17 +72,17 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Gets whether the entity is alive
+        ///     Gets whether the entity is alive
         /// </summary>
         public bool IsAlive => hp > 0;
 
         /// <summary>
-        /// Gets whether the entity can be healed
+        ///     Gets whether the entity can be healed
         /// </summary>
         public bool CanHeal => (IsAlive && !ignoreIsAlive) || ignoreIsAlive;
 
         /// <summary>
-        /// Gets whether the entity needs healing
+        ///     Gets whether the entity needs healing
         /// </summary>
         public bool NeedHeal => hp < maxHp;
 
@@ -92,15 +93,51 @@ namespace Neo.Tools
             Restore();
         }
 
+        private void OnDestroy()
+        {
+            if (healTimer != null) healTimer.Stop();
+        }
+
+        /// <summary>
+        ///     Applies damage to the entity
+        /// </summary>
+        /// <param name="count">Amount of damage to take</param>
+        [Button]
+        public void TakeDamage(int count)
+        {
+            var damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
+            Hp -= damage;
+            OnDamage?.Invoke(count);
+
+            if (!IsAlive) Die();
+        }
+
+        /// <summary>
+        ///     Heals the entity
+        /// </summary>
+        /// <param name="count">Amount of health to restore</param>
+        [Button]
+        public void Heal(int count)
+        {
+            var heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
+            Hp += heal;
+
+            OnHeal?.Invoke(count);
+        }
+
+        /// <summary>
+        ///     Restores health to maximum
+        /// </summary>
+        [Button]
+        public void Restore()
+        {
+            Hp = maxHp;
+        }
+
         private void InitializeHealTimer()
         {
             healTimer = new Timer(healDelay, 0.1f, true);
             healTimer.OnTimerEnd.AddListener(OnHealTimerEnd);
-        }
-
-        private void OnDestroy()
-        {
-            if (healTimer != null) healTimer.Stop();
         }
 
         private void OnHealTimerEnd()
@@ -109,7 +146,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Sets auto-heal parameters
+        ///     Sets auto-heal parameters
         /// </summary>
         /// <param name="amount">Amount of health restored per auto-heal</param>
         /// <param name="delay">Delay between auto-heals in seconds (-1 to keep current)</param>
@@ -126,7 +163,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Sets maximum health points
+        ///     Sets maximum health points
         /// </summary>
         /// <param name="count">New maximum health</param>
         /// <param name="restore">If true, restores health to maximum</param>
@@ -142,49 +179,13 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Sets current health points
+        ///     Sets current health points
         /// </summary>
         /// <param name="count">New health value</param>
         [Button]
         public void SetHp(int count)
         {
             Hp = count;
-        }
-
-        /// <summary>
-        /// Restores health to maximum
-        /// </summary>
-        [Button]
-        public void Restore()
-        {
-            Hp = maxHp;
-        }
-
-        /// <summary>
-        /// Applies damage to the entity
-        /// </summary>
-        /// <param name="count">Amount of damage to take</param>
-        [Button]
-        public void TakeDamage(int count)
-        {
-            var damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
-            Hp -= damage;
-            OnDamage?.Invoke(count);
-
-            if (!IsAlive) Die();
-        }
-
-        /// <summary>
-        /// Heals the entity
-        /// </summary>
-        /// <param name="count">Amount of health to restore</param>
-        [Button]
-        public void Heal(int count)
-        {
-            var heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
-            Hp += heal;
-
-            OnHeal?.Invoke(count);
         }
 
         private void Die()

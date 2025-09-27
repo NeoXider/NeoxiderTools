@@ -1,12 +1,13 @@
-using UnityEngine;
-using UnityEditor;
-using System.Linq;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Manages the creation and organization of a standard scene hierarchy
+    ///     Manages the creation and organization of a standard scene hierarchy
     /// </summary>
     public class CreateSceneHierarchy : ScriptableObject
     {
@@ -27,7 +28,7 @@ namespace Neo
         [SerializeField] private string separatorSymbols = "--";
 
         /// <summary>
-        /// Creates the scene hierarchy with the configured structure
+        ///     Creates the scene hierarchy with the configured structure
         /// </summary>
         public void CreateHierarchy()
         {
@@ -58,7 +59,7 @@ namespace Neo
 
                 if (ValidateHierarchy()) Debug.Log("Scene hierarchy created successfully");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to create scene hierarchy: {e.Message}");
                 Undo.RevertAllDownToGroup(group);
@@ -68,7 +69,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Sorts all root hierarchy objects alphabetically
+        ///     Sorts all root hierarchy objects alphabetically
         /// </summary>
         private void SortHierarchyObjects()
         {
@@ -106,7 +107,7 @@ namespace Neo
 
                 Debug.Log("Hierarchy objects sorted successfully");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to sort hierarchy objects: {e.Message}");
                 Undo.RevertAllDownToGroup(undoGroup);
@@ -116,7 +117,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Validates that all hierarchy objects exist in the scene
+        ///     Validates that all hierarchy objects exist in the scene
         /// </summary>
         private bool ValidateHierarchy()
         {

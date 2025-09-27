@@ -1,3 +1,4 @@
+using System;
 using Neo.Tools;
 using UnityEngine;
 
@@ -5,7 +6,7 @@ namespace Neo
 {
     namespace Audio
     {
-        [System.Serializable]
+        [Serializable]
         public class Sound
         {
             public AudioClip clip;
@@ -16,9 +17,9 @@ namespace Neo
         public class AM : Singleton<AM>
         {
             [SerializeField] private AudioSource _efx;
-            [SerializeField] private Sound[] _sounds;
             [Space] [SerializeField] private AudioSource _music;
             [SerializeField] private AudioClip[] _musicClips;
+            [SerializeField] private Sound[] _sounds;
 
             public float startVolumeEfx { get; set; } = 1f;
             public float startVolumeMusic { get; set; } = 1f;
@@ -88,7 +89,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Применяет стартовые громкости к AudioSource'ам
+            ///     Применяет стартовые громкости к AudioSource'ам
             /// </summary>
             public void ApplyStartVolumes()
             {

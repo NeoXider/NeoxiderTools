@@ -1,24 +1,11 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
-using System.Collections.Generic;
 
 namespace Neo.Tools
 {
     public class MultiKeyEventTrigger : MonoBehaviour
     {
-        [System.Serializable]
-        public struct KeyEventPair
-        {
-            public KeyCode key;
-            public UnityEvent onKeyPressed;
-
-            public KeyEventPair(KeyCode k)
-            {
-                key = k;
-                onKeyPressed = new UnityEvent();
-            }
-        }
-
         public KeyEventPair[] keyEventPairs =
         {
             new(KeyCode.Escape),
@@ -38,6 +25,19 @@ namespace Neo.Tools
             foreach (var pair in keyEventPairs)
                 if (Input.GetKeyDown(pair.key))
                     pair.onKeyPressed?.Invoke();
+        }
+
+        [Serializable]
+        public struct KeyEventPair
+        {
+            public KeyCode key;
+            public UnityEvent onKeyPressed;
+
+            public KeyEventPair(KeyCode k)
+            {
+                key = k;
+                onKeyPressed = new UnityEvent();
+            }
         }
     }
 }

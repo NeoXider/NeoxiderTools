@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,8 +27,8 @@ public class MovementController : MonoBehaviour
     public UnityEvent OnMovementStop;
 
     private IMovementInputProvider _inputProvider;
-    private Vector3 _referencePosition;
     private bool _isMoving;
+    private Vector3 _referencePosition;
 
     private void Awake()
     {
@@ -117,10 +118,10 @@ public class MovementController : MonoBehaviour
     }
 }
 
-[System.Serializable]
+[Serializable]
 public class AxisConstraint
 {
-    public bool enabled = false;
+    public bool enabled;
     public float min = -10f;
     public float max = 10f;
 }

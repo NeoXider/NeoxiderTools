@@ -1,4 +1,4 @@
-using System;
+using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -9,12 +9,6 @@ namespace Neo.Tools
     public class ScoreManager : Singleton<ScoreManager>
     {
         [SerializeField] private string _keySave = "BestScore";
-
-        public TMP_Text[] textScores;
-        public SetText[] setTextScore;
-
-        [Space] [Header("Best Score")] public TMP_Text[] textBestScores;
-        public SetText[] setTextBestScores;
 
         [Space] [Header("Stars")] public bool useProgress = true;
         public float[] starScores = { 0.25f, 0.5f, 0.75f };
@@ -31,9 +25,15 @@ namespace Neo.Tools
 
         [SerializeField] private int _bestScore;
         [SerializeField] private int _targetScore;
+        private int _countStars;
 
         private int _lastCountStars;
-        private int _countStars;
+        public SetText[] setTextBestScores;
+        public SetText[] setTextScore;
+
+        [Space] [Header("Best Score")] public TMP_Text[] textBestScores;
+
+        public TMP_Text[] textScores;
 
         public int BestScore
         {
@@ -86,6 +86,10 @@ namespace Neo.Tools
             }
         }
 
+        private void Start()
+        {
+        }
+
         protected override void Init()
         {
             base.Init();
@@ -97,15 +101,11 @@ namespace Neo.Tools
             SetScoreText();
         }
 
-        private void Start()
-        {
-        }
-
         /// <summary>
-        /// ���������� ���� � ��������� ������ ������
+        ///     ���������� ���� � ��������� ������ ������
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -115,7 +115,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -125,10 +125,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// ���������� ���� � ��������� ������ ������
+        ///     ���������� ���� � ��������� ������ ������
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -141,7 +141,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -159,7 +159,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// ���������� ����� ������� �����
+        ///     ���������� ����� ������� �����
         /// </summary>
         private void SetBestScoreText()
         {
@@ -174,7 +174,7 @@ namespace Neo.Tools
 
 
         /// <summary>
-        /// ���������� ����� �����
+        ///     ���������� ����� �����
         /// </summary>
         private void SetScoreText()
         {
@@ -188,10 +188,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// ����� ����� (��������, ��� �������� �� ����� ������� ��� ��������)
+        ///     ����� ����� (��������, ��� �������� �� ����� ������� ��� ��������)
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -203,7 +203,7 @@ namespace Neo.Tools
         }
 
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #else
         [Button]
 #endif
@@ -219,10 +219,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Получение количества звезд по количеству очков
-        /// параметры:
-        /// пример {500, 2500, 5000}, 3500 => 2, 6000 => 3
-        /// возвращает количество звезд
+        ///     Получение количества звезд по количеству очков
+        ///     параметры:
+        ///     пример {500, 2500, 5000}, 3500 => 2, 6000 => 3
+        ///     возвращает количество звезд
         /// </summary>
         public int GetCountStars(float[] starScores, bool useProgress = true, int? score = null)
         {

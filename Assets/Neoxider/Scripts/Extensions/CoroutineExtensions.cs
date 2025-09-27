@@ -23,10 +23,53 @@ namespace Neo.Extensions
             }
         }
 
+        public class CoroutineHandle
+        {
+            private readonly MonoBehaviour owner;
+            private Coroutine coroutine;
+
+            internal CoroutineHandle(MonoBehaviour owner)
+            {
+                this.owner = owner;
+                IsRunning = false;
+            }
+
+            public Coroutine Coroutine
+            {
+                get => coroutine;
+                internal set
+                {
+                    coroutine = value;
+                    IsRunning = true;
+                }
+            }
+
+            public bool IsRunning { get; private set; }
+
+            public void Stop()
+            {
+                if (!IsRunning || owner == null) return;
+
+                if (coroutine != null)
+                {
+                    owner.StopCoroutine(coroutine);
+                    coroutine = null;
+                }
+
+                IsRunning = false;
+            }
+
+            internal void Complete()
+            {
+                coroutine = null;
+                IsRunning = false;
+            }
+        }
+
         #region Extension Methods
 
         /// <summary>
-        /// Executes an action after a specified delay in seconds
+        ///     Executes an action after a specified delay in seconds
         /// </summary>
         public static CoroutineHandle Delay(this MonoBehaviour monoBehaviour, float seconds, Action action,
             bool useUnscaledTime = false)
@@ -35,7 +78,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Waits until a condition is true, then executes an action
+        ///     Waits until a condition is true, then executes an action
         /// </summary>
         public static CoroutineHandle WaitUntil(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
         {
@@ -43,7 +86,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Waits while a condition is true, then executes an action
+        ///     Waits while a condition is true, then executes an action
         /// </summary>
         public static CoroutineHandle WaitWhile(this MonoBehaviour monoBehaviour, Func<bool> predicate, Action action)
         {
@@ -51,7 +94,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Executes an action after a specified number of frames
+        ///     Executes an action after a specified number of frames
         /// </summary>
         public static CoroutineHandle DelayFrames(this MonoBehaviour monoBehaviour, int frameCount, Action action,
             bool useFixedUpdate = false)
@@ -60,7 +103,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Executes an action on the next frame
+        ///     Executes an action on the next frame
         /// </summary>
         public static CoroutineHandle NextFrame(this MonoBehaviour monoBehaviour, Action action)
         {
@@ -68,7 +111,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Executes an action at the end of the current frame
+        ///     Executes an action at the end of the current frame
         /// </summary>
         public static CoroutineHandle EndOfFrame(this MonoBehaviour monoBehaviour, Action action)
         {
@@ -76,7 +119,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Repeats an action every frame until a condition is met
+        ///     Repeats an action every frame until a condition is met
         /// </summary>
         public static CoroutineHandle RepeatUntil(this MonoBehaviour monoBehaviour, Func<bool> condition, Action action)
         {
@@ -136,7 +179,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Starts a custom coroutine and returns a handle to it.
+        ///     Starts a custom coroutine and returns a handle to it.
         /// </summary>
         /// <param name="routine">The IEnumerator routine to start.</param>
         /// <returns>A handle to the running coroutine, allowing it to be stopped.</returns>
@@ -272,50 +315,6 @@ namespace Neo.Extensions
         }
 
         #endregion
-
-        public class CoroutineHandle
-        {
-            private readonly MonoBehaviour owner;
-            private Coroutine coroutine;
-            private bool isRunning;
-
-            public Coroutine Coroutine
-            {
-                get => coroutine;
-                internal set
-                {
-                    coroutine = value;
-                    isRunning = true;
-                }
-            }
-
-            public bool IsRunning => isRunning;
-
-            internal CoroutineHandle(MonoBehaviour owner)
-            {
-                this.owner = owner;
-                isRunning = false;
-            }
-
-            public void Stop()
-            {
-                if (!isRunning || owner == null) return;
-
-                if (coroutine != null)
-                {
-                    owner.StopCoroutine(coroutine);
-                    coroutine = null;
-                }
-
-                isRunning = false;
-            }
-
-            internal void Complete()
-            {
-                coroutine = null;
-                isRunning = false;
-            }
-        }
     }
 
     // Helper component for running coroutines on GameObjects

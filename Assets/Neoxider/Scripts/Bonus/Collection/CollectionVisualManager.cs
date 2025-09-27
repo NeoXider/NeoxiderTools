@@ -19,6 +19,16 @@ namespace Neo.Bonus
             Subscriber(true);
         }
 
+        private void OnEnable()
+        {
+            Visual();
+        }
+
+        private void OnDestroy()
+        {
+            Subscriber(false);
+        }
+
         private void Subscriber(bool subscribe)
         {
             for (var i = 0; i < _items.Length; i++)
@@ -30,16 +40,6 @@ namespace Neo.Bonus
                 else
                     _items[i].button.onClick.RemoveListener(() => SetItem(id));
             }
-        }
-
-        private void OnDestroy()
-        {
-            Subscriber(false);
-        }
-
-        private void OnEnable()
-        {
-            Visual();
         }
 
         public void Visual()

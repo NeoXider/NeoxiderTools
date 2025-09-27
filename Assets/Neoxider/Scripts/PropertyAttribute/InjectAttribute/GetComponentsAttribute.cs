@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class GetComponentsAttribute : PropertyAttribute
 {
-    public bool SearchInChildren = false;
+    public bool SearchInChildren;
 
     public GetComponentsAttribute(bool searchInChildren = false)
     {

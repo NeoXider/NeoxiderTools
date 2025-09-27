@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -12,18 +13,6 @@ namespace Neo
         {
             public int s = 10;
 
-            [System.Serializable]
-            public class AsyncLoadScene
-            {
-                public GameObject gameObjectLoad;
-                public Animator animator;
-                public TextMeshProUGUI textProgress;
-                public AsyncOperation operationScene;
-                public string[] loadEndText = { "Loading... ", "Click a start" };
-                public float progress;
-                public bool isProgressLoad = false;
-            }
-
             [Header("Async Load Scene")] public AsyncLoadScene ALS;
 
             private void Update()
@@ -31,6 +20,14 @@ namespace Neo
                 if (Input.GetKeyDown(KeyCode.Space)
                     || Input.GetKeyDown(KeyCode.KeypadEnter))
                     ProceedScene();
+            }
+
+            private void OnValidate()
+            {
+                name = nameof(UIReady);
+#if UNITY_2023_1_OR_NEWER
+#else
+#endif
             }
 
             public void Quit()
@@ -88,7 +85,7 @@ namespace Neo
                         if (ALS.progress > 0.89)
                             ALS.textProgress.text = ALS.loadEndText[1];
                         else
-                            ALS.textProgress.text = ALS.loadEndText[0] + ((int)(ALS.progress * 100)).ToString();
+                            ALS.textProgress.text = ALS.loadEndText[0] + ((int)(ALS.progress * 100));
                     }
 
                     yield return null;
@@ -100,12 +97,16 @@ namespace Neo
                 Debug.Log("����� ��������� � ������������!");
             }
 
-            private void OnValidate()
+            [Serializable]
+            public class AsyncLoadScene
             {
-                name = nameof(UIReady);
-#if UNITY_2023_1_OR_NEWER
-#else
-#endif
+                public GameObject gameObjectLoad;
+                public Animator animator;
+                public TextMeshProUGUI textProgress;
+                public string[] loadEndText = { "Loading... ", "Click a start" };
+                public float progress;
+                public bool isProgressLoad;
+                public AsyncOperation operationScene;
             }
         }
     }

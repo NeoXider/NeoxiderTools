@@ -1,16 +1,15 @@
 using Neo.Extensions;
 using Neo.Tools;
-using TMPro;
 using UnityEngine;
 
 namespace Neo.Shop
 {
     public class TextMoney : SetText
     {
-        [SerializeField] private bool _levelMoney = false;
+        [SerializeField] private readonly bool _levelMoney = false;
+        private Money _money;
 
         public float amount;
-        private Money _money;
 
         public TextMoney()
         {

@@ -6,6 +6,7 @@
  *  – Easy to extend: just add your own UnityEvent fields or extra logic  *
  ***************************************************************************/
 
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
@@ -31,14 +32,36 @@ namespace Neo.Tools
         public CollisionEvent onCollisionStay = new();
         public CollisionEvent onCollisionExit = new();
 
-        [System.Serializable]
-        public class ColliderEvent : UnityEvent<Collider>
+        /* Collision -------------------------------------------------- */
+        private void OnCollisionEnter(Collision c)
         {
+            if (interactable && PassFilter(c.gameObject)) onCollisionEnter.Invoke(c);
         }
 
-        [System.Serializable]
-        public class CollisionEvent : UnityEvent<Collision>
+        private void OnCollisionExit(Collision c)
         {
+            if (interactable && PassFilter(c.gameObject)) onCollisionExit.Invoke(c);
+        }
+
+        private void OnCollisionStay(Collision c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onCollisionStay.Invoke(c);
+        }
+
+        /* Trigger ---------------------------------------------------- */
+        private void OnTriggerEnter(Collider c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerEnter.Invoke(c);
+        }
+
+        private void OnTriggerExit(Collider c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerExit.Invoke(c);
+        }
+
+        private void OnTriggerStay(Collider c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerStay.Invoke(c);
         }
 
         /* ───────── INTERNAL ───────────────────────────────────────── */
@@ -50,36 +73,14 @@ namespace Neo.Tools
             return string.IsNullOrEmpty(requiredTag) || go.CompareTag(requiredTag);
         }
 
-        /* Trigger ---------------------------------------------------- */
-        private void OnTriggerEnter(Collider c)
+        [Serializable]
+        public class ColliderEvent : UnityEvent<Collider>
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerEnter.Invoke(c);
         }
 
-        private void OnTriggerStay(Collider c)
+        [Serializable]
+        public class CollisionEvent : UnityEvent<Collision>
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerStay.Invoke(c);
-        }
-
-        private void OnTriggerExit(Collider c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onTriggerExit.Invoke(c);
-        }
-
-        /* Collision -------------------------------------------------- */
-        private void OnCollisionEnter(Collision c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionEnter.Invoke(c);
-        }
-
-        private void OnCollisionStay(Collision c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionStay.Invoke(c);
-        }
-
-        private void OnCollisionExit(Collision c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionExit.Invoke(c);
         }
     }
 }

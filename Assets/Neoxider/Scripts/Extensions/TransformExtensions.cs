@@ -1,19 +1,19 @@
-using System.Collections.Generic;
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for the Unity Transform component.
+    ///     Extension methods for the Unity Transform component.
     /// </summary>
     public static class TransformExtensions
     {
         #region Position Methods
 
         /// <summary>
-        /// Sets the transform's position with optional individual components.
+        ///     Sets the transform's position with optional individual components.
         /// </summary>
         public static void SetPosition(this Transform transform, Vector3? position = null, float? x = null,
             float? y = null, float? z = null)
@@ -29,7 +29,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Adds to the transform's position with optional individual components.
+        ///     Adds to the transform's position with optional individual components.
         /// </summary>
         public static void AddPosition(this Transform transform, Vector3? delta = null, float? x = null,
             float? y = null, float? z = null)
@@ -50,7 +50,7 @@ namespace Neo.Extensions
         #region Local Position Methods
 
         /// <summary>
-        /// Sets the transform's local position with optional individual components.
+        ///     Sets the transform's local position with optional individual components.
         /// </summary>
         public static void SetLocalPosition(this Transform transform, Vector3? position = null, float? x = null,
             float? y = null, float? z = null)
@@ -66,7 +66,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Adds to the transform's local position with optional individual components.
+        ///     Adds to the transform's local position with optional individual components.
         /// </summary>
         public static void AddLocalPosition(this Transform transform, Vector3? delta = null, float? x = null,
             float? y = null, float? z = null)
@@ -87,7 +87,7 @@ namespace Neo.Extensions
         #region Rotation Methods
 
         /// <summary>
-        /// Sets the transform's rotation with optional individual components.
+        ///     Sets the transform's rotation with optional individual components.
         /// </summary>
         public static void SetRotation(this Transform transform, Quaternion? rotation = null,
             Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
@@ -109,7 +109,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Adds to the transform's rotation with optional individual components.
+        ///     Adds to the transform's rotation with optional individual components.
         /// </summary>
         public static void AddRotation(this Transform transform, Quaternion? delta = null, Vector3? eulerDelta = null,
             float? x = null, float? y = null, float? z = null)
@@ -136,7 +136,7 @@ namespace Neo.Extensions
         #region Local Rotation Methods
 
         /// <summary>
-        /// Sets the transform's local rotation with optional individual components.
+        ///     Sets the transform's local rotation with optional individual components.
         /// </summary>
         public static void SetLocalRotation(this Transform transform, Quaternion? rotation = null,
             Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
@@ -158,7 +158,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Adds to the transform's local rotation with optional individual components.
+        ///     Adds to the transform's local rotation with optional individual components.
         /// </summary>
         public static void AddLocalRotation(this Transform transform, Quaternion? delta = null,
             Vector3? eulerDelta = null, float? x = null, float? y = null, float? z = null)
@@ -185,7 +185,7 @@ namespace Neo.Extensions
         #region Scale Methods
 
         /// <summary>
-        /// Sets the transform's scale with optional individual components.
+        ///     Sets the transform's scale with optional individual components.
         /// </summary>
         public static void SetScale(this Transform transform, Vector3? scale = null, float? x = null, float? y = null,
             float? z = null)
@@ -201,7 +201,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Adds to the transform's scale with optional individual components.
+        ///     Adds to the transform's scale with optional individual components.
         /// </summary>
         public static void AddScale(this Transform transform, Vector3? delta = null, float? x = null, float? y = null,
             float? z = null)
@@ -222,7 +222,7 @@ namespace Neo.Extensions
         #region Utility Methods
 
         /// <summary>
-        /// Rotates the transform to look at a specified position in 2D space (on the XY plane).
+        ///     Rotates the transform to look at a specified position in 2D space (on the XY plane).
         /// </summary>
         /// <param name="offset">Additional rotation angle in degrees applied to the final Z rotation.</param>
         public static void LookAt2D(this Transform transform, Vector3 targetPosition, float offset = 0f)
@@ -233,7 +233,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Returns a coroutine that smoothly rotates the transform to look at a target.
+        ///     Returns a coroutine that smoothly rotates the transform to look at a target.
         /// </summary>
         /// <remarks>You must run this with StartCoroutine().</remarks>
         /// <param name="target">The world position to look at.</param>
@@ -252,7 +252,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Finds the closest Transform from a collection of other transforms.
+        ///     Finds the closest Transform from a collection of other transforms.
         /// </summary>
         /// <param name="others">A collection of transforms to compare against.</param>
         /// <returns>The closest transform, or null if the collection is empty.</returns>
@@ -277,7 +277,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Returns all immediate child transforms of the current transform.
+        ///     Returns all immediate child transforms of the current transform.
         /// </summary>
         public static Transform[] GetChildTransforms(this Transform transform)
         {
@@ -289,7 +289,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Resets the transform's position, rotation, and scale to default values.
+        ///     Resets the transform's position, rotation, and scale to default values.
         /// </summary>
         public static void ResetTransform(this Transform transform)
         {
@@ -300,7 +300,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Resets the transform's local position, rotation, and scale to default values.
+        ///     Resets the transform's local position, rotation, and scale to default values.
         /// </summary>
         public static void ResetLocalTransform(this Transform transform)
         {
@@ -311,7 +311,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Copies position, rotation, and scale from a source transform to this transform.
+        ///     Copies position, rotation, and scale from a source transform to this transform.
         /// </summary>
         public static void CopyFrom(this Transform transform, Transform source)
         {
@@ -323,7 +323,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Destroys all child objects of the transform.
+        ///     Destroys all child objects of the transform.
         /// </summary>
         public static void DestroyChildren(this Transform transform)
         {

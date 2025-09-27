@@ -5,15 +5,20 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    /// Scene wrapper over <see cref="ChanceManager"/> with UnityEvents and optional ScriptableObject source.
-    /// Useful for drop tables, random events etc.
+    ///     Scene wrapper over <see cref="ChanceManager" /> with UnityEvents and optional ScriptableObject source.
+    ///     Useful for drop tables, random events etc.
     /// </summary>
     [AddComponentMenu("Neoxider/Random/Chance System")]
     public class ChanceSystemBehaviour : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Inline chance configuration")] private ChanceManager manager = new();
-        [SerializeField] [Tooltip("Optional ChanceData asset to copy configuration from at Awake")] private ChanceData chanceData;
-        [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")] private bool logDebugOnce;
+        [SerializeField] [Tooltip("Inline chance configuration")]
+        private ChanceManager manager = new();
+
+        [SerializeField] [Tooltip("Optional ChanceData asset to copy configuration from at Awake")]
+        private ChanceData chanceData;
+
+        [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
+        private bool logDebugOnce;
 
         public UnityEvent<int> OnIdGenerated;
 
@@ -21,10 +26,7 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            if (chanceData != null)
-            {
-                manager.CopyFrom(chanceData.Manager);
-            }
+            if (chanceData != null) manager.CopyFrom(chanceData.Manager);
 
             manager.Sanitize();
             manager.EnsureUniqueIds();
@@ -41,7 +43,9 @@ namespace Neo.Tools
                 {
                     var index = manager.Entries.ToList().IndexOf(entry);
                     var normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
-                    Debug.Log($"[ChanceSystem] Sampled entry id={entry.CustomId}, weight={entry.Weight:F4}, normalized={normalized:F4}", this);
+                    Debug.Log(
+                        $"[ChanceSystem] Sampled entry id={entry.CustomId}, weight={entry.Weight:F4}, normalized={normalized:F4}",
+                        this);
                 }
                 else
                 {
@@ -50,10 +54,7 @@ namespace Neo.Tools
             }
 #endif
 
-            if (manager == null)
-            {
-                manager = new ChanceManager();
-            }
+            if (manager == null) manager = new ChanceManager();
 
             manager.Sanitize();
             manager.EnsureUniqueIds();

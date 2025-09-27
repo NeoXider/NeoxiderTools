@@ -1,7 +1,7 @@
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Defines various time formatting options for use with extension methods.
+    ///     Defines various time formatting options for use with extension methods.
     /// </summary>
     public enum TimeFormat
     {
@@ -20,7 +20,7 @@ namespace Neo.Extensions
     }
 
     /// <summary>
-    /// Represents an edge or corner of the screen.
+    ///     Represents an edge or corner of the screen.
     /// </summary>
     public enum ScreenEdge
     {

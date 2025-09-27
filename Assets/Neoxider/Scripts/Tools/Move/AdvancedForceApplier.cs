@@ -1,8 +1,6 @@
-using System;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
-using Sirenix.OdinInspector;
 
 namespace Neo.Tools
 {
@@ -39,7 +37,7 @@ namespace Neo.Tools
         private float defaultForce = 10f;
 
         [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
-        public bool randomizeForce = false;
+        public bool randomizeForce;
 
         [FoldoutGroup("Force")] [ShowIf("randomizeForce")] [MinMaxSlider(0f, 10000f, true)]
         public Vector2 forceRange = new(5f, 15f);
@@ -53,7 +51,7 @@ namespace Neo.Tools
         public ForceMode2D forceMode2D = ForceMode2D.Impulse;
 
         [FoldoutGroup("Limits")] [ToggleLeft] [LabelText("Clamp Max Speed")]
-        public bool clampMaxSpeed = false;
+        public bool clampMaxSpeed;
 
         [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
         public float maxSpeed = 20f;
@@ -67,17 +65,17 @@ namespace Neo.Tools
         public bool useLocalForward = true;
 
         [FoldoutGroup("Direction")] [ToggleLeft] [LabelText("Invert Direction")]
-        public bool invertDirection = false;
+        public bool invertDirection;
 
-        [FoldoutGroup("Direction")]
-        [ShowIf("directionMode == DirectionMode.CustomVector")]
-        [LabelText("Custom Vector")]
+        [FoldoutGroup("Direction")] [ShowIf("directionMode == DirectionMode.CustomVector")] [LabelText("Custom Vector")]
         public Vector3 customDirection = Vector3.forward;
 
         [FoldoutGroup("Direction")]
         [ShowIf("directionMode == DirectionMode.ToTarget")]
         [LabelText("Target (Transform)")]
         public Transform target;
+
+        [FoldoutGroup("Events")] public UnityEvent OnApplyForce;
 
         [FoldoutGroup("Debug")]
         [InfoBox("No suitable Rigidbody found. Component won't be able to apply force.", InfoMessageType.Warning,
@@ -86,16 +84,6 @@ namespace Neo.Tools
         [ReadOnly]
         [LabelText("Active Body Type")]
         private string ActiveBodyInfo => Is3DActive() ? "Rigidbody (3D)" : Is2DActive() ? "Rigidbody2D (2D)" : "None";
-
-        [FoldoutGroup("Controls")]
-        [Button("Apply Now")]
-        [DisableInEditorMode]
-        private void ApplyNowButton()
-        {
-            ApplyForce();
-        }
-
-        [FoldoutGroup("Events")] public UnityEvent OnApplyForce;
 
         private void Awake()
         {
@@ -110,36 +98,44 @@ namespace Neo.Tools
                 ApplyForce(defaultForce);
         }
 
+        [FoldoutGroup("Controls")]
+        [Button("Apply Now")]
+        [DisableInEditorMode]
+        private void ApplyNowButton()
+        {
+            ApplyForce();
+        }
+
         /// <summary>
-        /// Применяет силу к телу.
+        ///     Применяет силу к телу.
         /// </summary>
         /// <param name="force">Величина силы (если 0, используется defaultForce)</param>
         /// <param name="direction">Направление силы (если null, используется GetDirection())</param>
         public void ApplyForce(float force = 0f, Vector3? direction = null)
         {
             var chosenForce = force > 0f ? force :
-                randomizeForce ? UnityEngine.Random.Range(forceRange.x, forceRange.y) : defaultForce;
+                randomizeForce ? Random.Range(forceRange.x, forceRange.y) : defaultForce;
             var dir = (direction ?? ComputeDirection()).normalized;
             if (dir.sqrMagnitude < 1e-6f) dir = transform.forward; // fallback
 
             if (Resolve3D())
             {
                 rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
-                if (clampMaxSpeed && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
-                    rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
+                if (clampMaxSpeed && rigidbody3D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+                    rigidbody3D.linearVelocity = rigidbody3D.linearVelocity.normalized * maxSpeed;
             }
             else if (Resolve2D())
             {
                 rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
-                if (clampMaxSpeed && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
-                    rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
+                if (clampMaxSpeed && rigidbody2D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+                    rigidbody2D.linearVelocity = rigidbody2D.linearVelocity.normalized * maxSpeed;
             }
 
             OnApplyForce?.Invoke();
         }
 
         /// <summary>
-        /// Получает направление для применения силы.
+        ///     Получает направление для применения силы.
         /// </summary>
         private Vector3 ComputeDirection()
         {
@@ -149,8 +145,8 @@ namespace Neo.Tools
             {
                 case DirectionMode.Velocity:
                 {
-                    if (Resolve3D()) result = rigidbody3D.velocity;
-                    else if (Resolve2D()) result = (Vector3)rigidbody2D.velocity;
+                    if (Resolve3D()) result = rigidbody3D.linearVelocity;
+                    else if (Resolve2D()) result = rigidbody2D.linearVelocity;
                     break;
                 }
                 case DirectionMode.TransformForward:

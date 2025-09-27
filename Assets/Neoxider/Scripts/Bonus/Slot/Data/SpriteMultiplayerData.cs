@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -6,34 +7,7 @@ namespace Neo.Bonus
     [CreateAssetMenu(fileName = "SpritesMultipliersDefault", menuName = "Neoxider/Slot/SpritesMult")]
     public class SpriteMultiplayerData : ScriptableObject
     {
-        #region structs
-
-        [System.Serializable]
-        public class SpritesMultiplier
-        {
-            public IdMult[] spriteMults;
-        }
-
-        [System.Serializable]
-        public struct IdMult
-        {
-            [Tooltip("ID элемента из SpritesData")]
-            public int id;
-
-            public CountMultiplayer[] countMult;
-        }
-
-        [System.Serializable]
-        public struct CountMultiplayer
-        {
-            public int count;
-            public float mult;
-        }
-
-        #endregion
-
         [SerializeField] private SpritesMultiplier _spritesMultiplier;
-        public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
 
         [Space] [Header("Auto Generate")] [SerializeField]
         private bool _generate;
@@ -42,6 +16,7 @@ namespace Neo.Bonus
         [SerializeField] private int _maxCount = 3;
         [SerializeField] private int defaultMultiplayer = 1;
         [SerializeField] private SpritesData _spritesData;
+        public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
 
 
         private void OnValidate()
@@ -73,5 +48,31 @@ namespace Neo.Bonus
 
             _spritesMultiplier.spriteMults = list.ToArray();
         }
+
+        #region structs
+
+        [Serializable]
+        public class SpritesMultiplier
+        {
+            public IdMult[] spriteMults;
+        }
+
+        [Serializable]
+        public struct IdMult
+        {
+            [Tooltip("ID элемента из SpritesData")]
+            public int id;
+
+            public CountMultiplayer[] countMult;
+        }
+
+        [Serializable]
+        public struct CountMultiplayer
+        {
+            public int count;
+            public float mult;
+        }
+
+        #endregion
     }
 }

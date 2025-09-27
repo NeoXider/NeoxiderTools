@@ -1,8 +1,9 @@
 using System;
 using System.Linq;
-using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
+using Neo;
+using Neo.Extensions;
 
 namespace Neo.Bonus
 {

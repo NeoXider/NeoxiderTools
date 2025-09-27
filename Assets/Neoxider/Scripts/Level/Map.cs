@@ -1,10 +1,11 @@
+using System;
 using UnityEngine;
 
 namespace Neo
 {
     namespace Level
     {
-        [System.Serializable]
+        [Serializable]
         public class Map
         {
             public bool isInfinity = true;
@@ -12,11 +13,11 @@ namespace Neo
             public bool isLoopLevel;
 
             [Space] [SerializeField] private int _level;
-            public int level => _level;
 
             public int idMap;
 
             private string _saveKey;
+            public int level => _level;
 
             public void Load(int i, string saveKey)
             {
@@ -40,8 +41,7 @@ namespace Neo
             {
                 if (!isInfinity)
                     return _level >= countLevels;
-                else
-                    return false;
+                return false;
             }
         }
     }

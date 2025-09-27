@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 
 /// <summary>
-/// Базовый контракт для любых систем перемещения.
+///     Базовый контракт для любых систем перемещения.
 /// </summary>
 public interface IMover
 {

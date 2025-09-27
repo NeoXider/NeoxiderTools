@@ -1,20 +1,19 @@
-using System;
-using UnityEngine;
-
 #if UNITY_EDITOR
+using System;
 using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Custom property drawer for RequireInterface attribute.
-    /// Ensures that assigned objects implement the required interface.
+    ///     Custom property drawer for RequireInterface attribute.
+    ///     Ensures that assigned objects implement the required interface.
     /// </summary>
     [CustomPropertyDrawer(typeof(RequireInterface))]
     public class RequireInterfaceDrawer : PropertyDrawer
     {
         /// <summary>
-        /// Draws the property field and validates the assigned value
+        ///     Draws the property field and validates the assigned value
         /// </summary>
         /// <param name="position">Rectangle on the screen to use for the property GUI</param>
         /// <param name="property">The SerializedProperty to make the custom GUI for</param>
@@ -42,7 +41,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Validates that the property can hold object references and the required type is an interface
+        ///     Validates that the property can hold object references and the required type is an interface
         /// </summary>
         /// <param name="property">The property to validate</param>
         /// <param name="targetType">The required interface type</param>
@@ -53,7 +52,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Checks if the assigned object implements the required interface
+        ///     Checks if the assigned object implements the required interface
         /// </summary>
         /// <param name="property">The property containing the object reference</param>
         /// <param name="targetType">The required interface type</param>
@@ -70,7 +69,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Validates that a GameObject has a component implementing the required interface
+        ///     Validates that a GameObject has a component implementing the required interface
         /// </summary>
         /// <param name="property">The property containing the GameObject reference</param>
         /// <param name="targetType">The required interface type</param>
@@ -85,7 +84,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Validates that a ScriptableObject implements the required interface
+        ///     Validates that a ScriptableObject implements the required interface
         /// </summary>
         /// <param name="property">The property containing the ScriptableObject reference</param>
         /// <param name="targetType">The required interface type</param>

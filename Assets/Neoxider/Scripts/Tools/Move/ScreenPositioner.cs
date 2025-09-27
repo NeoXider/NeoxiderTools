@@ -1,19 +1,12 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using Neo;
 using Neo.Extensions;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace Neo.Tools
 {
     public class ScreenPositioner : MonoBehaviour
     {
-        [Header("Position Settings")] public bool _useScreenPosition = false;
+        [Header("Position Settings")] public bool _useScreenPosition;
         public Vector2 _positionScreen = Vector2.zero;
-
-        [Space] public ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
 
         [Space] public Vector2 _offsetScreen = Vector2.zero;
         public Vector2 _offset = Vector2.zero;
@@ -24,7 +17,15 @@ namespace Neo.Tools
         [Header("References")] [SerializeField]
         private Camera _targetCamera;
 
+        [Space] public ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
+
         private void Start()
+        {
+            InitializeComponents();
+            UpdatePositionAndRotation();
+        }
+
+        private void OnValidate()
         {
             InitializeComponents();
             UpdatePositionAndRotation();
@@ -69,12 +70,6 @@ namespace Neo.Tools
                 transform.SetPosition(z: z);
 
             transform.AddPosition(_offset);
-        }
-
-        private void OnValidate()
-        {
-            InitializeComponents();
-            UpdatePositionAndRotation();
         }
 
         public void Configure(ScreenEdge edge, Vector2 offset, float depth)

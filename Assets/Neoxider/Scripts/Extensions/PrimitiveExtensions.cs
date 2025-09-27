@@ -4,19 +4,31 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Extension methods for primitive data types like float, int, and bool.
+    ///     Extension methods for primitive data types like float, int, and bool.
     /// </summary>
     public static class PrimitiveExtensions
     {
+        #region Bool Extensions
+
+        /// <summary>
+        ///     Converts a boolean value to an integer (1 for true, 0 for false).
+        /// </summary>
+        public static int ToInt(this bool value)
+        {
+            return value ? 1 : 0;
+        }
+
+        #endregion
+
         #region Constants
 
         /// <summary>
-        /// Default minimum value for normalization operations.
+        ///     Default minimum value for normalization operations.
         /// </summary>
         public const float DefaultMinValue = -1000000f;
 
         /// <summary>
-        /// Default maximum value for normalization operations.
+        ///     Default maximum value for normalization operations.
         /// </summary>
         public const float DefaultMaxValue = 1000000f;
 
@@ -25,7 +37,7 @@ namespace Neo.Extensions
         #region Float Extensions
 
         /// <summary>
-        /// Rounds a float value to a specified number of decimal places.
+        ///     Rounds a float value to a specified number of decimal places.
         /// </summary>
         public static float RoundToDecimal(this float value, int places)
         {
@@ -37,7 +49,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a time value in seconds to a string representation.
+        ///     Formats a time value in seconds to a string representation.
         /// </summary>
         public static string FormatTime(this float timeSeconds, TimeFormat format = TimeFormat.Seconds,
             string separator = ":")
@@ -71,7 +83,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a float number with a separator every three digits and specified decimal places.
+        ///     Formats a float number with a separator every three digits and specified decimal places.
         /// </summary>
         public static string FormatWithSeparator(this float number, string separator = "", int decimalPlaces = 2)
         {
@@ -90,7 +102,7 @@ namespace Neo.Extensions
         #region Normalization Extensions (for Float)
 
         /// <summary>
-        /// Normalizes a value to the range [0, 1] using default min/max values.
+        ///     Normalizes a value to the range [0, 1] using default min/max values.
         /// </summary>
         public static float NormalizeToUnit(this float x)
         {
@@ -98,7 +110,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Normalizes a value to the range [-1, 1] using default min/max values.
+        ///     Normalizes a value to the range [-1, 1] using default min/max values.
         /// </summary>
         public static float NormalizeToRange(this float x)
         {
@@ -106,7 +118,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Normalizes a value to the range [-1, 1] using specified min/max values.
+        ///     Normalizes a value to the range [-1, 1] using specified min/max values.
         /// </summary>
         public static float NormalizeToRange(this float x, float min, float max)
         {
@@ -114,7 +126,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Normalizes a value to the range [0, 1] using specified min/max values.
+        ///     Normalizes a value to the range [0, 1] using specified min/max values.
         /// </summary>
         public static float NormalizeToUnit(this float x, float min, float max)
         {
@@ -125,7 +137,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Denormalizes a value from [0, 1] range to the specified range.
+        ///     Denormalizes a value from [0, 1] range to the specified range.
         /// </summary>
         public static float Denormalize(this float normalizedValue, float min, float max)
         {
@@ -138,7 +150,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Remaps a value from one range to another.
+        ///     Remaps a value from one range to another.
         /// </summary>
         public static float Remap(this float value, float fromMin, float fromMax, float toMin, float toMax)
         {
@@ -151,7 +163,7 @@ namespace Neo.Extensions
         #region Int Extensions
 
         /// <summary>
-        /// Converts an integer value to a boolean (non-zero = true, zero = false).
+        ///     Converts an integer value to a boolean (non-zero = true, zero = false).
         /// </summary>
         public static bool ToBool(this int value)
         {
@@ -159,7 +171,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats an integer with a separator every three digits.
+        ///     Formats an integer with a separator every three digits.
         /// </summary>
         public static string FormatWithSeparator(this int number, string separator)
         {
@@ -167,18 +179,6 @@ namespace Neo.Extensions
                 return number.ToString();
 
             return string.Format("{0:N0}", number).Replace(",", separator);
-        }
-
-        #endregion
-
-        #region Bool Extensions
-
-        /// <summary>
-        /// Converts a boolean value to an integer (1 for true, 0 for false).
-        /// </summary>
-        public static int ToInt(this bool value)
-        {
-            return value ? 1 : 0;
         }
 
         #endregion

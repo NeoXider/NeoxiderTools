@@ -1,5 +1,7 @@
-using UnityEngine;
+using System;
 using System.IO;
+using UnityEngine;
+using Object = UnityEngine.Object;
 #if UNITY_EDITOR
 using UnityEditor;
 #endif
@@ -7,7 +9,7 @@ using UnityEditor;
 namespace Neo
 {
     /// <summary>
-    /// Static access point for Neoxider settings
+    ///     Static access point for Neoxider settings
     /// </summary>
     public static class NeoxiderSettings
     {
@@ -15,9 +17,24 @@ namespace Neo
         private static NeoxiderData currentSettings;
         private static CreateSceneHierarchy sceneHierarchyInstance;
 
+        #region Editor Methods
+
+#if UNITY_EDITOR
+        /// <summary>
+        ///     Open settings window in Unity Editor
+        /// </summary>
+        [MenuItem("Tools/Neoxider/Settings")]
+        public static void OpenSettings()
+        {
+            NeoxiderSettingsWindow.ShowWindow();
+        }
+#endif
+
+        #endregion
+
         #region Settings Data Class
 
-        [System.Serializable]
+        [Serializable]
         public class NeoxiderData
         {
             public bool enableAttributeSearch = true;
@@ -48,7 +65,7 @@ namespace Neo
         #region Public Properties
 
         /// <summary>
-        /// Current settings instance
+        ///     Current settings instance
         /// </summary>
         public static NeoxiderData Current
         {
@@ -61,7 +78,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Scene hierarchy settings
+        ///     Scene hierarchy settings
         /// </summary>
         public static CreateSceneHierarchy SceneHierarchy
         {
@@ -74,12 +91,12 @@ namespace Neo
         }
 
         /// <summary>
-        /// Root folder path for the project
+        ///     Root folder path for the project
         /// </summary>
         public static string RootFolderPath => Path.Combine(Application.dataPath, Current.rootFolder);
 
         /// <summary>
-        /// Whether attribute search is enabled
+        ///     Whether attribute search is enabled
         /// </summary>
         public static bool EnableAttributeSearch => Current.enableAttributeSearch;
 
@@ -88,7 +105,7 @@ namespace Neo
         #region Public Methods
 
         /// <summary>
-        /// Get the full path for a project folder
+        ///     Get the full path for a project folder
         /// </summary>
         public static string GetFolderPath(string folderName)
         {
@@ -96,7 +113,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Check if a folder exists in the project structure
+        ///     Check if a folder exists in the project structure
         /// </summary>
         public static bool FolderExists(string folderName)
         {
@@ -104,7 +121,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Get relative path from Assets folder
+        ///     Get relative path from Assets folder
         /// </summary>
         public static string GetRelativePath(string absolutePath)
         {
@@ -118,7 +135,7 @@ namespace Neo
         #region Settings Management
 
         /// <summary>
-        /// Reset settings to default values
+        ///     Reset settings to default values
         /// </summary>
         public static void ResetToDefaults()
         {
@@ -129,7 +146,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Load settings from file
+        ///     Load settings from file
         /// </summary>
         public static void LoadSettings()
         {
@@ -141,7 +158,7 @@ namespace Neo
                     currentSettings = JsonUtility.FromJson<NeoxiderData>(json);
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to load Neoxider settings: {e.Message}");
             }
@@ -154,7 +171,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Save current settings to file
+        ///     Save current settings to file
         /// </summary>
         public static void SaveSettings()
         {
@@ -169,26 +186,11 @@ namespace Neo
                 AssetDatabase.Refresh();
 #endif
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 Debug.LogError($"Failed to save Neoxider settings: {e.Message}");
             }
         }
-
-        #endregion
-
-        #region Editor Methods
-
-#if UNITY_EDITOR
-        /// <summary>
-        /// Open settings window in Unity Editor
-        /// </summary>
-        [MenuItem("Tools/Neoxider/Settings")]
-        public static void OpenSettings()
-        {
-            NeoxiderSettingsWindow.ShowWindow();
-        }
-#endif
 
         #endregion
     }

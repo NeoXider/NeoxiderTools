@@ -2,11 +2,18 @@
 using UnityEngine.Events;
 
 /// <summary>
-/// 2-D mouse mover 
+///     2-D mouse mover
 /// </summary>
 [RequireComponent(typeof(Transform))]
 public class MouseMover2D : MonoBehaviour, IMover
 {
+    public enum AxisMask
+    {
+        XY,
+        X,
+        Y
+    }
+
     public enum MoveMode
     {
         DeltaNormalized,
@@ -14,13 +21,6 @@ public class MouseMover2D : MonoBehaviour, IMover
         MoveToPointHold,
         ClickToPoint,
         Direction
-    }
-
-    public enum AxisMask
-    {
-        XY,
-        X,
-        Y
     }
 
     [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
@@ -36,27 +36,14 @@ public class MouseMover2D : MonoBehaviour, IMover
     [Header("Events")] public UnityEvent OnMoveStart;
     public UnityEvent OnMoveStop;
 
-    // IMover
-    public bool IsMoving { get; private set; }
-
-    public void MoveDelta(Vector2 d)
-    {
-        DirectTranslate(ApplyMask(d));
-    }
-
-    public void MoveToPoint(Vector2 p)
-    {
-        DirectTranslate(ApplyMask(p - (Vector2)transform.position));
-    }
-
     // internals
     private Camera cam;
-    private Rigidbody2D rb;
-    private Vector2 lastMouse;
-    private Vector2 desiredVelocity; // m/s  (только Delta-режимы)
     private Vector2 clickPoint; // Direction mode
-    private Vector2 targetPoint; // ClickToPoint mode
+    private Vector2 desiredVelocity; // m/s  (только Delta-режимы)
     private bool hasTarget;
+    private Vector2 lastMouse;
+    private Rigidbody2D rb;
+    private Vector2 targetPoint; // ClickToPoint mode
     private bool wasMoving;
 
     private void Awake()
@@ -101,6 +88,19 @@ public class MouseMover2D : MonoBehaviour, IMover
     {
         var delta = ComputeStep(Time.fixedDeltaTime);
         ApplyDelta(delta);
+    }
+
+    // IMover
+    public bool IsMoving { get; private set; }
+
+    public void MoveDelta(Vector2 d)
+    {
+        DirectTranslate(ApplyMask(d));
+    }
+
+    public void MoveToPoint(Vector2 p)
+    {
+        DirectTranslate(ApplyMask(p - (Vector2)transform.position));
     }
 
     // ---------- вычисляем шаг за fixedDT ------------------------------

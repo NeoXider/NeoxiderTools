@@ -9,7 +9,7 @@ namespace Neo
         {
             [SerializeField] private int _clipType;
 
-            [SerializeField] private bool _playOnAwake = false;
+            [SerializeField] private bool _playOnAwake;
 
             [SerializeField] private float _volume = 1;
 

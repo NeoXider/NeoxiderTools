@@ -10,7 +10,6 @@ namespace Neo
         public class LevelButton : MonoBehaviour
         {
             [SerializeField] private Button _button;
-            [SerializeField] private LevelManager _levelManager;
 
             [Space] [SerializeField] private GameObject[] _closes, _opens;
             [SerializeField] private TextMeshProUGUI _textLvl;
@@ -23,6 +22,7 @@ namespace Neo
             [Space] public UnityEvent OnDisableVisual;
             public UnityEvent OnEnableVisual;
             public UnityEvent OnCurrentVisual;
+            [SerializeField] private LevelManager _levelManager;
 
             private void Start()
             {
@@ -34,6 +34,11 @@ namespace Neo
             {
                 if (_button != null)
                     _button.onClick.RemoveListener(Click);
+            }
+
+            private void OnValidate()
+            {
+                _button ??= GetComponent<Button>();
             }
 
             public void Click()
@@ -72,11 +77,6 @@ namespace Neo
                     OnCurrentVisual?.Invoke();
                 else if (idVisual == 2)
                     OnEnableVisual?.Invoke();
-            }
-
-            private void OnValidate()
-            {
-                _button ??= GetComponent<Button>();
             }
         }
     }

@@ -12,8 +12,15 @@ namespace Neo.Bonus
 
         public int id { get; private set; }
 
+        private void OnValidate()
+        {
+            _spriteRenderer ??= GetComponent<SpriteRenderer>();
+            _image ??= GetComponent<Image>();
+            if (_textDescription == null) _textDescription = GetComponentInChildren<TMP_Text>();
+        }
+
         /// <summary>
-        /// Устанавливает визуальное представление элемента на основе данных.
+        ///     Устанавливает визуальное представление элемента на основе данных.
         /// </summary>
         public void SetVisuals(SlotVisualData data)
         {
@@ -49,13 +56,6 @@ namespace Neo.Bonus
                 _textDescription.gameObject.SetActive(hasDescription);
                 if (hasDescription) _textDescription.text = data.description;
             }
-        }
-
-        private void OnValidate()
-        {
-            _spriteRenderer ??= GetComponent<SpriteRenderer>();
-            _image ??= GetComponent<Image>();
-            if (_textDescription == null) _textDescription = GetComponentInChildren<TMP_Text>();
         }
     }
 }

@@ -4,11 +4,11 @@ using UnityEngine;
 namespace Neo
 {
     /// <summary>
-    /// Attribute that requires a Unity Object reference to implement a specific interface.
-    /// Can be used with both GameObjects (checking their components) and ScriptableObjects.
+    ///     Attribute that requires a Unity Object reference to implement a specific interface.
+    ///     Can be used with both GameObjects (checking their components) and ScriptableObjects.
     /// </summary>
     /// <example>
-    /// <code>
+    ///     <code>
     /// public interface IMoneyAdd { }
     /// 
     /// public class MyComponent : MonoBehaviour
@@ -25,12 +25,12 @@ namespace Neo
     public class RequireInterface : PropertyAttribute
     {
         /// <summary>
-        /// The interface type that the referenced object must implement
+        ///     The interface type that the referenced object must implement
         /// </summary>
         public readonly Type RequireType;
 
         /// <summary>
-        /// Creates a new RequireInterface attribute
+        ///     Creates a new RequireInterface attribute
         /// </summary>
         /// <param name="requireType">The interface type that the referenced object must implement</param>
         /// <exception cref="ArgumentException">Thrown when the specified type is not an interface</exception>

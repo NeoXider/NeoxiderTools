@@ -1,4 +1,3 @@
-using System;
 #if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
@@ -337,7 +336,8 @@ public sealed class SpineController : MonoBehaviour
             return;
         }
 
-        int skinIndex = persistSkinSelection ? PlayerPrefs.GetInt(skinPrefsKey, GetDefaultSkinIndex()) : GetDefaultSkinIndex();
+        int skinIndex =
+ persistSkinSelection ? PlayerPrefs.GetInt(skinPrefsKey, GetDefaultSkinIndex()) : GetDefaultSkinIndex();
         SetSkinByIndex(skinIndex, false);
     }
 
@@ -534,7 +534,8 @@ using UnityEngine;
 
 public sealed class SpineController : MonoBehaviour
 {
-    [SerializeField] private string message = "Spine package is missing. Install Spine Unity Runtime to use SpineController.";
+    [SerializeField]
+    private string message = "Spine package is missing. Install Spine Unity Runtime to use SpineController.";
 
     private void Awake()
     {

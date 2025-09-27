@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,41 +10,6 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(VisualToggle))]
         public class VisualToggle : MonoBehaviour
         {
-            [System.Serializable]
-            public class ImageVariant
-            {
-                public bool setNativeSize = false;
-                public Image image;
-                public Sprite start;
-                public Sprite end;
-            }
-
-            [System.Serializable]
-            public class ImageColor
-            {
-                public Image image;
-                public Color start = Color.white;
-                public Color end = Color.white;
-            }
-
-            [System.Serializable]
-            public class TmpColorTextVariant
-            {
-                public TextMeshProUGUI tmp;
-                public Color start = Color.white;
-                public Color end = Color.white;
-                public bool use_text = false;
-                public string start_t;
-                public string end_t;
-            }
-
-            [System.Serializable]
-            public class GameObjectVariant
-            {
-                public GameObject[] starts;
-                public GameObject[] ends;
-            }
-
             public ImageVariant[] imageV = new ImageVariant[0];
             public ImageColor[] imageC = new ImageColor[0];
             public TmpColorTextVariant[] textColor = new TmpColorTextVariant[0];
@@ -55,6 +21,29 @@ namespace Neo
             {
                 if (TryGetComponent(out Toggle toggle))
                     Visual(toggle.isOn);
+            }
+
+            private void OnValidate()
+            {
+                if (!end)
+                {
+                    foreach (var v in imageV)
+                        if (v.image != null)
+                            if (v.start == null)
+                                v.start = v.image.sprite;
+
+                    foreach (var t in textColor)
+                        if (t.tmp != null)
+                        {
+                            if (t.start == null)
+                                t.start = t.tmp.color;
+
+                            if (!t.use_text)
+                                t.start_t = t.tmp.text;
+                        }
+                }
+
+                Visual();
             }
 
             public void Press()
@@ -123,27 +112,39 @@ namespace Neo
                 for (var i = 0; i < variants.ends.Length; i++) variants.ends[i].SetActive(end);
             }
 
-            private void OnValidate()
+            [Serializable]
+            public class ImageVariant
             {
-                if (!end)
-                {
-                    foreach (var v in imageV)
-                        if (v.image != null)
-                            if (v.start == null)
-                                v.start = v.image.sprite;
+                public bool setNativeSize;
+                public Image image;
+                public Sprite start;
+                public Sprite end;
+            }
 
-                    foreach (var t in textColor)
-                        if (t.tmp != null)
-                        {
-                            if (t.start == null)
-                                t.start = t.tmp.color;
+            [Serializable]
+            public class ImageColor
+            {
+                public Image image;
+                public Color start = Color.white;
+                public Color end = Color.white;
+            }
 
-                            if (!t.use_text)
-                                t.start_t = t.tmp.text;
-                        }
-                }
+            [Serializable]
+            public class TmpColorTextVariant
+            {
+                public TextMeshProUGUI tmp;
+                public Color start = Color.white;
+                public Color end = Color.white;
+                public bool use_text;
+                public string start_t;
+                public string end_t;
+            }
 
-                Visual();
+            [Serializable]
+            public class GameObjectVariant
+            {
+                public GameObject[] starts;
+                public GameObject[] ends;
             }
         }
     }

@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Bonus
 {
-    [System.Serializable]
+    [Serializable]
     public class SpeedControll
     {
         [Tooltip("Начальная скорость вращения барабана.")]

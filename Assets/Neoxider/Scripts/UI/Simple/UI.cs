@@ -1,7 +1,7 @@
-using Neo;
 using System.Collections;
 using System.Collections.Generic;
 using Neo.Extensions;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,10 +11,11 @@ namespace Neo
     {
         public class UI : MonoBehaviour
         {
+            public static UI I;
             [SerializeField] private GameObject[] _pages;
 
             [Header("ButtonAutoSetChilds")] [SerializeField]
-            private bool _setChild = false;
+            private bool _setChild;
 
             [SerializeField] private Transform _parentPages;
 
@@ -28,7 +29,6 @@ namespace Neo
 
             [Space] [SerializeField] private float _timeDelay = 1.5f;
             [SerializeField] private Animator _animator;
-            public static UI I;
 
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
@@ -39,6 +39,27 @@ namespace Neo
 
                 if (id >= 0)
                     SetPage(startId);
+            }
+
+            private void OnValidate()
+            {
+                if (!Application.isPlaying && is_debug_change)
+                    SetPage(id);
+
+                if (_setChild)
+                {
+                    _setChild = false;
+
+                    var childs = new List<GameObject>();
+
+                    var parent = _parentPages != null ? _parentPages.transform : transform;
+
+                    foreach (Transform child in parent)
+                        if (child.gameObject != gameObject)
+                            childs.Add(child.gameObject);
+
+                    _pages = childs.ToArray();
+                }
             }
 
             public void SetPage()
@@ -103,27 +124,6 @@ namespace Neo
             public void SetCurrtentPage(bool active)
             {
                 _pages[id].SetActive(active);
-            }
-
-            private void OnValidate()
-            {
-                if (!Application.isPlaying && is_debug_change)
-                    SetPage(id);
-
-                if (_setChild)
-                {
-                    _setChild = false;
-
-                    var childs = new List<GameObject>();
-
-                    var parent = _parentPages != null ? _parentPages.transform : transform;
-
-                    foreach (Transform child in parent)
-                        if (child.gameObject != gameObject)
-                            childs.Add(child.gameObject);
-
-                    _pages = childs.ToArray();
-                }
             }
         }
     }

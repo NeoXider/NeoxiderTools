@@ -5,6 +5,7 @@ using DG.Tweening;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Serialization;
+using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
@@ -13,49 +14,39 @@ namespace Neo
 {
     public class AnimationFly : Singleton<AnimationFly>
     {
-        [Header("Настройки спавна бонусов")] [Tooltip("Родительский объект для спавна бонусов")]
-        public Transform spawnParent;
-
-        public Canvas parentCanvas;
-
-        public float scaleMult = 1;
-        public bool ignoreZ = false;
-
-        [Tooltip("Множитель количества спавнящихся объектов")]
-        public float countMultiplier = 1f;
-
-        [Tooltip("Максимальное количество объектов за один вызов")]
-        public int maxBonusCount = 1000;
-
-        [Header("Анимация")] public float flyDuration = 1.0f;
-        public float delayBetweenBonuses = 0.1f;
+        private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
         public float arcStrength = 2.0f;
-        public float multY = 0.5f;
-        public bool useUnscaledTime = false;
-
-        [Range(0, 1)] public float middlePoint = 0.4f;
-
-        [Space] public Ease easyStart = Ease.OutQuad;
-        public Ease easyEnd = Ease.InQuad;
-
-        [Serializable]
-        [Tooltip("Префабы бонусов по типу и конечная точка")]
-        public struct BonusPrefabData
-        {
-            public int bonusType;
-            public GameObject prefab;
-            public Transform endPos;
-
-            [FormerlySerializedAs("isWorld")] [FormerlySerializedAs("isCanvas")]
-            public bool isWorldSpace;
-        }
 
 #if ODIN_INSPECTOR
         [TableList]
 #endif
         public List<BonusPrefabData> bonusPrefabList = new();
 
-        private Dictionary<int, BonusPrefabData> _prefabDict = new();
+        [Tooltip("Множитель количества спавнящихся объектов")]
+        public float countMultiplier = 1f;
+
+        public float delayBetweenBonuses = 0.1f;
+        public Ease easyEnd = Ease.InQuad;
+
+        [Space] public Ease easyStart = Ease.OutQuad;
+
+        [Header("Анимация")] public float flyDuration = 1.0f;
+        public bool ignoreZ = false;
+
+        [Tooltip("Максимальное количество объектов за один вызов")]
+        public int maxBonusCount = 1000;
+
+        [Range(0, 1)] public float middlePoint = 0.4f;
+        public float multY = 0.5f;
+
+        public Canvas parentCanvas;
+
+        public float scaleMult = 1;
+
+        [Header("Настройки спавна бонусов")] [Tooltip("Родительский объект для спавна бонусов")]
+        public Transform spawnParent;
+
+        public bool useUnscaledTime = false;
 
         private void Start()
         {
@@ -172,9 +163,9 @@ namespace Neo
                 var endPos = end;
                 var midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
                 midPoint += new Vector3(
-                    UnityEngine.Random.Range(-arcStrength, arcStrength),
-                    UnityEngine.Random.Range(arcStrength * multY, arcStrength),
-                    UnityEngine.Random.Range(-arcStrength, arcStrength)
+                    Random.Range(-arcStrength, arcStrength),
+                    Random.Range(arcStrength * multY, arcStrength),
+                    Random.Range(-arcStrength, arcStrength)
                 );
                 bonus.transform.DOMove(midPoint, flyDuration / 2f)
                     .SetEase(easyStart).SetUpdate(useUnscaledTime)
@@ -234,11 +225,14 @@ namespace Neo
         }
 
         /// <summary>
-        /// Преобразует мировую позицию в позицию на Canvas (Screen Space Overlay/Camera).
-        /// Converts a world position to a position on the Canvas (Screen Space Overlay/Camera).
+        ///     Преобразует мировую позицию в позицию на Canvas (Screen Space Overlay/Camera).
+        ///     Converts a world position to a position on the Canvas (Screen Space Overlay/Camera).
         /// </summary>
         /// <param name="worldPosition">Мировая позиция / World position</param>
-        /// <param name="canvas">Canvas, в котором находится UI элемент (если null — используется parentCanvas) / Canvas containing the UI element (if null, uses parentCanvas)</param>
+        /// <param name="canvas">
+        ///     Canvas, в котором находится UI элемент (если null — используется parentCanvas) / Canvas containing
+        ///     the UI element (if null, uses parentCanvas)
+        /// </param>
         /// <param name="camera">Камера, используемая Canvas (null для Overlay) / Camera used by the Canvas (null for Overlay)</param>
         /// <returns>Позиция в пространстве Canvas (ScreenPoint) / Position in Canvas space (ScreenPoint)</returns>
         public static Vector2 WorldToCanvasPosition(Vector3 worldPosition, Canvas canvas = null, Camera camera = null)
@@ -257,6 +251,18 @@ namespace Neo
 
             var screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);
             return screenPoint;
+        }
+
+        [Serializable]
+        [Tooltip("Префабы бонусов по типу и конечная точка")]
+        public struct BonusPrefabData
+        {
+            public int bonusType;
+            public GameObject prefab;
+            public Transform endPos;
+
+            [FormerlySerializedAs("isWorld")] [FormerlySerializedAs("isCanvas")]
+            public bool isWorldSpace;
         }
     }
 }

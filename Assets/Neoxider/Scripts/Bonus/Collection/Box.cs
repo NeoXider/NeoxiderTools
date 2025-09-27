@@ -30,6 +30,11 @@ namespace Neo.Bonus
         public float maxProgress = 300;
         [SerializeField] private float _progress;
 
+        [Space] public UnityEvent OnTakePrize;
+        public UnityEvent OnProgressReached;
+        public UnityEvent OnProgressNotReached;
+        public UnityEvent<bool> OnChangeProgress;
+
         public float progress
         {
             get => _progress;
@@ -42,14 +47,18 @@ namespace Neo.Bonus
 
         public bool CheckProgress => progress >= maxProgress;
 
-        [Space] public UnityEvent OnTakePrize;
-        public UnityEvent OnProgressReached;
-        public UnityEvent OnProgressNotReached;
-        public UnityEvent<bool> OnChangeProgress;
-
         private void Awake()
         {
             _progress = PlayerPrefs.GetFloat(_saveName + nameof(progress), 0);
+        }
+
+        private void OnEnable()
+        {
+            if (_animItem != null)
+                _animItem.transform.localScale = Vector3.zero;
+
+            Visual();
+            Events();
         }
 
         public void AddProgress()
@@ -88,15 +97,6 @@ namespace Neo.Bonus
                 OnProgressReached?.Invoke();
             else
                 OnProgressNotReached?.Invoke();
-        }
-
-        private void OnEnable()
-        {
-            if (_animItem != null)
-                _animItem.transform.localScale = Vector3.zero;
-
-            Visual();
-            Events();
         }
 
 #if ODIN_INSPECTOR

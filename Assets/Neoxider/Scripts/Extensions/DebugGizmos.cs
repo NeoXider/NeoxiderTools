@@ -5,16 +5,19 @@ using UnityEngine;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// A utility class for drawing common debug gizmos in the Unity editor.
-    /// Call these methods from MonoBehaviour's OnDrawGizmos or OnDrawGizmosSelected.
+    ///     A utility class for drawing common debug gizmos in the Unity editor.
+    ///     Call these methods from MonoBehaviour's OnDrawGizmos or OnDrawGizmosSelected.
     /// </summary>
     public static class DebugGizmos
     {
         /// <summary>
-        /// Draws the outline of a Bounds object.
+        ///     Draws the outline of a Bounds object.
         /// </summary>
         /// <param name="bounds">The bounds to draw.</param>
-        /// <param name="changeColor">If true, the gizmo color will be temporarily changed. If false, uses the current Gizmos.color.</param>
+        /// <param name="changeColor">
+        ///     If true, the gizmo color will be temporarily changed. If false, uses the current
+        ///     Gizmos.color.
+        /// </param>
         /// <param name="color">The color to use for the gizmo. Defaults to red if not specified.</param>
         public static void DrawBounds(Bounds bounds, bool changeColor = true, Color? color = null)
         {
@@ -31,10 +34,13 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Draws a sphere at an average position.
+        ///     Draws a sphere at an average position.
         /// </summary>
         /// <param name="center">The center position to draw the sphere at.</param>
-        /// <param name="changeColor">If true, the gizmo color will be temporarily changed. If false, uses the current Gizmos.color.</param>
+        /// <param name="changeColor">
+        ///     If true, the gizmo color will be temporarily changed. If false, uses the current
+        ///     Gizmos.color.
+        /// </param>
         /// <param name="color">The color of the sphere. Defaults to red if not specified.</param>
         /// <param name="radius">The radius of the sphere.</param>
         public static void DrawAveragePosition(Vector3 center, bool changeColor = true, Color? color = null,
@@ -53,11 +59,14 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Draws a line from a starting point to the position of the closest GameObject.
+        ///     Draws a line from a starting point to the position of the closest GameObject.
         /// </summary>
         /// <param name="from">The starting point of the line.</param>
         /// <param name="closest">The target GameObject. If null, nothing is drawn.</param>
-        /// <param name="changeColor">If true, the gizmo color will be temporarily changed. If false, uses the current Gizmos.color.</param>
+        /// <param name="changeColor">
+        ///     If true, the gizmo color will be temporarily changed. If false, uses the current
+        ///     Gizmos.color.
+        /// </param>
         /// <param name="color">The color of the line. Defaults to red if not specified.</param>
         public static void DrawLineToClosest(Vector3 from, GameObject closest, bool changeColor = true,
             Color? color = null)
@@ -77,11 +86,14 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Draws lines from a starting point to a collection of target GameObjects.
+        ///     Draws lines from a starting point to a collection of target GameObjects.
         /// </summary>
         /// <param name="from">The starting point for the lines.</param>
         /// <param name="targets">The collection of GameObjects to draw lines to.</param>
-        /// <param name="changeColor">If true, the gizmo color will be temporarily changed. If false, uses the current Gizmos.color.</param>
+        /// <param name="changeColor">
+        ///     If true, the gizmo color will be temporarily changed. If false, uses the current
+        ///     Gizmos.color.
+        /// </param>
         /// <param name="color">The color of the lines. Defaults to red if not specified.</param>
         public static void DrawConnections(Vector3 from, IEnumerable<GameObject> targets, bool changeColor = true,
             Color? color = null)

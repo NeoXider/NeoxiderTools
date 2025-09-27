@@ -2,6 +2,7 @@
  *  PhysicsEvents2D ‒ the same idea, but for 2-D physics.                  *
  ***************************************************************************/
 
+using System;
 using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,14 +27,36 @@ namespace Neo.Tools
         public Collision2DEvent onCollisionStay = new();
         public Collision2DEvent onCollisionExit = new();
 
-        [System.Serializable]
-        public class Collider2DEvent : UnityEvent<Collider2D>
+        /* Collision -------------------------------------------------- */
+        private void OnCollisionEnter2D(Collision2D c)
         {
+            if (interactable && PassFilter(c.gameObject)) onCollisionEnter.Invoke(c);
         }
 
-        [System.Serializable]
-        public class Collision2DEvent : UnityEvent<Collision2D>
+        private void OnCollisionExit2D(Collision2D c)
         {
+            if (interactable && PassFilter(c.gameObject)) onCollisionExit.Invoke(c);
+        }
+
+        private void OnCollisionStay2D(Collision2D c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onCollisionStay.Invoke(c);
+        }
+
+        /* Trigger ---------------------------------------------------- */
+        private void OnTriggerEnter2D(Collider2D c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerEnter.Invoke(c);
+        }
+
+        private void OnTriggerExit2D(Collider2D c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerExit.Invoke(c);
+        }
+
+        private void OnTriggerStay2D(Collider2D c)
+        {
+            if (interactable && PassFilter(c.gameObject)) onTriggerStay.Invoke(c);
         }
 
         /* ───────── INTERNAL ───────────────────────────────────────── */
@@ -45,36 +68,14 @@ namespace Neo.Tools
             return string.IsNullOrEmpty(requiredTag) || go.CompareTag(requiredTag);
         }
 
-        /* Trigger ---------------------------------------------------- */
-        private void OnTriggerEnter2D(Collider2D c)
+        [Serializable]
+        public class Collider2DEvent : UnityEvent<Collider2D>
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerEnter.Invoke(c);
         }
 
-        private void OnTriggerStay2D(Collider2D c)
+        [Serializable]
+        public class Collision2DEvent : UnityEvent<Collision2D>
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerStay.Invoke(c);
-        }
-
-        private void OnTriggerExit2D(Collider2D c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onTriggerExit.Invoke(c);
-        }
-
-        /* Collision -------------------------------------------------- */
-        private void OnCollisionEnter2D(Collision2D c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionEnter.Invoke(c);
-        }
-
-        private void OnCollisionStay2D(Collision2D c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionStay.Invoke(c);
-        }
-
-        private void OnCollisionExit2D(Collision2D c)
-        {
-            if (interactable && PassFilter(c.gameObject)) onCollisionExit.Invoke(c);
         }
     }
 }

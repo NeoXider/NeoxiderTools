@@ -14,6 +14,11 @@ namespace Neo.Tools
             AdjustZBasedOnY();
         }
 
+        private void OnValidate()
+        {
+            AdjustZBasedOnY();
+        }
+
         private void AdjustZBasedOnY()
         {
             var position = transform.position;
@@ -22,11 +27,6 @@ namespace Neo.Tools
 
             position.z = newY * _ratio;
             transform.position = position;
-        }
-
-        private void OnValidate()
-        {
-            AdjustZBasedOnY();
         }
     }
 }

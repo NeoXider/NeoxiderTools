@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo
 {
     /// <summary>
-    /// Predefined soft colors for use with ColorAttribute
+    ///     Predefined soft colors for use with ColorAttribute
     /// </summary>
     public enum ColorEnum
     {
@@ -33,11 +33,11 @@ namespace Neo
     }
 
     /// <summary>
-    /// Attribute to color fields in the Unity Inspector.
-    /// Can be used with custom colors or predefined soft colors.
+    ///     Attribute to color fields in the Unity Inspector.
+    ///     Can be used with custom colors or predefined soft colors.
     /// </summary>
     /// <example>
-    /// <code>
+    ///     <code>
     /// [Color(1.0, 0.5, 0.5)] // Custom red color
     /// public string redField;
     /// 
@@ -48,12 +48,7 @@ namespace Neo
     public class ColorAttribute : PropertyAttribute
     {
         /// <summary>
-        /// The color to be applied to the field in the inspector
-        /// </summary>
-        public Color color { get; private set; }
-
-        /// <summary>
-        /// Creates a new ColorAttribute with custom RGBA values
+        ///     Creates a new ColorAttribute with custom RGBA values
         /// </summary>
         /// <param name="r">Red component (0-1)</param>
         /// <param name="g">Green component (0-1)</param>
@@ -65,7 +60,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Creates a new ColorAttribute with a predefined soft color
+        ///     Creates a new ColorAttribute with a predefined soft color
         /// </summary>
         /// <param name="colorEnum">The predefined color to use</param>
         public ColorAttribute(ColorEnum colorEnum)
@@ -74,7 +69,12 @@ namespace Neo
         }
 
         /// <summary>
-        /// Converts a ColorEnum value to a Color
+        ///     The color to be applied to the field in the inspector
+        /// </summary>
+        public Color color { get; private set; }
+
+        /// <summary>
+        ///     Converts a ColorEnum value to a Color
         /// </summary>
         /// <param name="colorEnum">The ColorEnum value to convert</param>
         /// <returns>The corresponding Color value</returns>

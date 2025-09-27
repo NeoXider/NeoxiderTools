@@ -5,12 +5,12 @@ using UnityEngine.EventSystems;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Utility methods for common Unity UI operations.
+    ///     Utility methods for common Unity UI operations.
     /// </summary>
     public static class UIUtils
     {
         /// <summary>
-        /// Gets all UI elements hit by the current mouse position.
+        ///     Gets all UI elements hit by the current mouse position.
         /// </summary>
         /// <returns>List of raycast results for UI elements under the cursor.</returns>
         public static List<RaycastResult> GetUIElementsUnderCursor()
@@ -26,7 +26,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Checks if the mouse pointer is currently over any UI element.
+        ///     Checks if the mouse pointer is currently over any UI element.
         /// </summary>
         /// <returns>True if the pointer is over a UI element, false otherwise.</returns>
         public static bool IsPointerOverUI()
@@ -36,7 +36,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Converts a 3D world position to a 2D local position on a specific UI Canvas.
+        ///     Converts a 3D world position to a 2D local position on a specific UI Canvas.
         /// </summary>
         /// <param name="canvas">The target canvas.</param>
         /// <param name="worldPoint">The world position to convert.</param>
@@ -47,18 +47,13 @@ namespace Neo.Extensions
             if (camera == null) camera = Camera.main;
             if (camera == null) return Vector2.zero;
 
-            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
-            {
-                return camera.WorldToScreenPoint(worldPoint);
-            }
-            else
-            {
-                var canvasRect = canvas.GetComponent<RectTransform>();
-                Vector2 screenPoint = camera.WorldToScreenPoint(worldPoint);
-                RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint,
-                    canvas.worldCamera ?? camera, out var localPoint);
-                return localPoint;
-            }
+            if (canvas.renderMode == RenderMode.ScreenSpaceOverlay) return camera.WorldToScreenPoint(worldPoint);
+
+            var canvasRect = canvas.GetComponent<RectTransform>();
+            Vector2 screenPoint = camera.WorldToScreenPoint(worldPoint);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPoint,
+                canvas.worldCamera ?? camera, out var localPoint);
+            return localPoint;
         }
     }
 }

@@ -1,14 +1,15 @@
-using UnityEngine;
+using System.IO;
 using UnityEditor;
 using UnityEditor.SceneManagement;
-using System.IO;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [InitializeOnLoad]
 public class SceneSaver : EditorWindow
 {
     private static bool isScriptEnabled = true;
     public static float intervalMinutes = 3f;
-    public static bool saveEvenIfNotDirty = false;
+    public static bool saveEvenIfNotDirty;
     private static string currentScenePath;
     private static double lastSaveTime;
     private static string lastSaveStatus = "";
@@ -16,6 +17,29 @@ public class SceneSaver : EditorWindow
     static SceneSaver()
     {
         EditorApplication.update += BackgroundSaveCheck;
+    }
+
+    private void OnEnable()
+    {
+        UpdateCurrentScenePath();
+        lastSaveTime = EditorApplication.timeSinceStartup;
+        EditorSceneManager.sceneOpened += OnSceneOpened;
+    }
+
+    private void OnDisable()
+    {
+        EditorSceneManager.sceneOpened -= OnSceneOpened;
+    }
+
+    private void OnGUI()
+    {
+        isScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", isScriptEnabled);
+        intervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", intervalMinutes);
+        saveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", saveEvenIfNotDirty);
+        EditorGUILayout.LabelField("Current Scene", currentScenePath);
+        EditorGUILayout.LabelField("Last Save Status", lastSaveStatus);
+
+        if (GUILayout.Button("Save Now")) SaveSceneClone();
     }
 
     [MenuItem("Tools/Neoxider/Scene Saver Settings")]
@@ -39,19 +63,7 @@ public class SceneSaver : EditorWindow
         }
     }
 
-    private void OnEnable()
-    {
-        UpdateCurrentScenePath();
-        lastSaveTime = EditorApplication.timeSinceStartup;
-        EditorSceneManager.sceneOpened += OnSceneOpened;
-    }
-
-    private void OnDisable()
-    {
-        EditorSceneManager.sceneOpened -= OnSceneOpened;
-    }
-
-    private static void OnSceneOpened(UnityEngine.SceneManagement.Scene scene, OpenSceneMode mode)
+    private static void OnSceneOpened(Scene scene, OpenSceneMode mode)
     {
         UpdateCurrentScenePath();
     }
@@ -84,16 +96,5 @@ public class SceneSaver : EditorWindow
         EditorSceneManager.SaveScene(currentScene, newScenePath, true);
         lastSaveStatus = $"Auto-saved scene clone: {newScenePath}";
         Debug.Log(lastSaveStatus);
-    }
-
-    private void OnGUI()
-    {
-        isScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", isScriptEnabled);
-        intervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", intervalMinutes);
-        saveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", saveEvenIfNotDirty);
-        EditorGUILayout.LabelField("Current Scene", currentScenePath);
-        EditorGUILayout.LabelField("Last Save Status", lastSaveStatus);
-
-        if (GUILayout.Button("Save Now")) SaveSceneClone();
     }
 }

@@ -6,7 +6,8 @@ namespace Neo.Save
     public static class GlobalSave
     {
         private static GlobalData _data;
-        private static bool _isReady;
+
+        private static readonly string saveData = "SavesData";
 
         public static GlobalData data
         {
@@ -22,13 +23,7 @@ namespace Neo.Save
             }
         }
 
-        public static bool IsReady
-        {
-            get => _isReady;
-            set => _isReady = value;
-        }
-
-        private static string saveData = "SavesData";
+        public static bool IsReady { get; set; }
 
         public static void LoadingData()
         {

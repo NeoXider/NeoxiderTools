@@ -1,15 +1,38 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
-using System.Collections;
 
 /// <summary>
-/// Enhanced AI navigation component that provides pathfinding and movement behavior
+///     Enhanced AI navigation component that provides pathfinding and movement behavior
 /// </summary>
 [RequireComponent(typeof(NavMeshAgent))]
 [RequireComponent(typeof(Animator))]
 public class AiNavigation : MonoBehaviour
 {
+    #region Validation
+
+    private void OnValidate()
+    {
+        if (agent == null)
+            agent = GetComponent<NavMeshAgent>();
+
+        if (animator == null)
+            animator = GetComponent<Animator>();
+
+        // Ensure positive values
+        stoppingDistance = Mathf.Max(0.01f, stoppingDistance);
+        baseSpeed = Mathf.Max(0.1f, baseSpeed);
+        sprintSpeedMultiplier = Mathf.Max(1f, sprintSpeedMultiplier);
+        acceleration = Mathf.Max(0.1f, acceleration);
+        turnSpeed = Mathf.Max(1f, turnSpeed);
+        pathUpdateInterval = Mathf.Max(0.1f, pathUpdateInterval);
+        pathCheckRadius = Mathf.Max(0.1f, pathCheckRadius);
+        maxPathLength = Mathf.Max(1f, maxPathLength);
+    }
+
+    #endregion
+
     #region Inspector Fields
 
     [Header("Navigation Settings")] [SerializeField]
@@ -58,7 +81,6 @@ public class AiNavigation : MonoBehaviour
     private bool hasStopped = true;
     private float lastPathUpdateTime;
     private Vector3 lastTargetPosition;
-    private bool isPathBlocked;
     private NavMeshPathStatus lastPathStatus;
     private Coroutine pathUpdateCoroutine;
     private bool isInitialized;
@@ -69,32 +91,32 @@ public class AiNavigation : MonoBehaviour
     #region Properties
 
     /// <summary>
-    /// Gets the current navigation target
+    ///     Gets the current navigation target
     /// </summary>
     public Transform Target => target;
 
     /// <summary>
-    /// Gets whether the agent has reached its destination
+    ///     Gets whether the agent has reached its destination
     /// </summary>
     public bool HasReachedDestination => hasStopped && target != null;
 
     /// <summary>
-    /// Gets whether the agent's path is blocked
+    ///     Gets whether the agent's path is blocked
     /// </summary>
-    public bool IsPathBlocked => isPathBlocked;
+    public bool IsPathBlocked { get; private set; }
 
     /// <summary>
-    /// Gets the current path status
+    ///     Gets the current path status
     /// </summary>
     public NavMeshPathStatus PathStatus => agent != null ? agent.pathStatus : NavMeshPathStatus.PathInvalid;
 
     /// <summary>
-    /// Gets the remaining distance to the destination
+    ///     Gets the remaining distance to the destination
     /// </summary>
     public float RemainingDistance => agent != null ? agent.remainingDistance : 0f;
 
     /// <summary>
-    /// Gets the current speed of the agent
+    ///     Gets the current speed of the agent
     /// </summary>
     public float CurrentSpeed => agent != null ? agent.velocity.magnitude : 0f;
 
@@ -158,7 +180,7 @@ public class AiNavigation : MonoBehaviour
     #region Public Methods
 
     /// <summary>
-    /// Sets a new navigation target
+    ///     Sets a new navigation target
     /// </summary>
     public void SetTarget(Transform newTarget)
     {
@@ -174,7 +196,7 @@ public class AiNavigation : MonoBehaviour
             agent.stoppingDistance = stoppingDistance;
             UpdatePath();
             hasStopped = false;
-            isPathBlocked = false;
+            IsPathBlocked = false;
 
             // Start path update coroutine if auto-update is enabled
             if (autoUpdatePath && pathUpdateCoroutine == null)
@@ -187,7 +209,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets a new navigation target by position
+    ///     Sets a new navigation target by position
     /// </summary>
     public bool SetDestination(Vector3 destination)
     {
@@ -203,7 +225,7 @@ public class AiNavigation : MonoBehaviour
             target = null;
             agent.SetDestination(hit.position);
             hasStopped = false;
-            isPathBlocked = false;
+            IsPathBlocked = false;
 
             // Start path update coroutine if auto-update is enabled
             if (autoUpdatePath && pathUpdateCoroutine == null)
@@ -217,7 +239,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Sets the agent's movement speed
+    ///     Sets the agent's movement speed
     /// </summary>
     public void SetSpeed(float multiplier)
     {
@@ -228,7 +250,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Enables sprint mode
+    ///     Enables sprint mode
     /// </summary>
     public void EnableSprint(bool enable)
     {
@@ -236,7 +258,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Stops the agent immediately
+    ///     Stops the agent immediately
     /// </summary>
     public void Stop()
     {
@@ -254,7 +276,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Resumes the agent's movement
+    ///     Resumes the agent's movement
     /// </summary>
     public void Resume()
     {
@@ -267,7 +289,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Warps the agent to a new position
+    ///     Warps the agent to a new position
     /// </summary>
     public bool WarpToPosition(Vector3 position)
     {
@@ -284,7 +306,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Checks if a position is reachable
+    ///     Checks if a position is reachable
     /// </summary>
     public bool IsPositionReachable(Vector3 position)
     {
@@ -301,7 +323,7 @@ public class AiNavigation : MonoBehaviour
     }
 
     /// <summary>
-    /// Gets the path to a position
+    ///     Gets the path to a position
     /// </summary>
     public NavMeshPath GetPathToPosition(Vector3 position)
     {
@@ -404,15 +426,15 @@ public class AiNavigation : MonoBehaviour
             else if (agent.pathStatus == NavMeshPathStatus.PathPartial ||
                      agent.pathStatus == NavMeshPathStatus.PathInvalid)
             {
-                if (!isPathBlocked)
+                if (!IsPathBlocked)
                 {
-                    isPathBlocked = true;
+                    IsPathBlocked = true;
                     OnPathBlocked?.Invoke(target.position);
                 }
             }
             else
             {
-                isPathBlocked = false;
+                IsPathBlocked = false;
             }
 
             // Notify path status changes
@@ -422,29 +444,6 @@ public class AiNavigation : MonoBehaviour
                 OnPathStatusChanged?.Invoke(agent.pathStatus);
             }
         }
-    }
-
-    #endregion
-
-    #region Validation
-
-    private void OnValidate()
-    {
-        if (agent == null)
-            agent = GetComponent<NavMeshAgent>();
-
-        if (animator == null)
-            animator = GetComponent<Animator>();
-
-        // Ensure positive values
-        stoppingDistance = Mathf.Max(0.01f, stoppingDistance);
-        baseSpeed = Mathf.Max(0.1f, baseSpeed);
-        sprintSpeedMultiplier = Mathf.Max(1f, sprintSpeedMultiplier);
-        acceleration = Mathf.Max(0.1f, acceleration);
-        turnSpeed = Mathf.Max(1f, turnSpeed);
-        pathUpdateInterval = Mathf.Max(0.1f, pathUpdateInterval);
-        pathCheckRadius = Mathf.Max(0.1f, pathCheckRadius);
-        maxPathLength = Mathf.Max(1f, maxPathLength);
     }
 
     #endregion

@@ -1,19 +1,18 @@
-using UnityEngine;
-
 #if UNITY_EDITOR
 using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Custom property drawer for ColorAttribute.
-    /// Colors the background of fields in the Unity Inspector.
+    ///     Custom property drawer for ColorAttribute.
+    ///     Colors the background of fields in the Unity Inspector.
     /// </summary>
     [CustomPropertyDrawer(typeof(ColorAttribute))]
     public class ColorAttributeDrawer : PropertyDrawer
     {
         /// <summary>
-        /// Draws the property with the specified color in the Unity Inspector
+        ///     Draws the property with the specified color in the Unity Inspector
         /// </summary>
         /// <param name="position">Rectangle on the screen to use for the property GUI</param>
         /// <param name="property">The SerializedProperty to make the custom GUI for</param>

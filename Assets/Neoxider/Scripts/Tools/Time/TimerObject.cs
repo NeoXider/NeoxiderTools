@@ -1,10 +1,11 @@
-﻿using UnityEngine;
+﻿using Sirenix.OdinInspector;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo
 {
     /// <summary>
-    /// MonoBehaviour-based timer with Unity events support
+    ///     MonoBehaviour-based timer with Unity events support
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour
@@ -19,19 +20,19 @@ namespace Neo
         public bool countUp = true;
 
         [Tooltip("Use unscaled time (ignores time scale)")]
-        public bool useUnscaledTime = false;
+        public bool useUnscaledTime;
 
         [Tooltip("Automatically restart when complete")]
-        public bool looping = false;
+        public bool looping;
 
         [Header("Initial State")] [Tooltip("Start timer automatically on enable")]
         public bool autoStart = true;
 
         [Tooltip("Current active state of the timer")]
-        public bool isActive = false;
+        public bool isActive;
 
         [Tooltip("Current time value of the timer")] [SerializeField]
-        private float currentTime = 0f;
+        private float currentTime;
 
         [Header("Events")] [Tooltip("Called when timer starts")]
         public UnityEvent OnTimerStarted;
@@ -49,6 +50,25 @@ namespace Neo
         public UnityEvent OnTimerCompleted;
 
         private float timeSinceLastUpdate;
+
+        /// <summary>
+        ///     Gets whether timer is currently running
+        /// </summary>
+        public bool IsRunning => isActive;
+
+        /// <summary>
+        ///     Gets whether timer has completed
+        /// </summary>
+        public bool IsCompleted => currentTime >= duration;
+
+        /// <summary>
+        ///     Resets timer to initial state
+        /// </summary>
+        public void Reset()
+        {
+            currentTime = 0f;
+            InvokeEvents();
+        }
 
         private void Start()
         {
@@ -108,7 +128,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Starts or restarts timer with optional new parameters
+        ///     Starts or restarts timer with optional new parameters
         /// </summary>
         /// <param name="newDuration">New duration in seconds. If negative, keeps current duration</param>
         /// <param name="newUpdateInterval">New update interval in seconds. If negative, keeps current interval</param>
@@ -122,7 +142,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Starts or resumes the timer
+        ///     Starts or resumes the timer
         /// </summary>
         [Button]
         public void Play()
@@ -136,7 +156,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Pauses or resumes the timer
+        ///     Pauses or resumes the timer
         /// </summary>
         /// <param name="paused">True to pause, false to resume</param>
         [Button]
@@ -152,7 +172,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Toggles between paused and running states
+        ///     Toggles between paused and running states
         /// </summary>
         public void TogglePause()
         {
@@ -160,7 +180,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Stops and resets the timer
+        ///     Stops and resets the timer
         /// </summary>
         [Button]
         public void Stop()
@@ -170,16 +190,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Resets timer to initial state
-        /// </summary>
-        public void Reset()
-        {
-            currentTime = 0f;
-            InvokeEvents();
-        }
-
-        /// <summary>
-        /// Sets the current time value
+        ///     Sets the current time value
         /// </summary>
         /// <param name="time">New time value in seconds</param>
         public void SetTime(float time)
@@ -189,7 +200,7 @@ namespace Neo
         }
 
         /// <summary>
-        /// Gets current progress (0-1)
+        ///     Gets current progress (0-1)
         /// </summary>
         /// <returns>Progress value from 0 to 1</returns>
         public float GetProgress()
@@ -198,22 +209,12 @@ namespace Neo
         }
 
         /// <summary>
-        /// Gets current time value
+        ///     Gets current time value
         /// </summary>
         /// <returns>Current time in seconds</returns>
         public float GetCurrentTime()
         {
             return countUp ? currentTime : duration - currentTime;
         }
-
-        /// <summary>
-        /// Gets whether timer is currently running
-        /// </summary>
-        public bool IsRunning => isActive;
-
-        /// <summary>
-        /// Gets whether timer has completed
-        /// </summary>
-        public bool IsCompleted => currentTime >= duration;
     }
 }

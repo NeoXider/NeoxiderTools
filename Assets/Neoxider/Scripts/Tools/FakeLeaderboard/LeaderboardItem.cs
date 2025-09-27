@@ -1,39 +1,43 @@
+using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-public class LeaderboardItem : MonoBehaviour
+namespace Neo.Tools
 {
-    public LeaderboardUser user;
-    public int id;
-    public bool isPlayer;
-
-    [Space] public TMP_Text textScore;
-    public TMP_Text textId;
-    public TMP_Text textName;
-
-    [Space] public UnityEvent OnUserTrue;
-    public UnityEvent OnuserFalse;
-    public UnityEvent<bool> OnUser;
-
-    public void Set(LeaderboardUser user, bool isPlayer)
+    public class LeaderboardItem : MonoBehaviour
     {
-        this.user = user;
-        id = user.num;
-        this.isPlayer = isPlayer;
+        public int id;
+        public bool isPlayer;
 
-        textName.text = user.name;
-        textScore.text = user.score.ToString();
-        textId.text = (id + 1).ToString();
+        [Space] public UnityEvent OnUserTrue;
+        public UnityEvent OnuserFalse;
+        public UnityEvent<bool> OnUser;
+        public TMP_Text textId;
+        public TMP_Text textName;
 
-        Events(isPlayer);
-    }
+        [Space] public TMP_Text textScore;
+        public LeaderboardUser user;
 
-    private void Events(bool isPlayer)
-    {
-        OnUser?.Invoke(isPlayer);
+        public void Set(LeaderboardUser user, bool isPlayer)
+        {
+            this.user = user;
+            id = user.num;
+            this.isPlayer = isPlayer;
 
-        if (isPlayer) OnUserTrue?.Invoke();
-        else OnuserFalse?.Invoke();
+            textName.text = user.name;
+            textScore.text = user.score.ToString();
+            textId.text = (id + 1).ToString();
+
+            Events(isPlayer);
+        }
+
+        private void Events(bool isPlayer)
+        {
+            OnUser?.Invoke(isPlayer);
+
+            if (isPlayer) OnUserTrue?.Invoke();
+            else OnuserFalse?.Invoke();
+        }
     }
 }

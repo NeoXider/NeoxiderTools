@@ -1,8 +1,9 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Bonus
 {
-    [System.Serializable]
+    [Serializable]
     public class VisualSlotLines
     {
         public GameObject[] lines;
