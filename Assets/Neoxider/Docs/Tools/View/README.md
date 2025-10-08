@@ -5,6 +5,7 @@
 ## Файлы
 
 - [ImageFillAmountAnimator](./ImageFillAmountAnimator.md)
+- [LightAnimator](./LightAnimator.md)
 - [Selector](./Selector.md)
 - [StarView](./StarView.md)
 - [ZPositionAdjuster](./ZPositionAdjuster.md)

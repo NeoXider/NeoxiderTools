@@ -21,6 +21,7 @@ public class AiNavigation : MonoBehaviour
             animator = GetComponent<Animator>();
 
         // Ensure positive values
+        triggerDistance = Mathf.Max(0f, triggerDistance);
         stoppingDistance = Mathf.Max(0.01f, stoppingDistance);
         baseSpeed = Mathf.Max(0.1f, baseSpeed);
         sprintSpeedMultiplier = Mathf.Max(1f, sprintSpeedMultiplier);
@@ -38,6 +39,7 @@ public class AiNavigation : MonoBehaviour
     [Header("Navigation Settings")] [SerializeField]
     private Transform target;
 
+    [Min(0)] [SerializeField] private float triggerDistance = 0;
     [SerializeField] private float stoppingDistance = 0.1f;
     [SerializeField] private bool updateRotation = true;
 
@@ -141,6 +143,7 @@ public class AiNavigation : MonoBehaviour
     {
         if (!isInitialized) return;
 
+        HandleTriggerDistance();
         UpdatePathfinding();
         UpdateAnimation();
         CheckPathStatus();
@@ -339,6 +342,33 @@ public class AiNavigation : MonoBehaviour
 
     #region Private Methods
 
+    private void HandleTriggerDistance()
+    {
+        if (target == null || triggerDistance <= 0f)
+        {
+            return;
+        }
+
+        var distanceToTarget = Vector3.Distance(transform.position, target.position);
+
+        if (distanceToTarget > triggerDistance)
+        {
+            if (!agent.isStopped)
+            {
+                agent.isStopped = true;
+                hasStopped = true;
+            }
+        }
+        else
+        {
+            // Target is in range
+            if (agent.isStopped)
+            {
+                Resume();
+            }
+        }
+    }
+    
     private void InitializeComponents()
     {
         agent = GetComponent<NavMeshAgent>();

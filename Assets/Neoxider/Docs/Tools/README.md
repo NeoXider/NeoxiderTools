@@ -100,6 +100,7 @@
   - [README](./Time/README.md)
 - **View**
   - [ImageFillAmountAnimator](./View/ImageFillAmountAnimator.md)
+  - [LightAnimator](./View/LightAnimator.md)
   - [Selector](./View/Selector.md)
   - [StarView](./View/StarView.md)
   - [ZPositionAdjuster](./View/ZPositionAdjuster.md)
