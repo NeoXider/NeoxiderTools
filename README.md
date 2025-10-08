@@ -1,9 +1,5 @@
 # Neoxider — коллекция мощных инструментов для Unity
 
-see: [!README](Assets/Neoxider/README.md)
-
-## v5.2.4
-
 > «Мне хотелось иметь библиотеку, которая ускоряет рутину, не превращая проект в чёрный ящик. Поэтому я собрали Neoxider.»
 
 Neoxider — это экосистема из более чем 150 модулей: UI, бонусы, экономика, ObjectPool, Spine, параллакс и многое другое. Пакет вырос на реальных проектах, поэтому он одинаково полезен и для быстрого прототипа, и для долгой поддержки коммьюнити‑проектов.
@@ -21,21 +17,10 @@ Neoxider — это экосистема из более чем 150 модуле
 
 ## Как ориентироваться
 
-| Каталог | Что внутри | Документация |
-|---------|------------|---------------|
-| `Audio` | Менеджеры звука, настройки микшера, play-on-click | [`Docs/Audio.md`](./Assets/Neoxider/Docs/Audio.md) |
-| `Bonus` | Коллекции, слот-машины, колёса удачи | [`Docs/Bonus.md`](./Assets/Neoxider/Docs/Bonus.md) |
-| `Editor` | Атрибуты редактора, инспекторные тулзы | [`Docs/Editor.md`](./Assets/Neoxider/Docs/Editor.md) |
-| `Extensions` | Расширения C# и Unity API | [`Docs/Extensions/README.md`](./Assets/Neoxider/Docs/Extensions/README.md) |
-| `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`Docs/GridSystem.md`](./Assets/Neoxider/Docs/GridSystem.md) |
-| `Level` | Прогресс уровней и таблицы рекордов | [`Docs/Level.md`](./Assets/Neoxider/Docs/Level.md) |
-| `Parallax` | Универсальный параллакс с предпросмотром | [`Docs/ParallaxLayer.md`](./Assets/Neoxider/Docs/ParallaxLayer.md) |
-| `Save` | Система сохранений с атрибутами `[SaveField]` | [`Docs/Save.md`](./Assets/Neoxider/Docs/Save.md) |
-| `Shop` | Магазин, валюта, кэшбэк | [`Docs/Shop.md`](./Assets/Neoxider/Docs/Shop.md) |
-| `Tools` | Огромный набор «кирпичиков»: спавнеры, таймеры, SpineController и др. | [`Docs/Tools/README.md`](./Assets/Neoxider/Docs/Tools/README.md) |
-| `UI` | UI-анимации, кнопки, страницы, прогресс-бары | [`Docs/UI/README.md`](./Assets/Neoxider/Docs/UI/README.md) |
-
 Полный список — в соответствующих подпапках `Docs`. Каждый markdown содержит быстрый старт и примеры.
+
+see: [Documentation](Assets/Neoxider/README.md)
+---
 
 ---
 
@@ -62,10 +47,6 @@ Neoxider — это экосистема из более чем 150 модуле
 - **MovementToolkit** — набор контроллеров движения (клава/мышь, 2D/3D, follow-камеры, ограничители экрана).
 - **InteractiveObject** — база для зон и триггеров, позволяет строить взаимодействия без кода.
 - **Timer / TimerObject** — таймеры с паузой, повтором, сериализацией и событиями прогресса.
-
-## Последние изменения:
-
-- Добавлен amdef и частично дополнена документация.
 
 ## FAQ
 
