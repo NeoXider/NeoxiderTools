@@ -43,6 +43,9 @@ https://github.com/NeoXider/NeoxiderTools.git?path=/Assets/Neoxider
 
 При добавлении этого URL в Unity Package Manager (в файле `manifest.json` или через интерфейс Unity) менеджер пакетов загрузит и установит только ту часть репозитория, которая располагается в папке `/Assets/Neoxider`.
 
+Также есть зависимость DG Dotween https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676
+---
+
 ---
 
 ## Быстрый старт
