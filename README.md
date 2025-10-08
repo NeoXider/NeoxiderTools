@@ -23,17 +23,17 @@ Neoxider — это экосистема из более чем 150 модуле
 
 | Каталог | Что внутри | Документация |
 |---------|------------|---------------|
-| `Audio` | Менеджеры звука, настройки микшера, play-on-click | [`Docs/Audio.md`](./Docs/Audio.md) |
-| `Bonus` | Коллекции, слот-машины, колёса удачи | [`Docs/Bonus.md`](./Docs/Bonus.md) |
-| `Editor` | Атрибуты редактора, инспекторные тулзы | [`Docs/Editor.md`](./Docs/Editor.md) |
-| `Extensions` | Расширения C# и Unity API | [`Docs/Extensions/README.md`](./Docs/Extensions/README.md) |
-| `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`Docs/GridSystem.md`](./Docs/GridSystem.md) |
-| `Level` | Прогресс уровней и таблицы рекордов | [`Docs/Level.md`](./Docs/Level.md) |
-| `Parallax` | Универсальный параллакс с предпросмотром | [`Docs/ParallaxLayer.md`](./Docs/ParallaxLayer.md) |
-| `Save` | Система сохранений с атрибутами `[SaveField]` | [`Docs/Save.md`](./Docs/Save.md) |
-| `Shop` | Магазин, валюта, кэшбэк | [`Docs/Shop.md`](./Docs/Shop.md) |
-| `Tools` | Огромный набор «кирпичиков»: спавнеры, таймеры, SpineController и др. | [`Docs/Tools/README.md`](./Docs/Tools/README.md) |
-| `UI` | UI-анимации, кнопки, страницы, прогресс-бары | [`Docs/UI/README.md`](./Docs/UI/README.md) |
+| `Audio` | Менеджеры звука, настройки микшера, play-on-click | [`Docs/Audio.md`](./Assets/Docs/Audio.md) |
+| `Bonus` | Коллекции, слот-машины, колёса удачи | [`Docs/Bonus.md`](./Assets/Docs/Bonus.md) |
+| `Editor` | Атрибуты редактора, инспекторные тулзы | [`Docs/Editor.md`](./Assets/Docs/Editor.md) |
+| `Extensions` | Расширения C# и Unity API | [`Docs/Extensions/README.md`](./Assets/Docs/Extensions/README.md) |
+| `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`Docs/GridSystem.md`](./Assets/Docs/GridSystem.md) |
+| `Level` | Прогресс уровней и таблицы рекордов | [`Docs/Level.md`](./Assets/Docs/Level.md) |
+| `Parallax` | Универсальный параллакс с предпросмотром | [`Docs/ParallaxLayer.md`](./Assets/Docs/ParallaxLayer.md) |
+| `Save` | Система сохранений с атрибутами `[SaveField]` | [`Docs/Save.md`](./Assets/Docs/Save.md) |
+| `Shop` | Магазин, валюта, кэшбэк | [`Docs/Shop.md`](./Assets/Docs/Shop.md) |
+| `Tools` | Огромный набор «кирпичиков»: спавнеры, таймеры, SpineController и др. | [`Docs/Tools/README.md`](./Assets/Docs/Tools/README.md) |
+| `UI` | UI-анимации, кнопки, страницы, прогресс-бары | [`Docs/UI/README.md`](./Assets/Docs/UI/README.md) |
 
 Полный список — в соответствующих подпапках `Docs`. Каждый markdown содержит быстрый старт и примеры.
 
