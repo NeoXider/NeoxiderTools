@@ -1,6 +1,9 @@
 using DG.Tweening;
 using Neo.Extensions;
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#endif
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;

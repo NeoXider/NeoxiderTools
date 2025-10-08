@@ -1,4 +1,8 @@
+
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#endif
+
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -104,21 +108,15 @@ namespace Neo.Tools
         /// <summary>
         ///     ���������� ���� � ��������� ������ ������
         /// </summary>
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void Add(int amount, bool updateBestScore = true)
         {
             Set(score + amount, updateBestScore);
         }
 
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void Add(int amount)
         {
             Set(score + amount);
@@ -127,11 +125,8 @@ namespace Neo.Tools
         /// <summary>
         ///     ���������� ���� � ��������� ������ ������
         /// </summary>
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void Set(int amount, bool updateBestScore = true)
         {
             Score = amount;
@@ -140,11 +135,8 @@ namespace Neo.Tools
             if (updateBestScore) SetBestScore();
         }
 
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void SetBestScore(int? score = 0)
         {
             if (score != null)
@@ -190,11 +182,8 @@ namespace Neo.Tools
         /// <summary>
         ///     ����� ����� (��������, ��� �������� �� ����� ������� ��� ��������)
         /// </summary>
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void ResetScore()
         {
             Score = 0;
@@ -202,11 +191,8 @@ namespace Neo.Tools
             SetScoreText();
         }
 
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         public void ResetBestScore()
         {
             BestScore = 0;

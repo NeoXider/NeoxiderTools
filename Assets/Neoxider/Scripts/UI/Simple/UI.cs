@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using Neo.Extensions;
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#endif
+
 using UnityEngine;
 using UnityEngine.Events;
 

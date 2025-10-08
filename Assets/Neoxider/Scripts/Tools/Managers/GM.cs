@@ -1,5 +1,8 @@
 using Neo.Extensions;
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#endif
+
 using UnityEngine;
 
 namespace Neo.Tools
@@ -72,35 +75,23 @@ namespace Neo.Tools
         #endregion
 
         #region Core Game Methods
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Menu()
         {
             StopGame();
             State = GameState.Menu;
             EM.Menu();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Preparing()
         {
             State = GameState.Preparing;
             EM.Preparing();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void StartGame(bool restart = false)
         {
             if (State == GameState.Pause)
@@ -112,12 +103,8 @@ namespace Neo.Tools
             else
                 EM.GameStart();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void StopGame()
         {
             if (State == GameState.NotStarted) return;
@@ -125,12 +112,8 @@ namespace Neo.Tools
             State = GameState.NotStarted;
             EM.StopGame();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Lose()
         {
             if (State != GameState.Game) return;
@@ -139,12 +122,8 @@ namespace Neo.Tools
             EM.StopGame();
             EM.Lose();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Win()
         {
             if (State != GameState.Game) return;
@@ -153,12 +132,8 @@ namespace Neo.Tools
             EM.StopGame();
             EM.Win();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void End()
         {
             if (State != GameState.Game) return;
@@ -167,12 +142,8 @@ namespace Neo.Tools
             EM.StopGame();
             EM.End();
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Pause()
         {
             if (State == GameState.Pause) return;
@@ -186,12 +157,8 @@ namespace Neo.Tools
                 Time.timeScale = 0;
             }
         }
-
-#if ODIN_INSPECTOR
+        
         [Button]
-#else
-        [Button]
-#endif
         public virtual void Resume()
         {
             if (State != GameState.Pause) return;

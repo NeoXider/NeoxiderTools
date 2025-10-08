@@ -1,5 +1,8 @@
 using Neo.UI;
+#if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+#endif
+
 using UnityEngine;
 
 namespace Neo.Tools
@@ -16,11 +19,8 @@ namespace Neo.Tools
             OnStarChange(scoreManager.CountStars);
         }
 
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [Button]
-#endif
         private void OnStarChange(int count)
         {
             if (stars != null)

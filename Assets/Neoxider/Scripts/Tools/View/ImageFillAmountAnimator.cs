@@ -6,6 +6,7 @@ public class ImageFillAmountAnimator : MonoBehaviour
 {
     [SerializeField] private Image _image;
     [SerializeField] private float _duration = 0.5f;
+    [SerializeField] private Ease _ease = Ease.OutQuad;
     private Tween _anim;
 
     private void OnValidate()
@@ -15,7 +16,7 @@ public class ImageFillAmountAnimator : MonoBehaviour
 
     public void SetValue(float value)
     {
-        _anim.Kill();
-        _anim = _image.DOFillAmount(value, _duration);
+        _anim?.Kill();
+        _anim = DOTween.To(() => _image.fillAmount, x => _image.fillAmount = x, value, _duration).SetEase(_ease);
     }
 }
