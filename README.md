@@ -50,7 +50,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=/Assets/Neoxider
 
 ## Быстрый старт
 
-1. **Подготовьте зависимости**: Unity 2021.3+, DOTween (по желанию), Spine Unity Runtime — для модулей Spine.
+1. **Подготовьте зависимости**: Unity 2021.3+, Spine Unity Runtime — для модулей Spine.
 2. **Импортируйте папку `Assets/Neoxider`** в свой проект.
 3. **Добавьте системный префаб** `Assets/Neoxider/Prefabs/--System--.prefab` в сцену — он подключает менеджеры событий и UI.
 4. **Подключите нужные подсистемы**: компоненты находятся в папках `Scripts/…`, а примеры и готовые конфигурации — в `Demo/` и `Prefabs/`.
