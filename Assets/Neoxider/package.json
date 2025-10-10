@@ -4,21 +4,14 @@
   "version": "5.2.5",
   "unity": "2022.1",
   "description": "NeoxiderTools Quick Start Library",
-  "author": {
-    "name": "Neoxider"
-  },
+  "author": { "name": "Neoxider" },
   "dependencies": {
-    "com.cysharp.unitask": "2.1.0"
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/NeoXider/NeoxiderTools.git"
   },
-  "keywords": [
-    "neoxider",
-    "tools",
-    "starter",
-    "extensions"
-  ],
+  "keywords": ["neoxider", "tools", "starter", "extensions"],
   "license": "Custom"
 }
