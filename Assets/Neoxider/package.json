@@ -8,7 +8,7 @@
     "name": "Neoxider"
   },
   "dependencies": {
-    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask"
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask#2.1.0"
   },
   "repository": {
     "type": "git",
