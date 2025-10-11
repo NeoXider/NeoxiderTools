@@ -19,10 +19,10 @@ namespace Neo
             [SerializeField] private float _allMoney;
             [SerializeField] private float _lastChangeMoney;
 
-            [SerializeField] [Color(ColorEnum.SoftBlue)]
+            [SerializeField] [GUIColor(0,1,1)]
             private float _levelMoney;
 
-            [SerializeField] [Color(ColorEnum.SoftGreen)]
+            [SerializeField] [GUIColor(0,1,0)]
             private float _money;
 
             public UnityEvent<float> OnChangeAllMoney;
@@ -44,7 +44,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void Add(float amount)
             {
@@ -58,7 +58,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public bool Spend(float amount)
             {
@@ -107,7 +107,7 @@ namespace Neo
 
             public float SetLevelMoney(float count = 0)
             {
-                var levelMoney = _levelMoney;
+                float levelMoney = _levelMoney;
                 _levelMoney = count;
                 ChangeLevelMoneyEvent();
                 return levelMoney;
@@ -115,10 +115,13 @@ namespace Neo
 
             public float SetMoneyForLevel(bool resetLevelMoney = true)
             {
-                var count = _levelMoney;
+                float count = _levelMoney;
                 _money += _levelMoney;
 
-                if (resetLevelMoney) SetLevelMoney();
+                if (resetLevelMoney)
+                {
+                    SetLevelMoney();
+                }
 
                 ChangeMoneyEvent();
                 Save();
@@ -134,7 +137,10 @@ namespace Neo
             {
                 SetText(t_money, _money);
 
-                foreach (var item in st_money) item.Set(_money);
+                foreach (SetText item in st_money)
+                {
+                    item.Set(_money);
+                }
 
                 OnChangedMoney?.Invoke(_money);
                 OnChangeLastMoney?.Invoke(_lastChangeMoney);
@@ -145,14 +151,20 @@ namespace Neo
             {
                 SetText(t_levelMoney, _levelMoney);
 
-                foreach (var item in st_levelMoney) item.Set(_levelMoney);
+                foreach (SetText item in st_levelMoney)
+                {
+                    item.Set(_levelMoney);
+                }
 
                 OnChangedLevelMoney?.Invoke(_levelMoney);
             }
 
             private void SetText(TMP_Text[] text, float count)
             {
-                foreach (var item in text) item.text = count.RoundToDecimal(_roundToDecimal).ToString();
+                foreach (TMP_Text item in text)
+                {
+                    item.text = count.RoundToDecimal(_roundToDecimal).ToString();
+                }
             }
         }
     }

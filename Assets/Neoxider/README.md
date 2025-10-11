@@ -25,7 +25,7 @@ Neoxider — это экосистема из более чем 150 модуле
 | `Editor` | Атрибуты редактора, инспекторные тулзы | [`Docs/Editor.md`](./Docs/Editor.md) |
 | `Extensions` | Расширения C# и Unity API | [`Docs/Extensions/README.md`](./Docs/Extensions/README.md) |
 | `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`Docs/GridSystem.md`](./Docs/GridSystem.md) |
-| `Level` | Прогресс уровней и таблицы рекордов | [`Docs/Level.md`](./Docs/Level.md) |
+| `Level` | Уровни, карты, прогресс игрока | [`Docs/Level/LevelManager.md`](./Docs/Level/LevelManager.md) |
 | `Parallax` | Универсальный параллакс с предпросмотром | [`Docs/ParallaxLayer.md`](./Docs/ParallaxLayer.md) |
 | `Save` | Система сохранений с атрибутами `[SaveField]` | [`Docs/Save.md`](./Docs/Save.md) |
 | `Shop` | Магазин, валюта, кэшбэк | [`Docs/Shop.md`](./Docs/Shop.md) |

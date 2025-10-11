@@ -12,6 +12,7 @@ namespace Neo.Tools
     /// </summary>
     public class GM : Singleton<GM>
     {
+        [GUIColor(1,0.5, 0.5)]
         [SerializeField] private GameState _state = GameState.Menu;
         [SerializeField] private GameState _lastState;
         public bool useTimeScalePause = true;

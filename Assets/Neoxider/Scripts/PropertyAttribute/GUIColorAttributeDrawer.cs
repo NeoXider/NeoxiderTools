@@ -5,11 +5,11 @@ using UnityEngine;
 namespace Neo
 {
     /// <summary>
-    ///     Custom property drawer for ColorAttribute.
+    ///     Custom property drawer for GUIColorAttribute.
     ///     Colors the background of fields in the Unity Inspector.
     /// </summary>
-    [CustomPropertyDrawer(typeof(ColorAttribute))]
-    public class ColorAttributeDrawer : PropertyDrawer
+    [CustomPropertyDrawer(typeof(GUIColorAttribute))]
+    public class GUIColorAttributeDrawer : PropertyDrawer
     {
         /// <summary>
         ///     Draws the property with the specified color in the Unity Inspector
@@ -20,7 +20,7 @@ namespace Neo
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             // Get the color attribute
-            var colorAttribute = (ColorAttribute)attribute;
+            var colorAttribute = (GUIColorAttribute)attribute;
 
             // Store the original GUI color to restore it later
             var originalColor = GUI.color;

@@ -1,4 +1,3 @@
-
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
@@ -6,13 +5,18 @@ using Sirenix.OdinInspector;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 
 namespace Neo.Tools
 {
     public class ScoreManager : Singleton<ScoreManager>
     {
         [SerializeField] private string _keySave = "BestScore";
+
+        [Space(20)] [SerializeField] [GUIColor(1, 0, 1)]
+        private int score;
+
+        [GUIColor(0, 1, 1)] [SerializeField] private int _bestScore;
+        [SerializeField] private int _targetScore;
 
         [Space] [Header("Stars")] public bool useProgress = true;
         public float[] starScores = { 0.25f, 0.5f, 0.75f };
@@ -24,20 +28,14 @@ namespace Neo.Tools
         [Space] public UnityEvent<float> OnProgressChange = new();
         public UnityEvent<int> OnStarChange = new();
 
-        [FormerlySerializedAs("_currentScore")] [Space(20)] [Header("Debug")] [SerializeField]
-        private int score;
-
-        [SerializeField] private int _bestScore;
-        [SerializeField] private int _targetScore;
-        private int _countStars;
-
-        private int _lastCountStars;
-        public SetText[] setTextBestScores;
+        [Space] [Header("Text")] public SetText[] setTextBestScores;
         public SetText[] setTextScore;
 
-        [Space] [Header("Best Score")] public TMP_Text[] textBestScores;
-
+        [Space] public TMP_Text[] textBestScores;
         public TMP_Text[] textScores;
+
+        private int _countStars;
+        private int _lastCountStars;
 
         public int BestScore
         {
@@ -57,7 +55,6 @@ namespace Neo.Tools
                 score = value;
                 OnValueChange?.Invoke(value);
                 OnProgressChange.Invoke(Progress);
-
                 CountStars = GetCountStars();
             }
         }
@@ -82,16 +79,11 @@ namespace Neo.Tools
             {
                 if (_lastCountStars != value)
                 {
-                    _lastCountStars = _countStars;
+                    _lastCountStars = value;
                     OnStarChange?.Invoke(value);
                 }
-
                 _countStars = value;
             }
-        }
-
-        private void Start()
-        {
         }
 
         protected override void Init()
@@ -100,21 +92,18 @@ namespace Neo.Tools
             BestScore = PlayerPrefs.GetInt(_keySave, 0);
             Score = 0;
             CountStars = 0;
-
             SetBestScoreText();
             SetScoreText();
         }
 
         /// <summary>
-        ///     ���������� ���� � ��������� ������ ������
+        /// Добавляет очки к текущему счету и опционально обновляет лучший результат.
         /// </summary>
-
         [Button]
         public void Add(int amount, bool updateBestScore = true)
         {
             Set(score + amount, updateBestScore);
         }
-
 
         [Button]
         public void Add(int amount)
@@ -123,24 +112,26 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     ���������� ���� � ��������� ������ ������
+        /// Устанавливает точное количество очков и опционально обновляет лучший результат.
         /// </summary>
-
         [Button]
         public void Set(int amount, bool updateBestScore = true)
         {
             Score = amount;
             SetScoreText();
-
-            if (updateBestScore) SetBestScore();
+            if (updateBestScore)
+            {
+                SetBestScore();
+            }
         }
-
 
         [Button]
         public void SetBestScore(int? score = 0)
         {
             if (score != null)
+            {
                 score = this.score;
+            }
 
             if (score > _bestScore)
             {
@@ -151,38 +142,50 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     ���������� ����� ������� �����
+        /// Обновляет текстовые поля лучшего результата.
         /// </summary>
         private void SetBestScoreText()
         {
             if (textBestScores != null)
-                foreach (var text in textBestScores)
+            {
+                foreach (TMP_Text text in textBestScores)
+                {
                     text.text = _bestScore.ToString();
-
+                }
+            }
             if (setTextBestScores != null)
-                foreach (var text in setTextBestScores)
+            {
+                foreach (SetText text in setTextBestScores)
+                {
                     text.Set(_bestScore);
+                }
+            }
         }
 
-
         /// <summary>
-        ///     ���������� ����� �����
+        /// Обновляет текстовые поля текущего счета.
         /// </summary>
         private void SetScoreText()
         {
             if (textScores != null)
-                foreach (var text in textScores)
+            {
+                foreach (TMP_Text text in textScores)
+                {
                     text.text = score.ToString();
-
+                }
+            }
             if (setTextScore != null)
-                foreach (var text in setTextScore)
+            {
+                foreach (SetText text in setTextScore)
+                {
                     text.Set(score);
+                }
+            }
         }
 
         /// <summary>
-        ///     ����� ����� (��������, ��� �������� �� ����� ������� ��� ��������)
+        /// Сбрасывает текущий счет до нуля.
         /// </summary>
-
         [Button]
         public void ResetScore()
         {
@@ -190,7 +193,6 @@ namespace Neo.Tools
             OnValueChange?.Invoke(score);
             SetScoreText();
         }
-
 
         [Button]
         public void ResetBestScore()
@@ -205,34 +207,39 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Получение количества звезд по количеству очков
-        ///     параметры:
-        ///     пример {500, 2500, 5000}, 3500 => 2, 6000 => 3
-        ///     возвращает количество звезд
+        /// Получение количества звезд по количеству очков.
         /// </summary>
+        /// <param name="starScores">Массив пороговых значений для получения звезд.</param>
+        /// <param name="useProgress">Использовать прогресс (0-1) или абсолютные значения очков.</param>
+        /// <param name="score">Счет для расчета (по умолчанию используется текущий).</param>
+        /// <returns>Количество полученных звезд.</returns>
         public int GetCountStars(float[] starScores, bool useProgress = true, int? score = null)
         {
-            if (score == null)
-                score = this.score;
+            if (score == null) score = this.score;
 
-            var stars = 0;
-            for (var i = 0; i < starScores.Length; i++)
+            int stars = 0;
+            for (int i = 0; i < starScores.Length; i++)
+            {
                 if (IsStar(starScores[i], useProgress, score))
+                {
                     stars++;
+                }
                 else
+                {
                     break;
-
+                }
+            }
             return stars;
         }
 
         public bool IsStar(float target, bool useProgress = true, int? score = null)
         {
-            if (score == null)
-                score = this.score;
+            if (score == null) score = this.score;
 
             if (useProgress)
+            {
                 return Mathf.Clamp01((float)score / _targetScore) >= target;
-
+            }
             return score >= target;
         }
     }

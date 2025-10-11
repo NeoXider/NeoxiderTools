@@ -9,12 +9,14 @@ namespace Neo
     {
         public class LevelManager : Singleton<LevelManager>
         {
-            [SerializeField] private readonly Map[] _maps = { new() };
-            [SerializeField] private readonly string _saveKey = "LevelManager";
+            [SerializeField] private string _saveKey = "LevelManager";
 
-            [Space] [SerializeField] private int _currentLevel;
+            [GUIColor(0.7, 0.7, 1)] [Space] [SerializeField]
+            private int _currentLevel;
 
-            [SerializeField] private LevelButton[] _lvlBtns;
+            [SerializeField] private Map[] _maps = { new() };
+
+            [Space] [SerializeField] private LevelButton[] _lvlBtns;
 
             [Space] [SerializeField] private int _mapId;
             [SerializeField] private bool _onAwakeNextLevel;
@@ -37,12 +39,25 @@ namespace Neo
             {
                 base.Init();
 
-                for (var i = 0; i < _maps.Length; i++) _maps[i].Load(i, _saveKey);
+                for (int i = 0; i < _maps.Length; i++)
+                {
+                    _maps[i].Load(i, _saveKey);
+                }
 
-                for (var i = 0; i < _lvlBtns.Length; i++) _lvlBtns[i].SetLevelManager(this);
+                for (int i = 0; i < _lvlBtns.Length; i++)
+                {
+                    _lvlBtns[i].SetLevelManager(this);
+                }
 
-                if (_onAwakeNextMap) SetLastMap();
-                if (_onAwakeNextLevel) SetLastLevel();
+                if (_onAwakeNextMap)
+                {
+                    SetLastMap();
+                }
+
+                if (_onAwakeNextLevel)
+                {
+                    SetLastLevel();
+                }
 
                 OnChangeMaxLevel?.Invoke(MaxLevel);
                 UpdateVisual();
@@ -52,29 +67,39 @@ namespace Neo
             {
                 if (_parentLevel != null)
                 {
-                    var btns = new HashSet<LevelButton>();
+                    HashSet<LevelButton> btns = new();
 
-                    foreach (var par in _parentLevel.GetComponentsInChildren<Transform>(true))
-                    foreach (var child in par.GetComponentsInChildren<Transform>(true))
+                    foreach (Transform par in _parentLevel.GetComponentsInChildren<Transform>(true))
+                    foreach (Transform child in par.GetComponentsInChildren<Transform>(true))
+                    {
                         if (child.TryGetComponent(out LevelButton levelButton))
+                        {
                             btns.Add(levelButton);
+                        }
+                    }
 
                     _lvlBtns = new LevelButton[btns.Count];
                     btns.CopyTo(_lvlBtns);
                 }
 
-                for (var i = 0; i < _maps.Length; i++) _maps[i].idMap = i;
+                for (int i = 0; i < _maps.Length; i++)
+                {
+                    _maps[i].idMap = i;
+                }
             }
 
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void SetLastMap()
             {
-                var mapId = GetLastIdMap();
-                if (mapId == -1) mapId = _maps.Length - 1;
+                int mapId = GetLastIdMap();
+                if (mapId == -1)
+                {
+                    mapId = _maps.Length - 1;
+                }
 
                 _mapId = mapId;
                 SetMapId(mapId);
@@ -82,9 +107,13 @@ namespace Neo
 
             public int GetLastIdMap()
             {
-                for (var i = 0; i < _maps.Length; i++)
+                for (int i = 0; i < _maps.Length; i++)
+                {
                     if (!_maps[i].GetCopmplete())
+                    {
                         return i;
+                    }
+                }
 
                 return -1;
             }
@@ -97,7 +126,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void SetMapId(int id)
             {
@@ -109,7 +138,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void NextLevel()
             {
@@ -119,20 +148,24 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void SetLastLevel()
             {
                 if (Map.isLoopLevel && Map.countLevels >= Map.level)
+                {
                     NextLevel();
+                }
                 else
+                {
                     SetLevel(Map.level);
+                }
             }
 
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void Restart()
             {
@@ -142,19 +175,22 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void SaveLevel()
             {
                 if (Map.level == _currentLevel)
                 {
-                    print("save level");
                     Map.SaveLevel();
                     OnChangeMaxLevel?.Invoke(MaxLevel);
 
                     if (_onAwakeNextMap)
+                    {
                         if (_mapId == GetLastIdMap() - 1)
+                        {
                             SetLastMap();
+                        }
+                    }
 
                     UpdateVisual();
                 }
@@ -162,15 +198,18 @@ namespace Neo
 
             private void UpdateVisual()
             {
-                var curLevel = Map;
+                Map curLevel = Map;
 
-                foreach (var item in _lvlBtns) item.transform.gameObject.SetActive(false);
+                foreach (LevelButton item in _lvlBtns)
+                {
+                    item.transform.gameObject.SetActive(false);
+                }
 
-                for (var i = 0; i < _lvlBtns.Length && i < curLevel.countLevels; i++)
+                for (int i = 0; i < _lvlBtns.Length && i < curLevel.countLevels; i++)
                 {
                     _lvlBtns[i].transform.gameObject.SetActive(true);
 
-                    var idVisual = i < curLevel.level ? 1 : i == curLevel.level ? 2 : 0;
+                    int idVisual = i < curLevel.level ? 1 : i == curLevel.level ? 2 : 0;
                     _lvlBtns[i].SetVisual(idVisual, i);
                 }
             }
@@ -178,7 +217,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Sirenix.OdinInspector.Button]
 #else
-        [Button]
+            [Button]
 #endif
             internal void SetLevel(int idLevel)
             {

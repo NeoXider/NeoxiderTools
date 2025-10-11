@@ -46,16 +46,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
-  _money: 0
-  _levelMoney: 0
   _allMoney: 0
   _lastChangeMoney: 0
-  _moneySave: Money
-  _roundToDecimal: 2
-  t_money: []
-  t_levelMoney: []
-  st_money: []
-  st_levelMoney: []
+  _levelMoney: 0
+  _money: 0
+  OnChangeAllMoney:
+    m_PersistentCalls:
+      m_Calls: []
   OnChangedLevelMoney:
     m_PersistentCalls:
       m_Calls: []
@@ -65,9 +62,10 @@ MonoBehaviour:
   OnChangeLastMoney:
     m_PersistentCalls:
       m_Calls: []
-  OnChangeAllMoney:
-    m_PersistentCalls:
-      m_Calls: []
+  st_levelMoney: []
+  st_money: []
+  t_levelMoney: []
+  t_money: []
 --- !u!1 &1868833216668724663
 GameObject:
   m_ObjectHideFlags: 0
@@ -208,11 +206,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
-  startOnAwake: 1
   _state: 0
   _lastState: 0
   useTimeScalePause: 1
   fps: 60
+  startOnAwake: 1
 --- !u!1 &4061788458752023584
 GameObject:
   m_ObjectHideFlags: 0
@@ -291,72 +289,27 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _saveKey: LevelManager
-  _parentLevel: {fileID: 0}
-  _lvlBtns: []
-  _mapId: 0
+  _currentLevel: 0
   _maps:
   - isInfinity: 1
     countLevels: 0
     isLoopLevel: 0
     _level: 0
     idMap: 0
-  _onAwakeNextMap: 0
+  _lvlBtns: []
+  _mapId: 0
   _onAwakeNextLevel: 0
-  _currentLevel: 0
+  _onAwakeNextMap: 0
+  _parentLevel: {fileID: 0}
   OnChangeLevel:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangeMaxLevel:
     m_PersistentCalls:
       m_Calls: []
   OnChangeMap:
     m_PersistentCalls:
       m_Calls: []
---- !u!1 &6135939872085309502
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 2231497603736629682}
-  - component: {fileID: 1114333391316774024}
-  m_Layer: 0
-  m_Name: UnscaleMaterial
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &2231497603736629682
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6135939872085309502}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 5203830643451774160}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1114333391316774024
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6135939872085309502}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67744be52d398cb4ba4463714b4b4ac4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  dontDestroyOnLoad: 0
+  OnChangeMaxLevel:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &7336510188879236416
 GameObject:
   m_ObjectHideFlags: 0
@@ -435,10 +388,9 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _keySave: BestScore
-  textScores: []
-  setTextScore: []
-  textBestScores: []
-  setTextBestScores: []
+  score: 0
+  _bestScore: 0
+  _targetScore: 0
   useProgress: 1
   starScores:
   - 0.25
@@ -459,9 +411,10 @@ MonoBehaviour:
   OnStarChange:
     m_PersistentCalls:
       m_Calls: []
-  score: 0
-  _bestScore: 0
-  _targetScore: 0
+  setTextBestScores: []
+  setTextScore: []
+  textBestScores: []
+  textScores: []
 --- !u!1 &8228604617647092868
 GameObject:
   m_ObjectHideFlags: 0
@@ -544,7 +497,6 @@ Transform:
   - {fileID: 2562489821453627556}
   - {fileID: 3123988592712656258}
   - {fileID: 4077041117442371288}
-  - {fileID: 2231497603736629682}
   - {fileID: 4849389512364873917}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
