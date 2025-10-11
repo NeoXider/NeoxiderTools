@@ -7,30 +7,34 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/AdvancedAttackCollider")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Настройки атаки")] [SerializeField]
-        private int attackDamage = 10; // Урон от атаки
+        [Header("Настройки атаки")]
+        [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию
+        public float triggerDuration = 0.2f; // Длительность активации триггера
 
-        [SerializeField] private float triggerDuration = 0.2f; // Длительность активации триггера
-
-        [Header("Настройки коллайдера")] [SerializeField]
-        private Collider2D collider2D; // 2D коллайдер
-
+        [Header("Настройки коллайдера")]
+        [SerializeField] private bool disableColliderAfterAttack; // Если true, коллайдер будет выключен после атаки
+        [SerializeField] private Collider2D collider2D; // 2D коллайдер
         [SerializeField] private Collider collider3D; // 3D коллайдер
 
-        [Header("Применение силы")] [SerializeField]
-        private bool applyForceOnHit; // Применять силу при попадании
+        [Header("Фильтрация целей")]
+        public LayerMask hittableLayers = -1; // Слои, на которые реагирует атака. По умолчанию - все
 
-        [SerializeField] private float forceMagnitude = 20f; // Величина силы
-        [SerializeField] private float forceDuration = 0.3f; // Длительность действия силы
+        [Header("Применение силы")]
+        public bool applyForceOnHit; // Применять силу при попадании
+        public float forceMagnitude = 20f; // Величина силы
+        public float forceDuration = 0.3f; // Длительность действия силы
 
-        [Header("Эффекты")] [SerializeField] private GameObject attackEffectPrefab; // Префаб эффекта атаки
+        [Header("Эффекты")]
+        public GameObject attackEffectPrefab; // Префаб эффекта атаки
 
-        [Header("События")] public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D
+        [Header("События")]
+        public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D
         public UnityEvent OnDeactivateTrigger; // Событие при деактивации триггера
 
-        private readonly HashSet<Collider2D> hitColliders2D = new(); // Отслеживание 2D попаданий
-        private readonly HashSet<Collider> hitColliders3D = new(); // Отслеживание 3D попаданий
+        private readonly HashSet<Collider2D> hitColliders2D = new();
+        private readonly HashSet<Collider> hitColliders3D = new();
+        private int _currentDamage;
 
         public int AttackDamage
         {
@@ -38,14 +42,15 @@ namespace Neo.Tools
             set => attackDamage = value;
         }
 
-        private void Start()
+        private void Awake()
         {
-            EnableCollider(false); // Коллайдеры отключены по умолчанию
+            EnableCollider(false); // Коллайдеры отключены при запуске
         }
 
         private void OnTriggerEnter(Collider collision)
         {
-            if (collider3D == null || hitColliders3D.Contains(collision))
+            // Проверка на null, повторное попадание или неверный слой
+            if (collider3D == null || hitColliders3D.Contains(collision) || (hittableLayers.value & (1 << collision.gameObject.layer)) == 0)
                 return;
 
             hitColliders3D.Add(collision);
@@ -55,7 +60,8 @@ namespace Neo.Tools
 
         private void OnTriggerEnter2D(Collider2D collision)
         {
-            if (collider2D == null || hitColliders2D.Contains(collision))
+            // Проверка на null, повторное попадание или неверный слой
+            if (collider2D == null || hitColliders2D.Contains(collision) || (hittableLayers.value & (1 << collision.gameObject.layer)) == 0)
                 return;
 
             hitColliders2D.Add(collision);
@@ -64,34 +70,32 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Активирует триггер атаки на заданное время
+        /// Активирует триггер атаки на заданное время.
         /// </summary>
-        public void ActivateTrigger()
+        /// <param name="damage">Переопределяет урон для этой конкретной атаки. Если -1, используется урон по умолчанию.</param>
+        public void ActivateTrigger(int damage = -1)
         {
+            _currentDamage = damage;
             hitColliders2D.Clear();
             hitColliders3D.Clear();
             EnableCollider(true);
             Invoke(nameof(DeactivateTrigger), triggerDuration);
         }
 
-        /// <summary>
-        ///     Обрабатывает атаку: урон, силу и эффекты
-        /// </summary>
         private void HandleAttack(GameObject target, Vector3 contactPosition)
         {
-            // Нанесение урона
-            if (target.TryGetComponent(out IDamageable damageable)) damageable.TakeDamage(attackDamage);
+            int finalDamage = (_currentDamage == -1) ? attackDamage : _currentDamage;
 
-            // Применение силы, если включено
-            if (applyForceOnHit) ApplyForceToTarget(target);
+            if (target.TryGetComponent(out IDamageable damageable))
+                damageable.TakeDamage(finalDamage);
 
-            // Проигрывание эффекта
-            if (attackEffectPrefab != null) Instantiate(attackEffectPrefab, contactPosition, Quaternion.identity);
+            if (applyForceOnHit)
+                ApplyForceToTarget(target);
+
+            if (attackEffectPrefab != null)
+                Instantiate(attackEffectPrefab, contactPosition, Quaternion.identity);
         }
 
-        /// <summary>
-        ///     Применяет силу к цели
-        /// </summary>
         private void ApplyForceToTarget(GameObject target)
         {
             var direction = (target.transform.position - transform.position).normalized;
@@ -99,22 +103,44 @@ namespace Neo.Tools
                 forceApplier.ApplyForce(forceMagnitude, direction);
         }
 
-        /// <summary>
-        ///     Деактивирует триггер
-        /// </summary>
         private void DeactivateTrigger()
         {
-            EnableCollider(false);
+            if (disableColliderAfterAttack)
+            {
+                EnableCollider(false);
+            }
             OnDeactivateTrigger?.Invoke();
         }
 
-        /// <summary>
-        ///     Включает или отключает коллайдеры
-        /// </summary>
         private void EnableCollider(bool enable)
         {
             if (collider2D != null) collider2D.enabled = enable;
             if (collider3D != null) collider3D.enabled = enable;
+        }
+
+        private void OnDrawGizmos()
+        {
+            bool isEnabled = (collider2D != null && collider2D.enabled) || (collider3D != null && collider3D.enabled);
+            if (!isEnabled) return;
+
+            Gizmos.color = Color.red;
+            Gizmos.matrix = transform.localToWorldMatrix;
+
+            if (collider2D != null)
+            {
+                if (collider2D is BoxCollider2D box)
+                    Gizmos.DrawCube(box.offset, box.size);
+                else if (collider2D is CircleCollider2D circle)
+                    Gizmos.DrawSphere(circle.offset, circle.radius);
+            }
+
+            if (collider3D != null)
+            {
+                if (collider3D is BoxCollider box)
+                    Gizmos.DrawCube(box.center, box.size);
+                else if (collider3D is SphereCollider sphere)
+                    Gizmos.DrawSphere(sphere.center, sphere.radius);
+            }
         }
     }
 }

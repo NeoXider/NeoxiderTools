@@ -13,20 +13,22 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/EvadeManager")]
     public class Evade : MonoBehaviour
     {
-        [Header("Evade Settings")] [Tooltip("Duration of the evade action in seconds")] [SerializeField]
-        private float evadeDuration = 1f;
+        [Header("Evade Settings")]
+        [Tooltip("Duration of the evade action in seconds")]
+        public float evadeDuration = 1f;
 
-        [Tooltip("Cooldown time between evades in seconds")] [SerializeField]
-        private float reloadTime = 2f;
+        [Tooltip("Cooldown time between evades in seconds")]
+        public float reloadTime = 2f;
 
-        [Tooltip("If true, cooldown starts immediately with evade")] [SerializeField]
-        private bool reloadImmediately = true;
+        [Tooltip("If true, cooldown starts immediately with evade")]
+        public bool reloadImmediately = true;
 
-        [Header("Events")] [Tooltip("Called when evade action starts")]
+        [Header("Events")]
+        [Tooltip("Called when evade action starts")]
         public UnityEvent OnEvadeStarted;
 
-        [Tooltip("Called with evade progress (0-1)")]
-        public UnityEvent<float> OnEvadeProgress;
+        [Tooltip("Called with cooldown progress (0-1)")]
+        public UnityEvent<float> OnReloadProgress;
 
         [Tooltip("Called when evade action completes")]
         public UnityEvent OnEvadeCompleted;
@@ -69,7 +71,7 @@ namespace Neo.Tools
             reloadTimer = new Timer(reloadTime);
             reloadTimer.OnTimerStart.AddListener(OnReloadStarted.Invoke);
             reloadTimer.OnTimerEnd.AddListener(OnReloadCompleted.Invoke);
-            reloadTimer.OnTimerUpdate.AddListener((_, progress) => OnEvadeProgress.Invoke(progress));
+            reloadTimer.OnTimerUpdate.AddListener((_, progress) => OnReloadProgress.Invoke(progress));
         }
 
         /// <summary>

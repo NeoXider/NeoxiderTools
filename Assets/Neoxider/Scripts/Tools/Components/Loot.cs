@@ -1,4 +1,5 @@
 using UnityEngine;
+using Neo.Extensions;
 
 namespace Neo
 {
@@ -6,28 +7,35 @@ namespace Neo
     {
         public class Loot : MonoBehaviour
         {
-            [SerializeField] private GameObject[] _lootItems;
-            [Space] [Range(0, 100)] public float _dropChance = 100;
+             public GameObject[] lootItems;
+            [Space] [Range(0, 1)] public float dropChance = 1;
 
-            [Space] [Header("Settings")] [SerializeField] [Min(0)]
-            private int _minCount = 1;
+            [Space] [Header("Settings")] public bool spawnOnDestroy = true;
+            [Min(0)] public int minCount = 1;
+            [Min(0)] public int maxCount = 3;
+            public float dropRadius;
 
-            [SerializeField] [Min(0)] private int _maxCount = 3;
-            [SerializeField] private float _dropRadius;
+            private void OnDestroy()
+            {
+                if (spawnOnDestroy)
+                {
+                    DropLoot();
+                }
+            }
 
             public void DropLoot()
             {
-                if (Random.Range(0, 100f) > _dropChance)
+                if (dropChance.Chance())
                 {
-                    var lootCount = Random.Range(_minCount, _maxCount + 1);
+                    int lootCount = minCount.RandomToValue(maxCount + 1);
 
-                    for (var i = 0; i < lootCount; i++)
+                    for (int i = 0; i < lootCount; i++)
                     {
-                        var selectedItem = GetRandomPrefab();
+                        GameObject selectedItem = GetRandomPrefab();
 
                         if (selectedItem != null)
                         {
-                            var dropPosition = transform.position + Random.insideUnitSphere * _dropRadius;
+                            Vector3 dropPosition = transform.position + Random.insideUnitSphere * dropRadius;
                             dropPosition.y = transform.position.y;
                             Instantiate(selectedItem, dropPosition, Quaternion.identity);
                         }
@@ -37,12 +45,14 @@ namespace Neo
 
             private GameObject GetRandomPrefab()
             {
-                if (_lootItems.Length > 0)
+                if (lootItems.Length > 0)
                 {
-                    if (_lootItems.Length == 1) return _lootItems[0];
-
-                    var randId = Random.Range(0, _lootItems.Length);
-                    return _lootItems[randId];
+                    if (lootItems.Length == 1)
+                    {
+                        return lootItems[0];
+                    }
+                    
+                    return lootItems.GetRandomElement();
                 }
 
                 return null;

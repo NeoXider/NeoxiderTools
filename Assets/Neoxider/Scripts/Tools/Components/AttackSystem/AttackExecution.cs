@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -6,26 +7,30 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AttackExecution))]
     public class AttackExecution : MonoBehaviour
     {
+        public enum AttackState
+        {
+            Ready,      // Готов к атаке
+            Attacking,  // В процессе атаки (до удара)
+            Cooldown    // Перезарядка после удара
+        }
+
+        [Header("Настройки атаки")]
         [SerializeField] private float _attackSpeed = 2;
-
-        public Vector2 minMaxSpeedAttack = new(0, 10);
         public float multiplayAttackSpeed = 1;
-
-        public float attackСooldown;
-
-        [Header("Delay before the actual attack")]
-        public float delayTimeAttack = 0.2f;
-
+        public float delayTimeAttack = 0.2f; // Задержка перед ударом
         [SerializeField] private bool _isAutoAttack;
 
-        [Space] [SerializeField] private bool _canAttackTime = true;
-        [SerializeField] private bool _canAttack = true;
+        [Header("События")]
+        public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
+        public UnityEvent OnAttack;      // Вызывается в момент удара
+        public UnityEvent OnEndAttack;   // Вызывается, когда атака снова готова
 
-        [Space] public UnityEvent OnStartAttack;
-        public UnityEvent OnAttack;
-        public UnityEvent OnEndAttack;
+        private bool _canAttackGlobal = true; // Глобальный флаг, разрешающий атаковать
+        private Coroutine _attackCoroutine;
 
-        private float time = -100;
+        // --- Публичные свойства ---
+        public AttackState CurrentState { get; private set; } = AttackState.Ready;
+        public float AttackCooldown { get; private set; } // Рассчитанное время перезарядки
 
         public float AttackSpeed
         {
@@ -33,103 +38,119 @@ namespace Neo.Tools
             set
             {
                 _attackSpeed = value;
-                UpdateAttackTime();
+                UpdateAttackCooldown();
             }
         }
 
-        public bool isAutoAttack
+        public bool IsAutoAttack
         {
             get => _isAutoAttack;
             set => _isAutoAttack = value;
         }
 
-        public bool canAttackTime => canAttackTime;
-        public bool canAttack => _canAttack && _canAttackTime;
+        public bool CanAttack => CurrentState == AttackState.Ready && _canAttackGlobal;
 
-        public void Reset()
-        {
-            CancelInvoke();
-            UpdateAttackTime();
-            SetCanAttack(true, true);
-        }
-
+        // --- Жизненный цикл Unity ---
         private void Start()
         {
-            UpdateAttackTime();
+            UpdateAttackCooldown();
         }
 
         private void Update()
         {
-            if (!_canAttackTime)
+            if (_isAutoAttack && CanAttack)
             {
-                var canAttackTime = Time.time > time;
-
-                if (canAttackTime)
-                {
-                    SetCanAttackTimer(canAttackTime);
-                    OnEndAttack?.Invoke();
-                }
-            }
-            else
-            {
-                if (_isAutoAttack) Attack();
+                Attack();
             }
         }
 
         private void OnValidate()
         {
-            UpdateAttackTime();
+            if (Application.isPlaying) return;
+            UpdateAttackCooldown();
         }
 
-        public void SetCanAttack(bool active)
+        private void OnDisable()
         {
-            _canAttack = active;
+            // Прерываем атаку, если объект отключается
+            if (_attackCoroutine != null)
+            {
+                StopCoroutine(_attackCoroutine);
+                CurrentState = AttackState.Ready;
+            }
         }
 
-        public void SetCanAttack(bool canAttack, bool canAttackTime)
-        {
-            _canAttack = canAttack;
-            _canAttackTime = canAttackTime;
-        }
+        // --- Публичные методы ---
 
-        public void SetCanAttackTimer(bool active)
-        {
-            _canAttackTime = active;
-        }
-
-        public void UpdateAttackTime(bool updateTime = false)
-        {
-            attackСooldown = GetTimeAttack(_attackSpeed);
-            SetCanAttackTimer(updateTime);
-        }
-
+        /// <summary>
+        /// Пытается начать атаку, если это возможно.
+        /// </summary>
+        /// <returns>True, если атака началась успешно.</returns>
         public bool Attack()
         {
-            if (_canAttackTime && enabled && _canAttack)
+            if (!CanAttack) return false;
+
+            _attackCoroutine = StartCoroutine(AttackSequence());
+            return true;
+        }
+
+        /// <summary>
+        /// Разрешает или запрещает атаковать.
+        /// </summary>
+        public void SetCanAttack(bool canAttack)
+        {
+            _canAttackGlobal = canAttack;
+        }
+
+        /// <summary>
+        /// Сбрасывает состояние атаки, прерывая текущий цикл и делая ее снова доступной.
+        /// </summary>
+        public void ResetAttack()
+        {
+            if (_attackCoroutine != null)
             {
-                SetCanAttackTimer(false);
-                time = Time.time + attackСooldown;
-                Invoke(nameof(AttackComplete), delayTimeAttack);
-                OnStartAttack?.Invoke();
-                return true;
+                StopCoroutine(_attackCoroutine);
+            }
+            CurrentState = AttackState.Ready;
+            OnEndAttack?.Invoke();
+        }
+
+        // --- Приватные методы ---
+
+        private IEnumerator AttackSequence()
+        {
+            // 1. Начало атаки (замах)
+            CurrentState = AttackState.Attacking;
+            OnStartAttack?.Invoke();
+
+            // 2. Задержка перед ударом
+            if (delayTimeAttack > 0)
+            {
+                yield return new WaitForSeconds(delayTimeAttack);
             }
 
-            return false;
-        }
-
-        public void AttackInvoke()
-        {
-            Attack();
-        }
-
-        public void AttackComplete()
-        {
+            // 3. Момент удара
             OnAttack?.Invoke();
+
+            // 4. Оставшееся время перезарядки
+            CurrentState = AttackState.Cooldown;
+            float cooldownDuration = AttackCooldown - delayTimeAttack;
+            if (cooldownDuration > 0)
+            {
+                yield return new WaitForSeconds(cooldownDuration);
+            }
+
+            // 5. Готовность к следующей атаке
+            CurrentState = AttackState.Ready;
+            OnEndAttack?.Invoke();
+            _attackCoroutine = null;
         }
 
-        public float GetTimeAttack(float attackSpeed)
+        private void UpdateAttackCooldown()
         {
-            return 1 / (attackSpeed * (1 / multiplayAttackSpeed));
+            if (_attackSpeed <= 0) _attackSpeed = 0.01f;
+            if (multiplayAttackSpeed <= 0) multiplayAttackSpeed = 0.01f;
+            AttackCooldown = 1 / (_attackSpeed * multiplayAttackSpeed);
         }
     }
 }
