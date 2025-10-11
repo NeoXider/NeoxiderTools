@@ -38,7 +38,7 @@ see: [Documentation](Assets/Neoxider/README.md)
 Если вы хотите интегрировать ассеты **NeoxiderTools** в ваш Unity-проект, импортируя только содержимое папки `/Assets/Neoxider`, используйте следующий Git URL:
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=/Assets/Neoxider
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
 При добавлении этого URL в Unity Package Manager (в файле `manifest.json` или через интерфейс Unity) менеджер пакетов загрузит и установит только ту часть репозитория, которая располагается в папке `/Assets/Neoxider`.
