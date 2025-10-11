@@ -86,13 +86,18 @@ namespace Neo.Tools
         /// Активирует триггер атаки на заданное время.
         /// </summary>
         /// <param name="damage">Переопределяет урон для этой конкретной атаки. Если -1, используется урон по умолчанию.</param>
-        public void ActivateTrigger(int damage = -1)
+        public void ActivateTrigger(int damage)
         {
             _currentDamage = damage;
             hitColliders2D.Clear();
             hitColliders3D.Clear();
             EnableCollider(true);
             Invoke(nameof(DeactivateTrigger), triggerDuration);
+        }
+
+        public void ActivateTrigger()
+        {
+            ActivateTrigger(attackDamage);
         }
 
         private void HandleAttack(GameObject target, Vector3 contactPosition)
