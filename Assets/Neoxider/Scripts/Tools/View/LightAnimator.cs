@@ -66,12 +66,12 @@ public class LightAnimator : MonoBehaviour
     public AnimationType animationType = AnimationType.PerlinNoise;
 
     [Header("Intensity Settings")]
-    [Range(0f, 10f)] public float minIntensity = 0.5f;
-    [Range(0f, 10f)] public float maxIntensity = 1.5f;
-    [Range(0.1f, 10f)] public float animationSpeed = 1.0f;
+    [Range(0f, 100)] public float minIntensity = 0.5f;
+    [Range(0f, 200f)] public float maxIntensity = 1.5f;
+    [Range(0f, 30f)] public float animationSpeed = 1.0f;
 
     [Header("Noise Settings")]
-    [Range(0.1f, 10f)] public float noiseScale = 1f;
+    [Range(0.1f, 20f)] public float noiseScale = 1f;
     public bool use2DNoise = true;
     public Vector2 noiseOffset;
 
