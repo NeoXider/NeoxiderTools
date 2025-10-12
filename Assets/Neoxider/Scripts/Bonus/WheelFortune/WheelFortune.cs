@@ -225,10 +225,19 @@ namespace Neo.Bonus
             if (items == null || items.Length == 0)
                 return;
 
-            items.Select(t => t.transform)
-                .ArrangeInCircle(transform.position,
-                    _prizeDistance,
-                    _offsetZ);
+            var angleStep = 360f / items.Length;
+            for (var i = 0; i < items.Length; i++)
+            {
+                var angle = -i * angleStep + _offsetZ;
+                var itemTransform = items[i].transform;
+
+                // Adding 90 degrees to start arrangement from the top
+                var positionAngle = (angle + 90f) * Mathf.Deg2Rad;
+                itemTransform.localPosition = new Vector3(Mathf.Cos(positionAngle), Mathf.Sin(positionAngle), 0) * _prizeDistance;
+
+                // The rotation should make the item's "up" vector point away from the center
+                itemTransform.localRotation = Quaternion.Euler(0, 0, angle);
+            }
         }
 
         public GameObject GetPrize(int id)
