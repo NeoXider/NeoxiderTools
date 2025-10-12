@@ -43,6 +43,7 @@ namespace Neo.Tools
 
         private void Awake()
         {
+            _currentDamage = AttackDamage;
             EnableCollider(false); // Коллайдеры отключены при запуске
         }
 
