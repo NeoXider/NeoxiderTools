@@ -36,8 +36,8 @@ see: [Documentation](Assets/Neoxider/README.md)
 
 Добавьте зависимости:
 
-- UniTask ```com.cysharp.unitask```
-- DG Dotween ```https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676```
+- **UniTask** from Git URL ```https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask```
+- **DG Dotween** from Assets Store ```[DotWeen](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676)```
 
 Если вы хотите интегрировать ассеты **NeoxiderTools** в ваш Unity-проект, импортируя только содержимое папки `/Assets/Neoxider`, используйте следующий Git URL:
 
