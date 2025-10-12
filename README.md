@@ -28,23 +28,22 @@ see: [Documentation](Assets/Neoxider/README.md)
 
 - **Unity:** Рекомендуется версия 2019 и выше.
 - **DOTween:** Для анимации (например, в «Колесе фортуны» и «Box») требуется установить DOTween.
-- **PlayerPrefs:** Используется для сохранения настроек и прогресса бонусной системы.
-- **Пользовательские атрибуты:** Некоторые компоненты могут применять атрибуты вроде `[GetComponent]` или `[FindAllInScene]` для упрощения настройки – убедитесь, что соответствующие утилиты включены в проект.
+- **UniTask** Ассинхронное прогшраммирование.
 
 ---
 
 ## Интеграция ассетов Neoxider через Unity Package Manager
+
+Добавьте зависимости:
+
+- UniTask ```com.cysharp.unitask```
+- DG Dotween ```https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676```
 
 Если вы хотите интегрировать ассеты **NeoxiderTools** в ваш Unity-проект, импортируя только содержимое папки `/Assets/Neoxider`, используйте следующий Git URL:
 
 ```
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
-
-При добавлении этого URL в Unity Package Manager (в файле `manifest.json` или через интерфейс Unity) менеджер пакетов загрузит и установит только ту часть репозитория, которая располагается в папке `/Assets/Neoxider`.
-
-Также есть зависимость DG Dotween https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676
----
 
 ---
 
