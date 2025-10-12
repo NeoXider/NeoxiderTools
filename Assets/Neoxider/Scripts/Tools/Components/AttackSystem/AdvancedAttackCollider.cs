@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.DemiEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -161,7 +162,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Gizmos.color = Color.red;
+            Gizmos.color = Color.red.SetAlpha(0.2f);
             Gizmos.matrix = transform.localToWorldMatrix;
 
             if (collider2D != null)
