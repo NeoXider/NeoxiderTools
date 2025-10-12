@@ -184,17 +184,17 @@ namespace Neo.Tools
             if (Resolve3D())
             {
                 rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
-                if (clampMaxSpeed && rigidbody3D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+                if (clampMaxSpeed && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
                 {
-                    rigidbody3D.linearVelocity = rigidbody3D.linearVelocity.normalized * maxSpeed;
+                    rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
                 }
             }
             else if (Resolve2D())
             {
                 rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
-                if (clampMaxSpeed && rigidbody2D.linearVelocity.sqrMagnitude > maxSpeed * maxSpeed)
+                if (clampMaxSpeed && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
                 {
-                    rigidbody2D.linearVelocity = rigidbody2D.linearVelocity.normalized * maxSpeed;
+                    rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
                 }
             }
 
@@ -214,11 +214,11 @@ namespace Neo.Tools
                 {
                     if (Resolve3D())
                     {
-                        result = rigidbody3D.linearVelocity;
+                        result = rigidbody3D.velocity;
                     }
                     else if (Resolve2D())
                     {
-                        result = rigidbody2D.linearVelocity;
+                        result = rigidbody2D.velocity;
                     }
 
                     break;
