@@ -380,7 +380,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   manager:
-    entries: []
+    entries:
+    - weight: 0.5
+      locked: 1
+      id: 0
+      label: Chance 1
+      notes: 
+    - weight: 0.3
+      locked: 1
+      id: 1
+      label: Chance 1
+      notes: 
+    - weight: 0.17
+      locked: 1
+      id: 2
+      label: Chance 1
+      notes: 
+    - weight: 0.029999971
+      locked: 1
+      id: 3
+      label: Chance 1
+      notes: 
     autoNormalize: 1
     normalizeTarget: 1
     distributeEvenlyWhenZero: 1
@@ -751,6 +771,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
   text: {fileID: 2009571022}
   _separator: .
   _decimal: 2
@@ -761,9 +784,6 @@ MonoBehaviour:
   _ease: 6
   _onEnableAnim: 1
   currentNum: 0
-  OnTextUpdated:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &2009571022
 MonoBehaviour:
   m_ObjectHideFlags: 0
