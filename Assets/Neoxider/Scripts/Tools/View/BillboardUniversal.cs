@@ -14,7 +14,7 @@ namespace Neo
                 TowardsDirection
             }
 
-            [SerializeField] private BillboardMode billboardMode = BillboardMode.TowardsCamera;
+            [SerializeField] private BillboardMode billboardMode = BillboardMode.AwayFromCamera;
             [SerializeField] private bool ignoreY = true;
             [SerializeField] private Camera targetCamera;
             [SerializeField] private Vector3 customDirection = Vector3.forward;

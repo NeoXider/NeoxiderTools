@@ -1,93 +1,72 @@
-# SpineController
+# Компонент SpineController
 
-Универсальный фасад над `SkeletonAnimation`, упрощающий работу с анимациями и скинами Spine как в редакторе, так и при запуске игры. Компонент берёт на себя инициализацию, автозаполнение списков клипов и предоставляет удобный API для UI, скриптов и UnityEvent.
+> **Важно:** Для работы этого компонента требуется установленный пакет **Spine Unity Runtime**. Если он отсутствует, компонент будет отключен и выведет предупреждение.
 
----
+## 1. Введение
 
-## Основные возможности
-- автоматическая инициализация `SkeletonAnimation` / `SkeletonDataAsset` и поддержка режима редактирования;
-- автосбор списков анимаций и скинов из `SkeletonData` (при необходимости можно заполнить вручную);
-- проигрывание клипов по имени/индексу, задание `mixDuration`, возврат к idle после нецикличных анимаций;
-- смена скинов с сохранением выбора в `PlayerPrefs`, пролистывание `Next/Previous` с учётом смещения индексов;
-- UnityEvent‑дружественные методы с одним аргументом — можно навешивать в инспекторе без вспомогательных скриптов;
-- событие `OnSwapSkin`, которое срабатывает после успешной смены скина;
-- доступ к спискам анимаций/скинов (`IReadOnlyList`) для внешних систем.
+`SpineController` — это высокоуровневая обертка для `SkeletonAnimation` из пакета Spine. Он предоставляет удобный API для управления анимациями, скинами и их состоянием. Компонент автоматизирует многие рутинные задачи, такие как: 
+
+- Получение списка всех доступных анимаций и скинов.
+- Воспроизведение анимаций по имени или индексу.
+- Управление анимацией по умолчанию (idle).
+- Переключение скинов и сохранение выбора между сессиями.
 
 ---
 
-## Расположение файлов
-- Скрипт: `Assets/Neoxider/Scripts/Tools/Other/SpineController.cs`
-- Документ: `Assets/Neoxider/Docs/Tools/Other/SpineController.md`
+## 2. Описание класса
 
----
+### SpineController
+- **Пространство имен**: отсутствует (глобальное)
+- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Other/SpineController.cs`
 
-## Быстрый старт
-1. Установите Spine Unity Runtime и добавьте `SkeletonAnimation` на объект.
-2. Повесьте компонент `SpineController` на тот же объект.
-3. В инспекторе включите `Auto Populate Animations/Skins`, либо заполните списки вручную.
-4. Укажите idle-анимацию (`Default Animation Name` или `Default Animation Index`) и при необходимости активируйте `Play Default On Enable`.
-5. Настройте работу со скинами: `Default Skin Index`, `Persist Skin Selection`, `Skin Index Offset` (если первый элемент списка служебный).
-6. Подпишите UI/UnityEvents на нужные методы (см. ниже).
+**Описание**
+Компонент является центральной точкой для управления Spine-анимациями на объекте. Он требует наличия `SkeletonAnimation` и автоматически получает ссылки на него.
 
----
+### Настройки в инспекторе
 
-## Публичные методы
-### Анимации
-- `TrackEntry Play(string name, bool loop = false, float mixDuration = 0f, bool queueDefault = true)`
-- `TrackEntry Play(int index, bool loop = false, float mixDuration = 0f, bool queueDefault = true)`
-- `void PlayDefault(bool forceRestart = false)` / `void Stop()`
-- `void SetDefaultAnimation(string name, bool playImmediately = true)`
-- `void SetDefaultAnimationByIndex(int index, bool playImmediately = true)`
+#### References
+- `skeletonAnimation` (`SkeletonAnimation`): Ссылка на основной компонент Spine.
+- `skeletonDataAsset` (`SkeletonDataAsset`): Ссылка на ассет с данными скелета.
 
-### Скины
-- `void SetSkin(string name, bool persist = true)`
-- `void SetSkinByIndex(int index, bool persist = true)`
-- `void NextSkin()` / `void PreviousSkin()`
+#### Animations
+- `autoPopulateAnimations` (`bool`): Если `true`, список `animationNames` будет автоматически заполнен всеми анимациями из `skeletonDataAsset`.
+- `animationNames` (`List<string>`): Список имен доступных анимаций.
+- `defaultAnimationName` (`string`): Имя анимации, которая будет проигрываться по умолчанию (в режиме ожидания).
+- `defaultAnimationIndex` (`int`): Индекс анимации по умолчанию в списке (если имя не задано).
+- `playDefaultOnEnable` (`bool`): Если `true`, анимация по умолчанию будет запущена при активации компонента.
+- `queueDefaultAfterNonLooping` (`bool`): Если `true`, после завершения любой нецикличной анимации будет автоматически запущена анимация по умолчанию.
 
-### UnityEvent‑friendly обёртки (1 аргумент)
-- `PlayAnimationByName(string name)` / `PlayAnimationLoopByName(string name)`
-- `PlayAnimationByIndex(int index)` / `PlayAnimationLoopByIndex(int index)`
-- `PlayDefault()` / `PlayDefaultForced()`
-- `SetDefaultAnimation(string name)` / `SetDefaultAnimationByIndex(int index)`
+#### Skins
+- `autoPopulateSkins` (`bool`): Если `true`, список `skinNames` будет автоматически заполнен всеми скинами.
+- `skinNames` (`List<string>`): Список имен доступных скинов.
+- `defaultSkinIndex` (`int`): Индекс скина по умолчанию.
+- `persistSkinSelection` (`bool`): Если `true`, выбранный скин будет сохраняться в `PlayerPrefs` и восстанавливаться при следующем запуске.
+- `skinPrefsKey` (`string`): Ключ для сохранения индекса скина в `PlayerPrefs`.
+- `skinIndexOffset` (`int`): Смещение для индекса скина. Полезно, если первые скины в списке являются служебными и не должны быть доступны для выбора.
 
-Все методы принимают один параметр либо не принимают вовсе, что делает их удобными для вызова из Inspector или `AnimationEvent`.
+### Публичные свойства (Public Properties)
+- `Animations` (`IReadOnlyList<string>`): Список только для чтения всех имен анимаций.
+- `Skins` (`IReadOnlyList<string>`): Список только для чтения всех имен скинов.
+- `SkeletonAnimation` (`SkeletonAnimation`): Прямой доступ к компоненту `SkeletonAnimation`.
+- `CurrentAnimationName` (`string`): Имя текущей проигрываемой анимации.
+- `CurrentSkinIndex` (`int`): Логический индекс текущего скина (с учетом смещения).
+- `CurrentSkinName` (`string`): Имя текущего скина.
 
----
+### Публичные методы (Public Methods)
 
-## Пример использования
-```csharp
-public class SpineUIButton : MonoBehaviour
-{
-    [SerializeField] private SpineController controller;
+#### Управление анимациями
+- `Play(int animationIndex, bool loop, ...)`: Проиграть анимацию по индексу.
+- `Play(string animationName, bool loop, ...)`: Проиграть анимацию по имени.
+- `PlayDefault(bool forceRestart)`: Проиграть анимацию по умолчанию. Если `forceRestart` равно `true`, анимация перезапустится, даже если она уже играет.
+- `SetDefaultAnimation(string animationName)`: Установить новую анимацию по умолчанию по имени.
+- `SetDefaultAnimationByIndex(int animationIndex)`: Установить новую анимацию по умолчанию по индексу.
+- `Stop()`: Остановить все проигрываемые анимации.
 
-    public void OnJumpPressed()
-    {
-        controller.Play("jump", loop: false, mixDuration: 0.2f);
-    }
+#### Управление скинами
+- `SetSkin(string skinName)`: Установить скин по имени.
+- `SetSkinByIndex(int skinIndex)`: Установить скин по его логическому индексу.
+- `NextSkin()`: Переключиться на следующий скин в списке.
+- `PreviousSkin()`: Переключиться на предыдущий скин в списке.
 
-    public void OnEquipSkin(string skinName)
-    {
-        controller.SetSkin(skinName);
-    }
-}
-```
-В UI можно назначить:
-- кнопке «Attack» — `PlayAnimationByName("attack")`;
-- кнопке «Idle» — `PlayDefaultForced()`;
-- кнопке «Следующий костюм» — `NextSkin()` без аргументов.
-
----
-
-## Советы
-- Если используете `Skin Index Offset` или унаследованный `Legacy Add Index`, убедитесь, что `Default Skin Index` не выходит за пределы логического диапазона.
-- Для плавных переходов между клипами задавайте `mixDuration` сразу после вызова `Play`.
-- При отключении `Persist Skin Selection` управление `PlayerPrefs` можно вынести в собственную систему прогресса.
-- Метод `Stop()` очищает треки и отменяет подписку на события — полезно при паузе или смене сцены.
-
----
-
-## Требования
-- Unity 2021.3+ (проект ориентирован на LTS ветку).
-- Spine Unity Runtime совместимой версии.
-
-`SpineController` можно расширять: например, добавить работу с несколькими дорожками (`SetAnimation` на track > 0), поддержку `SkeletonGraphic` или обвязку под Timeline Track.
+### Unity Events
+- `OnSwapSkin`: Событие, которое вызывается каждый раз при смене скина. Полезно для обновления других элементов UI, зависящих от скина.

@@ -1,12 +1,12 @@
 using DG.Tweening;
 using Neo.Extensions;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
-
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 
 namespace Neo
 {
@@ -39,10 +39,10 @@ namespace Neo
             public TMP_Text text;
 
             [Header("Formatting")] [Tooltip("Character used as thousand separator")] [SerializeField]
-            protected string _separator = ".";
+            protected string separator = ".";
 
             [Tooltip("Number of decimal places to display for float values")] [SerializeField] [Range(0, 10)]
-            protected int _decimal;
+            protected int @decimal;
 
             [Tooltip("Text to add before the value")] [SerializeField]
             protected string startAdd = "";
@@ -51,7 +51,7 @@ namespace Neo
             protected string endAdd = "";
 
             [Tooltip("Offset to add to integer values")] [SerializeField]
-            protected int _indexOffset;
+            protected int indexOffset;
 
             [Space] [Header("Anim")] [SerializeField]
             private float _timeAnim = 0.25f;
@@ -70,15 +70,19 @@ namespace Neo
             /// </summary>
             public string Separator
             {
-                get => _separator;
+                get => separator;
                 set
                 {
-                    _separator = value;
+                    separator = value;
                     // Update text if it's currently displaying a number
                     if (text != null && !string.IsNullOrEmpty(text.text))
                         // Try to parse the current text as a number and update it
-                        if (float.TryParse(text.text.Replace(_separator, ""), out var currentValue))
+                    {
+                        if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
+                        {
                             Set(currentValue);
+                        }
+                    }
                 }
             }
 
@@ -87,15 +91,19 @@ namespace Neo
             /// </summary>
             public int DecimalPlaces
             {
-                get => _decimal;
+                get => @decimal;
                 set
                 {
-                    _decimal = Mathf.Clamp(value, 0, 10);
+                    @decimal = Mathf.Clamp(value, 0, 10);
                     // Update text if it's currently displaying a number
                     if (text != null && !string.IsNullOrEmpty(text.text))
                         // Try to parse the current text as a number and update it
-                        if (float.TryParse(text.text.Replace(_separator, ""), out var currentValue))
+                    {
+                        if (float.TryParse(text.text.Replace(separator, ""), out float currentValue))
+                        {
                             Set(currentValue);
+                        }
+                    }
                 }
             }
 
@@ -104,8 +112,8 @@ namespace Neo
             /// </summary>
             public int IndexOffset
             {
-                get => _indexOffset;
-                set => _indexOffset = value;
+                get => indexOffset;
+                set => indexOffset = value;
             }
 
             #endregion
@@ -116,17 +124,21 @@ namespace Neo
             {
                 // Ensure text component is assigned
                 if (text == null)
+                {
                     text = GetComponent<TMP_Text>();
+                }
             }
 
             private void OnValidate()
             {
                 // Auto-assign text component if not set
                 if (text == null)
+                {
                     text = GetComponent<TMP_Text>();
+                }
 
                 // Ensure decimal places is within valid range
-                _decimal = Mathf.Clamp(_decimal, 0, 10);
+                @decimal = Mathf.Clamp(@decimal, 0, 10);
             }
 
             #endregion
@@ -145,7 +157,7 @@ namespace Neo
                     return;
                 }
 
-                Set((float)(value + _indexOffset));
+                Set((float)(value + indexOffset));
             }
 
             /// <summary>
@@ -162,21 +174,28 @@ namespace Neo
                 }
 
                 if (_tween != null && _tween.IsActive())
+                {
                     _tween.Kill();
+                }
 
                 if (_onEnableAnim && !gameObject.activeSelf)
+                {
                     currentNum = 0;
+                }
 
-                var startValue = currentNum;
-                var endValue = value;
+                float startValue = currentNum;
+                float endValue = value;
 
                 _tween = DOTween.To(() => startValue, x =>
                 {
                     currentNum = x;
-                    Set(x.FormatWithSeparator(_separator, _decimal));
+                    Set(x.FormatWithSeparator(separator, @decimal));
                 }, endValue, _timeAnim).SetEase(_ease);
 
-                if (_onEnableAnim && !gameObject.activeSelf) _tween?.Pause();
+                if (_onEnableAnim && !gameObject.activeSelf)
+                {
+                    _tween?.Pause();
+                }
             }
 
             /// <summary>
@@ -186,7 +205,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-        [Button]
+            [Button]
 #endif
             public void Set(string value = "0")
             {
@@ -196,7 +215,7 @@ namespace Neo
                     return;
                 }
 
-                var text = startAdd + value + endAdd;
+                string text = startAdd + value + endAdd;
                 this.text.text = text;
                 OnTextUpdated?.Invoke(text);
             }
@@ -218,11 +237,13 @@ namespace Neo
                 value = Mathf.Clamp(value, 0, 100);
 
                 // Format with decimal places
-                var formattedValue = value.FormatWithSeparator(_separator, _decimal);
+                string formattedValue = value.FormatWithSeparator(separator, @decimal);
 
                 // Add percent sign if requested
                 if (addPercentSign)
+                {
                     formattedValue += "%";
+                }
 
                 Set(formattedValue);
             }
@@ -241,7 +262,7 @@ namespace Neo
                 }
 
                 // Format with decimal places
-                var formattedValue = value.FormatWithSeparator(_separator, _decimal);
+                string formattedValue = value.FormatWithSeparator(separator, @decimal);
 
                 // Add currency symbol
                 Set(currencySymbol + formattedValue);

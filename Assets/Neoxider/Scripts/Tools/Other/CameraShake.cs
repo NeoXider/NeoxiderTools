@@ -1,7 +1,7 @@
 using System.Collections;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Tools
 {
     public class CameraShake : MonoBehaviour
     {
@@ -39,12 +39,12 @@ namespace Neo
 
         private IEnumerator Shake(float duration, float magnitude)
         {
-            var elapsed = 0f;
+            float elapsed = 0f;
             while (elapsed < duration)
             {
-                var x = _shakeX ? Random.Range(-1f, 1f) * magnitude : 0f;
-                var y = _shakeY ? Random.Range(-1f, 1f) * magnitude : 0f;
-                var z = _shakeZ ? Random.Range(-1f, 1f) * magnitude : 0f;
+                float x = _shakeX ? Random.Range(-1f, 1f) * magnitude : 0f;
+                float y = _shakeY ? Random.Range(-1f, 1f) * magnitude : 0f;
+                float z = _shakeZ ? Random.Range(-1f, 1f) * magnitude : 0f;
 
                 transform.localPosition = new Vector3(startPos.x + x, startPos.y + y, startPos.z + z);
 

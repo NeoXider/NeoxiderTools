@@ -3,7 +3,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
-    public class RewertAmount : MonoBehaviour
+    public class RevertAmount : MonoBehaviour
     {
         public UnityEvent<float> OnChange;
 

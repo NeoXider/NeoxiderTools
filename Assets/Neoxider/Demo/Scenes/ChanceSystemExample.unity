@@ -275,11 +275,11 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   text: {fileID: 301049515}
-  _separator: .
-  _decimal: 0
+  separator: .
+  decimal: 0
   startAdd: 'Prize: <color=red>'
   endAdd: </color>
-  _indexOffset: 0
+  indexOffset: 0
   _timeAnim: 0
   _ease: 6
   _onEnableAnim: 1

@@ -59,6 +59,10 @@ namespace Neo.Tools
                 _mim.OnClick += OnClick;
                 _mim.OnHold += OnHold;
             }
+            else
+            {
+                Debug.LogWarning("MouseInputManager is null");
+            }
 
             if (trail) trail.enabled = false;
             if (followObject) followObject.SetActive(false);

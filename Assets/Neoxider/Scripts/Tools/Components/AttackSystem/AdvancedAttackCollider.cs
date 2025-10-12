@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using DG.DemiEditor;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -27,6 +26,10 @@ namespace Neo.Tools
         public float forceDuration = 0.3f; // Длительность действия силы
 
         [Header("Эффекты")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
+
+        [Header("Настройки Gizmo")]
+        [SerializeField] private bool _showGizmo = true; // Показывать ли Gizmo в редакторе
+        [SerializeField] private Color _gizmoColor = new Color(1f, 0f, 0f, 0.2f); // Цвет Gizmo
 
         [Header("События")] public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D
@@ -156,13 +159,15 @@ namespace Neo.Tools
 
         private void OnDrawGizmos()
         {
+            if (!_showGizmo) return;
+
             bool isEnabled = (collider2D != null && collider2D.enabled) || (collider3D != null && collider3D.enabled);
             if (!isEnabled)
             {
                 return;
             }
 
-            Gizmos.color = Color.red.SetAlpha(0.2f);
+            Gizmos.color = _gizmoColor;
             Gizmos.matrix = transform.localToWorldMatrix;
 
             if (collider2D != null)

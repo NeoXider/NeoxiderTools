@@ -5,7 +5,6 @@
 ## Файлы
 
 - [AiNavigation](./AiNavigation.md)
-- [BillboardUniversal](./BillboardUniversal.md)
 - [CameraShake](./CameraShake.md)
-- [RewertAmount](./RewertAmount.md)
+- [RevertAmount](./RevertAmount.md)
 - [SpineController](./SpineController.md)

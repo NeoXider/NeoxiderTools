@@ -13,7 +13,7 @@ namespace Neo.Shop
 
         public TextMoney()
         {
-            _decimal = 0;
+            @decimal = 0;
         }
 
         private void OnEnable()
@@ -41,7 +41,7 @@ namespace Neo.Shop
         private void SetAmount(float count)
         {
             amount = count;
-            Set(amount.RoundToDecimal(_decimal).ToString());
+            Set(amount.RoundToDecimal(@decimal).ToString());
         }
 
         private void OnDisable()
