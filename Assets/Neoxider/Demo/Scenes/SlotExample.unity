@@ -476,6 +476,66 @@ PrefabInstance:
       propertyPath: m_Name
       value: SlotUI
       objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _logFinalVisuals
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationEase
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].time
+      value: 0.0030975342
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].time
+      value: 0.99072266
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].value
+      value: 1.0059204
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].value
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].inSlope
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].inSlope
+      value: -1.0185245
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].inWeight
+      value: 0.33333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].outSlope
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].inWeight
+      value: 0.33333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].outSlope
+      value: -1.0185245
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].outWeight
+      value: 0.33333334
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].tangentMode
+      value: 136
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[1].tangentMode
+      value: 34
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

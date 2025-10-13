@@ -1,5 +1,7 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,8 +12,8 @@ namespace Neo.Bonus
     public class SpinController : MonoBehaviour
     {
         [SerializeField] public CheckSpin checkSpin = new();
-        [SerializeField] public BetsData betsData;                // может быть null
-        [SerializeField] public SpritesData allSpritesData;       // может быть null
+        [SerializeField] public BetsData betsData; // может быть null
+        [SerializeField] public SpritesData allSpritesData; // может быть null
 
         [Space] [Header("Settings")] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _moneyGameObject;
@@ -31,8 +33,8 @@ namespace Neo.Bonus
             speed = 5000,
             timeSpin = 1,
             decelerationTime = 1,
-            minSpeed = 500,
         };
+
         [SerializeField] private bool _setSpace;
         [SerializeField] private Vector2 _space = Vector2.one;
         [SerializeField] private float offsetY;
@@ -43,6 +45,7 @@ namespace Neo.Bonus
 
         [Space] [Header("Events")] public UnityEvent OnStartSpin;
         public UnityEvent OnEndSpin;
+
         [Tooltip("Событие в конце спина. Передает true, если был выигрыш, иначе false.")]
         public UnityEvent<bool> OnEnd;
 
@@ -53,13 +56,16 @@ namespace Neo.Bonus
         [Space] public UnityEvent<string> OnChangeBet;
         public UnityEvent<string> OnChangeMoneyWin;
 
-        [Space] [Header("Debug")] [SerializeField] private bool _firstWin;
+        [Space] [Header("Debug")] [SerializeField]
+        private bool _firstWin;
+
         [SerializeField] [Min(1)] private int _countLine = 1;
         [SerializeField] [Min(0)] private int _betsId;
+        [SerializeField] private bool _logFinalVisuals;
 
         private SlotElement[,] _elements;
         public SlotElement[,] Elements => _elements;
-        
+
         public SlotVisualData[,] finalVisuals; // будет собираться ИЗ реальных видимых трёх после стопа
         public IMoneySpend moneySpend;
 
@@ -69,13 +75,20 @@ namespace Neo.Bonus
         {
             get
             {
-                if (finalVisuals == null) return new int[0, 0];
-                var cols = finalVisuals.GetLength(0);
-                var rows = finalVisuals.GetLength(1);
-                var ids = new int[cols, rows];
-                for (var i = 0; i < cols; i++)
-                for (var j = 0; j < rows; j++)
+                if (finalVisuals == null)
+                {
+                    return new int[0, 0];
+                }
+
+                int cols = finalVisuals.GetLength(0);
+                int rows = finalVisuals.GetLength(1);
+                int[,] ids = new int[cols, rows];
+                for (int i = 0; i < cols; i++)
+                for (int j = 0; j < rows; j++)
+                {
                     ids[i, j] = finalVisuals[i, j]?.id ?? -1;
+                }
+
                 return ids;
             }
         }
@@ -83,7 +96,9 @@ namespace Neo.Bonus
         private void Awake()
         {
             if (_moneyGameObject != null)
+            {
                 moneySpend ??= _moneyGameObject.GetComponent<IMoneySpend>();
+            }
         }
 
         private void Start()
@@ -94,27 +109,44 @@ namespace Neo.Bonus
 
             if (allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
             {
-                var initialData = allSpritesData.visuals[0];
-                foreach (var row in _rows) row.SetVisuals(initialData);
+                SlotVisualData initialData = allSpritesData.visuals[0];
+                foreach (Row row in _rows)
+                {
+                    row.SetVisuals(initialData);
+                }
             }
 
             SetPrice();
-            if (_lineSlot != null) _lineSlot.LineActiv(false);
+            if (_lineSlot != null)
+            {
+                _lineSlot.LineActiv(false);
+            }
         }
 
         private void SetElements()
         {
-            if (_rows == null) return;
+            if (_rows == null)
+            {
+                return;
+            }
+
             _elements = new SlotElement[_rows.Length, _countVerticalElements];
-            for (var i = 0; i < _rows.Length; i++)
-            for (var j = 0; j < _countVerticalElements; j++)
+            for (int i = 0; i < _rows.Length; i++)
+            for (int j = 0; j < _countVerticalElements; j++)
+            {
                 if (_rows[i].SlotElements.Length > j)
+                {
                     _elements[i, j] = _rows[i].SlotElements[j];
+                }
+            }
         }
 
         public void StartSpin()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             SetPrice();
 
@@ -128,35 +160,35 @@ namespace Neo.Bonus
 
         private IEnumerator StartSpinCoroutine()
         {
-            var delay = new WaitForSeconds(_delaySpinRoll);
-            if (_lineSlot != null) _lineSlot.LineActiv(false);
+            WaitForSeconds delay = new(_delaySpinRoll);
+            if (_lineSlot != null)
+            {
+                _lineSlot.LineActiv(false);
+            }
 
-            // Можно генерить «план» (для будущего), но главное — финал мы снимем с экрана.
-            GenerateFinalPlanIds(); // опционально: чтобы сохранялась вероятность win/lose
+            GenerateFinalPlanIds();
 
-            // Запускаем кручение — как раньше
-            bool hasSprites = allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0;
+            bool hasSprites = allSpritesData != null && allSpritesData.visuals != null &&
+                              allSpritesData.visuals.Length > 0;
 
-            for (var x = 0; x < _rows.Length; x++)
+            for (int x = 0; x < _rows.Length; x++)
             {
                 if (hasSprites)
                 {
-                    // Подачу очереди можно оставить любой — результат всё равно будет считан с экрана.
                     _rows[x].Spin(allSpritesData, null);
                 }
+
                 yield return delay;
             }
 
-            // Ждём естественной остановки — без вмешательства в спрайты
             yield return new WaitUntil(IsStop);
 
-            // СЧИТЫВАЕМ ТО, ЧТО ВИДИТ ИГРОК: берём 3 видимых из каждого ряда (Top→Down)
             BuildFinalVisualsFromScreen();
 
             ProcessSpinResult();
         }
 
-        /// <summary>Собирает finalVisuals из реальных видимых элементов (Top→Down) каждого ряда.</summary>
+        /// <summary>Собирает finalVisuals из реальных видимых элементов (снизу вверх) каждого ряда.</summary>
         private void BuildFinalVisualsFromScreen()
         {
             if (_rows == null || _rows.Length == 0)
@@ -169,18 +201,21 @@ namespace Neo.Bonus
 
             for (int x = 0; x < _rows.Length; x++)
             {
-                var row = _rows[x];
+                Row row = _rows[x];
                 if (row == null)
                 {
                     finalVisuals[x, 0] = finalVisuals[x, 1] = finalVisuals[x, 2] = null;
                     continue;
                 }
 
-                var visible = row.GetVisibleTopDown(); // гарантированно 3 элемента (Top→Down)
+                SlotElement[] visible = row.GetVisibleTopDown(); // гарантированно 3 элемента (Top→Down)
 
+                // Заполняем finalVisuals снизу вверх, чтобы соответствовать Gizmo (y=0 внизу)
                 for (int y = 0; y < 3; y++)
                 {
-                    var se = visible[y];
+                    // y=0 (низ) должен соответствовать последнему элементу visible (visible[2])
+                    // y=2 (верх) должен соответствовать первому элементу visible (visible[0])
+                    SlotElement se = visible[2 - y];
                     if (se == null)
                     {
                         finalVisuals[x, y] = null;
@@ -190,7 +225,9 @@ namespace Neo.Bonus
                     // Находим визуал по id (чтобы GameController получил корректные id)
                     SlotVisualData v = null;
                     if (allSpritesData?.visuals != null && allSpritesData.visuals.Length > 0)
+                    {
                         v = allSpritesData.visuals.FirstOrDefault(t => t.id == se.id);
+                    }
 
                     finalVisuals[x, y] = v; // если не нашли — null → id будет -1 (окей как защита)
                 }
@@ -204,12 +241,16 @@ namespace Neo.Bonus
         private void GenerateFinalPlanIds()
         {
             if (allSpritesData == null || allSpritesData.visuals == null || allSpritesData.visuals.Length == 0)
+            {
                 return;
+            }
 
-            var planIds = new int[_rows.Length, 3];
+            int[,] planIds = new int[_rows.Length, 3];
             for (int x = 0; x < _rows.Length; x++)
-                for (int y = 0; y < 3; y++)
-                    planIds[x, y] = allSpritesData.visuals[Random.Range(0, allSpritesData.visuals.Length)].id;
+            for (int y = 0; y < 3; y++)
+            {
+                planIds[x, y] = allSpritesData.visuals[Random.Range(0, allSpritesData.visuals.Length)].id;
+            }
 
             if (checkSpin != null && checkSpin.isActive)
             {
@@ -223,12 +264,17 @@ namespace Neo.Bonus
                     }
                     else
                     {
-                        var lines = checkSpin.GetWinningLines(planIds, _countLine);
+                        int[] lines = checkSpin.GetWinningLines(planIds, _countLine);
                         if (lines.Length > 0)
+                        {
                             checkSpin.SetLose(planIds, lines, totalIdCount, _countLine);
+                        }
                     }
                 }
-                catch { /* нет SO — игнор */ }
+                catch
+                {
+                    /* нет SO — игнор */
+                }
             }
 
             // Ничего не навязываем ряду — это лишь «план» для вероятностей/отладки при желании.
@@ -236,6 +282,29 @@ namespace Neo.Bonus
 
         private void ProcessSpinResult()
         {
+            if (_logFinalVisuals && finalVisuals != null)
+            {
+                StringBuilder debugMessage = new();
+                debugMessage.AppendLine("--- Final Visuals Table ---");
+                int cols = finalVisuals.GetLength(0);
+                int rows = finalVisuals.GetLength(1);
+
+                // Печатаем строки в обратном порядке (сверху вниз), чтобы в консоли выглядело естественно
+                for (int y = rows - 1; y >= 0; y--)
+                {
+                    List<string> lineParts = new();
+                    for (int x = 0; x < cols; x++)
+                    {
+                        int id = finalVisuals[x, y]?.id ?? -1;
+                        lineParts.Add($"[{x},{y}] = {id}");
+                    }
+
+                    debugMessage.AppendLine(string.Join(", ", lineParts));
+                }
+
+                Debug.Log(debugMessage.ToString());
+            }
+
             bool hasWon = false;
 
             if (finalVisuals == null || checkSpin == null || !checkSpin.isActive)
@@ -248,18 +317,24 @@ namespace Neo.Bonus
 
             try
             {
-                var finalIds = FinalElementIDs; // теперь это ТО, ЧТО НА ЭКРАНЕ (Top→Down)
-                var lines = checkSpin.GetWinningLines(finalIds, _countLine);
+                int[,] finalIds = FinalElementIDs; // теперь это ТО, ЧТО НА ЭКРАНЕ (Bottom-Up)
+                int[] lines = checkSpin.GetWinningLines(finalIds, _countLine);
 
                 if (lines.Length > 0)
                 {
-                    var mult = checkSpin.GetMultiplayers(finalIds, _countLine, lines);
+                    float[] mult = checkSpin.GetMultiplayers(finalIds, _countLine, lines);
                     Win(lines, mult);
                     hasWon = true;
                 }
-                else Lose();
+                else
+                {
+                    Lose();
+                }
             }
-            catch { Lose(); }
+            catch
+            {
+                Lose();
+            }
 
             OnEndSpin?.Invoke();
             OnEnd?.Invoke(hasWon);
@@ -267,18 +342,31 @@ namespace Neo.Bonus
 
         #region SimpleMethods
 
-        public bool IsStop() => _rows == null || _rows.All(row => !row.is_spinning);
+        public bool IsStop()
+        {
+            return _rows == null || _rows.All(row => !row.is_spinning);
+        }
 
         private void Win(int[] lines, float[] mult)
         {
-            if (_lineSlot != null) _lineSlot.LineActiv(lines);
+            if (_lineSlot != null)
+            {
+                _lineSlot.LineActiv(lines);
+            }
+
             float moneyWin = 0;
 
             int linePrice = 0;
-            if (betsData != null && betsData.bets != null && betsData.bets.Length > 0 && _betsId >= 0 && _betsId < betsData.bets.Length)
+            if (betsData != null && betsData.bets != null && betsData.bets.Length > 0 && _betsId >= 0 &&
+                _betsId < betsData.bets.Length)
+            {
                 linePrice = betsData.bets[_betsId];
+            }
 
-            foreach (var t in mult) moneyWin += t * linePrice;
+            foreach (float t in mult)
+            {
+                moneyWin += t * linePrice;
+            }
 
             moneyWin = Mathf.Max(1, moneyWin);
 
@@ -298,67 +386,100 @@ namespace Neo.Bonus
             int linePrice = 0;
             if (betsData != null && betsData.bets != null && betsData.bets.Length > 0)
             {
-                if (_betsId < 0 || _betsId >= betsData.bets.Length) _betsId = 0;
+                if (_betsId < 0 || _betsId >= betsData.bets.Length)
+                {
+                    _betsId = 0;
+                }
+
                 linePrice = betsData.bets[_betsId];
             }
 
             price = _priceOnLine ? _countLine * linePrice : linePrice;
 
             if (_textCountLine != null)
+            {
                 _textCountLine.text = _countLine.ToString();
+            }
 
             OnChangeBet?.Invoke(price.ToString());
 
             if (_lineSlot != null && _lineSlot.lines != null && _lineSlot.lines.Length > 0)
             {
-                var sequence = Enumerable.Range(0, Mathf.Min(_countLine, _lineSlot.lines.Length)).ToArray();
+                int[] sequence = Enumerable.Range(0, Mathf.Min(_countLine, _lineSlot.lines.Length)).ToArray();
                 _lineSlot.LineActiv(sequence);
             }
         }
 
         public void AddLine()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             _countLine++;
             if (_lineSlot != null && _lineSlot.lines != null && _countLine > _lineSlot.lines.Length)
+            {
                 _countLine = 1;
+            }
 
             SetPrice();
         }
 
         public void RemoveLine()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             _countLine--;
             if (_lineSlot != null && _lineSlot.lines != null && _countLine < 1)
+            {
                 _countLine = _lineSlot.lines.Length;
+            }
 
-            if (_countLine < 1) _countLine = 1;
+            if (_countLine < 1)
+            {
+                _countLine = 1;
+            }
+
             SetPrice();
         }
 
         public void SetMaxBet()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             if (betsData != null && betsData.bets != null && betsData.bets.Length > 0)
+            {
                 _betsId = betsData.bets.Length - 1;
+            }
             else
+            {
                 _betsId = 0;
+            }
 
             SetPrice();
         }
 
         public void AddBet()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             if (betsData != null && betsData.bets != null && betsData.bets.Length > 0)
             {
                 _betsId++;
-                if (_betsId >= betsData.bets.Length) _betsId = 0;
+                if (_betsId >= betsData.bets.Length)
+                {
+                    _betsId = 0;
+                }
             }
             else
             {
@@ -370,12 +491,18 @@ namespace Neo.Bonus
 
         public void RemoveBet()
         {
-            if (!IsStop()) return;
+            if (!IsStop())
+            {
+                return;
+            }
 
             if (betsData != null && betsData.bets != null && betsData.bets.Length > 0)
             {
                 _betsId--;
-                if (_betsId < 0) _betsId = betsData.bets.Length - 1;
+                if (_betsId < 0)
+                {
+                    _betsId = betsData.bets.Length - 1;
+                }
             }
             else
             {
@@ -388,26 +515,37 @@ namespace Neo.Bonus
         private void OnValidate()
         {
             _rows ??= GetComponentsInChildren<Row>(true);
-            if (_rows != null) SetSpace();
+            if (_rows != null)
+            {
+                SetSpace();
+            }
         }
 
         private void SetSpace()
         {
-            if (_setSpace == false || _rows == null || _rows.Length == 0) return;
-
-            var isUI = _rows[0].TryGetComponent<RectTransform>(out _);
-
-            for (var i = 0; i < _rows.Length; i++)
+            if (_setSpace == false || _rows == null || _rows.Length == 0)
             {
-                var row = _rows[i];
+                return;
+            }
+
+            bool isUI = _rows[0].TryGetComponent<RectTransform>(out _);
+
+            for (int i = 0; i < _rows.Length; i++)
+            {
+                Row row = _rows[i];
                 if (i > 0)
                 {
-                    var prevRow = _rows[i - 1];
+                    Row prevRow = _rows[i - 1];
                     if (isUI && row.transform is RectTransform rt && prevRow.transform is RectTransform prevRt)
-                        rt.anchoredPosition = new Vector2(prevRt.anchoredPosition.x + _space.x, prevRt.anchoredPosition.y);
+                    {
+                        rt.anchoredPosition =
+                            new Vector2(prevRt.anchoredPosition.x + _space.x, prevRt.anchoredPosition.y);
+                    }
                     else
+                    {
                         row.transform.localPosition = new Vector3(prevRow.transform.localPosition.x + _space.x,
                             prevRow.transform.localPosition.y, row.transform.localPosition.z);
+                    }
                 }
 
                 row.countSlotElement = _countVerticalElements;
@@ -416,7 +554,9 @@ namespace Neo.Bonus
                 row.ApplyLayout();
 
                 if (_isSingleSpeed)
+                {
                     row.speedControll = _speedControll;
+                }
             }
         }
 

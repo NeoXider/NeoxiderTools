@@ -90,9 +90,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6f3f7a8ae2919a41ab7d0bfe988fbb9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _image: {fileID: 2824904682077199602}
-  _spriteRenderer: {fileID: 0}
-  _textDescription: {fileID: 1921324236690330216}
+  image: {fileID: 2824904682077199602}
+  spriteRenderer: {fileID: 0}
+  textDescription: {fileID: 0}
   gizmoEnabled: 1
   gizmoAutoDetect: 1
   gizmoManualCol: -1

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -12,44 +13,58 @@ namespace Neo.Bonus
         public int countSlotElement = 3;
         [Header("SlotElement x2")] public SlotElement[] SlotElements;
         [SerializeField] public SpeedControll speedControll = new();
-        public float spaceY = 1;
+        public float spaceY = 1f;
         public float offsetY;
 
         public UnityEvent OnStop = new();
 
         private SpritesData _allSpritesData;
-        private float _resetPositionY;
-
-        private float[] _yPositions;
         public bool is_spinning { get; private set; }
 
-        private Queue<SlotVisualData> _finalFeed;   // очередь финальных визуалов, подаётся контроллером
-        private bool _useFinalFeed;                 // включаем во время замедления
-        private bool _aligning;                     // фаза финального выравнивания
+        private Tween _spinTween;
 
-        private void Awake() { ApplyLayout(); }
+        // «Смещение» барабана в юнитах. 0 означает, что элементы стоят строго на сетке.
+        private float _reelPosition;   // растет в + при вращении
+        private float _reelHeight;     // SlotElements.Length * spaceY
+
+        private void Awake()  { ApplyLayout(); }
         private void OnValidate() { ApplyLayout(); }
 
-        /// <summary>Расставляет дочерние элементы в правильные локальные позиции.</summary>
+        private void Update()
+        {
+            if (!is_spinning || SlotElements == null || SlotElements.Length == 0) return;
+            UpdateElementsPosition();
+        }
+
         public void ApplyLayout()
         {
             SlotElements = GetComponentsInChildren<SlotElement>(true);
             if (SlotElements == null || SlotElements.Length == 0) return;
 
-            _yPositions = new float[SlotElements.Length];
-            _resetPositionY = offsetY - spaceY;
+            _reelHeight = Mathf.Max(0.0001f, SlotElements.Length * Mathf.Abs(spaceY));
 
-            for (var i = 0; i < SlotElements.Length; i++)
+            for (int i = 0; i < SlotElements.Length; i++)
             {
-                var yPos = offsetY + spaceY * i;
-                _yPositions[i] = yPos;
+                float yPos = offsetY + i * spaceY;
+                SetLocalY(SlotElements[i].transform, yPos);
+            }
 
-                var element = SlotElements[i];
+            // После ребилда сетки – аккуратно нормализуем смещение
+            SnapReelPositionToGrid(keepMultipleTurns: false);
+            UpdateElementsPosition();
+        }
 
-                if (element.TryGetComponent<RectTransform>(out var rectTransform))
-                    rectTransform.anchoredPosition = new Vector2(0, yPos);
-                else
-                    element.transform.localPosition = new Vector3(0, yPos, 0);
+        private void UpdateElementsPosition()
+        {
+            // Нормализуем, чтобы число не разрасталось и % работал стабильно
+            _reelPosition = PositiveMod(_reelPosition, _reelHeight);
+
+            for (int i = 0; i < SlotElements.Length; i++)
+            {
+                float initialY = i * spaceY;
+                // Сдвигаем сетку вниз на _reelPosition и замыкаем кольцо
+                float y = offsetY + PositiveMod(initialY - _reelPosition, _reelHeight);
+                SetLocalY(SlotElements[i].transform, y);
             }
         }
 
@@ -57,120 +72,39 @@ namespace Neo.Bonus
         {
             is_spinning = true;
 
-            // 1) Константная скорость
-            float timerSpin = 0f;
-            while (timerSpin < speedControll.timeSpin)
+            // Фаза 1: постоянная скорость
+            float tEnd = Time.time + Mathf.Max(0f, speedControll.timeSpin);
+            while (Time.time < tEnd)
             {
-                timerSpin += Time.deltaTime;
-                MoveSlots(speedControll.speed * Time.deltaTime, resetVisuals: true); // рандом при рецикле
+                _reelPosition += speedControll.speed * Time.deltaTime;
                 yield return null;
             }
 
-            // 2) Замедление: переключаемся на "корм финала"
-            _useFinalFeed = true;
+            // Фаза 2: замедление с «посадкой» на ближайшую щёлку кратно spaceY
+            // 1) Берем остаток до сетки
+            float remainder = PositiveMod(_reelPosition, spaceY);
+            float toNextStep = (remainder == 0f) ? 0f : (spaceY - remainder);
 
-            var decelT = 0f;
-            var v0 = speedControll.speed;
-            var v1 = Mathf.Max(speedControll.minSpeed, 1f);
+            // 2) Добавим 1–2 оборота для визуальной «массы»
+            float extraTurns = _reelHeight * 2f;
 
-            while (decelT < speedControll.decelerationTime)
-            {
-                decelT += Time.deltaTime;
-                var t = Mathf.Clamp01(decelT / speedControll.decelerationTime);
-                var v = Mathf.Lerp(v0, v1, t);
-                MoveSlots(v * Time.deltaTime, resetVisuals: false); // без рандома; при рецикле — финальный корм
-                yield return null;
-            }
+            // 3) Цель: текущее + до ближайшей сетки + дополнительные обороты
+            float target = _reelPosition + toNextStep + extraTurns;
 
-            // 3) Финальная докрутка до следующей сетки ВНИЗ (без смены спрайтов)
-            _aligning = true;
-            _useFinalFeed = false;
-
-            var sorted = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            var first = sorted.First(); // нижний видимый как якорь
-            var targetY = FindNextGridYDown(GetLocalY(first.transform));
-
-            while (!Mathf.Approximately(GetLocalY(first.transform), targetY))
-            {
-                float current = GetLocalY(first.transform);
-                float newY = Mathf.MoveTowards(current, targetY, speedControll.minSpeed * Time.deltaTime);
-                float delta = newY - current; // отрицательное (вниз)
-                MoveSlots(-delta, resetVisuals: false);
-                yield return null;
-            }
-
-            // Финальная фиксация по сетке (позиции), спрайты НЕ трогаем
-            sorted = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            for (int i = 0; i < sorted.Length; i++)
-                SetLocalY(sorted[i].transform, _yPositions[i]);
-
-            is_spinning = false;
-            OnStop?.Invoke();
-        }
-
-        private float FindNextGridYDown(float currentY)
-        {
-            const float eps = 1e-4f;
-            float best = float.NegativeInfinity;
-            bool found = false;
-
-            for (int i = 0; i < _yPositions.Length; i++)
-            {
-                float y = _yPositions[i];
-                if (y <= currentY + eps && y > best)
+            // 4) Плавный твин до target. Никаких подмен визуалов здесь не делаем!
+            _spinTween = DOTween.To(() => _reelPosition, v => _reelPosition = v, target, speedControll.decelerationTime)
+                .SetEase(speedControll.decelerationEase)
+                .OnComplete(() =>
                 {
-                    best = y;
-                    found = true;
-                }
-            }
+                    // На финише – выравниваем точно на сетку и нормализуем
+                    SnapReelPositionToGrid(keepMultipleTurns: false);
+                    UpdateElementsPosition();
 
-            if (!found) best = _yPositions.Min();
-            return best;
-        }
+                    is_spinning = false;
+                    OnStop?.Invoke();
+                });
 
-        private void MoveSlots(float delta, bool resetVisuals)
-        {
-            foreach (var slot in SlotElements)
-            {
-                MoveSlot(slot.transform, -delta);
-
-                // если ушёл ниже порога — переезжает наверх и, при надобности, «кормится»
-                if (GetLocalY(slot.transform) <= _resetPositionY)
-                {
-                    float highestY = SlotElements.Max(s => GetLocalY(s.transform));
-                    SlotVisualData lastFed = null;
-
-                    while (GetLocalY(slot.transform) <= _resetPositionY)
-                    {
-                        highestY += spaceY;
-                        SetLocalY(slot.transform, highestY);
-
-                        if (_useFinalFeed && _finalFeed != null && _finalFeed.Count > 0)
-                            lastFed = _finalFeed.Dequeue();
-                    }
-
-                    if (_useFinalFeed)
-                    {
-                        if (lastFed != null) slot.SetVisuals(lastFed);
-                    }
-                    else if (resetVisuals)
-                    {
-                        var rnd = GetRandomVisualData();
-                        if (rnd != null) slot.SetVisuals(rnd);
-                    }
-                }
-            }
-        }
-
-        private void MoveSlot(Transform t, float yDelta)
-        {
-            if (t is RectTransform rt) rt.anchoredPosition += new Vector2(0, yDelta);
-            else t.localPosition += new Vector3(0, yDelta, 0);
-        }
-
-        private float GetLocalY(Transform t)
-        {
-            return t is RectTransform rt ? rt.anchoredPosition.y : t.localPosition.y;
+            yield break;
         }
 
         private void SetLocalY(Transform t, float y)
@@ -179,31 +113,43 @@ namespace Neo.Bonus
             else t.localPosition = new Vector3(t.localPosition.x, y, t.localPosition.z);
         }
 
-        private SlotVisualData GetRandomVisualData()
+        private float GetLocalY(Transform t)
         {
-            if (_allSpritesData == null || _allSpritesData.visuals.Length == 0) return null;
-            var randomIndex = Random.Range(0, _allSpritesData.visuals.Length);
-            return _allSpritesData.visuals[randomIndex];
+            return t is RectTransform rt ? rt.anchoredPosition.y : t.localPosition.y;
         }
 
-        public void Spin(SpritesData allSpritesData, SlotVisualData[] finalVisuals)
+        public void Spin(SpritesData allSpritesData, SlotVisualData[] /*ignored*/ finalVisuals)
         {
+            _spinTween?.Kill();
+            StopAllCoroutines();
+
             _allSpritesData = allSpritesData;
-            _finalFeed = new Queue<SlotVisualData>(finalVisuals ?? new SlotVisualData[0]);
 
-            _useFinalFeed = false;
-            _aligning = false;
-
-            foreach (var slot in SlotElements)
+            // На старте подкидываем рандомные визуалы – контроллер потом считает то, что реально видно
+            if (_allSpritesData != null && _allSpritesData.visuals != null && _allSpritesData.visuals.Length > 0)
             {
-                var rnd = GetRandomVisualData();
-                if (rnd != null) slot.SetVisuals(rnd);
+                foreach (var slot in SlotElements)
+                {
+                    var v = GetRandomVisualData();
+                    if (v != null) slot.SetVisuals(v);
+                }
             }
 
             StartCoroutine(SpinCoroutine());
         }
 
-        public void Stop() { is_spinning = false; }
+        public void Stop()
+        {
+            _spinTween?.Kill();
+            StopAllCoroutines();
+
+            // Мгновенная посадка на ближайшую сетку — без броска
+            SnapReelPositionToGrid(keepMultipleTurns: false);
+            UpdateElementsPosition();
+
+            is_spinning = false;
+            OnStop?.Invoke();
+        }
 
         public void SetVisuals(SlotVisualData data)
         {
@@ -211,41 +157,48 @@ namespace Neo.Bonus
             foreach (var s in SlotElements) s.SetVisuals(data);
         }
 
-        /// <summary>
-        /// Возвращает РОВНО три реально видимых слота (Top→Down) по их текущей Y-позиции.
-        /// Видимое окно считаем от нижнего порога (_resetPositionY) на 3 шага spaceY.
-        /// </summary>
         public SlotElement[] GetVisibleTopDown()
         {
-            const float eps = 1e-4f;
-            float bottom = _resetPositionY + eps;
-            float top = _resetPositionY + spaceY * 3f + eps;
+            // Чем выше Y – тем «видимее». Top → Down
+            return SlotElements
+                .OrderByDescending(s => GetLocalY(s.transform))
+                .Take(3)
+                .ToArray();
+        }
 
-            var inWindow = SlotElements
-                .Where(s =>
-                {
-                    float y = GetLocalY(s.transform);
-                    return y > bottom && y <= top;
-                })
-                .OrderByDescending(s => GetLocalY(s.transform)) // Top→Down
-                .ToList();
+        private SlotVisualData GetRandomVisualData()
+        {
+            if (_allSpritesData == null || _allSpritesData.visuals == null || _allSpritesData.visuals.Length == 0) return null;
+            int idx = Random.Range(0, _allSpritesData.visuals.Length);
+            return _allSpritesData.visuals[idx];
+        }
 
-            // Если по каким-то причинам попало не 3 — подстрахуемся
-            if (inWindow.Count < 3)
-            {
-                // добираем самые «верхние» элементы
-                var extra = SlotElements
-                    .Except(inWindow)
-                    .OrderByDescending(s => GetLocalY(s.transform))
-                    .Take(3 - inWindow.Count);
-                inWindow.AddRange(extra);
-                inWindow = inWindow
-                    .OrderByDescending(s => GetLocalY(s.transform))
-                    .Take(3)
-                    .ToList();
-            }
+        // --- Helpers ---
 
-            return inWindow.Take(3).ToArray();
+        private static float PositiveMod(float a, float m)
+        {
+            if (m <= 0f) return 0f;
+            float r = a % m;
+            return (r < 0f) ? r + m : r;
+        }
+
+        /// <summary>Ставит _reelPosition на ближайшую вниз/вверх сетку (по умолчанию — вниз) и нормализует.</summary>
+        private void SnapReelPositionToGrid(bool keepMultipleTurns)
+        {
+            if (spaceY <= 0f || _reelHeight <= 0f) return;
+
+            // приводим к [0, _reelHeight)
+            float pos = PositiveMod(_reelPosition, _reelHeight);
+
+            // округление до ближайшего шага (к сетке)
+            float steps = Mathf.Round(pos / spaceY);
+            pos = steps * spaceY;
+
+            // гарантируем допустимый диапазон и положительность
+            pos = PositiveMod(pos, _reelHeight);
+
+            // хотим ли сохранить «число оборотов»? обычно не нужно
+            _reelPosition = keepMultipleTurns ? (_reelPosition - PositiveMod(_reelPosition, _reelHeight) + pos) : pos;
         }
     }
 }

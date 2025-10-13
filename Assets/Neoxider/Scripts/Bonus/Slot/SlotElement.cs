@@ -11,9 +11,9 @@ namespace Neo.Bonus
     public class SlotElement : MonoBehaviour
     {
         [Header("Refs")]
-        [SerializeField] private Image _image;
-        [SerializeField] private SpriteRenderer _spriteRenderer;
-        [SerializeField] private TMP_Text _textDescription;
+        [SerializeField] public Image image;
+        [SerializeField] public SpriteRenderer spriteRenderer;
+        [SerializeField] public TMP_Text textDescription;
 
         [Header("Debug Gizmo")]
         [Tooltip("Включить/выключить гизмо-лейбл над элементом")]
@@ -47,15 +47,15 @@ namespace Neo.Bonus
         public Color gizmoOutlineColor = new Color(0f, 0f, 0f, 1f);
 
         [Tooltip("Толщина обводки в юнитах сцены")]
-        public float gizmoOutlineOffset = 0.012f;
+        public float gizmoOutlineOffset = 0.022f;
 
         public int id { get; private set; }
 
         private void OnValidate()
         {
-            _spriteRenderer ??= GetComponent<SpriteRenderer>();
-            _image ??= GetComponent<Image>();
-            if (_textDescription == null) _textDescription = GetComponentInChildren<TMP_Text>();
+            spriteRenderer ??= GetComponent<SpriteRenderer>();
+            image ??= GetComponent<Image>();
+            if (textDescription == null) textDescription = GetComponentInChildren<TMP_Text>();
         }
 
         /// <summary>
@@ -66,9 +66,9 @@ namespace Neo.Bonus
             if (data == null)
             {
                 // Скрываем элемент, если нет данных
-                if (_image) _image.enabled = false;
-                if (_spriteRenderer) _spriteRenderer.enabled = false;
-                if (_textDescription) _textDescription.gameObject.SetActive(false);
+                if (image) image.enabled = false;
+                if (spriteRenderer) spriteRenderer.enabled = false;
+                if (textDescription) textDescription.gameObject.SetActive(false);
                 return;
             }
 
@@ -76,24 +76,24 @@ namespace Neo.Bonus
             id = data.id;
 
             // Устанавливаем спрайт
-            if (_image != null)
+            if (image != null)
             {
-                _image.enabled = true;
-                _image.sprite = data.sprite;
+                image.enabled = true;
+                image.sprite = data.sprite;
             }
 
-            if (_spriteRenderer != null)
+            if (spriteRenderer != null)
             {
-                _spriteRenderer.enabled = true;
-                _spriteRenderer.sprite = data.sprite;
+                spriteRenderer.enabled = true;
+                spriteRenderer.sprite = data.sprite;
             }
 
             // Устанавливаем описание
-            if (_textDescription != null)
+            if (textDescription != null)
             {
                 var hasDescription = !string.IsNullOrEmpty(data.description);
-                _textDescription.gameObject.SetActive(hasDescription);
-                if (hasDescription) _textDescription.text = data.description;
+                textDescription.gameObject.SetActive(hasDescription);
+                if (hasDescription) textDescription.text = data.description;
             }
         }
 
@@ -143,18 +143,18 @@ namespace Neo.Bonus
             int rowIndex = -1;
             int colIndex = -1;
 
-            // индекс строки внутри Row: сверху-вниз
+            // индекс строки внутри Row: снизу-вверх
             if (rowComp != null && rowComp.SlotElements != null && rowComp.SlotElements.Length > 0)
             {
                 var sortedByY = rowComp.SlotElements
-                    .OrderByDescending(se => GetLocalY(se.transform))
+                    .OrderBy(se => se.transform.position.y)
                     .ToArray();
 
                 for (int i = 0; i < sortedByY.Length; i++)
                 {
                     if (sortedByY[i] == this)
                     {
-                        rowIndex = i; // 0 = верх, 1 = центр, 2 = низ
+                        rowIndex = i; // 0 = низ, 1 = центр, 2 = верх
                         break;
                     }
                 }
@@ -164,7 +164,7 @@ namespace Neo.Bonus
             if (rowComp != null && rowComp.transform.parent != null)
             {
                 var allRows = rowComp.transform.parent.GetComponentsInChildren<Row>(true);
-                var sortedByX = allRows.OrderBy(r => GetLocalX(r.transform)).ToArray();
+                var sortedByX = allRows.OrderBy(r => r.transform.position.x).ToArray();
 
                 for (int i = 0; i < sortedByX.Length; i++)
                 {
@@ -177,18 +177,6 @@ namespace Neo.Bonus
             }
 
             return (colIndex, rowIndex);
-        }
-
-        private static float GetLocalX(Transform t)
-        {
-            if (t is RectTransform rt) return rt.anchoredPosition.x;
-            return t.localPosition.x;
-        }
-
-        private static float GetLocalY(Transform t)
-        {
-            if (t is RectTransform rt) return rt.anchoredPosition.y;
-            return t.localPosition.y;
         }
 #endif
     }
