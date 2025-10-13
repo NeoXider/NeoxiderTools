@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -17,25 +18,19 @@ namespace Neo.Bonus
         public UnityEvent OnStop = new();
 
         private SpritesData _allSpritesData;
-        private SlotVisualData[] _finalVisuals;
         private float _resetPositionY;
 
         private float[] _yPositions;
         public bool is_spinning { get; private set; }
 
-        private void Awake()
-        {
-            ApplyLayout();
-        }
+        private Queue<SlotVisualData> _finalFeed;   // очередь финальных визуалов, подаётся контроллером
+        private bool _useFinalFeed;                 // включаем во время замедления
+        private bool _aligning;                     // фаза финального выравнивания
 
-        private void OnValidate()
-        {
-            ApplyLayout();
-        }
+        private void Awake() { ApplyLayout(); }
+        private void OnValidate() { ApplyLayout(); }
 
-        /// <summary>
-        ///     Расставляет дочерние элементы в правильные локальные позиции.
-        /// </summary>
+        /// <summary>Расставляет дочерние элементы в правильные локальные позиции.</summary>
         public void ApplyLayout()
         {
             SlotElements = GetComponentsInChildren<SlotElement>(true);
@@ -50,12 +45,11 @@ namespace Neo.Bonus
                 _yPositions[i] = yPos;
 
                 var element = SlotElements[i];
-                var elementTransform = element.transform;
 
                 if (element.TryGetComponent<RectTransform>(out var rectTransform))
                     rectTransform.anchoredPosition = new Vector2(0, yPos);
                 else
-                    elementTransform.localPosition = new Vector3(0, yPos, 0);
+                    element.transform.localPosition = new Vector3(0, yPos, 0);
             }
         }
 
@@ -63,81 +57,115 @@ namespace Neo.Bonus
         {
             is_spinning = true;
 
-            // 1. Фаза вращения
-            float timerSpin = 0;
+            // 1) Константная скорость
+            float timerSpin = 0f;
             while (timerSpin < speedControll.timeSpin)
             {
                 timerSpin += Time.deltaTime;
-                MoveSlots(speedControll.speed * Time.deltaTime);
+                MoveSlots(speedControll.speed * Time.deltaTime, resetVisuals: true); // рандом при рецикле
                 yield return null;
             }
 
-            SetFinalVisuals();
+            // 2) Замедление: переключаемся на "корм финала"
+            _useFinalFeed = true;
 
-            // 2. Фаза замедления
-            var decelerationTimer = 0f;
-            var initialSpeed = speedControll.speed;
-            while (decelerationTimer < speedControll.decelerationTime)
+            var decelT = 0f;
+            var v0 = speedControll.speed;
+            var v1 = Mathf.Max(speedControll.minSpeed, 1f);
+
+            while (decelT < speedControll.decelerationTime)
             {
-                decelerationTimer += Time.deltaTime;
-                var t = decelerationTimer / speedControll.decelerationTime;
-                var currentSpeed = Mathf.Lerp(initialSpeed, speedControll.minSpeed, t);
-                MoveSlots(currentSpeed * Time.deltaTime, false);
+                decelT += Time.deltaTime;
+                var t = Mathf.Clamp01(decelT / speedControll.decelerationTime);
+                var v = Mathf.Lerp(v0, v1, t);
+                MoveSlots(v * Time.deltaTime, resetVisuals: false); // без рандома; при рецикле — финальный корм
                 yield return null;
             }
 
-            // 3. Фаза финального выравнивания
-            var sortedSlots = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            var firstSlot = sortedSlots.First();
-            var targetY = _yPositions.First();
-            var currentY = GetLocalY(firstSlot.transform);
+            // 3) Финальная докрутка до следующей сетки ВНИЗ (без смены спрайтов)
+            _aligning = true;
+            _useFinalFeed = false;
 
-            var travelDistance = 0f;
-            var maxTravel = spaceY * 2; // Максимальное расстояние для избежания вечного цикла
+            var sorted = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
+            var first = sorted.First(); // нижний видимый как якорь
+            var targetY = FindNextGridYDown(GetLocalY(first.transform));
 
-            while (currentY > targetY && travelDistance < maxTravel)
+            while (!Mathf.Approximately(GetLocalY(first.transform), targetY))
             {
-                var moveDelta = speedControll.minSpeed * Time.deltaTime;
-                MoveSlots(moveDelta, false);
-                travelDistance += moveDelta;
-                currentY = GetLocalY(firstSlot.transform);
+                float current = GetLocalY(first.transform);
+                float newY = Mathf.MoveTowards(current, targetY, speedControll.minSpeed * Time.deltaTime);
+                float delta = newY - current; // отрицательное (вниз)
+                MoveSlots(-delta, resetVisuals: false);
                 yield return null;
             }
 
-            // Финальная доводка и расстановка всех элементов по местам
-            var finalOffset = targetY - GetLocalY(firstSlot.transform);
-            foreach (var slot in SlotElements) MoveSlot(slot.transform, finalOffset);
-
-            // Пересортировка и финальное выравнивание по эталонным позициям
-            sortedSlots = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            for (var i = 0; i < sortedSlots.Length; i++) SetLocalY(sortedSlots[i].transform, _yPositions[i]);
+            // Финальная фиксация по сетке (позиции), спрайты НЕ трогаем
+            sorted = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
+            for (int i = 0; i < sorted.Length; i++)
+                SetLocalY(sorted[i].transform, _yPositions[i]);
 
             is_spinning = false;
             OnStop?.Invoke();
         }
 
-        private void MoveSlots(float delta, bool resetVisuals = true)
+        private float FindNextGridYDown(float currentY)
+        {
+            const float eps = 1e-4f;
+            float best = float.NegativeInfinity;
+            bool found = false;
+
+            for (int i = 0; i < _yPositions.Length; i++)
+            {
+                float y = _yPositions[i];
+                if (y <= currentY + eps && y > best)
+                {
+                    best = y;
+                    found = true;
+                }
+            }
+
+            if (!found) best = _yPositions.Min();
+            return best;
+        }
+
+        private void MoveSlots(float delta, bool resetVisuals)
         {
             foreach (var slot in SlotElements)
             {
                 MoveSlot(slot.transform, -delta);
 
+                // если ушёл ниже порога — переезжает наверх и, при надобности, «кормится»
                 if (GetLocalY(slot.transform) <= _resetPositionY)
                 {
-                    var highestY = SlotElements.Max(s => GetLocalY(s.transform));
-                    SetLocalY(slot.transform, highestY + spaceY);
+                    float highestY = SlotElements.Max(s => GetLocalY(s.transform));
+                    SlotVisualData lastFed = null;
 
-                    if (resetVisuals) slot.SetVisuals(GetRandomVisualData());
+                    while (GetLocalY(slot.transform) <= _resetPositionY)
+                    {
+                        highestY += spaceY;
+                        SetLocalY(slot.transform, highestY);
+
+                        if (_useFinalFeed && _finalFeed != null && _finalFeed.Count > 0)
+                            lastFed = _finalFeed.Dequeue();
+                    }
+
+                    if (_useFinalFeed)
+                    {
+                        if (lastFed != null) slot.SetVisuals(lastFed);
+                    }
+                    else if (resetVisuals)
+                    {
+                        var rnd = GetRandomVisualData();
+                        if (rnd != null) slot.SetVisuals(rnd);
+                    }
                 }
             }
         }
 
         private void MoveSlot(Transform t, float yDelta)
         {
-            if (t is RectTransform rt)
-                rt.anchoredPosition += new Vector2(0, yDelta);
-            else
-                t.localPosition += new Vector3(0, yDelta, 0);
+            if (t is RectTransform rt) rt.anchoredPosition += new Vector2(0, yDelta);
+            else t.localPosition += new Vector3(0, yDelta, 0);
         }
 
         private float GetLocalY(Transform t)
@@ -147,21 +175,8 @@ namespace Neo.Bonus
 
         private void SetLocalY(Transform t, float y)
         {
-            if (t is RectTransform rt)
-                rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
-            else
-                t.localPosition = new Vector3(t.localPosition.x, y, t.localPosition.z);
-        }
-
-        private void SetFinalVisuals()
-        {
-            // Сортируем слоты по их текущей позиции, чтобы правильно назначить финальные спрайты
-            var sortedByY = SlotElements.OrderBy(s => GetLocalY(s.transform)).ToArray();
-            for (var i = 0; i < sortedByY.Length; i++)
-            {
-                var visualIndex = i % countSlotElement;
-                if (visualIndex < _finalVisuals.Length) sortedByY[i].SetVisuals(_finalVisuals[visualIndex]);
-            }
+            if (t is RectTransform rt) rt.anchoredPosition = new Vector2(rt.anchoredPosition.x, y);
+            else t.localPosition = new Vector3(t.localPosition.x, y, t.localPosition.z);
         }
 
         private SlotVisualData GetRandomVisualData()
@@ -174,21 +189,63 @@ namespace Neo.Bonus
         public void Spin(SpritesData allSpritesData, SlotVisualData[] finalVisuals)
         {
             _allSpritesData = allSpritesData;
-            _finalVisuals = finalVisuals;
+            _finalFeed = new Queue<SlotVisualData>(finalVisuals ?? new SlotVisualData[0]);
 
-            foreach (var slot in SlotElements) slot.SetVisuals(GetRandomVisualData());
+            _useFinalFeed = false;
+            _aligning = false;
+
+            foreach (var slot in SlotElements)
+            {
+                var rnd = GetRandomVisualData();
+                if (rnd != null) slot.SetVisuals(rnd);
+            }
 
             StartCoroutine(SpinCoroutine());
         }
 
-        public void Stop()
-        {
-            is_spinning = false;
-        }
+        public void Stop() { is_spinning = false; }
 
         public void SetVisuals(SlotVisualData data)
         {
+            if (data == null) return;
             foreach (var s in SlotElements) s.SetVisuals(data);
+        }
+
+        /// <summary>
+        /// Возвращает РОВНО три реально видимых слота (Top→Down) по их текущей Y-позиции.
+        /// Видимое окно считаем от нижнего порога (_resetPositionY) на 3 шага spaceY.
+        /// </summary>
+        public SlotElement[] GetVisibleTopDown()
+        {
+            const float eps = 1e-4f;
+            float bottom = _resetPositionY + eps;
+            float top = _resetPositionY + spaceY * 3f + eps;
+
+            var inWindow = SlotElements
+                .Where(s =>
+                {
+                    float y = GetLocalY(s.transform);
+                    return y > bottom && y <= top;
+                })
+                .OrderByDescending(s => GetLocalY(s.transform)) // Top→Down
+                .ToList();
+
+            // Если по каким-то причинам попало не 3 — подстрахуемся
+            if (inWindow.Count < 3)
+            {
+                // добираем самые «верхние» элементы
+                var extra = SlotElements
+                    .Except(inWindow)
+                    .OrderByDescending(s => GetLocalY(s.transform))
+                    .Take(3 - inWindow.Count);
+                inWindow.AddRange(extra);
+                inWindow = inWindow
+                    .OrderByDescending(s => GetLocalY(s.transform))
+                    .Take(3)
+                    .ToList();
+            }
+
+            return inWindow.Take(3).ToArray();
         }
     }
 }
