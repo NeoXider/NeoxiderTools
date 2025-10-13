@@ -15,6 +15,7 @@ namespace Neo.Bonus
     /// - Стартует спин рядов и ждёт полного останова
     /// - Считывает ИМЕННО видимые 3 символа из каждого ряда и собирает finalVisuals
     /// - Считает выигрыш/проигрыш и шлёт события
+    /// - Даёт доступ к двумерной матрице видимых элементов (Elements) для эффектов
     /// Здесь НЕТ анимаций — весь движок вращения/торможения внутри Row.
     /// </summary>
     public class SpinController : MonoBehaviour
@@ -70,11 +71,21 @@ namespace Neo.Bonus
         [SerializeField, Min(0)] private int _betsId;
         [SerializeField] private bool _logFinalVisuals;
 
+        [Tooltip("С какого числа печатать координаты в Debug: 0 (по умолчанию) или 1 и т.п.")]
+        [SerializeField] private int _gridIndexBase = 1;
+
         public SlotVisualData[,] finalVisuals; // собираем ИЗ экрана после стопа
         public IMoneySpend moneySpend;
 
+        /// <summary>
+        /// Двумерная матрица ССЫЛОК на реальные видимые элементы:
+        /// Elements[x,y], где y=0 — низ, y=2 — верх. Заполняется после остановки.
+        /// </summary>
+        public SlotElement[,] Elements { get; private set; }
+
         private int price;
 
+        /// <summary>Матрица ID (в той же ориентации, что Elements): y=0 — низ, y=2 — верх.</summary>
         public int[,] FinalElementIDs
         {
             get
@@ -83,9 +94,9 @@ namespace Neo.Bonus
                 int cols = finalVisuals.GetLength(0);
                 int rows = finalVisuals.GetLength(1);
                 int[,] ids = new int[cols, rows];
-                for (int i = 0; i < cols; i++)
-                for (int j = 0; j < rows; j++)
-                    ids[i, j] = finalVisuals[i, j]?.id ?? -1;
+                for (int x = 0; x < cols; x++)
+                for (int y = 0; y < rows; y++)
+                    ids[x, y] = finalVisuals[x, y]?.id ?? -1;
                 return ids;
             }
         }
@@ -146,48 +157,80 @@ namespace Neo.Bonus
             // Ждём полного останова ВСЕХ рядов
             yield return new WaitUntil(IsStop);
 
-            // Собираем реальный экран
-            BuildFinalVisualsFromScreen();
+            // Собираем реальный экран и кэш видимых элементов
+            BuildVisibleMatrices();
 
             // Считаем результат и шлём события
             ProcessSpinResult();
         }
 
-        /// <summary>Собирает finalVisuals из реальных видимых элементов (снизу вверх) каждого ряда.</summary>
-        private void BuildFinalVisualsFromScreen()
+        /// <summary>
+        /// Заполняет Elements[x,y] (ССЫЛКИ на видимые элементы) и finalVisuals[x,y] (данные) из экрана.
+        /// y=0 низ, y=2 верх.
+        /// </summary>
+        private void BuildVisibleMatrices()
         {
             if (_rows == null || _rows.Length == 0)
             {
+                Elements = null;
                 finalVisuals = null;
                 return;
             }
 
-            finalVisuals = new SlotVisualData[_rows.Length, 3];
+            int cols = _rows.Length;
+            int rows = 3;
 
-            for (int x = 0; x < _rows.Length; x++)
+            Elements = new SlotElement[cols, rows];
+            finalVisuals = new SlotVisualData[cols, rows];
+
+            for (int x = 0; x < cols; x++)
             {
                 var row = _rows[x];
                 if (row == null)
                 {
-                    finalVisuals[x, 0] = finalVisuals[x, 1] = finalVisuals[x, 2] = null;
+                    for (int y = 0; y < rows; y++)
+                    {
+                        Elements[x, y] = null;
+                        finalVisuals[x, y] = null;
+                    }
                     continue;
                 }
 
-                // Row гарантирует Top→Down три «окна»
+                // Row даёт Top→Down три «окна»
                 SlotElement[] visibleTopDown = row.GetVisibleTopDown();
 
-                // Записываем Bottom→Top в таблицу (y=0 — низ)
-                for (int y = 0; y < 3; y++)
+                // Записываем Bottom→Top в матрицы (y=0 — низ)
+                for (int y = 0; y < rows; y++)
                 {
-                    var se = visibleTopDown[2 - y]; // 2..0 ⇒ низ..верх
-                    SlotVisualData v = null;
+                    var se = visibleTopDown[rows - 1 - y]; // 2..0 ⇒ низ..верх
+                    Elements[x, y] = se;
 
+                    SlotVisualData v = null;
                     if (se != null && allSpritesData?.visuals != null && allSpritesData.visuals.Length > 0)
                         v = allSpritesData.visuals.FirstOrDefault(t => t.id == se.id);
 
-                    finalVisuals[x, y] = v; // если null — id будет -1 (защита)
+                    finalVisuals[x, y] = v;
                 }
             }
+        }
+
+        /// <summary>
+        /// Публичный геттер (получить актуальную матрицу элементов).
+        /// Если спин в покое — обновляет из экрана; во время спина вернёт последний кэш.
+        /// </summary>
+        public SlotElement[,] GetElementsMatrix(bool refreshIfIdle = true)
+        {
+            if (refreshIfIdle && IsStop()) BuildVisibleMatrices();
+            return Elements;
+        }
+
+        /// <summary>
+        /// Публичный геттер ID-матрицы (в той же ориентации, что Elements): y=0 низ.
+        /// </summary>
+        public int[,] GetElementIDsMatrix(bool refreshIfIdle = true)
+        {
+            if (refreshIfIdle && IsStop()) BuildVisibleMatrices();
+            return FinalElementIDs;
         }
 
         /// <summary>
@@ -225,20 +268,22 @@ namespace Neo.Bonus
 
         private void ProcessSpinResult()
         {
+            // Корректный, настраиваемый Debug: координаты печатаем с базой _gridIndexBase (0 или 1 и т.п.)
             if (_logFinalVisuals && finalVisuals != null)
             {
                 var sb = new StringBuilder();
                 sb.AppendLine("--- Final Visuals Table ---");
                 int cols = finalVisuals.GetLength(0);
                 int rows = finalVisuals.GetLength(1);
-                // печать сверху-вниз (для визуального соответствия экрану)
+
+                // печать сверху-вниз (визуально как на экране), НО координаты [x+base, y+base]
                 for (int y = rows - 1; y >= 0; y--)
                 {
                     var parts = new List<string>(cols);
                     for (int x = 0; x < cols; x++)
                     {
                         int id = finalVisuals[x, y]?.id ?? -1;
-                        parts.Add($"[{x},{y}] = {id}");
+                        parts.Add($"[{x + _gridIndexBase},{y + _gridIndexBase}] = {id}");
                     }
                     sb.AppendLine(string.Join(", ", parts));
                 }

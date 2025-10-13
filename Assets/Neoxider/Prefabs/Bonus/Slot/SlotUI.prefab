@@ -423,8 +423,6 @@ MonoBehaviour:
   _speedControll:
     speed: 5000
     timeSpin: 1
-    decelerationTime: 1
-    decelerationEase: 6
   _setSpace: 1
   _space: {x: 300, y: 150}
   offsetY: -175
@@ -459,6 +457,7 @@ MonoBehaviour:
   _countLine: 1
   _betsId: 0
   _logFinalVisuals: 0
+  _gridIndexBase: 1
 --- !u!1001 &1969437332703834904
 PrefabInstance:
   m_ObjectHideFlags: 0
