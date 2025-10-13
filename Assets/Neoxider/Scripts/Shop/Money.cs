@@ -11,7 +11,7 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
-            [Space] [SerializeField] private readonly string _moneySave = "Money";
+            [Space] [SerializeField] private string _moneySave = "Money";
 
             [Space] [Header("Text")] [SerializeField]
             private readonly int _roundToDecimal = 2;

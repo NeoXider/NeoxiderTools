@@ -3,25 +3,35 @@ using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
 using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 namespace Neo.Tools
 {
     public class Spawner : MonoBehaviour
     {
-        [Header("Spawn Settings")] [SerializeField]
-        private GameObject[] _prefabs;
+        [FormerlySerializedAs("_prefabs")] [Header("Spawn Settings")] [SerializeField]
+        public GameObject[] prefabs;
 
         [SerializeField] private bool _useObjectPool = true;
 
-        [SerializeField] [Tooltip("Задержка перед удалением объекта. Если 0, объект не будет удаляться автоматически.")]
-        private float _destroyDelay = 0f;
+        [FormerlySerializedAs("_destroyDelay")]
+        [SerializeField]
+        [Tooltip("Задержка перед удалением объекта. Если 0, объект не будет удаляться автоматически.")]
+        public float destroyDelay = 0f;
+
+        [Header("Events")]
+        public UnityEvent<GameObject> OnObjectSpawned;
 
         [Space] [Header("If spawnLimit is zero then infinite spawn")]
         public int spawnLimit;
 
-        [SerializeField] private float _minSpawnDelay = 0.5f;
-        [SerializeField] private float _maxSpawnDelay = 2f;
+        [FormerlySerializedAs("_minSpawnDelay")] [SerializeField]
+        public float minSpawnDelay = 0.5f;
+
+        [FormerlySerializedAs("_maxSpawnDelay")] [SerializeField]
+        public float maxSpawnDelay = 2f;
 
         [Space] [Header("Other Settings")] [SerializeField]
         private Transform _spawnTransform;
@@ -35,8 +45,10 @@ namespace Neo.Tools
 
         public bool isSpawning { get; private set; }
 
-        private readonly List<GameObject> _spawnedObjects = new();
+        private List<GameObject> _spawnedObjects = new();
         private int _spawnedCount;
+
+        public List<GameObject> SpawnedObjects => _spawnedObjects;
 
         private void Start()
         {
@@ -51,6 +63,7 @@ namespace Neo.Tools
             _spawnTransform ??= transform;
         }
 
+        [Button]
         public void StartSpawn()
         {
             if (isSpawning)
@@ -62,12 +75,13 @@ namespace Neo.Tools
             StartCoroutine(SpawnObjects());
         }
 
+        [Button]
         public void StopSpawn()
         {
             isSpawning = false;
         }
 
-        private IEnumerator SpawnObjects()
+        public IEnumerator SpawnObjects()
         {
             isSpawning = true;
             float timer = 0f;
@@ -80,7 +94,7 @@ namespace Neo.Tools
                 {
                     SpawnRandomObject();
                     _spawnedCount++;
-                    timer = Random.Range(_minSpawnDelay, _maxSpawnDelay);
+                    timer = Random.Range(minSpawnDelay, maxSpawnDelay);
                 }
 
                 yield return null;
@@ -89,16 +103,31 @@ namespace Neo.Tools
             isSpawning = false;
         }
 
-        private void SpawnRandomObject()
+        [Button]
+        public GameObject SpawnRandomObject()
         {
-            if (_prefabs.Length == 0)
+            if (prefabs.Length == 0)
             {
-                return;
+                return null;
             }
 
-            int randomIndex = _prefabs.GetRandomIndex();
-            GameObject prefabToSpawn = _prefabs[randomIndex];
-            SpawnObject(prefabToSpawn, GetSpawnPosition(), Quaternion.identity, _spawnTransform);
+            int randomIndex = prefabs.GetRandomIndex();
+            GameObject prefabToSpawn = prefabs[randomIndex];
+            return SpawnObject(prefabToSpawn, GetSpawnPosition(), Quaternion.identity, _spawnTransform);
+        }
+
+        // Note: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
+        [Button]
+        public GameObject SpawnById(int prefabId, Vector3 position)
+        {
+            if (prefabId < 0 || prefabId >= prefabs.Length)
+            {
+                Debug.LogError($"Prefab ID {prefabId} is out of range. Max ID is {prefabs.Length - 1}.");
+                return null;
+            }
+
+            GameObject prefabToSpawn = prefabs[prefabId];
+            return SpawnObject(prefabToSpawn, position, Quaternion.identity, _spawnTransform);
         }
 
         public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
@@ -108,17 +137,19 @@ namespace Neo.Tools
                 return null;
             }
 
-            GameObject spawnedObject = _useObjectPool
+            GameObject spawnedObject = _useObjectPool && PoolManager.I != null
                 ? PoolManager.Get(prefab, position, rotation)
                 : Instantiate(prefab, position, rotation);
 
             spawnedObject.transform.SetParent(parent);
             _spawnedObjects.Add(spawnedObject);
 
-            if (_destroyDelay > 0)
+            if (destroyDelay > 0)
             {
-                StartCoroutine(DelayedDestroy(spawnedObject, _destroyDelay));
+                StartCoroutine(DelayedDestroy(spawnedObject, destroyDelay));
             }
+
+            OnObjectSpawned?.Invoke(spawnedObject);
 
             return spawnedObject;
         }
@@ -156,6 +187,7 @@ namespace Neo.Tools
             return _spawnTransform.position;
         }
 
+        [Button]
         public void Clear()
         {
             StopAllCoroutines(); // Останавливаем все корутины (спавн и отложенное удаление)

@@ -58,7 +58,8 @@ namespace Neo.Bonus
         [SerializeField] [Min(0)] private int _betsId;
 
         private SlotElement[,] _elements;
-
+        public SlotElement[,] Elements => _elements;
+        
         public SlotVisualData[,] finalVisuals; // будет собираться ИЗ реальных видимых трёх после стопа
         public IMoneySpend moneySpend;
 
