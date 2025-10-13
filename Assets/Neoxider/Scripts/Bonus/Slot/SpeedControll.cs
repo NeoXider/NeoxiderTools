@@ -1,23 +1,20 @@
+// Assets/Neoxider/Scripts/Bonus/Slot/SpeedControll.cs
 using System;
-using DG.Tweening;
-using UnityEngine;
 
 namespace Neo.Bonus
 {
+    /// <summary>
+    /// Параметры скорости барабана:
+    /// - speed: стартовая скорость (юн/с), знак задаёт направление ( + вверх, - вниз ).
+    /// - timeSpin: время фазовой прокрутки на постоянной скорости перед началом торможения (сек).
+    /// </summary>
     [Serializable]
-    public class SpeedControll
+    public struct SpeedControll
     {
-        [Tooltip("Начальная скорость вращения барабана в юнитах/сек.")]
-        public float speed = 30f;
+        public float speed;
+        public float timeSpin;
 
-        [Tooltip("Время вращения с постоянной скоростью (до начала замедления).")]
-        public float timeSpin = 2f;
-
-        [Tooltip("Время, за которое барабан плавно остановится.")]
-        [Min(0.1f)]
-        public float decelerationTime = 1f;
-
-        [Tooltip("Тип замедления из стандартного набора DOTween.")]
-        public Ease decelerationEase = Ease.InOutQuad;
+        public static SpeedControll Default(float speed = 5000f, float timeSpin = 1f)
+            => new SpeedControll { speed = speed, timeSpin = timeSpin };
     }
 }

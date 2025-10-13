@@ -481,6 +481,10 @@ PrefabInstance:
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: _speedControll.decelerationEase
+      value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 7252264033611650085, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
       propertyPath: _speedControll.decelerationCurve.m_Curve.Array.data[0].time
       value: 0.0030975342
       objectReference: {fileID: 0}
