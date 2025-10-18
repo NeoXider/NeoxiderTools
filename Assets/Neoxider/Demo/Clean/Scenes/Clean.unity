@@ -712,6 +712,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1997406653}
   - component: {fileID: 1997406654}
+  - component: {fileID: 1997406655}
   m_Layer: 0
   m_Name: Health
   m_TagString: Untagged
@@ -750,6 +751,41 @@ MonoBehaviour:
     TypeName: Neoxider.Runtime.Core.CoreLifetimeScope
   autoRun: 1
   autoInjectGameObjects: []
+--- !u!114 &1997406655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1997406652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d8c5b1e3a869d1458d0de4b805ffefb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentHealth: 0
+  maxHealth: 0
+  healthPercentage: 0
+  healthPercent100: 0
+  healthDelta: 0
+  OnHealthChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnPlayerDiedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMaxHealthChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHealthPercentageChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHealthPercent100ChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHealthDeltaChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
