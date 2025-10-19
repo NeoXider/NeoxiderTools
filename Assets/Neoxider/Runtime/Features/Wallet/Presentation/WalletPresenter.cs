@@ -40,8 +40,7 @@ namespace Neo.Runtime.Features.Wallet.Presenter
                 }
 
                 MoneyModel model = _wallet.Get(view.CurrencyId);
-
-                // Первичный пуш
+                
                 bool hasLimit = model.Max.Value > 0f;
                 view.SetLimitMode(hasLimit);
                 view.UpdateMaxMoney(model.Max.Value);
@@ -52,8 +51,7 @@ namespace Neo.Runtime.Features.Wallet.Presenter
                     view.UpdateMoneyPercentage(p);
                     view.UpdateMoneyPercent100(p * 100f);
                 }
-
-                // Подписки
+                
                 model.Balance.AsObservable().Subscribe(b =>
                 {
                     view.UpdateMoney(b, model.Max.Value);

@@ -1,5 +1,77 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!1 &1222329201378452753
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2549400823684533665}
+  - component: {fileID: 1239518023995187017}
+  m_Layer: 0
+  m_Name: gems
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2549400823684533665
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222329201378452753}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2107811255900025255}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1239518023995187017
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1222329201378452753}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2f4cfb74a8473484bf048c8d13eb0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  balance: 0
+  max: 0
+  percent: 0
+  percent100: 0
+  delta: 0
+  hasLimit: 0
+  OnMoneyChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnWalletFullEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMaxMoneyChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyPercentageChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyPercent100ChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyDeltaChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLimitModeChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  currencyId: gems
 --- !u!1 &1586273993181111156
 GameObject:
   m_ObjectHideFlags: 0
@@ -113,7 +185,9 @@ Transform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 7445779525897846140}
+  - {fileID: 2549400823684533665}
   m_Father: {fileID: 4970086756138451408}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &7463660097597101991
@@ -268,3 +342,75 @@ MonoBehaviour:
   OnHealthDeltaChangedEvent:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &6617878813494638069
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7445779525897846140}
+  - component: {fileID: 7304278664242827837}
+  m_Layer: 0
+  m_Name: money
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7445779525897846140
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6617878813494638069}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2107811255900025255}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7304278664242827837
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6617878813494638069}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b2f4cfb74a8473484bf048c8d13eb0b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  balance: 0
+  max: 0
+  percent: 0
+  percent100: 0
+  delta: 0
+  hasLimit: 0
+  OnMoneyChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnWalletFullEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMaxMoneyChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyPercentageChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyPercent100ChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMoneyDeltaChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  OnLimitModeChangedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+  currencyId: coins
