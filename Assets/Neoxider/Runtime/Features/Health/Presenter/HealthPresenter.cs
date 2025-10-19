@@ -1,10 +1,10 @@
 using System;
+using Neo.Runtime.Features.Health.Model;
 using Neo.Runtime.Features.Health.View;
-using Neoxider.Runtime.Features.Health.Model;
 using R3;
 using VContainer;
 
-namespace Neoxider.Runtime.Features.Health.Presenter
+namespace Neo.Runtime.Features.Health.Presenter
 {
     /// <summary>
     /// Presenter for health system that handles communication between model and view.
@@ -69,41 +69,6 @@ namespace Neoxider.Runtime.Features.Health.Presenter
             _view.ShowDeath(true);
         }
 
-        /// <summary>
-        /// Deal damage to character
-        /// </summary>
-        /// <param name="amount">Damage amount</param>
-        public void TakeDamage(int amount)
-        {
-            if (amount < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(amount));
-            }
-
-            _health.TakeDamage(amount);
-        }
-
-        /// <summary>
-        /// Heal the character
-        /// </summary>
-        /// <param name="amount">Healing amount</param>
-        public void Heal(int amount)
-        {
-            if (amount < 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(amount));
-            }
-
-            _health.Heal(amount);
-        }
-
-        /// <summary>
-        /// Restore health to maximum level
-        /// </summary>
-        public void Restore()
-        {
-            _health.Restore();
-        }
 
         /// <summary>
         /// Dispose presenter resources

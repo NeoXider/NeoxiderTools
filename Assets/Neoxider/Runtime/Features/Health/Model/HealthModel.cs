@@ -1,7 +1,7 @@
 using System;
 using R3;
 
-namespace Neoxider.Runtime.Features.Health.Model
+namespace Neo.Runtime.Features.Health.Model
 {
     /// <summary>
     /// Health model for character with reactive properties and events.
@@ -12,17 +12,17 @@ namespace Neoxider.Runtime.Features.Health.Model
         /// Current health value
         /// </summary>
         public ReactiveProperty<int> CurrentCurrent { get; }
-        
+
         /// <summary>
         /// Maximum health value
         /// </summary>
         public ReactiveProperty<int> Max { get; }
-        
+
         /// <summary>
         /// Percentage of current health from maximum (0-1)
         /// </summary>
         public ReactiveProperty<float> Percent { get; }
-        
+
         /// <summary>
         /// Event that occurs when health reaches zero
         /// </summary>

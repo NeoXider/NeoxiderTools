@@ -18,27 +18,27 @@ namespace Neo.Runtime.Features.Health.View
         /// Event triggered when health changes
         /// </summary>
         public UnityEvent OnHealthChangedEvent;
-        
+
         /// <summary>
         /// Event triggered when player dies
         /// </summary>
         public UnityEvent<bool> OnPlayerDiedEvent;
-        
+
         /// <summary>
         /// Event triggered when maximum health changes
         /// </summary>
         public UnityEvent<int> OnMaxHealthChangedEvent;
-        
+
         /// <summary>
         /// Event triggered when health percentage changes
         /// </summary>
         public UnityEvent<float> OnHealthPercentageChangedEvent;
-        
+
         /// <summary>
         /// Event triggered when health percent 100 changes
         /// </summary>
         public UnityEvent<float> OnHealthPercent100ChangedEvent;
-        
+
         /// <summary>
         /// Event triggered when health delta changes
         /// </summary>

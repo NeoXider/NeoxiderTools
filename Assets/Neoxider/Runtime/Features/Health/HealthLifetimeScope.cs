@@ -1,10 +1,10 @@
+using Neo.Runtime.Features.Health.Model;
+using Neo.Runtime.Features.Health.Presenter;
 using VContainer.Unity;
 using Neo.Runtime.Features.Health.View;
-using Neoxider.Runtime.Features.Health.Model;
-using Neoxider.Runtime.Features.Health.Presenter;
 using VContainer;
 
-namespace Neoxider.Runtime.Features.Health
+namespace Neo.Runtime.Features.Health
 {
     public class HealthLifetimeScope : LifetimeScope
     {
@@ -15,7 +15,6 @@ namespace Neoxider.Runtime.Features.Health
             builder.RegisterComponentInHierarchy<HealthView>()
                 .As<IHealthView>()
                 .AsSelf();
-            
         }
     }
 }

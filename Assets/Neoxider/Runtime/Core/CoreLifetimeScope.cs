@@ -1,8 +1,8 @@
 using VContainer.Unity;
 using VContainer;
-using Neoxider.Runtime.Features.Health.Model;
+using Neo.Runtime.Features.Health.Model;
 
-namespace Neoxider.Runtime.Core
+namespace Neo.Runtime.Core
 {
     public class CoreLifetimeScope : LifetimeScope
     {

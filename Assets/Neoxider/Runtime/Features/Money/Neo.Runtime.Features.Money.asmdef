@@ -1,8 +1,8 @@
 {
-    "name": "Neo.Runtime.Features.Save",
+    "name": "Neo.Runtime.Features.Money",
     "rootNamespace": "",
     "references": [
-        "VContainer"
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
