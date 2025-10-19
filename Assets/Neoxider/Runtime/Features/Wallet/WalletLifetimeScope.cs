@@ -7,7 +7,7 @@ using Neo.Runtime.Features.Wallet.Presenter;
 using VContainer;
 using VContainer.Unity;
 
-namespace Neoxider.Runtime.Features.Wallet
+namespace Neo.Runtime.Features.Wallet
 {
     public class WalletLifetimeScope : LifetimeScope
     {

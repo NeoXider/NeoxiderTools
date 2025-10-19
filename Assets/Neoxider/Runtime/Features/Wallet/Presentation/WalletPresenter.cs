@@ -11,7 +11,7 @@ using VContainer.Unity;
 namespace Neo.Runtime.Features.Wallet.Presenter
 {
     /// <summary>
-    /// Один презентер на весь кошелёк: подписывает каждую MoneyViewWithId на свою MoneyModel.
+    /// One presenter for the entire wallet: subscribes each MoneyViewWithId to its own MoneyModel.
     /// </summary>
     public class WalletPresenter : IStartable, IDisposable
     {
@@ -21,6 +21,12 @@ namespace Neo.Runtime.Features.Wallet.Presenter
 
         private readonly CompositeDisposable _disp = new();
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="WalletPresenter"/> class.
+        /// </summary>
+        /// <param name="wallet">The wallet model to present.</param>
+        /// <param name="config">The wallet configuration.</param>
+        /// <param name="views">Collection of money views to bind.</param>
         [Inject]
         public WalletPresenter(WalletModel wallet, WalletConfig config, IEnumerable<MoneyViewWithId> views)
         {
@@ -29,6 +35,9 @@ namespace Neo.Runtime.Features.Wallet.Presenter
             _views = views ?? throw new ArgumentNullException(nameof(views));
         }
 
+        /// <summary>
+        /// Starts the presenter and binds all views to their respective models.
+        /// </summary>
         public void Start()
         {
             foreach (MoneyViewWithId view in _views)
@@ -86,6 +95,9 @@ namespace Neo.Runtime.Features.Wallet.Presenter
             }
         }
 
+        /// <summary>
+        /// Disposes the presenter and cleans up subscriptions.
+        /// </summary>
         public void Dispose()
         {
             _disp.Dispose();
