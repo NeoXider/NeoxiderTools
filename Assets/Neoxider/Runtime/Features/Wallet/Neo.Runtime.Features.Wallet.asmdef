@@ -1,12 +1,9 @@
 {
-    "name": "Neo.Runtime.Core",
+    "name": "Neo.Runtime.Features.Wallet",
     "rootNamespace": "",
     "references": [
         "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
-        "GUID:b542b3d024ae33f46a5ea1023abe9b2a",
-        "GUID:cc07c0df61a5c224a8e01f78077a98dc",
-        "GUID:c36c59cd7bd0b7c4898632a22e32d7db",
-        "GUID:d0d1e15f83a6431781265f28a622500e"
+        "GUID:c36c59cd7bd0b7c4898632a22e32d7db"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

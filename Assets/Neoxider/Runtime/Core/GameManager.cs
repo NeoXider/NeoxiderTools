@@ -2,6 +2,7 @@ using System;
 using Neo.Runtime.Features.Health.Model;
 using Neo.Runtime.Features.Money.Model;
 using Neo.Runtime.Features.Score.Model;
+using Neo.Runtime.Features.Wallet.Domain;
 using VContainer;
 using VContainer.Unity;
 
@@ -48,6 +49,8 @@ namespace Neo.Runtime.Core
 
         public static ScoreModel Score => Resolver.Resolve<ScoreModel>();
 
-        public static MoneyModel Money => Resolver.Resolve<MoneyModel>();
+        public static WalletModel Wallet => Resolver.Resolve<WalletModel>();
+
+        public static MoneyModel Money => Wallet.Get("money");
     }
 }
