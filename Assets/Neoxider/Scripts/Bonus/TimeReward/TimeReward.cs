@@ -11,7 +11,7 @@ namespace Neo
         public class TimeReward : MonoBehaviour
         {
             private const string _lastRewardTimeKey = "LastRewardTime";
-            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField] public int secondsToWaitForReward = 60 * 60; //1 hours
+            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField] public float secondsToWaitForReward = 60 * 60; //1 hours
             [FormerlySerializedAs("_startTakeReward")] [SerializeField] public bool startTakeReward;
             [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField] public string lastRewardTimeStr;
             [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)] public float updateTime = 1;
