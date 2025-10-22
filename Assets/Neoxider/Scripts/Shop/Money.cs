@@ -112,6 +112,14 @@ namespace Neo
                 ChangeLevelMoneyEvent();
                 return levelMoney;
             }
+            
+            public float SetMoney(float count = 0)
+            {
+                _lastChangeMoney = count - _money;
+                _money = count;
+                ChangeMoneyEvent();
+                return _money;
+            }
 
             public float SetMoneyForLevel(bool resetLevelMoney = true)
             {

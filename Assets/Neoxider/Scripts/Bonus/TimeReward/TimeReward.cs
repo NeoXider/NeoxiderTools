@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Neo
 {
@@ -10,10 +11,10 @@ namespace Neo
         public class TimeReward : MonoBehaviour
         {
             private const string _lastRewardTimeKey = "LastRewardTime";
-            [SerializeField] private int _secondsToWaitForReward = 60 * 60; //1 hours
-            [SerializeField] private bool _startTakeReward;
-            [SerializeField] private string _lastRewardTimeStr;
-            [SerializeField] [Min(0)] private float _updateTime = 1;
+            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField] public int secondsToWaitForReward = 60 * 60; //1 hours
+            [FormerlySerializedAs("_startTakeReward")] [SerializeField] public bool startTakeReward;
+            [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField] public string lastRewardTimeStr;
+            [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)] public float updateTime = 1;
             [SerializeField] private string _addKey = "Bonus1";
 
             public float timeLeft;
@@ -26,9 +27,9 @@ namespace Neo
 
             private void Start()
             {
-                InvokeRepeating(nameof(GetTime), 0, _updateTime);
+                InvokeRepeating(nameof(GetTime), 0, updateTime);
 
-                if (_startTakeReward) TakeReward();
+                if (startTakeReward) TakeReward();
             }
 
             private void GetTime()
@@ -51,18 +52,18 @@ namespace Neo
 
             public float GetSecondsUntilReward()
             {
-                _lastRewardTimeStr = PlayerPrefs.GetString(_lastRewardTimeKey + _addKey, string.Empty);
+                lastRewardTimeStr = PlayerPrefs.GetString(_lastRewardTimeKey + _addKey, string.Empty);
 
-                if (!string.IsNullOrEmpty(_lastRewardTimeStr))
+                if (!string.IsNullOrEmpty(lastRewardTimeStr))
                 {
                     DateTime lastRewardTime;
 
-                    if (DateTime.TryParse(_lastRewardTimeStr, out lastRewardTime))
+                    if (DateTime.TryParse(lastRewardTimeStr, out lastRewardTime))
                     {
                         var currentTime = DateTime.UtcNow;
                         var timeSinceLastReward = currentTime - lastRewardTime;
                         var secondsPassed = (float)timeSinceLastReward.TotalSeconds;
-                        var secondsUntilReward = _secondsToWaitForReward - secondsPassed;
+                        var secondsUntilReward = secondsToWaitForReward - secondsPassed;
 
                         return secondsUntilReward > 0 ? secondsUntilReward : 0;
                     }
