@@ -206,7 +206,6 @@ MonoBehaviour:
     TypeName: Neo.Runtime.Core.CoreLifetimeScope
   autoRun: 1
   autoInjectGameObjects: []
-  walletConfig: {fileID: 11400000, guid: 83fe67cf5b6077641afce0ad37ffc0a0, type: 2}
 --- !u!1 &1965360343035415861
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,6 +257,10 @@ MonoBehaviour:
     TypeName: 
   autoRun: 1
   autoInjectGameObjects: []
+  walletConfig: {fileID: 11400000, guid: 83fe67cf5b6077641afce0ad37ffc0a0, type: 2}
+  loggingConfig: {fileID: 11400000, guid: f02787fce05415744997f9cefd475faa, type: 2}
+  defaultMaxHealth: 100
+  defaultMaxScore: 1000
 --- !u!1 &6557272430676642105
 GameObject:
   m_ObjectHideFlags: 0
@@ -413,4 +416,4 @@ MonoBehaviour:
   OnLimitModeChangedEvent:
     m_PersistentCalls:
       m_Calls: []
-  currencyId: coins
+  currencyId: money

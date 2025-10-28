@@ -3,29 +3,22 @@ using Neo.Runtime.Features.Money.View;
 using Neo.Runtime.Features.Money.Model;
 using R3;
 using VContainer;
+using VContainer.Unity;
 
 namespace Neo.Runtime.Features.Money.Presenter
 {
     /// <summary>
     /// Presenter for money system
     /// </summary>
-    public class MoneyPresenter : IDisposable
+    public class MoneyPresenter : IStartable, IDisposable
     {
-        private readonly MoneyModel _money;
-        private readonly IMoneyView _view;
+        [Inject] private readonly MoneyModel _money;
+        [Inject] private readonly IMoneyView _view;
+
         private readonly CompositeDisposable _disp = new();
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        /// <param name="money">Money model</param>
-        /// <param name="view">Money view</param>
-        [Inject]
-        public MoneyPresenter(MoneyModel money, IMoneyView view)
+        public void Start()
         {
-            _money = money ?? throw new ArgumentNullException(nameof(money));
-            _view  = view  ?? throw new ArgumentNullException(nameof(view));
-
             // начальный режим лимита
             _view.SetLimitMode(_money.Max.Value > 0f);
 

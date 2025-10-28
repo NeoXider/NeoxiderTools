@@ -3,29 +3,22 @@ using Neo.Runtime.Features.Health.Model;
 using Neo.Runtime.Features.Health.View;
 using R3;
 using VContainer;
+using VContainer.Unity;
 
 namespace Neo.Runtime.Features.Health.Presenter
 {
     /// <summary>
     /// Presenter for health system that handles communication between model and view.
     /// </summary>
-    public class HealthPresenter : IDisposable
+    public class HealthPresenter : IStartable, IDisposable
     {
-        private readonly HealthModel _health;
-        private readonly IHealthView _view;
+        [Inject] private readonly HealthModel _health;
+        [Inject] private readonly IHealthView _view;
+
         private readonly CompositeDisposable _disp = new();
 
-        /// <summary>
-        /// Constructor for health presenter
-        /// </summary>
-        /// <param name="health">Health model instance</param>
-        /// <param name="view">Health view instance</param>
-        [Inject]
-        public HealthPresenter(HealthModel health, IHealthView view)
+        public void Start()
         {
-            _health = health ?? throw new ArgumentNullException(nameof(health));
-            _view = view ?? throw new ArgumentNullException(nameof(view));
-
             _health.CurrentCurrent.AsObservable().Subscribe(OnHealthChanged).AddTo(_disp);
             _health.Max.AsObservable().Subscribe(OnMaxHealthChanged).AddTo(_disp);
             _health.Percent.AsObservable().Subscribe(OnHealthPercentageChanged).AddTo(_disp);

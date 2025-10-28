@@ -5,6 +5,7 @@ using Neo.Runtime.Features.Wallet.Data;
 using Neo.Runtime.Features.Wallet.Domain;
 using Neo.Runtime.Features.Wallet.Presentation;
 using R3;
+using Serilog;
 using VContainer;
 using VContainer.Unity;
 
@@ -15,25 +16,12 @@ namespace Neo.Runtime.Features.Wallet.Presenter
     /// </summary>
     public class WalletPresenter : IStartable, IDisposable
     {
-        private readonly WalletModel _wallet;
-        private readonly WalletConfig _config;
-        private readonly IEnumerable<MoneyViewWithId> _views;
+        [Inject] private readonly WalletModel _wallet;
+        [Inject] private readonly WalletConfig _config;
+        [Inject] private readonly IEnumerable<MoneyViewWithId> _views;
+        [Inject] private readonly ILogger _logger;
 
         private readonly CompositeDisposable _disp = new();
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="WalletPresenter"/> class.
-        /// </summary>
-        /// <param name="wallet">The wallet model to present.</param>
-        /// <param name="config">The wallet configuration.</param>
-        /// <param name="views">Collection of money views to bind.</param>
-        [Inject]
-        public WalletPresenter(WalletModel wallet, WalletConfig config, IEnumerable<MoneyViewWithId> views)
-        {
-            _wallet = wallet ?? throw new ArgumentNullException(nameof(wallet));
-            _config = config ?? throw new ArgumentNullException(nameof(config));
-            _views = views ?? throw new ArgumentNullException(nameof(views));
-        }
 
         /// <summary>
         /// Starts the presenter and binds all views to their respective models.
@@ -44,11 +32,14 @@ namespace Neo.Runtime.Features.Wallet.Presenter
             {
                 if (!_config.TryGet(view.CurrencyId, out _))
                 {
-                    UnityEngine.Debug.LogWarning($"WalletPresenter: Unknown CurrencyId on view: {view.CurrencyId}");
+                    _logger.Warning("[WalletPresenter.Start] Unknown CurrencyId: {CurrencyId}", view.CurrencyId);
                     continue;
                 }
 
                 MoneyModel model = _wallet.Get(view.CurrencyId);
+                
+                _logger.Information("[WalletPresenter.Start] Binding view for currency: {CurrencyId}, Balance: {Balance}, Max: {Max}", 
+                    view.CurrencyId, model.Balance.Value, model.Max.Value);
                 
                 bool hasLimit = model.Max.Value > 0f;
                 view.SetLimitMode(hasLimit);
@@ -63,6 +54,9 @@ namespace Neo.Runtime.Features.Wallet.Presenter
                 
                 model.Balance.AsObservable().Subscribe(b =>
                 {
+                    _logger.Information("[WalletPresenter.OnBalanceChanged] Currency: {CurrencyId}, Balance: {Balance}/{Max}", 
+                        view.CurrencyId, b, model.Max.Value);
+                    
                     view.UpdateMoney(b, model.Max.Value);
                     if (model.Max.Value > 0f)
                     {
@@ -89,6 +83,7 @@ namespace Neo.Runtime.Features.Wallet.Presenter
                 {
                     if (model.Max.Value > 0f)
                     {
+                        _logger.Warning("[WalletPresenter.OnReachedMax] Wallet full for currency: {CurrencyId}", view.CurrencyId);
                         view.ShowWalletFull(true);
                     }
                 }).AddTo(_disp);

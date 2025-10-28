@@ -3,29 +3,22 @@ using Neo.Runtime.Features.Score.Model;
 using Neo.Runtime.Features.Score.View;
 using R3;
 using VContainer;
+using VContainer.Unity;
 
 namespace Neo.Runtime.Features.Score.Presenter
 {
     /// <summary>
     /// Presenter for score system that handles communication between model and view.
     /// </summary>
-    public class ScorePresenter : IDisposable
+    public class ScorePresenter : IStartable, IDisposable
     {
-        private readonly ScoreModel _score;
-        private readonly IScoreView _view;
+        [Inject] private readonly ScoreModel _score;
+        [Inject] private readonly IScoreView _view;
+
         private readonly CompositeDisposable _disp = new();
 
-        /// <summary>
-        /// Constructor for score presenter
-        /// </summary>
-        /// <param name="score">Score model instance</param>
-        /// <param name="view">Score view instance</param>
-        [Inject]
-        public ScorePresenter(ScoreModel score, IScoreView view)
+        public void Start()
         {
-            _score = score ?? throw new ArgumentNullException(nameof(score));
-            _view = view ?? throw new ArgumentNullException(nameof(view));
-
             _score.Current.AsObservable().Subscribe(OnScoreChanged).AddTo(_disp);
             _score.Max.AsObservable().Subscribe(OnMaxChanged).AddTo(_disp);
             _score.Percent.AsObservable().Subscribe(OnPercentChanged).AddTo(_disp);
