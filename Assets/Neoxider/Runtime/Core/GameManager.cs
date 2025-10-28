@@ -70,5 +70,10 @@ namespace Neo.Runtime.Core
         /// Gets the main money model (shortcut for Wallet.Get("money")).
         /// </summary>
         public static MoneyModel Money => Wallet.Get("money");
+        
+        /// <summary>
+        /// Gets the gems for money model (shortcut for Wallet.Get("gems")).
+        /// </summary>
+        public static MoneyModel Gems => Wallet.Get("gems");
     }
 }
