@@ -1,57 +1,244 @@
-# Компонент Light Animator
+# LightAnimator
 
-## 1. Введение
+**Namespace:** `Neo.Tools.View`  
+**Путь к файлу:** `Assets/Neoxider/Scripts/Tools/View/LightAnimator.cs`
 
-`LightAnimator` — это универсальный компонент для создания динамических световых эффектов в Unity. Он позволяет анимировать интенсивность и цвет как стандартных компонентов `Light`, так и `Light2D` из Universal Render Pipeline (URP). Это даёт возможность легко настраивать эффекты мерцания, пульсации, затухания и органичного "живого" света с помощью шума Перлина без написания кода.
+## Описание
 
-Компонент спроектирован для максимальной гибкости: он автоматически определяет, какой тип источника света используется (`Light` или `Light2D`), и работает с ним, не требуя наличия URP в проекте.
+Компонент для анимации источников света (Light и Light2D). Поддерживает различные типы анимации интенсивности и цвета. Автоматически определяет тип источника света и применяет анимацию соответствующим образом.
 
----
+## Ключевые особенности
 
-## 2. Описание класса
+- **Универсальность**: Работает с Light и Light2D компонентами
+- **Автоопределение**: Автоматически находит и использует доступный источник света
+- **События**: UnityEvents для реакции на изменения интенсивности и цвета
+- **Управление**: Методы Play/Pause/Stop для контроля анимации
+- **Гибкость**: Поддержка всех типов анимации из AnimationType
 
-### LightAnimator
-- **Пространство имен**: Глобальное
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/View/LightAnimator.cs`
-- **Требуемые компоненты**: `Light` или `UnityEngine.Rendering.Universal.Light2D`. Скрипт автоматически обнаружит один из этих компонентов на том же GameObject.
+## Публичные поля
 
-**Описание**
-Этот компонент процедурно анимирует свойства источника света с течением времени. Он предлагает несколько режимов анимации, от простого случайного мерцания до более сложных вариаций на основе шума Перлина.
+### Animation Settings
+- **animationType** (`AnimationType`) — Тип анимации
+- **minIntensity** (`float`) — Минимальная интенсивность
+- **maxIntensity** (`float`) — Максимальная интенсивность
+- **animationSpeed** (`float`) — Скорость анимации (0 = анимация отключена)
 
-### 2.1. Настройки анимации
-- `animationType` (`AnimationType`): Тип анимации, применяемой к свету.
-  - `RandomFlicker`: Случайным образом изменяет интенсивность в диапазоне от `minIntensity` до `maxIntensity` каждый кадр.
-  - `Pulsing`: Создает эффект плавной пульсации с использованием синусоиды.
-  - `SmoothTransition`: Плавно изменяет интенсивность между минимальным и максимальным значениями.
-  - `PerlinNoise`: Изменяет интенсивность с помощью шума Перлина для создания более естественного, органичного эффекта.
-  - `SinWave`: Изменяет интенсивность по синусоиде.
+### Noise Settings
+- **noiseScale** (`float`) — Масштаб шума для PerlinNoise
+- **use2DNoise** (`bool`) — Использовать 2D шум вместо 1D
+- **noiseOffset** (`Vector2`) — Дополнительное смещение шума
 
-### 2.2. Настройки интенсивности
-- `minIntensity` (`float`): Минимальное значение интенсивности для анимации.
-- `maxIntensity` (`float`): Максимальное значение интенсивности для анимации.
-- `animationSpeed` (`float`): Скорость анимации интенсивности.
+### Color Settings
+- **changeColor** (`bool`) — Изменять ли цвет света
+- **targetColor** (`Color`) — Целевой цвет
+- **colorBlendSpeed** (`float`) — Скорость смешивания цветов
 
-### 2.3. Настройки шума (для типа PerlinNoise)
-- `noiseScale` (`float`): Масштаб шума Перлина. Влияет на частоту и "детализацию" изменений.
-- `use2DNoise` (`bool`): Если `true`, используется 2D-шум Перлина. В противном случае — 1D.
-- `noiseOffset` (`Vector2`): Смещение для координат шума, позволяющее получить разные вариации анимации.
+### Custom Curve
+- **customCurve** (`AnimationCurve`) — Пользовательская кривая для CustomCurve типа
 
-### 2.4. Настройки цвета
-- `changeColor` (`bool`): Если `true`, цвет источника света будет анимироваться.
-- `targetColor` (`Color`): Целевой цвет, к которому будет происходить переход. Анимация интерполирует цвет между исходным и этим значением.
-- `colorBlendSpeed` (`float`): Скорость перехода цвета.
+### Control
+- **playOnStart** (`bool`) — Автоматически запускать анимацию при старте
 
-### 2.5. Настройки отладки
-- `enableDebugging` (`bool`): Если `true`, в консоль будут выводиться отладочные сообщения с текущими параметрами анимации.
+### Debug Settings
+- **enableDebugging** (`bool`) — Включить отладочные сообщения
 
----
+### Events
+- **OnIntensityChanged** (`UnityEvent<float>`) — Вызывается при изменении интенсивности
+- **OnColorChanged** (`UnityEvent<Color>`) — Вызывается при изменении цвета
+- **OnAnimationStarted** (`UnityEvent`) — Вызывается при запуске анимации
+- **OnAnimationStopped** (`UnityEvent`) — Вызывается при остановке анимации
+- **OnAnimationPaused** (`UnityEvent`) — Вызывается при паузе анимации
 
-## 3. Как использовать
+## Публичные свойства
 
-1.  **Добавьте источник света**: На `GameObject` в вашей сцене добавьте компонент `Light` (для 3D) или `Light2D` (если вы используете URP).
-2.  **Добавьте `LightAnimator`**: На тот же `GameObject` добавьте компонент `LightAnimator`. Он автоматически обнаружит источник света.
-3.  **Настройте анимацию**: В инспекторе выберите `animationType` из выпадающего списка.
-4.  **Настройте интенсивность**: Отрегулируйте `minIntensity`, `maxIntensity` и `animationSpeed`, чтобы управлять анимацией яркости.
-5.  **Настройте цвет (опционально)**: Если вы хотите анимировать цвет, включите `changeColor`, выберите `targetColor` и настройте `colorBlendSpeed`.
-6.  **Настройте шум (для PerlinNoise)**: Если вы используете `PerlinNoise`, вы можете изменить `noiseScale` и другие параметры шума для достижения желаемого эффекта.
-7.  **Запустите сцену**: Анимация света начнется автоматически. При выключении компонента или объекта его интенсивность и цвет вернутся к исходным значениям.
+### Только для чтения
+- **CurrentIntensity** (`float`) — Текущая интенсивность света
+- **CurrentColor** (`Color`) — Текущий цвет света
+- **IsPlaying** (`bool`) — Проигрывается ли анимация
+- **IsPaused** (`bool`) — Находится ли анимация на паузе
+
+### Для изменения извне
+- **MinIntensity** (`float`) — Минимальная интенсивность
+- **MaxIntensity** (`float`) — Максимальная интенсивность
+- **AnimationSpeed** (`float`) — Скорость анимации
+- **AnimationType** (`AnimationType`) — Тип анимации
+- **TargetColor** (`Color`) — Целевой цвет
+
+## Публичные методы
+
+### Play()
+Запустить анимацию. Устанавливает `IsPlaying = true` и `IsPaused = false`.
+
+### Stop()
+Остановить анимацию. Устанавливает `IsPlaying = false` и `IsPaused = false`.
+
+### Pause()
+Поставить анимацию на паузу. Работает только если анимация проигрывается.
+
+### Resume()
+Снять с паузы. Работает только если анимация на паузе.
+
+### ResetToOriginal()
+Сбросить к исходным значениям света (интенсивность и цвет).
+
+### ResetTime()
+Сбросить время анимации к нулю.
+
+### RandomizeTime()
+Установить случайное начальное время анимации.
+
+## Примеры использования
+
+### Простая анимация света
+```csharp
+public class LightController : MonoBehaviour
+{
+    private LightAnimator animator;
+    
+    void Start()
+    {
+        animator = GetComponent<LightAnimator>();
+        animator.OnIntensityChanged.AddListener(OnIntensityChanged);
+        animator.OnColorChanged.AddListener(OnColorChanged);
+    }
+    
+    void OnIntensityChanged(float intensity)
+    {
+        Debug.Log($"Light intensity changed to: {intensity}");
+    }
+    
+    void OnColorChanged(Color color)
+    {
+        Debug.Log($"Light color changed to: {color}");
+    }
+}
+```
+
+### Управление анимацией из кода
+```csharp
+public class LightManager : MonoBehaviour
+{
+    public LightAnimator[] lights;
+    
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            foreach (var light in lights)
+            {
+                if (light.IsPlaying)
+                    light.Pause();
+                else
+                    light.Resume();
+            }
+        }
+        
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            foreach (var light in lights)
+            {
+                light.Stop();
+                light.Play();
+            }
+        }
+    }
+}
+```
+
+### Динамическое изменение параметров
+```csharp
+public class DynamicLightController : MonoBehaviour
+{
+    public LightAnimator animator;
+    
+    void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Alpha1))
+        {
+            // Мерцание
+            animator.AnimationType = AnimationType.RandomFlicker;
+            animator.MinIntensity = 0.1f;
+            animator.MaxIntensity = 2.0f;
+            animator.AnimationSpeed = 5.0f;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Alpha2))
+        {
+            // Пульсация
+            animator.AnimationType = AnimationType.Pulsing;
+            animator.MinIntensity = 0.5f;
+            animator.MaxIntensity = 1.5f;
+            animator.AnimationSpeed = 2.0f;
+        }
+        
+        if (Input.GetKeyDown(KeyCode.Alpha3))
+        {
+            // Естественное мерцание
+            animator.AnimationType = AnimationType.PerlinNoise;
+            animator.MinIntensity = 0.3f;
+            animator.MaxIntensity = 1.8f;
+            animator.AnimationSpeed = 1.0f;
+        }
+    }
+}
+```
+
+## Настройка в инспекторе
+
+1. **Animation Settings**: Выберите тип анимации и настройте диапазон интенсивности
+2. **Noise Settings**: Настройте параметры шума для PerlinNoise
+3. **Color Settings**: Включите изменение цвета и выберите целевой цвет
+4. **Custom Curve**: Создайте кривую для CustomCurve типа
+5. **Events**: Подключите методы для реакции на события
+6. **Control**: Настройте автоматический запуск
+
+## Типичные применения
+
+### Мерцание свечи
+- **AnimationType**: PerlinNoise
+- **MinIntensity**: 0.3
+- **MaxIntensity**: 1.2
+- **AnimationSpeed**: 0.8
+- **NoiseScale**: 2.0
+
+### Пульсирующий неоновый свет
+- **AnimationType**: Pulsing
+- **MinIntensity**: 0.5
+- **MaxIntensity**: 2.0
+- **AnimationSpeed**: 3.0
+- **ChangeColor**: true
+
+### Дрожащий свет
+- **AnimationType**: RandomFlicker
+- **MinIntensity**: 0.1
+- **MaxIntensity**: 1.5
+- **AnimationSpeed**: 8.0
+
+### Плавное затухание
+- **AnimationType**: Exponential
+- **MinIntensity**: 0.0
+- **MaxIntensity**: 1.0
+- **AnimationSpeed**: 0.5
+
+## Советы по использованию
+
+- Используйте события вместо постоянного опроса значений
+- Для сложных эффектов комбинируйте несколько LightAnimator
+- Используйте `animationSpeed = 0` для отключения анимации
+- Применяйте `RandomizeTime()` для разнообразия в группе источников света
+- Используйте `CustomCurve` для точного контроля над формой анимации
+
+## Поддерживаемые компоненты
+
+- **Light** (стандартный Unity Light)
+- **Light2D** (Universal Render Pipeline)
+
+Компонент автоматически определяет доступный тип источника света и использует соответствующий интерфейс доступа.
+
+## Производительность
+
+- Оптимизирован для использования в Update
+- Минимальные вычисления каждый кадр
+- События вызываются только при изменении значений
+- Эффективное сравнение значений с учетом погрешности
+- Автоматическая валидация параметров
