@@ -36,13 +36,128 @@ Neoxider — это экосистема из более чем 150 модуле
 
 ---
 
+## Зависимости
+
+### Обязательные зависимости
+
+- **Unity:** 2022.1 или выше
+- **TextMeshPro:** автоматически устанавливается через Package Manager
+
+### Основные зависимости (для Runtime модулей)
+
+Эти зависимости требуются для работы модулей `Runtime/` (логирование, DI, реактивное программирование):
+
+- **[R3](https://github.com/Cysharp/R3)** — реактивное программирование (через NuGetForUnity)
+- **[VContainer](https://github.com/hadashiA/VContainer)** — Dependency Injection контейнер (через Git URL)
+- **[MessagePipe](https://github.com/Cysharp/MessagePipe)** — система сообщений Pub/Sub (через Git URL)
+- **[MessagePipe.VContainer](https://github.com/Cysharp/MessagePipe)** — адаптер MessagePipe для VContainer (через Git URL)
+- **[Serilog](https://serilog.net/)** — структурированное логирование (через NuGetForUnity)
+- **[Serilog.Sinks.File](https://github.com/serilog/serilog-sinks-file)** — файловый вывод логов (через NuGetForUnity)
+
+### Опциональные зависимости
+
+- **DOTween** (по желанию) — для анимаций UI компонентов
+- **Spine Unity Runtime** — для модулей Spine (только для `SpineController`)
+
+---
+
+## Установка зависимостей
+
+### ⚠️ Важно о зависимостях
+
+Unity Package Manager **не может автоматически устанавливать зависимости через Git URL** из `package.json` пакета. Все зависимости нужно устанавливать **вручную** в проекте пользователя.
+
+> 💡 **Примечание:** Только `TextMeshPro` установится автоматически, так как это стандартный Unity пакет. Остальные зависимости требуют ручной установки.
+
+### Ручная установка зависимостей
+
+**Все зависимости нужно устанавливать вручную** в вашем проекте. Unity Package Manager не может автоматически установить зависимости через Git URL.
+
+#### 1. Установка VContainer, MessagePipe (через Git URL)
+
+Эти пакеты **требуют ручной установки** в `Packages/manifest.json` вашего проекта:
+
+**Через Package Manager UI:**
+1. Откройте `Window > Package Manager`
+2. Нажмите `+` → `Add package from git URL...`
+3. Добавьте по очереди:
+   ```
+   https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer
+   https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe
+   https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer
+   ```
+
+**Через manifest.json:**
+Откройте `Packages/manifest.json` и добавьте зависимости в секцию `dependencies`:
+
+```json
+{
+  "dependencies": {
+    "jp.hadashikick.vcontainer": "https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer",
+    "com.cysharp.messagepipe": "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe",
+    "com.cysharp.messagepipe.vcontainer": "https://github.com/Cysharp/MessagePipe.git?path=src/MessagePipe.Unity/Assets/Plugins/MessagePipe.VContainer"
+  }
+}
+```
+
+> ⚠️ **Важно:** Эти зависимости **НЕ установятся автоматически** при установке пакета. Их нужно добавить вручную в `manifest.json` вашего проекта.
+
+#### 2. Установка R3 и Serilog (через NuGetForUnity)
+
+R3 и Serilog устанавливаются через NuGet, а не через Unity Package Manager:
+
+1. **Установите NuGetForUnity:**
+   - Откройте `Window > Package Manager`
+   - Нажмите `+` → `Add package from git URL...`
+   - Введите: `https://github.com/GlitchEnzo/NuGetForUnity.git`
+   - Или скачайте с [GitHub](https://github.com/GlitchEnzo/NuGetForUnity/releases)
+
+2. **Установите пакеты через NuGet:**
+   - Откройте `NuGet > Manage NuGet Packages`
+   - Найдите и установите:
+     - `R3` (последняя версия, обычно 1.3.0+)
+     - `Serilog` (последняя версия, обычно 4.3.0+)
+     - `Serilog.Extensions.Logging` (обычно 9.0.2+)
+     - `Serilog.Sinks.File` (обычно 7.0.0+)
+
+**Альтернативный способ (через packages.config):**
+Создайте или обновите файл `Assets/packages.config`:
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<packages>
+  <package id="R3" version="1.3.0" />
+  <package id="Serilog" version="4.3.0" />
+  <package id="Serilog.Extensions.Logging" version="9.0.2" />
+  <package id="Serilog.Sinks.File" version="7.0.0" />
+</packages>
+```
+Затем Unity автоматически установит их через NuGetForUnity.
+
+#### 3. Опциональные зависимости
+
+**DOTween:**
+- Скачайте с [официального сайта](http://dotween.demigiant.com/download.php) или через Asset Store
+- Импортируйте в проект через `Assets > Import Package > Custom Package...`
+
+**Spine Unity Runtime:**
+- Установите через Asset Store: [Spine Unity Runtime](https://assetstore.unity.com/packages/tools/animation/spine-unity-2d-skeletal-animation-56455)
+- Или через официальный сайт: [esotericsoftware.com](http://esotericsoftware.com/)
+
+---
+
 ## Быстрый старт
 
-1. **Подготовьте зависимости**: Unity 2021.3+, DOTween (по желанию), Spine Unity Runtime — для модулей Spine.
-2. **Импортируйте папку `Assets/Neoxider`** в свой проект.
-3. **Добавьте системный префаб** `Assets/Neoxider/Prefabs/--System--.prefab` в сцену — он подключает менеджеры событий и UI.
-4. **Подключите нужные подсистемы**: компоненты находятся в папках `Scripts/…`, а примеры и готовые конфигурации — в `Demo/` и `Prefabs/`.
-5. **Изучите документацию**: откройте соответствующий README в `Docs`, чтобы настроить модуль за несколько минут.
+1. **Установите NuGetForUnity** (требуется для R3 и Serilog).
+2. **Установите R3 и Serilog через NuGetForUnity** (требуется для Runtime модулей).
+3. **Установите VContainer и MessagePipe через Git URL** в `manifest.json`.
+4. **Импортируйте папку `Assets/Neoxider`** в свой проект (если устанавливаете вручную).
+5. **Добавьте системный префаб** `Assets/Neoxider/Prefabs/--System--.prefab` в сцену — он подключает менеджеры событий и UI.
+6. **Подключите нужные подсистемы**: компоненты находятся в папках `Scripts/…`, а примеры и готовые конфигурации — в `Demo/` и `Prefabs/`.
+7. **Изучите документацию**: откройте соответствующий README в `Docs`, чтобы настроить модуль за несколько минут.
+
+> 💡 **Совет:** Для работы Runtime модулей обязательно установите:
+> - **R3 и Serilog** через NuGetForUnity
+> - **VContainer и MessagePipe** через Git URL в `manifest.json`
 
 ---
 

@@ -8,6 +8,13 @@
   "dependencies": {
     "com.unity.textmeshpro": "3.0.6"
   },
+  "samples": [
+    {
+      "displayName": "Demo Scenes",
+      "description": "Example scenes demonstrating various Neoxider modules: Slot Machine, Wheel of Fortune, Draw Tool, Mouse Effects, Chance System, AI Movement, and more.",
+      "path": "Demo"
+    }
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/NeoXider/NeoxiderTools.git"
