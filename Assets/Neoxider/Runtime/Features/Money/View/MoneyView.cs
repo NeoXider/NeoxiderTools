@@ -19,7 +19,7 @@ namespace Neo.Runtime.Features.Money.View
         /// <summary>
         /// Event when money changes
         /// </summary>
-        public UnityEvent OnMoneyChangedEvent;
+        public UnityEvent<float> OnMoneyChangedEvent;
 
         /// <summary>
         /// Event when wallet full state changes
@@ -89,7 +89,7 @@ namespace Neo.Runtime.Features.Money.View
                 percent100 = 0f;
             }
 
-            OnMoneyChangedEvent?.Invoke();
+            OnMoneyChangedEvent?.Invoke(this.balance);
         }
 
         /// <summary>

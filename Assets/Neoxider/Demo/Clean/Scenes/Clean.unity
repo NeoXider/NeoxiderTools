@@ -469,15 +469,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 44.75
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -530,6 +530,7 @@ GameObject:
   - component: {fileID: 1824392998}
   - component: {fileID: 1824393000}
   - component: {fileID: 1824392999}
+  - component: {fileID: 1824393001}
   m_Layer: 5
   m_Name: Text (TMP) (1)
   m_TagString: Untagged
@@ -603,15 +604,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 36
+  m_fontSize: 44.75
   m_fontSizeBase: 36
   m_fontWeight: 400
-  m_enableAutoSizing: 0
+  m_enableAutoSizing: 1
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_wordSpacing: 0
@@ -653,6 +654,31 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1824392997}
   m_CullTransparentMesh: 1
+--- !u!114 &1824393001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1824392997}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
+  text: {fileID: 1824392999}
+  separator: .
+  decimal: 0
+  startAdd: 
+  endAdd: 
+  indexOffset: 0
+  _timeAnim: 0.25
+  _ease: 6
+  _onEnableAnim: 1
+  currentNum: 0
 --- !u!1001 &7795973860987770049
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -704,6 +730,34 @@ PrefabInstance:
     - target: {fileID: 4970086756138451408, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.size
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Mode
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1824393001}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_CallState
+      value: 2
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: Set
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_TargetAssemblyTypeName
+      value: Neo.Tools.SetText, Neo.Tools.Text
+      objectReference: {fileID: 0}
+    - target: {fileID: 7304278664242827837, guid: cc944fd05845e38458062cb785e10ec0, type: 3}
+      propertyPath: OnMoneyChangedEvent.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_ObjectArgumentAssemblyTypeName
+      value: UnityEngine.Object, UnityEngine
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

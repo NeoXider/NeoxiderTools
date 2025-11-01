@@ -1,0 +1,22 @@
+{
+    "name": "Neo.Runtime.Controllers",
+    "rootNamespace": "",
+    "references": [
+        "GUID:b0214a6008ed146ff8f122a6a9c2f6cc",
+        "GUID:c36c59cd7bd0b7c4898632a22e32d7db",
+        "GUID:a33ceb324d9b0614a9cbc55988ea57df",
+        "GUID:d0d1e15f83a6431781265f28a622500e",
+        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+        "GUID:0705ec5e577fd184fae4c7686762a850"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
+

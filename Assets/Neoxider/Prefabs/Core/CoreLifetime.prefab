@@ -166,6 +166,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2107811255900025255}
   - component: {fileID: 7463660097597101991}
+  - component: {fileID: 7708423685439992404}
   m_Layer: 0
   m_Name: Wallet
   m_TagString: Untagged
@@ -206,6 +207,58 @@ MonoBehaviour:
     TypeName: Neo.Runtime.Core.CoreLifetimeScope
   autoRun: 1
   autoInjectGameObjects: []
+--- !u!114 &7708423685439992404
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1928249537190039187}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 314667fdc49c3424eab746d08562e5f7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  walletConfig: {fileID: 11400000, guid: 83fe67cf5b6077641afce0ad37ffc0a0, type: 2}
+  autoSyncFromConfig: 1
+  currencies:
+  - currencyId: money
+    defaultAmount: 100
+    currentBalance: 0
+    OnBalanceChanged:
+      m_PersistentCalls:
+        m_Calls: []
+    OnAdd:
+      m_PersistentCalls:
+        m_Calls: []
+    OnSpend:
+      m_PersistentCalls:
+        m_Calls: []
+    OnSpendFailed:
+      m_PersistentCalls:
+        m_Calls: []
+    OnReachedMax:
+      m_PersistentCalls:
+        m_Calls: []
+  - currencyId: gems
+    defaultAmount: 100
+    currentBalance: 0
+    OnBalanceChanged:
+      m_PersistentCalls:
+        m_Calls: []
+    OnAdd:
+      m_PersistentCalls:
+        m_Calls: []
+    OnSpend:
+      m_PersistentCalls:
+        m_Calls: []
+    OnSpendFailed:
+      m_PersistentCalls:
+        m_Calls: []
+    OnReachedMax:
+      m_PersistentCalls:
+        m_Calls: []
+  defaultCurrencyId: money
 --- !u!1 &1965360343035415861
 GameObject:
   m_ObjectHideFlags: 0

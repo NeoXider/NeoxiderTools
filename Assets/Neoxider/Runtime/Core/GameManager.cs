@@ -15,7 +15,7 @@ namespace Neo.Runtime.Core
     {
         private static IObjectResolver _resolver;
 
-        private static IObjectResolver Resolver
+        public static IObjectResolver Resolver
         {
             get
             {
