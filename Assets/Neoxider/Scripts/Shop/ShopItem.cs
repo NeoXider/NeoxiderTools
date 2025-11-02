@@ -1,7 +1,9 @@
+using System;
 using Neo.UI;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Neo.Shop
@@ -22,24 +24,24 @@ namespace Neo.Shop
 
         [SerializeField] private Image _imageIco;
 
-        [GetComponent(true)] [SerializeField] private ButtonPrice buttonPrice;
+        [Header("SpriteRenderers (optional)")]
+        [SerializeField] private SpriteRenderer _spriteRendererItem;
+        [SerializeField] private SpriteRenderer _spriteRendererIcon;
+
+        [SerializeField] private ButtonPrice buttonPrice;
 
         public Button buttonBuy;
 
         [Space] public UnityEvent OnSelectItem;
         public UnityEvent OnDeselectItem;
 
-        private void OnValidate()
-        {
-            buttonBuy ??= GetComponentInChildren<Button>(true);
-        }
-
 
         public void Visual(ShopItemData shopItemData, int price, int id)
         {
-            _id = id;
-
-            if (buttonPrice != null) buttonPrice.SetPrice(price);
+            if (buttonPrice != null)
+            {
+                buttonPrice.SetPrice(price);
+            }
 
             if (_textPrice != null)
                 _textPrice.text = price.ToString();
@@ -55,8 +57,14 @@ namespace Neo.Shop
                 if (_imageItem != null)
                     _imageItem.sprite = shopItemData.sprite;
 
+                if (_spriteRendererItem != null)
+                    _spriteRendererItem.sprite = shopItemData.sprite;
+
                 if (_imageIco != null)
                     _imageIco.sprite = shopItemData.icon;
+
+                if (_spriteRendererIcon != null)
+                    _spriteRendererIcon.sprite = shopItemData.icon;
             }
         }
 
@@ -64,7 +72,8 @@ namespace Neo.Shop
         {
             if (active)
             {
-                if (buttonPrice != null) buttonPrice.TrySetVisualId(2);
+                if (buttonPrice != null)
+                    buttonPrice.TrySetVisualId(2);
 
                 OnSelectItem?.Invoke();
             }
@@ -75,6 +84,11 @@ namespace Neo.Shop
 
                 OnDeselectItem?.Invoke();
             }
+        }
+
+        private void OnValidate()
+        {
+            buttonBuy ??= GetComponentInChildren<Button>(true);
         }
     }
 }

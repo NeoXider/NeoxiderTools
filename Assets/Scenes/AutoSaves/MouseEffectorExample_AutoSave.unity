@@ -499,7 +499,7 @@ MonoBehaviour:
   spawnTrigger: 0
   spawnDuringHold: 1
   holdInterval: 0.016
-  spawnLifetime: 1
+  spawnLifetime: 0
   followInterval: 0.016
   followDepth: 10
   spawnParent: {fileID: 0}

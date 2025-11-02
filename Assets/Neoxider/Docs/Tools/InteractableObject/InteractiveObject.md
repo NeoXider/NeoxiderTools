@@ -15,18 +15,46 @@
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/InteractableObject/InteractiveObject.cs`
 
 **Описание**
-Компонент, который использует встроенную в Unity систему событий (Event System) для отслеживания действий мыши над объектом и вызова соответствующих публичных событий `UnityEvent`.
+Компонент, который использует встроенную в Unity систему событий (Event System) для отслеживания действий мыши/клавиатуры над объектом и вызова соответствующих публичных событий `UnityEvent`.
 
 **Ключевые поля**
 - `interactable`: Простой флаг, который позволяет временно включить или отключить всю интерактивность объекта.
-- `doubleClickThreshold`: Время в секундах, в течение которого два последовательных клика будут считаться за один двойной клик.
+- `doubleClickThreshold`: Время в секундах для распознавания двойного клика. Если `0`, двойной клик отключён.
+- `downUpMouseButton` (`Left | Right | Middle`): Кнопка мыши для генерации `onInteractDown/Up` (опрашивается каждый кадр).
+- `requireHoverForMouse` (`bool`, по умолчанию `true`): Требовать наведение для срабатывания мышиных `Down`.
+- `keyboardKey` (`KeyCode`, по умолчанию `E`): Клавиша для генерации `onInteractDown/Up` (опрашивается каждый кадр).
+- `requireHoverForKeyboard` (`bool`, по умолчанию `true`): Требовать наведение для `Key Down`.
 
 **Unity Events**
 - `onHoverEnter`: Вызывается, когда курсор мыши входит в границы объекта.
 - `onHoverExit`: Вызывается, когда курсор мыши покидает границы объекта.
 - `onClick`: Вызывается при клике левой кнопкой мыши.
-- `onDoubleClick`: Вызывается при двойном клике левой кнопкой мыши.
+- `onDoubleClick`: Вызывается при двойном клике левой кнопкой мыши (если `doubleClickThreshold > 0`).
 - `onRightClick`: Вызывается при клике правой кнопкой мыши.
+- `onMiddleClick`: Вызывается при клике средней кнопкой мыши (колёсико).
+- `onInteractDown`: Вызывается при нажатии, согласно выбранной привязке `activation`.
+- `onInteractUp`: Вызывается при отпускании, согласно выбранной привязке `activation`.
+
+---
+
+## 4. Секции инспектора
+
+- Hover — enabled by default:
+  - `onHoverEnter`, `onHoverExit`
+
+- Clicks — always enabled:
+  - `doubleClickThreshold`, `onClick`, `onDoubleClick`, `onRightClick`, `onMiddleClick`
+
+- Down/Up events:
+  - `onInteractDown`, `onInteractUp`
+
+- Down/Up — Mouse binding:
+  - `downUpMouseButton`, `requireHoverForMouse`
+
+- Down/Up — Keyboard binding:
+  - `keyboardKey`, `requireHoverForKeyboard`
+
+Примечание: клики обрабатываются системой событий Unity и не зависят от настроек Down/Up. Down/Up для мыши и клавиатуры работают параллельно и могут срабатывать одновременно, если оба источника активны.
 
 ---
 
@@ -37,8 +65,8 @@
 1.  **Event System**: Убедитесь, что на вашей сцене есть объект `EventSystem`. Обычно он создается автоматически при добавлении `Canvas`.
 
 2.  **Raycasters**:
-    -   **Для объектов в UI** (например, `Image`, `Button`): Компонент будет работать автоматически, если на родительском `Canvas` есть компонент `GraphicRaycaster`.
-    -   **Для 2D-объектов** (со `SpriteRenderer` и `Collider2D`): На вашей **основной камере** должен быть компонент `Physics 2D Raycaster`.
-    -   **Для 3D-объектов** (с `MeshRenderer` и `Collider`): На вашей **основной камере** должен быть компонент `Physics Raycaster`.
+    -   **Для объектов в UI** (например, `Image`, `Button`): Используется `GraphicRaycaster` на `Canvas` (поведение без изменений).
+    -   **Для 2D-объектов** (со `SpriteRenderer` и `Collider2D`): Компонент автоматически гарантирует наличие `Physics 2D Raycaster` на `Camera.main` (добавит при первом запуске, если отсутствует).
+    -   **Для 3D-объектов** (с `MeshRenderer` и `Collider`): Компонент автоматически гарантирует наличие `Physics Raycaster` на `Camera.main` (добавит при первом запуске, если отсутствует).
 
 3.  **Коллайдер**: Целевой объект (если он не в UI) должен иметь компонент коллайдера (например, `BoxCollider`, `SphereCollider`, `BoxCollider2D`), чтобы система событий могла его обнаружить.

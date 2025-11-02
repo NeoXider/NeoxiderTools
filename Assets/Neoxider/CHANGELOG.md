@@ -2,6 +2,39 @@
 
 Все заметные изменения в этом проекте будут задокументированы в этом файле.
 
+## [v5.2.10]
+
+### Добавлено
+- InteractiveObject:
+  - Автодобавление `PhysicsRaycaster`/`Physics2DRaycaster` на `Camera.main` для 3D/2D объектов соответственно.
+  - Новые события: `onMiddleClick`, `onInteractDown`, `onInteractUp`.
+  - Параллельная обработка нажатий мыши и клавиши (down/up) в `Update` с гибкой привязкой.
+  - Группировка секций в инспекторе через `Header` для удобства настройки.
+- Shop:
+  - Флаг `_changePreviewOnPurchaseFailed` — переключать превью при нехватке денег (по умолчанию: выключено).
+  - Сохранение/загрузка последнего экипированного индекса (`_keySaveEquipped`).
+  - Инициализация превью и выделения по сохранённому индексу.
+- ShopItem:
+  - Опциональная поддержка `SpriteRenderer` для установки спрайтов товара и иконки.
+ - MouseEffect:
+  - Поле `interactable` (по умолчанию включено) — при выключении компонент игнорирует события мыши.
+  - Поле `disableOnRelease` (по умолчанию включено) — управляет отключением `TrailRenderer` и `followObject` при отпускании мыши.
+  - Подписки перенесены в `OnEnable`/`OnDisable`; добавлен `followInterval` и `spawnParent`.
+  - Добавлены UnityEvents: `onStartFollow`, `onStopFollow`, `onSpawn`.
+  - Для `TrailRenderer` используется `emitting` вместо `enabled`; `Clear()` вызывается при старте следования.
+  - Добавлено автоудаление спавнимых префабов: `spawnLifetime` (0 = без автоудаления).
+
+### Изменено
+- InteractiveObject:
+  - Двойной клик отключается при `doubleClickThreshold = 0`.
+  - клики управляются EventSystem.
+ - MouseInputManager:
+  - Добавлено автосоздание синглтона после загрузки сцены (если отсутствует в сцене), объект помечается `DontDestroyOnLoad`.
+  - Добавлены статические поля поллинга: `LastEventData`, `HasEventData`, а также `LastEventDataRef` (ref readonly) для доступа без копирования.
+
+### Документация
+- Обновлены `Docs/Tools/InteractableObject/InteractiveObject.md` и `Docs/Shop/Shop.md` в соответствии с Руководством по документации.
+
 ## [v5.2.9]
 
 ### UI Blur shader
