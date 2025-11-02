@@ -24,33 +24,46 @@ namespace Neo
             /// </summary>
             private void UpdateSelection()
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
-                var effectiveIndex = _currentIndex + _indexOffset;
-                if (effectiveIndex < -1)
-                    effectiveIndex = -1;
+                int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
+                int effectiveIndex = _currentIndex + _indexOffset;
+                if (effectiveIndex < minEff)
+                {
+                    effectiveIndex = minEff;
+                }
                 else if (effectiveIndex >= total)
+                {
                     effectiveIndex = total - 1;
+                }
 
                 if (HasItems)
                 {
                     // Update GameObject active state based on selection
                     if (_fillMode)
                     {
-                        for (var i = 0; i < _items.Length; i++)
+                        for (int i = 0; i < _items.Length; i++)
+                        {
                             if (_items[i] != null)
+                            {
                                 _items[i].SetActive(i <= effectiveIndex);
+                            }
+                        }
                     }
                     else
                     {
-                        for (var i = 0; i < _items.Length; i++)
+                        for (int i = 0; i < _items.Length; i++)
+                        {
                             if (_items[i] != null)
+                            {
                                 _items[i].SetActive(i == effectiveIndex);
+                            }
+                        }
                     }
                 }
 
@@ -83,6 +96,9 @@ namespace Neo
             [SerializeField]
             private bool _loop = true;
 
+            [Tooltip("Allow effective index -1 (nothing selected). Useful for skins/empty state")] [SerializeField]
+            private bool _allowEmptyEffectiveIndex = false;
+
             [Header("Fill Settings")]
             [Tooltip("If enabled, all items up to and including current index will be active")]
             [SerializeField]
@@ -107,9 +123,19 @@ namespace Neo
             {
                 get
                 {
-                    if (_items != null && _items.Length > 0 && _count == 0)
+                    // If explicit virtual count is set (>0), use it (count mode)
+                    if (_count > 0)
+                    {
+                        return _count;
+                    }
+
+                    // Otherwise, fall back to items length when items provided
+                    if (_items != null && _items.Length > 0)
+                    {
                         return _items.Length;
-                    return _count > 0 ? _count : 0;
+                    }
+
+                    return 0;
                 }
                 set
                 {
@@ -184,12 +210,26 @@ namespace Neo
             /// <summary>
             ///     Gets whether the selector has reached the end of the items array
             /// </summary>
-            public bool IsAtEnd => _currentIndex >= Count - 1;
+            public bool IsAtEnd
+            {
+                get
+                {
+                    (int min, int max) = GetCurrentBounds();
+                    return _currentIndex >= max;
+                }
+            }
 
             /// <summary>
             ///     Gets whether the selector is at the beginning of the items array
             /// </summary>
-            public bool IsAtStart => _currentIndex <= 0;
+            public bool IsAtStart
+            {
+                get
+                {
+                    (int min, int max) = GetCurrentBounds();
+                    return _currentIndex <= min;
+                }
+            }
 
             public int IndexWithOffset => _currentIndex + _indexOffset;
 
@@ -198,7 +238,10 @@ namespace Neo
                 get
                 {
                     if (Value >= 0 && Value < Count)
+                    {
                         return _items[Value];
+                    }
+
                     return null;
                 }
             }
@@ -220,7 +263,10 @@ namespace Neo
 
             private void OnEnable()
             {
-                if (startOnAwake) Set(_startIndex);
+                if (startOnAwake)
+                {
+                    Set(_startIndex);
+                }
             }
 
             private void OnValidate()
@@ -236,24 +282,34 @@ namespace Neo
                 if (_setChild)
                 {
                     _setChild = false;
-                    var childs = new List<GameObject>();
+                    List<GameObject> childs = new();
 
                     foreach (Transform child in transform)
+                    {
                         if (child.gameObject != gameObject)
+                        {
                             childs.Add(child.gameObject);
+                        }
+                    }
 
                     _items = childs.ToArray();
 
                     // Log the number of items found
                     if (_items.Length > 0)
+                    {
                         Debug.Log($"Selector: Auto-populated {_items.Length} items from children");
+                    }
                     else
+                    {
                         Debug.LogWarning("Selector: No child items found to populate");
+                    }
                 }
 
                 // Update selection in editor if debug mode is enabled
                 if (_changeDebug && _items != null)
+                {
                     UpdateSelection();
+                }
             }
 
             #endregion
@@ -263,14 +319,10 @@ namespace Neo
             /// <summary>
             ///     Moves to the next item in the selection
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void Next()
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
@@ -279,15 +331,18 @@ namespace Neo
 
                 _currentIndex++;
 
-                // Handle reaching the end of the array or count
-                if (_currentIndex >= total)
+                (int min, int max) = GetCurrentBounds();
+                if (_currentIndex > max)
                 {
                     if (_loop)
-                        _currentIndex = 0;
+                    {
+                        _currentIndex = min;
+                    }
                     else
-                        _currentIndex = total - 1;
+                    {
+                        _currentIndex = max;
+                    }
 
-                    // Notify that we've reached the end
                     OnFinished?.Invoke();
                 }
 
@@ -297,14 +352,10 @@ namespace Neo
             /// <summary>
             ///     Moves to the previous item in the selection
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void Previous()
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
@@ -313,13 +364,17 @@ namespace Neo
 
                 _currentIndex--;
 
-                // Handle reaching the beginning
-                if (_currentIndex < 0)
+                (int min, int max) = GetCurrentBounds();
+                if (_currentIndex < min)
                 {
                     if (_loop)
-                        _currentIndex = total - 1;
+                    {
+                        _currentIndex = max;
+                    }
                     else
-                        _currentIndex = 0;
+                    {
+                        _currentIndex = min;
+                    }
                 }
 
                 UpdateSelection();
@@ -347,38 +402,44 @@ namespace Neo
             ///     Sets the current selection index
             /// </summary>
             /// <param name="index">The index to set</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void Set(int index)
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
                     return;
                 }
 
+                (int min, int max) = GetCurrentBounds();
                 if (_loop)
-                    _currentIndex = (index % total + total) % total;
+                {
+                    int range = max - min + 1;
+                    if (range <= 0)
+                    {
+                        _currentIndex = min;
+                    }
+                    else
+                    {
+                        _currentIndex = ((index - min) % range + range) % range + min;
+                    }
+                }
                 else
-                    _currentIndex = Mathf.Clamp(index, 0, total - 1);
+                {
+                    _currentIndex = Mathf.Clamp(index, min, max);
+                }
+
                 UpdateSelection();
             }
 
             /// <summary>
             ///     Sets the selection to the last item
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void SetLast()
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
@@ -392,14 +453,10 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to the first item
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void SetFirst()
             {
-                var total = Count;
+                int total = Count;
                 if (total == 0)
                 {
                     Debug.LogWarning("Selector: No items to select");
@@ -425,11 +482,22 @@ namespace Neo
             /// <returns>The selected GameObject or null if none is selected</returns>
             public GameObject GetSelectedItem()
             {
-                if (!HasItems || _currentIndex < 0 || _currentIndex >= _items.Length)
+                if (!HasItems)
+                {
                     return null;
-                var idx = _currentIndex + _indexOffset;
-                if (idx < 0 || idx >= _items.Length || _items[idx] == null)
+                }
+
+                if (_items.Length == 0)
+                {
                     return null;
+                }
+
+                int idx = _currentIndex + _indexOffset;
+                if (idx < 0 || idx >= _items.Length)
+                {
+                    return null;
+                }
+
                 return _items[idx];
             }
 
@@ -440,7 +508,7 @@ namespace Neo
             /// <returns>True if the index is valid, false otherwise</returns>
             public bool IsValidIndex(int index)
             {
-                var total = Count;
+                int total = Count;
                 return total > 0 && index >= 0 && index < total;
             }
 
@@ -449,7 +517,8 @@ namespace Neo
             /// </summary>
             public void Reset()
             {
-                _currentIndex = 0;
+                (int min, int max) = GetCurrentBounds();
+                _currentIndex = min;
                 UpdateSelection();
             }
 
@@ -458,11 +527,7 @@ namespace Neo
             /// </summary>
             /// <param name="index">Index to toggle</param>
             /// <param name="state">Optional state to set (true to enable, false to disable, null to toggle)</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-        [Button]
-#endif
             public void ToggleIndex(int index, bool? state = null)
             {
                 if (!HasItems)
@@ -471,7 +536,7 @@ namespace Neo
                     return;
                 }
 
-                var effectiveIndex = index + _indexOffset;
+                int effectiveIndex = index + _indexOffset;
                 if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
                 {
                     Debug.LogWarning($"Selector: Index {index} with offset {_indexOffset} is out of bounds");
@@ -479,7 +544,22 @@ namespace Neo
                 }
 
                 if (_items[effectiveIndex] != null)
+                {
                     _items[effectiveIndex].SetActive(state ?? !_items[effectiveIndex].activeSelf);
+                }
+            }
+
+            #endregion
+
+            #region Helpers
+
+            private (int min, int max) GetCurrentBounds()
+            {
+                int total = Count;
+                int effMin = _allowEmptyEffectiveIndex ? -1 : 0;
+                int min = effMin - _indexOffset;
+                int max = total - 1 - _indexOffset;
+                return (min, max);
             }
 
             #endregion
