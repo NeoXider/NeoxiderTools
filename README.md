@@ -13,6 +13,13 @@ Neoxider — это экосистема из более чем 150 модуле
 - **Документация внутри**: у каждого модуля есть собственный README в `Assets/Neoxider/Docs/...`.
 
 (Обратите особоте внимание модулю Extensions)
+
+## Demo Scenes
+![image](https://github.com/user-attachments/assets/90c98f0c-aae2-4837-81ed-b18a10b65ed5)
+
+## Demo Games
+![Uploading 2025-11-02_22-31-20.png…]()
+
 ---
 
 ## Как ориентироваться
