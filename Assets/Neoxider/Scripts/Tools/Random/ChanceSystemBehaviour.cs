@@ -60,6 +60,11 @@ namespace Neo.Tools
             manager.EnsureUniqueIds();
         }
 
+        public void GenerateVoid()
+        {
+            GenerateId();
+        }
+        
         public int GenerateId()
         {
             var id = manager.GetChanceId();

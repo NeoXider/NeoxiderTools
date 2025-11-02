@@ -546,8 +546,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 356245230}
-        m_TargetAssemblyTypeName: Neo.Tools.ChanceSystemBehaviour, Assembly-CSharp
-        m_MethodName: GenerateId
+        m_TargetAssemblyTypeName: Neo.Tools.ChanceSystemBehaviour, Neo.Tools.Random
+        m_MethodName: GenerateVoid
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
