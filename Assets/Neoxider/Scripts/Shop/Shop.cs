@@ -175,6 +175,9 @@ namespace Neo.Shop
                 Visual();
 
                 Select(id);
+
+                // Бесплатный/уже купленный товар — всегда обновляем превью
+                ShowPreview(id);
             }
             else if (_money.Spend(_prices[id]))
             {
@@ -188,16 +191,18 @@ namespace Neo.Shop
                 Select(id);
 
                 OnPurchased?.Invoke(id);
+
+                // Покупка успешна — обновляем превью
+                ShowPreview(id);
             }
             else
             {
                 OnPurchaseFailed?.Invoke(id);
-            }
-
-            // Переключение превью: всегда при успехе/бесплатно; при неудаче — по флагу
-            if (_prices[id] == 0 || _money == null || _shopItemDatas[id].isSinglePurchase || _changePreviewOnPurchaseFailed)
-            {
-                ShowPreview(id);
+                // При неудаче — меняем превью только если включён флаг
+                if (_changePreviewOnPurchaseFailed)
+                {
+                    ShowPreview(id);
+                }
             }
         }
 
