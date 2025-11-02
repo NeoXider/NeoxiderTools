@@ -18,7 +18,8 @@ Neoxider — это экосистема из более чем 150 модуле
 ![image](https://github.com/user-attachments/assets/90c98f0c-aae2-4837-81ed-b18a10b65ed5)
 
 ## Demo Games
-![Uploading 2025-11-02_22-31-20.png…]()
+<img width="354" height="623" alt="2025-11-02_22-31-20" src="https://github.com/user-attachments/assets/56c255c1-5e96-410c-b212-ea865ea4521f" />
+
 
 ---
 
