@@ -100,7 +100,7 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
-            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector - _wheelOffsetZ);
+            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
             if (_debugLogId)
                 Debug.Log("Wheel Id: " + GetResultId());
             _canvasGroup ??= GetComponent<CanvasGroup>();
@@ -138,7 +138,7 @@ namespace Neo.Bonus
         {
             _alignmentElapsed += Time.deltaTime;
             var t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
-            var angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle - _wheelOffsetZ, t);
+            var angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle, t);
             _wheelTransform.rotation = Quaternion.Euler(0, 0, angle);
             if (t >= 1f)
                 EndRotation();
@@ -158,8 +158,8 @@ namespace Neo.Bonus
             var sectorAngle = 360f / items.Length;
             var arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
             var currentWheelAngle = _wheelTransform.rotation.eulerAngles.z;
+            var targetRelative = resultId * sectorAngle - _wheelOffsetZ;
             var currentRelative = (currentWheelAngle - arrowAngle + 360f) % 360f;
-            var targetRelative = resultId * sectorAngle;
             var diff = targetRelative - currentRelative;
             if (diff > 180f)
                 diff -= 360f;
@@ -179,18 +179,14 @@ namespace Neo.Bonus
         private int GetResultId()
         {
             var sectorAngle = 360f / items.Length;
-            var wheelAngle = _wheelTransform.rotation.eulerAngles.z - _offsetZ;
+            var wheelAngle = _wheelTransform.rotation.eulerAngles.z;
             var arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
-            var relativeAngle = (wheelAngle - arrowAngle + 360f) % 360f;
+            var relativeAngle = (wheelAngle + _wheelOffsetZ - arrowAngle + 360f) % 360f;
             var id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
             return (id + items.Length) % items.Length;
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         public void Spin()
         {
             if (items.Length == 0)
@@ -206,11 +202,7 @@ namespace Neo.Bonus
                 Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         public void Stop()
         {
             if (State == SpinState.Idle)
