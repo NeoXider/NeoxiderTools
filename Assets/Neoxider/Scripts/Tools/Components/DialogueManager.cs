@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -43,7 +44,15 @@ namespace Neo.Tools
         public float charactersPerSecond = 50f;
 
         [Header("Поведение")]
-        public bool autoNextMonolog = true;
+        public bool autoNextSentence = false;
+        public bool autoNextMonolog = false;
+        public bool autoNextDialogue = false;
+        public bool allowRestart = false;
+
+        [Header("Задержки автопереходов (сек)")]
+        [Min(0f)] public float autoNextSentenceDelay = 3f;
+        [Min(0f)] public float autoNextMonologDelay = 3f;
+        [Min(0f)] public float autoNextDialogueDelay = 3f;
 
         [Header("Данные диалогов")]
         public Dialogue[] dialogues;
@@ -56,6 +65,8 @@ namespace Neo.Tools
 
         private string _lastCharacterName = string.Empty;
         private Coroutine _typewriterCoroutine;
+        private Coroutine _autoDelayCoroutine;
+        private string _currentSentenceCached = string.Empty;
 
         public int currentDialogueId { get; private set; }
         public int currentMonologId { get; private set; }
@@ -85,6 +96,10 @@ namespace Neo.Tools
             if (currentMonologId >= currentDialogue.monologues.Length)
             {
                 OnDialogueEnd?.Invoke();
+                if (autoNextDialogue)
+                {
+                    StartCoroutine(DelayedNextDialogue());
+                }
                 return;
             }
 
@@ -103,6 +118,11 @@ namespace Neo.Tools
             UpdateCharacter(currentMonolog);
             UpdateContent(currentMonolog);
             OnSentenceEnd?.Invoke();
+
+            if (!useTypewriterEffect && autoNextSentence)
+            {
+                StartCoroutine(DelayedNextSentenceOrEndMonolog());
+            }
         }
 
         private void UpdateCharacter(Monolog currentMonolog)
@@ -119,6 +139,7 @@ namespace Neo.Tools
         private void UpdateContent(Monolog currentMonolog)
         {
             var sentence = currentMonolog.sentences[currentSentenceId];
+            _currentSentenceCached = sentence.sentence;
 
             if (useTypewriterEffect)
             {
@@ -140,14 +161,48 @@ namespace Neo.Tools
         private IEnumerator Typewriter(string text)
         {
             if(dialogueText == null) yield break;
+            var sb = new StringBuilder(text.Length);
             dialogueText.text = "";
             float timePerCharacter = 1f / charactersPerSecond;
             foreach (char c in text)
             {
-                dialogueText.text += c;
+                sb.Append(c);
+                dialogueText.text = sb.ToString();
                 yield return new WaitForSeconds(timePerCharacter);
             }
             _typewriterCoroutine = null;
+
+            if (autoNextSentence)
+            {
+                ScheduleAutoDelay(DelayedNextSentenceOrEndMonolog());
+            }
+        }
+
+        private void TryNextSentenceOrEndMonolog()
+        {
+            var currentDialogue = dialogues.Length > currentDialogueId ? dialogues[currentDialogueId] : null;
+            if (currentDialogue == null) return;
+
+            var currentMonolog = currentDialogue.monologues.Length > currentMonologId ? currentDialogue.monologues[currentMonologId] : null;
+            if (currentMonolog == null) return;
+
+            if (currentSentenceId + 1 < currentMonolog.sentences.Length)
+            {
+                NextSentence();
+            }
+            else
+            {
+                EndMonolog();
+            }
+        }
+
+        private IEnumerator DelayedNextSentenceOrEndMonolog()
+        {
+            if (autoNextSentenceDelay > 0f)
+            {
+                yield return new WaitForSeconds(autoNextSentenceDelay);
+            }
+            TryNextSentenceOrEndMonolog();
         }
 
         private void EndMonolog()
@@ -155,7 +210,19 @@ namespace Neo.Tools
             if(dialogueText != null) dialogueText.text = "";
             OnMonologEnd?.Invoke();
 
-            if (autoNextMonolog) NextMonolog();
+            if (autoNextMonolog)
+            {
+                ScheduleAutoDelay(DelayedNextMonolog());
+            }
+        }
+
+        private IEnumerator DelayedNextMonolog()
+        {
+            if (autoNextMonologDelay > 0f)
+            {
+                yield return new WaitForSeconds(autoNextMonologDelay);
+            }
+            NextMonolog();
         }
 
         public void NextSentence()
@@ -179,12 +246,73 @@ namespace Neo.Tools
             UpdateDialogueText();
         }
 
+        private IEnumerator DelayedNextDialogue()
+        {
+            if (autoNextDialogueDelay > 0f)
+            {
+                yield return new WaitForSeconds(autoNextDialogueDelay);
+            }
+            NextDialogue();
+        }
+
+        private void ScheduleAutoDelay(IEnumerator routine)
+        {
+            if (_autoDelayCoroutine != null)
+            {
+                StopCoroutine(_autoDelayCoroutine);
+                _autoDelayCoroutine = null;
+            }
+            _autoDelayCoroutine = StartCoroutine(routine);
+        }
+
+        private void CancelAutoDelay()
+        {
+            if (_autoDelayCoroutine != null)
+            {
+                StopCoroutine(_autoDelayCoroutine);
+                _autoDelayCoroutine = null;
+            }
+        }
+
+        [Button]
+        public void SkipOrNext()
+        {
+            // Если печать активна — остановить и показать всю фразу
+            if (useTypewriterEffect && _typewriterCoroutine != null)
+            {
+                StopCoroutine(_typewriterCoroutine);
+                _typewriterCoroutine = null;
+                if (dialogueText != null)
+                {
+                    dialogueText.text = _currentSentenceCached;
+                }
+                CancelAutoDelay();
+                return;
+            }
+
+            // Иначе перейти дальше сразу
+            CancelAutoDelay();
+            TryNextSentenceOrEndMonolog();
+        }
+
         public void RestartDialogue()
         {
+            if (!allowRestart) return;
             currentMonologId = 0;
             currentSentenceId = 0;
             _lastCharacterName = string.Empty;
             UpdateDialogueText();
+        }
+
+        private void OnValidate()
+        {
+            if (charactersPerSecond <= 0f)
+            {
+                charactersPerSecond = 0.01f;
+            }
+            if (autoNextSentenceDelay < 0f) autoNextSentenceDelay = 0f;
+            if (autoNextMonologDelay < 0f) autoNextMonologDelay = 0f;
+            if (autoNextDialogueDelay < 0f) autoNextDialogueDelay = 0f;
         }
     }
 }

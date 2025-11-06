@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
+namespace Neo.Tools{
 /// <summary>
 ///     2-D mouse mover
 /// </summary>
@@ -196,4 +197,5 @@ public class MouseMover2D : MonoBehaviour, IMover
     {
         return cam ? cam.ScreenToWorldPoint(scr) : scr;
     }
+}
 }

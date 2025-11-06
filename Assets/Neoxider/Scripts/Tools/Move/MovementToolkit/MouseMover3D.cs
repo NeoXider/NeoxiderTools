@@ -19,6 +19,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
+namespace Neo.Tools{
 [RequireComponent(typeof(Transform))]
 public class MouseMover3D : MonoBehaviour
 {
@@ -240,4 +241,5 @@ public class MouseMover3D : MonoBehaviour
         world = Vector3.zero;
         return false;
     }
+}
 }

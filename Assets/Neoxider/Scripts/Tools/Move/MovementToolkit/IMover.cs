@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 
+namespace Neo.Tools{
 /// <summary>
 ///     Базовый контракт для любых систем перемещения.
 /// </summary>
@@ -13,4 +14,5 @@ public interface IMover
 
     /// <summary>Движение к точке назначения.</summary>
     void MoveToPoint(Vector2 worldTarget);
+}
 }

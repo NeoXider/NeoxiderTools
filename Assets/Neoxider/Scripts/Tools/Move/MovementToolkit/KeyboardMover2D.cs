@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 
+namespace Neo.Tools{
 /// <summary>
 ///     Moves a 2‑D object based on keyboard / joystick axes.
 ///     If a Rigidbody2D is present the script moves in <c>FixedUpdate</c>
@@ -120,4 +121,5 @@ public class KeyboardMover2D : MonoBehaviour, IMover
     }
 
     #endregion
+}
 }

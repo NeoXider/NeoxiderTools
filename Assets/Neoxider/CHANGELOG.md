@@ -1,4 +1,27 @@
 # Журнал изменений (Changelog)
+## [v5.2.12]
+
+### Добавлено
+- Spawner:
+  - Диапазоны поворота по осям (три Vector2), локальный/мировой режим, опциональный родитель.
+  - `OnObjectSpawned (UnityEvent<GameObject>)` — событие после спавна.
+- DialogueManager:
+  - Автопереходы по предложениям/монологам/диалогам с настраиваемыми задержками.
+  - Клэмп скорости печати, оптимизация через StringBuilder.
+  - `SkipOrNext()` — остановка печати и мгновенный показ; повторно — переход дальше.
+- AdvancedAttackCollider:
+  - Флаги: `use2D/use3D`, `useTrigger/useCollision`, `autoManageColliders`.
+  - Единое событие попадания `OnHit(GameObject)`.
+  - Игнор целей `ignoreObjects`.
+  - Исправлена фильтрация по слоям, добавлена поддержка коллизий (2D/3D).
+  - Сила удара: 2D/3D Rigidbody (Force/Impulse), масштаб по массе, нормаль контакта.
+  - `useAdvancedForceApplier`: при включении сила через Rigidbody не применяется, используется AdvancedForceApplier.
+
+### Документация
+- Обновлены: `Docs/Tools/Spawner/Spawner.md`, `Docs/Tools/Components/DialogueManager.md`,
+  `Docs/Tools/Components/AttackSystem/AdvancedAttackCollider.md`.
+
+---
 ## [v5.2.11]
 
 ### Добавлено
