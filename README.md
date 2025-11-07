@@ -96,4 +96,6 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 Neoxider развивается. Если нашли баг или хотите предложить модуль — открывайте issue/PR. В ответ мы стараемся документировать все изменения и предоставляем руководство по миграции.
 
+see: [Changelog](Assets/Neoxider/CHANGELOG.md)
+
 Удачи в разработке и приятного продакшена!
