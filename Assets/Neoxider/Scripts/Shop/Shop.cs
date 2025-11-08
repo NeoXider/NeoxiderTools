@@ -67,6 +67,7 @@ namespace Neo.Shop
             LoadEquipped();
             Spawn();
             Subscriber(true);
+            Id = _previewId;
             // Инициализируем превью сохранённым индексом (если допустим)
             ShowPreview(_previewId);
         }
