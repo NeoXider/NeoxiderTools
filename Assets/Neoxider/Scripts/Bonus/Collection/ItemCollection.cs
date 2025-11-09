@@ -18,16 +18,27 @@ namespace Neo.Bonus
         public ItemCollectionInfo ItemInfo => _itemInfo;
         public bool IsEnabled { get; private set; }
         private ItemCollectionData _currentData;
+        private bool _isInitialized;
+
+        private void Awake()
+        {
+            IsEnabled = false;
+            _isInitialized = false;
+        }
 
         public void SetEnabled(bool active)
         {
-            IsEnabled = active;
-            OnChangeEnabled.Invoke(active);
+            if (!_isInitialized || IsEnabled != active)
+            {
+                IsEnabled = active;
+                _isInitialized = true;
+                OnChangeEnabled.Invoke(active);
 
-            if (active)
-                OnActive?.Invoke();
-            else
-                OnDeactivated?.Invoke();
+                if (active)
+                    OnActive?.Invoke();
+                else
+                    OnDeactivated?.Invoke();
+            }
         }
 
         public void SetSprite(Sprite sprite)

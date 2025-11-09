@@ -24,6 +24,9 @@ namespace Neo.Shop
 
         [SerializeField] private bool _autoSubscribe = true;
 
+        [Tooltip("Если true, при загрузке автоматически активируется сохраненный ShopEquipped элемент")]
+        [SerializeField] private bool _activateSavedEquipped = true;
+
         [SerializeField] private string _keySave = "Shop";
         [SerializeField] private string _keySaveEquipped = "ShopEquipped";
 
@@ -67,7 +70,6 @@ namespace Neo.Shop
             LoadEquipped();
             Spawn();
             Subscriber(true);
-            Id = _previewId;
             // Инициализируем превью сохранённым индексом (если допустим)
             ShowPreview(_previewId);
         }
@@ -100,7 +102,12 @@ namespace Neo.Shop
             
             Visual();
             
-            if (_useSetItem) Select(Mathf.Clamp(_savedEquippedId, 0, _prices.Length - 1));
+            // Активируем сохраненный элемент если включена опция
+            if (_activateSavedEquipped && _useSetItem)
+            {
+                var equippedId = Mathf.Clamp(_savedEquippedId, 0, _prices.Length - 1);
+                Select(equippedId);
+            }
 
             load = true;
             OnLoad?.Invoke();
@@ -221,7 +228,12 @@ namespace Neo.Shop
         private void OnEnable()
         {
             if (load)
+            {
                 Visual();
+                // Восстанавливаем состояние выбора после обновления визуала
+                if (_useSetItem)
+                    Select(_id);
+            }
         }
 
         public void Visual()
