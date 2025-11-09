@@ -27,7 +27,7 @@ namespace Neo.Editor
 
         // Spacing
         public static float SignatureSpacing => 6f;
-        public static float ButtonSpacing => 3f;
+        public static float ButtonSpacing => 1f;
         public static float ButtonParameterSpacing => 20f;
 
         // Cyberpunk effects
