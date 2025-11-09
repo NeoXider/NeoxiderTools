@@ -54,6 +54,22 @@ namespace Neo.Editor
             // Check if Reset was pressed
             if (Event.current.commandName == "Reset") _wasResetPressed = true;
 
+            // Check if component has Neo namespace
+            var hasNeoNamespace = target != null && target.GetType().Namespace != null && 
+                                  target.GetType().Namespace.StartsWith("Neo");
+
+            // Draw "by Neoxider" signature at the beginning
+            DrawNeoxiderSignature();
+
+            // Draw background for Neo components
+            if (hasNeoNamespace)
+            {
+                var originalBgColor = GUI.backgroundColor;
+                GUI.backgroundColor = CustomEditorSettings.NeoBackgroundColor;
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                GUI.backgroundColor = originalBgColor;
+            }
+
             // Draw default inspector
             base.OnInspectorGUI();
 
@@ -71,6 +87,31 @@ namespace Neo.Editor
 
             // Draw method buttons
             DrawMethodButtons();
+
+            // Close background box for Neo components
+            if (hasNeoNamespace)
+            {
+                EditorGUILayout.EndVertical();
+            }
+        }
+
+        protected virtual void DrawNeoxiderSignature()
+        {
+            EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
+            
+            var originalTextColor = GUI.color;
+            GUI.color = CustomEditorSettings.SignatureColor;
+            var style = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
+            {
+                fontSize = CustomEditorSettings.SignatureFontSize,
+                alignment = TextAnchor.MiddleLeft,
+                fontStyle = CustomEditorSettings.SignatureFontStyle,
+                normal = { textColor = CustomEditorSettings.SignatureColor }
+            };
+            EditorGUILayout.LabelField("by Neoxider", style);
+            GUI.color = originalTextColor;
+            
+            EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
         }
 
         protected abstract void ProcessAttributeAssignments();
@@ -97,17 +138,32 @@ namespace Neo.Editor
                     ? method.Name
                     : buttonAttribute.ButtonName;
 
-                if (buttonText.Length > 16) buttonText = buttonText.Substring(0, 14) + "...";
+                if (buttonText.Length > CustomEditorSettings.ButtonTextMaxLength) 
+                    buttonText = buttonText.Substring(0, CustomEditorSettings.ButtonTextMaxLength - 2) + "...";
 
                 EditorGUILayout.BeginHorizontal();
 
-                // Store original GUI background color
-                var originalColor = GUI.backgroundColor;
-                // Set darker background for button
-                GUI.backgroundColor = new Color(0.5f, 0.5f, 0.5f);
+                // Store original GUI colors
+                var originalBgColor = GUI.backgroundColor;
+                var originalTextColor = GUI.contentColor;
+                var originalColor = GUI.color;
+                
+                // Create custom button style with cyberpunk look
+                var buttonStyle = new GUIStyle(EditorStyles.miniButton)
+                {
+                    normal = { textColor = CustomEditorSettings.ButtonTextColor },
+                    hover = { textColor = CustomEditorSettings.ButtonTextColor },
+                    active = { textColor = CustomEditorSettings.ButtonTextColor },
+                    focused = { textColor = CustomEditorSettings.ButtonTextColor }
+                };
+                
+                // Set cyberpunk purple background for button
+                GUI.backgroundColor = CustomEditorSettings.ButtonBackgroundColor;
+                GUI.contentColor = CustomEditorSettings.ButtonTextColor;
+                GUI.color = CustomEditorSettings.ButtonTextColor;
 
                 // Draw button on the left with compact style
-                if (GUILayout.Button(buttonText, EditorStyles.miniButton, GUILayout.Width(buttonAttribute.Width)))
+                if (GUILayout.Button(buttonText, buttonStyle, GUILayout.Width(buttonAttribute.Width)))
                     try
                     {
                         var paramValues = new object[parameters.Length];
@@ -159,11 +215,13 @@ namespace Neo.Editor
                             $"Error calling method {method.Name}: {e.InnerException?.Message ?? e.Message}\nStack trace: {e.InnerException?.StackTrace ?? e.StackTrace}");
                     }
 
-                // Restore original GUI background color
-                GUI.backgroundColor = originalColor;
+                // Restore original GUI colors
+                GUI.backgroundColor = originalBgColor;
+                GUI.contentColor = originalTextColor;
+                GUI.color = originalColor;
 
                 // Add spacing between button and parameters
-                GUILayout.Space(20);
+                GUILayout.Space(CustomEditorSettings.ButtonParameterSpacing);
 
                 // Draw parameters foldout on the right
                 if (parameters.Length > 0)
@@ -230,7 +288,7 @@ namespace Neo.Editor
                 EditorGUILayout.EndHorizontal();
 
                 // Add small space between methods
-                GUILayout.Space(2);
+                GUILayout.Space(CustomEditorSettings.ButtonSpacing);
             }
         }
 

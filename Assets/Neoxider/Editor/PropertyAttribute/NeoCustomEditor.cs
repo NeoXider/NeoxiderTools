@@ -8,6 +8,7 @@ namespace Neo.Editor
     ///     Supports finding components in scene, on GameObject, and loading from Resources.
     /// </summary>
     [CustomEditor(typeof(MonoBehaviour), true)]
+    [CanEditMultipleObjects]
     public class NeoCustomEditor : CustomEditorBase
     {
         protected override void ProcessAttributeAssignments()
