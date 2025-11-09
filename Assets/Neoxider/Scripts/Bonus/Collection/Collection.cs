@@ -104,6 +104,7 @@ namespace Neo.Bonus
             var prizeId = Array.IndexOf(_itemCollectionDatas, _randomPrize ? uniqs.GetRandomElement() : uniqs.First());
 
             AddItem(prizeId);
+            OnGetItem?.Invoke(prizeId);
 
             return _itemCollectionDatas[prizeId];
         }
@@ -128,7 +129,6 @@ namespace Neo.Bonus
             PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
             PlayerPrefs.Save();
 
-            OnGetItem?.Invoke(id);
             OnItemAdded?.Invoke(id);
         }
 
