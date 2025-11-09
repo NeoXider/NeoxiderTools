@@ -17,12 +17,10 @@ namespace Neo.Bonus
         public Image ItemImage => _itemImage;
         public ItemCollectionInfo ItemInfo => _itemInfo;
         public bool IsEnabled { get; private set; }
+        private ItemCollectionData _currentData;
 
         public void SetEnabled(bool active)
         {
-            if (IsEnabled == active)
-                return;
-
             IsEnabled = active;
             OnChangeEnabled.Invoke(active);
 
@@ -42,6 +40,7 @@ namespace Neo.Bonus
         {
             if (itemCollectionData != null)
             {
+                _currentData = itemCollectionData;
                 SetSprite(itemCollectionData.sprite);
                 
                 if (_itemInfo != null)
@@ -51,8 +50,7 @@ namespace Neo.Bonus
 
         public ItemCollectionData GetCurrentData()
         {
-            // Можно расширить, если нужно хранить текущие данные
-            return null;
+            return _currentData;
         }
     }
 }

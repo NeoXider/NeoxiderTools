@@ -11,7 +11,7 @@ namespace Neo.Bonus
         [SerializeField] private TMP_Text _textDescription;
         [TextArea(1, 4)] [SerializeField] private string _textDefaultValue;
         [SerializeField] private Image _imageItem;
-        [SerializeField] private bool _setNativeSize = true;
+        [SerializeField] private bool _setNativeSize;
 
         private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
 

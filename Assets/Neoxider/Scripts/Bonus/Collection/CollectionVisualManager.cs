@@ -55,7 +55,7 @@ namespace Neo.Bonus
             }
         }
 
-        private System.Collections.IEnumerator WaitForCollectionAndSubscribe()
+        private IEnumerator WaitForCollectionAndSubscribe()
         {
             while (!Collection.IsInitialized)
             {
