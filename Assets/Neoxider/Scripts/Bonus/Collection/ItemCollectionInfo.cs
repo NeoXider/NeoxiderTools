@@ -17,24 +17,33 @@ namespace Neo.Bonus
 
         public void SetData(ItemCollectionData itemCollectionData)
         {
-            if (itemCollectionData == null) return;
+            if (itemCollectionData == null)
+            {
+                Debug.LogWarning("[ItemCollectionInfo] SetData: itemCollectionData is null!");
+                return;
+            }
 
             if (_textName != null)
-                _textName.text = itemCollectionData.itemName;
+            {
+                _textName.text = itemCollectionData.itemName ?? string.Empty;
+            }
 
             if (_textDescription != null)
             {
-                if (itemCollectionData.description != string.Empty)
+                if (!string.IsNullOrEmpty(itemCollectionData.description))
                     _textDescription.text = itemCollectionData.description;
                 else
-                    _textDescription.text = _textDefaultValue;
+                    _textDescription.text = _textDefaultValue ?? string.Empty;
             }
 
             if (_imageItem != null)
             {
-                _imageItem.sprite = itemCollectionData.sprite;
-                if (_setNativeSize)
-                    _imageItem.SetNativeSize();
+                if (itemCollectionData.sprite != null)
+                {
+                    _imageItem.sprite = itemCollectionData.sprite;
+                    if (_setNativeSize)
+                        _imageItem.SetNativeSize();
+                }
             }
         }
 

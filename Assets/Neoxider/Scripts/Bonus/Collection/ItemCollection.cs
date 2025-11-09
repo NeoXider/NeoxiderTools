@@ -49,13 +49,15 @@ namespace Neo.Bonus
 
         public void SetData(ItemCollectionData itemCollectionData)
         {
-            if (itemCollectionData != null)
+            if (itemCollectionData == null)
+                return;
+
+            _currentData = itemCollectionData;
+            SetSprite(itemCollectionData.sprite);
+            
+            if (_itemInfo != null)
             {
-                _currentData = itemCollectionData;
-                SetSprite(itemCollectionData.sprite);
-                
-                if (_itemInfo != null)
-                    _itemInfo.SetData(itemCollectionData);
+                _itemInfo.SetData(itemCollectionData);
             }
         }
 
