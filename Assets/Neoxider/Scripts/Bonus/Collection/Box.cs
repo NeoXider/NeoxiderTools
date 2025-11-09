@@ -41,7 +41,7 @@ namespace Neo.Bonus
             set
             {
                 _progress = value;
-                PlayerPrefs.GetFloat(_saveName + nameof(progress), value);
+                PlayerPrefs.SetFloat(_saveName + nameof(progress), value);
             }
         }
 
@@ -66,21 +66,13 @@ namespace Neo.Bonus
             AddProgress(addProgress);
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         public void AddProgress(float amount)
         {
             ChangeProgress(amount);
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         public void ChangeProgress(float amount)
         {
             progress += amount;
@@ -99,16 +91,15 @@ namespace Neo.Bonus
                 OnProgressNotReached?.Invoke();
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         public void TakePrize()
         {
             if (CheckProgress)
             {
-                var itemData = Collection.Instance.GetPrize();
+                var itemData = Collection.I.GetPrize();
+
+                if (itemData == null)
+                    return;
 
                 if (_itemPrize != null)
                     _itemPrize.sprite = itemData.sprite;
@@ -119,14 +110,12 @@ namespace Neo.Bonus
                 ChangeProgress(-maxProgress);
 
                 Visual(true);
+                
+                OnTakePrize?.Invoke();
             }
         }
 
-#if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+[Button]
         private void Visual(bool openBox = false)
         {
             if (_bar != null) _bar.fillAmount = progress / maxProgress;

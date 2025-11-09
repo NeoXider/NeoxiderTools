@@ -1,4 +1,62 @@
 # Журнал изменений (Changelog)
+## [v5.2.13]
+
+### Изменено
+- Collection:
+  - Рефакторинг на использование `Singleton<Collection>` вместо ручного синглтона. Доступ через `Collection.I` вместо `Collection.Instance`.
+  - Все приватные поля переименованы с префиксом `_` для соответствия стандартам кодирования.
+  - Добавлены публичные свойства: `RandomPrize`, `ItemCollectionDatas`, `EnabledItems` (read-only), `ItemCount`, `UnlockedCount`, `LockedCount`.
+  - Метод `Load()` теперь публичный для возможности перезагрузки коллекции.
+  - Улучшена инициализация массива `_enabledItems` - проверка на соответствие размера массиву данных.
+
+### Добавлено
+- Collection:
+  - Полный API для работы через код:
+    - `HasItem(int id)` - проверка наличия предмета
+    - `AddItem(int id)` - добавление предмета в коллекцию
+    - `RemoveItem(int id)` - удаление предмета из коллекции
+    - `SetItemEnabled(int id, bool enabled)` - установка состояния предмета
+    - `ClearCollection()` - очистка всей коллекции
+    - `UnlockAllItems()` - разблокировка всех предметов
+    - `GetItemData(int id)` - получение данных предмета по ID
+  - Новые события: `OnItemAdded`, `OnItemRemoved` для отслеживания изменений коллекции.
+  - Автоматическое сохранение в `PlayerPrefs` при изменении коллекции.
+
+- CollectionVisualManager:
+  - Рефакторинг на использование `Singleton<CollectionVisualManager>`. Доступ через `CollectionVisualManager.I`.
+  - Автоматическая подписка на события `Collection` (`OnItemAdded`, `OnItemRemoved`, `OnLoadItems`) для синхронизации визуализации.
+  - Безопасная инициализация: ожидание инициализации `Collection` перед обновлением визуализации (исправлен баг с отображением всех предметов в начале).
+  - Корутина `WaitForCollectionAndVisual()` для ожидания инициализации `Collection`, если она еще не завершена.
+  - Автоматическое обновление визуализации при изменении коллекции через события.
+  - Новые методы: `GetItem(int id)`, `RefreshAllItems()`, `RefreshItem(int id)`.
+  - Публичные свойства: `Items`, `ItemsCount`, `EnableSetItem`.
+  - Улучшены проверки на `null` и валидность индексов во всех методах.
+
+- ItemCollection:
+  - Добавлена переменная `_itemInfo` для связи с `ItemCollectionInfo`.
+  - Публичные свойства: `ItemImage`, `ItemInfo`, `IsEnabled`.
+  - Метод `SetData()` теперь автоматически обновляет `ItemCollectionInfo`, если он указан.
+
+- ItemCollectionInfo:
+  - Исправлена опечатка: `_colllection` → `_collection`.
+  - Умная логика: если `_collection` не указана, используется синглтон `Collection.I`.
+  - Добавлены проверки на `null` и валидность индексов.
+
+### Исправлено
+- Collection:
+  - Исправлен баг с инициализацией массива `_enabledItems` при изменении размера `_itemCollectionDatas`.
+
+- CollectionVisualManager:
+  - **Критический баг**: Исправлена проблема с отображением всех предметов как доступных в начале игры. Теперь `CollectionVisualManager` ждет инициализации `Collection` перед обновлением визуализации.
+  - Исправлена проблема с подпиской на события кнопок при `null` элементах.
+  - Добавлены проверки на инициализацию `Collection` во всех методах обновления визуализации.
+
+### Документация
+- Обновлены: `Docs/Bonus/Collection/Collection.md`, `Docs/Bonus/Collection/CollectionVisualManager.md`, `Docs/Bonus/Collection/README.md`.
+- Добавлены примеры использования API через код.
+- Описаны новые методы и свойства.
+
+---
 ## [v5.2.12]
 
 ### Добавлено

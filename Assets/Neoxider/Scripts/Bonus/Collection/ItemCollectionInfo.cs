@@ -6,15 +6,19 @@ namespace Neo.Bonus
 {
     public class ItemCollectionInfo : MonoBehaviour
     {
-        [SerializeField] private Collection _colllection;
+        [SerializeField] private Collection _collection;
         [SerializeField] private TMP_Text _textName;
         [SerializeField] private TMP_Text _textDescription;
         [TextArea(1, 4)] [SerializeField] private string _textDefaultValue;
         [SerializeField] private Image _imageItem;
         [SerializeField] private bool _setNativeSize = true;
 
+        private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
+
         public void SetData(ItemCollectionData itemCollectionData)
         {
+            if (itemCollectionData == null) return;
+
             if (_textName != null)
                 _textName.text = itemCollectionData.itemName;
 
@@ -36,8 +40,13 @@ namespace Neo.Bonus
 
         public void SetItemId(int id)
         {
-            if (_colllection != null)
-                SetData(_colllection.itemCollectionDatas[id]);
+            var collection = CollectionInstance;
+            if (collection != null)
+            {
+                var itemData = collection.GetItemData(id);
+                if (itemData != null)
+                    SetData(itemData);
+            }
         }
     }
 }
