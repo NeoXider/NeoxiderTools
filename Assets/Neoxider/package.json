@@ -1,7 +1,7 @@
 {
   "name": "com.neoxider.tools",
   "displayName": "Neoxider Tools",
-  "version": "5.2.15",
+  "version": "5.2.16",
   "unity": "2022.1",
   "description": "NeoxiderTools Quick Start Library",
   "author": { "name": "Neoxider" },

@@ -103,6 +103,10 @@ namespace Neo
             [SerializeField]
             private bool _setChild;
 
+            [Tooltip("When enabled, automatically update items array when child objects are added or removed")]
+            [SerializeField]
+            private bool _autoUpdateFromChildren = false;
+
             [Header("Selection Settings")]
             [Tooltip("Whether to loop back to the beginning when reaching the end")]
             [SerializeField]
@@ -307,31 +311,20 @@ namespace Neo
                 if (_setChild)
                 {
                     _setChild = false;
-                    List<GameObject> childs = new();
-
-                    foreach (Transform child in transform)
-                    {
-                        if (child.gameObject != gameObject)
-                        {
-                            childs.Add(child.gameObject);
-                        }
-                    }
-
-                    _items = childs.ToArray();
-
-                    if (_items.Length > 0)
-                    {
-                        Debug.Log($"Selector: Auto-populated {_items.Length} items from children");
-                    }
-                    else
-                    {
-                        Debug.LogWarning("Selector: No child items found to populate");
-                    }
+                    RefreshItemsFromChildren();
                 }
 
                 if (_changeDebug && _items != null && Application.isPlaying)
                 {
                     UpdateSelection();
+                }
+            }
+
+            private void OnTransformChildrenChanged()
+            {
+                if (_autoUpdateFromChildren && Application.isPlaying)
+                {
+                    RefreshItemsFromChildren();
                 }
             }
 
@@ -580,6 +573,71 @@ namespace Neo
                 }
             }
 
+            /// <summary>
+            ///     Refreshes the items array from child GameObjects
+            /// </summary>
+            [Button]
+            public void RefreshItems()
+            {
+                RefreshItemsFromChildren();
+            }
+
+            /// <summary>
+            ///     Adds a GameObject to the items array
+            /// </summary>
+            /// <param name="item">The GameObject to add</param>
+            public void AddItem(GameObject item)
+            {
+                if (item == null)
+                {
+                    Debug.LogWarning("Selector: Cannot add null GameObject to items");
+                    return;
+                }
+
+                List<GameObject> itemsList = _items != null ? new List<GameObject>(_items) : new List<GameObject>();
+                
+                if (!itemsList.Contains(item))
+                {
+                    itemsList.Add(item);
+                    _items = itemsList.ToArray();
+                    
+                    if (Count > 0)
+                    {
+                        UpdateSelection();
+                    }
+                }
+            }
+
+            /// <summary>
+            ///     Removes a GameObject from the items array
+            /// </summary>
+            /// <param name="item">The GameObject to remove</param>
+            public void RemoveItem(GameObject item)
+            {
+                if (item == null || _items == null)
+                {
+                    return;
+                }
+
+                List<GameObject> itemsList = new List<GameObject>(_items);
+                
+                if (itemsList.Remove(item))
+                {
+                    _items = itemsList.ToArray();
+                    
+                    int total = Count;
+                    if (_currentIndex >= total && total > 0)
+                    {
+                        _currentIndex = total - 1;
+                    }
+                    
+                    if (Count > 0)
+                    {
+                        UpdateSelection();
+                    }
+                }
+            }
+
             #endregion
 
             #region Helpers
@@ -600,6 +658,38 @@ namespace Neo
                 int min = effMin - _indexOffset;
                 int max = total - 1 - _indexOffset;
                 return (min, max);
+            }
+
+            /// <summary>
+            ///     Refreshes the items array from child GameObjects
+            /// </summary>
+            private void RefreshItemsFromChildren()
+            {
+                List<GameObject> childs = new();
+
+                foreach (Transform child in transform)
+                {
+                    if (child.gameObject != gameObject)
+                    {
+                        childs.Add(child.gameObject);
+                    }
+                }
+
+                _items = childs.ToArray();
+
+                int total = Count;
+                if (_currentIndex >= total && total > 0)
+                {
+                    _currentIndex = total - 1;
+                }
+
+                if (_items.Length > 0)
+                {
+                    if (Application.isPlaying)
+                    {
+                        UpdateSelection();
+                    }
+                }
             }
 
             #endregion
