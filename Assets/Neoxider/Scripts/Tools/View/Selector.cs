@@ -27,7 +27,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot update selection - items array is null or empty, or count is 0");
                     return;
                 }
 
@@ -42,32 +42,44 @@ namespace Neo
                     effectiveIndex = total - 1;
                 }
 
-                if (HasItems)
+                GameObject[] items = _items;
+                if (items != null && items.Length > 0)
                 {
-                    // Update GameObject active state based on selection
-                    if (_fillMode)
+                    if (effectiveIndex < 0)
                     {
-                        for (int i = 0; i < _items.Length; i++)
+                        for (int i = 0; i < items.Length; i++)
                         {
-                            if (_items[i] != null)
+                            if (items[i] != null)
                             {
-                                _items[i].SetActive(i <= effectiveIndex);
+                                items[i].SetActive(false);
                             }
                         }
                     }
                     else
                     {
-                        for (int i = 0; i < _items.Length; i++)
+                        if (_fillMode)
                         {
-                            if (_items[i] != null)
+                            for (int i = 0; i < items.Length; i++)
                             {
-                                _items[i].SetActive(i == effectiveIndex);
+                                if (items[i] != null)
+                                {
+                                    items[i].SetActive(i <= effectiveIndex);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            for (int i = 0; i < items.Length; i++)
+                            {
+                                if (items[i] != null)
+                                {
+                                    items[i].SetActive(i == effectiveIndex);
+                                }
                             }
                         }
                     }
                 }
 
-                // In count-only mode, just invoke the event
                 OnSelectionChanged?.Invoke(_currentIndex);
             }
 
@@ -81,7 +93,7 @@ namespace Neo
             [Header("Count Mode")]
             [Tooltip("If set > 0 and items array is empty, selector will work with this count as virtual items")]
             [SerializeField]
-            private int _count = -1; // -1 means disabled, >0 enables count mode
+            private int _count = -1;
 
             [Header("Items")] [Tooltip("Array of GameObjects to be selected between")] [SerializeField]
             private GameObject[] _items;
@@ -123,13 +135,11 @@ namespace Neo
             {
                 get
                 {
-                    // If explicit virtual count is set (>0), use it (count mode)
                     if (_count > 0)
                     {
                         return _count;
                     }
 
-                    // Otherwise, fall back to items length when items provided
                     if (_items != null && _items.Length > 0)
                     {
                         return _items.Length;
@@ -140,7 +150,10 @@ namespace Neo
                 set
                 {
                     _count = value;
-                    UpdateSelection();
+                    if (Count > 0)
+                    {
+                        UpdateSelection();
+                    }
                 }
             }
 
@@ -231,18 +244,30 @@ namespace Neo
                 }
             }
 
+            /// <summary>
+            ///     Gets the current index with offset applied
+            /// </summary>
             public int IndexWithOffset => _currentIndex + _indexOffset;
 
+            /// <summary>
+            ///     Gets the currently selected GameObject
+            /// </summary>
             public GameObject Item
             {
                 get
                 {
-                    if (Value >= 0 && Value < Count)
+                    if (!HasItems)
                     {
-                        return _items[Value];
+                        return null;
                     }
 
-                    return null;
+                    int effectiveIndex = Value + _indexOffset;
+                    if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
+                    {
+                        return null;
+                    }
+
+                    return _items[effectiveIndex];
                 }
             }
 
@@ -257,13 +282,15 @@ namespace Neo
 
             private void Start()
             {
-                // Ensure selection is applied at start
-                UpdateSelection();
+                if (Count > 0)
+                {
+                    UpdateSelection();
+                }
             }
 
             private void OnEnable()
             {
-                if (startOnAwake)
+                if (startOnAwake && Count > 0)
                 {
                     Set(_startIndex);
                 }
@@ -271,14 +298,12 @@ namespace Neo
 
             private void OnValidate()
             {
-                // Validate items array
                 if (_items == null)
                 {
                     Debug.LogWarning("Selector: Items array is null");
                     return;
                 }
 
-                // Auto-populate items from children if requested
                 if (_setChild)
                 {
                     _setChild = false;
@@ -294,7 +319,6 @@ namespace Neo
 
                     _items = childs.ToArray();
 
-                    // Log the number of items found
                     if (_items.Length > 0)
                     {
                         Debug.Log($"Selector: Auto-populated {_items.Length} items from children");
@@ -305,8 +329,7 @@ namespace Neo
                     }
                 }
 
-                // Update selection in editor if debug mode is enabled
-                if (_changeDebug && _items != null)
+                if (_changeDebug && _items != null && Application.isPlaying)
                 {
                     UpdateSelection();
                 }
@@ -325,7 +348,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot move to next - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -358,7 +381,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot move to previous - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -408,7 +431,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot set selection - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -442,7 +465,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -459,11 +482,12 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: No items to select");
+                    Debug.LogWarning("Selector: Cannot set to first - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
-                _currentIndex = 0;
+                (int min, int max) = GetCurrentBounds();
+                _currentIndex = min;
                 UpdateSelection();
             }
 
@@ -479,7 +503,7 @@ namespace Neo
             /// <summary>
             ///     Gets the currently selected GameObject
             /// </summary>
-            /// <returns>The selected GameObject or null if none is selected</returns>
+            /// <returns>The selected GameObject or null if none is selected (including when effectiveIndex == -1)</returns>
             public GameObject GetSelectedItem()
             {
                 if (!HasItems)
@@ -487,7 +511,8 @@ namespace Neo
                     return null;
                 }
 
-                if (_items.Length == 0)
+                int total = Count;
+                if (total == 0)
                 {
                     return null;
                 }
@@ -509,7 +534,13 @@ namespace Neo
             public bool IsValidIndex(int index)
             {
                 int total = Count;
-                return total > 0 && index >= 0 && index < total;
+                if (total <= 0)
+                {
+                    return false;
+                }
+
+                (int min, int max) = GetCurrentBounds();
+                return index >= min && index <= max;
             }
 
             /// <summary>
@@ -553,9 +584,18 @@ namespace Neo
 
             #region Helpers
 
+            /// <summary>
+            ///     Gets the current valid bounds for the selection index
+            /// </summary>
+            /// <returns>A tuple containing the minimum and maximum valid indices</returns>
             private (int min, int max) GetCurrentBounds()
             {
                 int total = Count;
+                if (total <= 0)
+                {
+                    return (0, 0);
+                }
+
                 int effMin = _allowEmptyEffectiveIndex ? -1 : 0;
                 int min = effMin - _indexOffset;
                 int max = total - 1 - _indexOffset;
