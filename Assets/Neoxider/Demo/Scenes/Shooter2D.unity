@@ -186,8 +186,13 @@ MonoBehaviour:
   spawnLimit: 0
   minSpawnDelay: 0.2
   maxSpawnDelay: 0.2
+  _rotationX: {x: 0, y: 0}
+  _rotationY: {x: 0, y: 0}
+  _rotationZ: {x: 0, y: 0}
+  _useLocalRotation: 1
   _spawnTransform: {fileID: 2001086779}
   _spawnOnAwake: 1
+  _parentTransform: {fileID: 0}
   _spawnAreaCollider: {fileID: 0}
   _spawnAreaCollider2D: {fileID: 56993985}
 --- !u!61 &56993985
@@ -235,6 +240,63 @@ BoxCollider2D:
   serializedVersion: 2
   m_Size: {x: 0.001, y: 0.1}
   m_EdgeRadius: 0
+--- !u!1001 &1135655898
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -0.07796028
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.84807724
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 3.347223
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2777789640607467470, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5923800080323639265, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
+      propertyPath: m_Name
+      value: -AM
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 4684fb5574315884fbd90680bf41edda, type: 3}
 --- !u!1 &1562339260
 GameObject:
   m_ObjectHideFlags: 0
@@ -321,8 +383,13 @@ MonoBehaviour:
   spawnLimit: 0
   minSpawnDelay: 0.1
   maxSpawnDelay: 0.3
+  _rotationX: {x: 0, y: 0}
+  _rotationY: {x: 0, y: 0}
+  _rotationZ: {x: 0, y: 0}
+  _useLocalRotation: 1
   _spawnTransform: {fileID: 1562339263}
   _spawnOnAwake: 1
+  _parentTransform: {fileID: 0}
   _spawnAreaCollider: {fileID: 0}
   _spawnAreaCollider2D: {fileID: 1562339261}
 --- !u!4 &1562339263
@@ -691,8 +758,13 @@ MonoBehaviour:
   spawnLimit: 0
   minSpawnDelay: 0.2
   maxSpawnDelay: 2
+  _rotationX: {x: 0, y: 0}
+  _rotationY: {x: 0, y: 0}
+  _rotationZ: {x: 0, y: 0}
+  _useLocalRotation: 1
   _spawnTransform: {fileID: 1889027150}
   _spawnOnAwake: 1
+  _parentTransform: {fileID: 0}
   _spawnAreaCollider: {fileID: 0}
   _spawnAreaCollider2D: {fileID: 1889027148}
 --- !u!4 &1889027150
@@ -804,6 +876,7 @@ SceneRoots:
   m_Roots:
   - {fileID: 1763461388}
   - {fileID: 1712151091}
+  - {fileID: 1135655898}
   - {fileID: 1918450153}
   - {fileID: 2001086779}
   - {fileID: 1889027150}
