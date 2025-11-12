@@ -8,6 +8,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -1306852481427532321, guid: 24b8bd35203cf2342928da379ddb6f7d, type: 3}
+      propertyPath: attackDamage
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 6171709823259349456, guid: 24b8bd35203cf2342928da379ddb6f7d, type: 3}
       propertyPath: m_Name
       value: Laser Variant

@@ -13,7 +13,9 @@ GameObject:
   - component: {fileID: 8540909988327966162}
   - component: {fileID: 2779118350988456969}
   - component: {fileID: 7096822859739007894}
-  m_Layer: 0
+  - component: {fileID: -7305291794212445448}
+  - component: {fileID: 6428085809971242153}
+  m_Layer: 6
   m_Name: Asteroid_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -270,6 +272,86 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+      - m_Target: {fileID: 6428085809971242153}
+        m_TargetAssemblyTypeName: Neo.Tools.Loot, Neo.Tools.Components
+        m_MethodName: DropLoot
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   OnChangeMaxHp:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &-7305291794212445448
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8156675286961016348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d3d9bd4c102fba4f91b334cdbb92dda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 5
+  triggerDuration: 0.2
+  autoManageColliders: 0
+  collider2D: {fileID: 0}
+  collider3D: {fileID: 0}
+  use2D: 1
+  use3D: 1
+  useTrigger: 1
+  useCollision: 1
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  applyForceOnHit: 0
+  forceMagnitude: 20
+  forceDuration: 0.3
+  forceMode3D: 1
+  forceMode2D: 1
+  scaleForceByMass: 1
+  useAdvancedForceApplier: 1
+  attackEffectPrefab: {fileID: 0}
+  ignoreObjects: []
+  destroySelfOnHit: 1
+  destroyTargetOnHit: 0
+  _showGizmo: 1
+  _gizmoColor: {r: 1, g: 0, b: 0, a: 0.2}
+  OnAttackTriggerEnter2D:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackTriggerEnter3D:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDeactivateTrigger:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHit:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &6428085809971242153
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8156675286961016348}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb45b2cb9b7eb9a4a9c7b13238b5d7ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  lootItems:
+  - {fileID: 100004, guid: 2857e183f4cd3df4e9096e5b578bd32f, type: 3}
+  dropChance: 1
+  spawnOnDestroy: 0
+  minCount: 1
+  maxCount: 1
+  dropRadius: 0

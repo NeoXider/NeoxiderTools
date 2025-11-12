@@ -65,8 +65,12 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2779118350988456969, guid: ea2320c019707da41928909a4d7792eb, type: 3}
+      propertyPath: m_LinearDrag
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2779118350988456969, guid: ea2320c019707da41928909a4d7792eb, type: 3}
       propertyPath: m_GravityScale
-      value: 1
+      value: 0.4
       objectReference: {fileID: 0}
     - target: {fileID: 8156675286961016348, guid: ea2320c019707da41928909a4d7792eb, type: 3}
       propertyPath: m_Name
