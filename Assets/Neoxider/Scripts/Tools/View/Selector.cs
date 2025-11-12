@@ -27,7 +27,7 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot update selection - items array is null or empty, or count is 0");
+                    OnSelectionChanged?.Invoke(_currentIndex);
                     return;
                 }
 
@@ -49,9 +49,17 @@ namespace Neo
                     {
                         for (int i = 0; i < items.Length; i++)
                         {
-                            if (items[i] != null)
+                            GameObject item = items[i];
+                            if (item != null && item.activeSelf)
                             {
-                                items[i].SetActive(false);
+                                try
+                                {
+                                    item.SetActive(false);
+                                }
+                                catch (System.Exception)
+                                {
+                                    // Игнорируем ошибки при деактивации (объект может быть уничтожен)
+                                }
                             }
                         }
                     }
@@ -61,9 +69,21 @@ namespace Neo
                         {
                             for (int i = 0; i < items.Length; i++)
                             {
-                                if (items[i] != null)
+                                GameObject item = items[i];
+                                if (item != null)
                                 {
-                                    items[i].SetActive(i <= effectiveIndex);
+                                    bool shouldBeActive = i <= effectiveIndex;
+                                    if (item.activeSelf != shouldBeActive)
+                                    {
+                                        try
+                                        {
+                                            item.SetActive(shouldBeActive);
+                                        }
+                                        catch (System.Exception)
+                                        {
+                                            // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -71,9 +91,21 @@ namespace Neo
                         {
                             for (int i = 0; i < items.Length; i++)
                             {
-                                if (items[i] != null)
+                                GameObject item = items[i];
+                                if (item != null)
                                 {
-                                    items[i].SetActive(i == effectiveIndex);
+                                    bool shouldBeActive = i == effectiveIndex;
+                                    if (item.activeSelf != shouldBeActive)
+                                    {
+                                        try
+                                        {
+                                            item.SetActive(shouldBeActive);
+                                        }
+                                        catch (System.Exception)
+                                        {
+                                            // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -286,6 +318,8 @@ namespace Neo
 
             private void Start()
             {
+                TryInitializeFromChildren();
+
                 if (Count > 0)
                 {
                     UpdateSelection();
@@ -294,6 +328,8 @@ namespace Neo
 
             private void OnEnable()
             {
+                TryInitializeFromChildren();
+
                 if (startOnAwake && Count > 0)
                 {
                     Set(_startIndex);
@@ -338,6 +374,8 @@ namespace Neo
             [Button]
             public void Next()
             {
+                TryInitializeFromChildren();
+
                 int total = Count;
                 if (total == 0)
                 {
@@ -371,6 +409,8 @@ namespace Neo
             [Button]
             public void Previous()
             {
+                TryInitializeFromChildren();
+
                 int total = Count;
                 if (total == 0)
                 {
@@ -421,6 +461,8 @@ namespace Neo
             [Button]
             public void Set(int index)
             {
+                TryInitializeFromChildren();
+
                 int total = Count;
                 if (total == 0)
                 {
@@ -455,6 +497,8 @@ namespace Neo
             [Button]
             public void SetLast()
             {
+                TryInitializeFromChildren();
+
                 int total = Count;
                 if (total == 0)
                 {
@@ -472,6 +516,8 @@ namespace Neo
             [Button]
             public void SetFirst()
             {
+                TryInitializeFromChildren();
+
                 int total = Count;
                 if (total == 0)
                 {
@@ -594,6 +640,12 @@ namespace Neo
                     return;
                 }
 
+                if (_count > 0)
+                {
+                    Debug.LogWarning("Selector: Cannot add items when using count mode (_count > 0)");
+                    return;
+                }
+
                 List<GameObject> itemsList = _items != null ? new List<GameObject>(_items) : new List<GameObject>();
                 
                 if (!itemsList.Contains(item))
@@ -661,15 +713,31 @@ namespace Neo
             }
 
             /// <summary>
+            ///     Tries to initialize items from children if list is empty and auto-update is enabled
+            /// </summary>
+            private void TryInitializeFromChildren()
+            {
+                if (_autoUpdateFromChildren && (_items == null || _items.Length == 0) && _count <= 0)
+                {
+                    RefreshItemsFromChildren();
+                }
+            }
+
+            /// <summary>
             ///     Refreshes the items array from child GameObjects
             /// </summary>
             private void RefreshItemsFromChildren()
             {
+                if (transform == null)
+                {
+                    return;
+                }
+
                 List<GameObject> childs = new();
 
                 foreach (Transform child in transform)
                 {
-                    if (child.gameObject != gameObject)
+                    if (child != null && child.gameObject != null && child.gameObject != gameObject)
                     {
                         childs.Add(child.gameObject);
                     }
@@ -678,17 +746,14 @@ namespace Neo
                 _items = childs.ToArray();
 
                 int total = Count;
-                if (_currentIndex >= total && total > 0)
+                if (total > 0 && _currentIndex >= total)
                 {
                     _currentIndex = total - 1;
                 }
 
-                if (_items.Length > 0)
+                if (Application.isPlaying && total > 0)
                 {
-                    if (Application.isPlaying)
-                    {
-                        UpdateSelection();
-                    }
+                    UpdateSelection();
                 }
             }
 
