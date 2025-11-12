@@ -166,6 +166,7 @@ namespace Neo
 
             /// <summary>
             ///     Returns the number of selectable items (GameObjects or virtual count)
+            ///     Priority: If _count > 0 (virtual mode), returns _count. Otherwise returns _items.Length if available.
             /// </summary>
             public int Count
             {

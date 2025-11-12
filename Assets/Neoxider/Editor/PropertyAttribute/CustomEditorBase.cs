@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using Neo;
 
 namespace Neo.Editor
 {
@@ -54,16 +55,15 @@ namespace Neo.Editor
             // Check if Reset was pressed
             if (Event.current.commandName == "Reset") _wasResetPressed = true;
 
-            // Check if component has Neo namespace
+            // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
             var hasNeoNamespace = target != null && target.GetType().Namespace != null && 
-                                  target.GetType().Namespace.StartsWith("Neo");
+                                  (target.GetType().Namespace == "Neo" || target.GetType().Namespace.StartsWith("Neo."));
 
-            // Draw "by Neoxider" signature at the beginning
-            DrawNeoxiderSignature();
-
-            // Draw background for Neo components
+            // Draw "by Neoxider" signature and background only for Neo components
             if (hasNeoNamespace)
             {
+                DrawNeoxiderSignature();
+                
                 var originalBgColor = GUI.backgroundColor;
                 GUI.backgroundColor = CustomEditorSettings.NeoBackgroundColor;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
@@ -130,7 +130,43 @@ namespace Neo.Editor
             {
                 if (method == null) continue;
 
-                var buttonAttribute = method.GetCustomAttribute<ButtonAttribute>();
+                // Try to get ButtonAttribute using multiple methods for compatibility
+                ButtonAttribute buttonAttribute = null;
+                
+                // First try: GetCustomAttribute (preferred method)
+                try
+                {
+                    buttonAttribute = method.GetCustomAttribute<ButtonAttribute>();
+                }
+                catch
+                {
+                    // Ignore exception and try fallback
+                }
+                
+                // Fallback: GetCustomAttributes (more reliable, works with all namespaces)
+                if (buttonAttribute == null)
+                {
+                    var attributes = method.GetCustomAttributes(typeof(ButtonAttribute), false);
+                    if (attributes != null && attributes.Length > 0)
+                    {
+                        buttonAttribute = attributes[0] as ButtonAttribute;
+                    }
+                }
+                
+                // Additional fallback: search by full type name (for compatibility)
+                if (buttonAttribute == null)
+                {
+                    var allAttributes = method.GetCustomAttributes(false);
+                    foreach (var attr in allAttributes)
+                    {
+                        if (attr != null && attr.GetType().FullName == "Neo.ButtonAttribute")
+                        {
+                            buttonAttribute = attr as ButtonAttribute;
+                            break;
+                        }
+                    }
+                }
+                
                 if (buttonAttribute == null) continue;
 
                 var parameters = method.GetParameters();
