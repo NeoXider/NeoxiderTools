@@ -5,6 +5,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo.Tools
 {

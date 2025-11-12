@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
 #endif
 
 using UnityEngine;

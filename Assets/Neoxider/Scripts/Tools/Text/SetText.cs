@@ -6,6 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
 #endif
 
 namespace Neo
@@ -202,11 +203,7 @@ namespace Neo
             ///     Sets the text to display a string value
             /// </summary>
             /// <param name="value">The string value to display</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [Button]
-#endif
             public void Set(string value = "0")
             {
                 if (this.text == null)

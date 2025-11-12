@@ -3,6 +3,10 @@ using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 #if UNITY_EDITOR
 using UnityEditor;
 #endif

@@ -2,6 +2,10 @@ using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo.Audio
 {
@@ -120,6 +124,45 @@ namespace Neo.Audio
         {
             var volume = Mathf.Clamp01(percent);
             SetMixerVolume(audioMixer, MasterVolume, volume);
+        }
+
+        /// <summary>
+        /// Устанавливает громкость для любого параметра микшера по имени (нормализованное значение 0-1)
+        /// </summary>
+        /// <param name="parameterName">Имя параметра в микшере</param>
+        /// <param name="normalizedVolume">Нормализованное значение громкости (0-1)</param>
+        [Button]
+        public void SetMixerParameter(string parameterName, float normalizedVolume)
+        {
+            if (string.IsNullOrEmpty(parameterName))
+            {
+                Debug.LogWarning("[AMSettings] Имя параметра микшера не указано!");
+                return;
+            }
+            SetMixerVolume(audioMixer, parameterName, normalizedVolume);
+        }
+
+        /// <summary>
+        /// Устанавливает значение для любого параметра микшера напрямую в дБ
+        /// </summary>
+        /// <param name="parameterName">Имя параметра в микшере</param>
+        /// <param name="dbValue">Значение в децибелах (-80 до 20)</param>
+        [Button]
+        public void SetMixerParameterDB(string parameterName, float dbValue)
+        {
+            if (audioMixer == null)
+            {
+                Debug.LogWarning("[AMSettings] AudioMixer не установлен!");
+                return;
+            }
+            
+            if (string.IsNullOrEmpty(parameterName))
+            {
+                Debug.LogWarning("[AMSettings] Имя параметра микшера не указано!");
+                return;
+            }
+            
+            audioMixer.SetFloat(parameterName, Mathf.Clamp(dbValue, -80f, 20f));
         }
 
         private void SetMixerVolume(AudioMixer mixer, string parameterName, float normalizedVolume)

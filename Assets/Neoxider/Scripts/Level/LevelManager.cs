@@ -2,6 +2,10 @@ using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo
 {
@@ -88,11 +92,7 @@ namespace Neo
                 }
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void SetLastMap()
             {
                 int mapId = GetLastIdMap();
@@ -123,11 +123,7 @@ namespace Neo
                 return Map.level;
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void SetMapId(int id)
             {
                 _mapId = id;
@@ -135,21 +131,13 @@ namespace Neo
                 UpdateVisual();
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void NextLevel()
             {
                 SetLevel(_currentLevel + 1);
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void SetLastLevel()
             {
                 if (Map.isLoopLevel && Map.countLevels >= Map.level)
@@ -162,21 +150,13 @@ namespace Neo
                 }
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void Restart()
             {
                 SetLevel(_currentLevel);
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void SaveLevel()
             {
                 if (Map.level == _currentLevel)
@@ -214,11 +194,7 @@ namespace Neo
                 }
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             internal void SetLevel(int idLevel)
             {
                 _currentLevel = Map.isLoopLevel

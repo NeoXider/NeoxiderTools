@@ -2,6 +2,10 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo
 {
@@ -72,11 +76,7 @@ namespace Neo
                 return 0;
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
-        [Button]
-#endif
+            [Button]
             public bool TakeReward()
             {
                 if (CanTakeReward())

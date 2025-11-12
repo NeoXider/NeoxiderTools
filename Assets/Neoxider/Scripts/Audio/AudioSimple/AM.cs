@@ -1,6 +1,10 @@
 using System;
 using Neo.Tools;
 using UnityEngine;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo
 {

@@ -47,7 +47,32 @@ namespace Neo.Editor
         protected static Object[] FindObjectsByType(Type type,
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
-            return Object.FindObjectsByType(type, sortMode);
+            return Object.FindObjectsByType(type, sortMode); 
+        } 
+
+        private static bool? _odinInspectorAvailable = null;
+        
+        /// <summary>
+        ///     Проверяет, установлен ли Odin Inspector в проекте
+        /// </summary>
+        protected virtual bool IsOdinInspectorAvailable()
+        {
+            // Кэшируем результат проверки
+            if (_odinInspectorAvailable.HasValue)
+                return _odinInspectorAvailable.Value;
+             
+            // Проверяем наличие Odin Inspector через рефлексию
+            try
+            {
+                var odinInspectorType = System.Type.GetType("Sirenix.OdinInspector.Editor.OdinInspector, Sirenix.OdinInspector.Editor");
+                _odinInspectorAvailable = odinInspectorType != null;
+            }
+            catch
+            {
+                _odinInspectorAvailable = false;
+            }
+            
+            return _odinInspectorAvailable.Value;
         }
 
         public override void OnInspectorGUI()
@@ -55,11 +80,21 @@ namespace Neo.Editor
             // Check if Reset was pressed
             if (Event.current.commandName == "Reset") _wasResetPressed = true;
 
+            // Проверяем, установлен ли Odin Inspector
+            // Если Odin Inspector активен, он сам обрабатывает кнопки и оформление
+            // Поэтому мы пропускаем наше оформление и кнопки, чтобы не дублировать
+            var isOdinActive = IsOdinInspectorAvailable();
+            
+            // Временная отладка для проверки вызова метода
+            // Раскомментируйте для отладки:
+            //Debug.Log($"[NeoCustomEditor] OnInspectorGUI вызван для {target?.GetType().Name}, namespace: {target?.GetType().Namespace}, Odin активен: {isOdinActive}");
+
             // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
             var hasNeoNamespace = target != null && target.GetType().Namespace != null && 
                                   (target.GetType().Namespace == "Neo" || target.GetType().Namespace.StartsWith("Neo."));
 
-            // Draw "by Neoxider" signature and background only for Neo components
+            // Draw "by Neoxider" signature and background for all Neo components
+            // Фон и подпись рисуем всегда для Neo компонентов, независимо от Odin Inspector
             if (hasNeoNamespace)
             {
                 DrawNeoxiderSignature();
@@ -86,6 +121,9 @@ namespace Neo.Editor
             ProcessAttributeAssignments();
 
             // Draw method buttons
+            // Всегда рисуем кнопки, но DrawMethodButtons сам решит, какие рисовать:
+            // - Neo.ButtonAttribute - всегда рисуем
+            // - Odin Inspector ButtonAttribute - рисуем только если Odin не установлен
             DrawMethodButtons();
 
             // Close background box for Neo components
@@ -116,6 +154,128 @@ namespace Neo.Editor
 
         protected abstract void ProcessAttributeAssignments();
 
+        /// <summary>
+        ///     Структура для хранения информации о кнопке из разных типов ButtonAttribute
+        /// </summary>
+        protected struct ButtonInfo
+        {
+            public string ButtonName;
+            public float Width;
+
+            public ButtonInfo(string name, float width)
+            {
+                ButtonName = name;
+                Width = width;
+            }
+        }
+
+        /// <summary>
+        ///     Находит ButtonAttribute из Neo или Odin Inspector и извлекает информацию
+        /// </summary>
+        protected ButtonInfo? FindButtonAttribute(MethodInfo method)
+        {
+            if (method == null) return null;
+
+            // Получаем все атрибуты и проверяем их по типу
+            // Это более надежный способ, так как не зависит от using директив
+            var allAttributes = method.GetCustomAttributes(false);
+            
+            // Временная отладка
+            // Debug.Log($"[NeoCustomEditor] FindButtonAttribute для метода {method.Name}, найдено атрибутов: {allAttributes.Length}");
+            
+            foreach (var attr in allAttributes)
+            {
+                if (attr == null) continue;
+                
+                var attrType = attr.GetType();
+                var fullName = attrType.FullName;
+                var typeName = attrType.Name;
+                var namespaceName = attrType.Namespace;
+                
+                // Сначала проверяем Neo.ButtonAttribute (приоритет)
+                if (fullName == "Neo.ButtonAttribute" || 
+                    (namespaceName == "Neo" && typeName == "ButtonAttribute"))
+                {
+                    try
+                    {
+                        var neoAttr = attr as ButtonAttribute;
+                        if (neoAttr != null)
+                        {
+                            // Neo.ButtonAttribute всегда рисуем, независимо от Odin Inspector
+                            //Debug.Log($"[NeoCustomEditor] Найден Neo.ButtonAttribute для метода {method.Name}");
+                            return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width);
+                        }
+                    }
+                    catch
+                    {
+                        // Ignore
+                    }
+                }
+                
+                // Затем проверяем Odin Inspector ButtonAttribute
+                if (namespaceName == "Sirenix.OdinInspector" && typeName == "ButtonAttribute")
+                {
+                    // Если Odin Inspector установлен, он сам нарисует кнопки
+                    // Но мы все равно рисуем их, чтобы гарантировать, что кнопки будут видны
+                    // (Odin Inspector может не рисовать кнопки в некоторых случаях)
+                    //Debug.Log($"[NeoCustomEditor] Найден Odin Inspector ButtonAttribute для метода {method.Name}");
+                    try
+                    {
+                        // Извлекаем информацию из Odin Inspector ButtonAttribute через рефлексию
+                        var nameProperty = attrType.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
+                        if (nameProperty == null)
+                        {
+                            nameProperty = attrType.GetProperty("ButtonName", BindingFlags.Public | BindingFlags.Instance);
+                        }
+                        
+                        var name = nameProperty?.GetValue(attr) as string;
+                        
+                        if (string.IsNullOrEmpty(name))
+                        {
+                            name = null;
+                        }
+                        
+                        float width = 120f;
+                        var widthProperty = attrType.GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
+                        if (widthProperty != null)
+                        {
+                            var widthValue = widthProperty.GetValue(attr);
+                            if (widthValue is float f)
+                            {
+                                width = f;
+                            }
+                            else if (widthValue is int i)
+                            {
+                                width = i;
+                            }
+                        }
+                        
+                        return new ButtonInfo(name, width);
+                    }
+                    catch
+                    {
+                        return new ButtonInfo(null, 120f);
+                    }
+                }
+            }
+            
+            // Fallback: пробуем найти через типизированный поиск (для совместимости)
+            try
+            {
+                var neoButtonAttribute = method.GetCustomAttribute<ButtonAttribute>();
+                if (neoButtonAttribute != null)
+                {
+                    return new ButtonInfo(neoButtonAttribute.ButtonName, neoButtonAttribute.Width);
+                }
+            }
+            catch
+            {
+                // Ignore
+            }
+            
+            return null;
+        }
+
         protected virtual void DrawMethodButtons()
         {
             if (target == null) return;
@@ -123,51 +283,24 @@ namespace Neo.Editor
             var methods = target.GetType().GetMethods(
                 BindingFlags.Instance
                 | BindingFlags.Static
-                | BindingFlags.Public
+                | BindingFlags.Public 
                 | BindingFlags.NonPublic);
+
+            // Временная отладка (можно закомментировать после проверки)
+            //Debug.Log($"[NeoCustomEditor] DrawMethodButtons для {target.GetType().Name}, найдено методов: {methods.Length}");
 
             foreach (var method in methods)
             {
                 if (method == null) continue;
 
-                // Try to get ButtonAttribute using multiple methods for compatibility
-                ButtonAttribute buttonAttribute = null;
+                // Ищем ButtonAttribute из Neo или Odin Inspector
+                var buttonInfo = FindButtonAttribute(method);
+                if (!buttonInfo.HasValue) continue;
                 
-                // First try: GetCustomAttribute (preferred method)
-                try
-                {
-                    buttonAttribute = method.GetCustomAttribute<ButtonAttribute>();
-                }
-                catch
-                {
-                    // Ignore exception and try fallback
-                }
+                // Временная отладка (можно закомментировать после проверки)
+                //Debug.Log($"[NeoCustomEditor] Найдена кнопка для метода: {method.Name}");
                 
-                // Fallback: GetCustomAttributes (more reliable, works with all namespaces)
-                if (buttonAttribute == null)
-                {
-                    var attributes = method.GetCustomAttributes(typeof(ButtonAttribute), false);
-                    if (attributes != null && attributes.Length > 0)
-                    {
-                        buttonAttribute = attributes[0] as ButtonAttribute;
-                    }
-                }
-                
-                // Additional fallback: search by full type name (for compatibility)
-                if (buttonAttribute == null)
-                {
-                    var allAttributes = method.GetCustomAttributes(false);
-                    foreach (var attr in allAttributes)
-                    {
-                        if (attr != null && attr.GetType().FullName == "Neo.ButtonAttribute")
-                        {
-                            buttonAttribute = attr as ButtonAttribute;
-                            break;
-                        }
-                    }
-                }
-                
-                if (buttonAttribute == null) continue;
+                var buttonAttribute = buttonInfo.Value;
 
                 var parameters = method.GetParameters();
                 var buttonText = string.IsNullOrEmpty(buttonAttribute.ButtonName)

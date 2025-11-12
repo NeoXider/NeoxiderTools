@@ -16,6 +16,12 @@ namespace Neo
 
             public void SetVolume(string name = "", float volume = 0)
             {
+                if (audioMixer == null)
+                {
+                    Debug.LogWarning($"[SettingMixer] AudioMixer не установлен! Нельзя установить громкость для '{nameMixer}'.");
+                    return;
+                }
+                
                 name = string.IsNullOrEmpty(name) ? nameMixer : name;
                 audioMixer.SetFloat(name, volume);
             }

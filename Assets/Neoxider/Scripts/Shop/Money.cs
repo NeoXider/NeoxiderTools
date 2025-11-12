@@ -3,6 +3,10 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
+#endif
 
 namespace Neo
 {
@@ -41,11 +45,7 @@ namespace Neo
 
             public float LastChangeMoney => _lastChangeMoney;
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public void Add(float amount)
             {
                 _money += amount;
@@ -55,11 +55,7 @@ namespace Neo
                 ChangeMoneyEvent();
             }
 
-#if ODIN_INSPECTOR
-            [Sirenix.OdinInspector.Button]
-#else
             [Button]
-#endif
             public bool Spend(float amount)
             {
                 if (CanSpend(amount))

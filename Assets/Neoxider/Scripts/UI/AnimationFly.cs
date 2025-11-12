@@ -8,6 +8,7 @@ using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
 #endif
 
 namespace Neo

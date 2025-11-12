@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
+using Button = Sirenix.OdinInspector.Button;
 #endif
 
 using UnityEngine;
