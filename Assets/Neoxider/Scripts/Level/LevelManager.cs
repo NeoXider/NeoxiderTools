@@ -1,12 +1,10 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo
 {
     namespace Level
@@ -91,8 +89,11 @@ namespace Neo
                     _maps[i].idMap = i;
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetLastMap()
             {
                 int mapId = GetLastIdMap();
@@ -122,22 +123,31 @@ namespace Neo
             {
                 return Map.level;
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetMapId(int id)
             {
                 _mapId = id;
                 OnChangeMap?.Invoke(_currentLevel);
                 UpdateVisual();
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void NextLevel()
             {
                 SetLevel(_currentLevel + 1);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetLastLevel()
             {
                 if (Map.isLoopLevel && Map.countLevels >= Map.level)
@@ -149,14 +159,20 @@ namespace Neo
                     SetLevel(Map.level);
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Restart()
             {
                 SetLevel(_currentLevel);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SaveLevel()
             {
                 if (Map.level == _currentLevel)
@@ -193,8 +209,11 @@ namespace Neo
                     _lvlBtns[i].SetVisual(idVisual, i);
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             internal void SetLevel(int idLevel)
             {
                 _currentLevel = Map.isLoopLevel

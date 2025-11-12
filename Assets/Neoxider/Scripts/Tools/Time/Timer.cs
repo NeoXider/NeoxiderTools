@@ -1,16 +1,12 @@
-//v.1.0.4
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
-#endif
-
 using UnityEngine;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 
 namespace Neo
 {
@@ -197,8 +193,12 @@ namespace Neo
         /// <summary>
         ///     Starts or resumes the timer
         /// </summary>
-        [Button]
-        public async Task Start()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public async Task Start()
         {
             if (isRunning) return;
 
@@ -228,8 +228,12 @@ namespace Neo
         /// <summary>
         ///     Stops the timer
         /// </summary>
-        [Button]
-        public void Stop()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Stop()
         {
             if (!isRunning) return;
 
@@ -249,8 +253,12 @@ namespace Neo
         /// <summary>
         ///     Pauses the timer
         /// </summary>
-        [Button]
-        public void Pause()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Pause()
         {
             if (!isRunning || isPaused) return;
 
@@ -261,8 +269,12 @@ namespace Neo
         /// <summary>
         ///     Resumes the timer from pause
         /// </summary>
-        [Button]
-        public void Resume()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Resume()
         {
             if (!isRunning || !isPaused) return;
 

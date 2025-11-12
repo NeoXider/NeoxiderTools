@@ -1,11 +1,8 @@
-﻿
+﻿using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
-using UnityEngine;
-using UnityEngine.Events;
 
 namespace Neo
 {
@@ -149,8 +146,12 @@ namespace Neo
         /// <summary>
         ///     Starts or resumes the timer
         /// </summary>
-        [Button]
-        public void Play()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Play()
         {
             currentTime = 0f;
             isActive = true;
@@ -164,8 +165,12 @@ namespace Neo
         ///     Pauses or resumes the timer
         /// </summary>
         /// <param name="paused">True to pause, false to resume</param>
-        [Button]
-        public void Pause(bool paused = true)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Pause(bool paused = true)
         {
             if (isActive == !paused) return;
 
@@ -187,8 +192,12 @@ namespace Neo
         /// <summary>
         ///     Stops and resets the timer
         /// </summary>
-        [Button]
-        public void Stop()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Stop()
         {
             isActive = false;
             Reset();

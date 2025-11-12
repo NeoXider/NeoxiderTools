@@ -1,10 +1,8 @@
-using System;
+﻿using System;
 using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.GridSystem
 {
     /// <summary>
@@ -17,7 +15,6 @@ namespace Neo.GridSystem
         [BoxGroup("Размер поля")]
 #endif
         public Vector3Int Size = new(10, 10, 1);
-
 #if ODIN_INSPECTOR
         [BoxGroup("Правила движения")]
 #endif

@@ -1,10 +1,8 @@
+﻿using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-using UnityEngine;
-using UnityEngine.Events;
-
 namespace Neo.Tools
 {
     [AddComponentMenu("Neoxider/Tools/AdvancedForceApplier")]
@@ -24,105 +22,81 @@ namespace Neo.Tools
             CustomVector,
             ToTarget
         }
-
 #if ODIN_INSPECTOR
         [FoldoutGroup("Components")] [SerializeField]
 #endif
-        private Rigidbody rigidbody3D;
-
+            private Rigidbody rigidbody3D;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Components")] [SerializeField]
 #endif
-        private Rigidbody2D rigidbody2D;
-
+            private Rigidbody2D rigidbody2D;
 #if ODIN_INSPECTOR
         [FoldoutGroup("General")]
         [LabelText("Body Type")]
 #endif
         [Tooltip("Auto will try to find 3D first, then 2D. Can be fixed manually.")]
         public BodyType bodyType = BodyType.Auto;
-
 #if ODIN_INSPECTOR
 [FoldoutGroup("Force")] 
 [LabelText("Base Force (N)")]
 #endif
         [Min(0f)] [SerializeField] private float defaultForce = 10f;
-
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
 #endif
-        public bool randomizeForce;
-
+            public bool randomizeForce;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ShowIf("randomizeForce")] [MinMaxSlider(0f, 10000f, true)]
 #endif
-        public Vector2 forceRange = new(5f, 15f);
-
+            public Vector2 forceRange = new(5f, 15f);
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ToggleLeft]
 #endif
-        public bool playOnAwake = true;
-
+            public bool playOnAwake = true;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ShowIf("Is3DActive")] [LabelText("Force Mode (3D)")] [EnumToggleButtons]
 #endif
-        public ForceMode forceMode3D = ForceMode.Impulse;
-
+            public ForceMode forceMode3D = ForceMode.Impulse;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ShowIf("Is2DActive")] [LabelText("Force Mode (2D)")] [EnumToggleButtons]
 #endif
-        public ForceMode2D forceMode2D = ForceMode2D.Impulse;
-
+            public ForceMode2D forceMode2D = ForceMode2D.Impulse;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")] [ToggleLeft] [LabelText("Clamp Max Speed")]
 #endif
-
-        public bool clampMaxSpeed;
-
+            public bool clampMaxSpeed;
 #if ODIN_INSPECTOR
       [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
 #endif
-
-        public float maxSpeed = 20f;
-
+            public float maxSpeed = 20f;
 #if ODIN_INSPECTOR
        [FoldoutGroup("Direction")] [LabelText("Direction Source")]
 #endif
-
-        public DirectionMode directionMode = DirectionMode.Velocity;
-
+            public DirectionMode directionMode = DirectionMode.Velocity;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Direction")]
         [ShowIf("directionMode == DirectionMode.TransformForward")]
         [LabelText("Use Local Forward (2D=Right, 3D=Forward)")]
 #endif
-        public bool useLocalForward = true;
-
+            public bool useLocalForward = true;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Direction")] [ToggleLeft] [LabelText("Invert Direction")]
 #endif
-
-        public bool invertDirection;
-
+            public bool invertDirection;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Direction")] [ShowIf("directionMode == DirectionMode.CustomVector")] [LabelText("Custom Vector")]
-
 #endif
-        public Vector3 customDirection = Vector3.forward;
-
+public Vector3 customDirection = Vector3.forward;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Direction")]
         [ShowIf("directionMode == DirectionMode.ToTarget")]
         [LabelText("Target (Transform)")]
 #endif
-
-        public Transform target;
-
+            public Transform target;
 #if ODIN_INSPECTOR
    [FoldoutGroup("Events")]
 #endif
-        public UnityEvent OnApplyForce;
-
+            public UnityEvent OnApplyForce;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Debug")]
         [InfoBox("No suitable Rigidbody found. Component won't be able to apply force.", InfoMessageType.Warning,
@@ -131,8 +105,7 @@ namespace Neo.Tools
         [ReadOnly]
         [LabelText("Active Body Type")]
 #endif
-
-        private string ActiveBodyInfo => Is3DActive() ? "Rigidbody (3D)" : Is2DActive() ? "Rigidbody2D (2D)" : "None";
+            private string ActiveBodyInfo => Is3DActive() ? "Rigidbody (3D)" : Is2DActive() ? "Rigidbody2D (2D)" : "None";
 
         private void Awake()
         {
@@ -155,14 +128,16 @@ namespace Neo.Tools
                 ApplyForce(defaultForce);
             }
         }
-
 #if ODIN_INSPECTOR
 [FoldoutGroup("Controls")]
 [DisableInEditorMode]
 #endif
-
-        [Button("Apply Now")]
-        private void ApplyNowButton()
+#if ODIN_INSPECTOR
+            [Button("Apply Now")]
+#else
+            [Neo.ButtonAttribute("Apply Now")]
+#endif
+            private void ApplyNowButton()
         {
             ApplyForce();
         }

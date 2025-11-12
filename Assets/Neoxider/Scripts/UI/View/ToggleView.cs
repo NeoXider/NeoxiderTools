@@ -3,9 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo
 {
     namespace UI
@@ -19,7 +17,6 @@ namespace Neo
             [SerializeField] private bool _setNativeSize;
 
             public Sprite[] sprites;
-
 
             public bool activ;
             public UnityEvent On;
@@ -67,20 +64,29 @@ namespace Neo
 
                 Visual(activ);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Switch()
             {
                 Set(!activ);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Set(bool activ)
             {
                 Set(activ, false);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Set(bool activ, bool invoke = false)
             {
                 if (activ != this.activ)

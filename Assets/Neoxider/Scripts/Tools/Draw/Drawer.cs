@@ -1,16 +1,13 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo.Extensions;
-
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
-#endif
 
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 namespace Neo.Tools
 {
     /// <summary>
@@ -92,7 +89,6 @@ namespace Neo.Tools
         [Tooltip("Minimum distance (world units) between raw points.")] [Min(0f)]
         public float minPointDistance = 1f;
 
-
         /* ───────── LIFECYCLE & PHYSICS ─────────────────────────────────── */
 
         [Header("Lifecycle")]
@@ -108,7 +104,6 @@ namespace Neo.Tools
 
         [Tooltip("0 = keep forever; otherwise the finished line is after N seconds.")] [Min(0)]
         public float drawRelease;
-
 
         [Header("Physics")] public bool addCollider;
 
@@ -480,9 +475,12 @@ namespace Neo.Tools
         /// <summary>
         ///     Destroys all lines and clears the list of LineRenderers.
         /// </summary>
-
-        [Button]
-        public void DeleteAll()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void DeleteAll()
         {
             Debug.Log($"[Drawer] DeleteAll called for: {gameObject.name}");
             foreach (var lr in new List<LineRenderer>(lines))

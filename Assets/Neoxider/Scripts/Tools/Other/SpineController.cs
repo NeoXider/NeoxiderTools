@@ -1,4 +1,4 @@
-#if SPINE_UNITY
+﻿#if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
 using Spine;

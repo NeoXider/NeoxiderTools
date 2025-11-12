@@ -1,12 +1,9 @@
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
-#endif
-
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 namespace Neo.Tools
 {
     public class ScoreManager : Singleton<ScoreManager>
@@ -100,14 +97,21 @@ namespace Neo.Tools
         /// <summary>
         /// Добавляет очки к текущему счету и опционально обновляет лучший результат.
         /// </summary>
-        [Button]
-        public void Add(int amount, bool updateBestScore = true)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Add(int amount, bool updateBestScore = true)
         {
             Set(score + amount, updateBestScore);
         }
-
-        [Button]
-        public void Add(int amount)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Add(int amount)
         {
             Set(score + amount);
         }
@@ -115,8 +119,12 @@ namespace Neo.Tools
         /// <summary>
         /// Устанавливает точное количество очков и опционально обновляет лучший результат.
         /// </summary>
-        [Button]
-        public void Set(int amount, bool updateBestScore = true)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Set(int amount, bool updateBestScore = true)
         {
             Score = amount;
             SetScoreText();
@@ -125,9 +133,12 @@ namespace Neo.Tools
                 SetBestScore();
             }
         }
-
-        [Button]
-        public void SetBestScore(int? score = 0)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void SetBestScore(int? score = 0)
         {
             if (score != null)
             {
@@ -187,16 +198,23 @@ namespace Neo.Tools
         /// <summary>
         /// Сбрасывает текущий счет до нуля.
         /// </summary>
-        [Button]
-        public void ResetScore()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void ResetScore()
         {
             Score = 0;
             OnValueChange?.Invoke(score);
             SetScoreText();
         }
-
-        [Button]
-        public void ResetBestScore()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void ResetBestScore()
         {
             BestScore = 0;
             PlayerPrefs.DeleteKey(_keySave);

@@ -1,12 +1,9 @@
-using System.Collections.Generic;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
-#endif
-
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 namespace Neo
 {
     namespace Tools
@@ -163,7 +160,6 @@ namespace Neo
             private bool _changeDebug = true;
 
             private int _startIndex;
-
 
             /// <summary>
             ///     Returns the number of selectable items (GameObjects or virtual count)
@@ -373,7 +369,11 @@ namespace Neo
             /// <summary>
             ///     Moves to the next item in the selection
             /// </summary>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Next()
             {
                 TryInitializeFromChildren();
@@ -408,7 +408,11 @@ namespace Neo
             /// <summary>
             ///     Moves to the previous item in the selection
             /// </summary>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Previous()
             {
                 TryInitializeFromChildren();
@@ -460,7 +464,11 @@ namespace Neo
             ///     Sets the current selection index
             /// </summary>
             /// <param name="index">The index to set</param>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Set(int index)
             {
                 TryInitializeFromChildren();
@@ -496,7 +504,11 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to the last item
             /// </summary>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetLast()
             {
                 TryInitializeFromChildren();
@@ -515,7 +527,11 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to the first item
             /// </summary>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetFirst()
             {
                 TryInitializeFromChildren();
@@ -599,7 +615,11 @@ namespace Neo
             /// </summary>
             /// <param name="index">Index to toggle</param>
             /// <param name="state">Optional state to set (true to enable, false to disable, null to toggle)</param>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void ToggleIndex(int index, bool? state = null)
             {
                 if (!HasItems)
@@ -624,7 +644,11 @@ namespace Neo
             /// <summary>
             ///     Refreshes the items array from child GameObjects
             /// </summary>
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void RefreshItems()
             {
                 RefreshItemsFromChildren();
@@ -649,12 +673,12 @@ namespace Neo
                 }
 
                 List<GameObject> itemsList = _items != null ? new List<GameObject>(_items) : new List<GameObject>();
-                
+
                 if (!itemsList.Contains(item))
                 {
                     itemsList.Add(item);
                     _items = itemsList.ToArray();
-                    
+
                     if (Count > 0)
                     {
                         UpdateSelection();
@@ -674,17 +698,17 @@ namespace Neo
                 }
 
                 List<GameObject> itemsList = new List<GameObject>(_items);
-                
+
                 if (itemsList.Remove(item))
                 {
                     _items = itemsList.ToArray();
-                    
+
                     int total = Count;
                     if (_currentIndex >= total && total > 0)
                     {
                         _currentIndex = total - 1;
                     }
-                    
+
                     if (Count > 0)
                     {
                         UpdateSelection();

@@ -1,11 +1,9 @@
-using System;
+﻿using System;
 using Neo.Tools;
 using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo
 {
     namespace Audio
@@ -38,8 +36,11 @@ namespace Neo
                 if (_musicClips.Length > 0)
                     PlayMusic(0);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Play(int id, float volume)
             {
                 if (id >= 0 && id < _sounds.Length)
@@ -47,8 +48,11 @@ namespace Neo
                 else
                     Debug.LogWarning($"Sound ID {id} is out of range.");
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Play(int id)
             {
                 if (id >= 0 && id < _sounds.Length)
@@ -62,8 +66,11 @@ namespace Neo
                     Debug.LogWarning($"Sound ID {id} is out of range.");
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void PlayMusic(int id, float volume)
             {
                 if (id >= 0 && id < _musicClips.Length)
@@ -77,8 +84,11 @@ namespace Neo
                     Debug.LogWarning($"Music clip ID {id} is out of range.");
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void PlayMusic(int id)
             {
                 PlayMusic(id, 1f); // Используем базовую громкость, стартовая применяется через AMSettings
@@ -102,7 +112,6 @@ namespace Neo
                 if (_music != null)
                     _music.volume = startVolumeMusic;
             }
-
 
             private void OnValidate()
             {

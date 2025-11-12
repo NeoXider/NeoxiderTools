@@ -1,4 +1,4 @@
-#if DOTWEEN && !DOTWEEN_MODULE_UI
+﻿#if DOTWEEN && !DOTWEEN_MODULE_UI
 using System;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;

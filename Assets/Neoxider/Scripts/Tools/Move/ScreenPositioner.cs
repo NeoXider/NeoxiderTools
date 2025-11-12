@@ -1,6 +1,8 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
 using UnityEngine;
-
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 namespace Neo.Tools
 {
     public class ScreenPositioner : MonoBehaviour
@@ -36,9 +38,12 @@ namespace Neo.Tools
             if (_targetCamera == null)
                 _targetCamera = Camera.main;
         }
-
-        [Button("Update Position")]
-        private void UpdatePositionAndRotation()
+#if ODIN_INSPECTOR
+            [Button("Update Position")]
+#else
+            [Neo.ButtonAttribute("Update Position")]
+#endif
+            private void UpdatePositionAndRotation()
         {
             if (_targetCamera == null)
             {

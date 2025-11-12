@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -8,20 +8,17 @@ using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo
 {
     public class AnimationFly : Singleton<AnimationFly>
     {
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
         public float arcStrength = 2.0f;
-
 #if ODIN_INSPECTOR
         [TableList]
 #endif
-        public List<BonusPrefabData> bonusPrefabList = new();
+            public List<BonusPrefabData> bonusPrefabList = new();
 
         [Tooltip("Множитель количества спавнящихся объектов")]
         public float countMultiplier = 1f;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Text;
 using TMPro;
@@ -7,9 +7,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.Tools
 {
     [Serializable]
@@ -277,9 +275,12 @@ namespace Neo.Tools
                 _autoDelayCoroutine = null;
             }
         }
-
-        [Button]
-        public void SkipOrNext()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void SkipOrNext()
         {
             // Если печать активна — остановить и показать всю фразу
             if (useTypewriterEffect && _typewriterCoroutine != null)

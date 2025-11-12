@@ -84,10 +84,6 @@ namespace Neo.Editor
             // Если Odin Inspector активен, он сам обрабатывает кнопки и оформление
             // Поэтому мы пропускаем наше оформление и кнопки, чтобы не дублировать
             var isOdinActive = IsOdinInspectorAvailable();
-            
-            // Временная отладка для проверки вызова метода
-            // Раскомментируйте для отладки:
-            //Debug.Log($"[NeoCustomEditor] OnInspectorGUI вызван для {target?.GetType().Name}, namespace: {target?.GetType().Namespace}, Odin активен: {isOdinActive}");
 
             // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
             var hasNeoNamespace = target != null && target.GetType().Namespace != null && 
@@ -121,9 +117,9 @@ namespace Neo.Editor
             ProcessAttributeAssignments();
 
             // Draw method buttons
-            // Всегда рисуем кнопки, но DrawMethodButtons сам решит, какие рисовать:
+            // Всегда рисуем кнопки, независимо от того, установлен Odin Inspector или нет:
             // - Neo.ButtonAttribute - всегда рисуем
-            // - Odin Inspector ButtonAttribute - рисуем только если Odin не установлен
+            // - Odin Inspector ButtonAttribute - всегда рисуем (для совместимости и гарантии видимости)
             DrawMethodButtons();
 
             // Close background box for Neo components
@@ -180,9 +176,6 @@ namespace Neo.Editor
             // Это более надежный способ, так как не зависит от using директив
             var allAttributes = method.GetCustomAttributes(false);
             
-            // Временная отладка
-            // Debug.Log($"[NeoCustomEditor] FindButtonAttribute для метода {method.Name}, найдено атрибутов: {allAttributes.Length}");
-            
             foreach (var attr in allAttributes)
             {
                 if (attr == null) continue;
@@ -202,7 +195,6 @@ namespace Neo.Editor
                         if (neoAttr != null)
                         {
                             // Neo.ButtonAttribute всегда рисуем, независимо от Odin Inspector
-                            //Debug.Log($"[NeoCustomEditor] Найден Neo.ButtonAttribute для метода {method.Name}");
                             return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width);
                         }
                     }
@@ -215,10 +207,8 @@ namespace Neo.Editor
                 // Затем проверяем Odin Inspector ButtonAttribute
                 if (namespaceName == "Sirenix.OdinInspector" && typeName == "ButtonAttribute")
                 {
-                    // Если Odin Inspector установлен, он сам нарисует кнопки
-                    // Но мы все равно рисуем их, чтобы гарантировать, что кнопки будут видны
-                    // (Odin Inspector может не рисовать кнопки в некоторых случаях)
-                    //Debug.Log($"[NeoCustomEditor] Найден Odin Inspector ButtonAttribute для метода {method.Name}");
+                    // Всегда рисуем кнопки Odin Inspector через наш CustomEditorBase
+                    // Это гарантирует, что кнопки будут видны даже если Odin Inspector не рисует их
                     try
                     {
                         // Извлекаем информацию из Odin Inspector ButtonAttribute через рефлексию
@@ -278,16 +268,17 @@ namespace Neo.Editor
 
         protected virtual void DrawMethodButtons()
         {
-            if (target == null) return;
+            if (target == null)
+            {
+                Debug.LogWarning("[NeoCustomEditor] DrawMethodButtons: target == null");
+                return;
+            }
 
             var methods = target.GetType().GetMethods(
                 BindingFlags.Instance
                 | BindingFlags.Static
                 | BindingFlags.Public 
                 | BindingFlags.NonPublic);
-
-            // Временная отладка (можно закомментировать после проверки)
-            //Debug.Log($"[NeoCustomEditor] DrawMethodButtons для {target.GetType().Name}, найдено методов: {methods.Length}");
 
             foreach (var method in methods)
             {
@@ -297,8 +288,8 @@ namespace Neo.Editor
                 var buttonInfo = FindButtonAttribute(method);
                 if (!buttonInfo.HasValue) continue;
                 
-                // Временная отладка (можно закомментировать после проверки)
-                //Debug.Log($"[NeoCustomEditor] Найдена кнопка для метода: {method.Name}");
+                // Проверяем, установлен ли Odin Inspector, но все равно рисуем кнопки
+                // Это гарантирует, что кнопки будут видны даже если Odin Inspector не рисует их
                 
                 var buttonAttribute = buttonInfo.Value;
 

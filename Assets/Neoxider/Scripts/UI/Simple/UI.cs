@@ -1,14 +1,11 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using Neo.Extensions;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
-#endif
-
 using UnityEngine;
 using UnityEngine.Events;
-
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 namespace Neo
 {
     namespace UI
@@ -70,8 +67,11 @@ namespace Neo
             {
                 SetPage(id);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetPage(int id)
             {
                 this.id = id;
@@ -81,8 +81,11 @@ namespace Neo
 
                 if (id == 0) OnStartPage?.Invoke();
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void SetOnePage(int id)
             {
                 _pages.SetActiveAtIndex(id, false);

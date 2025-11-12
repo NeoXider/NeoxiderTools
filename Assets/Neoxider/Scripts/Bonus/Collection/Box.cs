@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using Neo.Extensions;
 using TMPro;
 using UnityEngine;
@@ -6,9 +6,7 @@ using UnityEngine.Events;
 using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.Bonus
 {
     public class Box : MonoBehaviour
@@ -69,15 +67,21 @@ namespace Neo.Bonus
         {
             AddProgress(addProgress);
         }
-
-[Button]
-        public void AddProgress(float amount)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void AddProgress(float amount)
         {
             ChangeProgress(amount);
         }
-
-[Button]
-        public void ChangeProgress(float amount)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void ChangeProgress(float amount)
         {
             progress += amount;
             Events();
@@ -94,9 +98,12 @@ namespace Neo.Bonus
             else
                 OnProgressNotReached?.Invoke();
         }
-
-[Button]
-        public void TakePrize()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void TakePrize()
         {
             if (CheckProgress)
             {
@@ -114,13 +121,16 @@ namespace Neo.Bonus
                 ChangeProgress(-maxProgress);
 
                 Visual(true);
-                
+
                 OnTakePrize?.Invoke();
             }
         }
-
-[Button]
-        private void Visual(bool openBox = false)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            private void Visual(bool openBox = false)
         {
             if (_bar != null) _bar.fillAmount = progress / maxProgress;
 

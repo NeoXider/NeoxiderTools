@@ -1,10 +1,8 @@
+﻿using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-using UnityEngine;
-using UnityEngine.Events;
-
 namespace Neo.Tools
 {
     /// <summary>
@@ -88,9 +86,12 @@ namespace Neo.Tools
         {
             if (healTimer != null) healTimer.Stop();
         }
-
-        [Button]
-        public void TakeDamage(int count)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void TakeDamage(int count)
         {
             var damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
             Hp -= damage;
@@ -98,17 +99,23 @@ namespace Neo.Tools
 
             if (!IsAlive) Die();
         }
-
-        [Button]
-        public void Heal(int count)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Heal(int count)
         {
             var heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
             Hp += heal;
             OnHeal?.Invoke(heal); // Передаем фактическое лечение
         }
-
-        [Button]
-        public void Restore()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Restore()
         {
             Hp = maxHp;
         }
@@ -123,9 +130,12 @@ namespace Neo.Tools
         {
             if (CanHeal && NeedHeal && healAmount > 0) Heal(healAmount);
         }
-
-        [Button]
-        public void SetHeal(int amount, float delay = -1)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void SetHeal(int amount, float delay = -1)
         {
             healAmount = amount;
 
@@ -135,9 +145,12 @@ namespace Neo.Tools
                 healTimer.Duration = delay;
             }
         }
-
-        [Button]
-        public void SetMaxHp(int count, bool restore = false)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void SetMaxHp(int count, bool restore = false)
         {
             maxHp = count;
 
@@ -146,9 +159,12 @@ namespace Neo.Tools
 
             OnChangeMaxHp?.Invoke(count);
         }
-
-        [Button]
-        public void SetHp(int count)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void SetHp(int count)
         {
             Hp = count;
         }

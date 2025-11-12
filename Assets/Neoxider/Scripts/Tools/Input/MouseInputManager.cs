@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Tools;
 using UnityEngine;
 
@@ -191,9 +191,7 @@ public class MouseInputManager : Singleton<MouseInputManager>
         UnityEditor.Handles.Label(pos, label, _labelStyle);
     }
 #endif
-    
-
-    public event Action<MouseEventData> OnPress = delegate { };
+            public event Action<MouseEventData> OnPress = delegate { };
     public event Action<MouseEventData> OnHold = delegate { };
     public event Action<MouseEventData> OnRelease = delegate { };
     public event Action<MouseEventData> OnClick = delegate { };

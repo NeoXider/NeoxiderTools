@@ -1,10 +1,8 @@
-
+﻿using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-using UnityEngine;
-using UnityEngine.Events;
 
 namespace Neo.Tools
 {
@@ -78,8 +76,12 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts the evade action if not on cooldown
         /// </summary>
-        [Button]
-        public void StartEvade()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void StartEvade()
         {
             if (IsOnCooldown) return;
 

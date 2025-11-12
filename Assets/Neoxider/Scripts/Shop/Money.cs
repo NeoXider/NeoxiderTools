@@ -1,13 +1,11 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo
 {
     namespace Shop
@@ -44,8 +42,11 @@ namespace Neo
             public float allMoney => _allMoney;
 
             public float LastChangeMoney => _lastChangeMoney;
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Add(float amount)
             {
                 _money += amount;
@@ -54,8 +55,11 @@ namespace Neo
                 Save();
                 ChangeMoneyEvent();
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public bool Spend(float amount)
             {
                 if (CanSpend(amount))
@@ -69,7 +73,6 @@ namespace Neo
 
                 return false;
             }
-
 
             protected override void Init()
             {
@@ -108,7 +111,7 @@ namespace Neo
                 ChangeLevelMoneyEvent();
                 return levelMoney;
             }
-            
+
             public float SetMoney(float count = 0)
             {
                 _lastChangeMoney = count - _money;

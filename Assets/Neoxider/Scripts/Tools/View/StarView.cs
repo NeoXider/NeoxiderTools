@@ -1,11 +1,8 @@
-using Neo.UI;
+﻿using Neo.UI;
+using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
-using UnityEngine;
-
 namespace Neo.Tools
 {
     public class StarView : MonoBehaviour
@@ -19,10 +16,12 @@ namespace Neo.Tools
             scoreManager.OnStarChange.AddListener(OnStarChange);
             OnStarChange(scoreManager.CountStars);
         }
-
-
-        [Button]
-        private void OnStarChange(int count)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            private void OnStarChange(int count)
         {
             if (stars != null)
                 for (var i = 0; i < stars.Length; i++)

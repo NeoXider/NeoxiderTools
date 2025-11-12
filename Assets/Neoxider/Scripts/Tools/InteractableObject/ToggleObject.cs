@@ -1,11 +1,8 @@
+﻿using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
-using UnityEngine;
-using UnityEngine.Events;
-
 namespace Neo
 {
     namespace Tools
@@ -30,14 +27,20 @@ namespace Neo
                     Toggle();
                 }
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Toggle()
             {
                 Set(!value);
             }
-
+#if ODIN_INSPECTOR
             [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
             public void Set(bool value)
             {
                 this.value = value;

@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
@@ -8,9 +8,7 @@ using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.Tools
 {
     /// <summary>
@@ -34,7 +32,6 @@ namespace Neo.Tools
         /// UnityEvent, вызывается после успешного спавна игрового объекта.
         /// </summary>
         public UnityEvent<GameObject> OnObjectSpawned;
-        
 
         [Space] [Header("If spawnLimit is zero then infinite spawn")]
         public int spawnLimit;
@@ -98,8 +95,12 @@ namespace Neo.Tools
         /// <summary>
         /// Запускает процесс спавна (корутина), если он ещё не запущен.
         /// </summary>
-        [Button]
-        public void StartSpawn()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void StartSpawn()
         {
             if (isSpawning)
             {
@@ -113,8 +114,12 @@ namespace Neo.Tools
         /// <summary>
         /// Останавливает процесс спавна. Текущие объекты остаются в сцене.
         /// </summary>
-        [Button]
-        public void StopSpawn()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void StopSpawn()
         {
             isSpawning = false;
         }
@@ -147,8 +152,12 @@ namespace Neo.Tools
         /// <summary>
         /// Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
         /// </summary>
-        [Button]
-        public GameObject SpawnRandomObject()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public GameObject SpawnRandomObject()
         {
             if (prefabs.Length == 0)
             {
@@ -167,8 +176,12 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs"/>.</param>
         /// <param name="position">Мировая позиция спавна.</param>
-        [Button]
-        public GameObject SpawnById(int prefabId, Vector3 position)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public GameObject SpawnById(int prefabId, Vector3 position)
         {
             if (prefabId < 0 || prefabId >= prefabs.Length)
             {
@@ -210,7 +223,7 @@ namespace Neo.Tools
             }
 
             OnObjectSpawned?.Invoke(spawnedObject);
-            
+
             return spawnedObject;
         }
 
@@ -274,9 +287,12 @@ namespace Neo.Tools
             Quaternion offset = Quaternion.Euler(rx, ry, rz);
             return _useLocalRotation ? baseRot * offset : offset;
         }
-
-        [Button]
-        public void Clear()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Clear()
         {
             StopAllCoroutines(); // Останавливаем все корутины (спавн и отложенное удаление)
             isSpawning = false; // Устанавливаем флаг, чтобы основной цикл спавна точно остановился

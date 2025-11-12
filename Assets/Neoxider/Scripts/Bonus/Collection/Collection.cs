@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,9 +7,7 @@ using Neo.Extensions;
 using Neo.Tools;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.Bonus
 {
     public class Collection : Singleton<Collection>
@@ -57,9 +55,12 @@ namespace Neo.Bonus
             base.Init();
             Load();
         }
-
-        [Button]
-        public void Load()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Load()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
             {
@@ -80,9 +81,12 @@ namespace Neo.Bonus
 
             OnLoadItems?.Invoke();
         }
-
-        [Button]
-        public void Save()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Save()
         {
             if (_enabledItems == null || _itemCollectionDatas == null)
                 return;
@@ -94,9 +98,12 @@ namespace Neo.Bonus
 
             PlayerPrefs.Save();
         }
-
-        [Button]
-        public ItemCollectionData GetPrize()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public ItemCollectionData GetPrize()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
                 return null;
@@ -158,9 +165,12 @@ namespace Neo.Bonus
             else
                 RemoveItem(id);
         }
-
-        [Button]
-        public void ClearCollection()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void ClearCollection()
         {
             if (_enabledItems == null)
                 return;
@@ -177,9 +187,12 @@ namespace Neo.Bonus
 
             PlayerPrefs.Save();
         }
-
-        [Button]
-        public void UnlockAllItems()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void UnlockAllItems()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
                 return;

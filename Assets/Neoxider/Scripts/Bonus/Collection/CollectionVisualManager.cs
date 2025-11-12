@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
@@ -6,9 +6,7 @@ using Neo;
 using Neo.Tools;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
 namespace Neo.Bonus
 {
     public class CollectionVisualManager : Singleton<CollectionVisualManager>
@@ -30,7 +28,7 @@ namespace Neo.Bonus
         protected override void Init()
         {
             base.Init();
-            
+
             if (_items == null || _items.Length == 0)
             {
                 Debug.LogWarning("[CollectionVisualManager] Items array is empty!");
@@ -95,7 +93,7 @@ namespace Neo.Bonus
         private void OnDestroy()
         {
             Subscriber(false);
-            
+
             if (Collection.IsInitialized)
             {
                 Collection.I.OnItemAdded.RemoveListener(OnCollectionItemChanged);
@@ -122,9 +120,12 @@ namespace Neo.Bonus
                     _items[i].button.onClick.RemoveListener(() => SetItem(id));
             }
         }
-
-        [Button]
-        public void Visual()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Visual()
         {
             if (_items == null || _items.Length == 0)
                 return;
@@ -176,9 +177,12 @@ namespace Neo.Bonus
 
             return _items[id];
         }
-
-        [Button]
-        public void RefreshAllItems()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void RefreshAllItems()
         {
             Visual();
         }

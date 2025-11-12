@@ -1,11 +1,10 @@
-using System.Linq;
+﻿using System.Linq;
 using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
 #if UNITY_EDITOR
 using UnityEditor;
@@ -38,7 +37,6 @@ namespace Neo.Bonus
 
         [Header("Transforms")] [Range(-360, 360)] [SerializeField]
         private float _wheelOffsetZ;
-
 
         [SerializeField] private RectTransform _wheelTransform;
         [SerializeField] private RectTransform _arrow;
@@ -192,9 +190,12 @@ namespace Neo.Bonus
             var id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
             return (id + items.Length) % items.Length;
         }
-
-[Button]
-        public void Spin()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Spin()
         {
             if (items.Length == 0)
                 return;
@@ -208,9 +209,12 @@ namespace Neo.Bonus
             if (_autoStopTime > 0)
                 Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
         }
-
-[Button]
-        public void Stop()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public void Stop()
         {
             if (State == SpinState.Idle)
                 return;
@@ -249,10 +253,10 @@ namespace Neo.Bonus
             var center = _wheelTransform.position;
             var wheelAngle = _wheelAngleInspector;
             var sectorAngle = 360f / items.Length;
-            
+
             var rect = _wheelTransform.rect;
             var radius = Mathf.Max(rect.width, rect.height) * 0.5f;
-            
+
             Canvas canvas = _wheelTransform.GetComponentInParent<Canvas>();
             var scale = canvas != null ? canvas.scaleFactor : 1f;
             radius *= scale;
@@ -263,7 +267,7 @@ namespace Neo.Bonus
                 var direction = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0);
                 var startPos = center;
                 var endPos = center + direction * radius;
-                
+
                 if (i == 0)
                 {
                     Handles.color = Color.magenta;
@@ -276,7 +280,7 @@ namespace Neo.Bonus
                 {
                     Handles.color = Color.yellow;
                 }
-                
+
                 Handles.DrawLine(startPos, endPos);
             }
 
@@ -288,15 +292,15 @@ namespace Neo.Bonus
                 var arrowDirection = new Vector3(Mathf.Sin(arrowAngleRad), Mathf.Cos(arrowAngleRad), 0);
                 var arrowLength = radius * 0.8f;
                 var arrowEnd = arrowPos + arrowDirection * arrowLength;
-                
+
                 Handles.color = Color.green;
                 Handles.DrawLine(arrowPos, arrowEnd);
-                
+
                 var arrowSize = 15f;
                 var perpDirection = new Vector3(-arrowDirection.y, arrowDirection.x, 0);
                 var arrowTip1 = arrowEnd - arrowDirection * arrowSize + perpDirection * arrowSize * 0.5f;
                 var arrowTip2 = arrowEnd - arrowDirection * arrowSize - perpDirection * arrowSize * 0.5f;
-                
+
                 Handles.DrawLine(arrowEnd, arrowTip1);
                 Handles.DrawLine(arrowEnd, arrowTip2);
                 Handles.DrawLine(arrowTip1, arrowTip2);
@@ -308,16 +312,16 @@ namespace Neo.Bonus
                 var virtualArrowAngle = (arrowAngle - _wheelOffsetZ + 360f) % 360f;
                 var virtualAngleRad = virtualArrowAngle * Mathf.Deg2Rad;
                 var virtualDirection = new Vector3(Mathf.Sin(virtualAngleRad), Mathf.Cos(virtualAngleRad), 0);
-                
+
                 Handles.color = new Color(0f, 1f, 1f, 0.8f);
                 var virtualArrowEnd = center + virtualDirection * (radius * 0.7f);
-                
+
                 var dashLength = 8f;
                 var dashGap = 4f;
                 var totalLength = Vector3.Distance(center, virtualArrowEnd);
                 var dir = (virtualArrowEnd - center).normalized;
                 var currentDist = 0f;
-                
+
                 while (currentDist < totalLength)
                 {
                     var dashStart = center + dir * currentDist;
@@ -325,21 +329,21 @@ namespace Neo.Bonus
                     Handles.DrawLine(dashStart, dashEnd);
                     currentDist += dashLength + dashGap;
                 }
-                
+
                 var arrowSize = 12f;
                 var perpDirection = new Vector3(-virtualDirection.y, virtualDirection.x, 0);
                 var virtualTip1 = virtualArrowEnd - virtualDirection * arrowSize + perpDirection * arrowSize * 0.4f;
                 var virtualTip2 = virtualArrowEnd - virtualDirection * arrowSize - perpDirection * arrowSize * 0.4f;
-                
+
                 Handles.DrawLine(virtualArrowEnd, virtualTip1);
                 Handles.DrawLine(virtualArrowEnd, virtualTip2);
                 Handles.DrawLine(virtualTip1, virtualTip2);
-                
+
                 Handles.color = new Color(0f, 1f, 1f, 0.2f);
                 var offsetArcRadius = radius * 0.5f;
                 var realArrowAngleRad = arrowAngle * Mathf.Deg2Rad;
                 var realDirection = new Vector3(Mathf.Sin(realArrowAngleRad), Mathf.Cos(realArrowAngleRad), 0);
-                
+
                 var arcSteps = Mathf.Max(8, Mathf.RoundToInt(Mathf.Abs(_wheelOffsetZ) / 5f));
                 for (var step = 0; step < arcSteps; step++)
                 {
@@ -347,13 +351,13 @@ namespace Neo.Bonus
                     var t2 = (float)(step + 1) / arcSteps;
                     var angle1 = Mathf.Lerp(realArrowAngleRad, virtualAngleRad, t);
                     var angle2 = Mathf.Lerp(realArrowAngleRad, virtualAngleRad, t2);
-                    
+
                     var pos1 = center + new Vector3(Mathf.Sin(angle1), Mathf.Cos(angle1), 0) * offsetArcRadius;
                     var pos2 = center + new Vector3(Mathf.Sin(angle2), Mathf.Cos(angle2), 0) * offsetArcRadius;
-                    
+
                     Handles.DrawLine(pos1, pos2);
                 }
-                
+
                 var labelPos = center + virtualDirection * (radius * 0.85f);
                 var style = new GUIStyle();
                 style.normal.textColor = new Color(0f, 1f, 1f, 1f);
@@ -366,16 +370,16 @@ namespace Neo.Bonus
             var currentResultId = GetResultId();
             var currentSectorStartAngle = (-currentResultId * sectorAngle + _offsetZ + wheelAngle) * Mathf.Deg2Rad;
             var currentSectorEndAngle = (-(currentResultId + 1) * sectorAngle + _offsetZ + wheelAngle) * Mathf.Deg2Rad;
-            
+
             Handles.color = new Color(1f, 0.5f, 0f, 0.3f);
-            
+
             var arcRadius = radius * 0.9f;
             var startDir = new Vector3(Mathf.Cos(currentSectorStartAngle), Mathf.Sin(currentSectorStartAngle), 0);
             var endDir = new Vector3(Mathf.Cos(currentSectorEndAngle), Mathf.Sin(currentSectorEndAngle), 0);
-            
+
             Handles.DrawLine(center, center + startDir * arcRadius);
             Handles.DrawLine(center, center + endDir * arcRadius);
-            
+
             var steps = 20;
             for (var step = 0; step < steps; step++)
             {
@@ -383,10 +387,10 @@ namespace Neo.Bonus
                 var t2 = (float)(step + 1) / steps;
                 var angle1 = Mathf.Lerp(currentSectorStartAngle, currentSectorEndAngle, t1);
                 var angle2 = Mathf.Lerp(currentSectorStartAngle, currentSectorEndAngle, t2);
-                
+
                 var pos1 = center + new Vector3(Mathf.Cos(angle1), Mathf.Sin(angle1), 0) * arcRadius;
                 var pos2 = center + new Vector3(Mathf.Cos(angle2), Mathf.Sin(angle2), 0) * arcRadius;
-                
+
                 Handles.DrawLine(pos1, pos2);
             }
 

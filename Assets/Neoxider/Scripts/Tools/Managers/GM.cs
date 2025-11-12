@@ -1,11 +1,8 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
+using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
-using Button = Sirenix.OdinInspector.Button;
 #endif
-
-using UnityEngine;
-
 namespace Neo.Tools
 {
     /// <summary>
@@ -77,24 +74,33 @@ namespace Neo.Tools
         #endregion
 
         #region Core Game Methods
-        
-        [Button]
-        public virtual void Menu()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Menu()
         {
             StopGame();
             State = GameState.Menu;
             EM.Menu();
         }
-        
-        [Button]
-        public virtual void Preparing()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Preparing()
         {
             State = GameState.Preparing;
             EM.Preparing();
         }
-        
-        [Button]
-        public virtual void StartGame(bool restart = false)
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void StartGame(bool restart = false)
         {
             if (State == GameState.Pause)
                 Resume();
@@ -105,18 +111,24 @@ namespace Neo.Tools
             else
                 EM.GameStart();
         }
-        
-        [Button]
-        public virtual void StopGame()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void StopGame()
         {
             if (State == GameState.NotStarted) return;
 
             State = GameState.NotStarted;
             EM.StopGame();
         }
-        
-        [Button]
-        public virtual void Lose()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Lose()
         {
             if (State != GameState.Game) return;
 
@@ -124,9 +136,12 @@ namespace Neo.Tools
             EM.StopGame();
             EM.Lose();
         }
-        
-        [Button]
-        public virtual void Win()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Win()
         {
             if (State != GameState.Game) return;
 
@@ -134,9 +149,12 @@ namespace Neo.Tools
             EM.StopGame();
             EM.Win();
         }
-        
-        [Button]
-        public virtual void End()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void End()
         {
             if (State != GameState.Game) return;
 
@@ -144,9 +162,12 @@ namespace Neo.Tools
             EM.StopGame();
             EM.End();
         }
-        
-        [Button]
-        public virtual void Pause()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Pause()
         {
             if (State == GameState.Pause) return;
 
@@ -159,9 +180,12 @@ namespace Neo.Tools
                 Time.timeScale = 0;
             }
         }
-        
-        [Button]
-        public virtual void Resume()
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [Neo.ButtonAttribute]
+#endif
+            public virtual void Resume()
         {
             if (State != GameState.Pause) return;
 
