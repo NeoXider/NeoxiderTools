@@ -26,9 +26,9 @@ namespace Neo.Extensions
         /// </summary>
         public static Vector3 RandomPointOnBounds(this Bounds bounds)
         {
-            var point = bounds.RandomPointInBounds();
-            var axis = Random.Range(0, 3);
-            var side = Random.Range(0, 2) == 0 ? bounds.min[axis] : bounds.max[axis];
+            Vector3 point = bounds.RandomPointInBounds();
+            int axis = Random.Range(0, 3);
+            float side = Random.Range(0, 2) == 0 ? bounds.min[axis] : bounds.max[axis];
             point[axis] = side;
             return point;
         }
@@ -43,8 +43,8 @@ namespace Neo.Extensions
         public static Vector2 RandomPointInCircle(this Circle circle)
         {
             // Using sqrt for uniform distribution
-            var angle = Random.Range(0, 2 * Mathf.PI);
-            var r = circle.radius * Mathf.Sqrt(Random.value);
+            float angle = Random.Range(0, 2 * Mathf.PI);
+            float r = circle.radius * Mathf.Sqrt(Random.value);
             return circle.center + new Vector2(r * Mathf.Cos(angle), r * Mathf.Sin(angle));
         }
 
@@ -53,7 +53,7 @@ namespace Neo.Extensions
         /// </summary>
         public static Vector2 RandomPointOnCircle(this Circle circle)
         {
-            var angle = Random.Range(0, 2 * Mathf.PI);
+            float angle = Random.Range(0, 2 * Mathf.PI);
             return circle.center + new Vector2(circle.radius * Mathf.Cos(angle), circle.radius * Mathf.Sin(angle));
         }
 

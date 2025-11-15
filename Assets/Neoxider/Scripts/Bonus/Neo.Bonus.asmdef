@@ -1,22 +1,22 @@
 {
-    "name": "Neo.Bonus",
-    "rootNamespace": "",
-    "references": [
-        "GUID:699bb923824f1724b91c66f5ba9ace74",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:231d5bb47ccb4574c8e0ed7b6e37990e",
-        "GUID:2a2f30532c56439469034d4a07bcb431",
-        "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
-        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-        "GUID:029c1c1b674aaae47a6841a0b89ad80e"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Neo.Bonus",
+  "rootNamespace": "",
+  "references": [
+    "GUID:699bb923824f1724b91c66f5ba9ace74",
+    "GUID:6055be8ebefd69e48b49212b09b47b2f",
+    "GUID:231d5bb47ccb4574c8e0ed7b6e37990e",
+    "GUID:2a2f30532c56439469034d4a07bcb431",
+    "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
+    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+    "GUID:029c1c1b674aaae47a6841a0b89ad80e"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

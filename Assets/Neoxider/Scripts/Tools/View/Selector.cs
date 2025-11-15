@@ -1,9 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Tools
@@ -12,7 +14,7 @@ namespace Neo
         ///     A component that manages selection between multiple GameObjects, with support for different selection modes.
         ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
         /// </summary>
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(Selector))]
         public class Selector : MonoBehaviour
         {
             #region Private Methods
@@ -54,7 +56,7 @@ namespace Neo
                                 {
                                     item.SetActive(false);
                                 }
-                                catch (System.Exception)
+                                catch (Exception)
                                 {
                                     // Игнорируем ошибки при деактивации (объект может быть уничтожен)
                                 }
@@ -77,7 +79,7 @@ namespace Neo
                                         {
                                             item.SetActive(shouldBeActive);
                                         }
-                                        catch (System.Exception)
+                                        catch (Exception)
                                         {
                                             // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
                                         }
@@ -99,7 +101,7 @@ namespace Neo
                                         {
                                             item.SetActive(shouldBeActive);
                                         }
-                                        catch (System.Exception)
+                                        catch (Exception)
                                         {
                                             // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
                                         }
@@ -135,7 +137,7 @@ namespace Neo
 
             [Tooltip("When enabled, automatically update items array when child objects are added or removed")]
             [SerializeField]
-            private bool _autoUpdateFromChildren = false;
+            private bool _autoUpdateFromChildren;
 
             [Header("Selection Settings")]
             [Tooltip("Whether to loop back to the beginning when reaching the end")]
@@ -143,7 +145,7 @@ namespace Neo
             private bool _loop = true;
 
             [Tooltip("Allow effective index -1 (nothing selected). Useful for skins/empty state")] [SerializeField]
-            private bool _allowEmptyEffectiveIndex = false;
+            private bool _allowEmptyEffectiveIndex;
 
             [Header("Fill Settings")]
             [Tooltip("If enabled, all items up to and including current index will be active")]
@@ -372,7 +374,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Next()
             {
@@ -381,7 +383,8 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot move to next - no items available (items array is null/empty or count is 0)");
+                    Debug.LogWarning(
+                        "Selector: Cannot move to next - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -411,7 +414,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Previous()
             {
@@ -420,7 +423,8 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot move to previous - no items available (items array is null/empty or count is 0)");
+                    Debug.LogWarning(
+                        "Selector: Cannot move to previous - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -467,7 +471,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Set(int index)
             {
@@ -476,7 +480,8 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set selection - no items available (items array is null/empty or count is 0)");
+                    Debug.LogWarning(
+                        "Selector: Cannot set selection - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -507,7 +512,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void SetLast()
             {
@@ -516,7 +521,8 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
+                    Debug.LogWarning(
+                        "Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -530,7 +536,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void SetFirst()
             {
@@ -539,7 +545,8 @@ namespace Neo
                 int total = Count;
                 if (total == 0)
                 {
-                    Debug.LogWarning("Selector: Cannot set to first - no items available (items array is null/empty or count is 0)");
+                    Debug.LogWarning(
+                        "Selector: Cannot set to first - no items available (items array is null/empty or count is 0)");
                     return;
                 }
 
@@ -618,7 +625,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void ToggleIndex(int index, bool? state = null)
             {
@@ -647,7 +654,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void RefreshItems()
             {
@@ -697,7 +704,7 @@ namespace Neo
                     return;
                 }
 
-                List<GameObject> itemsList = new List<GameObject>(_items);
+                List<GameObject> itemsList = new(_items);
 
                 if (itemsList.Remove(item))
                 {

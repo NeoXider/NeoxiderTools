@@ -14,7 +14,10 @@ namespace Neo
             maxSizeTrxture = EditorGUILayout.IntField("Max Size", maxSizeTrxture);
             textureType = (TextureImporterType)EditorGUILayout.EnumPopup("Texture Type", textureType);
 
-            if (GUILayout.Button("Apply")) ChangeMaxSize();
+            if (GUILayout.Button("Apply"))
+            {
+                ChangeMaxSize();
+            }
         }
 
         [MenuItem("Tools/Neoxider/" + "Change Texture Max Size")]
@@ -25,12 +28,12 @@ namespace Neo
 
         private void ChangeMaxSize()
         {
-            var guids = AssetDatabase.FindAssets("t:Texture2D");
+            string[] guids = AssetDatabase.FindAssets("t:Texture2D");
 
-            foreach (var guid in guids)
+            foreach (string guid in guids)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
 
                 if (importer != null && importer.textureType == textureType)
                 {

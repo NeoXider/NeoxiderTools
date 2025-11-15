@@ -9,7 +9,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
-    [AddComponentMenu("Neoxider/Tools/Physics/Physics Events 2D")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(PhysicsEvents2D))]
     public sealed class PhysicsEvents2D : MonoBehaviour
     {
         public bool interactable = true;
@@ -30,33 +30,51 @@ namespace Neo.Tools
         /* Collision -------------------------------------------------- */
         private void OnCollisionEnter2D(Collision2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onCollisionEnter.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onCollisionEnter.Invoke(c);
+            }
         }
 
         private void OnCollisionExit2D(Collision2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onCollisionExit.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onCollisionExit.Invoke(c);
+            }
         }
 
         private void OnCollisionStay2D(Collision2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onCollisionStay.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onCollisionStay.Invoke(c);
+            }
         }
 
         /* Trigger ---------------------------------------------------- */
         private void OnTriggerEnter2D(Collider2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerEnter.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onTriggerEnter.Invoke(c);
+            }
         }
 
         private void OnTriggerExit2D(Collider2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerExit.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onTriggerExit.Invoke(c);
+            }
         }
 
         private void OnTriggerStay2D(Collider2D c)
         {
-            if (interactable && PassFilter(c.gameObject)) onTriggerStay.Invoke(c);
+            if (interactable && PassFilter(c.gameObject))
+            {
+                onTriggerStay.Invoke(c);
+            }
         }
 
         /* ───────── INTERNAL ───────────────────────────────────────── */
@@ -64,7 +82,11 @@ namespace Neo.Tools
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)
         {
-            if (((1 << go.layer) & layers) == 0) return false;
+            if (((1 << go.layer) & layers) == 0)
+            {
+                return false;
+            }
+
             return string.IsNullOrEmpty(requiredTag) || go.CompareTag(requiredTag);
         }
 

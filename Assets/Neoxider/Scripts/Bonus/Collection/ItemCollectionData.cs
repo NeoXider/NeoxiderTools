@@ -18,7 +18,7 @@ namespace Neo.Bonus
         [SerializeField] private Sprite _sprite;
         [SerializeField] private int _itemType;
         [SerializeField] private ItemRarity _rarity = ItemRarity.Common;
-        [SerializeField] private int _category = 0;
+        [SerializeField] private int _category;
 
         public string itemName => _itemName;
         public string description => _description;

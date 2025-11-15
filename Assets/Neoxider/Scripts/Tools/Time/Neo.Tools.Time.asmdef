@@ -1,4 +1,7 @@
 {
   "name": "Neo.Tools.Time",
-  "references":[ "GUID:f6cc3e1d3a691d646830fdfbc1333dd9" ]
+  "references": [
+    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+    "GUID:f51ebe6a0ceec4240a699833d6309b23"
+  ]
 }

@@ -15,9 +15,15 @@ namespace Neo.Extensions
         private static void ValidateCollection<T>(ICollection<T> collection)
         {
             if (collection == null)
+            {
                 throw new ArgumentNullException(nameof(collection),
                     $"Collection of type {typeof(T).Name} cannot be null.");
-            if (collection.Count == 0) throw new ArgumentException("Collection cannot be empty", nameof(collection));
+            }
+
+            if (collection.Count == 0)
+            {
+                throw new ArgumentException("Collection cannot be empty", nameof(collection));
+            }
         }
 
         #endregion
@@ -41,13 +47,13 @@ namespace Neo.Extensions
         {
             ValidateCollection(collection);
 
-            var listToShuffle = inplace ? collection : new List<T>(collection);
+            IList<T> listToShuffle = inplace ? collection : new List<T>(collection);
 
-            var n = listToShuffle.Count;
+            int n = listToShuffle.Count;
             while (n > 1)
             {
                 n--;
-                var k = UnityEngine.Random.Range(0, n + 1);
+                int k = UnityEngine.Random.Range(0, n + 1);
                 (listToShuffle[k], listToShuffle[n]) = (listToShuffle[n], listToShuffle[k]); // Tuple swap
             }
 
@@ -98,7 +104,10 @@ namespace Neo.Extensions
         public static bool Chance(this float probability)
         {
             if (probability < 0f || probability > 1f)
+            {
                 throw new ArgumentOutOfRangeException(nameof(probability), "Probability must be between 0 and 1");
+            }
+
             return UnityEngine.Random.value < probability;
         }
 
@@ -136,7 +145,7 @@ namespace Neo.Extensions
         /// </summary>
         public static T GetRandomEnumValue<T>() where T : Enum
         {
-            var values = Enum.GetValues(typeof(T));
+            Array values = Enum.GetValues(typeof(T));
             return (T)values.GetValue(UnityEngine.Random.Range(0, values.Length));
         }
 
@@ -145,16 +154,26 @@ namespace Neo.Extensions
         /// </summary>
         public static int GetRandomWeightedIndex(this IList<float> weights)
         {
-            if (weights == null || weights.Count == 0) return -1;
+            if (weights == null || weights.Count == 0)
+            {
+                return -1;
+            }
 
             float totalWeight = 0;
-            foreach (var weight in weights) totalWeight += weight;
-
-            var randomPoint = UnityEngine.Random.value * totalWeight;
-
-            for (var i = 0; i < weights.Count; i++)
+            foreach (float weight in weights)
             {
-                if (randomPoint < weights[i]) return i;
+                totalWeight += weight;
+            }
+
+            float randomPoint = UnityEngine.Random.value * totalWeight;
+
+            for (int i = 0; i < weights.Count; i++)
+            {
+                if (randomPoint < weights[i])
+                {
+                    return i;
+                }
+
                 randomPoint -= weights[i];
             }
 

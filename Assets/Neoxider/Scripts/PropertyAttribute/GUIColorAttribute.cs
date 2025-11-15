@@ -14,11 +14,6 @@ namespace Neo
     public class GUIColorAttribute : PropertyAttribute
     {
         /// <summary>
-        ///     The color to be applied to the field in the inspector
-        /// </summary>
-        public Color color { get; private set; }
-
-        /// <summary>
         ///     Creates a new GUIColorAttribute with custom RGBA values
         /// </summary>
         /// <param name="r">Red component (0-1)</param>
@@ -27,7 +22,12 @@ namespace Neo
         /// <param name="a">Alpha component (0-1)</param>
         public GUIColorAttribute(double r, double g, double b, double a = 1f)
         {
-            this.color = new Color((float)r, (float)g, (float)b, (float)a);
+            color = new Color((float)r, (float)g, (float)b, (float)a);
         }
+
+        /// <summary>
+        ///     The color to be applied to the field in the inspector
+        /// </summary>
+        public Color color { get; private set; }
     }
 }

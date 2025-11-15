@@ -11,6 +11,7 @@ namespace Neo.GridSystem
     /// </summary>
     [ExecuteAlways]
     [RequireComponent(typeof(FieldGenerator))]
+    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldDebugDrawer))]
     public class FieldDebugDrawer : MonoBehaviour
     {
         public Color GridColor = new(1f, 1f, 0f, 0.3f);
@@ -29,17 +30,29 @@ namespace Neo.GridSystem
 
         private void OnDrawGizmos()
         {
-            if (generator == null) generator = GetComponent<FieldGenerator>();
-            if (unityGrid == null) unityGrid = generator.UnityGrid;
-            if (!generator.DebugEnabled || generator.Cells == null || unityGrid == null) return;
-            var size = generator.Config.Size;
+            if (generator == null)
+            {
+                generator = GetComponent<FieldGenerator>();
+            }
+
+            if (unityGrid == null)
+            {
+                unityGrid = generator.UnityGrid;
+            }
+
+            if (!generator.DebugEnabled || generator.Cells == null || unityGrid == null)
+            {
+                return;
+            }
+
+            Vector3Int size = generator.Config.Size;
             // Рисуем сетку
             Gizmos.color = GridColor;
-            for (var x = 0; x <= size.x; x++)
-            for (var y = 0; y <= size.y; y++)
+            for (int x = 0; x <= size.x; x++)
+            for (int y = 0; y <= size.y; y++)
             {
-                var from = unityGrid.CellToWorld(new Vector3Int(x, 0, 0));
-                var to = unityGrid.CellToWorld(new Vector3Int(x, size.y, 0));
+                Vector3 from = unityGrid.CellToWorld(new Vector3Int(x, 0, 0));
+                Vector3 to = unityGrid.CellToWorld(new Vector3Int(x, size.y, 0));
                 Gizmos.DrawLine(from, to);
                 from = unityGrid.CellToWorld(new Vector3Int(0, y, 0));
                 to = unityGrid.CellToWorld(new Vector3Int(size.x, y, 0));
@@ -47,22 +60,22 @@ namespace Neo.GridSystem
             }
 
             // Рисуем ячейки
-            for (var x = 0; x < size.x; x++)
-            for (var y = 0; y < size.y; y++)
-            for (var z = 0; z < size.z; z++)
+            for (int x = 0; x < size.x; x++)
+            for (int y = 0; y < size.y; y++)
+            for (int z = 0; z < size.z; z++)
             {
-                var cell = generator.Cells[x, y, z];
-                var pos = unityGrid.GetCellCenterWorld(cell.Position);
+                FieldCell cell = generator.Cells[x, y, z];
+                Vector3 pos = unityGrid.GetCellCenterWorld(cell.Position);
                 Gizmos.color = cell.IsWalkable ? WalkableCellColor : BlockedCellColor;
                 Gizmos.DrawCube(pos, unityGrid.cellSize * 0.9f);
 #if UNITY_EDITOR
                 if (DrawCoordinates)
                 {
-                    var style = new GUIStyle();
+                    GUIStyle style = new();
                     style.normal.textColor = TextColor;
                     style.fontSize = TextFontSize;
                     style.alignment = TextAnchor.MiddleCenter;
-                    var labelPos = pos;
+                    Vector3 labelPos = pos;
                     Handles.Label(labelPos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", style);
                 }
 #endif
@@ -72,10 +85,10 @@ namespace Neo.GridSystem
             if (DrawPath && DebugPath.Count > 1)
             {
                 Gizmos.color = PathColor;
-                for (var i = 1; i < DebugPath.Count; i++)
+                for (int i = 1; i < DebugPath.Count; i++)
                 {
-                    var a = generator.GetCellWorldCenter(DebugPath[i - 1]);
-                    var b = generator.GetCellWorldCenter(DebugPath[i]);
+                    Vector3 a = generator.GetCellWorldCenter(DebugPath[i - 1]);
+                    Vector3 b = generator.GetCellWorldCenter(DebugPath[i]);
                     Gizmos.DrawLine(a, b);
                 }
             }

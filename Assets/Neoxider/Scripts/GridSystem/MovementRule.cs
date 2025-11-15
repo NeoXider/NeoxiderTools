@@ -118,11 +118,15 @@ namespace Neo.GridSystem
 
         private static IEnumerable<Vector3Int> Get26Directions3D()
         {
-            for (var x = -1; x <= 1; x++)
-            for (var y = -1; y <= 1; y++)
-            for (var z = -1; z <= 1; z++)
+            for (int x = -1; x <= 1; x++)
+            for (int y = -1; y <= 1; y++)
+            for (int z = -1; z <= 1; z++)
             {
-                if (x == 0 && y == 0 && z == 0) continue;
+                if (x == 0 && y == 0 && z == 0)
+                {
+                    continue;
+                }
+
                 yield return new Vector3Int(x, y, z);
             }
         }

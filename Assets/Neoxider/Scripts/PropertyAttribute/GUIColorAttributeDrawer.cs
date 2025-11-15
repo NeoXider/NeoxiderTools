@@ -20,10 +20,10 @@ namespace Neo
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             // Get the color attribute
-            var colorAttribute = (GUIColorAttribute)attribute;
+            GUIColorAttribute colorAttribute = (GUIColorAttribute)attribute;
 
             // Store the original GUI color to restore it later
-            var originalColor = GUI.color;
+            Color originalColor = GUI.color;
 
             // Set the color from the attribute
             GUI.color = colorAttribute.color;

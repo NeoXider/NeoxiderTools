@@ -30,6 +30,7 @@ namespace Neo
             }
         }
 
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraRotationController))]
         public class CameraRotationController : MonoBehaviour
         {
             public AxisRotationSettings xAxisSettings = new(true, 10);
@@ -47,15 +48,17 @@ namespace Neo
             private void Update()
             {
                 if (Input.GetMouseButtonDown(0))
+                {
                     lastMousePosition = Input.mousePosition;
+                }
 
                 if (Input.GetMouseButton(0))
                 {
-                    var mouseDelta = Input.mousePosition - lastMousePosition;
+                    Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
                     lastMousePosition = Input.mousePosition;
 
-                    var mouseX = mouseDelta.x;
-                    var mouseY = mouseDelta.y;
+                    float mouseX = mouseDelta.x;
+                    float mouseY = mouseDelta.y;
 
                     if (xAxisSettings.isEnabled)
                     {
@@ -71,7 +74,7 @@ namespace Neo
 
                     if (zAxisSettings.isEnabled)
                     {
-                        var mouseZ = (mouseX + mouseY) * 0.5f;
+                        float mouseZ = (mouseX + mouseY) * 0.5f;
                         currentRotation.z += mouseZ * zAxisSettings.rotationSpeed * Time.deltaTime;
                         currentRotation.z = zAxisSettings.ClampAngle(currentRotation.z);
                     }

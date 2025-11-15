@@ -9,6 +9,7 @@ using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     public class AnimationFly : Singleton<AnimationFly>
@@ -18,7 +19,7 @@ namespace Neo
 #if ODIN_INSPECTOR
         [TableList]
 #endif
-            public List<BonusPrefabData> bonusPrefabList = new();
+        public List<BonusPrefabData> bonusPrefabList = new();
 
         [Tooltip("Множитель количества спавнящихся объектов")]
         public float countMultiplier = 1f;
@@ -29,7 +30,7 @@ namespace Neo
         [Space] public Ease easyStart = Ease.OutQuad;
 
         [Header("Анимация")] public float flyDuration = 1.0f;
-        public bool ignoreZ = false;
+        public bool ignoreZ;
 
         [Tooltip("Максимальное количество объектов за один вызов")]
         public int maxBonusCount = 1000;
@@ -44,7 +45,7 @@ namespace Neo
         [Header("Настройки спавна бонусов")] [Tooltip("Родительский объект для спавна бонусов")]
         public Transform spawnParent;
 
-        public bool useUnscaledTime = false;
+        public bool useUnscaledTime;
 
         private void Start()
         {
@@ -59,9 +60,13 @@ namespace Neo
         private void FillDictionary()
         {
             _prefabDict.Clear();
-            foreach (var data in bonusPrefabList)
+            foreach (BonusPrefabData data in bonusPrefabList)
+            {
                 if (!_prefabDict.ContainsKey(data.bonusType))
+                {
                     _prefabDict.Add(data.bonusType, data);
+                }
+            }
         }
 
         public void Execute(int type, int bonusCount, Vector3 start, Action<GameObject> onStart = null,
@@ -73,10 +78,10 @@ namespace Neo
                 return;
             }
 
-            var finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
+            int finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
             finalBonusCount = Mathf.Min(finalBonusCount, maxBonusCount);
 
-            var endPos = _prefabDict[type].isWorldSpace
+            Vector3 endPos = _prefabDict[type].isWorldSpace
                 ? Camera.main.WorldToScreenPoint(_prefabDict[type].endPos.position)
                 : _prefabDict[type].endPos.position;
 
@@ -94,10 +99,10 @@ namespace Neo
                 return;
             }
 
-            var finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
+            int finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
             finalBonusCount = Mathf.Min(finalBonusCount, maxBonusCount);
 
-            var endPos = _prefabDict[type].isWorldSpace
+            Vector3 endPos = _prefabDict[type].isWorldSpace
                 ? CanvasToWorldPosition(_prefabDict[type].endPos.position)
                 : _prefabDict[type].endPos.position;
 
@@ -123,7 +128,7 @@ namespace Neo
             Transform parent = null, Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
             parent = parent ?? spawnParent;
-            var finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
+            int finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
             finalBonusCount = Mathf.Min(finalBonusCount, maxBonusCount);
             StartCoroutine(AnimationRoutine(prefab, finalBonusCount, start.position, end.position, parent, onStart,
                 onEnd));
@@ -133,7 +138,7 @@ namespace Neo
             Transform parent = null, Action<GameObject> onStart = null, Action<GameObject> onEnd = null)
         {
             parent = parent ?? spawnParent;
-            var finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
+            int finalBonusCount = Mathf.CeilToInt(bonusCount * countMultiplier);
             finalBonusCount = Mathf.Min(finalBonusCount, maxBonusCount);
             StartCoroutine(AnimationRoutine(prefab, finalBonusCount, start, end, parent, onStart, onEnd));
         }
@@ -147,9 +152,9 @@ namespace Neo
                 end.z = 0f;
             }
 
-            for (var i = 0; i < bonusCount; i++)
+            for (int i = 0; i < bonusCount; i++)
             {
-                var bonus = Instantiate(prefab, start, Quaternion.identity, parent);
+                GameObject bonus = Instantiate(prefab, start, Quaternion.identity, parent);
                 Vector3 scale;
                 scale = bonus.transform.localScale;
                 scale *= scaleMult;
@@ -157,9 +162,9 @@ namespace Neo
 
                 onStart?.Invoke(bonus);
 
-                var startPos = start;
-                var endPos = end;
-                var midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
+                Vector3 startPos = start;
+                Vector3 endPos = end;
+                Vector3 midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
                 midPoint += new Vector3(
                     Random.Range(-arcStrength, arcStrength),
                     Random.Range(arcStrength * multY, arcStrength),
@@ -185,16 +190,22 @@ namespace Neo
 
         public GameObject GetPrefab(int type)
         {
-            if (_prefabDict.TryGetValue(type, out var data))
+            if (_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            {
                 return data.prefab;
+            }
+
             Debug.LogWarning($"[AnimationBonus] Нет префаба для бонуса типа {type}");
             return null;
         }
 
         public Transform GetPos(int type)
         {
-            if (_prefabDict.TryGetValue(type, out var data))
+            if (_prefabDict.TryGetValue(type, out BonusPrefabData data))
+            {
                 return data.endPos;
+            }
+
             Debug.LogWarning($"[AnimationBonus] Нет точки спавна для бонуса типа {type}");
             return null;
         }
@@ -210,10 +221,15 @@ namespace Neo
             }
 
             if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
                 camera = null;
-            else if (camera == null) camera = Camera.main;
+            }
+            else if (camera == null)
+            {
+                camera = Camera.main;
+            }
 
-            var worldPos = Vector3.zero;
+            Vector3 worldPos = Vector3.zero;
             RectTransformUtility.ScreenPointToWorldPointInRectangle(
                 canvas.transform as RectTransform,
                 uiPosition,
@@ -244,10 +260,15 @@ namespace Neo
             }
 
             if (canvas.renderMode == RenderMode.ScreenSpaceOverlay)
+            {
                 camera = null;
-            else if (camera == null) camera = Camera.main;
+            }
+            else if (camera == null)
+            {
+                camera = Camera.main;
+            }
 
-            var screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);
+            Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);
             return screenPoint;
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace Neo
 {
-    [AddComponentMenu("Neoxider/" + "Audio/" + nameof(RandomMusicPlayer))]
+    [AddComponentMenu("Neo/" + "Audio/" + nameof(RandomMusicPlayer))]
     [RequireComponent(typeof(AudioSource))]
     public class RandomMusicPlayer : MonoBehaviour
     {
@@ -16,7 +16,10 @@ namespace Neo
         private void Start()
         {
             audioSource = GetComponent<AudioSource>();
-            if (playOnStart) StartCoroutine(PlayMusicLoop());
+            if (playOnStart)
+            {
+                StartCoroutine(PlayMusicLoop());
+            }
         }
 
         private IEnumerator PlayMusicLoop()

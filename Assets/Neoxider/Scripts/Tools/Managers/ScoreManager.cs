@@ -4,6 +4,7 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
     public class ScoreManager : Singleton<ScoreManager>
@@ -80,6 +81,7 @@ namespace Neo.Tools
                     _lastCountStars = value;
                     OnStarChange?.Invoke(value);
                 }
+
                 _countStars = value;
             }
         }
@@ -95,36 +97,36 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Добавляет очки к текущему счету и опционально обновляет лучший результат.
+        ///     Добавляет очки к текущему счету и опционально обновляет лучший результат.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Add(int amount, bool updateBestScore = true)
+        public void Add(int amount, bool updateBestScore = true)
         {
             Set(score + amount, updateBestScore);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Add(int amount)
+        public void Add(int amount)
         {
             Set(score + amount);
         }
 
         /// <summary>
-        /// Устанавливает точное количество очков и опционально обновляет лучший результат.
+        ///     Устанавливает точное количество очков и опционально обновляет лучший результат.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Set(int amount, bool updateBestScore = true)
+        public void Set(int amount, bool updateBestScore = true)
         {
             Score = amount;
             SetScoreText();
@@ -136,9 +138,9 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetBestScore(int? score = 0)
+        public void SetBestScore(int? score = 0)
         {
             if (score != null)
             {
@@ -154,7 +156,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Обновляет текстовые поля лучшего результата.
+        ///     Обновляет текстовые поля лучшего результата.
         /// </summary>
         private void SetBestScoreText()
         {
@@ -165,6 +167,7 @@ namespace Neo.Tools
                     text.text = _bestScore.ToString();
                 }
             }
+
             if (setTextBestScores != null)
             {
                 foreach (SetText text in setTextBestScores)
@@ -175,7 +178,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Обновляет текстовые поля текущего счета.
+        ///     Обновляет текстовые поля текущего счета.
         /// </summary>
         private void SetScoreText()
         {
@@ -186,6 +189,7 @@ namespace Neo.Tools
                     text.text = score.ToString();
                 }
             }
+
             if (setTextScore != null)
             {
                 foreach (SetText text in setTextScore)
@@ -196,14 +200,14 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Сбрасывает текущий счет до нуля.
+        ///     Сбрасывает текущий счет до нуля.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ResetScore()
+        public void ResetScore()
         {
             Score = 0;
             OnValueChange?.Invoke(score);
@@ -212,9 +216,9 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ResetBestScore()
+        public void ResetBestScore()
         {
             BestScore = 0;
             PlayerPrefs.DeleteKey(_keySave);
@@ -226,7 +230,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Получение количества звезд по количеству очков.
+        ///     Получение количества звезд по количеству очков.
         /// </summary>
         /// <param name="starScores">Массив пороговых значений для получения звезд.</param>
         /// <param name="useProgress">Использовать прогресс (0-1) или абсолютные значения очков.</param>
@@ -234,7 +238,10 @@ namespace Neo.Tools
         /// <returns>Количество полученных звезд.</returns>
         public int GetCountStars(float[] starScores, bool useProgress = true, int? score = null)
         {
-            if (score == null) score = this.score;
+            if (score == null)
+            {
+                score = this.score;
+            }
 
             int stars = 0;
             for (int i = 0; i < starScores.Length; i++)
@@ -248,17 +255,22 @@ namespace Neo.Tools
                     break;
                 }
             }
+
             return stars;
         }
 
         public bool IsStar(float target, bool useProgress = true, int? score = null)
         {
-            if (score == null) score = this.score;
+            if (score == null)
+            {
+                score = this.score;
+            }
 
             if (useProgress)
             {
                 return Mathf.Clamp01((float)score / _targetScore) >= target;
             }
+
             return score >= target;
         }
     }

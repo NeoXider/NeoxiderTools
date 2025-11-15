@@ -3,45 +3,42 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
     /// <summary>
     ///     Component that handles health system with damage, healing and auto-healing capabilities
     /// </summary>
-    [AddComponentMenu("Neoxider/Tools/" + nameof(Health))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Health))]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {
-        [Header("Health Settings")]
-        [Tooltip("Maximum health points")]
+        [Header("Health Settings")] [Tooltip("Maximum health points")]
         public int maxHp = 10;
 
-        [Tooltip("Current health points")]
-        [SerializeField] private int hp;
+        [Tooltip("Current health points")] [SerializeField]
+        private int hp;
 
-        [Tooltip("If true, health will be restored to maximum on Awake")]
-        [SerializeField] private bool restoreOnAwake = true;
+        [Tooltip("If true, health will be restored to maximum on Awake")] [SerializeField]
+        private bool restoreOnAwake = true;
 
-        [Header("Auto-Heal Settings")]
-        [Tooltip("Amount of health restored per auto-heal")]
+        [Header("Auto-Heal Settings")] [Tooltip("Amount of health restored per auto-heal")]
         public int healAmount;
 
         [Tooltip("Delay between auto-heals in seconds")]
         public float healDelay = 1f;
 
-        [Tooltip("If true, can heal even when not alive")]
-        [SerializeField] private bool ignoreIsAlive;
+        [Tooltip("If true, can heal even when not alive")] [SerializeField]
+        private bool ignoreIsAlive;
 
         [Header("Damage & Heal Limits")]
         [Tooltip("Maximum damage that can be taken at once (-1 for no limit)")]
         [Min(-1)]
         public int maxDamageAmount = -1;
 
-        [Tooltip("Maximum healing that can be received at once (-1 for no limit)")]
-        [Min(-1)]
+        [Tooltip("Maximum healing that can be received at once (-1 for no limit)")] [Min(-1)]
         public int maxHealAmount = -1;
 
-        [Header("Events")]
-        public UnityEvent<int> OnChange;
+        [Header("Events")] public UnityEvent<int> OnChange;
         public UnityEvent<float> OnChangePercent;
         public UnityEvent<int> OnDamage;
         public UnityEvent<int> OnHeal;
@@ -84,38 +81,44 @@ namespace Neo.Tools
 
         private void OnDestroy()
         {
-            if (healTimer != null) healTimer.Stop();
+            if (healTimer != null)
+            {
+                healTimer.Stop();
+            }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void TakeDamage(int count)
+        public void TakeDamage(int count)
         {
-            var damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
+            int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
             Hp -= damage;
             OnDamage?.Invoke(damage); // Передаем фактический урон
 
-            if (!IsAlive) Die();
+            if (!IsAlive)
+            {
+                Die();
+            }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Heal(int count)
+        public void Heal(int count)
         {
-            var heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
+            int heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
             Hp += heal;
             OnHeal?.Invoke(heal); // Передаем фактическое лечение
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Restore()
+        public void Restore()
         {
             Hp = maxHp;
         }
@@ -128,14 +131,17 @@ namespace Neo.Tools
 
         private void OnHealTimerEnd()
         {
-            if (CanHeal && NeedHeal && healAmount > 0) Heal(healAmount);
+            if (CanHeal && NeedHeal && healAmount > 0)
+            {
+                Heal(healAmount);
+            }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetHeal(int amount, float delay = -1)
+        public void SetHeal(int amount, float delay = -1)
         {
             healAmount = amount;
 
@@ -148,23 +154,25 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMaxHp(int count, bool restore = false)
+        public void SetMaxHp(int count, bool restore = false)
         {
             maxHp = count;
 
             if (restore)
+            {
                 Restore();
+            }
 
             OnChangeMaxHp?.Invoke(count);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetHp(int count)
+        public void SetHp(int count)
         {
             Hp = count;
         }

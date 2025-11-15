@@ -13,14 +13,21 @@ namespace Neo.Extensions
         /// </summary>
         public static string SplitCamelCase(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
 
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
             sb.Append(input[0]);
 
-            for (var i = 1; i < input.Length; i++)
+            for (int i = 1; i < input.Length; i++)
             {
-                if (char.IsUpper(input[i])) sb.Append(' ');
+                if (char.IsUpper(input[i]))
+                {
+                    sb.Append(' ');
+                }
+
                 sb.Append(input[i]);
             }
 
@@ -40,7 +47,7 @@ namespace Neo.Extensions
         /// </summary>
         public static Color ToColor(this string hex)
         {
-            ColorUtility.TryParseHtmlString(hex, out var color);
+            ColorUtility.TryParseHtmlString(hex, out Color color);
             return color;
         }
 
@@ -49,7 +56,11 @@ namespace Neo.Extensions
         /// </summary>
         public static string ToCamelCase(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
             return char.ToLowerInvariant(input[0]) + input.Substring(1);
         }
 
@@ -58,7 +69,11 @@ namespace Neo.Extensions
         /// </summary>
         public static string Truncate(this string input, int maxLength)
         {
-            if (string.IsNullOrEmpty(input) || input.Length <= maxLength) return input;
+            if (string.IsNullOrEmpty(input) || input.Length <= maxLength)
+            {
+                return input;
+            }
+
             return input.Substring(0, maxLength - 3) + "...";
         }
 
@@ -67,7 +82,11 @@ namespace Neo.Extensions
         /// </summary>
         public static bool IsNumeric(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return false;
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
             return input.All(char.IsDigit);
         }
 
@@ -76,8 +95,12 @@ namespace Neo.Extensions
         /// </summary>
         public static string RandomString(int length, string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
         {
-            var sb = new StringBuilder();
-            for (var i = 0; i < length; i++) sb.Append(chars[Random.Range(0, chars.Length)]);
+            StringBuilder sb = new();
+            for (int i = 0; i < length; i++)
+            {
+                sb.Append(chars[Random.Range(0, chars.Length)]);
+            }
+
             return sb.ToString();
         }
 
@@ -86,8 +109,12 @@ namespace Neo.Extensions
         /// </summary>
         public static string Reverse(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
-            var arr = input.ToCharArray();
+            if (string.IsNullOrEmpty(input))
+            {
+                return input;
+            }
+
+            char[] arr = input.ToCharArray();
             Array.Reverse(arr);
             return new string(arr);
         }
@@ -97,7 +124,11 @@ namespace Neo.Extensions
         /// </summary>
         public static bool ToBool(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return false;
+            if (string.IsNullOrEmpty(input))
+            {
+                return false;
+            }
+
             return input.ToLower() switch
             {
                 "true" => true,
@@ -113,7 +144,11 @@ namespace Neo.Extensions
         /// <returns>The parsed integer, or the default value if parsing fails.</returns>
         public static int ToInt(this string input, int defaultValue = 0)
         {
-            if (int.TryParse(input, out var result)) return result;
+            if (int.TryParse(input, out int result))
+            {
+                return result;
+            }
+
             return defaultValue;
         }
 
@@ -123,7 +158,11 @@ namespace Neo.Extensions
         /// <returns>The parsed float, or the default value if parsing fails.</returns>
         public static float ToFloat(this string input, float defaultValue = 0f)
         {
-            if (float.TryParse(input, out var result)) return result;
+            if (float.TryParse(input, out float result))
+            {
+                return result;
+            }
+
             return defaultValue;
         }
 
@@ -158,7 +197,7 @@ namespace Neo.Extensions
         /// </summary>
         public static string SetColor(this string input, Color color)
         {
-            var hexColor = ColorUtility.ToHtmlStringRGB(color);
+            string hexColor = ColorUtility.ToHtmlStringRGB(color);
             return $"<color=#{hexColor}>{input}</color>";
         }
 
@@ -167,12 +206,21 @@ namespace Neo.Extensions
         /// </summary>
         public static string Rainbow(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
-            var sb = new StringBuilder();
-            for (var i = 0; i < input.Length; i++)
+            if (string.IsNullOrEmpty(input))
             {
-                var color = Color.HSVToRGB((float)i / input.Length, 1, 1);
-                sb.Append(input[i].ToString().SetColor(color));
+                return input;
+            }
+
+            StringBuilder sb = new();
+            for (int i = 0; i < input.Length; i++)
+            {
+                Color color = Color.HSVToRGB((float)i / input.Length, 1, 1);
+                string hexColor = ColorUtility.ToHtmlStringRGB(color);
+                sb.Append("<color=#");
+                sb.Append(hexColor);
+                sb.Append(">");
+                sb.Append(input[i]);
+                sb.Append("</color>");
             }
 
             return sb.ToString();
@@ -183,12 +231,21 @@ namespace Neo.Extensions
         /// </summary>
         public static string Gradient(this string input, Color startColor, Color endColor)
         {
-            if (string.IsNullOrEmpty(input)) return input;
-            var sb = new StringBuilder();
-            for (var i = 0; i < input.Length; i++)
+            if (string.IsNullOrEmpty(input))
             {
-                var color = Color.Lerp(startColor, endColor, (float)i / (input.Length - 1));
-                sb.Append(input[i].ToString().SetColor(color));
+                return input;
+            }
+
+            StringBuilder sb = new();
+            for (int i = 0; i < input.Length; i++)
+            {
+                Color color = Color.Lerp(startColor, endColor, (float)i / (input.Length - 1));
+                string hexColor = ColorUtility.ToHtmlStringRGB(color);
+                sb.Append("<color=#");
+                sb.Append(hexColor);
+                sb.Append(">");
+                sb.Append(input[i]);
+                sb.Append("</color>");
             }
 
             return sb.ToString();
@@ -199,11 +256,15 @@ namespace Neo.Extensions
         /// </summary>
         public static string RandomColors(this string input)
         {
-            if (string.IsNullOrEmpty(input)) return input;
-            var sb = new StringBuilder();
-            for (var i = 0; i < input.Length; i++)
+            if (string.IsNullOrEmpty(input))
             {
-                var color = new Color(Random.value, Random.value, Random.value);
+                return input;
+            }
+
+            StringBuilder sb = new();
+            for (int i = 0; i < input.Length; i++)
+            {
+                Color color = new(Random.value, Random.value, Random.value);
                 sb.Append(input[i].ToString().SetColor(color));
             }
 

@@ -3,8 +3,10 @@ using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ScreenPositioner))]
     public class ScreenPositioner : MonoBehaviour
     {
         [Header("Position Settings")] public bool _useScreenPosition;
@@ -36,14 +38,16 @@ namespace Neo.Tools
         private void InitializeComponents()
         {
             if (_targetCamera == null)
+            {
                 _targetCamera = Camera.main;
+            }
         }
 #if ODIN_INSPECTOR
             [Button("Update Position")]
 #else
-            [Neo.ButtonAttribute("Update Position")]
+        [ButtonAttribute("Update Position")]
 #endif
-            private void UpdatePositionAndRotation()
+        private void UpdatePositionAndRotation()
         {
             if (_targetCamera == null)
             {
@@ -56,23 +60,29 @@ namespace Neo.Tools
 
         private void ApplyScreenPosition()
         {
-            var z = transform.position.z;
+            float z = transform.position.z;
 
             if (_useScreenPosition)
+            {
                 transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
                     ScreenEdge.BottomLeft,
                     _positionScreen,
                     _depth
                 );
+            }
             else
+            {
                 transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
                     _screenEdge,
                     _offsetScreen,
                     _depth
                 );
+            }
 
             if (!_useDepth)
+            {
                 transform.SetPosition(z: z);
+            }
 
             transform.AddPosition(_offset);
         }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -32,7 +33,7 @@ namespace Neo
         [MenuItem(MenuPath)]
         public static void ShowWindow()
         {
-            var window = GetWindow<NeoxiderSettingsWindow>(WindowTitle);
+            NeoxiderSettingsWindow window = GetWindow<NeoxiderSettingsWindow>(WindowTitle);
             window.minSize = new Vector2(400, 500);
             window.Show();
         }
@@ -40,7 +41,10 @@ namespace Neo
         private void OnEnable()
         {
             NeoxiderSettings.LoadSettings();
-            if (NeoxiderSettings.Current.validateFoldersOnStart) ValidateFolders();
+            if (NeoxiderSettings.Current.validateFoldersOnStart)
+            {
+                ValidateFolders();
+            }
 
             // Initialize serialized object for hierarchy settings
             serializedHierarchy = new SerializedObject(NeoxiderSettings.SceneHierarchy);
@@ -48,7 +52,10 @@ namespace Neo
 
         private void OnDisable()
         {
-            if (isDirty) NeoxiderSettings.SaveSettings();
+            if (isDirty)
+            {
+                NeoxiderSettings.SaveSettings();
+            }
         }
 
         #endregion
@@ -89,10 +96,14 @@ namespace Neo
                 GUILayout.Label("Neoxider Global Settings", EditorStyles.boldLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button("Reset to Defaults", GUILayout.Width(120)))
+                {
                     if (EditorUtility.DisplayDialog("Reset Settings",
                             "Are you sure you want to reset all settings to defaults?",
                             "Yes", "No"))
+                    {
                         ResetToDefaults();
+                    }
+                }
             }
             EditorGUILayout.EndHorizontal();
         }
@@ -131,7 +142,7 @@ namespace Neo
                 EditorGUI.indentLevel++;
 
                 // Folder list
-                for (var i = 0; i < NeoxiderSettings.Current.folders.Length; i++)
+                for (int i = 0; i < NeoxiderSettings.Current.folders.Length; i++)
                 {
                     EditorGUILayout.BeginHorizontal();
                     NeoxiderSettings.Current.folders[i] =
@@ -150,7 +161,7 @@ namespace Neo
                 // Add new folder button
                 if (GUILayout.Button("Add Folder"))
                 {
-                    var list = NeoxiderSettings.Current.folders.ToList();
+                    List<string> list = NeoxiderSettings.Current.folders.ToList();
                     list.Add("New Folder");
                     NeoxiderSettings.Current.folders = list.ToArray();
                 }
@@ -167,17 +178,22 @@ namespace Neo
                 EditorGUI.indentLevel++;
 
                 if (serializedHierarchy == null)
+                {
                     serializedHierarchy = new SerializedObject(NeoxiderSettings.SceneHierarchy);
+                }
 
                 if (serializedHierarchy != null)
                 {
                     serializedHierarchy.Update();
 
-                    var iterator = serializedHierarchy.GetIterator();
-                    var enterChildren = true;
+                    SerializedProperty iterator = serializedHierarchy.GetIterator();
+                    bool enterChildren = true;
                     while (iterator.NextVisible(enterChildren))
                     {
-                        if (iterator.name == "m_Script") continue;
+                        if (iterator.name == "m_Script")
+                        {
+                            continue;
+                        }
 
                         EditorGUILayout.PropertyField(iterator, true);
                         enterChildren = false;
@@ -194,9 +210,15 @@ namespace Neo
         {
             EditorGUILayout.Space();
 
-            if (GUILayout.Button("Create Missing Folders")) CreateMissingFolders();
+            if (GUILayout.Button("Create Missing Folders"))
+            {
+                CreateMissingFolders();
+            }
 
-            if (GUILayout.Button("Create Scene Hierarchy")) NeoxiderSettings.SceneHierarchy.CreateHierarchy();
+            if (GUILayout.Button("Create Scene Hierarchy"))
+            {
+                NeoxiderSettings.SceneHierarchy.CreateHierarchy();
+            }
         }
 
         #endregion
@@ -207,12 +229,12 @@ namespace Neo
         {
             try
             {
-                var sourcePath = NeoxiderSettings.RootFolderPath;
+                string sourcePath = NeoxiderSettings.RootFolderPath;
                 CreateFolderIfMissing(sourcePath);
 
-                foreach (var folder in NeoxiderSettings.Current.folders)
+                foreach (string folder in NeoxiderSettings.Current.folders)
                 {
-                    var folderPath = NeoxiderSettings.GetFolderPath(folder);
+                    string folderPath = NeoxiderSettings.GetFolderPath(folder);
                     CreateFolderIfMissing(folderPath);
                 }
 
@@ -227,8 +249,8 @@ namespace Neo
 
         private void ValidateFolders()
         {
-            var sourcePath = NeoxiderSettings.RootFolderPath;
-            var hasErrors = false;
+            string sourcePath = NeoxiderSettings.RootFolderPath;
+            bool hasErrors = false;
 
             if (!Directory.Exists(sourcePath))
             {
@@ -236,14 +258,19 @@ namespace Neo
                 hasErrors = true;
             }
 
-            foreach (var folder in NeoxiderSettings.Current.folders)
+            foreach (string folder in NeoxiderSettings.Current.folders)
+            {
                 if (!NeoxiderSettings.FolderExists(folder))
                 {
                     Debug.LogWarning($"Missing folder: {folder}");
                     hasErrors = true;
                 }
+            }
 
-            if (!hasErrors) Debug.Log("All folders exist");
+            if (!hasErrors)
+            {
+                Debug.Log("All folders exist");
+            }
         }
 
         private void CreateFolderIfMissing(string path)

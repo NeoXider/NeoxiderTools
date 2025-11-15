@@ -1,51 +1,42 @@
 using UnityEngine;
 using UnityEngine.Events;
-using Neo.Animations;
 
 namespace Neo.Animations
 {
     /// <summary>
-    /// Универсальный аниматор для цветов.
-    /// Предоставляет простой способ анимации цвета с различными типами анимации.
+    ///     Универсальный аниматор для цветов.
+    ///     Предоставляет простой способ анимации цвета с различными типами анимации.
     /// </summary>
+    [AddComponentMenu("Neo/" + "Animations/" + nameof(ColorAnimator))]
     public class ColorAnimator : MonoBehaviour
     {
-        [Header("Animation Settings")]
-        [Tooltip("Тип анимации")]
+        [Header("Animation Settings")] [Tooltip("Тип анимации")]
         public AnimationType animationType = AnimationType.PerlinNoise;
 
-        [Header("Color Settings")]
-        [Tooltip("Начальный цвет")]
+        [Header("Color Settings")] [Tooltip("Начальный цвет")]
         public Color startColor = Color.white;
-        
-        [Tooltip("Конечный цвет")]
-        public Color endColor = Color.red;
-        
-        [Tooltip("Скорость анимации (0 = анимация отключена)")]
-        [Range(0f, 30f)] 
+
+        [Tooltip("Конечный цвет")] public Color endColor = Color.red;
+
+        [Tooltip("Скорость анимации (0 = анимация отключена)")] [Range(0f, 30f)]
         public float animationSpeed = 1.0f;
 
-        [Header("Noise Settings")]
-        [Tooltip("Масштаб шума для PerlinNoise")]
-        [Range(0.1f, 20f)] 
+        [Header("Noise Settings")] [Tooltip("Масштаб шума для PerlinNoise")] [Range(0.1f, 20f)]
         public float noiseScale = 1f;
-        
+
         [Tooltip("Использовать 2D шум вместо 1D")]
         public bool use2DNoise = true;
-        
+
         [Tooltip("Дополнительное смещение шума")]
         public Vector2 noiseOffset;
 
-        [Header("Custom Curve")]
-        [Tooltip("Пользовательская кривая для CustomCurve типа")]
+        [Header("Custom Curve")] [Tooltip("Пользовательская кривая для CustomCurve типа")]
         public AnimationCurve customCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        [Header("Control")]
-        [Tooltip("Автоматически запускать анимацию при старте")]
+        [Header("Control")] [Tooltip("Автоматически запускать анимацию при старте")]
         public bool playOnStart = true;
 
-        [Header("Events")]
-        [Tooltip("Вызывается при изменении цвета")]
+        [Header("Events")] [Tooltip("Вызывается при изменении цвета")]
         public UnityEvent<Color> OnColorChanged;
 
         [Tooltip("Вызывается при запуске анимации")]
@@ -57,66 +48,66 @@ namespace Neo.Animations
         [Tooltip("Вызывается при паузе анимации")]
         public UnityEvent OnAnimationPaused;
 
+        private float animationTime;
+        private Color lastColor;
+        private Vector2 randomOffset;
+
         /// <summary>
-        /// Текущий анимированный цвет (только для чтения)
+        ///     Текущий анимированный цвет (только для чтения)
         /// </summary>
         public Color CurrentColor { get; private set; }
 
         /// <summary>
-        /// Проигрывается ли анимация
+        ///     Проигрывается ли анимация
         /// </summary>
         public bool IsPlaying { get; private set; }
 
         /// <summary>
-        /// Находится ли анимация на паузе
+        ///     Находится ли анимация на паузе
         /// </summary>
         public bool IsPaused { get; private set; }
 
         /// <summary>
-        /// Начальный цвет (для изменения извне)
+        ///     Начальный цвет (для изменения извне)
         /// </summary>
-        public Color StartColor 
-        { 
-            get => startColor; 
-            set => startColor = value; 
-        }
-
-        /// <summary>
-        /// Конечный цвет (для изменения извне)
-        /// </summary>
-        public Color EndColor 
-        { 
-            get => endColor; 
-            set => endColor = value; 
-        }
-
-        /// <summary>
-        /// Скорость анимации (для изменения извне)
-        /// </summary>
-        public float AnimationSpeed 
-        { 
-            get => animationSpeed; 
-            set => animationSpeed = value; 
-        }
-
-        /// <summary>
-        /// Тип анимации (для изменения извне)
-        /// </summary>
-        public AnimationType AnimationType 
-        { 
-            get => animationType; 
-            set => animationType = value; 
-        }
-
-        private float animationTime;
-        private Vector2 randomOffset;
-        private Color lastColor;
-
-        void Start()
+        public Color StartColor
         {
-            animationTime = UnityEngine.Random.Range(0f, 1000f);
-            randomOffset = new Vector2(UnityEngine.Random.Range(-1000f, 1000f),
-                                       UnityEngine.Random.Range(-1000f, 1000f));
+            get => startColor;
+            set => startColor = value;
+        }
+
+        /// <summary>
+        ///     Конечный цвет (для изменения извне)
+        /// </summary>
+        public Color EndColor
+        {
+            get => endColor;
+            set => endColor = value;
+        }
+
+        /// <summary>
+        ///     Скорость анимации (для изменения извне)
+        /// </summary>
+        public float AnimationSpeed
+        {
+            get => animationSpeed;
+            set => animationSpeed = value;
+        }
+
+        /// <summary>
+        ///     Тип анимации (для изменения извне)
+        /// </summary>
+        public AnimationType AnimationType
+        {
+            get => animationType;
+            set => animationType = value;
+        }
+
+        private void Start()
+        {
+            animationTime = Random.Range(0f, 1000f);
+            randomOffset = new Vector2(Random.Range(-1000f, 1000f),
+                Random.Range(-1000f, 1000f));
 
             CurrentColor = startColor;
             lastColor = startColor;
@@ -127,10 +118,12 @@ namespace Neo.Animations
             }
         }
 
-        void Update()
+        private void Update()
         {
             if (!IsPlaying || IsPaused)
+            {
                 return;
+            }
 
             animationTime += Time.deltaTime;
 
@@ -152,7 +145,7 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Запустить анимацию
+        ///     Запустить анимацию
         /// </summary>
         public void Play()
         {
@@ -162,7 +155,7 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Остановить анимацию
+        ///     Остановить анимацию
         /// </summary>
         public void Stop()
         {
@@ -172,7 +165,7 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Поставить анимацию на паузу
+        ///     Поставить анимацию на паузу
         /// </summary>
         public void Pause()
         {
@@ -184,7 +177,7 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Снять с паузы
+        ///     Снять с паузы
         /// </summary>
         public void Resume()
         {
@@ -196,7 +189,7 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Сбросить время анимации
+        ///     Сбросить время анимации
         /// </summary>
         public void ResetTime()
         {
@@ -204,15 +197,15 @@ namespace Neo.Animations
         }
 
         /// <summary>
-        /// Установить случайное начальное время
+        ///     Установить случайное начальное время
         /// </summary>
         public void RandomizeTime()
         {
-            animationTime = UnityEngine.Random.Range(0f, 1000f);
+            animationTime = Random.Range(0f, 1000f);
         }
 
         /// <summary>
-        /// Вычисляет расстояние между двумя цветами
+        ///     Вычисляет расстояние между двумя цветами
         /// </summary>
         private float ColorDistance(Color a, Color b)
         {

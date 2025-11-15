@@ -40,7 +40,10 @@ namespace Neo
             public bool GetCopmplete()
             {
                 if (!isInfinity)
+                {
                     return _level >= countLevels;
+                }
+
                 return false;
             }
         }

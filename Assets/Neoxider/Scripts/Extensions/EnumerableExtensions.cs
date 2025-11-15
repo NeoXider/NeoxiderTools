@@ -16,8 +16,15 @@ namespace Neo.Extensions
         /// <param name="action">The action to perform.</param>
         public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)
         {
-            if (enumeration == null || action == null) return;
-            foreach (var item in enumeration) action(item);
+            if (enumeration == null || action == null)
+            {
+                return;
+            }
+
+            foreach (T item in enumeration)
+            {
+                action(item);
+            }
         }
 
         /// <summary>
@@ -26,7 +33,9 @@ namespace Neo.Extensions
         public static T GetSafe<T>(this IList<T> collection, int index, T defaultValue = default)
         {
             if (collection == null || index < 0 || index >= collection.Count)
+            {
                 return defaultValue;
+            }
 
             return collection[index];
         }
@@ -37,7 +46,9 @@ namespace Neo.Extensions
         public static T GetWrapped<T>(this IList<T> collection, int index)
         {
             if (collection == null || collection.Count == 0)
+            {
                 throw new ArgumentException("Collection cannot be null or empty.");
+            }
 
             return collection[index % collection.Count];
         }
@@ -55,9 +66,13 @@ namespace Neo.Extensions
         /// </summary>
         public static string ToIndexedString<T>(this IEnumerable<T> collection)
         {
-            var sb = new StringBuilder();
-            var index = 0;
-            foreach (var item in collection) sb.AppendLine($"[{index++}] {item}");
+            StringBuilder sb = new();
+            int index = 0;
+            foreach (T item in collection)
+            {
+                sb.AppendLine($"[{index++}] {item}");
+            }
+
             return sb.ToString();
         }
 
@@ -92,12 +107,15 @@ namespace Neo.Extensions
         /// </summary>
         public static string ToDebugString<T>(this IList<T> list)
         {
-            var sb = new StringBuilder("[");
-            for (var i = 0; i < list.Count; i++)
+            StringBuilder sb = new("[");
+            for (int i = 0; i < list.Count; i++)
             {
                 sb.Append(i + ": ");
                 sb.Append(list[i]);
-                if (i < list.Count - 1) sb.Append(", ");
+                if (i < list.Count - 1)
+                {
+                    sb.Append(", ");
+                }
             }
 
             sb.Append("]");
@@ -110,12 +128,18 @@ namespace Neo.Extensions
         public static int CountEmptyElements<T>(this T[] array)
         {
             if (array == null)
+            {
                 throw new ArgumentNullException(nameof(array));
+            }
 
-            var emptyCount = 0;
-            foreach (var element in array)
+            int emptyCount = 0;
+            foreach (T element in array)
+            {
                 if (element == null)
+                {
                     emptyCount++;
+                }
+            }
 
             return emptyCount;
         }

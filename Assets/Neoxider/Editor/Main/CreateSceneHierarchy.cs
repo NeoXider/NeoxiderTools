@@ -33,16 +33,19 @@ namespace Neo
         public void CreateHierarchy()
         {
             Undo.SetCurrentGroupName("Create Scene Hierarchy");
-            var group = Undo.GetCurrentGroup();
+            int group = Undo.GetCurrentGroup();
 
             try
             {
-                foreach (var objectName in hierarchyObjects)
+                foreach (string objectName in hierarchyObjects)
                 {
-                    if (string.IsNullOrEmpty(objectName)) continue;
+                    if (string.IsNullOrEmpty(objectName))
+                    {
+                        continue;
+                    }
 
-                    var decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                    var obj = GameObject.Find(decoratedName);
+                    string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                    GameObject obj = GameObject.Find(decoratedName);
                     if (obj == null)
                     {
                         obj = new GameObject(decoratedName);
@@ -55,9 +58,15 @@ namespace Neo
                     }
                 }
 
-                if (sortAlphabetically) SortHierarchyObjects();
+                if (sortAlphabetically)
+                {
+                    SortHierarchyObjects();
+                }
 
-                if (ValidateHierarchy()) Debug.Log("Scene hierarchy created successfully");
+                if (ValidateHierarchy())
+                {
+                    Debug.Log("Scene hierarchy created successfully");
+                }
             }
             catch (Exception e)
             {
@@ -74,30 +83,33 @@ namespace Neo
         private void SortHierarchyObjects()
         {
             // Собираем все объекты и их индексы
-            var objectsToSort = new List<(GameObject obj, int originalIndex)>();
+            List<(GameObject obj, int originalIndex)> objectsToSort = new();
 
-            foreach (var objectName in hierarchyObjects)
+            foreach (string objectName in hierarchyObjects)
             {
-                var decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                var obj = GameObject.Find(decoratedName);
-                if (obj != null) objectsToSort.Add((obj, obj.transform.GetSiblingIndex()));
+                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                GameObject obj = GameObject.Find(decoratedName);
+                if (obj != null)
+                {
+                    objectsToSort.Add((obj, obj.transform.GetSiblingIndex()));
+                }
             }
 
             // Сортируем по имени
-            var sortedObjects = objectsToSort
+            List<(GameObject obj, int originalIndex)> sortedObjects = objectsToSort
                 .OrderBy(x => x.obj.name)
                 .ToList();
 
             // Регистрируем операцию для Undo
             Undo.SetCurrentGroupName("Sort Hierarchy Objects");
-            var undoGroup = Undo.GetCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
 
             try
             {
                 // Применяем новые индексы
-                for (var i = 0; i < sortedObjects.Count; i++)
+                for (int i = 0; i < sortedObjects.Count; i++)
                 {
-                    var obj = sortedObjects[i].obj;
+                    GameObject obj = sortedObjects[i].obj;
                     if (obj != null)
                     {
                         Undo.RecordObject(obj.transform, "Change Sibling Index");
@@ -121,12 +133,15 @@ namespace Neo
         /// </summary>
         private bool ValidateHierarchy()
         {
-            var isValid = true;
-            foreach (var objectName in hierarchyObjects)
+            bool isValid = true;
+            foreach (string objectName in hierarchyObjects)
             {
-                if (string.IsNullOrEmpty(objectName)) continue;
+                if (string.IsNullOrEmpty(objectName))
+                {
+                    continue;
+                }
 
-                var decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
+                string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
                 if (GameObject.Find(decoratedName) == null)
                 {
                     Debug.LogError($"Failed to find hierarchy object: {decoratedName}");
@@ -142,7 +157,7 @@ namespace Neo
         [MenuItem("GameObject/Neoxider/Btn/Create Scene Hierarchy", false, 10)]
         private static void CreateHierarchyMenuItem()
         {
-            var creator = CreateInstance<CreateSceneHierarchy>();
+            CreateSceneHierarchy creator = CreateInstance<CreateSceneHierarchy>();
             creator.CreateHierarchy();
             DestroyImmediate(creator);
         }
@@ -150,11 +165,16 @@ namespace Neo
         [MenuItem("GameObject/Neoxider/Btn/Sort Hierarchy Objects", false, 11)]
         private static void SortHierarchyMenuItem()
         {
-            var creator = CreateInstance<CreateSceneHierarchy>();
+            CreateSceneHierarchy creator = CreateInstance<CreateSceneHierarchy>();
             if (creator.ValidateHierarchy())
+            {
                 creator.SortHierarchyObjects();
+            }
             else
+            {
                 Debug.LogWarning("Some hierarchy objects are missing. Create the full hierarchy first.");
+            }
+
             DestroyImmediate(creator);
         }
 

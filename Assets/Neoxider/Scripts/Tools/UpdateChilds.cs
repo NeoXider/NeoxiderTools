@@ -5,6 +5,7 @@ namespace Neo
 {
     namespace Tools
     {
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(UpdateChilds))]
         public class UpdateChilds : MonoBehaviour
         {
             public UnityEvent OnChangeChildsCount;

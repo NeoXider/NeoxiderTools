@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Neo
 {
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
         public LogType[] logTypesToDisplay = { LogType.Error, LogType.Exception };
@@ -14,9 +14,9 @@ namespace Neo
         public bool checkExistingErrors = true;
 
         public string errorText;
+        [Header("Main Settings")] public TextMeshProUGUI textMesh;
 
         private readonly List<string> errorList = new();
-        [Header("Main Settings")] public TextMeshProUGUI textMesh;
 
         private void OnEnable()
         {
@@ -33,23 +33,30 @@ namespace Neo
         {
             if (logTypesToDisplay.Length == 0 || Array.Exists(logTypesToDisplay, t => t == type))
             {
-                var errorText = GetColor(type) + "\n -- " + logString.SetColor(Color.green) + "\n -- " + stackTrace +
-                                "\n\n";
+                string errorText = GetColor(type) + "\n -- " + logString.SetColor(Color.green) + "\n -- " + stackTrace +
+                                   "\n\n";
 
-                if (checkExistingErrors && errorList.Contains(errorText)) return;
+                if (checkExistingErrors && errorList.Contains(errorText))
+                {
+                    return;
+                }
 
                 errorList.Add(errorText);
 
                 if (addText)
+                {
                     AppendText(errorText);
+                }
                 else
+                {
                     UpdateText(errorText);
+                }
             }
         }
 
         private string GetColor(LogType type)
         {
-            var color = Color.white;
+            Color color = Color.white;
 
             switch (type)
             {
@@ -75,12 +82,18 @@ namespace Neo
 
         public void UpdateText(string newText)
         {
-            if (textMesh != null) textMesh.text = newText;
+            if (textMesh != null)
+            {
+                textMesh.text = newText;
+            }
         }
 
         public void AppendText(string additionalText)
         {
-            if (textMesh != null) textMesh.text += additionalText;
+            if (textMesh != null)
+            {
+                textMesh.text += additionalText;
+            }
         }
     }
 }

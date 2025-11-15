@@ -36,11 +36,11 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
             scroll = GUILayout.BeginScrollView(scroll, GUILayout.Height(350));
             try
             {
-                for (var i = 0; i < objectsWithMissing.Count; i++)
+                for (int i = 0; i < objectsWithMissing.Count; i++)
                 {
-                    var info = objectsWithMissing[i];
+                    MissingScriptInfo info = objectsWithMissing[i];
                     // Цвета: выбранный — зелёный, остальные — красный
-                    var style = new GUIStyle(EditorStyles.label);
+                    GUIStyle style = new(EditorStyles.label);
                     style.normal.textColor = i == selectedIndex ? Color.green : Color.red;
                     EditorGUILayout.BeginHorizontal();
                     try
@@ -53,7 +53,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
                         }
 
                         // Кнопка удаления справа
-                        if (GUILayout.Button("X", GUILayout.Width(70))) RemoveMissingScriptFromObject(info);
+                        if (GUILayout.Button("X", GUILayout.Width(70)))
+                        {
+                            RemoveMissingScriptFromObject(info);
+                        }
                     }
                     finally
                     {
@@ -66,7 +69,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
                 GUILayout.EndScrollView();
             }
 
-            if (GUILayout.Button("Remove All Missing Scripts")) RemoveAllMissingScripts();
+            if (GUILayout.Button("Remove All Missing Scripts"))
+            {
+                RemoveAllMissingScripts();
+            }
         }
     }
 
@@ -91,10 +97,14 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
         {
             if (currentScene < scenePaths.Length)
             {
-                var sceneAssetPath = AssetDatabase.GUIDToAssetPath(scenePaths[currentScene]);
+                string sceneAssetPath = AssetDatabase.GUIDToAssetPath(scenePaths[currentScene]);
                 status = $"Scanning scene: {sceneAssetPath}";
-                var scene = EditorSceneManager.OpenScene(sceneAssetPath, OpenSceneMode.Single);
-                foreach (var go in scene.GetRootGameObjects()) FindMissingInHierarchy(go, sceneAssetPath, true, "/");
+                Scene scene = EditorSceneManager.OpenScene(sceneAssetPath, OpenSceneMode.Single);
+                foreach (GameObject go in scene.GetRootGameObjects())
+                {
+                    FindMissingInHierarchy(go, sceneAssetPath, true, "/");
+                }
+
                 currentScene++;
                 EditorUtility.DisplayProgressBar("Searching Scenes", sceneAssetPath,
                     (float)currentScene / scenePaths.Length);
@@ -110,10 +120,14 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
         {
             if (currentPrefab < prefabPaths.Length)
             {
-                var prefabAssetPath = AssetDatabase.GUIDToAssetPath(prefabPaths[currentPrefab]);
+                string prefabAssetPath = AssetDatabase.GUIDToAssetPath(prefabPaths[currentPrefab]);
                 status = $"Scanning prefab: {prefabAssetPath}";
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
-                if (prefab != null) FindMissingInHierarchy(prefab, prefabAssetPath, false, "/");
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
+                if (prefab != null)
+                {
+                    FindMissingInHierarchy(prefab, prefabAssetPath, false, "/");
+                }
+
                 currentPrefab++;
                 EditorUtility.DisplayProgressBar("Searching Prefabs", prefabAssetPath,
                     (float)currentPrefab / prefabPaths.Length);
@@ -126,7 +140,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
                 EditorApplication.update -= SearchAll;
                 // Возвращаемся к исходной сцене после поиска
                 if (!string.IsNullOrEmpty(initialScenePath) && initialScenePath != SceneManager.GetActiveScene().path)
+                {
                     EditorSceneManager.OpenScene(initialScenePath, OpenSceneMode.Single);
+                }
+
                 Repaint();
             }
         }
@@ -134,8 +151,9 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
     private void FindMissingInHierarchy(GameObject go, string assetPath, bool isScene, string parentPath)
     {
-        var thisPath = parentPath + go.name;
+        string thisPath = parentPath + go.name;
         if (GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go) > 0)
+        {
             objectsWithMissing.Add(new MissingScriptInfo
             {
                 assetPath = assetPath,
@@ -143,30 +161,36 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
                 objectName = go.name,
                 isScene = isScene
             });
+        }
+
         foreach (Transform child in go.transform)
+        {
             FindMissingInHierarchy(child.gameObject, assetPath, isScene, thisPath + "/");
+        }
     }
 
     private void SelectAndPing(MissingScriptInfo info, bool forceOpenScene = false)
     {
-        var previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
+        string previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
 
         if (info.isScene)
         {
             // Всегда открываем нужную сцену
-            var scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-            var parts = info.hierarchyPath.Trim('/').Split('/');
+            Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
+            string[] parts = info.hierarchyPath.Trim('/').Split('/');
             GameObject root = null;
-            foreach (var go in scene.GetRootGameObjects())
+            foreach (GameObject go in scene.GetRootGameObjects())
+            {
                 if (go.name == parts[0])
                 {
                     root = go;
                     break;
                 }
+            }
 
             if (root != null)
             {
-                var found = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
+                GameObject found = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
                 if (found != null)
                 {
                     Selection.activeObject = found;
@@ -183,10 +207,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
         else
         {
             // Префаб: загружаем и выделяем объект по пути
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
             if (prefab != null)
             {
-                var found = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
+                GameObject found = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
                 if (found != null)
                 {
                     Selection.activeObject = found;
@@ -203,12 +227,16 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
     private GameObject FindGameObjectByHierarchyPath(GameObject root, string path)
     {
-        var parts = path.Trim('/').Split('/');
-        var current = root;
-        for (var i = 1; i < parts.Length; i++) // i=1, т.к. root уже есть
+        string[] parts = path.Trim('/').Split('/');
+        GameObject current = root;
+        for (int i = 1; i < parts.Length; i++) // i=1, т.к. root уже есть
         {
-            var child = current.transform.Find(parts[i]);
-            if (child == null) return null;
+            Transform child = current.transform.Find(parts[i]);
+            if (child == null)
+            {
+                return null;
+            }
+
             current = child.gameObject;
         }
 
@@ -217,36 +245,42 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
     private void RemoveAllMissingScripts()
     {
-        var removed = 0;
-        var previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
-        foreach (var info in objectsWithMissing)
+        int removed = 0;
+        string previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
+        foreach (MissingScriptInfo info in objectsWithMissing)
         {
             GameObject go = null;
             if (info.isScene)
             {
-                var scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-                var parts = info.hierarchyPath.Trim('/').Split('/');
+                Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
+                string[] parts = info.hierarchyPath.Trim('/').Split('/');
                 GameObject root = null;
-                foreach (var r in scene.GetRootGameObjects())
+                foreach (GameObject r in scene.GetRootGameObjects())
+                {
                     if (r.name == parts[0])
                     {
                         root = r;
                         break;
                     }
+                }
 
                 if (root != null)
+                {
                     go = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
+                }
             }
             else
             {
-                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
+                GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
                 if (prefab != null)
+                {
                     go = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
+                }
             }
 
             if (go != null)
             {
-                var before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
+                int before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
                 if (before > 0)
                 {
                     Undo.RegisterCompleteObjectUndo(go, "Remove missing scripts");
@@ -258,7 +292,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
         // Возвращаемся к предыдущей сцене
         if (!string.IsNullOrEmpty(previousScenePath))
+        {
             EditorSceneManager.OpenScene(previousScenePath, OpenSceneMode.Single);
+        }
+
         Debug.Log($"[FindAndRemoveMissingScriptsWindow] Removed {removed} missing scripts from all found objects.");
         status = $"Removed {removed} missing scripts.";
         objectsWithMissing.Clear();
@@ -267,33 +304,39 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
     private void RemoveMissingScriptFromObject(MissingScriptInfo info)
     {
-        var previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
+        string previousScenePath = initialScenePath ?? SceneManager.GetActiveScene().path;
         GameObject go = null;
         if (info.isScene)
         {
-            var scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
-            var parts = info.hierarchyPath.Trim('/').Split('/');
+            Scene scene = EditorSceneManager.OpenScene(info.assetPath, OpenSceneMode.Single);
+            string[] parts = info.hierarchyPath.Trim('/').Split('/');
             GameObject root = null;
-            foreach (var r in scene.GetRootGameObjects())
+            foreach (GameObject r in scene.GetRootGameObjects())
+            {
                 if (r.name == parts[0])
                 {
                     root = r;
                     break;
                 }
+            }
 
             if (root != null)
+            {
                 go = FindGameObjectByHierarchyPath(root, info.hierarchyPath);
+            }
         }
         else
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(info.assetPath);
             if (prefab != null)
+            {
                 go = FindGameObjectByHierarchyPath(prefab, info.hierarchyPath);
+            }
         }
 
         if (go != null)
         {
-            var before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
+            int before = GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(go);
             if (before > 0)
             {
                 Undo.RegisterCompleteObjectUndo(go, "Remove missing scripts");
@@ -305,7 +348,10 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
 
         // Возвращаемся к предыдущей сцене
         if (!string.IsNullOrEmpty(previousScenePath))
+        {
             EditorSceneManager.OpenScene(previousScenePath, OpenSceneMode.Single);
+        }
+
         // Удаляем из списка
         objectsWithMissing.Remove(info);
         Repaint();

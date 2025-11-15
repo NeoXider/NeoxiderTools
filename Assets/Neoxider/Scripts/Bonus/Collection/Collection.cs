@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Linq;
-using UnityEngine;
-using UnityEngine.Events;
-using Neo;
 using Neo.Extensions;
 using Neo.Tools;
+using UnityEngine;
+using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Bonus
 {
     public class Collection : Singleton<Collection>
@@ -58,9 +58,9 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Load()
+        public void Load()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
             {
@@ -74,7 +74,7 @@ namespace Neo.Bonus
                 _enabledItems = new bool[_itemCollectionDatas.Length];
             }
 
-            for (var i = 0; i < _itemCollectionDatas.Length; i++)
+            for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 _enabledItems[i] = PlayerPrefs.GetInt($"{_saveKeyPrefix}Item_{i}", 0) == 1;
             }
@@ -84,14 +84,16 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Save()
+        public void Save()
         {
             if (_enabledItems == null || _itemCollectionDatas == null)
+            {
                 return;
+            }
 
-            for (var i = 0; i < _enabledItems.Length && i < _itemCollectionDatas.Length; i++)
+            for (int i = 0; i < _enabledItems.Length && i < _itemCollectionDatas.Length; i++)
             {
                 PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{i}", _enabledItems[i] ? 1 : 0);
             }
@@ -101,18 +103,24 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public ItemCollectionData GetPrize()
+        public ItemCollectionData GetPrize()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
+            {
                 return null;
+            }
 
-            var uniqs = _itemCollectionDatas.Where(x => !_enabledItems[Array.IndexOf(_itemCollectionDatas, x)]).ToArray();
+            ItemCollectionData[] uniqs = _itemCollectionDatas
+                .Where(x => !_enabledItems[Array.IndexOf(_itemCollectionDatas, x)]).ToArray();
 
-            if (uniqs.Length == 0) return null;
+            if (uniqs.Length == 0)
+            {
+                return null;
+            }
 
-            var prizeId = Array.IndexOf(_itemCollectionDatas, _randomPrize ? uniqs.GetRandomElement() : uniqs.First());
+            int prizeId = Array.IndexOf(_itemCollectionDatas, _randomPrize ? uniqs.GetRandomElement() : uniqs.First());
 
             AddItem(prizeId);
             OnGetItem?.Invoke(prizeId);
@@ -123,7 +131,9 @@ namespace Neo.Bonus
         public bool HasItem(int id)
         {
             if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
+            {
                 return false;
+            }
 
             return _enabledItems[id];
         }
@@ -131,10 +141,14 @@ namespace Neo.Bonus
         public void AddItem(int id)
         {
             if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
+            {
                 return;
+            }
 
             if (_enabledItems[id])
+            {
                 return;
+            }
 
             _enabledItems[id] = true;
             PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
@@ -146,10 +160,14 @@ namespace Neo.Bonus
         public void RemoveItem(int id)
         {
             if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
+            {
                 return;
+            }
 
             if (!_enabledItems[id])
+            {
                 return;
+            }
 
             _enabledItems[id] = false;
             PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
@@ -161,21 +179,27 @@ namespace Neo.Bonus
         public void SetItemEnabled(int id, bool enabled)
         {
             if (enabled)
+            {
                 AddItem(id);
+            }
             else
+            {
                 RemoveItem(id);
+            }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ClearCollection()
+        public void ClearCollection()
         {
             if (_enabledItems == null)
+            {
                 return;
+            }
 
-            for (var i = 0; i < _enabledItems.Length; i++)
+            for (int i = 0; i < _enabledItems.Length; i++)
             {
                 if (_enabledItems[i])
                 {
@@ -190,24 +214,30 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void UnlockAllItems()
+        public void UnlockAllItems()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
+            {
                 return;
+            }
 
-            for (var i = 0; i < _itemCollectionDatas.Length; i++)
+            for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 if (!_enabledItems[i])
+                {
                     AddItem(i);
+                }
             }
         }
 
         public ItemCollectionData GetItemData(int id)
         {
             if (_itemCollectionDatas == null || id < 0 || id >= _itemCollectionDatas.Length)
+            {
                 return null;
+            }
 
             return _itemCollectionDatas[id];
         }

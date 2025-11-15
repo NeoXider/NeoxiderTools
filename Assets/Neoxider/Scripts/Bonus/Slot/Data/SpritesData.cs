@@ -21,11 +21,19 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
-            if (_visuals == null) return;
+            if (_visuals == null)
+            {
+                return;
+            }
+
             // Автоматически присваиваем ID на основе индекса
-            for (var i = 0; i < _visuals.Length; i++)
+            for (int i = 0; i < _visuals.Length; i++)
+            {
                 if (_visuals[i] != null)
+                {
                     _visuals[i].id = i;
+                }
+            }
         }
     }
 }

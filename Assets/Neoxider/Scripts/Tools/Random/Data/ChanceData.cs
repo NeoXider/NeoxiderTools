@@ -19,7 +19,10 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            if (manager == null) manager = new ChanceManager();
+            if (manager == null)
+            {
+                manager = new ChanceManager();
+            }
 
             manager.Sanitize();
             manager.EnsureUniqueIds();
@@ -27,7 +30,7 @@ namespace Neo.Tools
 
         public int GenerateId()
         {
-            var id = manager.GetChanceId();
+            int id = manager.GetChanceId();
             OnIdGenerated?.Invoke(id);
             return id;
         }

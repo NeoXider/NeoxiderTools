@@ -6,26 +6,24 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Shop
     {
-        [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
+        [AddComponentMenu("Neo/" + "Shop/" + nameof(Money))]
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
             [Space] [SerializeField] private string _moneySave = "Money";
 
-            [Space] [Header("Text")] [SerializeField]
-            private readonly int _roundToDecimal = 2;
+            [Space] [Header("Text")] private readonly int _roundToDecimal = 2;
 
             [SerializeField] private float _allMoney;
             [SerializeField] private float _lastChangeMoney;
 
-            [SerializeField] [GUIColor(0,1,1)]
-            private float _levelMoney;
+            [SerializeField] [GUIColor(0, 1, 1)] private float _levelMoney;
 
-            [SerializeField] [GUIColor(0,1,0)]
-            private float _money;
+            [SerializeField] [GUIColor(0, 1, 0)] private float _money;
 
             public UnityEvent<float> OnChangeAllMoney;
 
@@ -45,7 +43,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Add(float amount)
             {
@@ -58,7 +56,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public bool Spend(float amount)
             {

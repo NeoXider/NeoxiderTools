@@ -63,32 +63,38 @@ public class {0} : Singleton<{0}>
             try
             {
                 // Get the selected folder path
-                var folderPath = GetSelectedPathOrFallback();
+                string folderPath = GetSelectedPathOrFallback();
 
                 // Show input dialog for class name
-                var className = GetClassName();
+                string className = GetClassName();
                 if (string.IsNullOrEmpty(className))
+                {
                     return;
+                }
 
                 // Generate file path
-                var filePath = Path.Combine(folderPath, className + FileExtension);
+                string filePath = Path.Combine(folderPath, className + FileExtension);
 
                 // Check if file already exists
                 if (File.Exists(filePath))
+                {
                     if (!EditorUtility.DisplayDialog("File Already Exists",
                             $"The file '{className + FileExtension}' already exists. Do you want to overwrite it?",
                             "Yes", "No"))
+                    {
                         return;
+                    }
+                }
 
                 // Create the script content
-                var scriptContent = string.Format(TemplateContent, className);
+                string scriptContent = string.Format(TemplateContent, className);
 
                 // Write the file
                 File.WriteAllText(filePath, scriptContent);
                 AssetDatabase.Refresh();
 
                 // Select the created file
-                var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(GetRelativePath(filePath));
+                TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(GetRelativePath(filePath));
                 Selection.activeObject = asset;
                 EditorGUIUtility.PingObject(asset);
 
@@ -102,13 +108,18 @@ public class {0} : Singleton<{0}>
 
         private static string GetClassName()
         {
-            var className = EditorInputDialog.Show(DialogTitle, DialogMessage, DefaultFileName);
+            string className = EditorInputDialog.Show(DialogTitle, DialogMessage, DefaultFileName);
 
             if (string.IsNullOrEmpty(className))
+            {
                 return null;
+            }
 
             // Ensure first letter is uppercase
-            if (className.Length > 0) className = char.ToUpper(className[0]) + className.Substring(1);
+            if (className.Length > 0)
+            {
+                className = char.ToUpper(className[0]) + className.Substring(1);
+            }
 
             // Remove invalid characters
             className = new string(className.Where(c => char.IsLetterOrDigit(c) || c == '_').ToArray());
@@ -118,14 +129,21 @@ public class {0} : Singleton<{0}>
 
         private static string GetSelectedPathOrFallback()
         {
-            var path = "Assets";
+            string path = "Assets";
 
-            foreach (var obj in Selection.GetFiltered<Object>(SelectionMode.Assets))
+            foreach (Object obj in Selection.GetFiltered<Object>(SelectionMode.Assets))
             {
                 path = AssetDatabase.GetAssetPath(obj);
-                if (string.IsNullOrEmpty(path)) continue;
+                if (string.IsNullOrEmpty(path))
+                {
+                    continue;
+                }
 
-                if (!AssetDatabase.IsValidFolder(path)) path = Path.GetDirectoryName(path);
+                if (!AssetDatabase.IsValidFolder(path))
+                {
+                    path = Path.GetDirectoryName(path);
+                }
+
                 break;
             }
 
@@ -135,7 +153,10 @@ public class {0} : Singleton<{0}>
         private static string GetRelativePath(string absolutePath)
         {
             if (absolutePath.StartsWith(Application.dataPath))
+            {
                 return "Assets" + absolutePath.Substring(Application.dataPath.Length);
+            }
+
             return absolutePath;
         }
     }
@@ -169,11 +190,17 @@ public class {0} : Singleton<{0}>
             }
 
             // Handle Enter key
-            if (Event.current.isKey && Event.current.keyCode == KeyCode.Return) Submit();
+            if (Event.current.isKey && Event.current.keyCode == KeyCode.Return)
+            {
+                Submit();
+            }
 
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button("OK")) Submit();
+                if (GUILayout.Button("OK"))
+                {
+                    Submit();
+                }
 
                 if (GUILayout.Button("Cancel"))
                 {
@@ -186,9 +213,9 @@ public class {0} : Singleton<{0}>
 
         public static string Show(string title, string message, string defaultName = "")
         {
-            var result = defaultName;
+            string result = defaultName;
 
-            var window = CreateInstance<EditorInputDialog>();
+            EditorInputDialog window = CreateInstance<EditorInputDialog>();
             window.title = title;
             window.message = message;
             window.defaultName = defaultName;

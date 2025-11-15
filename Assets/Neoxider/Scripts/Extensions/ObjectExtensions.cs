@@ -15,14 +15,21 @@ namespace Neo.Extensions
         /// <param name="immediate">Whether to destroy immediately (use with caution)</param>
         public static void SafeDestroy(this Object obj, bool immediate = false)
         {
-            if (obj == null) return;
+            if (obj == null)
+            {
+                return;
+            }
 
             if (Application.isPlaying)
             {
                 if (immediate)
+                {
                     Object.DestroyImmediate(obj);
+                }
                 else
+                {
                     Object.Destroy(obj);
+                }
             }
             else
             {
@@ -57,7 +64,10 @@ namespace Neo.Extensions
         /// <param name="newName">New name to set</param>
         public static void SetName(this Object obj, string newName)
         {
-            if (obj != null) obj.name = newName;
+            if (obj != null)
+            {
+                obj.name = newName;
+            }
         }
     }
 }

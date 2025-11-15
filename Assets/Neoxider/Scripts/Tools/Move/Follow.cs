@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Follow))]
     public class Follow : MonoBehaviour
     {
         public enum FollowMode
@@ -46,13 +47,19 @@ namespace Neo.Tools
         private void LateUpdate()
         {
             if (_target == null)
+            {
                 return;
+            }
 
             if (_followPosition)
+            {
                 FollowPosition();
+            }
 
             if (_followRotation)
+            {
                 FollowRotation();
+            }
         }
 
         private void OnValidate()
@@ -64,21 +71,33 @@ namespace Neo.Tools
         /// </summary>
         private void FollowPosition()
         {
-            var desiredPosition = _target.position + _offset;
+            Vector3 desiredPosition = _target.position + _offset;
 
             if (_positionLimitX != Vector2.zero)
+            {
                 desiredPosition.x = Mathf.Clamp(desiredPosition.x, _positionLimitX.x, _positionLimitX.y);
+            }
+
             if (_positionLimitY != Vector2.zero)
+            {
                 desiredPosition.y = Mathf.Clamp(desiredPosition.y, _positionLimitY.x, _positionLimitY.y);
+            }
+
             if (_positionLimitZ != Vector2.zero)
+            {
                 desiredPosition.z = Mathf.Clamp(desiredPosition.z, _positionLimitZ.x, _positionLimitZ.y);
+            }
 
             if (_followMode == FollowMode.TwoD)
+            {
                 desiredPosition.z = _offset.z;
+            }
 
             if (_useSmooth)
+            {
                 desiredPosition =
                     Vector3.Lerp(transform.position, desiredPosition, _smoothSpeed * Time.smoothDeltaTime);
+            }
 
             transform.position = desiredPosition;
         }
@@ -91,18 +110,26 @@ namespace Neo.Tools
         {
             if (_followMode == FollowMode.ThreeD)
             {
-                var direction = _target.position - transform.position;
+                Vector3 direction = _target.position - transform.position;
                 if (direction == Vector3.zero)
+                {
                     return;
+                }
 
-                var targetRotation = Quaternion.LookRotation(direction);
+                Quaternion targetRotation = Quaternion.LookRotation(direction);
                 targetRotation *= Quaternion.Euler(_rotationOffset3D);
 
-                var euler = targetRotation.eulerAngles;
+                Vector3 euler = targetRotation.eulerAngles;
                 if (_rotationLimitX != Vector2.zero)
+                {
                     euler.x = Mathf.Clamp(euler.x, _rotationLimitX.x, _rotationLimitX.y);
+                }
+
                 if (_rotationLimitY != Vector2.zero)
+                {
                     euler.y = Mathf.Clamp(euler.y, _rotationLimitY.x, _rotationLimitY.y);
+                }
+
                 targetRotation = Quaternion.Euler(euler);
 
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
@@ -110,14 +137,16 @@ namespace Neo.Tools
             }
             else if (_followMode == FollowMode.TwoD)
             {
-                var direction = _target.position - transform.position;
-                var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
+                Vector3 direction = _target.position - transform.position;
+                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
                 angle += _rotationOffset2D;
 
                 if (_rotationLimitZ != Vector2.zero)
+                {
                     angle = Mathf.Clamp(angle, _rotationLimitZ.x, _rotationLimitZ.y);
+                }
 
-                var targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
+                Quaternion targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation,
                     _rotationSpeed * Time.smoothDeltaTime);
             }

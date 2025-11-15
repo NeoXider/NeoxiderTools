@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Neo.Bonus
 {
+    [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollectionInfo))]
     public class ItemCollectionInfo : MonoBehaviour
     {
         [SerializeField] private Collection _collection;
@@ -31,9 +32,13 @@ namespace Neo.Bonus
             if (_textDescription != null)
             {
                 if (!string.IsNullOrEmpty(itemCollectionData.description))
+                {
                     _textDescription.text = itemCollectionData.description;
+                }
                 else
+                {
                     _textDescription.text = _textDefaultValue ?? string.Empty;
+                }
             }
 
             if (_imageItem != null)
@@ -42,19 +47,23 @@ namespace Neo.Bonus
                 {
                     _imageItem.sprite = itemCollectionData.sprite;
                     if (_setNativeSize)
+                    {
                         _imageItem.SetNativeSize();
+                    }
                 }
             }
         }
 
         public void SetItemId(int id)
         {
-            var collection = CollectionInstance;
+            Collection collection = CollectionInstance;
             if (collection != null)
             {
-                var itemData = collection.GetItemData(id);
+                ItemCollectionData itemData = collection.GetItemData(id);
                 if (itemData != null)
+                {
                     SetData(itemData);
+                }
             }
         }
     }

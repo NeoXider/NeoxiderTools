@@ -1,10 +1,10 @@
-using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardItem))]
     public class LeaderboardItem : MonoBehaviour
     {
         public int id;
@@ -36,8 +36,14 @@ namespace Neo.Tools
         {
             OnUser?.Invoke(isPlayer);
 
-            if (isPlayer) OnUserTrue?.Invoke();
-            else OnuserFalse?.Invoke();
+            if (isPlayer)
+            {
+                OnUserTrue?.Invoke();
+            }
+            else
+            {
+                OnuserFalse?.Invoke();
+            }
         }
     }
 }

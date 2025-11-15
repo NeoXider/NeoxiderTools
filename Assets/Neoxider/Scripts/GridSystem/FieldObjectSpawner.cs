@@ -25,6 +25,7 @@ namespace Neo.GridSystem
     ///     Универсальный спавнер для работы с сеткой. Хранит объекты по ячейкам, поддерживает флаг "занимает место".
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
+    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldObjectSpawner))]
     public class FieldObjectSpawner : MonoBehaviour
     {
         [Header("Префабы для спавна")] public GameObject[] Prefabs;
@@ -53,17 +54,28 @@ namespace Neo.GridSystem
         public SpawnedObjectInfo SpawnAt(Vector3Int cellPos, int prefabIndex = 0, bool occupiesSpace = true,
             string layer = "Default")
         {
-            var cell = generator.GetCell(cellPos);
-            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length) return null;
-            var worldPos = generator.GetCellWorldCenter(cell.Position);
-            var go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
-            var info = new SpawnedObjectInfo(go, cell, occupiesSpace);
-            if (!cellObjects.ContainsKey(cell)) cellObjects[cell] = new List<SpawnedObjectInfo>();
+            FieldCell cell = generator.GetCell(cellPos);
+            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length)
+            {
+                return null;
+            }
+
+            Vector3 worldPos = generator.GetCellWorldCenter(cell.Position);
+            GameObject go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
+            SpawnedObjectInfo info = new(go, cell, occupiesSpace);
+            if (!cellObjects.ContainsKey(cell))
+            {
+                cellObjects[cell] = new List<SpawnedObjectInfo>();
+            }
+
             cellObjects[cell].Add(info);
             objectLookup[go] = info;
             OnObjectSpawned.Invoke(info);
             if (occupiesSpace && cellObjects[cell].FindAll(o => o.OccupiesSpace).Count == 1)
+            {
                 OnCellOccupied.Invoke(cell);
+            }
+
             return info;
         }
 
@@ -72,8 +84,12 @@ namespace Neo.GridSystem
         /// </summary>
         public List<SpawnedObjectInfo> GetObjectsInCell(Vector3Int cellPos)
         {
-            var cell = generator.GetCell(cellPos);
-            if (cell == null || !cellObjects.ContainsKey(cell)) return new List<SpawnedObjectInfo>();
+            FieldCell cell = generator.GetCell(cellPos);
+            if (cell == null || !cellObjects.ContainsKey(cell))
+            {
+                return new List<SpawnedObjectInfo>();
+            }
+
             return new List<SpawnedObjectInfo>(cellObjects[cell]);
         }
 
@@ -82,8 +98,12 @@ namespace Neo.GridSystem
         /// </summary>
         public bool IsCellOccupied(Vector3Int cellPos)
         {
-            var cell = generator.GetCell(cellPos);
-            if (cell == null || !cellObjects.ContainsKey(cell)) return false;
+            FieldCell cell = generator.GetCell(cellPos);
+            if (cell == null || !cellObjects.ContainsKey(cell))
+            {
+                return false;
+            }
+
             return cellObjects[cell].Exists(o => o.OccupiesSpace);
         }
 
@@ -92,15 +112,21 @@ namespace Neo.GridSystem
         /// </summary>
         public void RemoveObject(GameObject go)
         {
-            if (!objectLookup.ContainsKey(go)) return;
-            var info = objectLookup[go];
-            var cell = info.Cell;
+            if (!objectLookup.ContainsKey(go))
+            {
+                return;
+            }
+
+            SpawnedObjectInfo info = objectLookup[go];
+            FieldCell cell = info.Cell;
             cellObjects[cell].Remove(info);
             objectLookup.Remove(go);
             Destroy(go);
             OnObjectRemoved.Invoke(info);
             if (info.OccupiesSpace && !cellObjects[cell].Exists(o => o.OccupiesSpace))
+            {
                 OnCellFreed.Invoke(cell);
+            }
         }
 
         /// <summary>
@@ -108,9 +134,12 @@ namespace Neo.GridSystem
         /// </summary>
         public List<SpawnedObjectInfo> GetAllObjects()
         {
-            var all = new List<SpawnedObjectInfo>();
-            foreach (var list in cellObjects.Values)
+            List<SpawnedObjectInfo> all = new();
+            foreach (List<SpawnedObjectInfo> list in cellObjects.Values)
+            {
                 all.AddRange(list);
+            }
+
             return all;
         }
     }

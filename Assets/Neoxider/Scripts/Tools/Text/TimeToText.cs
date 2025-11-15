@@ -11,9 +11,15 @@ namespace Neo
         ///     A component that formats and displays time values on a TMP_Text component.
         ///     Useful for countdown timers, elapsed time displays, or any time-based UI elements.
         /// </summary>
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TimeToText))]
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(TimeToText))]
         public class TimeToText : MonoBehaviour
         {
+            #region Private Fields
+
+            private float lastTime;
+
+            #endregion
+
             #region Static Methods
 
             /// <summary>
@@ -63,12 +69,6 @@ namespace Neo
             ///     Invoked when the time value changes
             /// </summary>
             public UnityEvent<float> OnTimeChanged;
-
-            #endregion
-
-            #region Private Fields
-
-            private float lastTime;
 
             #endregion
 
@@ -126,14 +126,18 @@ namespace Neo
             {
                 // Ensure text component is assigned
                 if (text == null)
+                {
                     text = GetComponent<TMP_Text>();
+                }
             }
 
             private void OnValidate()
             {
                 // Auto-assign text component if not set
                 if (text == null)
+                {
                     text = GetComponent<TMP_Text>();
+                }
             }
 
             #endregion
@@ -164,12 +168,19 @@ namespace Neo
 
                 // Display text based on zero text setting
                 if ((time == 0 && _zeroText) || time > 0)
+                {
                     text.text = startAddText + FormatTime(time, timeFormat, separator) + endAddText;
+                }
                 else
+                {
                     text.text = "";
+                }
 
                 // Check if time has reached zero
-                if (lastTime != time && time == 0) OnEnd?.Invoke();
+                if (lastTime != time && time == 0)
+                {
+                    OnEnd?.Invoke();
+                }
             }
 
             /// <summary>
@@ -178,7 +189,9 @@ namespace Neo
             private void UpdateDisplay()
             {
                 if (text == null)
+                {
                     return;
+                }
 
                 Set(CurrentTime);
             }

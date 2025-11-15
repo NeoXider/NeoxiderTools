@@ -4,11 +4,12 @@ using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace UI
     {
-        [AddComponentMenu("Neoxider/" + "UI/" + nameof(ToggleView))]
+        [AddComponentMenu("Neo/" + "UI/" + nameof(ToggleView))]
         public class ToggleView : MonoBehaviour
         {
             [GetComponent] [SerializeField] private Toggle _toggle;
@@ -35,18 +36,25 @@ namespace Neo
             private void Start()
             {
                 if (_toggle != null)
+                {
                     Set(_toggle.isOn);
+                }
             }
 
             private void OnEnable()
             {
                 if (_toggle != null)
+                {
                     _toggle.isOn = activ;
+                }
             }
 
             private void OnDestroy()
             {
-                if (_toggle != null) _toggle?.onValueChanged.RemoveListener(Set);
+                if (_toggle != null)
+                {
+                    _toggle?.onValueChanged.RemoveListener(Set);
+                }
             }
 
             private void OnValidate()
@@ -59,7 +67,10 @@ namespace Neo
                 {
                     _toggle = GetComponent<Toggle>();
 
-                    if (_toggle != null) _toggle.onValueChanged.AddListener(Set);
+                    if (_toggle != null)
+                    {
+                        _toggle.onValueChanged.AddListener(Set);
+                    }
                 }
 
                 Visual(activ);
@@ -67,7 +78,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Switch()
             {
@@ -76,7 +87,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Set(bool activ)
             {
@@ -85,7 +96,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Set(bool activ, bool invoke = false)
             {
@@ -94,9 +105,13 @@ namespace Neo
                     if (_toggle != null)
                     {
                         if (invoke)
+                        {
                             _toggle.isOn = activ;
+                        }
                         else
+                        {
                             _toggle.SetIsOnWithoutNotify(activ);
+                        }
                     }
 
                     this.activ = activ;
@@ -109,29 +124,41 @@ namespace Neo
             private void Actions(bool activ)
             {
                 if (activ)
+                {
                     On?.Invoke();
+                }
                 else
+                {
                     Off?.Invoke();
+                }
 
                 OnValueChanged?.Invoke(activ);
             }
 
             private void Visual(bool activ)
             {
-                var id = activ ? 1 : 0;
+                int id = activ ? 1 : 0;
 
                 if (sprites != null && sprites.Length == 2)
+                {
                     if (_image != null)
                     {
                         _image.sprite = sprites[id];
 
                         if (_setNativeSize)
+                        {
                             _image.SetNativeSize();
+                        }
                     }
+                }
 
                 if (_visuals != null && _visuals.Length == 2)
-                    for (var i = 0; i < _visuals.Length; i++)
+                {
+                    for (int i = 0; i < _visuals.Length; i++)
+                    {
                         _visuals[i].SetActive(id == i);
+                    }
+                }
             }
         }
     }

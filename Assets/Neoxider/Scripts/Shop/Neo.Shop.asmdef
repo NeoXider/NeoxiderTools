@@ -1,21 +1,21 @@
 {
-    "name": "Neo.Shop",
-    "rootNamespace": "",
-    "references": [
-        "GUID:699bb923824f1724b91c66f5ba9ace74",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
-        "GUID:231d5bb47ccb4574c8e0ed7b6e37990e",
-        "GUID:d06531eb44124d14385b705adce5c111",
-        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Neo.Shop",
+  "rootNamespace": "",
+  "references": [
+    "GUID:699bb923824f1724b91c66f5ba9ace74",
+    "GUID:6055be8ebefd69e48b49212b09b47b2f",
+    "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
+    "GUID:231d5bb47ccb4574c8e0ed7b6e37990e",
+    "GUID:d06531eb44124d14385b705adce5c111",
+    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

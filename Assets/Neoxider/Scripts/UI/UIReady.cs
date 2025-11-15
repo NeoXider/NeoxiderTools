@@ -8,7 +8,7 @@ namespace Neo
 {
     namespace UI
     {
-        [AddComponentMenu("Neoxider/" + "UI/" + nameof(UIReady))]
+        [AddComponentMenu("Neo/" + "UI/" + nameof(UIReady))]
         public class UIReady : MonoBehaviour
         {
             public int s = 10;
@@ -19,7 +19,9 @@ namespace Neo
             {
                 if (Input.GetKeyDown(KeyCode.Space)
                     || Input.GetKeyDown(KeyCode.KeypadEnter))
+                {
                     ProceedScene();
+                }
             }
 
             private void OnValidate()
@@ -37,16 +39,20 @@ namespace Neo
 
             public void Restart()
             {
-                var idScene = SceneManager.GetActiveScene().buildIndex;
+                int idScene = SceneManager.GetActiveScene().buildIndex;
                 LoadScene(idScene);
             }
 
             public void Pause(bool activ)
             {
                 if (activ)
+                {
                     Time.timeScale = 0;
+                }
                 else
+                {
                     Time.timeScale = 1.0f;
+                }
             }
 
             public void LoadScene(int idScene)
@@ -62,7 +68,9 @@ namespace Neo
             public void ProceedScene()
             {
                 if (ALS.operationScene != null)
+                {
                     ALS.operationScene.allowSceneActivation = true;
+                }
             }
 
             private IEnumerator LoadSceneCoroutine(int idScene)
@@ -71,10 +79,14 @@ namespace Neo
                 ALS.operationScene.allowSceneActivation = ALS.isProgressLoad;
 
                 if (ALS.gameObjectLoad != null)
+                {
                     ALS.gameObjectLoad.SetActive(true);
+                }
 
                 if (ALS.animator != null)
+                {
                     ALS.animator.enabled = true;
+                }
 
                 while (!ALS.operationScene.isDone)
                 {
@@ -83,16 +95,22 @@ namespace Neo
                     if (ALS.textProgress != null)
                     {
                         if (ALS.progress > 0.89)
+                        {
                             ALS.textProgress.text = ALS.loadEndText[1];
+                        }
                         else
-                            ALS.textProgress.text = ALS.loadEndText[0] + ((int)(ALS.progress * 100));
+                        {
+                            ALS.textProgress.text = ALS.loadEndText[0] + (int)(ALS.progress * 100);
+                        }
                     }
 
                     yield return null;
                 }
 
                 if (ALS.animator != null)
+                {
                     ALS.animator.enabled = false;
+                }
 
                 Debug.Log("����� ��������� � ������������!");
             }

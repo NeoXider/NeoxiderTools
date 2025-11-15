@@ -18,12 +18,26 @@ namespace Neo.Extensions
         public static void SetPosition(this Transform transform, Vector3? position = null, float? x = null,
             float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var newPosition = position ?? transform.position;
-            if (x.HasValue) newPosition.x = x.Value;
-            if (y.HasValue) newPosition.y = y.Value;
-            if (z.HasValue) newPosition.z = z.Value;
+            Vector3 newPosition = position ?? transform.position;
+            if (x.HasValue)
+            {
+                newPosition.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newPosition.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newPosition.z = z.Value;
+            }
 
             transform.position = newPosition;
         }
@@ -34,13 +48,27 @@ namespace Neo.Extensions
         public static void AddPosition(this Transform transform, Vector3? delta = null, float? x = null,
             float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var currentPosition = transform.position;
-            var finalDelta = delta ?? Vector3.zero;
-            if (x.HasValue) finalDelta.x += x.Value;
-            if (y.HasValue) finalDelta.y += y.Value;
-            if (z.HasValue) finalDelta.z += z.Value;
+            Vector3 currentPosition = transform.position;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
 
             transform.position = currentPosition + finalDelta;
         }
@@ -55,12 +83,26 @@ namespace Neo.Extensions
         public static void SetLocalPosition(this Transform transform, Vector3? position = null, float? x = null,
             float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var newPosition = position ?? transform.localPosition;
-            if (x.HasValue) newPosition.x = x.Value;
-            if (y.HasValue) newPosition.y = y.Value;
-            if (z.HasValue) newPosition.z = z.Value;
+            Vector3 newPosition = position ?? transform.localPosition;
+            if (x.HasValue)
+            {
+                newPosition.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newPosition.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newPosition.z = z.Value;
+            }
 
             transform.localPosition = newPosition;
         }
@@ -71,13 +113,27 @@ namespace Neo.Extensions
         public static void AddLocalPosition(this Transform transform, Vector3? delta = null, float? x = null,
             float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var currentPosition = transform.localPosition;
-            var finalDelta = delta ?? Vector3.zero;
-            if (x.HasValue) finalDelta.x += x.Value;
-            if (y.HasValue) finalDelta.y += y.Value;
-            if (z.HasValue) finalDelta.z += z.Value;
+            Vector3 currentPosition = transform.localPosition;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
 
             transform.localPosition = currentPosition + finalDelta;
         }
@@ -92,7 +148,10 @@ namespace Neo.Extensions
         public static void SetRotation(this Transform transform, Quaternion? rotation = null,
             Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
             if (rotation.HasValue)
             {
@@ -100,10 +159,21 @@ namespace Neo.Extensions
                 return;
             }
 
-            var angles = eulerAngles ?? transform.eulerAngles;
-            if (x.HasValue) angles.x = x.Value;
-            if (y.HasValue) angles.y = y.Value;
-            if (z.HasValue) angles.z = z.Value;
+            Vector3 angles = eulerAngles ?? transform.eulerAngles;
+            if (x.HasValue)
+            {
+                angles.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                angles.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                angles.z = z.Value;
+            }
 
             transform.rotation = Quaternion.Euler(angles);
         }
@@ -114,7 +184,10 @@ namespace Neo.Extensions
         public static void AddRotation(this Transform transform, Quaternion? delta = null, Vector3? eulerDelta = null,
             float? x = null, float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
             if (delta.HasValue)
             {
@@ -122,11 +195,22 @@ namespace Neo.Extensions
                 return;
             }
 
-            var currentAngles = transform.eulerAngles;
-            var finalDelta = eulerDelta ?? Vector3.zero;
-            if (x.HasValue) finalDelta.x += x.Value;
-            if (y.HasValue) finalDelta.y += y.Value;
-            if (z.HasValue) finalDelta.z += z.Value;
+            Vector3 currentAngles = transform.eulerAngles;
+            Vector3 finalDelta = eulerDelta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
 
             transform.rotation = Quaternion.Euler(currentAngles + finalDelta);
         }
@@ -141,7 +225,10 @@ namespace Neo.Extensions
         public static void SetLocalRotation(this Transform transform, Quaternion? rotation = null,
             Vector3? eulerAngles = null, float? x = null, float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
             if (rotation.HasValue)
             {
@@ -149,10 +236,21 @@ namespace Neo.Extensions
                 return;
             }
 
-            var angles = eulerAngles ?? transform.localEulerAngles;
-            if (x.HasValue) angles.x = x.Value;
-            if (y.HasValue) angles.y = y.Value;
-            if (z.HasValue) angles.z = z.Value;
+            Vector3 angles = eulerAngles ?? transform.localEulerAngles;
+            if (x.HasValue)
+            {
+                angles.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                angles.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                angles.z = z.Value;
+            }
 
             transform.localRotation = Quaternion.Euler(angles);
         }
@@ -163,7 +261,10 @@ namespace Neo.Extensions
         public static void AddLocalRotation(this Transform transform, Quaternion? delta = null,
             Vector3? eulerDelta = null, float? x = null, float? y = null, float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
             if (delta.HasValue)
             {
@@ -171,11 +272,22 @@ namespace Neo.Extensions
                 return;
             }
 
-            var currentAngles = transform.localEulerAngles;
-            var finalDelta = eulerDelta ?? Vector3.zero;
-            if (x.HasValue) finalDelta.x += x.Value;
-            if (y.HasValue) finalDelta.y += y.Value;
-            if (z.HasValue) finalDelta.z += z.Value;
+            Vector3 currentAngles = transform.localEulerAngles;
+            Vector3 finalDelta = eulerDelta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
 
             transform.localRotation = Quaternion.Euler(currentAngles + finalDelta);
         }
@@ -190,12 +302,26 @@ namespace Neo.Extensions
         public static void SetScale(this Transform transform, Vector3? scale = null, float? x = null, float? y = null,
             float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var newScale = scale ?? transform.localScale;
-            if (x.HasValue) newScale.x = x.Value;
-            if (y.HasValue) newScale.y = y.Value;
-            if (z.HasValue) newScale.z = z.Value;
+            Vector3 newScale = scale ?? transform.localScale;
+            if (x.HasValue)
+            {
+                newScale.x = x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                newScale.y = y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                newScale.z = z.Value;
+            }
 
             transform.localScale = newScale;
         }
@@ -206,13 +332,27 @@ namespace Neo.Extensions
         public static void AddScale(this Transform transform, Vector3? delta = null, float? x = null, float? y = null,
             float? z = null)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
 
-            var currentScale = transform.localScale;
-            var finalDelta = delta ?? Vector3.zero;
-            if (x.HasValue) finalDelta.x += x.Value;
-            if (y.HasValue) finalDelta.y += y.Value;
-            if (z.HasValue) finalDelta.z += z.Value;
+            Vector3 currentScale = transform.localScale;
+            Vector3 finalDelta = delta ?? Vector3.zero;
+            if (x.HasValue)
+            {
+                finalDelta.x += x.Value;
+            }
+
+            if (y.HasValue)
+            {
+                finalDelta.y += y.Value;
+            }
+
+            if (z.HasValue)
+            {
+                finalDelta.z += z.Value;
+            }
 
             transform.localScale = currentScale + finalDelta;
         }
@@ -227,8 +367,8 @@ namespace Neo.Extensions
         /// <param name="offset">Additional rotation angle in degrees applied to the final Z rotation.</param>
         public static void LookAt2D(this Transform transform, Vector3 targetPosition, float offset = 0f)
         {
-            var direction = (targetPosition - transform.position).normalized;
-            var angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            Vector3 direction = (targetPosition - transform.position).normalized;
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             transform.rotation = Quaternion.Euler(0f, 0f, angle - 90 + offset);
         }
 
@@ -241,7 +381,7 @@ namespace Neo.Extensions
         /// <returns>An IEnumerator to be used in a coroutine.</returns>
         public static IEnumerator SmoothLookAtRoutine(this Transform transform, Vector3 target, float speed)
         {
-            var targetRotation = Quaternion.LookRotation(target - transform.position);
+            Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
             while (Quaternion.Angle(transform.rotation, targetRotation) > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
@@ -259,13 +399,16 @@ namespace Neo.Extensions
         public static Transform GetClosest(this Transform transform, IEnumerable<Transform> others)
         {
             Transform closest = null;
-            var minDistanceSqr = float.MaxValue;
+            float minDistanceSqr = float.MaxValue;
 
-            if (others == null) return null;
-
-            foreach (var other in others.Where(t => t != null && t != transform))
+            if (others == null)
             {
-                var distSqr = (transform.position - other.position).sqrMagnitude;
+                return null;
+            }
+
+            foreach (Transform other in others.Where(t => t != null && t != transform))
+            {
+                float distSqr = (transform.position - other.position).sqrMagnitude;
                 if (distSqr < minDistanceSqr)
                 {
                     minDistanceSqr = distSqr;
@@ -281,10 +424,17 @@ namespace Neo.Extensions
         /// </summary>
         public static Transform[] GetChildTransforms(this Transform transform)
         {
-            if (transform == null) return new Transform[0];
+            if (transform == null)
+            {
+                return new Transform[0];
+            }
 
-            var children = new Transform[transform.childCount];
-            for (var i = 0; i < transform.childCount; i++) children[i] = transform.GetChild(i);
+            Transform[] children = new Transform[transform.childCount];
+            for (int i = 0; i < transform.childCount; i++)
+            {
+                children[i] = transform.GetChild(i);
+            }
+
             return children;
         }
 
@@ -293,7 +443,11 @@ namespace Neo.Extensions
         /// </summary>
         public static void ResetTransform(this Transform transform)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
+
             transform.position = Vector3.zero;
             transform.rotation = Quaternion.identity;
             transform.localScale = Vector3.one;
@@ -304,7 +458,11 @@ namespace Neo.Extensions
         /// </summary>
         public static void ResetLocalTransform(this Transform transform)
         {
-            if (transform == null) return;
+            if (transform == null)
+            {
+                return;
+            }
+
             transform.localPosition = Vector3.zero;
             transform.localRotation = Quaternion.identity;
             transform.localScale = Vector3.one;
@@ -315,7 +473,10 @@ namespace Neo.Extensions
         /// </summary>
         public static void CopyFrom(this Transform transform, Transform source)
         {
-            if (source == null || transform == null) return;
+            if (source == null || transform == null)
+            {
+                return;
+            }
 
             transform.position = source.position;
             transform.rotation = source.rotation;
@@ -327,15 +488,22 @@ namespace Neo.Extensions
         /// </summary>
         public static void DestroyChildren(this Transform transform)
         {
-            if (transform == null) return;
-
-            for (var i = transform.childCount - 1; i >= 0; i--)
+            if (transform == null)
             {
-                var child = transform.GetChild(i);
+                return;
+            }
+
+            for (int i = transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = transform.GetChild(i);
                 if (Application.isPlaying)
+                {
                     Object.Destroy(child.gameObject);
+                }
                 else
+                {
                     Object.DestroyImmediate(child.gameObject);
+                }
             }
         }
 

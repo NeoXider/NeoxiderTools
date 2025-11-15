@@ -9,6 +9,7 @@ namespace Neo.GridSystem
     ///     Генератор и управляющий класс для универсального поля (2D/3D) на базе UnityEngine.Grid. Singleton.
     /// </summary>
     [RequireComponent(typeof(Grid))]
+    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldGenerator))]
     public class FieldGenerator : MonoBehaviour
     {
         [Header("Конфиг поля")] public FieldGeneratorConfig Config = new();
@@ -31,12 +32,19 @@ namespace Neo.GridSystem
         {
             get
             {
-                var size = Config != null ? Config.Size : Vector3Int.zero;
-                var arr = new FieldCell[size.x, size.y];
-                if (Cells == null) return arr;
-                for (var x = 0; x < size.x; x++)
-                for (var y = 0; y < size.y; y++)
+                Vector3Int size = Config != null ? Config.Size : Vector3Int.zero;
+                FieldCell[,] arr = new FieldCell[size.x, size.y];
+                if (Cells == null)
+                {
+                    return arr;
+                }
+
+                for (int x = 0; x < size.x; x++)
+                for (int y = 0; y < size.y; y++)
+                {
                     arr[x, y] = Cells[x, y, 0];
+                }
+
                 return arr;
             }
         }
@@ -46,7 +54,10 @@ namespace Neo.GridSystem
             get
             {
                 if (unityGrid == null)
+                {
                     unityGrid = GetComponent<Grid>();
+                }
+
                 return unityGrid;
             }
         }
@@ -55,9 +66,14 @@ namespace Neo.GridSystem
         {
             I = this;
             if (unityGrid == null)
+            {
                 unityGrid = GetComponent<Grid>();
+            }
+
             if (Cells == null || Cells.Length == 0)
+            {
                 GenerateField();
+            }
         }
 
         private void OnValidate()
@@ -65,7 +81,10 @@ namespace Neo.GridSystem
             if (!Application.isPlaying)
             {
                 if (unityGrid == null)
+                {
                     unityGrid = GetComponent<Grid>();
+                }
+
                 GenerateField();
             }
         }
@@ -76,8 +95,11 @@ namespace Neo.GridSystem
         public void GenerateField(FieldGeneratorConfig config = null)
         {
             if (config != null)
+            {
                 Config = config;
-            var size = Config != null ? Config.Size : Vector3Int.one;
+            }
+
+            Vector3Int size = Config != null ? Config.Size : Vector3Int.one;
             if (size.x <= 0 || size.y <= 0 || size.z <= 0)
             {
                 Debug.LogError("FieldGenerator: Некорректный размер поля! Size: " + size);
@@ -86,11 +108,11 @@ namespace Neo.GridSystem
             }
 
             Cells = new FieldCell[size.x, size.y, size.z];
-            for (var x = 0; x < size.x; x++)
-            for (var y = 0; y < size.y; y++)
-            for (var z = 0; z < size.z; z++)
+            for (int x = 0; x < size.x; x++)
+            for (int y = 0; y < size.y; y++)
+            for (int z = 0; z < size.z; z++)
             {
-                var pos = new Vector3Int(x, y, z);
+                Vector3Int pos = new(x, y, z);
                 Cells[x, y, z] = new FieldCell(pos);
             }
 
@@ -100,9 +122,16 @@ namespace Neo.GridSystem
         // --- Получение ячеек ---
         public FieldCell GetCell(Vector3Int pos)
         {
-            if (Cells == null) return null;
+            if (Cells == null)
+            {
+                return null;
+            }
+
             if (InBounds(pos))
+            {
                 return Cells[pos.x, pos.y, pos.z];
+            }
+
             return null;
         }
 
@@ -118,15 +147,19 @@ namespace Neo.GridSystem
 
         public FieldCell GetCellFromWorld(Vector3 worldPosition)
         {
-            if (UnityGrid == null) return null;
-            var gridPos = UnityGrid.WorldToCell(worldPosition);
+            if (UnityGrid == null)
+            {
+                return null;
+            }
+
+            Vector3Int gridPos = UnityGrid.WorldToCell(worldPosition);
             return GetCell(gridPos);
         }
 
         // --- Проверка границ ---
         public bool InBounds(Vector3Int pos)
         {
-            var s = Config != null ? Config.Size : Vector3Int.zero;
+            Vector3Int s = Config != null ? Config.Size : Vector3Int.zero;
             return pos.x >= 0 && pos.x < s.x && pos.y >= 0 && pos.y < s.y && pos.z >= 0 && pos.z < s.z;
         }
 
@@ -143,7 +176,7 @@ namespace Neo.GridSystem
         // --- Установка ячеек ---
         public void SetCell(Vector3Int pos, int type, bool isWalkable)
         {
-            var cell = GetCell(pos);
+            FieldCell cell = GetCell(pos);
             if (cell != null)
             {
                 cell.Type = type;
@@ -165,16 +198,27 @@ namespace Neo.GridSystem
         // --- Соседи ---
         public List<FieldCell> GetNeighbors(FieldCell cell, IEnumerable<Vector3Int> directions = null)
         {
-            var neighbors = new List<FieldCell>();
-            if (cell == null || Config == null) return neighbors;
-            var dirs = directions ?? (Config.MovementRule != null ? Config.MovementRule.Directions : null);
-            if (dirs == null) return neighbors;
-            foreach (var dir in dirs)
+            List<FieldCell> neighbors = new();
+            if (cell == null || Config == null)
             {
-                var np = cell.Position + dir;
-                var ncell = GetCell(np);
+                return neighbors;
+            }
+
+            IEnumerable<Vector3Int> dirs =
+                directions ?? (Config.MovementRule != null ? Config.MovementRule.Directions : null);
+            if (dirs == null)
+            {
+                return neighbors;
+            }
+
+            foreach (Vector3Int dir in dirs)
+            {
+                Vector3Int np = cell.Position + dir;
+                FieldCell ncell = GetCell(np);
                 if (ncell != null)
+                {
                     neighbors.Add(ncell);
+                }
             }
 
             return neighbors;
@@ -198,31 +242,51 @@ namespace Neo.GridSystem
         // --- Поиск пути ---
         public List<FieldCell> FindPath(Vector3Int start, Vector3Int end, IEnumerable<Vector3Int> directions = null)
         {
-            if (Cells == null) return null;
-            var queue = new Queue<FieldCell>();
-            var visited = new HashSet<FieldCell>();
-            var prev = new Dictionary<FieldCell, FieldCell>();
-            var startCell = GetCell(start);
-            var endCell = GetCell(end);
-            if (startCell == null || endCell == null) return null;
+            if (Cells == null)
+            {
+                return null;
+            }
+
+            Queue<FieldCell> queue = new();
+            HashSet<FieldCell> visited = new();
+            Dictionary<FieldCell, FieldCell> prev = new();
+            FieldCell startCell = GetCell(start);
+            FieldCell endCell = GetCell(end);
+            if (startCell == null || endCell == null)
+            {
+                return null;
+            }
+
             queue.Enqueue(startCell);
             visited.Add(startCell);
             while (queue.Count > 0)
             {
-                var current = queue.Dequeue();
-                if (current == endCell) break;
-                foreach (var neighbor in GetNeighbors(current, directions))
+                FieldCell current = queue.Dequeue();
+                if (current == endCell)
                 {
-                    if (!neighbor.IsWalkable || visited.Contains(neighbor)) continue;
+                    break;
+                }
+
+                foreach (FieldCell neighbor in GetNeighbors(current, directions))
+                {
+                    if (!neighbor.IsWalkable || visited.Contains(neighbor))
+                    {
+                        continue;
+                    }
+
                     queue.Enqueue(neighbor);
                     visited.Add(neighbor);
                     prev[neighbor] = current;
                 }
             }
 
-            if (!visited.Contains(endCell)) return null;
-            var path = new List<FieldCell>();
-            var at = endCell;
+            if (!visited.Contains(endCell))
+            {
+                return null;
+            }
+
+            List<FieldCell> path = new();
+            FieldCell at = endCell;
             while (at != null && prev.ContainsKey(at))
             {
                 path.Add(at);
@@ -250,13 +314,21 @@ namespace Neo.GridSystem
         /// </summary>
         public Vector3 GetCellWorldCenter(Vector3Int cellPos)
         {
-            if (UnityGrid == null) return Vector3.zero;
+            if (UnityGrid == null)
+            {
+                return Vector3.zero;
+            }
+
             return UnityGrid.GetCellCenterWorld(cellPos);
         }
 
         public Vector3 GetCellCornerWorld(Vector3Int cellPos)
         {
-            if (UnityGrid == null) return Vector3.zero;
+            if (UnityGrid == null)
+            {
+                return Vector3.zero;
+            }
+
             return UnityGrid.CellToWorld(cellPos);
         }
 

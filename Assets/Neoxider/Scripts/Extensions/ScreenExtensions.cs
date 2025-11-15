@@ -13,9 +13,12 @@ namespace Neo.Extensions
         public static bool IsOnScreen(this Vector3 position, Camera camera = null)
         {
             camera = camera ?? Camera.main;
-            if (camera == null) return false;
+            if (camera == null)
+            {
+                return false;
+            }
 
-            var viewportPoint = camera.WorldToViewportPoint(position);
+            Vector3 viewportPoint = camera.WorldToViewportPoint(position);
             return viewportPoint.x >= 0 && viewportPoint.x <= 1 &&
                    viewportPoint.y >= 0 && viewportPoint.y <= 1 &&
                    viewportPoint.z >= 0;
@@ -42,9 +45,12 @@ namespace Neo.Extensions
         public static bool IsOutOfScreenSide(this Vector3 position, ScreenEdge side, Camera camera = null)
         {
             camera = camera ?? Camera.main;
-            if (camera == null) return false;
+            if (camera == null)
+            {
+                return false;
+            }
 
-            var viewportPoint = camera.WorldToViewportPoint(position);
+            Vector3 viewportPoint = camera.WorldToViewportPoint(position);
 
             return side switch
             {
@@ -67,11 +73,17 @@ namespace Neo.Extensions
         public static Vector3 GetClosestScreenEdgePoint(this Vector3 position, Camera camera = null)
         {
             camera = camera ?? Camera.main;
-            if (camera == null) return position;
+            if (camera == null)
+            {
+                return position;
+            }
 
-            var viewportPoint = camera.WorldToViewportPoint(position);
+            Vector3 viewportPoint = camera.WorldToViewportPoint(position);
 
-            if (position.IsOnScreen(camera)) return position;
+            if (position.IsOnScreen(camera))
+            {
+                return position;
+            }
 
             viewportPoint.x = Mathf.Clamp01(viewportPoint.x);
             viewportPoint.y = Mathf.Clamp01(viewportPoint.y);
@@ -93,14 +105,18 @@ namespace Neo.Extensions
             Vector2 offset = default,
             float depth = 0f)
         {
-            if (camera == null) camera = Camera.main;
+            if (camera == null)
+            {
+                camera = Camera.main;
+            }
+
             if (camera == null)
             {
                 Debug.LogError("No camera available!");
                 return Vector3.zero;
             }
 
-            var screenPosition = GetEdgePosition(edge) + offset;
+            Vector2 screenPosition = GetEdgePosition(edge) + offset;
             return camera.ScreenPointToWorldPosition(screenPosition, depth);
         }
 
@@ -112,13 +128,20 @@ namespace Neo.Extensions
         /// <returns>A Bounds object representing the viewable area in world space.</returns>
         public static Bounds GetWorldScreenBounds(this Camera camera, float distance)
         {
-            if (camera == null) camera = Camera.main;
-            if (camera == null) return new Bounds(Vector3.zero, Vector3.zero);
+            if (camera == null)
+            {
+                camera = Camera.main;
+            }
 
-            var lowerLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, distance));
-            var upperRight = camera.ViewportToWorldPoint(new Vector3(1, 1, distance));
+            if (camera == null)
+            {
+                return new Bounds(Vector3.zero, Vector3.zero);
+            }
 
-            var bounds = new Bounds();
+            Vector3 lowerLeft = camera.ViewportToWorldPoint(new Vector3(0, 0, distance));
+            Vector3 upperRight = camera.ViewportToWorldPoint(new Vector3(1, 1, distance));
+
+            Bounds bounds = new();
             bounds.SetMinMax(lowerLeft, upperRight);
             return bounds;
         }

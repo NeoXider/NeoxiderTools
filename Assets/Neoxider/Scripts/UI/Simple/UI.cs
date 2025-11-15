@@ -6,10 +6,12 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace UI
     {
+        [AddComponentMenu("Neo/" + "UI/" + nameof(UI))]
         public class UI : MonoBehaviour
         {
             public static UI I;
@@ -39,25 +41,33 @@ namespace Neo
                 I = this;
 
                 if (id >= 0)
+                {
                     SetPage(startId);
+                }
             }
 
             private void OnValidate()
             {
                 if (!Application.isPlaying && is_debug_change)
+                {
                     SetPage(id);
+                }
 
                 if (_setChild)
                 {
                     _setChild = false;
 
-                    var childs = new List<GameObject>();
+                    List<GameObject> childs = new();
 
-                    var parent = _parentPages != null ? _parentPages.transform : transform;
+                    Transform parent = _parentPages != null ? _parentPages.transform : transform;
 
                     foreach (Transform child in parent)
+                    {
                         if (child.gameObject != gameObject)
+                        {
                             childs.Add(child.gameObject);
+                        }
+                    }
 
                     _pages = childs.ToArray();
                 }
@@ -70,26 +80,29 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void SetPage(int id)
             {
                 this.id = id;
-                _pages.SetActiveAll(false).SetActiveAtIndex(id, true);
+                _pages.SetActiveAll(false).SetActiveAtIndex(id);
 
                 OnChangePage?.Invoke(id);
 
-                if (id == 0) OnStartPage?.Invoke();
+                if (id == 0)
+                {
+                    OnStartPage?.Invoke();
+                }
             }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void SetOnePage(int id)
             {
                 _pages.SetActiveAtIndex(id, false);
-                _pages.SetActiveAtIndex(id, true);
+                _pages.SetActiveAtIndex(id);
 
                 OnChangePage?.Invoke(id);
             }
@@ -120,12 +133,21 @@ namespace Neo
 
                 yield return new WaitForSeconds(_timeDelay);
 
-                if (one) SetOnePage(id);
-                else SetPage(id);
+                if (one)
+                {
+                    SetOnePage(id);
+                }
+                else
+                {
+                    SetPage(id);
+                }
 
                 yield return new WaitForSeconds(_timeDelay);
 
-                if (_animator != null) _animator.gameObject.SetActive(false);
+                if (_animator != null)
+                {
+                    _animator.gameObject.SetActive(false);
+                }
             }
 
             public void SetCurrtentPage(bool active)

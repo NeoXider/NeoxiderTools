@@ -1,16 +1,16 @@
-﻿using Neo.Tools;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
-        /// <summary>
-        ///     EventManager GameStates
-        /// </summary>
-        public class EM : Singleton<EM>
+    /// <summary>
+    ///     EventManager GameStates
+    /// </summary>
+    public class EM : Singleton<EM>
     {
         [FormerlySerializedAs("OnMenuState")] [Header("Game Events")]
         public UnityEvent OnMenu;
@@ -40,7 +40,7 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
         public static void Preparing()
         {
@@ -49,90 +49,90 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void GameStart()
+        public static void GameStart()
         {
             I?.OnGameStart?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Lose()
+        public static void Lose()
         {
             I?.OnLose?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Win()
+        public static void Win()
         {
             I?.OnWin?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void End()
+        public static void End()
         {
             I?.OnEnd?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void StopGame()
+        public static void StopGame()
         {
             I?.OnStopGame?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void PlayerDied()
+        public static void PlayerDied()
         {
             I?.OnPlayerDeath?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Pause()
+        public static void Pause()
         {
             I?.OnPause?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Resume()
+        public static void Resume()
         {
             I?.OnResume?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Menu()
+        public static void Menu()
         {
             I?.OnMenu?.Invoke();
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public static void Restart()
+        public static void Restart()
         {
             I?.OnRestart?.Invoke();
         }

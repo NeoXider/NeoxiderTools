@@ -3,11 +3,12 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Tools
     {
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {
             public bool value;
@@ -30,7 +31,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Toggle()
             {
@@ -39,7 +40,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Set(bool value)
             {
@@ -49,9 +50,13 @@ namespace Neo
                 OnChangeFlip?.Invoke(!value);
 
                 if (value)
+                {
                     ON?.Invoke();
+                }
                 else
+                {
                     OFF?.Invoke();
+                }
             }
         }
     }

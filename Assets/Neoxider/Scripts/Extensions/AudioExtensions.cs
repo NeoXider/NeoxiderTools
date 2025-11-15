@@ -18,7 +18,11 @@ namespace Neo.Extensions
         public static CoroutineExtensions.CoroutineHandle FadeTo(this AudioSource source, float targetVolume,
             float duration)
         {
-            if (source == null) return null;
+            if (source == null)
+            {
+                return null;
+            }
+
             targetVolume = Mathf.Clamp01(targetVolume);
 
             return CoroutineExtensions.Start(FadeToRoutine(source, targetVolume, duration));
@@ -49,12 +53,15 @@ namespace Neo.Extensions
 
         private static IEnumerator FadeToRoutine(AudioSource source, float targetVolume, float duration)
         {
-            var startVolume = source.volume;
+            float startVolume = source.volume;
             float timer = 0;
 
             while (timer < duration)
             {
-                if (source == null) yield break; // Stop if the source is destroyed
+                if (source == null)
+                {
+                    yield break; // Stop if the source is destroyed
+                }
 
                 timer += Time.deltaTime;
                 source.volume = Mathf.Lerp(startVolume, targetVolume, timer / duration);
@@ -64,7 +71,10 @@ namespace Neo.Extensions
             if (source != null)
             {
                 source.volume = targetVolume;
-                if (targetVolume == 0) source.Stop();
+                if (targetVolume == 0)
+                {
+                    source.Stop();
+                }
             }
         }
     }

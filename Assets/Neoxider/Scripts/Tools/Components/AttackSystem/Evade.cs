@@ -9,11 +9,10 @@ namespace Neo.Tools
     /// <summary>
     ///     Component that handles evade mechanics with cooldown system
     /// </summary>
-    [AddComponentMenu("Neoxider/Tools/EvadeManager")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Evade))]
     public class Evade : MonoBehaviour
     {
-        [Header("Evade Settings")]
-        [Tooltip("Duration of the evade action in seconds")]
+        [Header("Evade Settings")] [Tooltip("Duration of the evade action in seconds")]
         public float evadeDuration = 1f;
 
         [Tooltip("Cooldown time between evades in seconds")]
@@ -22,8 +21,7 @@ namespace Neo.Tools
         [Tooltip("If true, cooldown starts immediately with evade")]
         public bool reloadImmediately = true;
 
-        [Header("Events")]
-        [Tooltip("Called when evade action starts")]
+        [Header("Events")] [Tooltip("Called when evade action starts")]
         public UnityEvent OnEvadeStarted;
 
         [Tooltip("Called with cooldown progress (0-1)")]
@@ -62,7 +60,10 @@ namespace Neo.Tools
 
         private void OnDestroy()
         {
-            if (reloadTimer != null) reloadTimer.Stop();
+            if (reloadTimer != null)
+            {
+                reloadTimer.Stop();
+            }
         }
 
         private void InitializeTimer()
@@ -79,16 +80,22 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void StartEvade()
+        public void StartEvade()
         {
-            if (IsOnCooldown) return;
+            if (IsOnCooldown)
+            {
+                return;
+            }
 
             IsEvading = true;
             OnEvadeStarted.Invoke();
 
-            if (reloadImmediately) reloadTimer.Start();
+            if (reloadImmediately)
+            {
+                reloadTimer.Start();
+            }
 
             Invoke(nameof(CompleteEvade), evadeDuration);
         }
@@ -98,7 +105,10 @@ namespace Neo.Tools
             IsEvading = false;
             OnEvadeCompleted.Invoke();
 
-            if (!reloadImmediately) reloadTimer.Start();
+            if (!reloadImmediately)
+            {
+                reloadTimer.Start();
+            }
         }
 
         /// <summary>

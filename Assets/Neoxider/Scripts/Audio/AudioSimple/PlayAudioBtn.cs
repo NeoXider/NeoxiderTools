@@ -5,7 +5,7 @@ namespace Neo
 {
     namespace Audio
     {
-        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudioBtn))]
+        [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudioBtn))]
         public class PlayAudioBtn : MonoBehaviour
         {
             [SerializeField] private int _idClip;
@@ -15,13 +15,17 @@ namespace Neo
             private void OnEnable()
             {
                 if (_button != null)
+                {
                     _button.onClick.AddListener(AudioPlay);
+                }
             }
 
             private void OnDisable()
             {
                 if (_button != null)
+                {
                     _button.onClick.RemoveListener(AudioPlay);
+                }
             }
 
             public void AudioPlay()

@@ -4,6 +4,7 @@ using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Audio
@@ -15,7 +16,7 @@ namespace Neo
             [Range(0f, 1f)] public float volume = 1;
         }
 
-        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AM))]
+        [AddComponentMenu("Neo/" + "Audio/" + nameof(AM))]
         public class AM : Singleton<AM>
         {
             [SerializeField] private AudioSource _efx;
@@ -34,30 +35,36 @@ namespace Neo
                 base.Init();
 
                 if (_musicClips.Length > 0)
+                {
                     PlayMusic(0);
+                }
             }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Play(int id, float volume)
             {
                 if (id >= 0 && id < _sounds.Length)
+                {
                     _efx.PlayOneShot(_sounds[id].clip, Mathf.Clamp(volume, 0f, 1f));
+                }
                 else
+                {
                     Debug.LogWarning($"Sound ID {id} is out of range.");
+                }
             }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Play(int id)
             {
                 if (id >= 0 && id < _sounds.Length)
                 {
-                    var soundMultiplier = _sounds[id].volume;
+                    float soundMultiplier = _sounds[id].volume;
                     soundMultiplier = soundMultiplier == 0 ? 1 : soundMultiplier;
                     Play(id, soundMultiplier);
                 }
@@ -69,7 +76,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void PlayMusic(int id, float volume)
             {
@@ -87,7 +94,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void PlayMusic(int id)
             {
@@ -97,9 +104,13 @@ namespace Neo
             public void SetVolume(float volume, bool efx)
             {
                 if (efx)
+                {
                     _efx.volume = Mathf.Clamp(volume, 0f, 1f);
+                }
                 else
+                {
                     _music.volume = Mathf.Clamp(volume, 0f, 1f);
+                }
             }
 
             /// <summary>
@@ -108,21 +119,32 @@ namespace Neo
             public void ApplyStartVolumes()
             {
                 if (_efx != null)
+                {
                     _efx.volume = startVolumeEfx;
+                }
+
                 if (_music != null)
+                {
                     _music.volume = startVolumeMusic;
+                }
             }
 
             private void OnValidate()
             {
-                if (_music == null) CreateMusic();
+                if (_music == null)
+                {
+                    CreateMusic();
+                }
 
-                if (_efx == null) CreateEfx();
+                if (_efx == null)
+                {
+                    CreateEfx();
+                }
             }
 
             private void CreateMusic()
             {
-                var obj = new GameObject("Music");
+                GameObject obj = new("Music");
                 obj.transform.SetParent(transform, false);
 
                 _music = obj.AddComponent<AudioSource>();
@@ -133,7 +155,7 @@ namespace Neo
 
             private void CreateEfx()
             {
-                var obj = new GameObject("Efx");
+                GameObject obj = new("Efx");
                 obj.transform.SetParent(transform, false);
 
                 _efx = obj.AddComponent<AudioSource>();

@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {
         public bool useMove = true;
@@ -24,12 +25,12 @@ namespace Neo.Tools
 
         private void Start()
         {
-            var idPlayer = Leaderboard.I.GetIdPlayer();
+            int idPlayer = Leaderboard.I.GetIdPlayer();
 
             if (idPlayer >= 0)
             {
                 print("move to " + idPlayer + " pos");
-                var targetItem = Leaderboard.I.leaderboardItems[idPlayer];
+                LeaderboardItem targetItem = Leaderboard.I.leaderboardItems[idPlayer];
 
                 starScale = targetItem.transform.localScale.x;
             }
@@ -39,33 +40,44 @@ namespace Neo.Tools
         {
             Enable?.Invoke();
 
-            if (useMove) Invoke(nameof(Move), delayTime);
+            if (useMove)
+            {
+                Invoke(nameof(Move), delayTime);
+            }
 
             if (useSortEnable)
+            {
                 if (Leaderboard.I != null)
+                {
                     Leaderboard.I.Sort();
+                }
+            }
         }
 
         public void Move()
         {
-            var idPlayer = Leaderboard.I.GetIdPlayer();
+            int idPlayer = Leaderboard.I.GetIdPlayer();
 
             if (idPlayer >= 0)
             {
                 print("move to " + idPlayer + " pos");
-                var targetItem = Leaderboard.I.leaderboardItems[idPlayer];
-                var targetPos = transform.position - targetItem.transform.position;
+                LeaderboardItem targetItem = Leaderboard.I.leaderboardItems[idPlayer];
+                Vector3 targetPos = transform.position - targetItem.transform.position;
 
                 transform.DOMoveY(targetPos.y + offsetY, timeMove)
                     .SetEase(Ease.Linear)
                     .OnComplete(() =>
                     {
                         if (useAnimPlayer)
+                        {
                             targetItem.transform.DOScale(scale, durationAnimPlayer).OnComplete(() =>
                             {
                                 if (useAnimStartScale)
+                                {
                                     targetItem.transform.DOScale(1, durationAnimPlayer);
+                                }
                             });
+                        }
                     });
             }
             else

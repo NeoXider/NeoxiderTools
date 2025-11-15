@@ -13,7 +13,11 @@ namespace Neo.Save
         {
             get
             {
-                if (_data == null) LoadingData();
+                if (_data == null)
+                {
+                    LoadingData();
+                }
+
                 return _data;
             }
             set
@@ -29,8 +33,12 @@ namespace Neo.Save
         {
             try
             {
-                var jsonData = PlayerPrefs.GetString(saveData, string.Empty);
-                if (!string.IsNullOrEmpty(jsonData)) _data = JsonUtility.FromJson<GlobalData>(jsonData);
+                string jsonData = PlayerPrefs.GetString(saveData, string.Empty);
+                if (!string.IsNullOrEmpty(jsonData))
+                {
+                    _data = JsonUtility.FromJson<GlobalData>(jsonData);
+                }
+
                 IsReady = true;
             }
             catch (Exception e)
@@ -43,7 +51,7 @@ namespace Neo.Save
         {
             try
             {
-                var jsonData = JsonUtility.ToJson(_data);
+                string jsonData = JsonUtility.ToJson(_data);
                 PlayerPrefs.SetString(saveData, jsonData);
             }
             catch (Exception e)

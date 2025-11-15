@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 namespace Neo
 {
+    [AddComponentMenu("Neo/" + "UI/" + nameof(FakeLoad))]
     public class FakeLoad : MonoBehaviour
     {
         private static bool isInitialized;
@@ -18,14 +19,17 @@ namespace Neo
 
         private void Awake()
         {
-            if (_loadOnAwake) Load();
+            if (_loadOnAwake)
+            {
+                Load();
+            }
         }
 
         public void Load()
         {
             if (!isLoadOne || (isLoadOne && !isInitialized))
             {
-                var time = Random.Range(timeLoad.x, timeLoad.y);
+                float time = Random.Range(timeLoad.x, timeLoad.y);
                 OnStart?.Invoke();
                 StartCoroutine(Loading(time));
                 isInitialized = true;
@@ -38,7 +42,7 @@ namespace Neo
 
             while (timer < time)
             {
-                var percent = timer / time;
+                float percent = timer / time;
                 OnChange?.Invoke(percent);
                 OnChangePercent?.Invoke((int)(percent * 100));
                 yield return null;

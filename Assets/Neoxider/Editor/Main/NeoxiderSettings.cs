@@ -71,7 +71,11 @@ namespace Neo
         {
             get
             {
-                if (currentSettings == null) LoadSettings();
+                if (currentSettings == null)
+                {
+                    LoadSettings();
+                }
+
                 return currentSettings;
             }
             internal set => currentSettings = value;
@@ -85,7 +89,10 @@ namespace Neo
             get
             {
                 if (sceneHierarchyInstance == null)
+                {
                     sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+                }
+
                 return sceneHierarchyInstance;
             }
         }
@@ -126,7 +133,10 @@ namespace Neo
         public static string GetRelativePath(string absolutePath)
         {
             if (absolutePath.StartsWith(Application.dataPath))
+            {
                 return "Assets" + absolutePath.Substring(Application.dataPath.Length);
+            }
+
             return absolutePath;
         }
 
@@ -140,7 +150,11 @@ namespace Neo
         public static void ResetToDefaults()
         {
             currentSettings = new NeoxiderData();
-            if (sceneHierarchyInstance != null) Object.DestroyImmediate(sceneHierarchyInstance);
+            if (sceneHierarchyInstance != null)
+            {
+                Object.DestroyImmediate(sceneHierarchyInstance);
+            }
+
             sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
             SaveSettings();
         }
@@ -154,7 +168,7 @@ namespace Neo
             {
                 if (File.Exists(SettingsPath))
                 {
-                    var json = File.ReadAllText(SettingsPath);
+                    string json = File.ReadAllText(SettingsPath);
                     currentSettings = JsonUtility.FromJson<NeoxiderData>(json);
                 }
             }
@@ -163,11 +177,16 @@ namespace Neo
                 Debug.LogError($"Failed to load Neoxider settings: {e.Message}");
             }
 
-            if (currentSettings == null) currentSettings = new NeoxiderData();
+            if (currentSettings == null)
+            {
+                currentSettings = new NeoxiderData();
+            }
 
             // Create scene hierarchy instance
             if (sceneHierarchyInstance == null)
+            {
                 sceneHierarchyInstance = ScriptableObject.CreateInstance<CreateSceneHierarchy>();
+            }
         }
 
         /// <summary>
@@ -175,11 +194,14 @@ namespace Neo
         /// </summary>
         public static void SaveSettings()
         {
-            if (currentSettings == null) return;
+            if (currentSettings == null)
+            {
+                return;
+            }
 
             try
             {
-                var json = JsonUtility.ToJson(currentSettings, true);
+                string json = JsonUtility.ToJson(currentSettings, true);
                 File.WriteAllText(SettingsPath, json);
 
 #if UNITY_EDITOR

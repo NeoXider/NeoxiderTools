@@ -4,7 +4,6 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
-using Neo;
 
 namespace Neo.Editor
 {
@@ -18,6 +17,8 @@ namespace Neo.Editor
             BindingFlags.Public |
             BindingFlags.NonPublic |
             BindingFlags.Instance;
+
+        private static bool? _odinInspectorAvailable;
 
         protected Dictionary<string, bool> _buttonFoldouts = new();
 
@@ -47,11 +48,9 @@ namespace Neo.Editor
         protected static Object[] FindObjectsByType(Type type,
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
-            return Object.FindObjectsByType(type, sortMode); 
-        } 
+            return Object.FindObjectsByType(type, sortMode);
+        }
 
-        private static bool? _odinInspectorAvailable = null;
-        
         /// <summary>
         ///     Проверяет, установлен ли Odin Inspector в проекте
         /// </summary>
@@ -59,43 +58,50 @@ namespace Neo.Editor
         {
             // Кэшируем результат проверки
             if (_odinInspectorAvailable.HasValue)
+            {
                 return _odinInspectorAvailable.Value;
-             
+            }
+
             // Проверяем наличие Odin Inspector через рефлексию
             try
             {
-                var odinInspectorType = System.Type.GetType("Sirenix.OdinInspector.Editor.OdinInspector, Sirenix.OdinInspector.Editor");
+                Type odinInspectorType =
+                    Type.GetType("Sirenix.OdinInspector.Editor.OdinInspector, Sirenix.OdinInspector.Editor");
                 _odinInspectorAvailable = odinInspectorType != null;
             }
             catch
             {
                 _odinInspectorAvailable = false;
             }
-            
+
             return _odinInspectorAvailable.Value;
         }
 
         public override void OnInspectorGUI()
         {
             // Check if Reset was pressed
-            if (Event.current.commandName == "Reset") _wasResetPressed = true;
+            if (Event.current.commandName == "Reset")
+            {
+                _wasResetPressed = true;
+            }
 
             // Проверяем, установлен ли Odin Inspector
             // Если Odin Inspector активен, он сам обрабатывает кнопки и оформление
             // Поэтому мы пропускаем наше оформление и кнопки, чтобы не дублировать
-            var isOdinActive = IsOdinInspectorAvailable();
+            bool isOdinActive = IsOdinInspectorAvailable();
 
             // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
-            var hasNeoNamespace = target != null && target.GetType().Namespace != null && 
-                                  (target.GetType().Namespace == "Neo" || target.GetType().Namespace.StartsWith("Neo."));
+            bool hasNeoNamespace = target != null && target.GetType().Namespace != null &&
+                                   (target.GetType().Namespace == "Neo" ||
+                                    target.GetType().Namespace.StartsWith("Neo."));
 
             // Draw "by Neoxider" signature and background for all Neo components
             // Фон и подпись рисуем всегда для Neo компонентов, независимо от Odin Inspector
             if (hasNeoNamespace)
             {
                 DrawNeoxiderSignature();
-                
-                var originalBgColor = GUI.backgroundColor;
+
+                Color originalBgColor = GUI.backgroundColor;
                 GUI.backgroundColor = CustomEditorSettings.NeoBackgroundColor;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 GUI.backgroundColor = originalBgColor;
@@ -132,10 +138,10 @@ namespace Neo.Editor
         protected virtual void DrawNeoxiderSignature()
         {
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
-            
-            var originalTextColor = GUI.color;
+
+            Color originalTextColor = GUI.color;
             GUI.color = CustomEditorSettings.SignatureColor;
-            var style = new GUIStyle(EditorStyles.centeredGreyMiniLabel)
+            GUIStyle style = new(EditorStyles.centeredGreyMiniLabel)
             {
                 fontSize = CustomEditorSettings.SignatureFontSize,
                 alignment = TextAnchor.MiddleLeft,
@@ -144,54 +150,45 @@ namespace Neo.Editor
             };
             EditorGUILayout.LabelField("by Neoxider", style);
             GUI.color = originalTextColor;
-            
+
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
         }
 
         protected abstract void ProcessAttributeAssignments();
 
         /// <summary>
-        ///     Структура для хранения информации о кнопке из разных типов ButtonAttribute
-        /// </summary>
-        protected struct ButtonInfo
-        {
-            public string ButtonName;
-            public float Width;
-
-            public ButtonInfo(string name, float width)
-            {
-                ButtonName = name;
-                Width = width;
-            }
-        }
-
-        /// <summary>
         ///     Находит ButtonAttribute из Neo или Odin Inspector и извлекает информацию
         /// </summary>
         protected ButtonInfo? FindButtonAttribute(MethodInfo method)
         {
-            if (method == null) return null;
+            if (method == null)
+            {
+                return null;
+            }
 
             // Получаем все атрибуты и проверяем их по типу
             // Это более надежный способ, так как не зависит от using директив
-            var allAttributes = method.GetCustomAttributes(false);
-            
-            foreach (var attr in allAttributes)
+            object[] allAttributes = method.GetCustomAttributes(false);
+
+            foreach (object attr in allAttributes)
             {
-                if (attr == null) continue;
-                
-                var attrType = attr.GetType();
-                var fullName = attrType.FullName;
-                var typeName = attrType.Name;
-                var namespaceName = attrType.Namespace;
-                
+                if (attr == null)
+                {
+                    continue;
+                }
+
+                Type attrType = attr.GetType();
+                string fullName = attrType.FullName;
+                string typeName = attrType.Name;
+                string namespaceName = attrType.Namespace;
+
                 // Сначала проверяем Neo.ButtonAttribute (приоритет)
-                if (fullName == "Neo.ButtonAttribute" || 
+                if (fullName == "Neo.ButtonAttribute" ||
                     (namespaceName == "Neo" && typeName == "ButtonAttribute"))
                 {
                     try
                     {
-                        var neoAttr = attr as ButtonAttribute;
+                        ButtonAttribute neoAttr = attr as ButtonAttribute;
                         if (neoAttr != null)
                         {
                             // Neo.ButtonAttribute всегда рисуем, независимо от Odin Inspector
@@ -203,7 +200,7 @@ namespace Neo.Editor
                         // Ignore
                     }
                 }
-                
+
                 // Затем проверяем Odin Inspector ButtonAttribute
                 if (namespaceName == "Sirenix.OdinInspector" && typeName == "ButtonAttribute")
                 {
@@ -212,24 +209,27 @@ namespace Neo.Editor
                     try
                     {
                         // Извлекаем информацию из Odin Inspector ButtonAttribute через рефлексию
-                        var nameProperty = attrType.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
+                        PropertyInfo nameProperty =
+                            attrType.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
                         if (nameProperty == null)
                         {
-                            nameProperty = attrType.GetProperty("ButtonName", BindingFlags.Public | BindingFlags.Instance);
+                            nameProperty = attrType.GetProperty("ButtonName",
+                                BindingFlags.Public | BindingFlags.Instance);
                         }
-                        
-                        var name = nameProperty?.GetValue(attr) as string;
-                        
+
+                        string name = nameProperty?.GetValue(attr) as string;
+
                         if (string.IsNullOrEmpty(name))
                         {
                             name = null;
                         }
-                        
+
                         float width = 120f;
-                        var widthProperty = attrType.GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
+                        PropertyInfo widthProperty =
+                            attrType.GetProperty("Width", BindingFlags.Public | BindingFlags.Instance);
                         if (widthProperty != null)
                         {
-                            var widthValue = widthProperty.GetValue(attr);
+                            object widthValue = widthProperty.GetValue(attr);
                             if (widthValue is float f)
                             {
                                 width = f;
@@ -239,7 +239,7 @@ namespace Neo.Editor
                                 width = i;
                             }
                         }
-                        
+
                         return new ButtonInfo(name, width);
                     }
                     catch
@@ -248,11 +248,11 @@ namespace Neo.Editor
                     }
                 }
             }
-            
+
             // Fallback: пробуем найти через типизированный поиск (для совместимости)
             try
             {
-                var neoButtonAttribute = method.GetCustomAttribute<ButtonAttribute>();
+                ButtonAttribute neoButtonAttribute = method.GetCustomAttribute<ButtonAttribute>();
                 if (neoButtonAttribute != null)
                 {
                     return new ButtonInfo(neoButtonAttribute.ButtonName, neoButtonAttribute.Width);
@@ -262,7 +262,7 @@ namespace Neo.Editor
             {
                 // Ignore
             }
-            
+
             return null;
         }
 
@@ -274,49 +274,57 @@ namespace Neo.Editor
                 return;
             }
 
-            var methods = target.GetType().GetMethods(
+            MethodInfo[] methods = target.GetType().GetMethods(
                 BindingFlags.Instance
                 | BindingFlags.Static
-                | BindingFlags.Public 
+                | BindingFlags.Public
                 | BindingFlags.NonPublic);
 
-            foreach (var method in methods)
+            foreach (MethodInfo method in methods)
             {
-                if (method == null) continue;
+                if (method == null)
+                {
+                    continue;
+                }
 
                 // Ищем ButtonAttribute из Neo или Odin Inspector
-                var buttonInfo = FindButtonAttribute(method);
-                if (!buttonInfo.HasValue) continue;
-                
+                ButtonInfo? buttonInfo = FindButtonAttribute(method);
+                if (!buttonInfo.HasValue)
+                {
+                    continue;
+                }
+
                 // Проверяем, установлен ли Odin Inspector, но все равно рисуем кнопки
                 // Это гарантирует, что кнопки будут видны даже если Odin Inspector не рисует их
-                
-                var buttonAttribute = buttonInfo.Value;
 
-                var parameters = method.GetParameters();
-                var buttonText = string.IsNullOrEmpty(buttonAttribute.ButtonName)
+                ButtonInfo buttonAttribute = buttonInfo.Value;
+
+                ParameterInfo[] parameters = method.GetParameters();
+                string buttonText = string.IsNullOrEmpty(buttonAttribute.ButtonName)
                     ? method.Name
                     : buttonAttribute.ButtonName;
 
-                if (buttonText.Length > CustomEditorSettings.ButtonTextMaxLength) 
+                if (buttonText.Length > CustomEditorSettings.ButtonTextMaxLength)
+                {
                     buttonText = buttonText.Substring(0, CustomEditorSettings.ButtonTextMaxLength - 2) + "...";
+                }
 
                 EditorGUILayout.BeginHorizontal();
 
                 // Store original GUI colors
-                var originalBgColor = GUI.backgroundColor;
-                var originalTextColor = GUI.contentColor;
-                var originalColor = GUI.color;
-                
+                Color originalBgColor = GUI.backgroundColor;
+                Color originalTextColor = GUI.contentColor;
+                Color originalColor = GUI.color;
+
                 // Create custom button style with cyberpunk look
-                var buttonStyle = new GUIStyle(EditorStyles.miniButton)
+                GUIStyle buttonStyle = new(EditorStyles.miniButton)
                 {
                     normal = { textColor = CustomEditorSettings.ButtonTextColor },
                     hover = { textColor = CustomEditorSettings.ButtonTextColor },
                     active = { textColor = CustomEditorSettings.ButtonTextColor },
                     focused = { textColor = CustomEditorSettings.ButtonTextColor }
                 };
-                
+
                 // Set cyberpunk purple background for button
                 GUI.backgroundColor = CustomEditorSettings.ButtonBackgroundColor;
                 GUI.contentColor = CustomEditorSettings.ButtonTextColor;
@@ -324,18 +332,25 @@ namespace Neo.Editor
 
                 // Draw button on the left with compact style
                 if (GUILayout.Button(buttonText, buttonStyle, GUILayout.Width(buttonAttribute.Width)))
+                {
                     try
                     {
-                        var paramValues = new object[parameters.Length];
-                        for (var i = 0; i < parameters.Length; i++)
+                        object[] paramValues = new object[parameters.Length];
+                        for (int i = 0; i < parameters.Length; i++)
                         {
-                            var param = parameters[i];
-                            if (param == null) continue;
+                            ParameterInfo param = parameters[i];
+                            if (param == null)
+                            {
+                                continue;
+                            }
 
-                            var key = $"{method.Name}_{param.Name}";
+                            string key = $"{method.Name}_{param.Name}";
                             object value = null;
 
-                            if (!_isFirstRun.ContainsKey(key)) _isFirstRun[key] = true;
+                            if (!_isFirstRun.ContainsKey(key))
+                            {
+                                _isFirstRun[key] = true;
+                            }
 
                             if (_isFirstRun[key] && param.HasDefaultValue)
                             {
@@ -343,7 +358,7 @@ namespace Neo.Editor
                                 _buttonParameterValues[key] = value;
                                 _isFirstRun[key] = false;
                             }
-                            else if (_buttonParameterValues.TryGetValue(key, out var storedValue))
+                            else if (_buttonParameterValues.TryGetValue(key, out object storedValue))
                             {
                                 value = storedValue;
                             }
@@ -365,15 +380,20 @@ namespace Neo.Editor
                         }
 
                         if (method.IsStatic)
+                        {
                             method.Invoke(null, paramValues);
+                        }
                         else
+                        {
                             method.Invoke(target, paramValues);
+                        }
                     }
                     catch (Exception e)
                     {
                         Debug.LogError(
                             $"Error calling method {method.Name}: {e.InnerException?.Message ?? e.Message}\nStack trace: {e.InnerException?.StackTrace ?? e.StackTrace}");
                     }
+                }
 
                 // Restore original GUI colors
                 GUI.backgroundColor = originalBgColor;
@@ -386,8 +406,11 @@ namespace Neo.Editor
                 // Draw parameters foldout on the right
                 if (parameters.Length > 0)
                 {
-                    var foldoutKey = $"{method.Name}_foldout";
-                    if (!_buttonFoldouts.ContainsKey(foldoutKey)) _buttonFoldouts[foldoutKey] = false;
+                    string foldoutKey = $"{method.Name}_foldout";
+                    if (!_buttonFoldouts.ContainsKey(foldoutKey))
+                    {
+                        _buttonFoldouts[foldoutKey] = false;
+                    }
 
                     EditorGUILayout.BeginVertical();
                     _buttonFoldouts[foldoutKey] =
@@ -403,15 +426,21 @@ namespace Neo.Editor
                         // Begin vertical group for parameters
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-                        for (var i = 0; i < parameters.Length; i++)
+                        for (int i = 0; i < parameters.Length; i++)
                         {
-                            var param = parameters[i];
-                            if (param == null) continue;
+                            ParameterInfo param = parameters[i];
+                            if (param == null)
+                            {
+                                continue;
+                            }
 
-                            var key = $"{method.Name}_{param.Name}";
+                            string key = $"{method.Name}_{param.Name}";
                             object value = null;
 
-                            if (!_isFirstRun.ContainsKey(key)) _isFirstRun[key] = true;
+                            if (!_isFirstRun.ContainsKey(key))
+                            {
+                                _isFirstRun[key] = true;
+                            }
 
                             if (_isFirstRun[key] && param.HasDefaultValue)
                             {
@@ -419,7 +448,7 @@ namespace Neo.Editor
                                 _buttonParameterValues[key] = value;
                                 _isFirstRun[key] = false;
                             }
-                            else if (_buttonParameterValues.TryGetValue(key, out var storedValue))
+                            else if (_buttonParameterValues.TryGetValue(key, out object storedValue))
                             {
                                 value = storedValue;
                             }
@@ -430,7 +459,7 @@ namespace Neo.Editor
                             }
 
                             EditorGUI.BeginChangeCheck();
-                            var newValue = DrawParameterField(param.Name, value, param.ParameterType);
+                            object newValue = DrawParameterField(param.Name, value, param.ParameterType);
                             if (EditorGUI.EndChangeCheck())
                             {
                                 _buttonParameterValues[key] = newValue;
@@ -460,7 +489,7 @@ namespace Neo.Editor
                 EditorGUILayout.BeginHorizontal();
 
                 // Remove any existing indent
-                var indent = EditorGUI.indentLevel;
+                int indent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
 
                 object result = null;
@@ -478,7 +507,7 @@ namespace Neo.Editor
                 }
                 else if (type == typeof(bool))
                 {
-                    var currentValue = value is bool boolValue ? boolValue : false;
+                    bool currentValue = value is bool boolValue ? boolValue : false;
                     result = EditorGUILayout.Toggle(label, currentValue);
                 }
                 else if (type == typeof(GameObject))
@@ -491,7 +520,10 @@ namespace Neo.Editor
                 }
                 else if (type.IsEnum)
                 {
-                    if (value == null || !type.IsInstanceOfType(value)) value = Enum.GetValues(type).GetValue(0);
+                    if (value == null || !type.IsInstanceOfType(value))
+                    {
+                        value = Enum.GetValues(type).GetValue(0);
+                    }
 
                     result = EditorGUILayout.EnumPopup(label, (Enum)value);
                 }
@@ -530,16 +562,67 @@ namespace Neo.Editor
 
         protected object GetDefaultValue(Type type)
         {
-            if (type == typeof(int)) return 0;
-            if (type == typeof(float)) return 0f;
-            if (type == typeof(string)) return string.Empty;
-            if (type == typeof(bool)) return false;
-            if (type == typeof(Vector2)) return Vector2.zero;
-            if (type == typeof(Vector3)) return Vector3.zero;
-            if (type == typeof(Color)) return Color.white;
-            if (type.IsEnum) return Enum.GetValues(type).GetValue(0);
-            if (type.IsValueType) return Activator.CreateInstance(type);
+            if (type == typeof(int))
+            {
+                return 0;
+            }
+
+            if (type == typeof(float))
+            {
+                return 0f;
+            }
+
+            if (type == typeof(string))
+            {
+                return string.Empty;
+            }
+
+            if (type == typeof(bool))
+            {
+                return false;
+            }
+
+            if (type == typeof(Vector2))
+            {
+                return Vector2.zero;
+            }
+
+            if (type == typeof(Vector3))
+            {
+                return Vector3.zero;
+            }
+
+            if (type == typeof(Color))
+            {
+                return Color.white;
+            }
+
+            if (type.IsEnum)
+            {
+                return Enum.GetValues(type).GetValue(0);
+            }
+
+            if (type.IsValueType)
+            {
+                return Activator.CreateInstance(type);
+            }
+
             return null;
+        }
+
+        /// <summary>
+        ///     Структура для хранения информации о кнопке из разных типов ButtonAttribute
+        /// </summary>
+        protected struct ButtonInfo
+        {
+            public string ButtonName;
+            public float Width;
+
+            public ButtonInfo(string name, float width)
+            {
+                ButtonName = name;
+                Width = width;
+            }
         }
     }
 }

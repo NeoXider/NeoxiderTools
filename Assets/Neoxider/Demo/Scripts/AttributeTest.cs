@@ -1,7 +1,6 @@
 using Neo.Shop;
 using Neo.Tools;
 using UnityEngine;
-using Neo;
 
 namespace Neo
 {
@@ -9,11 +8,9 @@ namespace Neo
     {
         public class AttributeTest : MonoBehaviour
         {
-            [GUIColor(1,1,0)] [FindAllInScene]
-            public Rigidbody[] rbsFindAllInScene;
+            [GUIColor(1, 1, 0)] [FindAllInScene] public Rigidbody[] rbsFindAllInScene;
 
-            [GUIColor(1,0,1)] [FindAllInScene]
-            public SphereCollider[] ballsFindAllInScene;
+            [GUIColor(1, 0, 1)] [FindAllInScene] public SphereCollider[] ballsFindAllInScene;
 
             [FindInScene] public Camera camFindInScene;
 

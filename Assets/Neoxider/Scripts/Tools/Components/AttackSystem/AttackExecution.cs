@@ -4,29 +4,30 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AttackExecution))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(AttackExecution))]
     public class AttackExecution : MonoBehaviour
     {
         public enum AttackState
         {
-            Ready,      // Готов к атаке
-            Attacking,  // В процессе атаки (до удара)
-            Cooldown    // Перезарядка после удара
+            Ready, // Готов к атаке
+            Attacking, // В процессе атаки (до удара)
+            Cooldown // Перезарядка после удара
         }
 
-        [Header("Настройки атаки")]
-        [SerializeField] private float _attackSpeed = 2;
+        [Header("Настройки атаки")] [SerializeField]
+        private float _attackSpeed = 2;
+
         public float multiplayAttackSpeed = 1;
         public float delayTimeAttack = 0.2f; // Задержка перед ударом
         [SerializeField] private bool _isAutoAttack;
 
-        [Header("События")]
-        public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
-        public UnityEvent OnAttack;      // Вызывается в момент удара
-        public UnityEvent OnEndAttack;   // Вызывается, когда атака снова готова
+        [Header("События")] public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
+
+        public UnityEvent OnAttack; // Вызывается в момент удара
+        public UnityEvent OnEndAttack; // Вызывается, когда атака снова готова
+        private Coroutine _attackCoroutine;
 
         private bool _canAttackGlobal = true; // Глобальный флаг, разрешающий атаковать
-        private Coroutine _attackCoroutine;
 
         // --- Публичные свойства ---
         public AttackState CurrentState { get; private set; } = AttackState.Ready;
@@ -64,12 +65,6 @@ namespace Neo.Tools
             }
         }
 
-        private void OnValidate()
-        {
-            if (Application.isPlaying) return;
-            UpdateAttackCooldown();
-        }
-
         private void OnDisable()
         {
             // Прерываем атаку, если объект отключается
@@ -80,22 +75,35 @@ namespace Neo.Tools
             }
         }
 
+        private void OnValidate()
+        {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
+            UpdateAttackCooldown();
+        }
+
         // --- Публичные методы ---
 
         /// <summary>
-        /// Пытается начать атаку, если это возможно.
+        ///     Пытается начать атаку, если это возможно.
         /// </summary>
         /// <returns>True, если атака началась успешно.</returns>
         public bool Attack()
         {
-            if (!CanAttack) return false;
+            if (!CanAttack)
+            {
+                return false;
+            }
 
             _attackCoroutine = StartCoroutine(AttackSequence());
             return true;
         }
 
         /// <summary>
-        /// Разрешает или запрещает атаковать.
+        ///     Разрешает или запрещает атаковать.
         /// </summary>
         public void SetCanAttack(bool canAttack)
         {
@@ -103,7 +111,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Сбрасывает состояние атаки, прерывая текущий цикл и делая ее снова доступной.
+        ///     Сбрасывает состояние атаки, прерывая текущий цикл и делая ее снова доступной.
         /// </summary>
         public void ResetAttack()
         {
@@ -111,6 +119,7 @@ namespace Neo.Tools
             {
                 StopCoroutine(_attackCoroutine);
             }
+
             CurrentState = AttackState.Ready;
             OnEndAttack?.Invoke();
         }
@@ -148,8 +157,16 @@ namespace Neo.Tools
 
         private void UpdateAttackCooldown()
         {
-            if (_attackSpeed <= 0) _attackSpeed = 0.01f;
-            if (multiplayAttackSpeed <= 0) multiplayAttackSpeed = 0.01f;
+            if (_attackSpeed <= 0)
+            {
+                _attackSpeed = 0.01f;
+            }
+
+            if (multiplayAttackSpeed <= 0)
+            {
+                multiplayAttackSpeed = 0.01f;
+            }
+
             AttackCooldown = 1 / (_attackSpeed * multiplayAttackSpeed);
         }
     }

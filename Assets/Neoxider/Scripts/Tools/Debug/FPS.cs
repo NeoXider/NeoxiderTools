@@ -7,7 +7,7 @@ namespace Neo
     ///     Displays and monitors FPS (Frames Per Second) in the game.
     ///     Provides visual feedback about performance with color coding.
     /// </summary>
-    [AddComponentMenu("Neoxider/Tools/" + nameof(FPS))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {
         [Header("Update Settings")] [Tooltip("How often to update the FPS display (in seconds)")] [SerializeField]
@@ -72,7 +72,7 @@ namespace Neo
         private void Update()
         {
             // Update the FPS buffer
-            var currentFps = 1f / Time.deltaTime;
+            float currentFps = 1f / Time.deltaTime;
             accumulatedFps -= fpsBuffer[bufferIndex];
             fpsBuffer[bufferIndex] = currentFps;
             accumulatedFps += currentFps;
@@ -81,23 +81,35 @@ namespace Neo
 
         private void OnValidate()
         {
-            if (updateInterval < 0.1f) updateInterval = 0.1f;
-            if (sampleSize < 1) sampleSize = 1;
+            if (updateInterval < 0.1f)
+            {
+                updateInterval = 0.1f;
+            }
+
+            if (sampleSize < 1)
+            {
+                sampleSize = 1;
+            }
+
             if (warningFpsThreshold >= goodFpsThreshold)
+            {
                 warningFpsThreshold = goodFpsThreshold - 10f;
+            }
         }
 
         private void UpdateFpsDisplay()
         {
-            var averageFps = accumulatedFps / sampleSize;
+            float averageFps = accumulatedFps / sampleSize;
 
             // Format the FPS text
-            var fpsText = showDecimals
+            string fpsText = showDecimals
                 ? averageFps.ToString("F1")
                 : Mathf.RoundToInt(averageFps).ToString();
 
             if (showSuffix)
+            {
                 fpsText += " FPS";
+            }
 
             // Update text and color
             text.text = fpsText;
@@ -107,9 +119,15 @@ namespace Neo
         private Color GetFpsColor(float fps)
         {
             if (fps >= goodFpsThreshold)
+            {
                 return goodColor;
+            }
+
             if (fps >= warningFpsThreshold)
+            {
                 return warningColor;
+            }
+
             return criticalColor;
         }
 

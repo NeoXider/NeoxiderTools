@@ -28,6 +28,7 @@ namespace Neo.Tools
     ///     This class handles both manual and automatic component initialization.
     ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Bootstrap))]
     public class Bootstrap : MonoBehaviour
     {
         [SerializeField] [Tooltip("List of components to initialize manually")]
@@ -54,22 +55,33 @@ namespace Neo.Tools
         private void InitializeComponents()
         {
             // First initialize manual components
-            foreach (var component in _manualInitializables)
+            foreach (MonoBehaviour component in _manualInitializables)
+            {
                 if (component is IInit initializable)
+                {
                     _initializables.Add(initializable);
+                }
+            }
 
             // Then find other components if auto-find is enabled
             if (_autoFindComponents)
             {
-                var components = FindObjectsOfType<MonoBehaviour>();
-                foreach (var component in components)
+                MonoBehaviour[] components = FindObjectsOfType<MonoBehaviour>();
+                foreach (MonoBehaviour component in components)
+                {
                     if (component is IInit initializable && !_initializables.Contains(initializable))
+                    {
                         _initializables.Add(initializable);
+                    }
+                }
             }
 
             // Sort by priority and initialize
-            var sortedInitializables = _initializables.OrderByDescending(x => x.InitPriority).ToList();
-            foreach (var initializable in sortedInitializables) initializable.Init();
+            List<IInit> sortedInitializables = _initializables.OrderByDescending(x => x.InitPriority).ToList();
+            foreach (IInit initializable in sortedInitializables)
+            {
+                initializable.Init();
+            }
         }
 
         /// <summary>

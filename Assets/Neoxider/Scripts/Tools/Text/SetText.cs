@@ -3,10 +3,10 @@ using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Tools
@@ -15,7 +15,7 @@ namespace Neo
         ///     A component that sets text on a TMP_Text component with formatting options.
         ///     Useful for displaying numeric values with separators and decimal places.
         /// </summary>
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SetText))]
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(SetText))]
         public class SetText : MonoBehaviour
         {
             #region Events
@@ -166,7 +166,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button(nameof(Set) + "float")]
 #else
-            [Neo.ButtonAttribute(nameof(Set) + "float")]
+            [ButtonAttribute(nameof(Set) + "float")]
 #endif
             public void Set(float value)
             {
@@ -208,7 +208,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public void Set(string value = "0")
             {

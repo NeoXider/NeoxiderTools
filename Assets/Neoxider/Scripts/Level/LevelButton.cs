@@ -7,6 +7,7 @@ namespace Neo
 {
     namespace Level
     {
+        [AddComponentMenu("Neo/" + "Level/" + nameof(LevelButton))]
         public class LevelButton : MonoBehaviour
         {
             [SerializeField] private Button _button;
@@ -27,13 +28,17 @@ namespace Neo
             private void Start()
             {
                 if (_button != null)
+                {
                     _button.onClick.AddListener(Click);
+                }
             }
 
             private void OnDestroy()
             {
                 if (_button != null)
+                {
                     _button.onClick.RemoveListener(Click);
+                }
             }
 
             private void OnValidate()
@@ -44,7 +49,9 @@ namespace Neo
             public void Click()
             {
                 if (activ)
+                {
                     _levelManager.SetLevel(level);
+                }
             }
 
             public void SetLevelManager(LevelManager levelManager)
@@ -57,12 +64,20 @@ namespace Neo
                 activ = idVisual != 0;
                 this.level = level;
 
-                for (var i = 0; i < _closes.Length; i++) _closes[i].SetActive(!activ);
+                for (int i = 0; i < _closes.Length; i++)
+                {
+                    _closes[i].SetActive(!activ);
+                }
 
-                for (var i = 0; i < _opens.Length; i++) _opens[i].SetActive(activ);
+                for (int i = 0; i < _opens.Length; i++)
+                {
+                    _opens[i].SetActive(activ);
+                }
 
                 if (_textLvl != null)
+                {
                     _textLvl.text = (level + 1).ToString();
+                }
 
                 Events(idVisual);
             }
@@ -72,11 +87,17 @@ namespace Neo
                 OnChangeVisual?.Invoke(idVisual);
 
                 if (idVisual == 0)
+                {
                     OnDisableVisual?.Invoke();
+                }
                 else if (idVisual == 1)
+                {
                     OnCurrentVisual?.Invoke();
+                }
                 else if (idVisual == 2)
+                {
                     OnEnableVisual?.Invoke();
+                }
             }
         }
     }

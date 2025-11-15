@@ -3,6 +3,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(DistanceChecker))]
     public class DistanceChecker : MonoBehaviour
     {
         [GetComponent] public Transform currentObject;
@@ -17,9 +18,11 @@ namespace Neo.Tools
         private void Update()
         {
             if (currentObject == null || targetObject == null)
+            {
                 return;
+            }
 
-            var distance = Vector3.Distance(currentObject.position, targetObject.position);
+            float distance = Vector3.Distance(currentObject.position, targetObject.position);
 
             if (distance < distanceThreshold && !isWithinDistance)
             {

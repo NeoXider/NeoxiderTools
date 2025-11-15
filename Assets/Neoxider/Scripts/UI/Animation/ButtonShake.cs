@@ -7,6 +7,7 @@ using Random = UnityEngine.Random;
 
 namespace Neo.UI
 {
+    [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonShake))]
     public class ButtonShake : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         [Header("Shake Settings")] [SerializeField]
@@ -32,7 +33,10 @@ namespace Neo.UI
         {
             _rectTransform.localPosition = _startPositions;
 
-            if (_shakeOnStart) StartShaking();
+            if (_shakeOnStart)
+            {
+                StartShaking();
+            }
         }
 
         private void OnDisable()
@@ -41,20 +45,30 @@ namespace Neo.UI
 
         private void OnValidate()
         {
-            if (_rectTransform == null) _rectTransform = GetComponent<RectTransform>();
+            if (_rectTransform == null)
+            {
+                _rectTransform = GetComponent<RectTransform>();
+            }
         }
 
         public void OnPointerDown(PointerEventData eventData)
         {
             if (_shakeOnStart)
+            {
                 StopShaking();
+            }
             else
+            {
                 StartShaking();
+            }
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            if (!_shakeOnEnd) StopShaking();
+            if (!_shakeOnEnd)
+            {
+                StopShaking();
+            }
         }
 
         private void StartShaking()
@@ -82,13 +96,13 @@ namespace Neo.UI
 
         private IEnumerator ShakeButton()
         {
-            var originalPosition = _rectTransform.localPosition;
-            var elapsed = 0f;
+            Vector3 originalPosition = _rectTransform.localPosition;
+            float elapsed = 0f;
 
             while (elapsed < _shakeDuration || _shakeDuration == 0)
             {
-                var x = Random.Range(-1f, 1f) * _shakeMagnitude;
-                var y = Random.Range(-1f, 1f) * _shakeMagnitude;
+                float x = Random.Range(-1f, 1f) * _shakeMagnitude;
+                float y = Random.Range(-1f, 1f) * _shakeMagnitude;
 
                 _rectTransform.localPosition = originalPosition + new Vector3(x, y, 0);
                 elapsed += Time.deltaTime;

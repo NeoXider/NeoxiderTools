@@ -19,7 +19,10 @@ namespace Neo.Extensions
         /// <returns>A collection of points representing the line.</returns>
         public static IEnumerable<Vector3> GetLine(int count, Vector3 origin, Vector3 direction, float spacing)
         {
-            for (var i = 0; i < count; i++) yield return origin + direction.normalized * (i * spacing);
+            for (int i = 0; i < count; i++)
+            {
+                yield return origin + direction.normalized * (i * spacing);
+            }
         }
 
         /// <summary>
@@ -34,12 +37,15 @@ namespace Neo.Extensions
         public static IEnumerable<Vector3> GetGrid(int count, Vector3 origin, int columns, float spacingX,
             float spacingY)
         {
-            if (columns <= 0) columns = 1;
-
-            for (var i = 0; i < count; i++)
+            if (columns <= 0)
             {
-                var row = i / columns;
-                var col = i % columns;
+                columns = 1;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                int row = i / columns;
+                int col = i % columns;
                 yield return origin + new Vector3(col * spacingX, -row * spacingY, 0);
             }
         }
@@ -54,13 +60,16 @@ namespace Neo.Extensions
         /// <returns>A collection of points representing the circle.</returns>
         public static IEnumerable<Vector3> GetCircle(int count, Vector3 center, float radius, float rotationOffset = 0)
         {
-            if (count <= 0) yield break;
-
-            var angleStep = 360f / count;
-            for (var i = 0; i < count; i++)
+            if (count <= 0)
             {
-                var angle = i * angleStep + rotationOffset;
-                var rad = angle * Mathf.Deg2Rad;
+                yield break;
+            }
+
+            float angleStep = 360f / count;
+            for (int i = 0; i < count; i++)
+            {
+                float angle = i * angleStep + rotationOffset;
+                float rad = angle * Mathf.Deg2Rad;
                 yield return center + new Vector3(radius * Mathf.Cos(rad), radius * Mathf.Sin(rad), 0);
             }
         }
@@ -75,12 +84,15 @@ namespace Neo.Extensions
         public static IEnumerable<Vector3> GetGrid3D(int count, Vector3 origin, int columns, Vector3 right, Vector3 up,
             float spacingX, float spacingY)
         {
-            if (columns <= 0) columns = 1;
-
-            for (var i = 0; i < count; i++)
+            if (columns <= 0)
             {
-                var row = i / columns;
-                var col = i % columns;
+                columns = 1;
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                int row = i / columns;
+                int col = i % columns;
                 yield return origin + right.normalized * col * spacingX + up.normalized * row * spacingY;
             }
         }
@@ -92,16 +104,19 @@ namespace Neo.Extensions
         public static IEnumerable<Vector3> GetCircle3D(int count, Vector3 center, Vector3 normal, float radius,
             float rotationOffset = 0)
         {
-            if (count <= 0) yield break;
-
-            var rotation = Quaternion.FromToRotation(Vector3.forward, normal);
-            var angleStep = 360f / count;
-
-            for (var i = 0; i < count; i++)
+            if (count <= 0)
             {
-                var angle = i * angleStep + rotationOffset;
-                var rad = angle * Mathf.Deg2Rad;
-                var point = new Vector3(radius * Mathf.Cos(rad), radius * Mathf.Sin(rad), 0);
+                yield break;
+            }
+
+            Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, normal);
+            float angleStep = 360f / count;
+
+            for (int i = 0; i < count; i++)
+            {
+                float angle = i * angleStep + rotationOffset;
+                float rad = angle * Mathf.Deg2Rad;
+                Vector3 point = new(radius * Mathf.Cos(rad), radius * Mathf.Sin(rad), 0);
                 yield return center + rotation * point;
             }
         }
@@ -115,9 +130,15 @@ namespace Neo.Extensions
         /// </remarks>
         public static IEnumerable<Vector3> GetSphereSurface(int count, Vector3 center, float radius)
         {
-            if (count <= 0) yield break;
+            if (count <= 0)
+            {
+                yield break;
+            }
 
-            for (var i = 0; i < count; i++) yield return center + Random.onUnitSphere * radius;
+            for (int i = 0; i < count; i++)
+            {
+                yield return center + Random.onUnitSphere * radius;
+            }
         }
 
         #endregion
@@ -134,10 +155,10 @@ namespace Neo.Extensions
             float currentRadius = 0;
             float currentAngle = 0;
 
-            for (var i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
             {
-                var rad = currentAngle * Mathf.Deg2Rad;
-                var point = new Vector3(currentRadius * Mathf.Cos(rad), currentRadius * Mathf.Sin(rad), 0);
+                float rad = currentAngle * Mathf.Deg2Rad;
+                Vector3 point = new(currentRadius * Mathf.Cos(rad), currentRadius * Mathf.Sin(rad), 0);
                 yield return center + point;
 
                 currentAngle += angleStep;
@@ -155,13 +176,16 @@ namespace Neo.Extensions
         public static IEnumerable<Vector3> GetSineWave(int count, Vector3 origin, Vector3 direction, float amplitude,
             float frequency, float spacing)
         {
-            var up = Vector3.Cross(direction, Vector3.forward).normalized;
-            if (up == Vector3.zero) up = Vector3.up; // Handle case where direction is aligned with forward
-
-            for (var i = 0; i < count; i++)
+            Vector3 up = Vector3.Cross(direction, Vector3.forward).normalized;
+            if (up == Vector3.zero)
             {
-                var distance = i * spacing;
-                var y = amplitude * Mathf.Sin(distance * frequency);
+                up = Vector3.up; // Handle case where direction is aligned with forward
+            }
+
+            for (int i = 0; i < count; i++)
+            {
+                float distance = i * spacing;
+                float y = amplitude * Mathf.Sin(distance * frequency);
                 yield return origin + direction.normalized * distance + up * y;
             }
         }

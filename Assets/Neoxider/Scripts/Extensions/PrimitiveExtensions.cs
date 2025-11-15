@@ -42,9 +42,11 @@ namespace Neo.Extensions
         public static float RoundToDecimal(this float value, int places)
         {
             if (places < 0)
+            {
                 throw new ArgumentException("Number of decimal places cannot be negative", nameof(places));
+            }
 
-            var multiplier = Mathf.Pow(10.0f, places);
+            float multiplier = Mathf.Pow(10.0f, places);
             return Mathf.Round(value * multiplier) / multiplier;
         }
 
@@ -55,13 +57,15 @@ namespace Neo.Extensions
             string separator = ":")
         {
             if (timeSeconds < 0)
+            {
                 timeSeconds = 0;
+            }
 
-            var days = (int)(timeSeconds / 86400);
-            var hours = (int)(timeSeconds % 86400 / 3600);
-            var minutes = (int)(timeSeconds % 3600 / 60);
-            var seconds = (int)(timeSeconds % 60);
-            var milliseconds = (int)((timeSeconds - (int)timeSeconds) * 100);
+            int days = (int)(timeSeconds / 86400);
+            int hours = (int)(timeSeconds % 86400 / 3600);
+            int minutes = (int)(timeSeconds % 3600 / 60);
+            int seconds = (int)(timeSeconds % 60);
+            int milliseconds = (int)((timeSeconds - (int)timeSeconds) * 100);
 
             return format switch
             {
@@ -88,12 +92,16 @@ namespace Neo.Extensions
         public static string FormatWithSeparator(this float number, string separator = "", int decimalPlaces = 2)
         {
             if (decimalPlaces < 0)
+            {
                 throw new ArgumentException("Decimal places cannot be negative", nameof(decimalPlaces));
+            }
 
             if (string.IsNullOrEmpty(separator))
+            {
                 return number.ToString($"F{decimalPlaces}");
+            }
 
-            var format = $"N{decimalPlaces}";
+            string format = $"N{decimalPlaces}";
             return number.ToString(format).Replace(",", separator);
         }
 
@@ -131,7 +139,9 @@ namespace Neo.Extensions
         public static float NormalizeToUnit(this float x, float min, float max)
         {
             if (min >= max)
+            {
                 throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
+            }
 
             return Mathf.Clamp01((x - min) / (max - min));
         }
@@ -142,9 +152,14 @@ namespace Neo.Extensions
         public static float Denormalize(this float normalizedValue, float min, float max)
         {
             if (normalizedValue < 0f || normalizedValue > 1f)
+            {
                 throw new ArgumentException("Normalized value must be between 0 and 1", nameof(normalizedValue));
+            }
+
             if (min >= max)
+            {
                 throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
+            }
 
             return min + (max - min) * normalizedValue;
         }
@@ -154,7 +169,7 @@ namespace Neo.Extensions
         /// </summary>
         public static float Remap(this float value, float fromMin, float fromMax, float toMin, float toMax)
         {
-            var normalizedValue = NormalizeToUnit(value, fromMin, fromMax);
+            float normalizedValue = NormalizeToUnit(value, fromMin, fromMax);
             return Denormalize(normalizedValue, toMin, toMax);
         }
 
@@ -176,7 +191,9 @@ namespace Neo.Extensions
         public static string FormatWithSeparator(this int number, string separator)
         {
             if (string.IsNullOrEmpty(separator))
+            {
                 return number.ToString();
+            }
 
             return string.Format("{0:N0}", number).Replace(",", separator);
         }

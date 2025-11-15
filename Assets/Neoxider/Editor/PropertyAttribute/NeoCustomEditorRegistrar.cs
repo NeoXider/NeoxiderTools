@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEditorInternal;
 using UnityEngine;
 
 namespace Neo.Editor
@@ -14,7 +15,7 @@ namespace Neo.Editor
         {
             // Register editor refresh on Unity load
             EditorApplication.delayCall += OnEditorReady;
-            
+
             // Также регистрируем при изменении скриптов
             EditorApplication.projectChanged += OnProjectChanged;
         }
@@ -22,17 +23,17 @@ namespace Neo.Editor
         private static void OnEditorReady()
         {
             // Force refresh of all inspectors to ensure CustomEditor is properly registered
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-            
+            InternalEditorUtility.RepaintAllViews();
+
             // Отладка: проверяем, зарегистрирован ли наш CustomEditor
-            Debug.Log("[NeoCustomEditorRegistrar] CustomEditor зарегистрирован. NeoCustomEditor должен работать для всех MonoBehaviour.");
+            Debug.Log(
+                "[NeoCustomEditorRegistrar] CustomEditor зарегистрирован. NeoCustomEditor должен работать для всех MonoBehaviour.");
         }
-        
+
         private static void OnProjectChanged()
         {
             // При изменении проекта обновляем инспекторы
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            InternalEditorUtility.RepaintAllViews();
         }
     }
 }
-

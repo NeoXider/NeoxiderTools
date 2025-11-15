@@ -7,6 +7,7 @@ namespace Neo.GridSystem
     ///     Компонент для размещения игровых объектов на поле. Не зависит от структуры поля.
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
+    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldSpawner))]
     public class FieldSpawner : MonoBehaviour
     {
         [Header("Префабы для спавна")] public GameObject[] Prefabs;
@@ -25,10 +26,14 @@ namespace Neo.GridSystem
         /// </summary>
         public GameObject SpawnAt(Vector3Int cellPos, int prefabIndex = 0)
         {
-            var cell = generator.GetCell(cellPos);
-            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length) return null;
-            var worldPos = generator.GetCellWorldCenter(cell.Position);
-            var go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
+            FieldCell cell = generator.GetCell(cellPos);
+            if (cell == null || Prefabs == null || prefabIndex < 0 || prefabIndex >= Prefabs.Length)
+            {
+                return null;
+            }
+
+            Vector3 worldPos = generator.GetCellWorldCenter(cell.Position);
+            GameObject go = Instantiate(Prefabs[prefabIndex], worldPos, Quaternion.identity, transform);
             OnObjectSpawned.Invoke(go, cell);
             return go;
         }
@@ -38,14 +43,16 @@ namespace Neo.GridSystem
         /// </summary>
         public void SpawnOnAllWalkable(int prefabIndex = 0)
         {
-            var size = generator.Config.Size;
-            for (var x = 0; x < size.x; x++)
-            for (var y = 0; y < size.y; y++)
-            for (var z = 0; z < size.z; z++)
+            Vector3Int size = generator.Config.Size;
+            for (int x = 0; x < size.x; x++)
+            for (int y = 0; y < size.y; y++)
+            for (int z = 0; z < size.z; z++)
             {
-                var cell = generator.Cells[x, y, z];
+                FieldCell cell = generator.Cells[x, y, z];
                 if (cell.IsWalkable)
+                {
                     SpawnAt(cell.Position, prefabIndex);
+                }
             }
         }
     }

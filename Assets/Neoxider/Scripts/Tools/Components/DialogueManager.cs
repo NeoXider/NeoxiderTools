@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections;
-using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,6 +7,7 @@ using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
     [Serializable]
@@ -33,34 +33,31 @@ namespace Neo.Tools
         [TextArea(3, 7)] public string sentence;
     }
 
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(DialogueManager))]
     public class DialogueManager : MonoBehaviour
     {
-        [Header("UI Элементы")]
-        public Image characterImage;
+        [Header("UI Элементы")] public Image characterImage;
         public TMP_Text characterNameText;
         public TMP_Text dialogueText;
         public bool setNativeSize = true;
 
-        [Header("Настройки эффектов")]
-        public bool useTypewriterEffect = true;
+        [Header("Настройки эффектов")] public bool useTypewriterEffect = true;
         public float charactersPerSecond = 50f;
 
-        [Header("Поведение")]
-        public bool autoNextSentence = false;
-        public bool autoNextMonolog = false;
-        public bool autoNextDialogue = false;
-        public bool allowRestart = false;
+        [Header("Поведение")] public bool autoNextSentence;
+        public bool autoNextMonolog;
+        public bool autoNextDialogue;
+        public bool allowRestart;
 
-        [Header("Задержки автопереходов (сек)")]
-        [Min(0f)] public float autoNextSentenceDelay = 3f;
+        [Header("Задержки автопереходов (сек)")] [Min(0f)]
+        public float autoNextSentenceDelay = 3f;
+
         [Min(0f)] public float autoNextMonologDelay = 3f;
         [Min(0f)] public float autoNextDialogueDelay = 3f;
 
-        [Header("Данные диалогов")]
-        public Dialogue[] dialogues;
+        [Header("Данные диалогов")] public Dialogue[] dialogues;
 
-        [Header("События")]
-        public UnityEvent OnSentenceEnd;
+        [Header("События")] public UnityEvent OnSentenceEnd;
         public UnityEvent OnMonologEnd;
         public UnityEvent OnDialogueEnd;
         public UnityEvent<string> OnCharacterChange;
@@ -90,9 +87,12 @@ namespace Neo.Tools
 
         private void UpdateDialogueText()
         {
-            if (currentDialogueId >= dialogues.Length) return;
+            if (currentDialogueId >= dialogues.Length)
+            {
+                return;
+            }
 
-            var currentDialogue = dialogues[currentDialogueId];
+            Dialogue currentDialogue = dialogues[currentDialogueId];
             currentDialogue.OnChangeDialog?.Invoke(currentDialogueId);
 
             if (currentMonologId >= currentDialogue.monologues.Length)
@@ -102,10 +102,11 @@ namespace Neo.Tools
                 {
                     StartCoroutine(DelayedNextDialogue());
                 }
+
                 return;
             }
 
-            var currentMonolog = currentDialogue.monologues[currentMonologId];
+            Monolog currentMonolog = currentDialogue.monologues[currentMonologId];
             currentMonolog.OnChangeMonolog?.Invoke(currentMonologId);
 
             if (currentSentenceId >= currentMonolog.sentences.Length)
@@ -114,7 +115,7 @@ namespace Neo.Tools
                 return;
             }
 
-            var sentence = currentMonolog.sentences[currentSentenceId];
+            Sentence sentence = currentMonolog.sentences[currentSentenceId];
             sentence.OnChangeSentence?.Invoke();
 
             UpdateCharacter(currentMonolog);
@@ -129,10 +130,14 @@ namespace Neo.Tools
 
         private void UpdateCharacter(Monolog currentMonolog)
         {
-            var characterName = currentMonolog.characterName;
+            string characterName = currentMonolog.characterName;
             if (characterName != _lastCharacterName)
             {
-                if(characterNameText != null) characterNameText.text = characterName;
+                if (characterNameText != null)
+                {
+                    characterNameText.text = characterName;
+                }
+
                 OnCharacterChange?.Invoke(characterName);
                 _lastCharacterName = characterName;
             }
@@ -140,38 +145,53 @@ namespace Neo.Tools
 
         private void UpdateContent(Monolog currentMonolog)
         {
-            var sentence = currentMonolog.sentences[currentSentenceId];
+            Sentence sentence = currentMonolog.sentences[currentSentenceId];
             _currentSentenceCached = sentence.sentence;
 
             if (useTypewriterEffect)
             {
-                if (_typewriterCoroutine != null) StopCoroutine(_typewriterCoroutine);
+                if (_typewriterCoroutine != null)
+                {
+                    StopCoroutine(_typewriterCoroutine);
+                }
+
                 _typewriterCoroutine = StartCoroutine(Typewriter(sentence.sentence));
             }
             else
             {
-                if(dialogueText != null) dialogueText.text = sentence.sentence;
+                if (dialogueText != null)
+                {
+                    dialogueText.text = sentence.sentence;
+                }
             }
 
             if (characterImage != null && sentence.sprite != null)
             {
                 characterImage.sprite = sentence.sprite;
-                if (setNativeSize) characterImage.SetNativeSize();
+                if (setNativeSize)
+                {
+                    characterImage.SetNativeSize();
+                }
             }
         }
 
         private IEnumerator Typewriter(string text)
         {
-            if(dialogueText == null) yield break;
-            var sb = new StringBuilder(text.Length);
+            if (dialogueText == null)
+            {
+                yield break;
+            }
+
             dialogueText.text = "";
+            int currentLength = 0;
             float timePerCharacter = 1f / charactersPerSecond;
             foreach (char c in text)
             {
-                sb.Append(c);
-                dialogueText.text = sb.ToString();
+                currentLength++;
+                dialogueText.text = text.Substring(0, currentLength);
                 yield return new WaitForSeconds(timePerCharacter);
             }
+
             _typewriterCoroutine = null;
 
             if (autoNextSentence)
@@ -182,11 +202,19 @@ namespace Neo.Tools
 
         private void TryNextSentenceOrEndMonolog()
         {
-            var currentDialogue = dialogues.Length > currentDialogueId ? dialogues[currentDialogueId] : null;
-            if (currentDialogue == null) return;
+            Dialogue currentDialogue = dialogues.Length > currentDialogueId ? dialogues[currentDialogueId] : null;
+            if (currentDialogue == null)
+            {
+                return;
+            }
 
-            var currentMonolog = currentDialogue.monologues.Length > currentMonologId ? currentDialogue.monologues[currentMonologId] : null;
-            if (currentMonolog == null) return;
+            Monolog currentMonolog = currentDialogue.monologues.Length > currentMonologId
+                ? currentDialogue.monologues[currentMonologId]
+                : null;
+            if (currentMonolog == null)
+            {
+                return;
+            }
 
             if (currentSentenceId + 1 < currentMonolog.sentences.Length)
             {
@@ -204,12 +232,17 @@ namespace Neo.Tools
             {
                 yield return new WaitForSeconds(autoNextSentenceDelay);
             }
+
             TryNextSentenceOrEndMonolog();
         }
 
         private void EndMonolog()
         {
-            if(dialogueText != null) dialogueText.text = "";
+            if (dialogueText != null)
+            {
+                dialogueText.text = "";
+            }
+
             OnMonologEnd?.Invoke();
 
             if (autoNextMonolog)
@@ -224,6 +257,7 @@ namespace Neo.Tools
             {
                 yield return new WaitForSeconds(autoNextMonologDelay);
             }
+
             NextMonolog();
         }
 
@@ -254,6 +288,7 @@ namespace Neo.Tools
             {
                 yield return new WaitForSeconds(autoNextDialogueDelay);
             }
+
             NextDialogue();
         }
 
@@ -264,6 +299,7 @@ namespace Neo.Tools
                 StopCoroutine(_autoDelayCoroutine);
                 _autoDelayCoroutine = null;
             }
+
             _autoDelayCoroutine = StartCoroutine(routine);
         }
 
@@ -278,9 +314,9 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SkipOrNext()
+        public void SkipOrNext()
         {
             // Если печать активна — остановить и показать всю фразу
             if (useTypewriterEffect && _typewriterCoroutine != null)
@@ -291,6 +327,7 @@ namespace Neo.Tools
                 {
                     dialogueText.text = _currentSentenceCached;
                 }
+
                 CancelAutoDelay();
                 return;
             }
@@ -302,7 +339,11 @@ namespace Neo.Tools
 
         public void RestartDialogue()
         {
-            if (!allowRestart) return;
+            if (!allowRestart)
+            {
+                return;
+            }
+
             currentMonologId = 0;
             currentSentenceId = 0;
             _lastCharacterName = string.Empty;
@@ -315,9 +356,21 @@ namespace Neo.Tools
             {
                 charactersPerSecond = 0.01f;
             }
-            if (autoNextSentenceDelay < 0f) autoNextSentenceDelay = 0f;
-            if (autoNextMonologDelay < 0f) autoNextMonologDelay = 0f;
-            if (autoNextDialogueDelay < 0f) autoNextDialogueDelay = 0f;
+
+            if (autoNextSentenceDelay < 0f)
+            {
+                autoNextSentenceDelay = 0f;
+            }
+
+            if (autoNextMonologDelay < 0f)
+            {
+                autoNextMonologDelay = 0f;
+            }
+
+            if (autoNextDialogueDelay < 0f)
+            {
+                autoNextDialogueDelay = 0f;
+            }
         }
     }
 }

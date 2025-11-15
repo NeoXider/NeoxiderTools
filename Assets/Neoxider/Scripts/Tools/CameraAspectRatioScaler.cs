@@ -17,6 +17,7 @@ namespace Neo
     /// </remarks>
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraAspectRatioScaler))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {
         /// <summary>
@@ -81,9 +82,13 @@ namespace Neo
         {
             _camera = GetComponent<Camera>();
             if (_camera.orthographic)
+            {
                 _defaultSize = _camera.orthographicSize;
+            }
             else
+            {
                 _defaultFOV = _camera.fieldOfView;
+            }
         }
 
         /// <summary>
@@ -100,7 +105,9 @@ namespace Neo
         private void Update()
         {
             if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
+            {
                 UpdateCameraScale();
+            }
         }
 
         /// <summary>
@@ -108,7 +115,10 @@ namespace Neo
         /// </summary>
         private void OnValidate()
         {
-            if (_camera == null) _camera = GetComponent<Camera>();
+            if (_camera == null)
+            {
+                _camera = GetComponent<Camera>();
+            }
 
             UpdateCameraScale();
         }
@@ -119,19 +129,26 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            private void UpdateCameraScale()
+        private void UpdateCameraScale()
         {
-            if (_camera == null) return;
+            if (_camera == null)
+            {
+                return;
+            }
 
-            var targetAspect = useTargetResolution ? targetResolution.x / targetResolution.y : 16f / 9f;
-            var currentAspect = (float)Screen.width / Screen.height;
+            float targetAspect = useTargetResolution ? targetResolution.x / targetResolution.y : 16f / 9f;
+            float currentAspect = (float)Screen.width / Screen.height;
 
             if (_camera.orthographic)
+            {
                 UpdateOrthographicCamera(targetAspect, currentAspect);
+            }
             else
+            {
                 UpdatePerspectiveCamera(targetAspect, currentAspect);
+            }
         }
 
         /// <summary>
@@ -141,7 +158,7 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdateOrthographicCamera(float targetAspect, float currentAspect)
         {
-            var newSize = _defaultSize;
+            float newSize = _defaultSize;
 
             switch (scaleMode)
             {
@@ -170,7 +187,7 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdatePerspectiveCamera(float targetAspect, float currentAspect)
         {
-            var newFOV = _defaultFOV;
+            float newFOV = _defaultFOV;
 
             switch (scaleMode)
             {

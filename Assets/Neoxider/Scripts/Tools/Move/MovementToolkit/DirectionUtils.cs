@@ -1,10 +1,11 @@
 using UnityEngine;
 
-namespace Neo.Tools 
+namespace Neo.Tools
 {
     public static class DirectionUtils
     {
-        public static Vector3 ResolveDirection(Transform t, ConstantMover.DirectionSource source, Vector3 custom, bool local)
+        public static Vector3 ResolveDirection(Transform t, ConstantMover.DirectionSource source, Vector3 custom,
+            bool local)
         {
             switch (source)
             {
@@ -39,5 +40,3 @@ namespace Neo.Tools
         }
     }
 }
-
-

@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
@@ -9,23 +10,34 @@ using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
     /// <summary>
-    /// Спавнер префабов с настраиваемыми задержками, диапазонами поворота по осям (Эйлер),
-    /// опциональным родителем и режимом применения поворота в локальных или мировых координатах.
+    ///     Спавнер префабов с настраиваемыми задержками, диапазонами поворота по осям (Эйлер),
+    ///     опциональным родителем и режимом применения поворота в локальных или мировых координатах.
     /// </summary>
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Spawner))]
     public class Spawner : MonoBehaviour
     {
-        [FormerlySerializedAs("_prefabs")] [Header("Spawn Settings")] [SerializeField]
-        public GameObject[] prefabs;
+        [Header("Spawn Settings")] [SerializeField]
+        private GameObject[] _prefabs;
+
+        /// <summary>
+        ///     Массив префабов для спавна. При установке выполняется валидация.
+        /// </summary>
+        public GameObject[] prefabs
+        {
+            get => _prefabs;
+            set => _prefabs = value ?? Array.Empty<GameObject>();
+        }
 
         [SerializeField] private bool _useObjectPool = true;
 
         [FormerlySerializedAs("_destroyDelay")]
         [SerializeField]
         [Tooltip("Задержка перед удалением объекта. Если 0, объект не будет удаляться автоматически.")]
-        public float destroyDelay = 0f;
+        public float destroyDelay;
 
         [Header("Events")]
         /// <summary>
@@ -44,12 +56,17 @@ namespace Neo.Tools
 
         [Header("Rotation Settings")]
         /// <summary>Диапазон поворота вокруг оси X (pitch), градусов.</summary>
-        [SerializeField] private Vector2 _rotationX = Vector2.zero; // pitch
+        [SerializeField]
+        private Vector2 _rotationX = Vector2.zero; // pitch
+
         /// <summary>Диапазон поворота вокруг оси Y (yaw), градусов.</summary>
         [SerializeField] private Vector2 _rotationY = Vector2.zero; // yaw
+
         /// <summary>Диапазон поворота вокруг оси Z (roll), градусов.</summary>
         [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
-        [SerializeField] [Tooltip("Если true, поворот задаётся относительно спавнера (локально). Если false — в мировых координатах.")]
+
+        [SerializeField]
+        [Tooltip("Если true, поворот задаётся относительно спавнера (локально). Если false — в мировых координатах.")]
         private bool _useLocalRotation = true;
 
         [Space] [Header("Other Settings")] [SerializeField]
@@ -60,7 +77,8 @@ namespace Neo.Tools
 
         [SerializeField] private bool _spawnOnAwake;
 
-        [Header("Parenting")] [SerializeField]
+        [Header("Parenting")]
+        [SerializeField]
         [Tooltip("Родитель для заспавненных объектов. Если null — спавн без родителя.")]
         /// <summary>
         /// Родитель для заспавненных объектов. Если null — объект не получает родителя.
@@ -74,10 +92,9 @@ namespace Neo.Tools
 
         public bool isSpawning { get; private set; }
 
-        private List<GameObject> _spawnedObjects = new();
         private int _spawnedCount;
 
-        public List<GameObject> SpawnedObjects => _spawnedObjects;
+        public List<GameObject> SpawnedObjects { get; } = new();
 
         private void Start()
         {
@@ -90,17 +107,40 @@ namespace Neo.Tools
         private void OnValidate()
         {
             _spawnTransform ??= transform;
+
+            // Валидация диапазонов задержек
+            if (minSpawnDelay < 0)
+            {
+                minSpawnDelay = 0;
+            }
+
+            if (maxSpawnDelay < minSpawnDelay)
+            {
+                maxSpawnDelay = minSpawnDelay;
+            }
+
+            // Валидация массива префабов
+            if (_prefabs != null)
+            {
+                for (int i = 0; i < _prefabs.Length; i++)
+                {
+                    if (_prefabs[i] == null)
+                    {
+                        Debug.LogWarning($"[Spawner] Prefab at index {i} is null on {gameObject.name}!", this);
+                    }
+                }
+            }
         }
 
         /// <summary>
-        /// Запускает процесс спавна (корутина), если он ещё не запущен.
+        ///     Запускает процесс спавна (корутина), если он ещё не запущен.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void StartSpawn()
+        public void StartSpawn()
         {
             if (isSpawning)
             {
@@ -112,20 +152,20 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Останавливает процесс спавна. Текущие объекты остаются в сцене.
+        ///     Останавливает процесс спавна. Текущие объекты остаются в сцене.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void StopSpawn()
+        public void StopSpawn()
         {
             isSpawning = false;
         }
 
         /// <summary>
-        /// Главная корутина спавна, создает объекты с интервалами в пределах [minSpawnDelay, maxSpawnDelay].
+        ///     Главная корутина спавна, создает объекты с интервалами в пределах [minSpawnDelay, maxSpawnDelay].
         /// </summary>
         public IEnumerator SpawnObjects()
         {
@@ -150,51 +190,73 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
+        ///     Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public GameObject SpawnRandomObject()
+        public GameObject SpawnRandomObject()
         {
-            if (prefabs.Length == 0)
+            if (_prefabs == null || _prefabs.Length == 0)
             {
+                Debug.LogWarning($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
                 return null;
             }
 
-            int randomIndex = prefabs.GetRandomIndex();
-            GameObject prefabToSpawn = prefabs[randomIndex];
+            int randomIndex = _prefabs.GetRandomIndex();
+            GameObject prefabToSpawn = _prefabs[randomIndex];
+
+            if (prefabToSpawn == null)
+            {
+                Debug.LogWarning($"[Spawner] Prefab at index {randomIndex} is null on {gameObject.name}.", this);
+                return null;
+            }
+
             return SpawnObject(prefabToSpawn, GetSpawnPosition(), GetSpawnRotation(), _parentTransform);
         }
 
         // Note: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
         /// <summary>
-        /// Спавнит префаб по индексу <paramref name="prefabId"/> в заданной позиции.
-        /// Поворот и родитель берутся из настроек спавнера.
+        ///     Спавнит префаб по индексу <paramref name="prefabId" /> в заданной позиции.
+        ///     Поворот и родитель берутся из настроек спавнера.
         /// </summary>
-        /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs"/>.</param>
+        /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs" />.</param>
         /// <param name="position">Мировая позиция спавна.</param>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public GameObject SpawnById(int prefabId, Vector3 position)
+        public GameObject SpawnById(int prefabId, Vector3 position)
         {
-            if (prefabId < 0 || prefabId >= prefabs.Length)
+            if (_prefabs == null || _prefabs.Length == 0)
             {
-                Debug.LogError($"Prefab ID {prefabId} is out of range. Max ID is {prefabs.Length - 1}.");
+                Debug.LogError($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
                 return null;
             }
 
-            GameObject prefabToSpawn = prefabs[prefabId];
+            if (prefabId < 0 || prefabId >= _prefabs.Length)
+            {
+                Debug.LogError(
+                    $"[Spawner] Prefab ID {prefabId} is out of range. Max ID is {_prefabs.Length - 1} on {gameObject.name}.",
+                    this);
+                return null;
+            }
+
+            GameObject prefabToSpawn = _prefabs[prefabId];
+            if (prefabToSpawn == null)
+            {
+                Debug.LogError($"[Spawner] Prefab at index {prefabId} is null on {gameObject.name}.", this);
+                return null;
+            }
+
             return SpawnObject(prefabToSpawn, position, GetSpawnRotation(), _parentTransform);
         }
 
         /// <summary>
-        /// Базовый метод спавна/получения из пула.
+        ///     Базовый метод спавна/получения из пула.
         /// </summary>
         /// <param name="prefab">Префаб для спавна.</param>
         /// <param name="position">Мировая позиция.</param>
@@ -215,7 +277,8 @@ namespace Neo.Tools
             {
                 spawnedObject.transform.SetParent(parent, true);
             }
-            _spawnedObjects.Add(spawnedObject);
+
+            SpawnedObjects.Add(spawnedObject);
 
             if (destroyDelay > 0)
             {
@@ -233,7 +296,7 @@ namespace Neo.Tools
 
             if (objectToDestroy != null)
             {
-                _spawnedObjects.Remove(objectToDestroy);
+                SpawnedObjects.Remove(objectToDestroy);
                 if (_useObjectPool)
                 {
                     PoolManager.Release(objectToDestroy);
@@ -246,7 +309,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Возвращает позицию спавна: случайная точка в зоне, если задана, иначе точка спавна.
+        ///     Возвращает позицию спавна: случайная точка в зоне, если задана, иначе точка спавна.
         /// </summary>
         public Vector3 GetSpawnPosition()
         {
@@ -264,8 +327,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Возвращает поворот спавна. Если диапазоны осей равны нулю, возвращает
-        /// базовый поворот (локальный: поворот точки спавна; мировой: Quaternion.identity).
+        ///     Возвращает поворот спавна. Если диапазоны осей равны нулю, возвращает
+        ///     базовый поворот (локальный: поворот точки спавна; мировой: Quaternion.identity).
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
@@ -280,9 +343,15 @@ namespace Neo.Tools
                 return _useLocalRotation ? baseRot : Quaternion.identity;
             }
 
-            float rx = zeroX ? 0f : Random.Range(Mathf.Min(_rotationX.x, _rotationX.y), Mathf.Max(_rotationX.x, _rotationX.y));
-            float ry = zeroY ? 0f : Random.Range(Mathf.Min(_rotationY.x, _rotationY.y), Mathf.Max(_rotationY.x, _rotationY.y));
-            float rz = zeroZ ? 0f : Random.Range(Mathf.Min(_rotationZ.x, _rotationZ.y), Mathf.Max(_rotationZ.x, _rotationZ.y));
+            float rx = zeroX
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationX.x, _rotationX.y), Mathf.Max(_rotationX.x, _rotationX.y));
+            float ry = zeroY
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationY.x, _rotationY.y), Mathf.Max(_rotationY.x, _rotationY.y));
+            float rz = zeroZ
+                ? 0f
+                : Random.Range(Mathf.Min(_rotationZ.x, _rotationZ.y), Mathf.Max(_rotationZ.x, _rotationZ.y));
 
             Quaternion offset = Quaternion.Euler(rx, ry, rz);
             return _useLocalRotation ? baseRot * offset : offset;
@@ -290,14 +359,14 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Clear()
+        public void Clear()
         {
             StopAllCoroutines(); // Останавливаем все корутины (спавн и отложенное удаление)
             isSpawning = false; // Устанавливаем флаг, чтобы основной цикл спавна точно остановился
 
-            foreach (GameObject obj in _spawnedObjects)
+            foreach (GameObject obj in SpawnedObjects)
             {
                 if (obj != null)
                 {
@@ -312,12 +381,12 @@ namespace Neo.Tools
                 }
             }
 
-            _spawnedObjects.Clear();
+            SpawnedObjects.Clear();
         }
 
         public int GetActiveObjectCount()
         {
-            return _spawnedObjects.Count(obj => obj != null && obj.activeInHierarchy);
+            return SpawnedObjects.Count(obj => obj != null && obj.activeInHierarchy);
         }
 
         // --- Методы для получения случайной точки в коллайдерах (без изменений) ---

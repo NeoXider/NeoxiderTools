@@ -21,15 +21,15 @@ namespace Neo.Save
 
         public static bool IsLoad { get; private set; }
 
+        protected virtual void OnDestroy()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+
         private void OnApplicationQuit()
         {
             Save();
             Debug.Log("[SaveManager] Game Quit & Saved");
-        }
-
-        protected virtual void OnDestroy()
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 
         #region Singleton Pattern
@@ -90,41 +90,55 @@ namespace Neo.Save
 
         public static void Register(MonoBehaviour monoObj)
         {
-            if (monoObj == null) return;
+            if (monoObj == null)
+            {
+                return;
+            }
 
-            var key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-            if (_saveableComponents.ContainsKey(key)) return;
+            string key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            if (_saveableComponents.ContainsKey(key))
+            {
+                return;
+            }
 
-            var fieldsToSave = monoObj.GetType()
+            List<FieldInfo> fieldsToSave = monoObj.GetType()
                 .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
                 .Where(f => f.IsDefined(typeof(SaveField), true))
                 .ToList();
 
             if (fieldsToSave.Count > 0)
+            {
                 _saveableComponents[key] = (monoObj, fieldsToSave);
+            }
         }
 
         public static void Unregister(MonoBehaviour monoObj)
         {
-            if (monoObj == null) return;
-            var key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            if (monoObj == null)
+            {
+                return;
+            }
+
+            string key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
             _saveableComponents.Remove(key);
         }
 
         private static List<MonoBehaviour> RegisterAllSaveables()
         {
-            var newlyRegisteredComponents = new List<MonoBehaviour>();
-            var allObjects = FindObjectsOfType<MonoBehaviour>(true);
-            foreach (var obj in allObjects)
+            List<MonoBehaviour> newlyRegisteredComponents = new();
+            MonoBehaviour[] allObjects = FindObjectsOfType<MonoBehaviour>(true);
+            foreach (MonoBehaviour obj in allObjects)
+            {
                 if (obj is ISaveableComponent)
                 {
-                    var key = $"{obj.GetType().Name}_{obj.GetInstanceID()}";
+                    string key = $"{obj.GetType().Name}_{obj.GetInstanceID()}";
                     if (!_saveableComponents.ContainsKey(key))
                     {
                         Register(obj);
                         newlyRegisteredComponents.Add(obj);
                     }
                 }
+            }
 
             Debug.Log($"[SaveManager] saveable count: {_saveableComponents.Count}");
             return newlyRegisteredComponents;
@@ -132,7 +146,7 @@ namespace Neo.Save
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            var newlyRegistered = RegisterAllSaveables();
+            List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
             Load(newlyRegistered); // только для новых объектов
             Debug.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.");
         }
@@ -143,23 +157,26 @@ namespace Neo.Save
 
         public static void Save()
         {
-            var container = new SaveDataContainer();
+            SaveDataContainer container = new();
 
-            foreach (var kvp in _saveableComponents)
+            foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> kvp in _saveableComponents)
             {
-                var componentKey = kvp.Key;
-                var (instance, fieldsToSave) = kvp.Value;
-                if (instance == null) continue;
-
-                var savedComponent = new SavedComponent { ComponentKey = componentKey };
-
-                foreach (var field in fieldsToSave)
+                string componentKey = kvp.Key;
+                (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = kvp.Value;
+                if (instance == null)
                 {
-                    var saveAttr = field.GetCustomAttribute<SaveField>(true);
+                    continue;
+                }
+
+                SavedComponent savedComponent = new() { ComponentKey = componentKey };
+
+                foreach (FieldInfo field in fieldsToSave)
+                {
+                    SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
                     if (saveAttr != null && saveAttr.AutoSaveOnQuit)
                     {
-                        var value = field.GetValue(instance);
-                        var savedField = new SavedField
+                        object value = field.GetValue(instance);
+                        SavedField savedField = new()
                         {
                             Key = saveAttr.Key,
                             TypeName = field.FieldType.AssemblyQualifiedName,
@@ -170,52 +187,67 @@ namespace Neo.Save
                 }
 
                 if (savedComponent.Fields.Count > 0)
+                {
                     container.AllSavedComponents.Add(savedComponent);
+                }
             }
 
-            var jsonData = JsonUtility.ToJson(container, true);
+            string jsonData = JsonUtility.ToJson(container, true);
             PlayerPrefs.SetString($"{saveDataKeyPrefix}All", jsonData);
             PlayerPrefs.Save();
         }
 
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
         {
-            var jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
-            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson) return;
+            string jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
+            {
+                return;
+            }
 
             try
             {
-                var container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
-                if (container == null || container.AllSavedComponents == null) return;
-
-                var loadedDataMap = container.AllSavedComponents.ToDictionary(c => c.ComponentKey);
-
-                var targetComponents = componentsToLoad ?? _saveableComponents.Values.Select(x => x.instance).ToList();
-
-                foreach (var monoObj in targetComponents)
+                SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
+                if (container == null || container.AllSavedComponents == null)
                 {
-                    if (!monoObj) continue;
+                    return;
+                }
 
-                    var componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-                    if (loadedDataMap.TryGetValue(componentKey, out var savedComponent)
-                        && _saveableComponents.TryGetValue(componentKey, out var registeredData))
+                Dictionary<string, SavedComponent> loadedDataMap =
+                    container.AllSavedComponents.ToDictionary(c => c.ComponentKey);
+
+                List<MonoBehaviour> targetComponents =
+                    componentsToLoad ?? _saveableComponents.Values.Select(x => x.instance).ToList();
+
+                foreach (MonoBehaviour monoObj in targetComponents)
+                {
+                    if (!monoObj)
                     {
-                        var instance = registeredData.instance;
-                        var fields = registeredData.fields;
+                        continue;
+                    }
 
-                        foreach (var savedField in savedComponent.Fields)
+                    string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+                    if (loadedDataMap.TryGetValue(componentKey, out SavedComponent savedComponent)
+                        && _saveableComponents.TryGetValue(componentKey,
+                            out (MonoBehaviour instance, List<FieldInfo> fields) registeredData))
+                    {
+                        MonoBehaviour instance = registeredData.instance;
+                        List<FieldInfo> fields = registeredData.fields;
+
+                        foreach (SavedField savedField in savedComponent.Fields)
                         {
-                            var field = fields.FirstOrDefault(f =>
+                            FieldInfo field = fields.FirstOrDefault(f =>
                                 f.GetCustomAttribute<SaveField>(true)?.Key == savedField.Key);
-                            var saveAttr = field?.GetCustomAttribute<SaveField>(true);
+                            SaveField saveAttr = field?.GetCustomAttribute<SaveField>(true);
 
                             if (field != null && saveAttr != null && saveAttr.AutoLoadOnAwake)
                             {
-                                var fieldType = Type.GetType(savedField.TypeName);
+                                Type fieldType = Type.GetType(savedField.TypeName);
                                 if (fieldType != null && savedField.Value != null)
+                                {
                                     try
                                     {
-                                        var value = StringToValue(savedField.Value, fieldType);
+                                        object value = StringToValue(savedField.Value, fieldType);
                                         field.SetValue(instance, value);
                                     }
                                     catch (Exception ex)
@@ -224,6 +256,7 @@ namespace Neo.Save
                                             $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
                                         // оставляем текущее значение (дефолт сцены)
                                     }
+                                }
                             }
                         }
 
@@ -243,23 +276,36 @@ namespace Neo.Save
 
         private static string ValueToString(object value, Type declaredType)
         {
-            if (value == null) return null;
+            if (value == null)
+            {
+                return null;
+            }
 
-            var type = declaredType ?? value.GetType();
+            Type type = declaredType ?? value.GetType();
 
             // enum
-            if (type.IsEnum) return value.ToString();
+            if (type.IsEnum)
+            {
+                return value.ToString();
+            }
 
             // примитивы и строка
-            if (type.IsPrimitive) return Convert.ToString(value, CultureInfo.InvariantCulture);
-            if (type == typeof(string)) return (string)value;
+            if (type.IsPrimitive)
+            {
+                return Convert.ToString(value, CultureInfo.InvariantCulture);
+            }
+
+            if (type == typeof(string))
+            {
+                return (string)value;
+            }
 
             // массивы
             if (type.IsArray)
             {
-                var elemType = type.GetElementType();
-                var wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
-                var wrapper = Activator.CreateInstance(wrapperType);
+                Type elemType = type.GetElementType();
+                Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
+                object wrapper = Activator.CreateInstance(wrapperType);
                 // wrapper.Items = (T[])value;
                 wrapperType.GetField("Items").SetValue(wrapper, value);
                 return JsonUtility.ToJson(wrapper);
@@ -268,18 +314,20 @@ namespace Neo.Save
             // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
-                var elemType = type.GetGenericArguments()[0];
-                var wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
-                var wrapper = Activator.CreateInstance(wrapperType);
+                Type elemType = type.GetGenericArguments()[0];
+                Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
+                object wrapper = Activator.CreateInstance(wrapperType);
 
                 // скопируем в wrapper.Items
-                var list = (IEnumerable)value;
-                var itemsField = wrapperType.GetField("Items");
-                var targetList = itemsField.GetValue(wrapper); // это List<T>
+                IEnumerable list = (IEnumerable)value;
+                FieldInfo itemsField = wrapperType.GetField("Items");
+                object targetList = itemsField.GetValue(wrapper); // это List<T>
 
-                var addMethod = targetList.GetType().GetMethod("Add");
-                foreach (var it in list)
+                MethodInfo addMethod = targetList.GetType().GetMethod("Add");
+                foreach (object it in list)
+                {
                     addMethod.Invoke(targetList, new[] { it });
+                }
 
                 return JsonUtility.ToJson(wrapper);
             }
@@ -290,32 +338,45 @@ namespace Neo.Save
 
         private static object StringToValue(string s, Type type)
         {
-            if (s == null) return null;
+            if (s == null)
+            {
+                return null;
+            }
 
             // enum
-            if (type.IsEnum) return Enum.Parse(type, s);
+            if (type.IsEnum)
+            {
+                return Enum.Parse(type, s);
+            }
 
             // примитивы и строка
-            if (type.IsPrimitive) return Convert.ChangeType(s, type, CultureInfo.InvariantCulture);
-            if (type == typeof(string)) return s;
+            if (type.IsPrimitive)
+            {
+                return Convert.ChangeType(s, type, CultureInfo.InvariantCulture);
+            }
+
+            if (type == typeof(string))
+            {
+                return s;
+            }
 
             // массивы
             if (type.IsArray)
             {
-                var elemType = type.GetElementType();
-                var wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
-                var wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                var items = wrapperType.GetField("Items").GetValue(wrapperObj);
+                Type elemType = type.GetElementType();
+                Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
+                object wrapperObj = JsonUtility.FromJson(s, wrapperType);
+                object items = wrapperType.GetField("Items").GetValue(wrapperObj);
                 return items; // это T[]
             }
 
             // List<T>
             if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
             {
-                var elemType = type.GetGenericArguments()[0];
-                var wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
-                var wrapperObj = JsonUtility.FromJson(s, wrapperType);
-                var items = wrapperType.GetField("Items").GetValue(wrapperObj); // List<T>
+                Type elemType = type.GetGenericArguments()[0];
+                Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
+                object wrapperObj = JsonUtility.FromJson(s, wrapperType);
+                object items = wrapperType.GetField("Items").GetValue(wrapperObj); // List<T>
                 return items;
             }
 
@@ -337,17 +398,18 @@ namespace Neo.Save
 
             Register(monoObj);
 
-            var componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-            if (!_saveableComponents.TryGetValue(componentKey, out var reg))
+            string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            if (!_saveableComponents.TryGetValue(componentKey,
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
                 Debug.LogError($"[SaveManager] Could not save {componentKey}: not registered.");
                 return;
             }
 
-            var (instance, fieldsToSave) = reg;
+            (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = reg;
 
             // читаем контейнер (валидный дефолт!)
-            var currentJsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            string currentJsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             SaveDataContainer container;
             try
             {
@@ -358,7 +420,8 @@ namespace Neo.Save
                 container = new SaveDataContainer();
             }
 
-            var savedComponent = container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
+            SavedComponent savedComponent =
+                container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
             if (savedComponent == null)
             {
                 savedComponent = new SavedComponent { ComponentKey = componentKey };
@@ -367,13 +430,13 @@ namespace Neo.Save
 
             savedComponent.Fields.Clear();
 
-            foreach (var field in fieldsToSave)
+            foreach (FieldInfo field in fieldsToSave)
             {
-                var saveAttr = field.GetCustomAttribute<SaveField>(true);
+                SaveField saveAttr = field.GetCustomAttribute<SaveField>(true);
                 if (saveAttr != null)
                 {
-                    var fieldValue = field.GetValue(instance);
-                    var savedField = new SavedField
+                    object fieldValue = field.GetValue(instance);
+                    SavedField savedField = new()
                     {
                         Key = saveAttr.Key,
                         TypeName = field.FieldType.AssemblyQualifiedName,
@@ -383,9 +446,12 @@ namespace Neo.Save
                 }
             }
 
-            var newJsonData = JsonUtility.ToJson(container, true);
+            string newJsonData = JsonUtility.ToJson(container, true);
             PlayerPrefs.SetString($"{saveDataKeyPrefix}All", newJsonData);
-            if (isSave) PlayerPrefs.Save();
+            if (isSave)
+            {
+                PlayerPrefs.Save();
+            }
 
             Debug.Log($"[SaveManager] Manually saved {componentKey}");
         }
@@ -400,35 +466,44 @@ namespace Neo.Save
 
             Register(monoObj);
 
-            var componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-            if (!_saveableComponents.TryGetValue(componentKey, out var reg))
+            string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            if (!_saveableComponents.TryGetValue(componentKey,
+                    out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
                 Debug.LogWarning($"[SaveManager] No registered fields for {componentKey}");
                 return;
             }
 
-            var fields = reg.fields;
+            List<FieldInfo> fields = reg.fields;
 
-            var jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
-            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson) return;
+            string jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
+            {
+                return;
+            }
 
             try
             {
-                var container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
-                var savedComponent = container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
+                SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(jsonData);
+                SavedComponent savedComponent =
+                    container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);
                 if (savedComponent != null)
                 {
-                    foreach (var savedField in savedComponent.Fields)
+                    foreach (SavedField savedField in savedComponent.Fields)
                     {
-                        var field = fields.FirstOrDefault(f =>
+                        FieldInfo field = fields.FirstOrDefault(f =>
                             f.GetCustomAttribute<SaveField>(true)?.Key == savedField.Key);
-                        if (field == null) continue;
+                        if (field == null)
+                        {
+                            continue;
+                        }
 
-                        var fieldType = Type.GetType(savedField.TypeName);
+                        Type fieldType = Type.GetType(savedField.TypeName);
                         if (fieldType != null && savedField.Value != null)
+                        {
                             try
                             {
-                                var value = StringToValue(savedField.Value, fieldType);
+                                object value = StringToValue(savedField.Value, fieldType);
                                 field.SetValue(monoObj, value);
                             }
                             catch (Exception ex)
@@ -436,6 +511,7 @@ namespace Neo.Save
                                 Debug.LogWarning(
                                     $"[SaveManager] Load field '{savedField.Key}' failed: {ex.Message}. Keep default.");
                             }
+                        }
                     }
 
                     (monoObj as ISaveableComponent)?.OnDataLoaded();

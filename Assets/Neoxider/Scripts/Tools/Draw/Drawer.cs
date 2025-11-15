@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using Neo.Extensions;
-
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
     /// <summary>
@@ -17,6 +17,7 @@ namespace Neo.Tools
     ///     • Optional 2-D collider & timed self-destruct,
     ///     • Can clone most settings from a “template” <see cref="LineRenderer" />.
     /// </summary>
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(Drawer))]
     public sealed class Drawer : MonoBehaviour
     {
         /* ───────── INPUT ───────────────────────────────────────────────── */
@@ -123,6 +124,7 @@ namespace Neo.Tools
         public UnityEvent<Vector3> OnLineStarted = new();
 
         public List<LineRenderer> lines = new();
+        private Vector3[] _cachedPositionsArray;
 
         private LineRenderer _currentLR;
         private float _distance;
@@ -154,7 +156,7 @@ namespace Neo.Tools
 
                 if (drawRelease > 0)
                 {
-                    var progress = Mathf.Clamp01(1 - value / drawRelease);
+                    float progress = Mathf.Clamp01(1 - value / drawRelease);
                     OnRemainingPercent?.Invoke(progress);
                 }
             }
@@ -167,39 +169,67 @@ namespace Neo.Tools
         private void Awake()
         {
             cam = Camera.main;
+            if (cam == null)
+            {
+                cam = FindFirstObjectByType<Camera>();
+                if (cam == null)
+                {
+                    Debug.LogError($"[Drawer] Camera not found on {gameObject.name}. Component will be disabled.",
+                        this);
+                    enabled = false;
+                    return;
+                }
+            }
 
             if (!lineMaterial)
+            {
                 lineMaterial = new Material(Shader.Find("Sprites/Default"));
+            }
         }
 
         private void Update()
         {
-            if (!isActive) return;
+            if (!isActive)
+            {
+                return;
+            }
 
             if (_currentLR != null)
+            {
                 Timer += Time.deltaTime;
+            }
 
             if (Input.GetMouseButtonDown(0))
+            {
                 BeginLine(ScreenToWorld(Input.mousePosition));
+            }
 
             if (Input.GetMouseButton(0))
             {
-                var worldPos = ScreenToWorld(Input.mousePosition);
+                Vector3 worldPos = ScreenToWorld(Input.mousePosition);
 
                 AppendPoint(worldPos);
 
                 Folow(worldPos);
 
-                if (drawRelease > 0 && Timer >= drawRelease) EndLine();
+                if (drawRelease > 0 && Timer >= drawRelease)
+                {
+                    EndLine();
+                }
             }
 
             if (Input.GetMouseButtonUp(0))
+            {
                 EndLine();
+            }
         }
 
         private void Folow(Vector3 pos)
         {
-            if (!useFolow || _currentLR == null || _currentLR.positionCount == 0) return;
+            if (!useFolow || _currentLR == null || _currentLR.positionCount == 0)
+            {
+                return;
+            }
 
             pos.z = fixedZ;
             _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
@@ -219,7 +249,10 @@ namespace Neo.Tools
 
             AppendPoint(position);
 
-            if (addCollider && !colliderAfterCreation) CreateCollider();
+            if (addCollider && !colliderAfterCreation)
+            {
+                CreateCollider();
+            }
 
             Timer = 0;
             OnLineStarted?.Invoke(position);
@@ -254,7 +287,7 @@ namespace Neo.Tools
             }
             else
             {
-                var go = new GameObject($"Line {Time.frameCount}");
+                GameObject go = new($"Line {Time.frameCount}");
                 go.transform.SetParent(transform);
                 lr = go.AddComponent<LineRenderer>();
                 lr.useWorldSpace = true;
@@ -266,9 +299,14 @@ namespace Neo.Tools
             {
                 runtimeMat = new Material(lineMaterial); // клон
                 if (lineSprite != null)
+                {
                     runtimeMat.mainTexture = lineSprite.texture;
+                }
                 else if (lineTexture != null)
+                {
                     runtimeMat.mainTexture = lineTexture;
+                }
+
                 lr.material = runtimeMat;
             }
             else if (lineSprite != null)
@@ -296,7 +334,10 @@ namespace Neo.Tools
         {
             lr.colorGradient = color;
             lr.widthMultiplier = lineWidth;
-            if (useWidthCurve) lr.widthCurve = widthCurve;
+            if (useWidthCurve)
+            {
+                lr.widthCurve = widthCurve;
+            }
 
             lr.textureMode = textureMode;
             lr.textureScale = textureScale;
@@ -314,11 +355,14 @@ namespace Neo.Tools
         /// <param name="worldPos">The world position of the point to add.</param>
         public void AppendPoint(Vector3 worldPos)
         {
-            if (!_currentLR) return;
+            if (!_currentLR)
+            {
+                return;
+            }
 
             // 1. Сразу приводим Z к единому уровню
             worldPos.z = fixedZ;
-            var pos = worldPos;
+            Vector3 pos = worldPos;
 
             if (CountPoints == 0)
             {
@@ -328,21 +372,36 @@ namespace Neo.Tools
             }
 
             // 2. Вычисляем конечную позицию с учётом fixedLength
-            var last = rawPoints[^1];
+            Vector3 last = rawPoints[^1];
 
             if (fixedLength > 0)
             {
-                var dir = worldPos - last;
-                if (dir.sqrMagnitude < 1e-6f) return;
-
-                if (Vector3.Distance(last, worldPos) > fixedLength)
-                    pos = last + dir.normalized * fixedLength;
-                else
+                Vector3 dir = worldPos - last;
+                if (dir.sqrMagnitude < 1e-6f)
+                {
                     return;
+                }
+
+                float sqrDistance = dir.sqrMagnitude;
+                float sqrFixedLength = fixedLength * fixedLength;
+
+                if (sqrDistance > sqrFixedLength)
+                {
+                    pos = last + dir.normalized * fixedLength;
+                }
+                else
+                {
+                    return;
+                }
             }
             else
             {
-                if (Vector3.Distance(last, worldPos) < minPointDistance) return;
+                float sqrDistance = (worldPos - last).sqrMagnitude;
+                float sqrMinDistance = minPointDistance * minPointDistance;
+                if (sqrDistance < sqrMinDistance)
+                {
+                    return;
+                }
             }
 
             // 3. Добавляем точку
@@ -351,25 +410,35 @@ namespace Neo.Tools
             Distance += Vector3.Distance(last, pos);
 
             // 4. Сглаживаем, ограничиваем, перезаписываем
-            var processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
-            _currentLR.positionCount = processed.Count;
-            _currentLR.SetPositions(processed.ToArray());
+            List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
+            UpdateLinePositions(processed);
 
             // 5. «Хвост»
-            if (useFolow) _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
+            if (useFolow)
+            {
+                _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
+            }
 
             // 6. Живой коллайдер
             if (addCollider && !colliderAfterCreation && _liveCol)
+            {
                 UpdateColliderPoints(_liveCol, processed);
+            }
 
             if (maxDistanceCreate > 0 && Distance >= maxDistanceCreate)
+            {
                 EndLine();
+            }
         }
 
         public static void UpdateColliderPoints(EdgeCollider2D col, List<Vector3> src)
         {
-            var pts2D = new Vector2[src.Count];
-            for (var i = 0; i < src.Count; i++) pts2D[i] = src[i];
+            Vector2[] pts2D = new Vector2[src.Count];
+            for (int i = 0; i < src.Count; i++)
+            {
+                pts2D[i] = src[i];
+            }
+
             col.points = pts2D;
         }
 
@@ -379,17 +448,22 @@ namespace Neo.Tools
         /// </summary>
         public static List<Vector3> LimitPoints(List<Vector3> pts, int max)
         {
-            if (max <= 1 || pts.Count <= max) return pts;
+            if (max <= 1 || pts.Count <= max)
+            {
+                return pts;
+            }
 
             if (max == 2)
-                return new List<Vector3> { pts[0], pts[^1] };
-
-            var result = new List<Vector3>(max);
-            var step = (pts.Count - 1f) / (max - 1);
-
-            for (var i = 0; i < max; i++)
             {
-                var idx = Mathf.RoundToInt(i * step);
+                return new List<Vector3> { pts[0], pts[^1] };
+            }
+
+            List<Vector3> result = new(max);
+            float step = (pts.Count - 1f) / (max - 1);
+
+            for (int i = 0; i < max; i++)
+            {
+                int idx = Mathf.RoundToInt(i * step);
                 result.Add(pts[idx]);
             }
 
@@ -401,7 +475,10 @@ namespace Neo.Tools
         /// </summary>
         public void EndLine()
         {
-            if (_currentLR == null) return;
+            if (_currentLR == null)
+            {
+                return;
+            }
 
             if (rawPoints.Count < minCountCreate ||
                 (minDistanceCreate > 0 && Distance < minDistanceCreate)) // too short – discard
@@ -411,14 +488,17 @@ namespace Neo.Tools
             }
 
             // ensure collider gets the smoothed version
-            if (addCollider && colliderAfterCreation) CreateCollider();
+            if (addCollider && colliderAfterCreation)
+            {
+                CreateCollider();
+            }
 
             lines.Add(_currentLR);
             OnLineCreated.Invoke(_currentLR);
 
             if (deleteAfterRelease > 0f)
             {
-                var line = _currentLR;
+                LineRenderer line = _currentLR;
                 this.Delay(deleteAfterRelease, () => { Delete(line); });
             }
 
@@ -429,7 +509,7 @@ namespace Neo.Tools
         public EdgeCollider2D CreateCollider()
         {
             _liveCol = _currentLR.gameObject.AddComponent<EdgeCollider2D>();
-            var pts2D = GetCurrentLinePositions();
+            Vector2[] pts2D = GetCurrentLinePositions();
             _liveCol.points = pts2D;
             _liveCol.edgeRadius = (useWidthCurve ? widthCurve.Evaluate(rawPoints.Count - 1) : lineWidth) * 0.5f;
             return _liveCol;
@@ -437,9 +517,12 @@ namespace Neo.Tools
 
         private Vector2[] GetCurrentLinePositions()
         {
-            var pts2D = new Vector2[_currentLR.positionCount];
-            for (var i = 0; i < _currentLR.positionCount; i++)
+            Vector2[] pts2D = new Vector2[_currentLR.positionCount];
+            for (int i = 0; i < _currentLR.positionCount; i++)
+            {
                 pts2D[i] = _currentLR.GetPosition(i);
+            }
+
             return pts2D;
         }
 
@@ -449,7 +532,11 @@ namespace Neo.Tools
         /// <param name="lr">The LineRenderer to delete.</param>
         public void Delete(LineRenderer lr)
         {
-            if (lr == null) return;
+            if (lr == null)
+            {
+                return;
+            }
+
             lines.Remove(lr);
             Destroy(lr.gameObject);
         }
@@ -459,7 +546,11 @@ namespace Neo.Tools
         /// </summary>
         public void DeleteFirst()
         {
-            if (lines.Count == 0) return;
+            if (lines.Count == 0)
+            {
+                return;
+            }
+
             Delete(lines[0]);
         }
 
@@ -468,7 +559,11 @@ namespace Neo.Tools
         /// </summary>
         public void DeleteLast()
         {
-            if (lines.Count == 0) return;
+            if (lines.Count == 0)
+            {
+                return;
+            }
+
             Delete(lines[^1]);
         }
 
@@ -478,13 +573,16 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void DeleteAll()
+        public void DeleteAll()
         {
             Debug.Log($"[Drawer] DeleteAll called for: {gameObject.name}");
-            foreach (var lr in new List<LineRenderer>(lines))
+            foreach (LineRenderer lr in new List<LineRenderer>(lines))
+            {
                 Destroy(lr.gameObject);
+            }
+
             lines.Clear();
             // Удаляем текущую рисуемую линию, если она ещё не добавлена в lines
             if (_currentLR != null)
@@ -518,16 +616,19 @@ namespace Neo.Tools
         /// <returns>A new list of smoothed points based on the Chaikin algorithm.</returns>
         public static List<Vector3> Smooth(List<Vector3> points, int passes, float? fixedZ = 0)
         {
-            if (passes <= 0 || points.Count < 3) return new List<Vector3>(points);
+            if (passes <= 0 || points.Count < 3)
+            {
+                return new List<Vector3>(points);
+            }
 
             List<Vector3> output = new(points);
-            for (var p = 0; p < passes; p++)
+            for (int p = 0; p < passes; p++)
             {
-                var tmp = new List<Vector3> { output[0] };
-                for (var i = 0; i < output.Count - 1; i++)
+                List<Vector3> tmp = new() { output[0] };
+                for (int i = 0; i < output.Count - 1; i++)
                 {
-                    var a = output[i];
-                    var b = output[i + 1];
+                    Vector3 a = output[i];
+                    Vector3 b = output[i + 1];
 
                     if (fixedZ != null)
                     {
@@ -550,7 +651,10 @@ namespace Neo.Tools
         {
             float distance = 0;
 
-            for (var i = 1; i < points.Length; i++) distance += Vector3.Distance(points[i - 1], points[i]);
+            for (int i = 1; i < points.Length; i++)
+            {
+                distance += Vector3.Distance(points[i - 1], points[i]);
+            }
 
             return distance;
         }
@@ -559,9 +663,31 @@ namespace Neo.Tools
         {
             float distance = 0;
 
-            for (var i = 1; i < points.Count; i++) distance += Vector3.Distance(points[i - 1], points[i]);
+            for (int i = 1; i < points.Count; i++)
+            {
+                distance += Vector3.Distance(points[i - 1], points[i]);
+            }
 
             return distance;
+        }
+
+        /// <summary>
+        ///     Updates LineRenderer positions using cached array to avoid allocations.
+        /// </summary>
+        private void UpdateLinePositions(List<Vector3> positions)
+        {
+            if (_cachedPositionsArray == null || _cachedPositionsArray.Length != positions.Count)
+            {
+                _cachedPositionsArray = new Vector3[positions.Count];
+            }
+
+            for (int i = 0; i < positions.Count; i++)
+            {
+                _cachedPositionsArray[i] = positions[i];
+            }
+
+            _currentLR.positionCount = positions.Count;
+            _currentLR.SetPositions(_cachedPositionsArray);
         }
 
         [Serializable]

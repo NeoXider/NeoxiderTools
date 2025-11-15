@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace Neo.Audio
 {
-    [AddComponentMenu("Neoxider/Audio/Audio Control")]
+    [AddComponentMenu("Neo/" + "Audio/" + nameof(AudioControl))]
     public class AudioControl : MonoBehaviour
     {
         public enum ControlType
@@ -39,11 +39,17 @@ namespace Neo.Audio
             if (uiType == UIType.Auto)
             {
                 if (toggle != null)
+                {
                     uiType = UIType.Toggle;
+                }
                 else if (slider != null)
+                {
                     uiType = UIType.Slider;
+                }
                 else
+                {
                     Debug.LogError("[AudioControl] Не найден компонент Toggle или Slider!", this);
+                }
             }
         }
 
@@ -53,8 +59,16 @@ namespace Neo.Audio
             if (settings == null)
             {
                 Debug.LogError("[AudioControl] AMSettings не найден на сцене!", this);
-                if (toggle != null) toggle.interactable = false;
-                if (slider != null) slider.interactable = false;
+                if (toggle != null)
+                {
+                    toggle.interactable = false;
+                }
+
+                if (slider != null)
+                {
+                    slider.interactable = false;
+                }
+
                 return;
             }
 
@@ -80,8 +94,15 @@ namespace Neo.Audio
                 settings.OnMuteEfx.RemoveListener(_ => SyncToggleState());
             }
 
-            if (toggle != null) toggle.onValueChanged.RemoveListener(OnToggleValueChanged);
-            if (slider != null) slider.onValueChanged.RemoveListener(OnSliderValueChanged);
+            if (toggle != null)
+            {
+                toggle.onValueChanged.RemoveListener(OnToggleValueChanged);
+            }
+
+            if (slider != null)
+            {
+                slider.onValueChanged.RemoveListener(OnSliderValueChanged);
+            }
         }
 
         private void OnToggleValueChanged(bool value)
@@ -118,7 +139,10 @@ namespace Neo.Audio
 
         private void SyncToggleState()
         {
-            if (toggle == null || settings == null) return;
+            if (toggle == null || settings == null)
+            {
+                return;
+            }
 
             toggle.onValueChanged.RemoveListener(OnToggleValueChanged);
 
@@ -140,7 +164,10 @@ namespace Neo.Audio
 
         private void SyncSliderState()
         {
-            if (slider == null || settings == null || settings.music == null || settings.efx == null) return;
+            if (slider == null || settings == null || settings.music == null || settings.efx == null)
+            {
+                return;
+            }
 
             slider.onValueChanged.RemoveListener(OnSliderValueChanged);
 
@@ -153,8 +180,8 @@ namespace Neo.Audio
                     slider.value = settings.efx.volume / settings.startEfxVolume;
                     break;
                 case ControlType.Master:
-                    var avgPercent = (settings.music.volume / settings.startMusicVolume +
-                                      settings.efx.volume / settings.startEfxVolume) / 2f;
+                    float avgPercent = (settings.music.volume / settings.startMusicVolume +
+                                        settings.efx.volume / settings.startEfxVolume) / 2f;
                     slider.value = avgPercent;
                     break;
             }

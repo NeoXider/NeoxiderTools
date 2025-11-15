@@ -1,7 +1,9 @@
 {
   "name": "Neo.Tools.InteractableObject",
   "rootNamespace": "",
-  "references": ["GUID:f6cc3e1d3a691d646830fdfbc1333dd9"],
+  "references": [
+    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
+  ],
   "includePlatforms": [],
   "excludePlatforms": [],
   "allowUnsafeCode": false,

@@ -1,27 +1,43 @@
 using UnityEngine;
 
-namespace Neo.Tools 
+namespace Neo.Tools
 {
-    [AddComponentMenu("Neoxider/Move/MovementToolkit/ConstantRotator")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ConstantRotator))]
     public class ConstantRotator : MonoBehaviour
     {
-        public enum RotationMode { Transform, Rigidbody, Rigidbody2D }
-        public enum AxisSource { None, LocalForward3D, Up2D, Right2D, Custom }
+        public enum AxisSource
+        {
+            None,
+            LocalForward3D,
+            Up2D,
+            Right2D,
+            Custom
+        }
 
-        [Header("Mode")]
-        public RotationMode mode = RotationMode.Transform;
-        [Tooltip("Если true — ось берётся в локальном пространстве, иначе — в мировом")] public bool spaceLocal = true;
-        [Tooltip("Вычитать время из скорости")] public bool useDeltaTime = true;
+        public enum RotationMode
+        {
+            Transform,
+            Rigidbody,
+            Rigidbody2D
+        }
 
-        [Header("Axis")]
-        public AxisSource axisSource = AxisSource.None;
+        [Header("Mode")] public RotationMode mode = RotationMode.Transform;
+
+        [Tooltip("Если true — ось берётся в локальном пространстве, иначе — в мировом")]
+        public bool spaceLocal = true;
+
+        [Tooltip("Вычитать время из скорости")]
+        public bool useDeltaTime = true;
+
+        [Header("Axis")] public AxisSource axisSource = AxisSource.None;
+
         public Vector3 customAxis = Vector3.up;
 
-        [Header("Speed (deg/sec)")]
-        public float degreesPerSecond = 90f;
+        [Header("Speed (deg/sec)")] public float degreesPerSecond = 90f;
+
+        private Rigidbody2D _rb2D;
 
         private Rigidbody _rb3D;
-        private Rigidbody2D _rb2D;
 
         private void Awake()
         {
@@ -46,6 +62,7 @@ namespace Neo.Tools
                     RotateTransform();
                     return;
                 }
+
                 RotateRigidbody3D();
             }
             else if (mode == RotationMode.Rigidbody2D)
@@ -55,6 +72,7 @@ namespace Neo.Tools
                     RotateTransform();
                     return;
                 }
+
                 RotateRigidbody2D();
             }
         }
@@ -83,17 +101,33 @@ namespace Neo.Tools
                     axis = spaceLocal ? transform.forward : Vector3.forward;
                     break;
             }
-            if (axis.sqrMagnitude < 1e-6f) return Vector3.zero;
+
+            if (axis.sqrMagnitude < 1e-6f)
+            {
+                return Vector3.zero;
+            }
+
             return axis.normalized;
         }
 
-        private float Dt() => useDeltaTime ? Time.deltaTime : 1f;
-        private float Fdt() => useDeltaTime ? Time.fixedDeltaTime : 1f;
+        private float Dt()
+        {
+            return useDeltaTime ? Time.deltaTime : 1f;
+        }
+
+        private float Fdt()
+        {
+            return useDeltaTime ? Time.fixedDeltaTime : 1f;
+        }
 
         private void RotateTransform()
         {
-            var axis = ResolveAxisWorld();
-            if (axis == Vector3.zero) return; // нет вращения
+            Vector3 axis = ResolveAxisWorld();
+            if (axis == Vector3.zero)
+            {
+                return; // нет вращения
+            }
+
             float deltaDeg = degreesPerSecond * Dt();
             // Вращение вокруг оси в мировом пространстве
             transform.Rotate(axis, deltaDeg, Space.World);
@@ -101,23 +135,29 @@ namespace Neo.Tools
 
         private void RotateRigidbody3D()
         {
-            var axis = ResolveAxisWorld();
-            if (axis == Vector3.zero) return;
+            Vector3 axis = ResolveAxisWorld();
+            if (axis == Vector3.zero)
+            {
+                return;
+            }
+
             float deltaDeg = degreesPerSecond * Fdt();
-            var deltaRot = Quaternion.AngleAxis(deltaDeg, axis);
+            Quaternion deltaRot = Quaternion.AngleAxis(deltaDeg, axis);
             _rb3D.MoveRotation(deltaRot * _rb3D.rotation);
         }
 
         private void RotateRigidbody2D()
         {
             // Для 2D берём проекцию оси на Z, чтобы определить знак вращения
-            var axis = ResolveAxisWorld();
-            if (axis == Vector3.zero) return;
+            Vector3 axis = ResolveAxisWorld();
+            if (axis == Vector3.zero)
+            {
+                return;
+            }
+
             float sign = Mathf.Sign(Vector3.Dot(axis, Vector3.forward));
             float deltaDeg = degreesPerSecond * Fdt() * (sign == 0 ? 1f : sign);
             _rb2D.MoveRotation(_rb2D.rotation + deltaDeg);
         }
     }
 }
-
-

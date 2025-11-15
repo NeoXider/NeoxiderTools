@@ -5,18 +5,28 @@ using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo
 {
     namespace Bonus
     {
-        [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(TimeReward))]
+        [AddComponentMenu("Neo/" + "Bonus/" + nameof(TimeReward))]
         public class TimeReward : MonoBehaviour
         {
             private const string _lastRewardTimeKey = "LastRewardTime";
-            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField] public float secondsToWaitForReward = 60 * 60; //1 hours
-            [FormerlySerializedAs("_startTakeReward")] [SerializeField] public bool startTakeReward;
-            [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField] public string lastRewardTimeStr;
-            [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)] public float updateTime = 1;
+
+            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField]
+            public float secondsToWaitForReward = 60 * 60; //1 hours
+
+            [FormerlySerializedAs("_startTakeReward")] [SerializeField]
+            public bool startTakeReward;
+
+            [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField]
+            public string lastRewardTimeStr;
+
+            [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)]
+            public float updateTime = 1;
+
             [SerializeField] private string _addKey = "Bonus1";
 
             public float timeLeft;
@@ -31,7 +41,10 @@ namespace Neo
             {
                 InvokeRepeating(nameof(GetTime), 0, updateTime);
 
-                if (startTakeReward) TakeReward();
+                if (startTakeReward)
+                {
+                    TakeReward();
+                }
             }
 
             private void GetTime()
@@ -48,7 +61,7 @@ namespace Neo
 
             public static string FormatTime(int seconds)
             {
-                var time = TimeSpan.FromSeconds(seconds);
+                TimeSpan time = TimeSpan.FromSeconds(seconds);
                 return time.ToString(@"hh\:mm\:ss");
             }
 
@@ -62,10 +75,10 @@ namespace Neo
 
                     if (DateTime.TryParse(lastRewardTimeStr, out lastRewardTime))
                     {
-                        var currentTime = DateTime.UtcNow;
-                        var timeSinceLastReward = currentTime - lastRewardTime;
-                        var secondsPassed = (float)timeSinceLastReward.TotalSeconds;
-                        var secondsUntilReward = secondsToWaitForReward - secondsPassed;
+                        DateTime currentTime = DateTime.UtcNow;
+                        TimeSpan timeSinceLastReward = currentTime - lastRewardTime;
+                        float secondsPassed = (float)timeSinceLastReward.TotalSeconds;
+                        float secondsUntilReward = secondsToWaitForReward - secondsPassed;
 
                         return secondsUntilReward > 0 ? secondsUntilReward : 0;
                     }
@@ -76,7 +89,7 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+            [ButtonAttribute]
 #endif
             public bool TakeReward()
             {

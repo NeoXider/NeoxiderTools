@@ -37,7 +37,9 @@ namespace Neo
         public RequireInterface(Type requireType)
         {
             if (!requireType.IsInterface)
+            {
                 throw new ArgumentException($"Type {requireType.Name} is not an interface", nameof(requireType));
+            }
 
             RequireType = requireType;
         }

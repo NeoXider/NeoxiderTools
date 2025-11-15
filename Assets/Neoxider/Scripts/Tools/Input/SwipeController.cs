@@ -37,7 +37,7 @@ namespace Neo
     ///  ]]>
     /// </code>
     /// </example>
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SwipeController))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(SwipeController))]
     public class SwipeController : MonoBehaviour
     {
         private static SwipeController instance;
@@ -87,9 +87,13 @@ namespace Neo
         private void Update()
         {
             if (Input.touchSupported && Input.touchCount > 0)
+            {
                 HandleTouch();
+            }
             else
+            {
                 HandleMouse();
+            }
         }
 
         public static bool GetSwipeDirection(out SwipeDirection direction)
@@ -106,7 +110,8 @@ namespace Neo
 
         private void HandleTouch()
         {
-            foreach (var touch in Input.touches)
+            foreach (Touch touch in Input.touches)
+            {
                 switch (touch.phase)
                 {
                     case TouchPhase.Began:
@@ -129,6 +134,7 @@ namespace Neo
                         swipeCompleted = true;
                         break;
                 }
+            }
         }
 
         private void HandleMouse()
@@ -159,7 +165,7 @@ namespace Neo
             {
                 if (IsVerticalSwipe())
                 {
-                    var direction = fingerUpPosition.y - fingerDownPosition.y > 0
+                    SwipeDirection direction = fingerUpPosition.y - fingerDownPosition.y > 0
                         ? SwipeDirection.Up
                         : SwipeDirection.Down;
                     if (swipeCompleted || lastSwipeDirection != direction || ignoreLastSwipe)
@@ -171,7 +177,7 @@ namespace Neo
                 }
                 else
                 {
-                    var direction = fingerUpPosition.x - fingerDownPosition.x > 0
+                    SwipeDirection direction = fingerUpPosition.x - fingerDownPosition.x > 0
                         ? SwipeDirection.Right
                         : SwipeDirection.Left;
                     if (swipeCompleted || lastSwipeDirection != direction || ignoreLastSwipe)
@@ -188,7 +194,7 @@ namespace Neo
 
         private void SendSwipe(SwipeDirection direction)
         {
-            var swipeData = new SwipeData
+            SwipeData swipeData = new()
             {
                 Direction = direction,
                 StartPosition = fingerUpPosition,

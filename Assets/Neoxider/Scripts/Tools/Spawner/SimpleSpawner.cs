@@ -2,15 +2,16 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(SimpleSpawner))]
     public class SimpleSpawner : MonoBehaviour
     {
-        [Header("Настройки спавна")]
-        public GameObject prefab;
+        [Header("Настройки спавна")] public GameObject prefab;
+
         public Vector3 offset = Vector3.zero; // Исправлена опечатка
         public Vector3 eulerAngle = Vector3.zero;
 
-        [Header("Поведение")]
-        public bool useParent = true;
+        [Header("Поведение")] public bool useParent = true;
+
         public bool useObjectPool = true;
 
         public void Spawn()

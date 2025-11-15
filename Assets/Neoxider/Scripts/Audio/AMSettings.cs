@@ -5,9 +5,10 @@ using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Audio
 {
-    [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
+    [AddComponentMenu("Neo/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
         private AM _am;
@@ -70,31 +71,39 @@ namespace Neo.Audio
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetEfx(bool active)
+        public void SetEfx(bool active)
         {
-            if (efx == null) return;
+            if (efx == null)
+            {
+                return;
+            }
+
             efx.mute = !active;
             OnMuteEfx?.Invoke(efx.mute);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMusic(bool active)
+        public void SetMusic(bool active)
         {
-            if (music == null) return;
+            if (music == null)
+            {
+                return;
+            }
+
             music.mute = !active;
             OnMuteMusic?.Invoke(music.mute);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMusicAndEfx(bool active)
+        public void SetMusicAndEfx(bool active)
         {
             SetEfx(active);
             SetMusic(active);
@@ -102,9 +111,9 @@ namespace Neo.Audio
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMusicAndEfxVolume(float percent)
+        public void SetMusicAndEfxVolume(float percent)
         {
             SetEfxVolume(percent);
             SetMusicVolume(percent);
@@ -112,69 +121,78 @@ namespace Neo.Audio
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMusicVolume(float percent)
+        public void SetMusicVolume(float percent)
         {
-            if (music == null) return;
-            var volume = Mathf.Clamp01(percent);
+            if (music == null)
+            {
+                return;
+            }
+
+            float volume = Mathf.Clamp01(percent);
             music.volume = volume;
             SetMixerVolume(audioMixer, MusicVolume, volume);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetEfxVolume(float percent)
+        public void SetEfxVolume(float percent)
         {
-            if (efx == null) return;
-            var volume = Mathf.Clamp01(percent);
+            if (efx == null)
+            {
+                return;
+            }
+
+            float volume = Mathf.Clamp01(percent);
             efx.volume = volume;
             SetMixerVolume(audioMixer, EfxVolume, volume);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMasterVolume(float percent)
+        public void SetMasterVolume(float percent)
         {
-            var volume = Mathf.Clamp01(percent);
+            float volume = Mathf.Clamp01(percent);
             SetMixerVolume(audioMixer, MasterVolume, volume);
         }
 
         /// <summary>
-        /// Устанавливает громкость для любого параметра микшера по имени (нормализованное значение 0-1)
+        ///     Устанавливает громкость для любого параметра микшера по имени (нормализованное значение 0-1)
         /// </summary>
         /// <param name="parameterName">Имя параметра в микшере</param>
         /// <param name="normalizedVolume">Нормализованное значение громкости (0-1)</param>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMixerParameter(string parameterName, float normalizedVolume)
+        public void SetMixerParameter(string parameterName, float normalizedVolume)
         {
             if (string.IsNullOrEmpty(parameterName))
             {
                 Debug.LogWarning("[AMSettings] Имя параметра микшера не указано!");
                 return;
             }
+
             SetMixerVolume(audioMixer, parameterName, normalizedVolume);
         }
 
         /// <summary>
-        /// Устанавливает значение для любого параметра микшера напрямую в дБ
+        ///     Устанавливает значение для любого параметра микшера напрямую в дБ
         /// </summary>
         /// <param name="parameterName">Имя параметра в микшере</param>
         /// <param name="dbValue">Значение в децибелах (-80 до 20)</param>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void SetMixerParameterDB(string parameterName, float dbValue)
+        public void SetMixerParameterDB(string parameterName, float dbValue)
         {
             if (audioMixer == null)
             {
@@ -193,39 +211,54 @@ namespace Neo.Audio
 
         private void SetMixerVolume(AudioMixer mixer, string parameterName, float normalizedVolume)
         {
-            if (mixer == null) return;
+            if (mixer == null)
+            {
+                return;
+            }
 
-            var db = normalizedVolume > 0 ? Mathf.Log10(normalizedVolume) * 20 : -80;
+            float db = normalizedVolume > 0 ? Mathf.Log10(normalizedVolume) * 20 : -80;
             mixer.SetFloat(parameterName, db);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ToggleMusic()
+        public void ToggleMusic()
         {
-            if (music == null) return;
+            if (music == null)
+            {
+                return;
+            }
+
             SetMusic(music.mute);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ToggleEfx()
+        public void ToggleEfx()
         {
-            if (efx == null) return;
+            if (efx == null)
+            {
+                return;
+            }
+
             SetEfx(efx.mute);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ToggleMusicAndEfx()
+        public void ToggleMusicAndEfx()
         {
-            if (music == null) return;
+            if (music == null)
+            {
+                return;
+            }
+
             SetEfx(music.mute);
             SetMusic(music.mute);
         }

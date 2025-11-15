@@ -14,8 +14,16 @@ namespace Neo.Extensions
         /// </summary>
         public static IEnumerable<GameObject> SetActiveAll(this IEnumerable<GameObject> gameObjects, bool active)
         {
-            if (gameObjects == null) return null;
-            foreach (var gameObject in gameObjects.Where(go => go != null)) gameObject.SetActive(active);
+            if (gameObjects == null)
+            {
+                return null;
+            }
+
+            foreach (GameObject gameObject in gameObjects.Where(go => go != null))
+            {
+                gameObject.SetActive(active);
+            }
+
             return gameObjects;
         }
 
@@ -25,8 +33,16 @@ namespace Neo.Extensions
         public static IEnumerable<T> SetActiveAll<T>(this IEnumerable<T> components, bool active)
             where T : Component
         {
-            if (components == null) return null;
-            foreach (var component in components.Where(c => c != null)) component.gameObject.SetActive(active);
+            if (components == null)
+            {
+                return null;
+            }
+
+            foreach (T component in components.Where(c => c != null))
+            {
+                component.gameObject.SetActive(active);
+            }
+
             return components;
         }
 
@@ -35,10 +51,18 @@ namespace Neo.Extensions
         /// </summary>
         public static IList<GameObject> SetActiveRange(this IList<GameObject> gameObjects, int upToIndex, bool active)
         {
-            if (gameObjects == null) return null;
-            for (var i = 0; i < Mathf.Min(upToIndex, gameObjects.Count); i++)
+            if (gameObjects == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < Mathf.Min(upToIndex, gameObjects.Count); i++)
+            {
                 if (gameObjects[i] != null)
+                {
                     gameObjects[i].SetActive(active);
+                }
+            }
 
             return gameObjects;
         }
@@ -54,8 +78,12 @@ namespace Neo.Extensions
                 return null;
             }
 
-            var gameObject = gameObjects[index];
-            if (gameObject != null) gameObject.SetActive(active);
+            GameObject gameObject = gameObjects[index];
+            if (gameObject != null)
+            {
+                gameObject.SetActive(active);
+            }
+
             return gameObject;
         }
 
@@ -71,7 +99,7 @@ namespace Neo.Extensions
                 return null;
             }
 
-            var component = components[index];
+            T component = components[index];
             if (component != null)
             {
                 component.gameObject.SetActive(active);
@@ -106,9 +134,16 @@ namespace Neo.Extensions
         /// </summary>
         public static void DestroyAll(this IEnumerable<GameObject> gameObjects)
         {
-            if (gameObjects == null) return;
+            if (gameObjects == null)
+            {
+                return;
+            }
+
             // ToList() is used to create a copy, avoiding issues with modifying the collection while iterating.
-            foreach (var gameObject in gameObjects.ToList().Where(go => go != null)) Object.Destroy(gameObject);
+            foreach (GameObject gameObject in gameObjects.ToList().Where(go => go != null))
+            {
+                Object.Destroy(gameObject);
+            }
         }
 
         /// <summary>
@@ -116,9 +151,16 @@ namespace Neo.Extensions
         /// </summary>
         public static void DestroyAll<T>(this IEnumerable<T> components) where T : Component
         {
-            if (components == null) return;
+            if (components == null)
+            {
+                return;
+            }
+
             // ToList() is used to create a copy.
-            foreach (var component in components.ToList().Where(c => c != null)) Object.Destroy(component.gameObject);
+            foreach (T component in components.ToList().Where(c => c != null))
+            {
+                Object.Destroy(component.gameObject);
+            }
         }
 
         /// <summary>
@@ -135,7 +177,11 @@ namespace Neo.Extensions
         public static IEnumerable<T> GetComponentsFromAll<T>(this IEnumerable<GameObject> gameObjects)
             where T : Component
         {
-            if (gameObjects == null) return Enumerable.Empty<T>();
+            if (gameObjects == null)
+            {
+                return Enumerable.Empty<T>();
+            }
+
             return gameObjects
                 .Where(obj => obj != null)
                 .Select(obj => obj.GetComponent<T>())
@@ -147,7 +193,11 @@ namespace Neo.Extensions
         /// </summary>
         public static T GetFirstComponentFromAll<T>(this IEnumerable<GameObject> gameObjects) where T : Component
         {
-            if (gameObjects == null) return null;
+            if (gameObjects == null)
+            {
+                return null;
+            }
+
             return gameObjects
                 .Where(obj => obj != null)
                 .Select(obj => obj.GetComponent<T>())
@@ -159,8 +209,15 @@ namespace Neo.Extensions
         /// </summary>
         public static void SetPositionAll(this IEnumerable<GameObject> gameObjects, Vector3 position)
         {
-            if (gameObjects == null) return;
-            foreach (var gameObject in gameObjects.Where(go => go != null)) gameObject.transform.position = position;
+            if (gameObjects == null)
+            {
+                return;
+            }
+
+            foreach (GameObject gameObject in gameObjects.Where(go => go != null))
+            {
+                gameObject.transform.position = position;
+            }
         }
 
         /// <summary>
@@ -172,13 +229,16 @@ namespace Neo.Extensions
         public static GameObject FindClosest(this IEnumerable<GameObject> gameObjects, Vector3 position)
         {
             GameObject closest = null;
-            var minDistance = float.MaxValue;
+            float minDistance = float.MaxValue;
 
-            if (gameObjects == null) return null;
-
-            foreach (var go in gameObjects.Where(go => go != null))
+            if (gameObjects == null)
             {
-                var distance = Vector3.Distance(go.transform.position, position);
+                return null;
+            }
+
+            foreach (GameObject go in gameObjects.Where(go => go != null))
+            {
+                float distance = Vector3.Distance(go.transform.position, position);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -198,13 +258,16 @@ namespace Neo.Extensions
         public static T FindClosest<T>(this IEnumerable<T> components, Vector3 position) where T : Component
         {
             T closest = null;
-            var minDistance = float.MaxValue;
+            float minDistance = float.MaxValue;
 
-            if (components == null) return null;
-
-            foreach (var component in components.Where(c => c != null))
+            if (components == null)
             {
-                var distance = Vector3.Distance(component.transform.position, position);
+                return null;
+            }
+
+            foreach (T component in components.Where(c => c != null))
+            {
+                float distance = Vector3.Distance(component.transform.position, position);
                 if (distance < minDistance)
                 {
                     minDistance = distance;
@@ -222,12 +285,19 @@ namespace Neo.Extensions
         public static IEnumerable<GameObject> WithinDistance(this IEnumerable<GameObject> gameObjects, Vector3 position,
             float distance)
         {
-            if (gameObjects == null) yield break;
+            if (gameObjects == null)
+            {
+                yield break;
+            }
 
-            var sqrDistance = distance * distance;
-            foreach (var go in gameObjects.Where(go => go != null))
+            float sqrDistance = distance * distance;
+            foreach (GameObject go in gameObjects.Where(go => go != null))
+            {
                 if (Vector3.SqrMagnitude(go.transform.position - position) <= sqrDistance)
+                {
                     yield return go;
+                }
+            }
         }
 
         /// <summary>
@@ -237,12 +307,19 @@ namespace Neo.Extensions
         public static IEnumerable<T> WithinDistance<T>(this IEnumerable<T> components, Vector3 position, float distance)
             where T : Component
         {
-            if (components == null) yield break;
+            if (components == null)
+            {
+                yield break;
+            }
 
-            var sqrDistance = distance * distance;
-            foreach (var component in components.Where(c => c != null))
+            float sqrDistance = distance * distance;
+            foreach (T component in components.Where(c => c != null))
+            {
                 if (Vector3.SqrMagnitude(component.transform.position - position) <= sqrDistance)
+                {
                     yield return component;
+                }
+            }
         }
 
         /// <summary>
@@ -252,8 +329,15 @@ namespace Neo.Extensions
         public static void SetParentAll(this IEnumerable<GameObject> gameObjects, Transform parent,
             bool worldPositionStays = true)
         {
-            if (gameObjects == null) return;
-            foreach (var go in gameObjects.Where(go => go != null)) go.transform.SetParent(parent, worldPositionStays);
+            if (gameObjects == null)
+            {
+                return;
+            }
+
+            foreach (GameObject go in gameObjects.Where(go => go != null))
+            {
+                go.transform.SetParent(parent, worldPositionStays);
+            }
         }
 
         /// <summary>
@@ -263,9 +347,15 @@ namespace Neo.Extensions
         public static void SetParentAll<T>(this IEnumerable<T> components, Transform parent,
             bool worldPositionStays = true) where T : Component
         {
-            if (components == null) return;
-            foreach (var component in components.Where(c => c != null))
+            if (components == null)
+            {
+                return;
+            }
+
+            foreach (T component in components.Where(c => c != null))
+            {
                 component.transform.SetParent(parent, worldPositionStays);
+            }
         }
 
         /// <summary>
@@ -274,12 +364,15 @@ namespace Neo.Extensions
         /// <returns>The average world position, or Vector3.zero if the collection is empty.</returns>
         public static Vector3 GetAveragePosition(this IEnumerable<GameObject> gameObjects)
         {
-            var sum = Vector3.zero;
-            var count = 0;
+            Vector3 sum = Vector3.zero;
+            int count = 0;
 
-            if (gameObjects == null) return sum;
+            if (gameObjects == null)
+            {
+                return sum;
+            }
 
-            foreach (var go in gameObjects.Where(go => go != null))
+            foreach (GameObject go in gameObjects.Where(go => go != null))
             {
                 sum += go.transform.position;
                 count++;
@@ -294,12 +387,15 @@ namespace Neo.Extensions
         /// <returns>The average world position, or Vector3.zero if the collection is empty.</returns>
         public static Vector3 GetAveragePosition<T>(this IEnumerable<T> components) where T : Component
         {
-            var sum = Vector3.zero;
-            var count = 0;
+            Vector3 sum = Vector3.zero;
+            int count = 0;
 
-            if (components == null) return sum;
+            if (components == null)
+            {
+                return sum;
+            }
 
-            foreach (var component in components.Where(c => c != null))
+            foreach (T component in components.Where(c => c != null))
             {
                 sum += component.transform.position;
                 count++;
@@ -315,17 +411,26 @@ namespace Neo.Extensions
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
         public static Bounds GetCombinedBounds(this IEnumerable<GameObject> gameObjects)
         {
-            if (gameObjects == null || !gameObjects.Any()) return new Bounds(Vector3.zero, Vector3.zero);
+            if (gameObjects == null || !gameObjects.Any())
+            {
+                return new Bounds(Vector3.zero, Vector3.zero);
+            }
 
-            var renderers = gameObjects
+            IEnumerable<Renderer> renderers = gameObjects
                 .Where(go => go != null)
                 .SelectMany(go => go.GetComponentsInChildren<Renderer>())
                 .Where(r => r.enabled);
 
-            if (!renderers.Any()) return new Bounds(Vector3.zero, Vector3.zero);
+            if (!renderers.Any())
+            {
+                return new Bounds(Vector3.zero, Vector3.zero);
+            }
 
-            var bounds = renderers.First().bounds;
-            foreach (var renderer in renderers.Skip(1)) bounds.Encapsulate(renderer.bounds);
+            Bounds bounds = renderers.First().bounds;
+            foreach (Renderer renderer in renderers.Skip(1))
+            {
+                bounds.Encapsulate(renderer.bounds);
+            }
 
             return bounds;
         }
@@ -337,9 +442,12 @@ namespace Neo.Extensions
         /// <returns>A Bounds object that contains all renderers, or a zero-sized bounds at origin if no renderers are found.</returns>
         public static Bounds GetCombinedBounds<T>(this IEnumerable<T> components) where T : Component
         {
-            if (components == null) return new Bounds(Vector3.zero, Vector3.zero);
+            if (components == null)
+            {
+                return new Bounds(Vector3.zero, Vector3.zero);
+            }
 
-            var gameObjects = components.Where(c => c != null).Select(c => c.gameObject);
+            IEnumerable<GameObject> gameObjects = components.Where(c => c != null).Select(c => c.gameObject);
             return GetCombinedBounds(gameObjects);
         }
     }

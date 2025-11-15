@@ -8,6 +8,7 @@ namespace Neo
 {
     namespace UI
     {
+        [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonChangePage))]
         public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {
             public bool intecactable = true;
@@ -43,7 +44,10 @@ namespace Neo
 
             public void OnPointerClick(PointerEventData eventData)
             {
-                if (!intecactable) return;
+                if (!intecactable)
+                {
+                    return;
+                }
 
                 if (_canSwitchPage)
                 {
@@ -54,9 +58,13 @@ namespace Neo
                     else
                     {
                         if (_useAnimPage)
+                        {
                             SetPageAnim(_idPage);
+                        }
                         else
+                        {
                             SetPage(_idPage);
+                        }
                     }
                 }
 
@@ -66,16 +74,21 @@ namespace Neo
             public void OnPointerDown(PointerEventData eventData)
             {
                 if (intecactable && _useAnimImage)
+                {
                     if (intecactable && _useAnimImage)
                     {
-                        var scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
+                        float scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
                         transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
                     }
+                }
             }
 
             public void OnPointerUp(PointerEventData eventData)
             {
-                if (intecactable && _useAnimImage) transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
+                if (intecactable && _useAnimImage)
+                {
+                    transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
+                }
             }
 
             public void SetOnePage(int id)

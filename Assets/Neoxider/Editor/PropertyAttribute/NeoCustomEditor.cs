@@ -17,18 +17,16 @@ namespace Neo.Editor
         {
             //Debug.Log("[NeoCustomEditor] Класс загружен и зарегистрирован как CustomEditor для MonoBehaviour");
         }
-        
+
         // Отладка: проверяем, создается ли экземпляр редактора
-        public NeoCustomEditor()
-        {
-            //Debug.Log($"[NeoCustomEditor] Создан экземпляр редактора для {target?.GetType().Name}");
-        }
-        
+
         protected override void ProcessAttributeAssignments()
         {
-            var targetObject = target as MonoBehaviour;
+            MonoBehaviour targetObject = target as MonoBehaviour;
             if (targetObject == null)
+            {
                 return;
+            }
 
             // Process component attributes
             ComponentDrawer.ProcessComponentAttributes(targetObject);

@@ -1,15 +1,13 @@
 using Neo.Extensions;
 using Neo.Tools;
-using UnityEngine;
 
 namespace Neo.Shop
 {
     public class TextMoney : SetText
     {
-        [SerializeField] private readonly bool _levelMoney = false;
-        private Money _money;
-
         public float amount;
+        private readonly bool _levelMoney = false;
+        private Money _money;
 
         public TextMoney()
         {
@@ -32,24 +30,30 @@ namespace Neo.Shop
             }
         }
 
+        private void OnDisable()
+        {
+            if (_levelMoney)
+            {
+                _money.OnChangedLevelMoney.RemoveListener(SetAmount);
+            }
+            else
+            {
+                _money.OnChangedMoney.RemoveListener(SetAmount);
+            }
+        }
+
         private void GetMoney()
         {
             if (_money == null)
+            {
                 _money = Money.I;
+            }
         }
 
         private void SetAmount(float count)
         {
             amount = count;
             Set(amount.RoundToDecimal(@decimal).ToString());
-        }
-
-        private void OnDisable()
-        {
-            if (_levelMoney)
-                _money.OnChangedLevelMoney.RemoveListener(SetAmount);
-            else
-                _money.OnChangedMoney.RemoveListener(SetAmount);
         }
     }
 }

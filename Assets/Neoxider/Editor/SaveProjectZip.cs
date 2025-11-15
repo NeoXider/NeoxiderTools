@@ -24,31 +24,39 @@ public static class SaveProjectZip
     [MenuItem("Tools/Neoxider/Save Project Zip")]
     private static void MakeZip()
     {
-        var projRoot = Path.GetDirectoryName(Application.dataPath);
-        var projName = Path.GetFileName(projRoot);
-        var defaultFile =
+        string projRoot = Path.GetDirectoryName(Application.dataPath);
+        string projName = Path.GetFileName(projRoot);
+        string defaultFile =
             $"{projName}.zip";
 
-        var zipPath = EditorUtility.SaveFilePanel(
+        string zipPath = EditorUtility.SaveFilePanel(
             "Save Project as ZIP",
             projRoot, // стартовая папка
             defaultFile,
             "zip");
 
         if (string.IsNullOrEmpty(zipPath)) // cancel
+        {
             return;
+        }
 
         try
         {
-            if (File.Exists(zipPath)) File.Delete(zipPath);
+            if (File.Exists(zipPath))
+            {
+                File.Delete(zipPath);
+            }
 
-            using (var archive =
+            using (ZipArchive archive =
                    ZipFile.Open(zipPath, ZipArchiveMode.Create))
             {
-                foreach (var folder in RootFolders)
+                foreach (string folder in RootFolders)
                 {
-                    var srcPath = Path.Combine(projRoot, folder);
-                    if (!Directory.Exists(srcPath)) continue;
+                    string srcPath = Path.Combine(projRoot, folder);
+                    if (!Directory.Exists(srcPath))
+                    {
+                        continue;
+                    }
 
                     AddDirectoryToZip(archive, srcPath, folder);
                 }
@@ -68,17 +76,17 @@ public static class SaveProjectZip
         string absPath,
         string relPath)
     {
-        foreach (var file in Directory.GetFiles(absPath))
+        foreach (string file in Directory.GetFiles(absPath))
         {
-            var entry = Path.Combine(relPath, Path.GetFileName(file))
+            string entry = Path.Combine(relPath, Path.GetFileName(file))
                 .Replace("\\", "/");
             zip.CreateEntryFromFile(file, entry,
                 CompressionLevel.Optimal);
         }
 
-        foreach (var dir in Directory.GetDirectories(absPath))
+        foreach (string dir in Directory.GetDirectories(absPath))
         {
-            var subRel = Path.Combine(relPath,
+            string subRel = Path.Combine(relPath,
                 Path.GetFileName(dir));
             AddDirectoryToZip(zip, dir, subRel);
         }

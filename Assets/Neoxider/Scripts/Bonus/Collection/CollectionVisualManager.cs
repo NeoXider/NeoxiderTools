@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Collections;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
-using Neo;
-using Neo.Tools;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Bonus
 {
     public class CollectionVisualManager : Singleton<CollectionVisualManager>
@@ -105,30 +105,40 @@ namespace Neo.Bonus
         private void Subscriber(bool subscribe)
         {
             if (_items == null)
+            {
                 return;
+            }
 
-            for (var i = 0; i < _items.Length; i++)
+            for (int i = 0; i < _items.Length; i++)
             {
                 if (_items[i] == null || _items[i].button == null)
+                {
                     continue;
+                }
 
-                var id = i;
+                int id = i;
 
                 if (subscribe)
+                {
                     _items[i].button.onClick.AddListener(() => SetItem(id));
+                }
                 else
+                {
                     _items[i].button.onClick.RemoveListener(() => SetItem(id));
+                }
             }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Visual()
+        public void Visual()
         {
             if (_items == null || _items.Length == 0)
+            {
                 return;
+            }
 
             if (!Collection.IsInitialized)
             {
@@ -136,7 +146,7 @@ namespace Neo.Bonus
                 return;
             }
 
-            for (var i = 0; i < _items.Length; i++)
+            for (int i = 0; i < _items.Length; i++)
             {
                 if (i < Collection.I.ItemCount)
                 {
@@ -148,15 +158,21 @@ namespace Neo.Bonus
         public void UpdateItemVisibility(int id)
         {
             if (_items == null || id < 0 || id >= _items.Length)
+            {
                 return;
+            }
 
             if (!Collection.IsInitialized)
+            {
                 return;
+            }
 
             if (_items[id] == null)
+            {
                 return;
+            }
 
-            var itemData = Collection.I.GetItemData(id);
+            ItemCollectionData itemData = Collection.I.GetItemData(id);
             if (itemData != null)
             {
                 _items[id].SetData(itemData);
@@ -167,22 +183,27 @@ namespace Neo.Bonus
 
         public void SetItem(int id)
         {
-            if (!_enableSetItem || (_enableSetItem && Collection.I.HasItem(id))) OnSetItem?.Invoke(id);
+            if (!_enableSetItem || (_enableSetItem && Collection.I.HasItem(id)))
+            {
+                OnSetItem?.Invoke(id);
+            }
         }
 
         public ItemCollection GetItem(int id)
         {
             if (_items == null || id < 0 || id >= _items.Length)
+            {
                 return null;
+            }
 
             return _items[id];
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void RefreshAllItems()
+        public void RefreshAllItems()
         {
             Visual();
         }
@@ -194,7 +215,7 @@ namespace Neo.Bonus
 
         public void SetItem(ItemCollection itemCollection)
         {
-            var id = Array.IndexOf(_items, itemCollection);
+            int id = Array.IndexOf(_items, itemCollection);
             SetItem(id);
         }
     }

@@ -6,6 +6,7 @@ namespace Neo
 {
     namespace Bonus
     {
+        [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelMoneyWin))]
         public class WheelMoneyWin : MonoBehaviour
         {
             public TMP_Text prize;
@@ -16,7 +17,9 @@ namespace Neo
                 Money.I.Add(wins[id]);
 
                 if (prize != null)
+                {
                     prize.text = wins[id].ToString();
+                }
             }
         }
     }

@@ -3,8 +3,10 @@ using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(StarView))]
     public class StarView : MonoBehaviour
     {
         [Header("GameObjects")] public GameObject[] starObjects;
@@ -19,17 +21,25 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            private void OnStarChange(int count)
+        private void OnStarChange(int count)
         {
             if (stars != null)
-                for (var i = 0; i < stars.Length; i++)
+            {
+                for (int i = 0; i < stars.Length; i++)
+                {
                     stars[i].Set(i < count);
+                }
+            }
 
             if (starObjects != null)
-                for (var i = 0; i < starObjects.Length; i++)
+            {
+                for (int i = 0; i < starObjects.Length; i++)
+                {
                     starObjects[i].SetActive(i < count);
+                }
+            }
         }
     }
 }

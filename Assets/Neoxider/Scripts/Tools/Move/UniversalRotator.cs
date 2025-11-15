@@ -3,9 +3,10 @@ using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Tools
 {
-    [AddComponentMenu("Neo/Tools/UniversalRotator")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(UniversalRotator))]
     public class UniversalRotator : MonoBehaviour
     {
         public enum AimSource
@@ -68,7 +69,7 @@ namespace Neo.Tools
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
         [LabelText("Офсет (Euler)")]
 #endif
-            public Vector3 rotationOffsetEuler = Vector3.zero;
+        public Vector3 rotationOffsetEuler = Vector3.zero;
 
         // ========== ОГРАНИЧЕНИЯ ==========
 #if ODIN_INSPECTOR
@@ -77,11 +78,11 @@ namespace Neo.Tools
         [LabelText("Ось ограничения (локальная)")]
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
 #endif
-            public Axis limitedAxis3D = Axis.Y;
+        public Axis limitedAxis3D = Axis.Y;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Ограничения")] [LabelText("Диапазон (°)")] [MinMaxSlider(-360f, 360f, true)]
 #endif
-            public Vector2 limitRange = new(0f, 360f);
+        public Vector2 limitRange = new(0f, 360f);
 #if ODIN_INSPECTOR
         [FoldoutGroup("Ограничения")]
         [LabelText("Относительно стартовой позы")]
@@ -96,11 +97,11 @@ namespace Neo.Tools
         [LabelText("Использовать мировые координаты мыши")]
         [OnValueChanged(nameof(OnUseMouseToggled))]
 #endif
-            public bool useMouseWorld;
+        public bool useMouseWorld;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение")] [ShowIf("@!useMouseWorld")] [LabelText("Цель (Transform)")]
 #endif
-            public Transform target;
+        public Transform target;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение")]
         [ShowIf("@useMouseWorld")]
@@ -114,7 +115,7 @@ namespace Neo.Tools
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
         [LabelText("Режим 3D мыши")]
 #endif
-            public Mouse3DMode mouse3DMode = Mouse3DMode.PlaneThroughObject;
+        public Mouse3DMode mouse3DMode = Mouse3DMode.PlaneThroughObject;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение/MOUSE 3D")]
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
@@ -128,7 +129,7 @@ namespace Neo.Tools
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
         [LabelText("Слои Raycast (3D)")]
 #endif
-            public LayerMask mouseRaycastMask = Physics.DefaultRaycastLayers;
+        public LayerMask mouseRaycastMask = Physics.DefaultRaycastLayers;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение/3D")]
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
@@ -217,7 +218,7 @@ namespace Neo.Tools
             }
         }
 #endif
-            private void OnValidate()
+        private void OnValidate()
         {
             TryAssignMainCameraIfNull();
             // Нормализуем диапазон (исправляем NaN/Inf)
@@ -233,9 +234,9 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            private void ClearTargetButton()
+        private void ClearTargetButton()
         {
             ClearTarget();
         }
@@ -246,9 +247,9 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
             [Button("Look at Target Instantly")]
 #else
-            [Neo.ButtonAttribute("Look at Target Instantly")]
+        [ButtonAttribute("Look at Target Instantly")]
 #endif
-            private void LookAtTargetInstant()
+        private void LookAtTargetInstant()
         {
             SetTarget(target);
             if (target != null)

@@ -23,8 +23,11 @@ namespace Neo.Extensions
         public static void ArrangeInCircle(this Transform element, Vector3 center, float radius, int index,
             int totalCount, float rotationOffset = 0)
         {
-            var point = LayoutUtils.GetCircle(totalCount, center, radius, rotationOffset).ElementAtOrDefault(index);
-            if (element != null) element.position = point;
+            Vector3 point = LayoutUtils.GetCircle(totalCount, center, radius, rotationOffset).ElementAtOrDefault(index);
+            if (element != null)
+            {
+                element.position = point;
+            }
         }
 
         #endregion
@@ -34,16 +37,23 @@ namespace Neo.Extensions
         /// </summary>
         private static void ApplyPositions(IEnumerable<Transform> elements, IEnumerable<Vector3> points)
         {
-            if (elements == null || points == null) return;
+            if (elements == null || points == null)
+            {
+                return;
+            }
 
-            var elementList = elements.ToList();
-            var pointList = points.ToList();
+            List<Transform> elementList = elements.ToList();
+            List<Vector3> pointList = points.ToList();
 
-            var count = Mathf.Min(elementList.Count, pointList.Count);
+            int count = Mathf.Min(elementList.Count, pointList.Count);
 
-            for (var i = 0; i < count; i++)
+            for (int i = 0; i < count; i++)
+            {
                 if (elementList[i] != null)
+                {
                     elementList[i].position = pointList[i];
+                }
+            }
         }
 
         #region Collection Arrangements
@@ -54,7 +64,7 @@ namespace Neo.Extensions
         public static void ArrangeInLine(this IEnumerable<Transform> elements, Vector3 origin, Vector3 direction,
             float spacing)
         {
-            var points = LayoutUtils.GetLine(elements.Count(), origin, direction, spacing);
+            IEnumerable<Vector3> points = LayoutUtils.GetLine(elements.Count(), origin, direction, spacing);
             ApplyPositions(elements, points);
         }
 
@@ -64,7 +74,7 @@ namespace Neo.Extensions
         public static void ArrangeInGrid(this IEnumerable<Transform> elements, Vector3 origin, int columns,
             float spacingX, float spacingY)
         {
-            var points = LayoutUtils.GetGrid(elements.Count(), origin, columns, spacingX, spacingY);
+            IEnumerable<Vector3> points = LayoutUtils.GetGrid(elements.Count(), origin, columns, spacingX, spacingY);
             ApplyPositions(elements, points);
         }
 
@@ -74,7 +84,7 @@ namespace Neo.Extensions
         public static void ArrangeInCircle(this IEnumerable<Transform> elements, Vector3 center, float radius,
             float rotationOffset = 0)
         {
-            var points = LayoutUtils.GetCircle(elements.Count(), center, radius, rotationOffset);
+            IEnumerable<Vector3> points = LayoutUtils.GetCircle(elements.Count(), center, radius, rotationOffset);
             ApplyPositions(elements, points);
         }
 
@@ -97,7 +107,8 @@ namespace Neo.Extensions
         public static void ArrangeInGrid3D(this IEnumerable<Transform> elements, Vector3 origin, int columns,
             Vector3 right, Vector3 up, float spacingX, float spacingY)
         {
-            var points = LayoutUtils.GetGrid3D(elements.Count(), origin, columns, right, up, spacingX, spacingY);
+            IEnumerable<Vector3> points =
+                LayoutUtils.GetGrid3D(elements.Count(), origin, columns, right, up, spacingX, spacingY);
             ApplyPositions(elements, points);
         }
 
@@ -107,7 +118,8 @@ namespace Neo.Extensions
         public static void ArrangeInCircle3D(this IEnumerable<Transform> elements, Vector3 center, Vector3 normal,
             float radius, float rotationOffset = 0)
         {
-            var points = LayoutUtils.GetCircle3D(elements.Count(), center, normal, radius, rotationOffset);
+            IEnumerable<Vector3> points =
+                LayoutUtils.GetCircle3D(elements.Count(), center, normal, radius, rotationOffset);
             ApplyPositions(elements, points);
         }
 
@@ -116,7 +128,7 @@ namespace Neo.Extensions
         /// </summary>
         public static void ArrangeOnSphereSurface(this IEnumerable<Transform> elements, Vector3 center, float radius)
         {
-            var points = LayoutUtils.GetSphereSurface(elements.Count(), center, radius);
+            IEnumerable<Vector3> points = LayoutUtils.GetSphereSurface(elements.Count(), center, radius);
             ApplyPositions(elements, points);
         }
 
@@ -130,7 +142,7 @@ namespace Neo.Extensions
         public static void ArrangeInSpiral(this IEnumerable<Transform> elements, Vector3 center, float radiusStep,
             float angleStep)
         {
-            var points = LayoutUtils.GetSpiral(elements.Count(), center, radiusStep, angleStep);
+            IEnumerable<Vector3> points = LayoutUtils.GetSpiral(elements.Count(), center, radiusStep, angleStep);
             ApplyPositions(elements, points);
         }
 
@@ -140,7 +152,8 @@ namespace Neo.Extensions
         public static void ArrangeOnSineWave(this IEnumerable<Transform> elements, Vector3 origin, Vector3 direction,
             float amplitude, float frequency, float spacing)
         {
-            var points = LayoutUtils.GetSineWave(elements.Count(), origin, direction, amplitude, frequency, spacing);
+            IEnumerable<Vector3> points =
+                LayoutUtils.GetSineWave(elements.Count(), origin, direction, amplitude, frequency, spacing);
             ApplyPositions(elements, points);
         }
 

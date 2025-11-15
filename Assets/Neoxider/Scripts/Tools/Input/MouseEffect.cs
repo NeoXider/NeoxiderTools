@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     seconds.
     ///     • Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
     /// </summary>
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(MouseEffect))]
     public class MouseEffect : MonoBehaviour
     {
         public enum SpawnTrigger
@@ -19,9 +20,11 @@ namespace Neo.Tools
             Click
         }
 
-        [Header("Interactivity")]
-        [Tooltip("If disabled, component ignores mouse events and does nothing")] public bool interactable = true;
-        [Tooltip("Disable Trail/Follow object on mouse release")] public bool disableOnRelease = true;
+        [Header("Interactivity")] [Tooltip("If disabled, component ignores mouse events and does nothing")]
+        public bool interactable = true;
+
+        [Tooltip("Disable Trail/Follow object on mouse release")]
+        public bool disableOnRelease = true;
 
         [Header("Effect Sources")] [Tooltip("TrailRenderer that follows the cursor (optional)")]
         public TrailRenderer trail;
@@ -38,18 +41,25 @@ namespace Neo.Tools
         [Tooltip("Spawn prefab repeatedly while holding")]
         public bool spawnDuringHold = true;
 
-        [Tooltip("Interval in seconds for Hold spawning")] public float holdInterval = 0.05f;
-        [Tooltip("Lifetime in seconds for spawned prefabs; 0 = don't destroy")] public float spawnLifetime = 0f;
+        [Tooltip("Interval in seconds for Hold spawning")]
+        public float holdInterval = 0.05f;
 
-        [Tooltip("Interval in seconds for following updates")] public float followInterval = 0.016f;
+        [Tooltip("Lifetime in seconds for spawned prefabs; 0 = don't destroy")]
+        public float spawnLifetime;
+
+        [Tooltip("Interval in seconds for following updates")]
+        public float followInterval = 0.016f;
 
         [Header("Follow Settings")] [Tooltip("Depth (world Z) used to place the trail / follower")]
         public float followDepth = 10f;
 
         [Header("Spawn Parent (optional)")]
-        [Tooltip("Parent for spawned prefabs; if null, spawns under this GameObject")] public Transform spawnParent;
+        [Tooltip("Parent for spawned prefabs; if null, spawns under this GameObject")]
+        public Transform spawnParent;
 
-        [Header("Events")] public UnityEvent onStartFollow; public UnityEvent onStopFollow; public UnityEvent onSpawn;
+        [Header("Events")] public UnityEvent onStartFollow;
+        public UnityEvent onStopFollow;
+        public UnityEvent onSpawn;
 
         private Camera _cam;
         private bool _holdSingleSpawned;
@@ -71,7 +81,46 @@ namespace Neo.Tools
                 trail.enabled = false;
 #endif
             }
-            if (followObject) followObject.SetActive(false);
+
+            if (followObject)
+            {
+                followObject.SetActive(false);
+            }
+        }
+
+        private void Update()
+        {
+            if (!interactable)
+            {
+                return;
+            }
+
+            if (!_isFollowing)
+            {
+                return;
+            }
+
+            if (Time.time - _lastFollowUpdate < followInterval)
+            {
+                return;
+            }
+
+            if (!TryGetCursorWorld(out Vector3 wp))
+            {
+                return;
+            }
+
+            if (trail)
+            {
+                trail.transform.position = wp;
+            }
+
+            if (followObject && followObject.activeSelf)
+            {
+                followObject.transform.position = wp;
+            }
+
+            _lastFollowUpdate = Time.time;
         }
 
         private void OnEnable()
@@ -94,29 +143,24 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            if (_mim == null) return;
+            if (_mim == null)
+            {
+                return;
+            }
+
             _mim.OnPress -= OnPress;
             _mim.OnRelease -= OnRelease;
             _mim.OnClick -= OnClick;
             _mim.OnHold -= OnHold;
         }
 
-        private void Update()
-        {
-            if (!interactable) return;
-            if (!_isFollowing) return;
-            if (Time.time - _lastFollowUpdate < followInterval) return;
-            if (!TryGetCursorWorld(out var wp)) return;
-
-            if (trail) trail.transform.position = wp;
-            if (followObject && followObject.activeSelf) followObject.transform.position = wp;
-
-            _lastFollowUpdate = Time.time;
-        }
-
         private void OnDestroy()
         {
-            if (_mim == null) return;
+            if (_mim == null)
+            {
+                return;
+            }
+
             _mim.OnPress -= OnPress;
             _mim.OnRelease -= OnRelease;
             _mim.OnClick -= OnClick;
@@ -126,9 +170,12 @@ namespace Neo.Tools
         private bool TryGetCursorWorld(out Vector3 worldPos)
         {
             worldPos = Vector3.zero;
-            if (_cam == null) return false;
+            if (_cam == null)
+            {
+                return false;
+            }
 
-            var mp = Input.mousePosition;
+            Vector3 mp = Input.mousePosition;
             mp.x = Mathf.Clamp(mp.x, 0f, Screen.width);
             mp.y = Mathf.Clamp(mp.y, 0f, Screen.height);
 
@@ -140,7 +187,11 @@ namespace Neo.Tools
 
         private void OnPress(MouseInputManager.MouseEventData data)
         {
-            if (!interactable) return;
+            if (!interactable)
+            {
+                return;
+            }
+
             if (trail)
             {
 #if UNITY_2020_2_OR_NEWER
@@ -161,7 +212,9 @@ namespace Neo.Tools
             }
 
             if (spawnPrefab && spawnTrigger == SpawnTrigger.Press)
+            {
                 SpawnAt(data.WorldPosition);
+            }
 
             _lastHoldSpawn = Time.time;
             _lastFollowUpdate = Time.time;
@@ -172,9 +225,15 @@ namespace Neo.Tools
 
         private void OnRelease(MouseInputManager.MouseEventData data)
         {
-            if (!interactable) return;
+            if (!interactable)
+            {
+                return;
+            }
+
             if (spawnPrefab && spawnTrigger == SpawnTrigger.Release)
+            {
                 SpawnAt(data.WorldPosition);
+            }
 
             if (disableOnRelease)
             {
@@ -186,7 +245,11 @@ namespace Neo.Tools
                     trail.enabled = false;
 #endif
                 }
-                if (followObject) followObject.SetActive(false);
+
+                if (followObject)
+                {
+                    followObject.SetActive(false);
+                }
             }
 
             _isFollowing = false;
@@ -196,15 +259,28 @@ namespace Neo.Tools
 
         private void OnClick(MouseInputManager.MouseEventData data)
         {
-            if (!interactable) return;
+            if (!interactable)
+            {
+                return;
+            }
+
             if (spawnPrefab && spawnTrigger == SpawnTrigger.Click)
+            {
                 SpawnAt(data.WorldPosition);
+            }
         }
 
         private void OnHold(MouseInputManager.MouseEventData data)
         {
-            if (!interactable) return;
-            if (!spawnPrefab) return;
+            if (!interactable)
+            {
+                return;
+            }
+
+            if (!spawnPrefab)
+            {
+                return;
+            }
 
             /* single-shot spawn on first Hold frame */
             if (spawnTrigger == SpawnTrigger.Hold && !_holdSingleSpawned)
@@ -214,8 +290,15 @@ namespace Neo.Tools
             }
 
             /* periodic spawn while holding */
-            if (!spawnDuringHold) return;
-            if (Time.time - _lastHoldSpawn < holdInterval) return;
+            if (!spawnDuringHold)
+            {
+                return;
+            }
+
+            if (Time.time - _lastHoldSpawn < holdInterval)
+            {
+                return;
+            }
 
             SpawnAt(data.WorldPosition);
             _lastHoldSpawn = Time.time;
@@ -223,11 +306,18 @@ namespace Neo.Tools
 
         private void SpawnAt(Vector3 position)
         {
-            if (!spawnPrefab) return;
-            var parent = spawnParent != null ? spawnParent : transform;
-            var instance = Instantiate(spawnPrefab, position, Quaternion.identity, parent);
+            if (!spawnPrefab)
+            {
+                return;
+            }
+
+            Transform parent = spawnParent != null ? spawnParent : transform;
+            GameObject instance = Instantiate(spawnPrefab, position, Quaternion.identity, parent);
             if (spawnLifetime > 0f)
+            {
                 Destroy(instance, spawnLifetime);
+            }
+
             onSpawn?.Invoke();
         }
     }

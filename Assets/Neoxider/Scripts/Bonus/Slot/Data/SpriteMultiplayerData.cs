@@ -25,22 +25,30 @@ namespace Neo.Bonus
             {
                 _generate = false;
 
-                if (_spritesData != null) AutoGenerateSpriteMultiplayer();
+                if (_spritesData != null)
+                {
+                    AutoGenerateSpriteMultiplayer();
+                }
             }
         }
 
         private void AutoGenerateSpriteMultiplayer()
         {
-            var list = new List<IdMult>();
+            List<IdMult> list = new();
 
-            if (_spritesData.visuals == null) return;
-
-            for (var s = 0; s < _spritesData.visuals.Length; s++)
+            if (_spritesData.visuals == null)
             {
-                var countList = new List<CountMultiplayer>();
+                return;
+            }
 
-                for (var i = _minCount; i <= _maxCount; i++)
+            for (int s = 0; s < _spritesData.visuals.Length; s++)
+            {
+                List<CountMultiplayer> countList = new();
+
+                for (int i = _minCount; i <= _maxCount; i++)
+                {
                     countList.Add(new CountMultiplayer { count = i, mult = defaultMultiplayer });
+                }
 
                 // Используем ID из SpritesData
                 list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });

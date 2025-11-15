@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Neo.Save.Examples
 {
+    [AddComponentMenu("Neo/" + "Save/" + nameof(PlayerData))]
     public class PlayerData : MonoBehaviour, ISaveableComponent
     {
         [SaveField(nameof(playerScore))] [SerializeField]

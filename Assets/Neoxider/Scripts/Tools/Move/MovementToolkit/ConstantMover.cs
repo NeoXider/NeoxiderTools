@@ -2,31 +2,45 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
-    [AddComponentMenu("Neoxider/Move/MovementToolkit/ConstantMover")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ConstantMover))]
     public class ConstantMover : MonoBehaviour
     {
-        public enum MovementMode { Transform, Rigidbody, Rigidbody2D }
-        public enum DirectionSource { LocalForward3D, Up2D, Right2D, Custom }
+        public enum DirectionSource
+        {
+            LocalForward3D,
+            Up2D,
+            Right2D,
+            Custom
+        }
 
-        [Header("Mode")]
-        public MovementMode mode = MovementMode.Transform;
-        [Tooltip("Если true — направление/ось берутся в локальном пространстве, иначе — в мировом")] public bool spaceLocal = true;
-        [Tooltip("Вычитать время из скорости")] public bool useDeltaTime = true;
+        public enum MovementMode
+        {
+            Transform,
+            Rigidbody,
+            Rigidbody2D
+        }
 
-        [Header("Direction")]
-        public DirectionSource directionSource = DirectionSource.LocalForward3D;
+        [Header("Mode")] public MovementMode mode = MovementMode.Transform;
+
+        [Tooltip("Если true — направление/ось берутся в локальном пространстве, иначе — в мировом")]
+        public bool spaceLocal = true;
+
+        [Tooltip("Вычитать время из скорости")]
+        public bool useDeltaTime = true;
+
+        [Header("Direction")] public DirectionSource directionSource = DirectionSource.LocalForward3D;
+
         public Vector3 customDirection = Vector3.forward;
 
-        [Header("Speed (units/sec)")]
-        public float speed = 1f;
+        [Header("Speed (units/sec)")] public float speed = 1f;
 
-        [Header("Axis Locks (world space)")]
-        public bool lockX;
+        [Header("Axis Locks (world space)")] public bool lockX;
+
         public bool lockY;
         public bool lockZ;
+        private Rigidbody2D _rb2D;
 
         private Rigidbody _rb3D;
-        private Rigidbody2D _rb2D;
 
         private void Awake()
         {
@@ -51,6 +65,7 @@ namespace Neo.Tools
                     MoveTransform();
                     return;
                 }
+
                 MoveRigidbody3D();
             }
             else if (mode == MovementMode.Rigidbody2D)
@@ -60,6 +75,7 @@ namespace Neo.Tools
                     MoveTransform();
                     return;
                 }
+
                 MoveRigidbody2D();
             }
         }
@@ -83,18 +99,41 @@ namespace Neo.Tools
                     dir = spaceLocal ? transform.forward : Vector3.forward;
                     break;
             }
-            if (dir.sqrMagnitude < 1e-6f) dir = Vector3.forward;
+
+            if (dir.sqrMagnitude < 1e-6f)
+            {
+                dir = Vector3.forward;
+            }
+
             return dir.normalized;
         }
 
-        private float Dt() => useDeltaTime ? Time.deltaTime : 1f;
-        private float Fdt() => useDeltaTime ? Time.fixedDeltaTime : 1f;
+        private float Dt()
+        {
+            return useDeltaTime ? Time.deltaTime : 1f;
+        }
+
+        private float Fdt()
+        {
+            return useDeltaTime ? Time.fixedDeltaTime : 1f;
+        }
 
         private void ApplyAxisLocks(ref Vector3 delta)
         {
-            if (lockX) delta.x = 0f;
-            if (lockY) delta.y = 0f;
-            if (lockZ) delta.z = 0f;
+            if (lockX)
+            {
+                delta.x = 0f;
+            }
+
+            if (lockY)
+            {
+                delta.y = 0f;
+            }
+
+            if (lockZ)
+            {
+                delta.z = 0f;
+            }
         }
 
         private void MoveTransform()
@@ -122,5 +161,3 @@ namespace Neo.Tools
         }
     }
 }
-
-

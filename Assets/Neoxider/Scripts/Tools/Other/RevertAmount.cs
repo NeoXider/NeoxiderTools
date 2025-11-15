@@ -3,6 +3,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(RevertAmount))]
     public class RevertAmount : MonoBehaviour
     {
         public UnityEvent<float> OnChange;

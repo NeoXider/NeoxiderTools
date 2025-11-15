@@ -6,6 +6,7 @@ using UnityEngine.EventSystems;
 
 namespace Neo.UI
 {
+    [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonScale))]
     public class ButtonScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
         [SerializeField] private RectTransform _rectTransform;
@@ -33,7 +34,9 @@ namespace Neo.UI
         void IPointerDownHandler.OnPointerDown(PointerEventData eventData)
         {
             if (_resizeCoroutine != null)
+            {
                 StopCoroutine(_resizeCoroutine);
+            }
 
             _resizeCoroutine = StartCoroutine(ResizeButton(_pressedSize));
         }
@@ -41,7 +44,9 @@ namespace Neo.UI
         void IPointerUpHandler.OnPointerUp(PointerEventData eventData)
         {
             if (_resizeCoroutine != null)
+            {
                 StopCoroutine(_resizeCoroutine);
+            }
 
             _resizeCoroutine = StartCoroutine(ResizeButton(_currentSize));
         }
@@ -49,7 +54,7 @@ namespace Neo.UI
         private IEnumerator ResizeButton(Vector2 targetSize)
         {
             Vector2 initialSize = _rectTransform.localScale;
-            var elapsedTime = 0f;
+            float elapsedTime = 0f;
 
             while (elapsedTime < resizeDuration)
             {

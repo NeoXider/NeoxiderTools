@@ -22,18 +22,25 @@ namespace Neo.Editor
         public static void ProcessComponentAttributes(MonoBehaviour targetObject)
         {
             if (!NeoxiderSettings.EnableAttributeSearch)
-                return;
-
-            var fields = targetObject.GetType().GetFields(CustomEditorBase.FIELD_FLAGS);
-
-            foreach (var field in fields)
             {
-                var fieldValue = field.GetValue(targetObject);
-                var isNull = fieldValue == null || (fieldValue is Object obj && obj == null);
+                return;
+            }
+
+            FieldInfo[] fields = targetObject.GetType().GetFields(CustomEditorBase.FIELD_FLAGS);
+
+            foreach (FieldInfo field in fields)
+            {
+                object fieldValue = field.GetValue(targetObject);
+                bool isNull = fieldValue == null || (fieldValue is Object obj && obj == null);
 
                 if (isNull)
+                {
                     ProcessNullField(field, targetObject);
-                else if (IsEmptyCollection(fieldValue)) ProcessEmptyCollection(field, targetObject);
+                }
+                else if (IsEmptyCollection(fieldValue))
+                {
+                    ProcessEmptyCollection(field, targetObject);
+                }
             }
         }
 
@@ -43,13 +50,21 @@ namespace Neo.Editor
         private static void ProcessNullField(FieldInfo field, MonoBehaviour targetObject)
         {
             if (HasAttribute<FindInSceneAttribute>(field))
+            {
                 AssignComponentFromScene(field, targetObject);
+            }
             else if (HasAttribute<FindAllInSceneAttribute>(field))
+            {
                 AssignAllComponentsFromScene(field, targetObject);
+            }
             else if (HasAttribute<GetComponentAttribute>(field))
+            {
                 AssignComponentFromGameObject(field, targetObject);
+            }
             else if (HasAttribute<GetComponentsAttribute>(field))
+            {
                 AssignComponentsFromGameObject(field, targetObject);
+            }
         }
 
         /// <summary>
@@ -58,9 +73,13 @@ namespace Neo.Editor
         private static void ProcessEmptyCollection(FieldInfo field, MonoBehaviour targetObject)
         {
             if (HasAttribute<GetComponentsAttribute>(field))
+            {
                 AssignComponentsFromGameObject(field, targetObject);
+            }
             else if (HasAttribute<FindAllInSceneAttribute>(field))
+            {
                 AssignAllComponentsFromScene(field, targetObject);
+            }
         }
 
         /// <summary>
@@ -73,7 +92,10 @@ namespace Neo.Editor
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
             if (componentType == typeof(GameObject))
+            {
                 return CustomEditorBase.FindObjectsByType<GameObject>(sortMode);
+            }
+
             return CustomEditorBase.FindObjectsByType(componentType, sortMode);
         }
 
@@ -82,9 +104,12 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignComponentFromScene(FieldInfo field, MonoBehaviour targetObject)
         {
-            if (field == null || targetObject == null) return;
+            if (field == null || targetObject == null)
+            {
+                return;
+            }
 
-            var componentType = field.FieldType;
+            Type componentType = field.FieldType;
             if (!typeof(Component).IsAssignableFrom(componentType) && componentType != typeof(GameObject))
             {
                 Debug.LogWarning($"Field '{field.Name}': type {componentType} is not a Component or GameObject.");
@@ -93,7 +118,7 @@ namespace Neo.Editor
 
             try
             {
-                var components = GetComponentsFromScene(componentType);
+                Object[] components = GetComponentsFromScene(componentType);
                 if (components != null && components.Length > 0)
                 {
                     field.SetValue(targetObject, components[0]);
@@ -115,13 +140,18 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignAllComponentsFromScene(FieldInfo field, MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
+            FindAllInSceneAttribute attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
                 .FirstOrDefault() as FindAllInSceneAttribute;
             if (attribute == null)
+            {
                 return;
+            }
 
-            var elementType = GetElementType(field);
-            if (elementType == null) elementType = field.FieldType;
+            Type elementType = GetElementType(field);
+            if (elementType == null)
+            {
+                elementType = field.FieldType;
+            }
 
             if (!typeof(Component).IsAssignableFrom(elementType) && elementType != typeof(GameObject))
             {
@@ -129,7 +159,7 @@ namespace Neo.Editor
                 return;
             }
 
-            var components = GetComponentsFromScene(elementType, attribute.SortMode);
+            Object[] components = GetComponentsFromScene(elementType, attribute.SortMode);
             SetFieldValueForCollection(field, targetObject, components);
         }
 
@@ -138,12 +168,14 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignComponentFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
+            GetComponentAttribute attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
                 .FirstOrDefault() as GetComponentAttribute;
             if (attribute == null)
+            {
                 return;
+            }
 
-            var component = attribute.SearchInChildren
+            Component component = attribute.SearchInChildren
                 ? targetObject.GetComponentInChildren(field.FieldType)
                 : targetObject.GetComponent(field.FieldType);
 
@@ -159,13 +191,18 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignComponentsFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
-            var attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
+            GetComponentsAttribute attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
                 .FirstOrDefault() as GetComponentsAttribute;
             if (attribute == null)
+            {
                 return;
+            }
 
-            var elementType = GetElementType(field);
-            if (elementType == null) elementType = field.FieldType;
+            Type elementType = GetElementType(field);
+            if (elementType == null)
+            {
+                elementType = field.FieldType;
+            }
 
             if (!typeof(Component).IsAssignableFrom(elementType) && elementType != typeof(GameObject))
             {
@@ -175,14 +212,14 @@ namespace Neo.Editor
 
             if (elementType == typeof(GameObject))
             {
-                var gameObjects = attribute.SearchInChildren
+                GameObject[] gameObjects = attribute.SearchInChildren
                     ? targetObject.GetComponentsInChildren<Transform>().Select(t => t.gameObject).ToArray()
                     : new[] { targetObject.gameObject };
                 SetFieldValueForCollection(field, targetObject, gameObjects);
                 return;
             }
 
-            var components = attribute.SearchInChildren
+            Component[] components = attribute.SearchInChildren
                 ? targetObject.GetComponentsInChildren(elementType)
                 : targetObject.GetComponents(elementType);
             SetFieldValueForCollection(field, targetObject, components);
@@ -199,7 +236,7 @@ namespace Neo.Editor
             }
             else if (typeof(IList).IsAssignableFrom(field.FieldType))
             {
-                var list = value.Cast<object>().ToList();
+                List<object> list = value.Cast<object>().ToList();
                 field.SetValue(targetObject, list);
             }
             else if (value.Length > 0)
@@ -238,19 +275,23 @@ namespace Neo.Editor
         private static Type GetElementType(FieldInfo field)
         {
             if (field.FieldType.IsArray)
+            {
                 return field.FieldType.GetElementType();
+            }
 
             if (field.FieldType.IsGenericType)
             {
-                var genericType = field.FieldType.GetGenericTypeDefinition();
+                Type genericType = field.FieldType.GetGenericTypeDefinition();
                 if (genericType == typeof(List<>) ||
                     genericType == typeof(IList<>) ||
                     genericType == typeof(ICollection<>) ||
                     genericType == typeof(IEnumerable<>))
                 {
-                    var args = field.FieldType.GetGenericArguments();
+                    Type[] args = field.FieldType.GetGenericArguments();
                     if (args.Length > 0)
+                    {
                         return args[0];
+                    }
                 }
             }
 

@@ -11,7 +11,10 @@ namespace DG.Tweening
         public static TweenerCore<float, float, FloatOptions> DOFillAmount(this Image target, float endValue,
             float duration)
         {
-            if (target == null) throw new ArgumentNullException(nameof(target));
+            if (target == null)
+            {
+                throw new ArgumentNullException(nameof(target));
+            }
 
             return DOTween.To(() => target.fillAmount, x => target.fillAmount = x, endValue, duration)
                 .SetTarget(target);

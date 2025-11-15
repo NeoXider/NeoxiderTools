@@ -1,26 +1,30 @@
 using UnityEngine;
 
-public class AnchorMove : MonoBehaviour
+namespace Neo.UI
 {
-    [Range(0, 1)] public float x = 0.5f;
-
-    [Range(0, 1)] public float y = 0.5f;
-
-    private RectTransform rect;
-
-    private void OnValidate()
+    [AddComponentMenu("Neo/" + "UI/" + nameof(AnchorMove))]
+    public class AnchorMove : MonoBehaviour
     {
-        rect ??= transform as RectTransform;
+        [Range(0, 1)] public float x = 0.5f;
 
-        rect.anchorMin = new Vector2(x, y);
-        rect.anchorMax = new Vector2(x, y);
+        [Range(0, 1)] public float y = 0.5f;
 
-        rect.anchoredPosition = Vector2.zero;
+        private RectTransform rect;
+
+        private void OnValidate()
+        {
+            rect ??= transform as RectTransform;
+
+            rect.anchorMin = new Vector2(x, y);
+            rect.anchorMax = new Vector2(x, y);
+
+            rect.anchoredPosition = Vector2.zero;
 
 
-        rect.anchoredPosition = Vector2.zero;
+            rect.anchoredPosition = Vector2.zero;
 
 
-        print(rect.localPosition);
+            print(rect.localPosition);
+        }
     }
 }

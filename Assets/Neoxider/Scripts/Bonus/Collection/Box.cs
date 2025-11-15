@@ -7,8 +7,10 @@ using UnityEngine.UI;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
+
 namespace Neo.Bonus
 {
+    [AddComponentMenu("Neo/" + "Bonus/" + nameof(Box))]
     public class Box : MonoBehaviour
     {
         [SerializeField] private string _saveName = "BoxPrize";
@@ -57,7 +59,9 @@ namespace Neo.Bonus
         private void OnEnable()
         {
             if (_animItem != null)
+            {
                 _animItem.transform.localScale = Vector3.zero;
+            }
 
             Visual();
             Events();
@@ -70,18 +74,18 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void AddProgress(float amount)
+        public void AddProgress(float amount)
         {
             ChangeProgress(amount);
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void ChangeProgress(float amount)
+        public void ChangeProgress(float amount)
         {
             progress += amount;
             Events();
@@ -89,34 +93,44 @@ namespace Neo.Bonus
 
         private void Events()
         {
-            var progressOpen = CheckProgress;
+            bool progressOpen = CheckProgress;
 
             OnChangeProgress?.Invoke(progressOpen);
 
             if (progressOpen)
+            {
                 OnProgressReached?.Invoke();
+            }
             else
+            {
                 OnProgressNotReached?.Invoke();
+            }
         }
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void TakePrize()
+        public void TakePrize()
         {
             if (CheckProgress)
             {
-                var itemData = Collection.I.GetPrize();
+                ItemCollectionData itemData = Collection.I.GetPrize();
 
                 if (itemData == null)
+                {
                     return;
+                }
 
                 if (_itemPrize != null)
+                {
                     _itemPrize.sprite = itemData.sprite;
+                }
 
                 if (_animItem != null)
+                {
                     _animItem.transform.DOScale(1, 2).SetEase(_ease);
+                }
 
                 ChangeProgress(-maxProgress);
 
@@ -128,11 +142,14 @@ namespace Neo.Bonus
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            private void Visual(bool openBox = false)
+        private void Visual(bool openBox = false)
         {
-            if (_bar != null) _bar.fillAmount = progress / maxProgress;
+            if (_bar != null)
+            {
+                _bar.fillAmount = progress / maxProgress;
+            }
 
             if (_boxImage != null)
             {
@@ -140,12 +157,20 @@ namespace Neo.Bonus
                 _boxImage.SetNativeSize();
             }
 
-            if (_textProgress != null) _textProgress.text = $"{progress.RoundToDecimal(0)}";
+            if (_textProgress != null)
+            {
+                _textProgress.text = $"{progress.RoundToDecimal(0)}";
+            }
 
-            if (_textMaxProgress != null) _textMaxProgress.text = $"{maxProgress.RoundToDecimal(0)}";
+            if (_textMaxProgress != null)
+            {
+                _textMaxProgress.text = $"{maxProgress.RoundToDecimal(0)}";
+            }
 
             if (_textProgressMaxProgress != null)
+            {
                 _textProgressMaxProgress.text = $"{progress.RoundToDecimal(0)}/{maxProgress.RoundToDecimal(0)}";
+            }
         }
     }
 }

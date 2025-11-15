@@ -10,6 +10,7 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(NavMeshAgent))]
     [RequireComponent(typeof(Animator))]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(AiNavigation))]
     public class AiNavigation : MonoBehaviour
     {
         #region Validation
@@ -45,7 +46,7 @@ namespace Neo.Tools
         [Header("Navigation Settings")] [SerializeField]
         private Transform target;
 
-        [Min(0)] [SerializeField] private float triggerDistance = 0;
+        [Min(0)] [SerializeField] private float triggerDistance;
         [SerializeField] private float stoppingDistance = 0.1f;
         [SerializeField] private bool updateRotation = true;
 
@@ -127,7 +128,7 @@ namespace Neo.Tools
         ///     Gets the current speed of the agent
         /// </summary>
         public float CurrentSpeed => agent != null ? agent.velocity.magnitude : 0f;
-        
+
         /// <summary>
         ///     Gets or sets the distance from the destination at which the agent should stop.
         /// </summary>
@@ -137,7 +138,10 @@ namespace Neo.Tools
             set
             {
                 stoppingDistance = Mathf.Max(0.01f, value);
-                if (agent != null) agent.stoppingDistance = stoppingDistance;
+                if (agent != null)
+                {
+                    agent.stoppingDistance = stoppingDistance;
+                }
             }
         }
 
@@ -150,7 +154,10 @@ namespace Neo.Tools
             set
             {
                 baseSpeed = Mathf.Max(0.1f, value);
-                if (agent != null) agent.speed = baseSpeed;
+                if (agent != null)
+                {
+                    agent.speed = baseSpeed;
+                }
             }
         }
 
@@ -163,7 +170,10 @@ namespace Neo.Tools
             set
             {
                 acceleration = Mathf.Max(0.1f, value);
-                if (agent != null) agent.acceleration = acceleration;
+                if (agent != null)
+                {
+                    agent.acceleration = acceleration;
+                }
             }
         }
 
@@ -176,10 +186,13 @@ namespace Neo.Tools
             set
             {
                 turnSpeed = Mathf.Max(1f, value);
-                if (agent != null) agent.angularSpeed = turnSpeed;
+                if (agent != null)
+                {
+                    agent.angularSpeed = turnSpeed;
+                }
             }
         }
-        
+
         /// <summary>
         ///     Gets or sets the distance at which the agent starts moving towards the target.
         ///     If set to 0, the agent will always move if a target is set.
@@ -352,7 +365,7 @@ namespace Neo.Tools
             agent.speed = baseSpeed * Mathf.Max(0.1f, multiplier);
             OnSpeedChanged?.Invoke(agent.speed);
         }
-        
+
         /// <summary>
         ///     Sets the agent's movement speed to an absolute value.
         ///     Note: This is a direct override and will be reset by calls to SetSpeedMultiplier or EnableSprint.

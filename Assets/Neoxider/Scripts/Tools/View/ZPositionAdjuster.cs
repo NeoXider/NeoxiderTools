@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ZPositionAdjuster))]
     public class ZPositionAdjuster : MonoBehaviour
     {
         [SerializeField] private bool _useNormalizeToUnit = true;
@@ -21,9 +22,9 @@ namespace Neo.Tools
 
         private void AdjustZBasedOnY()
         {
-            var position = transform.position;
+            Vector3 position = transform.position;
 
-            var newY = _useNormalizeToUnit ? position.y.NormalizeToUnit() : position.y.NormalizeToRange();
+            float newY = _useNormalizeToUnit ? position.y.NormalizeToUnit() : position.y.NormalizeToRange();
 
             position.z = newY * _ratio;
             transform.position = position;

@@ -33,10 +33,16 @@ namespace Neo.Extensions
         /// </summary>
         public static int[] GetIntArray(string key, int[] defaultValue = null)
         {
-            if (!PlayerPrefs.HasKey(key)) return defaultValue ?? new int[0];
+            if (!PlayerPrefs.HasKey(key))
+            {
+                return defaultValue ?? new int[0];
+            }
 
-            var arrayString = PlayerPrefs.GetString(key);
-            if (string.IsNullOrEmpty(arrayString)) return defaultValue ?? new int[0];
+            string arrayString = PlayerPrefs.GetString(key);
+            if (string.IsNullOrEmpty(arrayString))
+            {
+                return defaultValue ?? new int[0];
+            }
 
             try
             {
@@ -72,10 +78,16 @@ namespace Neo.Extensions
         /// </summary>
         public static float[] GetFloatArray(string key, float[] defaultValue = null)
         {
-            if (!PlayerPrefs.HasKey(key)) return defaultValue ?? new float[0];
+            if (!PlayerPrefs.HasKey(key))
+            {
+                return defaultValue ?? new float[0];
+            }
 
-            var arrayString = PlayerPrefs.GetString(key);
-            if (string.IsNullOrEmpty(arrayString)) return defaultValue ?? new float[0];
+            string arrayString = PlayerPrefs.GetString(key);
+            if (string.IsNullOrEmpty(arrayString))
+            {
+                return defaultValue ?? new float[0];
+            }
 
             try
             {
@@ -111,10 +123,16 @@ namespace Neo.Extensions
         /// </summary>
         public static string[] GetStringArray(string key, string[] defaultValue = null)
         {
-            if (!PlayerPrefs.HasKey(key)) return defaultValue ?? new string[0];
+            if (!PlayerPrefs.HasKey(key))
+            {
+                return defaultValue ?? new string[0];
+            }
 
-            var arrayString = PlayerPrefs.GetString(key);
-            if (string.IsNullOrEmpty(arrayString)) return defaultValue ?? new string[0];
+            string arrayString = PlayerPrefs.GetString(key);
+            if (string.IsNullOrEmpty(arrayString))
+            {
+                return defaultValue ?? new string[0];
+            }
 
             return arrayString.Split(SEPARATOR);
         }
@@ -134,7 +152,7 @@ namespace Neo.Extensions
                 return;
             }
 
-            var intArray = array.Select(b => b ? 1 : 0).ToArray();
+            int[] intArray = array.Select(b => b ? 1 : 0).ToArray();
             SetIntArray(key, intArray);
         }
 
@@ -143,11 +161,14 @@ namespace Neo.Extensions
         /// </summary>
         public static bool[] GetBoolArray(string key, bool[] defaultValue = null)
         {
-            if (!PlayerPrefs.HasKey(key)) return defaultValue ?? new bool[0];
+            if (!PlayerPrefs.HasKey(key))
+            {
+                return defaultValue ?? new bool[0];
+            }
 
             try
             {
-                var intArray = GetIntArray(key);
+                int[] intArray = GetIntArray(key);
                 return intArray.Select(i => i == 1).ToArray();
             }
             catch (Exception ex)

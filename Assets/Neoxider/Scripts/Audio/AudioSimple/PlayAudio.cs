@@ -4,7 +4,7 @@ namespace Neo
 {
     namespace Audio
     {
-        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudio))]
+        [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {
             [SerializeField] private int _clipType;
@@ -16,7 +16,9 @@ namespace Neo
             private void Start()
             {
                 if (_playOnAwake)
+                {
                     AudioPlay();
+                }
             }
 
             public void AudioPlay()

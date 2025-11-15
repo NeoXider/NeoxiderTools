@@ -15,8 +15,12 @@ namespace Neo.Extensions
         /// <returns>Existing or new component of type T</returns>
         public static T GetOrAdd<T>(this Component component) where T : Component
         {
-            var comp = component.GetComponent<T>();
-            if (comp == null) comp = component.gameObject.AddComponent<T>();
+            T comp = component.GetComponent<T>();
+            if (comp == null)
+            {
+                comp = component.gameObject.AddComponent<T>();
+            }
+
             return comp;
         }
 
@@ -29,15 +33,17 @@ namespace Neo.Extensions
         public static string GetPath(this Component component)
         {
             if (component == null || component.gameObject == null)
+            {
                 return string.Empty;
+            }
 
             return GetGameObjectPath(component.gameObject);
         }
 
         private static string GetGameObjectPath(GameObject obj)
         {
-            var path = obj.name;
-            var parent = obj.transform.parent;
+            string path = obj.name;
+            Transform parent = obj.transform.parent;
 
             while (parent != null)
             {

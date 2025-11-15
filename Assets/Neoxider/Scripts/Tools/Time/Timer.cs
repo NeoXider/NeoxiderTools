@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
-using System.Threading.Tasks;
-
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
@@ -21,7 +20,7 @@ namespace Neo
     }
 
     /// <summary>
-    ///     Async timer implementation with events and looping support
+    ///     Async timer implementation with events and looping support using UniTask
     /// </summary>
     /// <example>
     ///     <code>
@@ -35,7 +34,7 @@ namespace Neo
     ///     Debug.Log($"Time left: {time:F1}s, Progress: {progress:P0}");
     /// });
     /// 
-    /// // Start the timer
+    /// // Start the timer (UniTask)
     /// await timer.Start();
     /// 
     /// // Pause and resume
@@ -48,10 +47,13 @@ namespace Neo
     /// 
     /// // Stop the timer
     /// timer.Stop();
+    /// 
+    /// // Dispose resources when done
+    /// timer.Dispose();
     /// </code>
     /// </example>
     [Serializable]
-    public class Timer
+    public class Timer : IDisposable
     {
         /// <summary>
         ///     Event triggered when the timer starts
@@ -145,7 +147,7 @@ namespace Neo
         /// <summary>
         ///     Gets the current progress of the timer (0 to 1)
         /// </summary>
-        public float Progress => 1f - RemainingTime / duration;
+        public float Progress => duration > 0 ? 1f - RemainingTime / duration : 0f;
 
         /// <summary>
         ///     Gets or sets the total duration of the timer in seconds
@@ -155,10 +157,17 @@ namespace Neo
             get => duration;
             set
             {
-                if (value < 0) value = 0;
-                var difference = value - duration;
+                if (value < 0)
+                {
+                    value = 0;
+                }
+
+                float difference = value - duration;
                 duration = value;
-                if (isRunning) RemainingTime += difference;
+                if (isRunning)
+                {
+                    RemainingTime += difference;
+                }
             }
         }
 
@@ -170,9 +179,22 @@ namespace Neo
             get => updateInterval;
             set
             {
-                if (value < 0) value = 0;
+                if (value < 0)
+                {
+                    value = 0;
+                }
+
                 updateInterval = value;
             }
+        }
+
+        /// <summary>
+        ///     Disposes resources used by the timer
+        /// </summary>
+        public void Dispose()
+        {
+            Stop();
+            cancellationTokenSource?.Dispose();
         }
 
         /// <summary>
@@ -184,35 +206,67 @@ namespace Neo
             Stop();
             Duration = newDuration;
             UpdateInterval = newUpdateInterval;
-            if (looping.HasValue) IsLooping = looping.Value;
-            if (useUnscaledTime.HasValue) UseUnscaledTime = useUnscaledTime.Value;
+            if (looping.HasValue)
+            {
+                IsLooping = looping.Value;
+            }
+
+            if (useUnscaledTime.HasValue)
+            {
+                UseUnscaledTime = useUnscaledTime.Value;
+            }
+
             lastUpdateTime = 0f;
             RemainingTime = Duration;
         }
 
         /// <summary>
-        ///     Starts or resumes the timer
+        ///     Starts or resumes the timer (synchronous version - fire and forget)
+        ///     Can be called from non-async code. For async usage, use StartAsync().
         /// </summary>
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public async Task Start()
+        public void Start()
         {
-            if (isRunning) return;
+            StartAsync().Forget();
+        }
+
+        /// <summary>
+        ///     Starts or resumes the timer (async version)
+        /// </summary>
+        /// <param name="cancellationToken">Optional external cancellation token</param>
+        public async UniTask StartAsync(CancellationToken cancellationToken = default)
+        {
+            if (isRunning)
+            {
+                return;
+            }
 
             isRunning = true;
             isPaused = false;
             OnTimerStart.Invoke();
 
-            cancellationTokenSource = new CancellationTokenSource();
+            if (cancellationToken != default && cancellationToken.CanBeCanceled)
+            {
+                cancellationTokenSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            }
+            else
+            {
+                cancellationTokenSource = new CancellationTokenSource();
+            }
+
             try
             {
                 do
                 {
                     await RunTimerCycle(cancellationTokenSource.Token);
-                    if (!IsLooping) OnTimerEnd.Invoke();
+                    if (!IsLooping)
+                    {
+                        OnTimerEnd.Invoke();
+                    }
                 } while (IsLooping && isRunning);
             }
             catch (OperationCanceledException)
@@ -231,11 +285,14 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Stop()
+        public void Stop()
         {
-            if (!isRunning) return;
+            if (!isRunning)
+            {
+                return;
+            }
 
             if (cancellationTokenSource != null)
             {
@@ -256,11 +313,14 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Pause()
+        public void Pause()
         {
-            if (!isRunning || isPaused) return;
+            if (!isRunning || isPaused)
+            {
+                return;
+            }
 
             isPaused = true;
             OnTimerPause.Invoke();
@@ -272,11 +332,14 @@ namespace Neo
 #if ODIN_INSPECTOR
             [Button]
 #else
-            [Neo.ButtonAttribute]
+        [ButtonAttribute]
 #endif
-            public void Resume()
+        public void Resume()
         {
-            if (!isRunning || !isPaused) return;
+            if (!isRunning || !isPaused)
+            {
+                return;
+            }
 
             isPaused = false;
             OnTimerResume.Invoke();
@@ -285,10 +348,11 @@ namespace Neo
         /// <summary>
         ///     Restarts the timer from the beginning
         /// </summary>
-        public async Task Restart()
+        /// <param name="cancellationToken">Optional external cancellation token</param>
+        public async UniTask Restart(CancellationToken cancellationToken = default)
         {
             Stop();
-            await Start();
+            await StartAsync(cancellationToken);
         }
 
         /// <summary>
@@ -301,28 +365,38 @@ namespace Neo
             Duration = Mathf.Max(0, Duration + seconds);
         }
 
-        private async Task RunTimerCycle(CancellationToken cancellationToken)
+        private async UniTask RunTimerCycle(CancellationToken cancellationToken)
         {
             RemainingTime = Duration;
             lastUpdateTime = 0f;
 
             while (RemainingTime > 0 && !cancellationToken.IsCancellationRequested)
             {
-                if (!isPaused)
+                // Wait while paused
+                if (isPaused)
                 {
-                    var deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
-                    lastUpdateTime += deltaTime;
-
-                    if (lastUpdateTime >= UpdateInterval)
+                    await UniTask.WaitWhile(() => isPaused, cancellationToken: cancellationToken);
+                    if (cancellationToken.IsCancellationRequested)
                     {
-                        RemainingTime -= lastUpdateTime;
-                        var progress = 1f - RemainingTime / Duration;
-                        OnTimerUpdate.Invoke(RemainingTime, progress);
-                        lastUpdateTime = 0f;
+                        return;
                     }
                 }
 
-                await Task.Yield();
+                float deltaTime = UseUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+                lastUpdateTime += deltaTime;
+
+                if (lastUpdateTime >= UpdateInterval)
+                {
+                    RemainingTime -= lastUpdateTime;
+                    RemainingTime = Mathf.Max(0f, RemainingTime);
+
+                    float progress = Duration > 0 ? 1f - RemainingTime / Duration : 1f;
+                    OnTimerUpdate.Invoke(RemainingTime, progress);
+                    lastUpdateTime = 0f;
+                }
+
+                // Use UniTask.Yield for better Unity integration
+                await UniTask.Yield(cancellationToken);
             }
         }
     }

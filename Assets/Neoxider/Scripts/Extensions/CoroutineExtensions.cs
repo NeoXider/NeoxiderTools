@@ -14,7 +14,7 @@ namespace Neo.Extensions
             {
                 if (instance == null)
                 {
-                    var go = new GameObject("[CoroutineHelper]");
+                    GameObject go = new("[CoroutineHelper]");
                     instance = go.AddComponent<CoroutineHelper>();
                     GameObject.DontDestroyOnLoad(go);
                 }
@@ -48,7 +48,10 @@ namespace Neo.Extensions
 
             public void Stop()
             {
-                if (!IsRunning || owner == null) return;
+                if (!IsRunning || owner == null)
+                {
+                    return;
+                }
 
                 if (coroutine != null)
                 {
@@ -131,26 +134,26 @@ namespace Neo.Extensions
         public static CoroutineHandle Delay(this GameObject gameObject, float seconds, Action action,
             bool useUnscaledTime = false)
         {
-            var owner = GetOrAddCoroutineComponent(gameObject);
+            MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.Delay(seconds, action, useUnscaledTime);
         }
 
         public static CoroutineHandle WaitUntil(this GameObject gameObject, Func<bool> predicate, Action action)
         {
-            var owner = GetOrAddCoroutineComponent(gameObject);
+            MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.WaitUntil(predicate, action);
         }
 
         public static CoroutineHandle WaitWhile(this GameObject gameObject, Func<bool> predicate, Action action)
         {
-            var owner = GetOrAddCoroutineComponent(gameObject);
+            MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.WaitWhile(predicate, action);
         }
 
         public static CoroutineHandle DelayFrames(this GameObject gameObject, int frameCount, Action action,
             bool useFixedUpdate = false)
         {
-            var owner = GetOrAddCoroutineComponent(gameObject);
+            MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.DelayFrames(frameCount, action, useFixedUpdate);
         }
 
@@ -203,7 +206,7 @@ namespace Neo.Extensions
                 owner = Instance;
             }
 
-            var handle = new CoroutineHandle(owner);
+            CoroutineHandle handle = new(owner);
             handle.Coroutine = owner.StartCoroutine(WrapCoroutine(routine, handle));
             return handle;
         }
@@ -216,17 +219,25 @@ namespace Neo.Extensions
 
         private static MonoBehaviour GetOrAddCoroutineComponent(GameObject gameObject)
         {
-            var runner = gameObject.GetComponent<CoroutineRunner>();
-            if (runner == null) runner = gameObject.AddComponent<CoroutineRunner>();
+            CoroutineRunner runner = gameObject.GetComponent<CoroutineRunner>();
+            if (runner == null)
+            {
+                runner = gameObject.AddComponent<CoroutineRunner>();
+            }
+
             return runner;
         }
 
         private static IEnumerator DelayedAction(float seconds, Action action, bool useUnscaledTime)
         {
             if (useUnscaledTime)
+            {
                 yield return new WaitForSecondsRealtime(seconds);
+            }
             else
+            {
                 yield return new WaitForSeconds(seconds);
+            }
 
             try
             {
@@ -241,11 +252,19 @@ namespace Neo.Extensions
         private static IEnumerator DelayedFramesAction(int frameCount, Action action, bool useFixedUpdate)
         {
             if (useFixedUpdate)
-                for (var i = 0; i < frameCount; i++)
+            {
+                for (int i = 0; i < frameCount; i++)
+                {
                     yield return new WaitForFixedUpdate();
+                }
+            }
             else
-                for (var i = 0; i < frameCount; i++)
+            {
+                for (int i = 0; i < frameCount; i++)
+                {
                     yield return null;
+                }
+            }
 
             try
             {

@@ -10,18 +10,26 @@ namespace Neo.Bonus
 
         public void LineActiv(int[] idList)
         {
-            foreach (var item in lines)
+            foreach (GameObject item in lines)
+            {
                 item.SetActive(false);
+            }
 
-            foreach (var id in idList)
+            foreach (int id in idList)
+            {
                 if (id >= 0 && id < lines.Length)
+                {
                     lines[id].SetActive(true);
+                }
+            }
         }
 
         public void LineActiv(bool activ)
         {
-            foreach (var item in lines)
+            foreach (GameObject item in lines)
+            {
                 item.SetActive(activ);
+            }
         }
     }
 }

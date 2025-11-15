@@ -39,13 +39,16 @@ public class SceneSaver : EditorWindow
         EditorGUILayout.LabelField("Current Scene", currentScenePath);
         EditorGUILayout.LabelField("Last Save Status", lastSaveStatus);
 
-        if (GUILayout.Button("Save Now")) SaveSceneClone();
+        if (GUILayout.Button("Save Now"))
+        {
+            SaveSceneClone();
+        }
     }
 
     [MenuItem("Tools/Neoxider/Scene Saver Settings")]
     public static void ShowWindow()
     {
-        var window = GetWindow<SceneSaver>("Scene Saver Settings");
+        SceneSaver window = GetWindow<SceneSaver>("Scene Saver Settings");
         window.minSize = new Vector2(250, 100);
         UpdateCurrentScenePath();
     }
@@ -54,7 +57,7 @@ public class SceneSaver : EditorWindow
     {
         if (isScriptEnabled && !EditorApplication.isPlayingOrWillChangePlaymode)
         {
-            var currentTime = EditorApplication.timeSinceStartup;
+            double currentTime = EditorApplication.timeSinceStartup;
             if (currentTime - lastSaveTime >= intervalMinutes * 60)
             {
                 SaveSceneClone();
@@ -70,17 +73,23 @@ public class SceneSaver : EditorWindow
 
     private static void UpdateCurrentScenePath()
     {
-        var activeScene = EditorSceneManager.GetActiveScene();
+        Scene activeScene = EditorSceneManager.GetActiveScene();
         currentScenePath = activeScene.path;
 
-        if (string.IsNullOrEmpty(currentScenePath)) currentScenePath = "Untitled";
+        if (string.IsNullOrEmpty(currentScenePath))
+        {
+            currentScenePath = "Untitled";
+        }
     }
 
     private static void SaveSceneClone()
     {
-        if (EditorApplication.isPlaying) return;
+        if (EditorApplication.isPlaying)
+        {
+            return;
+        }
 
-        var currentScene = EditorSceneManager.GetActiveScene();
+        Scene currentScene = EditorSceneManager.GetActiveScene();
         if (!currentScene.isDirty && !saveEvenIfNotDirty)
         {
             lastSaveStatus = "Scene is not dirty, skipping auto-save.";
@@ -88,8 +97,8 @@ public class SceneSaver : EditorWindow
         }
 
         UpdateCurrentScenePath();
-        var sceneName = Path.GetFileNameWithoutExtension(currentScenePath);
-        var newScenePath = Path.Combine("Assets", "Scenes", "AutoSaves", $"{sceneName}_AutoSave.unity");
+        string sceneName = Path.GetFileNameWithoutExtension(currentScenePath);
+        string newScenePath = Path.Combine("Assets", "Scenes", "AutoSaves", $"{sceneName}_AutoSave.unity");
 
         Directory.CreateDirectory(Path.Combine("Assets", "Scenes", "AutoSaves"));
 

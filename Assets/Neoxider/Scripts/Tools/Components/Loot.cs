@@ -1,13 +1,14 @@
-using UnityEngine;
 using Neo.Extensions;
+using UnityEngine;
 
 namespace Neo
 {
     namespace Tools
     {
+        [AddComponentMenu("Neo/" + "Tools/" + nameof(Loot))]
         public class Loot : MonoBehaviour
         {
-             public GameObject[] lootItems;
+            public GameObject[] lootItems;
             [Space] [Range(0, 1)] public float dropChance = 1;
 
             [Space] [Header("Settings")] public bool spawnOnDestroy = true;
@@ -51,7 +52,7 @@ namespace Neo
                     {
                         return lootItems[0];
                     }
-                    
+
                     return lootItems.GetRandomElement();
                 }
 

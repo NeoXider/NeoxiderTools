@@ -20,8 +20,8 @@ namespace Neo
         /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            var requireInterface = attribute as RequireInterface;
-            var requireType = requireInterface.RequireType;
+            RequireInterface requireInterface = attribute as RequireInterface;
+            Type requireType = requireInterface.RequireType;
 
             // Validate property type and interface
             if (IsValid(property, requireType))
@@ -34,7 +34,7 @@ namespace Neo
             }
 
             // Draw the property field with a green tint to indicate interface requirement
-            var originalColor = GUI.color;
+            Color originalColor = GUI.color;
             GUI.color = new Color(0.7f, 1f, 0.7f); // Lighter green tint
             EditorGUI.PropertyField(position, property, label);
             GUI.color = originalColor;
@@ -59,13 +59,19 @@ namespace Neo
         private void CheckProperty(SerializedProperty property, Type targetType)
         {
             if (property.objectReferenceValue == null)
+            {
                 return;
+            }
 
             // Handle different types of Unity objects
             if (property.objectReferenceValue is GameObject gameObject)
+            {
                 CheckGameObject(property, targetType, gameObject);
+            }
             else if (property.objectReferenceValue is ScriptableObject scriptableObject)
+            {
                 CheckScriptableObject(property, targetType, scriptableObject);
+            }
         }
 
         /// <summary>
@@ -92,7 +98,7 @@ namespace Neo
         private void CheckScriptableObject(SerializedProperty property, Type targetType,
             ScriptableObject scriptableObject)
         {
-            var objectType = scriptableObject.GetType();
+            Type objectType = scriptableObject.GetType();
             if (!targetType.IsAssignableFrom(objectType))
             {
                 property.objectReferenceValue = null;

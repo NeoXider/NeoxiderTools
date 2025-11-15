@@ -1,10 +1,11 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace Neo.Tools
 {
-    [System.Serializable]
+    [Serializable]
     public class PoolConfig
     {
         public GameObject prefab;
@@ -13,16 +14,17 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    /// Центральный менеджер для управления всеми пулами объектов в игре.
+    ///     Центральный менеджер для управления всеми пулами объектов в игре.
     /// </summary>
     public class PoolManager : Singleton<PoolManager>
     {
-        [Header("Настройки пула по умолчанию")]
-        [SerializeField] private int _defaultInitialSize = 10;
+        [Header("Настройки пула по умолчанию")] [SerializeField]
+        private int _defaultInitialSize = 10;
+
         [SerializeField] private bool _defaultExpandPool = true;
 
-        [Header("Предварительные конфигурации пулов")]
-        [SerializeField] private List<PoolConfig> _preconfiguredPools;
+        [Header("Предварительные конфигурации пулов")] [SerializeField]
+        private List<PoolConfig> _preconfiguredPools;
 
         private readonly Dictionary<GameObject, NeoObjectPool> _pools = new();
 
@@ -45,21 +47,22 @@ namespace Neo.Tools
 
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
-            foreach (var pool in _pools.Values)
+            foreach (NeoObjectPool pool in _pools.Values)
             {
                 pool.Clear();
             }
+
             _pools.Clear();
             PrewarmPools();
         }
 
         private void PrewarmPools()
         {
-            foreach (var config in _preconfiguredPools)
+            foreach (PoolConfig config in _preconfiguredPools)
             {
                 if (config.prefab != null && !_pools.ContainsKey(config.prefab))
                 {
-                    var pool = new NeoObjectPool(config.prefab, config.initialSize, config.expandPool);
+                    NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool);
                     _pools[config.prefab] = pool;
                 }
             }
@@ -72,16 +75,21 @@ namespace Neo.Tools
                 pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool);
                 _pools[prefab] = pool;
             }
+
             return pool;
         }
 
         public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
         {
-            if (I == null) { Debug.LogError("PoolManager не найден на сцене!"); return null; }
+            if (I == null)
+            {
+                Debug.LogError("PoolManager не найден на сцене!");
+                return null;
+            }
 
             NeoObjectPool pool = I.GetOrCreatePool(prefab);
             GameObject instance = pool.GetObject(position, rotation);
-            
+
             // Если родитель не указан, делаем объект дочерним для самого PoolManager
             instance.transform.SetParent(parent == null ? I.transform : parent);
 
@@ -89,6 +97,7 @@ namespace Neo.Tools
             {
                 info = instance.AddComponent<PooledObjectInfo>();
             }
+
             info.OwnerPool = pool;
 
             return instance;
@@ -96,7 +105,10 @@ namespace Neo.Tools
 
         public static void Release(GameObject instance)
         {
-            if (instance == null) return;
+            if (instance == null)
+            {
+                return;
+            }
 
             if (instance.TryGetComponent(out PooledObjectInfo info) && info.OwnerPool != null)
             {
@@ -104,7 +116,8 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning($"Объект {instance.name} не является объектом из пула. Он будет уничтожен (Destroy).", instance);
+                Debug.LogWarning($"Объект {instance.name} не является объектом из пула. Он будет уничтожен (Destroy).",
+                    instance);
                 Destroy(instance);
             }
         }

@@ -8,7 +8,7 @@ namespace Neo.Tools
     ///     Scene wrapper over <see cref="ChanceManager" /> with UnityEvents and optional ScriptableObject source.
     ///     Useful for drop tables, random events etc.
     /// </summary>
-    [AddComponentMenu("Neoxider/Random/Chance System")]
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {
         [SerializeField] [Tooltip("Inline chance configuration")]
@@ -26,7 +26,10 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            if (chanceData != null) manager.CopyFrom(chanceData.Manager);
+            if (chanceData != null)
+            {
+                manager.CopyFrom(chanceData.Manager);
+            }
 
             manager.Sanitize();
             manager.EnsureUniqueIds();
@@ -38,11 +41,11 @@ namespace Neo.Tools
             if (logDebugOnce)
             {
                 logDebugOnce = false;
-                var entry = manager?.Evaluate();
+                ChanceManager.Entry entry = manager?.Evaluate();
                 if (entry != null)
                 {
-                    var index = manager.Entries.ToList().IndexOf(entry);
-                    var normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
+                    int index = manager.Entries.ToList().IndexOf(entry);
+                    float normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
                     Debug.Log(
                         $"[ChanceSystem] Sampled entry id={entry.CustomId}, weight={entry.Weight:F4}, normalized={normalized:F4}",
                         this);
@@ -54,7 +57,10 @@ namespace Neo.Tools
             }
 #endif
 
-            if (manager == null) manager = new ChanceManager();
+            if (manager == null)
+            {
+                manager = new ChanceManager();
+            }
 
             manager.Sanitize();
             manager.EnsureUniqueIds();
@@ -64,10 +70,10 @@ namespace Neo.Tools
         {
             GenerateId();
         }
-        
+
         public int GenerateId()
         {
-            var id = manager.GetChanceId();
+            int id = manager.GetChanceId();
             OnIdGenerated?.Invoke(id);
             return id;
         }

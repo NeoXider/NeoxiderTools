@@ -8,17 +8,17 @@ namespace Neo.Editor
     public static class CustomEditorSettings
     {
         // Neo component background (dark cyberpunk)
-        public static Color NeoBackgroundColor => new Color(0.15f, 0.1f, 0.2f, 1f); // Dark purple-tinted background
+        public static Color NeoBackgroundColor => new(0.15f, 0.1f, 0.2f, 1f); // Dark purple-tinted background
 
         // Button colors (cyberpunk neon style)
-        public static Color ButtonBackgroundColor => new Color(0.6f, 0.2f, 1f, 1f); // Bright purple
-        public static Color ButtonHoverColor => new Color(0.8f, 0.3f, 1f, 1f); // Lighter purple on hover
+        public static Color ButtonBackgroundColor => new(0.6f, 0.2f, 1f, 1f); // Bright purple
+        public static Color ButtonHoverColor => new(0.8f, 0.3f, 1f, 1f); // Lighter purple on hover
         public static Color ButtonTextColor => Color.white;
-        public static Color ButtonBorderColor => new Color(0.9f, 0.5f, 1f, 0.8f); // Neon glow border
+        public static Color ButtonBorderColor => new(0.9f, 0.5f, 1f, 0.8f); // Neon glow border
 
         // Signature colors (cyberpunk neon)
-        public static Color SignatureColor => new Color(0.8f, 0.75f, 1f, 1f);
-        public static Color SignatureGlowColor => new Color(0.9f, 0.8f, 1f, 0.6f); // Subtle glow effect
+        public static Color SignatureColor => new(0.8f, 0.75f, 1f, 1f);
+        public static Color SignatureGlowColor => new(0.9f, 0.8f, 1f, 0.6f); // Subtle glow effect
 
         // Text settings
         public static int SignatureFontSize => 14;
@@ -35,4 +35,3 @@ namespace Neo.Editor
         public static float GlowIntensity => 0.3f;
     }
 }
-

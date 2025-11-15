@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Neo.Bonus
 {
+    [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {
         [GetComponent] public Button button;
@@ -13,12 +14,12 @@ namespace Neo.Bonus
         public UnityEvent<bool> OnChangeEnabled;
         public UnityEvent OnActive;
         public UnityEvent OnDeactivated;
+        private ItemCollectionData _currentData;
+        private bool _isInitialized;
 
         public Image ItemImage => _itemImage;
         public ItemCollectionInfo ItemInfo => _itemInfo;
         public bool IsEnabled { get; private set; }
-        private ItemCollectionData _currentData;
-        private bool _isInitialized;
 
         private void Awake()
         {
@@ -35,26 +36,34 @@ namespace Neo.Bonus
                 OnChangeEnabled.Invoke(active);
 
                 if (active)
+                {
                     OnActive?.Invoke();
+                }
                 else
+                {
                     OnDeactivated?.Invoke();
+                }
             }
         }
 
         public void SetSprite(Sprite sprite)
         {
             if (_itemImage != null)
+            {
                 _itemImage.sprite = sprite;
+            }
         }
 
         public void SetData(ItemCollectionData itemCollectionData)
         {
             if (itemCollectionData == null)
+            {
                 return;
+            }
 
             _currentData = itemCollectionData;
             SetSprite(itemCollectionData.sprite);
-            
+
             if (_itemInfo != null)
             {
                 _itemInfo.SetData(itemCollectionData);

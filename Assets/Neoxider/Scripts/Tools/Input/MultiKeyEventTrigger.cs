@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [AddComponentMenu("Neo/" + "Tools/" + nameof(MultiKeyEventTrigger))]
     public class MultiKeyEventTrigger : MonoBehaviour
     {
         public KeyEventPair[] keyEventPairs =
@@ -22,9 +23,13 @@ namespace Neo.Tools
 
         private void Update()
         {
-            foreach (var pair in keyEventPairs)
+            foreach (KeyEventPair pair in keyEventPairs)
+            {
                 if (Input.GetKeyDown(pair.key))
+                {
                     pair.onKeyPressed?.Invoke();
+                }
+            }
         }
 
         [Serializable]

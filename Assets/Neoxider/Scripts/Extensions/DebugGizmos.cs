@@ -27,7 +27,7 @@ namespace Neo.Extensions
                 return;
             }
 
-            var originalColor = Gizmos.color;
+            Color originalColor = Gizmos.color;
             Gizmos.color = color ?? Color.red;
             Gizmos.DrawWireCube(bounds.center, bounds.size);
             Gizmos.color = originalColor;
@@ -52,7 +52,7 @@ namespace Neo.Extensions
                 return;
             }
 
-            var originalColor = Gizmos.color;
+            Color originalColor = Gizmos.color;
             Gizmos.color = color ?? Color.red;
             Gizmos.DrawWireSphere(center, radius);
             Gizmos.color = originalColor;
@@ -71,7 +71,10 @@ namespace Neo.Extensions
         public static void DrawLineToClosest(Vector3 from, GameObject closest, bool changeColor = true,
             Color? color = null)
         {
-            if (closest == null) return;
+            if (closest == null)
+            {
+                return;
+            }
 
             if (!changeColor)
             {
@@ -79,7 +82,7 @@ namespace Neo.Extensions
                 return;
             }
 
-            var originalColor = Gizmos.color;
+            Color originalColor = Gizmos.color;
             Gizmos.color = color ?? Color.red;
             Gizmos.DrawLine(from, closest.transform.position);
             Gizmos.color = originalColor;
@@ -98,18 +101,28 @@ namespace Neo.Extensions
         public static void DrawConnections(Vector3 from, IEnumerable<GameObject> targets, bool changeColor = true,
             Color? color = null)
         {
-            if (targets == null) return;
-
-            if (!changeColor)
+            if (targets == null)
             {
-                foreach (var target in targets.Where(t => t != null)) Gizmos.DrawLine(from, target.transform.position);
                 return;
             }
 
-            var originalColor = Gizmos.color;
+            if (!changeColor)
+            {
+                foreach (GameObject target in targets.Where(t => t != null))
+                {
+                    Gizmos.DrawLine(from, target.transform.position);
+                }
+
+                return;
+            }
+
+            Color originalColor = Gizmos.color;
             Gizmos.color = color ?? Color.red;
 
-            foreach (var target in targets.Where(t => t != null)) Gizmos.DrawLine(from, target.transform.position);
+            foreach (GameObject target in targets.Where(t => t != null))
+            {
+                Gizmos.DrawLine(from, target.transform.position);
+            }
 
             Gizmos.color = originalColor;
         }

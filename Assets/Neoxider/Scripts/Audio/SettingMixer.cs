@@ -5,7 +5,7 @@ namespace Neo
 {
     namespace Audio
     {
-        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
+        [AddComponentMenu("Neo/" + "Audio/" + nameof(SettingMixer))]
         public class SettingMixer : MonoBehaviour
         {
             public string nameMixer = "Master";
@@ -18,10 +18,11 @@ namespace Neo
             {
                 if (audioMixer == null)
                 {
-                    Debug.LogWarning($"[SettingMixer] AudioMixer не установлен! Нельзя установить громкость для '{nameMixer}'.");
+                    Debug.LogWarning(
+                        $"[SettingMixer] AudioMixer не установлен! Нельзя установить громкость для '{nameMixer}'.");
                     return;
                 }
-                
+
                 name = string.IsNullOrEmpty(name) ? nameMixer : name;
                 audioMixer.SetFloat(name, volume);
             }

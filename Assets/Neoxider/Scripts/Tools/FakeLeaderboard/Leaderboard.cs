@@ -53,10 +53,40 @@ namespace Neo.Tools
 
         private void Start()
         {
-            if (generateLeaderboardOnAwake && prefab != null) GenerateLeaderboardItems();
+            if (generateLeaderboardOnAwake && prefab != null)
+            {
+                GenerateLeaderboardItems();
+            }
 
             if (onAwakeSort)
+            {
                 Sort();
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (Application.isPlaying)
+            {
+                return;
+            }
+
+            if (users.Count > count)
+            {
+                users = users.Take(count).ToList();
+            }
+
+            if (users.Count < count)
+            {
+                GenerateUserList();
+                Sort();
+            }
+
+            if (generateLeaderboardItemsOnValidate && prefab != null)
+            {
+                GenerateLeaderboardItems();
+                Sort();
+            }
         }
 
         public void UpdatePlayerScore(int score)
@@ -75,7 +105,7 @@ namespace Neo.Tools
 
         private void SyncPlayer()
         {
-            var idx = users.FindIndex(u => u.id == player.id);
+            int idx = users.FindIndex(u => u.id == player.id);
             if (idx >= 0)
             {
                 users[idx].score = player.score;
@@ -87,35 +117,18 @@ namespace Neo.Tools
             }
         }
 
-        private void OnValidate()
-        {
-            if (Application.isPlaying) return;
-
-            if (users.Count > count) users = users.Take(count).ToList();
-
-            if (users.Count < count)
-            {
-                GenerateUserList();
-                Sort();
-            }
-
-            if (generateLeaderboardItemsOnValidate && prefab != null)
-            {
-                GenerateLeaderboardItems();
-                Sort();
-            }
-        }
-
         private void GenerateLeaderboardItems()
         {
             if (sortUsers == null || sortUsers.Count == 0)
-                Sort();
-
-            var countAdd = sortUsers.Count - leaderboardItems.Count;
-
-            for (var i = 0; i < countAdd; i++)
             {
-                var obj = Instantiate(prefab, container);
+                Sort();
+            }
+
+            int countAdd = sortUsers.Count - leaderboardItems.Count;
+
+            for (int i = 0; i < countAdd; i++)
+            {
+                LeaderboardItem obj = Instantiate(prefab, container);
                 leaderboardItems.Add(obj);
             }
         }
@@ -124,14 +137,17 @@ namespace Neo.Tools
         {
             users.Clear();
 
-            for (var i = 0; i < count - 1; i++)
+            for (int i = 0; i < count - 1; i++)
             {
-                var score = rangeScore.RandomRange();
-                var num = useNum ? formatNum ? FormatText(i + 1) : (i + 1).ToString() : "";
+                int score = rangeScore.RandomRange();
+                string num = useNum ? formatNum ? FormatText(i + 1) : (i + 1).ToString() : "";
                 users.Add(new LeaderboardUser(names.GetRandomElement() + sep + num, score));
             }
 
-            if (!users.Exists(u => u.id == player.id)) users.Add(player);
+            if (!users.Exists(u => u.id == player.id))
+            {
+                users.Add(player);
+            }
         }
 
         public void Sort()
@@ -145,20 +161,23 @@ namespace Neo.Tools
 
         private void SetItems()
         {
-            for (var i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
+            for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
             {
                 sortUsers[i].num = i;
                 leaderboardItems[i].Set(sortUsers[i], sortUsers[i].id == player.id);
             }
 
-            if (leaderboardItemPlayer != null) leaderboardItemPlayer.Set(sortUsers[GetIdPlayer()], true);
+            if (leaderboardItemPlayer != null)
+            {
+                leaderboardItemPlayer.Set(sortUsers[GetIdPlayer()], true);
+            }
         }
 
         public string FormatText(int num)
         {
             if (useZero)
             {
-                var digitsCount = count.ToString().Length;
+                int digitsCount = count.ToString().Length;
                 return num.ToString("D" + digitsCount);
             }
 
