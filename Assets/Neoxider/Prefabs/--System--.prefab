@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
+  _moneySave: Money
   _allMoney: 0
   _lastChangeMoney: 0
   _levelMoney: 0
@@ -209,7 +210,7 @@ MonoBehaviour:
   _state: 0
   _lastState: 0
   useTimeScalePause: 1
-  fps: 60
+  fps: 144
   startOnAwake: 1
 --- !u!1 &4061788458752023584
 GameObject:

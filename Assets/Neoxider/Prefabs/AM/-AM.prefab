@@ -50,9 +50,9 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _efx: {fileID: 5927283950737982046}
-  _sounds: []
   _music: {fileID: 3241006007560494323}
   _musicClips: []
+  _sounds: []
 --- !u!114 &4442224029750033861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,9 +68,9 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   audioMixer: {fileID: 24100000, guid: 0754ed7d80b973b409d9564a9a20dbea, type: 2}
+  EfxVolume: EfxVolume
   MasterVolume: MasterVolume
   MusicVolume: MusicVolume
-  EfxVolume: EfxVolume
   OnMuteEfx:
     m_PersistentCalls:
       m_Calls: []
@@ -120,7 +120,7 @@ AudioSource:
   m_GameObject: {fileID: 8035219944115291451}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: -7671028037875789662, guid: 0754ed7d80b973b409d9564a9a20dbea, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 0.7
@@ -248,7 +248,7 @@ AudioSource:
   m_GameObject: {fileID: 8174169959880097911}
   m_Enabled: 1
   serializedVersion: 4
-  OutputAudioMixerGroup: {fileID: 0}
+  OutputAudioMixerGroup: {fileID: 6154996088633166871, guid: 0754ed7d80b973b409d9564a9a20dbea, type: 2}
   m_audioClip: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
