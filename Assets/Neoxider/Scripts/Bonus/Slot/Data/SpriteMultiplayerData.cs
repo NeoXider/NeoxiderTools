@@ -4,18 +4,37 @@ using UnityEngine;
 
 namespace Neo.Bonus
 {
-    [CreateAssetMenu(fileName = "SpritesMultipliersDefault", menuName = "Neoxider/Slot/SpritesMult")]
+    /// <summary>
+    ///     ScriptableObject для хранения множителей выигрыша в зависимости от количества символов.
+    ///     Поддерживает автоматическую генерацию множителей на основе SpritesData.
+    /// </summary>
+    [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neo/Bonus/Slot/Sprite Multiplier Data", order = 4)]
     public class SpriteMultiplayerData : ScriptableObject
     {
+        [Tooltip("Конфигурация множителей для каждого символа")]
         [SerializeField] private SpritesMultiplier _spritesMultiplier;
 
-        [Space] [Header("Auto Generate")] [SerializeField]
+        [Space] 
+        [Header("Auto Generate")] 
+        [Tooltip("Включить автоматическую генерацию множителей на основе SpritesData")]
+        [SerializeField]
         private bool _generate;
 
+        [Tooltip("Минимальное количество символов для генерации")]
         [SerializeField] private int _minCount = 3;
+        
+        [Tooltip("Максимальное количество символов для генерации")]
         [SerializeField] private int _maxCount = 3;
+        
+        [Tooltip("Множитель по умолчанию для всех комбинаций")]
         [SerializeField] private int defaultMultiplayer = 1;
+        
+        [Tooltip("Ссылка на SpritesData для автоматической генерации")]
         [SerializeField] private SpritesData _spritesData;
+        
+        /// <summary>
+        ///     Конфигурация множителей.
+        /// </summary>
         public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
 
 

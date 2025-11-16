@@ -62,7 +62,7 @@ public enum ItemRarity
 
 #### Вариант C: ScriptableObject для редкостей
 ```csharp
-[CreateAssetMenu(menuName = "Neoxider/ItemRarityData")]
+[CreateAssetMenu(fileName = "Item Rarity Data", menuName = "Neo/Bonus/Collection/Item Rarity Data", order = 11)]
 public class ItemRarityData : ScriptableObject
 {
     public string rarityName;
@@ -158,7 +158,7 @@ public enum ItemCategory
 
 #### Вариант D: ScriptableObject для категорий
 ```csharp
-[CreateAssetMenu(menuName = "Neoxider/ItemCategoryData")]
+[CreateAssetMenu(fileName = "Item Category Data", menuName = "Neo/Bonus/Collection/Item Category Data", order = 12)]
 public class ItemCategoryData : ScriptableObject
 {
     public string categoryName;
