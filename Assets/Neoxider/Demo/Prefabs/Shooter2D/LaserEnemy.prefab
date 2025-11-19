@@ -172,7 +172,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d3d9bd4c102fba4f91b334cdbb92dda, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  attackDamage: 1
+  attackDamage: 10
   triggerDuration: 0
   autoManageColliders: 0
   collider2D: {fileID: 0}
