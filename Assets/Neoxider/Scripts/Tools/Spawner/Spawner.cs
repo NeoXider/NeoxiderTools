@@ -68,6 +68,10 @@ namespace Neo.Tools
         [SerializeField]
         [Tooltip("Если true, поворот задаётся относительно спавнера (локально). Если false — в мировых координатах.")]
         private bool _useLocalRotation = true;
+        
+        [SerializeField]
+        [Tooltip("Если true, берет поворот от _spawnTransform")]
+        private bool _useParentRotation = false;
 
         [Space] [Header("Other Settings")] [SerializeField]
         /// <summary>
@@ -332,6 +336,11 @@ namespace Neo.Tools
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
+            if (_useParentRotation)
+            {
+                return _spawnTransform.rotation;
+            }
+            
             bool zeroX = _rotationX == Vector2.zero;
             bool zeroY = _rotationY == Vector2.zero;
             bool zeroZ = _rotationZ == Vector2.zero;
