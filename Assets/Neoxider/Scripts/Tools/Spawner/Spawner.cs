@@ -276,6 +276,8 @@ namespace Neo.Tools
             GameObject spawnedObject = _useObjectPool && PoolManager.I != null
                 ? PoolManager.Get(prefab, position, rotation)
                 : Instantiate(prefab, position, rotation);
+            
+            spawnedObject.SetActive(true);
 
             if (parent != null)
             {

@@ -215,7 +215,7 @@ MonoBehaviour:
   _prefabs:
   - {fileID: 6171709823259349456, guid: a23c499f958be544aae3b0f0e3d2cc39, type: 3}
   _useObjectPool: 1
-  destroyDelay: 0.7
+  destroyDelay: 7
   OnObjectSpawned:
     m_PersistentCalls:
       m_Calls: []
@@ -227,11 +227,11 @@ MonoBehaviour:
   _rotationZ: {x: 0, y: 0}
   _useLocalRotation: 1
   _useParentRotation: 1
-  _spawnTransform: {fileID: 2001086779}
+  _spawnTransform: {fileID: 6324425}
   _spawnOnAwake: 1
-  _parentTransform: {fileID: 0}
+  _parentTransform: {fileID: 2001086779}
   _spawnAreaCollider: {fileID: 0}
-  _spawnAreaCollider2D: {fileID: 6324426}
+  _spawnAreaCollider2D: {fileID: 0}
 --- !u!1 &56993982
 GameObject:
   m_ObjectHideFlags: 0
@@ -295,9 +295,9 @@ MonoBehaviour:
   _useParentRotation: 1
   _spawnTransform: {fileID: 2001086779}
   _spawnOnAwake: 1
-  _parentTransform: {fileID: 0}
+  _parentTransform: {fileID: 2001086779}
   _spawnAreaCollider: {fileID: 0}
-  _spawnAreaCollider2D: {fileID: 56993985}
+  _spawnAreaCollider2D: {fileID: 0}
 --- !u!61 &56993985
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1376,7 +1376,7 @@ MonoBehaviour:
   _rotationY: {x: 0, y: 0}
   _rotationZ: {x: -360, y: 360}
   _useLocalRotation: 1
-  _useParentRotation: 1
+  _useParentRotation: 0
   _spawnTransform: {fileID: 1562339263}
   _spawnOnAwake: 1
   _parentTransform: {fileID: 0}
@@ -2049,7 +2049,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 5, y: 1}
+  m_Size: {x: 10, y: 1}
   m_EdgeRadius: 0
 --- !u!114 &1889027149
 MonoBehaviour:
@@ -2063,7 +2063,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3fed614c5b8839f49b00c843f4bd4917, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _prefabs: []
+  _prefabs:
+  - {fileID: 1993566278}
   _useObjectPool: 1
   destroyDelay: 0
   OnObjectSpawned:
@@ -2076,7 +2077,7 @@ MonoBehaviour:
   _rotationY: {x: 0, y: 0}
   _rotationZ: {x: 0, y: 0}
   _useLocalRotation: 1
-  _useParentRotation: 1
+  _useParentRotation: 0
   _spawnTransform: {fileID: 1889027150}
   _spawnOnAwake: 1
   _parentTransform: {fileID: 0}
@@ -2172,7 +2173,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1993566279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2361,7 +2362,7 @@ Transform:
   m_GameObject: {fileID: 1993566278}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 0.9772728, w: 0.21198574}
-  m_LocalPosition: {x: 1.42, y: 1.6, z: 0}
+  m_LocalPosition: {x: 4.52, y: 13.74, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
