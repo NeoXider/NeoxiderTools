@@ -37,10 +37,10 @@ RectTransform:
   - {fileID: 1877489409030881271}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 400, y: 500}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &5440513096134199391
 CanvasRenderer:
@@ -98,6 +98,8 @@ MonoBehaviour:
   _textPrice: {fileID: 0}
   _imageItem: {fileID: 3810645206512747865}
   _imageIco: {fileID: 0}
+  _spriteRendererItem: {fileID: 0}
+  _spriteRendererIcon: {fileID: 0}
   buttonPrice: {fileID: 8322383767737657999}
   buttonBuy: {fileID: 8739281535453525215}
   OnSelectItem:
