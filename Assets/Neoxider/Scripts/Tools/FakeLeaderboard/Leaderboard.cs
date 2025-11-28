@@ -140,7 +140,15 @@ namespace Neo.Tools
 
         private void SyncPlayer()
         {
+            // Сначала ищем по id
             int idx = users.FindIndex(u => u.id == player.id);
+            
+            // Если не нашли по id, ищем по имени (на случай если id изменился после загрузки)
+            if (idx < 0)
+            {
+                idx = users.FindIndex(u => u.name == player.name);
+            }
+            
             if (idx >= 0)
             {
                 users[idx].score = player.score;
@@ -225,7 +233,9 @@ namespace Neo.Tools
             for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
             {
                 sortUsers[i].num = i;
-                leaderboardItems[i].Set(sortUsers[i], sortUsers[i].id == player.id, this);
+                // Проверяем по id или по имени (на случай если id не совпадает после загрузки)
+                bool isPlayerItem = sortUsers[i].id == player.id || sortUsers[i].name == player.name;
+                leaderboardItems[i].Set(sortUsers[i], isPlayerItem, this);
             }
 
             if (leaderboardItemPlayer != null)
