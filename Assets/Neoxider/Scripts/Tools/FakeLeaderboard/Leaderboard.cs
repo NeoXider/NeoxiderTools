@@ -266,7 +266,8 @@ namespace Neo.Tools
 
         public int GetIdPlayer()
         {
-            return sortUsers.FindIndex(x => x.id == player.id);
+            // Ищем игрока по id или по имени (на случай если id не совпадает после загрузки)
+            return sortUsers.FindIndex(x => x.id == player.id || x.name == player.name);
         }
 
         private void SavePlayerData()
