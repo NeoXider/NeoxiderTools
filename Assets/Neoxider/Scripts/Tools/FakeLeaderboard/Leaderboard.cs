@@ -155,11 +155,30 @@ namespace Neo.Tools
                 Sort();
             }
 
+            // Выключаем объекты на сцене, которые не находятся в списке
+            if (container != null)
+            {
+                LeaderboardItem[] sceneItems = container.GetComponentsInChildren<LeaderboardItem>(true);
+                foreach (LeaderboardItem item in sceneItems)
+                {
+                    if (!leaderboardItems.Contains(item))
+                    {
+                        // Проверяем, является ли объект объектом на сцене (не префабом)
+                        // gameObject.scene.IsValid() возвращает true только для объектов на сцене
+                        if (item.gameObject.scene.IsValid())
+                        {
+                            item.gameObject.SetActive(false);
+                        }
+                    }
+                }
+            }
+
             int countAdd = sortUsers.Count - leaderboardItems.Count;
 
             for (int i = 0; i < countAdd; i++)
             {
                 LeaderboardItem obj = Instantiate(prefab, container);
+                obj.gameObject.SetActive(true);
                 leaderboardItems.Add(obj);
             }
         }
