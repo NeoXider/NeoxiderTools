@@ -216,7 +216,10 @@ namespace Neo.Tools
         {
             if (sortOrder == SortOrder.Descending)
             {
-                sortUsers = users.OrderByDescending(x => x.score).ToList();
+                // При сортировке по убыванию: сначала по счету, затем все с 0 счетом в конце
+                sortUsers = users.OrderByDescending(x => x.score)
+                    .ThenBy(x => x.score == 0 ? 1 : 0) // Все с 0 счетом в конце
+                    .ToList();
             }
             else
             {
