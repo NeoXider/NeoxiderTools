@@ -79,6 +79,10 @@ namespace Neo.Tools
         [Tooltip("Ключ для сохранения данных игрока (можно изменить для разных лидербордов)")]
         public string playerSaveKey = "LeaderboardPlayer";
 
+        [Space] [Header("Player Score Display")]
+        [Tooltip("Текст, отображаемый если у игрока нет счета (по умолчанию: --)")]
+        public string noScoreText = "--";
+
         private void Start()
         {
             LoadPlayerData();

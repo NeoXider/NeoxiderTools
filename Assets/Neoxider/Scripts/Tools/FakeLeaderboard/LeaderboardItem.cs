@@ -27,7 +27,12 @@ namespace Neo.Tools
 
             textName.text = user.name;
             
-            if (leaderboard != null)
+            // Если это игрок и у него нет счета, показываем текст "пропущено"
+            if (isPlayer && user.score == 0)
+            {
+                textScore.text = leaderboard != null ? leaderboard.noScoreText : "--";
+            }
+            else if (leaderboard != null)
             {
                 textScore.text = leaderboard.FormatScore(user.score);
             }
