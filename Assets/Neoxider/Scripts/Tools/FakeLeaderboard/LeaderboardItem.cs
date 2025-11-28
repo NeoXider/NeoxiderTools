@@ -19,14 +19,23 @@ namespace Neo.Tools
         [Space] public TMP_Text textScore;
         public LeaderboardUser user;
 
-        public void Set(LeaderboardUser user, bool isPlayer)
+        public void Set(LeaderboardUser user, bool isPlayer, Leaderboard leaderboard = null)
         {
             this.user = user;
             id = user.num;
             this.isPlayer = isPlayer;
 
             textName.text = user.name;
-            textScore.text = user.score.ToString();
+            
+            if (leaderboard != null)
+            {
+                textScore.text = leaderboard.FormatScore(user.score);
+            }
+            else
+            {
+                textScore.text = user.score.ToString();
+            }
+            
             textId.text = (id + 1).ToString();
 
             Events(isPlayer);

@@ -7,6 +7,12 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    public enum SortOrder
+    {
+        Descending,
+        Ascending
+    }
+
     [Serializable]
     public class LeaderboardUser
     {
@@ -51,8 +57,32 @@ namespace Neo.Tools
         [Space] public List<LeaderboardUser> users = new();
         public bool useZero = true;
 
+        [Space] [Header("Sorting")] 
+        [Tooltip("Направление сортировки: по убыванию (больше к меньше) или по возрастанию (меньше к больше)")]
+        public SortOrder sortOrder = SortOrder.Descending;
+
+        [Space] [Header("Score Formatting")]
+        [Tooltip("Форматировать ли счет (добавлять разделители)")]
+        public bool formatScore = false;
+
+        [Space] [Header("Time Formatting")]
+        [Tooltip("Использовать ли форматирование времени для счета")]
+        public bool useTimeFormat = false;
+
+        [Tooltip("Формат времени для отображения счета")]
+        public TimeFormat timeFormat = TimeFormat.Seconds;
+
+        [Tooltip("Разделитель для формата времени")]
+        public string timeSeparator = ":";
+
+        [Space] [Header("Save Settings")]
+        [Tooltip("Ключ для сохранения данных игрока (можно изменить для разных лидербордов)")]
+        public string playerSaveKey = "LeaderboardPlayer";
+
         private void Start()
         {
+            LoadPlayerData();
+
             if (generateLeaderboardOnAwake && prefab != null)
             {
                 GenerateLeaderboardItems();
@@ -93,6 +123,7 @@ namespace Neo.Tools
         {
             player.score = score;
             SyncPlayer();
+            SavePlayerData();
             Sort();
         }
 
@@ -152,7 +183,14 @@ namespace Neo.Tools
 
         public void Sort()
         {
-            sortUsers = users.OrderByDescending(x => x.score).ToList();
+            if (sortOrder == SortOrder.Descending)
+            {
+                sortUsers = users.OrderByDescending(x => x.score).ToList();
+            }
+            else
+            {
+                sortUsers = users.OrderBy(x => x.score).ToList();
+            }
 
             SetItems();
 
@@ -164,12 +202,16 @@ namespace Neo.Tools
             for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
             {
                 sortUsers[i].num = i;
-                leaderboardItems[i].Set(sortUsers[i], sortUsers[i].id == player.id);
+                leaderboardItems[i].Set(sortUsers[i], sortUsers[i].id == player.id, this);
             }
 
             if (leaderboardItemPlayer != null)
             {
-                leaderboardItemPlayer.Set(sortUsers[GetIdPlayer()], true);
+                int playerId = GetIdPlayer();
+                if (playerId >= 0 && playerId < sortUsers.Count)
+                {
+                    leaderboardItemPlayer.Set(sortUsers[playerId], true, this);
+                }
             }
         }
 
@@ -192,6 +234,51 @@ namespace Neo.Tools
         public int GetIdPlayer()
         {
             return sortUsers.FindIndex(x => x.id == player.id);
+        }
+
+        private void SavePlayerData()
+        {
+            if (string.IsNullOrEmpty(playerSaveKey))
+            {
+                return;
+            }
+
+            PlayerPrefs.SetString($"{playerSaveKey}_Name", player.name);
+            PlayerPrefs.SetInt($"{playerSaveKey}_Score", player.score);
+            PlayerPrefs.Save();
+        }
+
+        private void LoadPlayerData()
+        {
+            if (string.IsNullOrEmpty(playerSaveKey))
+            {
+                return;
+            }
+
+            if (PlayerPrefs.HasKey($"{playerSaveKey}_Name"))
+            {
+                player.name = PlayerPrefs.GetString($"{playerSaveKey}_Name", "PlayerName");
+            }
+
+            if (PlayerPrefs.HasKey($"{playerSaveKey}_Score"))
+            {
+                player.score = PlayerPrefs.GetInt($"{playerSaveKey}_Score", 0);
+            }
+        }
+
+        public string FormatScore(int score)
+        {
+            if (useTimeFormat)
+            {
+                return ((float)score).FormatTime(timeFormat, timeSeparator);
+            }
+
+            if (formatScore)
+            {
+                return score.ToString("N0").Replace(",", " ");
+            }
+
+            return score.ToString();
         }
     }
 }

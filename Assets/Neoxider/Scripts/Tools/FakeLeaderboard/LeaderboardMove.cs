@@ -7,6 +7,10 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {
+        [Header("Leaderboard Reference")]
+        [Tooltip("Конкретный лидерборд для использования. Если не указан, используется синглтон")]
+        public Leaderboard leaderboard;
+
         public bool useMove = true;
         public float delayTime = 0.5f;
         public float timeMove = 0.5f;
@@ -23,14 +27,25 @@ namespace Neo.Tools
 
         private float starScale;
 
+        private Leaderboard GetLeaderboard()
+        {
+            return leaderboard != null ? leaderboard : Leaderboard.I;
+        }
+
         private void Start()
         {
-            int idPlayer = Leaderboard.I.GetIdPlayer();
+            Leaderboard lb = GetLeaderboard();
+            if (lb == null)
+            {
+                return;
+            }
 
-            if (idPlayer >= 0)
+            int idPlayer = lb.GetIdPlayer();
+
+            if (idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
             {
                 print("move to " + idPlayer + " pos");
-                LeaderboardItem targetItem = Leaderboard.I.leaderboardItems[idPlayer];
+                LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
 
                 starScale = targetItem.transform.localScale.x;
             }
@@ -47,21 +62,29 @@ namespace Neo.Tools
 
             if (useSortEnable)
             {
-                if (Leaderboard.I != null)
+                Leaderboard lb = GetLeaderboard();
+                if (lb != null)
                 {
-                    Leaderboard.I.Sort();
+                    lb.Sort();
                 }
             }
         }
 
         public void Move()
         {
-            int idPlayer = Leaderboard.I.GetIdPlayer();
+            Leaderboard lb = GetLeaderboard();
+            if (lb == null)
+            {
+                Debug.LogWarning("Leaderboard not found");
+                return;
+            }
 
-            if (idPlayer >= 0)
+            int idPlayer = lb.GetIdPlayer();
+
+            if (idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
             {
                 print("move to " + idPlayer + " pos");
-                LeaderboardItem targetItem = Leaderboard.I.leaderboardItems[idPlayer];
+                LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
                 Vector3 targetPos = transform.position - targetItem.transform.position;
 
                 transform.DOMoveY(targetPos.y + offsetY, timeMove)
