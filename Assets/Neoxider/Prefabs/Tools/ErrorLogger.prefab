@@ -37,7 +37,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -200}
+  m_SizeDelta: {x: 0, y: -100}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!222 &2489827732989133331
 CanvasRenderer:
@@ -141,11 +141,11 @@ RectTransform:
   - {fileID: 4787167917820888644}
   m_Father: {fileID: 5001392862630919797}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -20}
-  m_SizeDelta: {x: 0, y: 500}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: 50}
+  m_SizeDelta: {x: 0, y: -100}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &3479149917377567168
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -259,7 +259,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _toggle: {fileID: 102410208763197699}
-  _image: {fileID: 0}
+  _image: {fileID: 8032534299731487750}
   _visuals: []
   _setNativeSize: 0
   sprites: []
@@ -533,7 +533,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -0.00037915583}
+  m_AnchoredPosition: {x: 0, y: -0.00036621094}
   m_SizeDelta: {x: -60, y: 0}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &2749829603991607268
@@ -813,11 +813,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ef681d121903a348ade07503b9dec30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textMesh: {fileID: 2012376556499173007}
-  logTypesToDisplay: 0000000004000000
+  logTypeFilter: 19
   addText: 1
   checkExistingErrors: 1
+  showScriptPath: 1
   errorText: 
+  textMesh: {fileID: 2012376556499173007}
 --- !u!225 &8013049658555322177
 CanvasGroup:
   m_ObjectHideFlags: 0

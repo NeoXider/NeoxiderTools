@@ -7,10 +7,17 @@
 - Namespace: `Neo.Tools`
 - Путь: `Assets/Neoxider/Scripts/Tools/Components/AttackSystem/AdvancedAttackCollider.cs`
 
+## Enum
+- `AttackType` — вид атаки:
+  - `Damage` — нанесение урона (по умолчанию)
+  - `Heal` — лечение
+
 ## Публичные поля
 - Настройки атаки:
-  - `int AttackDamage`
-  - `float triggerDuration`
+  - `int AttackDamage` — урон/лечение от атаки
+  - `AttackType attackType` — вид атаки: урон или лечение (по умолчанию `Damage`)
+  - `bool preventRepeatHits` — ограничивать повторные столкновения с одним и тем же объектом (по умолчанию `false`). Если выключено, можно наносить урон/лечение несколько раз одному объекту.
+  - `float triggerDuration` — длительность активации триггера
 - Настройки авто-управления:
   - `bool autoManageColliders` — если включено, компонент сам включает/выключает коллайдеры на время активации. По умолчанию false.
 - Коллайдеры:
@@ -44,7 +51,10 @@
 ## Поведение
 - Авто-детект коллайдеров, если не назначены: `GetComponent<Collider2D>()`, `GetComponent<Collider>()`.
 - Фильтр слоёв: `PassesLayer(int layer) => (hittableLayers.value & (1 << layer)) != 0`.
-- Исключение повторных попаданий в течение одной активации — по коллайдеру цели.
+- Исключение повторных попаданий: если `preventRepeatHits == true`, то в течение одной активации повторные попадания по одному коллайдеру игнорируются. Если `preventRepeatHits == false` (по умолчанию), можно наносить урон/лечение несколько раз одному объекту.
+- Вид атаки:
+  - Если `attackType == AttackType.Damage`: применяется урон через `IDamageable.TakeDamage()`.
+  - Если `attackType == AttackType.Heal`: применяется лечение через `IHealable.Heal()`.
 - Игнор целей: если цель в `ignoreObjects`, урон/события не применяются, уничтожение тоже не выполняется.
 - Активация:
   - `ActivateTrigger(int damage = AttackDamage)` очищает трекер попаданий.

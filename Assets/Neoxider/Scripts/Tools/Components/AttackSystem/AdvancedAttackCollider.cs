@@ -4,11 +4,26 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    public enum AttackType
+    {
+        Damage,
+        Heal
+    }
+
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Настройки атаки")] [SerializeField]
+        [Header("Настройки атаки")] 
+        [SerializeField]
         private int attackDamage = 10; // Урон от атаки по умолчанию
+
+        [Tooltip("Вид атаки: урон или лечение")]
+        [SerializeField]
+        private AttackType attackType = AttackType.Damage;
+
+        [Tooltip("Ограничивать повторные столкновения с одним и тем же объектом (по умолчанию выключено)")]
+        [SerializeField]
+        private bool preventRepeatHits = false;
 
         public float triggerDuration = 0.2f; // Длительность активации триггера
 
@@ -114,13 +129,17 @@ namespace Neo.Tools
                 return;
             }
 
-            if (collider3D == null || collision.collider == null || hitColliders3D.Contains(collision.collider) ||
+            if (collider3D == null || collision.collider == null || 
+                (preventRepeatHits && hitColliders3D.Contains(collision.collider)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
                 return;
             }
 
-            hitColliders3D.Add(collision.collider);
+            if (preventRepeatHits)
+            {
+                hitColliders3D.Add(collision.collider);
+            }
 
             Vector3 contact = collision.contacts.Length > 0
                 ? collision.contacts[0].point
@@ -138,13 +157,17 @@ namespace Neo.Tools
                 return;
             }
 
-            if (collider2D == null || collision.collider == null || hitColliders2D.Contains(collision.collider) ||
+            if (collider2D == null || collision.collider == null || 
+                (preventRepeatHits && hitColliders2D.Contains(collision.collider)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
                 return;
             }
 
-            hitColliders2D.Add(collision.collider);
+            if (preventRepeatHits)
+            {
+                hitColliders2D.Add(collision.collider);
+            }
 
             Vector3 contact = collision.contacts.Length > 0
                 ? collision.contacts[0].point
@@ -204,12 +227,17 @@ namespace Neo.Tools
             }
 
             // Проверка на null, повторное попадание или неверный слой
-            if (collider3D == null || hitColliders3D.Contains(collision) || !PassesLayer(collision.gameObject.layer))
+            if (collider3D == null || 
+                (preventRepeatHits && hitColliders3D.Contains(collision)) || 
+                !PassesLayer(collision.gameObject.layer))
             {
                 return;
             }
 
-            hitColliders3D.Add(collision);
+            if (preventRepeatHits)
+            {
+                hitColliders3D.Add(collision);
+            }
 
             Vector3 contactPoint = collision.ClosestPoint(transform.position);
             Vector3 approxNormal = (contactPoint - transform.position).normalized;
@@ -225,12 +253,17 @@ namespace Neo.Tools
             }
 
             // Проверка на null, повторное попадание или неверный слой
-            if (collider2D == null || hitColliders2D.Contains(collision) || !PassesLayer(collision.gameObject.layer))
+            if (collider2D == null || 
+                (preventRepeatHits && hitColliders2D.Contains(collision)) || 
+                !PassesLayer(collision.gameObject.layer))
             {
                 return;
             }
 
-            hitColliders2D.Add(collision);
+            if (preventRepeatHits)
+            {
+                hitColliders2D.Add(collision);
+            }
 
             Vector2 contactPoint2D = collision.ClosestPoint(transform.position);
             Vector3 approxNormal2D = ((Vector3)contactPoint2D - transform.position).normalized;
@@ -283,11 +316,21 @@ namespace Neo.Tools
                 }
             }
 
-            int finalDamage = _currentDamage == -1 ? attackDamage : _currentDamage;
+            int finalValue = _currentDamage == -1 ? attackDamage : _currentDamage;
 
-            if (target.TryGetComponent(out IDamageable damageable))
+            if (attackType == AttackType.Damage)
             {
-                damageable.TakeDamage(finalDamage);
+                if (target.TryGetComponent(out IDamageable damageable))
+                {
+                    damageable.TakeDamage(finalValue);
+                }
+            }
+            else if (attackType == AttackType.Heal)
+            {
+                if (target.TryGetComponent(out IHealable healable))
+                {
+                    healable.Heal(finalValue);
+                }
             }
 
             if (applyForceOnHit)

@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -7,9 +8,78 @@ namespace Neo
     {
         public class CreateMenuObject
         {
-            public const string startPath = "Assets/Neoxider/UI Extension/Prefabs/";
-
             public const string createPatch = "GameObject/UI/Neoxider/";
+
+            private static string _startPath;
+
+            /// <summary>
+            ///     Динамически определяет путь к папке префабов, работая как при установке через Git, так и как обычный пакет
+            /// </summary>
+            public static string startPath
+            {
+                get
+                {
+                    if (!string.IsNullOrEmpty(_startPath))
+                    {
+                        return _startPath;
+                    }
+
+                    // Ищем путь к скрипту через поиск по имени
+                    string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
+                    string scriptPath = null;
+                    
+                    foreach (string guid in guids)
+                    {
+                        string path = AssetDatabase.GUIDToAssetPath(guid);
+                        if (path.Contains("UI Extension") && path.Contains("Editor"))
+                        {
+                            scriptPath = path;
+                            break;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(scriptPath))
+                    {
+                        // Определяем базовый путь на основе расположения скрипта
+                        string basePath = Path.GetDirectoryName(scriptPath);
+                        // Убираем "Editor" из пути и добавляем "Prefabs"
+                        basePath = basePath.Replace("\\Editor", "").Replace("/Editor", "");
+                        _startPath = basePath + "/Prefabs/";
+                    }
+                    else
+                    {
+                        // Fallback - пробуем стандартные пути
+                        string assetsPath = "Assets/Neoxider/UI Extension/Prefabs/";
+                        string packagesPath = "Packages/com.neoxider.tools/UI Extension/Prefabs/";
+                        
+                        // Проверяем, существует ли папка Packages
+                        if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
+                        {
+                            _startPath = packagesPath;
+                        }
+                        else if (AssetDatabase.IsValidFolder("Assets/Neoxider/UI Extension/Prefabs"))
+                        {
+                            _startPath = assetsPath;
+                        }
+                        else
+                        {
+                            // Последняя попытка - ищем папку Prefabs
+                            string[] prefabGuids = AssetDatabase.FindAssets("Canvas LandScape t:Prefab");
+                            if (prefabGuids.Length > 0)
+                            {
+                                string prefabPath = AssetDatabase.GUIDToAssetPath(prefabGuids[0]);
+                                _startPath = Path.GetDirectoryName(prefabPath) + "/";
+                            }
+                            else
+                            {
+                                _startPath = assetsPath; // Fallback на стандартный путь
+                            }
+                        }
+                    }
+
+                    return _startPath;
+                }
+            }
 
             public static T Create<T>() where T : MonoBehaviour
             {

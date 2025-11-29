@@ -1,3 +1,4 @@
+using System.IO;
 using Neo.Audio;
 using Neo.Bonus;
 using Neo.Shop;
@@ -9,7 +10,84 @@ namespace Neo
 {
     public class CreateMenuObject
     {
-        public static string startPath = "Assets/Neoxider/";
+        private static string _startPath;
+
+        /// <summary>
+        ///     Динамически определяет путь к корневой папке Neoxider, работая как при установке через Git, так и как обычный пакет
+        /// </summary>
+        public static string startPath
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(_startPath))
+                {
+                    return _startPath;
+                }
+
+                // Ищем путь к скрипту через поиск по имени
+                string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
+                string scriptPath = null;
+                
+                foreach (string guid in guids)
+                {
+                    string path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (path.Contains("Neoxider") && path.Contains("Editor/Create"))
+                    {
+                        scriptPath = path;
+                        break;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(scriptPath))
+                {
+                    // Определяем базовый путь на основе расположения скрипта
+                    // Убираем "Editor/Create" из пути
+                    string basePath = Path.GetDirectoryName(scriptPath); // Editor/Create
+                    basePath = Path.GetDirectoryName(basePath); // Editor
+                    basePath = Path.GetDirectoryName(basePath); // Neoxider
+                    _startPath = basePath + "/";
+                }
+                else
+                {
+                    // Fallback - пробуем стандартные пути
+                    string assetsPath = "Assets/Neoxider/";
+                    string packagesPath = "Packages/com.neoxider.tools/";
+                    
+                    // Проверяем, существует ли папка Packages
+                    if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
+                    {
+                        _startPath = packagesPath;
+                    }
+                    else if (AssetDatabase.IsValidFolder("Assets/Neoxider"))
+                    {
+                        _startPath = assetsPath;
+                    }
+                    else
+                    {
+                        // Последняя попытка - ищем любой префаб Neoxider
+                        string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
+                        foreach (string guid in prefabGuids)
+                        {
+                            string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
+                            if (prefabPath.Contains("Neoxider"))
+                            {
+                                // Находим корень Neoxider
+                                int neoxiderIndex = prefabPath.IndexOf("Neoxider");
+                                _startPath = prefabPath.Substring(0, neoxiderIndex + "Neoxider".Length) + "/";
+                                break;
+                            }
+                        }
+                        
+                        if (string.IsNullOrEmpty(_startPath))
+                        {
+                            _startPath = assetsPath; // Fallback на стандартный путь
+                        }
+                    }
+                }
+
+                return _startPath;
+            }
+        }
 
         public static T Create<T>() where T : MonoBehaviour
         {
