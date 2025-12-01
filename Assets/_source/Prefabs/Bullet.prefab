@@ -147,7 +147,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   bodyType: 1
-  defaultForce: 30
+  defaultForce: 50
   randomizeForce: 0
   forceRange: {x: 5, y: 15}
   playOnAwake: 1

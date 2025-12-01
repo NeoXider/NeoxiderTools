@@ -7,6 +7,8 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {
+        private const float ScaleDelta = 0.1f;
+
         [Header("Leaderboard Reference")]
         [Tooltip("Конкретный лидерборд для использования. Если не указан, используется синглтон")]
         public Leaderboard leaderboard;
@@ -18,14 +20,13 @@ namespace Neo.Tools
 
 
         [Space] public bool useAnimPlayer = true;
-        public float scale = 1.2f;
         public float durationAnimPlayer = 0.3f;
         public bool useAnimStartScale;
 
         [Space] public bool useSortEnable = true;
         public UnityEvent Enable;
 
-        private float starScale;
+        private float starScale = 1f;
 
         private Leaderboard GetLeaderboard()
         {
@@ -85,6 +86,17 @@ namespace Neo.Tools
             {
                 print("move to " + idPlayer + " pos");
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
+
+                // Сбрасываем масштаб всех элементов перед новой анимацией, чтобы
+                // старые выделенные карточки не сохраняли увеличенный размер.
+                foreach (LeaderboardItem item in lb.leaderboardItems)
+                {
+                    if (item != null)
+                    {
+                        item.transform.localScale = Vector3.one * starScale;
+                    }
+                }
+
                 Vector3 targetPos = transform.position - targetItem.transform.position;
 
                 transform.DOMoveY(targetPos.y + offsetY, timeMove)
@@ -93,11 +105,13 @@ namespace Neo.Tools
                     {
                         if (useAnimPlayer)
                         {
-                            targetItem.transform.DOScale(scale, durationAnimPlayer).OnComplete(() =>
+                            float targetScale = starScale + ScaleDelta;
+
+                            targetItem.transform.DOScale(targetScale, durationAnimPlayer).OnComplete(() =>
                             {
                                 if (useAnimStartScale)
                                 {
-                                    targetItem.transform.DOScale(1, durationAnimPlayer);
+                                    targetItem.transform.DOScale(starScale, durationAnimPlayer);
                                 }
                             });
                         }

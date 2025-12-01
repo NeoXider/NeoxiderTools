@@ -123,8 +123,33 @@ namespace Neo.Tools
             }
         }
 
-        public void UpdatePlayerScore(int score)
+        private bool IsBetterScore(int newScore, int currentScore)
         {
+            if (newScore == currentScore)
+            {
+                return false;
+            }
+
+            return sortOrder == SortOrder.Descending
+                ? newScore > currentScore
+                : newScore < currentScore;
+        }
+
+        /// <summary>
+        /// Обновляет счет игрока, при необходимости сохраняя только лучший результат.
+        /// </summary>
+        /// <param name="score">Новый счет игрока.</param>
+        /// <param name="overrideBestScore">
+        /// Если false (по умолчанию), счет будет обновлен только если он лучше текущего
+        /// в зависимости от <see cref="sortOrder"/>. Если true — счет обновляется всегда.
+        /// </param>
+        public void UpdatePlayerScore(int score, bool overrideBestScore = false)
+        {
+            if (!overrideBestScore && !IsBetterScore(score, player.score))
+            {
+                return;
+            }
+
             player.score = score;
             SyncPlayer();
             SavePlayerData();
