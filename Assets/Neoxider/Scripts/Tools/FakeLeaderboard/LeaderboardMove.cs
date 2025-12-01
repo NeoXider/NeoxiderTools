@@ -7,8 +7,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {
-        private const float ScaleDelta = 0.1f;
-
         [Header("Leaderboard Reference")]
         [Tooltip("Конкретный лидерборд для использования. Если не указан, используется синглтон")]
         public Leaderboard leaderboard;
@@ -20,13 +18,16 @@ namespace Neo.Tools
 
 
         [Space] public bool useAnimPlayer = true;
+        [Tooltip("Насколько будет увеличен элемент игрока относительно его базового размера")]
+        public float scaleDelta = 0.1f;
         public float durationAnimPlayer = 0.3f;
         public bool useAnimStartScale;
 
         [Space] public bool useSortEnable = true;
         public UnityEvent Enable;
 
-        private float starScale = 1f;
+        private LeaderboardItem lastAnimatedItem;
+        private Vector3 lastAnimatedItemBaseScale = Vector3.one;
 
         private Leaderboard GetLeaderboard()
         {
@@ -47,8 +48,6 @@ namespace Neo.Tools
             {
                 print("move to " + idPlayer + " pos");
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
-
-                starScale = targetItem.transform.localScale.x;
             }
         }
 
@@ -86,16 +85,17 @@ namespace Neo.Tools
             {
                 print("move to " + idPlayer + " pos");
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
-
-                // Сбрасываем масштаб всех элементов перед новой анимацией, чтобы
-                // старые выделенные карточки не сохраняли увеличенный размер.
-                foreach (LeaderboardItem item in lb.leaderboardItems)
+                
+                // Сбрасываем масштаб предыдущей выделенной карточки, если она больше не является текущей.
+                if (lastAnimatedItem != null && lastAnimatedItem != targetItem)
                 {
-                    if (item != null)
-                    {
-                        item.transform.localScale = Vector3.one * starScale;
-                    }
+                    lastAnimatedItem.transform.localScale = lastAnimatedItemBaseScale;
                 }
+
+                // Запоминаем базовый размер текущей карточки игрока перед анимацией.
+                Vector3 baseScale = targetItem.transform.localScale;
+                lastAnimatedItem = targetItem;
+                lastAnimatedItemBaseScale = baseScale;
 
                 Vector3 targetPos = transform.position - targetItem.transform.position;
 
@@ -105,15 +105,12 @@ namespace Neo.Tools
                     {
                         if (useAnimPlayer)
                         {
-                            float targetScale = starScale + ScaleDelta;
+                            Vector3 targetScale = baseScale + Vector3.one * scaleDelta;
 
-                            targetItem.transform.DOScale(targetScale, durationAnimPlayer).OnComplete(() =>
-                            {
-                                if (useAnimStartScale)
-                                {
-                                    targetItem.transform.DOScale(starScale, durationAnimPlayer);
-                                }
-                            });
+                            // Увеличиваем карточку и возвращаем к базовому размеру в стиле "yoyo".
+                            targetItem.transform
+                                .DOScale(targetScale, durationAnimPlayer)
+                                .SetLoops(2, LoopType.Yoyo);
                         }
                     });
             }
