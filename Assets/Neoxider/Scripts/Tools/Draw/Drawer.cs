@@ -109,6 +109,15 @@ namespace Neo.Tools
         [Header("Physics")] public bool addCollider;
 
         public bool colliderAfterCreation;
+        
+        [Header("Pooling")]
+        [Tooltip("Использовать PoolManager для переиспользования LineRenderer объектов")]
+        public bool usePooling;
+        
+        [Tooltip("Префаб LineRenderer для пулинга. Если не указан, создаётся автоматически")]
+        public LineRenderer poolPrefab;
+        
+        private GameObject _autoPoolPrefab;
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
         [Header("Events")] public LineCreatedEvent OnLineCreated = new();
@@ -277,6 +286,22 @@ namespace Neo.Tools
         {
             LineRenderer lr;
 
+            if (usePooling && PoolManager.I != null)
+            {
+                GameObject prefab = GetPoolPrefab();
+                if (prefab != null)
+                {
+                    GameObject pooled = PoolManager.Get(prefab, Vector3.zero, Quaternion.identity, transform);
+                    if (pooled != null)
+                    {
+                        lr = pooled.GetComponent<LineRenderer>();
+                        lr.positionCount = 0;
+                        ApplyFallbackSettings(lr);
+                        return lr;
+                    }
+                }
+            }
+
             if (useTemplateSettings && templateRenderer != null)
             {
                 lr = Instantiate(templateRenderer, transform);
@@ -325,6 +350,27 @@ namespace Neo.Tools
 
             ApplyFallbackSettings(lr);
             return lr;
+        }
+
+        /// <summary>
+        ///     Получает или создаёт префаб для пулинга.
+        /// </summary>
+        private GameObject GetPoolPrefab()
+        {
+            if (poolPrefab != null)
+                return poolPrefab.gameObject;
+            
+            if (_autoPoolPrefab != null)
+                return _autoPoolPrefab;
+            
+            _autoPoolPrefab = new GameObject("LineRenderer_PoolPrefab");
+            _autoPoolPrefab.SetActive(false);
+            LineRenderer lr = _autoPoolPrefab.AddComponent<LineRenderer>();
+            lr.useWorldSpace = true;
+            ApplyFallbackSettings(lr);
+            DontDestroyOnLoad(_autoPoolPrefab);
+            
+            return _autoPoolPrefab;
         }
 
         /// <summary>
@@ -529,7 +575,6 @@ namespace Neo.Tools
         /// <summary>
         ///     Destroys the provided LineRenderer and removes it from the list of lines.
         /// </summary>
-        /// <param name="lr">The LineRenderer to delete.</param>
         public void Delete(LineRenderer lr)
         {
             if (lr == null)
@@ -538,7 +583,11 @@ namespace Neo.Tools
             }
 
             lines.Remove(lr);
-            Destroy(lr.gameObject);
+            
+            if (usePooling)
+                PoolManager.Release(lr.gameObject);
+            else
+                Destroy(lr.gameObject);
         }
 
         /// <summary>
@@ -610,10 +659,6 @@ namespace Neo.Tools
         /// <summary>
         ///     Applies the Chaikin smoothing algorithm to a list of points over multiple passes.
         /// </summary>
-        /// <param name="points">The original list of points to smooth.</param>
-        /// <param name="passes">Number of smoothing passes to apply.</param>
-        /// <param name="fixedZ">Optional fixed Z value for the resulting points. Default is 0.</param>
-        /// <returns>A new list of smoothed points based on the Chaikin algorithm.</returns>
         public static List<Vector3> Smooth(List<Vector3> points, int passes, float? fixedZ = 0)
         {
             if (passes <= 0 || points.Count < 3)
@@ -621,14 +666,22 @@ namespace Neo.Tools
                 return new List<Vector3>(points);
             }
 
-            List<Vector3> output = new(points);
+            Vector3[] input = points.ToArray();
+            Vector3[] output = null;
+            
             for (int p = 0; p < passes; p++)
             {
-                List<Vector3> tmp = new() { output[0] };
-                for (int i = 0; i < output.Count - 1; i++)
+                int newSize = 1 + (input.Length - 1) * 2 + 1;
+                if (output == null || output.Length != newSize)
+                    output = new Vector3[newSize];
+                
+                output[0] = input[0];
+                int idx = 1;
+                
+                for (int i = 0; i < input.Length - 1; i++)
                 {
-                    Vector3 a = output[i];
-                    Vector3 b = output[i + 1];
+                    Vector3 a = input[i];
+                    Vector3 b = input[i + 1];
 
                     if (fixedZ != null)
                     {
@@ -636,15 +689,16 @@ namespace Neo.Tools
                         b.z = fixedZ.Value;
                     }
 
-                    tmp.Add(Vector3.Lerp(a, b, 0.25f));
-                    tmp.Add(Vector3.Lerp(a, b, 0.75f));
+                    output[idx++] = Vector3.Lerp(a, b, 0.25f);
+                    output[idx++] = Vector3.Lerp(a, b, 0.75f);
                 }
 
-                tmp.Add(output[^1]);
-                output = tmp;
+                output[idx] = input[^1];
+                
+                (input, output) = (output, input);
             }
 
-            return output;
+            return new List<Vector3>(input);
         }
 
         public static float GetDistance(Vector3[] points)

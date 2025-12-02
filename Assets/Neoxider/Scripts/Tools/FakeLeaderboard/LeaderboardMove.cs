@@ -28,6 +28,9 @@ namespace Neo.Tools
 
         private LeaderboardItem lastAnimatedItem;
         private Vector3 lastAnimatedItemBaseScale = Vector3.one;
+        
+        private Tweener _moveTween;
+        private Tweener _scaleTween;
 
         private Leaderboard GetLeaderboard()
         {
@@ -72,6 +75,9 @@ namespace Neo.Tools
 
         public void Move()
         {
+            // Отменяем предыдущие анимации при быстром повторном вызове
+            KillActiveTweens();
+            
             Leaderboard lb = GetLeaderboard();
             if (lb == null)
             {
@@ -99,7 +105,7 @@ namespace Neo.Tools
 
                 Vector3 targetPos = transform.position - targetItem.transform.position;
 
-                transform.DOMoveY(targetPos.y + offsetY, timeMove)
+                _moveTween = transform.DOMoveY(targetPos.y + offsetY, timeMove)
                     .SetEase(Ease.Linear)
                     .OnComplete(() =>
                     {
@@ -108,7 +114,7 @@ namespace Neo.Tools
                             Vector3 targetScale = baseScale + Vector3.one * scaleDelta;
 
                             // Увеличиваем карточку и возвращаем к базовому размеру в стиле "yoyo".
-                            targetItem.transform
+                            _scaleTween = targetItem.transform
                                 .DOScale(targetScale, durationAnimPlayer)
                                 .SetLoops(2, LoopType.Yoyo);
                         }
@@ -118,6 +124,22 @@ namespace Neo.Tools
             {
                 Debug.LogWarning("Not Find player in leaderboards");
             }
+        }
+        
+        /// <summary>
+        /// Отменяет все активные анимации.
+        /// </summary>
+        public void KillActiveTweens()
+        {
+            _moveTween?.Kill();
+            _scaleTween?.Kill();
+            _moveTween = null;
+            _scaleTween = null;
+        }
+        
+        private void OnDisable()
+        {
+            KillActiveTweens();
         }
     }
 }

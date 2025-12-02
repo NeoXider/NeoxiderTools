@@ -35,6 +35,12 @@ namespace Neo.Tools
 
         private int _countStars;
         private int _lastCountStars;
+        
+        // Кэшированные строки для избежания аллокаций
+        private string _cachedScoreString;
+        private int _cachedScoreValue = int.MinValue;
+        private string _cachedBestScoreString;
+        private int _cachedBestScoreValue = int.MinValue;
 
         public int BestScore
         {
@@ -156,15 +162,23 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет текстовые поля лучшего результата.
+        ///     Обновляет текстовые поля лучшего результата с кэшированием строки.
         /// </summary>
         private void SetBestScoreText()
         {
+            // Кэшируем строку только при изменении значения
+            if (_cachedBestScoreValue != _bestScore)
+            {
+                _cachedBestScoreValue = _bestScore;
+                _cachedBestScoreString = _bestScore.ToString();
+            }
+            
             if (textBestScores != null)
             {
                 foreach (TMP_Text text in textBestScores)
                 {
-                    text.text = _bestScore.ToString();
+                    if (text != null)
+                        text.text = _cachedBestScoreString;
                 }
             }
 
@@ -172,21 +186,30 @@ namespace Neo.Tools
             {
                 foreach (SetText text in setTextBestScores)
                 {
-                    text.Set(_bestScore);
+                    if (text != null)
+                        text.Set(_bestScore);
                 }
             }
         }
 
         /// <summary>
-        ///     Обновляет текстовые поля текущего счета.
+        ///     Обновляет текстовые поля текущего счета с кэшированием строки.
         /// </summary>
         private void SetScoreText()
         {
+            // Кэшируем строку только при изменении значения
+            if (_cachedScoreValue != score)
+            {
+                _cachedScoreValue = score;
+                _cachedScoreString = score.ToString();
+            }
+            
             if (textScores != null)
             {
                 foreach (TMP_Text text in textScores)
                 {
-                    text.text = score.ToString();
+                    if (text != null)
+                        text.text = _cachedScoreString;
                 }
             }
 
@@ -194,7 +217,8 @@ namespace Neo.Tools
             {
                 foreach (SetText text in setTextScore)
                 {
-                    text.Set(score);
+                    if (text != null)
+                        text.Set(score);
                 }
             }
         }

@@ -14,6 +14,7 @@
 - **Components**
   - [DialogueManager](./Components/DialogueManager.md)
   - [Loot](./Components/Loot.md)
+  - [TypewriterEffect](./Components/TypewriterEffect.md)
   - [README](./Components/README.md)
   - **AttackSystem**
     - [AdvancedAttackCollider](./Components/AttackSystem/AdvancedAttackCollider.md)

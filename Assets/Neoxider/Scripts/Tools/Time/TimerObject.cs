@@ -29,6 +29,9 @@ namespace Neo
 
         [Tooltip("Use unscaled time (ignores time scale)")]
         public bool useUnscaledTime;
+        
+        [Tooltip("Автоматически ставить на паузу при Time.timeScale == 0")]
+        public bool pauseOnTimeScaleZero = true;
 
         [Tooltip("Automatically restart when complete")]
         public bool looping;
@@ -255,9 +258,10 @@ namespace Neo
         private void Update()
         {
             if (!isActive)
-            {
                 return;
-            }
+            
+            if (pauseOnTimeScaleZero && !useUnscaledTime && Time.timeScale == 0f)
+                return;
 
             float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
             timeSinceLastUpdate += deltaTime;

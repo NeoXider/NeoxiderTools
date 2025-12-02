@@ -19,6 +19,8 @@ namespace Neo.Tools
         [SerializeField] private bool distributeEvenlyWhenZero = true;
 
         private Func<float> randomProvider;
+        private float _cachedTotalWeight;
+        private bool _totalWeightDirty = true;
 
         public ChanceManager(params float[] weights)
         {
@@ -78,14 +80,25 @@ namespace Neo.Tools
         {
             get
             {
-                float sum = 0f;
-                for (int i = 0; i < entries.Count; i++)
+                if (_totalWeightDirty)
                 {
-                    sum += Mathf.Max(0f, entries[i].Weight);
+                    _cachedTotalWeight = 0f;
+                    for (int i = 0; i < entries.Count; i++)
+                    {
+                        _cachedTotalWeight += Mathf.Max(0f, entries[i].Weight);
+                    }
+                    _totalWeightDirty = false;
                 }
-
-                return sum;
+                return _cachedTotalWeight;
             }
+        }
+        
+        /// <summary>
+        /// Помечает кэш TotalWeight как устаревший.
+        /// </summary>
+        public void InvalidateTotalWeight()
+        {
+            _totalWeightDirty = true;
         }
 
         public float GetNormalizedWeight(int index)
@@ -351,11 +364,54 @@ namespace Neo.Tools
                     entry.Label = $"Chance {i + 1}";
                 }
             }
+            
+            _totalWeightDirty = true;
 
             if (autoNormalize)
             {
                 Normalize();
             }
+        }
+        
+        /// <summary>
+        /// Проверяет корректность весов и возвращает список проблем.
+        /// </summary>
+        public List<string> ValidateWeights()
+        {
+            List<string> issues = new List<string>();
+            
+            if (entries == null || entries.Count == 0)
+            {
+                issues.Add("Список записей пуст");
+                return issues;
+            }
+            
+            float total = TotalWeight;
+            if (total <= 0f)
+            {
+                issues.Add("Общий вес равен 0 — ни один элемент не может быть выбран");
+            }
+            
+            int zeroWeightCount = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                Entry entry = entries[i];
+                if (entry.Weight < 0f)
+                {
+                    issues.Add($"[{i}] '{entry.Label}': отрицательный вес ({entry.Weight})");
+                }
+                else if (entry.Weight == 0f && !entry.Locked)
+                {
+                    zeroWeightCount++;
+                }
+            }
+            
+            if (zeroWeightCount > 0 && zeroWeightCount < entries.Count)
+            {
+                issues.Add($"{zeroWeightCount} записей с нулевым весом никогда не будут выбраны");
+            }
+            
+            return issues;
         }
 
         public void EnsureUniqueIds()
@@ -374,6 +430,8 @@ namespace Neo.Tools
 
         private void OnCollectionChanged()
         {
+            _totalWeightDirty = true;
+            
             if (autoNormalize)
             {
                 Normalize();

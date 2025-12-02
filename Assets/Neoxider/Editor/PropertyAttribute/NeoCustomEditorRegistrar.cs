@@ -24,10 +24,6 @@ namespace Neo.Editor
         {
             // Force refresh of all inspectors to ensure CustomEditor is properly registered
             InternalEditorUtility.RepaintAllViews();
-
-            // Отладка: проверяем, зарегистрирован ли наш CustomEditor
-            Debug.Log(
-                "[NeoCustomEditorRegistrar] CustomEditor зарегистрирован. NeoCustomEditor должен работать для всех MonoBehaviour.");
         }
 
         private static void OnProjectChanged()

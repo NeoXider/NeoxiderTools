@@ -4,10 +4,11 @@
 
 ## Файлы
 
-- [DialogueManager](./DialogueManager.md)
-- [Loot](./Loot.md)
+- [DialogueManager](./DialogueManager.md) — диалоговая система с персонажами, портретами и событиями
+- [Loot](./Loot.md) — система лута и дропа
+- [TypewriterEffect](./TypewriterEffect.md) — эффект печатной машинки с паузами на знаках препинания
 
 ## Папки
 
-- [AttackSystem](./AttackSystem)
-- [Interface](./Interface)
+- [AttackSystem](./AttackSystem) — система атак и урона
+- [Interface](./Interface) — интерфейсы для атак

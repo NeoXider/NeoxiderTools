@@ -8,10 +8,27 @@ namespace Neo
 {
     namespace UI
     {
+        public enum SceneLoadMode
+        {
+            /// <summary>
+            /// Загружает сцену синхронно.
+            /// </summary>
+            Sync,
+            /// <summary>
+            /// Загружает сцену асинхронно и активирует сразу.
+            /// </summary>
+            Async,
+            /// <summary>
+            /// Загружает сцену асинхронно, но ждёт ручной активации.
+            /// </summary>
+            AsyncManual
+        }
+        
         [AddComponentMenu("Neo/" + "UI/" + nameof(UIReady))]
         public class UIReady : MonoBehaviour
         {
-            public int s = 10;
+            [Header("Scene Loading")]
+            public SceneLoadMode loadMode = SceneLoadMode.Sync;
 
             [Header("Async Load Scene")] public AsyncLoadScene ALS;
 
@@ -55,16 +72,52 @@ namespace Neo
                 }
             }
 
+            /// <summary>
+            /// Загружает сцену согласно выбранному режиму.
+            /// </summary>
             public void LoadScene(int idScene)
+            {
+                switch (loadMode)
+                {
+                    case SceneLoadMode.Sync:
+                        SceneManager.LoadScene(idScene);
+                        break;
+                    case SceneLoadMode.Async:
+                        StartCoroutine(LoadSceneCoroutine(idScene, true));
+                        break;
+                    case SceneLoadMode.AsyncManual:
+                        StartCoroutine(LoadSceneCoroutine(idScene, false));
+                        break;
+                }
+            }
+            
+            /// <summary>
+            /// Загружает сцену синхронно.
+            /// </summary>
+            public void LoadSceneSync(int idScene)
             {
                 SceneManager.LoadScene(idScene);
             }
 
+            /// <summary>
+            /// Загружает сцену асинхронно с автоактивацией.
+            /// </summary>
             public void LoadSceneAsync(int idScene)
             {
-                StartCoroutine(LoadSceneCoroutine(idScene));
+                StartCoroutine(LoadSceneCoroutine(idScene, true));
+            }
+            
+            /// <summary>
+            /// Загружает сцену асинхронно без автоактивации (требует вызова ProceedScene).
+            /// </summary>
+            public void LoadSceneAsyncManual(int idScene)
+            {
+                StartCoroutine(LoadSceneCoroutine(idScene, false));
             }
 
+            /// <summary>
+            /// Активирует сцену после асинхронной загрузки без автоактивации.
+            /// </summary>
             public void ProceedScene()
             {
                 if (ALS.operationScene != null)
@@ -73,10 +126,10 @@ namespace Neo
                 }
             }
 
-            private IEnumerator LoadSceneCoroutine(int idScene)
+            private IEnumerator LoadSceneCoroutine(int idScene, bool autoActivate)
             {
                 ALS.operationScene = SceneManager.LoadSceneAsync(idScene);
-                ALS.operationScene.allowSceneActivation = ALS.isProgressLoad;
+                ALS.operationScene.allowSceneActivation = autoActivate;
 
                 if (ALS.gameObjectLoad != null)
                 {

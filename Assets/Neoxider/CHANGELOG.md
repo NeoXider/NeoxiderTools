@@ -1,5 +1,58 @@
 # Журнал изменений (Changelog)
 
+## [v5.2.27]
+
+### Добавлено
+- **TypewriterEffect**: Новый универсальный модуль эффекта печатной машинки
+  - Класс `TypewriterEffect` для использования из кода (без MonoBehaviour)
+  - Компонент `TypewriterEffectComponent` для использования в инспекторе
+  - Поддержка UniTask для асинхронной работы
+  - События: OnStart, OnComplete, OnCharacterTyped, OnProgressChanged
+
+- **DialogueSystem**: Разделение на модульные компоненты
+  - `DialogueController` — основная логика
+  - `DialogueUI` — управление UI
+  - `DialogueData` — структуры данных (Dialogue, Monolog, Sentence)
+  - Интеграция с TypewriterEffect через UniTask
+
+- **Drawer**: Интеграция с PoolManager
+  - Опция `usePooling` для переиспользования LineRenderer (по умолчанию выключена)
+  - Поле `poolPrefab` — опционально, если не указан, создаётся автоматически
+
+- **UIReady**: Enum `SceneLoadMode`
+  - `Sync` — синхронная загрузка
+  - `Async` — асинхронная с автоактивацией
+  - `AsyncManual` — асинхронная с ручной активацией
+
+- **ChanceManager**: Метод `ValidateWeights()` для проверки корректности весов
+
+- **TimerObject**: Опция `pauseOnTimeScaleZero` для автопаузы
+
+### Улучшено
+- **LeaderboardMove**: Отмена предыдущих анимаций при быстром вызове Move()
+  - Добавлены поля `_moveTween`, `_scaleTween` для управления
+  - Метод `KillActiveTweens()` для отмены анимаций
+
+- **ScoreManager**: Кэширование строк в SetScoreText/SetBestScoreText
+  - Уменьшены аллокации при частых обновлениях счёта
+
+- **Drawer**: Оптимизация Chaikin smoothing
+  - Использование массивов вместо списков
+  - Переиспользование буферов между проходами
+
+- **ChanceManager**: Кэширование TotalWeight
+  - Свойство `_totalWeightDirty` для отслеживания изменений
+  - Метод `InvalidateTotalWeight()` для ручной инвалидации
+
+- **UI.cs**: Кэширование страниц через Dictionary
+
+### Технические изменения
+- DialogueManager удалён, заменён на DialogueController + DialogueUI
+- TypewriterEffect использует UniTask вместо корутин
+- Добавлена документация для новых компонентов
+
+---
+
 ## [v5.2.22]
 
 ### Улучшено
