@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 4128821160330500978}
   - component: {fileID: 70864725020341059}
   - component: {fileID: 6072908117927463472}
+  - component: {fileID: 8369130564433873490}
   m_Layer: 0
   m_Name: Bullet
   m_TagString: Untagged
@@ -64,7 +65,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  - {fileID: 2100000, guid: c6f25b7a500fdb848b4d16846d497396, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -161,5 +162,56 @@ MonoBehaviour:
   customDirection: {x: 0, y: 0, z: 1}
   target: {fileID: 0}
   OnApplyForce:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &8369130564433873490
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8540771556068852926}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d3d9bd4c102fba4f91b334cdbb92dda, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  attackDamage: 1
+  attackType: 0
+  preventRepeatHits: 0
+  triggerDuration: 0.2
+  autoManageColliders: 0
+  collider2D: {fileID: 0}
+  collider3D: {fileID: 0}
+  use2D: 0
+  use3D: 1
+  useTrigger: 1
+  useCollision: 1
+  hittableLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  applyForceOnHit: 1
+  forceMagnitude: 1
+  forceDuration: 0.3
+  forceMode3D: 1
+  forceMode2D: 1
+  scaleForceByMass: 1
+  useAdvancedForceApplier: 1
+  attackEffectPrefab: {fileID: 0}
+  ignoreObjects: []
+  destroySelfOnHit: 0
+  destroyTargetOnHit: 0
+  _showGizmo: 1
+  _gizmoColor: {r: 1, g: 0, b: 0, a: 0.2}
+  OnAttackTriggerEnter2D:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAttackTriggerEnter3D:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDeactivateTrigger:
+    m_PersistentCalls:
+      m_Calls: []
+  OnHit:
     m_PersistentCalls:
       m_Calls: []
