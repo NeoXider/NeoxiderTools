@@ -11,6 +11,7 @@
 | `Animations` | Универсальная система анимации значений, цветов, векторов и источников света | [`./Animations/README.md`](./Animations/README.md) |
 | `Audio` | Менеджеры звука, настройки микшера, play-on-click | [`./Audio/README.md`](./Audio/README.md) |
 | `Bonus` | Коллекции, слот‑машины, колёса удачи | [`./Bonus/README.md`](./Bonus/README.md) |
+| `Cards` | Карточные игры: колода, рука, покерные комбинации | [`./Cards/README.md`](./Cards/README.md) |
 | `Editor` | Атрибуты редактора, инспекторные тулзы | [`./Editor/README.md`](./Editor/README.md) |
 | `Extensions` | Расширения C# и Unity API | [`./Extensions/README.md`](./Extensions/README.md) |
 | `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`./GridSystem.md`](./GridSystem.md) |

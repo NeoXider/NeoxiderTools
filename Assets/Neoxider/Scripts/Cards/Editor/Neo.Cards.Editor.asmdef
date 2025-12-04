@@ -1,0 +1,19 @@
+{
+  "name": "Neo.Cards.Editor",
+  "rootNamespace": "Neo.Cards.Editor",
+  "references": [
+    "Neo.Cards"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+

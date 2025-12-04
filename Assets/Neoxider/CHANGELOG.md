@@ -1,5 +1,25 @@
 # Журнал изменений (Changelog)
 
+## [v5.3.0]
+
+### Добавлено
+- **Cards**: Новый модуль карточных игр в MVP архитектуре
+  - `CardData` — неизменяемая структура карты с поддержкой сравнения и козырей
+  - `DeckModel`, `HandModel` — модели колоды и руки
+  - `CardView`, `DeckView`, `HandView` — визуальные компоненты с анимациями DOTween
+  - `CardPresenter`, `DeckPresenter`, `HandPresenter` — презентеры MVP
+  - `DeckConfig` — ScriptableObject со спрайтами по мастям и кастомным редактором
+  - No-code компоненты: `CardComponent`, `DeckComponent`, `HandComponent`, `BoardComponent`
+  - Типы колод: 36, 52, 54 карты
+  - Раскладки руки: Fan, Line, Stack, Grid
+  - Методы сравнения: `Beats()`, `CanCover()` для игры «Дурак»
+  - **Poker**: подмодуль покерных комбинаций
+    - `PokerCombination` — от HighCard до RoyalFlush
+    - `PokerHandEvaluator` — определение комбинации из 5-7 карт
+    - `PokerRules` — сравнение рук, определение победителей, Texas Hold'em
+
+---
+
 ## [v5.2.27]
 
 ### Добавлено
