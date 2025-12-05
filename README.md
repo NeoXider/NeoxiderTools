@@ -16,6 +16,8 @@ Neoxider — это экосистема из более чем 150 модуле
 (Обратите особоте внимание модулю Extensions если любите писать код)
 так же множество скриптов поддерживают работу через код или только с ним, к примеру Singleton, ChanceSystem и множество других
 
+<img width="464" height="522" alt="image" src="https://github.com/user-attachments/assets/fbb02b88-fed6-4445-bf19-079382966628" />
+
 ## Demo Scenes
 ![image](https://github.com/user-attachments/assets/90c98f0c-aae2-4837-81ed-b18a10b65ed5)
 
