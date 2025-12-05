@@ -110,6 +110,15 @@ namespace Neo.Editor
             }
             
             EditorGUILayout.EndVertical();
+            
+            // Информация об исправлении для Package Manager
+            EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            EditorGUILayout.LabelField("Устранение проблем", EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                "Если компоненты Neo.Tools не отображаются с градиентной линией и кнопками при установке из Package Manager, " +
+                "используйте меню: Tools → Neoxider → Fix Editor Assembly References",
+                MessageType.Info);
+            EditorGUILayout.EndVertical();
         }
 
         private void ResetToDefaults()

@@ -84,6 +84,16 @@ namespace Neo.Editor
         /// </summary>
         private static string GetScriptPath([System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
         {
+            // CallerFilePath возвращает абсолютный путь, нужно преобразовать в относительный Unity путь
+            if (!string.IsNullOrEmpty(sourceFilePath))
+            {
+                // Для работы как из Assets, так и из Packages
+                string projectPath = System.IO.Directory.GetCurrentDirectory();
+                if (sourceFilePath.StartsWith(projectPath))
+                {
+                    sourceFilePath = sourceFilePath.Substring(projectPath.Length + 1).Replace('\\', '/');
+                }
+            }
             return sourceFilePath;
         }
 
@@ -182,9 +192,32 @@ namespace Neo.Editor
             bool isOdinActive = IsOdinInspectorAvailable();
 
             // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
-            bool hasNeoNamespace = target != null && target.GetType().Namespace != null &&
-                                   (target.GetType().Namespace == "Neo" ||
-                                    target.GetType().Namespace.StartsWith("Neo."));
+            bool hasNeoNamespace = false;
+            
+            if (target != null && target.GetType().Namespace != null)
+            {
+                string targetNamespace = target.GetType().Namespace;
+                
+                // Проверяем точное совпадение "Neo" или начало с "Neo."
+                hasNeoNamespace = targetNamespace == "Neo" || targetNamespace.StartsWith("Neo.");
+                
+                // Дополнительная проверка для вложенных namespace (например, Neo { namespace Audio)
+                // В таких случаях полный namespace будет "Neo.Audio"
+                if (!hasNeoNamespace && targetNamespace.Contains("."))
+                {
+                    // Проверяем каждую часть namespace
+                    string[] parts = targetNamespace.Split('.');
+                    hasNeoNamespace = parts.Length > 0 && parts[0] == "Neo";
+                }
+                
+                // Debug для диагностики
+                // Раскомментируйте эти строки если компоненты Neo.Tools не отображаются с оформлением:
+                // if (targetNamespace.Contains("Neo") && targetNamespace.Contains("Tools"))
+                // {
+                //     Debug.Log($"[Neo Debug] Component: {target.GetType().FullName}, Namespace: {targetNamespace}, " +
+                //              $"Has Neo Namespace: {hasNeoNamespace}, Assembly: {target.GetType().Assembly.GetName().Name}");
+                // }
+            }
 
             if (hasNeoNamespace)
             {
