@@ -75,7 +75,6 @@ namespace Neo.Tools
 
         public void Move()
         {
-            // Отменяем предыдущие анимации при быстром повторном вызове
             KillActiveTweens();
             
             Leaderboard lb = GetLeaderboard();

@@ -23,16 +23,46 @@ namespace Neo.Cards
 
         [Header("Limits")]
         [SerializeField] private int _maxCards = 36;
+        
+        [Header("Card Order")]
+        [Tooltip("Если true - новые карты добавляются под низ (sibling index 0)")]
+        [SerializeField] private bool _addToBottom;
 
         [Header("Animation")]
         [SerializeField] private float _arrangeDuration = 0.3f;
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
         [Header("Events")]
-        public UnityEvent<CardComponent> OnCardAdded;
-        public UnityEvent<CardComponent> OnCardRemoved;
-        public UnityEvent<CardComponent> OnCardClicked;
-        public UnityEvent OnHandChanged;
+        [SerializeField] private UnityEvent<int> _onCardCountChanged;
+        [SerializeField] private UnityEvent<CardComponent> _onCardAdded;
+        [SerializeField] private UnityEvent<CardComponent> _onCardRemoved;
+        [SerializeField] private UnityEvent<CardComponent> _onCardClicked;
+        [SerializeField] private UnityEvent _onHandChanged;
+
+        /// <summary>
+        /// Событие изменения количества карт в руке. Передаёт текущее количество.
+        /// </summary>
+        public UnityEvent<int> OnCardCountChanged => _onCardCountChanged;
+
+        /// <summary>
+        /// Событие добавления карты.
+        /// </summary>
+        public UnityEvent<CardComponent> OnCardAdded => _onCardAdded;
+
+        /// <summary>
+        /// Событие удаления карты.
+        /// </summary>
+        public UnityEvent<CardComponent> OnCardRemoved => _onCardRemoved;
+
+        /// <summary>
+        /// Событие клика по карте.
+        /// </summary>
+        public UnityEvent<CardComponent> OnCardClicked => _onCardClicked;
+
+        /// <summary>
+        /// Событие изменения руки.
+        /// </summary>
+        public UnityEvent OnHandChanged => _onHandChanged;
 
         private readonly List<CardComponent> _cards = new();
         private HandModel _model;
@@ -77,7 +107,15 @@ namespace Neo.Cards
 
         private void Awake()
         {
-            _model = new HandModel();
+            EnsureModelInitialized();
+        }
+
+        private void EnsureModelInitialized()
+        {
+            if (_model == null)
+            {
+                _model = new HandModel();
+            }
         }
 
         /// <summary>
@@ -89,16 +127,62 @@ namespace Neo.Cards
         {
             if (card == null || IsFull) return;
 
+            EnsureModelInitialized();
+            
+            Vector3 startPosition = card.transform.position;
+            
             card.transform.SetParent(transform, true);
             card.OnClick.AddListener(() => HandleCardClick(card));
 
-            _cards.Add(card);
-            _model.Add(card.Data);
+            if (_addToBottom)
+            {
+                _cards.Insert(0, card);
+                _model.Add(card.Data);
+            }
+            else
+            {
+                _cards.Add(card);
+                _model.Add(card.Data);
+            }
 
-            await ArrangeCardsAsync(animate);
+            if (animate)
+            {
+                card.transform.position = startPosition;
+                
+                var positions = CalculatePositions();
+                var rotations = CalculateRotations();
+                int targetIndex = _addToBottom ? 0 : _cards.Count - 1;
 
-            OnCardAdded?.Invoke(card);
-            OnHandChanged?.Invoke();
+                for (int i = 0; i < _cards.Count; i++)
+                {
+                    _cards[i].transform.SetSiblingIndex(_addToBottom ? (_cards.Count - 1 - i) : i);
+                }
+
+                if (targetIndex < positions.Count && targetIndex < rotations.Count)
+                {
+                    await AnimateCard(card, positions[targetIndex], rotations[targetIndex]);
+                }
+                
+                for (int i = 0; i < _cards.Count; i++)
+                {
+                    if (i != targetIndex && i < positions.Count && i < rotations.Count)
+                    {
+                        _cards[i].transform.localPosition = positions[i];
+                        _cards[i].transform.localRotation = rotations[i];
+                        _cards[i].UpdateOriginalTransform();
+                    }
+                }
+                
+                card.UpdateOriginalTransform();
+            }
+            else
+            {
+                await ArrangeCardsAsync(false);
+            }
+
+            _onCardAdded?.Invoke(card);
+            _onCardCountChanged?.Invoke(_cards.Count);
+            _onHandChanged?.Invoke();
         }
 
         /// <summary>
@@ -111,6 +195,33 @@ namespace Neo.Cards
         }
 
         /// <summary>
+        /// Берёт первую карту из руки (для игры "Пьяница").
+        /// </summary>
+        /// <returns>Первая карта или null если рука пуста</returns>
+        public CardComponent DrawFirst()
+        {
+            if (_cards.Count == 0) return null;
+            
+            var card = _cards[0];
+            RemoveCard(card);
+            return card;
+        }
+
+        /// <summary>
+        /// Берёт случайную карту из руки.
+        /// </summary>
+        /// <returns>Случайная карта или null если рука пуста</returns>
+        public CardComponent DrawRandom()
+        {
+            if (_cards.Count == 0) return null;
+            
+            int index = UnityEngine.Random.Range(0, _cards.Count);
+            var card = _cards[index];
+            RemoveCard(card);
+            return card;
+        }
+
+        /// <summary>
         /// Удаляет карту из руки
         /// </summary>
         /// <param name="card">Карта для удаления</param>
@@ -119,7 +230,10 @@ namespace Neo.Cards
         {
             if (card == null || !_cards.Contains(card)) return;
 
+            EnsureModelInitialized();
+            
             card.OnClick.RemoveAllListeners();
+            card.ResetHover();
             card.transform.SetParent(null, true);
 
             _cards.Remove(card);
@@ -127,8 +241,9 @@ namespace Neo.Cards
 
             await ArrangeCardsAsync(animate);
 
-            OnCardRemoved?.Invoke(card);
-            OnHandChanged?.Invoke();
+            _onCardRemoved?.Invoke(card);
+            _onCardCountChanged?.Invoke(_cards.Count);
+            _onHandChanged?.Invoke();
         }
 
         /// <summary>
@@ -172,6 +287,7 @@ namespace Neo.Cards
         /// </summary>
         public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
+            EnsureModelInitialized();
             _model.SortByRank(ascending);
 
             if (ascending)
@@ -203,6 +319,7 @@ namespace Neo.Cards
         /// </summary>
         public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
+            EnsureModelInitialized();
             _model.SortBySuit(ascending);
 
             if (ascending)
@@ -264,8 +381,12 @@ namespace Neo.Cards
             }
 
             _cards.Clear();
+            
+            EnsureModelInitialized();
             _model.Clear();
-            OnHandChanged?.Invoke();
+            
+            _onCardCountChanged?.Invoke(0);
+            _onHandChanged?.Invoke();
         }
 
         /// <summary>
@@ -293,6 +414,7 @@ namespace Neo.Cards
                 {
                     _cards[i].transform.localPosition = positions[i];
                     _cards[i].transform.localRotation = rotations[i];
+                    _cards[i].UpdateOriginalTransform();
                 }
             }
 
@@ -300,11 +422,16 @@ namespace Neo.Cards
             {
                 await UniTask.WhenAll(tasks);
             }
+            
+            foreach (var card in _cards)
+            {
+                card.UpdateOriginalTransform();
+            }
         }
 
         private void HandleCardClick(CardComponent card)
         {
-            OnCardClicked?.Invoke(card);
+            _onCardClicked?.Invoke(card);
         }
 
         private List<Vector3> CalculatePositions()
@@ -334,17 +461,24 @@ namespace Neo.Cards
             int count = _cards.Count;
             if (count == 0) return positions;
 
-            float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
-            float startAngle = totalAngle / 2f;
+            if (count == 1)
+            {
+                positions.Add(Vector3.zero);
+                return positions;
+            }
+
+            float angleStep = _arcAngle;
+            float totalAngle = angleStep * (count - 1);
+            totalAngle = Mathf.Min(totalAngle, 60f);
+            angleStep = totalAngle / Mathf.Max(1, count - 1);
 
             for (int i = 0; i < count; i++)
             {
-                float angle = startAngle - (totalAngle / Mathf.Max(1, count - 1)) * i;
-                if (count == 1) angle = 0;
-
+                float angle = -totalAngle / 2f + angleStep * i;
                 float radians = angle * Mathf.Deg2Rad;
+                
                 float x = Mathf.Sin(radians) * _arcRadius;
-                float y = Mathf.Cos(radians) * _arcRadius - _arcRadius;
+                float y = -Mathf.Cos(radians) * _arcRadius + _arcRadius;
 
                 positions.Add(new Vector3(x, y, 0));
             }
@@ -358,15 +492,21 @@ namespace Neo.Cards
             int count = _cards.Count;
             if (count == 0) return rotations;
 
-            float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
-            float startAngle = totalAngle / 2f;
+            if (count == 1)
+            {
+                rotations.Add(Quaternion.identity);
+                return rotations;
+            }
+
+            float angleStep = _arcAngle;
+            float totalAngle = angleStep * (count - 1);
+            totalAngle = Mathf.Min(totalAngle, 60f);
+            angleStep = totalAngle / Mathf.Max(1, count - 1);
 
             for (int i = 0; i < count; i++)
             {
-                float angle = startAngle - (totalAngle / Mathf.Max(1, count - 1)) * i;
-                if (count == 1) angle = 0;
-
-                rotations.Add(Quaternion.Euler(0, 0, angle));
+                float angle = -totalAngle / 2f + angleStep * i;
+                rotations.Add(Quaternion.Euler(0, 0, -angle));
             }
 
             return rotations;

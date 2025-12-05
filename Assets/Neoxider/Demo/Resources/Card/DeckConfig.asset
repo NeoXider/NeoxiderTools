@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DeckConfig
   m_EditorClassIdentifier: 
   _deckType: 52
+  _gameDeckType: 36
   _backSprite: {fileID: 21300000, guid: 8bebfb400e860764d8eb23b7e8ad0e52, type: 3}
   _hearts:
   - {fileID: -2135442563, guid: 7ecb0e979b772354e9f096774872cbc5, type: 3}

@@ -1,399 +1,290 @@
-# Пример: Игра «Пьяница»
+# Игра «Пьяница» (War Card Game)
 
-Пошаговое руководство по созданию классической карточной игры «Пьяница» с использованием модуля Neo.Cards.
+Готовый компонент `DrunkardGame` для создания классической карточной игры без написания кода.
 
 ---
 
 ## Правила игры
 
 1. Колода делится поровну между двумя игроками
-2. Каждый ход игроки выкладывают верхнюю карту
-3. У кого карта старше — забирает обе карты себе в низ колоды
-4. При равенстве карт — «спор»: выкладывается ещё по одной карте рубашкой вверх, затем ещё по одной лицом — кто старше, забирает все
+2. Порядок хода настраивается (`Player Goes First`):
+   - По умолчанию: сначала соперник, затем игрок (задержка настраивается)
+   - Можно поменять: сначала игрок, затем соперник
+3. У кого карта старше — забирает обе карты себе
+4. При равенстве карт — «война»: выкладывается ещё по одной карте рубашкой вверх, затем ещё по одной лицом — кто старше, забирает все
 5. Побеждает тот, кто соберёт все карты
+6. Если используется HandComponent — карты улетают с стола в руку с анимацией
 
 ---
 
-## Шаг 1: Подготовка сцены
+## Быстрая настройка (No-Code)
 
-### Иерархия объектов
+### Шаг 1: Создайте иерархию объектов
 
 ```
-DrunkardGame
-├── Canvas
-│   ├── PlayerDeck (DeckComponent)
-│   ├── OpponentDeck (DeckComponent)
-│   ├── PlayerCard (CardComponent)
-│   ├── OpponentCard (CardComponent)
+Canvas
+├── GamePage (ваша страница игры)
+│   ├── DrunkardGame (DrunkardGame.cs)
+│   ├── PlayerHand (HandComponent) — опционально, для видимых карт
+│   ├── OpponentHand (HandComponent) — опционально
+│   ├── PlayerDeckPos (RectTransform)
+│   ├── PlayerCardPos (RectTransform)
+│   ├── OpponentDeckPos (RectTransform)
+│   ├── OpponentCardPos (RectTransform)
+│   ├── PlayerScoreText (TMP_Text)
+│   ├── OpponentScoreText (TMP_Text)
 │   ├── PlayButton (Button)
-│   ├── PlayerCountText (TMP_Text)
-│   └── OpponentCountText (TMP_Text)
-└── GameManager (DrunkardGame.cs)
+│   ├── WinPanel (Panel)
+│   │   ├── WinText
+│   │   └── RestartButton
+│   └── LosePanel (Panel)
+│       ├── LoseText
+│       └── RestartButton
 ```
 
-### Настройка DeckConfig
+### Шаг 2: Создайте DeckConfig
 
-1. Создайте `DeckConfig` через **Create → Neo → Cards → Deck Config**
-2. Выберите тип колоды `Standard36` или `Standard52`
+1. ПКМ в Project → **Create → Neo → Cards → Deck Config**
+2. Настройте типы колоды:
+   - **Deck Type** — тип для спрайтов (можно `Standard52` если хотите универсальный конфиг)
+   - **Game Deck Type** — установите `Standard36` для классической «Пьяницы»
 3. Назначьте спрайты карт и рубашки
 
+### Шаг 3: Создайте префаб карты
+
+1. Создайте UI Image
+2. Добавьте компонент `CardComponent`
+3. Назначьте `Image` в поле `Card Image`
+4. Настройте размер (например 100x140)
+5. Сохраните как префаб
+
+### Шаг 4: Настройте DrunkardGame
+
+В инспекторе компонента `DrunkardGame`:
+
+#### Config
+
+| Поле | Описание |
+|------|----------|
+| **Deck Config** | Конфигурация колоды (GameDeckType = 36 карт) |
+| **Card Prefab** | Префаб карты с CardComponent |
+| **Initialize On Start** | Автоматически раздать карты при запуске (по умолчанию true) |
+| **Debug** | Включить логи для отладки (по умолчанию false) |
+
+#### Positions
+
+| Поле | Описание |
+|------|----------|
+| **Cards Parent** | Родитель для спавна карт (GamePage или Canvas) |
+| **Initial Board** | (Опционально) BoardComponent для начального спавна всех карт |
+| **Player Deck Position** | Transform позиции колоды игрока. **Можно указать HandComponent!** |
+| **Player Card Position** | Transform куда выкладывается карта игрока |
+| **Opponent Deck Position** | Transform позиции колоды соперника. **Можно указать HandComponent!** |
+| **Opponent Card Position** | Transform куда выкладывается карта соперника |
+
+**Как работает Initial Board:**
+- Если указан — все карты сначала спавнятся в BoardComponent
+- Затем раздаются поровну в HandComponent (если указан) или в очередь
+- Удобно для визуализации "раздачи с колоды"
+
+#### Timing
+
+| Поле | Значение по умолчанию | Описание |
+|------|----------------------|----------|
+| **Card Move Duration** | 0.3 сек | Длительность анимации перемещения карты |
+| **Round Delay** | 1 сек | Задержка перед скрытием карт после раунда |
+| **Turn Delay** | 0.3 сек | Задержка между ходами игроков |
+| **War Continue Delay** | 0.5 сек | Задержка при продолжении «войны» |
+| **Card Return Delay** | 0.1 сек | Задержка между картами при возврате в руку |
+
+#### Game Rules
+
+| Поле | Значение по умолчанию | Описание |
+|------|----------------------|----------|
+| **Player Goes First** | false | Кто ходит первым: true = игрок, false = соперник |
+
 ---
 
-## Шаг 2: Создание скрипта игры
+## Режимы работы
 
-```csharp
-using System.Collections.Generic;
-using Cysharp.Threading.Tasks;
-using Neo.Cards;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
+### Режим 1: Невидимые очереди (классический)
 
-namespace MyGame
-{
-    public class DrunkardGame : MonoBehaviour
-    {
-        [Header("Config")]
-        [SerializeField] private DeckConfig _deckConfig;
-        [SerializeField] private CardComponent _cardPrefab;
+Карты хранятся в невидимых стопках, показываются только при ходе.
 
-        [Header("Player")]
-        [SerializeField] private Transform _playerDeckPosition;
-        [SerializeField] private Transform _playerCardPosition;
-        [SerializeField] private TMP_Text _playerCountText;
+**Настройка:**
+- `Initial Board` → пусто
+- `Player Deck Position` → пустой RectTransform (позиция)
+- `Opponent Deck Position` → пустой RectTransform (позиция)
 
-        [Header("Opponent")]
-        [SerializeField] private Transform _opponentDeckPosition;
-        [SerializeField] private Transform _opponentCardPosition;
-        [SerializeField] private TMP_Text _opponentCountText;
+### Режим 2: Видимые руки
 
-        [Header("UI")]
-        [SerializeField] private Button _playButton;
-        [SerializeField] private TMP_Text _resultText;
-        [SerializeField] private float _cardMoveDuration = 0.3f;
-        [SerializeField] private float _roundDelay = 1f;
+Карты отображаются в HandComponent, игрок видит свою стопку.
 
-        private Queue<CardData> _playerCards = new();
-        private Queue<CardData> _opponentCards = new();
-        private CardComponent _playerCardView;
-        private CardComponent _opponentCardView;
-        private bool _isPlaying;
+**Настройка:**
+- `Initial Board` → пусто (или BoardComponent)
+- `Player Deck Position` → GameObject с **HandComponent**
+  - В HandComponent установите **Add To Bottom ☑** (новые карты под низ стопки)
+- `Opponent Deck Position` → GameObject с **HandComponent** (опционально)
 
-        private void Start()
-        {
-            _playButton.onClick.AddListener(PlayRound);
-            InitializeGame();
-        }
+При раздаче карты автоматически добавятся в HandComponent и будут видны! После победы в раунде карты **летят со стола в руку** с анимацией.
 
-        /// <summary>
-        /// Инициализирует игру: создаёт колоду и раздаёт карты
-        /// </summary>
-        public void InitializeGame()
-        {
-            _playerCards.Clear();
-            _opponentCards.Clear();
-            _resultText.text = "";
+### Режим 3: Раздача через BoardComponent
 
-            // Создаём и перемешиваем колоду
-            var deck = new DeckModel();
-            deck.Initialize(_deckConfig.DeckType, shuffle: true);
+Все карты сначала спавнятся в BoardComponent (визуализация колоды), затем раздаются.
 
-            // Раздаём карты поровну
-            bool toPlayer = true;
-            while (!deck.IsEmpty)
-            {
-                CardData? card = deck.Draw();
-                if (!card.HasValue) break;
+**Настройка:**
+- `Initial Board` → **BoardComponent** с макс. картами 36-54
+- `Player Deck Position` → HandComponent или пустой Transform
+- `Opponent Deck Position` → HandComponent или пустой Transform
 
-                if (toPlayer)
-                    _playerCards.Enqueue(card.Value);
-                else
-                    _opponentCards.Enqueue(card.Value);
-
-                toPlayer = !toPlayer;
-            }
-
-            UpdateUI();
-            _playButton.interactable = true;
-        }
-
-        /// <summary>
-        /// Разыгрывает один раунд
-        /// </summary>
-        public async void PlayRound()
-        {
-            if (_isPlaying) return;
-            if (_playerCards.Count == 0 || _opponentCards.Count == 0)
-            {
-                EndGame();
-                return;
-            }
-
-            _isPlaying = true;
-            _playButton.interactable = false;
-
-            // Берём карты
-            CardData playerCard = _playerCards.Dequeue();
-            CardData opponentCard = _opponentCards.Dequeue();
-
-            // Показываем карты
-            await ShowCards(playerCard, opponentCard);
-
-            // Определяем победителя раунда
-            int comparison = playerCard.CompareTo(opponentCard);
-
-            if (comparison > 0)
-            {
-                // Игрок выиграл
-                _resultText.text = "Вы выиграли раунд!";
-                _playerCards.Enqueue(playerCard);
-                _playerCards.Enqueue(opponentCard);
-            }
-            else if (comparison < 0)
-            {
-                // Противник выиграл
-                _resultText.text = "Противник выиграл раунд!";
-                _opponentCards.Enqueue(opponentCard);
-                _opponentCards.Enqueue(playerCard);
-            }
-            else
-            {
-                // Спор!
-                _resultText.text = "Спор!";
-                await HandleWar(playerCard, opponentCard);
-            }
-
-            await UniTask.Delay((int)(_roundDelay * 1000));
-
-            // Убираем карты
-            await HideCards();
-
-            UpdateUI();
-            CheckGameEnd();
-
-            _isPlaying = false;
-            _playButton.interactable = true;
-        }
-
-        /// <summary>
-        /// Обрабатывает ситуацию «спора» при равных картах
-        /// </summary>
-        private async UniTask HandleWar(CardData card1, CardData card2)
-        {
-            var warPile = new List<CardData> { card1, card2 };
-
-            while (true)
-            {
-                // Проверяем, достаточно ли карт для спора
-                if (_playerCards.Count < 2 || _opponentCards.Count < 2)
-                {
-                    // Не хватает карт — делим пополам
-                    foreach (var card in warPile)
-                    {
-                        if (warPile.IndexOf(card) % 2 == 0)
-                            _playerCards.Enqueue(card);
-                        else
-                            _opponentCards.Enqueue(card);
-                    }
-                    return;
-                }
-
-                // Кладём по одной карте рубашкой вверх
-                warPile.Add(_playerCards.Dequeue());
-                warPile.Add(_opponentCards.Dequeue());
-
-                // Открываем по одной карте
-                CardData playerWarCard = _playerCards.Dequeue();
-                CardData opponentWarCard = _opponentCards.Dequeue();
-                warPile.Add(playerWarCard);
-                warPile.Add(opponentWarCard);
-
-                await ShowCards(playerWarCard, opponentWarCard);
-                await UniTask.Delay(500);
-
-                int comparison = playerWarCard.CompareTo(opponentWarCard);
-
-                if (comparison > 0)
-                {
-                    _resultText.text = "Вы выиграли спор!";
-                    foreach (var card in warPile)
-                        _playerCards.Enqueue(card);
-                    return;
-                }
-                else if (comparison < 0)
-                {
-                    _resultText.text = "Противник выиграл спор!";
-                    foreach (var card in warPile)
-                        _opponentCards.Enqueue(card);
-                    return;
-                }
-
-                // Снова равенство — продолжаем спор
-                _resultText.text = "Снова спор!";
-                await UniTask.Delay(500);
-            }
-        }
-
-        /// <summary>
-        /// Показывает карты на столе
-        /// </summary>
-        private async UniTask ShowCards(CardData playerCard, CardData opponentCard)
-        {
-            // Создаём или переиспользуем карты
-            if (_playerCardView == null)
-            {
-                _playerCardView = Instantiate(_cardPrefab, _playerDeckPosition.position, Quaternion.identity);
-                _playerCardView.Config = _deckConfig;
-            }
-
-            if (_opponentCardView == null)
-            {
-                _opponentCardView = Instantiate(_cardPrefab, _opponentDeckPosition.position, Quaternion.identity);
-                _opponentCardView.Config = _deckConfig;
-            }
-
-            // Устанавливаем данные
-            _playerCardView.SetData(playerCard, faceUp: false);
-            _opponentCardView.SetData(opponentCard, faceUp: false);
-
-            _playerCardView.gameObject.SetActive(true);
-            _opponentCardView.gameObject.SetActive(true);
-
-            // Анимация: перемещаем на стол
-            var movePlayer = _playerCardView.MoveToAsync(_playerCardPosition.position, _cardMoveDuration);
-            var moveOpponent = _opponentCardView.MoveToAsync(_opponentCardPosition.position, _cardMoveDuration);
-            await UniTask.WhenAll(movePlayer, moveOpponent);
-
-            // Переворачиваем
-            var flipPlayer = _playerCardView.FlipAsync();
-            var flipOpponent = _opponentCardView.FlipAsync();
-            await UniTask.WhenAll(flipPlayer, flipOpponent);
-        }
-
-        /// <summary>
-        /// Скрывает карты со стола
-        /// </summary>
-        private async UniTask HideCards()
-        {
-            if (_playerCardView != null)
-            {
-                _playerCardView.gameObject.SetActive(false);
-                _playerCardView.transform.position = _playerDeckPosition.position;
-            }
-
-            if (_opponentCardView != null)
-            {
-                _opponentCardView.gameObject.SetActive(false);
-                _opponentCardView.transform.position = _opponentDeckPosition.position;
-            }
-
-            await UniTask.Yield();
-        }
-
-        /// <summary>
-        /// Обновляет UI
-        /// </summary>
-        private void UpdateUI()
-        {
-            _playerCountText.text = $"Ваши карты: {_playerCards.Count}";
-            _opponentCountText.text = $"Карты противника: {_opponentCards.Count}";
-        }
-
-        /// <summary>
-        /// Проверяет окончание игры
-        /// </summary>
-        private void CheckGameEnd()
-        {
-            if (_playerCards.Count == 0 || _opponentCards.Count == 0)
-            {
-                EndGame();
-            }
-        }
-
-        /// <summary>
-        /// Завершает игру
-        /// </summary>
-        private void EndGame()
-        {
-            _playButton.interactable = false;
-
-            if (_playerCards.Count > _opponentCards.Count)
-            {
-                _resultText.text = "🎉 Вы победили!";
-            }
-            else if (_opponentCards.Count > _playerCards.Count)
-            {
-                _resultText.text = "😢 Противник победил!";
-            }
-            else
-            {
-                _resultText.text = "🤝 Ничья!";
-            }
-        }
-
-        /// <summary>
-        /// Перезапускает игру
-        /// </summary>
-        public void RestartGame()
-        {
-            if (_playerCardView != null) Destroy(_playerCardView.gameObject);
-            if (_opponentCardView != null) Destroy(_opponentCardView.gameObject);
-            _playerCardView = null;
-            _opponentCardView = null;
-
-            InitializeGame();
-        }
-    }
-}
+**Визуализация:**
+```
+1. Спавн всех карт в Board (36 карт видны)
+2. Раздача поровну → карты перемещаются в Hand
+3. Игра начинается
 ```
 
 ---
 
-## Шаг 3: Настройка в Unity
+## Подключение событий в инспекторе
 
-### 3.1 Создайте префаб карты
+### События счёта карт
 
-1. Создайте UI Image с компонентом `CardComponent`
-2. Настройте размер карты (рекомендуется 100x140)
-3. Добавьте компонент `CanvasGroup` для возможных эффектов
-4. Сохраните как префаб
+| Событие | Параметр | Использование |
+|---------|----------|---------------|
+| `OnPlayerCardCountChanged` | `int` | Подключите `TMP_Text.SetText` для отображения счёта игрока |
+| `OnOpponentCardCountChanged` | `int` | Подключите `TMP_Text.SetText` для отображения счёта соперника |
 
-### 3.2 Настройте сцену
+**Пример настройки:**
+```
+OnPlayerCardCountChanged (int):
+  → PlayerScoreText.SetText (Dynamic int)
+  
+OnOpponentCardCountChanged (int):
+  → OpponentScoreText.SetText (Dynamic int)
+```
 
-1. Создайте Canvas с режимом Screen Space - Overlay
-2. Добавьте пустые объекты для позиций:
-   - `PlayerDeckPosition` — позиция колоды игрока
-   - `OpponentDeckPosition` — позиция колоды противника
-   - `PlayerCardPosition` — куда выкладывается карта игрока
-   - `OpponentCardPosition` — куда выкладывается карта противника
-3. Добавьте UI элементы:
-   - Кнопка «Играть»
-   - Текст счётчика карт игрока
-   - Текст счётчика карт противника
-   - Текст результата
+### События игры
 
-### 3.3 Назначьте ссылки
+| Событие | Использование |
+|---------|---------------|
+| `OnGameStarted` | Скрыть «Tap to Start» надпись |
+| `OnGameRestarted` | Сбросить UI, скрыть панели результата |
+| `OnPlayerWin` | Показать панель победы |
+| `OnOpponentWin` | Показать панель поражения |
 
-1. Создайте GameObject с компонентом `DrunkardGame`
-2. Назначьте все сериализованные поля в инспекторе
+**Пример настройки:**
+```
+OnPlayerWin:
+  → WinPanel.SetActive (true)
+  
+OnOpponentWin:
+  → LosePanel.SetActive (true)
+  
+OnGameRestarted:
+  → WinPanel.SetActive (false)
+  → LosePanel.SetActive (false)
+```
+
+### События раунда
+
+| Событие | Использование |
+|---------|---------------|
+| `OnRoundStarted` | Показать индикатор раунда |
+| `OnRoundEnded` | Обновить UI |
+| `OnPlayerWonRound` | Звук/текст победы в раунде |
+| `OnOpponentWonRound` | Звук/текст поражения в раунде |
+| `OnWarStarted` | Показать текст «Война!» |
+| `OnWarEnded` | Скрыть текст «Война!» |
 
 ---
 
-## Шаг 4: Дополнительные улучшения
+## Настройка управления
 
-### Автоматическая игра
+### Кнопка хода
+
+```
+PlayButton (Button)
+└── OnClick()
+    └── DrunkardGame → Play()  ← для вызова раунда
+```
+
+### Кнопка рестарта
+
+```
+RestartButton (Button)
+└── OnClick()
+    └── DrunkardGame → RestartGame()
+```
+
+**Примечание:** Используйте метод `Play()` (не `PlayRound`), так как он синхронный и подходит для UI кнопок.
+
+---
+
+## Публичные свойства
+
+| Свойство | Тип | Описание |
+|----------|-----|----------|
+| `PlayerCardCount` | `int` | Текущее количество карт у игрока (из руки или очереди) |
+| `OpponentCardCount` | `int` | Текущее количество карт у соперника |
+| `IsPlaying` | `bool` | Идёт ли сейчас раунд |
+| `GameStarted` | `bool` | Началась ли игра |
+| `PlayerHand` | `HandComponent` | HandComponent игрока (если указан) |
+| `OpponentHand` | `HandComponent` | HandComponent соперника (если указан) |
+| `UsePlayerHand` | `bool` | Используется ли рука игрока |
+| `UseOpponentHand` | `bool` | Используется ли рука соперника |
+
+---
+
+## Публичные методы
+
+| Метод | Описание |
+|-------|----------|
+| `Play()` | Выполняет один раунд игры (синхронный, для UI кнопок) |
+| `PlayRound()` | Асинхронная версия раунда |
+| `RestartGame()` | Перезапускает игру |
+
+---
+
+## Расширенная настройка (с кодом)
+
+### Подписка на события из кода
 
 ```csharp
-[SerializeField] private bool _autoPlay;
-[SerializeField] private float _autoPlayDelay = 0.5f;
-
-private async void AutoPlayLoop()
+public class DrunkardUI : MonoBehaviour
 {
-    while (_autoPlay && _playerCards.Count > 0 && _opponentCards.Count > 0)
+    [SerializeField] private DrunkardGame _game;
+    [SerializeField] private TMP_Text _playerScore;
+    [SerializeField] private TMP_Text _opponentScore;
+    [SerializeField] private GameObject _winPanel;
+    [SerializeField] private GameObject _losePanel;
+
+    private void OnEnable()
     {
-        PlayRound();
-        await UniTask.WaitUntil(() => !_isPlaying);
-        await UniTask.Delay((int)(_autoPlayDelay * 1000));
+        _game.OnPlayerCardCountChanged.AddListener(UpdatePlayerScore);
+        _game.OnOpponentCardCountChanged.AddListener(UpdateOpponentScore);
+        _game.OnPlayerWin.AddListener(ShowWinPanel);
+        _game.OnOpponentWin.AddListener(ShowLosePanel);
+        _game.OnGameRestarted.AddListener(HidePanels);
+    }
+
+    private void OnDisable()
+    {
+        _game.OnPlayerCardCountChanged.RemoveListener(UpdatePlayerScore);
+        _game.OnOpponentCardCountChanged.RemoveListener(UpdateOpponentScore);
+        _game.OnPlayerWin.RemoveListener(ShowWinPanel);
+        _game.OnOpponentWin.RemoveListener(ShowLosePanel);
+        _game.OnGameRestarted.RemoveListener(HidePanels);
+    }
+
+    private void UpdatePlayerScore(int count) => _playerScore.text = count.ToString();
+    private void UpdateOpponentScore(int count) => _opponentScore.text = count.ToString();
+    private void ShowWinPanel() { _winPanel.SetActive(true); }
+    private void ShowLosePanel() { _losePanel.SetActive(true); }
+    private void HidePanels() 
+    { 
+        _winPanel.SetActive(false); 
+        _losePanel.SetActive(false); 
     }
 }
 ```
@@ -401,52 +292,153 @@ private async void AutoPlayLoop()
 ### Звуковые эффекты
 
 ```csharp
+public class DrunkardAudio : MonoBehaviour
+{
+    [SerializeField] private DrunkardGame _game;
 [SerializeField] private AudioSource _audioSource;
-[SerializeField] private AudioClip _cardFlipSound;
-[SerializeField] private AudioClip _winSound;
-[SerializeField] private AudioClip _loseSound;
+    [SerializeField] private AudioClip _cardFlip;
+    [SerializeField] private AudioClip _win;
+    [SerializeField] private AudioClip _lose;
+    [SerializeField] private AudioClip _war;
 
-private void PlaySound(AudioClip clip)
-{
-    if (_audioSource != null && clip != null)
-        _audioSource.PlayOneShot(clip);
-}
-```
-
-### Сохранение статистики
-
-```csharp
-private int _wins;
-private int _losses;
-
-private void EndGame()
-{
-    if (_playerCards.Count > _opponentCards.Count)
+    private void OnEnable()
     {
-        _wins++;
-        PlayerPrefs.SetInt("Drunkard_Wins", _wins);
+        _game.OnRoundStarted.AddListener(() => _audioSource.PlayOneShot(_cardFlip));
+        _game.OnPlayerWin.AddListener(() => _audioSource.PlayOneShot(_win));
+        _game.OnOpponentWin.AddListener(() => _audioSource.PlayOneShot(_lose));
+        _game.OnWarStarted.AddListener(() => _audioSource.PlayOneShot(_war));
     }
-    else
-    {
-        _losses++;
-        PlayerPrefs.SetInt("Drunkard_Losses", _losses);
-    }
-    PlayerPrefs.Save();
 }
 ```
 
 ---
 
+## Полный список событий
+
+### UnityEvent<int> (с параметром)
+
+| Событие | Параметр | Когда вызывается |
+|---------|----------|------------------|
+| `OnPlayerCardCountChanged` | Количество карт | После каждого раунда и при рестарте |
+| `OnOpponentCardCountChanged` | Количество карт | После каждого раунда и при рестарте |
+
+### UnityEvent (без параметров)
+
+| Событие | Когда вызывается |
+|---------|------------------|
+| `OnGameStarted` | При первом раунде |
+| `OnGameRestarted` | При вызове RestartGame() |
+| `OnPlayerWin` | Когда игрок собрал все карты |
+| `OnOpponentWin` | Когда соперник собрал все карты |
+| `OnRoundStarted` | В начале каждого раунда |
+| `OnRoundEnded` | В конце каждого раунда |
+| `OnPlayerWonRound` | Когда игрок выиграл раунд |
+| `OnOpponentWonRound` | Когда соперник выиграл раунд |
+| `OnWarStarted` | При начале «войны» (равные карты) |
+| `OnWarEnded` | При завершении «войны» |
+
+---
+
+## Особенности реализации
+
+### Hover эффект на картах
+
+CardComponent автоматически обрабатывает hover:
+- ✅ Корректно работает во время анимации
+- ✅ Сбрасывается при начале новой анимации
+- ✅ Не накапливает эффекты при частых кликах
+- ✅ Обновляет оригинальную позицию после перестановки в HandComponent
+
+Настройка в префабе:
+```
+CardComponent
+├── Enable Hover Effect → ☑ (включить)
+├── Hover Scale → 0.1 (дельта увеличения: 0.1 = +10%, 0.2 = +20%)
+├── Hover Y Offset → 20 (подъём вверх в пикселях)
+└── Hover Duration → 0.15 (скорость анимации в секундах)
+```
+
+**Примеры Hover Scale:**
+- `0.1` → карта станет 110% от оригинального размера (+10%)
+- `0.2` → карта станет 120% (+20%)
+- `-0.1` → карта уменьшится до 90% (-10%)
+
+### Порядок ходов
+
+Настраивается параметром `Player Goes First`:
+
+**Если false (по умолчанию) — соперник первый:**
+1. Соперник берёт карту
+2. Задержка `Turn Delay` (0.3 сек)
+3. Игрок берёт карту
+4. Сравнение и определение победителя
+
+**Если true — игрок первый:**
+1. Игрок берёт карту
+2. Задержка `Turn Delay` (0.3 сек)
+3. Соперник берёт карту
+4. Сравнение и определение победителя
+
+Далее:
+5. Задержка `Round Delay` (1 сек)
+6. Карты скрываются (уничтожаются или летят в руку)
+
+### Обработка "войны"
+
+При равенстве карт:
+1. Первые 2 карты **остаются на столе**
+2. Каждый кладёт 1 карту рубашкой вниз (добавляется в `warPile`)
+3. Затем открывают ещё по 1 карте (создаётся **рядом** со старыми)
+4. Если снова равенство — процесс повторяется (все карты остаются на столе)
+5. Победитель забирает **ВСЕ** карты со стола (летят в руку с анимацией)
+6. Карты переворачиваются рубашкой вверх после попадания в руку
+
+---
+
+## Отладка
+
+### Включите Debug режим
+
+```
+DrunkardGame
+└── Debug → ☑
+```
+
+Логи покажут:
+```
+[DrunkardGame] Игра перезапущена. Карт у игрока: 18, у соперника: 18
+[DrunkardGame] NotifyCardCountChanged: Player=18, Opponent=18
+[DrunkardGame] OnPlayerCardCountChanged listeners: 1
+[DrunkardGame] Play() вызван
+[DrunkardGame] ShowOpponentCard: Q♦
+[DrunkardGame] Создана карта соперника
+[DrunkardGame] Создана карта игрока
+```
+
+### Частые проблемы
+
+| Проблема | Решение |
+|----------|---------|
+| Карты не появляются | Проверьте `Cards Parent`, `Card Prefab` и позиции назначены |
+| `Play()` не вызывается | Подключите кнопку к `DrunkardGame.Play` |
+| Счёт не обновляется | Подключите события `OnPlayerCardCountChanged` к TMP_Text |
+| Карты за пределами экрана | Проверьте позиции Transform'ов |
+| Карты невидимы | `Cards Parent` должен быть внутри активного Canvas |
+
+---
+
 ## Результат
 
-После выполнения всех шагов у вас будет рабочая игра «Пьяница» с:
+После настройки у вас будет рабочая игра «Пьяница» с:
 
-- ✅ Раздачей карт
+- ✅ Автоматической раздачей карт (в очередь или HandComponent)
 - ✅ Анимацией выкладывания и переворота карт
-- ✅ Логикой сравнения карт
-- ✅ Обработкой «спора» при равных картах
-- ✅ Подсчётом карт
+- ✅ Правильным порядком ходов (сначала соперник, потом игрок)
+- ✅ Обработкой «войны» при равных картах
+- ✅ Подсчётом карт через события
 - ✅ Определением победителя
+- ✅ Полной настройкой UI без кода
+- ✅ Поддержкой видимых рук (HandComponent)
 
 ---
 
@@ -454,6 +446,6 @@ private void EndGame()
 
 - [CardData](../CardData.md) — структура данных карты
 - [DeckConfig](../DeckConfig.md) — конфигурация колоды
+- [CardComponent](../CardComponent.md) — компонент карты
+- [HandComponent](../HandComponent.md) — компонент руки
 - [README](../README.md) — обзор модуля Cards
-
-

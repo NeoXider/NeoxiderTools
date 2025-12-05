@@ -61,7 +61,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Material: {fileID: 2100000, guid: 9dda03a06785654478c3b31b969ff1be, type: 2}
+  m_Material: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
@@ -139,6 +139,7 @@ MonoBehaviour:
   _imageTarget: {fileID: 1919716052896930487}
   page: 0
   _canSwitchPage: 1
+  _executeState: 0
   _useAnimImage: 1
   _timeAnimImage: 0.3
   _scaleAnim: -0.15
@@ -253,7 +254,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 72
+  m_fontSize: 61.8
   m_fontSizeBase: 24
   m_fontWeight: 400
   m_enableAutoSizing: 1

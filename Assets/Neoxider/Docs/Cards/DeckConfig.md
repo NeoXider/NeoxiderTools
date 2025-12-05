@@ -14,7 +14,8 @@ ScriptableObject для конфигурации колоды карт со сп
 
 | Поле | Описание |
 |------|----------|
-| **Deck Type** | Тип колоды: 36, 52 или 54 карты |
+| **Deck Type** | Тип колоды для спрайтов: сколько карт загружено (36, 52 или 54) |
+| **Game Deck Type** | Тип колоды для игры: сколько карт использовать (по умолчанию 54) |
 | **Back Sprite** | Спрайт рубашки карты |
 | **Hearts** | Спрайты червей (от младшей к старшей) |
 | **Diamonds** | Спрайты бубен |
@@ -22,6 +23,29 @@ ScriptableObject для конфигурации колоды карт со сп
 | **Spades** | Спрайты пик |
 | **Red Joker** | Спрайт красного джокера (для 54 карт) |
 | **Black Joker** | Спрайт чёрного джокера |
+
+---
+
+## DeckType vs GameDeckType
+
+| Параметр | Описание | Пример |
+|----------|----------|--------|
+| **DeckType** | Сколько спрайтов загружено | Загружены все 52 карты |
+| **GameDeckType** | Сколько карт использовать в игре | Играем только с 36 картами |
+
+### Примеры использования
+
+```
+DeckType = Standard52 (все спрайты от 2 до A)
+GameDeckType = Standard36 → В игре будут только карты от 6 до A
+GameDeckType = Standard52 → В игре будут все карты от 2 до A
+GameDeckType = Standard54 → В игре будут все карты + 2 джокера
+```
+
+### Ограничения
+
+- `GameDeckType` не может требовать карты, которых нет в `DeckType`
+- Например: если `DeckType = Standard36`, то `GameDeckType` не может быть `Standard52` (нет спрайтов для карт 2-5)
 
 ---
 
@@ -68,7 +92,12 @@ Sprite sprite = config.GetSprite(cardData);
 ### GenerateDeck
 
 ```csharp
-List<CardData> allCards = config.GenerateDeck();
+// Генерирует колоду на основе GameDeckType
+List<CardData> gameCards = config.GenerateDeck();
+
+// Генерирует колоду указанного типа
+List<CardData> cards36 = config.GenerateDeck(DeckType.Standard36);
+List<CardData> cards52 = config.GenerateDeck(DeckType.Standard52);
 ```
 
 ### Validate
@@ -91,7 +120,8 @@ else
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
-| `DeckType` | `DeckType` | Тип колоды |
+| `DeckType` | `DeckType` | Тип колоды для спрайтов |
+| `GameDeckType` | `DeckType` | Тип колоды для игры |
 | `BackSprite` | `Sprite` | Спрайт рубашки |
 | `Hearts` | `IReadOnlyList<Sprite>` | Спрайты червей |
 | `Diamonds` | `IReadOnlyList<Sprite>` | Спрайты бубен |
@@ -102,8 +132,26 @@ else
 
 ---
 
+## Пример: Универсальная конфигурация
+
+Создайте один DeckConfig с полным набором спрайтов (52 или 54), и используйте его для разных игр:
+
+```
+DeckConfig "UniversalDeck"
+├── DeckType = Standard52 (или Standard54)
+├── GameDeckType = Standard54 (по умолчанию)
+└── Все спрайты загружены
+```
+
+Затем в конкретной игре:
+- **Пьяница** → `GameDeckType = Standard36`
+- **Покер** → `GameDeckType = Standard52`
+- **С джокерами** → `GameDeckType = Standard54`
+
+---
+
 ## См. также
 
 - [DeckComponent](./DeckComponent.md)
 - [CardData](./CardData.md)
-
+- [Пьяница](./Examples/Drunkard.md)

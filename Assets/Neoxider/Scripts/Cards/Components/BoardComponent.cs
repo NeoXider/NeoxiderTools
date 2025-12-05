@@ -17,7 +17,7 @@ namespace Neo.Cards
 
         [Header("Settings")]
         [SerializeField] private int _maxCards = 5;
-        [SerializeField] private bool _faceUp = true;
+        [SerializeField] private bool _faceUp = false;
 
         [Header("Animation")]
         [SerializeField] private float _placeDuration = 0.3f;
@@ -67,7 +67,8 @@ namespace Neo.Cards
         /// </summary>
         /// <param name="card">Карта для размещения</param>
         /// <param name="animate">Анимировать</param>
-        public async UniTask PlaceCardAsync(CardComponent card, bool animate = true)
+        /// <param name="overrideFaceUp">Если true - применить настройку FaceUp из компонента, если false - оставить как есть</param>
+        public async UniTask PlaceCardAsync(CardComponent card, bool animate = true, bool overrideFaceUp = true)
         {
             if (card == null || IsFull) return;
 
@@ -75,7 +76,11 @@ namespace Neo.Cards
             Transform slot = GetSlot(slotIndex);
 
             card.transform.SetParent(transform, true);
-            card.IsFaceUp = _faceUp;
+            
+            if (overrideFaceUp)
+            {
+                card.IsFaceUp = _faceUp;
+            }
 
             _cards.Add(card);
 

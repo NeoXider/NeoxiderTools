@@ -76,9 +76,9 @@ namespace Neo.Cards
         /// <param name="shuffle">Перемешать</param>
         public void Initialize(bool shuffle = true)
         {
-            _model.Initialize(_config.DeckType, shuffle);
+            _model.Initialize(_config.GameDeckType, shuffle);
 
-            if (_config.DeckType == DeckType.Standard36)
+            if (_config.GameDeckType == DeckType.Standard36)
             {
                 CardData? trumpCard = _model.PeekBottom();
                 if (trumpCard.HasValue)

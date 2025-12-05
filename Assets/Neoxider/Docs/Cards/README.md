@@ -75,6 +75,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 
 - [CardData](./CardData.md) — структура данных карты
 - [DeckConfig](./DeckConfig.md) — конфигурация колоды
+- [CardComponent](./CardComponent.md) — компонент карты (no-code)
 - [DeckComponent](./DeckComponent.md) — компонент колоды
 - [HandComponent](./HandComponent.md) — компонент руки
 - [BoardComponent](./BoardComponent.md) — компонент доски
@@ -82,9 +83,26 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 
 ---
 
-## Примеры игр
+## Готовые игры
 
-- [Пьяница](./Examples/Drunkard.md) — пошаговое создание классической карточной игры
+| Игра | Компонент | Описание |
+|------|-----------|----------|
+| [Пьяница](./Examples/Drunkard.md) | `DrunkardGame` | Классическая карточная игра (War Card Game) |
+
+### DrunkardGame — быстрый старт
+
+```csharp
+// Игра настраивается через инспектор без кода!
+// Просто подключите UnityEvent к UI элементам:
+
+// OnPlayerCardCountChanged (int) → TMP_Text.SetText
+// OnOpponentCardCountChanged (int) → TMP_Text.SetText
+// OnPlayerWin → WinPanel.SetActive(true)
+// OnOpponentWin → LosePanel.SetActive(true)
+
+// Для хода игрока — Button.OnClick → DrunkardGame.Play
+// Для рестарта — Button.OnClick → DrunkardGame.RestartGame
+```
 
 ---
 

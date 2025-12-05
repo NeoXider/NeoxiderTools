@@ -44,3 +44,7 @@ await typewriter.PlayAsync("Привет!", text => myText.text = text);
 typewriterComponent.Play("Привет!");
 ```
 
+
+
+
+

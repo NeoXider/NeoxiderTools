@@ -36,7 +36,8 @@ namespace Neo.Cards
 
         [Header("Hover Effect")]
         [SerializeField] private bool _enableHoverEffect = true;
-        [SerializeField] private float _hoverScale = 1.1f;
+        [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")]
+        [SerializeField] private float _hoverScale = 0.1f;
         [SerializeField] private float _hoverYOffset = 20f;
         [SerializeField] private float _hoverDuration = 0.15f;
 
@@ -49,9 +50,13 @@ namespace Neo.Cards
 
         private CardData _data;
         private Vector3 _originalScale;
+        private Vector3 _currentTargetScale;
         private Vector3 _originalPosition;
         private Tween _currentTween;
+        private Tween _hoverScaleTween;
+        private Tween _hoverMoveTween;
         private bool _isHovered;
+        private bool _isAnimating;
 
         /// <summary>
         /// Данные карты
@@ -99,7 +104,18 @@ namespace Neo.Cards
         private void Awake()
         {
             _originalScale = transform.localScale;
+            _currentTargetScale = _originalScale;
+            _originalPosition = transform.position;
             InitializeData();
+            EnsureRaycastTarget();
+        }
+
+        private void EnsureRaycastTarget()
+        {
+            if (_cardImage != null)
+            {
+                _cardImage.raycastTarget = true;
+            }
         }
 
         private void Start()
@@ -109,10 +125,23 @@ namespace Neo.Cards
 
         private void OnValidate()
         {
-            if (Application.isPlaying)
+            if (Application.isPlaying) return;
+            
+            InitializeData();
+            
+            if (_config == null) return;
+
+            Sprite sprite = _isFaceUp ? _config.GetSprite(_data) : _config.BackSprite;
+            if (sprite == null) return;
+
+            if (_cardImage != null && _cardImage.sprite != sprite)
             {
-                InitializeData();
-                UpdateVisual();
+                _cardImage.sprite = sprite;
+            }
+
+            if (_spriteRenderer != null && _spriteRenderer.sprite != sprite)
+            {
+                _spriteRenderer.sprite = sprite;
             }
         }
 
@@ -165,8 +194,15 @@ namespace Neo.Cards
                 return;
             }
 
+            _isAnimating = true;
             _currentTween?.Kill();
+            
+            if (_isHovered)
+            {
+                ResetHoverImmediate();
+            }
 
+            Vector3 scaleBeforeFlip = transform.localScale;
             float halfDuration = duration / 2f;
 
             var tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
@@ -175,9 +211,13 @@ namespace Neo.Cards
             _isFaceUp = !_isFaceUp;
             UpdateVisual();
 
-            var tween2 = transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
+            var tween2 = transform.DOScaleX(scaleBeforeFlip.x, halfDuration).SetEase(_flipEase);
             await UniTask.WaitUntil(() => !tween2.IsActive());
 
+            transform.localScale = scaleBeforeFlip;
+            _currentTargetScale = scaleBeforeFlip;
+
+            _isAnimating = false;
             OnFlip?.Invoke();
         }
 
@@ -200,14 +240,24 @@ namespace Neo.Cards
             if (duration <= 0)
             {
                 transform.position = position;
+                _originalPosition = position;
                 OnMoveComplete?.Invoke();
                 return;
             }
 
+            _isAnimating = true;
             _currentTween?.Kill();
+            
+            if (_isHovered)
+            {
+                ResetHoverImmediate();
+            }
+            
             _currentTween = transform.DOMove(position, duration).SetEase(_moveEase);
             await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            
             _originalPosition = position;
+            _isAnimating = false;
             OnMoveComplete?.Invoke();
         }
 
@@ -221,14 +271,24 @@ namespace Neo.Cards
             if (duration <= 0)
             {
                 transform.localPosition = localPosition;
+                _originalPosition = transform.position;
                 OnMoveComplete?.Invoke();
                 return;
             }
 
+            _isAnimating = true;
             _currentTween?.Kill();
+            
+            if (_isHovered)
+            {
+                ResetHoverImmediate();
+            }
+            
             _currentTween = transform.DOLocalMove(localPosition, duration).SetEase(_moveEase);
             await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            
             _originalPosition = transform.position;
+            _isAnimating = false;
             OnMoveComplete?.Invoke();
         }
 
@@ -243,22 +303,116 @@ namespace Neo.Cards
         void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
         {
             if (!_isInteractable || !_enableHoverEffect) return;
+            
+            bool hasScaleEffect = !Mathf.Approximately(_hoverScale, 0f);
+            bool hasMoveEffect = !Mathf.Approximately(_hoverYOffset, 0f);
+            
+            if (!hasScaleEffect && !hasMoveEffect) return;
+            
+            if (_isAnimating)
+            {
+                CompleteCurrentAnimation();
+            }
+
+            if (_isHovered)
+            {
+                ResetHoverImmediate();
+            }
 
             _isHovered = true;
             _originalPosition = transform.position;
-            transform.DOScale(_originalScale * _hoverScale, _hoverDuration);
-            transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
+            
+            _hoverScaleTween?.Kill();
+            _hoverMoveTween?.Kill();
+            
+            if (hasScaleEffect)
+            {
+                Vector3 currentScale = transform.localScale;
+                _hoverScaleTween = transform.DOScale(currentScale * (1f + _hoverScale), _hoverDuration);
+            }
+            
+            if (hasMoveEffect)
+            {
+                _hoverMoveTween = transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
+            }
+            
             OnHoverEnter?.Invoke();
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
         {
-            if (!_isInteractable || !_enableHoverEffect || !_isHovered) return;
+            if (!_isInteractable || !_enableHoverEffect) return;
+            ResetHover();
+        }
 
+        /// <summary>
+        /// Сбрасывает hover эффект с анимацией
+        /// </summary>
+        public void ResetHover()
+        {
+            if (!_isHovered) return;
+            
             _isHovered = false;
-            transform.DOScale(_originalScale, _hoverDuration);
-            transform.DOMove(_originalPosition, _hoverDuration);
+            
+            bool hasScaleEffect = !Mathf.Approximately(_hoverScale, 0f);
+            bool hasMoveEffect = !Mathf.Approximately(_hoverYOffset, 0f);
+            
+            _hoverScaleTween?.Kill();
+            _hoverMoveTween?.Kill();
+            
+            if (hasScaleEffect)
+            {
+                _hoverScaleTween = transform.DOScale(_currentTargetScale, _hoverDuration);
+            }
+            
+            if (hasMoveEffect)
+            {
+                _hoverMoveTween = transform.DOMove(_originalPosition, _hoverDuration);
+            }
+            
             OnHoverExit?.Invoke();
+        }
+
+        /// <summary>
+        /// Мгновенно сбрасывает hover без анимации
+        /// </summary>
+        private void ResetHoverImmediate()
+        {
+            _hoverScaleTween?.Kill();
+            _hoverMoveTween?.Kill();
+            
+            bool hasScaleEffect = !Mathf.Approximately(_hoverScale, 0f);
+            bool hasMoveEffect = !Mathf.Approximately(_hoverYOffset, 0f);
+            
+            if (hasScaleEffect)
+            {
+                transform.localScale = _currentTargetScale;
+            }
+            
+            if (hasMoveEffect)
+            {
+                transform.position = _originalPosition;
+            }
+        }
+
+        /// <summary>
+        /// Завершает текущую анимацию мгновенно
+        /// </summary>
+        private void CompleteCurrentAnimation()
+        {
+            if (!_isAnimating) return;
+            
+            _currentTween?.Complete();
+            _isAnimating = false;
+        }
+
+        /// <summary>
+        /// Обновляет оригинальную позицию (вызывается после завершения расстановки в HandComponent)
+        /// </summary>
+        public void UpdateOriginalTransform()
+        {
+            _originalPosition = transform.position;
+            _currentTargetScale = transform.localScale;
         }
 
         private void InitializeData()
@@ -293,6 +447,8 @@ namespace Neo.Cards
         private void OnDestroy()
         {
             _currentTween?.Kill();
+            _hoverScaleTween?.Kill();
+            _hoverMoveTween?.Kill();
         }
     }
 }

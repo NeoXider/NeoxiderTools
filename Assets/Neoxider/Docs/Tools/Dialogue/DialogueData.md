@@ -47,3 +47,7 @@ Dialogue[]
         └── sentence (текст)
 ```
 
+
+
+
+

@@ -11,7 +11,11 @@ namespace Neo.Cards
     public class DeckConfig : ScriptableObject
     {
         [Header("Deck Settings")]
+        [Tooltip("Тип колоды для спрайтов (сколько карт загружено в конфиг)")]
         [SerializeField] private DeckType _deckType = DeckType.Standard52;
+        
+        [Tooltip("Тип колоды для игры (сколько карт использовать). Позволяет иметь все спрайты, но играть меньшим количеством карт.")]
+        [SerializeField] private DeckType _gameDeckType = DeckType.Standard54;
 
         [Header("Card Back")]
         [SerializeField] private Sprite _backSprite;
@@ -33,9 +37,14 @@ namespace Neo.Cards
         [SerializeField] private Sprite _blackJoker;
 
         /// <summary>
-        /// Тип колоды
+        /// Тип колоды для спрайтов (определяет количество загруженных спрайтов)
         /// </summary>
         public DeckType DeckType => _deckType;
+
+        /// <summary>
+        /// Тип колоды для игры (определяет сколько карт использовать в игре)
+        /// </summary>
+        public DeckType GameDeckType => _gameDeckType;
 
         /// <summary>
         /// Спрайт рубашки карты
@@ -108,13 +117,23 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Генерирует список всех карт колоды
+        /// Генерирует список карт для игры (использует GameDeckType)
         /// </summary>
         /// <returns>Список карт</returns>
         public List<CardData> GenerateDeck()
         {
+            return GenerateDeck(_gameDeckType);
+        }
+
+        /// <summary>
+        /// Генерирует список карт указанного типа колоды
+        /// </summary>
+        /// <param name="deckType">Тип колоды для генерации</param>
+        /// <returns>Список карт</returns>
+        public List<CardData> GenerateDeck(DeckType deckType)
+        {
             var cards = new List<CardData>();
-            Rank minRank = _deckType.GetMinRank();
+            Rank minRank = deckType.GetMinRank();
 
             foreach (Suit suit in Enum.GetValues(typeof(Suit)))
             {
@@ -124,7 +143,7 @@ namespace Neo.Cards
                 }
             }
 
-            if (_deckType == DeckType.Standard54)
+            if (deckType == DeckType.Standard54)
             {
                 cards.Add(CardData.CreateJoker(true));
                 cards.Add(CardData.CreateJoker(false));
@@ -165,7 +184,7 @@ namespace Neo.Cards
             ValidateSuit(_clubs, Suit.Clubs, expectedCount, errors);
             ValidateSuit(_spades, Suit.Spades, expectedCount, errors);
 
-            if (_deckType == DeckType.Standard54)
+            if (_deckType == DeckType.Standard54 || _gameDeckType == DeckType.Standard54)
             {
                 if (_redJoker == null)
                 {
@@ -175,6 +194,11 @@ namespace Neo.Cards
                 {
                     warnings.Add("Не указан спрайт чёрного джокера (для колоды 54)");
                 }
+            }
+
+            if (_gameDeckType.GetMinRank() < _deckType.GetMinRank())
+            {
+                errors.Add($"GameDeckType ({_gameDeckType}) требует карты от {_gameDeckType.GetMinRank()}, но DeckType ({_deckType}) начинается с {_deckType.GetMinRank()}. Увеличьте DeckType или уменьшите GameDeckType.");
             }
 
             return errors.Count == 0;

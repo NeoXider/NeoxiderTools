@@ -161,12 +161,14 @@ typewriter.SetDefaultPunctuationPauses();
 
 | Метод | Возврат | Описание |
 |-------|---------|----------|
-| `Play(string)` | `void` | Запускает эффект с указанным текстом |
+| `Play(string text = "")` | `void` | Запускает эффект. Если text пустой — берёт из TargetText |
 | `PlayAutoText()` | `void` | Запускает эффект с текстом из AutoStartText или TargetText |
 | `Complete()` | `void` | Завершает мгновенно |
 | `Stop()` | `void` | Останавливает |
 | `Clear()` | `void` | Очищает текст |
 | `TrySkip()` | `bool` | Пропускает если печатает |
+
+**Примечание:** Метод `Play()` можно вызвать без параметров из UI кнопки — текст автоматически возьмётся из TMP_Text компонента.
 
 ### События (UnityEvent)
 
@@ -191,8 +193,11 @@ typewriter.SetDefaultPunctuationPauses();
 // Получаем компонент
 var typewriter = GetComponent<TypewriterEffectComponent>();
 
-// Запускаем эффект
+// Запускаем эффект с текстом
 typewriter.Play("Новый текст для печати");
+
+// Или без параметров - возьмёт текст из TMP_Text
+typewriter.Play();
 
 // Пропустить/завершить мгновенно
 if (Input.GetKeyDown(KeyCode.Space))
@@ -200,4 +205,18 @@ if (Input.GetKeyDown(KeyCode.Space))
     typewriter.TrySkip();
 }
 ```
+
+### Пример настройки через UI кнопку
+
+```
+TMP_Text: "Привет, игрок!"
+├── TypewriterEffectComponent
+    └── Auto Start → ☐ (выключен)
+
+Button
+└── OnClick()
+    └── TypewriterEffectComponent → Play()  ← вызов без параметров!
+```
+
+Текст автоматически возьмётся из TMP_Text компонента.
 

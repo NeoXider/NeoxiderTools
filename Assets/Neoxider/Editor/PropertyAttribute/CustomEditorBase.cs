@@ -12,6 +12,33 @@ namespace Neo.Editor
     /// </summary>
     public abstract class CustomEditorBase : UnityEditor.Editor
     {
+        private static bool _isAnimating;
+        
+        protected void EnsureRepaint()
+        {
+            if (!_isAnimating)
+            {
+                _isAnimating = true;
+                EditorApplication.update += OnEditorUpdate;
+            }
+        }
+        
+        private void OnEditorUpdate()
+        {
+            if (target != null)
+            {
+                Repaint();
+            }
+        }
+        
+        protected virtual void OnDisable()
+        {
+            if (_isAnimating)
+            {
+                EditorApplication.update -= OnEditorUpdate;
+                _isAnimating = false;
+            }
+        }
         // Binding flags for field reflection
         public const BindingFlags FIELD_FLAGS =
             BindingFlags.Public |
@@ -19,6 +46,7 @@ namespace Neo.Editor
             BindingFlags.Instance;
 
         private static bool? _odinInspectorAvailable;
+        private static string _cachedVersion;
 
         protected Dictionary<string, bool> _buttonFoldouts = new();
 
@@ -49,6 +77,69 @@ namespace Neo.Editor
             FindObjectsSortMode sortMode = FindObjectsSortMode.None)
         {
             return Object.FindObjectsByType(type, sortMode);
+        }
+
+        /// <summary>
+        ///     Получает путь к текущему файлу скрипта
+        /// </summary>
+        private static string GetScriptPath([System.Runtime.CompilerServices.CallerFilePath] string sourceFilePath = "")
+        {
+            return sourceFilePath;
+        }
+
+        /// <summary>
+        ///     Получает версию пакета Neoxider из package.json
+        /// </summary>
+        protected virtual string GetNeoxiderVersion()
+        {
+            if (!string.IsNullOrEmpty(_cachedVersion))
+            {
+                return _cachedVersion;
+            }
+
+            try
+            {
+                // Получаем путь к текущему скрипту и поднимаемся до package.json
+                string directory = System.IO.Path.GetDirectoryName(GetScriptPath());
+                
+                while (!string.IsNullOrEmpty(directory))
+                {
+                    string packagePath = System.IO.Path.Combine(directory, "package.json");
+                    
+                    if (System.IO.File.Exists(packagePath))
+                    {
+                        string json = System.IO.File.ReadAllText(packagePath);
+                        
+                        // Проверяем, что это Neoxider Tools пакет
+                        if (json.Contains("\"displayName\": \"Neoxider Tools\"") || 
+                            json.Contains("\"name\": \"com.neoxider.tools\""))
+                        {
+                            // Парсим версию
+                            int versionIndex = json.IndexOf("\"version\":");
+                            if (versionIndex != -1)
+                            {
+                                int startQuote = json.IndexOf("\"", versionIndex + 10);
+                                int endQuote = json.IndexOf("\"", startQuote + 1);
+                                if (startQuote != -1 && endQuote != -1)
+                                {
+                                    _cachedVersion = json.Substring(startQuote + 1, endQuote - startQuote - 1).Trim();
+                                    return _cachedVersion;
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Поднимаемся на уровень выше
+                    directory = System.IO.Directory.GetParent(directory)?.FullName;
+                }
+            }
+            catch
+            {
+                // Игнорируем ошибки
+            }
+
+            _cachedVersion = "Unknown";
+            return _cachedVersion;
         }
 
         /// <summary>
@@ -95,16 +186,19 @@ namespace Neo.Editor
                                    (target.GetType().Namespace == "Neo" ||
                                     target.GetType().Namespace.StartsWith("Neo."));
 
-            // Draw "by Neoxider" signature and background for all Neo components
-            // Фон и подпись рисуем всегда для Neo компонентов, независимо от Odin Inspector
             if (hasNeoNamespace)
             {
                 DrawNeoxiderSignature();
-
+                
                 Color originalBgColor = GUI.backgroundColor;
                 GUI.backgroundColor = CustomEditorSettings.NeoBackgroundColor;
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 GUI.backgroundColor = originalBgColor;
+
+                if (CustomEditorSettings.EnableRainbowComponentOutline)
+                {
+                    BeginRainbowLineTracking();
+                }
             }
 
             // Draw default inspector
@@ -128,9 +222,13 @@ namespace Neo.Editor
             // - Odin Inspector ButtonAttribute - всегда рисуем (для совместимости и гарантии видимости)
             DrawMethodButtons();
 
-            // Close background box for Neo components
             if (hasNeoNamespace)
             {
+                if (CustomEditorSettings.EnableRainbowComponentOutline)
+                {
+                    EndRainbowLineTracking();
+                }
+                
                 EditorGUILayout.EndVertical();
             }
         }
@@ -139,19 +237,432 @@ namespace Neo.Editor
         {
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
 
+            if (CustomEditorSettings.EnableRainbowSignature && CustomEditorSettings.EnableRainbowSignatureAnimation)
+            {
+                EnsureRepaint();
+            }
+
             Color originalTextColor = GUI.color;
-            GUI.color = CustomEditorSettings.SignatureColor;
+            
+            Color signatureColor = CustomEditorSettings.SignatureColor;
+            if (CustomEditorSettings.EnableRainbowSignature && CustomEditorSettings.EnableRainbowSignatureAnimation)
+            {
+                signatureColor = GetRainbowColor(CustomEditorSettings.RainbowSpeed);
+            }
+            
+            GUI.color = signatureColor;
             GUIStyle style = new(EditorStyles.centeredGreyMiniLabel)
             {
                 fontSize = CustomEditorSettings.SignatureFontSize,
                 alignment = TextAnchor.MiddleLeft,
                 fontStyle = CustomEditorSettings.SignatureFontStyle,
-                normal = { textColor = CustomEditorSettings.SignatureColor }
+                normal = { textColor = signatureColor }
             };
-            EditorGUILayout.LabelField("by Neoxider", style);
+            
+            string version = GetNeoxiderVersion();
+            string signatureText = $"by Neoxider v{version}";
+            
+            if (CustomEditorSettings.EnableRainbowOutline)
+            {
+                DrawTextWithRainbowOutline(signatureText, style);
+            }
+            else
+            {
+                EditorGUILayout.LabelField(signatureText, style);
+            }
+            
             GUI.color = originalTextColor;
 
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
+        }
+        
+        /// <summary>
+        /// Генерирует радужный цвет на основе времени
+        /// </summary>
+        private Color GetRainbowColor(float speed)
+        {
+            float time = (float)EditorApplication.timeSinceStartup * speed;
+            float hue = Mathf.Repeat(time, 1f);
+            return Color.HSVToRGB(hue, CustomEditorSettings.RainbowSaturation, CustomEditorSettings.RainbowBrightness);
+        }
+        
+        /// <summary>
+        /// Рисует текст с радужной обводкой
+        /// </summary>
+        private void DrawTextWithRainbowOutline(string text, GUIStyle baseStyle)
+        {
+            Rect rect = GUILayoutUtility.GetRect(new GUIContent(text), baseStyle);
+            
+            float outlineSize = CustomEditorSettings.RainbowOutlineSize;
+            float time = (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed;
+            
+            GUIStyle outlineStyle = new(baseStyle);
+            
+            for (int angle = 0; angle < 360; angle += 45)
+            {
+                float radian = angle * Mathf.Deg2Rad;
+                float offsetX = Mathf.Cos(radian) * outlineSize;
+                float offsetY = Mathf.Sin(radian) * outlineSize;
+                
+                float hue = Mathf.Repeat(time + (angle / 360f) * 0.2f, 1f);
+                Color outlineColor = Color.HSVToRGB(hue, 
+                    CustomEditorSettings.RainbowSaturation, 
+                    CustomEditorSettings.RainbowBrightness * 0.8f);
+                outlineColor.a = CustomEditorSettings.RainbowOutlineAlpha;
+                
+                outlineStyle.normal.textColor = outlineColor;
+                
+                Rect offsetRect = new Rect(rect.x + offsetX, rect.y + offsetY, rect.width, rect.height);
+                GUI.Label(offsetRect, text, outlineStyle);
+            }
+            
+            GUI.Label(rect, text, baseStyle);
+        }
+        
+        private Rect _componentOutlineRect;
+        
+        /// <summary>
+        /// Начинает рисование радужной обводки вокруг компонента
+        /// </summary>
+        private void DrawRainbowComponentOutlineBegin()
+        {
+            _componentOutlineRect = EditorGUILayout.BeginVertical();
+        }
+        
+        /// <summary>
+        /// Завершает рисование радужной обводки вокруг компонента
+        /// </summary>
+        private void DrawRainbowComponentOutlineEnd()
+        {
+            EditorGUILayout.EndVertical();
+            
+            if (Event.current.type == EventType.Repaint)
+            {
+                float time = (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed;
+                float borderWidth = CustomEditorSettings.RainbowComponentOutlineWidth;
+                
+                Rect rect = _componentOutlineRect;
+                rect.x -= borderWidth;
+                rect.y -= borderWidth;
+                rect.width += borderWidth * 2;
+                rect.height += borderWidth * 2;
+                
+                DrawRainbowBorder(rect, borderWidth, time);
+            }
+        }
+        
+        private Rect _rainbowLineStartRect;
+        private float _rainbowLineStartY;
+        
+        /// <summary>
+        /// Начинает отслеживание позиции для радужной линии
+        /// </summary>
+        private void BeginRainbowLineTracking()
+        {
+            if (CustomEditorSettings.EnableRainbowLineAnimation)
+            {
+                EnsureRepaint();
+            }
+            
+            // Используем небольшой rect чтобы получить текущую Y позицию
+            Rect rect = EditorGUILayout.GetControlRect(false, 0);
+            
+            if (Event.current.type == EventType.Repaint)
+            {
+                _rainbowLineStartY = rect.y;
+            }
+        }
+        
+        /// <summary>
+        /// Завершает отслеживание и рисует радужную линию
+        /// </summary>
+        private void EndRainbowLineTracking()
+        {
+            if (Event.current.type == EventType.Repaint)
+            {
+                float lineWidth = 3f;
+                float time = CustomEditorSettings.EnableRainbowLineAnimation 
+                    ? (float)EditorApplication.timeSinceStartup * CustomEditorSettings.RainbowSpeed * 5f
+                    : 0f;
+                
+                Color[] rainbowColors = new Color[]
+                {
+                    new Color(0.9f, 0.2f, 0.2f),
+                    new Color(1f, 0.5f, 0.2f),
+                    new Color(1f, 0.9f, 0.2f),
+                    new Color(0.3f, 0.9f, 0.3f),
+                    new Color(0.2f, 0.7f, 1f),
+                    new Color(0.3f, 0.3f, 1f),
+                    new Color(0.7f, 0.3f, 1f)
+                };
+
+                Rect lastRect = GUILayoutUtility.GetLastRect();
+                float lineHeight = lastRect.yMax - _rainbowLineStartY;
+                
+                if (lineHeight > 0)
+                {
+                    float inspectorWidth = EditorGUIUtility.currentViewWidth;
+                    float lineX = 16f;
+                    
+                    int segments = Mathf.Max(10, Mathf.FloorToInt(lineHeight / 5f));
+                    float segmentHeight = lineHeight / segments;
+
+                    for (int i = 0; i < segments; i++)
+                    {
+                        float t = i / (float)segments;
+                        t = Mathf.Repeat(t + time, 1f);
+                        
+                        int colorIndex = Mathf.FloorToInt(t * (rainbowColors.Length - 1));
+                        float localT = (t * (rainbowColors.Length - 1)) - colorIndex;
+
+                        Color color = Color.Lerp(
+                            rainbowColors[Mathf.Min(colorIndex, rainbowColors.Length - 1)],
+                            rainbowColors[Mathf.Min(colorIndex + 1, rainbowColors.Length - 1)],
+                            localT
+                        );
+
+                        Rect segmentRect = new Rect(
+                            lineX,
+                            _rainbowLineStartY + i * segmentHeight,
+                            lineWidth,
+                            segmentHeight + 1
+                        );
+
+                        EditorGUI.DrawRect(segmentRect, color);
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Рисует радужную рамку вокруг прямоугольника
+        /// </summary>
+        private void DrawRainbowBorder(Rect rect, float borderWidth, float time)
+        {
+            int segments = 40;
+            float perimeter = (rect.width + rect.height) * 2;
+            float segmentLength = perimeter / segments;
+            
+            for (int i = 0; i < segments; i++)
+            {
+                float t = (float)i / segments;
+                float hue = Mathf.Repeat(time + t, 1f);
+                Color color = Color.HSVToRGB(hue, 
+                    CustomEditorSettings.RainbowSaturation, 
+                    CustomEditorSettings.RainbowBrightness);
+                
+                float nextT = (float)(i + 1) / segments;
+                Vector2 start = GetPointOnRectPerimeter(rect, t);
+                Vector2 end = GetPointOnRectPerimeter(rect, nextT);
+                
+                Handles.BeginGUI();
+                Handles.color = color;
+                Handles.DrawAAPolyLine(borderWidth, start, end);
+                Handles.EndGUI();
+            }
+        }
+        
+        /// <summary>
+        /// Получает точку на периметре прямоугольника
+        /// </summary>
+        private Vector2 GetPointOnRectPerimeter(Rect rect, float t)
+        {
+            float perimeter = (rect.width + rect.height) * 2;
+            float distance = t * perimeter;
+            
+            if (distance < rect.width)
+            {
+                return new Vector2(rect.x + distance, rect.y);
+            }
+            distance -= rect.width;
+            
+            if (distance < rect.height)
+            {
+                return new Vector2(rect.xMax, rect.y + distance);
+            }
+            distance -= rect.height;
+            
+            if (distance < rect.width)
+            {
+                return new Vector2(rect.xMax - distance, rect.yMax);
+            }
+            distance -= rect.width;
+            
+            return new Vector2(rect.x, rect.yMax - distance);
+        }
+
+        /// <summary>
+        /// Рисует закруглённую кнопку с градиентом
+        /// </summary>
+        private bool DrawGradientButton(string text, float width, float height = 0)
+        {
+            if (height == 0)
+            {
+                height = GradientButtonSettings.DefaultButtonHeight;
+            }
+            
+            Rect buttonRect = GUILayoutUtility.GetRect(width, height);
+            
+            if (Event.current.type == EventType.Repaint)
+            {
+                // Получаем цвета из настроек
+                Color topColor = GradientButtonSettings.TopColor;
+                Color bottomColor = GradientButtonSettings.BottomColor;
+                
+                // Проверка на hover
+                bool isHover = buttonRect.Contains(Event.current.mousePosition);
+                if (isHover)
+                {
+                    topColor = Color.Lerp(topColor, Color.white, GradientButtonSettings.HoverBrightness);
+                    bottomColor = Color.Lerp(bottomColor, Color.white, GradientButtonSettings.HoverBrightness);
+                }
+                
+                // Рисуем градиент через несколько прямоугольников
+                for (int i = 0; i < GradientButtonSettings.GradientSegments; i++)
+                {
+                    float t = i / (float)GradientButtonSettings.GradientSegments;
+                    
+                    Color segmentColor = Color.Lerp(topColor, bottomColor, t);
+                    
+                    Rect segmentRect = new Rect(
+                        buttonRect.x,
+                        buttonRect.y + buttonRect.height * t,
+                        buttonRect.width,
+                        buttonRect.height / GradientButtonSettings.GradientSegments + 1
+                    );
+                    
+                    EditorGUI.DrawRect(segmentRect, segmentColor);
+                }
+                
+                // Рисуем закруглённые углы поверх (эффект скругления)
+                DrawRoundedCorners(buttonRect, GradientButtonSettings.CornerRadius, topColor, bottomColor);
+                
+                Handles.BeginGUI();
+                
+                // Неоновая обводка (если включена)
+                if (GradientButtonSettings.EnableNeonGlow)
+                {
+                    // Внешнее свечение
+                    Handles.color = new Color(
+                        GradientButtonSettings.NeonGlowColor.r,
+                        GradientButtonSettings.NeonGlowColor.g,
+                        GradientButtonSettings.NeonGlowColor.b,
+                        0.15f
+                    );
+                    
+                    float glowWidth = 4f;
+                    Vector3[] points = new Vector3[]
+                    {
+                        new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y - 1),
+                        new Vector3(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.y - 1),
+                        new Vector3(buttonRect.xMax + 1, buttonRect.y + GradientButtonSettings.CornerRadius),
+                        new Vector3(buttonRect.xMax + 1, buttonRect.yMax - GradientButtonSettings.CornerRadius),
+                        new Vector3(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.yMax + 1),
+                        new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.yMax + 1),
+                        new Vector3(buttonRect.x - 1, buttonRect.yMax - GradientButtonSettings.CornerRadius),
+                        new Vector3(buttonRect.x - 1, buttonRect.y + GradientButtonSettings.CornerRadius),
+                        new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y - 1)
+                    };
+                    
+                    Handles.DrawAAPolyLine(glowWidth, points);
+                    
+                    // Яркая внутренняя обводка
+                    Handles.color = GradientButtonSettings.NeonGlowColor;
+                    Handles.DrawAAPolyLine(1.5f, points);
+                }
+                else
+                {
+                    // Стандартная обводка сверху
+                    Handles.color = GradientButtonSettings.HighlightColor;
+                    Handles.DrawAAPolyLine(GradientButtonSettings.HighlightWidth, 
+                        new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y),
+                        new Vector3(buttonRect.xMax - GradientButtonSettings.CornerRadius, buttonRect.y)
+                    );
+                }
+                
+                Handles.EndGUI();
+            }
+            
+            // Текст кнопки с тенью для киберпанк стиля
+            if (GradientButtonSettings.EnableNeonGlow)
+            {
+                // Тень текста
+                GUIStyle shadowStyle = new GUIStyle(EditorStyles.label)
+                {
+                    alignment = GradientButtonSettings.TextAlignment,
+                    fontStyle = GradientButtonSettings.TextStyle,
+                    normal = { textColor = new Color(0, 0, 0, 0.5f) }
+                };
+                
+                Rect shadowRect = new Rect(buttonRect.x, buttonRect.y + 1, buttonRect.width, buttonRect.height);
+                GUI.Label(shadowRect, text, shadowStyle);
+            }
+            
+            // Основной текст
+            GUIStyle textStyle = new GUIStyle(EditorStyles.label)
+            {
+                alignment = GradientButtonSettings.TextAlignment,
+                fontStyle = GradientButtonSettings.TextStyle,
+                normal = { textColor = GradientButtonSettings.TextColor }
+            };
+            
+            GUI.Label(buttonRect, text, textStyle);
+            
+            return Event.current.type == EventType.MouseDown && buttonRect.Contains(Event.current.mousePosition);
+        }
+
+        /// <summary>
+        /// Рисует эффект закруглённых углов
+        /// </summary>
+        private void DrawRoundedCorners(Rect rect, float radius, Color topColor, Color bottomColor)
+        {
+            Color bgColor = GradientButtonSettings.InspectorBackgroundColor;
+            
+            // Верхние углы
+            DrawCornerMask(new Rect(rect.x, rect.y, radius, radius), radius, bgColor, true, true);
+            DrawCornerMask(new Rect(rect.xMax - radius, rect.y, radius, radius), radius, bgColor, false, true);
+            
+            // Нижние углы
+            DrawCornerMask(new Rect(rect.x, rect.yMax - radius, radius, radius), radius, bgColor, true, false);
+            DrawCornerMask(new Rect(rect.xMax - radius, rect.yMax - radius, radius, radius), radius, bgColor, false, false);
+        }
+
+        /// <summary>
+        /// Рисует маску угла для создания эффекта скругления
+        /// </summary>
+        private void DrawCornerMask(Rect cornerRect, float radius, Color bgColor, bool isLeft, bool isTop)
+        {
+            Vector2 center = isLeft 
+                ? (isTop ? new Vector2(cornerRect.xMax, cornerRect.yMax) : new Vector2(cornerRect.xMax, cornerRect.y))
+                : (isTop ? new Vector2(cornerRect.x, cornerRect.yMax) : new Vector2(cornerRect.x, cornerRect.y));
+            
+            // Используем более высокое разрешение для плавного скругления
+            int steps = GradientButtonSettings.CornerMaskSteps;
+            float pixelSize = cornerRect.width / steps;
+            
+            for (int x = 0; x < steps; x++)
+            {
+                for (int y = 0; y < steps; y++)
+                {
+                    // Центр каждого "пикселя"
+                    float px = cornerRect.x + (x + 0.5f) / steps * cornerRect.width;
+                    float py = cornerRect.y + (y + 0.5f) / steps * cornerRect.height;
+                    
+                    float dist = Vector2.Distance(new Vector2(px, py), center);
+                    
+                    // Более точная проверка расстояния с небольшим сглаживанием
+                    if (dist > radius + pixelSize * 0.5f)
+                    {
+                        Rect pixelRect = new Rect(
+                            cornerRect.x + x * pixelSize, 
+                            cornerRect.y + y * pixelSize, 
+                            pixelSize + 0.5f, 
+                            pixelSize + 0.5f
+                        );
+                        EditorGUI.DrawRect(pixelRect, bgColor);
+                    }
+                }
+            }
         }
 
         protected abstract void ProcessAttributeAssignments();
@@ -311,27 +822,13 @@ namespace Neo.Editor
 
                 EditorGUILayout.BeginHorizontal();
 
-                // Store original GUI colors
-                Color originalBgColor = GUI.backgroundColor;
-                Color originalTextColor = GUI.contentColor;
-                Color originalColor = GUI.color;
-
-                // Create custom button style with cyberpunk look
-                GUIStyle buttonStyle = new(EditorStyles.miniButton)
-                {
-                    normal = { textColor = CustomEditorSettings.ButtonTextColor },
-                    hover = { textColor = CustomEditorSettings.ButtonTextColor },
-                    active = { textColor = CustomEditorSettings.ButtonTextColor },
-                    focused = { textColor = CustomEditorSettings.ButtonTextColor }
-                };
-
-                // Set cyberpunk purple background for button
-                GUI.backgroundColor = CustomEditorSettings.ButtonBackgroundColor;
-                GUI.contentColor = CustomEditorSettings.ButtonTextColor;
-                GUI.color = CustomEditorSettings.ButtonTextColor;
-
-                // Draw button on the left with compact style
-                if (GUILayout.Button(buttonText, buttonStyle, GUILayout.Width(buttonAttribute.Width)))
+                // Draw gradient button with rounded corners
+                bool buttonPressed = DrawGradientButton(buttonText, buttonAttribute.Width);
+                
+                // Add small spacing after button
+                GUILayout.Space(GradientButtonSettings.ButtonSpacing);
+                
+                if (buttonPressed)
                 {
                     try
                     {
@@ -394,11 +891,6 @@ namespace Neo.Editor
                             $"Error calling method {method.Name}: {e.InnerException?.Message ?? e.Message}\nStack trace: {e.InnerException?.StackTrace ?? e.StackTrace}");
                     }
                 }
-
-                // Restore original GUI colors
-                GUI.backgroundColor = originalBgColor;
-                GUI.contentColor = originalTextColor;
-                GUI.color = originalColor;
 
                 // Add spacing between button and parameters
                 GUILayout.Space(CustomEditorSettings.ButtonParameterSpacing);
@@ -476,8 +968,8 @@ namespace Neo.Editor
 
                 EditorGUILayout.EndHorizontal();
 
-                // Add small space between methods
-                GUILayout.Space(CustomEditorSettings.ButtonSpacing);
+                // Add space between button methods
+                GUILayout.Space(GradientButtonSettings.ButtonSpacing);
             }
         }
 

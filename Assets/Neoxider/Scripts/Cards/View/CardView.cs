@@ -23,7 +23,8 @@ namespace Neo.Cards
         [SerializeField] private Ease _moveEase = Ease.OutQuad;
 
         [Header("Hover")]
-        [SerializeField] private float _hoverScale = 1.1f;
+        [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")]
+        [SerializeField] private float _hoverScale = 0.1f;
         [SerializeField] private float _hoverDuration = 0.15f;
         [SerializeField] private float _hoverYOffset = 20f;
 
@@ -177,7 +178,7 @@ namespace Neo.Cards
             OnHovered?.Invoke(this);
 
             _originalPosition = transform.position;
-            transform.DOScale(_originalScale * _hoverScale, _hoverDuration);
+            transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration);
             transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
         }
 

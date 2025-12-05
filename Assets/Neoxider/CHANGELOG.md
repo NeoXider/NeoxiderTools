@@ -1,5 +1,32 @@
 # Журнал изменений (Changelog)
 
+## [v5.3.1]
+
+### Добавлено
+- **DrunkardGame**: Готовая игра "Пьяница" с no-code настройкой
+  - События счёта карт, победы, раундов, войны
+  - Поддержка HandComponent и BoardComponent
+  - Параметр `Player Goes First` для порядка ходов
+  - Анимация возврата карт в руку
+- **DeckConfig**: `GameDeckType` — выбор количества карт в игре (36/52/54)
+- **HandComponent**: Событие `OnCardCountChanged(int)`, методы `DrawFirst()/DrawRandom()`, параметр `Add To Bottom`
+- **CardComponent**: Методы `UpdateOriginalTransform()`, `ResetHover()`, автоматическое включение `raycastTarget`
+- **TypewriterEffectComponent**: Автостарт в Awake, кеширование текста из TMP_Text, метод `Play()` опционально берёт текст из TMP_Text
+- **BoardComponent**: Параметр `overrideFaceUp` для контроля переворота карт
+- **CustomEditor**: Анимированная радужная линия слева (настройки через Tools → Neoxider Settings)
+
+### Улучшено
+- **CardComponent**: Hover Scale как дельта (0.1 = +10%), раздельные эффекты перемещения и масштаба (если = 0, эффект отключен)
+- **HandComponent**: Симметричная раскладка веером, анимация добавления карт
+
+### Исправлено
+- **CardComponent**: Искажение масштаба после FlipAsync, hover при частых кликах
+- **HandComponent**: NullReferenceException при вызове до Awake
+- **DrunkardGame**: Карты войны не исчезают, остаются на столе
+- **CustomEditorBase**: OnValidate только в Edit Mode
+
+---
+
 ## [v5.3.0]
 
 ### Добавлено

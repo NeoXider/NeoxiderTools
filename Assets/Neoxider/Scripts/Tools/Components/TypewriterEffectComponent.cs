@@ -58,13 +58,16 @@ namespace Neo.Tools
             _effect.OnComplete += () => OnComplete?.Invoke();
             _effect.OnCharacterTyped += c => OnCharacterTyped?.Invoke(c);
             _effect.OnProgressChanged += p => OnProgressChanged?.Invoke(p);
-        }
-
-        private void Start()
-        {
-            _hasStarted = true;
+            
+            if (string.IsNullOrEmpty(_autoStartText) && _targetText != null && !string.IsNullOrEmpty(_targetText.text))
+            {
+                _autoStartText = _targetText.text;
+                _targetText.text = string.Empty;
+            }
+            
             if (_autoStart)
             {
+                _hasStarted = true;
                 PlayAutoText();
             }
         }
@@ -82,21 +85,45 @@ namespace Neo.Tools
         /// </summary>
         public void PlayAutoText()
         {
-            string text = string.IsNullOrEmpty(_autoStartText) && _targetText != null 
-                ? _targetText.text 
-                : _autoStartText;
-            Play(text);
+            if (_targetText == null)
+            {
+                Debug.LogWarning($"[TypewriterEffectComponent] TargetText не назначен на {gameObject.name}", this);
+                return;
+            }
+
+            if (string.IsNullOrEmpty(_autoStartText))
+            {
+                Debug.LogWarning($"[TypewriterEffectComponent] AutoStartText пустой на {gameObject.name}", this);
+                return;
+            }
+            
+            Stop();
+            _cts = new CancellationTokenSource();
+            PlayInternalAsync(_autoStartText, _cts.Token).Forget();
         }
 
         /// <summary>
         /// Запускает эффект печати текста.
+        /// Если text пустой - берёт текст из TargetText.
         /// </summary>
-        public void Play(string text)
+        public void Play(string text = "")
         {
             if (_targetText == null)
             {
                 Debug.LogWarning($"[TypewriterEffectComponent] TargetText не назначен на {gameObject.name}", this);
                 return;
+            }
+            
+            if (string.IsNullOrEmpty(text))
+            {
+                text = _targetText.text;
+                if (string.IsNullOrEmpty(text))
+                {
+                    Debug.LogWarning($"[TypewriterEffectComponent] Текст пустой на {gameObject.name}", this);
+                    return;
+                }
+                
+                _targetText.text = string.Empty;
             }
             
             Stop();

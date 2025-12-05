@@ -80,7 +80,7 @@ namespace Neo.Cards
         {
             _model = new DeckModel();
             _model.OnDeckEmpty += HandleDeckEmpty;
-            _model.Initialize(_config.DeckType, _shuffleOnStart);
+            _model.Initialize(_config.GameDeckType, _shuffleOnStart);
 
             if (_showTrumpCard && _trumpCardDisplay != null)
             {

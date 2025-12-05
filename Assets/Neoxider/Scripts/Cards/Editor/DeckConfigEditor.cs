@@ -14,6 +14,7 @@ namespace Neo.Cards.Editor
         private const int MaxPreviewsPerRow = 7;
 
         private SerializedProperty _deckType;
+        private SerializedProperty _gameDeckType;
         private SerializedProperty _backSprite;
         private SerializedProperty _hearts;
         private SerializedProperty _diamonds;
@@ -32,6 +33,7 @@ namespace Neo.Cards.Editor
         private void OnEnable()
         {
             _deckType = serializedObject.FindProperty("_deckType");
+            _gameDeckType = serializedObject.FindProperty("_gameDeckType");
             _backSprite = serializedObject.FindProperty("_backSprite");
             _hearts = serializedObject.FindProperty("_hearts");
             _diamonds = serializedObject.FindProperty("_diamonds");
@@ -84,11 +86,51 @@ namespace Neo.Cards.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Настройки колоды", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(_deckType, new GUIContent("Тип колоды"));
-
+            
+            EditorGUILayout.PropertyField(_deckType, new GUIContent("Тип для спрайтов", "Сколько карт загружено в конфиг"));
+            
             int expectedCount = GetExpectedCardCount();
             EditorGUILayout.HelpBox($"Ожидается {expectedCount} карт на каждую масть", MessageType.Info);
+            
+            EditorGUILayout.Space(5);
+            EditorGUILayout.PropertyField(_gameDeckType, new GUIContent("Тип для игры", "Сколько карт использовать в игре"));
+            
+            DeckType spriteType = (DeckType)_deckType.enumValueIndex;
+            DeckType gameType = (DeckType)_gameDeckType.enumValueIndex;
+            
+            int gameCardCount = GetGameCardCount(gameType);
+            string gameInfo = gameType == DeckType.Standard54 
+                ? $"В игре: {gameCardCount} карт (52 + 2 джокера)" 
+                : $"В игре: {gameCardCount} карт";
+            
+            if (IsGameTypeValid(spriteType, gameType))
+            {
+                EditorGUILayout.HelpBox(gameInfo, MessageType.Info);
+            }
+            else
+            {
+                EditorGUILayout.HelpBox($"⚠ GameDeckType ({gameType}) требует карты, которых нет в DeckType ({spriteType})", MessageType.Error);
+            }
+            
             EditorGUILayout.EndVertical();
+        }
+        
+        private bool IsGameTypeValid(DeckType spriteType, DeckType gameType)
+        {
+            Rank spriteMinRank = spriteType.GetMinRank();
+            Rank gameMinRank = gameType.GetMinRank();
+            return gameMinRank >= spriteMinRank;
+        }
+        
+        private int GetGameCardCount(DeckType gameType)
+        {
+            return gameType switch
+            {
+                DeckType.Standard36 => 36,
+                DeckType.Standard52 => 52,
+                DeckType.Standard54 => 54,
+                _ => 52
+            };
         }
 
         private void DrawBackSprite()
