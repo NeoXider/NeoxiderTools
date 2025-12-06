@@ -1513,10 +1513,30 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _autoCheckEventSystem: 1
   interactable: 1
+  useMouseInteraction: 1
+  useKeyboardInteraction: 1
+  interactionDistance: 0
+  distanceCheckPoint: {fileID: 0}
   downUpMouseButton: 0
-  requireHoverForMouse: 1
   keyboardKey: 101
-  requireHoverForKeyboard: 1
+  onInteractDown:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 974689349}
+        m_TargetAssemblyTypeName: Neo.Shop.Money, Neo.Shop
+        m_MethodName: Add
+        m_Mode: 4
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 1
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  onInteractUp:
+    m_PersistentCalls:
+      m_Calls: []
   onHoverEnter:
     m_PersistentCalls:
       m_Calls: []
@@ -1560,22 +1580,10 @@ MonoBehaviour:
   onMiddleClick:
     m_PersistentCalls:
       m_Calls: []
-  onInteractDown:
+  onEnterRange:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 974689349}
-        m_TargetAssemblyTypeName: Neo.Shop.Money, Neo.Shop
-        m_MethodName: Add
-        m_Mode: 4
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 1
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  onInteractUp:
+      m_Calls: []
+  onExitRange:
     m_PersistentCalls:
       m_Calls: []
 --- !u!58 &1612225844
