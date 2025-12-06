@@ -1,4 +1,5 @@
 ﻿using Neo.Extensions;
+using Neo.Save;
 using Neo.Tools;
 using TMPro;
 using UnityEngine;
@@ -86,14 +87,14 @@ namespace Neo
 
             private void Load()
             {
-                _money = PlayerPrefs.GetFloat(_moneySave, _money);
-                _allMoney = PlayerPrefs.GetFloat(_moneySave + nameof(_allMoney), 0);
+                _money = SaveProvider.GetFloat(_moneySave, _money);
+                _allMoney = SaveProvider.GetFloat(_moneySave + nameof(_allMoney), 0);
             }
 
             private void Save()
             {
-                PlayerPrefs.SetFloat(_moneySave, _money);
-                PlayerPrefs.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
+                SaveProvider.SetFloat(_moneySave, _money);
+                SaveProvider.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
             }
 
             public void AddLevelMoney(float count)

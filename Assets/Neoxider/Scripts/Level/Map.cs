@@ -1,4 +1,5 @@
 using System;
+using Neo.Save;
 using UnityEngine;
 
 namespace Neo
@@ -24,7 +25,7 @@ namespace Neo
                 idMap = i;
                 _saveKey = saveKey;
 
-                _level = PlayerPrefs.GetInt(GetSaveKey() + nameof(_level), 0);
+                _level = SaveProvider.GetInt(GetSaveKey() + nameof(_level), 0);
             }
 
             private string GetSaveKey()
@@ -34,7 +35,7 @@ namespace Neo
 
             public void SaveLevel()
             {
-                PlayerPrefs.SetInt(GetSaveKey() + nameof(_level), ++_level);
+                SaveProvider.SetInt(GetSaveKey() + nameof(_level), ++_level);
             }
 
             public bool GetCopmplete()

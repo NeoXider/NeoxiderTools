@@ -1,4 +1,5 @@
-﻿using TMPro;
+﻿using Neo.Save;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
@@ -95,7 +96,7 @@ namespace Neo.Tools
         protected override void Init()
         {
             base.Init();
-            BestScore = PlayerPrefs.GetInt(_keySave, 0);
+            BestScore = SaveProvider.GetInt(_keySave, 0);
             Score = 0;
             CountStars = 0;
             SetBestScoreText();
@@ -156,7 +157,7 @@ namespace Neo.Tools
             if (score > _bestScore)
             {
                 BestScore = this.score;
-                PlayerPrefs.SetInt(_keySave, _bestScore);
+                SaveProvider.SetInt(_keySave, _bestScore);
                 SetBestScoreText();
             }
         }
@@ -245,7 +246,7 @@ namespace Neo.Tools
         public void ResetBestScore()
         {
             BestScore = 0;
-            PlayerPrefs.DeleteKey(_keySave);
+            SaveProvider.DeleteKey(_keySave);
         }
 
         public int GetCountStars()

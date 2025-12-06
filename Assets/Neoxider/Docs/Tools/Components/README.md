@@ -6,6 +6,7 @@
 
 - [DialogueManager](./DialogueManager.md) — диалоговая система с персонажами, портретами и событиями
 - [Loot](./Loot.md) — система лута и дропа
+- [ScoreManager](./ScoreManager.md) — менеджер очков с системой звезд и сохранением рекордов
 - [TypewriterEffect](./TypewriterEffect.md) — эффект печатной машинки с паузами на знаках препинания
 
 ## Папки

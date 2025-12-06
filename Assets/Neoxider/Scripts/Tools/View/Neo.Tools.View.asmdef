@@ -8,7 +8,8 @@
     "GUID:699bb923824f1724b91c66f5ba9ace74",
     "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
     "Unity.RenderPipelines.Universal.Runtime",
-    "GUID:f379901b708384043af2b7e935332075"
+    "GUID:f379901b708384043af2b7e935332075",
+    "GUID:c4e3ca8dc710d5440b6cd2f90408487f"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

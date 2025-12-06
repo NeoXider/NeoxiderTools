@@ -33,7 +33,7 @@ namespace Neo.Save
         {
             try
             {
-                string jsonData = PlayerPrefs.GetString(saveData, string.Empty);
+                string jsonData = SaveProvider.GetString(saveData, string.Empty);
                 if (!string.IsNullOrEmpty(jsonData))
                 {
                     _data = JsonUtility.FromJson<GlobalData>(jsonData);
@@ -52,7 +52,7 @@ namespace Neo.Save
             try
             {
                 string jsonData = JsonUtility.ToJson(_data);
-                PlayerPrefs.SetString(saveData, jsonData);
+                SaveProvider.SetString(saveData, jsonData);
             }
             catch (Exception e)
             {

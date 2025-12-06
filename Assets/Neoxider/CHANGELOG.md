@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 ## [5.3.4] - Unreleased
 
 ### Добавлено
+- **Система провайдеров сохранения (SaveProvider)**: Новая профессиональная система сохранения данных
+  - Статический класс `SaveProvider` с API аналогичным PlayerPrefs
+  - Интерфейс `ISaveProvider` для создания собственных провайдеров
+  - Реализованные провайдеры: `PlayerPrefsSaveProvider` (по умолчанию) и `FileSaveProvider` (JSON файлы)
+  - ScriptableObject `SaveProviderSettings` для настройки через Inspector
+  - Автоматическая инициализация с PlayerPrefs по умолчанию
+  - Поддержка событий (OnDataSaved, OnDataLoaded, OnKeyChanged)
+  - Расширения для работы с массивами
 - **VisualToggle**: Полностью переработан и улучшен
   - Добавлена поддержка UnityEvent (On, Off, OnValueChanged)
   - Добавлены кнопки в Inspector для тестирования
@@ -16,6 +24,10 @@ All notable changes to this project will be documented in this file.
   - Свойство IsActive для получения/установки состояния
 
 ### Улучшено
+- **SaveManager**: Теперь использует систему провайдеров вместо прямых вызовов PlayerPrefs
+- **GlobalSave**: Интегрирован с системой провайдеров для единообразной работы
+- **Все компоненты сохранения**: Рефакторинг для использования SaveProvider
+  - Money, ScoreManager, TimeReward, Collection, Box, Map, Leaderboard, Shop
 - **VisualToggle**: Теперь объединяет возможности ToggleView и старого VisualToggle
   - Поддержка множественных Image, цветов, текста и GameObject'ов
   - Автоматическое сохранение начальных значений

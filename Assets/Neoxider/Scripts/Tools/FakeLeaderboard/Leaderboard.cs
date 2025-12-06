@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
+using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -302,9 +303,9 @@ namespace Neo.Tools
                 return;
             }
 
-            PlayerPrefs.SetString($"{playerSaveKey}_Name", player.name);
-            PlayerPrefs.SetInt($"{playerSaveKey}_Score", player.score);
-            PlayerPrefs.Save();
+            SaveProvider.SetString($"{playerSaveKey}_Name", player.name);
+            SaveProvider.SetInt($"{playerSaveKey}_Score", player.score);
+            SaveProvider.Save();
         }
 
         private void LoadPlayerData()
@@ -314,14 +315,14 @@ namespace Neo.Tools
                 return;
             }
 
-            if (PlayerPrefs.HasKey($"{playerSaveKey}_Name"))
+            if (SaveProvider.HasKey($"{playerSaveKey}_Name"))
             {
-                player.name = PlayerPrefs.GetString($"{playerSaveKey}_Name", "PlayerName");
+                player.name = SaveProvider.GetString($"{playerSaveKey}_Name", "PlayerName");
             }
 
-            if (PlayerPrefs.HasKey($"{playerSaveKey}_Score"))
+            if (SaveProvider.HasKey($"{playerSaveKey}_Score"))
             {
-                player.score = PlayerPrefs.GetInt($"{playerSaveKey}_Score", 0);
+                player.score = SaveProvider.GetInt($"{playerSaveKey}_Score", 0);
             }
         }
 

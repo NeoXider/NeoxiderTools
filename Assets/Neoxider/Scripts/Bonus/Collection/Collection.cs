@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Neo.Extensions;
+using Neo.Save;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -76,7 +77,7 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
-                _enabledItems[i] = PlayerPrefs.GetInt($"{_saveKeyPrefix}Item_{i}", 0) == 1;
+                _enabledItems[i] = SaveProvider.GetInt($"{_saveKeyPrefix}Item_{i}", 0) == 1;
             }
 
             OnLoadItems?.Invoke();
@@ -95,10 +96,10 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _enabledItems.Length && i < _itemCollectionDatas.Length; i++)
             {
-                PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{i}", _enabledItems[i] ? 1 : 0);
+                SaveProvider.SetInt($"{_saveKeyPrefix}Item_{i}", _enabledItems[i] ? 1 : 0);
             }
 
-            PlayerPrefs.Save();
+            SaveProvider.Save();
         }
 #if ODIN_INSPECTOR
             [Button]
@@ -152,7 +153,7 @@ namespace Neo.Bonus
 
             _enabledItems[id] = true;
             PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
-            PlayerPrefs.Save();
+            SaveProvider.Save();
 
             OnItemAdded?.Invoke(id);
         }
@@ -171,7 +172,7 @@ namespace Neo.Bonus
 
             _enabledItems[id] = false;
             PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
-            PlayerPrefs.Save();
+            SaveProvider.Save();
 
             OnItemRemoved?.Invoke(id);
         }
@@ -209,7 +210,7 @@ namespace Neo.Bonus
                 }
             }
 
-            PlayerPrefs.Save();
+            SaveProvider.Save();
         }
 #if ODIN_INSPECTOR
             [Button]

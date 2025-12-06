@@ -7,5 +7,4 @@
 - [Bootstrap](./Bootstrap.md)
 - [EM (EventManager)](./EM.md)
 - [GM (GameManager)](./GM.md)
-- [ScoreManager](./ScoreManager.md)
 - [Singleton](./Singleton.md)

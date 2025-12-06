@@ -53,6 +53,7 @@ Assets/Neoxider/
 #### Components (Компоненты)
 - **DialogueManager** — система диалогов с персонажами, портретами и событиями
 - **Loot** — система выпадения лута
+- **ScoreManager** — управление очками с системой звезд и сохранением рекордов
 - **TypewriterEffect** — эффект печатающейся машинки для текста
 - **AttackSystem** — полноценная система боя:
   - `Health` — система здоровья
@@ -86,7 +87,6 @@ Assets/Neoxider/
 - **GM** (GameManager) — глобальный менеджер игры
 - **EM** (EventManager) — менеджер событий
 - **Bootstrap** — система инициализации
-- **ScoreManager** — управление очками
 
 #### Random (Случайность)
 - **ChanceManager** — декларативная система вероятностей
@@ -155,14 +155,23 @@ Assets/Neoxider/
 ### 5. **Save** — Система сохранений
 Мощная система сохранения данных:
 
+#### Система провайдеров (новая)
+- **SaveProvider** — статический класс с API как PlayerPrefs для работы с различными провайдерами сохранения
+- **ISaveProvider** — интерфейс для всех провайдеров сохранения
+- **PlayerPrefsSaveProvider** — реализация через PlayerPrefs (по умолчанию)
+- **FileSaveProvider** — реализация через JSON файлы
+- **SaveProviderSettings** — ScriptableObject для настройки провайдеров
+- **SaveProviderSettingsComponent** — опциональная MonoBehaviour обертка для настройки
+- **SaveProviderExtensions** — расширения для работы с массивами
+
 #### Компонентная система
 - **SaveableBehaviour** — базовый класс для сохраняемых компонентов
 - **SaveField (атрибут)** — автоматическое сохранение полей
-- **SaveManager** — ядро системы сохранения
+- **SaveManager** — ядро системы сохранения (использует систему провайдеров)
 - **ISaveableComponent** — интерфейс для компонентов
 
 #### Глобальное хранилище
-- **GlobalSave** — статический класс для глобальных данных
+- **GlobalSave** — статический класс для глобальных данных (использует систему провайдеров)
 - **GlobalData** — контейнер для данных
 
 ### 6. **Cards** — Карточные игры
@@ -307,6 +316,7 @@ Assets/Neoxider/
 - Автоматическое сохранение данных
 - Система атрибутов `[SaveField]` для сохранения
 - Автоинициализация компонентов
+- Единая система провайдеров сохранения с автоматической инициализацией
 
 ---
 
@@ -449,6 +459,15 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ### Текущая версия: 5.3.4 (unreleased)
 
 #### Последние изменения (5.3.4):
+- **Система провайдеров сохранения (SaveProvider)**: Новая профессиональная система сохранения данных
+  - Статический класс `SaveProvider` с API аналогичным PlayerPrefs
+  - Интерфейс `ISaveProvider` для создания собственных провайдеров
+  - Реализованные провайдеры: `PlayerPrefsSaveProvider` (по умолчанию) и `FileSaveProvider` (JSON файлы)
+  - ScriptableObject `SaveProviderSettings` для настройки через Inspector
+  - Автоматическая инициализация с PlayerPrefs по умолчанию
+  - Поддержка событий (OnDataSaved, OnDataLoaded, OnKeyChanged)
+  - Расширения для работы с массивами
+  - Все компоненты сохранения рефакторены для использования SaveProvider
 - **VisualToggle**: Полностью переработан и объединен с ToggleView
   - Добавлена поддержка UnityEvent (On, Off, OnValueChanged)
   - Добавлены кнопки в Inspector для тестирования
@@ -458,6 +477,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
   - Полная XML документация
 - **ToggleView**: Удален, полностью заменен улучшенным VisualToggle
 - **StarView**: Обновлен для использования VisualToggle
+- **ScoreManager**: Перенесен из Managers в Components
 
 #### История версий:
 - **5.3.3**: KeyboardMover 3D, Follow переработка, CameraConstraint, AiNavigation, оптимизация
@@ -471,10 +491,9 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 Запланированные улучшения (из `FUTURE_IMPROVEMENTS.md`):
 
-### Центральная система сохранений
-- **ISaveProvider** интерфейс для различных систем сохранения
-- Поддержка JSON, Binary, Encrypted провайдеров
-- Рефакторинг существующих компонентов
+### Расширение системы провайдеров сохранений
+- Поддержка Binary и Encrypted провайдеров
+- Дополнительные расширения и утилиты
 
 ### Производительность
 - Оптимизация аллокаций

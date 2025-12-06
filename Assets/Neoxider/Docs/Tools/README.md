@@ -14,6 +14,7 @@
 - **Components**
   - [DialogueManager](./Components/DialogueManager.md)
   - [Loot](./Components/Loot.md)
+  - [ScoreManager](./Components/ScoreManager.md)
   - [TypewriterEffect](./Components/TypewriterEffect.md)
   - [README](./Components/README.md)
   - **AttackSystem**
@@ -53,7 +54,6 @@
   - [Bootstrap](./Managers/Bootstrap.md)
   - [EM](./Managers/EM.md)
   - [GM](./Managers/GM.md)
-  - [ScoreManager](./Managers/ScoreManager.md)
   - [Singleton](./Managers/Singleton.md)
   - [README](./Managers/README.md)
 - **Move**

@@ -193,13 +193,13 @@ namespace Neo.Save
             }
 
             string jsonData = JsonUtility.ToJson(container, true);
-            PlayerPrefs.SetString($"{saveDataKeyPrefix}All", jsonData);
-            PlayerPrefs.Save();
+            SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
+            SaveProvider.Save();
         }
 
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
         {
-            string jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            string jsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
             {
                 return;
@@ -409,7 +409,7 @@ namespace Neo.Save
             (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = reg;
 
             // читаем контейнер (валидный дефолт!)
-            string currentJsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            string currentJsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             SaveDataContainer container;
             try
             {
@@ -447,10 +447,10 @@ namespace Neo.Save
             }
 
             string newJsonData = JsonUtility.ToJson(container, true);
-            PlayerPrefs.SetString($"{saveDataKeyPrefix}All", newJsonData);
+            SaveProvider.SetString($"{saveDataKeyPrefix}All", newJsonData);
             if (isSave)
             {
-                PlayerPrefs.Save();
+                SaveProvider.Save();
             }
 
             Debug.Log($"[SaveManager] Manually saved {componentKey}");
@@ -476,7 +476,7 @@ namespace Neo.Save
 
             List<FieldInfo> fields = reg.fields;
 
-            string jsonData = PlayerPrefs.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            string jsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
             {
                 return;

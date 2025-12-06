@@ -1,4 +1,5 @@
 ﻿using System;
+using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -67,7 +68,7 @@ namespace Neo
 
             public float GetSecondsUntilReward()
             {
-                lastRewardTimeStr = PlayerPrefs.GetString(_lastRewardTimeKey + _addKey, string.Empty);
+                lastRewardTimeStr = SaveProvider.GetString(_lastRewardTimeKey + _addKey, string.Empty);
 
                 if (!string.IsNullOrEmpty(lastRewardTimeStr))
                 {
@@ -118,7 +119,7 @@ namespace Neo
                 canTakeReward = false;
                 Debug.Log(nameof(SaveCurrentTimeAsLastRewardTime) + " " + _addKey);
                 OnRewardClaimed?.Invoke();
-                PlayerPrefs.SetString(_lastRewardTimeKey + _addKey, DateTime.UtcNow.ToString());
+                SaveProvider.SetString(_lastRewardTimeKey + _addKey, DateTime.UtcNow.ToString());
             }
         }
     }

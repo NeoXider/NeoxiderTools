@@ -1,5 +1,6 @@
 ﻿using DG.Tweening;
 using Neo.Extensions;
+using Neo.Save;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -45,7 +46,7 @@ namespace Neo.Bonus
             set
             {
                 _progress = value;
-                PlayerPrefs.SetFloat(_saveName + nameof(progress), value);
+                SaveProvider.SetFloat(_saveName + nameof(progress), value);
             }
         }
 
@@ -53,7 +54,7 @@ namespace Neo.Bonus
 
         private void Awake()
         {
-            _progress = PlayerPrefs.GetFloat(_saveName + nameof(progress), 0);
+            _progress = SaveProvider.GetFloat(_saveName + nameof(progress), 0);
         }
 
         private void OnEnable()

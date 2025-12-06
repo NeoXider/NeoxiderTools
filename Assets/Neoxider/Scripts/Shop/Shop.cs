@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -179,7 +180,7 @@ namespace Neo.Shop
 
             for (int i = 0; i < _prices.Length; i++)
             {
-                prices[i] = PlayerPrefs.GetInt(_keySave + i, NotNullDatas() ? _shopItemDatas[i].price : _prices[i]);
+                prices[i] = SaveProvider.GetInt(_keySave + i, NotNullDatas() ? _shopItemDatas[i].price : _prices[i]);
             }
 
             _prices = prices;
@@ -189,13 +190,13 @@ namespace Neo.Shop
         {
             for (int i = 0; i < _prices.Length; i++)
             {
-                PlayerPrefs.SetInt(_keySave + i, _prices[i]);
+                SaveProvider.SetInt(_keySave + i, _prices[i]);
             }
         }
 
         private void LoadEquipped()
         {
-            _savedEquippedId = PlayerPrefs.GetInt(_keySaveEquipped, 0);
+            _savedEquippedId = SaveProvider.GetInt(_keySaveEquipped, 0);
             _savedEquippedId = Mathf.Clamp(_savedEquippedId, 0,
                 _prices != null && _prices.Length > 0 ? _prices.Length - 1 : 0);
             PreviewId = _savedEquippedId;
@@ -261,7 +262,7 @@ namespace Neo.Shop
         private void Select(int id)
         {
             _id = id;
-            PlayerPrefs.SetInt(_keySaveEquipped, _id);
+            SaveProvider.SetInt(_keySaveEquipped, _id);
             OnSelect?.Invoke(id);
 
             if (_useSetItem)
