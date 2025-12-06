@@ -162,7 +162,7 @@ namespace Neo.Tools.View
 - `DeckComponent`
 - `CardComponent`
 - `StarView`
-- `ToggleView`
+- `VisualToggle`
 - И все остальные компоненты в пространстве имён `Neo.*`
 
 ## Технические детали

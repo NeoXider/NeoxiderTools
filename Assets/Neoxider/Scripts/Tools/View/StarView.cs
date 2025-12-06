@@ -11,7 +11,7 @@ namespace Neo.Tools
     {
         [Header("GameObjects")] public GameObject[] starObjects;
         [FindInScene] public ScoreManager scoreManager;
-        [Space] [Header("ToggleView")] public ToggleView[] stars;
+        [Space] [Header("VisualToggle")] public VisualToggle[] stars;
 
         public void Awake()
         {
@@ -29,7 +29,7 @@ namespace Neo.Tools
             {
                 for (int i = 0; i < stars.Length; i++)
                 {
-                    stars[i].Set(i < count);
+                    stars[i].SetActive(i < count);
                 }
             }
 

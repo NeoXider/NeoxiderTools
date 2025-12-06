@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.3.4] - Unreleased
+
+### Добавлено
+- **VisualToggle**: Полностью переработан и улучшен
+  - Добавлена поддержка UnityEvent (On, Off, OnValueChanged)
+  - Добавлены кнопки в Inspector для тестирования
+  - Улучшена интеграция с Toggle компонентом
+  - Добавлена защита от рекурсии при работе с Toggle
+  - Добавлена опция `setOnAwake` для автоматического вызова событий текущего состояния при старте
+  - Расширенное API с методами Toggle(), SetActive(), SetInactive()
+  - Полная XML документация
+  - Свойство IsActive для получения/установки состояния
+
+### Улучшено
+- **VisualToggle**: Теперь объединяет возможности ToggleView и старого VisualToggle
+  - Поддержка множественных Image, цветов, текста и GameObject'ов
+  - Автоматическое сохранение начальных значений
+  - Улучшенная обработка событий
+
+### Удалено
+- **ToggleView**: Удален, полностью заменен улучшенным VisualToggle
+  - Все возможности перенесены в VisualToggle
+  - StarView обновлен для использования VisualToggle
+
+---
+
 ## [5.3.3] - Unreleased
 
 ### Улучшено

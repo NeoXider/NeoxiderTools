@@ -1294,7 +1294,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97c57a1e8a32a1743ad637ad53ef1fec, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  s: 10
+  loadMode: 0
   ALS:
     gameObjectLoad: {fileID: 0}
     animator: {fileID: 0}
@@ -1338,6 +1338,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   attackDamage: 10
+  attackType: 0
+  preventRepeatHits: 0
   triggerDuration: 0.2
   autoManageColliders: 0
   collider2D: {fileID: 0}
@@ -1488,22 +1490,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 1712151091}
-  _followMode: 1
-  _followPosition: 1
-  _useSmooth: 0
-  _smoothSpeed: 5
-  _offset: {x: 0, y: 0, z: 0}
-  _positionLimitX: {x: 0, y: 0}
-  _positionLimitY: {x: 0, y: 0}
-  _positionLimitZ: {x: 0, y: 0}
-  _rotationLimitX: {x: 0, y: 0}
-  _rotationLimitY: {x: 0, y: 0}
-  _rotationLimitZ: {x: 0, y: 0}
-  _followRotation: 0
-  _rotationSpeed: 5
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: 0
+  target: {fileID: 0}
+  followMode: 0
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 5
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!114 &1558015835
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1520,6 +1554,7 @@ MonoBehaviour:
   updateInterval: 0.015
   countUp: 1
   useUnscaledTime: 0
+  pauseOnTimeScaleZero: 1
   looping: 0
   autoStart: 1
   initialProgress: 0
@@ -2764,22 +2799,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 1712151091}
-  _followMode: 1
-  _followPosition: 0
-  _useSmooth: 0
-  _smoothSpeed: 2
-  _offset: {x: 0, y: 0, z: 0}
-  _positionLimitX: {x: 0, y: 0}
-  _positionLimitY: {x: 0, y: 0}
-  _positionLimitZ: {x: 0, y: 0}
-  _rotationLimitX: {x: 0, y: 0}
-  _rotationLimitY: {x: 0, y: 0}
-  _rotationLimitZ: {x: 0, y: 0}
-  _followRotation: 1
-  _rotationSpeed: 1
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: 0
+  target: {fileID: 1712151091}
+  followMode: 1
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 2
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!114 &1993566284
 MonoBehaviour:
   m_ObjectHideFlags: 0
