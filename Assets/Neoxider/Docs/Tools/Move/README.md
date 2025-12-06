@@ -7,10 +7,8 @@
 - [AdvancedForceApplier](./AdvancedForceApplier.md)
 - [CameraConstraint](./CameraConstraint.md)
 - [CameraRotationController](./CameraRotationController.md)
-- [DirectionAlignedObject](./DirectionAlignedObject.md)
 - [DistanceChecker](./DistanceChecker.md)
 - [Follow](./Follow.md)
-- [MoveController](./MoveController.md)
 - [ScreenPositioner](./ScreenPositioner.md)
 - [UniversalRotator](./UniversalRotator.md)
 

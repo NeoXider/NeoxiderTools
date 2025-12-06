@@ -10,10 +10,10 @@ namespace Neo.Editor
     {
         private Vector2 _scrollPosition;
 
-        [MenuItem("Tools/Neoxider Settings")]
+        [MenuItem("Tools/Neoxider/Visual Settings")]
         public static void ShowWindow()
         {
-            var window = GetWindow<NeoxiderSettingsWindow>("Neoxider Settings");
+            var window = GetWindow<NeoxiderSettingsWindow>("Visual Settings");
             window.minSize = new Vector2(400, 300);
         }
 
@@ -55,7 +55,6 @@ namespace Neo.Editor
             
             EditorGUI.BeginChangeCheck();
 
-            // Signature settings
             EditorGUILayout.LabelField("Текст (Signature)", EditorStyles.miniLabel);
             bool enableSignature = EditorGUILayout.Toggle("Включить Rainbow Signature", CustomEditorSettings.EnableRainbowSignature);
             
@@ -65,7 +64,6 @@ namespace Neo.Editor
             
             GUILayout.Space(5);
             
-            // Line settings
             EditorGUILayout.LabelField("Линия (Rainbow Line)", EditorStyles.miniLabel);
             bool enableOutline = EditorGUILayout.Toggle("Включить Rainbow Outline", CustomEditorSettings.EnableRainbowOutline);
             bool enableComponentOutline = EditorGUILayout.Toggle("Включить Rainbow Line (слева)", CustomEditorSettings.EnableRainbowComponentOutline);
@@ -76,7 +74,6 @@ namespace Neo.Editor
             
             GUILayout.Space(5);
             
-            // Speed settings
             EditorGUILayout.LabelField("Скорость анимации", EditorStyles.miniLabel);
             float speed = EditorGUILayout.Slider("Rainbow Speed", CustomEditorSettings.RainbowSpeed, 0f, 1f);
 
@@ -111,7 +108,6 @@ namespace Neo.Editor
             
             EditorGUILayout.EndVertical();
             
-            // Информация об исправлении для Package Manager
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Устранение проблем", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(

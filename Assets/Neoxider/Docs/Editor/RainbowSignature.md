@@ -13,7 +13,7 @@
 
 ## Настройки через меню
 
-**Tools → Neoxider Settings**
+**Tools → Neoxider → Visual Settings**
 
 Откроется окно с настройками:
 

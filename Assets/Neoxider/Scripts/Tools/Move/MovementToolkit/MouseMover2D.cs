@@ -4,7 +4,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     2-D mouse mover
+    ///     Mouse-based movement component supporting 2D and 3D planes.
+    ///     Provides multiple movement modes for different gameplay mechanics.
     /// </summary>
     [RequireComponent(typeof(Transform))]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MouseMover2D))]
@@ -13,8 +14,11 @@ namespace Neo.Tools
         public enum AxisMask
         {
             XY,
+            XZ,
+            YZ,
             X,
-            Y
+            Y,
+            Z
         }
 
         public enum MoveMode
@@ -26,14 +30,27 @@ namespace Neo.Tools
             Direction
         }
 
-        [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
-        [Header("Axis Mask")] [SerializeField] private AxisMask axes = AxisMask.XY;
-        [Header("Speed")] [SerializeField] private float speed = 5f; // units / sec
+        [Header("Mode")]
+        [SerializeField]
+        private MoveMode mode = MoveMode.DeltaNormalized;
 
-        [Header("Δ-sensitivity")] [SerializeField]
-        private float pxToWorld = .01f; // 1 px → м
+        [Header("Axis Mask")]
+        [Tooltip("Movement plane/axis restriction.")]
+        [SerializeField]
+        private AxisMask axes = AxisMask.XY;
 
-        [Header("Point Offset")] [SerializeField]
+        [Header("Speed")]
+        [Tooltip("Units per second.")]
+        [SerializeField]
+        private float speed = 5f;
+
+        [Header("Δ-sensitivity")]
+        [Tooltip("Pixel to world unit conversion factor.")]
+        [SerializeField]
+        private float pxToWorld = .01f;
+
+        [Header("Point Offset")]
+        [SerializeField]
         private Vector2 offset;
 
         [Header("Events")] public UnityEvent OnMoveStart;
@@ -227,7 +244,8 @@ namespace Neo.Tools
 
         private void DirectTranslate(Vector2 d)
         {
-            transform.Translate(d, Space.World);
+            Vector3 delta3D = MapToPlane(d);
+            transform.Translate(delta3D, Space.World);
         }
 
         private Vector2 ApplyMask(Vector2 v)
@@ -235,9 +253,26 @@ namespace Neo.Tools
             return axes switch
             {
                 AxisMask.XY => v,
+                AxisMask.XZ => v,
+                AxisMask.YZ => v,
                 AxisMask.X => new Vector2(v.x, 0),
                 AxisMask.Y => new Vector2(0, v.y),
+                AxisMask.Z => new Vector2(0, v.y),
                 _ => v
+            };
+        }
+
+        private Vector3 MapToPlane(Vector2 input)
+        {
+            return axes switch
+            {
+                AxisMask.XY => new Vector3(input.x, input.y, 0f),
+                AxisMask.XZ => new Vector3(input.x, 0f, input.y),
+                AxisMask.YZ => new Vector3(0f, input.x, input.y),
+                AxisMask.X => new Vector3(input.x, 0f, 0f),
+                AxisMask.Y => new Vector3(0f, input.y, 0f),
+                AxisMask.Z => new Vector3(0f, 0f, input.y),
+                _ => new Vector3(input.x, input.y, 0f)
             };
         }
 

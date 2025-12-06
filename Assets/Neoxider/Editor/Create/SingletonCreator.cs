@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using GUI = UnityEngine.GUI;
 
 namespace Neo.Editor
 {

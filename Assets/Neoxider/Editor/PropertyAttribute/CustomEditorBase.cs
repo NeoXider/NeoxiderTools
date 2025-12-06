@@ -4,6 +4,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
+using GUI = UnityEngine.GUI;
 
 namespace Neo.Editor
 {
@@ -234,10 +235,8 @@ namespace Neo.Editor
                 }
             }
 
-            // Draw default inspector
             base.OnInspectorGUI();
 
-            // Clear button parameters if Reset was pressed
             if (_wasResetPressed)
             {
                 _buttonParameterValues.Clear();
