@@ -1,8 +1,12 @@
 # Neoxider — коллекция мощных инструментов для Unity
 
-> «Мне хотелось иметь библиотеку, которая ускоряет рутину, не превращая проект в чёрный ящик. Поэтому я собрал Neoxider.»
+> **RU:** Готовые решения для Unity, которые легко интегрируются в ваш проект. Более 150 модулей для быстрой разработки игр без лишних сложностей.
+> 
+> **EN:** Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.
 
-Neoxider — это экосистема из более чем 150 модулей: UI, бонусы, экономика, ObjectPool, Spine, параллакс и многое другое. Пакет вырос на реальных проектах, поэтому он одинаково полезен и для быстрого прототипа, и для долгой поддержки коммьюнити‑проектов.
+**Neoxider** — это экосистема готовых инструментов для Unity, созданная разработчиками для разработчиков. Легко настраивается через Inspector, не требует глубокого погружения в код, но при этом остаётся полностью прозрачной и расширяемой. Идеально подходит для прототипирования и продакшн-проектов.
+
+**Neoxider** is an ecosystem of ready-to-use Unity tools, built by developers for developers. Easy to configure through Inspector, no deep code diving required, yet fully transparent and extensible. Perfect for prototyping and production projects.
 
 ---
 
