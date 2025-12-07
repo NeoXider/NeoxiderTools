@@ -1,0 +1,39 @@
+{
+    "name": "Flexalon.Editor",
+    "rootNamespace": "",
+    "references": [
+        "Flexalon"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.unitywebrequest",
+            "expression": "",
+            "define": "UNITY_WEB_REQUEST"
+        },
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "",
+            "define": "UNITY_XRI"
+        },
+        {
+            "name": "com.unity.modules.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS"
+        },
+        {
+            "name": "com.unity.modules.ui",
+            "expression": "",
+            "define": "UNITY_UI"
+        }
+    ],
+    "noEngineReferences": false
+}

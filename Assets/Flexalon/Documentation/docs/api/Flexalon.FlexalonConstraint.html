@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonConstraint | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonConstraint | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="The Flexalon Constraint component positions its gameObject relative to a target, which can be any other gameObject. The constrained object or the target can also have layout components, which provides a powerful way to combine layouts together.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonConstraint.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonConstraint%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonConstraint">
+
+
+
+  <h1 id="Flexalon_FlexalonConstraint" data-uid="Flexalon.FlexalonConstraint" class="text-break">
+Class FlexalonConstraint  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>The Flexalon Constraint component positions its gameObject relative to a target,
+which can be any other gameObject. The constrained object or the target can also
+have layout components, which provides a powerful way to combine layouts together.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonConstraint : FlexalonComponent, Constraint</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></div>
+      <div><span class="xref">FlexalonConstraint</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.Constraint.html">Constraint</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent__node">FlexalonComponent._node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Node">FlexalonComponent.Node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_MarkDirty">FlexalonComponent.MarkDirty()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_ForceUpdate">FlexalonComponent.ForceUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoOnEnable">FlexalonComponent.DoOnEnable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoOnDisable">FlexalonComponent.DoOnDisable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Initialize">FlexalonComponent.Initialize()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Upgrade_System_Int32_">FlexalonComponent.Upgrade(int)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonConstraint_DepthAlign_" data-uid="Flexalon.FlexalonConstraint.DepthAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_DepthAlign" data-uid="Flexalon.FlexalonConstraint.DepthAlign">
+  DepthAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L49"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the depth axis aligns to the target's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align DepthAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_DepthPivot_" data-uid="Flexalon.FlexalonConstraint.DepthPivot*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_DepthPivot" data-uid="Flexalon.FlexalonConstraint.DepthPivot">
+  DepthPivot
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L76"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the depth axis aligns to this object's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align DepthPivot { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_HorizontalAlign_" data-uid="Flexalon.FlexalonConstraint.HorizontalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_HorizontalAlign" data-uid="Flexalon.FlexalonConstraint.HorizontalAlign">
+  HorizontalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L31"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the horizontal axis aligns to the target's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align HorizontalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_HorizontalPivot_" data-uid="Flexalon.FlexalonConstraint.HorizontalPivot*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_HorizontalPivot" data-uid="Flexalon.FlexalonConstraint.HorizontalPivot">
+  HorizontalPivot
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L58"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the horizontal axis aligns to this object's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align HorizontalPivot { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_Target_" data-uid="Flexalon.FlexalonConstraint.Target*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_Target" data-uid="Flexalon.FlexalonConstraint.Target">
+  Target
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L22"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Which gameObject to constrain to.
+The position depends on the Align and Pivot options (see below).
+The rotation is set to match the target's rotation.
+The available space is set to match the target's size. Set the width, height, and
+depth properties on the Flexalon Object Component to Parent to match the target's size.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public GameObject Target { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">GameObject</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_VerticalAlign_" data-uid="Flexalon.FlexalonConstraint.VerticalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_VerticalAlign" data-uid="Flexalon.FlexalonConstraint.VerticalAlign">
+  VerticalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L40"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the vertical axis aligns to the target's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align VerticalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_VerticalPivot_" data-uid="Flexalon.FlexalonConstraint.VerticalPivot*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_VerticalPivot" data-uid="Flexalon.FlexalonConstraint.VerticalPivot">
+  VerticalPivot
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L67"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the vertical axis aligns to this object's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align VerticalPivot { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonConstraint_Constrain_" data-uid="Flexalon.FlexalonConstraint.Constrain*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_Constrain_Flexalon_FlexalonNode_" data-uid="Flexalon.FlexalonConstraint.Constrain(Flexalon.FlexalonNode)">
+  Constrain(FlexalonNode)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L147"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Applies the constraint.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void Constrain(FlexalonNode node)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_DoUpdate_" data-uid="Flexalon.FlexalonConstraint.DoUpdate*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_DoUpdate" data-uid="Flexalon.FlexalonConstraint.DoUpdate">
+  DoUpdate()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L94"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when the component is updated.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void DoUpdate()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_ResetProperties_" data-uid="Flexalon.FlexalonConstraint.ResetProperties*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_ResetProperties" data-uid="Flexalon.FlexalonConstraint.ResetProperties">
+  ResetProperties()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L88"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when the component is destroyed to reset properties on the FlexalonNode.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void ResetProperties()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonConstraint_UpdateProperties_" data-uid="Flexalon.FlexalonConstraint.UpdateProperties*"></a>
+
+  <h3 id="Flexalon_FlexalonConstraint_UpdateProperties" data-uid="Flexalon.FlexalonConstraint.UpdateProperties">
+  UpdateProperties()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonConstraint.cs/#L118"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when the component is enabled to apply properties to the FlexalonNode.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void UpdateProperties()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

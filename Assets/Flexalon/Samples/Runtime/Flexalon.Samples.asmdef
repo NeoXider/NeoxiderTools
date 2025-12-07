@@ -1,0 +1,49 @@
+{
+    "name": "Flexalon.Samples",
+    "rootNamespace": "",
+    "references": [
+        "Flexalon",
+        "Unity.TextMeshPro",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.unitywebrequest",
+            "expression": "",
+            "define": "UNITY_WEB_REQUEST"
+        },
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "",
+            "define": "UNITY_TMPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "UNITY_TMPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "",
+            "define": "UNITY_GUI"
+        },
+        {
+            "name": "com.unity.modules.ui",
+            "expression": "",
+            "define": "UNITY_UI"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UNITY_INPUT_SYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

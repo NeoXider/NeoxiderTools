@@ -1,0 +1,1907 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Interface FlexalonNode | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Interface FlexalonNode | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="Represents a node in the Flexalon layout tree.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonNode.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonNode%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonNode">
+
+
+
+  <h1 id="Flexalon_FlexalonNode" data-uid="Flexalon.FlexalonNode" class="text-break">
+Interface FlexalonNode  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L7"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Represents a node in the Flexalon layout tree.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public interface FlexalonNode</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonNode_Adapter_" data-uid="Flexalon.FlexalonNode.Adapter*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Adapter" data-uid="Flexalon.FlexalonNode.Adapter">
+  Adapter
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L151"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the active adapter for this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Adapter Adapter { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Adapter.html">Adapter</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Children_" data-uid="Flexalon.FlexalonNode.Children*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Children" data-uid="Flexalon.FlexalonNode.Children">
+  Children
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L25"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The children of this layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">IReadOnlyList&lt;FlexalonNode&gt; Children { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">IReadOnlyList</span>&lt;<a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Constraint_" data-uid="Flexalon.FlexalonNode.Constraint*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Constraint" data-uid="Flexalon.FlexalonNode.Constraint">
+  Constraint
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L148"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the constraint of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Constraint Constraint { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Constraint.html">Constraint</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Dirty_" data-uid="Flexalon.FlexalonNode.Dirty*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Dirty" data-uid="Flexalon.FlexalonNode.Dirty">
+  Dirty
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L16"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>True if this node is dirty.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool Dirty { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_FlexalonObject_" data-uid="Flexalon.FlexalonNode.FlexalonObject*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_FlexalonObject" data-uid="Flexalon.FlexalonNode.FlexalonObject">
+  FlexalonObject
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L60"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the FlexalonObject of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">FlexalonObject FlexalonObject { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonObject.html">FlexalonObject</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GameObject_" data-uid="Flexalon.FlexalonNode.GameObject*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GameObject" data-uid="Flexalon.FlexalonNode.GameObject">
+  GameObject
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The GameObject associated with this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">GameObject GameObject { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">GameObject</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_HasFlexalonObject_" data-uid="Flexalon.FlexalonNode.HasFlexalonObject*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_HasFlexalonObject" data-uid="Flexalon.FlexalonNode.HasFlexalonObject">
+  HasFlexalonObject
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L63"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns true if FlexalonObject is set.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool HasFlexalonObject { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_HasResult_" data-uid="Flexalon.FlexalonNode.HasResult*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_HasResult" data-uid="Flexalon.FlexalonNode.HasResult">
+  HasResult
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L127"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Has layout ever run on this node?</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool HasResult { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Index_" data-uid="Flexalon.FlexalonNode.Index*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Index" data-uid="Flexalon.FlexalonNode.Index">
+  Index
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L28"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The index of this node in its parent's Children list.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">int Index { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">int</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_IsDragging_" data-uid="Flexalon.FlexalonNode.IsDragging*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_IsDragging" data-uid="Flexalon.FlexalonNode.IsDragging">
+  IsDragging
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L172"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>True when this node is being dragged.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool IsDragging { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Margin_" data-uid="Flexalon.FlexalonNode.Margin*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Margin" data-uid="Flexalon.FlexalonNode.Margin">
+  Margin
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L97"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned margin of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Directions Margin { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Directions.html">Directions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Method_" data-uid="Flexalon.FlexalonNode.Method*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Method" data-uid="Flexalon.FlexalonNode.Method">
+  Method
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L54"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the layout method of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Layout Method { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Layout.html">Layout</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Modifiers_" data-uid="Flexalon.FlexalonNode.Modifiers*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Modifiers" data-uid="Flexalon.FlexalonNode.Modifiers">
+  Modifiers
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L160"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the set of modifiers that apply to layout results.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">IReadOnlyList&lt;FlexalonModifier&gt; Modifiers { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">IReadOnlyList</span>&lt;<a class="xref" href="Flexalon.FlexalonModifier.html">FlexalonModifier</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Offset_" data-uid="Flexalon.FlexalonNode.Offset*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Offset" data-uid="Flexalon.FlexalonNode.Offset">
+  Offset
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L75"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned offset of this node relative to its layout position.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 Offset { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Padding_" data-uid="Flexalon.FlexalonNode.Padding*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Padding" data-uid="Flexalon.FlexalonNode.Padding">
+  Padding
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L100"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned padding of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Directions Padding { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Directions.html">Directions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Parent_" data-uid="Flexalon.FlexalonNode.Parent*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Parent" data-uid="Flexalon.FlexalonNode.Parent">
+  Parent
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L22"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The parent layout node of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">FlexalonNode Parent { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Result_" data-uid="Flexalon.FlexalonNode.Result*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Result" data-uid="Flexalon.FlexalonNode.Result">
+  Result
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L130"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the result of the last layout run.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">FlexalonResult Result { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonResult.html">FlexalonResult</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Rotation_" data-uid="Flexalon.FlexalonNode.Rotation*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Rotation" data-uid="Flexalon.FlexalonNode.Rotation">
+  Rotation
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L94"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned relative rotation of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Quaternion Rotation { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Quaternion</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Scale_" data-uid="Flexalon.FlexalonNode.Scale*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Scale" data-uid="Flexalon.FlexalonNode.Scale">
+  Scale
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L91"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned relative scale of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 Scale { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Size_" data-uid="Flexalon.FlexalonNode.Size*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Size" data-uid="Flexalon.FlexalonNode.Size">
+  Size
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L69"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned fixed size of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 Size { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SizeOfParent_" data-uid="Flexalon.FlexalonNode.SizeOfParent*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SizeOfParent" data-uid="Flexalon.FlexalonNode.SizeOfParent">
+  SizeOfParent
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L72"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned size factor of this node relative to the available space.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 SizeOfParent { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SkipLayout_" data-uid="Flexalon.FlexalonNode.SkipLayout*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SkipLayout" data-uid="Flexalon.FlexalonNode.SkipLayout">
+  SkipLayout
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L175"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>True when this node should not skipped when performing layout.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool SkipLayout { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonNode_AddChild_" data-uid="Flexalon.FlexalonNode.AddChild*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_AddChild_Flexalon_FlexalonNode_" data-uid="Flexalon.FlexalonNode.AddChild(Flexalon.FlexalonNode)">
+  AddChild(FlexalonNode)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L32"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a child to this layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void AddChild(FlexalonNode child)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>child</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The child to add.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_AddModifier_" data-uid="Flexalon.FlexalonNode.AddModifier*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_AddModifier_Flexalon_FlexalonModifier_" data-uid="Flexalon.FlexalonNode.AddModifier(Flexalon.FlexalonModifier)">
+  AddModifier(FlexalonModifier)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L163"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a modifier to this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void AddModifier(FlexalonModifier modifier)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>modifier</code> <a class="xref" href="Flexalon.FlexalonModifier.html">FlexalonModifier</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_ApplyScaleAndRotation_" data-uid="Flexalon.FlexalonNode.ApplyScaleAndRotation*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_ApplyScaleAndRotation" data-uid="Flexalon.FlexalonNode.ApplyScaleAndRotation">
+  ApplyScaleAndRotation()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L157"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Only applies rotation and scale changes to the node. Faster than marking it dirty.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void ApplyScaleAndRotation()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_CanShrink_" data-uid="Flexalon.FlexalonNode.CanShrink*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_CanShrink_System_Int32_" data-uid="Flexalon.FlexalonNode.CanShrink(System.Int32)">
+  CanShrink(int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L88"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns true if this node is not filling this axis and has a min size set.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">bool CanShrink(int axis)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_Detach_" data-uid="Flexalon.FlexalonNode.Detach*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_Detach" data-uid="Flexalon.FlexalonNode.Detach">
+  Detach()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L45"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes this node from its parent layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void Detach()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_DetachAllChildren_" data-uid="Flexalon.FlexalonNode.DetachAllChildren*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_DetachAllChildren" data-uid="Flexalon.FlexalonNode.DetachAllChildren">
+  DetachAllChildren()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L48"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes all children from this layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void DetachAllChildren()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_ForceUpdate_" data-uid="Flexalon.FlexalonNode.ForceUpdate*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_ForceUpdate" data-uid="Flexalon.FlexalonNode.ForceUpdate">
+  ForceUpdate()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L19"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Forces this node, its parent nodes, and its children nodes to update immediately.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void ForceUpdate()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetArrangeSize_" data-uid="Flexalon.FlexalonNode.GetArrangeSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetArrangeSize" data-uid="Flexalon.FlexalonNode.GetArrangeSize">
+  GetArrangeSize()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L118"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the computed size of this node during the arrange step.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 GetArrangeSize()</code></pre>
+  </div>
+
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetChild_" data-uid="Flexalon.FlexalonNode.GetChild*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetChild_System_Int32_" data-uid="Flexalon.FlexalonNode.GetChild(System.Int32)">
+  GetChild(int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L42"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the child of this layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">FlexalonNode GetChild(int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index of the child to return.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The child at the given index.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetMaxSize_" data-uid="Flexalon.FlexalonNode.GetMaxSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetMaxSize_System_Int32_System_Single_" data-uid="Flexalon.FlexalonNode.GetMaxSize(System.Int32,System.Single)">
+  GetMaxSize(int, float)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L115"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the max size of this node, including margin.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">float GetMaxSize(int axis, float parentSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd></dd>
+    <dt><code>parentSize</code> <span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetMeasureSize_" data-uid="Flexalon.FlexalonNode.GetMeasureSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetMeasureSize_System_Int32_System_Single_" data-uid="Flexalon.FlexalonNode.GetMeasureSize(System.Int32,System.Single)">
+  GetMeasureSize(int, float)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L106"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the computed size of this node during the measure step.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">float GetMeasureSize(int axis, float layoutSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetMeasureSize_" data-uid="Flexalon.FlexalonNode.GetMeasureSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetMeasureSize_Vector3_" data-uid="Flexalon.FlexalonNode.GetMeasureSize(Vector3)">
+  GetMeasureSize(Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L103"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the computed size of this node during the measure step.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 GetMeasureSize(Vector3 layoutSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>layoutSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetMinSize_" data-uid="Flexalon.FlexalonNode.GetMinSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetMinSize_System_Int32_System_Single_" data-uid="Flexalon.FlexalonNode.GetMinSize(System.Int32,System.Single)">
+  GetMinSize(int, float)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L112"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the min size of this node, including margin.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">float GetMinSize(int axis, float parentSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd></dd>
+    <dt><code>parentSize</code> <span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetMinSize_" data-uid="Flexalon.FlexalonNode.GetMinSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetMinSize_Vector3_" data-uid="Flexalon.FlexalonNode.GetMinSize(Vector3)">
+  GetMinSize(Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L109"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the min size of this node, including margin.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 GetMinSize(Vector3 parentSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>parentSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetSizeType_" data-uid="Flexalon.FlexalonNode.GetSizeType*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetSizeType_Flexalon_Axis_" data-uid="Flexalon.FlexalonNode.GetSizeType(Flexalon.Axis)">
+  GetSizeType(Axis)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L80"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned SizeType of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">SizeType GetSizeType(Axis axis)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <a class="xref" href="Flexalon.Axis.html">Axis</a></dt>
+    <dd><p>The axis to get the SizeType of.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.SizeType.html">SizeType</a></dt>
+    <dd><p>The SizeType of the given axis.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetSizeType_" data-uid="Flexalon.FlexalonNode.GetSizeType*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetSizeType_System_Int32_" data-uid="Flexalon.FlexalonNode.GetSizeType(System.Int32)">
+  GetSizeType(int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the assigned SizeType of this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">SizeType GetSizeType(int axis)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd><p>The axis to get the SizeType of.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.SizeType.html">SizeType</a></dt>
+    <dd><p>The SizeType of the given axis.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetWorldBoxPosition_" data-uid="Flexalon.FlexalonNode.GetWorldBoxPosition*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetWorldBoxPosition_Vector3_System_Boolean_" data-uid="Flexalon.FlexalonNode.GetWorldBoxPosition(Vector3,System.Boolean)">
+  GetWorldBoxPosition(Vector3, bool)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L121"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the world position of the layout box. Used for gizmos.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 GetWorldBoxPosition(Vector3 scale, bool includePadding)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>scale</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>includePadding</code> <span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_GetWorldBoxScale_" data-uid="Flexalon.FlexalonNode.GetWorldBoxScale*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_GetWorldBoxScale_System_Boolean_" data-uid="Flexalon.FlexalonNode.GetWorldBoxScale(System.Boolean)">
+  GetWorldBoxScale(bool)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L124"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the world scale of the layout box. Used for gizmos.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">Vector3 GetWorldBoxScale(bool includeLocalScale)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>includeLocalScale</code> <span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_InsertChild_" data-uid="Flexalon.FlexalonNode.InsertChild*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_InsertChild_Flexalon_FlexalonNode_System_Int32_" data-uid="Flexalon.FlexalonNode.InsertChild(Flexalon.FlexalonNode,System.Int32)">
+  InsertChild(FlexalonNode, int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L37"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inserts a child into this layout node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void InsertChild(FlexalonNode child, int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>child</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The child to insert.</p>
+</dd>
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index to insert the child at.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_MarkDirty_" data-uid="Flexalon.FlexalonNode.MarkDirty*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_MarkDirty" data-uid="Flexalon.FlexalonNode.MarkDirty">
+  MarkDirty()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L13"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Marks this node and its parents as dirty, so they will be updated by the Flexalon component.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void MarkDirty()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_RemoveModifier_" data-uid="Flexalon.FlexalonNode.RemoveModifier*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_RemoveModifier_Flexalon_FlexalonModifier_" data-uid="Flexalon.FlexalonNode.RemoveModifier(Flexalon.FlexalonModifier)">
+  RemoveModifier(FlexalonModifier)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L166"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes a modifier from this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void RemoveModifier(FlexalonModifier modifier)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>modifier</code> <a class="xref" href="Flexalon.FlexalonModifier.html">FlexalonModifier</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetAdapter_" data-uid="Flexalon.FlexalonNode.SetAdapter*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetAdapter_Flexalon_Adapter_" data-uid="Flexalon.FlexalonNode.SetAdapter(Flexalon.Adapter)">
+  SetAdapter(Adapter)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L154"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Overrides the default adapter for this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetAdapter(Adapter adapter)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>adapter</code> <a class="xref" href="Flexalon.Adapter.html">Adapter</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetConstraint_" data-uid="Flexalon.FlexalonNode.SetConstraint*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetConstraint_Flexalon_Constraint_Flexalon_FlexalonNode_" data-uid="Flexalon.FlexalonNode.SetConstraint(Flexalon.Constraint,Flexalon.FlexalonNode)">
+  SetConstraint(Constraint, FlexalonNode)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L145"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Constrains this node to the given target node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetConstraint(Constraint constraint, FlexalonNode target)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>constraint</code> <a class="xref" href="Flexalon.Constraint.html">Constraint</a></dt>
+    <dd></dd>
+    <dt><code>target</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetFlexalonObject_" data-uid="Flexalon.FlexalonNode.SetFlexalonObject*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetFlexalonObject_Flexalon_FlexalonObject_" data-uid="Flexalon.FlexalonNode.SetFlexalonObject(Flexalon.FlexalonObject)">
+  SetFlexalonObject(FlexalonObject)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L66"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Assigns a FlexalonObject to this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetFlexalonObject(FlexalonObject obj)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>obj</code> <a class="xref" href="Flexalon.FlexalonObject.html">FlexalonObject</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetMethod_" data-uid="Flexalon.FlexalonNode.SetMethod*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetMethod_Flexalon_Layout_" data-uid="Flexalon.FlexalonNode.SetMethod(Flexalon.Layout)">
+  SetMethod(Layout)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L51"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Assigns a layout method to this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetMethod(Layout method)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>method</code> <a class="xref" href="Flexalon.Layout.html">Layout</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetPositionResult_" data-uid="Flexalon.FlexalonNode.SetPositionResult*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetPositionResult_Vector3_" data-uid="Flexalon.FlexalonNode.SetPositionResult(Vector3)">
+  SetPositionResult(Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L139"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Set the position result from a layout arrange step.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetPositionResult(Vector3 position)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>position</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetRotationResult_" data-uid="Flexalon.FlexalonNode.SetRotationResult*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetRotationResult_Quaternion_" data-uid="Flexalon.FlexalonNode.SetRotationResult(Quaternion)">
+  SetRotationResult(Quaternion)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L142"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Set the rotation result from a layout arrange step.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetRotationResult(Quaternion quaternion)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>quaternion</code> <span class="xref">Quaternion</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetShrinkFillSize_" data-uid="Flexalon.FlexalonNode.SetShrinkFillSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetShrinkFillSize_System_Int32_System_Single_System_Single_System_Boolean_" data-uid="Flexalon.FlexalonNode.SetShrinkFillSize(System.Int32,System.Single,System.Single,System.Boolean)">
+  SetShrinkFillSize(int, float, float, bool)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L136"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the space a child should shrink or fill.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetShrinkFillSize(int axis, float childSize, float layoutSize, bool includesSizeOfParent = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>axis</code> <span class="xref">int</span></dt>
+    <dd></dd>
+    <dt><code>childSize</code> <span class="xref">float</span></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">float</span></dt>
+    <dd></dd>
+    <dt><code>includesSizeOfParent</code> <span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetShrinkFillSize_" data-uid="Flexalon.FlexalonNode.SetShrinkFillSize*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetShrinkFillSize_Vector3_Vector3_System_Boolean_" data-uid="Flexalon.FlexalonNode.SetShrinkFillSize(Vector3,Vector3,System.Boolean)">
+  SetShrinkFillSize(Vector3, Vector3, bool)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L133"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Sets the space a child should shrink or fill.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetShrinkFillSize(Vector3 childSize, Vector3 layoutSize, bool includesSizeOfParent = false)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>childSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>includesSizeOfParent</code> <span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonNode_SetTransformUpdater_" data-uid="Flexalon.FlexalonNode.SetTransformUpdater*"></a>
+
+  <h3 id="Flexalon_FlexalonNode_SetTransformUpdater_Flexalon_TransformUpdater_" data-uid="Flexalon.FlexalonNode.SetTransformUpdater(Flexalon.TransformUpdater)">
+  SetTransformUpdater(TransformUpdater)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L57"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Assigns a transform updater to this node.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">void SetTransformUpdater(TransformUpdater updater)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>updater</code> <a class="xref" href="Flexalon.TransformUpdater.html">TransformUpdater</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="events">Events
+</h2>
+
+
+
+  <h3 id="Flexalon_FlexalonNode_ResultChanged" data-uid="Flexalon.FlexalonNode.ResultChanged">
+  ResultChanged
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Core/FlexalonNode.cs/#L169"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Event invoked when layout results change.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">event System.Action&lt;FlexalonNode&gt; ResultChanged</code></pre>
+  </div>
+
+
+
+
+
+
+  <h4 class="section">Event Type</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Action</span>&lt;<a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

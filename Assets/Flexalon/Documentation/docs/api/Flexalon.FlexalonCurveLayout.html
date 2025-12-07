@@ -1,0 +1,973 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonCurveLayout | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonCurveLayout | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="Use a curve layout to position children along a b&#233;zier curve.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonCurveLayout.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonCurveLayout%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonCurveLayout">
+
+
+
+  <h1 id="Flexalon_FlexalonCurveLayout" data-uid="Flexalon.FlexalonCurveLayout" class="text-break">
+Class FlexalonCurveLayout  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L9"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Use a curve layout to position children along a bézier curve.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonCurveLayout : LayoutBase, Layout</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></div>
+      <div><a class="xref" href="Flexalon.LayoutBase.html">LayoutBase</a></div>
+      <div><span class="xref">FlexalonCurveLayout</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.Layout.html">Layout</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnEnable">LayoutBase.DoOnEnable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnDisable">LayoutBase.DoOnDisable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_ResetProperties">LayoutBase.ResetProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_SetChildrenFillShrinkSize_Flexalon_FlexalonNode_Vector3_Vector3_">LayoutBase.SetChildrenFillShrinkSize(FlexalonNode, Vector3, Vector3)</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent__node">FlexalonComponent._node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Node">FlexalonComponent.Node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_MarkDirty">FlexalonComponent.MarkDirty()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_ForceUpdate">FlexalonComponent.ForceUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_UpdateProperties">FlexalonComponent.UpdateProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoUpdate">FlexalonComponent.DoUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Upgrade_System_Int32_">FlexalonComponent.Upgrade(int)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="fields">Fields
+</h2>
+
+
+
+  <h3 id="Flexalon_FlexalonCurveLayout_EditorHovered" data-uid="Flexalon.FlexalonCurveLayout.EditorHovered">
+  EditorHovered
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L678"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int EditorHovered</code></pre>
+  </div>
+
+
+
+
+  <h4 class="section">Field Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">int</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonCurveLayout_AfterEnd_" data-uid="Flexalon.FlexalonCurveLayout.AfterEnd*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_AfterEnd" data-uid="Flexalon.FlexalonCurveLayout.AfterEnd">
+  AfterEnd
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L167"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offsets all objects along the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonCurveLayout.ExtendBehavior AfterEnd { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.ExtendBehavior.html">ExtendBehavior</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_BeforeStart_" data-uid="Flexalon.FlexalonCurveLayout.BeforeStart*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_BeforeStart" data-uid="Flexalon.FlexalonCurveLayout.BeforeStart">
+  BeforeStart
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L158"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offsets all objects along the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonCurveLayout.ExtendBehavior BeforeStart { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.ExtendBehavior.html">ExtendBehavior</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_CurveLength_" data-uid="Flexalon.FlexalonCurveLayout.CurveLength*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_CurveLength" data-uid="Flexalon.FlexalonCurveLayout.CurveLength">
+  CurveLength
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L290"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The length of the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float CurveLength { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_CurvePositions_" data-uid="Flexalon.FlexalonCurveLayout.CurvePositions*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_CurvePositions" data-uid="Flexalon.FlexalonCurveLayout.CurvePositions">
+  CurvePositions
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L281"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Points along the curve used to position objects and can be used for visualization.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IReadOnlyList&lt;Vector3&gt; CurvePositions { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">IReadOnlyList</span>&lt;<span class="xref">Vector3</span>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_LockPositions_" data-uid="Flexalon.FlexalonCurveLayout.LockPositions*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_LockPositions" data-uid="Flexalon.FlexalonCurveLayout.LockPositions">
+  LockPositions
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L103"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Prevents the position handles from appearing in the editor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool LockPositions { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_LockTangents_" data-uid="Flexalon.FlexalonCurveLayout.LockTangents*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_LockTangents" data-uid="Flexalon.FlexalonCurveLayout.LockTangents">
+  LockTangents
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L94"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Prevents the tangent handles from appearing in the editor.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool LockTangents { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Points_" data-uid="Flexalon.FlexalonCurveLayout.Points*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Points" data-uid="Flexalon.FlexalonCurveLayout.Points">
+  Points
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L72"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The points that define the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public IReadOnlyList&lt;FlexalonCurveLayout.CurvePoint&gt; Points { get; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">IReadOnlyList</span>&lt;<a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">CurvePoint</a>&gt;</dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Rotation_" data-uid="Flexalon.FlexalonCurveLayout.Rotation*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Rotation" data-uid="Flexalon.FlexalonCurveLayout.Rotation">
+  Rotation
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L203"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how children should be rotated</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonCurveLayout.RotationOptions Rotation { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.RotationOptions.html">RotationOptions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Spacing_" data-uid="Flexalon.FlexalonCurveLayout.Spacing*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Spacing" data-uid="Flexalon.FlexalonCurveLayout.Spacing">
+  Spacing
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L121"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines the fixed distance between children.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float Spacing { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_SpacingType_" data-uid="Flexalon.FlexalonCurveLayout.SpacingType*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_SpacingType" data-uid="Flexalon.FlexalonCurveLayout.SpacingType">
+  SpacingType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L112"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the children will be spaced along the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonCurveLayout.SpacingOptions SpacingType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.SpacingOptions.html">SpacingOptions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_StartAt_" data-uid="Flexalon.FlexalonCurveLayout.StartAt*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_StartAt" data-uid="Flexalon.FlexalonCurveLayout.StartAt">
+  StartAt
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L130"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Offsets all objects along the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float StartAt { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonCurveLayout_AddPoint_" data-uid="Flexalon.FlexalonCurveLayout.AddPoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_AddPoint_Flexalon_FlexalonCurveLayout_CurvePoint_" data-uid="Flexalon.FlexalonCurveLayout.AddPoint(Flexalon.FlexalonCurveLayout.CurvePoint)">
+  AddPoint(CurvePoint)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L211"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a new point to the end of the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddPoint(FlexalonCurveLayout.CurvePoint point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>point</code> <a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">CurvePoint</a></dt>
+    <dd><p>The point to add.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_AddPoint_" data-uid="Flexalon.FlexalonCurveLayout.AddPoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_AddPoint_Vector3_Vector3_" data-uid="Flexalon.FlexalonCurveLayout.AddPoint(Vector3,Vector3)">
+  AddPoint(Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L220"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a new point to the end of the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void AddPoint(Vector3 position, Vector3 tangent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>position</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The position of the point.</p>
+</dd>
+    <dt><code>tangent</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The tangent of the point.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Arrange_" data-uid="Flexalon.FlexalonCurveLayout.Arrange*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Arrange_Flexalon_FlexalonNode_Vector3_" data-uid="Flexalon.FlexalonCurveLayout.Arrange(Flexalon.FlexalonNode,Vector3)">
+  Arrange(FlexalonNode, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L586"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Position the children of node within the available bounds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Arrange(FlexalonNode node, Vector3 layoutSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Initialize_" data-uid="Flexalon.FlexalonCurveLayout.Initialize*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Initialize" data-uid="Flexalon.FlexalonCurveLayout.Initialize">
+  Initialize()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L658"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"></div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void Initialize()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_InsertPoint_" data-uid="Flexalon.FlexalonCurveLayout.InsertPoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_InsertPoint_System_Int32_Flexalon_FlexalonCurveLayout_CurvePoint_" data-uid="Flexalon.FlexalonCurveLayout.InsertPoint(System.Int32,Flexalon.FlexalonCurveLayout.CurvePoint)">
+  InsertPoint(int, CurvePoint)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L228"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inserts a new point into the curve at the specified index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void InsertPoint(int index, FlexalonCurveLayout.CurvePoint point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index to insert the point at.</p>
+</dd>
+    <dt><code>point</code> <a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">CurvePoint</a></dt>
+    <dd><p>The point to insert.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_InsertPoint_" data-uid="Flexalon.FlexalonCurveLayout.InsertPoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_InsertPoint_System_Int32_Vector3_Vector3_" data-uid="Flexalon.FlexalonCurveLayout.InsertPoint(System.Int32,Vector3,Vector3)">
+  InsertPoint(int, Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L238"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Inserts a new point into the curve at the specified index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void InsertPoint(int index, Vector3 position, Vector3 tangent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index to insert the point at.</p>
+</dd>
+    <dt><code>position</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The position of the point.</p>
+</dd>
+    <dt><code>tangent</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The tangent of the point.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_Measure_" data-uid="Flexalon.FlexalonCurveLayout.Measure*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_Measure_Flexalon_FlexalonNode_Vector3_Vector3_Vector3_" data-uid="Flexalon.FlexalonCurveLayout.Measure(Flexalon.FlexalonNode,Vector3,Vector3,Vector3)">
+  Measure(FlexalonNode, Vector3, Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L561"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Perform minimal work to determine what the size of node and available size for node's children.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Bounds Measure(FlexalonNode node, Vector3 size, Vector3 min, Vector3 max)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>size</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>min</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>max</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Bounds</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_RemovePoint_" data-uid="Flexalon.FlexalonCurveLayout.RemovePoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_RemovePoint_System_Int32_" data-uid="Flexalon.FlexalonCurveLayout.RemovePoint(System.Int32)">
+  RemovePoint(int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L263"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Removes the point at the index.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void RemovePoint(int index)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index of the point to remove.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_ReplacePoint_" data-uid="Flexalon.FlexalonCurveLayout.ReplacePoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_ReplacePoint_System_Int32_Flexalon_FlexalonCurveLayout_CurvePoint_" data-uid="Flexalon.FlexalonCurveLayout.ReplacePoint(System.Int32,Flexalon.FlexalonCurveLayout.CurvePoint)">
+  ReplacePoint(int, CurvePoint)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L246"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Replaces the point at the index with a new point.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ReplacePoint(int index, FlexalonCurveLayout.CurvePoint point)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index of the point to replace.</p>
+</dd>
+    <dt><code>point</code> <a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a>.<a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">CurvePoint</a></dt>
+    <dd><p>The new point.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_ReplacePoint_" data-uid="Flexalon.FlexalonCurveLayout.ReplacePoint*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_ReplacePoint_System_Int32_Vector3_Vector3_" data-uid="Flexalon.FlexalonCurveLayout.ReplacePoint(System.Int32,Vector3,Vector3)">
+  ReplacePoint(int, Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L256"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Replaces the point at the index with a new point.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void ReplacePoint(int index, Vector3 position, Vector3 tangent)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>index</code> <span class="xref">int</span></dt>
+    <dd><p>The index of the point to replace.</p>
+</dd>
+    <dt><code>position</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The position of the point.</p>
+</dd>
+    <dt><code>tangent</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The tangent of the point.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonCurveLayout_SetPoints_" data-uid="Flexalon.FlexalonCurveLayout.SetPoints*"></a>
+
+  <h3 id="Flexalon_FlexalonCurveLayout_SetPoints_List_Flexalon_FlexalonCurveLayout_CurvePoint__" data-uid="Flexalon.FlexalonCurveLayout.SetPoints(List{Flexalon.FlexalonCurveLayout.CurvePoint})">
+  SetPoints(List&lt;CurvePoint&gt;)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonCurveLayout.cs/#L271"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Replaces all points of the curve.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void SetPoints(List&lt;FlexalonCurveLayout.CurvePoint&gt; points)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>points</code> <span class="xref">List</span>&lt;<a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">CurvePoint</a>&gt;</dt>
+    <dd><p>The new points.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -38,14 +38,22 @@ namespace Neo
             [SerializeField]
             private bool useKeyboardInteraction = true;
 
-            [Header("Distance Control")]
-            [Tooltip("Maximum interaction distance (0 = unlimited).")]
-            [SerializeField]
-            private float interactionDistance = 2f;
+        [Header("Distance Control")]
+        [Tooltip("Maximum interaction distance (0 = unlimited).")]
+        [SerializeField]
+        private float interactionDistance = 2f;
 
-            [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
-            [SerializeField]
-            private Transform distanceCheckPoint;
+        [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
+        [SerializeField]
+        private Transform distanceCheckPoint;
+
+        [Tooltip("Check for obstacles (walls) between object and check point. Uses raycast to detect blocking colliders.")]
+        [SerializeField]
+        private bool checkObstacles = true;
+
+        [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")]
+        [SerializeField]
+        private LayerMask obstacleLayers = -1;
 
             [Header("Down/Up — Mouse Binding")]
             [SerializeField]
@@ -161,7 +169,8 @@ namespace Neo
 
                 if (keyDown)
                 {
-                    if (isHovered)
+                    bool inRange = IsInRange();
+                    if (inRange || interactionDistance <= 0f)
                     {
                         onInteractDown?.Invoke();
                     }
@@ -175,7 +184,7 @@ namespace Neo
 
             private bool IsInRange()
             {
-                if (interactionDistance <= 0f)
+                if (interactionDistance <= 0f && !checkObstacles)
                 {
                     return true;
                 }
@@ -185,8 +194,67 @@ namespace Neo
                     return true;
                 }
 
-                float distanceSqr = (transform.position - distanceCheckPoint.position).sqrMagnitude;
-                return distanceSqr <= interactionDistance * interactionDistance;
+                Vector3 checkPointPos = distanceCheckPoint.position;
+                Vector3 objectPos = transform.position;
+                float distanceSqr = (objectPos - checkPointPos).sqrMagnitude;
+
+                if (interactionDistance > 0f && distanceSqr > interactionDistance * interactionDistance)
+                {
+                    return false;
+                }
+
+                if (checkObstacles)
+                {
+                    Vector3 direction = objectPos - checkPointPos;
+                    float distance = Mathf.Sqrt(distanceSqr);
+
+                    if (distance < 0.01f)
+                    {
+                        return true;
+                    }
+
+                    Vector3 directionNormalized = direction.normalized;
+                    float checkDistance = distance - 0.1f;
+
+                    if (checkDistance <= 0f)
+                    {
+                        return true;
+                    }
+
+                    bool has3DCollider = TryGetComponent<Collider>(out Collider selfCollider3D);
+                    bool has2DCollider = TryGetComponent<Collider2D>(out Collider2D selfCollider2D);
+
+                    if (has3DCollider)
+                    {
+                        RaycastHit hit;
+                        if (Physics.Raycast(checkPointPos, directionNormalized, out hit, checkDistance, obstacleLayers))
+                        {
+                            if (hit.collider != selfCollider3D)
+                            {
+                                return false;
+                            }
+                        }
+                    }
+                    else if (has2DCollider)
+                    {
+                        Vector2 origin2D = new Vector2(checkPointPos.x, checkPointPos.y);
+                        Vector2 direction2D = new Vector2(directionNormalized.x, directionNormalized.y);
+                        RaycastHit2D hit = Physics2D.Raycast(origin2D, direction2D, checkDistance, obstacleLayers);
+                        if (hit.collider != null && hit.collider != selfCollider2D)
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        if (Physics.Raycast(checkPointPos, directionNormalized, checkDistance, obstacleLayers))
+                        {
+                            return false;
+                        }
+                    }
+                }
+
+                return true;
             }
 
             public void OnPointerClick(PointerEventData eventData)

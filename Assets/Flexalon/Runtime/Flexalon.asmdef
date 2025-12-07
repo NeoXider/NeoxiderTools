@@ -1,0 +1,60 @@
+{
+    "name": "Flexalon",
+    "rootNamespace": "",
+    "references": [
+        "Unity.TextMeshPro",
+        "Unity.XR.Interaction.Toolkit",
+        "Oculus.Interaction",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.physics2d",
+            "expression": "",
+            "define": "UNITY_PHYSICS_2D"
+        },
+        {
+            "name": "com.unity.modules.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS"
+        },
+        {
+            "name": "com.unity.textmeshpro",
+            "expression": "",
+            "define": "UNITY_TMPRO"
+        },
+        {
+            "name": "com.unity.ugui",
+            "expression": "2.0.0",
+            "define": "UNITY_TMPRO"
+        },
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "",
+            "define": "UNITY_XRI"
+        },
+        {
+            "name": "com.unity.xr.interaction.toolkit",
+            "expression": "3.0.0",
+            "define": "UNITY_XRI_3"
+        },
+        {
+            "name": "com.unity.modules.ui",
+            "expression": "",
+            "define": "UNITY_UI"
+        },
+        {
+            "name": "com.unity.inputsystem",
+            "expression": "",
+            "define": "UNITY_INPUT_SYSTEM"
+        }
+    ],
+    "noEngineReferences": false
+}

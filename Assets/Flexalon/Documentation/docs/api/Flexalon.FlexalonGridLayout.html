@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonGridLayout | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonGridLayout | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="Use a grid layout to position children at fixed intervals. Objects are placed in cells in column-row-layer order.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonGridLayout.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonGridLayout%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonGridLayout">
+
+
+
+  <h1 id="Flexalon_FlexalonGridLayout" data-uid="Flexalon.FlexalonGridLayout" class="text-break">
+Class FlexalonGridLayout  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L11"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Use a grid layout to position children at fixed intervals.
+Objects are placed in cells in column-row-layer order.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonGridLayout : LayoutBase, Layout</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></div>
+      <div><a class="xref" href="Flexalon.LayoutBase.html">LayoutBase</a></div>
+      <div><span class="xref">FlexalonGridLayout</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.Layout.html">Layout</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnEnable">LayoutBase.DoOnEnable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnDisable">LayoutBase.DoOnDisable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_ResetProperties">LayoutBase.ResetProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_Initialize">LayoutBase.Initialize()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_SetChildrenFillShrinkSize_Flexalon_FlexalonNode_Vector3_Vector3_">LayoutBase.SetChildrenFillShrinkSize(FlexalonNode, Vector3, Vector3)</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent__node">FlexalonComponent._node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Node">FlexalonComponent.Node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_MarkDirty">FlexalonComponent.MarkDirty()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_ForceUpdate">FlexalonComponent.ForceUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_UpdateProperties">FlexalonComponent.UpdateProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoUpdate">FlexalonComponent.DoUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Upgrade_System_Int32_">FlexalonComponent.Upgrade(int)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonGridLayout_CellType_" data-uid="Flexalon.FlexalonGridLayout.CellType*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_CellType" data-uid="Flexalon.FlexalonGridLayout.CellType">
+  CellType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L27"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The type of cell to use on the column-row axes.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonGridLayout.CellTypes CellType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonGridLayout.html">FlexalonGridLayout</a>.<a class="xref" href="Flexalon.FlexalonGridLayout.CellTypes.html">CellTypes</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_ColumnDirection_" data-uid="Flexalon.FlexalonGridLayout.ColumnDirection*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_ColumnDirection" data-uid="Flexalon.FlexalonGridLayout.ColumnDirection">
+  ColumnDirection
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L63"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The direction of the column axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Direction ColumnDirection { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_Columns_" data-uid="Flexalon.FlexalonGridLayout.Columns*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_Columns" data-uid="Flexalon.FlexalonGridLayout.Columns">
+  Columns
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L36"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The number of columns in the grid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public uint Columns { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">uint</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_ColumnSize_" data-uid="Flexalon.FlexalonGridLayout.ColumnSize*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_ColumnSize" data-uid="Flexalon.FlexalonGridLayout.ColumnSize">
+  ColumnSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L109"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The fixed size of the columns.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float ColumnSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_ColumnSizeType_" data-uid="Flexalon.FlexalonGridLayout.ColumnSizeType*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_ColumnSizeType" data-uid="Flexalon.FlexalonGridLayout.ColumnSizeType">
+  ColumnSizeType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L100"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to determine the size of the columns,</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonGridLayout.CellSizeTypes ColumnSizeType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonGridLayout.html">FlexalonGridLayout</a>.<a class="xref" href="Flexalon.FlexalonGridLayout.CellSizeTypes.html">CellSizeTypes</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_ColumnSpacing_" data-uid="Flexalon.FlexalonGridLayout.ColumnSpacing*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_ColumnSpacing" data-uid="Flexalon.FlexalonGridLayout.ColumnSpacing">
+  ColumnSpacing
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L169"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The spacing between columns.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float ColumnSpacing { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_DepthAlign_" data-uid="Flexalon.FlexalonGridLayout.DepthAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_DepthAlign" data-uid="Flexalon.FlexalonGridLayout.DepthAlign">
+  DepthAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L214"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to align each child in its cell in depth.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align DepthAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_HorizontalAlign_" data-uid="Flexalon.FlexalonGridLayout.HorizontalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_HorizontalAlign" data-uid="Flexalon.FlexalonGridLayout.HorizontalAlign">
+  HorizontalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L196"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to align each child in its cell horizontally.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align HorizontalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_LayerDirection_" data-uid="Flexalon.FlexalonGridLayout.LayerDirection*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_LayerDirection" data-uid="Flexalon.FlexalonGridLayout.LayerDirection">
+  LayerDirection
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L81"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The direction of the layer axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Direction LayerDirection { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_Layers_" data-uid="Flexalon.FlexalonGridLayout.Layers*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_Layers" data-uid="Flexalon.FlexalonGridLayout.Layers">
+  Layers
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L54"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The number of layers in the grid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public uint Layers { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">uint</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_LayerSizeSize_" data-uid="Flexalon.FlexalonGridLayout.LayerSizeSize*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_LayerSizeSize" data-uid="Flexalon.FlexalonGridLayout.LayerSizeSize">
+  LayerSizeSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L155"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The fixed size of the layers.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float LayerSizeSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_LayerSizeType_" data-uid="Flexalon.FlexalonGridLayout.LayerSizeType*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_LayerSizeType" data-uid="Flexalon.FlexalonGridLayout.LayerSizeType">
+  LayerSizeType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L146"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to determine the size of the layers.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonGridLayout.CellSizeTypes LayerSizeType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonGridLayout.html">FlexalonGridLayout</a>.<a class="xref" href="Flexalon.FlexalonGridLayout.CellSizeTypes.html">CellSizeTypes</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_LayerSpacing_" data-uid="Flexalon.FlexalonGridLayout.LayerSpacing*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_LayerSpacing" data-uid="Flexalon.FlexalonGridLayout.LayerSpacing">
+  LayerSpacing
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L187"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The spacing between layers.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float LayerSpacing { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_RowDirection_" data-uid="Flexalon.FlexalonGridLayout.RowDirection*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_RowDirection" data-uid="Flexalon.FlexalonGridLayout.RowDirection">
+  RowDirection
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L72"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The direction of the row axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Direction RowDirection { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_Rows_" data-uid="Flexalon.FlexalonGridLayout.Rows*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_Rows" data-uid="Flexalon.FlexalonGridLayout.Rows">
+  Rows
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L45"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The number of rows in the grid.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public uint Rows { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">uint</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_RowSize_" data-uid="Flexalon.FlexalonGridLayout.RowSize*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_RowSize" data-uid="Flexalon.FlexalonGridLayout.RowSize">
+  RowSize
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L132"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The fixed size of the rows.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RowSize { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_RowSizeType_" data-uid="Flexalon.FlexalonGridLayout.RowSizeType*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_RowSizeType" data-uid="Flexalon.FlexalonGridLayout.RowSizeType">
+  RowSizeType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L123"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to determine the size of the rows.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonGridLayout.CellSizeTypes RowSizeType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonGridLayout.html">FlexalonGridLayout</a>.<a class="xref" href="Flexalon.FlexalonGridLayout.CellSizeTypes.html">CellSizeTypes</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_RowSpacing_" data-uid="Flexalon.FlexalonGridLayout.RowSpacing*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_RowSpacing" data-uid="Flexalon.FlexalonGridLayout.RowSpacing">
+  RowSpacing
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L178"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The spacing between rows.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RowSpacing { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_VerticalAlign_" data-uid="Flexalon.FlexalonGridLayout.VerticalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_VerticalAlign" data-uid="Flexalon.FlexalonGridLayout.VerticalAlign">
+  VerticalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L205"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How to align each child in its cell vertically.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align VerticalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonGridLayout_Arrange_" data-uid="Flexalon.FlexalonGridLayout.Arrange*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_Arrange_Flexalon_FlexalonNode_Vector3_" data-uid="Flexalon.FlexalonGridLayout.Arrange(Flexalon.FlexalonNode,Vector3)">
+  Arrange(FlexalonNode, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L521"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Position the children of node within the available bounds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Arrange(FlexalonNode node, Vector3 layoutSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_GetChildAt_" data-uid="Flexalon.FlexalonGridLayout.GetChildAt*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_GetChildAt_System_Int32_System_Int32_System_Int32_" data-uid="Flexalon.FlexalonGridLayout.GetChildAt(System.Int32,System.Int32,System.Int32)">
+  GetChildAt(int, int, int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L239"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns the first child in the cell.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Transform GetChildAt(int column, int row, int layer = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>column</code> <span class="xref">int</span></dt>
+    <dd><p>The column of the cell.</p>
+</dd>
+    <dt><code>row</code> <span class="xref">int</span></dt>
+    <dd><p>The row of the cell.</p>
+</dd>
+    <dt><code>layer</code> <span class="xref">int</span></dt>
+    <dd><p>The layer of the cell.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Transform</span></dt>
+    <dd><p>The first child in the cell.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_GetChildrenAt_" data-uid="Flexalon.FlexalonGridLayout.GetChildrenAt*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_GetChildrenAt_System_Int32_System_Int32_System_Int32_" data-uid="Flexalon.FlexalonGridLayout.GetChildrenAt(System.Int32,System.Int32,System.Int32)">
+  GetChildrenAt(int, int, int)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L257"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Returns all children in the cell.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Transform[] GetChildrenAt(int column, int row, int layer = 0)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>column</code> <span class="xref">int</span></dt>
+    <dd><p>The column of the cell.</p>
+</dd>
+    <dt><code>row</code> <span class="xref">int</span></dt>
+    <dd><p>The row of the cell.</p>
+</dd>
+    <dt><code>layer</code> <span class="xref">int</span></dt>
+    <dd><p>The layer of the cell.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Transform</span>[]</dt>
+    <dd><p>A list of children in the cell.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonGridLayout_Measure_" data-uid="Flexalon.FlexalonGridLayout.Measure*"></a>
+
+  <h3 id="Flexalon_FlexalonGridLayout_Measure_Flexalon_FlexalonNode_Vector3_Vector3_Vector3_" data-uid="Flexalon.FlexalonGridLayout.Measure(Flexalon.FlexalonNode,Vector3,Vector3,Vector3)">
+  Measure(FlexalonNode, Vector3, Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonGridLayout.cs/#L393"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Perform minimal work to determine what the size of node and available size for node's children.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Bounds Measure(FlexalonNode node, Vector3 size, Vector3 min, Vector3 max)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>size</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>min</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>max</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Bounds</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

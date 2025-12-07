@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonRigidBodyAnimator | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonRigidBodyAnimator | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="If you add a Rigid Body or Rigid Body 2D component a gameObject which is managed by Flexalon, then the physics system will fight with Flexalon over the object&#39;s position and rotation. Adding a Rigid Body animator will resolve this by applying forces to the the rigid body component instead of changing the transform directly.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonRigidBodyAnimator.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonRigidBodyAnimator%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonRigidBodyAnimator">
+
+
+
+  <h1 id="Flexalon_FlexalonRigidBodyAnimator" data-uid="Flexalon.FlexalonRigidBodyAnimator" class="text-break">
+Class FlexalonRigidBodyAnimator  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L13"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>If you add a Rigid Body or Rigid Body 2D component a gameObject which is managed by Flexalon, then
+the physics system will fight with Flexalon over the object's position and rotation.
+Adding a Rigid Body animator will resolve this by applying forces to the the rigid body component
+instead of changing the transform directly.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonRigidBodyAnimator : MonoBehaviour, TransformUpdater</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><span class="xref">FlexalonRigidBodyAnimator</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.TransformUpdater.html">TransformUpdater</a></div>
+    </dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_PositionForce_" data-uid="Flexalon.FlexalonRigidBodyAnimator.PositionForce*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_PositionForce" data-uid="Flexalon.FlexalonRigidBodyAnimator.PositionForce">
+  PositionForce
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L23"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How much force should be applied each frame to move the object to the layout position.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionForce { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_RotationForce_" data-uid="Flexalon.FlexalonRigidBodyAnimator.RotationForce*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_RotationForce" data-uid="Flexalon.FlexalonRigidBodyAnimator.RotationForce">
+  RotationForce
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L32"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>How much force should be applied each frame to rotation the object to the layout rotation.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationForce { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_ScaleInterpolationSpeed_" data-uid="Flexalon.FlexalonRigidBodyAnimator.ScaleInterpolationSpeed*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_ScaleInterpolationSpeed" data-uid="Flexalon.FlexalonRigidBodyAnimator.ScaleInterpolationSpeed">
+  ScaleInterpolationSpeed
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L42"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Amount the object's scale should be interpolated towards the layout size at each frame.
+This value is multiplied by Time.deltaTime.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float ScaleInterpolationSpeed { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_PreUpdate_" data-uid="Flexalon.FlexalonRigidBodyAnimator.PreUpdate*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_PreUpdate_Flexalon_FlexalonNode_" data-uid="Flexalon.FlexalonRigidBodyAnimator.PreUpdate(Flexalon.FlexalonNode)">
+  PreUpdate(FlexalonNode)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L71"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called before the layout system starts updating any transforms.
+Use this to capture the transform position.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void PreUpdate(FlexalonNode node)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The node being updated.</p>
+</dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_UpdatePosition_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdatePosition*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_UpdatePosition_Flexalon_FlexalonNode_Vector3_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdatePosition(Flexalon.FlexalonNode,Vector3)">
+  UpdatePosition(FlexalonNode, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L77"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called to update the position of the object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool UpdatePosition(FlexalonNode node, Vector3 position)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The node being updated.</p>
+</dd>
+    <dt><code>position</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The computed local position of the object.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_UpdateRectSize_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateRectSize*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_UpdateRectSize_Flexalon_FlexalonNode_Vector2_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateRectSize(Flexalon.FlexalonNode,Vector2)">
+  UpdateRectSize(FlexalonNode, Vector2)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L124"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called to update the rect of the object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool UpdateRectSize(FlexalonNode node, Vector2 size)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The node being updated.</p>
+</dd>
+    <dt><code>size</code> <span class="xref">Vector2</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_UpdateRotation_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateRotation*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_UpdateRotation_Flexalon_FlexalonNode_Quaternion_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateRotation(Flexalon.FlexalonNode,Quaternion)">
+  UpdateRotation(FlexalonNode, Quaternion)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L92"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called to update the rotation of the object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool UpdateRotation(FlexalonNode node, Quaternion rotation)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The node being updated.</p>
+</dd>
+    <dt><code>rotation</code> <span class="xref">Quaternion</span></dt>
+    <dd><p>The computed local rotation of the object.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRigidBodyAnimator_UpdateScale_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateScale*"></a>
+
+  <h3 id="Flexalon_FlexalonRigidBodyAnimator_UpdateScale_Flexalon_FlexalonNode_Vector3_" data-uid="Flexalon.FlexalonRigidBodyAnimator.UpdateScale(Flexalon.FlexalonNode,Vector3)">
+  UpdateScale(FlexalonNode, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Animators/FlexalonRigidBodyAnimator.cs/#L107"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called to update the scale of the object.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool UpdateScale(FlexalonNode node, Vector3 scale)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd><p>The node being updated.</p>
+</dd>
+    <dt><code>scale</code> <span class="xref">Vector3</span></dt>
+    <dd><p>The computed local scale of the object.</p>
+</dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonFlexibleLayout | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonFlexibleLayout | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="Use a flexible layout to position children linearly along the x, y, or z axis. The sizes of the children are considered so that they are evenly spaced.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonFlexibleLayout.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonFlexibleLayout%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonFlexibleLayout">
+
+
+
+  <h1 id="Flexalon_FlexalonFlexibleLayout" data-uid="Flexalon.FlexalonFlexibleLayout" class="text-break">
+Class FlexalonFlexibleLayout  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L10"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>Use a flexible layout to position children linearly along the x, y, or z axis.
+The sizes of the children are considered so that they are evenly spaced.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonFlexibleLayout : LayoutBase, Layout</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></div>
+      <div><a class="xref" href="Flexalon.LayoutBase.html">LayoutBase</a></div>
+      <div><span class="xref">FlexalonFlexibleLayout</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.Layout.html">Layout</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnEnable">LayoutBase.DoOnEnable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_DoOnDisable">LayoutBase.DoOnDisable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_ResetProperties">LayoutBase.ResetProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_Initialize">LayoutBase.Initialize()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.LayoutBase.html#Flexalon_LayoutBase_SetChildrenFillShrinkSize_Flexalon_FlexalonNode_Vector3_Vector3_">LayoutBase.SetChildrenFillShrinkSize(FlexalonNode, Vector3, Vector3)</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent__node">FlexalonComponent._node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Node">FlexalonComponent.Node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_MarkDirty">FlexalonComponent.MarkDirty()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_ForceUpdate">FlexalonComponent.ForceUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_UpdateProperties">FlexalonComponent.UpdateProperties()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoUpdate">FlexalonComponent.DoUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Upgrade_System_Int32_">FlexalonComponent.Upgrade(int)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_DepthAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.DepthAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_DepthAlign" data-uid="Flexalon.FlexalonFlexibleLayout.DepthAlign">
+  DepthAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L74"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the entire layout aligns to the parent's box in depth.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align DepthAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_DepthInnerAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.DepthInnerAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_DepthInnerAlign" data-uid="Flexalon.FlexalonFlexibleLayout.DepthInnerAlign">
+  DepthInnerAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L107"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The inner align property along the Direction axis will change how wrapped lines align
+with each other. The inner align property along the other two axes will change how each object lines
+up with all other objects.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align DepthInnerAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_Direction_" data-uid="Flexalon.FlexalonFlexibleLayout.Direction*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_Direction" data-uid="Flexalon.FlexalonFlexibleLayout.Direction">
+  Direction
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L26"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The direction in which objects are placed, one after the other.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Direction Direction { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_Gap_" data-uid="Flexalon.FlexalonFlexibleLayout.Gap*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_Gap" data-uid="Flexalon.FlexalonFlexibleLayout.Gap">
+  Gap
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L125"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a gap between objects on the Direction axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float Gap { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_GapType_" data-uid="Flexalon.FlexalonFlexibleLayout.GapType*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_GapType" data-uid="Flexalon.FlexalonFlexibleLayout.GapType">
+  GapType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L116"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the space between children is distributed.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonFlexibleLayout.GapOptions GapType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonFlexibleLayout.html">FlexalonFlexibleLayout</a>.<a class="xref" href="Flexalon.FlexalonFlexibleLayout.GapOptions.html">GapOptions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_HorizontalAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.HorizontalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_HorizontalAlign" data-uid="Flexalon.FlexalonFlexibleLayout.HorizontalAlign">
+  HorizontalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L56"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the entire layout horizontally aligns to the parent's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align HorizontalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_HorizontalInnerAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.HorizontalInnerAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_HorizontalInnerAlign" data-uid="Flexalon.FlexalonFlexibleLayout.HorizontalInnerAlign">
+  HorizontalInnerAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The inner align property along the Direction axis will change how wrapped lines align
+with each other. The inner align property along the other two axes will change how each object lines
+up with all other objects.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align HorizontalInnerAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_VerticalAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.VerticalAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_VerticalAlign" data-uid="Flexalon.FlexalonFlexibleLayout.VerticalAlign">
+  VerticalAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L65"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the entire layout vertically aligns to the parent's box.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align VerticalAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_VerticalInnerAlign_" data-uid="Flexalon.FlexalonFlexibleLayout.VerticalInnerAlign*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_VerticalInnerAlign" data-uid="Flexalon.FlexalonFlexibleLayout.VerticalInnerAlign">
+  VerticalInnerAlign
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L96"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The inner align property along the Direction axis will change how wrapped lines align
+with each other. The inner align property along the other two axes will change how each object lines
+up with all other objects.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Align VerticalInnerAlign { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_Wrap_" data-uid="Flexalon.FlexalonFlexibleLayout.Wrap*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_Wrap" data-uid="Flexalon.FlexalonFlexibleLayout.Wrap">
+  Wrap
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L38"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If set, then the flexible layout will attempt to position children in a line
+along the Direction axis until it runs out of space. Then it will start the next line by
+following the wrap direction. Wrapping will only occur if the size of the Direction axis is
+set to any value other than &quot;Layout&quot;.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool Wrap { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_WrapDirection_" data-uid="Flexalon.FlexalonFlexibleLayout.WrapDirection*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_WrapDirection" data-uid="Flexalon.FlexalonFlexibleLayout.WrapDirection">
+  WrapDirection
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L47"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>The direction to start a new line when wrapping.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Direction WrapDirection { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_WrapGap_" data-uid="Flexalon.FlexalonFlexibleLayout.WrapGap*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_WrapGap" data-uid="Flexalon.FlexalonFlexibleLayout.WrapGap">
+  WrapGap
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L148"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Adds a gap between objects on the Wrap Direction axis.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float WrapGap { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_WrapGapType_" data-uid="Flexalon.FlexalonFlexibleLayout.WrapGapType*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_WrapGapType" data-uid="Flexalon.FlexalonFlexibleLayout.WrapGapType">
+  WrapGapType
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L139"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Determines how the space between lines is distributed.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public FlexalonFlexibleLayout.GapOptions WrapGapType { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><a class="xref" href="Flexalon.FlexalonFlexibleLayout.html">FlexalonFlexibleLayout</a>.<a class="xref" href="Flexalon.FlexalonFlexibleLayout.GapOptions.html">GapOptions</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_Arrange_" data-uid="Flexalon.FlexalonFlexibleLayout.Arrange*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_Arrange_Flexalon_FlexalonNode_Vector3_" data-uid="Flexalon.FlexalonFlexibleLayout.Arrange(Flexalon.FlexalonNode,Vector3)">
+  Arrange(FlexalonNode, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L408"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Position the children of node within the available bounds.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override void Arrange(FlexalonNode node, Vector3 layoutSize)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>layoutSize</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonFlexibleLayout_Measure_" data-uid="Flexalon.FlexalonFlexibleLayout.Measure*"></a>
+
+  <h3 id="Flexalon_FlexalonFlexibleLayout_Measure_Flexalon_FlexalonNode_Vector3_Vector3_Vector3_" data-uid="Flexalon.FlexalonFlexibleLayout.Measure(Flexalon.FlexalonNode,Vector3,Vector3,Vector3)">
+  Measure(FlexalonNode, Vector3, Vector3, Vector3)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Layouts/FlexalonFlexibleLayout.cs/#L370"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Perform minimal work to determine what the size of node and available size for node's children.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public override Bounds Measure(FlexalonNode node, Vector3 size, Vector3 min, Vector3 max)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+    <dt><code>size</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>min</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+    <dt><code>max</code> <span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+  <h4 class="section">Returns</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Bounds</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

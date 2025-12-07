@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Namespace Flexalon | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Namespace Flexalon | Flexalon 3D Layouts ">
+      
+      
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon">
+
+  <h1 id="Flexalon" data-uid="Flexalon" class="text-break">Namespace Flexalon</h1>
+  <div class="markdown level0 summary"></div>
+  <div class="markdown level0 conceptual"></div>
+  <div class="markdown level0 remarks"></div>
+
+    <h3 id="classes">
+Classes
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Flex.html">Flex</a></dt>
+      <dd></dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Flexalon.html">Flexalon</a></dt>
+      <dd><p>Singleton class which tracks and updates all FlexalonNodes in the scene.
+See <a href="..\../docs/coreConcepts.html">core concepts</a> for more information.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonAlignLayout.html">FlexalonAlignLayout</a></dt>
+      <dd><p>Use a align layout to align all children to the parent on the specified axes.
+For example, use a align layout to place all children along a floor, wall, or edge.</p>
+<p>Once aligned, you can adjust the position, rotation, or size of each child by
+editing the Offset, Rotation, Size, and Scale properties on that child's Flexalon Object Component.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonAspectRatioAdapter.html">FlexalonAspectRatioAdapter</a></dt>
+      <dd></dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCircleLayout.html">FlexalonCircleLayout</a></dt>
+      <dd><p>Use a circle layout to position children along a circle or spiral.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCloner.html">FlexalonCloner</a></dt>
+      <dd><p>Sometimes, it's useful to generate child objects instead of defining them statically.
+The Flexalon Cloner can generate objects from a set of prefabs iteratively or randomly,
+and can optionally bind to a data source.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonColliderAdapter.html">FlexalonColliderAdapter</a></dt>
+      <dd></dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></dt>
+      <dd><p>Base type for many Flexalon components. Deals with FlexalonNode lifecycle,
+and provides the ForceUpdate and MarkDirty methods to trigger a Flexalon update.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonConstraint.html">FlexalonConstraint</a></dt>
+      <dd><p>The Flexalon Constraint component positions its gameObject relative to a target,
+which can be any other gameObject. The constrained object or the target can also
+have layout components, which provides a powerful way to combine layouts together.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveAnimator.html">FlexalonCurveAnimator</a></dt>
+      <dd><p>The curve animator applies a curve the the position, rotation, and scale
+of the object. The curve is restarted each time the layout position changes.
+This is ideal for scenarios in which the layout position does not change often.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.html">FlexalonCurveLayout</a></dt>
+      <dd><p>Use a curve layout to position children along a bézier curve.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonDragTarget.html">FlexalonDragTarget</a></dt>
+      <dd><p>A drag target allows a layout to accept  dragged FlexalonInteractable objects.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonFlexibleLayout.html">FlexalonFlexibleLayout</a></dt>
+      <dd><p>Use a flexible layout to position children linearly along the x, y, or z axis.
+The sizes of the children are considered so that they are evenly spaced.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonGridCell.html">FlexalonGridCell</a></dt>
+      <dd><p>Specifies which cell a gameObject should occupy in a grid layout.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonGridLayout.html">FlexalonGridLayout</a></dt>
+      <dd><p>Use a grid layout to position children at fixed intervals.
+Objects are placed in cells in column-row-layer order.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonInteractable.html">FlexalonInteractable</a></dt>
+      <dd><p>Allows a gameObject to be clicked and dragged.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonInteractable.InteractableEvent.html">FlexalonInteractable.InteractableEvent</a></dt>
+      <dd><p>An event that occurs to a FlexalonInteractable.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonLerpAnimator.html">FlexalonLerpAnimator</a></dt>
+      <dd><p>The lerp animator constnatly performs a linear interpolation between
+the object's current position and its layout position. This is useful
+if the layout position is continuously changing.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonMouseInputProvider.html">FlexalonMouseInputProvider</a></dt>
+      <dd><p>Simple input provider that uses the mouse for input.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonObject.html">FlexalonObject</a></dt>
+      <dd><p>To control the size of an object, add a Flexalon Object
+component to it and edit the width, height, or depth properties.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonRandomLayout.html">FlexalonRandomLayout</a></dt>
+      <dd><p>Use a random layout to position, rotate, and size children randomly within bounds.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonRandomModifier.html">FlexalonRandomModifier</a></dt>
+      <dd><p>The Flexalon Random Modifier component can be added to any layout
+to randomly modify the positions and rotations of the children.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonResult.html">FlexalonResult</a></dt>
+      <dd><p>This component is added to each object in a layout. It stores the results of the layout process
+so they can be loaded from a scene/prefab without rerunning layout.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonRigidBodyAnimator.html">FlexalonRigidBodyAnimator</a></dt>
+      <dd><p>If you add a Rigid Body or Rigid Body 2D component a gameObject which is managed by Flexalon, then
+the physics system will fight with Flexalon over the object's position and rotation.
+Adding a Rigid Body animator will resolve this by applying forces to the the rigid body component
+instead of changing the transform directly.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonShapeLayout.html">FlexalonShapeLayout</a></dt>
+      <dd><p>Use a shape layout to position children in a shape formation with a specified number of sides.
+The first child is placed in the center, and subsequent children are placed in concentric layers
+around the center, with each layer forming the desired shape.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexItem.html">FlexItem</a></dt>
+      <dd></dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.LayoutBase.html">LayoutBase</a></dt>
+      <dd><p>Base class for all layout componets. See <a href="..\../docs/customLayout.html">custom layout</a> for details
+on how to extend this class. Assigns the Layout method to FlexalonNode and keeps the
+node's children up to date.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Math.html">Math</a></dt>
+      <dd><p>Common math help functions.</p>
+</dd>
+    </dl>
+    <h3 id="structs">
+Structs
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Directions.html">Directions</a></dt>
+      <dd><p>Six floats representing right, left, top, bottom, back, front.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.CurvePoint.html">FlexalonCurveLayout.CurvePoint</a></dt>
+      <dd><p>A point on the curve.</p>
+</dd>
+    </dl>
+    <h3 id="interfaces">
+Interfaces
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Adapter.html">Adapter</a></dt>
+      <dd><p>Adapters determine how Flexalon measures other Unity components.
+See <a href="..\../docs/adapters.html">adapters</a> documentation.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Constraint.html">Constraint</a></dt>
+      <dd><p>A constraint runs whenever a target layout is updated.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.DataBinding.html">DataBinding</a></dt>
+      <dd><p>When the Cloner creates objects from a DataSource, it will search the cloned objects
+for any component which implements DataBinding to bind the data entry from the
+data source to the visual item. The component can then use this data to change its appearance.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.DataSource.html">DataSource</a></dt>
+      <dd><p>Provides data for a FlexalonCloner.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonModifier.html">FlexalonModifier</a></dt>
+      <dd><p>Interface for components that modify layout results.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+      <dd><p>Represents a node in the Flexalon layout tree.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.InputProvider.html">InputProvider</a></dt>
+      <dd><p>Implement this interface and assign it to the Flexalon.InputProvider
+to override how FlexalonInteractables receive input.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Layout.html">Layout</a></dt>
+      <dd><p>A layout determines how the children of a node are positioned.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.TransformUpdater.html">TransformUpdater</a></dt>
+      <dd><p>A transform updater determines how an object
+gets from its current position to the computed layout position.</p>
+</dd>
+    </dl>
+    <h3 id="enums">
+Enums
+</h3>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Align.html">Align</a></dt>
+      <dd><p>Represents a direction to align.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Axis.html">Axis</a></dt>
+      <dd><p>Represents an axis.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Direction.html">Direction</a></dt>
+      <dd><p>Represents an axis and direction.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCircleLayout.InitialRadiusOptions.html">FlexalonCircleLayout.InitialRadiusOptions</a></dt>
+      <dd><p>Determines the initial radius of the circle.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCircleLayout.RadiusOptions.html">FlexalonCircleLayout.RadiusOptions</a></dt>
+      <dd><p>Determines if and how the radius changes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCircleLayout.RotateOptions.html">FlexalonCircleLayout.RotateOptions</a></dt>
+      <dd><p>Determines how children should be rotated.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCircleLayout.SpacingOptions.html">FlexalonCircleLayout.SpacingOptions</a></dt>
+      <dd><p>Determines how the space between children is distributed.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCloner.CloneTypes.html">FlexalonCloner.CloneTypes</a></dt>
+      <dd><p>In which order should prefabs be cloned.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.ExtendBehavior.html">FlexalonCurveLayout.ExtendBehavior</a></dt>
+      <dd><p>Determines how the curve is extended before the beginning and after the end.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.RotationOptions.html">FlexalonCurveLayout.RotationOptions</a></dt>
+      <dd><p>Determines how children should be rotated</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.SpacingOptions.html">FlexalonCurveLayout.SpacingOptions</a></dt>
+      <dd><p>Determines how the children will be spaced along the curve.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonCurveLayout.TangentMode.html">FlexalonCurveLayout.TangentMode</a></dt>
+      <dd><p>Determines how the tangent for a CurvePoint is determined.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonFlexibleLayout.GapOptions.html">FlexalonFlexibleLayout.GapOptions</a></dt>
+      <dd><p>Determines how the space between children is distributed.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonGridLayout.CellSizeTypes.html">FlexalonGridLayout.CellSizeTypes</a></dt>
+      <dd><p>How to determine the size of the cell.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonGridLayout.CellTypes.html">FlexalonGridLayout.CellTypes</a></dt>
+      <dd><p>The type of cell to use on the column-row axes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonInteractable.InteractableState.html">FlexalonInteractable.InteractableState</a></dt>
+      <dd><p>The current state of the interactable.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.FlexalonInteractable.RestrictionType.html">FlexalonInteractable.RestrictionType</a></dt>
+      <dd><p>Restricts the movement of an object during a drag.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.InputMode.html">InputMode</a></dt>
+      <dd></dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.MinMaxSizeType.html">MinMaxSizeType</a></dt>
+      <dd><p>Determines how a FlexalonObject min or max should be determined.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.Plane.html">Plane</a></dt>
+      <dd><p>Represents a plane along two axes.</p>
+</dd>
+    </dl>
+    <dl class="jumplist">
+      <dt><a class="xref" href="Flexalon.SizeType.html">SizeType</a></dt>
+      <dd><p>Determines how a FlexalonObject should be sized.</p>
+</dd>
+    </dl>
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

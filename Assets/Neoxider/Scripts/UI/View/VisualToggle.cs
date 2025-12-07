@@ -24,7 +24,7 @@ namespace Neo.UI
         
         [Header("State")]
         [Tooltip("Текущее состояние переключателя (false = start, true = end)")]
-        [SerializeField] private bool _isActive;
+        [SerializeField] private bool _isActive = false;
         
         /// <summary>
         /// Если включено, вызывает события текущего состояния при старте (Start).

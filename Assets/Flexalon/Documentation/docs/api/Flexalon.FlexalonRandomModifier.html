@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+      <title>Class FlexalonRandomModifier | Flexalon 3D Layouts </title>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="title" content="Class FlexalonRandomModifier | Flexalon 3D Layouts ">
+      
+      <meta name="description" content="The Flexalon Random Modifier component can be added to any layout to randomly modify the positions and rotations of the children.">
+      <link rel="icon" href="images/favicon.svg">
+      <link rel="stylesheet" href="public/docfx.min.css">
+      <link rel="stylesheet" href="public/main.css">
+      <meta name="docfx:navrel" content="tochead.html">
+      <meta name="docfx:tocrel" content="toc.html">
+      
+      <meta name="docfx:rel" content="">
+      
+      
+      <meta name="docfx:docurl" content="https://github.com/afarchy/flexalon/new/master/apiSpec/new?filename=Flexalon_FlexalonRandomModifier.md&amp;value=---%0Auid%3A%20Flexalon.FlexalonRandomModifier%0Asummary%3A%20&#39;*You%20can%20override%20summary%20for%20the%20API%20here%20using%20*MARKDOWN*%20syntax&#39;%0A---%0A%0A*Please%20type%20below%20more%20information%20about%20this%20API%3A*%0A%0A">
+      <meta name="loc:inThisArticle" content="In this article">
+      <meta name="loc:searchResultsCount" content="{count} results for &quot;{query}&quot;">
+      <meta name="loc:searchNoResults" content="No results for &quot;{query}&quot;">
+      <meta name="loc:tocFilter" content="Filter by title">
+      <meta name="loc:nextArticle" content="Next">
+      <meta name="loc:prevArticle" content="Previous">
+      <meta name="loc:themeLight" content="Light">
+      <meta name="loc:themeDark" content="Dark">
+      <meta name="loc:themeAuto" content="Auto">
+      <meta name="loc:changeTheme" content="Change theme">
+      <meta name="loc:copy" content="Copy">
+      <meta name="loc:downloadPdf" content="Download PDF">
+
+      
+
+      
+
+  </head>
+
+  <body class="tex2jax_ignore" data-layout="" data-yaml-mime="ManagedReference">
+    <header class="bg-body border-bottom">
+      <nav id="autocollapse" class="navbar navbar-expand-md" role="navigation">
+        <div class="container-xxl flex-nowrap">
+          <a class="navbar-brand" href="https://www.flexalon.com/">
+            <img id="logo" class="svg" src="images/logo_32x32.png" alt="">
+            
+          </a>
+          <button class="btn btn-lg d-md-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navpanel" aria-controls="navpanel" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="collapse navbar-collapse" id="navpanel">
+            <div id="navbar">
+              <form class="search" role="search" id="search">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search-query" type="search" disabled placeholder="Search" autocomplete="off" aria-label="Search">
+              </form>
+            </div>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <main class="container-xxl">
+      <div class="toc-offcanvas">
+        <div class="offcanvas-md offcanvas-start" tabindex="-1" id="tocOffcanvas" aria-labelledby="tocOffcanvasLabel">
+          <div class="offcanvas-header">
+            <h5 class="offcanvas-title" id="tocOffcanvasLabel">Table of Contents</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#tocOffcanvas" aria-label="Close"></button>
+          </div>
+          <div class="offcanvas-body">
+            <nav class="toc" id="toc"></nav>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="actionbar">
+          <button class="btn btn-lg border-0 d-md-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#tocOffcanvas" aria-controls="tocOffcanvas" aria-expanded="false" aria-label="Show table of contents">
+            <i class="bi bi-list"></i>
+          </button>
+
+          <nav id="breadcrumb"></nav>
+        </div>
+
+        <article data-uid="Flexalon.FlexalonRandomModifier">
+
+
+
+  <h1 id="Flexalon_FlexalonRandomModifier" data-uid="Flexalon.FlexalonRandomModifier" class="text-break">
+Class FlexalonRandomModifier  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L9"><i class="bi bi-code-slash"></i></a>
+  </h1>
+
+  <div class="facts text-secondary">
+    <dl><dt>Namespace</dt><dd><a class="xref" href="Flexalon.html">Flexalon</a></dd></dl>
+  <dl><dt>Assembly</dt><dd>Flexalon.dll</dd></dl>
+  </div>
+
+  <div class="markdown summary"><p>The Flexalon Random Modifier component can be added to any layout
+to randomly modify the positions and rotations of the children.</p>
+</div>
+  <div class="markdown conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public class FlexalonRandomModifier : FlexalonComponent, FlexalonModifier</code></pre>
+  </div>
+
+
+
+
+  <dl class="typelist inheritance">
+    <dt>Inheritance</dt>
+    <dd>
+      <div><span class="xref">object</span></div>
+      <div><a class="xref" href="Flexalon.FlexalonComponent.html">FlexalonComponent</a></div>
+      <div><span class="xref">FlexalonRandomModifier</span></div>
+    </dd>
+  </dl>
+
+  <dl class="typelist implements">
+    <dt>Implements</dt>
+    <dd>
+      <div><a class="xref" href="Flexalon.FlexalonModifier.html">FlexalonModifier</a></div>
+    </dd>
+  </dl>
+
+
+  <dl class="typelist inheritedMembers">
+    <dt>Inherited Members</dt>
+    <dd>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent__node">FlexalonComponent._node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Node">FlexalonComponent.Node</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_MarkDirty">FlexalonComponent.MarkDirty()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_ForceUpdate">FlexalonComponent.ForceUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoOnEnable">FlexalonComponent.DoOnEnable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoOnDisable">FlexalonComponent.DoOnDisable()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_DoUpdate">FlexalonComponent.DoUpdate()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Initialize">FlexalonComponent.Initialize()</a>
+    </div>
+    <div>
+      <a class="xref" href="Flexalon.FlexalonComponent.html#Flexalon_FlexalonComponent_Upgrade_System_Int32_">FlexalonComponent.Upgrade(int)</a>
+    </div>
+  </dd></dl>
+
+
+
+
+
+
+  <h2 class="section" id="properties">Properties
+</h2>
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMax_" data-uid="Flexalon.FlexalonRandomModifier.PositionMax*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMax" data-uid="Flexalon.FlexalonRandomModifier.PositionMax">
+  PositionMax
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L154"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 PositionMax { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMaxX_" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMaxX" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxX">
+  PositionMaxX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L48"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum X position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMaxX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMaxY_" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMaxY" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxY">
+  PositionMaxY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L85"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum Y position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMaxY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMaxZ_" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMaxZ" data-uid="Flexalon.FlexalonRandomModifier.PositionMaxZ">
+  PositionMaxZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L122"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum Z position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMaxZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMin_" data-uid="Flexalon.FlexalonRandomModifier.PositionMin*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMin" data-uid="Flexalon.FlexalonRandomModifier.PositionMin">
+  PositionMin
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L136"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public Vector3 PositionMin { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">Vector3</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMinX_" data-uid="Flexalon.FlexalonRandomModifier.PositionMinX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMinX" data-uid="Flexalon.FlexalonRandomModifier.PositionMinX">
+  PositionMinX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L34"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum X position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMinX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMinY_" data-uid="Flexalon.FlexalonRandomModifier.PositionMinY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMinY" data-uid="Flexalon.FlexalonRandomModifier.PositionMinY">
+  PositionMinY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L71"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum Y position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMinY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PositionMinZ_" data-uid="Flexalon.FlexalonRandomModifier.PositionMinZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PositionMinZ" data-uid="Flexalon.FlexalonRandomModifier.PositionMinZ">
+  PositionMinZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L108"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum Z position value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float PositionMinZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizePositionX_" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizePositionX" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionX">
+  RandomizePositionX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L25"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the X position of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizePositionX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizePositionY_" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizePositionY" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionY">
+  RandomizePositionY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L62"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the Y position of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizePositionY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizePositionZ_" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizePositionZ" data-uid="Flexalon.FlexalonRandomModifier.RandomizePositionZ">
+  RandomizePositionZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L99"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the Z position of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizePositionZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizeRotationX_" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizeRotationX" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationX">
+  RandomizeRotationX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L172"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the X rotation of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizeRotationX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizeRotationY_" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizeRotationY" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationY">
+  RandomizeRotationY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L209"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the Y rotation of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizeRotationY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomizeRotationZ_" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomizeRotationZ" data-uid="Flexalon.FlexalonRandomModifier.RandomizeRotationZ">
+  RandomizeRotationZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L246"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>If true, the Z rotation of each child will be randomized.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public bool RandomizeRotationZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">bool</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RandomSeed_" data-uid="Flexalon.FlexalonRandomModifier.RandomSeed*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RandomSeed" data-uid="Flexalon.FlexalonRandomModifier.RandomSeed">
+  RandomSeed
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L16"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Seed value used to determine random values.
+This ensures results the remain consistent each time layout is computed.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public int RandomSeed { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">int</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMaxX_" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMaxX" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxX">
+  RotationMaxX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L195"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum X rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMaxX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMaxY_" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMaxY" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxY">
+  RotationMaxY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L232"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum Y rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMaxY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMaxZ_" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMaxZ" data-uid="Flexalon.FlexalonRandomModifier.RotationMaxZ">
+  RotationMaxZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L269"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Maximum Z rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMaxZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMinX_" data-uid="Flexalon.FlexalonRandomModifier.RotationMinX*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMinX" data-uid="Flexalon.FlexalonRandomModifier.RotationMinX">
+  RotationMinX
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L181"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum X rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMinX { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMinY_" data-uid="Flexalon.FlexalonRandomModifier.RotationMinY*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMinY" data-uid="Flexalon.FlexalonRandomModifier.RotationMinY">
+  RotationMinY
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L218"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum Y rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMinY { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_RotationMinZ_" data-uid="Flexalon.FlexalonRandomModifier.RotationMinZ*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_RotationMinZ" data-uid="Flexalon.FlexalonRandomModifier.RotationMinZ">
+  RotationMinZ
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L255"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Minimum Z rotation value.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public float RotationMinZ { get; set; }</code></pre>
+  </div>
+
+
+
+
+
+  <h4 class="section">Property Value</h4>
+  <dl class="parameters">
+    <dt><span class="xref">float</span></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+  <h2 class="section" id="methods">Methods
+</h2>
+
+
+  <a id="Flexalon_FlexalonRandomModifier_PostArrange_" data-uid="Flexalon.FlexalonRandomModifier.PostArrange*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_PostArrange_Flexalon_FlexalonNode_" data-uid="Flexalon.FlexalonRandomModifier.PostArrange(Flexalon.FlexalonNode)">
+  PostArrange(FlexalonNode)
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L293"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called after the node's children are arranged.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">public void PostArrange(FlexalonNode node)</code></pre>
+  </div>
+
+  <h4 class="section">Parameters</h4>
+  <dl class="parameters">
+    <dt><code>node</code> <a class="xref" href="Flexalon.FlexalonNode.html">FlexalonNode</a></dt>
+    <dd></dd>
+  </dl>
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_ResetProperties_" data-uid="Flexalon.FlexalonRandomModifier.ResetProperties*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_ResetProperties" data-uid="Flexalon.FlexalonRandomModifier.ResetProperties">
+  ResetProperties()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L287"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when the component is destroyed to reset properties on the FlexalonNode.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void ResetProperties()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  <a id="Flexalon_FlexalonRandomModifier_UpdateProperties_" data-uid="Flexalon.FlexalonRandomModifier.UpdateProperties*"></a>
+
+  <h3 id="Flexalon_FlexalonRandomModifier_UpdateProperties" data-uid="Flexalon.FlexalonRandomModifier.UpdateProperties">
+  UpdateProperties()
+  <a class="header-action link-secondary" title="View source" href="https://github.com/afarchy/flexalon/blob/master/Flexalon/Assets/Flexalon/Runtime/Modifiers/FlexalonRandomModifier.cs/#L281"><i class="bi bi-code-slash"></i></a>
+  </h3>
+
+  <div class="markdown level1 summary"><p>Called when the component is enabled to apply properties to the FlexalonNode.</p>
+</div>
+  <div class="markdown level1 conceptual"></div>
+
+  <div class="codewrapper">
+    <pre><code class="lang-csharp hljs">protected override void UpdateProperties()</code></pre>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</article>
+
+
+
+      </div>
+
+      <div class="affix">
+        <nav id="affix"></nav>
+      </div>
+    </main>
+
+    <div class="container-xxl search-results" id="search-results"></div>
+
+    <footer class="border-top text-secondary">
+      <div class="container-xxl">
+        <div class="flex-fill">
+          Made by <a href="https://www.virtualmaker.dev" target="_blank">Virtual Maker</a>
+        </div>
+      </div>
+    </footer>
+  </body>
+</html>

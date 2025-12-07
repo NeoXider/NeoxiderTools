@@ -77,6 +77,11 @@
   - [RewertAmount](./Other/RewertAmount.md)
   - [SpineController](./Other/SpineController.md)
   - [README](./Other/README.md)
+- **Physics**
+  - [ExplosiveForce](./Physics/ExplosiveForce.md)
+  - [ImpulseZone](./Physics/ImpulseZone.md)
+  - [MagneticField](./Physics/MagneticField.md)
+  - [README](./Physics/README.md)
 - **Random**
   - [ChanceManager](./Random/ChanceManager.md)
   - [ChanceSystemBehaviour](./Random/ChanceSystemBehaviour.md)
