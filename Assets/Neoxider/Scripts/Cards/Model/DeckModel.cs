@@ -6,16 +6,16 @@ namespace Neo.Cards
     /// <summary>
     /// Модель колоды карт (логика без визуализации)
     /// </summary>
-    public class DeckModel
+    public class DeckModel : ICardContainer
     {
-        private readonly List<CardData> _cards = new();
+        private readonly CardContainerModel _cards = new CardContainerModel(CardLocation.Deck);
         private readonly List<CardData> _discardPile = new();
         private readonly Random _random = new();
 
         /// <summary>
         /// Карты в колоде
         /// </summary>
-        public IReadOnlyList<CardData> Cards => _cards;
+        public IReadOnlyList<CardData> Cards => _cards.Data;
 
         /// <summary>
         /// Карты в сбросе
@@ -37,6 +37,10 @@ namespace Neo.Cards
         /// </summary>
         public DeckType DeckType { get; private set; }
 
+        public CardLocation Location => _cards.Location;
+        public int Count => _cards.Count;
+        public IReadOnlyList<CardData> Data => _cards.Data;
+
         /// <summary>
         /// Событие при изменении колоды
         /// </summary>
@@ -46,6 +50,12 @@ namespace Neo.Cards
         /// Событие когда колода опустела
         /// </summary>
         public event Action OnDeckEmpty;
+
+        public event Action OnChanged
+        {
+            add => OnDeckChanged += value;
+            remove => OnDeckChanged -= value;
+        }
 
         /// <summary>
         /// Инициализирует колоду указанного типа
@@ -91,7 +101,8 @@ namespace Neo.Cards
         {
             _cards.Clear();
             _discardPile.Clear();
-            _cards.AddRange(cards);
+            foreach (var card in cards)
+                _cards.Add(card);
 
             if (shuffle)
             {
@@ -109,7 +120,7 @@ namespace Neo.Cards
             for (int i = _cards.Count - 1; i > 0; i--)
             {
                 int j = _random.Next(i + 1);
-                (_cards[i], _cards[j]) = (_cards[j], _cards[i]);
+                ( _cards.Mutable[i], _cards.Mutable[j]) = ( _cards.Mutable[j], _cards.Mutable[i]);
             }
 
             OnDeckChanged?.Invoke();
@@ -127,8 +138,8 @@ namespace Neo.Cards
             }
 
             int lastIndex = _cards.Count - 1;
-            CardData card = _cards[lastIndex];
-            _cards.RemoveAt(lastIndex);
+            CardData card = _cards.Mutable[lastIndex];
+            _cards.Remove(card);
 
             OnDeckChanged?.Invoke();
 
@@ -172,7 +183,7 @@ namespace Neo.Cards
                 return null;
             }
 
-            return _cards[^1];
+            return _cards.Mutable[^1];
         }
 
         /// <summary>
@@ -186,7 +197,7 @@ namespace Neo.Cards
                 return null;
             }
 
-            return _cards[0];
+            return _cards.Mutable[0];
         }
 
         /// <summary>
@@ -213,7 +224,7 @@ namespace Neo.Cards
         /// <param name="card">Карта</param>
         public void ReturnToBottom(CardData card)
         {
-            _cards.Insert(0, card);
+            _cards.Mutable.Insert(0, card);
             OnDeckChanged?.Invoke();
         }
 
@@ -232,7 +243,10 @@ namespace Neo.Cards
         /// </summary>
         public void ReshuffleDiscardPile()
         {
-            _cards.AddRange(_discardPile);
+            foreach (var card in _discardPile)
+            {
+                _cards.Add(card);
+            }
             _discardPile.Clear();
             Shuffle();
         }
@@ -255,6 +269,14 @@ namespace Neo.Cards
             _discardPile.Clear();
             OnDeckChanged?.Invoke();
         }
+
+        #region ICardContainer explicit
+        public bool CanAdd(CardData card) => true;
+        bool ICardContainer.Remove(CardData card) => _cards.Remove(card);
+        List<CardData> ICardContainer.RemoveAll() => _cards.RemoveAll();
+        void ICardContainer.Clear() => Clear();
+        void ICardContainer.Add(CardData card) => _cards.Add(card);
+        #endregion
     }
 }
 

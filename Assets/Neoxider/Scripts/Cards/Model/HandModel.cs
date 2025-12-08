@@ -7,14 +7,14 @@ namespace Neo.Cards
     /// <summary>
     /// Модель руки игрока (набор карт)
     /// </summary>
-    public class HandModel
+    public class HandModel : ICardContainer
     {
-        private readonly List<CardData> _cards = new();
+        private readonly CardContainerModel _cards = new CardContainerModel(CardLocation.Hand);
 
         /// <summary>
         /// Карты в руке
         /// </summary>
-        public IReadOnlyList<CardData> Cards => _cards;
+        public IReadOnlyList<CardData> Cards => _cards.Data;
 
         /// <summary>
         /// Количество карт в руке
@@ -25,6 +25,9 @@ namespace Neo.Cards
         /// Пуста ли рука
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
+
+        public CardLocation Location => _cards.Location;
+        IReadOnlyList<CardData> ICardContainer.Data => _cards.Data;
 
         /// <summary>
         /// Событие добавления карты
@@ -40,6 +43,12 @@ namespace Neo.Cards
         /// Событие изменения руки
         /// </summary>
         public event Action OnHandChanged;
+
+        public event Action OnChanged
+        {
+            add => OnHandChanged += value;
+            remove => OnHandChanged -= value;
+        }
 
         /// <summary>
         /// Добавляет карту в руку
@@ -94,8 +103,8 @@ namespace Neo.Cards
                 throw new ArgumentOutOfRangeException(nameof(index));
             }
 
-            CardData card = _cards[index];
-            _cards.RemoveAt(index);
+            CardData card = _cards.Mutable[index];
+            _cards.Remove(card);
             OnCardRemoved?.Invoke(card);
             OnHandChanged?.Invoke();
             return card;
@@ -117,7 +126,7 @@ namespace Neo.Cards
         /// <returns>true если карта есть в руке</returns>
         public bool Contains(CardData card)
         {
-            return _cards.Contains(card);
+            return _cards.Data.Contains(card);
         }
 
         /// <summary>
@@ -127,7 +136,7 @@ namespace Neo.Cards
         /// <returns>true если есть карта с таким рангом</returns>
         public bool ContainsRank(Rank rank)
         {
-            return _cards.Any(c => !c.IsJoker && c.Rank == rank);
+            return _cards.Data.Any(c => !c.IsJoker && c.Rank == rank);
         }
 
         /// <summary>
@@ -137,7 +146,7 @@ namespace Neo.Cards
         /// <returns>true если есть карта с такой мастью</returns>
         public bool ContainsSuit(Suit suit)
         {
-            return _cards.Any(c => !c.IsJoker && c.Suit == suit);
+            return _cards.Data.Any(c => !c.IsJoker && c.Suit == suit);
         }
 
         /// <summary>
@@ -147,7 +156,7 @@ namespace Neo.Cards
         /// <returns>Карта</returns>
         public CardData GetAt(int index)
         {
-            return _cards[index];
+            return _cards.Data[index];
         }
 
         /// <summary>
@@ -157,7 +166,12 @@ namespace Neo.Cards
         /// <returns>Индекс или -1 если не найдена</returns>
         public int IndexOf(CardData card)
         {
-            return _cards.IndexOf(card);
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                if (_cards.Data[i].Equals(card))
+                    return i;
+            }
+            return -1;
         }
 
         /// <summary>
@@ -168,11 +182,11 @@ namespace Neo.Cards
         {
             if (ascending)
             {
-                _cards.Sort((a, b) => a.Rank.CompareTo(b.Rank));
+                _cards.Mutable.Sort((a, b) => a.Rank.CompareTo(b.Rank));
             }
             else
             {
-                _cards.Sort((a, b) => b.Rank.CompareTo(a.Rank));
+                _cards.Mutable.Sort((a, b) => b.Rank.CompareTo(a.Rank));
             }
             OnHandChanged?.Invoke();
         }
@@ -185,7 +199,7 @@ namespace Neo.Cards
         {
             if (ascending)
             {
-                _cards.Sort((a, b) =>
+                _cards.Mutable.Sort((a, b) =>
                 {
                     int suitCompare = a.Suit.CompareTo(b.Suit);
                     return suitCompare != 0 ? suitCompare : a.Rank.CompareTo(b.Rank);
@@ -193,7 +207,7 @@ namespace Neo.Cards
             }
             else
             {
-                _cards.Sort((a, b) =>
+                _cards.Mutable.Sort((a, b) =>
                 {
                     int suitCompare = b.Suit.CompareTo(a.Suit);
                     return suitCompare != 0 ? suitCompare : b.Rank.CompareTo(a.Rank);
@@ -209,7 +223,7 @@ namespace Neo.Cards
         /// <returns>Список карт</returns>
         public List<CardData> GetCardsBySuit(Suit suit)
         {
-            return _cards.Where(c => !c.IsJoker && c.Suit == suit).ToList();
+            return _cards.Data.Where(c => !c.IsJoker && c.Suit == suit).ToList();
         }
 
         /// <summary>
@@ -219,7 +233,7 @@ namespace Neo.Cards
         /// <returns>Список карт</returns>
         public List<CardData> GetCardsByRank(Rank rank)
         {
-            return _cards.Where(c => !c.IsJoker && c.Rank == rank).ToList();
+            return _cards.Data.Where(c => !c.IsJoker && c.Rank == rank).ToList();
         }
 
         /// <summary>
@@ -230,7 +244,7 @@ namespace Neo.Cards
         /// <returns>Список карт, которыми можно побить</returns>
         public List<CardData> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
-            return _cards.Where(c => c.CanCover(attackCard, trump)).ToList();
+            return _cards.Data.Where(c => c.CanCover(attackCard, trump)).ToList();
         }
 
         /// <summary>
@@ -241,7 +255,7 @@ namespace Neo.Cards
         public List<CardData> GetCardsMatchingRanks(IEnumerable<Rank> ranks)
         {
             var rankSet = new HashSet<Rank>(ranks);
-            return _cards.Where(c => !c.IsJoker && rankSet.Contains(c.Rank)).ToList();
+            return _cards.Data.Where(c => !c.IsJoker && rankSet.Contains(c.Rank)).ToList();
         }
 
         /// <summary>
@@ -254,7 +268,7 @@ namespace Neo.Cards
             if (_cards.Count == 0)
                 return null;
 
-            return _cards
+            return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderBy(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenBy(c => c.Rank)
@@ -271,12 +285,25 @@ namespace Neo.Cards
             if (_cards.Count == 0)
                 return null;
 
-            return _cards
+            return _cards.Data
                 .Where(c => !c.IsJoker)
                 .OrderByDescending(c => trump.HasValue && c.Suit == trump.Value ? 1 : 0)
                 .ThenByDescending(c => c.Rank)
                 .FirstOrDefault();
         }
+
+        #region ICardContainer explicit
+        public bool CanAdd(CardData card) => true;
+        void ICardContainer.Add(CardData card) => Add(card);
+        bool ICardContainer.Remove(CardData card) => Remove(card);
+        List<CardData> ICardContainer.RemoveAll()
+        {
+            var snapshot = new List<CardData>(_cards.Data);
+            _cards.Clear();
+            return snapshot;
+        }
+        void ICardContainer.Clear() => Clear();
+        #endregion
     }
 }
 
