@@ -455,6 +455,32 @@ namespace Neo.Cards
         /// </summary>
         private async UniTask MoveAllWarCardsToWinnerAsync(bool playerWins, List<CardData> warPile)
         {
+            // Собираем скрытые карты войны, которые не имеют визуальных CardComponent (warPile > _warCards).
+            List<CardData> hiddenCards = null;
+            if (UsePlayerHand || UseOpponentHand)
+            {
+                var visualUsage = new Dictionary<CardData, int>();
+                foreach (var card in _warCards)
+                {
+                    if (card == null) continue;
+                    if (!visualUsage.TryAdd(card.Data, 1))
+                        visualUsage[card.Data]++;
+                }
+
+                foreach (var data in warPile)
+                {
+                    if (visualUsage.TryGetValue(data, out int remaining) && remaining > 0)
+                    {
+                        visualUsage[data] = remaining - 1;
+                    }
+                    else
+                    {
+                        hiddenCards ??= new List<CardData>();
+                        hiddenCards.Add(data);
+                    }
+                }
+            }
+
             if (playerWins)
             {
                 if (UsePlayerHand)
@@ -466,6 +492,17 @@ namespace Neo.Cards
                             await PlayerHand.AddCardAsync(card, animate: true);
                             card.IsFaceUp = false;
                             await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                        }
+                    }
+
+                    if (hiddenCards is { Count: > 0 })
+                    {
+                        foreach (var data in hiddenCards)
+                        {
+                            var hiddenCardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
+                            hiddenCardObj.Config = _deckConfig;
+                            hiddenCardObj.SetData(data, faceUp: false);
+                            await PlayerHand.AddCardAsync(hiddenCardObj, animate: false);
                         }
                     }
                 }
@@ -491,6 +528,17 @@ namespace Neo.Cards
                             await OpponentHand.AddCardAsync(card, animate: true);
                             card.IsFaceUp = false;
                             await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                        }
+                    }
+
+                    if (hiddenCards is { Count: > 0 })
+                    {
+                        foreach (var data in hiddenCards)
+                        {
+                            var hiddenCardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
+                            hiddenCardObj.Config = _deckConfig;
+                            hiddenCardObj.SetData(data, faceUp: false);
+                            await OpponentHand.AddCardAsync(hiddenCardObj, animate: false);
                         }
                     }
                 }
@@ -835,6 +883,7 @@ namespace Neo.Cards
                     var cardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
                     cardObj.Config = _deckConfig;
                     cardObj.SetData(card.Value, faceUp: false);
+                    _initialBoard.RegisterInitialCard(cardObj);
                     allCards.Add(cardObj);
                 }
 
