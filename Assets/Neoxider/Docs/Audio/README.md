@@ -8,7 +8,7 @@
 
 ### Корневые скрипты
 - [**AMSettings**](./AMSettings.md): Синглтон для управления глобальными настройками звука (громкость, мьют, микшер).
-- [**RandomMusicPlayer**](./RandomMusicPlayer.md): Компонент для проигрывания случайной фоновой музыки без повторов.
+- [**RandomMusicController**](./RandomMusicController.md): Контроллер для случайной музыки (используется внутри AM).
 - [**SettingMixer**](./SettingMixer.md): Простая утилита для прямого управления параметром `AudioMixer`.
 
 ### Подмодули
