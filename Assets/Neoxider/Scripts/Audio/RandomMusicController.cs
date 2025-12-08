@@ -1,5 +1,6 @@
 using System;
-using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Neo.Extensions;
 using UnityEngine;
 
@@ -14,7 +15,7 @@ namespace Neo.Audio
         private AudioSource _audioSource;
         private AudioClip[] _tracks;
         private int _lastTrackIndex = -1;
-        private CoroutineHandle _coroutineHandle;
+        private CancellationTokenSource _cancellationTokenSource;
         private bool _isPlaying;
         private bool _isPaused;
 
@@ -81,7 +82,8 @@ namespace Neo.Audio
 
             _isPlaying = true;
             _isPaused = false;
-            _coroutineHandle = CoroutineExtensions.Start(PlayMusicLoop());
+            _cancellationTokenSource = new CancellationTokenSource();
+            PlayMusicLoop(_cancellationTokenSource.Token).Forget();
         }
 
         /// <summary>
@@ -89,12 +91,13 @@ namespace Neo.Audio
         /// </summary>
         public void Stop()
         {
-            if (_coroutineHandle != null && _coroutineHandle.IsRunning)
+            if (_cancellationTokenSource != null)
             {
-                _coroutineHandle.Stop();
+                _cancellationTokenSource.Cancel();
+                _cancellationTokenSource.Dispose();
+                _cancellationTokenSource = null;
             }
 
-            _coroutineHandle = null;
             _isPlaying = false;
             _isPaused = false;
 
@@ -142,14 +145,14 @@ namespace Neo.Audio
             _isPaused = false;
         }
 
-        private IEnumerator PlayMusicLoop()
+        private async UniTaskVoid PlayMusicLoop(CancellationToken cancellationToken)
         {
-            while (_isPlaying)
+            while (_isPlaying && !cancellationToken.IsCancellationRequested)
             {
                 if (_tracks.Length == 0)
                 {
                     Debug.LogWarning("[RandomMusicController] Список треков пуст.");
-                    yield break;
+                    break;
                 }
 
                 int newTrackIndex;
@@ -164,7 +167,7 @@ namespace Neo.Audio
                 if (track == null)
                 {
                     Debug.LogWarning($"[RandomMusicController] Трек по индексу {newTrackIndex} равен null.");
-                    yield break;
+                    break;
                 }
 
                 _audioSource.clip = track;
@@ -172,7 +175,14 @@ namespace Neo.Audio
 
                 OnTrackChanged?.Invoke(track);
 
-                yield return new WaitForSeconds(track.length);
+                try
+                {
+                    await UniTask.Delay((int)(track.length * 1000), cancellationToken: cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    break;
+                }
             }
         }
     }
