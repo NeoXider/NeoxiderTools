@@ -77,7 +77,7 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
-                _enabledItems[i] = SaveProvider.GetInt($"{_saveKeyPrefix}Item_{i}", 0) == 1;
+                _enabledItems[i] = SaveProvider.GetInt($"{_saveKeyPrefix}Item_{i}") == 1;
             }
 
             OnLoadItems?.Invoke();

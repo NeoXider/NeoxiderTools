@@ -1,27 +1,18 @@
-using UnityEditor;
+using System.IO;
 using Neo.Editor.Windows;
+using UnityEditor;
+using UnityEngine;
 
 namespace Neo
 {
     /// <summary>
-    /// Окно редактора для глобальных настроек Neoxider
+    ///     Окно редактора для глобальных настроек Neoxider
     /// </summary>
     public class NeoxiderSettingsWindow : EditorWindow
     {
         private const string MenuPath = "Tools/Neoxider/Settings";
         private const string WindowTitle = "Neoxider Settings";
         private NeoxiderSettingsWindowGUI _gui;
-
-        /// <summary>
-        /// Показывает окно настроек
-        /// </summary>
-        [MenuItem(MenuPath)]
-        public static void ShowWindow()
-        {
-            NeoxiderSettingsWindow window = GetWindow<NeoxiderSettingsWindow>(WindowTitle);
-            window.minSize = new UnityEngine.Vector2(400, 500);
-            window.Show();
-        }
 
         private void OnEnable()
         {
@@ -45,14 +36,25 @@ namespace Neo
             _gui?.OnGUI(this);
         }
 
+        /// <summary>
+        ///     Показывает окно настроек
+        /// </summary>
+        [MenuItem(MenuPath)]
+        public static void ShowWindow()
+        {
+            NeoxiderSettingsWindow window = GetWindow<NeoxiderSettingsWindow>(WindowTitle);
+            window.minSize = new Vector2(400, 500);
+            window.Show();
+        }
+
         private void ValidateFolders()
         {
             string sourcePath = NeoxiderSettings.RootFolderPath;
             bool hasErrors = false;
 
-            if (!System.IO.Directory.Exists(sourcePath))
+            if (!Directory.Exists(sourcePath))
             {
-                UnityEngine.Debug.LogWarning($"Root folder missing: {NeoxiderSettings.Current.rootFolder}");
+                Debug.LogWarning($"Root folder missing: {NeoxiderSettings.Current.rootFolder}");
                 hasErrors = true;
             }
 
@@ -60,14 +62,14 @@ namespace Neo
             {
                 if (!NeoxiderSettings.FolderExists(folder))
                 {
-                    UnityEngine.Debug.LogWarning($"Missing folder: {folder}");
+                    Debug.LogWarning($"Missing folder: {folder}");
                     hasErrors = true;
                 }
             }
 
             if (!hasErrors)
             {
-                UnityEngine.Debug.Log("All folders exist");
+                Debug.Log("All folders exist");
             }
         }
     }

@@ -1,7 +1,5 @@
-using UnityEngine;
 using UnityEditor;
-using Neo.StateMachine;
-using Neo.StateMachine.NoCode;
+using UnityEngine;
 
 namespace Neo.StateMachine.NoCode.Editor
 {
@@ -11,23 +9,9 @@ namespace Neo.StateMachine.NoCode.Editor
     /// </summary>
     public class TransitionEditorWindow : EditorWindow
     {
-        private StateTransition transition;
         private StateMachineData data;
         private Vector2 scrollPosition;
-
-        /// <summary>
-        ///     Показать окно редактора перехода.
-        /// </summary>
-        /// <param name="transition">Переход для редактирования.</param>
-        /// <param name="data">StateMachineData, содержащий переход.</param>
-        public static void ShowWindow(StateTransition transition, StateMachineData data)
-        {
-            var window = GetWindow<TransitionEditorWindow>("Edit Transition");
-            window.transition = transition;
-            window.data = data;
-            window.minSize = new Vector2(400, 300);
-            window.Show();
-        }
+        private StateTransition transition;
 
         private void OnGUI()
         {
@@ -59,11 +43,12 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.ObjectField("From State", transition.FromStateData, typeof(StateData), false);
             EditorGUILayout.ObjectField("To State", transition.ToStateData, typeof(StateData), false);
             EditorGUI.EndDisabledGroup();
-            
+
             if (transition.FromStateData != null)
             {
                 EditorGUILayout.LabelField("From State Name", transition.FromStateData.StateName);
             }
+
             if (transition.ToStateData != null)
             {
                 EditorGUILayout.LabelField("To State Name", transition.ToStateData.StateName);
@@ -85,8 +70,8 @@ namespace Neo.StateMachine.NoCode.Editor
                 {
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                     EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
-                    
-                    var predicate = transition.Predicates[i];
+
+                    StatePredicate predicate = transition.Predicates[i];
                     if (predicate != null)
                     {
                         EditorGUILayout.LabelField("Type", predicate.GetType().Name);
@@ -138,9 +123,23 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.EndHorizontal();
         }
 
+        /// <summary>
+        ///     Показать окно редактора перехода.
+        /// </summary>
+        /// <param name="transition">Переход для редактирования.</param>
+        /// <param name="data">StateMachineData, содержащий переход.</param>
+        public static void ShowWindow(StateTransition transition, StateMachineData data)
+        {
+            TransitionEditorWindow window = GetWindow<TransitionEditorWindow>("Edit Transition");
+            window.transition = transition;
+            window.data = data;
+            window.minSize = new Vector2(400, 300);
+            window.Show();
+        }
+
         private void ShowAddPredicateMenu()
         {
-            GenericMenu menu = new GenericMenu();
+            GenericMenu menu = new();
 
             // Добавляем типы предикатов, которые можно создать
             // TODO: Использовать рефлексию для автоматического поиска всех типов StatePredicate
@@ -157,13 +156,10 @@ namespace Neo.StateMachine.NoCode.Editor
             });
 
             menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Custom Predicate..."), false, () =>
-            {
-                Debug.LogWarning("[TransitionEditorWindow] Custom predicate creation not yet implemented.");
-            });
+            menu.AddItem(new GUIContent("Custom Predicate..."), false,
+                () => { Debug.LogWarning("[TransitionEditorWindow] Custom predicate creation not yet implemented."); });
 
             menu.ShowAsContext();
         }
     }
 }
-

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -25,111 +26,63 @@ namespace Neo.Tools
             Exponential
         }
 
-        [System.Serializable]
-        public class AxisLimit
-        {
-            public bool enabled;
-            public float min = -10f;
-            public float max = 10f;
-        }
+        [Header("Target")] [SerializeField] private Transform target;
 
-        [System.Serializable]
-        public class DeadzoneSettings
-        {
-            public bool enabled;
-            [Tooltip("Camera doesn't move while target is within this radius.")]
-            public float radius = 1f;
-        }
+        [SerializeField] private FollowMode followMode = FollowMode.ThreeD;
 
-        [System.Serializable]
-        public class DistanceSettings
-        {
-            [Tooltip("Minimum distance to start following (0 = no limit).")]
-            public float activationDistance = 0f;
-            
-            [Tooltip("Stop moving when this close to target (0 = move to target).")]
-            public float stoppingDistance = 0f;
-        }
-
-        [Header("Target")]
-        [SerializeField]
-        private Transform target;
-
-        [SerializeField]
-        private FollowMode followMode = FollowMode.ThreeD;
-
-        [Header("Position Settings")]
-        [SerializeField]
+        [Header("Position Settings")] [SerializeField]
         private bool followPosition = true;
 
-        [SerializeField]
-        private SmoothMode positionSmoothMode = SmoothMode.MoveTowards;
+        [SerializeField] private SmoothMode positionSmoothMode = SmoothMode.MoveTowards;
 
-        [Tooltip("Speed for position smoothing. Meaning varies by smooth mode.")]
-        [SerializeField]
+        [Tooltip("Speed for position smoothing. Meaning varies by smooth mode.")] [SerializeField]
         private float positionSpeed = 5f;
 
-        [SerializeField]
-        private Vector3 offset;
+        [SerializeField] private Vector3 offset;
 
-        [Header("Deadzone")]
-        [SerializeField]
-        private DeadzoneSettings deadzone = new();
+        [Header("Deadzone")] [SerializeField] private DeadzoneSettings deadzone = new();
 
-        [Header("Distance Control")]
-        [SerializeField]
+        [Header("Distance Control")] [SerializeField]
         private DistanceSettings distanceControl = new();
 
-        [Header("Position Limits")]
-        [SerializeField]
+        [Header("Position Limits")] [SerializeField]
         private AxisLimit limitX = new();
 
-        [SerializeField]
-        private AxisLimit limitY = new();
+        [SerializeField] private AxisLimit limitY = new();
 
-        [SerializeField]
-        private AxisLimit limitZ = new();
+        [SerializeField] private AxisLimit limitZ = new();
 
-        [Header("Rotation Settings")]
-        [SerializeField]
+        [Header("Rotation Settings")] [SerializeField]
         private bool followRotation = true;
 
-        [SerializeField]
-        private SmoothMode rotationSmoothMode = SmoothMode.Lerp;
+        [SerializeField] private SmoothMode rotationSmoothMode = SmoothMode.Lerp;
 
-        [Tooltip("Speed for rotation smoothing (degrees per second for MoveTowards).")]
-        [SerializeField]
+        [Tooltip("Speed for rotation smoothing (degrees per second for MoveTowards).")] [SerializeField]
         private float rotationSpeed = 180f;
 
-        [SerializeField]
-        private Vector3 rotationOffset3D;
+        [SerializeField] private Vector3 rotationOffset3D;
 
-        [SerializeField]
-        private float rotationOffset2D;
+        [SerializeField] private float rotationOffset2D;
 
-        [Header("Rotation Limits (3D)")]
-        [SerializeField]
+        [Header("Rotation Limits (3D)")] [SerializeField]
         private AxisLimit rotationLimitX = new();
 
-        [SerializeField]
-        private AxisLimit rotationLimitY = new();
+        [SerializeField] private AxisLimit rotationLimitY = new();
 
-        [Header("Rotation Limits (2D)")]
-        [SerializeField]
+        [Header("Rotation Limits (2D)")] [SerializeField]
         private AxisLimit rotationLimitZ = new();
 
-        [Header("Events")]
-        public UnityEvent onStartFollowing;
+        [Header("Events")] public UnityEvent onStartFollowing;
+
         public UnityEvent onStopFollowing;
 
-        [Header("Debug")]
-        [SerializeField]
-        private bool showDebugGizmos = true;
+        [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+
+        private bool _isFollowing;
+        private Vector3 _lastTargetPosition;
 
         private Vector3 _positionVelocity;
         private Vector3 _rotationVelocity;
-        private Vector3 _lastTargetPosition;
-        private bool _isFollowing;
 
         private void Start()
         {
@@ -191,20 +144,20 @@ namespace Neo.Tools
         {
             Vector3 targetPos = CalculateTargetPosition();
             targetPos = ApplyPositionLimits(targetPos);
-            
+
             float distanceToTarget = Vector3.Distance(transform.position, targetPos);
-            
+
             if (distanceControl.activationDistance > 0f && distanceToTarget < distanceControl.activationDistance)
             {
                 UpdateFollowingState(false);
                 return;
             }
-            
+
             UpdateFollowingState(true);
-            
+
             targetPos = ApplyDeadzone(targetPos);
             targetPos = ApplyStoppingDistance(targetPos);
-            
+
             transform.position = SmoothPosition(transform.position, targetPos);
         }
 
@@ -404,6 +357,33 @@ namespace Neo.Tools
             float z = Mathf.SmoothDampAngle(currentEuler.z, targetEuler.z, ref velocity.z, smoothTime);
 
             return Quaternion.Euler(x, y, z);
+        }
+
+        [Serializable]
+        public class AxisLimit
+        {
+            public bool enabled;
+            public float min = -10f;
+            public float max = 10f;
+        }
+
+        [Serializable]
+        public class DeadzoneSettings
+        {
+            public bool enabled;
+
+            [Tooltip("Camera doesn't move while target is within this radius.")]
+            public float radius = 1f;
+        }
+
+        [Serializable]
+        public class DistanceSettings
+        {
+            [Tooltip("Minimum distance to start following (0 = no limit).")]
+            public float activationDistance;
+
+            [Tooltip("Stop moving when this close to target (0 = move to target).")]
+            public float stoppingDistance;
         }
 
         #region === Public API ===

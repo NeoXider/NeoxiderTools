@@ -4,11 +4,17 @@ using System.Collections.Generic;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Базовая модель контейнера карт.
+    ///     Базовая модель контейнера карт.
     /// </summary>
     public class CardContainerModel : ICardContainer
     {
         protected readonly List<CardData> CardsInternal = new();
+
+        public CardContainerModel(CardLocation location)
+        {
+            Location = location;
+        }
+
         public List<CardData> Mutable => CardsInternal;
 
         public CardLocation Location { get; }
@@ -17,12 +23,10 @@ namespace Neo.Cards
 
         public event Action OnChanged;
 
-        public CardContainerModel(CardLocation location)
+        public virtual bool CanAdd(CardData card)
         {
-            Location = location;
+            return true;
         }
-
-        public virtual bool CanAdd(CardData card) => true;
 
         public virtual void Add(CardData card)
         {
@@ -33,13 +37,17 @@ namespace Neo.Cards
         public virtual bool Remove(CardData card)
         {
             bool removed = CardsInternal.Remove(card);
-            if (removed) OnChanged?.Invoke();
+            if (removed)
+            {
+                OnChanged?.Invoke();
+            }
+
             return removed;
         }
 
         public virtual List<CardData> RemoveAll()
         {
-            var snapshot = new List<CardData>(CardsInternal);
+            List<CardData> snapshot = new(CardsInternal);
             CardsInternal.Clear();
             OnChanged?.Invoke();
             return snapshot;
@@ -52,4 +60,3 @@ namespace Neo.Cards
         }
     }
 }
-

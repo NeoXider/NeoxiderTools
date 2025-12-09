@@ -6,68 +6,70 @@ using UnityEngine.Events;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Компонент доски для общих карт (например, 5 карт на столе в Texas Hold'em или биты в "Дураке")
+    ///     Компонент доски для общих карт (например, 5 карт на столе в Texas Hold'em или биты в "Дураке")
     /// </summary>
     public class BoardComponent : MonoBehaviour
     {
-        [Header("Layout")]
-        [SerializeField] private Transform[] _cardSlots;
+        [Header("Layout")] [SerializeField] private Transform[] _cardSlots;
+
         [SerializeField] private float _slotSpacing = 80f;
         [SerializeField] private bool _autoGenerateSlots = true;
 
-        [Header("Settings")]
-        [SerializeField] private int _maxCards = 5;
-        [SerializeField] private bool _faceUp = false;
-        [Tooltip("Допустимо ли автоматически увеличивать максимальное количество карт при возврате")]
-        [SerializeField] private bool _autoExpandCapacity = true;
+        [Header("Settings")] [SerializeField] private int _maxCards = 5;
+
+        [SerializeField] private bool _faceUp;
+
+        [Tooltip("Допустимо ли автоматически увеличивать максимальное количество карт при возврате")] [SerializeField]
+        private bool _autoExpandCapacity = true;
 
         [Header("Sources (for reset)")]
         [Tooltip("Руки, из которых нужно забирать карты при сбросе/рестарте")]
-        [SerializeField] private List<HandComponent> _handSources = new();
-        [Tooltip("Другие BoardComponent, которые нужно очищать в этот Board")]
-        [SerializeField] private List<BoardComponent> _boardSources = new();
-        [Tooltip("Дополнительные корневые объекты, из которых будут собраны CardComponent")]
-        [SerializeField] private List<Transform> _extraRoots = new();
+        [SerializeField]
+        private List<HandComponent> _handSources = new();
 
-        [Header("Debug")]
-        [Tooltip("Последний собранный список карт при RestoreAllSourcesToBoard")]
-        [SerializeField] private List<CardComponent> _lastCollectedCards = new();
-        [Tooltip("Карты, созданные при первоначальном спавне (Initial Board)")]
-        [SerializeField] private List<CardComponent> _initialSpawnedCards = new();
+        [Tooltip("Другие BoardComponent, которые нужно очищать в этот Board")] [SerializeField]
+        private List<BoardComponent> _boardSources = new();
 
-        [Header("Animation")]
-        [SerializeField] private float _placeDuration = 0.3f;
+        [Tooltip("Дополнительные корневые объекты, из которых будут собраны CardComponent")] [SerializeField]
+        private List<Transform> _extraRoots = new();
 
-        [Header("Events")]
-        public UnityEvent<CardComponent> OnCardPlaced;
+        [Header("Debug")] [Tooltip("Последний собранный список карт при RestoreAllSourcesToBoard")] [SerializeField]
+        private List<CardComponent> _lastCollectedCards = new();
+
+        [Tooltip("Карты, созданные при первоначальном спавне (Initial Board)")] [SerializeField]
+        private List<CardComponent> _initialSpawnedCards = new();
+
+        [Header("Animation")] [SerializeField] private float _placeDuration = 0.3f;
+
+        [Header("Events")] public UnityEvent<CardComponent> OnCardPlaced;
+
         public UnityEvent OnBoardFull;
         public UnityEvent OnBoardCleared;
 
-        [SerializeField]
-        private List<CardComponent> _cards = new();
+        [SerializeField] private List<CardComponent> _cards = new();
 
         /// <summary>
-        /// Карты на доске
+        ///     Карты на доске
         /// </summary>
         public IReadOnlyList<CardComponent> Cards => _cards;
 
         /// <summary>
-        /// Количество карт на доске
+        ///     Количество карт на доске
         /// </summary>
         public int Count => _cards.Count;
 
         /// <summary>
-        /// Пуста ли доска
+        ///     Пуста ли доска
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
         /// <summary>
-        /// Заполнена ли доска
+        ///     Заполнена ли доска
         /// </summary>
         public bool IsFull => _cards.Count >= _maxCards;
 
         /// <summary>
-        /// Слоты для карт
+        ///     Слоты для карт
         /// </summary>
         public Transform[] CardSlots => _cardSlots;
 
@@ -80,20 +82,23 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Размещает карту на доске
+        ///     Размещает карту на доске
         /// </summary>
         /// <param name="card">Карта для размещения</param>
         /// <param name="animate">Анимировать</param>
         /// <param name="overrideFaceUp">Если true - применить настройку FaceUp из компонента, если false - оставить как есть</param>
         public async UniTask PlaceCardAsync(CardComponent card, bool animate = true, bool overrideFaceUp = true)
         {
-            if (card == null || IsFull) return;
+            if (card == null || IsFull)
+            {
+                return;
+            }
 
             int slotIndex = _cards.Count;
             Transform slot = GetSlot(slotIndex);
 
             card.transform.SetParent(transform, true);
-            
+
             if (overrideFaceUp)
             {
                 card.IsFaceUp = _faceUp;
@@ -119,7 +124,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Размещает карту синхронно
+        ///     Размещает карту синхронно
         /// </summary>
         /// <param name="card">Карта</param>
         public void PlaceCard(CardComponent card)
@@ -128,14 +133,17 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Принудительно размещает карту, расширяя вместимость при необходимости (используется для рестарта).
+        ///     Принудительно размещает карту, расширяя вместимость при необходимости (используется для рестарта).
         /// </summary>
         /// <param name="card">Карта</param>
         /// <param name="animate">Анимировать</param>
         /// <param name="overrideFaceUp">Учитывать настройку FaceUp</param>
         private async UniTask ForcePlaceCardAsync(CardComponent card, bool animate = false, bool overrideFaceUp = true)
         {
-            if (card == null) return;
+            if (card == null)
+            {
+                return;
+            }
 
             if (_autoExpandCapacity && IsFull)
             {
@@ -150,12 +158,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Регистрирует карту как созданную при первоначальном спавне (Initial Board).
+        ///     Регистрирует карту как созданную при первоначальном спавне (Initial Board).
         /// </summary>
         /// <param name="card">Карта</param>
         public void RegisterInitialCard(CardComponent card)
         {
-            if (card == null) return;
+            if (card == null)
+            {
+                return;
+            }
+
             if (!_initialSpawnedCards.Contains(card))
             {
                 _initialSpawnedCards.Add(card);
@@ -163,16 +175,20 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Размещает несколько карт
+        ///     Размещает несколько карт
         /// </summary>
         /// <param name="cards">Карты для размещения</param>
         /// <param name="animate">Анимировать</param>
         /// <param name="delayBetweenCards">Задержка между картами</param>
-        public async UniTask PlaceCardsAsync(IEnumerable<CardComponent> cards, bool animate = true, float delayBetweenCards = 0.1f)
+        public async UniTask PlaceCardsAsync(IEnumerable<CardComponent> cards, bool animate = true,
+            float delayBetweenCards = 0.1f)
         {
-            foreach (var card in cards)
+            foreach (CardComponent card in cards)
             {
-                if (IsFull) break;
+                if (IsFull)
+                {
+                    break;
+                }
 
                 await PlaceCardAsync(card, animate);
 
@@ -184,13 +200,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Удаляет карту с доски
+        ///     Удаляет карту с доски
         /// </summary>
         /// <param name="card">Карта для удаления</param>
         /// <returns>true если карта была удалена</returns>
         public bool RemoveCard(CardComponent card)
         {
-            if (card == null) return false;
+            if (card == null)
+            {
+                return false;
+            }
 
             bool removed = _cards.Remove(card);
             if (removed)
@@ -202,13 +221,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Удаляет карту по индексу
+        ///     Удаляет карту по индексу
         /// </summary>
         /// <param name="index">Индекс карты</param>
         /// <returns>Удалённая карта или null</returns>
         public CardComponent RemoveAt(int index)
         {
-            if (index < 0 || index >= _cards.Count) return null;
+            if (index < 0 || index >= _cards.Count)
+            {
+                return null;
+            }
 
             CardComponent card = _cards[index];
             _cards.RemoveAt(index);
@@ -218,14 +240,14 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Очищает доску
+        ///     Очищает доску
         /// </summary>
 #if ODIN_INSPECTOR
         [Sirenix.OdinInspector.Button]
 #endif
         public void Clear()
         {
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 if (card != null)
                 {
@@ -238,14 +260,14 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Очищает доску и возвращает карты
+        ///     Очищает доску и возвращает карты
         /// </summary>
         /// <returns>Список карт</returns>
         public List<CardComponent> ClearAndReturn()
         {
-            var cards = new List<CardComponent>(_cards);
+            List<CardComponent> cards = new(_cards);
 
-            foreach (var card in cards)
+            foreach (CardComponent card in cards)
             {
                 if (card != null)
                 {
@@ -260,7 +282,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Переворачивает все карты
+        ///     Переворачивает все карты
         /// </summary>
 #if ODIN_INSPECTOR
         [Sirenix.OdinInspector.Button]
@@ -271,7 +293,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает все карты из указанных источников (рук, других досок и дополнительных корней) обратно на эту доску.
+        ///     Возвращает все карты из указанных источников (рук, других досок и дополнительных корней) обратно на эту доску.
         /// </summary>
 #if ODIN_INSPECTOR
         [Sirenix.OdinInspector.Button]
@@ -282,20 +304,24 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает все карты из указанных источников (рук, других досок и дополнительных корней) обратно на эту доску.
+        ///     Возвращает все карты из указанных источников (рук, других досок и дополнительных корней) обратно на эту доску.
         /// </summary>
         public async UniTask RestoreAllSourcesToBoardAsync()
         {
-            var collected = new List<CardComponent>();
-            var seen = new HashSet<CardComponent>();
+            List<CardComponent> collected = new();
+            HashSet<CardComponent> seen = new();
 
             // Снимаем карты с рук
-            foreach (var hand in _handSources)
+            foreach (HandComponent hand in _handSources)
             {
-                if (hand == null) continue;
+                if (hand == null)
+                {
+                    continue;
+                }
+
                 while (hand.Count > 0)
                 {
-                    var card = hand.DrawFirst();
+                    CardComponent card = hand.DrawFirst();
                     if (card != null && seen.Add(card))
                     {
                         collected.Add(card);
@@ -308,11 +334,15 @@ namespace Neo.Cards
             }
 
             // Снимаем карты с других досок
-            foreach (var board in _boardSources)
+            foreach (BoardComponent board in _boardSources)
             {
-                if (board == null || board == this) continue;
-                var returned = board.ClearAndReturn();
-                foreach (var card in returned)
+                if (board == null || board == this)
+                {
+                    continue;
+                }
+
+                List<CardComponent> returned = board.ClearAndReturn();
+                foreach (CardComponent card in returned)
                 {
                     if (card != null && seen.Add(card))
                     {
@@ -322,13 +352,21 @@ namespace Neo.Cards
             }
 
             // Собираем дополнительные корни
-            foreach (var root in _extraRoots)
+            foreach (Transform root in _extraRoots)
             {
-                if (root == null) continue;
-                var cards = root.GetComponentsInChildren<CardComponent>(includeInactive: true);
-                foreach (var card in cards)
+                if (root == null)
                 {
-                    if (card == null || card.transform == transform) continue;
+                    continue;
+                }
+
+                CardComponent[] cards = root.GetComponentsInChildren<CardComponent>(true);
+                foreach (CardComponent card in cards)
+                {
+                    if (card == null || card.transform == transform)
+                    {
+                        continue;
+                    }
+
                     if (seen.Add(card))
                     {
                         collected.Add(card);
@@ -337,9 +375,9 @@ namespace Neo.Cards
             }
 
             // Возвращаем на эту доску
-            foreach (var card in collected)
+            foreach (CardComponent card in collected)
             {
-                await ForcePlaceCardAsync(card, animate: false, overrideFaceUp: true);
+                await ForcePlaceCardAsync(card);
             }
 
             _lastCollectedCards.Clear();
@@ -349,12 +387,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Переворачивает все карты с анимацией
+        ///     Переворачивает все карты с анимацией
         /// </summary>
         /// <param name="delayBetweenCards">Задержка между переворотами</param>
         public async UniTask FlipAllAsync(float delayBetweenCards = 0.1f)
         {
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 await card.FlipAsync();
 
@@ -366,14 +404,14 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает все ранги карт на доске
+        ///     Возвращает все ранги карт на доске
         /// </summary>
         /// <returns>Набор рангов</returns>
         public HashSet<Rank> GetAllRanks()
         {
-            var ranks = new HashSet<Rank>();
+            HashSet<Rank> ranks = new();
 
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 if (!card.Data.IsJoker)
                 {
@@ -385,14 +423,14 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает все данные карт на доске
+        ///     Возвращает все данные карт на доске
         /// </summary>
         /// <returns>Список данных карт</returns>
         public List<CardData> GetAllCardData()
         {
-            var data = new List<CardData>();
+            List<CardData> data = new();
 
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 data.Add(card.Data);
             }
@@ -402,8 +440,15 @@ namespace Neo.Cards
 
         private Transform GetSlot(int index)
         {
-            if (_cardSlots == null || _cardSlots.Length == 0) return transform;
-            if (index < 0 || index >= _cardSlots.Length) return transform;
+            if (_cardSlots == null || _cardSlots.Length == 0)
+            {
+                return transform;
+            }
+
+            if (index < 0 || index >= _cardSlots.Length)
+            {
+                return transform;
+            }
 
             return _cardSlots[index];
         }
@@ -417,7 +462,7 @@ namespace Neo.Cards
 
             for (int i = 0; i < _maxCards; i++)
             {
-                GameObject slot = new GameObject($"Slot_{i}");
+                GameObject slot = new($"Slot_{i}");
                 slot.transform.SetParent(transform);
                 slot.transform.localPosition = new Vector3(startX + i * _slotSpacing, 0, 0);
                 slot.transform.localRotation = Quaternion.identity;
@@ -426,4 +471,3 @@ namespace Neo.Cards
         }
     }
 }
-

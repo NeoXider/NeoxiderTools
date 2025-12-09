@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.StateMachine
 {
@@ -39,8 +40,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class BoolStateCondition : StateCondition
     {
-        [SerializeField]
-        private bool value;
+        [SerializeField] private bool value;
 
         /// <summary>
         ///     Значение для проверки.
@@ -63,14 +63,11 @@ namespace Neo.StateMachine
     [Serializable]
     public class FloatStateCondition : StateCondition
     {
-        [SerializeField]
-        private float value;
+        [SerializeField] private float value;
 
-        [SerializeField]
-        private ComparisonType comparison = ComparisonType.GreaterThan;
+        [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThan;
 
-        [SerializeField]
-        private float threshold = 0f;
+        [SerializeField] private float threshold;
 
         /// <summary>
         ///     Значение для сравнения.
@@ -120,15 +117,14 @@ namespace Neo.StateMachine
     [Serializable]
     public class EventStateCondition : StateCondition
     {
-        [SerializeField]
-        private UnityEngine.Events.UnityEvent onEvaluate = new UnityEngine.Events.UnityEvent();
+        [SerializeField] private UnityEvent onEvaluate = new();
 
-        private bool lastResult = false;
+        private bool lastResult;
 
         /// <summary>
         ///     Событие для оценки. Должно устанавливать результат через SetResult().
         /// </summary>
-        public UnityEngine.Events.UnityEvent OnEvaluate => onEvaluate;
+        public UnityEvent OnEvaluate => onEvaluate;
 
         /// <summary>
         ///     Установить результат оценки условия.
@@ -146,5 +142,3 @@ namespace Neo.StateMachine
         }
     }
 }
-
-

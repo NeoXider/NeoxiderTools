@@ -27,7 +27,7 @@ namespace Neo
                 // Ищем путь к скрипту через поиск по имени
                 string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
                 string scriptPath = null;
-                
+
                 foreach (string guid in guids)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guid);
@@ -52,7 +52,7 @@ namespace Neo
                     // Fallback - пробуем стандартные пути
                     string assetsPath = "Assets/Neoxider/";
                     string packagesPath = "Packages/com.neoxider.tools/";
-                    
+
                     // Проверяем, существует ли папка Packages
                     if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
                     {
@@ -77,7 +77,7 @@ namespace Neo
                                 break;
                             }
                         }
-                        
+
                         if (string.IsNullOrEmpty(_startPath))
                         {
                             _startPath = assetsPath; // Fallback на стандартный путь

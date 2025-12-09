@@ -6,25 +6,34 @@ namespace Neo
     namespace Audio
     {
         /// <summary>
-        /// Компонент для воспроизведения звукового эффекта из AM.
-        /// Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
+        ///     Компонент для воспроизведения звукового эффекта из AM.
+        ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
         [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {
-            [Header("Legacy Mode (by ID)")]
-            [SerializeField] private int _clipType;
+            [Header("Legacy Mode (by ID)")] [SerializeField]
+            private int _clipType;
 
-            [Header("New Mode (by Clip)")]
-            [SerializeField] private AudioClip[] _clips;
+            [Header("New Mode (by Clip)")] [SerializeField]
+            private AudioClip[] _clips;
+
             [SerializeField] private bool _useRandomClip;
 
             [SerializeField] private bool _playOnAwake;
             [SerializeField] private float _volume = 1;
 
+            private void Start()
+            {
+                if (_playOnAwake)
+                {
+                    AudioPlay();
+                }
+            }
+
             /// <summary>
-            /// Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
-            /// Иначе использует режим по ID (legacy).
+            ///     Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
+            ///     Иначе использует режим по ID (legacy).
             /// </summary>
             public void AudioPlay()
             {
@@ -52,14 +61,6 @@ namespace Neo
                 else
                 {
                     AM.I.Play(_clipType, _volume);
-                }
-            }
-
-            private void Start()
-            {
-                if (_playOnAwake)
-                {
-                    AudioPlay();
                 }
             }
         }

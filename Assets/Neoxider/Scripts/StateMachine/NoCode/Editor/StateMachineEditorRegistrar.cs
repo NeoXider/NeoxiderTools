@@ -1,6 +1,5 @@
-using UnityEngine;
 using UnityEditor;
-using Neo.StateMachine.NoCode;
+using UnityEngine;
 
 namespace Neo.StateMachine.NoCode.Editor
 {
@@ -11,22 +10,25 @@ namespace Neo.StateMachine.NoCode.Editor
     [InitializeOnLoad]
     public static class StateMachineEditorRegistrar
     {
-        private static bool isInitialized;
-
         static StateMachineEditorRegistrar()
         {
             EditorApplication.delayCall += OnEditorReady;
         }
 
+        /// <summary>
+        ///     Получить статус инициализации.
+        /// </summary>
+        public static bool IsInitialized { get; private set; }
+
         private static void OnEditorReady()
         {
-            if (isInitialized)
+            if (IsInitialized)
             {
                 return;
             }
 
             Initialize();
-            isInitialized = true;
+            IsInitialized = true;
         }
 
         /// <summary>
@@ -47,8 +49,8 @@ namespace Neo.StateMachine.NoCode.Editor
         private static void ValidateRegistration()
         {
             // Проверка регистрации CustomEditor для StateMachineData
-            var testData = ScriptableObject.CreateInstance<StateMachineData>();
-            var stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
+            StateMachineData testData = ScriptableObject.CreateInstance<StateMachineData>();
+            UnityEditor.Editor stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
             if (stateMachineDataEditor == null || !(stateMachineDataEditor is StateMachineDataEditor))
             {
                 Debug.LogWarning(
@@ -58,13 +60,8 @@ namespace Neo.StateMachine.NoCode.Editor
             {
                 Object.DestroyImmediate(stateMachineDataEditor);
             }
+
             Object.DestroyImmediate(testData);
         }
-
-        /// <summary>
-        ///     Получить статус инициализации.
-        /// </summary>
-        public static bool IsInitialized => isInitialized;
     }
 }
-

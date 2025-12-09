@@ -109,15 +109,12 @@ namespace Neo.Tools
         [Header("Physics")] public bool addCollider;
 
         public bool colliderAfterCreation;
-        
-        [Header("Pooling")]
-        [Tooltip("Использовать PoolManager для переиспользования LineRenderer объектов")]
+
+        [Header("Pooling")] [Tooltip("Использовать PoolManager для переиспользования LineRenderer объектов")]
         public bool usePooling;
-        
+
         [Tooltip("Префаб LineRenderer для пулинга. Если не указан, создаётся автоматически")]
         public LineRenderer poolPrefab;
-        
-        private GameObject _autoPoolPrefab;
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
         [Header("Events")] public LineCreatedEvent OnLineCreated = new();
@@ -133,6 +130,8 @@ namespace Neo.Tools
         public UnityEvent<Vector3> OnLineStarted = new();
 
         public List<LineRenderer> lines = new();
+
+        private GameObject _autoPoolPrefab;
         private Vector3[] _cachedPositionsArray;
 
         private LineRenderer _currentLR;
@@ -358,18 +357,22 @@ namespace Neo.Tools
         private GameObject GetPoolPrefab()
         {
             if (poolPrefab != null)
+            {
                 return poolPrefab.gameObject;
-            
+            }
+
             if (_autoPoolPrefab != null)
+            {
                 return _autoPoolPrefab;
-            
+            }
+
             _autoPoolPrefab = new GameObject("LineRenderer_PoolPrefab");
             _autoPoolPrefab.SetActive(false);
             LineRenderer lr = _autoPoolPrefab.AddComponent<LineRenderer>();
             lr.useWorldSpace = true;
             ApplyFallbackSettings(lr);
             DontDestroyOnLoad(_autoPoolPrefab);
-            
+
             return _autoPoolPrefab;
         }
 
@@ -583,11 +586,15 @@ namespace Neo.Tools
             }
 
             lines.Remove(lr);
-            
+
             if (usePooling)
+            {
                 PoolManager.Release(lr.gameObject);
+            }
             else
+            {
                 Destroy(lr.gameObject);
+            }
         }
 
         /// <summary>
@@ -668,16 +675,18 @@ namespace Neo.Tools
 
             Vector3[] input = points.ToArray();
             Vector3[] output = null;
-            
+
             for (int p = 0; p < passes; p++)
             {
                 int newSize = 1 + (input.Length - 1) * 2 + 1;
                 if (output == null || output.Length != newSize)
+                {
                     output = new Vector3[newSize];
-                
+                }
+
                 output[0] = input[0];
                 int idx = 1;
-                
+
                 for (int i = 0; i < input.Length - 1; i++)
                 {
                     Vector3 a = input[i];
@@ -694,7 +703,7 @@ namespace Neo.Tools
                 }
 
                 output[idx] = input[^1];
-                
+
                 (input, output) = (output, input);
             }
 

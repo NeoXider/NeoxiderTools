@@ -1,8 +1,5 @@
-using System;
-using UnityEngine;
 using UnityEditor;
-using Neo.StateMachine;
-using Neo.StateMachine.NoCode;
+using UnityEngine;
 
 namespace Neo.StateMachine.NoCode.Editor
 {
@@ -30,10 +27,12 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.Space();
 
             // Валидация (silent режим - не логируем в консоль при каждой отрисовке)
-            bool isValid = data.Validate(silent: true);
+            bool isValid = data.Validate(true);
             if (!isValid)
             {
-                EditorGUILayout.HelpBox("State Machine configuration has errors. Add states to configure the state machine.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "State Machine configuration has errors. Add states to configure the state machine.",
+                    MessageType.Warning);
             }
 
             // Отображение состояний
@@ -47,12 +46,15 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.LabelField("Initial State", EditorStyles.boldLabel);
             SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
             EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
-            
+
             // Legacy поле для обратной совместимости (скрыто, но сохраняется)
             SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
-            if (initialStateProp.objectReferenceValue == null && !string.IsNullOrEmpty(initialStateNameProp.stringValue))
+            if (initialStateProp.objectReferenceValue == null &&
+                !string.IsNullOrEmpty(initialStateNameProp.stringValue))
             {
-                EditorGUILayout.HelpBox($"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
+                    MessageType.Warning);
             }
 
             EditorGUILayout.Space();
@@ -74,7 +76,8 @@ namespace Neo.StateMachine.NoCode.Editor
                 }
                 else
                 {
-                    EditorUtility.DisplayDialog("Validation", "State Machine configuration has errors. Check the console.", "OK");
+                    EditorUtility.DisplayDialog("Validation",
+                        "State Machine configuration has errors. Check the console.", "OK");
                 }
             }
 
@@ -87,4 +90,3 @@ namespace Neo.StateMachine.NoCode.Editor
     ///     Регистрация происходит автоматически через атрибут [CustomEditor] и StateMachineEditorRegistrar.
     /// </summary>
 }
-

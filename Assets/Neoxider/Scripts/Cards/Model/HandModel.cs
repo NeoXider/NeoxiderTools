@@ -5,44 +5,29 @@ using System.Linq;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Модель руки игрока (набор карт)
+    ///     Модель руки игрока (набор карт)
     /// </summary>
     public class HandModel : ICardContainer
     {
-        private readonly CardContainerModel _cards = new CardContainerModel(CardLocation.Hand);
+        private readonly CardContainerModel _cards = new(CardLocation.Hand);
 
         /// <summary>
-        /// Карты в руке
+        ///     Карты в руке
         /// </summary>
         public IReadOnlyList<CardData> Cards => _cards.Data;
 
         /// <summary>
-        /// Количество карт в руке
-        /// </summary>
-        public int Count => _cards.Count;
-
-        /// <summary>
-        /// Пуста ли рука
+        ///     Пуста ли рука
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
+        /// <summary>
+        ///     Количество карт в руке
+        /// </summary>
+        public int Count => _cards.Count;
+
         public CardLocation Location => _cards.Location;
         IReadOnlyList<CardData> ICardContainer.Data => _cards.Data;
-
-        /// <summary>
-        /// Событие добавления карты
-        /// </summary>
-        public event Action<CardData> OnCardAdded;
-
-        /// <summary>
-        /// Событие удаления карты
-        /// </summary>
-        public event Action<CardData> OnCardRemoved;
-
-        /// <summary>
-        /// Событие изменения руки
-        /// </summary>
-        public event Action OnHandChanged;
 
         public event Action OnChanged
         {
@@ -51,7 +36,22 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Добавляет карту в руку
+        ///     Событие добавления карты
+        /// </summary>
+        public event Action<CardData> OnCardAdded;
+
+        /// <summary>
+        ///     Событие удаления карты
+        /// </summary>
+        public event Action<CardData> OnCardRemoved;
+
+        /// <summary>
+        ///     Событие изменения руки
+        /// </summary>
+        public event Action OnHandChanged;
+
+        /// <summary>
+        ///     Добавляет карту в руку
         /// </summary>
         /// <param name="card">Карта для добавления</param>
         public void Add(CardData card)
@@ -62,21 +62,22 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Добавляет несколько карт в руку
+        ///     Добавляет несколько карт в руку
         /// </summary>
         /// <param name="cards">Карты для добавления</param>
         public void AddRange(IEnumerable<CardData> cards)
         {
-            foreach (var card in cards)
+            foreach (CardData card in cards)
             {
                 _cards.Add(card);
                 OnCardAdded?.Invoke(card);
             }
+
             OnHandChanged?.Invoke();
         }
 
         /// <summary>
-        /// Удаляет карту из руки
+        ///     Удаляет карту из руки
         /// </summary>
         /// <param name="card">Карта для удаления</param>
         /// <returns>true если карта была удалена</returns>
@@ -88,11 +89,12 @@ namespace Neo.Cards
                 OnHandChanged?.Invoke();
                 return true;
             }
+
             return false;
         }
 
         /// <summary>
-        /// Удаляет карту по индексу
+        ///     Удаляет карту по индексу
         /// </summary>
         /// <param name="index">Индекс карты</param>
         /// <returns>Удалённая карта</returns>
@@ -111,7 +113,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Очищает руку
+        ///     Очищает руку
         /// </summary>
         public void Clear()
         {
@@ -120,7 +122,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет наличие карты в руке
+        ///     Проверяет наличие карты в руке
         /// </summary>
         /// <param name="card">Карта для поиска</param>
         /// <returns>true если карта есть в руке</returns>
@@ -130,7 +132,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет наличие карты с указанным рангом
+        ///     Проверяет наличие карты с указанным рангом
         /// </summary>
         /// <param name="rank">Ранг для поиска</param>
         /// <returns>true если есть карта с таким рангом</returns>
@@ -140,7 +142,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет наличие карты с указанной мастью
+        ///     Проверяет наличие карты с указанной мастью
         /// </summary>
         /// <param name="suit">Масть для поиска</param>
         /// <returns>true если есть карта с такой мастью</returns>
@@ -150,7 +152,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает карту по индексу
+        ///     Возвращает карту по индексу
         /// </summary>
         /// <param name="index">Индекс карты</param>
         /// <returns>Карта</returns>
@@ -160,7 +162,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Находит индекс карты
+        ///     Находит индекс карты
         /// </summary>
         /// <param name="card">Карта для поиска</param>
         /// <returns>Индекс или -1 если не найдена</returns>
@@ -169,13 +171,16 @@ namespace Neo.Cards
             for (int i = 0; i < _cards.Count; i++)
             {
                 if (_cards.Data[i].Equals(card))
+                {
                     return i;
+                }
             }
+
             return -1;
         }
 
         /// <summary>
-        /// Сортирует карты по рангу
+        ///     Сортирует карты по рангу
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
         public void SortByRank(bool ascending = true)
@@ -188,11 +193,12 @@ namespace Neo.Cards
             {
                 _cards.Mutable.Sort((a, b) => b.Rank.CompareTo(a.Rank));
             }
+
             OnHandChanged?.Invoke();
         }
 
         /// <summary>
-        /// Сортирует карты по масти, затем по рангу
+        ///     Сортирует карты по масти, затем по рангу
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
         public void SortBySuit(bool ascending = true)
@@ -213,11 +219,12 @@ namespace Neo.Cards
                     return suitCompare != 0 ? suitCompare : b.Rank.CompareTo(a.Rank);
                 });
             }
+
             OnHandChanged?.Invoke();
         }
 
         /// <summary>
-        /// Возвращает все карты указанной масти
+        ///     Возвращает все карты указанной масти
         /// </summary>
         /// <param name="suit">Масть</param>
         /// <returns>Список карт</returns>
@@ -227,7 +234,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает все карты указанного ранга
+        ///     Возвращает все карты указанного ранга
         /// </summary>
         /// <param name="rank">Ранг</param>
         /// <returns>Список карт</returns>
@@ -237,7 +244,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Находит карты, которыми можно побить указанную карту
+        ///     Находит карты, которыми можно побить указанную карту
         /// </summary>
         /// <param name="attackCard">Атакующая карта</param>
         /// <param name="trump">Козырная масть</param>
@@ -248,25 +255,27 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Находит карты с таким же рангом (для подкидывания в "Дураке")
+        ///     Находит карты с таким же рангом (для подкидывания в "Дураке")
         /// </summary>
         /// <param name="ranks">Ранги на столе</param>
         /// <returns>Список карт для подкидывания</returns>
         public List<CardData> GetCardsMatchingRanks(IEnumerable<Rank> ranks)
         {
-            var rankSet = new HashSet<Rank>(ranks);
+            HashSet<Rank> rankSet = new(ranks);
             return _cards.Data.Where(c => !c.IsJoker && rankSet.Contains(c.Rank)).ToList();
         }
 
         /// <summary>
-        /// Возвращает минимальную карту в руке
+        ///     Возвращает минимальную карту в руке
         /// </summary>
         /// <param name="trump">Козырная масть (козыри считаются выше)</param>
         /// <returns>Минимальная карта или null если рука пуста</returns>
         public CardData? GetLowestCard(Suit? trump = null)
         {
             if (_cards.Count == 0)
+            {
                 return null;
+            }
 
             return _cards.Data
                 .Where(c => !c.IsJoker)
@@ -276,14 +285,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает максимальную карту в руке
+        ///     Возвращает максимальную карту в руке
         /// </summary>
         /// <param name="trump">Козырная масть</param>
         /// <returns>Максимальная карта или null если рука пуста</returns>
         public CardData? GetHighestCard(Suit? trump = null)
         {
             if (_cards.Count == 0)
+            {
                 return null;
+            }
 
             return _cards.Data
                 .Where(c => !c.IsJoker)
@@ -293,17 +304,34 @@ namespace Neo.Cards
         }
 
         #region ICardContainer explicit
-        public bool CanAdd(CardData card) => true;
-        void ICardContainer.Add(CardData card) => Add(card);
-        bool ICardContainer.Remove(CardData card) => Remove(card);
+
+        public bool CanAdd(CardData card)
+        {
+            return true;
+        }
+
+        void ICardContainer.Add(CardData card)
+        {
+            Add(card);
+        }
+
+        bool ICardContainer.Remove(CardData card)
+        {
+            return Remove(card);
+        }
+
         List<CardData> ICardContainer.RemoveAll()
         {
-            var snapshot = new List<CardData>(_cards.Data);
+            List<CardData> snapshot = new(_cards.Data);
             _cards.Clear();
             return snapshot;
         }
-        void ICardContainer.Clear() => Clear();
+
+        void ICardContainer.Clear()
+        {
+            Clear();
+        }
+
         #endregion
     }
 }
-

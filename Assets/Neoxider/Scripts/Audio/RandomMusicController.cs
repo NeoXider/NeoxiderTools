@@ -7,45 +7,44 @@ using UnityEngine;
 namespace Neo.Audio
 {
     /// <summary>
-    /// Контроллер для воспроизведения случайной музыки из списка треков без повторов подряд.
-    /// Не является MonoBehaviour, управляется через AM.
+    ///     Контроллер для воспроизведения случайной музыки из списка треков без повторов подряд.
+    ///     Не является MonoBehaviour, управляется через AM.
     /// </summary>
     public class RandomMusicController
     {
         private AudioSource _audioSource;
-        private AudioClip[] _tracks;
-        private int _lastTrackIndex = -1;
         private CancellationTokenSource _cancellationTokenSource;
         private bool _isPlaying;
-        private bool _isPaused;
+        private int _lastTrackIndex = -1;
+        private AudioClip[] _tracks;
 
         /// <summary>
-        /// Событие вызывается при смене трека.
-        /// </summary>
-        public event Action<AudioClip> OnTrackChanged;
-
-        /// <summary>
-        /// Событие вызывается при остановке воспроизведения.
-        /// </summary>
-        public event Action OnStopped;
-
-        /// <summary>
-        /// Возвращает текущий воспроизводимый трек.
+        ///     Возвращает текущий воспроизводимый трек.
         /// </summary>
         public AudioClip CurrentTrack => _audioSource != null ? _audioSource.clip : null;
 
         /// <summary>
-        /// Возвращает true, если музыка воспроизводится.
+        ///     Возвращает true, если музыка воспроизводится.
         /// </summary>
-        public bool IsPlaying => _isPlaying && !_isPaused;
+        public bool IsPlaying => _isPlaying && !IsPaused;
 
         /// <summary>
-        /// Возвращает true, если воспроизведение приостановлено.
+        ///     Возвращает true, если воспроизведение приостановлено.
         /// </summary>
-        public bool IsPaused => _isPaused;
+        public bool IsPaused { get; private set; }
 
         /// <summary>
-        /// Инициализирует контроллер с указанным AudioSource и списком треков.
+        ///     Событие вызывается при смене трека.
+        /// </summary>
+        public event Action<AudioClip> OnTrackChanged;
+
+        /// <summary>
+        ///     Событие вызывается при остановке воспроизведения.
+        /// </summary>
+        public event Action OnStopped;
+
+        /// <summary>
+        ///     Инициализирует контроллер с указанным AudioSource и списком треков.
         /// </summary>
         /// <param name="audioSource">AudioSource для воспроизведения музыки.</param>
         /// <param name="tracks">Массив музыкальных треков для воспроизведения.</param>
@@ -62,13 +61,14 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        /// Начинает воспроизведение случайной музыки из списка треков.
+        ///     Начинает воспроизведение случайной музыки из списка треков.
         /// </summary>
         public void Start()
         {
             if (_audioSource == null)
             {
-                Debug.LogError("[RandomMusicController] AudioSource не инициализирован. Вызовите Initialize() сначала.");
+                Debug.LogError(
+                    "[RandomMusicController] AudioSource не инициализирован. Вызовите Initialize() сначала.");
                 return;
             }
 
@@ -81,13 +81,13 @@ namespace Neo.Audio
             Stop();
 
             _isPlaying = true;
-            _isPaused = false;
+            IsPaused = false;
             _cancellationTokenSource = new CancellationTokenSource();
             PlayMusicLoop(_cancellationTokenSource.Token).Forget();
         }
 
         /// <summary>
-        /// Останавливает воспроизведение музыки.
+        ///     Останавливает воспроизведение музыки.
         /// </summary>
         public void Stop()
         {
@@ -99,7 +99,7 @@ namespace Neo.Audio
             }
 
             _isPlaying = false;
-            _isPaused = false;
+            IsPaused = false;
 
             if (_audioSource != null)
             {
@@ -110,11 +110,11 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        /// Приостанавливает воспроизведение музыки.
+        ///     Приостанавливает воспроизведение музыки.
         /// </summary>
         public void Pause()
         {
-            if (!_isPlaying || _isPaused)
+            if (!_isPlaying || IsPaused)
             {
                 return;
             }
@@ -124,15 +124,15 @@ namespace Neo.Audio
                 _audioSource.Pause();
             }
 
-            _isPaused = true;
+            IsPaused = true;
         }
 
         /// <summary>
-        /// Возобновляет воспроизведение приостановленной музыки.
+        ///     Возобновляет воспроизведение приостановленной музыки.
         /// </summary>
         public void Resume()
         {
-            if (!_isPaused)
+            if (!IsPaused)
             {
                 return;
             }
@@ -142,7 +142,7 @@ namespace Neo.Audio
                 _audioSource.UnPause();
             }
 
-            _isPaused = false;
+            IsPaused = false;
         }
 
         private async UniTaskVoid PlayMusicLoop(CancellationToken cancellationToken)

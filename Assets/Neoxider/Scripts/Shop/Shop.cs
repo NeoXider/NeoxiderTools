@@ -196,7 +196,7 @@ namespace Neo.Shop
 
         private void LoadEquipped()
         {
-            _savedEquippedId = SaveProvider.GetInt(_keySaveEquipped, 0);
+            _savedEquippedId = SaveProvider.GetInt(_keySaveEquipped);
             _savedEquippedId = Mathf.Clamp(_savedEquippedId, 0,
                 _prices != null && _prices.Length > 0 ? _prices.Length - 1 : 0);
             PreviewId = _savedEquippedId;

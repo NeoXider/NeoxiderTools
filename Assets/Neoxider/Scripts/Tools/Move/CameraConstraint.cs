@@ -17,40 +17,32 @@ namespace Neo.Tools
             Manual
         }
 
-        [Header("Bounds Source")]
-        [Tooltip("Type of boundary to use for constraining camera.")]
-        [SerializeField]
+        [Header("Bounds Source")] [Tooltip("Type of boundary to use for constraining camera.")] [SerializeField]
         private BoundsType boundsType = BoundsType.SpriteRenderer;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
         [SerializeField] private Collider2D collider2D;
         [SerializeField] private Collider collider;
 
-        [Header("Manual Bounds (when BoundsType is Manual)")]
-        [SerializeField]
+        [Header("Manual Bounds (when BoundsType is Manual)")] [SerializeField]
         private Bounds manualBounds = new(Vector3.zero, Vector3.one * 100f);
 
-        [Header("Camera")]
-        [Tooltip("Camera to constrain. Uses component's camera if not set.")]
-        [SerializeField]
+        [Header("Camera")] [Tooltip("Camera to constrain. Uses component's camera if not set.")] [SerializeField]
         private Camera cam;
 
-        [Header("Settings")]
-        [Tooltip("Additional padding from the edge of bounds.")]
-        [SerializeField]
+        [Header("Settings")] [Tooltip("Additional padding from the edge of bounds.")] [SerializeField]
         private float edgePadding;
 
         [SerializeField] private bool constraintX = true;
         [SerializeField] private bool constraintY = true;
         [SerializeField] private bool constraintZ = true;
 
-        [Header("Debug")]
-        [SerializeField]
-        private bool showDebugGizmos = true;
+        [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+
+        private bool _boundsValid;
+        private Vector3 _maxBounds;
 
         private Vector3 _minBounds;
-        private Vector3 _maxBounds;
-        private bool _boundsValid;
 
         private void Start()
         {
@@ -113,107 +105,6 @@ namespace Neo.Tools
                 }
             }
         }
-
-        #region === Public API ===
-
-        /// <summary>
-        ///     Recalculates bounds. Call if bounds or camera parameters change at runtime.
-        /// </summary>
-        public void UpdateBounds()
-        {
-            CalculateBounds();
-        }
-
-        /// <summary>
-        ///     Set bounds type and source at runtime.
-        /// </summary>
-        public void SetBoundsSource(BoundsType type, Object source = null)
-        {
-            boundsType = type;
-
-            switch (type)
-            {
-                case BoundsType.SpriteRenderer:
-                    if (source is SpriteRenderer sr)
-                    {
-                        spriteRenderer = sr;
-                    }
-
-                    break;
-                case BoundsType.Collider2D:
-                    if (source is Collider2D col2D)
-                    {
-                        collider2D = col2D;
-                    }
-
-                    break;
-                case BoundsType.Collider:
-                    if (source is Collider col)
-                    {
-                        collider = col;
-                    }
-
-                    break;
-            }
-
-            UpdateBounds();
-        }
-
-        /// <summary>
-        ///     Set manual bounds at runtime.
-        /// </summary>
-        public void SetManualBounds(Bounds bounds)
-        {
-            boundsType = BoundsType.Manual;
-            manualBounds = bounds;
-            UpdateBounds();
-        }
-
-        /// <summary>
-        ///     Set edge padding at runtime.
-        /// </summary>
-        public void SetEdgePadding(float padding)
-        {
-            edgePadding = Mathf.Max(0f, padding);
-            UpdateBounds();
-        }
-
-        /// <summary>
-        ///     Enable or disable constraint on specific axis.
-        /// </summary>
-        public void SetAxisConstraint(bool x, bool y, bool z)
-        {
-            constraintX = x;
-            constraintY = y;
-            constraintZ = z;
-        }
-
-        /// <summary>
-        ///     Get current calculated bounds.
-        /// </summary>
-        public void GetConstraintBounds(out Vector3 min, out Vector3 max)
-        {
-            min = _minBounds;
-            max = _maxBounds;
-        }
-
-        /// <summary>
-        ///     Check if camera is at edge of bounds.
-        /// </summary>
-        public bool IsAtEdge(out bool atMinX, out bool atMaxX, out bool atMinY, out bool atMaxY)
-        {
-            Vector3 pos = transform.position;
-            float threshold = 0.01f;
-
-            atMinX = Mathf.Abs(pos.x - _minBounds.x) < threshold;
-            atMaxX = Mathf.Abs(pos.x - _maxBounds.x) < threshold;
-            atMinY = Mathf.Abs(pos.y - _minBounds.y) < threshold;
-            atMaxY = Mathf.Abs(pos.y - _maxBounds.y) < threshold;
-
-            return atMinX || atMaxX || atMinY || atMaxY;
-        }
-
-        #endregion
 
         private bool ValidateBoundsSource()
         {
@@ -372,5 +263,106 @@ namespace Neo.Tools
             Gizmos.DrawWireSphere(new Vector3(min.x, min.y, min.z), 0.2f);
             Gizmos.DrawWireSphere(new Vector3(max.x, min.y, min.z), 0.2f);
         }
+
+        #region === Public API ===
+
+        /// <summary>
+        ///     Recalculates bounds. Call if bounds or camera parameters change at runtime.
+        /// </summary>
+        public void UpdateBounds()
+        {
+            CalculateBounds();
+        }
+
+        /// <summary>
+        ///     Set bounds type and source at runtime.
+        /// </summary>
+        public void SetBoundsSource(BoundsType type, Object source = null)
+        {
+            boundsType = type;
+
+            switch (type)
+            {
+                case BoundsType.SpriteRenderer:
+                    if (source is SpriteRenderer sr)
+                    {
+                        spriteRenderer = sr;
+                    }
+
+                    break;
+                case BoundsType.Collider2D:
+                    if (source is Collider2D col2D)
+                    {
+                        collider2D = col2D;
+                    }
+
+                    break;
+                case BoundsType.Collider:
+                    if (source is Collider col)
+                    {
+                        collider = col;
+                    }
+
+                    break;
+            }
+
+            UpdateBounds();
+        }
+
+        /// <summary>
+        ///     Set manual bounds at runtime.
+        /// </summary>
+        public void SetManualBounds(Bounds bounds)
+        {
+            boundsType = BoundsType.Manual;
+            manualBounds = bounds;
+            UpdateBounds();
+        }
+
+        /// <summary>
+        ///     Set edge padding at runtime.
+        /// </summary>
+        public void SetEdgePadding(float padding)
+        {
+            edgePadding = Mathf.Max(0f, padding);
+            UpdateBounds();
+        }
+
+        /// <summary>
+        ///     Enable or disable constraint on specific axis.
+        /// </summary>
+        public void SetAxisConstraint(bool x, bool y, bool z)
+        {
+            constraintX = x;
+            constraintY = y;
+            constraintZ = z;
+        }
+
+        /// <summary>
+        ///     Get current calculated bounds.
+        /// </summary>
+        public void GetConstraintBounds(out Vector3 min, out Vector3 max)
+        {
+            min = _minBounds;
+            max = _maxBounds;
+        }
+
+        /// <summary>
+        ///     Check if camera is at edge of bounds.
+        /// </summary>
+        public bool IsAtEdge(out bool atMinX, out bool atMaxX, out bool atMinY, out bool atMaxY)
+        {
+            Vector3 pos = transform.position;
+            float threshold = 0.01f;
+
+            atMinX = Mathf.Abs(pos.x - _minBounds.x) < threshold;
+            atMaxX = Mathf.Abs(pos.x - _maxBounds.x) < threshold;
+            atMinY = Mathf.Abs(pos.y - _minBounds.y) < threshold;
+            atMaxY = Mathf.Abs(pos.y - _maxBounds.y) < threshold;
+
+            return atMinX || atMaxX || atMinY || atMaxY;
+        }
+
+        #endregion
     }
 }

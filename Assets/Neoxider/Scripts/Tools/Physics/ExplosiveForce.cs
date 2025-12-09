@@ -1,117 +1,111 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using Neo;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Компонент взрывной силы, который применяет взрывную силу ко всем объектам в заданном радиусе.
-    /// Поддерживает фильтрацию по слоям, опциональное добавление физики и различные режимы активации.
+    ///     Компонент взрывной силы, который применяет взрывную силу ко всем объектам в заданном радиусе.
+    ///     Поддерживает фильтрацию по слоям, опциональное добавление физики и различные режимы активации.
     /// </summary>
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(ExplosiveForce))]
     public class ExplosiveForce : MonoBehaviour
     {
         /// <summary>
-        /// Режим активации взрыва.
+        ///     Режим активации взрыва.
         /// </summary>
         public enum ActivationMode
         {
             /// <summary>Активация при старте (Start)</summary>
             OnStart,
+
             /// <summary>Активация при пробуждении (Awake)</summary>
             OnAwake,
+
             /// <summary>Активация с задержкой</summary>
             Delayed,
+
             /// <summary>Только по вызову метода</summary>
             Manual
         }
 
         /// <summary>
-        /// Режим применения силы.
+        ///     Режим применения силы.
         /// </summary>
         public enum ForceMode
         {
             /// <summary>AddForce - постоянная сила</summary>
             AddForce,
+
             /// <summary>AddExplosionForce - взрывная сила с затуханием</summary>
             AddExplosionForce
         }
 
         /// <summary>
-        /// Тип затухания силы по расстоянию.
+        ///     Тип затухания силы по расстоянию.
         /// </summary>
         public enum FalloffType
         {
             /// <summary>Линейное затухание</summary>
             Linear,
+
             /// <summary>Квадратичное затухание</summary>
             Quadratic
         }
 
-        [Header("Активация")]
-        [Tooltip("Режим активации взрыва")]
-        [SerializeField] private ActivationMode activationMode = ActivationMode.OnStart;
+        [Header("Активация")] [Tooltip("Режим активации взрыва")] [SerializeField]
+        private ActivationMode activationMode = ActivationMode.OnStart;
 
-        [Tooltip("Задержка перед взрывом (используется при режиме Delayed)")]
-        [SerializeField] private float delay = 0f;
+        [Tooltip("Задержка перед взрывом (используется при режиме Delayed)")] [SerializeField]
+        private float delay;
 
-        [Header("Сила взрыва")]
-        [Tooltip("Базовая сила взрыва")]
-        [Min(0f)]
-        [SerializeField] private float force = 100f;
+        [Header("Сила взрыва")] [Tooltip("Базовая сила взрыва")] [Min(0f)] [SerializeField]
+        private float force = 100f;
 
-        [Tooltip("Случайная вариация силы (добавляется к базовой силе)")]
-        [SerializeField] private float forceRandomness = 0f;
+        [Tooltip("Случайная вариация силы (добавляется к базовой силе)")] [SerializeField]
+        private float forceRandomness;
 
-        [Tooltip("Режим применения силы")]
-        [SerializeField] private ForceMode forceMode = ForceMode.AddExplosionForce;
+        [Tooltip("Режим применения силы")] [SerializeField]
+        private ForceMode forceMode = ForceMode.AddExplosionForce;
 
-        [Tooltip("Тип затухания силы по расстоянию")]
-        [SerializeField] private FalloffType falloffType = FalloffType.Quadratic;
+        [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
+        private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Радиус и фильтрация")]
-        [Tooltip("Радиус действия взрыва")]
-        [Min(0f)]
-        [SerializeField] private float radius = 5f;
+        [Header("Радиус и фильтрация")] [Tooltip("Радиус действия взрыва")] [Min(0f)] [SerializeField]
+        private float radius = 5f;
 
-        [Tooltip("Слои объектов, на которые будет воздействовать взрыв")]
-        [SerializeField] private LayerMask affectedLayers = -1;
+        [Tooltip("Слои объектов, на которые будет воздействовать взрыв")] [SerializeField]
+        private LayerMask affectedLayers = -1;
 
-        [Header("Опции")]
-        [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")]
-        [SerializeField] private bool addRigidbodyIfNeeded = false;
+        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Уничтожить этот объект после взрыва")]
-        [SerializeField] private bool destroyAfterExplosion = false;
+        [Tooltip("Уничтожить этот объект после взрыва")] [SerializeField]
+        private bool destroyAfterExplosion;
 
-        [Tooltip("Задержка перед уничтожением (если destroyAfterExplosion = true)")]
-        [SerializeField] private float destroyDelay = 0f;
+        [Tooltip("Задержка перед уничтожением (если destroyAfterExplosion = true)")] [SerializeField]
+        private float destroyDelay;
 
-        [Header("События")]
-        [Tooltip("Вызывается при взрыве")]
-        public UnityEvent OnExplode = new UnityEvent();
+        [Header("События")] [Tooltip("Вызывается при взрыве")]
+        public UnityEvent OnExplode = new();
 
         [Tooltip("Вызывается для каждого затронутого объекта")]
-        public UnityEvent<GameObject> OnObjectAffected = new UnityEvent<GameObject>();
-
-        private bool hasExploded;
+        public UnityEvent<GameObject> OnObjectAffected = new();
 
         /// <summary>
-        /// Получить текущую силу взрыва.
+        ///     Получить текущую силу взрыва.
         /// </summary>
         public float CurrentForce => force;
 
         /// <summary>
-        /// Получить текущий радиус взрыва.
+        ///     Получить текущий радиус взрыва.
         /// </summary>
         public float CurrentRadius => radius;
 
         /// <summary>
-        /// Проверка, произошел ли уже взрыв.
+        ///     Проверка, произошел ли уже взрыв.
         /// </summary>
-        public bool HasExploded => hasExploded;
+        public bool HasExploded { get; private set; }
 
         private void Awake()
         {
@@ -144,7 +138,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Вызвать взрыв вручную с базовой силой из компонента.
+        ///     Вызвать взрыв вручную с базовой силой из компонента.
         /// </summary>
         public void Explode()
         {
@@ -152,17 +146,17 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Вызвать взрыв вручную с кастомной силой.
+        ///     Вызвать взрыв вручную с кастомной силой.
         /// </summary>
         /// <param name="customForce">Кастомная сила взрыва (если 0, используется базовая)</param>
         public void Explode(float customForce)
         {
-            if (hasExploded && activationMode != ActivationMode.Manual)
+            if (HasExploded && activationMode != ActivationMode.Manual)
             {
                 return;
             }
 
-            hasExploded = true;
+            HasExploded = true;
 
             float finalForce = customForce > 0f ? customForce : force;
             if (forceRandomness > 0f)
@@ -192,7 +186,7 @@ namespace Neo.Tools
                     }
                 }
 
-                Vector3 direction = (col.transform.position - transform.position);
+                Vector3 direction = col.transform.position - transform.position;
                 float distance = direction.magnitude;
 
                 if (distance < 0.01f)
@@ -207,7 +201,8 @@ namespace Neo.Tools
 
                 if (forceMode == ForceMode.AddExplosionForce)
                 {
-                    rb.AddExplosionForce(forceAtDistance, transform.position, radius, 0f, UnityEngine.ForceMode.Impulse);
+                    rb.AddExplosionForce(forceAtDistance, transform.position, radius, 0f,
+                        UnityEngine.ForceMode.Impulse);
                 }
                 else
                 {
@@ -233,7 +228,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить силу взрыва.
+        ///     Установить силу взрыва.
         /// </summary>
         public void SetForce(float newForce)
         {
@@ -241,7 +236,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить радиус взрыва.
+        ///     Установить радиус взрыва.
         /// </summary>
         public void SetRadius(float newRadius)
         {
@@ -249,13 +244,13 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Сбросить состояние взрыва (позволяет взорваться снова).
-        /// Полезно для режимов OnStart, OnAwake, Delayed - после автоматического взрыва можно взорваться снова.
-        /// Для режима Manual этот метод не обязателен, так как можно взрываться многократно.
+        ///     Сбросить состояние взрыва (позволяет взорваться снова).
+        ///     Полезно для режимов OnStart, OnAwake, Delayed - после автоматического взрыва можно взорваться снова.
+        ///     Для режима Manual этот метод не обязателен, так как можно взрываться многократно.
         /// </summary>
         public void ResetExplosion()
         {
-            hasExploded = false;
+            HasExploded = false;
         }
 
         private float CalculateForceAtDistance(float distance, float baseForce)
@@ -268,7 +263,7 @@ namespace Neo.Tools
             float normalizedDistance = distance / radius;
             float falloff = falloffType == FalloffType.Linear
                 ? 1f - normalizedDistance
-                : 1f - (normalizedDistance * normalizedDistance);
+                : 1f - normalizedDistance * normalizedDistance;
 
             return baseForce * falloff;
         }
@@ -311,4 +306,3 @@ namespace Neo.Tools
         }
     }
 }
-

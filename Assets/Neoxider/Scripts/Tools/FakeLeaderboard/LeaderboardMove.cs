@@ -18,24 +18,21 @@ namespace Neo.Tools
 
 
         [Space] public bool useAnimPlayer = true;
+
         [Tooltip("Насколько будет увеличен элемент игрока относительно его базового размера")]
         public float scaleDelta = 0.1f;
+
         public float durationAnimPlayer = 0.3f;
         public bool useAnimStartScale;
 
         [Space] public bool useSortEnable = true;
         public UnityEvent Enable;
 
-        private LeaderboardItem lastAnimatedItem;
-        private Vector3 lastAnimatedItemBaseScale = Vector3.one;
-        
         private Tweener _moveTween;
         private Tweener _scaleTween;
 
-        private Leaderboard GetLeaderboard()
-        {
-            return leaderboard != null ? leaderboard : Leaderboard.I;
-        }
+        private LeaderboardItem lastAnimatedItem;
+        private Vector3 lastAnimatedItemBaseScale = Vector3.one;
 
         private void Start()
         {
@@ -73,10 +70,20 @@ namespace Neo.Tools
             }
         }
 
+        private void OnDisable()
+        {
+            KillActiveTweens();
+        }
+
+        private Leaderboard GetLeaderboard()
+        {
+            return leaderboard != null ? leaderboard : Leaderboard.I;
+        }
+
         public void Move()
         {
             KillActiveTweens();
-            
+
             Leaderboard lb = GetLeaderboard();
             if (lb == null)
             {
@@ -90,7 +97,7 @@ namespace Neo.Tools
             {
                 print("move to " + idPlayer + " pos");
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
-                
+
                 // Сбрасываем масштаб предыдущей выделенной карточки, если она больше не является текущей.
                 if (lastAnimatedItem != null && lastAnimatedItem != targetItem)
                 {
@@ -124,9 +131,9 @@ namespace Neo.Tools
                 Debug.LogWarning("Not Find player in leaderboards");
             }
         }
-        
+
         /// <summary>
-        /// Отменяет все активные анимации.
+        ///     Отменяет все активные анимации.
         /// </summary>
         public void KillActiveTweens()
         {
@@ -134,11 +141,6 @@ namespace Neo.Tools
             _scaleTween?.Kill();
             _moveTween = null;
             _scaleTween = null;
-        }
-        
-        private void OnDisable()
-        {
-            KillActiveTweens();
         }
     }
 }

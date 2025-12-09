@@ -1,82 +1,57 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using UnityEngine;
 
 namespace Neo.Save
 {
     /// <summary>
-    /// Реализация провайдера сохранения через JSON файл.
-    /// Все данные сохраняются в один файл в формате JSON.
+    ///     Реализация провайдера сохранения через JSON файл.
+    ///     Все данные сохраняются в один файл в формате JSON.
     /// </summary>
     public class FileSaveProvider : ISaveProvider
     {
-        /// <summary>
-        /// Тип провайдера - File.
-        /// </summary>
-        public SaveProviderType ProviderType => SaveProviderType.File;
-        
-        /// <summary>
-        /// Событие, вызываемое после сохранения данных.
-        /// </summary>
-        public event Action OnDataSaved;
-        
-        /// <summary>
-        /// Событие, вызываемое после загрузки данных.
-        /// </summary>
-        public event Action OnDataLoaded;
-        
-        /// <summary>
-        /// Событие, вызываемое при изменении значения ключа.
-        /// </summary>
-        public event Action<string> OnKeyChanged;
-        
         private readonly string _filePath;
         private Dictionary<string, SaveValue> _data;
         private bool _isDirty;
-        
+
         /// <summary>
-        /// Структура для хранения значения с типом.
+        ///     Создает новый экземпляр FileSaveProvider.
         /// </summary>
-        [Serializable]
-        private class SaveValue
-        {
-            public string type;
-            public string value;
-        }
-        
-        /// <summary>
-        /// Пара ключ-значение для сериализации.
-        /// </summary>
-        [Serializable]
-        private class KeyValuePair
-        {
-            public string key;
-            public SaveValue value;
-        }
-        
-        /// <summary>
-        /// Структура для сериализации всех данных в JSON.
-        /// </summary>
-        [Serializable]
-        private class SaveData
-        {
-            public List<KeyValuePair> items = new List<KeyValuePair>();
-        }
-        
-        /// <summary>
-        /// Создает новый экземпляр FileSaveProvider.
-        /// </summary>
-        /// <param name="fileName">Имя файла для сохранения (например, "save.json"). Будет сохранен в Application.persistentDataPath.</param>
+        /// <param name="fileName">
+        ///     Имя файла для сохранения (например, "save.json"). Будет сохранен в
+        ///     Application.persistentDataPath.
+        /// </param>
         public FileSaveProvider(string fileName = "save.json")
         {
             _filePath = Path.Combine(Application.persistentDataPath, fileName);
             _data = new Dictionary<string, SaveValue>();
             Load();
         }
-        
+
         /// <summary>
-        /// Получает целочисленное значение по ключу.
+        ///     Тип провайдера - File.
+        /// </summary>
+        public SaveProviderType ProviderType => SaveProviderType.File;
+
+        /// <summary>
+        ///     Событие, вызываемое после сохранения данных.
+        /// </summary>
+        public event Action OnDataSaved;
+
+        /// <summary>
+        ///     Событие, вызываемое после загрузки данных.
+        /// </summary>
+        public event Action OnDataLoaded;
+
+        /// <summary>
+        ///     Событие, вызываемое при изменении значения ключа.
+        /// </summary>
+        public event Action<string> OnKeyChanged;
+
+        /// <summary>
+        ///     Получает целочисленное значение по ключу.
         /// </summary>
         public int GetInt(string key, int defaultValue = 0)
         {
@@ -87,12 +62,12 @@ namespace Neo.Save
                     return result;
                 }
             }
-            
+
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Устанавливает целочисленное значение по ключу.
+        ///     Устанавливает целочисленное значение по ключу.
         /// </summary>
         public void SetInt(string key, int value)
         {
@@ -100,35 +75,35 @@ namespace Neo.Save
             _isDirty = true;
             OnKeyChanged?.Invoke(key);
         }
-        
+
         /// <summary>
-        /// Получает значение с плавающей точкой по ключу.
+        ///     Получает значение с плавающей точкой по ключу.
         /// </summary>
         public float GetFloat(string key, float defaultValue = 0f)
         {
             if (_data.TryGetValue(key, out SaveValue saveValue) && saveValue.type == "float")
             {
-                if (float.TryParse(saveValue.value, System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float result))
+                if (float.TryParse(saveValue.value, NumberStyles.Float, CultureInfo.InvariantCulture, out float result))
                 {
                     return result;
                 }
             }
-            
+
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Устанавливает значение с плавающей точкой по ключу.
+        ///     Устанавливает значение с плавающей точкой по ключу.
         /// </summary>
         public void SetFloat(string key, float value)
         {
-            _data[key] = new SaveValue { type = "float", value = value.ToString(System.Globalization.CultureInfo.InvariantCulture) };
+            _data[key] = new SaveValue { type = "float", value = value.ToString(CultureInfo.InvariantCulture) };
             _isDirty = true;
             OnKeyChanged?.Invoke(key);
         }
-        
+
         /// <summary>
-        /// Получает строковое значение по ключу.
+        ///     Получает строковое значение по ключу.
         /// </summary>
         public string GetString(string key, string defaultValue = "")
         {
@@ -136,12 +111,12 @@ namespace Neo.Save
             {
                 return saveValue.value ?? defaultValue;
             }
-            
+
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Устанавливает строковое значение по ключу.
+        ///     Устанавливает строковое значение по ключу.
         /// </summary>
         public void SetString(string key, string value)
         {
@@ -149,9 +124,9 @@ namespace Neo.Save
             _isDirty = true;
             OnKeyChanged?.Invoke(key);
         }
-        
+
         /// <summary>
-        /// Получает булево значение по ключу.
+        ///     Получает булево значение по ключу.
         /// </summary>
         public bool GetBool(string key, bool defaultValue = false)
         {
@@ -162,12 +137,12 @@ namespace Neo.Save
                     return result;
                 }
             }
-            
+
             return defaultValue;
         }
-        
+
         /// <summary>
-        /// Устанавливает булево значение по ключу.
+        ///     Устанавливает булево значение по ключу.
         /// </summary>
         public void SetBool(string key, bool value)
         {
@@ -175,17 +150,17 @@ namespace Neo.Save
             _isDirty = true;
             OnKeyChanged?.Invoke(key);
         }
-        
+
         /// <summary>
-        /// Проверяет, существует ли ключ в хранилище.
+        ///     Проверяет, существует ли ключ в хранилище.
         /// </summary>
         public bool HasKey(string key)
         {
             return _data.ContainsKey(key);
         }
-        
+
         /// <summary>
-        /// Удаляет ключ и его значение из хранилища.
+        ///     Удаляет ключ и его значение из хранилища.
         /// </summary>
         public void DeleteKey(string key)
         {
@@ -194,37 +169,37 @@ namespace Neo.Save
                 _isDirty = true;
             }
         }
-        
+
         /// <summary>
-        /// Удаляет все ключи из хранилища.
+        ///     Удаляет все ключи из хранилища.
         /// </summary>
         public void DeleteAll()
         {
             _data.Clear();
             _isDirty = true;
         }
-        
+
         /// <summary>
-        /// Принудительно сохраняет данные в файл.
+        ///     Принудительно сохраняет данные в файл.
         /// </summary>
         public void Save()
         {
             try
             {
-                SaveData saveData = new SaveData();
-                foreach (var kvp in _data)
+                SaveData saveData = new();
+                foreach (KeyValuePair<string, SaveValue> kvp in _data)
                 {
                     saveData.items.Add(new KeyValuePair { key = kvp.Key, value = kvp.Value });
                 }
-                
+
                 string json = JsonUtility.ToJson(saveData, true);
-                
+
                 string directory = Path.GetDirectoryName(_filePath);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                 {
                     Directory.CreateDirectory(directory);
                 }
-                
+
                 File.WriteAllText(_filePath, json);
                 _isDirty = false;
                 OnDataSaved?.Invoke();
@@ -234,9 +209,9 @@ namespace Neo.Save
                 Debug.LogError($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
             }
         }
-        
+
         /// <summary>
-        /// Принудительно загружает данные из файла.
+        ///     Принудительно загружает данные из файла.
         /// </summary>
         public void Load()
         {
@@ -246,11 +221,11 @@ namespace Neo.Save
                 {
                     string json = File.ReadAllText(_filePath);
                     SaveData saveData = JsonUtility.FromJson<SaveData>(json);
-                    
+
                     _data = new Dictionary<string, SaveValue>();
                     if (saveData != null && saveData.items != null)
                     {
-                        foreach (var item in saveData.items)
+                        foreach (KeyValuePair item in saveData.items)
                         {
                             if (!string.IsNullOrEmpty(item.key))
                             {
@@ -263,7 +238,7 @@ namespace Neo.Save
                 {
                     _data = new Dictionary<string, SaveValue>();
                 }
-                
+
                 OnDataLoaded?.Invoke();
             }
             catch (Exception ex)
@@ -273,10 +248,10 @@ namespace Neo.Save
                 OnDataLoaded?.Invoke();
             }
         }
-        
+
         /// <summary>
-        /// Автоматически сохраняет данные при изменении, если включен автосохранение.
-        /// Вызывается при уничтожении объекта.
+        ///     Автоматически сохраняет данные при изменении, если включен автосохранение.
+        ///     Вызывается при уничтожении объекта.
         /// </summary>
         ~FileSaveProvider()
         {
@@ -285,6 +260,34 @@ namespace Neo.Save
                 Save();
             }
         }
+
+        /// <summary>
+        ///     Структура для хранения значения с типом.
+        /// </summary>
+        [Serializable]
+        private class SaveValue
+        {
+            public string type;
+            public string value;
+        }
+
+        /// <summary>
+        ///     Пара ключ-значение для сериализации.
+        /// </summary>
+        [Serializable]
+        private class KeyValuePair
+        {
+            public string key;
+            public SaveValue value;
+        }
+
+        /// <summary>
+        ///     Структура для сериализации всех данных в JSON.
+        /// </summary>
+        [Serializable]
+        private class SaveData
+        {
+            public List<KeyValuePair> items = new();
+        }
     }
 }
-

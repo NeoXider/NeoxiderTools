@@ -9,18 +9,18 @@ using GUI = UnityEngine.GUI;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    /// GUI отрисовка для окна настроек Neoxider
+    ///     GUI отрисовка для окна настроек Neoxider
     /// </summary>
     public class NeoxiderSettingsWindowGUI : EditorWindowGUI
     {
+        private bool _isDirty;
         private Vector2 _scrollPosition;
         private SerializedObject _serializedHierarchy;
         private bool _showFolderSettings = true;
         private bool _showHierarchySettings = true;
-        private bool _isDirty;
 
         /// <summary>
-        /// Инициализация GUI
+        ///     Инициализация GUI
         /// </summary>
         public void Initialize()
         {
@@ -28,7 +28,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Отрисовка GUI
+        ///     Отрисовка GUI
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
@@ -58,7 +58,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Сохранение изменений при закрытии
+        ///     Сохранение изменений при закрытии
         /// </summary>
         public void OnDisable()
         {
@@ -69,7 +69,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Сброс настроек к значениям по умолчанию
+        ///     Сброс настроек к значениям по умолчанию
         /// </summary>
         public void ResetToDefaults()
         {
@@ -240,4 +240,3 @@ namespace Neo.Editor.Windows
         }
     }
 }
-

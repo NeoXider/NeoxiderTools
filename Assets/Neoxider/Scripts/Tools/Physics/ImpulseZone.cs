@@ -1,72 +1,67 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using Neo;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Зона импульса, которая применяет импульс к объектам при входе в триггер.
-    /// Поддерживает различные направления импульса, фильтрацию и опциональное добавление физики.
+    ///     Зона импульса, которая применяет импульс к объектам при входе в триггер.
+    ///     Поддерживает различные направления импульса, фильтрацию и опциональное добавление физики.
     /// </summary>
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(ImpulseZone))]
     [RequireComponent(typeof(Collider))]
     public class ImpulseZone : MonoBehaviour
     {
         /// <summary>
-        /// Направление импульса.
+        ///     Направление импульса.
         /// </summary>
         public enum ImpulseDirection
         {
             /// <summary>От центра зоны</summary>
             AwayFromCenter,
+
             /// <summary>К центру зоны</summary>
             TowardsCenter,
+
             /// <summary>По направлению Transform.forward</summary>
             TransformForward,
+
             /// <summary>Кастомное направление</summary>
             Custom
         }
 
-        [Header("Настройки импульса")]
-        [Tooltip("Сила импульса")]
-        [Min(0f)]
-        [SerializeField] private float impulseForce = 50f;
+        [Header("Настройки импульса")] [Tooltip("Сила импульса")] [Min(0f)] [SerializeField]
+        private float impulseForce = 50f;
 
-        [Tooltip("Направление импульса")]
-        [SerializeField] private ImpulseDirection direction = ImpulseDirection.AwayFromCenter;
+        [Tooltip("Направление импульса")] [SerializeField]
+        private ImpulseDirection direction = ImpulseDirection.AwayFromCenter;
 
-        [Tooltip("Кастомное направление (используется при режиме Custom)")]
-        [SerializeField] private Vector3 customDirection = Vector3.up;
+        [Tooltip("Кастомное направление (используется при режиме Custom)")] [SerializeField]
+        private Vector3 customDirection = Vector3.up;
 
-        [Header("Фильтрация")]
-        [Tooltip("Слои объектов, на которые будет воздействовать импульс")]
-        [SerializeField] private LayerMask affectedLayers = -1;
+        [Header("Фильтрация")] [Tooltip("Слои объектов, на которые будет воздействовать импульс")] [SerializeField]
+        private LayerMask affectedLayers = -1;
 
-        [Tooltip("Тег объектов (пусто = игнорировать фильтр по тегу)")]
-        [SerializeField] private string requiredTag = "";
+        [Tooltip("Тег объектов (пусто = игнорировать фильтр по тегу)")] [SerializeField]
+        private string requiredTag = "";
 
-        [Header("Опции")]
-        [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")]
-        [SerializeField] private bool addRigidbodyIfNeeded = false;
+        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Одноразовое срабатывание (каждый объект может получить импульс только один раз)")]
-        [SerializeField] private bool oneTimeOnly = false;
+        [Tooltip("Одноразовое срабатывание (каждый объект может получить импульс только один раз)")] [SerializeField]
+        private bool oneTimeOnly;
 
-        [Tooltip("Задержка между срабатываниями для одного объекта")]
-        [Min(0f)]
-        [SerializeField] private float cooldown = 0f;
+        [Tooltip("Задержка между срабатываниями для одного объекта")] [Min(0f)] [SerializeField]
+        private float cooldown;
 
-        [Header("События")]
-        [Tooltip("Вызывается при входе объекта в зону")]
-        public UnityEvent<GameObject> OnObjectEntered = new UnityEvent<GameObject>();
+        [Header("События")] [Tooltip("Вызывается при входе объекта в зону")]
+        public UnityEvent<GameObject> OnObjectEntered = new();
 
         [Tooltip("Вызывается при применении импульса")]
-        public UnityEvent<GameObject> OnImpulseApplied = new UnityEvent<GameObject>();
+        public UnityEvent<GameObject> OnImpulseApplied = new();
 
-        private readonly HashSet<Collider> processedColliders = new HashSet<Collider>();
-        private readonly Dictionary<Collider, float> cooldownTimers = new Dictionary<Collider, float>();
+        private readonly HashSet<Collider> processedColliders = new();
+        private readonly Dictionary<Collider, float> cooldownTimers = new();
 
         private Collider zoneCollider;
 
@@ -83,8 +78,8 @@ namespace Neo.Tools
         {
             if (cooldown > 0f && cooldownTimers.Count > 0)
             {
-                List<Collider> toRemove = new List<Collider>();
-                foreach (var kvp in cooldownTimers)
+                List<Collider> toRemove = new();
+                foreach (KeyValuePair<Collider, float> kvp in cooldownTimers)
                 {
                     cooldownTimers[kvp.Key] = kvp.Value - Time.deltaTime;
                     if (cooldownTimers[kvp.Key] <= 0f)
@@ -126,7 +121,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Применить импульс к объекту вручную.
+        ///     Применить импульс к объекту вручную.
         /// </summary>
         public void ApplyImpulseToObject(GameObject target)
         {
@@ -150,7 +145,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить силу импульса.
+        ///     Установить силу импульса.
         /// </summary>
         public void SetImpulseForce(float newForce)
         {
@@ -158,7 +153,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Очистить список обработанных объектов (позволяет снова применять импульс).
+        ///     Очистить список обработанных объектов (позволяет снова применять импульс).
         /// </summary>
         public void ClearProcessedObjects()
         {
@@ -206,6 +201,7 @@ namespace Neo.Tools
                     {
                         result = Random.onUnitSphere;
                     }
+
                     break;
 
                 case ImpulseDirection.TowardsCenter:
@@ -214,6 +210,7 @@ namespace Neo.Tools
                     {
                         result = -Random.onUnitSphere;
                     }
+
                     break;
 
                 case ImpulseDirection.TransformForward:
@@ -279,10 +276,11 @@ namespace Neo.Tools
             }
             else if (zoneCollider is CapsuleCollider capsule)
             {
-                Gizmos.DrawWireSphere(capsule.center + Vector3.up * (capsule.height * 0.5f - capsule.radius), capsule.radius);
-                Gizmos.DrawWireSphere(capsule.center - Vector3.up * (capsule.height * 0.5f - capsule.radius), capsule.radius);
+                Gizmos.DrawWireSphere(capsule.center + Vector3.up * (capsule.height * 0.5f - capsule.radius),
+                    capsule.radius);
+                Gizmos.DrawWireSphere(capsule.center - Vector3.up * (capsule.height * 0.5f - capsule.radius),
+                    capsule.radius);
             }
         }
     }
 }
-

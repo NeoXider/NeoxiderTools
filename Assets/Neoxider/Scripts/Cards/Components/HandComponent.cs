@@ -1,99 +1,101 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Cards
 {
     /// <summary>
-    /// Компонент руки для работы без кода
+    ///     Компонент руки для работы без кода
     /// </summary>
     public class HandComponent : MonoBehaviour
     {
-        [Header("Layout")]
-        [SerializeField] private HandLayoutType _layoutType = HandLayoutType.Fan;
+        [Header("Layout")] [SerializeField] private HandLayoutType _layoutType = HandLayoutType.Fan;
+
         [SerializeField] private float _spacing = 60f;
         [SerializeField] private float _arcAngle = 30f;
         [SerializeField] private float _arcRadius = 400f;
 
-        [Header("Grid Settings")]
-        [SerializeField] private int _gridColumns = 5;
+        [Header("Grid Settings")] [SerializeField]
+        private int _gridColumns = 5;
+
         [SerializeField] private float _gridRowSpacing = 80f;
 
-        [Header("Limits")]
-        [SerializeField] private int _maxCards = 36;
-        
+        [Header("Limits")] [SerializeField] private int _maxCards = 36;
+
         [Header("Card Order")]
         [Tooltip("Если true - новые карты добавляются под низ (sibling index 0)")]
-        [SerializeField] private bool _addToBottom;
+        [SerializeField]
+        private bool _addToBottom;
 
-        [Header("Animation")]
-        [SerializeField] private float _arrangeDuration = 0.3f;
+        [Header("Animation")] [SerializeField] private float _arrangeDuration = 0.3f;
+
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent<int> _onCardCountChanged;
+        [Header("Events")] [SerializeField] private UnityEvent<int> _onCardCountChanged;
+
         [SerializeField] private UnityEvent<CardComponent> _onCardAdded;
         [SerializeField] private UnityEvent<CardComponent> _onCardRemoved;
         [SerializeField] private UnityEvent<CardComponent> _onCardClicked;
         [SerializeField] private UnityEvent _onHandChanged;
 
+        private readonly List<CardComponent> _cards = new();
+
         /// <summary>
-        /// Событие изменения количества карт в руке. Передаёт текущее количество.
+        ///     Событие изменения количества карт в руке. Передаёт текущее количество.
         /// </summary>
         public UnityEvent<int> OnCardCountChanged => _onCardCountChanged;
 
         /// <summary>
-        /// Событие добавления карты.
+        ///     Событие добавления карты.
         /// </summary>
         public UnityEvent<CardComponent> OnCardAdded => _onCardAdded;
 
         /// <summary>
-        /// Событие удаления карты.
+        ///     Событие удаления карты.
         /// </summary>
         public UnityEvent<CardComponent> OnCardRemoved => _onCardRemoved;
 
         /// <summary>
-        /// Событие клика по карте.
+        ///     Событие клика по карте.
         /// </summary>
         public UnityEvent<CardComponent> OnCardClicked => _onCardClicked;
 
         /// <summary>
-        /// Событие изменения руки.
+        ///     Событие изменения руки.
         /// </summary>
         public UnityEvent OnHandChanged => _onHandChanged;
 
-        private readonly List<CardComponent> _cards = new();
-        private HandModel _model;
-
         /// <summary>
-        /// Модель руки
+        ///     Модель руки
         /// </summary>
-        public HandModel Model => _model;
+        public HandModel Model { get; private set; }
 
         /// <summary>
-        /// Карты в руке
+        ///     Карты в руке
         /// </summary>
         public IReadOnlyList<CardComponent> Cards => _cards;
 
         /// <summary>
-        /// Количество карт
+        ///     Количество карт
         /// </summary>
         public int Count => _cards.Count;
 
         /// <summary>
-        /// Пуста ли рука
+        ///     Пуста ли рука
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
         /// <summary>
-        /// Заполнена ли рука
+        ///     Заполнена ли рука
         /// </summary>
         public bool IsFull => _cards.Count >= _maxCards;
 
         /// <summary>
-        /// Тип раскладки
+        ///     Тип раскладки
         /// </summary>
         public HandLayoutType LayoutType
         {
@@ -101,7 +103,7 @@ namespace Neo.Cards
             set
             {
                 _layoutType = value;
-                ArrangeCardsAsync(true).Forget();
+                ArrangeCardsAsync().Forget();
             }
         }
 
@@ -112,57 +114,60 @@ namespace Neo.Cards
 
         private void EnsureModelInitialized()
         {
-            if (_model == null)
+            if (Model == null)
             {
-                _model = new HandModel();
+                Model = new HandModel();
             }
         }
 
         /// <summary>
-        /// Добавляет карту в руку
+        ///     Добавляет карту в руку
         /// </summary>
         /// <param name="card">Карта для добавления</param>
         /// <param name="animate">Анимировать</param>
         public async UniTask AddCardAsync(CardComponent card, bool animate = true)
         {
-            if (card == null || IsFull) return;
+            if (card == null || IsFull)
+            {
+                return;
+            }
 
             EnsureModelInitialized();
-            
+
             Vector3 startPosition = card.transform.position;
-            
+
             card.transform.SetParent(transform, true);
             card.OnClick.AddListener(() => HandleCardClick(card));
 
             if (_addToBottom)
             {
                 _cards.Insert(0, card);
-                _model.Add(card.Data);
+                Model.Add(card.Data);
             }
             else
             {
                 _cards.Add(card);
-                _model.Add(card.Data);
+                Model.Add(card.Data);
             }
 
             if (animate)
             {
                 card.transform.position = startPosition;
-                
-                var positions = CalculatePositions();
-                var rotations = CalculateRotations();
+
+                List<Vector3> positions = CalculatePositions();
+                List<Quaternion> rotations = CalculateRotations();
                 int targetIndex = _addToBottom ? 0 : _cards.Count - 1;
 
                 for (int i = 0; i < _cards.Count; i++)
                 {
-                    _cards[i].transform.SetSiblingIndex(_addToBottom ? (_cards.Count - 1 - i) : i);
+                    _cards[i].transform.SetSiblingIndex(_addToBottom ? _cards.Count - 1 - i : i);
                 }
 
                 if (targetIndex < positions.Count && targetIndex < rotations.Count)
                 {
                     await AnimateCard(card, positions[targetIndex], rotations[targetIndex]);
                 }
-                
+
                 for (int i = 0; i < _cards.Count; i++)
                 {
                     if (i != targetIndex && i < positions.Count && i < rotations.Count)
@@ -172,7 +177,7 @@ namespace Neo.Cards
                         _cards[i].UpdateOriginalTransform();
                     }
                 }
-                
+
                 card.UpdateOriginalTransform();
             }
             else
@@ -186,7 +191,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Добавляет карту синхронно
+        ///     Добавляет карту синхронно
         /// </summary>
         /// <param name="card">Карта</param>
         public void AddCard(CardComponent card)
@@ -195,49 +200,58 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Берёт первую карту из руки (для игры "Пьяница").
+        ///     Берёт первую карту из руки (для игры "Пьяница").
         /// </summary>
         /// <returns>Первая карта или null если рука пуста</returns>
         public CardComponent DrawFirst()
         {
-            if (_cards.Count == 0) return null;
-            
-            var card = _cards[0];
+            if (_cards.Count == 0)
+            {
+                return null;
+            }
+
+            CardComponent card = _cards[0];
             RemoveCard(card);
             return card;
         }
 
         /// <summary>
-        /// Берёт случайную карту из руки.
+        ///     Берёт случайную карту из руки.
         /// </summary>
         /// <returns>Случайная карта или null если рука пуста</returns>
         public CardComponent DrawRandom()
         {
-            if (_cards.Count == 0) return null;
-            
-            int index = UnityEngine.Random.Range(0, _cards.Count);
-            var card = _cards[index];
+            if (_cards.Count == 0)
+            {
+                return null;
+            }
+
+            int index = Random.Range(0, _cards.Count);
+            CardComponent card = _cards[index];
             RemoveCard(card);
             return card;
         }
 
         /// <summary>
-        /// Удаляет карту из руки
+        ///     Удаляет карту из руки
         /// </summary>
         /// <param name="card">Карта для удаления</param>
         /// <param name="animate">Анимировать</param>
         public async UniTask RemoveCardAsync(CardComponent card, bool animate = true)
         {
-            if (card == null || !_cards.Contains(card)) return;
+            if (card == null || !_cards.Contains(card))
+            {
+                return;
+            }
 
             EnsureModelInitialized();
-            
+
             card.OnClick.RemoveAllListeners();
             card.ResetHover();
             card.transform.SetParent(null, true);
 
             _cards.Remove(card);
-            _model.Remove(card.Data);
+            Model.Remove(card.Data);
 
             await ArrangeCardsAsync(animate);
 
@@ -247,7 +261,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Удаляет карту синхронно
+        ///     Удаляет карту синхронно
         /// </summary>
         /// <param name="card">Карта</param>
         public void RemoveCard(CardComponent card)
@@ -256,14 +270,17 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Удаляет карту по индексу
+        ///     Удаляет карту по индексу
         /// </summary>
         /// <param name="index">Индекс карты</param>
         /// <param name="animate">Анимировать</param>
         /// <returns>Удалённая карта</returns>
         public async UniTask<CardComponent> RemoveAtAsync(int index, bool animate = true)
         {
-            if (index < 0 || index >= _cards.Count) return null;
+            if (index < 0 || index >= _cards.Count)
+            {
+                return null;
+            }
 
             CardComponent card = _cards[index];
             await RemoveCardAsync(card, animate);
@@ -271,7 +288,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Сортирует карты по рангу
+        ///     Сортирует карты по рангу
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
 #if ODIN_INSPECTOR
@@ -279,16 +296,16 @@ namespace Neo.Cards
 #endif
         public void SortByRank(bool ascending = true)
         {
-            SortByRankAsync(ascending, true).Forget();
+            SortByRankAsync(ascending).Forget();
         }
 
         /// <summary>
-        /// Сортирует карты по рангу с анимацией
+        ///     Сортирует карты по рангу с анимацией
         /// </summary>
         public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
             EnsureModelInitialized();
-            _model.SortByRank(ascending);
+            Model.SortByRank(ascending);
 
             if (ascending)
             {
@@ -303,7 +320,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Сортирует карты по масти
+        ///     Сортирует карты по масти
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
 #if ODIN_INSPECTOR
@@ -311,16 +328,16 @@ namespace Neo.Cards
 #endif
         public void SortBySuit(bool ascending = true)
         {
-            SortBySuitAsync(ascending, true).Forget();
+            SortBySuitAsync(ascending).Forget();
         }
 
         /// <summary>
-        /// Сортирует карты по масти с анимацией
+        ///     Сортирует карты по масти с анимацией
         /// </summary>
         public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
             EnsureModelInitialized();
-            _model.SortBySuit(ascending);
+            Model.SortBySuit(ascending);
 
             if (ascending)
             {
@@ -343,16 +360,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Находит карты, которыми можно побить указанную
+        ///     Находит карты, которыми можно побить указанную
         /// </summary>
         /// <param name="attackCard">Атакующая карта</param>
         /// <param name="trump">Козырная масть</param>
         /// <returns>Список карт</returns>
         public List<CardComponent> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
-            var result = new List<CardComponent>();
+            List<CardComponent> result = new();
 
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 if (card.Data.CanCover(attackCard, trump))
                 {
@@ -364,14 +381,14 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Очищает руку
+        ///     Очищает руку
         /// </summary>
 #if ODIN_INSPECTOR
         [Sirenix.OdinInspector.Button]
 #endif
         public void Clear()
         {
-            foreach (var card in _cards)
+            foreach (CardComponent card in _cards)
             {
                 if (card != null)
                 {
@@ -381,26 +398,29 @@ namespace Neo.Cards
             }
 
             _cards.Clear();
-            
+
             EnsureModelInitialized();
-            _model.Clear();
-            
+            Model.Clear();
+
             _onCardCountChanged?.Invoke(0);
             _onHandChanged?.Invoke();
         }
 
         /// <summary>
-        /// Расставляет карты
+        ///     Расставляет карты
         /// </summary>
         /// <param name="animate">Анимировать</param>
         public async UniTask ArrangeCardsAsync(bool animate = true)
         {
-            if (_cards.Count == 0) return;
+            if (_cards.Count == 0)
+            {
+                return;
+            }
 
-            var positions = CalculatePositions();
-            var rotations = CalculateRotations();
+            List<Vector3> positions = CalculatePositions();
+            List<Quaternion> rotations = CalculateRotations();
 
-            var tasks = new List<UniTask>();
+            List<UniTask> tasks = new();
 
             for (int i = 0; i < _cards.Count; i++)
             {
@@ -422,8 +442,8 @@ namespace Neo.Cards
             {
                 await UniTask.WhenAll(tasks);
             }
-            
-            foreach (var card in _cards)
+
+            foreach (CardComponent card in _cards)
             {
                 card.UpdateOriginalTransform();
             }
@@ -457,9 +477,12 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateFanPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cards.Count;
-            if (count == 0) return positions;
+            if (count == 0)
+            {
+                return positions;
+            }
 
             if (count == 1)
             {
@@ -476,7 +499,7 @@ namespace Neo.Cards
             {
                 float angle = -totalAngle / 2f + angleStep * i;
                 float radians = angle * Mathf.Deg2Rad;
-                
+
                 float x = Mathf.Sin(radians) * _arcRadius;
                 float y = -Mathf.Cos(radians) * _arcRadius + _arcRadius;
 
@@ -488,9 +511,12 @@ namespace Neo.Cards
 
         private List<Quaternion> CalculateFanRotations()
         {
-            var rotations = new List<Quaternion>();
+            List<Quaternion> rotations = new();
             int count = _cards.Count;
-            if (count == 0) return rotations;
+            if (count == 0)
+            {
+                return rotations;
+            }
 
             if (count == 1)
             {
@@ -514,7 +540,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateLinePositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cards.Count;
 
             float totalWidth = (count - 1) * _spacing;
@@ -530,7 +556,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateStackPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cards.Count;
 
             for (int i = 0; i < count; i++)
@@ -543,7 +569,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateGridPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cards.Count;
 
             int rows = Mathf.CeilToInt((float)count / _gridColumns);
@@ -568,21 +594,23 @@ namespace Neo.Cards
 
         private List<Quaternion> CalculateNoRotations()
         {
-            var rotations = new List<Quaternion>();
+            List<Quaternion> rotations = new();
             for (int i = 0; i < _cards.Count; i++)
             {
                 rotations.Add(Quaternion.identity);
             }
+
             return rotations;
         }
 
         private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation)
         {
-            var moveTween = card.transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
-            var rotateTween = card.transform.DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
+            TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
+                card.transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
+            TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
+                card.transform.DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
 
             await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive());
         }
     }
 }
-

@@ -1,6 +1,6 @@
 using System;
-using UnityEngine;
 using Neo.StateMachine.NoCode;
+using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
@@ -27,20 +27,16 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neo/Tools/State Machine Behaviour")]
     public class StateMachineBehaviourBase : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Включить логирование переходов состояний")]
-        private bool enableDebugLog = false;
+        [SerializeField] [Tooltip("Включить логирование переходов состояний")]
+        private bool enableDebugLog;
 
-        [SerializeField]
-        [Tooltip("Показывать текущее состояние в инспекторе")]
+        [SerializeField] [Tooltip("Показывать текущее состояние в инспекторе")]
         private bool showStateInInspector = true;
 
-        [SerializeField]
-        [Tooltip("NoCode конфигурация State Machine (опционально)")]
+        [SerializeField] [Tooltip("NoCode конфигурация State Machine (опционально)")]
         private StateMachineData stateMachineData;
 
-        [SerializeField]
-        [Tooltip("Автоматически оценивать переходы каждый кадр")]
+        [SerializeField] [Tooltip("Автоматически оценивать переходы каждый кадр")]
         private bool autoEvaluateTransitions = true;
 
         private StateMachine<IState> stateMachine;
@@ -133,11 +129,12 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                Debug.LogWarning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.", this);
+                Debug.LogWarning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
+                    this);
                 return;
             }
 
-            var stateData = System.Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
+            StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
             if (stateData != null)
             {
                 StateMachine.ChangeState(stateData);
@@ -149,7 +146,8 @@ namespace Neo.StateMachine
             }
             else
             {
-                Debug.LogWarning($"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
+                Debug.LogWarning(
+                    $"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
             }
         }
 
@@ -173,7 +171,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            stateMachineData.LoadIntoStateMachine<IState>(StateMachine);
+            stateMachineData.LoadIntoStateMachine(StateMachine);
 
             if (stateMachineData.InitialState != null)
             {
@@ -205,4 +203,3 @@ namespace Neo.StateMachine
         }
     }
 }
-

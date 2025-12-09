@@ -5,84 +5,87 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Конфигурация колоды карт со спрайтами
+    ///     Конфигурация колоды карт со спрайтами
     /// </summary>
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neo/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
     {
         [Header("Deck Settings")]
         [Tooltip("Тип колоды для спрайтов (сколько карт загружено в конфиг)")]
-        [SerializeField] private DeckType _deckType = DeckType.Standard52;
-        
-        [Tooltip("Тип колоды для игры (сколько карт использовать). Позволяет иметь все спрайты, но играть меньшим количеством карт.")]
-        [SerializeField] private DeckType _gameDeckType = DeckType.Standard54;
+        [SerializeField]
+        private DeckType _deckType = DeckType.Standard52;
 
-        [Header("Card Back")]
-        [SerializeField] private Sprite _backSprite;
+        [Tooltip(
+            "Тип колоды для игры (сколько карт использовать). Позволяет иметь все спрайты, но играть меньшим количеством карт.")]
+        [SerializeField]
+        private DeckType _gameDeckType = DeckType.Standard54;
 
-        [Header("Hearts (от младшей к старшей)")]
-        [SerializeField] private List<Sprite> _hearts = new();
+        [Header("Card Back")] [SerializeField] private Sprite _backSprite;
 
-        [Header("Diamonds (от младшей к старшей)")]
-        [SerializeField] private List<Sprite> _diamonds = new();
+        [Header("Hearts (от младшей к старшей)")] [SerializeField]
+        private List<Sprite> _hearts = new();
 
-        [Header("Clubs (от младшей к старшей)")]
-        [SerializeField] private List<Sprite> _clubs = new();
+        [Header("Diamonds (от младшей к старшей)")] [SerializeField]
+        private List<Sprite> _diamonds = new();
 
-        [Header("Spades (от младшей к старшей)")]
-        [SerializeField] private List<Sprite> _spades = new();
+        [Header("Clubs (от младшей к старшей)")] [SerializeField]
+        private List<Sprite> _clubs = new();
 
-        [Header("Jokers (для 54 карт)")]
-        [SerializeField] private Sprite _redJoker;
+        [Header("Spades (от младшей к старшей)")] [SerializeField]
+        private List<Sprite> _spades = new();
+
+        [Header("Jokers (для 54 карт)")] [SerializeField]
+        private Sprite _redJoker;
+
         [SerializeField] private Sprite _blackJoker;
 
         /// <summary>
-        /// Тип колоды для спрайтов (определяет количество загруженных спрайтов)
+        ///     Тип колоды для спрайтов (определяет количество загруженных спрайтов)
         /// </summary>
         public DeckType DeckType => _deckType;
 
         /// <summary>
-        /// Тип колоды для игры (определяет сколько карт использовать в игре)
+        ///     Тип колоды для игры (определяет сколько карт использовать в игре)
         /// </summary>
         public DeckType GameDeckType => _gameDeckType;
 
         /// <summary>
-        /// Спрайт рубашки карты
+        ///     Спрайт рубашки карты
         /// </summary>
         public Sprite BackSprite => _backSprite;
 
         /// <summary>
-        /// Спрайт красного джокера
+        ///     Спрайт красного джокера
         /// </summary>
         public Sprite RedJoker => _redJoker;
 
         /// <summary>
-        /// Спрайт чёрного джокера
+        ///     Спрайт чёрного джокера
         /// </summary>
         public Sprite BlackJoker => _blackJoker;
 
         /// <summary>
-        /// Спрайты карт червей
+        ///     Спрайты карт червей
         /// </summary>
         public IReadOnlyList<Sprite> Hearts => _hearts;
 
         /// <summary>
-        /// Спрайты карт бубен
+        ///     Спрайты карт бубен
         /// </summary>
         public IReadOnlyList<Sprite> Diamonds => _diamonds;
 
         /// <summary>
-        /// Спрайты карт треф
+        ///     Спрайты карт треф
         /// </summary>
         public IReadOnlyList<Sprite> Clubs => _clubs;
 
         /// <summary>
-        /// Спрайты карт пик
+        ///     Спрайты карт пик
         /// </summary>
         public IReadOnlyList<Sprite> Spades => _spades;
 
         /// <summary>
-        /// Возвращает спрайт для указанной карты
+        ///     Возвращает спрайт для указанной карты
         /// </summary>
         /// <param name="card">Данные карты</param>
         /// <returns>Спрайт карты или null если не найден</returns>
@@ -109,7 +112,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает ожидаемое количество карт для одной масти
+        ///     Возвращает ожидаемое количество карт для одной масти
         /// </summary>
         public int GetExpectedCardCountPerSuit()
         {
@@ -117,7 +120,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Генерирует список карт для игры (использует GameDeckType)
+        ///     Генерирует список карт для игры (использует GameDeckType)
         /// </summary>
         /// <returns>Список карт</returns>
         public List<CardData> GenerateDeck()
@@ -126,13 +129,13 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Генерирует список карт указанного типа колоды
+        ///     Генерирует список карт указанного типа колоды
         /// </summary>
         /// <param name="deckType">Тип колоды для генерации</param>
         /// <returns>Список карт</returns>
         public List<CardData> GenerateDeck(DeckType deckType)
         {
-            var cards = new List<CardData>();
+            List<CardData> cards = new();
             Rank minRank = deckType.GetMinRank();
 
             foreach (Suit suit in Enum.GetValues(typeof(Suit)))
@@ -153,7 +156,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет валидность конфигурации
+        ///     Проверяет валидность конфигурации
         /// </summary>
         /// <param name="errors">Список ошибок</param>
         /// <returns>true если конфигурация валидна</returns>
@@ -163,7 +166,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет валидность конфигурации с разделением на ошибки и предупреждения
+        ///     Проверяет валидность конфигурации с разделением на ошибки и предупреждения
         /// </summary>
         /// <param name="errors">Список критических ошибок</param>
         /// <param name="warnings">Список предупреждений</param>
@@ -190,6 +193,7 @@ namespace Neo.Cards
                 {
                     warnings.Add("Не указан спрайт красного джокера (для колоды 54)");
                 }
+
                 if (_blackJoker == null)
                 {
                     warnings.Add("Не указан спрайт чёрного джокера (для колоды 54)");
@@ -198,7 +202,8 @@ namespace Neo.Cards
 
             if (_gameDeckType.GetMinRank() < _deckType.GetMinRank())
             {
-                errors.Add($"GameDeckType ({_gameDeckType}) требует карты от {_gameDeckType.GetMinRank()}, но DeckType ({_deckType}) начинается с {_deckType.GetMinRank()}. Увеличьте DeckType или уменьшите GameDeckType.");
+                errors.Add(
+                    $"GameDeckType ({_gameDeckType}) требует карты от {_gameDeckType.GetMinRank()}, но DeckType ({_deckType}) начинается с {_deckType.GetMinRank()}. Увеличьте DeckType или уменьшите GameDeckType.");
             }
 
             return errors.Count == 0;
@@ -214,7 +219,8 @@ namespace Neo.Cards
 
             if (sprites.Count != expectedCount)
             {
-                errors.Add($"Масть {suit.ToRussianName()}: ожидается {expectedCount} спрайтов, указано {sprites.Count}");
+                errors.Add(
+                    $"Масть {suit.ToRussianName()}: ожидается {expectedCount} спрайтов, указано {sprites.Count}");
             }
 
             for (int i = 0; i < sprites.Count; i++)
@@ -245,4 +251,3 @@ namespace Neo.Cards
         }
     }
 }
-

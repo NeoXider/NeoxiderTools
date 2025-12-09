@@ -1,68 +1,68 @@
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    /// Покерные комбинации в порядке возрастания силы
+    ///     Покерные комбинации в порядке возрастания силы
     /// </summary>
     public enum PokerCombination
     {
         /// <summary>
-        /// Старшая карта - нет комбинации
+        ///     Старшая карта - нет комбинации
         /// </summary>
         HighCard = 0,
 
         /// <summary>
-        /// Пара - две карты одного ранга
+        ///     Пара - две карты одного ранга
         /// </summary>
         Pair = 1,
 
         /// <summary>
-        /// Две пары - две разные пары
+        ///     Две пары - две разные пары
         /// </summary>
         TwoPair = 2,
 
         /// <summary>
-        /// Тройка (сет) - три карты одного ранга
+        ///     Тройка (сет) - три карты одного ранга
         /// </summary>
         ThreeOfAKind = 3,
 
         /// <summary>
-        /// Стрит - пять последовательных карт разных мастей
+        ///     Стрит - пять последовательных карт разных мастей
         /// </summary>
         Straight = 4,
 
         /// <summary>
-        /// Флеш - пять карт одной масти
+        ///     Флеш - пять карт одной масти
         /// </summary>
         Flush = 5,
 
         /// <summary>
-        /// Фулл хаус - тройка + пара
+        ///     Фулл хаус - тройка + пара
         /// </summary>
         FullHouse = 6,
 
         /// <summary>
-        /// Каре - четыре карты одного ранга
+        ///     Каре - четыре карты одного ранга
         /// </summary>
         FourOfAKind = 7,
 
         /// <summary>
-        /// Стрит-флеш - пять последовательных карт одной масти
+        ///     Стрит-флеш - пять последовательных карт одной масти
         /// </summary>
         StraightFlush = 8,
 
         /// <summary>
-        /// Роял-флеш - стрит-флеш от десятки до туза
+        ///     Роял-флеш - стрит-флеш от десятки до туза
         /// </summary>
         RoyalFlush = 9
     }
 
     /// <summary>
-    /// Расширения для покерных комбинаций
+    ///     Расширения для покерных комбинаций
     /// </summary>
     public static class PokerCombinationExtensions
     {
         /// <summary>
-        /// Возвращает русское название комбинации
+        ///     Возвращает русское название комбинации
         /// </summary>
         public static string ToRussianName(this PokerCombination combination)
         {
@@ -83,7 +83,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Возвращает английское название комбинации
+        ///     Возвращает английское название комбинации
         /// </summary>
         public static string ToEnglishName(this PokerCombination combination)
         {
@@ -104,4 +104,3 @@ namespace Neo.Cards.Poker
         }
     }
 }
-

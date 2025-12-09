@@ -1,33 +1,33 @@
 namespace Neo.Cards
 {
     /// <summary>
-    /// Типы колод игральных карт
+    ///     Типы колод игральных карт
     /// </summary>
     public enum DeckType
     {
         /// <summary>
-        /// Колода 36 карт (от шестёрки до туза) - для игры в "Дурака"
+        ///     Колода 36 карт (от шестёрки до туза) - для игры в "Дурака"
         /// </summary>
         Standard36 = 36,
 
         /// <summary>
-        /// Стандартная колода 52 карты (от двойки до туза)
+        ///     Стандартная колода 52 карты (от двойки до туза)
         /// </summary>
         Standard52 = 52,
 
         /// <summary>
-        /// Колода 54 карты (52 + 2 джокера)
+        ///     Колода 54 карты (52 + 2 джокера)
         /// </summary>
         Standard54 = 54
     }
 
     /// <summary>
-    /// Расширения для работы с типами колод
+    ///     Расширения для работы с типами колод
     /// </summary>
     public static class DeckTypeExtensions
     {
         /// <summary>
-        /// Возвращает минимальный ранг карты для данного типа колоды
+        ///     Возвращает минимальный ранг карты для данного типа колоды
         /// </summary>
         public static Rank GetMinRank(this DeckType deckType)
         {
@@ -41,7 +41,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает количество карт в колоде (без джокеров)
+        ///     Возвращает количество карт в колоде (без джокеров)
         /// </summary>
         public static int GetCardCount(this DeckType deckType)
         {
@@ -55,7 +55,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает количество джокеров в колоде
+        ///     Возвращает количество джокеров в колоде
         /// </summary>
         public static int GetJokerCount(this DeckType deckType)
         {
@@ -63,7 +63,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает общее количество карт в колоде (с джокерами)
+        ///     Возвращает общее количество карт в колоде (с джокерами)
         /// </summary>
         public static int GetTotalCardCount(this DeckType deckType)
         {
@@ -71,7 +71,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает количество карт одной масти
+        ///     Возвращает количество карт одной масти
         /// </summary>
         public static int GetCardsPerSuit(this DeckType deckType)
         {
@@ -85,4 +85,3 @@ namespace Neo.Cards
         }
     }
 }
-

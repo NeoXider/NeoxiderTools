@@ -12,14 +12,19 @@ namespace Neo.StateMachine
     {
         /// <summary>Больше чем</summary>
         GreaterThan,
+
         /// <summary>Меньше чем</summary>
         LessThan,
+
         /// <summary>Больше или равно</summary>
         GreaterThanOrEqual,
+
         /// <summary>Меньше или равно</summary>
         LessThanOrEqual,
+
         /// <summary>Равно</summary>
         Equal,
+
         /// <summary>Не равно</summary>
         NotEqual
     }
@@ -50,14 +55,12 @@ namespace Neo.StateMachine
         /// <summary>
         ///     Имя предиката для отладки и отображения в инспекторе.
         /// </summary>
-        [SerializeField]
-        protected string predicateName = "Unnamed Predicate";
+        [SerializeField] protected string predicateName = "Unnamed Predicate";
 
         /// <summary>
         ///     Инвертировать результат оценки предиката.
         /// </summary>
-        [SerializeField]
-        protected bool isInverted = false;
+        [SerializeField] protected bool isInverted;
 
         /// <summary>
         ///     Получить или установить имя предиката.
@@ -112,8 +115,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class BoolPredicate : StatePredicate
     {
-        [SerializeField]
-        private bool value;
+        [SerializeField] private bool value;
 
         /// <summary>
         ///     Значение для проверки.
@@ -136,14 +138,11 @@ namespace Neo.StateMachine
     [Serializable]
     public class FloatComparisonPredicate : StatePredicate
     {
-        [SerializeField]
-        private float value;
+        [SerializeField] private float value;
 
-        [SerializeField]
-        private ComparisonType comparison = ComparisonType.GreaterThan;
+        [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThan;
 
-        [SerializeField]
-        private float threshold = 0f;
+        [SerializeField] private float threshold;
 
         /// <summary>
         ///     Значение для сравнения.
@@ -193,14 +192,11 @@ namespace Neo.StateMachine
     [Serializable]
     public class IntComparisonPredicate : StatePredicate
     {
-        [SerializeField]
-        private int value;
+        [SerializeField] private int value;
 
-        [SerializeField]
-        private ComparisonType comparison = ComparisonType.GreaterThan;
+        [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThan;
 
-        [SerializeField]
-        private int threshold = 0;
+        [SerializeField] private int threshold;
 
         /// <summary>
         ///     Значение для сравнения.
@@ -250,14 +246,11 @@ namespace Neo.StateMachine
     [Serializable]
     public class StringComparisonPredicate : StatePredicate
     {
-        [SerializeField]
-        private string value = "";
+        [SerializeField] private string value = "";
 
-        [SerializeField]
-        private string target = "";
+        [SerializeField] private string target = "";
 
-        [SerializeField]
-        private bool caseSensitive = false;
+        [SerializeField] private bool caseSensitive;
 
         /// <summary>
         ///     Значение для сравнения.
@@ -292,6 +285,7 @@ namespace Neo.StateMachine
             {
                 return value == target;
             }
+
             return string.Equals(value, target, StringComparison.OrdinalIgnoreCase);
         }
     }
@@ -302,10 +296,9 @@ namespace Neo.StateMachine
     [Serializable]
     public class EventPredicate : StatePredicate
     {
-        [SerializeField]
-        private UnityEvent onEvaluate = new UnityEvent();
+        [SerializeField] private UnityEvent onEvaluate = new();
 
-        private bool lastResult = false;
+        private bool lastResult;
 
         /// <summary>
         ///     Событие для оценки. Должно устанавливать результат через SetResult().
@@ -357,13 +350,11 @@ namespace Neo.StateMachine
     [Serializable]
     public class StateDurationPredicate : StatePredicate
     {
-        [SerializeField]
-        private float requiredDuration = 1f;
+        [SerializeField] private float requiredDuration = 1f;
 
-        [SerializeField]
-        private ComparisonType comparison = ComparisonType.GreaterThanOrEqual;
+        [SerializeField] private ComparisonType comparison = ComparisonType.GreaterThanOrEqual;
 
-        private float stateEnterTime = 0f;
+        private float stateEnterTime;
 
         /// <summary>
         ///     Требуемая длительность в секундах.
@@ -414,8 +405,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class AndPredicate : StatePredicate
     {
-        [SerializeField]
-        private List<StatePredicate> predicates = new List<StatePredicate>();
+        [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
         ///     Список предикатов для комбинирования.
@@ -450,7 +440,7 @@ namespace Neo.StateMachine
                 return true;
             }
 
-            foreach (var predicate in predicates)
+            foreach (StatePredicate predicate in predicates)
             {
                 if (predicate == null)
                 {
@@ -473,8 +463,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class OrPredicate : StatePredicate
     {
-        [SerializeField]
-        private List<StatePredicate> predicates = new List<StatePredicate>();
+        [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
         ///     Список предикатов для комбинирования.
@@ -509,7 +498,7 @@ namespace Neo.StateMachine
                 return false;
             }
 
-            foreach (var predicate in predicates)
+            foreach (StatePredicate predicate in predicates)
             {
                 if (predicate == null)
                 {
@@ -532,8 +521,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class NotPredicate : StatePredicate
     {
-        [SerializeField]
-        private StatePredicate predicate;
+        [SerializeField] private StatePredicate predicate;
 
         /// <summary>
         ///     Предикат для инверсии.
@@ -555,5 +543,3 @@ namespace Neo.StateMachine
         }
     }
 }
-
-

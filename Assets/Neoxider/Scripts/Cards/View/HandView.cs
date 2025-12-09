@@ -1,39 +1,36 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using UnityEngine;
 
 namespace Neo.Cards
 {
     /// <summary>
-    /// Визуальное представление руки игрока
+    ///     Визуальное представление руки игрока
     /// </summary>
     public class HandView : MonoBehaviour, IHandView
     {
-        [Header("Layout")]
-        [SerializeField] private HandLayoutType _layoutType = HandLayoutType.Fan;
+        [Header("Layout")] [SerializeField] private HandLayoutType _layoutType = HandLayoutType.Fan;
+
         [SerializeField] private float _spacing = 60f;
         [SerializeField] private float _arcAngle = 30f;
         [SerializeField] private float _arcRadius = 400f;
 
-        [Header("Grid Settings")]
-        [SerializeField] private int _gridColumns = 5;
+        [Header("Grid Settings")] [SerializeField]
+        private int _gridColumns = 5;
+
         [SerializeField] private float _gridRowSpacing = 80f;
 
-        [Header("Animation")]
-        [SerializeField] private float _arrangeDuration = 0.3f;
+        [Header("Animation")] [SerializeField] private float _arrangeDuration = 0.3f;
+
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
         private readonly List<ICardView> _cardViews = new();
 
-        /// <inheritdoc />
-        public IReadOnlyList<ICardView> CardViews => _cardViews;
-
-        /// <inheritdoc />
-        public int Count => _cardViews.Count;
-
         /// <summary>
-        /// Тип раскладки
+        ///     Тип раскладки
         /// </summary>
         public HandLayoutType LayoutType
         {
@@ -41,12 +38,12 @@ namespace Neo.Cards
             set
             {
                 _layoutType = value;
-                ArrangeCardsAsync(true).Forget();
+                ArrangeCardsAsync().Forget();
             }
         }
 
         /// <summary>
-        /// Расстояние между картами
+        ///     Расстояние между картами
         /// </summary>
         public float Spacing
         {
@@ -55,9 +52,18 @@ namespace Neo.Cards
         }
 
         /// <inheritdoc />
+        public IReadOnlyList<ICardView> CardViews => _cardViews;
+
+        /// <inheritdoc />
+        public int Count => _cardViews.Count;
+
+        /// <inheritdoc />
         public async UniTask AddCardAsync(ICardView cardView, bool animate = true)
         {
-            if (cardView == null) return;
+            if (cardView == null)
+            {
+                return;
+            }
 
             _cardViews.Add(cardView);
             cardView.Transform.SetParent(transform, true);
@@ -68,7 +74,10 @@ namespace Neo.Cards
         /// <inheritdoc />
         public async UniTask RemoveCardAsync(ICardView cardView, bool animate = true)
         {
-            if (cardView == null) return;
+            if (cardView == null)
+            {
+                return;
+            }
 
             _cardViews.Remove(cardView);
             await ArrangeCardsAsync(animate);
@@ -77,16 +86,19 @@ namespace Neo.Cards
         /// <inheritdoc />
         public async UniTask ArrangeCardsAsync(bool animate = true)
         {
-            if (_cardViews.Count == 0) return;
+            if (_cardViews.Count == 0)
+            {
+                return;
+            }
 
-            var positions = CalculatePositions();
-            var rotations = CalculateRotations();
+            List<Vector3> positions = CalculatePositions();
+            List<Quaternion> rotations = CalculateRotations();
 
-            var tasks = new List<UniTask>();
+            List<UniTask> tasks = new();
 
             for (int i = 0; i < _cardViews.Count; i++)
             {
-                var cardView = _cardViews[i];
+                ICardView cardView = _cardViews[i];
                 cardView.Transform.SetSiblingIndex(i);
 
                 if (animate)
@@ -135,18 +147,24 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateFanPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cardViews.Count;
 
-            if (count == 0) return positions;
+            if (count == 0)
+            {
+                return positions;
+            }
 
             float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
             float startAngle = totalAngle / 2f;
 
             for (int i = 0; i < count; i++)
             {
-                float angle = startAngle - (totalAngle / Mathf.Max(1, count - 1)) * i;
-                if (count == 1) angle = 0;
+                float angle = startAngle - totalAngle / Mathf.Max(1, count - 1) * i;
+                if (count == 1)
+                {
+                    angle = 0;
+                }
 
                 float radians = angle * Mathf.Deg2Rad;
                 float x = Mathf.Sin(radians) * _arcRadius;
@@ -160,18 +178,24 @@ namespace Neo.Cards
 
         private List<Quaternion> CalculateFanRotations()
         {
-            var rotations = new List<Quaternion>();
+            List<Quaternion> rotations = new();
             int count = _cardViews.Count;
 
-            if (count == 0) return rotations;
+            if (count == 0)
+            {
+                return rotations;
+            }
 
             float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
             float startAngle = totalAngle / 2f;
 
             for (int i = 0; i < count; i++)
             {
-                float angle = startAngle - (totalAngle / Mathf.Max(1, count - 1)) * i;
-                if (count == 1) angle = 0;
+                float angle = startAngle - totalAngle / Mathf.Max(1, count - 1) * i;
+                if (count == 1)
+                {
+                    angle = 0;
+                }
 
                 rotations.Add(Quaternion.Euler(0, 0, angle));
             }
@@ -181,7 +205,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateLinePositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cardViews.Count;
 
             float totalWidth = (count - 1) * _spacing;
@@ -197,7 +221,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateStackPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cardViews.Count;
 
             for (int i = 0; i < count; i++)
@@ -210,7 +234,7 @@ namespace Neo.Cards
 
         private List<Vector3> CalculateGridPositions()
         {
-            var positions = new List<Vector3>();
+            List<Vector3> positions = new();
             int count = _cardViews.Count;
 
             int rows = Mathf.CeilToInt((float)count / _gridColumns);
@@ -236,21 +260,23 @@ namespace Neo.Cards
 
         private List<Quaternion> CalculateNoRotations()
         {
-            var rotations = new List<Quaternion>();
+            List<Quaternion> rotations = new();
             for (int i = 0; i < _cardViews.Count; i++)
             {
                 rotations.Add(Quaternion.identity);
             }
+
             return rotations;
         }
 
         private async UniTask AnimateCard(ICardView cardView, Vector3 position, Quaternion rotation)
         {
-            var moveTween = cardView.Transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
-            var rotateTween = cardView.Transform.DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
+            TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
+                cardView.Transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
+            TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween = cardView.Transform
+                .DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
 
             await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive());
         }
     }
 }
-

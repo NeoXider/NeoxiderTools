@@ -58,17 +58,16 @@ namespace Neo.Tools
         [Space] public List<LeaderboardUser> users = new();
         public bool useZero = true;
 
-        [Space] [Header("Sorting")] 
+        [Space]
+        [Header("Sorting")]
         [Tooltip("Направление сортировки: по убыванию (больше к меньше) или по возрастанию (меньше к больше)")]
         public SortOrder sortOrder = SortOrder.Descending;
 
-        [Space] [Header("Score Formatting")]
-        [Tooltip("Форматировать ли счет (добавлять разделители)")]
-        public bool formatScore = false;
+        [Space] [Header("Score Formatting")] [Tooltip("Форматировать ли счет (добавлять разделители)")]
+        public bool formatScore;
 
-        [Space] [Header("Time Formatting")]
-        [Tooltip("Использовать ли форматирование времени для счета")]
-        public bool useTimeFormat = false;
+        [Space] [Header("Time Formatting")] [Tooltip("Использовать ли форматирование времени для счета")]
+        public bool useTimeFormat;
 
         [Tooltip("Формат времени для отображения счета")]
         public TimeFormat timeFormat = TimeFormat.Seconds;
@@ -76,11 +75,13 @@ namespace Neo.Tools
         [Tooltip("Разделитель для формата времени")]
         public string timeSeparator = ":";
 
-        [Space] [Header("Save Settings")]
+        [Space]
+        [Header("Save Settings")]
         [Tooltip("Ключ для сохранения данных игрока (можно изменить для разных лидербордов)")]
         public string playerSaveKey = "LeaderboardPlayer";
 
-        [Space] [Header("Player Score Display")]
+        [Space]
+        [Header("Player Score Display")]
         [Tooltip("Текст, отображаемый если у игрока нет счета (по умолчанию: --)")]
         public string noScoreText = "--";
 
@@ -137,12 +138,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Обновляет счет игрока, при необходимости сохраняя только лучший результат.
+        ///     Обновляет счет игрока, при необходимости сохраняя только лучший результат.
         /// </summary>
         /// <param name="score">Новый счет игрока.</param>
         /// <param name="overrideBestScore">
-        /// Если false (по умолчанию), счет будет обновлен только если он лучше текущего
-        /// в зависимости от <see cref="sortOrder"/>. Если true — счет обновляется всегда.
+        ///     Если false (по умолчанию), счет будет обновлен только если он лучше текущего
+        ///     в зависимости от <see cref="sortOrder" />. Если true — счет обновляется всегда.
         /// </param>
         public void UpdatePlayerScore(int score, bool overrideBestScore = false)
         {
@@ -168,13 +169,13 @@ namespace Neo.Tools
         {
             // Сначала ищем по id
             int idx = users.FindIndex(u => u.id == player.id);
-            
+
             // Если не нашли по id, ищем по имени (на случай если id изменился после загрузки)
             if (idx < 0)
             {
                 idx = users.FindIndex(u => u.name == player.name);
             }
-            
+
             if (idx >= 0)
             {
                 users[idx].score = player.score;
@@ -322,7 +323,7 @@ namespace Neo.Tools
 
             if (SaveProvider.HasKey($"{playerSaveKey}_Score"))
             {
-                player.score = SaveProvider.GetInt($"{playerSaveKey}_Score", 0);
+                player.score = SaveProvider.GetInt($"{playerSaveKey}_Score");
             }
         }
 

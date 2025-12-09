@@ -17,8 +17,8 @@ namespace Neo
         }
 
         /// <summary>
-        /// Центральный аудио менеджер для воспроизведения звуковых эффектов и музыки.
-        /// Поддерживает как конкретную музыку из списка, так и случайное воспроизведение.
+        ///     Центральный аудио менеджер для воспроизведения звуковых эффектов и музыки.
+        ///     Поддерживает как конкретную музыку из списка, так и случайное воспроизведение.
         /// </summary>
         [AddComponentMenu("Neo/" + "Audio/" + nameof(AM))]
         public class AM : Singleton<AM>
@@ -28,39 +28,53 @@ namespace Neo
             [SerializeField] private AudioClip[] _musicClips;
             [SerializeField] private Sound[] _sounds;
 
-            [Header("Random Music")]
-            [SerializeField] private bool _useRandomMusic;
+            [Header("Random Music")] [SerializeField]
+            private bool _useRandomMusic;
+
             [SerializeField] private AudioClip[] _randomMusicTracks;
 
             private RandomMusicController _randomMusicController;
-
-            /// <summary>
-            /// Событие вызывается при начале воспроизведения музыки.
-            /// </summary>
-            public event Action<AudioClip> OnMusicStarted;
-
-            /// <summary>
-            /// Событие вызывается при остановке музыки.
-            /// </summary>
-            public event Action OnMusicStopped;
-
-            /// <summary>
-        /// Событие вызывается при смене трека в режиме случайной музыки.
-        /// </summary>
-            public event Action<AudioClip> OnRandomMusicTrackChanged;
 
             public float startVolumeEfx { get; set; } = 1f;
             public float startVolumeMusic { get; set; } = 1f;
 
             /// <summary>
-            /// AudioSource для воспроизведения звуковых эффектов.
+            ///     AudioSource для воспроизведения звуковых эффектов.
             /// </summary>
             public AudioSource Efx => _efx;
 
             /// <summary>
-            /// AudioSource для воспроизведения музыки.
+            ///     AudioSource для воспроизведения музыки.
             /// </summary>
             public AudioSource Music => _music;
+
+            private void OnValidate()
+            {
+                if (_music == null)
+                {
+                    CreateMusic();
+                }
+
+                if (_efx == null)
+                {
+                    CreateEfx();
+                }
+            }
+
+            /// <summary>
+            ///     Событие вызывается при начале воспроизведения музыки.
+            /// </summary>
+            public event Action<AudioClip> OnMusicStarted;
+
+            /// <summary>
+            ///     Событие вызывается при остановке музыки.
+            /// </summary>
+            public event Action OnMusicStopped;
+
+            /// <summary>
+            ///     Событие вызывается при смене трека в режиме случайной музыки.
+            /// </summary>
+            public event Action<AudioClip> OnRandomMusicTrackChanged;
 
             protected override void Init()
             {
@@ -70,7 +84,7 @@ namespace Neo
                 if (_music != null)
                 {
                     _randomMusicController.Initialize(_music, _randomMusicTracks);
-                    _randomMusicController.OnTrackChanged += (clip) => OnRandomMusicTrackChanged?.Invoke(clip);
+                    _randomMusicController.OnTrackChanged += clip => OnRandomMusicTrackChanged?.Invoke(clip);
                 }
 
                 if (_useRandomMusic && _randomMusicTracks != null && _randomMusicTracks.Length > 0)
@@ -82,8 +96,9 @@ namespace Neo
                     PlayMusic(0);
                 }
             }
+
             /// <summary>
-            /// Воспроизводит звуковой эффект по ID из массива звуков с указанной громкостью.
+            ///     Воспроизводит звуковой эффект по ID из массива звуков с указанной громкостью.
             /// </summary>
             /// <param name="id">ID звука в массиве _sounds.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
@@ -116,7 +131,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Воспроизводит звуковой эффект по ID из массива звуков с громкостью по умолчанию из настроек.
+            ///     Воспроизводит звуковой эффект по ID из массива звуков с громкостью по умолчанию из настроек.
             /// </summary>
             /// <param name="id">ID звука в массиве _sounds.</param>
 #if ODIN_INSPECTOR
@@ -138,7 +153,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Воспроизводит звуковой эффект напрямую по AudioClip с указанной громкостью.
+            ///     Воспроизводит звуковой эффект напрямую по AudioClip с указанной громкостью.
             /// </summary>
             /// <param name="clip">AudioClip для воспроизведения.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
@@ -158,9 +173,10 @@ namespace Neo
 
                 _efx.PlayOneShot(clip, Mathf.Clamp(volume, 0f, 1f));
             }
+
             /// <summary>
-            /// Воспроизводит музыку по ID из массива музыки с указанной громкостью.
-            /// Останавливает случайную музыку, если она была включена.
+            ///     Воспроизводит музыку по ID из массива музыки с указанной громкостью.
+            ///     Останавливает случайную музыку, если она была включена.
             /// </summary>
             /// <param name="id">ID музыки в массиве _musicClips.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
@@ -203,8 +219,8 @@ namespace Neo
             }
 
             /// <summary>
-            /// Воспроизводит музыку по ID из массива музыки с громкостью по умолчанию.
-            /// Останавливает случайную музыку, если она была включена.
+            ///     Воспроизводит музыку по ID из массива музыки с громкостью по умолчанию.
+            ///     Останавливает случайную музыку, если она была включена.
             /// </summary>
             /// <param name="id">ID музыки в массиве _musicClips.</param>
 #if ODIN_INSPECTOR
@@ -218,8 +234,8 @@ namespace Neo
             }
 
             /// <summary>
-            /// Воспроизводит музыку напрямую по AudioClip с указанной громкостью.
-            /// Останавливает случайную музыку, если она была включена.
+            ///     Воспроизводит музыку напрямую по AudioClip с указанной громкостью.
+            ///     Останавливает случайную музыку, если она была включена.
             /// </summary>
             /// <param name="clip">AudioClip для воспроизведения.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
@@ -251,7 +267,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Возвращает текущий воспроизводимый музыкальный клип.
+            ///     Возвращает текущий воспроизводимый музыкальный клип.
             /// </summary>
             /// <returns>Текущий AudioClip или null, если ничего не воспроизводится.</returns>
             public AudioClip GetCurrentMusicClip()
@@ -265,8 +281,8 @@ namespace Neo
             }
 
             /// <summary>
-            /// Включает режим случайной музыки из списка треков.
-            /// Останавливает текущую конкретную музыку, если она играет.
+            ///     Включает режим случайной музыки из списка треков.
+            ///     Останавливает текущую конкретную музыку, если она играет.
             /// </summary>
             public void EnableRandomMusic()
             {
@@ -286,7 +302,7 @@ namespace Neo
                 {
                     _randomMusicController = new RandomMusicController();
                     _randomMusicController.Initialize(_music, _randomMusicTracks);
-                    _randomMusicController.OnTrackChanged += (clip) => OnRandomMusicTrackChanged?.Invoke(clip);
+                    _randomMusicController.OnTrackChanged += clip => OnRandomMusicTrackChanged?.Invoke(clip);
                 }
 
                 if (_music.isPlaying)
@@ -300,7 +316,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Выключает режим случайной музыки.
+            ///     Выключает режим случайной музыки.
             /// </summary>
             public void DisableRandomMusic()
             {
@@ -313,7 +329,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Возвращает true, если включен режим случайной музыки.
+            ///     Возвращает true, если включен режим случайной музыки.
             /// </summary>
             public bool IsRandomMusicEnabled()
             {
@@ -321,7 +337,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Устанавливает громкость для звуковых эффектов или музыки.
+            ///     Устанавливает громкость для звуковых эффектов или музыки.
             /// </summary>
             /// <param name="volume">Громкость (0-1).</param>
             /// <param name="efx">true для эффектов, false для музыки.</param>
@@ -344,7 +360,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Применяет стартовые громкости к AudioSource'ам.
+            ///     Применяет стартовые громкости к AudioSource'ам.
             /// </summary>
             public void ApplyStartVolumes()
             {
@@ -356,19 +372,6 @@ namespace Neo
                 if (_music != null)
                 {
                     _music.volume = startVolumeMusic;
-                }
-            }
-
-            private void OnValidate()
-            {
-                if (_music == null)
-                {
-                    CreateMusic();
-                }
-
-                if (_efx == null)
-                {
-                    CreateEfx();
                 }
             }
 

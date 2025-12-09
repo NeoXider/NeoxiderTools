@@ -1,16 +1,16 @@
+using Neo.Editor.Windows;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Neo.Editor.Windows;
 
 /// <summary>
-/// Окно редактора для автоматического сохранения сцен
+///     Окно редактора для автоматического сохранения сцен
 /// </summary>
 [InitializeOnLoad]
 public class SceneSaver : EditorWindow
 {
-    private static SceneSaverGUI _staticGUI;
+    private static readonly SceneSaverGUI _staticGUI;
     private static double _lastSaveTime;
     private SceneSaverGUI _gui;
 
@@ -23,17 +23,6 @@ public class SceneSaver : EditorWindow
         EditorSceneManager.sceneOpened += OnSceneOpened;
     }
 
-    /// <summary>
-    /// Показывает окно Scene Saver
-    /// </summary>
-    [MenuItem("Tools/Neoxider/Scene Saver")]
-    public static void ShowWindow()
-    {
-        SceneSaver window = GetWindow<SceneSaver>("Scene Saver");
-        window.minSize = new Vector2(250, 100);
-        _staticGUI?.UpdateCurrentScenePath();
-    }
-
     private void OnEnable()
     {
         _gui = new SceneSaverGUI();
@@ -44,6 +33,17 @@ public class SceneSaver : EditorWindow
     private void OnGUI()
     {
         _gui?.OnGUI(this);
+    }
+
+    /// <summary>
+    ///     Показывает окно Scene Saver
+    /// </summary>
+    [MenuItem("Tools/Neoxider/Scene Saver")]
+    public static void ShowWindow()
+    {
+        SceneSaver window = GetWindow<SceneSaver>("Scene Saver");
+        window.minSize = new Vector2(250, 100);
+        _staticGUI?.UpdateCurrentScenePath();
     }
 
     private static void BackgroundSaveCheck()

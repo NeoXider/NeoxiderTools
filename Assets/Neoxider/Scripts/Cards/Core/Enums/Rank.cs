@@ -1,83 +1,83 @@
 namespace Neo.Cards
 {
     /// <summary>
-    /// Ранги (достоинства) игральных карт
+    ///     Ранги (достоинства) игральных карт
     /// </summary>
     public enum Rank
     {
         /// <summary>
-        /// Двойка
+        ///     Двойка
         /// </summary>
         Two = 2,
 
         /// <summary>
-        /// Тройка
+        ///     Тройка
         /// </summary>
         Three = 3,
 
         /// <summary>
-        /// Четвёрка
+        ///     Четвёрка
         /// </summary>
         Four = 4,
 
         /// <summary>
-        /// Пятёрка
+        ///     Пятёрка
         /// </summary>
         Five = 5,
 
         /// <summary>
-        /// Шестёрка
+        ///     Шестёрка
         /// </summary>
         Six = 6,
 
         /// <summary>
-        /// Семёрка
+        ///     Семёрка
         /// </summary>
         Seven = 7,
 
         /// <summary>
-        /// Восьмёрка
+        ///     Восьмёрка
         /// </summary>
         Eight = 8,
 
         /// <summary>
-        /// Девятка
+        ///     Девятка
         /// </summary>
         Nine = 9,
 
         /// <summary>
-        /// Десятка
+        ///     Десятка
         /// </summary>
         Ten = 10,
 
         /// <summary>
-        /// Валет
+        ///     Валет
         /// </summary>
         Jack = 11,
 
         /// <summary>
-        /// Дама
+        ///     Дама
         /// </summary>
         Queen = 12,
 
         /// <summary>
-        /// Король
+        ///     Король
         /// </summary>
         King = 13,
 
         /// <summary>
-        /// Туз
+        ///     Туз
         /// </summary>
         Ace = 14
     }
 
     /// <summary>
-    /// Расширения для работы с рангами карт
+    ///     Расширения для работы с рангами карт
     /// </summary>
     public static class RankExtensions
     {
         /// <summary>
-        /// Проверяет, является ли карта картинкой (Jack, Queen, King)
+        ///     Проверяет, является ли карта картинкой (Jack, Queen, King)
         /// </summary>
         public static bool IsFaceCard(this Rank rank)
         {
@@ -85,7 +85,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет, является ли карта тузом
+        ///     Проверяет, является ли карта тузом
         /// </summary>
         public static bool IsAce(this Rank rank)
         {
@@ -93,7 +93,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает короткое обозначение ранга (2, 3, ..., J, Q, K, A)
+        ///     Возвращает короткое обозначение ранга (2, 3, ..., J, Q, K, A)
         /// </summary>
         public static string ToShortString(this Rank rank)
         {
@@ -117,7 +117,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает название ранга на русском языке
+        ///     Возвращает название ранга на русском языке
         /// </summary>
         public static string ToRussianName(this Rank rank)
         {
@@ -141,17 +141,18 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает числовое значение ранга для подсчёта очков
+        ///     Возвращает числовое значение ранга для подсчёта очков
         /// </summary>
         /// <param name="rank">Ранг карты</param>
         /// <param name="aceAsOne">Считать туз за 1 (true) или за 14 (false)</param>
         public static int ToValue(this Rank rank, bool aceAsOne = false)
         {
             if (aceAsOne && rank == Rank.Ace)
+            {
                 return 1;
+            }
 
             return (int)rank;
         }
     }
 }
-

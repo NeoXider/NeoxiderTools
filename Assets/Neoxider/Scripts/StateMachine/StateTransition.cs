@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEngine;
 using Neo.StateMachine.NoCode;
+using UnityEngine;
 
 namespace Neo.StateMachine
 {
@@ -36,25 +36,20 @@ namespace Neo.StateMachine
     [Serializable]
     public class StateTransition
     {
-        [SerializeField]
-        private StateData fromStateData;
+        [SerializeField] private StateData fromStateData;
 
-        [SerializeField]
-        private StateData toStateData;
+        [SerializeField] private StateData toStateData;
 
-        [SerializeField]
-        private List<StatePredicate> predicates = new List<StatePredicate>();
+        [SerializeField] private int priority;
 
-        [SerializeField]
-        private int priority = 0;
+        [SerializeField] private bool isEnabled = true;
 
-        [SerializeField]
-        private bool isEnabled = true;
-
-        [SerializeField]
-        private string transitionName = "Unnamed Transition";
+        [SerializeField] private string transitionName = "Unnamed Transition";
 
         private Type fromStateType;
+
+        [SerializeField] private List<StatePredicate> predicates = new();
+
         private Type toStateType;
 
         /// <summary>
@@ -256,4 +251,3 @@ namespace Neo.StateMachine
         }
     }
 }
-

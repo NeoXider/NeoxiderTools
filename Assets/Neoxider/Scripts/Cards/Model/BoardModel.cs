@@ -1,9 +1,7 @@
-using System.Collections.Generic;
-
 namespace Neo.Cards
 {
     /// <summary>
-    /// Модель стола (board) для общих карт.
+    ///     Модель стола (board) для общих карт.
     /// </summary>
     public class BoardModel : CardContainerModel
     {
@@ -14,8 +12,9 @@ namespace Neo.Cards
             _maxCards = maxCards;
         }
 
-        public override bool CanAdd(CardData card) => Count < _maxCards;
+        public override bool CanAdd(CardData card)
+        {
+            return Count < _maxCards;
+        }
     }
 }
-
-

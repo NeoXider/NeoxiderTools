@@ -1,6 +1,8 @@
 using System;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using DG.Tweening.Core;
+using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -8,39 +10,47 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Визуальное представление карты
+    ///     Визуальное представление карты
     /// </summary>
     public class CardView : MonoBehaviour, ICardView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
-        [Header("Visual")]
-        [SerializeField] private Image _cardImage;
+        [Header("Visual")] [SerializeField] private Image _cardImage;
+
         [SerializeField] private SpriteRenderer _spriteRenderer;
 
-        [Header("Animation")]
-        [SerializeField] private float _flipDuration = 0.3f;
+        [Header("Animation")] [SerializeField] private float _flipDuration = 0.3f;
+
         [SerializeField] private float _moveDuration = 0.2f;
         [SerializeField] private Ease _flipEase = Ease.OutQuad;
         [SerializeField] private Ease _moveEase = Ease.OutQuad;
 
-        [Header("Hover")]
-        [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")]
-        [SerializeField] private float _hoverScale = 0.1f;
+        [Header("Hover")] [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")] [SerializeField]
+        private float _hoverScale = 0.1f;
+
         [SerializeField] private float _hoverDuration = 0.15f;
         [SerializeField] private float _hoverYOffset = 20f;
-
-        private CardData _data;
-        private bool _isFaceUp = true;
-        private bool _isInteractable = true;
         private DeckConfig _config;
-        private Vector3 _originalScale;
-        private Vector3 _originalPosition;
         private Tween _currentTween;
 
-        /// <inheritdoc />
-        public CardData Data => _data;
+        private bool _isInteractable = true;
+        private Vector3 _originalPosition;
+        private Vector3 _originalScale;
+
+        private void Awake()
+        {
+            _originalScale = transform.localScale;
+        }
+
+        private void OnDestroy()
+        {
+            _currentTween?.Kill();
+        }
 
         /// <inheritdoc />
-        public bool IsFaceUp => _isFaceUp;
+        public CardData Data { get; private set; }
+
+        /// <inheritdoc />
+        public bool IsFaceUp { get; private set; } = true;
 
         /// <inheritdoc />
         public Transform Transform => transform;
@@ -54,32 +64,18 @@ namespace Neo.Cards
         /// <inheritdoc />
         public event Action<ICardView> OnUnhovered;
 
-        private void Awake()
-        {
-            _originalScale = transform.localScale;
-        }
-
-        /// <summary>
-        /// Инициализирует карту с конфигурацией
-        /// </summary>
-        /// <param name="config">Конфигурация колоды со спрайтами</param>
-        public void Initialize(DeckConfig config)
-        {
-            _config = config;
-        }
-
         /// <inheritdoc />
         public void SetData(CardData data, bool faceUp = true)
         {
-            _data = data;
-            _isFaceUp = faceUp;
+            Data = data;
+            IsFaceUp = faceUp;
             UpdateVisual();
         }
 
         /// <inheritdoc />
         public void Flip()
         {
-            _isFaceUp = !_isFaceUp;
+            IsFaceUp = !IsFaceUp;
             UpdateVisual();
         }
 
@@ -96,13 +92,15 @@ namespace Neo.Cards
 
             float halfDuration = duration / 2f;
 
-            var tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
+            TweenerCore<Vector3, Vector3, VectorOptions>
+                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
             await UniTask.WaitUntil(() => !tween1.IsActive());
 
-            _isFaceUp = !_isFaceUp;
+            IsFaceUp = !IsFaceUp;
             UpdateVisual();
 
-            var tween2 = transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
+            TweenerCore<Vector3, Vector3, VectorOptions> tween2 =
+                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
             await UniTask.WaitUntil(() => !tween2.IsActive());
         }
 
@@ -121,8 +119,58 @@ namespace Neo.Cards
             _originalPosition = position;
         }
 
+        /// <inheritdoc />
+        public void SetInteractable(bool interactable)
+        {
+            _isInteractable = interactable;
+        }
+
+        void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
+        {
+            if (_isInteractable)
+            {
+                OnClicked?.Invoke(this);
+            }
+        }
+
+        void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
+        {
+            if (!_isInteractable)
+            {
+                return;
+            }
+
+            OnHovered?.Invoke(this);
+
+            _originalPosition = transform.position;
+            transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration);
+            transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
+        }
+
+        void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
+        {
+            if (!_isInteractable)
+            {
+                return;
+            }
+
+            OnUnhovered?.Invoke(this);
+
+            transform.DOScale(_originalScale, _hoverDuration);
+            transform.DOMove(_originalPosition, _hoverDuration);
+        }
+
         /// <summary>
-        /// Перемещает карту в локальную позицию
+        ///     Инициализирует карту с конфигурацией
+        /// </summary>
+        /// <param name="config">Конфигурация колоды со спрайтами</param>
+        public void Initialize(DeckConfig config)
+        {
+            _config = config;
+        }
+
+        /// <summary>
+        ///     Перемещает карту в локальную позицию
         /// </summary>
         /// <param name="localPosition">Локальная позиция</param>
         /// <param name="duration">Длительность анимации</param>
@@ -141,7 +189,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Поворачивает карту
+        ///     Поворачивает карту
         /// </summary>
         /// <param name="rotation">Целевой поворот</param>
         /// <param name="duration">Длительность анимации</param>
@@ -153,50 +201,19 @@ namespace Neo.Cards
                 return;
             }
 
-            var rotateTween = transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase);
+            TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
+                transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase);
             await UniTask.WaitUntil(() => !rotateTween.IsActive());
-        }
-
-        /// <inheritdoc />
-        public void SetInteractable(bool interactable)
-        {
-            _isInteractable = interactable;
-        }
-
-        void IPointerClickHandler.OnPointerClick(PointerEventData eventData)
-        {
-            if (_isInteractable)
-            {
-                OnClicked?.Invoke(this);
-            }
-        }
-
-        void IPointerEnterHandler.OnPointerEnter(PointerEventData eventData)
-        {
-            if (!_isInteractable) return;
-
-            OnHovered?.Invoke(this);
-
-            _originalPosition = transform.position;
-            transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration);
-            transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
-        }
-
-        void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
-        {
-            if (!_isInteractable) return;
-
-            OnUnhovered?.Invoke(this);
-
-            transform.DOScale(_originalScale, _hoverDuration);
-            transform.DOMove(_originalPosition, _hoverDuration);
         }
 
         private void UpdateVisual()
         {
-            if (_config == null) return;
+            if (_config == null)
+            {
+                return;
+            }
 
-            Sprite sprite = _isFaceUp ? _config.GetSprite(_data) : _config.BackSprite;
+            Sprite sprite = IsFaceUp ? _config.GetSprite(Data) : _config.BackSprite;
 
             if (_cardImage != null)
             {
@@ -208,11 +225,5 @@ namespace Neo.Cards
                 _spriteRenderer.sprite = sprite;
             }
         }
-
-        private void OnDestroy()
-        {
-            _currentTween?.Kill();
-        }
     }
 }
-

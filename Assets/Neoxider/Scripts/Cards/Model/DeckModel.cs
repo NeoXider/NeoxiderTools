@@ -4,52 +4,42 @@ using System.Collections.Generic;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Модель колоды карт (логика без визуализации)
+    ///     Модель колоды карт (логика без визуализации)
     /// </summary>
     public class DeckModel : ICardContainer
     {
-        private readonly CardContainerModel _cards = new CardContainerModel(CardLocation.Deck);
+        private readonly CardContainerModel _cards = new(CardLocation.Deck);
         private readonly List<CardData> _discardPile = new();
         private readonly Random _random = new();
 
         /// <summary>
-        /// Карты в колоде
+        ///     Карты в колоде
         /// </summary>
         public IReadOnlyList<CardData> Cards => _cards.Data;
 
         /// <summary>
-        /// Карты в сбросе
+        ///     Карты в сбросе
         /// </summary>
         public IReadOnlyList<CardData> DiscardPile => _discardPile;
 
         /// <summary>
-        /// Количество карт в колоде
+        ///     Количество карт в колоде
         /// </summary>
         public int RemainingCount => _cards.Count;
 
         /// <summary>
-        /// Пуста ли колода
+        ///     Пуста ли колода
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
         /// <summary>
-        /// Тип колоды
+        ///     Тип колоды
         /// </summary>
         public DeckType DeckType { get; private set; }
 
         public CardLocation Location => _cards.Location;
         public int Count => _cards.Count;
         public IReadOnlyList<CardData> Data => _cards.Data;
-
-        /// <summary>
-        /// Событие при изменении колоды
-        /// </summary>
-        public event Action OnDeckChanged;
-
-        /// <summary>
-        /// Событие когда колода опустела
-        /// </summary>
-        public event Action OnDeckEmpty;
 
         public event Action OnChanged
         {
@@ -58,7 +48,17 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Инициализирует колоду указанного типа
+        ///     Событие при изменении колоды
+        /// </summary>
+        public event Action OnDeckChanged;
+
+        /// <summary>
+        ///     Событие когда колода опустела
+        /// </summary>
+        public event Action OnDeckEmpty;
+
+        /// <summary>
+        ///     Инициализирует колоду указанного типа
         /// </summary>
         /// <param name="deckType">Тип колоды</param>
         /// <param name="shuffle">Перемешать после создания</param>
@@ -93,7 +93,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Инициализирует колоду из заданного списка карт
+        ///     Инициализирует колоду из заданного списка карт
         /// </summary>
         /// <param name="cards">Список карт</param>
         /// <param name="shuffle">Перемешать после создания</param>
@@ -101,8 +101,10 @@ namespace Neo.Cards
         {
             _cards.Clear();
             _discardPile.Clear();
-            foreach (var card in cards)
+            foreach (CardData card in cards)
+            {
                 _cards.Add(card);
+            }
 
             if (shuffle)
             {
@@ -113,21 +115,21 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Перемешивает колоду (алгоритм Фишера-Йетса)
+        ///     Перемешивает колоду (алгоритм Фишера-Йетса)
         /// </summary>
         public void Shuffle()
         {
             for (int i = _cards.Count - 1; i > 0; i--)
             {
                 int j = _random.Next(i + 1);
-                ( _cards.Mutable[i], _cards.Mutable[j]) = ( _cards.Mutable[j], _cards.Mutable[i]);
+                (_cards.Mutable[i], _cards.Mutable[j]) = (_cards.Mutable[j], _cards.Mutable[i]);
             }
 
             OnDeckChanged?.Invoke();
         }
 
         /// <summary>
-        /// Берёт верхнюю карту из колоды
+        ///     Берёт верхнюю карту из колоды
         /// </summary>
         /// <returns>Карта или null если колода пуста</returns>
         public CardData? Draw()
@@ -152,13 +154,13 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Берёт несколько карт из колоды
+        ///     Берёт несколько карт из колоды
         /// </summary>
         /// <param name="count">Количество карт</param>
         /// <returns>Список взятых карт</returns>
         public List<CardData> Draw(int count)
         {
-            var result = new List<CardData>(count);
+            List<CardData> result = new(count);
 
             for (int i = 0; i < count && _cards.Count > 0; i++)
             {
@@ -173,7 +175,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает верхнюю карту без извлечения
+        ///     Возвращает верхнюю карту без извлечения
         /// </summary>
         /// <returns>Верхняя карта или null если колода пуста</returns>
         public CardData? Peek()
@@ -187,7 +189,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает нижнюю карту без извлечения (часто используется как козырь в "Дураке")
+        ///     Возвращает нижнюю карту без извлечения (часто используется как козырь в "Дураке")
         /// </summary>
         /// <returns>Нижняя карта или null если колода пуста</returns>
         public CardData? PeekBottom()
@@ -201,7 +203,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Добавляет карту в сброс
+        ///     Добавляет карту в сброс
         /// </summary>
         /// <param name="card">Карта для сброса</param>
         public void Discard(CardData card)
@@ -210,7 +212,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Добавляет несколько карт в сброс
+        ///     Добавляет несколько карт в сброс
         /// </summary>
         /// <param name="cards">Карты для сброса</param>
         public void Discard(IEnumerable<CardData> cards)
@@ -219,7 +221,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает карту в колоду (вниз)
+        ///     Возвращает карту в колоду (вниз)
         /// </summary>
         /// <param name="card">Карта</param>
         public void ReturnToBottom(CardData card)
@@ -229,7 +231,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает карту в колоду (наверх)
+        ///     Возвращает карту в колоду (наверх)
         /// </summary>
         /// <param name="card">Карта</param>
         public void ReturnToTop(CardData card)
@@ -239,20 +241,21 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Перемешивает сброс и добавляет в колоду
+        ///     Перемешивает сброс и добавляет в колоду
         /// </summary>
         public void ReshuffleDiscardPile()
         {
-            foreach (var card in _discardPile)
+            foreach (CardData card in _discardPile)
             {
                 _cards.Add(card);
             }
+
             _discardPile.Clear();
             Shuffle();
         }
 
         /// <summary>
-        /// Сбрасывает колоду в начальное состояние
+        ///     Сбрасывает колоду в начальное состояние
         /// </summary>
         /// <param name="shuffle">Перемешать после сброса</param>
         public void Reset(bool shuffle = true)
@@ -261,7 +264,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Очищает колоду и сброс
+        ///     Очищает колоду и сброс
         /// </summary>
         public void Clear()
         {
@@ -271,12 +274,32 @@ namespace Neo.Cards
         }
 
         #region ICardContainer explicit
-        public bool CanAdd(CardData card) => true;
-        bool ICardContainer.Remove(CardData card) => _cards.Remove(card);
-        List<CardData> ICardContainer.RemoveAll() => _cards.RemoveAll();
-        void ICardContainer.Clear() => Clear();
-        void ICardContainer.Add(CardData card) => _cards.Add(card);
+
+        public bool CanAdd(CardData card)
+        {
+            return true;
+        }
+
+        bool ICardContainer.Remove(CardData card)
+        {
+            return _cards.Remove(card);
+        }
+
+        List<CardData> ICardContainer.RemoveAll()
+        {
+            return _cards.RemoveAll();
+        }
+
+        void ICardContainer.Clear()
+        {
+            Clear();
+        }
+
+        void ICardContainer.Add(CardData card)
+        {
+            _cards.Add(card);
+        }
+
         #endregion
     }
 }
-

@@ -16,48 +16,37 @@ namespace Neo.Tools
             FixedInterval
         }
 
-        [Header("Objects")]
-        [Tooltip("Source object. Uses this transform if not set.")]
-        [SerializeField]
+        [Header("Objects")] [Tooltip("Source object. Uses this transform if not set.")] [SerializeField]
         private Transform currentObject;
 
-        [Tooltip("Target object to measure distance to.")]
-        [SerializeField]
+        [Tooltip("Target object to measure distance to.")] [SerializeField]
         private Transform targetObject;
 
-        [Header("Distance Settings")]
-        [Tooltip("Distance threshold for triggering events.")]
-        [SerializeField]
+        [Header("Distance Settings")] [Tooltip("Distance threshold for triggering events.")] [SerializeField]
         private float distanceThreshold = 5f;
 
-        [Header("Update Settings")]
-        [SerializeField]
+        [Header("Update Settings")] [SerializeField]
         private UpdateMode updateMode = UpdateMode.EveryFrame;
 
-        [Tooltip("Update interval in seconds (only for FixedInterval mode).")]
-        [SerializeField]
+        [Tooltip("Update interval in seconds (only for FixedInterval mode).")] [SerializeField]
         private float updateInterval = 0.1f;
 
-        [Header("Continuous Tracking")]
-        [Tooltip("Enable continuous distance tracking with events.")]
-        [SerializeField]
+        [Header("Continuous Tracking")] [Tooltip("Enable continuous distance tracking with events.")] [SerializeField]
         private bool enableContinuousTracking;
 
-        [Header("Events")]
-        public UnityEvent onApproach;
+        [Header("Events")] public UnityEvent onApproach;
+
         public UnityEvent onDepart;
 
-        [Header("Continuous Distance Event")]
-        public UnityEvent<float> onDistanceChanged;
+        [Header("Continuous Distance Event")] public UnityEvent<float> onDistanceChanged;
 
-        [Header("Debug")]
-        [SerializeField]
-        private bool showDebugGizmos = true;
+        [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+
+        private float _distanceThresholdSqr;
 
         private bool _isWithinDistance;
-        private float _lastUpdateTime;
-        private float _distanceThresholdSqr;
         private float _lastDistance;
+        private float _lastUpdateTime;
 
         private void Awake()
         {
@@ -89,11 +78,6 @@ namespace Neo.Tools
             CheckDistance();
         }
 
-        private void OnValidate()
-        {
-            _distanceThresholdSqr = distanceThreshold * distanceThreshold;
-        }
-
         private void OnDrawGizmosSelected()
         {
             if (!showDebugGizmos || currentObject == null)
@@ -111,6 +95,11 @@ namespace Neo.Tools
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(source.position, targetObject.position);
             }
+        }
+
+        private void OnValidate()
+        {
+            _distanceThresholdSqr = distanceThreshold * distanceThreshold;
         }
 
         private void CheckDistance()

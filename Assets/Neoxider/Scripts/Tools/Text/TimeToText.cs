@@ -44,8 +44,7 @@ namespace Neo
             [Header("Time Format")] [Tooltip("Whether to display text when time is zero")] [SerializeField]
             private bool _zeroText = true;
 
-            [Tooltip("The format to use when displaying time")]
-            [SerializeField]
+            [Tooltip("The format to use when displaying time")] [SerializeField]
             private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
 
             [Header("Text Formatting")] [Tooltip("Text to add before the time value")] [SerializeField]

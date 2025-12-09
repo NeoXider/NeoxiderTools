@@ -18,34 +18,26 @@ namespace Neo.Tools
             Patrol,
             Combined
         }
-        [Header("Movement Mode")]
-        [SerializeField]
+
+        [Header("Movement Mode")] [SerializeField]
         private MovementMode movementMode = MovementMode.FollowTarget;
 
-        [Header("Follow Target Settings")]
-        [SerializeField]
+        [Header("Follow Target Settings")] [SerializeField]
         private Transform target;
 
-        [Tooltip("Minimum distance to start moving (0 = always move).")]
-        [Min(0)]
-        [SerializeField]
+        [Tooltip("Minimum distance to start moving (0 = always move).")] [Min(0)] [SerializeField]
         private float triggerDistance;
 
-        [Tooltip("Distance from target where agent stops.")]
-        [SerializeField]
+        [Tooltip("Distance from target where agent stops.")] [SerializeField]
         private float stoppingDistance = 2f;
 
-        [Header("Patrol Settings")]
-        [Tooltip("Patrol points array.")]
-        [SerializeField]
+        [Header("Patrol Settings")] [Tooltip("Patrol points array.")] [SerializeField]
         private Transform[] patrolPoints;
 
-        [Tooltip("Wait time at each patrol point.")]
-        [SerializeField]
+        [Tooltip("Wait time at each patrol point.")] [SerializeField]
         private float patrolWaitTime = 1f;
 
-        [Tooltip("Loop patrol route.")]
-        [SerializeField]
+        [Tooltip("Loop patrol route.")] [SerializeField]
         private bool loopPatrol = true;
 
         [Header("Combined Mode Settings")]
@@ -53,103 +45,79 @@ namespace Neo.Tools
         [SerializeField]
         private float aggroDistance = 10f;
 
-        [Tooltip("Distance to stop following and return to patrol (0 = never stop).")]
-        [SerializeField]
+        [Tooltip("Distance to stop following and return to patrol (0 = never stop).")] [SerializeField]
         private float maxFollowDistance = 20f;
 
-        [Header("General Settings")]
-        [SerializeField]
+        [Header("General Settings")] [SerializeField]
         private bool updateRotation = true;
 
-        [Header("Movement Settings")]
-        [Tooltip("Normal walking speed.")]
-        [SerializeField]
+        [Header("Movement Settings")] [Tooltip("Normal walking speed.")] [SerializeField]
         private float walkSpeed = 3f;
 
-        [Tooltip("Running speed.")]
-        [SerializeField]
+        [Tooltip("Running speed.")] [SerializeField]
         private float runSpeed = 6f;
 
-        [SerializeField]
-        private float acceleration = 8f;
+        [SerializeField] private float acceleration = 8f;
 
-        [Tooltip("Turn speed in degrees per second.")]
-        [SerializeField]
+        [Tooltip("Turn speed in degrees per second.")] [SerializeField]
         private float turnSpeed = 260f;
 
-        [SerializeField]
-        private float maxPathLength = 100f;
+        [SerializeField] private float maxPathLength = 100f;
 
-        [Header("Path Settings")]
-        [SerializeField]
+        [Header("Path Settings")] [SerializeField]
         private bool autoUpdatePath = true;
 
-        [SerializeField]
-        private float pathUpdateInterval = 0.5f;
+        [SerializeField] private float pathUpdateInterval = 0.5f;
 
-        [SerializeField]
-        private float pathCheckRadius = 0.5f;
+        [SerializeField] private float pathCheckRadius = 0.5f;
 
-        [Header("Animation Settings")]
-        [Tooltip("Animator to control (optional).")]
-        [SerializeField]
+        [Header("Animation Settings")] [Tooltip("Animator to control (optional).")] [SerializeField]
         private Animator animator;
 
-        [Tooltip("Float parameter for normalized speed (0-1).")]
-        [SerializeField]
+        [Tooltip("Float parameter for normalized speed (0-1).")] [SerializeField]
         private string speedParameter = "Speed";
 
-        [Tooltip("Bool parameter for movement state.")]
-        [SerializeField]
+        [Tooltip("Bool parameter for movement state.")] [SerializeField]
         private string isMovingParameter = "IsMoving";
 
-        [Tooltip("Smoothing time for speed transitions.")]
-        [SerializeField]
+        [Tooltip("Smoothing time for speed transitions.")] [SerializeField]
         private float animationDampTime = 0.1f;
 
-        [Header("Debug")]
-        [Tooltip("Enable detailed logging for troubleshooting.")]
-        [SerializeField]
-        private bool debugMode = false;
+        [Header("Debug")] [Tooltip("Enable detailed logging for troubleshooting.")] [SerializeField]
+        private bool debugMode;
 
-        [Header("Events")]
-        public UnityEvent<Vector3> onDestinationReached;
+        [Header("Events")] public UnityEvent<Vector3> onDestinationReached;
 
         public UnityEvent<Vector3> onPathBlocked;
         public UnityEvent<float> onSpeedChanged;
         public UnityEvent<Vector3> onPathUpdated;
         public UnityEvent<NavMeshPathStatus> onPathStatusChanged;
 
-        [Header("Patrol Events")]
-        public UnityEvent<int> onPatrolPointReached;
+        [Header("Patrol Events")] public UnityEvent<int> onPatrolPointReached;
 
         public UnityEvent onPatrolStarted;
         public UnityEvent onPatrolCompleted;
 
-        [Header("Combined Mode Events")]
-        public UnityEvent onStartFollowing;
+        [Header("Combined Mode Events")] public UnityEvent onStartFollowing;
 
         public UnityEvent onStopFollowing;
 
         private NavMeshAgent agent;
+        private float aggroDistanceSqr;
+        private float currentSpeedVelocity;
         private bool hasStopped = true;
+        private Transform initialTarget;
+        private bool isFollowingTarget;
+        private bool isInitialized;
+        private int isMovingHash;
+        private bool isWaitingAtPatrol;
+        private NavMeshPathStatus lastPathStatus;
         private float lastPathUpdateTime;
         private Vector3 lastTargetPosition;
-        private NavMeshPathStatus lastPathStatus;
-        private Coroutine pathUpdateCoroutine;
-        private bool isInitialized;
-        private float currentSpeedVelocity;
-        private bool isRunning;
-        private int currentPatrolIndex;
-        private bool isWaitingAtPatrol;
-        private bool isPatrolling;
-        private bool isFollowingTarget;
-        private Transform initialTarget;
-        private int speedHash;
-        private int isMovingHash;
-        private float aggroDistanceSqr;
         private float maxFollowDistanceSqr;
         private float nextDebugLogTime;
+        private Coroutine pathUpdateCoroutine;
+        private int speedHash;
 
         #region === Properties ===
 
@@ -175,9 +143,12 @@ namespace Neo.Tools
         public bool IsOnNavMesh => agent != null && agent.enabled && agent.isOnNavMesh;
         public bool HasPath => agent != null && agent.enabled && agent.isOnNavMesh && agent.hasPath;
         public bool IsMoving => !hasStopped;
-        public bool IsRunning => isRunning;
-        public bool IsPatrolling => isPatrolling;
-        public int CurrentPatrolIndex => currentPatrolIndex;
+        public bool IsRunning { get; private set; }
+
+        public bool IsPatrolling { get; private set; }
+
+        public int CurrentPatrolIndex { get; private set; }
+
         public MovementMode CurrentMode => movementMode;
 
         public float StoppingDistance
@@ -199,7 +170,7 @@ namespace Neo.Tools
             set
             {
                 walkSpeed = Mathf.Max(0.1f, value);
-                if (agent != null && !isRunning)
+                if (agent != null && !IsRunning)
                 {
                     agent.speed = walkSpeed;
                 }
@@ -212,7 +183,7 @@ namespace Neo.Tools
             set
             {
                 runSpeed = Mathf.Max(0.1f, value);
-                if (agent != null && isRunning)
+                if (agent != null && IsRunning)
                 {
                     agent.speed = runSpeed;
                 }
@@ -330,7 +301,8 @@ namespace Neo.Tools
                     }
                     else
                     {
-                        Debug.LogWarning($"AiNavigation ({gameObject.name}): FollowTarget mode requires target to be set!");
+                        Debug.LogWarning(
+                            $"AiNavigation ({gameObject.name}): FollowTarget mode requires target to be set!");
                     }
 
                     break;
@@ -342,12 +314,14 @@ namespace Neo.Tools
                 case MovementMode.Combined:
                     if (target == null)
                     {
-                        Debug.LogWarning($"AiNavigation ({gameObject.name}): Combined mode requires target to be set! Set target in inspector or via SetTarget().");
+                        Debug.LogWarning(
+                            $"AiNavigation ({gameObject.name}): Combined mode requires target to be set! Set target in inspector or via SetTarget().");
                     }
 
                     if (aggroDistance <= 0f)
                     {
-                        Debug.LogWarning($"AiNavigation ({gameObject.name}): Combined mode requires aggroDistance > 0! Currently {aggroDistance}");
+                        Debug.LogWarning(
+                            $"AiNavigation ({gameObject.name}): Combined mode requires aggroDistance > 0! Currently {aggroDistance}");
                     }
 
                     StartPatrol();
@@ -434,7 +408,7 @@ namespace Neo.Tools
                 Vector3 pointPos = patrolPoints[i].position;
                 Gizmos.DrawWireSphere(pointPos, 0.5f);
 
-                if (i == currentPatrolIndex && Application.isPlaying)
+                if (i == CurrentPatrolIndex && Application.isPlaying)
                 {
                     Gizmos.color = Color.yellow;
                     Gizmos.DrawWireSphere(pointPos, 0.7f);
@@ -547,7 +521,7 @@ namespace Neo.Tools
                 return;
             }
 
-            isRunning = enable;
+            IsRunning = enable;
             agent.speed = enable ? runSpeed : walkSpeed;
             onSpeedChanged?.Invoke(agent.speed);
         }
@@ -693,11 +667,11 @@ namespace Neo.Tools
                 }
             }
 
-            isPatrolling = true;
+            IsPatrolling = true;
             isFollowingTarget = false;
             isWaitingAtPatrol = false;
-            currentPatrolIndex = 0;
-            MoveToPatrolPoint(currentPatrolIndex);
+            CurrentPatrolIndex = 0;
+            MoveToPatrolPoint(CurrentPatrolIndex);
             onPatrolStarted?.Invoke();
         }
 
@@ -706,7 +680,7 @@ namespace Neo.Tools
         /// </summary>
         public void StopPatrol()
         {
-            isPatrolling = false;
+            IsPatrolling = false;
             Stop();
         }
 
@@ -744,10 +718,10 @@ namespace Neo.Tools
         public void SetPatrolPoints(Transform[] points)
         {
             patrolPoints = points;
-            if (isPatrolling)
+            if (IsPatrolling)
             {
-                currentPatrolIndex = 0;
-                MoveToPatrolPoint(currentPatrolIndex);
+                CurrentPatrolIndex = 0;
+                MoveToPatrolPoint(CurrentPatrolIndex);
             }
         }
 
@@ -943,7 +917,7 @@ namespace Neo.Tools
 
         private void HandlePatrol()
         {
-            if (!isPatrolling)
+            if (!IsPatrolling)
             {
                 return;
             }
@@ -968,7 +942,7 @@ namespace Neo.Tools
                     Debug.LogWarning($"[{gameObject.name}] Combined: initialTarget is null! Set target in inspector.");
                 }
 
-                if (!isPatrolling)
+                if (!IsPatrolling)
                 {
                     StartPatrol();
                 }
@@ -982,7 +956,8 @@ namespace Neo.Tools
             if (debugMode && Time.time >= nextDebugLogTime)
             {
                 float dist = Mathf.Sqrt(distanceSqr);
-                Debug.Log($"[{gameObject.name}] Combined: dist={dist:F1}, aggroDistance={aggroDistance}, isFollowing={isFollowingTarget}, isPatrolling={isPatrolling}, target={initialTarget.name}");
+                Debug.Log(
+                    $"[{gameObject.name}] Combined: dist={dist:F1}, aggroDistance={aggroDistance}, isFollowing={isFollowingTarget}, isPatrolling={IsPatrolling}, target={initialTarget.name}");
                 nextDebugLogTime = Time.time + 1f;
             }
 
@@ -994,11 +969,12 @@ namespace Neo.Tools
                 if (debugMode)
                 {
                     float dist = Mathf.Sqrt(distanceSqr);
-                    Debug.Log($"[{gameObject.name}] AGGRO! Starting to follow {initialTarget.name} at distance {dist:F1}m");
+                    Debug.Log(
+                        $"[{gameObject.name}] AGGRO! Starting to follow {initialTarget.name} at distance {dist:F1}m");
                 }
 
                 isFollowingTarget = true;
-                isPatrolling = false;
+                IsPatrolling = false;
                 isWaitingAtPatrol = false;
                 target = initialTarget;
                 onStartFollowing?.Invoke();
@@ -1071,11 +1047,11 @@ namespace Neo.Tools
         private IEnumerator WaitAtPatrolPoint()
         {
             isWaitingAtPatrol = true;
-            onPatrolPointReached?.Invoke(currentPatrolIndex);
+            onPatrolPointReached?.Invoke(CurrentPatrolIndex);
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Reached patrol point {currentPatrolIndex}, waiting {patrolWaitTime}s");
+                Debug.Log($"[{gameObject.name}] Reached patrol point {CurrentPatrolIndex}, waiting {patrolWaitTime}s");
             }
 
             yield return new WaitForSeconds(patrolWaitTime);
@@ -1086,13 +1062,13 @@ namespace Neo.Tools
 
         private void MoveToNextPatrolPoint()
         {
-            currentPatrolIndex++;
+            CurrentPatrolIndex++;
 
-            if (currentPatrolIndex >= patrolPoints.Length)
+            if (CurrentPatrolIndex >= patrolPoints.Length)
             {
                 if (loopPatrol)
                 {
-                    currentPatrolIndex = 0;
+                    CurrentPatrolIndex = 0;
 
                     if (debugMode)
                     {
@@ -1101,7 +1077,7 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    isPatrolling = false;
+                    IsPatrolling = false;
                     onPatrolCompleted?.Invoke();
 
                     if (debugMode)
@@ -1115,10 +1091,10 @@ namespace Neo.Tools
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Moving to patrol point {currentPatrolIndex}");
+                Debug.Log($"[{gameObject.name}] Moving to patrol point {CurrentPatrolIndex}");
             }
 
-            MoveToPatrolPoint(currentPatrolIndex);
+            MoveToPatrolPoint(CurrentPatrolIndex);
         }
 
         private void ReturnToPatrol()
@@ -1129,7 +1105,7 @@ namespace Neo.Tools
             }
 
             hasStopped = true;
-            isPatrolling = true;
+            IsPatrolling = true;
             isFollowingTarget = false;
 
             if (debugMode)
@@ -1155,13 +1131,12 @@ namespace Neo.Tools
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Resuming patrol, moving to point {currentPatrolIndex}");
+                Debug.Log($"[{gameObject.name}] Resuming patrol, moving to point {CurrentPatrolIndex}");
             }
 
-            MoveToPatrolPoint(currentPatrolIndex);
+            MoveToPatrolPoint(CurrentPatrolIndex);
         }
 
         #endregion
     }
 }
-

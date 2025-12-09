@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace Neo.StateMachine
 {
     /// <summary>
@@ -92,5 +90,3 @@ namespace Neo.StateMachine
         void OnLateUpdate();
     }
 }
-
-

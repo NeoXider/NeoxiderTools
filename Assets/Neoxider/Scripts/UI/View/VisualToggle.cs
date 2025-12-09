@@ -10,59 +10,57 @@ using Sirenix.OdinInspector;
 namespace Neo.UI
 {
     /// <summary>
-    /// Универсальный компонент для переключения между двумя визуальными состояниями с поддержкой множественных элементов.
-    /// Может работать автономно или автоматически интегрироваться с компонентом Toggle.
+    ///     Универсальный компонент для переключения между двумя визуальными состояниями с поддержкой множественных элементов.
+    ///     Может работать автономно или автоматически интегрироваться с компонентом Toggle.
     /// </summary>
     /// <remarks>
-    /// Компонент поддерживает одновременное управление множеством Image (спрайты и цвета), 
-    /// TextMeshPro (цвета и текст) и GameObject'ов. Автоматически подписывается на события Toggle при наличии.
+    ///     Компонент поддерживает одновременное управление множеством Image (спрайты и цвета),
+    ///     TextMeshPro (цвета и текст) и GameObject'ов. Автоматически подписывается на события Toggle при наличии.
     /// </remarks>
     [AddComponentMenu("Neo/" + "UI/" + nameof(VisualToggle))]
     public class VisualToggle : MonoBehaviour
     {
         [GetComponent] [SerializeField] private Toggle _toggle;
-        
-        [Header("State")]
-        [Tooltip("Текущее состояние переключателя (false = start, true = end)")]
-        [SerializeField] private bool _isActive = false;
-        
+
+        [Header("State")] [Tooltip("Текущее состояние переключателя (false = start, true = end)")] [SerializeField]
+        private bool _isActive;
+
         /// <summary>
-        /// Если включено, вызывает события текущего состояния при старте (Start).
-        /// Полезно для инициализации связанных систем в соответствии с начальным состоянием.
+        ///     Если включено, вызывает события текущего состояния при старте (Start).
+        ///     Полезно для инициализации связанных систем в соответствии с начальным состоянием.
         /// </summary>
-        [Tooltip("Если включено, вызывает события текущего состояния при старте (Start)")]
-        [SerializeField] private bool _setOnAwake = true;
-        
+        [Tooltip("Если включено, вызывает события текущего состояния при старте (Start)")] [SerializeField]
+        private bool _setOnAwake = true;
+
         [Header("Image Variants")]
         [Tooltip("Массив Image для переключения спрайтов между состояниями")]
-        [SerializeField] private ImageVariant[] imageV = new ImageVariant[0];
-        
-        [Header("Image Colors")]
-        [Tooltip("Массив Image для переключения цветов между состояниями")]
-        [SerializeField] private ImageColor[] imageC = new ImageColor[0];
-        
+        [SerializeField]
+        private ImageVariant[] imageV = new ImageVariant[0];
+
+        [Header("Image Colors")] [Tooltip("Массив Image для переключения цветов между состояниями")] [SerializeField]
+        private ImageColor[] imageC = new ImageColor[0];
+
         [Header("Text Variants")]
         [Tooltip("Массив TextMeshPro для переключения цветов и/или текста между состояниями")]
-        [SerializeField] private TmpColorTextVariant[] textColor = new TmpColorTextVariant[0];
-        
-        [Header("GameObject Variants")]
-        [Tooltip("Группы GameObject'ов для переключения активности")]
-        [SerializeField] private GameObjectVariant variants;
-        
-        private bool _isUpdatingFromToggle;
-        
-        [Header("Events")]
-        [Tooltip("Вызывается при переходе в активное состояние (end)")]
+        [SerializeField]
+        private TmpColorTextVariant[] textColor = new TmpColorTextVariant[0];
+
+        [Header("GameObject Variants")] [Tooltip("Группы GameObject'ов для переключения активности")] [SerializeField]
+        private GameObjectVariant variants;
+
+        [Header("Events")] [Tooltip("Вызывается при переходе в активное состояние (end)")]
         public UnityEvent On;
-        
+
         [Tooltip("Вызывается при переходе в неактивное состояние (start)")]
         public UnityEvent Off;
-        
+
         [Tooltip("Вызывается при любом изменении состояния. Передает новое значение (true = активен)")]
         public UnityEvent<bool> OnValueChanged;
-        
+
+        private bool _isUpdatingFromToggle;
+
         /// <summary>
-        /// Текущее состояние переключателя.
+        ///     Текущее состояние переключателя.
         /// </summary>
         /// <value>true если в конечном состоянии (end), false если в начальном (start)</value>
         public bool IsActive
@@ -82,7 +80,7 @@ namespace Neo.UI
                 }
             }
         }
-        
+
         private void Awake()
         {
             if (_toggle != null)
@@ -90,33 +88,23 @@ namespace Neo.UI
                 _toggle.onValueChanged.AddListener(OnToggleValueChanged);
                 _isActive = _toggle.isOn;
             }
-            
+
             UpdateVisuals();
         }
-        
+
         private void Start()
         {
             if (_toggle != null)
             {
-                SetActive(_toggle.isOn, false);
+                SetActive(_toggle.isOn);
             }
-            
+
             if (_setOnAwake)
             {
                 InvokeEvents(_isActive);
             }
         }
-        
-        private void OnToggleValueChanged(bool value)
-        {
-            if (!_isUpdatingFromToggle)
-            {
-                _isUpdatingFromToggle = true;
-                SetActive(value, false);
-                _isUpdatingFromToggle = false;
-            }
-        }
-        
+
         private void OnEnable()
         {
             if (_toggle != null)
@@ -124,7 +112,7 @@ namespace Neo.UI
                 _toggle.isOn = _isActive;
             }
         }
-        
+
         private void OnDestroy()
         {
             if (_toggle != null)
@@ -132,24 +120,34 @@ namespace Neo.UI
                 _toggle.onValueChanged.RemoveListener(OnToggleValueChanged);
             }
         }
-        
+
         private void OnValidate()
         {
             if (_toggle != null)
             {
                 _isActive = _toggle.isOn;
             }
-            
+
             if (!_isActive)
             {
                 AutoSaveStartValues();
             }
-            
+
             UpdateVisuals();
         }
-        
+
+        private void OnToggleValueChanged(bool value)
+        {
+            if (!_isUpdatingFromToggle)
+            {
+                _isUpdatingFromToggle = true;
+                SetActive(value);
+                _isUpdatingFromToggle = false;
+            }
+        }
+
         /// <summary>
-        /// Инвертирует текущее состояние переключателя.
+        ///     Инвертирует текущее состояние переключателя.
         /// </summary>
 #if ODIN_INSPECTOR
         [Button]
@@ -160,25 +158,25 @@ namespace Neo.UI
         {
             SetActive(!_isActive);
         }
-        
+
         /// <summary>
-        /// Устанавливает состояние в активное (end) и обновляет визуал.
+        ///     Устанавливает состояние в активное (end) и обновляет визуал.
         /// </summary>
         public void SetActive()
         {
             SetActive(true);
         }
-        
+
         /// <summary>
-        /// Устанавливает состояние в неактивное (start) и обновляет визуал.
+        ///     Устанавливает состояние в неактивное (start) и обновляет визуал.
         /// </summary>
         public void SetInactive()
         {
             SetActive(false);
         }
-        
+
         /// <summary>
-        /// Устанавливает указанное состояние переключателя.
+        ///     Устанавливает указанное состояние переключателя.
         /// </summary>
         /// <param name="isActive">true для активного состояния (end), false для неактивного (start)</param>
         /// <param name="invokeToggleEvent">Если true и есть Toggle, вызовет его событие onValueChanged</param>
@@ -200,12 +198,12 @@ namespace Neo.UI
                     _toggle.SetIsOnWithoutNotify(isActive);
                 }
             }
-            
+
             IsActive = isActive;
         }
-        
+
         /// <summary>
-        /// Обновляет все визуальные элементы в соответствии с текущим состоянием.
+        ///     Обновляет все визуальные элементы в соответствии с текущим состоянием.
         /// </summary>
         public void UpdateVisuals()
         {
@@ -214,7 +212,7 @@ namespace Neo.UI
             UpdateTextVariants();
             UpdateGameObjectVariants();
         }
-        
+
         private void InvokeEvents(bool isActive)
         {
             if (isActive)
@@ -225,10 +223,10 @@ namespace Neo.UI
             {
                 Off?.Invoke();
             }
-            
+
             OnValueChanged?.Invoke(isActive);
         }
-        
+
         private void AutoSaveStartValues()
         {
             foreach (ImageVariant v in imageV)
@@ -238,16 +236,16 @@ namespace Neo.UI
                     v.start = v.image.sprite;
                 }
             }
-            
+
             foreach (TmpColorTextVariant t in textColor)
             {
                 if (t.tmp != null)
                 {
-                    if (t.start == default(Color))
+                    if (t.start == default)
                     {
                         t.start = t.tmp.color;
                     }
-                    
+
                     if (!t.useText && string.IsNullOrEmpty(t.startText))
                     {
                         t.startText = t.tmp.text;
@@ -255,57 +253,78 @@ namespace Neo.UI
                 }
             }
         }
-        
+
         private void UpdateImageVariants()
         {
-            if (imageV == null || imageV.Length == 0) return;
-            
+            if (imageV == null || imageV.Length == 0)
+            {
+                return;
+            }
+
             foreach (ImageVariant variant in imageV)
             {
-                if (variant.image == null) continue;
-                
+                if (variant.image == null)
+                {
+                    continue;
+                }
+
                 variant.image.sprite = _isActive ? variant.end : variant.start;
-                
+
                 if (variant.setNativeSize)
                 {
                     variant.image.SetNativeSize();
                 }
             }
         }
-        
+
         private void UpdateImageColors()
         {
-            if (imageC == null || imageC.Length == 0) return;
-            
+            if (imageC == null || imageC.Length == 0)
+            {
+                return;
+            }
+
             foreach (ImageColor colorVariant in imageC)
             {
-                if (colorVariant.image == null) continue;
-                
+                if (colorVariant.image == null)
+                {
+                    continue;
+                }
+
                 colorVariant.image.color = _isActive ? colorVariant.end : colorVariant.start;
             }
         }
-        
+
         private void UpdateTextVariants()
         {
-            if (textColor == null || textColor.Length == 0) return;
-            
+            if (textColor == null || textColor.Length == 0)
+            {
+                return;
+            }
+
             foreach (TmpColorTextVariant textVariant in textColor)
             {
-                if (textVariant.tmp == null) continue;
-                
+                if (textVariant.tmp == null)
+                {
+                    continue;
+                }
+
                 textVariant.tmp.color = _isActive ? textVariant.end : textVariant.start;
-                
+
                 if (textVariant.useText)
                 {
                     textVariant.tmp.text = _isActive ? textVariant.endText : textVariant.startText;
                 }
             }
         }
-        
+
         private void UpdateGameObjectVariants()
         {
-            if (variants == null) return;
-            
+            if (variants == null)
+            {
+                return;
+            }
+
             if (variants.starts != null)
             {
                 foreach (GameObject obj in variants.starts)
@@ -316,7 +335,7 @@ namespace Neo.UI
                     }
                 }
             }
-            
+
             if (variants.ends != null)
             {
                 foreach (GameObject obj in variants.ends)
@@ -328,76 +347,76 @@ namespace Neo.UI
                 }
             }
         }
-        
+
         /// <summary>
-        /// Класс для настройки переключения спрайтов Image между состояниями.
+        ///     Класс для настройки переключения спрайтов Image между состояниями.
         /// </summary>
         [Serializable]
         public class ImageVariant
         {
             [Tooltip("Image компонент для переключения спрайта")]
             public Image image;
-            
+
             [Tooltip("Спрайт для начального состояния (start)")]
             public Sprite start;
-            
+
             [Tooltip("Спрайт для конечного состояния (end)")]
             public Sprite end;
-            
+
             [Tooltip("Автоматически устанавливать размер Image по размеру спрайта")]
             public bool setNativeSize;
         }
-        
+
         /// <summary>
-        /// Класс для настройки переключения цветов Image между состояниями.
+        ///     Класс для настройки переключения цветов Image между состояниями.
         /// </summary>
         [Serializable]
         public class ImageColor
         {
             [Tooltip("Image компонент для переключения цвета")]
             public Image image;
-            
+
             [Tooltip("Цвет для начального состояния (start)")]
             public Color start = Color.white;
-            
+
             [Tooltip("Цвет для конечного состояния (end)")]
             public Color end = Color.white;
         }
-        
+
         /// <summary>
-        /// Класс для настройки переключения цветов и/или текста TextMeshPro между состояниями.
+        ///     Класс для настройки переключения цветов и/или текста TextMeshPro между состояниями.
         /// </summary>
         [Serializable]
         public class TmpColorTextVariant
         {
             [Tooltip("TextMeshPro компонент для переключения")]
             public TextMeshProUGUI tmp;
-            
+
             [Tooltip("Цвет для начального состояния (start)")]
             public Color start = Color.white;
-            
+
             [Tooltip("Цвет для конечного состояния (end)")]
             public Color end = Color.white;
-            
+
             [Tooltip("Переключать ли текст вместе с цветом")]
             public bool useText;
-            
+
             [Tooltip("Текст для начального состояния (start). Используется только если useText = true")]
             public string startText;
-            
+
             [Tooltip("Текст для конечного состояния (end). Используется только если useText = true")]
             public string endText;
         }
-        
+
         /// <summary>
-        /// Класс для настройки переключения активности групп GameObject'ов между состояниями.
+        ///     Класс для настройки переключения активности групп GameObject'ов между состояниями.
         /// </summary>
         [Serializable]
         public class GameObjectVariant
         {
             [Tooltip("GameObject'ы, которые активны в начальном состоянии (start)")]
             public GameObject[] starts;
-            
+
             [Tooltip("GameObject'ы, которые активны в конечном состоянии (end)")]
             public GameObject[] ends;
         }

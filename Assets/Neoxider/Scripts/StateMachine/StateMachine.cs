@@ -37,44 +37,11 @@ namespace Neo.StateMachine
     /// </example>
     public class StateMachine<TState> where TState : class, IState
     {
-        private readonly Dictionary<Type, TState> stateCache = new Dictionary<Type, TState>();
-        private readonly Dictionary<Type, List<StateTransition>> transitionCache = new Dictionary<Type, List<StateTransition>>();
-        private readonly List<StateTransition> globalTransitions = new List<StateTransition>();
-
-        private TState currentState;
-        private TState previousState;
         private readonly bool enableStateCaching;
         private readonly bool enableTransitionCaching;
-
-        /// <summary>
-        ///     Событие смены состояния. Вызывается при переходе из одного состояния в другое.
-        /// </summary>
-        public UnityEvent<TState, TState> OnStateChanged { get; } = new UnityEvent<TState, TState>();
-
-        /// <summary>
-        ///     Событие входа в состояние. Вызывается при входе в новое состояние.
-        /// </summary>
-        public UnityEvent<TState> OnStateEntered { get; } = new UnityEvent<TState>();
-
-        /// <summary>
-        ///     Событие выхода из состояния. Вызывается при выходе из состояния.
-        /// </summary>
-        public UnityEvent<TState> OnStateExited { get; } = new UnityEvent<TState>();
-
-        /// <summary>
-        ///     Событие оценки перехода. Вызывается при оценке каждого перехода.
-        /// </summary>
-        public UnityEvent<StateTransition, bool> OnTransitionEvaluated { get; } = new UnityEvent<StateTransition, bool>();
-
-        /// <summary>
-        ///     Текущее активное состояние.
-        /// </summary>
-        public TState CurrentState => currentState;
-
-        /// <summary>
-        ///     Предыдущее состояние.
-        /// </summary>
-        public TState PreviousState => previousState;
+        private readonly List<StateTransition> globalTransitions = new();
+        private readonly Dictionary<Type, TState> stateCache = new();
+        private readonly Dictionary<Type, List<StateTransition>> transitionCache = new();
 
         /// <summary>
         ///     Создать новый экземпляр State Machine.
@@ -86,6 +53,36 @@ namespace Neo.StateMachine
             this.enableStateCaching = enableStateCaching;
             this.enableTransitionCaching = enableTransitionCaching;
         }
+
+        /// <summary>
+        ///     Событие смены состояния. Вызывается при переходе из одного состояния в другое.
+        /// </summary>
+        public UnityEvent<TState, TState> OnStateChanged { get; } = new();
+
+        /// <summary>
+        ///     Событие входа в состояние. Вызывается при входе в новое состояние.
+        /// </summary>
+        public UnityEvent<TState> OnStateEntered { get; } = new();
+
+        /// <summary>
+        ///     Событие выхода из состояния. Вызывается при выходе из состояния.
+        /// </summary>
+        public UnityEvent<TState> OnStateExited { get; } = new();
+
+        /// <summary>
+        ///     Событие оценки перехода. Вызывается при оценке каждого перехода.
+        /// </summary>
+        public UnityEvent<StateTransition, bool> OnTransitionEvaluated { get; } = new();
+
+        /// <summary>
+        ///     Текущее активное состояние.
+        /// </summary>
+        public TState CurrentState { get; private set; }
+
+        /// <summary>
+        ///     Предыдущее состояние.
+        /// </summary>
+        public TState PreviousState { get; private set; }
 
         /// <summary>
         ///     Получить или создать экземпляр состояния с кэшированием.
@@ -101,7 +98,7 @@ namespace Neo.StateMachine
                 return cachedState as T;
             }
 
-            T newState = new T();
+            T newState = new();
 
             if (enableStateCaching)
             {
@@ -133,21 +130,21 @@ namespace Neo.StateMachine
                 return;
             }
 
-            if (currentState == newState)
+            if (CurrentState == newState)
             {
                 return;
             }
 
-            previousState = currentState;
-            currentState = newState as TState;
+            PreviousState = CurrentState;
+            CurrentState = newState;
 
-            previousState?.OnExit();
-            OnStateExited?.Invoke(previousState);
+            PreviousState?.OnExit();
+            OnStateExited?.Invoke(PreviousState);
 
-            currentState?.OnEnter();
-            OnStateEntered?.Invoke(currentState);
+            CurrentState?.OnEnter();
+            OnStateEntered?.Invoke(CurrentState);
 
-            OnStateChanged?.Invoke(previousState, currentState);
+            OnStateChanged?.Invoke(PreviousState, CurrentState);
         }
 
         /// <summary>
@@ -173,15 +170,15 @@ namespace Neo.StateMachine
         /// <returns>True, если переход возможен.</returns>
         public bool CanTransitionTo<T>() where T : class, TState
         {
-            if (currentState == null)
+            if (CurrentState == null)
             {
                 return true;
             }
 
             Type targetType = typeof(T);
-            var transitions = GetAvailableTransitions(currentState.GetType());
+            List<StateTransition> transitions = GetAvailableTransitions(CurrentState.GetType());
 
-            return transitions.Any(t => t.ToStateType == targetType && t.EvaluatePredicates(currentState));
+            return transitions.Any(t => t.ToStateType == targetType && t.EvaluatePredicates(CurrentState));
         }
 
         /// <summary>
@@ -251,7 +248,7 @@ namespace Neo.StateMachine
         /// <returns>Список доступных переходов.</returns>
         public List<StateTransition> GetAvailableTransitions(Type fromStateType)
         {
-            List<StateTransition> availableTransitions = new List<StateTransition>();
+            List<StateTransition> availableTransitions = new();
 
             if (enableTransitionCaching && transitionCache.TryGetValue(fromStateType, out List<StateTransition> cached))
             {
@@ -268,22 +265,22 @@ namespace Neo.StateMachine
         /// </summary>
         public void EvaluateTransitions()
         {
-            if (currentState == null)
+            if (CurrentState == null)
             {
                 return;
             }
 
-            Type currentType = currentState.GetType();
-            var transitions = GetAvailableTransitions(currentType);
+            Type currentType = CurrentState.GetType();
+            List<StateTransition> transitions = GetAvailableTransitions(currentType);
 
-            foreach (var transition in transitions)
+            foreach (StateTransition transition in transitions)
             {
                 if (!transition.IsEnabled)
                 {
                     continue;
                 }
 
-                bool canTransition = transition.CanTransition(currentState);
+                bool canTransition = transition.CanTransition(CurrentState);
                 OnTransitionEvaluated?.Invoke(transition, canTransition);
 
                 if (canTransition && transition.ToStateType != null)
@@ -299,7 +296,7 @@ namespace Neo.StateMachine
         /// </summary>
         public void Update()
         {
-            currentState?.OnUpdate();
+            CurrentState?.OnUpdate();
         }
 
         /// <summary>
@@ -307,7 +304,7 @@ namespace Neo.StateMachine
         /// </summary>
         public void FixedUpdate()
         {
-            currentState?.OnFixedUpdate();
+            CurrentState?.OnFixedUpdate();
         }
 
         /// <summary>
@@ -315,7 +312,7 @@ namespace Neo.StateMachine
         /// </summary>
         public void LateUpdate()
         {
-            currentState?.OnLateUpdate();
+            CurrentState?.OnLateUpdate();
         }
 
         /// <summary>
@@ -368,5 +365,3 @@ namespace Neo.StateMachine
         }
     }
 }
-
-

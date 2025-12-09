@@ -1,25 +1,41 @@
+using System;
+using System.IO;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    /// GUI отрисовка для окна Scene Saver
+    ///     GUI отрисовка для окна Scene Saver
     /// </summary>
     public class SceneSaverGUI : EditorWindowGUI
     {
-        private bool _isScriptEnabled = true;
-        private float _intervalMinutes = 3f;
-        private bool _saveEvenIfNotDirty;
         private string _currentScenePath;
         private string _lastSaveStatus = "";
 
         /// <summary>
-        /// Обновление пути текущей сцены
+        ///     Получение состояния включенности скрипта
+        /// </summary>
+        public bool IsScriptEnabled { get; private set; } = true;
+
+        /// <summary>
+        ///     Получение интервала в минутах
+        /// </summary>
+        public float IntervalMinutes { get; private set; } = 3f;
+
+        /// <summary>
+        ///     Получение флага сохранения даже если не изменено
+        /// </summary>
+        public bool SaveEvenIfNotDirty { get; private set; }
+
+        /// <summary>
+        ///     Обновление пути текущей сцены
         /// </summary>
         public void UpdateCurrentScenePath()
         {
-            var activeScene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            Scene activeScene = EditorSceneManager.GetActiveScene();
             _currentScenePath = activeScene.path;
 
             if (string.IsNullOrEmpty(_currentScenePath))
@@ -29,13 +45,13 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Отрисовка GUI
+        ///     Отрисовка GUI
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
-            _isScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", _isScriptEnabled);
-            _intervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", _intervalMinutes);
-            _saveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", _saveEvenIfNotDirty);
+            IsScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", IsScriptEnabled);
+            IntervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", IntervalMinutes);
+            SaveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", SaveEvenIfNotDirty);
             EditorGUILayout.LabelField("Current Scene", _currentScenePath);
             EditorGUILayout.LabelField("Last Save Status", _lastSaveStatus);
 
@@ -46,22 +62,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Получение состояния включенности скрипта
-        /// </summary>
-        public bool IsScriptEnabled => _isScriptEnabled;
-
-        /// <summary>
-        /// Получение интервала в минутах
-        /// </summary>
-        public float IntervalMinutes => _intervalMinutes;
-
-        /// <summary>
-        /// Получение флага сохранения даже если не изменено
-        /// </summary>
-        public bool SaveEvenIfNotDirty => _saveEvenIfNotDirty;
-
-        /// <summary>
-        /// Сохранение копии сцены
+        ///     Сохранение копии сцены
         /// </summary>
         public void SaveSceneClone()
         {
@@ -71,7 +72,7 @@ namespace Neo.Editor.Windows
                 return;
             }
 
-            var currentScene = UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene();
+            Scene currentScene = EditorSceneManager.GetActiveScene();
 
             if (string.IsNullOrEmpty(currentScene.path))
             {
@@ -79,7 +80,7 @@ namespace Neo.Editor.Windows
                 return;
             }
 
-            if (!currentScene.isDirty && !_saveEvenIfNotDirty)
+            if (!currentScene.isDirty && !SaveEvenIfNotDirty)
             {
                 _lastSaveStatus = "Scene is not dirty, skipping auto-save.";
                 return;
@@ -88,17 +89,17 @@ namespace Neo.Editor.Windows
             try
             {
                 UpdateCurrentScenePath();
-                string sceneName = System.IO.Path.GetFileNameWithoutExtension(_currentScenePath);
-                string autoSaveFolder = System.IO.Path.Combine("Assets", "Scenes", "AutoSaves");
-                string newScenePath = System.IO.Path.Combine(autoSaveFolder, $"{sceneName}_AutoSave.unity");
+                string sceneName = Path.GetFileNameWithoutExtension(_currentScenePath);
+                string autoSaveFolder = Path.Combine("Assets", "Scenes", "AutoSaves");
+                string newScenePath = Path.Combine(autoSaveFolder, $"{sceneName}_AutoSave.unity");
 
-                if (!System.IO.Directory.Exists(autoSaveFolder))
+                if (!Directory.Exists(autoSaveFolder))
                 {
-                    System.IO.Directory.CreateDirectory(autoSaveFolder);
+                    Directory.CreateDirectory(autoSaveFolder);
                     AssetDatabase.Refresh();
                 }
 
-                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(currentScene, newScenePath, true);
+                bool saved = EditorSceneManager.SaveScene(currentScene, newScenePath, true);
 
                 if (saved)
                 {
@@ -111,7 +112,7 @@ namespace Neo.Editor.Windows
                     Debug.LogWarning($"[SceneSaver] Failed to save scene to {newScenePath}");
                 }
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 _lastSaveStatus = $"Error: {e.Message}";
                 Debug.LogError($"[SceneSaver] {e.Message}");
@@ -119,4 +120,3 @@ namespace Neo.Editor.Windows
         }
     }
 }
-

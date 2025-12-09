@@ -1,17 +1,18 @@
+using System;
 using System.Linq;
 
 namespace Neo.Save
 {
     /// <summary>
-    /// Расширения для работы с провайдерами сохранения.
-    /// Предоставляет дополнительные методы для работы с массивами и коллекциями.
+    ///     Расширения для работы с провайдерами сохранения.
+    ///     Предоставляет дополнительные методы для работы с массивами и коллекциями.
     /// </summary>
     public static class SaveProviderExtensions
     {
         private const char SEPARATOR = ',';
-        
+
         /// <summary>
-        /// Сохраняет массив целых чисел по ключу.
+        ///     Сохраняет массив целых чисел по ключу.
         /// </summary>
         /// <param name="provider">Провайдер сохранения</param>
         /// <param name="key">Ключ для сохранения</param>
@@ -23,12 +24,12 @@ namespace Neo.Save
                 provider.DeleteKey(key);
                 return;
             }
-            
+
             provider.SetString(key, string.Join(SEPARATOR.ToString(), array));
         }
-        
+
         /// <summary>
-        /// Загружает массив целых чисел по ключу.
+        ///     Загружает массив целых чисел по ключу.
         /// </summary>
         /// <param name="provider">Провайдер сохранения</param>
         /// <param name="key">Ключ для загрузки</param>
@@ -40,25 +41,25 @@ namespace Neo.Save
             {
                 return defaultValue ?? new int[0];
             }
-            
+
             string arrayString = provider.GetString(key);
             if (string.IsNullOrEmpty(arrayString))
             {
                 return defaultValue ?? new int[0];
             }
-            
+
             try
             {
                 return arrayString.Split(SEPARATOR).Select(int.Parse).ToArray();
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 return defaultValue ?? new int[0];
             }
         }
-        
+
         /// <summary>
-        /// Сохраняет массив чисел с плавающей точкой по ключу.
+        ///     Сохраняет массив чисел с плавающей точкой по ключу.
         /// </summary>
         /// <param name="provider">Провайдер сохранения</param>
         /// <param name="key">Ключ для сохранения</param>
@@ -70,12 +71,12 @@ namespace Neo.Save
                 provider.DeleteKey(key);
                 return;
             }
-            
+
             provider.SetString(key, string.Join(SEPARATOR.ToString(), array));
         }
-        
+
         /// <summary>
-        /// Загружает массив чисел с плавающей точкой по ключу.
+        ///     Загружает массив чисел с плавающей точкой по ключу.
         /// </summary>
         /// <param name="provider">Провайдер сохранения</param>
         /// <param name="key">Ключ для загрузки</param>
@@ -87,28 +88,21 @@ namespace Neo.Save
             {
                 return defaultValue ?? new float[0];
             }
-            
+
             string arrayString = provider.GetString(key);
             if (string.IsNullOrEmpty(arrayString))
             {
                 return defaultValue ?? new float[0];
             }
-            
+
             try
             {
                 return arrayString.Split(SEPARATOR).Select(float.Parse).ToArray();
             }
-            catch (System.Exception)
+            catch (Exception)
             {
                 return defaultValue ?? new float[0];
             }
         }
     }
 }
-
-
-
-
-
-
-

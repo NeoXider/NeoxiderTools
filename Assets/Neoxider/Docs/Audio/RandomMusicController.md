@@ -82,3 +82,4 @@ public class Example : MonoBehaviour
 - Если список треков пуст или равен `null`, воспроизведение не начнется.
 - Контроллер использует UniTask для асинхронной работы, поэтому может работать без MonoBehaviour.
 - Для управления случайной музыкой рекомендуется использовать методы `AM.EnableRandomMusic()` и `AM.DisableRandomMusic()`.
+

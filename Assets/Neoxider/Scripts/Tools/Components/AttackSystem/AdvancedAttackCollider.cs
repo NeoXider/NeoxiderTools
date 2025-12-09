@@ -13,17 +13,15 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Настройки атаки")] 
-        [SerializeField]
+        [Header("Настройки атаки")] [SerializeField]
         private int attackDamage = 10; // Урон от атаки по умолчанию
 
-        [Tooltip("Вид атаки: урон или лечение")]
-        [SerializeField]
+        [Tooltip("Вид атаки: урон или лечение")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
 
         [Tooltip("Ограничивать повторные столкновения с одним и тем же объектом (по умолчанию выключено)")]
         [SerializeField]
-        private bool preventRepeatHits = false;
+        private bool preventRepeatHits;
 
         public float triggerDuration = 0.2f; // Длительность активации триггера
 
@@ -129,7 +127,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (collider3D == null || collision.collider == null || 
+            if (collider3D == null || collision.collider == null ||
                 (preventRepeatHits && hitColliders3D.Contains(collision.collider)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
@@ -157,7 +155,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (collider2D == null || collision.collider == null || 
+            if (collider2D == null || collision.collider == null ||
                 (preventRepeatHits && hitColliders2D.Contains(collision.collider)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
@@ -227,8 +225,8 @@ namespace Neo.Tools
             }
 
             // Проверка на null, повторное попадание или неверный слой
-            if (collider3D == null || 
-                (preventRepeatHits && hitColliders3D.Contains(collision)) || 
+            if (collider3D == null ||
+                (preventRepeatHits && hitColliders3D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
                 return;
@@ -253,8 +251,8 @@ namespace Neo.Tools
             }
 
             // Проверка на null, повторное попадание или неверный слой
-            if (collider2D == null || 
-                (preventRepeatHits && hitColliders2D.Contains(collision)) || 
+            if (collider2D == null ||
+                (preventRepeatHits && hitColliders2D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
             {
                 return;

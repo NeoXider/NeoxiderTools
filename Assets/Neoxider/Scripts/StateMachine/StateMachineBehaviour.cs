@@ -1,6 +1,7 @@
 using System;
-using UnityEngine;
+using System.Reflection;
 using Neo.StateMachine.NoCode;
+using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
 #endif
@@ -26,32 +27,28 @@ namespace Neo.StateMachine
     ///     }
     /// }
     /// </code>
-    /// </example> 
+    /// </example>
     [AddComponentMenu("Neo/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {
-        [SerializeField]
-        [Tooltip("Начальное состояние (тип состояния для кода)")]
+        [SerializeField] [Tooltip("Начальное состояние (тип состояния для кода)")]
         private string initialStateTypeName;
 
-        [SerializeField]
-        [Tooltip("Включить логирование переходов состояний")]
-        private bool enableDebugLog = false;
+        [SerializeField] [Tooltip("Включить логирование переходов состояний")]
+        private bool enableDebugLog;
 
-        [SerializeField]
-        [Tooltip("Показывать текущее состояние в инспекторе")]
+        [SerializeField] [Tooltip("Показывать текущее состояние в инспекторе")]
         private bool showStateInInspector = true;
 
-        [SerializeField]
-        [Tooltip("NoCode конфигурация State Machine (опционально)")]
-        private NoCode.StateMachineData stateMachineData;
+        [SerializeField] [Tooltip("NoCode конфигурация State Machine (опционально)")]
+        private StateMachineData stateMachineData;
 
-        [SerializeField]
-        [Tooltip("Автоматически оценивать переходы каждый кадр")]
+        [SerializeField] [Tooltip("Автоматически оценивать переходы каждый кадр")]
         private bool autoEvaluateTransitions = true;
 
-        private StateMachine<TState> stateMachine;
         private Type initialStateType;
+
+        private StateMachine<TState> stateMachine;
 
         /// <summary>
         ///     Получить экземпляр State Machine.
@@ -123,6 +120,16 @@ namespace Neo.StateMachine
             StateMachine.ClearTransitionCache();
         }
 
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (showStateInInspector && Application.isPlaying && StateMachine != null)
+            {
+                // Информация о текущем состоянии будет отображаться в кастомном редакторе
+            }
+        }
+#endif
+
         /// <summary>
         ///     Сменить состояние по типу.
         /// </summary>
@@ -145,11 +152,12 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                Debug.LogWarning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.", this);
+                Debug.LogWarning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
+                    this);
                 return;
             }
 
-            var stateData = System.Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
+            StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
             if (stateData != null)
             {
                 // StateData реализует IState, но нужно проверить совместимость типов
@@ -164,12 +172,14 @@ namespace Neo.StateMachine
                 }
                 else
                 {
-                    Debug.LogWarning($"[StateMachineBehaviour] StateData '{stateName}' is not compatible with TState type.", this);
+                    Debug.LogWarning(
+                        $"[StateMachineBehaviour] StateData '{stateName}' is not compatible with TState type.", this);
                 }
             }
             else
             {
-                Debug.LogWarning($"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
+                Debug.LogWarning(
+                    $"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
             }
         }
 
@@ -193,7 +203,7 @@ namespace Neo.StateMachine
                 return;
             }
 
-            stateMachineData.LoadIntoStateMachine<TState>(StateMachine);
+            stateMachineData.LoadIntoStateMachine(StateMachine);
 
             if (stateMachineData.InitialState != null)
             {
@@ -238,11 +248,11 @@ namespace Neo.StateMachine
 
             try
             {
-                var method = typeof(StateMachine<TState>).GetMethod("ChangeState", new[] { typeof(Type) });
+                MethodInfo method = typeof(StateMachine<TState>).GetMethod("ChangeState", new[] { typeof(Type) });
                 if (method == null)
                 {
                     // Используем рефлексию для создания экземпляра
-                    var state = Activator.CreateInstance(stateType) as TState;
+                    TState state = Activator.CreateInstance(stateType) as TState;
                     if (state != null)
                     {
                         StateMachine.ChangeState(state);
@@ -251,19 +261,9 @@ namespace Neo.StateMachine
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[StateMachineBehaviour] Failed to change state to {stateType.Name}: {ex.Message}", this);
+                Debug.LogError($"[StateMachineBehaviour] Failed to change state to {stateType.Name}: {ex.Message}",
+                    this);
             }
         }
-
-#if UNITY_EDITOR
-        private void OnValidate()
-        {
-            if (showStateInInspector && Application.isPlaying && StateMachine != null)
-            {
-                // Информация о текущем состоянии будет отображаться в кастомном редакторе
-            }
-        }
-#endif
     }
 }
-

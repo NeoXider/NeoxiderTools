@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -21,21 +22,17 @@ namespace Neo.StateMachine.NoCode
     [CreateAssetMenu(fileName = "New State", menuName = "Neo/State Machine/State Data")]
     public class StateData : ScriptableObject, IState
     {
-        [SerializeField]
-        [Tooltip("Имя состояния для идентификации")]
+        [SerializeField] [Tooltip("Имя состояния для идентификации")]
         private string stateName = "New State";
 
-        [SerializeField]
         [Tooltip("Действия, выполняемые при входе в состояние")]
-        private List<StateAction> onEnterActions = new List<StateAction>();
+        private readonly List<StateAction> onEnterActions = new();
 
-        [SerializeField]
-        [Tooltip("Действия, выполняемые каждый кадр в состоянии")]
-        private List<StateAction> onUpdateActions = new List<StateAction>();
-
-        [SerializeField]
         [Tooltip("Действия, выполняемые при выходе из состояния")]
-        private List<StateAction> onExitActions = new List<StateAction>();
+        private readonly List<StateAction> onExitActions = new();
+
+        [Tooltip("Действия, выполняемые каждый кадр в состоянии")]
+        private readonly List<StateAction> onUpdateActions = new();
 
         /// <summary>
         ///     Имя состояния.
@@ -108,7 +105,7 @@ namespace Neo.StateMachine.NoCode
                 return;
             }
 
-            foreach (var action in actions)
+            foreach (StateAction action in actions)
             {
                 if (action != null)
                 {
@@ -116,14 +113,13 @@ namespace Neo.StateMachine.NoCode
                     {
                         action.Execute();
                     }
-                    catch (System.Exception ex)
+                    catch (Exception ex)
                     {
-                        Debug.LogError($"[StateData] Error executing action in state '{stateName}': {ex.Message}", this);
+                        Debug.LogError($"[StateData] Error executing action in state '{stateName}': {ex.Message}",
+                            this);
                     }
                 }
             }
         }
     }
 }
-
-

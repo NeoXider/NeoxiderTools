@@ -23,60 +23,47 @@ namespace Neo
             private static bool physicsRaycasterEnsured2D;
             private static bool eventSystemChecked;
 
-            [Header("Event System")]
-            [SerializeField]
+            [Header("Event System")] [SerializeField]
             private bool _autoCheckEventSystem = true;
 
             public bool interactable = true;
 
-            [Header("Interaction Settings")]
-            [Tooltip("Enable mouse interaction (hover and click).")]
-            [SerializeField]
+            [Header("Interaction Settings")] [Tooltip("Enable mouse interaction (hover and click).")] [SerializeField]
             private bool useMouseInteraction = true;
 
-            [Tooltip("Enable keyboard interaction.")]
-            [SerializeField]
+            [Tooltip("Enable keyboard interaction.")] [SerializeField]
             private bool useKeyboardInteraction = true;
 
-        [Header("Distance Control")]
-        [Tooltip("Maximum interaction distance (0 = unlimited).")]
-        [SerializeField]
-        private float interactionDistance = 2f;
+            [Header("Distance Control")] [Tooltip("Maximum interaction distance (0 = unlimited).")] [SerializeField]
+            private float interactionDistance = 2f;
 
-        [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
-        [SerializeField]
-        private Transform distanceCheckPoint;
-
-        [Tooltip("Check for obstacles (walls) between object and check point. Uses raycast to detect blocking colliders.")]
-        [SerializeField]
-        private bool checkObstacles = true;
-
-        [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")]
-        [SerializeField]
-        private LayerMask obstacleLayers = -1;
-
-            [Header("Down/Up — Mouse Binding")]
+            [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
             [SerializeField]
+            private Transform distanceCheckPoint;
+
+            [Tooltip(
+                "Check for obstacles (walls) between object and check point. Uses raycast to detect blocking colliders.")]
+            [SerializeField]
+            private bool checkObstacles = true;
+
+            [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")] [SerializeField]
+            private LayerMask obstacleLayers = -1;
+
+            [Header("Down/Up — Mouse Binding")] [SerializeField]
             private MouseButton downUpMouseButton = MouseButton.Left;
 
-            [Header("Down/Up — Keyboard Binding")]
-            [SerializeField]
+            [Header("Down/Up — Keyboard Binding")] [SerializeField]
             private KeyCode keyboardKey = KeyCode.E;
 
-            [Space]
-            [Header("Down/Up Events")]
-            public UnityEvent onInteractDown;
+            [Space] [Header("Down/Up Events")] public UnityEvent onInteractDown;
 
             public UnityEvent onInteractUp;
 
-            [Header("Hover Events")]
-            [Space]
-            public UnityEvent onHoverEnter;
+            [Header("Hover Events")] [Space] public UnityEvent onHoverEnter;
 
             public UnityEvent onHoverExit;
 
-            [Header("Click Events")]
-            [SerializeField]
+            [Header("Click Events")] [SerializeField]
             private float doubleClickThreshold = 0.3f;
 
             public UnityEvent onClick;
@@ -84,13 +71,11 @@ namespace Neo
             public UnityEvent onRightClick;
             public UnityEvent onMiddleClick;
 
-            [Header("Distance Events")]
-            public UnityEvent onEnterRange;
+            [Header("Distance Events")] public UnityEvent onEnterRange;
 
             public UnityEvent onExitRange;
 
             private float clickTime;
-            private bool isHovered;
             private bool keyHeldPrev;
             private bool mouseHeldPrev;
             private bool wasInRange;
@@ -142,6 +127,70 @@ namespace Neo
                 }
             }
 
+            private void OnDrawGizmosSelected()
+            {
+                if (interactionDistance <= 0f)
+                {
+                    return;
+                }
+
+                Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
+                Gizmos.DrawWireSphere(transform.position, interactionDistance);
+            }
+
+            public void OnPointerClick(PointerEventData eventData)
+            {
+                if (!interactable || !useMouseInteraction)
+                {
+                    return;
+                }
+
+                if (interactionDistance > 0f && !IsInRange())
+                {
+                    return;
+                }
+
+                if (eventData.button == PointerEventData.InputButton.Left)
+                {
+                    if (doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold)
+                    {
+                        onDoubleClick.Invoke();
+                    }
+                    else
+                    {
+                        onClick.Invoke();
+                    }
+
+                    clickTime = Time.time;
+                }
+                else if (eventData.button == PointerEventData.InputButton.Right)
+                {
+                    onRightClick.Invoke();
+                }
+                else if (eventData.button == PointerEventData.InputButton.Middle)
+                {
+                    onMiddleClick.Invoke();
+                }
+            }
+
+            public void OnPointerEnter(PointerEventData eventData)
+            {
+                if (interactable && useMouseInteraction)
+                {
+                    IsHovered = true;
+                    onHoverEnter.Invoke();
+                }
+            }
+
+            public void OnPointerExit(PointerEventData eventData)
+            {
+                if (interactable && useMouseInteraction)
+                {
+                    IsHovered = false;
+                    onHoverExit.Invoke();
+                }
+            }
+
             private void UpdateMouseInput()
             {
                 int mouseIndex = (int)downUpMouseButton;
@@ -149,7 +198,7 @@ namespace Neo
 
                 if (mouseHeld && !mouseHeldPrev)
                 {
-                    if (isHovered)
+                    if (IsHovered)
                     {
                         onInteractDown?.Invoke();
                     }
@@ -221,8 +270,8 @@ namespace Neo
                         return true;
                     }
 
-                    bool has3DCollider = TryGetComponent<Collider>(out Collider selfCollider3D);
-                    bool has2DCollider = TryGetComponent<Collider2D>(out Collider2D selfCollider2D);
+                    bool has3DCollider = TryGetComponent(out Collider selfCollider3D);
+                    bool has2DCollider = TryGetComponent(out Collider2D selfCollider2D);
 
                     if (has3DCollider)
                     {
@@ -237,8 +286,8 @@ namespace Neo
                     }
                     else if (has2DCollider)
                     {
-                        Vector2 origin2D = new Vector2(checkPointPos.x, checkPointPos.y);
-                        Vector2 direction2D = new Vector2(directionNormalized.x, directionNormalized.y);
+                        Vector2 origin2D = new(checkPointPos.x, checkPointPos.y);
+                        Vector2 direction2D = new(directionNormalized.x, directionNormalized.y);
                         RaycastHit2D hit = Physics2D.Raycast(origin2D, direction2D, checkDistance, obstacleLayers);
                         if (hit.collider != null && hit.collider != selfCollider2D)
                         {
@@ -255,70 +304,6 @@ namespace Neo
                 }
 
                 return true;
-            }
-
-            public void OnPointerClick(PointerEventData eventData)
-            {
-                if (!interactable || !useMouseInteraction)
-                {
-                    return;
-                }
-
-                if (interactionDistance > 0f && !IsInRange())
-                {
-                    return;
-                }
-
-                if (eventData.button == PointerEventData.InputButton.Left)
-                {
-                    if (doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold)
-                    {
-                        onDoubleClick.Invoke();
-                    }
-                    else
-                    {
-                        onClick.Invoke();
-                    }
-
-                    clickTime = Time.time;
-                }
-                else if (eventData.button == PointerEventData.InputButton.Right)
-                {
-                    onRightClick.Invoke();
-                }
-                else if (eventData.button == PointerEventData.InputButton.Middle)
-                {
-                    onMiddleClick.Invoke();
-                }
-            }
-
-            public void OnPointerEnter(PointerEventData eventData)
-            {
-                if (interactable && useMouseInteraction)
-                {
-                    isHovered = true;
-                    onHoverEnter.Invoke();
-                }
-            }
-
-            public void OnPointerExit(PointerEventData eventData)
-            {
-                if (interactable && useMouseInteraction)
-                {
-                    isHovered = false;
-                    onHoverExit.Invoke();
-                }
-            }
-
-            private void OnDrawGizmosSelected()
-            {
-                if (interactionDistance <= 0f)
-                {
-                    return;
-                }
-
-                Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
-                Gizmos.DrawWireSphere(transform.position, interactionDistance);
             }
 
             private void CheckEventSystemOnce()
@@ -436,7 +421,7 @@ namespace Neo
             /// <summary>
             ///     Returns true if object is currently hovered.
             /// </summary>
-            public bool IsHovered => isHovered;
+            public bool IsHovered { get; private set; }
 
             #endregion
         }

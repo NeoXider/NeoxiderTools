@@ -7,53 +7,16 @@ using Object = UnityEngine.Object;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Презентер колоды - связывает модель колоды с визуальным представлением
+    ///     Презентер колоды - связывает модель колоды с визуальным представлением
     /// </summary>
     public class DeckPresenter
     {
-        private readonly DeckModel _model;
-        private readonly IDeckView _view;
-        private readonly DeckConfig _config;
-        private readonly CardView _cardPrefab;
         private readonly List<CardPresenter> _activeCards = new();
+        private readonly CardView _cardPrefab;
+        private readonly DeckConfig _config;
 
         /// <summary>
-        /// Модель колоды
-        /// </summary>
-        public DeckModel Model => _model;
-
-        /// <summary>
-        /// Визуальное представление
-        /// </summary>
-        public IDeckView View => _view;
-
-        /// <summary>
-        /// Количество оставшихся карт
-        /// </summary>
-        public int RemainingCount => _model.RemainingCount;
-
-        /// <summary>
-        /// Пуста ли колода
-        /// </summary>
-        public bool IsEmpty => _model.IsEmpty;
-
-        /// <summary>
-        /// Козырная карта (нижняя карта колоды)
-        /// </summary>
-        public CardData? TrumpCard => _model.PeekBottom();
-
-        /// <summary>
-        /// Событие когда колода опустела
-        /// </summary>
-        public event Action OnDeckEmpty;
-
-        /// <summary>
-        /// Событие при взятии карты
-        /// </summary>
-        public event Action<CardPresenter> OnCardDrawn;
-
-        /// <summary>
-        /// Создаёт презентер колоды
+        ///     Создаёт презентер колоды
         /// </summary>
         /// <param name="model">Модель колоды</param>
         /// <param name="view">Визуальное представление</param>
@@ -61,58 +24,93 @@ namespace Neo.Cards
         /// <param name="cardPrefab">Префаб карты</param>
         public DeckPresenter(DeckModel model, IDeckView view, DeckConfig config, CardView cardPrefab)
         {
-            _model = model ?? throw new ArgumentNullException(nameof(model));
-            _view = view ?? throw new ArgumentNullException(nameof(view));
+            Model = model ?? throw new ArgumentNullException(nameof(model));
+            View = view ?? throw new ArgumentNullException(nameof(view));
             _config = config ?? throw new ArgumentNullException(nameof(config));
             _cardPrefab = cardPrefab ?? throw new ArgumentNullException(nameof(cardPrefab));
 
-            _model.OnDeckChanged += HandleDeckChanged;
-            _model.OnDeckEmpty += HandleDeckEmpty;
+            Model.OnDeckChanged += HandleDeckChanged;
+            Model.OnDeckEmpty += HandleDeckEmpty;
         }
 
         /// <summary>
-        /// Инициализирует колоду
+        ///     Модель колоды
+        /// </summary>
+        public DeckModel Model { get; }
+
+        /// <summary>
+        ///     Визуальное представление
+        /// </summary>
+        public IDeckView View { get; }
+
+        /// <summary>
+        ///     Количество оставшихся карт
+        /// </summary>
+        public int RemainingCount => Model.RemainingCount;
+
+        /// <summary>
+        ///     Пуста ли колода
+        /// </summary>
+        public bool IsEmpty => Model.IsEmpty;
+
+        /// <summary>
+        ///     Козырная карта (нижняя карта колоды)
+        /// </summary>
+        public CardData? TrumpCard => Model.PeekBottom();
+
+        /// <summary>
+        ///     Событие когда колода опустела
+        /// </summary>
+        public event Action OnDeckEmpty;
+
+        /// <summary>
+        ///     Событие при взятии карты
+        /// </summary>
+        public event Action<CardPresenter> OnCardDrawn;
+
+        /// <summary>
+        ///     Инициализирует колоду
         /// </summary>
         /// <param name="shuffle">Перемешать</param>
         public void Initialize(bool shuffle = true)
         {
-            _model.Initialize(_config.GameDeckType, shuffle);
+            Model.Initialize(_config.GameDeckType, shuffle);
 
             if (_config.GameDeckType == DeckType.Standard36)
             {
-                CardData? trumpCard = _model.PeekBottom();
+                CardData? trumpCard = Model.PeekBottom();
                 if (trumpCard.HasValue)
                 {
-                    _view.ShowTopCard(trumpCard.Value);
+                    View.ShowTopCard(trumpCard.Value);
                 }
             }
         }
 
         /// <summary>
-        /// Перемешивает колоду
+        ///     Перемешивает колоду
         /// </summary>
         public void Shuffle()
         {
-            _model.Shuffle();
+            Model.Shuffle();
         }
 
         /// <summary>
-        /// Берёт карту из колоды
+        ///     Берёт карту из колоды
         /// </summary>
         /// <param name="faceUp">Показать лицом вверх</param>
         /// <returns>Презентер взятой карты или null</returns>
         public CardPresenter DrawCard(bool faceUp = true)
         {
-            CardData? cardData = _model.Draw();
+            CardData? cardData = Model.Draw();
             if (!cardData.HasValue)
             {
                 return null;
             }
 
-            CardView cardView = Object.Instantiate(_cardPrefab, _view.SpawnPoint.position, Quaternion.identity);
+            CardView cardView = Object.Instantiate(_cardPrefab, View.SpawnPoint.position, Quaternion.identity);
             cardView.Initialize(_config);
 
-            var presenter = new CardPresenter(cardView, _config);
+            CardPresenter presenter = new(cardView, _config);
             presenter.SetData(cardData.Value, faceUp);
 
             _activeCards.Add(presenter);
@@ -122,15 +120,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Берёт карту из колоды с анимацией
+        ///     Берёт карту из колоды с анимацией
         /// </summary>
         /// <param name="targetPosition">Целевая позиция</param>
         /// <param name="faceUp">Показать лицом вверх</param>
         /// <param name="moveDuration">Длительность перемещения</param>
         /// <returns>Презентер взятой карты</returns>
-        public async UniTask<CardPresenter> DrawCardAsync(Vector3 targetPosition, bool faceUp = true, float moveDuration = 0.3f)
+        public async UniTask<CardPresenter> DrawCardAsync(Vector3 targetPosition, bool faceUp = true,
+            float moveDuration = 0.3f)
         {
-            var presenter = DrawCard(faceUp);
+            CardPresenter presenter = DrawCard(faceUp);
             if (presenter == null)
             {
                 return null;
@@ -141,18 +140,18 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Берёт несколько карт из колоды
+        ///     Берёт несколько карт из колоды
         /// </summary>
         /// <param name="count">Количество карт</param>
         /// <param name="faceUp">Показать лицом вверх</param>
         /// <returns>Список презентеров карт</returns>
         public List<CardPresenter> DrawCards(int count, bool faceUp = true)
         {
-            var presenters = new List<CardPresenter>();
+            List<CardPresenter> presenters = new();
 
             for (int i = 0; i < count; i++)
             {
-                var presenter = DrawCard(faceUp);
+                CardPresenter presenter = DrawCard(faceUp);
                 if (presenter != null)
                 {
                     presenters.Add(presenter);
@@ -163,23 +162,26 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает карту в колоду
+        ///     Возвращает карту в колоду
         /// </summary>
         /// <param name="presenter">Презентер карты</param>
         /// <param name="toTop">В начало колоды (true) или в конец (false)</param>
         public void ReturnCard(CardPresenter presenter, bool toTop = false)
         {
-            if (presenter == null) return;
+            if (presenter == null)
+            {
+                return;
+            }
 
             _activeCards.Remove(presenter);
 
             if (toTop)
             {
-                _model.ReturnToTop(presenter.Data);
+                Model.ReturnToTop(presenter.Data);
             }
             else
             {
-                _model.ReturnToBottom(presenter.Data);
+                Model.ReturnToBottom(presenter.Data);
             }
 
             presenter.Dispose();
@@ -191,12 +193,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Сбрасывает колоду
+        ///     Сбрасывает колоду
         /// </summary>
         /// <param name="shuffle">Перемешать</param>
         public void Reset(bool shuffle = true)
         {
-            foreach (var presenter in _activeCards)
+            foreach (CardPresenter presenter in _activeCards)
             {
                 presenter.Dispose();
                 if (presenter.View is CardView cardView)
@@ -204,36 +206,37 @@ namespace Neo.Cards
                     Object.Destroy(cardView.gameObject);
                 }
             }
+
             _activeCards.Clear();
 
-            _model.Reset(shuffle);
+            Model.Reset(shuffle);
         }
 
         /// <summary>
-        /// Освобождает ресурсы
+        ///     Освобождает ресурсы
         /// </summary>
         public void Dispose()
         {
-            _model.OnDeckChanged -= HandleDeckChanged;
-            _model.OnDeckEmpty -= HandleDeckEmpty;
+            Model.OnDeckChanged -= HandleDeckChanged;
+            Model.OnDeckEmpty -= HandleDeckEmpty;
 
-            foreach (var presenter in _activeCards)
+            foreach (CardPresenter presenter in _activeCards)
             {
                 presenter.Dispose();
             }
+
             _activeCards.Clear();
         }
 
         private void HandleDeckChanged()
         {
-            _view.UpdateVisual(_model.RemainingCount);
+            View.UpdateVisual(Model.RemainingCount);
         }
 
         private void HandleDeckEmpty()
         {
-            _view.HideTopCard();
+            View.HideTopCard();
             OnDeckEmpty?.Invoke();
         }
     }
 }
-

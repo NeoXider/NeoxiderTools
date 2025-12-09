@@ -1,10 +1,11 @@
+using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    /// GUI отрисовка для окна изменения максимального размера текстур
+    ///     GUI отрисовка для окна изменения максимального размера текстур
     /// </summary>
     public class TextureMaxSizeChangerGUI : EditorWindowGUI
     {
@@ -12,7 +13,7 @@ namespace Neo.Editor.Windows
         private TextureImporterType _textureType = TextureImporterType.Default;
 
         /// <summary>
-        /// Отрисовка GUI
+        ///     Отрисовка GUI
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
@@ -29,8 +30,8 @@ namespace Neo.Editor.Windows
         private void ChangeMaxSize()
         {
             if (!EditorUtility.DisplayDialog("Change Texture Max Size",
-                $"This will change max size to {_maxSizeTexture} for ALL textures of type {_textureType}.\n\nAre you sure?",
-                "Yes", "Cancel"))
+                    $"This will change max size to {_maxSizeTexture} for ALL textures of type {_textureType}.\n\nAre you sure?",
+                    "Yes", "Cancel"))
             {
                 return;
             }
@@ -65,7 +66,7 @@ namespace Neo.Editor.Windows
                 EditorUtility.DisplayDialog("Complete",
                     $"Changed max size for {changed} textures.", "OK");
             }
-            catch (System.Exception e)
+            catch (Exception e)
             {
                 EditorUtility.ClearProgressBar();
                 Debug.LogError($"[TextureMaxSizeChanger] Error: {e.Message}");
@@ -74,4 +75,3 @@ namespace Neo.Editor.Windows
         }
     }
 }
-

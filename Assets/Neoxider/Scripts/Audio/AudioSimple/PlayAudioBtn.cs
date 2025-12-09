@@ -7,25 +7,42 @@ namespace Neo
     namespace Audio
     {
         /// <summary>
-        /// Компонент для воспроизведения звука при нажатии на кнопку.
-        /// Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
+        ///     Компонент для воспроизведения звука при нажатии на кнопку.
+        ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
         [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudioBtn))]
         public class PlayAudioBtn : MonoBehaviour
         {
-            [Header("Legacy Mode (by ID)")]
-            [SerializeField] private int _idClip;
+            [Header("Legacy Mode (by ID)")] [SerializeField]
+            private int _idClip;
 
-            [Header("New Mode (by Clip)")]
-            [SerializeField] private AudioClip[] _clips;
+            [Header("New Mode (by Clip)")] [SerializeField]
+            private AudioClip[] _clips;
+
             [SerializeField] private bool _useRandomClip;
             [SerializeField] private float _volume = 1f;
 
             [SerializeField] [GetComponent] private Button _button;
 
+            private void OnEnable()
+            {
+                if (_button != null)
+                {
+                    _button.onClick.AddListener(AudioPlay);
+                }
+            }
+
+            private void OnDisable()
+            {
+                if (_button != null)
+                {
+                    _button.onClick.RemoveListener(AudioPlay);
+                }
+            }
+
             /// <summary>
-            /// Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
-            /// Иначе использует режим по ID (legacy).
+            ///     Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
+            ///     Иначе использует режим по ID (legacy).
             /// </summary>
             public void AudioPlay()
             {
@@ -53,22 +70,6 @@ namespace Neo
                 else
                 {
                     AM.I.Play(_idClip);
-                }
-            }
-
-            private void OnEnable()
-            {
-                if (_button != null)
-                {
-                    _button.onClick.AddListener(AudioPlay);
-                }
-            }
-
-            private void OnDisable()
-            {
-                if (_button != null)
-                {
-                    _button.onClick.RemoveListener(AudioPlay);
                 }
             }
         }

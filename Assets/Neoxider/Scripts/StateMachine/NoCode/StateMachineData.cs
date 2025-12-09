@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using Neo.StateMachine;
 
 namespace Neo.StateMachine.NoCode
 {
@@ -25,38 +24,20 @@ namespace Neo.StateMachine.NoCode
     [CreateAssetMenu(fileName = "New State Machine", menuName = "Neo/State Machine/State Machine Data")]
     public class StateMachineData : ScriptableObject
     {
-        [SerializeField]
-        [Tooltip("Все состояния State Machine")]
+        [SerializeField] [Tooltip("Все состояния State Machine")]
         private StateData[] states = new StateData[0];
 
-        [SerializeField]
-        [Tooltip("Начальное состояние (ScriptableObject)")]
+        [SerializeField] [Tooltip("Начальное состояние (ScriptableObject)")]
         private StateData initialState;
 
-        [SerializeField]
-        [Tooltip("Имя начального состояния (legacy, используется если initialState не задан)")]
+        [SerializeField] [Tooltip("Имя начального состояния (legacy, используется если initialState не задан)")]
         private string initialStateName = "";
 
-        [SerializeField]
-        [Tooltip("Глобальные переходы между состояниями")]
-        private List<StateTransition> transitions = new List<StateTransition>();
+        [SerializeField] [Tooltip("Глобальные переходы между состояниями")]
+        private List<StateTransition> transitions = new();
 
-        [SerializeField]
-        [Tooltip("Позиции узлов (legacy, не используется)")]
-        private List<StatePosition> statePositions = new List<StatePosition>();
-
-        [System.Serializable]
-        private class StatePosition
-        {
-            public string stateName;
-            public Vector2 position;
-
-            public StatePosition(string name, Vector2 pos)
-            {
-                stateName = name;
-                position = pos;
-            }
-        }
+        [SerializeField] [Tooltip("Позиции узлов (legacy, не используется)")]
+        private List<StatePosition> statePositions = new();
 
         /// <summary>
         ///     Все состояния State Machine.
@@ -97,6 +78,15 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public List<StateTransition> Transitions => transitions;
 
+        private void OnValidate()
+        {
+            // Автоматическая валидация в редакторе
+            if (Application.isPlaying)
+            {
+                Validate();
+            }
+        }
+
         /// <summary>
         ///     Получить позицию состояния (legacy метод, не используется).
         /// </summary>
@@ -109,7 +99,7 @@ namespace Neo.StateMachine.NoCode
                 return Vector2.zero;
             }
 
-            var pos = statePositions.FirstOrDefault(p => p != null && p.stateName == stateName);
+            StatePosition pos = statePositions.FirstOrDefault(p => p != null && p.stateName == stateName);
             return pos != null ? pos.position : Vector2.zero;
         }
 
@@ -130,7 +120,7 @@ namespace Neo.StateMachine.NoCode
                 statePositions = new List<StatePosition>();
             }
 
-            var existing = statePositions.FirstOrDefault(p => p != null && p.stateName == stateName);
+            StatePosition existing = statePositions.FirstOrDefault(p => p != null && p.stateName == stateName);
             if (existing != null)
             {
                 existing.position = position;
@@ -166,7 +156,7 @@ namespace Neo.StateMachine.NoCode
             }
 
             // Регистрация переходов
-            foreach (var transition in transitions)
+            foreach (StateTransition transition in transitions)
             {
                 if (transition != null)
                 {
@@ -177,7 +167,7 @@ namespace Neo.StateMachine.NoCode
             }
 
             // Регистрация переходов из состояний
-            foreach (var state in states)
+            foreach (StateData state in states)
             {
                 if (state != null && state is StateData stateData)
                 {
@@ -215,6 +205,7 @@ namespace Neo.StateMachine.NoCode
                 {
                     Debug.LogWarning("[StateMachineData] No states defined.", this);
                 }
+
                 return false;
             }
 
@@ -229,21 +220,26 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    Debug.LogWarning($"[StateMachineData] Initial state '{initialState.StateName}' not found in states array.", this);
+                    Debug.LogWarning(
+                        $"[StateMachineData] Initial state '{initialState.StateName}' not found in states array.",
+                        this);
                 }
+
                 return false;
             }
             else if (initialState == null && GetStateByName(initialStateName) == null)
             {
                 if (!silent)
                 {
-                    Debug.LogWarning($"[StateMachineData] Initial state '{initialStateName}' not found in states.", this);
+                    Debug.LogWarning($"[StateMachineData] Initial state '{initialStateName}' not found in states.",
+                        this);
                 }
+
                 return false;
             }
 
             // Проверка переходов
-            foreach (var transition in transitions)
+            foreach (StateTransition transition in transitions)
             {
                 if (transition == null)
                 {
@@ -256,7 +252,9 @@ namespace Neo.StateMachine.NoCode
                     {
                         if (!silent)
                         {
-                            Debug.LogWarning($"[StateMachineData] Transition from state '{transition.FromStateData.StateName}' not found in States array.", this);
+                            Debug.LogWarning(
+                                $"[StateMachineData] Transition from state '{transition.FromStateData.StateName}' not found in States array.",
+                                this);
                         }
                     }
                 }
@@ -274,7 +272,9 @@ namespace Neo.StateMachine.NoCode
                     {
                         if (!silent)
                         {
-                            Debug.LogWarning($"[StateMachineData] Transition to state '{transition.ToStateData.StateName}' not found in States array.", this);
+                            Debug.LogWarning(
+                                $"[StateMachineData] Transition to state '{transition.ToStateData.StateName}' not found in States array.",
+                                this);
                         }
                     }
                 }
@@ -298,14 +298,17 @@ namespace Neo.StateMachine.NoCode
             // StateMachineBehaviour будет обрабатывать переходы по именам
         }
 
-        private void OnValidate()
+        [Serializable]
+        private class StatePosition
         {
-            // Автоматическая валидация в редакторе
-            if (Application.isPlaying)
+            public string stateName;
+            public Vector2 position;
+
+            public StatePosition(string name, Vector2 pos)
             {
-                Validate();
+                stateName = name;
+                position = pos;
             }
         }
     }
 }
-

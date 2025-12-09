@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Neo
 {
-    [System.Flags]
+    [Flags]
     public enum LogTypeFilter
     {
         None = 0,
@@ -21,19 +21,17 @@ namespace Neo
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
-        [Header("Log Type Filters")]
-        [Tooltip("Выберите типы логов для отображения")]
+        [Header("Log Type Filters")] [Tooltip("Выберите типы логов для отображения")]
         public LogTypeFilter logTypeFilter = LogTypeFilter.Error | LogTypeFilter.Exception;
 
-        [Header("Display Settings")]
-        [Tooltip("Добавлять текст в конец (true) или заменять (false)")]
+        [Header("Display Settings")] [Tooltip("Добавлять текст в конец (true) или заменять (false)")]
         public bool addText = true;
-        
+
         [Tooltip("Проверять на дубликаты ошибок")]
         public bool checkExistingErrors = true;
-        
+
         [Tooltip("Добавлять путь к скрипту откуда был вызван лог")]
-        public bool showScriptPath = false;
+        public bool showScriptPath;
 
         public string errorText;
         [Header("Main Settings")] public TextMeshProUGUI textMesh;
@@ -69,7 +67,7 @@ namespace Neo
                 }
             }
 
-            string errorText = GetColor(type) + "\n -- " + logString.SetColor(Color.green) + scriptPath + 
+            string errorText = GetColor(type) + "\n -- " + logString.SetColor(Color.green) + scriptPath +
                                "\n -- " + stackTrace + "\n\n";
 
             if (checkExistingErrors && errorList.Contains(errorText))
@@ -114,7 +112,7 @@ namespace Neo
             // Ищем паттерн: (at Assets/Path/To/Script.cs:line)
             // Или: (at Packages/com.package/Script.cs:line)
             Match match = Regex.Match(stackTrace, @"\(at\s+([^)]+\.cs):(\d+)\)");
-            
+
             if (match.Success)
             {
                 string filePath = match.Groups[1].Value;

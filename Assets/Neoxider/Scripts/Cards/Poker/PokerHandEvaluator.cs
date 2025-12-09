@@ -5,18 +5,18 @@ using System.Linq;
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    /// Оценщик покерных комбинаций
+    ///     Оценщик покерных комбинаций
     /// </summary>
     public static class PokerHandEvaluator
     {
         /// <summary>
-        /// Оценивает руку из 5-7 карт и возвращает лучшую комбинацию
+        ///     Оценивает руку из 5-7 карт и возвращает лучшую комбинацию
         /// </summary>
         /// <param name="cards">Карты для оценки (5-7 штук)</param>
         /// <returns>Результат оценки</returns>
         public static PokerHandResult Evaluate(IEnumerable<CardData> cards)
         {
-            var cardList = cards.Where(c => !c.IsJoker).ToList();
+            List<CardData> cardList = cards.Where(c => !c.IsJoker).ToList();
 
             if (cardList.Count < 5)
             {
@@ -32,15 +32,15 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Находит лучшую комбинацию из 5 карт среди 6-7 карт
+        ///     Находит лучшую комбинацию из 5 карт среди 6-7 карт
         /// </summary>
         private static PokerHandResult FindBestHand(List<CardData> cards)
         {
             PokerHandResult bestResult = null;
 
-            foreach (var combination in GetCombinations(cards, 5))
+            foreach (IEnumerable<CardData> combination in GetCombinations(cards, 5))
             {
-                var result = EvaluateFiveCards(combination.ToList());
+                PokerHandResult result = EvaluateFiveCards(combination.ToList());
 
                 if (bestResult == null || result.CompareTo(bestResult) > 0)
                 {
@@ -52,12 +52,12 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Оценивает ровно 5 карт
+        ///     Оценивает ровно 5 карт
         /// </summary>
         private static PokerHandResult EvaluateFiveCards(List<CardData> cards)
         {
-            var sortedCards = cards.OrderByDescending(c => c.Rank).ToList();
-            var groups = GetRankGroups(sortedCards);
+            List<CardData> sortedCards = cards.OrderByDescending(c => c.Rank).ToList();
+            Dictionary<int, List<Rank>> groups = GetRankGroups(sortedCards);
             bool isFlush = IsFlush(sortedCards);
             bool isStraight = IsStraight(sortedCards, out Rank highCard);
 
@@ -82,7 +82,7 @@ namespace Neo.Cards.Poker
             if (groups.ContainsKey(4))
             {
                 Rank fourRank = groups[4][0];
-                var kickers = sortedCards
+                List<Rank> kickers = sortedCards
                     .Where(c => c.Rank != fourRank)
                     .Select(c => c.Rank)
                     .Take(1)
@@ -109,7 +109,7 @@ namespace Neo.Cards.Poker
 
             if (isFlush)
             {
-                var ranks = sortedCards.Select(c => c.Rank).ToList();
+                List<Rank> ranks = sortedCards.Select(c => c.Rank).ToList();
 
                 return new PokerHandResult(
                     PokerCombination.Flush,
@@ -130,7 +130,7 @@ namespace Neo.Cards.Poker
             if (groups.ContainsKey(3))
             {
                 Rank threeRank = groups[3][0];
-                var kickers = sortedCards
+                List<Rank> kickers = sortedCards
                     .Where(c => c.Rank != threeRank)
                     .Select(c => c.Rank)
                     .Take(2)
@@ -145,11 +145,11 @@ namespace Neo.Cards.Poker
 
             if (groups.ContainsKey(2))
             {
-                var pairs = groups[2].OrderByDescending(r => r).ToList();
+                List<Rank> pairs = groups[2].OrderByDescending(r => r).ToList();
 
                 if (pairs.Count >= 2)
                 {
-                    var kickers = sortedCards
+                    List<Rank> kickers = sortedCards
                         .Where(c => c.Rank != pairs[0] && c.Rank != pairs[1])
                         .Select(c => c.Rank)
                         .Take(1)
@@ -163,7 +163,7 @@ namespace Neo.Cards.Poker
                 }
 
                 Rank pairRank = pairs[0];
-                var kickersList = sortedCards
+                List<Rank> kickersList = sortedCards
                     .Where(c => c.Rank != pairRank)
                     .Select(c => c.Rank)
                     .Take(3)
@@ -176,7 +176,7 @@ namespace Neo.Cards.Poker
                     sortedCards);
             }
 
-            var highCardKickers = sortedCards.Select(c => c.Rank).ToList();
+            List<Rank> highCardKickers = sortedCards.Select(c => c.Rank).ToList();
 
             return new PokerHandResult(
                 PokerCombination.HighCard,
@@ -186,27 +186,28 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Группирует карты по количеству повторений ранга
+        ///     Группирует карты по количеству повторений ранга
         /// </summary>
         private static Dictionary<int, List<Rank>> GetRankGroups(List<CardData> cards)
         {
-            var rankCounts = cards
+            Dictionary<Rank, int> rankCounts = cards
                 .GroupBy(c => c.Rank)
                 .ToDictionary(g => g.Key, g => g.Count());
 
-            var result = new Dictionary<int, List<Rank>>();
+            Dictionary<int, List<Rank>> result = new();
 
-            foreach (var kvp in rankCounts)
+            foreach (KeyValuePair<Rank, int> kvp in rankCounts)
             {
                 int count = kvp.Value;
                 if (!result.ContainsKey(count))
                 {
                     result[count] = new List<Rank>();
                 }
+
                 result[count].Add(kvp.Key);
             }
 
-            foreach (var list in result.Values)
+            foreach (List<Rank> list in result.Values)
             {
                 list.Sort((a, b) => b.CompareTo(a));
             }
@@ -215,25 +216,31 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Проверяет, является ли рука флешем (все карты одной масти)
+        ///     Проверяет, является ли рука флешем (все карты одной масти)
         /// </summary>
         private static bool IsFlush(List<CardData> cards)
         {
-            if (cards.Count == 0) return false;
+            if (cards.Count == 0)
+            {
+                return false;
+            }
 
             Suit firstSuit = cards[0].Suit;
             return cards.All(c => c.Suit == firstSuit);
         }
 
         /// <summary>
-        /// Проверяет, является ли рука стритом (последовательность)
+        ///     Проверяет, является ли рука стритом (последовательность)
         /// </summary>
         private static bool IsStraight(List<CardData> cards, out Rank highCard)
         {
-            var ranks = cards.Select(c => (int)c.Rank).Distinct().OrderByDescending(r => r).ToList();
+            List<int> ranks = cards.Select(c => (int)c.Rank).Distinct().OrderByDescending(r => r).ToList();
             highCard = (Rank)ranks[0];
 
-            if (ranks.Count < 5) return false;
+            if (ranks.Count < 5)
+            {
+                return false;
+            }
 
             if (IsConsecutive(ranks))
             {
@@ -255,7 +262,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Проверяет, являются ли ранги последовательными
+        ///     Проверяет, являются ли ранги последовательными
         /// </summary>
         private static bool IsConsecutive(List<int> ranks)
         {
@@ -266,11 +273,12 @@ namespace Neo.Cards.Poker
                     return false;
                 }
             }
+
             return true;
         }
 
         /// <summary>
-        /// Генерирует все комбинации заданного размера
+        ///     Генерирует все комбинации заданного размера
         /// </summary>
         private static IEnumerable<IEnumerable<T>> GetCombinations<T>(IList<T> list, int length)
         {
@@ -282,7 +290,7 @@ namespace Neo.Cards.Poker
 
             for (int i = 0; i <= list.Count - length; i++)
             {
-                foreach (var tail in GetCombinations(list.Skip(i + 1).ToList(), length - 1))
+                foreach (IEnumerable<T> tail in GetCombinations(list.Skip(i + 1).ToList(), length - 1))
                 {
                     yield return new[] { list[i] }.Concat(tail);
                 }
@@ -290,4 +298,3 @@ namespace Neo.Cards.Poker
         }
     }
 }
-

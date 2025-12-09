@@ -29,23 +29,17 @@ namespace Neo.Tools
             YZ
         }
 
-        [Header("Movement Plane")]
-        [Tooltip("The plane on which movement occurs.")]
-        [SerializeField]
+        [Header("Movement Plane")] [Tooltip("The plane on which movement occurs.")] [SerializeField]
         private MovementPlane movementPlane = MovementPlane.XY;
 
-        [Header("Mode")]
-        [Tooltip("How the axis vector is treated.")]
-        [SerializeField]
+        [Header("Mode")] [Tooltip("How the axis vector is treated.")] [SerializeField]
         private AxisMode axisMode = AxisMode.AxisRaw;
 
-        [Header("Speed")]
-        [Tooltip("Units per second.")]
-        [SerializeField]
+        [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
-        [Header("Events")]
-        public UnityEvent OnMoveStart;
+        [Header("Events")] public UnityEvent OnMoveStart;
+
         public UnityEvent OnMoveStop;
 
         #endregion

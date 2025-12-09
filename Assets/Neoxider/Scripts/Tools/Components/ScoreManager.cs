@@ -36,7 +36,7 @@ namespace Neo.Tools
 
         private int _countStars;
         private int _lastCountStars;
-        
+
         // Кэшированные строки для избежания аллокаций
         private string _cachedScoreString;
         private int _cachedScoreValue = int.MinValue;
@@ -96,7 +96,7 @@ namespace Neo.Tools
         protected override void Init()
         {
             base.Init();
-            BestScore = SaveProvider.GetInt(_keySave, 0);
+            BestScore = SaveProvider.GetInt(_keySave);
             Score = 0;
             CountStars = 0;
             SetBestScoreText();
@@ -173,13 +173,15 @@ namespace Neo.Tools
                 _cachedBestScoreValue = _bestScore;
                 _cachedBestScoreString = _bestScore.ToString();
             }
-            
+
             if (textBestScores != null)
             {
                 foreach (TMP_Text text in textBestScores)
                 {
                     if (text != null)
+                    {
                         text.text = _cachedBestScoreString;
+                    }
                 }
             }
 
@@ -188,7 +190,9 @@ namespace Neo.Tools
                 foreach (SetText text in setTextBestScores)
                 {
                     if (text != null)
+                    {
                         text.Set(_bestScore);
+                    }
                 }
             }
         }
@@ -204,13 +208,15 @@ namespace Neo.Tools
                 _cachedScoreValue = score;
                 _cachedScoreString = score.ToString();
             }
-            
+
             if (textScores != null)
             {
                 foreach (TMP_Text text in textScores)
                 {
                     if (text != null)
+                    {
                         text.text = _cachedScoreString;
+                    }
                 }
             }
 
@@ -219,7 +225,9 @@ namespace Neo.Tools
                 foreach (SetText text in setTextScore)
                 {
                     if (text != null)
+                    {
                         text.Set(score);
+                    }
                 }
             }
         }

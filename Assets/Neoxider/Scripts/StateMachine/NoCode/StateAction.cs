@@ -39,11 +39,9 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class LogStateAction : StateAction
     {
-        [SerializeField]
-        private string message = "State Action Executed";
+        [SerializeField] private string message = "State Action Executed";
 
-        [SerializeField]
-        private LogType logType = LogType.Log;
+        [SerializeField] private LogType logType = LogType.Log;
 
         /// <summary>
         ///     Сообщение для логирования.
@@ -86,11 +84,9 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class SetGameObjectActiveAction : StateAction
     {
-        [SerializeField]
-        private GameObject target;
+        [SerializeField] private GameObject target;
 
-        [SerializeField]
-        private bool setActive = true;
+        [SerializeField] private bool setActive = true;
 
         /// <summary>
         ///     Целевой GameObject.
@@ -125,8 +121,7 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class InvokeUnityEventAction : StateAction
     {
-        [SerializeField]
-        private UnityEvent unityEvent = new UnityEvent();
+        [SerializeField] private UnityEvent unityEvent = new();
 
         /// <summary>
         ///     UnityEvent для вызова.
@@ -149,14 +144,11 @@ namespace Neo.StateMachine.NoCode
     [Serializable]
     public class ChangeSceneAction : StateAction
     {
-        [SerializeField]
-        private string sceneName = "";
+        [SerializeField] private string sceneName = "";
 
-        [SerializeField]
-        private int sceneBuildIndex = -1;
+        [SerializeField] private int sceneBuildIndex = -1;
 
-        [SerializeField]
-        private LoadSceneMode loadMode = LoadSceneMode.Single;
+        [SerializeField] private LoadSceneMode loadMode = LoadSceneMode.Single;
 
         /// <summary>
         ///     Имя сцены для загрузки.
@@ -202,5 +194,3 @@ namespace Neo.StateMachine.NoCode
         }
     }
 }
-
-

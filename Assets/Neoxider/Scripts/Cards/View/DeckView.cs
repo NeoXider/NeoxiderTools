@@ -4,39 +4,29 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    /// Визуальное представление колоды карт
+    ///     Визуальное представление колоды карт
     /// </summary>
     public class DeckView : MonoBehaviour, IDeckView
     {
-        [Header("References")]
-        [SerializeField] private Transform _spawnPoint;
+        [Header("References")] [SerializeField]
+        private Transform _spawnPoint;
+
         [SerializeField] private Image _deckImage;
         [SerializeField] private SpriteRenderer _deckSprite;
         [SerializeField] private Image _topCardImage;
         [SerializeField] private SpriteRenderer _topCardSprite;
 
-        [Header("Settings")]
-        [SerializeField] private int _visibleCardCount = 1;
+        [Header("Settings")] [SerializeField] private int _visibleCardCount = 1;
+
         [SerializeField] private Vector3 _cardOffset = new(2f, 2f, 0f);
 
-        [Header("Config")]
-        [SerializeField] private DeckConfig _config;
+        [Header("Config")] [SerializeField] private DeckConfig _config;
 
         private bool _showTopCard;
         private CardData _topCardData;
 
-        /// <inheritdoc />
-        public Transform SpawnPoint => _spawnPoint != null ? _spawnPoint : transform;
-
-        /// <inheritdoc />
-        public int VisibleCardCount
-        {
-            get => _visibleCardCount;
-            set => _visibleCardCount = Mathf.Max(0, value);
-        }
-
         /// <summary>
-        /// Конфигурация колоды
+        ///     Конфигурация колоды
         /// </summary>
         public DeckConfig Config
         {
@@ -51,6 +41,16 @@ namespace Neo.Cards
         private void Start()
         {
             UpdateVisual(_visibleCardCount);
+        }
+
+        /// <inheritdoc />
+        public Transform SpawnPoint => _spawnPoint != null ? _spawnPoint : transform;
+
+        /// <inheritdoc />
+        public int VisibleCardCount
+        {
+            get => _visibleCardCount;
+            set => _visibleCardCount = Mathf.Max(0, value);
         }
 
         /// <inheritdoc />
@@ -117,4 +117,3 @@ namespace Neo.Cards
         }
     }
 }
-

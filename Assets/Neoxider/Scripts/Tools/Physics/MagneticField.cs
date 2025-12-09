@@ -1,134 +1,127 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-using Neo;
 
 namespace Neo.Tools
 {
     /// <summary>
-    /// Магнитное поле, которое притягивает или отталкивает объекты в радиусе.
-    /// Поддерживает постоянное воздействие, фильтрацию по слоям и опциональное добавление физики.
+    ///     Магнитное поле, которое притягивает или отталкивает объекты в радиусе.
+    ///     Поддерживает постоянное воздействие, фильтрацию по слоям и опциональное добавление физики.
     /// </summary>
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(MagneticField))]
     public class MagneticField : MonoBehaviour
     {
         /// <summary>
-        /// Режим работы магнитного поля.
+        ///     Режим работы магнитного поля.
         /// </summary>
         public enum FieldMode
         {
             /// <summary>Притяжение объектов к себе</summary>
             Attract,
+
             /// <summary>Отталкивание объектов</summary>
             Repel,
+
             /// <summary>Переключение между притяжением и отталкиванием</summary>
             Toggle,
+
             /// <summary>Притяжение к Transform цели</summary>
             ToTarget,
+
             /// <summary>Притяжение к точке в пространстве</summary>
             ToPoint
         }
 
         /// <summary>
-        /// Тип затухания силы по расстоянию.
+        ///     Тип затухания силы по расстоянию.
         /// </summary>
         public enum FalloffType
         {
             /// <summary>Линейное затухание</summary>
             Linear,
+
             /// <summary>Квадратичное затухание</summary>
             Quadratic,
+
             /// <summary>Без затухания</summary>
             Constant
         }
 
-        [Header("Настройки поля")]
-        [Tooltip("Режим работы поля")]
-        [SerializeField] private FieldMode mode = FieldMode.Attract;
+        [Header("Настройки поля")] [Tooltip("Режим работы поля")] [SerializeField]
+        private FieldMode mode = FieldMode.Attract;
 
-        [Tooltip("Сила магнитного поля")]
-        [Min(0f)]
-        [SerializeField] private float fieldStrength = 10f;
+        [Tooltip("Сила магнитного поля")] [Min(0f)] [SerializeField]
+        private float fieldStrength = 10f;
 
-        [Tooltip("Радиус действия поля")]
-        [Min(0f)]
-        [SerializeField] private float radius = 5f;
+        [Tooltip("Радиус действия поля")] [Min(0f)] [SerializeField]
+        private float radius = 5f;
 
-        [Tooltip("Тип затухания силы по расстоянию")]
-        [SerializeField] private FalloffType falloffType = FalloffType.Quadratic;
+        [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
+        private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Фильтрация")]
-        [Tooltip("Слои объектов, на которые будет воздействовать поле")]
-        [SerializeField] private LayerMask affectedLayers = -1;
+        [Header("Фильтрация")] [Tooltip("Слои объектов, на которые будет воздействовать поле")] [SerializeField]
+        private LayerMask affectedLayers = -1;
 
-        [Header("Режим Toggle")]
-        [Tooltip("Время притяжения в режиме Toggle (секунды)")]
-        [Min(0.1f)]
-        [SerializeField] private float attractDuration = 2f;
+        [Header("Режим Toggle")] [Tooltip("Время притяжения в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
+        private float attractDuration = 2f;
 
-        [Tooltip("Время отталкивания в режиме Toggle (секунды)")]
-        [Min(0.1f)]
-        [SerializeField] private float repelDuration = 2f;
+        [Tooltip("Время отталкивания в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
+        private float repelDuration = 2f;
 
-        [Tooltip("Начальный режим для Toggle (с чего начинать)")]
-        [SerializeField] private bool startWithAttract = true;
+        [Tooltip("Начальный режим для Toggle (с чего начинать)")] [SerializeField]
+        private bool startWithAttract = true;
 
-        [Header("Цель притяжения")]
-        [Tooltip("Transform цели (используется при режиме ToTarget)")]
-        [SerializeField] private Transform targetTransform;
+        [Header("Цель притяжения")] [Tooltip("Transform цели (используется при режиме ToTarget)")] [SerializeField]
+        private Transform targetTransform;
 
-        [Tooltip("Точка в пространстве (используется при режиме ToPoint)")]
-        [SerializeField] private Vector3 targetPoint = Vector3.zero;
+        [Tooltip("Точка в пространстве (используется при режиме ToPoint)")] [SerializeField]
+        private Vector3 targetPoint = Vector3.zero;
 
-        [Header("Опции")]
-        [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")]
-        [SerializeField] private bool addRigidbodyIfNeeded = false;
+        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Использовать FixedUpdate вместо Update для более стабильной физики")]
-        [SerializeField] private bool useFixedUpdate = true;
+        [Tooltip("Использовать FixedUpdate вместо Update для более стабильной физики")] [SerializeField]
+        private bool useFixedUpdate = true;
 
-        [Tooltip("Интервал обновления объектов в поле (0 = каждый кадр)")]
-        [Min(0f)]
-        [SerializeField] private float updateInterval = 0f;
+        [Tooltip("Интервал обновления объектов в поле (0 = каждый кадр)")] [Min(0f)] [SerializeField]
+        private float updateInterval;
 
-        [Header("События")]
-        [Tooltip("Вызывается при входе объекта в поле")]
-        public UnityEvent<GameObject> OnObjectEntered = new UnityEvent<GameObject>();
+        [Header("События")] [Tooltip("Вызывается при входе объекта в поле")]
+        public UnityEvent<GameObject> OnObjectEntered = new();
 
         [Tooltip("Вызывается при выходе объекта из поля")]
-        public UnityEvent<GameObject> OnObjectExited = new UnityEvent<GameObject>();
+        public UnityEvent<GameObject> OnObjectExited = new();
 
         [Tooltip("Вызывается при изменении режима (для Toggle)")]
-        public UnityEvent<bool> OnModeChanged = new UnityEvent<bool>();
+        public UnityEvent<bool> OnModeChanged = new();
 
-        private readonly HashSet<GameObject> objectsInField = new HashSet<GameObject>();
-        private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new Dictionary<GameObject, Rigidbody>();
+        private readonly HashSet<GameObject> objectsInField = new();
+        private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();
         private float lastUpdateTime;
         private float toggleStartTime;
-        private bool currentToggleState;
 
         /// <summary>
-        /// Получить текущую силу поля.
+        ///     Получить текущую силу поля.
         /// </summary>
         public float CurrentStrength => fieldStrength;
 
         /// <summary>
-        /// Получить текущий радиус поля.
+        ///     Получить текущий радиус поля.
         /// </summary>
         public float CurrentRadius => radius;
 
         /// <summary>
-        /// Получить количество объектов в поле.
+        ///     Получить количество объектов в поле.
         /// </summary>
         public int ObjectsInFieldCount => objectsInField.Count;
 
         /// <summary>
-        /// Получить текущее активное состояние в режиме Toggle (true = притяжение, false = отталкивание).
+        ///     Получить текущее активное состояние в режиме Toggle (true = притяжение, false = отталкивание).
         /// </summary>
-        public bool CurrentToggleState => currentToggleState;
+        public bool CurrentToggleState { get; private set; }
 
         /// <summary>
-        /// Переключить режим поля (Attract/Repel).
+        ///     Переключить режим поля (Attract/Repel).
         /// </summary>
         public void ToggleMode()
         {
@@ -136,7 +129,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить режим поля.
+        ///     Установить режим поля.
         /// </summary>
         public void SetMode(FieldMode newMode)
         {
@@ -144,7 +137,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить силу поля.
+        ///     Установить силу поля.
         /// </summary>
         public void SetStrength(float newStrength)
         {
@@ -152,7 +145,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить радиус поля.
+        ///     Установить радиус поля.
         /// </summary>
         public void SetRadius(float newRadius)
         {
@@ -160,7 +153,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить время притяжения для режима Toggle.
+        ///     Установить время притяжения для режима Toggle.
         /// </summary>
         public void SetAttractDuration(float duration)
         {
@@ -168,7 +161,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить время отталкивания для режима Toggle.
+        ///     Установить время отталкивания для режима Toggle.
         /// </summary>
         public void SetRepelDuration(float duration)
         {
@@ -176,16 +169,16 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Сбросить таймер режима Toggle (начать цикл заново).
+        ///     Сбросить таймер режима Toggle (начать цикл заново).
         /// </summary>
         public void ResetToggleTimer()
         {
             toggleStartTime = Time.time;
-            currentToggleState = startWithAttract;
+            CurrentToggleState = startWithAttract;
         }
 
         /// <summary>
-        /// Установить цель притяжения (Transform).
+        ///     Установить цель притяжения (Transform).
         /// </summary>
         public void SetTarget(Transform target)
         {
@@ -197,7 +190,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Установить точку притяжения.
+        ///     Установить точку притяжения.
         /// </summary>
         public void SetTargetPoint(Vector3 point)
         {
@@ -210,7 +203,7 @@ namespace Neo.Tools
             if (mode == FieldMode.Toggle)
             {
                 toggleStartTime = Time.time;
-                currentToggleState = startWithAttract;
+                CurrentToggleState = startWithAttract;
             }
         }
 
@@ -244,13 +237,13 @@ namespace Neo.Tools
             }
 
             float elapsed = Time.time - toggleStartTime;
-            float currentDuration = currentToggleState ? attractDuration : repelDuration;
+            float currentDuration = CurrentToggleState ? attractDuration : repelDuration;
 
             if (elapsed >= currentDuration)
             {
-                currentToggleState = !currentToggleState;
+                CurrentToggleState = !CurrentToggleState;
                 toggleStartTime = Time.time;
-                OnModeChanged?.Invoke(currentToggleState);
+                OnModeChanged?.Invoke(CurrentToggleState);
             }
         }
 
@@ -265,7 +258,7 @@ namespace Neo.Tools
 
             Vector3 center = GetAttractionPoint();
             Collider[] colliders = Physics.OverlapSphere(center, radius, affectedLayers);
-            HashSet<GameObject> currentObjects = new HashSet<GameObject>();
+            HashSet<GameObject> currentObjects = new();
 
             foreach (Collider col in colliders)
             {
@@ -286,7 +279,7 @@ namespace Neo.Tools
                 ApplyMagneticForce(obj, col);
             }
 
-            List<GameObject> toRemove = new List<GameObject>();
+            List<GameObject> toRemove = new();
             foreach (GameObject obj in objectsInField)
             {
                 if (!currentObjects.Contains(obj))
@@ -350,10 +343,10 @@ namespace Neo.Tools
                 direction = Random.onUnitSphere;
             }
 
-            bool shouldAttract = mode == FieldMode.Attract || 
-                                mode == FieldMode.ToTarget || 
-                                mode == FieldMode.ToPoint ||
-                                (mode == FieldMode.Toggle && currentToggleState);
+            bool shouldAttract = mode == FieldMode.Attract ||
+                                 mode == FieldMode.ToTarget ||
+                                 mode == FieldMode.ToPoint ||
+                                 (mode == FieldMode.Toggle && CurrentToggleState);
 
             return shouldAttract ? -direction : direction;
         }
@@ -388,7 +381,7 @@ namespace Neo.Tools
             float normalizedDistance = distance / radius;
             float falloff = falloffType == FalloffType.Linear
                 ? 1f - normalizedDistance
-                : 1f - (normalizedDistance * normalizedDistance);
+                : 1f - normalizedDistance * normalizedDistance;
 
             return baseForce * falloff;
         }
@@ -419,10 +412,10 @@ namespace Neo.Tools
         private void OnDrawGizmosSelected()
         {
             Vector3 center = GetAttractionPoint();
-            bool isAttracting = mode == FieldMode.Attract || 
-                               mode == FieldMode.ToTarget || 
-                               mode == FieldMode.ToPoint ||
-                               (mode == FieldMode.Toggle && currentToggleState);
+            bool isAttracting = mode == FieldMode.Attract ||
+                                mode == FieldMode.ToTarget ||
+                                mode == FieldMode.ToPoint ||
+                                (mode == FieldMode.Toggle && CurrentToggleState);
             Gizmos.color = isAttracting ? Color.blue : Color.red;
             Gizmos.DrawWireSphere(center, radius);
 
@@ -437,4 +430,3 @@ namespace Neo.Tools
         }
     }
 }
-

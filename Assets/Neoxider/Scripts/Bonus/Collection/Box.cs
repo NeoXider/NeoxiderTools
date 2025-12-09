@@ -54,7 +54,7 @@ namespace Neo.Bonus
 
         private void Awake()
         {
-            _progress = SaveProvider.GetFloat(_saveName + nameof(progress), 0);
+            _progress = SaveProvider.GetFloat(_saveName + nameof(progress));
         }
 
         private void OnEnable()

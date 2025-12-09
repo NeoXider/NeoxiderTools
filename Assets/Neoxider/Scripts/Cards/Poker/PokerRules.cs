@@ -4,41 +4,52 @@ using System.Linq;
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    /// Правила покера для определения победителя
+    ///     Правила покера для определения победителя
     /// </summary>
     public static class PokerRules
     {
         /// <summary>
-        /// Сравнивает две руки
+        ///     Сравнивает две руки
         /// </summary>
         /// <param name="hand1">Первая рука</param>
         /// <param name="hand2">Вторая рука</param>
         /// <returns>Положительное если первая рука сильнее, отрицательное если вторая, 0 если равны</returns>
         public static int CompareHands(PokerHandResult hand1, PokerHandResult hand2)
         {
-            if (hand1 == null && hand2 == null) return 0;
-            if (hand1 == null) return -1;
-            if (hand2 == null) return 1;
+            if (hand1 == null && hand2 == null)
+            {
+                return 0;
+            }
+
+            if (hand1 == null)
+            {
+                return -1;
+            }
+
+            if (hand2 == null)
+            {
+                return 1;
+            }
 
             return hand1.CompareTo(hand2);
         }
 
         /// <summary>
-        /// Сравнивает две руки по картам
+        ///     Сравнивает две руки по картам
         /// </summary>
         /// <param name="cards1">Карты первого игрока</param>
         /// <param name="cards2">Карты второго игрока</param>
         /// <returns>Положительное если первая рука сильнее, отрицательное если вторая, 0 если равны</returns>
         public static int CompareHands(IEnumerable<CardData> cards1, IEnumerable<CardData> cards2)
         {
-            var result1 = PokerHandEvaluator.Evaluate(cards1);
-            var result2 = PokerHandEvaluator.Evaluate(cards2);
+            PokerHandResult result1 = PokerHandEvaluator.Evaluate(cards1);
+            PokerHandResult result2 = PokerHandEvaluator.Evaluate(cards2);
 
             return CompareHands(result1, result2);
         }
 
         /// <summary>
-        /// Определяет победителей среди нескольких рук
+        ///     Определяет победителей среди нескольких рук
         /// </summary>
         /// <param name="hands">Список результатов оценки рук</param>
         /// <returns>Индексы победителей (может быть несколько при split pot)</returns>
@@ -49,12 +60,15 @@ namespace Neo.Cards.Poker
                 return new List<int>();
             }
 
-            var winners = new List<int> { 0 };
+            List<int> winners = new() { 0 };
             PokerHandResult bestHand = hands[0];
 
             for (int i = 1; i < hands.Count; i++)
             {
-                if (hands[i] == null) continue;
+                if (hands[i] == null)
+                {
+                    continue;
+                }
 
                 int compare = hands[i].CompareTo(bestHand);
 
@@ -74,13 +88,13 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Определяет победителей по картам игроков
+        ///     Определяет победителей по картам игроков
         /// </summary>
         /// <param name="playerCards">Карты каждого игрока</param>
         /// <returns>Индексы победителей</returns>
         public static List<int> GetWinners(IList<IEnumerable<CardData>> playerCards)
         {
-            var hands = playerCards
+            List<PokerHandResult> hands = playerCards
                 .Select(cards => cards != null ? PokerHandEvaluator.Evaluate(cards) : null)
                 .ToList();
 
@@ -88,7 +102,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Определяет победителей в Texas Hold'em
+        ///     Определяет победителей в Texas Hold'em
         /// </summary>
         /// <param name="communityCards">Общие карты на столе (3-5 карт)</param>
         /// <param name="playerHoleCards">Карманные карты каждого игрока (по 2 карты)</param>
@@ -97,10 +111,10 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IList<IEnumerable<CardData>> playerHoleCards)
         {
-            var community = communityCards.ToList();
-            var hands = new List<PokerHandResult>();
+            List<CardData> community = communityCards.ToList();
+            List<PokerHandResult> hands = new();
 
-            foreach (var holeCards in playerHoleCards)
+            foreach (IEnumerable<CardData> holeCards in playerHoleCards)
             {
                 if (holeCards == null)
                 {
@@ -108,7 +122,7 @@ namespace Neo.Cards.Poker
                     continue;
                 }
 
-                var allCards = community.Concat(holeCards).ToList();
+                List<CardData> allCards = community.Concat(holeCards).ToList();
                 hands.Add(PokerHandEvaluator.Evaluate(allCards));
             }
 
@@ -116,7 +130,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Оценивает руку в Texas Hold'em
+        ///     Оценивает руку в Texas Hold'em
         /// </summary>
         /// <param name="communityCards">Общие карты на столе</param>
         /// <param name="holeCards">Карманные карты игрока</param>
@@ -125,24 +139,24 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IEnumerable<CardData> holeCards)
         {
-            var allCards = communityCards.Concat(holeCards).ToList();
+            List<CardData> allCards = communityCards.Concat(holeCards).ToList();
             return PokerHandEvaluator.Evaluate(allCards);
         }
 
         /// <summary>
-        /// Проверяет, выиграл ли игрок (или сыграл вничью)
+        ///     Проверяет, выиграл ли игрок (или сыграл вничью)
         /// </summary>
         /// <param name="playerIndex">Индекс игрока</param>
         /// <param name="hands">Все руки</param>
         /// <returns>true если игрок среди победителей</returns>
         public static bool IsWinner(int playerIndex, IList<PokerHandResult> hands)
         {
-            var winners = GetWinners(hands);
+            List<int> winners = GetWinners(hands);
             return winners.Contains(playerIndex);
         }
 
         /// <summary>
-        /// Возвращает лучшую руку среди всех
+        ///     Возвращает лучшую руку среди всех
         /// </summary>
         /// <param name="hands">Список рук</param>
         /// <returns>Лучшая рука или null</returns>
@@ -150,9 +164,12 @@ namespace Neo.Cards.Poker
         {
             PokerHandResult best = null;
 
-            foreach (var hand in hands)
+            foreach (PokerHandResult hand in hands)
             {
-                if (hand == null) continue;
+                if (hand == null)
+                {
+                    continue;
+                }
 
                 if (best == null || hand.CompareTo(best) > 0)
                 {
@@ -164,7 +181,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        /// Рассчитывает вероятность улучшения руки (аутсы)
+        ///     Рассчитывает вероятность улучшения руки (аутсы)
         /// </summary>
         /// <param name="currentHand">Текущие карты</param>
         /// <param name="targetCombination">Желаемая комбинация</param>
@@ -175,16 +192,16 @@ namespace Neo.Cards.Poker
             PokerCombination targetCombination,
             IEnumerable<CardData> remainingDeck)
         {
-            var current = currentHand.ToList();
+            List<CardData> current = currentHand.ToList();
             int outs = 0;
 
-            foreach (var card in remainingDeck)
+            foreach (CardData card in remainingDeck)
             {
-                var testHand = current.Concat(new[] { card }).ToList();
+                List<CardData> testHand = current.Concat(new[] { card }).ToList();
 
                 if (testHand.Count >= 5)
                 {
-                    var result = PokerHandEvaluator.Evaluate(testHand);
+                    PokerHandResult result = PokerHandEvaluator.Evaluate(testHand);
                     if (result.Combination >= targetCombination)
                     {
                         outs++;
@@ -196,4 +213,3 @@ namespace Neo.Cards.Poker
         }
     }
 }
-

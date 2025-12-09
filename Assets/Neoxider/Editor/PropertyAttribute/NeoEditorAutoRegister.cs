@@ -1,14 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Editor
 {
     /// <summary>
-    /// Автоматическая регистрация CustomEditor для всех Neo компонентов
-    /// Решает проблему с видимостью при установке пакета через Package Manager
+    ///     Автоматическая регистрация CustomEditor для всех Neo компонентов
+    ///     Решает проблему с видимостью при установке пакета через Package Manager
     /// </summary>
     [InitializeOnLoad]
     public static class NeoEditorAutoRegister
@@ -22,7 +22,7 @@ namespace Neo.Editor
         private static void RegisterNeoEditors()
         {
             // Находим все типы MonoBehaviour из namespace Neo
-            var neoTypes = AppDomain.CurrentDomain.GetAssemblies()
+            List<Type> neoTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly =>
                 {
                     try
@@ -51,6 +51,3 @@ namespace Neo.Editor
         }
     }
 }
-
-
-

@@ -25,7 +25,7 @@ namespace Neo
                 idMap = i;
                 _saveKey = saveKey;
 
-                _level = SaveProvider.GetInt(GetSaveKey() + nameof(_level), 0);
+                _level = SaveProvider.GetInt(GetSaveKey() + nameof(_level));
             }
 
             private string GetSaveKey()

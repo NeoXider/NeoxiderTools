@@ -14,9 +14,8 @@ namespace Neo.Bonus
 
         [Tooltip("Спрайт символа для отображения в слот-машине")]
         public Sprite sprite;
-        
-        [Tooltip("Описание символа")]
-        [TextArea(1, 3)] 
+
+        [Tooltip("Описание символа")] [TextArea(1, 3)]
         public string description;
     }
 
@@ -27,9 +26,9 @@ namespace Neo.Bonus
     [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neo/Bonus/Slot/Sprites Data", order = 3)]
     public class SpritesData : ScriptableObject
     {
-        [Tooltip("Массив визуальных данных для всех символов слот-машины")]
-        [SerializeField] private SlotVisualData[] _visuals;
-        
+        [Tooltip("Массив визуальных данных для всех символов слот-машины")] [SerializeField]
+        private SlotVisualData[] _visuals;
+
         /// <summary>
         ///     Массив визуальных данных символов.
         /// </summary>

@@ -30,27 +30,18 @@ namespace Neo.Tools
             Direction
         }
 
-        [Header("Mode")]
-        [SerializeField]
-        private MoveMode mode = MoveMode.DeltaNormalized;
+        [Header("Mode")] [SerializeField] private MoveMode mode = MoveMode.DeltaNormalized;
 
-        [Header("Axis Mask")]
-        [Tooltip("Movement plane/axis restriction.")]
-        [SerializeField]
+        [Header("Axis Mask")] [Tooltip("Movement plane/axis restriction.")] [SerializeField]
         private AxisMask axes = AxisMask.XY;
 
-        [Header("Speed")]
-        [Tooltip("Units per second.")]
-        [SerializeField]
+        [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
-        [Header("Δ-sensitivity")]
-        [Tooltip("Pixel to world unit conversion factor.")]
-        [SerializeField]
+        [Header("Δ-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
         private float pxToWorld = .01f;
 
-        [Header("Point Offset")]
-        [SerializeField]
+        [Header("Point Offset")] [SerializeField]
         private Vector2 offset;
 
         [Header("Events")] public UnityEvent OnMoveStart;

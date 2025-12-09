@@ -35,7 +35,7 @@ namespace Neo
 
             public UnityEvent<int> OnChangePage;
             public UnityEvent OnStartPage;
-            
+
             private Dictionary<int, GameObject> _pageCache;
 
             private void Awake()
@@ -48,14 +48,16 @@ namespace Neo
                     SetPage(startId);
                 }
             }
-            
+
             private void BuildPageCache()
             {
                 _pageCache = new Dictionary<int, GameObject>(_pages.Length);
                 for (int i = 0; i < _pages.Length; i++)
                 {
                     if (_pages[i] != null)
+                    {
                         _pageCache[i] = _pages[i];
+                    }
                 }
             }
 
@@ -98,13 +100,15 @@ namespace Neo
             public void SetPage(int id)
             {
                 this.id = id;
-                
+
                 foreach (GameObject page in _pages)
                 {
                     if (page != null)
+                    {
                         page.SetActive(false);
+                    }
                 }
-                
+
                 if (_pageCache != null && _pageCache.TryGetValue(id, out GameObject targetPage))
                 {
                     targetPage.SetActive(true);

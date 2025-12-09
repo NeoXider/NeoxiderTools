@@ -88,7 +88,7 @@ namespace Neo
             private void Load()
             {
                 _money = SaveProvider.GetFloat(_moneySave, _money);
-                _allMoney = SaveProvider.GetFloat(_moneySave + nameof(_allMoney), 0);
+                _allMoney = SaveProvider.GetFloat(_moneySave + nameof(_allMoney));
             }
 
             private void Save()

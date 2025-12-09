@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    /// GUI отрисовка для окна поиска и удаления Missing Scripts
+    ///     GUI отрисовка для окна поиска и удаления Missing Scripts
     /// </summary>
     public class FindAndRemoveMissingScriptsWindowGUI : EditorWindowGUI
     {
@@ -23,17 +23,17 @@ namespace Neo.Editor.Windows
         private string _status = "";
 
         /// <summary>
-        /// Отрисовка GUI
+        ///     Отрисовка GUI
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
             EditorGUILayout.BeginHorizontal();
-            
+
             if (GUILayout.Button("Find in Current Scene Only"))
             {
                 SearchCurrentSceneOnly();
             }
-            
+
             if (GUILayout.Button("Find in All Scenes & Prefabs"))
             {
                 _objectsWithMissing.Clear();
@@ -41,7 +41,7 @@ namespace Neo.Editor.Windows
                 _initialScenePath = SceneManager.GetActiveScene().path;
                 EditorApplication.update += SearchAll;
             }
-            
+
             EditorGUILayout.EndHorizontal();
 
             GUILayout.Label(_status);
@@ -90,7 +90,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Отписка от событий при закрытии
+        ///     Отписка от событий при закрытии
         /// </summary>
         public void OnDisable()
         {
@@ -98,16 +98,16 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        /// Поиск Missing Scripts только в текущей сцене
+        ///     Поиск Missing Scripts только в текущей сцене
         /// </summary>
         private void SearchCurrentSceneOnly()
         {
             _objectsWithMissing.Clear();
             _status = "Searching current scene...";
             _initialScenePath = SceneManager.GetActiveScene().path;
-            
+
             Scene currentScene = SceneManager.GetActiveScene();
-            
+
             if (string.IsNullOrEmpty(currentScene.path))
             {
                 _status = "Scene is not saved. Please save the scene first.";
@@ -120,10 +120,10 @@ namespace Neo.Editor.Windows
                 FindMissingInHierarchy(go, currentScene.path, true, "/");
             }
 
-            _status = _objectsWithMissing.Count > 0 
-                ? $"Found {_objectsWithMissing.Count} objects with Missing Scripts in current scene." 
+            _status = _objectsWithMissing.Count > 0
+                ? $"Found {_objectsWithMissing.Count} objects with Missing Scripts in current scene."
                 : "No Missing Scripts found in current scene.";
-            
+
             EditorWindow.focusedWindow?.Repaint();
         }
 
@@ -183,7 +183,8 @@ namespace Neo.Editor.Windows
                     _status = $"Found {_objectsWithMissing.Count} objects with Missing Scripts.";
                     EditorUtility.ClearProgressBar();
                     EditorApplication.update -= SearchAll;
-                    if (!string.IsNullOrEmpty(_initialScenePath) && _initialScenePath != SceneManager.GetActiveScene().path)
+                    if (!string.IsNullOrEmpty(_initialScenePath) &&
+                        _initialScenePath != SceneManager.GetActiveScene().path)
                     {
                         EditorSceneManager.OpenScene(_initialScenePath, OpenSceneMode.Single);
                     }
@@ -402,4 +403,3 @@ namespace Neo.Editor.Windows
         }
     }
 }
-

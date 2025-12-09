@@ -1,38 +1,38 @@
 namespace Neo.Cards
 {
     /// <summary>
-    /// Масти игральных карт
+    ///     Масти игральных карт
     /// </summary>
     public enum Suit
     {
         /// <summary>
-        /// Червы (красные)
+        ///     Червы (красные)
         /// </summary>
         Hearts = 0,
 
         /// <summary>
-        /// Бубны (красные)
+        ///     Бубны (красные)
         /// </summary>
         Diamonds = 1,
 
         /// <summary>
-        /// Трефы (чёрные)
+        ///     Трефы (чёрные)
         /// </summary>
         Clubs = 2,
 
         /// <summary>
-        /// Пики (чёрные)
+        ///     Пики (чёрные)
         /// </summary>
         Spades = 3
     }
 
     /// <summary>
-    /// Расширения для работы с мастями
+    ///     Расширения для работы с мастями
     /// </summary>
     public static class SuitExtensions
     {
         /// <summary>
-        /// Проверяет, является ли масть красной (Hearts или Diamonds)
+        ///     Проверяет, является ли масть красной (Hearts или Diamonds)
         /// </summary>
         public static bool IsRed(this Suit suit)
         {
@@ -40,7 +40,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Проверяет, является ли масть чёрной (Clubs или Spades)
+        ///     Проверяет, является ли масть чёрной (Clubs или Spades)
         /// </summary>
         public static bool IsBlack(this Suit suit)
         {
@@ -48,7 +48,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает символ масти в Unicode
+        ///     Возвращает символ масти в Unicode
         /// </summary>
         public static char ToSymbol(this Suit suit)
         {
@@ -63,7 +63,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        /// Возвращает название масти на русском языке
+        ///     Возвращает название масти на русском языке
         /// </summary>
         public static string ToRussianName(this Suit suit)
         {
@@ -78,4 +78,3 @@ namespace Neo.Cards
         }
     }
 }
-

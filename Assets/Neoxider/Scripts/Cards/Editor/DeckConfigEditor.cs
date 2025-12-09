@@ -1,10 +1,11 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Cards.Editor
 {
     /// <summary>
-    /// Кастомный редактор для DeckConfig с превью спрайтов
+    ///     Кастомный редактор для DeckConfig с превью спрайтов
     /// </summary>
     [CustomEditor(typeof(DeckConfig))]
     public class DeckConfigEditor : UnityEditor.Editor
@@ -12,23 +13,23 @@ namespace Neo.Cards.Editor
         private const float PreviewSize = 60f;
         private const float PreviewSpacing = 5f;
         private const int MaxPreviewsPerRow = 7;
+        private SerializedProperty _backSprite;
+        private SerializedProperty _blackJoker;
+        private SerializedProperty _clubs;
 
         private SerializedProperty _deckType;
-        private SerializedProperty _gameDeckType;
-        private SerializedProperty _backSprite;
-        private SerializedProperty _hearts;
         private SerializedProperty _diamonds;
-        private SerializedProperty _clubs;
-        private SerializedProperty _spades;
+        private SerializedProperty _gameDeckType;
+        private SerializedProperty _hearts;
         private SerializedProperty _redJoker;
-        private SerializedProperty _blackJoker;
+        private bool _showClubs = true;
+        private bool _showDiamonds = true;
 
         private bool _showHearts = true;
-        private bool _showDiamonds = true;
-        private bool _showClubs = true;
-        private bool _showSpades = true;
         private bool _showJokers = true;
+        private bool _showSpades = true;
         private bool _showValidation = true;
+        private SerializedProperty _spades;
 
         private void OnEnable()
         {
@@ -73,7 +74,7 @@ namespace Neo.Cards.Editor
         private void DrawHeader()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            GUIStyle headerStyle = new GUIStyle(EditorStyles.boldLabel)
+            GUIStyle headerStyle = new(EditorStyles.boldLabel)
             {
                 fontSize = 14,
                 alignment = TextAnchor.MiddleCenter
@@ -86,42 +87,46 @@ namespace Neo.Cards.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             EditorGUILayout.LabelField("Настройки колоды", EditorStyles.boldLabel);
-            
-            EditorGUILayout.PropertyField(_deckType, new GUIContent("Тип для спрайтов", "Сколько карт загружено в конфиг"));
-            
+
+            EditorGUILayout.PropertyField(_deckType,
+                new GUIContent("Тип для спрайтов", "Сколько карт загружено в конфиг"));
+
             int expectedCount = GetExpectedCardCount();
             EditorGUILayout.HelpBox($"Ожидается {expectedCount} карт на каждую масть", MessageType.Info);
-            
+
             EditorGUILayout.Space(5);
-            EditorGUILayout.PropertyField(_gameDeckType, new GUIContent("Тип для игры", "Сколько карт использовать в игре"));
-            
+            EditorGUILayout.PropertyField(_gameDeckType,
+                new GUIContent("Тип для игры", "Сколько карт использовать в игре"));
+
             DeckType spriteType = (DeckType)_deckType.enumValueIndex;
             DeckType gameType = (DeckType)_gameDeckType.enumValueIndex;
-            
+
             int gameCardCount = GetGameCardCount(gameType);
-            string gameInfo = gameType == DeckType.Standard54 
-                ? $"В игре: {gameCardCount} карт (52 + 2 джокера)" 
+            string gameInfo = gameType == DeckType.Standard54
+                ? $"В игре: {gameCardCount} карт (52 + 2 джокера)"
                 : $"В игре: {gameCardCount} карт";
-            
+
             if (IsGameTypeValid(spriteType, gameType))
             {
                 EditorGUILayout.HelpBox(gameInfo, MessageType.Info);
             }
             else
             {
-                EditorGUILayout.HelpBox($"⚠ GameDeckType ({gameType}) требует карты, которых нет в DeckType ({spriteType})", MessageType.Error);
+                EditorGUILayout.HelpBox(
+                    $"⚠ GameDeckType ({gameType}) требует карты, которых нет в DeckType ({spriteType})",
+                    MessageType.Error);
             }
-            
+
             EditorGUILayout.EndVertical();
         }
-        
+
         private bool IsGameTypeValid(DeckType spriteType, DeckType gameType)
         {
             Rank spriteMinRank = spriteType.GetMinRank();
             Rank gameMinRank = gameType.GetMinRank();
             return gameMinRank >= spriteMinRank;
         }
-        
+
         private int GetGameCardCount(DeckType gameType)
         {
             return gameType switch
@@ -147,6 +152,7 @@ namespace Neo.Cards.Editor
                 Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize));
                 DrawSpritePreview(rect, sprite);
             }
+
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.EndVertical();
@@ -201,9 +207,11 @@ namespace Neo.Cards.Editor
                 EditorGUILayout.PropertyField(_redJoker, GUIContent.none);
                 if (_redJoker.objectReferenceValue != null)
                 {
-                    Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
+                    Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize),
+                        GUILayout.Height(PreviewSize));
                     DrawSpritePreview(rect, (Sprite)_redJoker.objectReferenceValue);
                 }
+
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.Space(3);
@@ -214,9 +222,11 @@ namespace Neo.Cards.Editor
                 EditorGUILayout.PropertyField(_blackJoker, GUIContent.none);
                 if (_blackJoker.objectReferenceValue != null)
                 {
-                    Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
+                    Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize),
+                        GUILayout.Height(PreviewSize));
                     DrawSpritePreview(rect, (Sprite)_blackJoker.objectReferenceValue);
                 }
+
                 EditorGUILayout.EndHorizontal();
             }
 
@@ -225,14 +235,18 @@ namespace Neo.Cards.Editor
 
         private void DrawValidation()
         {
-            _showValidation = EditorGUILayout.Foldout(_showValidation, "Валидация конфигурации", true, EditorStyles.foldoutHeader);
+            _showValidation = EditorGUILayout.Foldout(_showValidation, "Валидация конфигурации", true,
+                EditorStyles.foldoutHeader);
 
-            if (!_showValidation) return;
+            if (!_showValidation)
+            {
+                return;
+            }
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             DeckConfig config = (DeckConfig)target;
-            bool isValid = config.Validate(out var errors, out var warnings);
+            bool isValid = config.Validate(out List<string> errors, out List<string> warnings);
 
             if (isValid && warnings.Count == 0)
             {
@@ -240,11 +254,12 @@ namespace Neo.Cards.Editor
             }
             else
             {
-                foreach (var error in errors)
+                foreach (string error in errors)
                 {
                     EditorGUILayout.HelpBox(error, MessageType.Error);
                 }
-                foreach (var warning in warnings)
+
+                foreach (string warning in warnings)
                 {
                     EditorGUILayout.HelpBox(warning, MessageType.Warning);
                 }
@@ -278,7 +293,10 @@ namespace Neo.Cards.Editor
 
         private void DrawSpritePreviewGrid(SerializedProperty arrayProperty)
         {
-            if (arrayProperty.arraySize == 0) return;
+            if (arrayProperty.arraySize == 0)
+            {
+                return;
+            }
 
             EditorGUILayout.BeginHorizontal();
 
@@ -316,12 +334,15 @@ namespace Neo.Cards.Editor
 
         private void DrawSpritePreview(Rect rect, Sprite sprite)
         {
-            if (sprite == null) return;
+            if (sprite == null)
+            {
+                return;
+            }
 
             Texture2D texture = sprite.texture;
             Rect spriteRect = sprite.textureRect;
 
-            Rect texCoords = new Rect(
+            Rect texCoords = new(
                 spriteRect.x / texture.width,
                 spriteRect.y / texture.height,
                 spriteRect.width / texture.width,
@@ -344,4 +365,3 @@ namespace Neo.Cards.Editor
         }
     }
 }
-
