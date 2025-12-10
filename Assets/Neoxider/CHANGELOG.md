@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.3.7] - Unreleased
+## [5.3.8] - Unreleased
+
+### Добавлено
+- **AiNavigation**: Добавлена поддержка зоны патрулирования через BoxCollider
+  - Новое поле `patrolZone` - можно задать BoxCollider для случайного патрулирования
+  - Агент будет выбирать случайные точки внутри зоны и перемещаться к ним
+  - Работает в режимах Patrol и Combined
+  - Если задан patrolZone, то массив patrolPoints игнорируется
+  - Методы `SetPatrolZone(BoxCollider)` и `ClearPatrolZone()` для управления в рантайме
+  - Свойство `UsesPatrolZone` для проверки режима
+  - Визуализация зоны через Gizmos (полупрозрачный зелёный куб)
 
 ### Исправлено
 - **Physics модуль**: Исправлены ошибки компиляции с атрибутами Odin Inspector

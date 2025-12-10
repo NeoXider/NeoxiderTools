@@ -34,6 +34,9 @@ namespace Neo.Tools
         [Header("Patrol Settings")] [Tooltip("Patrol points array.")] [SerializeField]
         private Transform[] patrolPoints;
 
+        [Tooltip("Zone for random patrol (if set, ignores patrol points).")] [SerializeField]
+        private BoxCollider patrolZone;
+
         [Tooltip("Wait time at each patrol point.")] [SerializeField]
         private float patrolWaitTime = 1f;
 
@@ -150,6 +153,11 @@ namespace Neo.Tools
         public int CurrentPatrolIndex { get; private set; }
 
         public MovementMode CurrentMode => movementMode;
+
+        /// <summary>
+        ///     Проверка, используется ли зона патрулирования вместо точек.
+        /// </summary>
+        public bool UsesPatrolZone => patrolZone != null;
 
         public float StoppingDistance
         {
@@ -391,6 +399,18 @@ namespace Neo.Tools
 
         private void DrawPatrolPath()
         {
+            if (patrolZone != null)
+            {
+                Gizmos.color = new Color(0f, 1f, 0f, 0.3f);
+                Matrix4x4 oldMatrix = Gizmos.matrix;
+                Gizmos.matrix = patrolZone.transform.localToWorldMatrix;
+                Gizmos.DrawCube(patrolZone.center, patrolZone.size);
+                Gizmos.color = Color.green;
+                Gizmos.DrawWireCube(patrolZone.center, patrolZone.size);
+                Gizmos.matrix = oldMatrix;
+                return;
+            }
+
             if (patrolPoints == null || patrolPoints.Length == 0)
             {
                 return;
@@ -646,15 +666,15 @@ namespace Neo.Tools
         /// </summary>
         public void StartPatrol()
         {
-            if (patrolPoints == null || patrolPoints.Length == 0)
+            if (patrolZone == null && (patrolPoints == null || patrolPoints.Length == 0))
             {
-                Debug.LogWarning($"AiNavigation ({gameObject.name}): No patrol points set!");
+                Debug.LogWarning($"AiNavigation ({gameObject.name}): No patrol points or patrol zone set!");
                 return;
             }
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Starting patrol");
+                Debug.Log($"[{gameObject.name}] Starting patrol" + (patrolZone != null ? " in zone" : " with points"));
             }
 
             if (movementMode == MovementMode.Combined && target == null && initialTarget != null)
@@ -671,7 +691,16 @@ namespace Neo.Tools
             isFollowingTarget = false;
             isWaitingAtPatrol = false;
             CurrentPatrolIndex = 0;
-            MoveToPatrolPoint(CurrentPatrolIndex);
+
+            if (patrolZone != null)
+            {
+                MoveToRandomPointInZone();
+            }
+            else
+            {
+                MoveToPatrolPoint(CurrentPatrolIndex);
+            }
+
             onPatrolStarted?.Invoke();
         }
 
@@ -723,6 +752,26 @@ namespace Neo.Tools
                 CurrentPatrolIndex = 0;
                 MoveToPatrolPoint(CurrentPatrolIndex);
             }
+        }
+
+        /// <summary>
+        ///     Set patrol zone at runtime. If set, patrol points will be ignored.
+        /// </summary>
+        public void SetPatrolZone(BoxCollider zone)
+        {
+            patrolZone = zone;
+            if (IsPatrolling && patrolZone != null)
+            {
+                MoveToRandomPointInZone();
+            }
+        }
+
+        /// <summary>
+        ///     Clear patrol zone (will use patrol points instead).
+        /// </summary>
+        public void ClearPatrolZone()
+        {
+            patrolZone = null;
         }
 
         #endregion
@@ -1044,6 +1093,72 @@ namespace Neo.Tools
             SetDestination(patrolPoints[index].position);
         }
 
+        private void MoveToRandomPointInZone()
+        {
+            if (patrolZone == null)
+            {
+                return;
+            }
+
+            Vector3 randomPoint = GetRandomPointInBox(patrolZone);
+
+            if (NavMesh.SamplePosition(randomPoint, out NavMeshHit hit, patrolZone.size.magnitude, NavMesh.AllAreas))
+            {
+                if (agent != null)
+                {
+                    agent.stoppingDistance = stoppingDistance;
+                }
+
+                hasStopped = false;
+                SetDestination(hit.position);
+
+                if (debugMode)
+                {
+                    Debug.Log($"[{gameObject.name}] Moving to random point in zone: {hit.position}");
+                }
+            }
+            else
+            {
+                if (debugMode)
+                {
+                    Debug.LogWarning($"[{gameObject.name}] Could not find valid NavMesh position in patrol zone");
+                }
+
+                StartCoroutine(RetryMoveToRandomPoint());
+            }
+        }
+
+        private IEnumerator RetryMoveToRandomPoint()
+        {
+            yield return new WaitForSeconds(0.5f);
+
+            if (IsPatrolling && patrolZone != null)
+            {
+                MoveToRandomPointInZone();
+            }
+        }
+
+        private Vector3 GetRandomPointInBox(BoxCollider box)
+        {
+            Vector3 center = box.transform.TransformPoint(box.center);
+            Vector3 size = box.size;
+            Vector3 scale = box.transform.lossyScale;
+
+            Vector3 halfExtents = new(
+                size.x * scale.x * 0.5f,
+                size.y * scale.y * 0.5f,
+                size.z * scale.z * 0.5f
+            );
+
+            Vector3 randomLocal = new(
+                Random.Range(-halfExtents.x, halfExtents.x),
+                Random.Range(-halfExtents.y, halfExtents.y),
+                Random.Range(-halfExtents.z, halfExtents.z)
+            );
+
+            return center + box.transform.rotation * randomLocal;
+        }
+
         private IEnumerator WaitAtPatrolPoint()
         {
             isWaitingAtPatrol = true;
@@ -1051,7 +1166,8 @@ namespace Neo.Tools
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Reached patrol point {CurrentPatrolIndex}, waiting {patrolWaitTime}s");
+                string pointInfo = patrolZone != null ? "random point in zone" : $"point {CurrentPatrolIndex}";
+                Debug.Log($"[{gameObject.name}] Reached patrol {pointInfo}, waiting {patrolWaitTime}s");
             }
 
             yield return new WaitForSeconds(patrolWaitTime);
@@ -1062,6 +1178,17 @@ namespace Neo.Tools
 
         private void MoveToNextPatrolPoint()
         {
+            if (patrolZone != null)
+            {
+                if (debugMode)
+                {
+                    Debug.Log($"[{gameObject.name}] Moving to next random point in zone");
+                }
+
+                MoveToRandomPointInZone();
+                return;
+            }
+
             CurrentPatrolIndex++;
 
             if (CurrentPatrolIndex >= patrolPoints.Length)
@@ -1129,12 +1256,24 @@ namespace Neo.Tools
                 agent.isStopped = false;
             }
 
-            if (debugMode)
+            if (patrolZone != null)
             {
-                Debug.Log($"[{gameObject.name}] Resuming patrol, moving to point {CurrentPatrolIndex}");
-            }
+                if (debugMode)
+                {
+                    Debug.Log($"[{gameObject.name}] Resuming patrol, moving to random point in zone");
+                }
 
-            MoveToPatrolPoint(CurrentPatrolIndex);
+                MoveToRandomPointInZone();
+            }
+            else
+            {
+                if (debugMode)
+                {
+                    Debug.Log($"[{gameObject.name}] Resuming patrol, moving to point {CurrentPatrolIndex}");
+                }
+
+                MoveToPatrolPoint(CurrentPatrolIndex);
+            }
         }
 
         #endregion

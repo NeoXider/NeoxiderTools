@@ -41,9 +41,7 @@ namespace Neo.Tools
         [FoldoutGroup("Force")]
         [LabelText("Base Force (N)")]
 #endif
-        [Min(0f)]
-        [SerializeField]
-        private float defaultForce = 10f;
+        [Min(0f)] [SerializeField] private float defaultForce = 10f;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
 #endif

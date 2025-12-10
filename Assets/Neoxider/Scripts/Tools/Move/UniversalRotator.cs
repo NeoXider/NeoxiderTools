@@ -61,8 +61,7 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
         [LabelText("Скорость (°/сек)")]
 #endif
-        [Tooltip("Скорость вращения (град/сек).")]
-        [Min(0f)]
+        [Tooltip("Скорость вращения (град/сек).")] [Min(0f)]
         public float rotationSpeed = 360f;
 
         [Tooltip("Офсет вращения. В 3D — полный Euler. В 2D используется только Z.")]
