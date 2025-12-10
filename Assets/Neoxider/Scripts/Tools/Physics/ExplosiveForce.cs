@@ -1,6 +1,9 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 
 namespace Neo.Tools
 {
@@ -30,18 +33,6 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Режим применения силы.
-        /// </summary>
-        public enum ForceMode
-        {
-            /// <summary>AddForce - постоянная сила</summary>
-            AddForce,
-
-            /// <summary>AddExplosionForce - взрывная сила с затуханием</summary>
-            AddExplosionForce
-        }
-
-        /// <summary>
         ///     Тип затухания силы по расстоянию.
         /// </summary>
         public enum FalloffType
@@ -51,6 +42,18 @@ namespace Neo.Tools
 
             /// <summary>Квадратичное затухание</summary>
             Quadratic
+        }
+
+        /// <summary>
+        ///     Режим применения силы.
+        /// </summary>
+        public enum ForceMode
+        {
+            /// <summary>AddForce - постоянная сила</summary>
+            AddForce,
+
+            /// <summary>AddExplosionForce - взрывная сила с затуханием</summary>
+            AddExplosionForce
         }
 
         [Header("Активация")] [Tooltip("Режим активации взрыва")] [SerializeField]
@@ -135,6 +138,15 @@ namespace Neo.Tools
                     Explode();
                 }
             }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, radius);
+
+            Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
+            Gizmos.DrawSphere(transform.position, radius);
         }
 
         /// <summary>
@@ -294,15 +306,6 @@ namespace Neo.Tools
         private void ResetExplosionButton()
         {
             ResetExplosion();
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, radius);
-
-            Gizmos.color = new Color(1f, 0f, 0f, 0.2f);
-            Gizmos.DrawSphere(transform.position, radius);
         }
     }
 }

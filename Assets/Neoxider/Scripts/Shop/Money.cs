@@ -5,7 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo
@@ -16,8 +15,6 @@ namespace Neo
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
             [Space] [SerializeField] private string _moneySave = "Money";
-
-            [Space] [Header("Text")] private readonly int _roundToDecimal = 2;
 
             [SerializeField] private float _allMoney;
             [SerializeField] private float _lastChangeMoney;
@@ -36,11 +33,20 @@ namespace Neo
             [SerializeField] private TMP_Text[] t_levelMoney;
 
             [SerializeField] private TMP_Text[] t_money;
+
+            [Space] [Header("Text")] private readonly int _roundToDecimal = 2;
             public float levelMoney => _levelMoney;
             public float money => _money;
             public float allMoney => _allMoney;
 
             public float LastChangeMoney => _lastChangeMoney;
+
+            private void Start()
+            {
+                Load();
+                SetLevelMoney();
+                ChangeMoneyEvent();
+            }
 #if ODIN_INSPECTOR
             [Button]
 #else
@@ -76,13 +82,6 @@ namespace Neo
             protected override void Init()
             {
                 base.Init();
-            }
-
-            private void Start()
-            {
-                Load();
-                SetLevelMoney();
-                ChangeMoneyEvent();
             }
 
             private void Load()

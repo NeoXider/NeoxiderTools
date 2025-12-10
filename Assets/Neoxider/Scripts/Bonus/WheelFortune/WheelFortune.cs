@@ -1,5 +1,4 @@
 ﻿#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 using UnityEngine;
 using UnityEngine.Events;
@@ -108,183 +107,6 @@ namespace Neo.Bonus
             {
                 _canvasGroup.interactable = true;
             }
-        }
-
-        private void OnValidate()
-        {
-            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
-            if (_debugLogId)
-            {
-                Debug.Log("Wheel Id: " + GetResultId());
-            }
-
-            _canvasGroup ??= GetComponent<CanvasGroup>();
-
-            if (_setPrizes && _wheelTransform != null)
-            {
-                items = new GameObject[_wheelTransform.childCount];
-                for (int i = 0; i < items.Length; i++)
-                {
-                    items[i] = _wheelTransform.GetChild(i).gameObject;
-                }
-
-                _setPrizes = false;
-            }
-
-            if (_autoArrangePrizes && _wheelAngleInspector == 0)
-            {
-                ArrangePrizes();
-            }
-        }
-
-        private void RotateWheel()
-        {
-            _wheelTransform.Rotate(Vector3.back * (_rotateLeft ? _currentAngularVelocity : -_currentAngularVelocity) *
-                                   Time.deltaTime);
-            if (State == SpinState.Decelerating)
-            {
-                _currentAngularVelocity -= Time.deltaTime * _angularDeceleration;
-                if (_currentAngularVelocity <= 0f)
-                {
-                    if (_enableAlignment)
-                    {
-                        InitAlignment();
-                    }
-                    else
-                    {
-                        EndRotation();
-                    }
-                }
-            }
-        }
-
-        private void AlignWheel()
-        {
-            _alignmentElapsed += Time.deltaTime;
-            float t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
-            float angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle, t);
-            _wheelTransform.rotation = Quaternion.Euler(0, 0, angle);
-            if (t >= 1f)
-            {
-                EndRotation();
-            }
-        }
-
-        private void InitAlignment()
-        {
-            _alignmentStartAngle = _wheelTransform.rotation.eulerAngles.z;
-            _alignmentTargetAngle = CalculateTargetAngle();
-            _alignmentElapsed = 0f;
-            State = SpinState.Aligning;
-        }
-
-        private float CalculateTargetAngle()
-        {
-            int resultId = GetResultId();
-            float sectorAngle = 360f / items.Length;
-            float arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
-            float currentWheelAngle = _wheelTransform.rotation.eulerAngles.z;
-            float targetRelative = resultId * sectorAngle - _wheelOffsetZ;
-            float currentRelative = (currentWheelAngle - arrowAngle + 360f) % 360f;
-            float diff = targetRelative - currentRelative;
-            if (diff > 180f)
-            {
-                diff -= 360f;
-            }
-            else if (diff < -180f)
-            {
-                diff += 360f;
-            }
-
-            return currentWheelAngle + diff;
-        }
-
-        private void EndRotation()
-        {
-            State = SpinState.Idle;
-            if (_canvasGroup != null)
-            {
-                _canvasGroup.interactable = true;
-            }
-
-            OnWinIdVariant?.Invoke(GetResultId());
-        }
-
-        private int GetResultId()
-        {
-            float sectorAngle = 360f / items.Length;
-            float wheelAngle = _wheelTransform.rotation.eulerAngles.z;
-            float arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
-            float relativeAngle = (wheelAngle + _wheelOffsetZ - arrowAngle + 360f) % 360f;
-            int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
-            return (id + items.Length) % items.Length;
-        }
-#if ODIN_INSPECTOR
-            [Button]
-#else
-        [ButtonAttribute]
-#endif
-        public void Spin()
-        {
-            if (items.Length == 0)
-            {
-                return;
-            }
-
-            if (State == SpinState.Idle && (!_singleUse || (_singleUse && _canUse)))
-            {
-                _canUse = false;
-                State = SpinState.Spinning;
-                _currentAngularVelocity = _initialAngularVelocity;
-            }
-
-            if (_autoStopTime > 0)
-            {
-                Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
-            }
-        }
-#if ODIN_INSPECTOR
-            [Button]
-#else
-        [ButtonAttribute]
-#endif
-        public void Stop()
-        {
-            if (State == SpinState.Idle)
-            {
-                return;
-            }
-
-            if (_canvasGroup != null)
-            {
-                _canvasGroup.interactable = false;
-            }
-
-            State = SpinState.Decelerating;
-        }
-
-        private void ArrangePrizes()
-        {
-            if (items == null || items.Length == 0)
-            {
-                return;
-            }
-
-            float angleStep = 360f / items.Length;
-            for (int i = 0; i < items.Length; i++)
-            {
-                float angle = -i * angleStep + _offsetZ;
-                Transform itemTransform = items[i].transform;
-                float positionAngle = (angle + 90f) * Mathf.Deg2Rad;
-                itemTransform.localPosition =
-                    new Vector3(Mathf.Cos(positionAngle), Mathf.Sin(positionAngle), 0) * _prizeDistance;
-                itemTransform.localRotation = Quaternion.Euler(0, 0, angle);
-            }
-        }
-
-        public GameObject GetPrize(int id)
-        {
-            return items[id];
         }
 
 #if UNITY_EDITOR
@@ -444,5 +266,182 @@ namespace Neo.Bonus
             Handles.DrawWireDisc(center, Vector3.forward, radius);
         }
 #endif
+
+        private void OnValidate()
+        {
+            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
+            if (_debugLogId)
+            {
+                Debug.Log("Wheel Id: " + GetResultId());
+            }
+
+            _canvasGroup ??= GetComponent<CanvasGroup>();
+
+            if (_setPrizes && _wheelTransform != null)
+            {
+                items = new GameObject[_wheelTransform.childCount];
+                for (int i = 0; i < items.Length; i++)
+                {
+                    items[i] = _wheelTransform.GetChild(i).gameObject;
+                }
+
+                _setPrizes = false;
+            }
+
+            if (_autoArrangePrizes && _wheelAngleInspector == 0)
+            {
+                ArrangePrizes();
+            }
+        }
+
+        private void RotateWheel()
+        {
+            _wheelTransform.Rotate(Vector3.back * (_rotateLeft ? _currentAngularVelocity : -_currentAngularVelocity) *
+                                   Time.deltaTime);
+            if (State == SpinState.Decelerating)
+            {
+                _currentAngularVelocity -= Time.deltaTime * _angularDeceleration;
+                if (_currentAngularVelocity <= 0f)
+                {
+                    if (_enableAlignment)
+                    {
+                        InitAlignment();
+                    }
+                    else
+                    {
+                        EndRotation();
+                    }
+                }
+            }
+        }
+
+        private void AlignWheel()
+        {
+            _alignmentElapsed += Time.deltaTime;
+            float t = Mathf.Clamp01(_alignmentElapsed / _alignmentDuration);
+            float angle = Mathf.LerpAngle(_alignmentStartAngle, _alignmentTargetAngle, t);
+            _wheelTransform.rotation = Quaternion.Euler(0, 0, angle);
+            if (t >= 1f)
+            {
+                EndRotation();
+            }
+        }
+
+        private void InitAlignment()
+        {
+            _alignmentStartAngle = _wheelTransform.rotation.eulerAngles.z;
+            _alignmentTargetAngle = CalculateTargetAngle();
+            _alignmentElapsed = 0f;
+            State = SpinState.Aligning;
+        }
+
+        private float CalculateTargetAngle()
+        {
+            int resultId = GetResultId();
+            float sectorAngle = 360f / items.Length;
+            float arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
+            float currentWheelAngle = _wheelTransform.rotation.eulerAngles.z;
+            float targetRelative = resultId * sectorAngle - _wheelOffsetZ;
+            float currentRelative = (currentWheelAngle - arrowAngle + 360f) % 360f;
+            float diff = targetRelative - currentRelative;
+            if (diff > 180f)
+            {
+                diff -= 360f;
+            }
+            else if (diff < -180f)
+            {
+                diff += 360f;
+            }
+
+            return currentWheelAngle + diff;
+        }
+
+        private void EndRotation()
+        {
+            State = SpinState.Idle;
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.interactable = true;
+            }
+
+            OnWinIdVariant?.Invoke(GetResultId());
+        }
+
+        private int GetResultId()
+        {
+            float sectorAngle = 360f / items.Length;
+            float wheelAngle = _wheelTransform.rotation.eulerAngles.z;
+            float arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
+            float relativeAngle = (wheelAngle + _wheelOffsetZ - arrowAngle + 360f) % 360f;
+            int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
+            return (id + items.Length) % items.Length;
+        }
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [ButtonAttribute]
+#endif
+        public void Spin()
+        {
+            if (items.Length == 0)
+            {
+                return;
+            }
+
+            if (State == SpinState.Idle && (!_singleUse || (_singleUse && _canUse)))
+            {
+                _canUse = false;
+                State = SpinState.Spinning;
+                _currentAngularVelocity = _initialAngularVelocity;
+            }
+
+            if (_autoStopTime > 0)
+            {
+                Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
+            }
+        }
+#if ODIN_INSPECTOR
+        [Button]
+#else
+        [ButtonAttribute]
+#endif
+        public void Stop()
+        {
+            if (State == SpinState.Idle)
+            {
+                return;
+            }
+
+            if (_canvasGroup != null)
+            {
+                _canvasGroup.interactable = false;
+            }
+
+            State = SpinState.Decelerating;
+        }
+
+        private void ArrangePrizes()
+        {
+            if (items == null || items.Length == 0)
+            {
+                return;
+            }
+
+            float angleStep = 360f / items.Length;
+            for (int i = 0; i < items.Length; i++)
+            {
+                float angle = -i * angleStep + _offsetZ;
+                Transform itemTransform = items[i].transform;
+                float positionAngle = (angle + 90f) * Mathf.Deg2Rad;
+                itemTransform.localPosition =
+                    new Vector3(Mathf.Cos(positionAngle), Mathf.Sin(positionAngle), 0) * _prizeDistance;
+                itemTransform.localRotation = Quaternion.Euler(0, 0, angle);
+            }
+        }
+
+        public GameObject GetPrize(int id)
+        {
+            return items[id];
+        }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using UnityEngine;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo
@@ -127,7 +126,7 @@ namespace Neo
         ///     Calculates and applies the appropriate camera scale based on current settings.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

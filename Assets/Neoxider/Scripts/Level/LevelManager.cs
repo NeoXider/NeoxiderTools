@@ -3,7 +3,6 @@ using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo
@@ -38,6 +37,31 @@ namespace Neo
             public int CurrentLevel => _currentLevel;
             public Map Map => _maps[_mapId];
 
+            private void OnValidate()
+            {
+                if (_parentLevel != null)
+                {
+                    HashSet<LevelButton> btns = new();
+
+                    foreach (Transform par in _parentLevel.GetComponentsInChildren<Transform>(true))
+                    foreach (Transform child in par.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (child.TryGetComponent(out LevelButton levelButton))
+                        {
+                            btns.Add(levelButton);
+                        }
+                    }
+
+                    _lvlBtns = new LevelButton[btns.Count];
+                    btns.CopyTo(_lvlBtns);
+                }
+
+                for (int i = 0; i < _maps.Length; i++)
+                {
+                    _maps[i].idMap = i;
+                }
+            }
+
             protected override void Init()
             {
                 base.Init();
@@ -64,31 +88,6 @@ namespace Neo
 
                 OnChangeMaxLevel?.Invoke(MaxLevel);
                 UpdateVisual();
-            }
-
-            private void OnValidate()
-            {
-                if (_parentLevel != null)
-                {
-                    HashSet<LevelButton> btns = new();
-
-                    foreach (Transform par in _parentLevel.GetComponentsInChildren<Transform>(true))
-                    foreach (Transform child in par.GetComponentsInChildren<Transform>(true))
-                    {
-                        if (child.TryGetComponent(out LevelButton levelButton))
-                        {
-                            btns.Add(levelButton);
-                        }
-                    }
-
-                    _lvlBtns = new LevelButton[btns.Count];
-                    btns.CopyTo(_lvlBtns);
-                }
-
-                for (int i = 0; i < _maps.Length; i++)
-                {
-                    _maps[i].idMap = i;
-                }
             }
 #if ODIN_INSPECTOR
             [Button]

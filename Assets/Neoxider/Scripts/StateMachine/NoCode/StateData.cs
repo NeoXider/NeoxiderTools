@@ -25,15 +25,6 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] [Tooltip("Имя состояния для идентификации")]
         private string stateName = "New State";
 
-        [Tooltip("Действия, выполняемые при входе в состояние")]
-        private readonly List<StateAction> onEnterActions = new();
-
-        [Tooltip("Действия, выполняемые при выходе из состояния")]
-        private readonly List<StateAction> onExitActions = new();
-
-        [Tooltip("Действия, выполняемые каждый кадр в состоянии")]
-        private readonly List<StateAction> onUpdateActions = new();
-
         /// <summary>
         ///     Имя состояния.
         /// </summary>
@@ -46,24 +37,27 @@ namespace Neo.StateMachine.NoCode
         /// <summary>
         ///     Действия при входе в состояние.
         /// </summary>
-        public List<StateAction> OnEnterActions => onEnterActions;
+        [field: Tooltip("Действия, выполняемые при входе в состояние")]
+        public List<StateAction> OnEnterActions { get; } = new();
 
         /// <summary>
         ///     Действия при обновлении состояния.
         /// </summary>
-        public List<StateAction> OnUpdateActions => onUpdateActions;
+        [field: Tooltip("Действия, выполняемые каждый кадр в состоянии")]
+        public List<StateAction> OnUpdateActions { get; } = new();
 
         /// <summary>
         ///     Действия при выходе из состояния.
         /// </summary>
-        public List<StateAction> OnExitActions => onExitActions;
+        [field: Tooltip("Действия, выполняемые при выходе из состояния")]
+        public List<StateAction> OnExitActions { get; } = new();
 
         /// <summary>
         ///     Вызывается при входе в состояние.
         /// </summary>
         public void OnEnter()
         {
-            ExecuteActions(onEnterActions);
+            ExecuteActions(OnEnterActions);
         }
 
         /// <summary>
@@ -71,7 +65,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnUpdate()
         {
-            ExecuteActions(onUpdateActions);
+            ExecuteActions(OnUpdateActions);
         }
 
         /// <summary>
@@ -79,7 +73,7 @@ namespace Neo.StateMachine.NoCode
         /// </summary>
         public void OnExit()
         {
-            ExecuteActions(onExitActions);
+            ExecuteActions(OnExitActions);
         }
 
         /// <summary>

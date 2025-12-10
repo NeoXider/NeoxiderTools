@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.UI

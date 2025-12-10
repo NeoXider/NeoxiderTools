@@ -3,7 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Tools
@@ -33,15 +32,15 @@ namespace Neo.Tools
 
         [Space] public TMP_Text[] textBestScores;
         public TMP_Text[] textScores;
-
-        private int _countStars;
-        private int _lastCountStars;
+        private string _cachedBestScoreString;
+        private int _cachedBestScoreValue = int.MinValue;
 
         // Кэшированные строки для избежания аллокаций
         private string _cachedScoreString;
         private int _cachedScoreValue = int.MinValue;
-        private string _cachedBestScoreString;
-        private int _cachedBestScoreValue = int.MinValue;
+
+        private int _countStars;
+        private int _lastCountStars;
 
         public int BestScore
         {
@@ -107,7 +106,7 @@ namespace Neo.Tools
         ///     Добавляет очки к текущему счету и опционально обновляет лучший результат.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -116,7 +115,7 @@ namespace Neo.Tools
             Set(score + amount, updateBestScore);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -129,7 +128,7 @@ namespace Neo.Tools
         ///     Устанавливает точное количество очков и опционально обновляет лучший результат.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -143,7 +142,7 @@ namespace Neo.Tools
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -236,7 +235,7 @@ namespace Neo.Tools
         ///     Сбрасывает текущий счет до нуля.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -247,7 +246,7 @@ namespace Neo.Tools
             SetScoreText();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

@@ -7,7 +7,6 @@ using TMPro;
 #endif
 
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo
@@ -418,7 +417,7 @@ namespace Neo
         ///     Starts or resumes the timer
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -535,7 +534,7 @@ namespace Neo
         /// </summary>
         /// <param name="paused">True to pause, false to resume</param>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -569,7 +568,7 @@ namespace Neo
         ///     Stops and resets the timer
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -589,7 +588,7 @@ namespace Neo
         ///     Resumes the timer from pause
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

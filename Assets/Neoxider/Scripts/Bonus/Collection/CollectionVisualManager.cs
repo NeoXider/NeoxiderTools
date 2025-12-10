@@ -4,7 +4,6 @@ using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Bonus
@@ -25,19 +24,6 @@ namespace Neo.Bonus
             set => _enableSetItem = value;
         }
 
-        protected override void Init()
-        {
-            base.Init();
-
-            if (_items == null || _items.Length == 0)
-            {
-                Debug.LogWarning("[CollectionVisualManager] Items array is empty!");
-                return;
-            }
-
-            Subscriber(true);
-        }
-
         private void Start()
         {
             if (Collection.IsInitialized)
@@ -55,6 +41,31 @@ namespace Neo.Bonus
             {
                 Visual();
             }
+        }
+
+        private void OnDestroy()
+        {
+            Subscriber(false);
+
+            if (Collection.IsInitialized)
+            {
+                Collection.I.OnItemAdded.RemoveListener(OnCollectionItemChanged);
+                Collection.I.OnItemRemoved.RemoveListener(OnCollectionItemChanged);
+                Collection.I.OnLoadItems.RemoveListener(OnCollectionLoaded);
+            }
+        }
+
+        protected override void Init()
+        {
+            base.Init();
+
+            if (_items == null || _items.Length == 0)
+            {
+                Debug.LogWarning("[CollectionVisualManager] Items array is empty!");
+                return;
+            }
+
+            Subscriber(true);
         }
 
         private IEnumerator WaitForCollectionAndSubscribe()
@@ -90,18 +101,6 @@ namespace Neo.Bonus
             }
         }
 
-        private void OnDestroy()
-        {
-            Subscriber(false);
-
-            if (Collection.IsInitialized)
-            {
-                Collection.I.OnItemAdded.RemoveListener(OnCollectionItemChanged);
-                Collection.I.OnItemRemoved.RemoveListener(OnCollectionItemChanged);
-                Collection.I.OnLoadItems.RemoveListener(OnCollectionLoaded);
-            }
-        }
-
         private void Subscriber(bool subscribe)
         {
             if (_items == null)
@@ -129,7 +128,7 @@ namespace Neo.Bonus
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -199,7 +198,7 @@ namespace Neo.Bonus
             return _items[id];
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

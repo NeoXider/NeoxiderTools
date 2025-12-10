@@ -38,10 +38,12 @@ namespace Neo.Tools
         [Tooltip("Auto will try to find 3D first, then 2D. Can be fixed manually.")]
         public BodyType bodyType = BodyType.Auto;
 #if ODIN_INSPECTOR
-[FoldoutGroup("Force")] 
-[LabelText("Base Force (N)")]
+        [FoldoutGroup("Force")]
+        [LabelText("Base Force (N)")]
 #endif
-        [Min(0f)] [SerializeField] private float defaultForce = 10f;
+        [Min(0f)]
+        [SerializeField]
+        private float defaultForce = 10f;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
 #endif
@@ -67,11 +69,11 @@ namespace Neo.Tools
 #endif
         public bool clampMaxSpeed;
 #if ODIN_INSPECTOR
-      [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
+        [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
 #endif
         public float maxSpeed = 20f;
 #if ODIN_INSPECTOR
-       [FoldoutGroup("Direction")] [LabelText("Direction Source")]
+        [FoldoutGroup("Direction")] [LabelText("Direction Source")]
 #endif
         public DirectionMode directionMode = DirectionMode.Velocity;
 #if ODIN_INSPECTOR
@@ -95,7 +97,7 @@ namespace Neo.Tools
 #endif
         public Transform target;
 #if ODIN_INSPECTOR
-   [FoldoutGroup("Events")]
+        [FoldoutGroup("Events")]
 #endif
         public UnityEvent OnApplyForce;
 #if ODIN_INSPECTOR
@@ -130,11 +132,11 @@ namespace Neo.Tools
             }
         }
 #if ODIN_INSPECTOR
-[FoldoutGroup("Controls")]
-[DisableInEditorMode]
+        [FoldoutGroup("Controls")]
+        [DisableInEditorMode]
 #endif
 #if ODIN_INSPECTOR
-            [Button("Apply Now")]
+        [Button("Apply Now")]
 #else
         [ButtonAttribute("Apply Now")]
 #endif

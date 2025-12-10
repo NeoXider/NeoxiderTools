@@ -1,7 +1,6 @@
 ﻿using Neo.Extensions;
 using UnityEngine;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Tools
@@ -43,7 +42,7 @@ namespace Neo.Tools
             }
         }
 #if ODIN_INSPECTOR
-            [Button("Update Position")]
+        [Button("Update Position")]
 #else
         [ButtonAttribute("Update Position")]
 #endif

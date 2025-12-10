@@ -14,7 +14,6 @@ namespace Neo
 {
     public class AnimationFly : Singleton<AnimationFly>
     {
-        private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
         public float arcStrength = 2.0f;
 #if ODIN_INSPECTOR
         [TableList]
@@ -46,6 +45,7 @@ namespace Neo
         public Transform spawnParent;
 
         public bool useUnscaledTime;
+        private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
 
         private void Start()
         {

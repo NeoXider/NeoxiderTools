@@ -3,7 +3,6 @@ using System.Reflection;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.StateMachine

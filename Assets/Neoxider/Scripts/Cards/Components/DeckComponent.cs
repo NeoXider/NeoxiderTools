@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -65,7 +66,7 @@ namespace Neo.Cards
         ///     Сбрасывает колоду
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void Reset()
         {
@@ -102,7 +103,7 @@ namespace Neo.Cards
         ///     Инициализирует колоду
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void Initialize()
         {
@@ -127,7 +128,7 @@ namespace Neo.Cards
         ///     Перемешивает колоду
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void Shuffle()
         {

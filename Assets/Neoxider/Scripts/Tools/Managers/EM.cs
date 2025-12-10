@@ -2,7 +2,6 @@
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Tools
@@ -38,7 +37,7 @@ namespace Neo.Tools
         public UnityEvent<bool> OnPauseApplication;
         public UnityEvent OnQuitApplication;
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -47,7 +46,7 @@ namespace Neo.Tools
             I?.OnPreparing?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -56,7 +55,7 @@ namespace Neo.Tools
             I?.OnGameStart?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -65,7 +64,7 @@ namespace Neo.Tools
             I?.OnLose?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -74,7 +73,7 @@ namespace Neo.Tools
             I?.OnWin?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -83,7 +82,7 @@ namespace Neo.Tools
             I?.OnEnd?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -92,7 +91,7 @@ namespace Neo.Tools
             I?.OnStopGame?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -101,7 +100,7 @@ namespace Neo.Tools
             I?.OnPlayerDeath?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -110,7 +109,7 @@ namespace Neo.Tools
             I?.OnPause?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -119,7 +118,7 @@ namespace Neo.Tools
             I?.OnResume?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -128,7 +127,7 @@ namespace Neo.Tools
             I?.OnMenu?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

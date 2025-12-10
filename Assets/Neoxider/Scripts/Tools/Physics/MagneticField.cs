@@ -1,6 +1,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+#if ODIN_INSPECTOR
+using Sirenix.OdinInspector;
+#endif
 
 namespace Neo.Tools
 {
@@ -11,6 +14,21 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(MagneticField))]
     public class MagneticField : MonoBehaviour
     {
+        /// <summary>
+        ///     Тип затухания силы по расстоянию.
+        /// </summary>
+        public enum FalloffType
+        {
+            /// <summary>Линейное затухание</summary>
+            Linear,
+
+            /// <summary>Квадратичное затухание</summary>
+            Quadratic,
+
+            /// <summary>Без затухания</summary>
+            Constant
+        }
+
         /// <summary>
         ///     Режим работы магнитного поля.
         /// </summary>
@@ -30,21 +48,6 @@ namespace Neo.Tools
 
             /// <summary>Притяжение к точке в пространстве</summary>
             ToPoint
-        }
-
-        /// <summary>
-        ///     Тип затухания силы по расстоянию.
-        /// </summary>
-        public enum FalloffType
-        {
-            /// <summary>Линейное затухание</summary>
-            Linear,
-
-            /// <summary>Квадратичное затухание</summary>
-            Quadratic,
-
-            /// <summary>Без затухания</summary>
-            Constant
         }
 
         [Header("Настройки поля")] [Tooltip("Режим работы поля")] [SerializeField]
@@ -95,8 +98,9 @@ namespace Neo.Tools
         [Tooltip("Вызывается при изменении режима (для Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
-        private readonly HashSet<GameObject> objectsInField = new();
         private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();
+
+        private readonly HashSet<GameObject> objectsInField = new();
         private float lastUpdateTime;
         private float toggleStartTime;
 
@@ -119,6 +123,57 @@ namespace Neo.Tools
         ///     Получить текущее активное состояние в режиме Toggle (true = притяжение, false = отталкивание).
         /// </summary>
         public bool CurrentToggleState { get; private set; }
+
+        private void Awake()
+        {
+            if (mode == FieldMode.Toggle)
+            {
+                toggleStartTime = Time.time;
+                CurrentToggleState = startWithAttract;
+            }
+        }
+
+        private void Update()
+        {
+            if (useFixedUpdate)
+            {
+                return;
+            }
+
+            UpdateToggleState();
+            UpdateField();
+        }
+
+        private void FixedUpdate()
+        {
+            if (!useFixedUpdate)
+            {
+                return;
+            }
+
+            UpdateToggleState();
+            UpdateField();
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector3 center = GetAttractionPoint();
+            bool isAttracting = mode == FieldMode.Attract ||
+                                mode == FieldMode.ToTarget ||
+                                mode == FieldMode.ToPoint ||
+                                (mode == FieldMode.Toggle && CurrentToggleState);
+            Gizmos.color = isAttracting ? Color.blue : Color.red;
+            Gizmos.DrawWireSphere(center, radius);
+
+            Gizmos.color = new Color(isAttracting ? 0f : 1f, 0f, isAttracting ? 1f : 0f, 0.1f);
+            Gizmos.DrawSphere(center, radius);
+
+            if (mode == FieldMode.ToTarget && targetTransform != null)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, targetTransform.position);
+            }
+        }
 
         /// <summary>
         ///     Переключить режим поля (Attract/Repel).
@@ -196,37 +251,6 @@ namespace Neo.Tools
         {
             targetPoint = point;
             mode = FieldMode.ToPoint;
-        }
-
-        private void Awake()
-        {
-            if (mode == FieldMode.Toggle)
-            {
-                toggleStartTime = Time.time;
-                CurrentToggleState = startWithAttract;
-            }
-        }
-
-        private void Update()
-        {
-            if (useFixedUpdate)
-            {
-                return;
-            }
-
-            UpdateToggleState();
-            UpdateField();
-        }
-
-        private void FixedUpdate()
-        {
-            if (!useFixedUpdate)
-            {
-                return;
-            }
-
-            UpdateToggleState();
-            UpdateField();
         }
 
         private void UpdateToggleState()
@@ -407,26 +431,6 @@ namespace Neo.Tools
         private void ResetToggleTimerButton()
         {
             ResetToggleTimer();
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Vector3 center = GetAttractionPoint();
-            bool isAttracting = mode == FieldMode.Attract ||
-                                mode == FieldMode.ToTarget ||
-                                mode == FieldMode.ToPoint ||
-                                (mode == FieldMode.Toggle && CurrentToggleState);
-            Gizmos.color = isAttracting ? Color.blue : Color.red;
-            Gizmos.DrawWireSphere(center, radius);
-
-            Gizmos.color = new Color(isAttracting ? 0f : 1f, 0f, isAttracting ? 1f : 0f, 0.1f);
-            Gizmos.DrawSphere(center, radius);
-
-            if (mode == FieldMode.ToTarget && targetTransform != null)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, targetTransform.position);
-            }
         }
     }
 }

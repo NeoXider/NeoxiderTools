@@ -6,7 +6,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Bonus
@@ -73,7 +72,7 @@ namespace Neo.Bonus
             AddProgress(addProgress);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -82,7 +81,7 @@ namespace Neo.Bonus
             ChangeProgress(amount);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -108,7 +107,7 @@ namespace Neo.Bonus
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -141,7 +140,7 @@ namespace Neo.Bonus
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

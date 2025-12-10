@@ -8,7 +8,6 @@ using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Tools
@@ -22,15 +21,6 @@ namespace Neo.Tools
     {
         [Header("Spawn Settings")] [SerializeField]
         private GameObject[] _prefabs;
-
-        /// <summary>
-        ///     Массив префабов для спавна. При установке выполняется валидация.
-        /// </summary>
-        public GameObject[] prefabs
-        {
-            get => _prefabs;
-            set => _prefabs = value ?? Array.Empty<GameObject>();
-        }
 
         [SerializeField] private bool _useObjectPool = true;
 
@@ -93,9 +83,18 @@ namespace Neo.Tools
 
         [SerializeField] private Collider2D _spawnAreaCollider2D;
 
-        public bool isSpawning { get; private set; }
-
         private int _spawnedCount;
+
+        /// <summary>
+        ///     Массив префабов для спавна. При установке выполняется валидация.
+        /// </summary>
+        public GameObject[] prefabs
+        {
+            get => _prefabs;
+            set => _prefabs = value ?? Array.Empty<GameObject>();
+        }
+
+        public bool isSpawning { get; private set; }
 
         public List<GameObject> SpawnedObjects { get; } = new();
 
@@ -139,7 +138,7 @@ namespace Neo.Tools
         ///     Запускает процесс спавна (корутина), если он ещё не запущен.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -158,7 +157,7 @@ namespace Neo.Tools
         ///     Останавливает процесс спавна. Текущие объекты остаются в сцене.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -196,7 +195,7 @@ namespace Neo.Tools
         ///     Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
         /// </summary>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -228,7 +227,7 @@ namespace Neo.Tools
         /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs" />.</param>
         /// <param name="position">Мировая позиция спавна.</param>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -367,7 +366,7 @@ namespace Neo.Tools
             return _useLocalRotation ? baseRot * offset : offset;
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

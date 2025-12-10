@@ -6,7 +6,6 @@ using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Bonus
@@ -57,7 +56,7 @@ namespace Neo.Bonus
             Load();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -83,7 +82,7 @@ namespace Neo.Bonus
             OnLoadItems?.Invoke();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -102,7 +101,7 @@ namespace Neo.Bonus
             SaveProvider.Save();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -189,7 +188,7 @@ namespace Neo.Bonus
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -213,7 +212,7 @@ namespace Neo.Bonus
             SaveProvider.Save();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

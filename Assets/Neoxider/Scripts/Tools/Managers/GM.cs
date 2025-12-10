@@ -1,7 +1,6 @@
 ﻿using Neo.Extensions;
 using UnityEngine;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Tools
@@ -80,7 +79,7 @@ namespace Neo.Tools
         #region Core Game Methods
 
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -91,7 +90,7 @@ namespace Neo.Tools
             EM.Menu();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -101,7 +100,7 @@ namespace Neo.Tools
             EM.Preparing();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -123,7 +122,7 @@ namespace Neo.Tools
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -138,7 +137,7 @@ namespace Neo.Tools
             EM.StopGame();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -154,7 +153,7 @@ namespace Neo.Tools
             EM.Lose();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -170,7 +169,7 @@ namespace Neo.Tools
             EM.Win();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -186,7 +185,7 @@ namespace Neo.Tools
             EM.End();
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -207,7 +206,7 @@ namespace Neo.Tools
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

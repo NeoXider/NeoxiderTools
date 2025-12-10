@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.3.7] - Unreleased
+
+### Исправлено
+- **Physics модуль**: Исправлены ошибки компиляции с атрибутами Odin Inspector
+  - Добавлены директивы `using Sirenix.OdinInspector` в компоненты ExplosiveForce, ImpulseZone, MagneticField
+
+### Улучшено
+- **Physics модуль**: Рефакторинг всего кода модуля
+  - Улучшена структура и читаемость кода
+  - Оптимизированы внутренние процессы
+
+---
+
 ## [5.3.5] - Unreleased
 
 ### Добавлено

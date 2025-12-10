@@ -4,7 +4,6 @@ using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo
@@ -49,18 +48,6 @@ namespace Neo
                 }
             }
 
-            private void BuildPageCache()
-            {
-                _pageCache = new Dictionary<int, GameObject>(_pages.Length);
-                for (int i = 0; i < _pages.Length; i++)
-                {
-                    if (_pages[i] != null)
-                    {
-                        _pageCache[i] = _pages[i];
-                    }
-                }
-            }
-
             private void OnValidate()
             {
                 if (!Application.isPlaying && is_debug_change)
@@ -85,6 +72,18 @@ namespace Neo
                     }
 
                     _pages = childs.ToArray();
+                }
+            }
+
+            private void BuildPageCache()
+            {
+                _pageCache = new Dictionary<int, GameObject>(_pages.Length);
+                for (int i = 0; i < _pages.Length; i++)
+                {
+                    if (_pages[i] != null)
+                    {
+                        _pageCache[i] = _pages[i];
+                    }
                 }
             }
 

@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo.Audio
@@ -11,8 +10,6 @@ namespace Neo.Audio
     [AddComponentMenu("Neo/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
-        private AM _am;
-
         [Tooltip("Опциональный микшер для управления громкостью.")]
         public AudioMixer audioMixer;
 
@@ -30,6 +27,7 @@ namespace Neo.Audio
 
         public float startEfxVolume = 1;
         public float startMusicVolume = 0.5f;
+        private AM _am;
 
         public AudioSource efx { get; private set; }
         public AudioSource music { get; private set; }
@@ -69,7 +67,7 @@ namespace Neo.Audio
             }
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -84,7 +82,7 @@ namespace Neo.Audio
             OnMuteEfx?.Invoke(efx.mute);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -99,7 +97,7 @@ namespace Neo.Audio
             OnMuteMusic?.Invoke(music.mute);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -109,7 +107,7 @@ namespace Neo.Audio
             SetMusic(active);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -119,7 +117,7 @@ namespace Neo.Audio
             SetMusicVolume(percent);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -135,7 +133,7 @@ namespace Neo.Audio
             SetMixerVolume(audioMixer, MusicVolume, volume);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -151,7 +149,7 @@ namespace Neo.Audio
             SetMixerVolume(audioMixer, EfxVolume, volume);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -167,7 +165,7 @@ namespace Neo.Audio
         /// <param name="parameterName">Имя параметра в микшере</param>
         /// <param name="normalizedVolume">Нормализованное значение громкости (0-1)</param>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -188,7 +186,7 @@ namespace Neo.Audio
         /// <param name="parameterName">Имя параметра в микшере</param>
         /// <param name="dbValue">Значение в децибелах (-80 до 20)</param>
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -220,7 +218,7 @@ namespace Neo.Audio
             mixer.SetFloat(parameterName, db);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -234,7 +232,7 @@ namespace Neo.Audio
             SetMusic(music.mute);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -248,7 +246,7 @@ namespace Neo.Audio
             SetEfx(efx.mute);
         }
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif

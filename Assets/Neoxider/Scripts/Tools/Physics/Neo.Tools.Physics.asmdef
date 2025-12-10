@@ -2,7 +2,8 @@
   "name": "Neo.Tools.Physics",
   "rootNamespace": "",
   "references": [
-    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
+    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+    "GUID:ad968d605628d06499b62cdc30f11cf8"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
@@ -14,5 +15,3 @@
   "versionDefines": [],
   "noEngineReferences": false
 }
-
-

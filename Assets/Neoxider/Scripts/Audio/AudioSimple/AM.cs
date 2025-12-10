@@ -2,7 +2,6 @@ using System;
 using Neo.Tools;
 using UnityEngine;
 #if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
 #endif
 
 namespace Neo

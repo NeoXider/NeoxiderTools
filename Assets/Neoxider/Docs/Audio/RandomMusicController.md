@@ -83,3 +83,4 @@ public class Example : MonoBehaviour
 - Контроллер использует UniTask для асинхронной работы, поэтому может работать без MonoBehaviour.
 - Для управления случайной музыкой рекомендуется использовать методы `AM.EnableRandomMusic()` и `AM.DisableRandomMusic()`.
 
+

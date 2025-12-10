@@ -59,9 +59,10 @@ namespace Neo.Tools
 
         // ========== СКОРОСТЬ И ОФСЕТ ==========
 #if ODIN_INSPECTOR
-[LabelText("Скорость (°/сек)")]
+        [LabelText("Скорость (°/сек)")]
 #endif
-        [Tooltip("Скорость вращения (град/сек).")] [Min(0f)]
+        [Tooltip("Скорость вращения (град/сек).")]
+        [Min(0f)]
         public float rotationSpeed = 360f;
 
         [Tooltip("Офсет вращения. В 3D — полный Euler. В 2D используется только Z.")]
@@ -232,7 +233,7 @@ namespace Neo.Tools
         [DisableInEditorMode]
 #endif
 #if ODIN_INSPECTOR
-            [Button]
+        [Button]
 #else
         [ButtonAttribute]
 #endif
@@ -245,7 +246,7 @@ namespace Neo.Tools
         [ShowIf("@target != null && !useMouseWorld")]
 #endif
 #if ODIN_INSPECTOR
-            [Button("Look at Target Instantly")]
+        [Button("Look at Target Instantly")]
 #else
         [ButtonAttribute("Look at Target Instantly")]
 #endif

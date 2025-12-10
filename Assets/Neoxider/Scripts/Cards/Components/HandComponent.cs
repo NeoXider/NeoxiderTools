@@ -3,6 +3,7 @@ using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
+using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -292,7 +293,7 @@ namespace Neo.Cards
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void SortByRank(bool ascending = true)
         {
@@ -324,7 +325,7 @@ namespace Neo.Cards
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void SortBySuit(bool ascending = true)
         {
@@ -384,7 +385,7 @@ namespace Neo.Cards
         ///     Очищает руку
         /// </summary>
 #if ODIN_INSPECTOR
-        [Sirenix.OdinInspector.Button]
+        [Button]
 #endif
         public void Clear()
         {
