@@ -9,8 +9,10 @@ namespace Neo.UI
     [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonScale))]
     public class ButtonScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {
-        [SerializeField] private RectTransform _rectTransform;
-        [SerializeField] private Vector2 _pressedSize = new(0.85f, 0.85f);
+        [Header("References")] [SerializeField]
+        private RectTransform _rectTransform;
+
+        [Header("Settings")] [SerializeField] private Vector2 _pressedSize = new(0.85f, 0.85f);
         [SerializeField] private float resizeDuration = 0.15f;
 
         private Vector2 _currentSize;

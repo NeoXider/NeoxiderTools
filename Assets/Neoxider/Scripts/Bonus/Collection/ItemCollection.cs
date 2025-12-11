@@ -7,7 +7,7 @@ namespace Neo.Bonus
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {
-        [GetComponent] public Button button;
+        [Header("References")] [GetComponent] public Button button;
         [SerializeField] private Image _itemImage;
         [SerializeField] private ItemCollectionInfo _itemInfo;
 

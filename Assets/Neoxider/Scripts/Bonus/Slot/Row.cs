@@ -23,8 +23,7 @@ namespace Neo.Bonus
 
         [Header("Visible")] public int countSlotElement = 3;
 
-        [Header("Elements (обычно x2 от видимых)")]
-        public SlotElement[] SlotElements;
+        [Header("Elements (Usually x2)")] public SlotElement[] SlotElements;
 
         [Header("Speed setup")] public SpeedControll speedControll; // стартовая скорость (юн/с), знак = направление
 
@@ -38,7 +37,7 @@ namespace Neo.Bonus
         [Tooltip("Отражение offsetY (для совместимости/инспектора)")]
         public float windowStartY = 1f; // зеркало offsetY (не используется напрямую в расчётах)
 
-        [Header("Hidden paddings (зона смены вне окна)")]
+        [Header("Hidden Paddings")]
         [Tooltip("Сколько НИЖЕ окна появляется элемент при wrap сверху (рекоменд. ≥ 0.6 * spaceY)")]
         public float hiddenPaddingBottom = 0.6f;
 

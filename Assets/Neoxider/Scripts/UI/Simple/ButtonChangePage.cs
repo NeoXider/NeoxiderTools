@@ -11,15 +11,17 @@ namespace Neo
         [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonChangePage))]
         public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {
-            public bool intecactable = true;
-            [SerializeField] private Image _imageTarget;
+            [Header("Settings")] public bool intecactable = true;
 
-            [Space] [SerializeField] private bool _canSwitchPage = true;
+            [Header("References")] [SerializeField]
+            private Image _imageTarget;
+
+            [Header("Page")] [SerializeField] private bool _canSwitchPage = true;
             [SerializeField] private int _idPage;
             [SerializeField] private bool _onePage;
             [SerializeField] private bool _useAnimPage;
 
-            [Space] [SerializeField] private bool _useAnimImage = true;
+            [Header("Animation")] [SerializeField] private bool _useAnimImage = true;
             [SerializeField] private float _timeAnimImage = 0.3f;
             [SerializeField] private float _scaleAnim = -0.15f;
 
@@ -73,14 +75,13 @@ namespace Neo
 
             public void OnPointerDown(PointerEventData eventData)
             {
-                if (intecactable && _useAnimImage)
+                if (!intecactable || !_useAnimImage)
                 {
-                    if (intecactable && _useAnimImage)
-                    {
-                        float scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
-                        transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
-                    }
+                    return;
                 }
+
+                float scale = startScale.x * (1f + _scaleAnim);
+                transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
             }
 
             public void OnPointerUp(PointerEventData eventData)

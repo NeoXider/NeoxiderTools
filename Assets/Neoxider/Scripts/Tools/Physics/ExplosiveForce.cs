@@ -56,13 +56,13 @@ namespace Neo.Tools
             Quadratic
         }
 
-        [Header("Активация")] [Tooltip("Режим активации взрыва")] [SerializeField]
+        [Header("Activation")] [Tooltip("Режим активации взрыва")] [SerializeField]
         private ActivationMode activationMode = ActivationMode.OnStart;
 
         [Tooltip("Задержка перед взрывом (используется при режиме Delayed)")] [SerializeField]
         private float delay;
 
-        [Header("Сила взрыва")] [Tooltip("Базовая сила взрыва")] [Min(0f)] [SerializeField]
+        [Header("Explosion Force")] [Tooltip("Базовая сила взрыва")] [Min(0f)] [SerializeField]
         private float force = 100f;
 
         [Tooltip("Случайная вариация силы (добавляется к базовой силе)")] [SerializeField]
@@ -74,13 +74,13 @@ namespace Neo.Tools
         [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
         private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Радиус и фильтрация")] [Tooltip("Радиус действия взрыва")] [Min(0f)] [SerializeField]
+        [Header("Radius & Filtering")] [Tooltip("Радиус действия взрыва")] [Min(0f)] [SerializeField]
         private float radius = 5f;
 
         [Tooltip("Слои объектов, на которые будет воздействовать взрыв")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
-        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
         [Tooltip("Уничтожить этот объект после взрыва")] [SerializeField]
@@ -89,8 +89,7 @@ namespace Neo.Tools
         [Tooltip("Задержка перед уничтожением (если destroyAfterExplosion = true)")] [SerializeField]
         private float destroyDelay;
 
-        [Header("События")] [Tooltip("Вызывается при взрыве")]
-        public UnityEvent OnExplode = new();
+        [Tooltip("Вызывается при взрыве")] public UnityEvent OnExplode = new();
 
         [Tooltip("Вызывается для каждого затронутого объекта")]
         public UnityEvent<GameObject> OnObjectAffected = new();

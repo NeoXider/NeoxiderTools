@@ -10,9 +10,7 @@ namespace Neo.Cards
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neo/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
     {
-        [Header("Deck Settings")]
-        [Tooltip("Тип колоды для спрайтов (сколько карт загружено в конфиг)")]
-        [SerializeField]
+        [Header("Settings")] [Tooltip("Тип колоды для спрайтов (сколько карт загружено в конфиг)")] [SerializeField]
         private DeckType _deckType = DeckType.Standard52;
 
         [Tooltip(
@@ -22,19 +20,19 @@ namespace Neo.Cards
 
         [Header("Card Back")] [SerializeField] private Sprite _backSprite;
 
-        [Header("Hearts (от младшей к старшей)")] [SerializeField]
+        [Header("Hearts (Low to High)")] [SerializeField]
         private List<Sprite> _hearts = new();
 
-        [Header("Diamonds (от младшей к старшей)")] [SerializeField]
+        [Header("Diamonds (Low to High)")] [SerializeField]
         private List<Sprite> _diamonds = new();
 
-        [Header("Clubs (от младшей к старшей)")] [SerializeField]
+        [Header("Clubs (Low to High)")] [SerializeField]
         private List<Sprite> _clubs = new();
 
-        [Header("Spades (от младшей к старшей)")] [SerializeField]
+        [Header("Spades (Low to High)")] [SerializeField]
         private List<Sprite> _spades = new();
 
-        [Header("Jokers (для 54 карт)")] [SerializeField]
+        [Header("Jokers (54-card)")] [SerializeField]
         private Sprite _redJoker;
 
         [SerializeField] private Sprite _blackJoker;

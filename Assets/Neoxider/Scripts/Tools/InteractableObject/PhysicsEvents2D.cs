@@ -19,11 +19,11 @@ namespace Neo.Tools
 
         /* ───────── EVENTS ─────────────────────────────────────────── */
 
-        [Header("Trigger events")] public Collider2DEvent onTriggerEnter = new();
+        public Collider2DEvent onTriggerEnter = new();
         public Collider2DEvent onTriggerStay = new();
         public Collider2DEvent onTriggerExit = new();
 
-        [Header("Collision events")] public Collision2DEvent onCollisionEnter = new();
+        public Collision2DEvent onCollisionEnter = new();
         public Collision2DEvent onCollisionStay = new();
         public Collision2DEvent onCollisionExit = new();
 

@@ -1,4 +1,4 @@
-﻿/*  MouseMover3D.cs
+/*  MouseMover3D.cs
  *  Legacy-Input universal **3-D** mouse mover
  *  (physics-friendly, без дрожаний)
  *
@@ -59,7 +59,7 @@ namespace Neo.Tools
         [Header("Raycast mask (optional ground)")] [SerializeField]
         private LayerMask groundMask;
 
-        [Header("Events")] public UnityEvent OnMoveStart;
+        public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
 
         private Camera cam;

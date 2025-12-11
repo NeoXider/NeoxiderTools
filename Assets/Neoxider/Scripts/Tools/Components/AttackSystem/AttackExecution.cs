@@ -14,14 +14,13 @@ namespace Neo.Tools
             Cooldown // Перезарядка после удара
         }
 
-        [Header("Настройки атаки")] [SerializeField]
-        private float _attackSpeed = 2;
+        [Header("Attack")] [SerializeField] private float _attackSpeed = 2;
 
         public float multiplayAttackSpeed = 1;
         public float delayTimeAttack = 0.2f; // Задержка перед ударом
         [SerializeField] private bool _isAutoAttack;
 
-        [Header("События")] public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
+        public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
 
         public UnityEvent OnAttack; // Вызывается в момент удара
         public UnityEvent OnEndAttack; // Вызывается, когда атака снова готова

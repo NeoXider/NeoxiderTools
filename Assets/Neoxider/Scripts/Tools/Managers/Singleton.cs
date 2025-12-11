@@ -7,7 +7,8 @@ namespace Neo.Tools
         public static bool CreateInstance = false;
 
         private static T _instance;
-        [SerializeField] protected bool _dontDestroyOnLoad;
+
+        [Header("Settings")] [SerializeField] protected bool _dontDestroyOnLoad;
         [SerializeField] protected bool _setInstanceOnAwake = true;
         private bool _isInitialized;
 

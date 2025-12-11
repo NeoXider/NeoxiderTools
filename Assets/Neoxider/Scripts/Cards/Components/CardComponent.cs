@@ -47,7 +47,7 @@ namespace Neo.Cards
         [SerializeField] private float _hoverYOffset = 20f;
         [SerializeField] private float _hoverDuration = 0.15f;
 
-        [Header("Events")] public UnityEvent OnClick;
+        public UnityEvent OnClick;
 
         public UnityEvent OnFlip;
         public UnityEvent OnMoveComplete;

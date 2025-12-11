@@ -26,63 +26,44 @@ namespace Neo.NPC
             ManualVelocity
         }
 
-        [Header("NPC")]
-        [SerializeField] private bool isActive = true;
+        [Header("NPC")] [SerializeField] private bool isActive = true;
 
         [SerializeField] private Animator animator;
 
-        [Header("Mode")]
-        [SerializeField] private NavigationMode mode = NavigationMode.FollowTarget;
+        [Header("Mode")] [SerializeField] private NavigationMode mode = NavigationMode.FollowTarget;
 
-        [Header("Agent")]
-        [SerializeField] private RotationPolicy rotationPolicy = RotationPolicy.Agent;
+        [Header("Agent")] [SerializeField] private RotationPolicy rotationPolicy = RotationPolicy.Agent;
 
-        [Tooltip("Used only when RotationPolicy = Agent.")]
-        [SerializeField]
+        [Tooltip("Used only when RotationPolicy = Agent.")] [SerializeField]
         private bool updateRotation = true;
-        [Min(0.1f)]
-        [SerializeField] private float walkSpeed = 3f;
-        [Min(0.1f)]
-        [SerializeField] private float runSpeed = 6f;
-        [Min(0.1f)]
-        [SerializeField] private float acceleration = 8f;
-        [Min(1f)]
-        [SerializeField] private float turnSpeed = 260f;
-        [Min(0.01f)]
-        [SerializeField] private float stoppingDistance = 2f;
-        [Min(0.01f)]
-        [SerializeField] private float agentRadius = 0.5f;
+
+        [Min(0.1f)] [SerializeField] private float walkSpeed = 3f;
+        [Min(0.1f)] [SerializeField] private float runSpeed = 6f;
+        [Min(0.1f)] [SerializeField] private float acceleration = 8f;
+        [Min(1f)] [SerializeField] private float turnSpeed = 260f;
+        [Min(0.01f)] [SerializeField] private float stoppingDistance = 2f;
+        [Min(0.01f)] [SerializeField] private float agentRadius = 0.5f;
         [SerializeField] private int areaMask = NavMesh.AllAreas;
 
-        [Header("Path")]
-        [SerializeField] private bool autoUpdatePath = true;
-        [Min(0.05f)]
-        [SerializeField] private float pathUpdateInterval = 0.5f;
-        [Min(0.1f)]
-        [SerializeField] private float maxSampleDistance = 100f;
+        [Header("Path")] [SerializeField] private bool autoUpdatePath = true;
+        [Min(0.05f)] [SerializeField] private float pathUpdateInterval = 0.5f;
+        [Min(0.1f)] [SerializeField] private float maxSampleDistance = 100f;
 
-        [Header("Follow")]
-        [SerializeField] private Transform followTarget;
-        [Min(0f)]
-        [SerializeField] private float triggerDistance;
-        [Tooltip("Optional movement bounds. If set, NPC won't move outside.")]
-        [SerializeField] private BoxCollider followMovementBounds;
+        [Header("Follow")] [SerializeField] private Transform followTarget;
+        [Min(0f)] [SerializeField] private float triggerDistance;
 
-        [Header("Patrol")]
-        [SerializeField] private Transform[] patrolPoints;
+        [Tooltip("Optional movement bounds. If set, NPC won't move outside.")] [SerializeField]
+        private BoxCollider followMovementBounds;
+
+        [Header("Patrol")] [SerializeField] private Transform[] patrolPoints;
         [SerializeField] private BoxCollider patrolZone;
-        [Min(0f)]
-        [SerializeField] private float patrolWaitTime = 1f;
+        [Min(0f)] [SerializeField] private float patrolWaitTime = 1f;
         [SerializeField] private bool loopPatrol = true;
 
-        [Header("Combined")]
-        [SerializeField] private Transform combinedTarget;
-        [Min(0f)]
-        [SerializeField] private float aggroDistance = 10f;
-        [Min(0f)]
-        [SerializeField] private float maxFollowDistance = 20f;
+        [Header("Combined")] [SerializeField] private Transform combinedTarget;
+        [Min(0f)] [SerializeField] private float aggroDistance = 10f;
+        [Min(0f)] [SerializeField] private float maxFollowDistance = 20f;
 
-        [Header("Events")]
         public UnityEvent onMovementStarted;
         public UnityEvent onMovementStopped;
         public UnityEvent<NavigationMode> onModeChanged;
@@ -102,8 +83,7 @@ namespace Neo.NPC
 
         public UnityEvent<float> onSpeedChanged;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugMode;
+        [Header("Debug")] [SerializeField] private bool debugMode;
         [SerializeField] private bool drawGizmos = true;
         [SerializeField] private bool drawPathGizmos = true;
 
@@ -111,9 +91,9 @@ namespace Neo.NPC
 
         private NavMeshAgent agent;
 
-        private Neo.NPC.Navigation.NpcNavAgentCore agentCore;
-        private Neo.NPC.Navigation.NpcFollowTargetCore followCore;
-        private Neo.NPC.Navigation.NpcPatrolCore patrolCore;
+        private Navigation.NpcNavAgentCore agentCore;
+        private Navigation.NpcFollowTargetCore followCore;
+        private Navigation.NpcPatrolCore patrolCore;
 
         private INavigationBehaviour currentBehaviour;
         private FollowBehaviour followBehaviour;
@@ -142,10 +122,10 @@ namespace Neo.NPC
         {
             agent = GetComponent<NavMeshAgent>();
 
-            agentCore = new Neo.NPC.Navigation.NpcNavAgentCore(agent);
+            agentCore = new Navigation.NpcNavAgentCore(agent);
             ApplyAgentSettings();
 
-            followCore = new Neo.NPC.Navigation.NpcFollowTargetCore(transform, agent);
+            followCore = new Navigation.NpcFollowTargetCore(transform, agent);
             followCore.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
             followCore.DestinationReached += p => onDestinationReached?.Invoke(p);
             followCore.PathBlocked += p => onPathBlocked?.Invoke(p);
@@ -153,7 +133,7 @@ namespace Neo.NPC
             followCore.PathStatusChanged += s => onPathStatusChanged?.Invoke(s);
             followCore.DestinationUnreachable += OnFollowDestinationUnreachable;
 
-            patrolCore = new Neo.NPC.Navigation.NpcPatrolCore(transform, agent);
+            patrolCore = new Navigation.NpcPatrolCore(transform, agent);
             patrolCore.Configure(patrolPoints, patrolZone, patrolWaitTime, loopPatrol, maxSampleDistance);
             patrolCore.PatrolStarted += () => onPatrolStarted?.Invoke();
             patrolCore.PatrolCompleted += () => onPatrolCompleted?.Invoke();
@@ -164,7 +144,7 @@ namespace Neo.NPC
             patrolBehaviour = new PatrolBehaviour(this);
             combinedBehaviour = new CombinedBehaviour(this);
 
-            SetModeInternal(mode, invokeEvent: true);
+            SetModeInternal(mode, true);
         }
 
         private void OnDisable()
@@ -225,7 +205,7 @@ namespace Neo.NPC
                 return;
             }
 
-            SetModeInternal(newMode, invokeEvent: true);
+            SetModeInternal(newMode, true);
         }
 
         public void SetFollowTarget(Transform target)
@@ -303,6 +283,23 @@ namespace Neo.NPC
 
         private void ApplyAgentSettings()
         {
+            // В Play Mode OnValidate может сработать до Awake (например при domain reload),
+            // поэтому защищаемся от null инициализации.
+            if (agentCore == null)
+            {
+                if (agent == null)
+                {
+                    agent = GetComponent<NavMeshAgent>();
+                }
+
+                if (agent == null)
+                {
+                    return;
+                }
+
+                agentCore = new Navigation.NpcNavAgentCore(agent);
+            }
+
             agentCore.Configure(
                 walkSpeed,
                 runSpeed,
@@ -388,7 +385,7 @@ namespace Neo.NPC
             {
                 isCombinedFollowing = false;
                 followCore.SetFollowEnabled(false);
-                patrolCore.StartPatrol(resetIndex: false);
+                patrolCore.StartPatrol(false);
                 onStopFollowing?.Invoke();
                 LogDecision($"Follow unreachable -> return to patrol ({desired})");
                 return;
@@ -501,7 +498,8 @@ namespace Neo.NPC
 
             public void Enter()
             {
-                host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval, host.maxSampleDistance);
+                host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval,
+                    host.maxSampleDistance);
                 host.followCore.SetFollowEnabled(true);
                 host.followCore.SetTarget(host.followTarget);
                 host.onTargetChanged?.Invoke(host.followTarget);
@@ -531,13 +529,14 @@ namespace Neo.NPC
             public void Enter()
             {
                 host.followCore.SetFollowEnabled(false);
-                host.patrolCore.Configure(host.patrolPoints, host.patrolZone, host.patrolWaitTime, host.loopPatrol, host.maxSampleDistance);
-                host.patrolCore.StartPatrol(resetIndex: true);
+                host.patrolCore.Configure(host.patrolPoints, host.patrolZone, host.patrolWaitTime, host.loopPatrol,
+                    host.maxSampleDistance);
+                host.patrolCore.StartPatrol(true);
             }
 
             public void Exit()
             {
-                host.patrolCore.StopPatrol(stopAgent: false);
+                host.patrolCore.StopPatrol(false);
             }
 
             public void Tick(float deltaTime, float time)
@@ -560,11 +559,13 @@ namespace Neo.NPC
             {
                 isFollowing = false;
 
-                host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval, host.maxSampleDistance);
+                host.followCore.Configure(host.triggerDistance, host.autoUpdatePath, host.pathUpdateInterval,
+                    host.maxSampleDistance);
                 host.followCore.SetFollowEnabled(false);
 
-                host.patrolCore.Configure(host.patrolPoints, host.patrolZone, host.patrolWaitTime, host.loopPatrol, host.maxSampleDistance);
-                host.patrolCore.StartPatrol(resetIndex: false);
+                host.patrolCore.Configure(host.patrolPoints, host.patrolZone, host.patrolWaitTime, host.loopPatrol,
+                    host.maxSampleDistance);
+                host.patrolCore.StartPatrol(false);
 
                 host.onTargetChanged?.Invoke(host.combinedTarget);
             }
@@ -572,7 +573,7 @@ namespace Neo.NPC
             public void Exit()
             {
                 host.followCore.SetFollowEnabled(false);
-                host.patrolCore.StopPatrol(stopAgent: false);
+                host.patrolCore.StopPatrol(false);
                 isFollowing = false;
             }
 
@@ -595,7 +596,7 @@ namespace Neo.NPC
                 {
                     isFollowing = true;
                     host.isCombinedFollowing = true;
-                    host.patrolCore.StopPatrol(stopAgent: false);
+                    host.patrolCore.StopPatrol(false);
                     host.followCore.SetTarget(host.combinedTarget);
                     host.followCore.SetFollowEnabled(true);
                     host.onStartFollowing?.Invoke();
@@ -606,7 +607,7 @@ namespace Neo.NPC
                     isFollowing = false;
                     host.isCombinedFollowing = false;
                     host.followCore.SetFollowEnabled(false);
-                    host.patrolCore.StartPatrol(resetIndex: false);
+                    host.patrolCore.StartPatrol(false);
                     host.onStopFollowing?.Invoke();
                     host.LogDecision("Combined -> stop following");
                 }
@@ -623,4 +624,3 @@ namespace Neo.NPC
         }
     }
 }
-

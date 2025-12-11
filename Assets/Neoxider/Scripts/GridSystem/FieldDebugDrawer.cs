@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -14,15 +14,18 @@ namespace Neo.GridSystem
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldDebugDrawer))]
     public class FieldDebugDrawer : MonoBehaviour
     {
-        public Color GridColor = new(1f, 1f, 0f, 0.3f);
+        [Header("Colors")] public Color GridColor = new(1f, 1f, 0f, 0.3f);
         public Color PathColor = Color.cyan;
         public Color BlockedCellColor = new(1f, 0f, 0f, 0.3f); // полупрозрачный красный
         public Color WalkableCellColor = new(0f, 1f, 0f, 0.3f); // полупрозрачный зелёный
         public Color CoordinatesColor = Color.white;
-        public bool DrawCoordinates = true;
+
+        [Header("Settings")] public bool DrawCoordinates = true;
         public bool DrawPath;
-        public List<Vector3Int> DebugPath = new();
-        public Color TextColor = Color.white; // Новый параметр для цвета текста
+
+        [Header("Debug")] public List<Vector3Int> DebugPath = new();
+
+        [Header("Text")] public Color TextColor = Color.white; // Новый параметр для цвета текста
         public int TextFontSize = 14; // Новый параметр для размера текста
 
         private FieldGenerator generator;

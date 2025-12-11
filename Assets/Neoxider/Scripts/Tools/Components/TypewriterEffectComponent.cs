@@ -28,7 +28,7 @@ namespace Neo.Tools
 
         [SerializeField] private TypewriterEffect _effect = new();
 
-        [Header("Events")] public UnityEvent OnStart;
+        public UnityEvent OnStart;
 
         public UnityEvent OnComplete;
         public UnityEvent<char> OnCharacterTyped;

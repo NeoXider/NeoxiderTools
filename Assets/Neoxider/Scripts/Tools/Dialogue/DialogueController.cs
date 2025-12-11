@@ -38,7 +38,7 @@ namespace Neo.Tools
 
         [Header("Dialogue Data")] public Dialogue[] dialogues;
 
-        [Header("Events")] public UnityEvent OnSentenceEnd;
+        public UnityEvent OnSentenceEnd;
 
         public UnityEvent OnMonologEnd;
         public UnityEvent OnDialogueEnd;

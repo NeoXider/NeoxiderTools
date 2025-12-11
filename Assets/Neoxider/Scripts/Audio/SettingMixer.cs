@@ -8,8 +8,9 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Audio/" + nameof(SettingMixer))]
         public class SettingMixer : MonoBehaviour
         {
-            public string nameMixer = "Master";
-            public AudioMixer audioMixer;
+            [Header("Settings")] public string nameMixer = "Master";
+
+            [Header("References")] public AudioMixer audioMixer;
             public readonly float Max = 20;
 
             public readonly float Min = -80;

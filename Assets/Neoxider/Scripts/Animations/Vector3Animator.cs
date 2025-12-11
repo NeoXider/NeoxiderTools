@@ -36,7 +36,7 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Автоматически запускать анимацию при старте")]
         public bool playOnStart = true;
 
-        [Header("Events")] [Tooltip("Вызывается при изменении вектора")]
+        [Tooltip("Вызывается при изменении вектора")]
         public UnityEvent<Vector3> OnVectorChanged;
 
         [Tooltip("Вызывается при запуске анимации")]

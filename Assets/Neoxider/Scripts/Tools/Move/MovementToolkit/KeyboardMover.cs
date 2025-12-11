@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -38,7 +38,7 @@ namespace Neo.Tools
         [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
-        [Header("Events")] public UnityEvent OnMoveStart;
+        public UnityEvent OnMoveStart;
 
         public UnityEvent OnMoveStop;
 

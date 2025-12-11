@@ -52,7 +52,7 @@ namespace Neo.Tools.View
         [Header("Debug Settings")] [Tooltip("Включить отладочные сообщения")]
         public bool enableDebugging;
 
-        [Header("Events")] [Tooltip("Вызывается при изменении интенсивности")]
+        [Tooltip("Вызывается при изменении интенсивности")]
         public UnityEvent<float> OnIntensityChanged;
 
         [Tooltip("Вызывается при изменении цвета")]

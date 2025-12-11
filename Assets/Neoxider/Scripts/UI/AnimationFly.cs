@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -28,7 +28,7 @@ namespace Neo
 
         [Space] public Ease easyStart = Ease.OutQuad;
 
-        [Header("Анимация")] public float flyDuration = 1.0f;
+        [Header("Animation")] public float flyDuration = 1.0f;
         public bool ignoreZ;
 
         [Tooltip("Максимальное количество объектов за один вызов")]
@@ -41,7 +41,7 @@ namespace Neo
 
         public float scaleMult = 1;
 
-        [Header("Настройки спавна бонусов")] [Tooltip("Родительский объект для спавна бонусов")]
+        [Header("Spawn")] [Tooltip("Родительский объект для спавна бонусов")]
         public Transform spawnParent;
 
         public bool useUnscaledTime;

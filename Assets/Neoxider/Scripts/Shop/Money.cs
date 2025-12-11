@@ -1,4 +1,4 @@
-﻿using Neo.Extensions;
+using Neo.Extensions;
 using Neo.Save;
 using Neo.Tools;
 using TMPro;
@@ -25,7 +25,7 @@ namespace Neo
 
             public UnityEvent<float> OnChangeAllMoney;
 
-            [Space] [Header("Events")] public UnityEvent<float> OnChangedLevelMoney;
+            [Space] public UnityEvent<float> OnChangedLevelMoney;
             public UnityEvent<float> OnChangedMoney;
             public UnityEvent<float> OnChangeLastMoney;
             [SerializeField] private SetText[] st_levelMoney;

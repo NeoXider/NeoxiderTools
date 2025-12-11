@@ -7,8 +7,10 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ImageFillAmountAnimator))]
     public class ImageFillAmountAnimator : MonoBehaviour
     {
-        [SerializeField] private Image _image;
-        [SerializeField] private float _duration = 0.5f;
+        [Header("References")] [SerializeField]
+        private Image _image;
+
+        [Header("Settings")] [SerializeField] private float _duration = 0.5f;
         [SerializeField] private Ease _ease = Ease.OutQuad;
         private Tween _anim;
 

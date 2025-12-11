@@ -28,9 +28,9 @@ namespace Neo.GridSystem
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldObjectSpawner))]
     public class FieldObjectSpawner : MonoBehaviour
     {
-        [Header("Префабы для спавна")] public GameObject[] Prefabs;
+        [Header("Prefabs")] public GameObject[] Prefabs;
 
-        [Header("События")] public UnityEvent<SpawnedObjectInfo> OnObjectSpawned = new();
+        public UnityEvent<SpawnedObjectInfo> OnObjectSpawned = new();
         public UnityEvent<SpawnedObjectInfo> OnObjectRemoved = new();
         public UnityEvent<FieldCell> OnCellOccupied = new();
         public UnityEvent<FieldCell> OnCellFreed = new();

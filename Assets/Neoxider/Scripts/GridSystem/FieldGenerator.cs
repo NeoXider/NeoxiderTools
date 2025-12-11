@@ -12,9 +12,9 @@ namespace Neo.GridSystem
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldGenerator))]
     public class FieldGenerator : MonoBehaviour
     {
-        [Header("Конфиг поля")] public FieldGeneratorConfig Config = new();
+        [Header("Settings")] public FieldGeneratorConfig Config = new();
 
-        [Header("Debug/Визуализация")] public bool DebugEnabled = true;
+        [Header("Debug")] public bool DebugEnabled = true;
 
         public UnityEvent OnFieldGenerated = new();
 

@@ -15,19 +15,19 @@ namespace Neo
         {
             private const string _lastRewardTimeKey = "LastRewardTime";
 
-            [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField]
+            [Header("Settings")] [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField]
             public float secondsToWaitForReward = 60 * 60; //1 hours
-
-            [FormerlySerializedAs("_startTakeReward")] [SerializeField]
-            public bool startTakeReward;
-
-            [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField]
-            public string lastRewardTimeStr;
 
             [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)]
             public float updateTime = 1;
 
             [SerializeField] private string _addKey = "Bonus1";
+
+            [FormerlySerializedAs("_startTakeReward")] [SerializeField]
+            public bool startTakeReward;
+
+            [Header("Debug")] [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField]
+            public string lastRewardTimeStr;
 
             public float timeLeft;
 

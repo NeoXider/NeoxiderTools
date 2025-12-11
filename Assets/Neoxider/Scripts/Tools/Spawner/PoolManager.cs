@@ -18,12 +18,11 @@ namespace Neo.Tools
     /// </summary>
     public class PoolManager : Singleton<PoolManager>
     {
-        [Header("Настройки пула по умолчанию")] [SerializeField]
-        private int _defaultInitialSize = 10;
+        [Header("Defaults")] [SerializeField] private int _defaultInitialSize = 10;
 
         [SerializeField] private bool _defaultExpandPool = true;
 
-        [Header("Предварительные конфигурации пулов")] [SerializeField]
+        [Header("Preconfigured Pools")] [SerializeField]
         private List<PoolConfig> _preconfiguredPools;
 
         private readonly Dictionary<GameObject, NeoObjectPool> _pools = new();

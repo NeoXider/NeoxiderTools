@@ -9,10 +9,6 @@ namespace Neo.Editor
 {
     internal static class NeoUpdateChecker
     {
-        // TEMP: включи, чтобы принудительно показать UI обновления (без интернета).
-        // Выключить после проверки внешнего вида.
-        private static bool ForceUpdateUiPreview = false;
-
         private const int MinCheckIntervalSeconds = 5 * 60;
 
         private const string SessionLastCheckTicks = "Neo.UpdateCheck.LastCheckTicks";
@@ -57,23 +53,6 @@ namespace Neo.Editor
 
         public static State Tick(string currentVersion, string packageRootPath)
         {
-            if (ForceUpdateUiPreview)
-            {
-                string latest = GetPreviewLatestVersion(currentVersion);
-
-                string updateUrl = "https://github.com/NeoXider/NeoxiderTools";
-                string repoUrl = TryGetRepositoryUrlFromPackageJson(packageRootPath);
-                if (TryParseGitHubOwnerRepo(repoUrl, out string owner, out string repo, out string repoWebUrl))
-                {
-                    updateUrl = repoWebUrl;
-                }
-
-                return new State(UpdateStatus.UpdateAvailable,
-                    latestVersion: latest,
-                    updateUrl: updateUrl,
-                    error: string.Empty);
-            }
-
             // Если уже в процессе — просто возвращаем текущее состояние
             if (_isChecking)
             {
@@ -99,16 +78,18 @@ namespace Neo.Editor
                 : state;
         }
 
-        private static string GetPreviewLatestVersion(string currentVersion)
+        public static void RequestImmediateCheck(string currentVersion, string packageRootPath)
         {
-            // Делаем на 1 патч выше текущей версии, чтобы UI был реалистичным.
-            if (TryParseVersion(currentVersion, out Version current))
+            if (_isChecking)
             {
-                int patch = Math.Max(0, current.Build) + 1;
-                return $"{current.Major}.{current.Minor}.{patch}";
+                return;
             }
 
-            return "0.0.1";
+            // Сбрасываем интервал и помечаем как Checking сразу
+            SessionState.SetString(SessionLastCheckTicks, "0");
+            SessionState.SetInt(SessionStatus, (int)UpdateStatus.Checking);
+
+            TryStartCheck(currentVersion, packageRootPath);
         }
 
         private static State ReadState()
@@ -209,7 +190,7 @@ namespace Neo.Editor
 
             string json = request.downloadHandler?.text;
             string latest = TryExtractLatestVersionFromGitHubReleaseJson(json);
-            ApplyResult(currentVersion, latest, updateUrl, error: null);
+            ApplyResult(currentVersion, latest, updateUrl, null);
         }
 
         private static void TryCheckTagsFallback(string currentVersion, string owner, string repo, string repoWebUrl)
@@ -230,13 +211,13 @@ namespace Neo.Editor
                     {
                         if (tagsRequest.result != UnityWebRequest.Result.Success)
                         {
-                            ApplyResult(currentVersion, latestVersion: null, updateUrl, error: tagsRequest.error);
+                            ApplyResult(currentVersion, null, updateUrl, tagsRequest.error);
                             return;
                         }
 
                         string json = tagsRequest.downloadHandler?.text;
                         string latest = TryExtractLatestVersionFromGitHubTagsJson(json);
-                        ApplyResult(currentVersion, latest, updateUrl, error: null);
+                        ApplyResult(currentVersion, latest, updateUrl, null);
                     }
                     finally
                     {
@@ -246,7 +227,7 @@ namespace Neo.Editor
             }
             catch
             {
-                ApplyResult(currentVersion, latestVersion: null, updateUrl: repoWebUrl, error: "Update check failed");
+                ApplyResult(currentVersion, null, repoWebUrl, "Update check failed");
             }
         }
 
@@ -420,7 +401,8 @@ namespace Neo.Editor
             return null;
         }
 
-        private static bool TryParseGitHubOwnerRepo(string repoUrl, out string owner, out string repo, out string repoWebUrl)
+        private static bool TryParseGitHubOwnerRepo(string repoUrl, out string owner, out string repo,
+            out string repoWebUrl)
         {
             owner = null;
             repo = null;
@@ -445,7 +427,7 @@ namespace Neo.Editor
 
             try
             {
-                Uri uri = new Uri(url);
+                Uri uri = new(url);
                 string[] segments = uri.AbsolutePath.Trim('/').Split('/');
                 if (segments.Length < 2)
                 {
@@ -464,4 +446,3 @@ namespace Neo.Editor
         }
     }
 }
-

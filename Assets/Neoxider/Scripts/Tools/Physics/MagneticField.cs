@@ -50,7 +50,7 @@ namespace Neo.Tools
             Constant
         }
 
-        [Header("Настройки поля")] [Tooltip("Режим работы поля")] [SerializeField]
+        [Header("Settings")] [Tooltip("Режим работы поля")] [SerializeField]
         private FieldMode mode = FieldMode.Attract;
 
         [Tooltip("Сила магнитного поля")] [Min(0f)] [SerializeField]
@@ -62,10 +62,10 @@ namespace Neo.Tools
         [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
         private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Фильтрация")] [Tooltip("Слои объектов, на которые будет воздействовать поле")] [SerializeField]
+        [Header("Filtering")] [Tooltip("Слои объектов, на которые будет воздействовать поле")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
-        [Header("Режим Toggle")] [Tooltip("Время притяжения в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
+        [Header("Toggle Mode")] [Tooltip("Время притяжения в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
         private float attractDuration = 2f;
 
         [Tooltip("Время отталкивания в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
@@ -74,13 +74,13 @@ namespace Neo.Tools
         [Tooltip("Начальный режим для Toggle (с чего начинать)")] [SerializeField]
         private bool startWithAttract = true;
 
-        [Header("Цель притяжения")] [Tooltip("Transform цели (используется при режиме ToTarget)")] [SerializeField]
+        [Header("Attraction Target")] [Tooltip("Transform цели (используется при режиме ToTarget)")] [SerializeField]
         private Transform targetTransform;
 
         [Tooltip("Точка в пространстве (используется при режиме ToPoint)")] [SerializeField]
         private Vector3 targetPoint = Vector3.zero;
 
-        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
         [Tooltip("Использовать FixedUpdate вместо Update для более стабильной физики")] [SerializeField]
@@ -89,7 +89,7 @@ namespace Neo.Tools
         [Tooltip("Интервал обновления объектов в поле (0 = каждый кадр)")] [Min(0f)] [SerializeField]
         private float updateInterval;
 
-        [Header("События")] [Tooltip("Вызывается при входе объекта в поле")]
+        [Tooltip("Вызывается при входе объекта в поле")]
         public UnityEvent<GameObject> OnObjectEntered = new();
 
         [Tooltip("Вызывается при выходе объекта из поля")]

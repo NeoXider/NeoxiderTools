@@ -27,7 +27,7 @@ namespace Neo.Cards
 
         [SerializeField] private CardComponent _trumpCardDisplay;
 
-        [Header("Events")] public UnityEvent OnInitialized;
+        public UnityEvent OnInitialized;
 
         public UnityEvent OnShuffled;
         public UnityEvent OnDeckEmpty;

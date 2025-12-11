@@ -1,4 +1,4 @@
-﻿using UnityEditor;
+using UnityEditor;
 using UnityEngine;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -44,6 +44,7 @@ namespace Neo.Tools
         }
 
         // ========== РЕЖИМЫ ==========
+        [Header("Mode")]
         [Tooltip("Режим вращения: 3D (по forward) или 2D (в плоскости XY, поворот по Z).")]
 #if ODIN_INSPECTOR
         [LabelText("Режим вращения")]
@@ -58,10 +59,12 @@ namespace Neo.Tools
         public bool useUnscaledTime;
 
         // ========== СКОРОСТЬ И ОФСЕТ ==========
+        [Header("Speed")]
 #if ODIN_INSPECTOR
         [LabelText("Скорость (°/сек)")]
 #endif
-        [Tooltip("Скорость вращения (град/сек).")] [Min(0f)]
+        [Tooltip("Скорость вращения (град/сек).")]
+        [Min(0f)]
         public float rotationSpeed = 360f;
 
         [Tooltip("Офсет вращения. В 3D — полный Euler. В 2D используется только Z.")]
@@ -72,6 +75,7 @@ namespace Neo.Tools
         public Vector3 rotationOffsetEuler = Vector3.zero;
 
         // ========== ОГРАНИЧЕНИЯ ==========
+        [Header("Limits")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Ограничения")]
         [InfoBox("Если диапазон [0..360] — ограничения отключены.", InfoMessageType.None)]
@@ -91,6 +95,7 @@ namespace Neo.Tools
         public bool limitsRelativeToInitial = true;
 
         // ========== НАВЕДЕНИЕ ==========
+        [Header("Targeting")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение")]
         [ToggleLeft]

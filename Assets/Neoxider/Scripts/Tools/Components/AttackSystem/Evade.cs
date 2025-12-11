@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 #endif
@@ -20,7 +20,7 @@ namespace Neo.Tools
         [Tooltip("If true, cooldown starts immediately with evade")]
         public bool reloadImmediately = true;
 
-        [Header("Events")] [Tooltip("Called when evade action starts")]
+        [Tooltip("Called when evade action starts")]
         public UnityEvent OnEvadeStarted;
 
         [Tooltip("Called with cooldown progress (0-1)")]

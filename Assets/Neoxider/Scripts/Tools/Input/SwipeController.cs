@@ -46,7 +46,7 @@ namespace Neo
         ///     If true, swipes are only detected after the user has released the touch or mouse button. This can be useful
         ///     for games or applications where swipes are meant to be deliberate actions rather than continuous inputs.
         /// </summary>
-        [SerializeField] public bool detectSwipeOnlyAfterRelease;
+        [Header("Settings")] [SerializeField] public bool detectSwipeOnlyAfterRelease;
 
         /// <summary>
         ///     The minimum distance (in screen pixels) that the user must move their finger or the mouse for a movement

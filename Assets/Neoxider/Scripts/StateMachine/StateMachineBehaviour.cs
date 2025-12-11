@@ -30,7 +30,7 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neo/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {
-        [SerializeField] [Tooltip("Начальное состояние (тип состояния для кода)")]
+        [Header("Settings")] [SerializeField] [Tooltip("Начальное состояние (тип состояния для кода)")]
         private string initialStateTypeName;
 
         [SerializeField] [Tooltip("Включить логирование переходов состояний")]
@@ -39,11 +39,11 @@ namespace Neo.StateMachine
         [SerializeField] [Tooltip("Показывать текущее состояние в инспекторе")]
         private bool showStateInInspector = true;
 
-        [SerializeField] [Tooltip("NoCode конфигурация State Machine (опционально)")]
-        private StateMachineData stateMachineData;
-
         [SerializeField] [Tooltip("Автоматически оценивать переходы каждый кадр")]
         private bool autoEvaluateTransitions = true;
+
+        [Header("References")] [SerializeField] [Tooltip("NoCode конфигурация State Machine (опционально)")]
+        private StateMachineData stateMachineData;
 
         private Type initialStateType;
 

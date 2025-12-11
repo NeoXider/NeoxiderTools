@@ -19,7 +19,7 @@ namespace Neo.Tools
 
         [Header("Settings")] public bool setNativeSize = true;
 
-        [Header("Events")] public UnityEvent<string> OnCharacterChange;
+        public UnityEvent<string> OnCharacterChange;
 
         private string _lastCharacterName = string.Empty;
 

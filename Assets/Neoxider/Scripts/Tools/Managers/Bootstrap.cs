@@ -29,21 +29,19 @@ namespace Neo.Tools
     ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Bootstrap))]
-    public class Bootstrap : MonoBehaviour
+    public class Bootstrap : Singleton<Bootstrap>
     {
-        [SerializeField] [Tooltip("List of components to initialize manually")]
+        [Header("References")] [SerializeField] [Tooltip("List of components to initialize manually")]
         private List<MonoBehaviour> _manualInitializables = new();
 
-        [SerializeField] [Tooltip("If true, automatically finds and initializes all IInit components in the scene")]
+        [Header("Settings")]
+        [SerializeField]
+        [Tooltip("If true, automatically finds and initializes all IInit components in the scene")]
         private bool _autoFindComponents;
 
         private readonly List<IInit> _initializables = new();
 
-        private void Awake()
-        {
-            DontDestroyOnLoad(gameObject);
-            InitializeComponents();
-        }
+        protected override bool DontDestroyOnLoadEnabled => true;
 
         /// <summary>
         ///     Initializes all components in priority order
@@ -52,8 +50,10 @@ namespace Neo.Tools
         ///     First initializes manual components, then finds and initializes automatic components if enabled.
         ///     Components are sorted by priority before initialization.
         /// </remarks>
-        private void InitializeComponents()
+        protected override void Init()
         {
+            base.Init();
+
             // First initialize manual components
             foreach (MonoBehaviour component in _manualInitializables)
             {
@@ -66,7 +66,8 @@ namespace Neo.Tools
             // Then find other components if auto-find is enabled
             if (_autoFindComponents)
             {
-                MonoBehaviour[] components = FindObjectsOfType<MonoBehaviour>();
+                MonoBehaviour[] components =
+                    FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                 foreach (MonoBehaviour component in components)
                 {
                     if (component is IInit initializable && !_initializables.Contains(initializable))

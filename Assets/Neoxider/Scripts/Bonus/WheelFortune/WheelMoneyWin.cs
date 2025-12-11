@@ -9,8 +9,9 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelMoneyWin))]
         public class WheelMoneyWin : MonoBehaviour
         {
-            public TMP_Text prize;
-            public int[] wins = new int[8];
+            [Header("References")] public TMP_Text prize;
+
+            [Header("Settings")] public int[] wins = new int[8];
 
             public void Win(int id)
             {

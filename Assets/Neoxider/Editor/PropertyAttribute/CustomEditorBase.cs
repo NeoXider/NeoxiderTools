@@ -16,7 +16,6 @@ namespace Neo.Editor
     /// </summary>
     public abstract class CustomEditorBase : UnityEditor.Editor
     {
-        // Binding flags for field reflection
         public const BindingFlags FIELD_FLAGS =
             BindingFlags.Public |
             BindingFlags.NonPublic |
@@ -36,14 +35,27 @@ namespace Neo.Editor
 
         private static readonly Dictionary<string, bool> _neoFoldouts = new();
 
+        // Reflection helpers (suppress Unity's built-in HeaderAttribute drawing when we already render our own sections)
+        private static readonly Type _scriptAttributeUtilityType =
+            typeof(UnityEditor.Editor).Assembly.GetType("UnityEditor.ScriptAttributeUtility");
+
+        private static readonly MethodInfo _getHandlerMethod =
+            _scriptAttributeUtilityType?.GetMethod("GetHandler",
+                BindingFlags.NonPublic | BindingFlags.Static,
+                null,
+                new[] { typeof(SerializedProperty) },
+                null);
+
         private Rect _componentOutlineRect;
         protected Dictionary<string, bool> _isFirstRun = new();
 
         private Rect _rainbowLineStartRect;
         private float _rainbowLineStartY;
 
-        // Track if Reset was pressed
         private bool _wasResetPressed;
+
+        private string _unityEventSearch = string.Empty;
+        private bool _unityEventOnlyWithListeners;
 
         protected virtual void OnDisable()
         {
@@ -71,7 +83,6 @@ namespace Neo.Editor
             }
         }
 
-        // Utility methods for finding objects
         protected new static T FindFirstObjectByType<T>() where T : Object
         {
             return Object.FindFirstObjectByType<T>();
@@ -99,10 +110,8 @@ namespace Neo.Editor
         /// </summary>
         private static string GetScriptPath([CallerFilePath] string sourceFilePath = "")
         {
-            // CallerFilePath возвращает абсолютный путь, нужно преобразовать в относительный Unity путь
             if (!string.IsNullOrEmpty(sourceFilePath))
             {
-                // Для работы как из Assets, так и из Packages
                 string projectPath = Directory.GetCurrentDirectory();
                 if (sourceFilePath.StartsWith(projectPath))
                 {
@@ -131,7 +140,6 @@ namespace Neo.Editor
 
             try
             {
-                // Самый надежный путь для пакетов: Unity выдаёт assetPath вида "Packages/com.neoxider.tools"
                 UnityEditor.PackageManager.PackageInfo packageInfo =
                     UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(CustomEditorBase).Assembly);
                 if (packageInfo != null)
@@ -154,12 +162,10 @@ namespace Neo.Editor
             }
             catch
             {
-                // Ignore
             }
 
             try
             {
-                // Получаем путь к текущему скрипту и поднимаемся до package.json
                 string directory = Path.GetDirectoryName(GetScriptPath());
 
                 while (!string.IsNullOrEmpty(directory))
@@ -170,7 +176,6 @@ namespace Neo.Editor
                     {
                         string json = File.ReadAllText(packagePath);
 
-                        // Проверяем, что это Neoxider Tools пакет
                         if (json.Contains("\"displayName\": \"Neoxider Tools\"") ||
                             json.Contains("\"name\": \"com.neoxider.tools\""))
                         {
@@ -181,7 +186,6 @@ namespace Neo.Editor
 
                             if (string.IsNullOrEmpty(_cachedVersion))
                             {
-                                // Парсим версию
                                 int versionIndex = json.IndexOf("\"version\":", StringComparison.Ordinal);
                                 if (versionIndex != -1)
                                 {
@@ -195,7 +199,6 @@ namespace Neo.Editor
                                 }
                             }
 
-                            // Если уже нашли и root, и version — выходим
                             if (!string.IsNullOrEmpty(_cachedNeoxiderRootPath) && !string.IsNullOrEmpty(_cachedVersion))
                             {
                                 return;
@@ -203,13 +206,11 @@ namespace Neo.Editor
                         }
                     }
 
-                    // Поднимаемся на уровень выше
                     directory = Directory.GetParent(directory)?.FullName;
                 }
             }
             catch
             {
-                // Ignore
             }
 
             if (string.IsNullOrEmpty(_cachedVersion))
@@ -227,7 +228,6 @@ namespace Neo.Editor
 
             string normalized = path.Replace('\\', '/');
 
-            // Если путь уже Unity-relative
             if (normalized.StartsWith("Assets/") || normalized.StartsWith("Packages/"))
             {
                 return normalized;
@@ -243,10 +243,8 @@ namespace Neo.Editor
             }
             catch
             {
-                // Ignore
             }
 
-            // Фоллбек: пытаемся вытащить часть с Assets/ или Packages/
             int assetsIndex = normalized.IndexOf("/Assets/", StringComparison.OrdinalIgnoreCase);
             if (assetsIndex >= 0)
             {
@@ -273,7 +271,6 @@ namespace Neo.Editor
 
             try
             {
-                // Ожидаемый путь: <NeoxiderRoot>/NeoLogo.png
                 EnsureNeoxiderPackageInfo();
                 string root = _cachedNeoxiderRootPath;
 
@@ -282,7 +279,6 @@ namespace Neo.Editor
                     string iconPath = $"{root}/NeoLogo.png".Replace('\\', '/');
                     _cachedLibraryIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
 
-                    // Backward-compat (на случай старого расположения иконки)
                     if (_cachedLibraryIcon == null)
                     {
                         string legacyIconPath = $"{root}/Editor/Icons/NeoxiderToolsIcon.png".Replace('\\', '/');
@@ -292,12 +288,10 @@ namespace Neo.Editor
             }
             catch
             {
-                // Ignore
             }
 
             if (_cachedLibraryIcon == null)
             {
-                // Фоллбек: попробуем найти по имени (один раз, т.к. есть кеширование)
                 try
                 {
                     string[] guids = AssetDatabase.FindAssets("NeoLogo t:Texture2D");
@@ -309,7 +303,6 @@ namespace Neo.Editor
                 }
                 catch
                 {
-                    // Ignore
                 }
             }
 
@@ -321,13 +314,11 @@ namespace Neo.Editor
         /// </summary>
         protected virtual bool IsOdinInspectorAvailable()
         {
-            // Кэшируем результат проверки
             if (_odinInspectorAvailable.HasValue)
             {
                 return _odinInspectorAvailable.Value;
             }
 
-            // Проверяем наличие Odin Inspector через рефлексию
             try
             {
                 Type odinInspectorType =
@@ -344,43 +335,26 @@ namespace Neo.Editor
 
         public override void OnInspectorGUI()
         {
-            // Check if Reset was pressed
             if (Event.current.commandName == "Reset")
             {
                 _wasResetPressed = true;
             }
 
-            // Проверяем, установлен ли Odin Inspector
-            // Если Odin Inspector активен, он сам обрабатывает кнопки и оформление
-            // Поэтому мы пропускаем наше оформление и кнопки, чтобы не дублировать
             bool isOdinActive = IsOdinInspectorAvailable();
 
-            // Check if component has Neo namespace (including Neo.Tools, Neo.Shop, etc.)
             bool hasNeoNamespace = false;
 
             if (target != null && target.GetType().Namespace != null)
             {
                 string targetNamespace = target.GetType().Namespace;
 
-                // Проверяем точное совпадение "Neo" или начало с "Neo."
                 hasNeoNamespace = targetNamespace == "Neo" || targetNamespace.StartsWith("Neo.");
 
-                // Дополнительная проверка для вложенных namespace (например, Neo { namespace Audio)
-                // В таких случаях полный namespace будет "Neo.Audio"
                 if (!hasNeoNamespace && targetNamespace.Contains("."))
                 {
-                    // Проверяем каждую часть namespace
                     string[] parts = targetNamespace.Split('.');
                     hasNeoNamespace = parts.Length > 0 && parts[0] == "Neo";
                 }
-
-                // Debug для диагностики
-                // Раскомментируйте эти строки если компоненты Neo.Tools не отображаются с оформлением:
-                // if (targetNamespace.Contains("Neo") && targetNamespace.Contains("Tools"))
-                // {
-                //     Debug.Log($"[Neo Debug] Component: {target.GetType().FullName}, Namespace: {targetNamespace}, " +
-                //              $"Has Neo Namespace: {hasNeoNamespace}, Assembly: {target.GetType().Assembly.GetName().Name}");
-                // }
             }
 
             if (hasNeoNamespace)
@@ -415,11 +389,8 @@ namespace Neo.Editor
                 _wasResetPressed = false;
             }
 
-            // Process custom attributes if enabled
             ProcessAttributeAssignments();
 
-            // Buttons / Actions
-            // Если Odin активен — пусть Odin сам управляет кнопками.
             if (!isOdinActive)
             {
                 if (hasNeoNamespace)
@@ -428,7 +399,6 @@ namespace Neo.Editor
                 }
                 else
                 {
-                    // Поведение как раньше для не-Neo компонентов
                     DrawMethodButtons();
                 }
             }
@@ -492,7 +462,8 @@ namespace Neo.Editor
                     float t = 0.5f + 0.5f * Mathf.Sin((float)EditorApplication.timeSinceStartup * 4f);
                     signatureColor = Color.Lerp(new Color(1f, 0.25f, 0.25f, 1f), new Color(1f, 0.65f, 0.65f, 1f), t);
                 }
-                else if (CustomEditorSettings.EnableRainbowSignature && CustomEditorSettings.EnableRainbowSignatureAnimation)
+                else if (CustomEditorSettings.EnableRainbowSignature &&
+                         CustomEditorSettings.EnableRainbowSignatureAnimation)
                 {
                     signatureColor = GetRainbowColor(CustomEditorSettings.RainbowSpeed);
                 }
@@ -537,6 +508,18 @@ namespace Neo.Editor
                         {
                             using (new EditorGUILayout.HorizontalScope())
                             {
+                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
+                                if (refreshContent == null || refreshContent.image == null)
+                                {
+                                    refreshContent = new GUIContent("⟳");
+                                }
+
+                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
+                                {
+                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
+                                    Repaint();
+                                }
+
                                 GUIStyle newVersionStyle = new(EditorStyles.miniBoldLabel)
                                 {
                                     normal = { textColor = new Color(1f, 0.25f, 0.25f, 1f) }
@@ -552,28 +535,62 @@ namespace Neo.Editor
                                 }
                             }
                         }
+
                         break;
 
                     case NeoUpdateChecker.UpdateStatus.UpToDate:
                         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                         {
-                            GUIStyle okStyle = new(EditorStyles.miniBoldLabel)
+                            using (new EditorGUILayout.HorizontalScope())
                             {
-                                normal = { textColor = new Color(0.35f, 1f, 0.35f, 1f) }
-                            };
-                            EditorGUILayout.LabelField("Актуальная версия", okStyle);
+                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
+                                if (refreshContent == null || refreshContent.image == null)
+                                {
+                                    refreshContent = new GUIContent("⟳");
+                                }
+
+                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
+                                {
+                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
+                                    Repaint();
+                                }
+
+                                GUIStyle okStyle = new(EditorStyles.miniBoldLabel)
+                                {
+                                    normal = { textColor = new Color(0.35f, 1f, 0.35f, 1f) }
+                                };
+                                EditorGUILayout.LabelField("Актуальная версия", okStyle);
+                            }
                         }
+
                         break;
 
                     case NeoUpdateChecker.UpdateStatus.Ahead:
                         using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                         {
-                            GUIStyle devStyle = new(EditorStyles.miniBoldLabel)
+                            using (new EditorGUILayout.HorizontalScope())
                             {
-                                normal = { textColor = new Color(1f, 0.75f, 0.25f, 1f) }
-                            };
-                            EditorGUILayout.LabelField($"Не опубликована (последняя: {updateState.LatestVersion})", devStyle);
+                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
+                                if (refreshContent == null || refreshContent.image == null)
+                                {
+                                    refreshContent = new GUIContent("⟳");
+                                }
+
+                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
+                                {
+                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
+                                    Repaint();
+                                }
+
+                                GUIStyle devStyle = new(EditorStyles.miniBoldLabel)
+                                {
+                                    normal = { textColor = new Color(1f, 0.75f, 0.25f, 1f) }
+                                };
+                                EditorGUILayout.LabelField($"Не опубликована (последняя: {updateState.LatestVersion})",
+                                    devStyle);
+                            }
                         }
+
                         break;
                 }
             }
@@ -663,7 +680,6 @@ namespace Neo.Editor
                 return;
             }
 
-            // Если в объекте нет ни одного [Header] — рисуем как обычно (без лишних секций).
             bool hasAnyHeader = false;
             for (int i = 0; i < properties.Count; i++)
             {
@@ -678,7 +694,7 @@ namespace Neo.Editor
             {
                 for (int i = 0; i < properties.Count; i++)
                 {
-                    EditorGUILayout.PropertyField(properties[i], true);
+                    DrawPropertyField(properties[i], false);
                 }
 
                 return;
@@ -687,6 +703,7 @@ namespace Neo.Editor
             List<HeaderSection> sections = BuildHeaderSections(properties);
             Color baseGreen = CustomEditorSettings.ScriptNameColor;
             Color darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+            int minFieldsForCategory = Mathf.Max(0, CustomEditorSettings.MinFieldsForHeaderCategory);
 
             for (int i = 0; i < sections.Count; i++)
             {
@@ -696,7 +713,24 @@ namespace Neo.Editor
                     DrawWarningHeader(section.Title);
                     for (int p = 0; p < section.Properties.Count; p++)
                     {
-                        EditorGUILayout.PropertyField(section.Properties[p], true);
+                        DrawPropertyField(section.Properties[p], true);
+                    }
+
+                    continue;
+                }
+
+                bool excludeFromMinFieldsRule =
+                    string.Equals(section.Title, "Actions", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(section.Title, "Events", StringComparison.OrdinalIgnoreCase);
+
+                if (!excludeFromMinFieldsRule &&
+                    minFieldsForCategory > 0 &&
+                    section.Properties.Count < minFieldsForCategory)
+                {
+                    DrawPlainHeader(section.Title);
+                    for (int p = 0; p < section.Properties.Count; p++)
+                    {
+                        DrawPropertyField(section.Properties[p], true);
                     }
 
                     continue;
@@ -704,9 +738,8 @@ namespace Neo.Editor
 
                 string key = $"{target.GetType().FullName}.NeoFoldout.Header.{section.Title}";
 
-                bool expanded = GetFoldoutState(key, defaultValue: true);
+                bool expanded = GetFoldoutState(key, true);
 
-                // Когда секция раскрыта — делаем заголовок/акцент темнее (чтобы было компактнее и спокойнее визуально)
                 Color accent = expanded ? darkGreen : baseGreen;
                 Color titleColor = expanded ? Color.white : baseGreen;
                 Color countColor = expanded
@@ -727,12 +760,313 @@ namespace Neo.Editor
                     EditorGUI.indentLevel++;
                     for (int p = 0; p < section.Properties.Count; p++)
                     {
-                        EditorGUILayout.PropertyField(section.Properties[p], true);
+                        DrawPropertyField(section.Properties[p], true);
                     }
 
                     EditorGUI.indentLevel--;
                 }
             }
+        }
+
+        private void DrawAutoSections(List<SerializedProperty> properties)
+        {
+            if (properties == null || properties.Count == 0 || target == null)
+            {
+                return;
+            }
+
+            List<SerializedProperty> references = new();
+            List<SerializedProperty> settings = new();
+            List<SerializedProperty> debug = new();
+
+            for (int i = 0; i < properties.Count; i++)
+            {
+                SerializedProperty p = properties[i];
+                if (p == null)
+                {
+                    continue;
+                }
+
+                if (IsDebugProperty(p))
+                {
+                    debug.Add(p);
+                }
+                else if (IsReferenceProperty(p))
+                {
+                    references.Add(p);
+                }
+                else
+                {
+                    settings.Add(p);
+                }
+            }
+
+            Color baseGreen = CustomEditorSettings.ScriptNameColor;
+            Color darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+
+            DrawAutoSection("References", references, baseGreen, darkGreen);
+            DrawAutoSection("Settings", settings, baseGreen, darkGreen);
+            DrawAutoSection("Debug", debug, baseGreen, darkGreen);
+        }
+
+        private void DrawAutoSection(string title, List<SerializedProperty> props, Color baseColor, Color darkColor)
+        {
+            if (props == null || props.Count == 0 || target == null)
+            {
+                return;
+            }
+
+            string key = $"{target.GetType().FullName}.NeoFoldout.Auto.{title}";
+            bool expanded = GetFoldoutState(key, true);
+
+            Color accent = expanded ? darkColor : baseColor;
+            Color titleColor = expanded ? Color.white : baseColor;
+            Color countColor = expanded
+                ? new Color(1f, 1f, 1f, 0.75f)
+                : new Color(baseColor.r, baseColor.g, baseColor.b, 0.75f);
+
+            expanded = DrawNeoSectionHeader(expanded, title, props.Count, accent, "d_Folder Icon", titleColor,
+                countColor);
+            _neoFoldouts[key] = expanded;
+
+            if (!expanded)
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUI.indentLevel++;
+                for (int i = 0; i < props.Count; i++)
+                {
+                    DrawPropertyField(props[i], false);
+                }
+
+                EditorGUI.indentLevel--;
+            }
+        }
+
+        private bool IsReferenceProperty(SerializedProperty property)
+        {
+            if (property == null || target == null)
+            {
+                return false;
+            }
+
+            if (property.propertyType == SerializedPropertyType.ObjectReference)
+            {
+                return true;
+            }
+
+            if (!TryGetFieldInfoForPropertyPath(target.GetType(), property.propertyPath, out FieldInfo fieldInfo))
+            {
+                return false;
+            }
+
+            Type t = fieldInfo.FieldType;
+            if (t == null)
+            {
+                return false;
+            }
+
+            if (typeof(Object).IsAssignableFrom(t))
+            {
+                return true;
+            }
+
+            if (t.IsArray)
+            {
+                Type element = t.GetElementType();
+                return element != null && typeof(Object).IsAssignableFrom(element);
+            }
+
+            if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>))
+            {
+                Type element = t.GetGenericArguments()[0];
+                return element != null && typeof(Object).IsAssignableFrom(element);
+            }
+
+            return false;
+        }
+
+        private static bool IsDebugProperty(SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return false;
+            }
+
+            string name = property.name ?? string.Empty;
+            string path = property.propertyPath ?? string.Empty;
+
+            return name.Contains("debug", StringComparison.OrdinalIgnoreCase) ||
+                   name.Contains("gizmo", StringComparison.OrdinalIgnoreCase) ||
+                   name.Contains("editor", StringComparison.OrdinalIgnoreCase) ||
+                   path.Contains("debug", StringComparison.OrdinalIgnoreCase) ||
+                   path.Contains("gizmo", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private void DrawPropertyField(SerializedProperty property, bool suppressUnityHeaderDecorators)
+        {
+            if (property == null)
+            {
+                return;
+            }
+
+            if (property.propertyType == SerializedPropertyType.Boolean)
+            {
+                DrawBooleanToggle(property);
+                return;
+            }
+
+            if (suppressUnityHeaderDecorators && !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(property)))
+            {
+                DrawPropertyFieldWithoutHeaderDecorator(property);
+                return;
+            }
+
+            EditorGUILayout.PropertyField(property, true);
+        }
+
+        private static void DrawPropertyFieldWithoutHeaderDecorator(SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return;
+            }
+
+            // If reflection fails (Unity internal API changed), fallback to default drawing.
+            if (_getHandlerMethod == null)
+            {
+                EditorGUILayout.PropertyField(property, true);
+                return;
+            }
+
+            object handler = null;
+            try
+            {
+                handler = _getHandlerMethod.Invoke(null, new object[] { property });
+            }
+            catch
+            {
+                EditorGUILayout.PropertyField(property, true);
+                return;
+            }
+
+            if (handler == null)
+            {
+                EditorGUILayout.PropertyField(property, true);
+                return;
+            }
+
+            FieldInfo decoratorsField =
+                handler.GetType().GetField("m_DecoratorDrawers", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (decoratorsField == null)
+            {
+                EditorGUILayout.PropertyField(property, true);
+                return;
+            }
+
+            object originalDecorators = null;
+            try
+            {
+                originalDecorators = decoratorsField.GetValue(handler);
+                if (originalDecorators is not System.Collections.IList list)
+                {
+                    EditorGUILayout.PropertyField(property, true);
+                    return;
+                }
+
+                System.Collections.IList filtered;
+                try
+                {
+                    filtered = (System.Collections.IList)Activator.CreateInstance(decoratorsField.FieldType);
+                }
+                catch
+                {
+                    EditorGUILayout.PropertyField(property, true);
+                    return;
+                }
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    object d = list[i];
+                    if (d == null)
+                    {
+                        continue;
+                    }
+
+                    // Suppress only HeaderAttribute rendering; keep Space / other decorators intact.
+                    if (d.GetType().Name == "HeaderDrawer")
+                    {
+                        continue;
+                    }
+
+                    filtered.Add(d);
+                }
+
+                decoratorsField.SetValue(handler, filtered);
+                EditorGUILayout.PropertyField(property, true);
+            }
+            catch
+            {
+                EditorGUILayout.PropertyField(property, true);
+            }
+            finally
+            {
+                if (originalDecorators != null)
+                {
+                    try
+                    {
+                        decoratorsField.SetValue(handler, originalDecorators);
+                    }
+                    catch
+                    {
+                        // ignore
+                    }
+                }
+            }
+        }
+
+        private void DrawBooleanToggle(SerializedProperty property)
+        {
+            Rect rect = EditorGUILayout.GetControlRect(true, EditorGUIUtility.singleLineHeight);
+            GUIContent label = new(property.displayName, property.tooltip);
+
+            EditorGUI.BeginProperty(rect, label, property);
+
+            Rect contentRect = EditorGUI.PrefixLabel(rect, label);
+
+            const float buttonWidth = 48f;
+            Rect buttonRect = new(contentRect.xMax - buttonWidth, contentRect.y, buttonWidth, contentRect.height);
+
+            bool value = property.boolValue;
+
+            Color oldBg = GUI.backgroundColor;
+            Color oldColor = GUI.color;
+
+            GUI.backgroundColor = value
+                ? new Color(0.25f, 0.95f, 0.45f, 1f)
+                : new Color(0.25f, 0.25f, 0.25f, 1f);
+
+            GUI.color = Color.white;
+
+            GUIStyle style = new(EditorStyles.miniButton)
+            {
+                alignment = TextAnchor.MiddleCenter,
+                fontStyle = FontStyle.Bold,
+                fixedHeight = 18f
+            };
+
+            if (GUI.Button(buttonRect, value ? "ON" : "OFF", style))
+            {
+                property.boolValue = !value;
+            }
+
+            GUI.backgroundColor = oldBg;
+            GUI.color = oldColor;
+
+            EditorGUI.EndProperty();
         }
 
         private readonly struct HeaderSection
@@ -760,7 +1094,6 @@ namespace Neo.Editor
 
                 if (string.IsNullOrEmpty(headerTitle))
                 {
-                    // General: все поля до первого Header
                     List<SerializedProperty> general = new();
                     while (i < properties.Count && string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i])))
                     {
@@ -770,13 +1103,12 @@ namespace Neo.Editor
 
                     if (general.Count > 0)
                     {
-                        sections.Add(new HeaderSection("General", general, isWarningHeader: false));
+                        sections.Add(new HeaderSection("General", general, false));
                     }
 
                     continue;
                 }
 
-                // Секция начинается на поле с HeaderAttribute и продолжается до следующего HeaderAttribute
                 List<SerializedProperty> sectionProps = new();
                 sectionProps.Add(p);
                 i++;
@@ -788,7 +1120,7 @@ namespace Neo.Editor
                 }
 
                 bool nextIsHeaderOrEnd = i >= properties.Count ||
-                                        !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i]));
+                                         !string.IsNullOrEmpty(TryGetHeaderTitleForProperty(properties[i]));
 
                 bool looksLikeWarning =
                     headerTitle.StartsWith("⚠", StringComparison.Ordinal) ||
@@ -797,7 +1129,6 @@ namespace Neo.Editor
                     headerTitle.Contains("предуп", StringComparison.OrdinalIgnoreCase) ||
                     headerTitle.Contains("ошиб", StringComparison.OrdinalIgnoreCase);
 
-                // Если Header "пустой" (идёт сразу следующий Header или конец) — не делаем категорию, а рисуем как предупреждение.
                 bool isEmptyHeaderGroup = sectionProps.Count == 1 && nextIsHeaderOrEnd;
                 bool isWarningHeader = looksLikeWarning || isEmptyHeaderGroup;
 
@@ -826,6 +1157,25 @@ namespace Neo.Editor
             EditorGUILayout.Space(2);
         }
 
+        private void DrawPlainHeader(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return;
+            }
+
+            GUIStyle style = new(EditorStyles.boldLabel)
+            {
+                fontSize = 14,
+                wordWrap = true,
+                normal = { textColor = Color.white }
+            };
+
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField(text, style);
+            EditorGUILayout.Space(2);
+        }
+
         private string TryGetHeaderTitleForProperty(SerializedProperty property)
         {
             if (property == null || target == null)
@@ -840,9 +1190,7 @@ namespace Neo.Editor
 
             try
             {
-                // GetCustomAttribute<T> может бросать AmbiguousMatchException, если по какой-то причине
-                // на поле оказалось несколько HeaderAttribute. Берём первый безопасным способом.
-                object[] attrs = fieldInfo.GetCustomAttributes(typeof(HeaderAttribute), inherit: true);
+                object[] attrs = fieldInfo.GetCustomAttributes(typeof(HeaderAttribute), true);
                 if (attrs == null || attrs.Length == 0)
                 {
                     return null;
@@ -865,10 +1213,6 @@ namespace Neo.Editor
                 return false;
             }
 
-            // Пример путей:
-            // - myField
-            // - nested.someField
-            // - list.Array.data[0].someField
             string[] parts = propertyPath.Split('.');
             Type currentType = rootType;
             FieldInfo currentField = null;
@@ -879,13 +1223,11 @@ namespace Neo.Editor
 
                 if (part == "Array")
                 {
-                    // Следующий токен будет data[x] — пропускаем
                     continue;
                 }
 
                 if (part.StartsWith("data[", StringComparison.Ordinal))
                 {
-                    // Индекс массива/листа — пропускаем, тип уже должен быть elementType
                     continue;
                 }
 
@@ -899,7 +1241,6 @@ namespace Neo.Editor
 
                 currentType = currentField.FieldType;
 
-                // Если это список/массив — дальше ожидается Array.data[x]
                 if (currentType.IsArray)
                 {
                     currentType = currentType.GetElementType();
@@ -938,9 +1279,130 @@ namespace Neo.Editor
                 return false;
             }
 
-            // UnityEvent сериализуется как "UnityEvent" / "UnityEvent`1" и т.п.
+            // 1) Fast-path: Unity often reports a type string containing "UnityEvent"
+            //    (but custom subclasses like ColliderEvent may not contain it).
             string typeName = property.type;
-            return !string.IsNullOrEmpty(typeName) && typeName.Contains("UnityEvent");
+            if (!string.IsNullOrEmpty(typeName) && typeName.Contains("UnityEvent"))
+            {
+                return true;
+            }
+
+            // 2) Robust path: any UnityEventBase derivative has the internal persistent calls array.
+            //    This catches custom serializable UnityEvent subclasses used in PhysicsEvents2D/3D etc.
+            if (property.propertyType != SerializedPropertyType.Generic)
+            {
+                return false;
+            }
+
+            SerializedProperty calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
+            return calls != null && calls.isArray;
+        }
+
+        private static SerializedProperty GetPersistentCallsArray(SerializedProperty unityEventProperty)
+        {
+            if (unityEventProperty == null)
+            {
+                return null;
+            }
+
+            SerializedProperty calls = unityEventProperty.FindPropertyRelative("m_PersistentCalls.m_Calls");
+            if (calls != null && calls.isArray)
+            {
+                return calls;
+            }
+
+            return null;
+        }
+
+        private static int GetPersistentCallCount(SerializedProperty unityEventProperty)
+        {
+            SerializedProperty calls = GetPersistentCallsArray(unityEventProperty);
+            return calls != null ? calls.arraySize : 0;
+        }
+
+        private static int GetBrokenPersistentCallCount(SerializedProperty unityEventProperty)
+        {
+            SerializedProperty calls = GetPersistentCallsArray(unityEventProperty);
+            if (calls == null)
+            {
+                return 0;
+            }
+
+            int broken = 0;
+            for (int i = 0; i < calls.arraySize; i++)
+            {
+                SerializedProperty call = calls.GetArrayElementAtIndex(i);
+                if (call == null)
+                {
+                    continue;
+                }
+
+                SerializedProperty targetProp = call.FindPropertyRelative("m_Target");
+                SerializedProperty methodProp = call.FindPropertyRelative("m_MethodName");
+
+                bool hasTarget = targetProp != null &&
+                                 targetProp.propertyType == SerializedPropertyType.ObjectReference &&
+                                 targetProp.objectReferenceValue != null;
+                bool hasMethod = methodProp != null && methodProp.propertyType == SerializedPropertyType.String &&
+                                 !string.IsNullOrWhiteSpace(methodProp.stringValue);
+
+                if (!hasTarget || !hasMethod)
+                {
+                    broken++;
+                }
+            }
+
+            return broken;
+        }
+
+        private static string BuildPersistentCallPreview(SerializedProperty unityEventProperty, int maxItems)
+        {
+            SerializedProperty calls = GetPersistentCallsArray(unityEventProperty);
+            if (calls == null || calls.arraySize == 0 || maxItems <= 0)
+            {
+                return null;
+            }
+
+            int count = Mathf.Min(calls.arraySize, maxItems);
+            List<string> parts = new(count);
+
+            for (int i = 0; i < count; i++)
+            {
+                SerializedProperty call = calls.GetArrayElementAtIndex(i);
+                if (call == null)
+                {
+                    continue;
+                }
+
+                SerializedProperty targetProp = call.FindPropertyRelative("m_Target");
+                SerializedProperty methodProp = call.FindPropertyRelative("m_MethodName");
+
+                string targetName = targetProp != null &&
+                                    targetProp.propertyType == SerializedPropertyType.ObjectReference &&
+                                    targetProp.objectReferenceValue != null
+                    ? targetProp.objectReferenceValue.name
+                    : "<Missing Target>";
+
+                string methodName = methodProp != null && methodProp.propertyType == SerializedPropertyType.String &&
+                                    !string.IsNullOrWhiteSpace(methodProp.stringValue)
+                    ? methodProp.stringValue
+                    : "<Missing Method>";
+
+                parts.Add($"{targetName}.{methodName}");
+            }
+
+            if (parts.Count == 0)
+            {
+                return null;
+            }
+
+            string preview = string.Join(", ", parts);
+            if (calls.arraySize > maxItems)
+            {
+                preview += $" … (+{calls.arraySize - maxItems})";
+            }
+
+            return preview;
         }
 
         private void DrawUnityEventsFoldout(List<SerializedProperty> unityEvents)
@@ -959,7 +1421,7 @@ namespace Neo.Editor
                 Color accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
                 Color accent = current ? accentDark : accentBase;
 
-                current = DrawNeoSectionHeader(current, "Events", unityEvents.Count, accent, "d_UnityEvent",
+                current = DrawNeoSectionHeader(current, "Events", unityEvents.Count, accent, "d_EventSystem Icon",
                     current ? Color.white : accentBase,
                     current
                         ? new Color(1f, 1f, 1f, 0.75f)
@@ -969,15 +1431,107 @@ namespace Neo.Editor
                 {
                     using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                     {
-                        EditorGUI.indentLevel++;
-                        foreach (SerializedProperty p in unityEvents)
+                        using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
                         {
+                            GUIStyle searchStyle = EditorStyles.toolbarSearchField;
+                            GUIStyle cancelStyle =
+                                GUI.skin.FindStyle("ToolbarSearchCancelButton") ??
+                                GUI.skin.FindStyle("ToolbarSeachCancelButton"); // старые Unity (опечатка в названии)
+                            GUIContent cancelContent = GUIContent.none;
+                            GUILayoutOption cancelWidth = null;
+                            if (cancelStyle == null)
+                            {
+                                cancelStyle = EditorStyles.toolbarButton;
+                                cancelContent = new GUIContent("×");
+                                cancelWidth = GUILayout.Width(20);
+                            }
+
+                            _unityEventSearch ??= string.Empty;
+                            _unityEventSearch =
+                                GUILayout.TextField(_unityEventSearch, searchStyle, GUILayout.MinWidth(140));
+
+                            if (GUILayout.Button(cancelContent, cancelStyle, cancelWidth ?? GUILayout.Width(18)))
+                            {
+                                _unityEventSearch = string.Empty;
+                                GUI.FocusControl(null);
+                            }
+
+                            GUILayout.Space(6);
+
+                            _unityEventOnlyWithListeners = GUILayout.Toggle(_unityEventOnlyWithListeners, "Only active",
+                                EditorStyles.toolbarButton, GUILayout.Width(80));
+
+                            GUILayout.FlexibleSpace();
+                        }
+
+                        EditorGUI.indentLevel++;
+
+                        GUIStyle warningMini = new(EditorStyles.miniLabel)
+                        {
+                            wordWrap = true,
+                            normal = { textColor = new Color(1f, 0.35f, 0.35f, 1f) }
+                        };
+
+                        int shown = 0;
+                        for (int i = 0; i < unityEvents.Count; i++)
+                        {
+                            SerializedProperty p = unityEvents[i];
                             if (p == null)
                             {
                                 continue;
                             }
 
-                            EditorGUILayout.PropertyField(p, true);
+                            int callCount = GetPersistentCallCount(p);
+                            if (_unityEventOnlyWithListeners && callCount == 0)
+                            {
+                                continue;
+                            }
+
+                            if (!string.IsNullOrWhiteSpace(_unityEventSearch))
+                            {
+                                string dn = p.displayName ?? string.Empty;
+                                string pp = p.propertyPath ?? string.Empty;
+                                if (dn.IndexOf(_unityEventSearch, StringComparison.OrdinalIgnoreCase) < 0 &&
+                                    pp.IndexOf(_unityEventSearch, StringComparison.OrdinalIgnoreCase) < 0)
+                                {
+                                    continue;
+                                }
+                            }
+
+                            int brokenCount = GetBrokenPersistentCallCount(p);
+                            string label =
+                                brokenCount > 0 ? $"⚠ {p.displayName} ({callCount})" : $"{p.displayName} ({callCount})";
+
+                            if (shown > 0)
+                            {
+                                EditorGUILayout.Space(2);
+                            }
+
+                            EditorGUILayout.PropertyField(p, new GUIContent(label), true);
+
+                            if (!p.isExpanded && callCount > 0)
+                            {
+                                string preview = BuildPersistentCallPreview(p, 2);
+                                if (!string.IsNullOrEmpty(preview))
+                                {
+                                    EditorGUILayout.LabelField(preview, EditorStyles.miniLabel);
+                                }
+                            }
+
+                            if (brokenCount > 0 && !p.isExpanded)
+                            {
+                                EditorGUILayout.LabelField(
+                                    $"Есть {brokenCount} сломанных listener(ов): проверь Target/Method.",
+                                    warningMini);
+                            }
+
+                            shown++;
+                        }
+
+                        if (shown == 0)
+                        {
+                            EditorGUILayout.LabelField("Ничего не найдено по текущему фильтру.",
+                                EditorStyles.centeredGreyMiniLabel);
                         }
 
                         EditorGUI.indentLevel--;
@@ -1065,8 +1619,8 @@ namespace Neo.Editor
             Rect accentRect = new(rect.x, rect.y, 4f, rect.height);
             EditorGUI.DrawRect(accentRect, accent);
 
-            // Click handling
-            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && rect.Contains(Event.current.mousePosition))
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 &&
+                rect.Contains(Event.current.mousePosition))
             {
                 expanded = !expanded;
                 GUI.FocusControl(null);
@@ -1106,7 +1660,6 @@ namespace Neo.Editor
             Rect countRect = new(rect.xMax - 60f, rect.y + 6f, 52f, 16f);
             GUI.Label(countRect, $"({count})", countStyle);
 
-            // Bottom separator line
             Rect lineRect = new(rect.x, rect.yMax - 1f, rect.width, 1f);
             EditorGUI.DrawRect(lineRect, new Color(1f, 1f, 1f, 0.06f));
 
@@ -1214,7 +1767,6 @@ namespace Neo.Editor
                 EnsureRepaint();
             }
 
-            // Используем небольшой rect чтобы получить текущую Y позицию
             Rect rect = EditorGUILayout.GetControlRect(false, 0);
 
             if (Event.current.type == EventType.Repaint)
@@ -1358,11 +1910,9 @@ namespace Neo.Editor
 
             if (Event.current.type == EventType.Repaint)
             {
-                // Получаем цвета из настроек
                 Color topColor = GradientButtonSettings.TopColor;
                 Color bottomColor = GradientButtonSettings.BottomColor;
 
-                // Проверка на hover
                 bool isHover = buttonRect.Contains(Event.current.mousePosition);
                 if (isHover)
                 {
@@ -1370,7 +1920,6 @@ namespace Neo.Editor
                     bottomColor = Color.Lerp(bottomColor, Color.white, GradientButtonSettings.HoverBrightness);
                 }
 
-                // Рисуем градиент через несколько прямоугольников
                 for (int i = 0; i < GradientButtonSettings.GradientSegments; i++)
                 {
                     float t = i / (float)GradientButtonSettings.GradientSegments;
@@ -1387,15 +1936,12 @@ namespace Neo.Editor
                     EditorGUI.DrawRect(segmentRect, segmentColor);
                 }
 
-                // Рисуем закруглённые углы поверх (эффект скругления)
                 DrawRoundedCorners(buttonRect, GradientButtonSettings.CornerRadius, topColor, bottomColor);
 
                 Handles.BeginGUI();
 
-                // Неоновая обводка (если включена)
                 if (GradientButtonSettings.EnableNeonGlow)
                 {
-                    // Внешнее свечение
                     Handles.color = new Color(
                         GradientButtonSettings.NeonGlowColor.r,
                         GradientButtonSettings.NeonGlowColor.g,
@@ -1419,13 +1965,11 @@ namespace Neo.Editor
 
                     Handles.DrawAAPolyLine(glowWidth, points);
 
-                    // Яркая внутренняя обводка
                     Handles.color = GradientButtonSettings.NeonGlowColor;
                     Handles.DrawAAPolyLine(1.5f, points);
                 }
                 else
                 {
-                    // Стандартная обводка сверху
                     Handles.color = GradientButtonSettings.HighlightColor;
                     Handles.DrawAAPolyLine(GradientButtonSettings.HighlightWidth,
                         new Vector3(buttonRect.x + GradientButtonSettings.CornerRadius, buttonRect.y),
@@ -1436,10 +1980,8 @@ namespace Neo.Editor
                 Handles.EndGUI();
             }
 
-            // Текст кнопки с тенью для киберпанк стиля
             if (GradientButtonSettings.EnableNeonGlow)
             {
-                // Тень текста
                 GUIStyle shadowStyle = new(EditorStyles.label)
                 {
                     alignment = GradientButtonSettings.TextAlignment,
@@ -1451,7 +1993,6 @@ namespace Neo.Editor
                 GUI.Label(shadowRect, text, shadowStyle);
             }
 
-            // Основной текст
             GUIStyle textStyle = new(EditorStyles.label)
             {
                 alignment = GradientButtonSettings.TextAlignment,
@@ -1471,11 +2012,9 @@ namespace Neo.Editor
         {
             Color bgColor = GradientButtonSettings.InspectorBackgroundColor;
 
-            // Верхние углы
             DrawCornerMask(new Rect(rect.x, rect.y, radius, radius), radius, bgColor, true, true);
             DrawCornerMask(new Rect(rect.xMax - radius, rect.y, radius, radius), radius, bgColor, false, true);
 
-            // Нижние углы
             DrawCornerMask(new Rect(rect.x, rect.yMax - radius, radius, radius), radius, bgColor, true, false);
             DrawCornerMask(new Rect(rect.xMax - radius, rect.yMax - radius, radius, radius), radius, bgColor, false,
                 false);
@@ -1492,7 +2031,6 @@ namespace Neo.Editor
                     ? new Vector2(cornerRect.x, cornerRect.yMax)
                     : new Vector2(cornerRect.x, cornerRect.y);
 
-            // Используем более высокое разрешение для плавного скругления
             int steps = GradientButtonSettings.CornerMaskSteps;
             float pixelSize = cornerRect.width / steps;
 
@@ -1500,13 +2038,11 @@ namespace Neo.Editor
             {
                 for (int y = 0; y < steps; y++)
                 {
-                    // Центр каждого "пикселя"
                     float px = cornerRect.x + (x + 0.5f) / steps * cornerRect.width;
                     float py = cornerRect.y + (y + 0.5f) / steps * cornerRect.height;
 
                     float dist = Vector2.Distance(new Vector2(px, py), center);
 
-                    // Более точная проверка расстояния с небольшим сглаживанием
                     if (dist > radius + pixelSize * 0.5f)
                     {
                         Rect pixelRect = new(
@@ -1533,8 +2069,6 @@ namespace Neo.Editor
                 return null;
             }
 
-            // Получаем все атрибуты и проверяем их по типу
-            // Это более надежный способ, так как не зависит от using директив
             object[] allAttributes = method.GetCustomAttributes(false);
 
             foreach (object attr in allAttributes)
@@ -1549,7 +2083,6 @@ namespace Neo.Editor
                 string typeName = attrType.Name;
                 string namespaceName = attrType.Namespace;
 
-                // Сначала проверяем Neo.ButtonAttribute (приоритет)
                 if (fullName == "Neo.ButtonAttribute" ||
                     (namespaceName == "Neo" && typeName == "ButtonAttribute"))
                 {
@@ -1558,24 +2091,18 @@ namespace Neo.Editor
                         ButtonAttribute neoAttr = attr as ButtonAttribute;
                         if (neoAttr != null)
                         {
-                            // Neo.ButtonAttribute всегда рисуем, независимо от Odin Inspector
                             return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width);
                         }
                     }
                     catch
                     {
-                        // Ignore
                     }
                 }
 
-                // Затем проверяем Odin Inspector ButtonAttribute
                 if (namespaceName == "Sirenix.OdinInspector" && typeName == "ButtonAttribute")
                 {
-                    // Всегда рисуем кнопки Odin Inspector через наш CustomEditorBase
-                    // Это гарантирует, что кнопки будут видны даже если Odin Inspector не рисует их
                     try
                     {
-                        // Извлекаем информацию из Odin Inspector ButtonAttribute через рефлексию
                         PropertyInfo nameProperty =
                             attrType.GetProperty("Name", BindingFlags.Public | BindingFlags.Instance);
                         if (nameProperty == null)
@@ -1616,7 +2143,6 @@ namespace Neo.Editor
                 }
             }
 
-            // Fallback: пробуем найти через типизированный поиск (для совместимости)
             try
             {
                 ButtonAttribute neoButtonAttribute = method.GetCustomAttribute<ButtonAttribute>();
@@ -1627,7 +2153,6 @@ namespace Neo.Editor
             }
             catch
             {
-                // Ignore
             }
 
             return null;
@@ -1664,15 +2189,12 @@ namespace Neo.Editor
                     continue;
                 }
 
-                // Ищем ButtonAttribute из Neo или Odin Inspector
                 ButtonInfo? buttonInfo = FindButtonAttribute(method);
                 if (!buttonInfo.HasValue)
                 {
                     continue;
                 }
 
-                // Проверяем, установлен ли Odin Inspector, но все равно рисуем кнопки
-                // Это гарантирует, что кнопки будут видны даже если Odin Inspector не рисует их
 
                 ButtonInfo buttonAttribute = buttonInfo.Value;
 
@@ -1688,10 +2210,8 @@ namespace Neo.Editor
 
                 EditorGUILayout.BeginHorizontal();
 
-                // Draw gradient button with rounded corners
                 bool buttonPressed = DrawGradientButton(buttonText, buttonAttribute.Width);
 
-                // Add small spacing after button
                 GUILayout.Space(GradientButtonSettings.ButtonSpacing);
 
                 if (buttonPressed)
@@ -1758,10 +2278,8 @@ namespace Neo.Editor
                     }
                 }
 
-                // Add spacing between button and parameters
                 GUILayout.Space(CustomEditorSettings.ButtonParameterSpacing);
 
-                // Draw parameters foldout on the right
                 if (parameters.Length > 0)
                 {
                     string foldoutKey = $"{method.Name}_foldout";
@@ -1776,12 +2294,9 @@ namespace Neo.Editor
 
                     if (_buttonFoldouts[foldoutKey])
                     {
-                        // Begin a new horizontal group to reset the indentation
                         EditorGUILayout.BeginHorizontal();
-                        // Add fixed space instead of indentation
                         GUILayout.Space(0);
 
-                        // Begin vertical group for parameters
                         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
                         for (int i = 0; i < parameters.Length; i++)
@@ -1834,7 +2349,6 @@ namespace Neo.Editor
 
                 EditorGUILayout.EndHorizontal();
 
-                // Add space between button methods
                 GUILayout.Space(GradientButtonSettings.ButtonSpacing);
             }
         }
@@ -1843,10 +2357,8 @@ namespace Neo.Editor
         {
             try
             {
-                // Begin horizontal to control layout
                 EditorGUILayout.BeginHorizontal();
 
-                // Remove any existing indent
                 int indent = EditorGUI.indentLevel;
                 EditorGUI.indentLevel = 0;
 
@@ -1905,7 +2417,6 @@ namespace Neo.Editor
                     result = value;
                 }
 
-                // Restore the original indent level
                 EditorGUI.indentLevel = indent;
 
                 EditorGUILayout.EndHorizontal();

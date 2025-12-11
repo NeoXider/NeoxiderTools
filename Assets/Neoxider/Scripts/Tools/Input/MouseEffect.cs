@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -57,7 +57,7 @@ namespace Neo.Tools
         [Tooltip("Parent for spawned prefabs; if null, spawns under this GameObject")]
         public Transform spawnParent;
 
-        [Header("Events")] public UnityEvent onStartFollow;
+        public UnityEvent onStartFollow;
         public UnityEvent onStopFollow;
         public UnityEvent onSpawn;
 

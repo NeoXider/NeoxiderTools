@@ -47,7 +47,7 @@ namespace Neo.UI
         [Header("GameObject Variants")] [Tooltip("Группы GameObject'ов для переключения активности")] [SerializeField]
         private GameObjectVariant variants;
 
-        [Header("Events")] [Tooltip("Вызывается при переходе в активное состояние (end)")]
+        [Tooltip("Вызывается при переходе в активное состояние (end)")]
         public UnityEvent On;
 
         [Tooltip("Вызывается при переходе в неактивное состояние (start)")]

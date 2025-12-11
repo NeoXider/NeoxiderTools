@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -44,7 +44,7 @@ namespace Neo.Tools
         [Header("Point Offset")] [SerializeField]
         private Vector2 offset;
 
-        [Header("Events")] public UnityEvent OnMoveStart;
+        public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
 
         // internals

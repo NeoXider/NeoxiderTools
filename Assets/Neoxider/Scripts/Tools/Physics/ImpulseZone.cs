@@ -33,7 +33,7 @@ namespace Neo.Tools
             Custom
         }
 
-        [Header("Настройки импульса")] [Tooltip("Сила импульса")] [Min(0f)] [SerializeField]
+        [Header("Settings")] [Tooltip("Сила импульса")] [Min(0f)] [SerializeField]
         private float impulseForce = 50f;
 
         [Tooltip("Направление импульса")] [SerializeField]
@@ -42,13 +42,13 @@ namespace Neo.Tools
         [Tooltip("Кастомное направление (используется при режиме Custom)")] [SerializeField]
         private Vector3 customDirection = Vector3.up;
 
-        [Header("Фильтрация")] [Tooltip("Слои объектов, на которые будет воздействовать импульс")] [SerializeField]
+        [Header("Filtering")] [Tooltip("Слои объектов, на которые будет воздействовать импульс")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
         [Tooltip("Тег объектов (пусто = игнорировать фильтр по тегу)")] [SerializeField]
         private string requiredTag = "";
 
-        [Header("Опции")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
         [Tooltip("Одноразовое срабатывание (каждый объект может получить импульс только один раз)")] [SerializeField]
@@ -57,7 +57,7 @@ namespace Neo.Tools
         [Tooltip("Задержка между срабатываниями для одного объекта")] [Min(0f)] [SerializeField]
         private float cooldown;
 
-        [Header("События")] [Tooltip("Вызывается при входе объекта в зону")]
+        [Tooltip("Вызывается при входе объекта в зону")]
         public UnityEvent<GameObject> OnObjectEntered = new();
 
         [Tooltip("Вызывается при применении импульса")]

@@ -40,7 +40,7 @@ namespace Neo.NPC.Navigation
 
                 for (int i = 0; i < pointsPerRing; i++)
                 {
-                    float angle = (i / (float)pointsPerRing) * Mathf.PI * 2f;
+                    float angle = i / (float)pointsPerRing * Mathf.PI * 2f;
                     Vector3 offset = new(Mathf.Cos(angle) * radius, 0f, Mathf.Sin(angle) * radius);
                     Vector3 candidate = desired + offset;
 
@@ -56,4 +56,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-

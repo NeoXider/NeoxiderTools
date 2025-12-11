@@ -89,6 +89,11 @@ namespace Neo.Editor
             Color scriptNameColor = EditorGUILayout.ColorField("Цвет названия скрипта",
                 CustomEditorSettings.ScriptNameColor);
 
+            int minFieldsForHeaderCategory = EditorGUILayout.IntSlider(
+                "Минимум полей для категории Header",
+                CustomEditorSettings.MinFieldsForHeaderCategory,
+                0, 10);
+
             if (EditorGUI.EndChangeCheck())
             {
                 CustomEditorSettings.SetEnableRainbowSignature(enableSignature);
@@ -98,6 +103,7 @@ namespace Neo.Editor
                 CustomEditorSettings.SetEnableRainbowLineAnimation(enableLineAnim);
                 CustomEditorSettings.SetRainbowSpeed(speed);
                 CustomEditorSettings.SetScriptNameColor(scriptNameColor);
+                CustomEditorSettings.SetMinFieldsForHeaderCategory(minFieldsForHeaderCategory);
 
                 RepaintAllInspectors();
             }
@@ -139,6 +145,7 @@ namespace Neo.Editor
             CustomEditorSettings.SetEnableRainbowLineAnimation(true);
             CustomEditorSettings.SetRainbowSpeed(0.1f);
             CustomEditorSettings.SetScriptNameColor(new Color(0.35f, 1f, 0.35f, 1f));
+            CustomEditorSettings.SetMinFieldsForHeaderCategory(3);
 
             RepaintAllInspectors();
         }

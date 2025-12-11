@@ -63,8 +63,7 @@ namespace Neo.Tools
         [Tooltip("If true, the shake will be relative to the current position/rotation")]
         public bool relativeShake = true;
 
-        [Header("Events")] [Tooltip("Called when shake starts")]
-        public UnityEvent OnShakeStart;
+        [Tooltip("Called when shake starts")] public UnityEvent OnShakeStart;
 
         [Tooltip("Called when shake completes")]
         public UnityEvent OnShakeComplete;

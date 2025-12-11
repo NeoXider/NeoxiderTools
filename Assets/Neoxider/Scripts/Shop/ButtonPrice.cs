@@ -18,13 +18,18 @@ namespace Neo
                 Selected
             }
 
-            [SerializeField] private TMP_Text[] _textPrice;
+            [Header("References")] [SerializeField]
+            private TMP_Text[] _textPrice;
+
             [SerializeField] private TMP_Text[] _textButton;
-            [SerializeField] [Min(0)] private int _price;
-            [Space] [SerializeField] private bool _textPrice_0;
+            [SerializeField] private Visual _visual;
+
+            [Header("Settings")] [SerializeField] [Min(0)]
+            private int _price;
+
+            [SerializeField] private bool _textPrice_0;
             [SerializeField] private bool _textButtonAndPrice;
             [SerializeField] private ButtonType _type = ButtonType.Buy;
-            [SerializeField] private Visual _visual;
             [SerializeField] private string _textBuy = "Buy";
             [SerializeField] private string _textSelect = "Select";
             [SerializeField] private string _textSelected = "Selected";

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -95,8 +95,7 @@ namespace Neo
         [Tooltip("Called when timer reaches a milestone percentage")]
         public UnityEvent<float> OnMilestoneReached;
 
-        [Header("Events")] [Tooltip("Called when timer starts")]
-        public UnityEvent OnTimerStarted;
+        [Tooltip("Called when timer starts")] public UnityEvent OnTimerStarted;
 
         [Tooltip("Called when timer is paused")]
         public UnityEvent OnTimerPaused;

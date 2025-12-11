@@ -5,7 +5,7 @@ namespace Neo.Save.Examples
     [AddComponentMenu("Neo/" + "Save/" + nameof(PlayerData))]
     public class PlayerData : MonoBehaviour, ISaveableComponent
     {
-        [SaveField(nameof(playerScore))] [SerializeField]
+        [Header("Save Data")] [SaveField(nameof(playerScore))] [SerializeField]
         private int playerScore;
 
         [SaveField(nameof(playerPosition))] [SerializeField]

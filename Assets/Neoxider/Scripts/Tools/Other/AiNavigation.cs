@@ -22,11 +22,10 @@ namespace Neo.Tools
             Combined
         }
 
-        [Header("УСТАРЕВШЕЕ: используйте NPCNavigation (Neo/NPC/NpcNavigation)")]
-        [Header("Movement Mode")] [SerializeField]
+        [Header("DEPRECATED: use NPCNavigation (Neo/NPC/NpcNavigation)")] [Header("Movement Mode")] [SerializeField]
         private MovementMode movementMode = MovementMode.FollowTarget;
 
-        [Header("Follow Target Settings")] [SerializeField]
+        [Header("Follow Target")] [SerializeField]
         private Transform target;
 
         [Tooltip("Minimum distance to start moving (0 = always move).")] [Min(0)] [SerializeField]
@@ -35,7 +34,7 @@ namespace Neo.Tools
         [Tooltip("Distance from target where agent stops.")] [SerializeField]
         private float stoppingDistance = 2f;
 
-        [Header("Patrol Settings")] [Tooltip("Patrol points array.")] [SerializeField]
+        [Header("Patrol")] [Tooltip("Patrol points array.")] [SerializeField]
         private Transform[] patrolPoints;
 
         [Tooltip("Zone for random patrol (if set, ignores patrol points).")] [SerializeField]
@@ -47,7 +46,7 @@ namespace Neo.Tools
         [Tooltip("Loop patrol route.")] [SerializeField]
         private bool loopPatrol = true;
 
-        [Header("Combined Mode Settings")]
+        [Header("Combined Mode")]
         [Tooltip("Distance to start following target (0 = never start automatically).")]
         [SerializeField]
         private float aggroDistance = 10f;
@@ -55,10 +54,9 @@ namespace Neo.Tools
         [Tooltip("Distance to stop following and return to patrol (0 = never stop).")] [SerializeField]
         private float maxFollowDistance = 20f;
 
-        [Header("General Settings")] [SerializeField]
-        private bool updateRotation = true;
+        [Header("General")] [SerializeField] private bool updateRotation = true;
 
-        [Header("Movement Settings")] [Tooltip("Normal walking speed.")] [SerializeField]
+        [Header("Movement")] [Tooltip("Normal walking speed.")] [SerializeField]
         private float walkSpeed = 3f;
 
         [Tooltip("Running speed.")] [SerializeField]
@@ -71,8 +69,7 @@ namespace Neo.Tools
 
         [SerializeField] private float maxPathLength = 100f;
 
-        [Header("Path Settings")] [SerializeField]
-        private bool autoUpdatePath = true;
+        [Header("Path")] [SerializeField] private bool autoUpdatePath = true;
 
         [SerializeField] private float pathUpdateInterval = 0.5f;
 
@@ -93,7 +90,7 @@ namespace Neo.Tools
         [Header("Debug")] [Tooltip("Enable detailed logging for troubleshooting.")] [SerializeField]
         private bool debugMode;
 
-        [Header("Events")] public UnityEvent<Vector3> onDestinationReached;
+        public UnityEvent<Vector3> onDestinationReached;
 
         public UnityEvent<Vector3> onPathBlocked;
         public UnityEvent<float> onSpeedChanged;

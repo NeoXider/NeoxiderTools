@@ -20,7 +20,7 @@ namespace Neo.Audio
             Slider
         }
 
-        [Tooltip("Тип управления: Master, Music или Efx.")] [SerializeField]
+        [Header("Settings")] [Tooltip("Тип управления: Master, Music или Efx.")] [SerializeField]
         private ControlType controlType;
 
         [Tooltip("Тип UI элемента. 'Auto' определит автоматически.")] [SerializeField]

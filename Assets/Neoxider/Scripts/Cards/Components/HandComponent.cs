@@ -38,7 +38,7 @@ namespace Neo.Cards
 
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
-        [Header("Events")] [SerializeField] private UnityEvent<int> _onCardCountChanged;
+        [SerializeField] private UnityEvent<int> _onCardCountChanged;
 
         [SerializeField] private UnityEvent<CardComponent> _onCardAdded;
         [SerializeField] private UnityEvent<CardComponent> _onCardRemoved;

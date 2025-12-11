@@ -7,16 +7,16 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardItem))]
     public class LeaderboardItem : MonoBehaviour
     {
-        public int id;
-        public bool isPlayer;
+        [Header("References")] public TMP_Text textId;
+        public TMP_Text textName;
+        public TMP_Text textScore;
 
-        [Space] public UnityEvent OnUserTrue;
+        public UnityEvent OnUserTrue;
         public UnityEvent OnuserFalse;
         public UnityEvent<bool> OnUser;
-        public TMP_Text textId;
-        public TMP_Text textName;
 
-        [Space] public TMP_Text textScore;
+        [Header("Debug")] public int id;
+        public bool isPlayer;
         public LeaderboardUser user;
 
         public void Set(LeaderboardUser user, bool isPlayer, Leaderboard leaderboard = null)

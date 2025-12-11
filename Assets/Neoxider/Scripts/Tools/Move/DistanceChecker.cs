@@ -34,7 +34,7 @@ namespace Neo.Tools
         [Header("Continuous Tracking")] [Tooltip("Enable continuous distance tracking with events.")] [SerializeField]
         private bool enableContinuousTracking;
 
-        [Header("Events")] public UnityEvent onApproach;
+        public UnityEvent onApproach;
 
         public UnityEvent onDepart;
 

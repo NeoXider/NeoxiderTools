@@ -52,7 +52,7 @@ namespace Neo.Bonus
         [Space] [Header("Text")] [SerializeField]
         private TMP_Text _textCountLine;
 
-        [Space] [Header("Events")] public UnityEvent OnStartSpin;
+        [Space] public UnityEvent OnStartSpin;
 
         public UnityEvent OnEndSpin;
 

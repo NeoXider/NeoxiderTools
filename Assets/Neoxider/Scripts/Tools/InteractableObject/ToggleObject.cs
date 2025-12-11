@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 #endif
@@ -10,9 +10,9 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {
-            public bool value;
+            [Header("Settings")] public bool value;
 
-            public bool toggleDebug;
+            [Header("Debug")] public bool toggleDebug;
 
             public UnityEvent<bool> OnChange;
             public UnityEvent<bool> OnChangeFlip;

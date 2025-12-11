@@ -13,8 +13,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Настройки атаки")] [SerializeField]
-        private int attackDamage = 10; // Урон от атаки по умолчанию
+        [Header("Attack")] [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию
 
         [Tooltip("Вид атаки: урон или лечение")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
@@ -25,7 +24,7 @@ namespace Neo.Tools
 
         public float triggerDuration = 0.2f; // Длительность активации триггера
 
-        [Header("Настройки авто-управления")]
+        [Header("Auto")]
         [SerializeField]
         [Tooltip("Если включено, компонент сам включает/выключает коллайдеры на время активации триггера.")]
         private bool autoManageColliders; // По умолчанию не управляем коллайдерами автоматически
@@ -33,7 +32,7 @@ namespace Neo.Tools
         [SerializeField] private new Collider2D collider2D; // 2D коллайдер
         [SerializeField] private Collider collider3D; // 3D коллайдер
 
-        [Header("Режимы обработки")] [Tooltip("Обрабатывать 2D столкновения/триггеры")]
+        [Header("Modes")] [Tooltip("Обрабатывать 2D столкновения/триггеры")]
         public bool use2D = true;
 
         [Tooltip("Обрабатывать 3D столкновения/триггеры")]
@@ -45,10 +44,10 @@ namespace Neo.Tools
         [Tooltip("Обрабатывать события коллизий")]
         public bool useCollision = true;
 
-        [Header("Фильтрация целей")]
+        [Header("Filtering")]
         public LayerMask hittableLayers = -1; // Слои, на которые реагирует атака. По умолчанию - все
 
-        [Header("Применение силы")] public bool applyForceOnHit; // Применять силу при попадании
+        [Header("Force")] public bool applyForceOnHit; // Применять силу при попадании
         public float forceMagnitude = 20f; // Величина силы
         public float forceDuration = 0.3f; // Длительность действия силы (зарезервировано)
 
@@ -64,25 +63,23 @@ namespace Neo.Tools
         [Tooltip("Использовать AdvancedForceApplier как запасной вариант")]
         public bool useAdvancedForceApplier = true;
 
-        [Header("Эффекты")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
+        [Header("Effects")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
 
-        [Header("Игнор цели")]
+        [Header("Ignore")]
         [Tooltip("Список объектов, которым НЕ наносится урон и не триггерится попадание")]
         [SerializeField]
         private GameObject[] ignoreObjects;
 
-        [Header("Уничтожение при попадании")] [Tooltip("Если true — уничтожает этот объект при столкновении/попадании")]
+        [Header("Destroy")] [Tooltip("Если true — уничтожает этот объект при столкновении/попадании")]
         public bool destroySelfOnHit;
 
         [Tooltip("Если true — уничтожает объект цели при столкновении/попадании")]
         public bool destroyTargetOnHit;
 
-        [Header("Настройки Gizmo")] [SerializeField]
-        private bool _showGizmo = true; // Показывать ли Gizmo в редакторе
+        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true; // Показывать ли Gizmo в редакторе
 
         [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f); // Цвет Gizmo
 
-        [Header("События")]
         public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D (триггер)
 
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D (триггер)

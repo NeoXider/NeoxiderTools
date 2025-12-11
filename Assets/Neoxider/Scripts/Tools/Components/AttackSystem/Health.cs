@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 #endif
@@ -37,7 +37,7 @@ namespace Neo.Tools
         [Tooltip("Maximum healing that can be received at once (-1 for no limit)")] [Min(-1)]
         public int maxHealAmount = -1;
 
-        [Header("Events")] public UnityEvent<int> OnChange;
+        public UnityEvent<int> OnChange;
         public UnityEvent<float> OnChangePercent;
         public UnityEvent<int> OnDamage;
         public UnityEvent<int> OnHeal;

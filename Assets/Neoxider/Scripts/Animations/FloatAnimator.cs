@@ -36,7 +36,7 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Автоматически запускать анимацию при старте")]
         public bool playOnStart = true;
 
-        [Header("Events")] [Tooltip("Вызывается при изменении значения")]
+        [Tooltip("Вызывается при изменении значения")]
         public UnityEvent<float> OnValueChanged;
 
         [Tooltip("Вызывается при запуске анимации")]

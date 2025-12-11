@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -29,7 +29,6 @@ namespace Neo.Tools
         [Tooltip("Задержка перед удалением объекта. Если 0, объект не будет удаляться автоматически.")]
         public float destroyDelay;
 
-        [Header("Events")]
         /// <summary>
         /// UnityEvent, вызывается после успешного спавна игрового объекта.
         /// </summary>

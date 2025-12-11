@@ -67,6 +67,7 @@ namespace Neo.Editor
             Settings.RainbowComponentOutlineWidth;
 
         public static Color ScriptNameColor => Settings.ScriptNameColor;
+        public static int MinFieldsForHeaderCategory => Settings.MinFieldsForHeaderCategory;
 
         // Setters
         public static void SetEnableRainbowSignature(bool value)
@@ -102,6 +103,11 @@ namespace Neo.Editor
         public static void SetScriptNameColor(Color value)
         {
             Settings.SetScriptNameColor(value);
+        }
+
+        public static void SetMinFieldsForHeaderCategory(int value)
+        {
+            Settings.SetMinFieldsForHeaderCategory(value);
         }
     }
 }

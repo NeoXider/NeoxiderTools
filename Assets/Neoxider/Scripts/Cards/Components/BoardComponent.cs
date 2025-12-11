@@ -44,7 +44,7 @@ namespace Neo.Cards
 
         [Header("Animation")] [SerializeField] private float _placeDuration = 0.3f;
 
-        [Header("Events")] public UnityEvent<CardComponent> OnCardPlaced;
+        public UnityEvent<CardComponent> OnCardPlaced;
 
         public UnityEvent OnBoardFull;
         public UnityEvent OnBoardCleared;

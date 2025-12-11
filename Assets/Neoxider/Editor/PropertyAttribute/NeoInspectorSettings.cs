@@ -6,48 +6,36 @@ namespace Neo.Editor
     [FilePath("ProjectSettings/NeoInspectorSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     internal sealed class NeoInspectorSettings : ScriptableSingleton<NeoInspectorSettings>
     {
-        [SerializeField]
-        private bool migratedFromEditorPrefs;
+        [SerializeField] private bool migratedFromEditorPrefs;
 
-        [Header("Rainbow Effects - Text")]
-        [SerializeField]
+        [Header("Rainbow Effects - Text")] [SerializeField]
         private bool enableRainbowSignature = true;
 
-        [SerializeField]
-        private bool enableRainbowSignatureAnimation = true;
+        [SerializeField] private bool enableRainbowSignatureAnimation = true;
 
-        [Header("Rainbow Effects - Line")]
-        [SerializeField]
+        [Header("Rainbow Effects - Line")] [SerializeField]
         private bool enableRainbowOutline = true;
 
-        [SerializeField]
-        private bool enableRainbowComponentOutline = true;
+        [SerializeField] private bool enableRainbowComponentOutline = true;
 
-        [SerializeField]
-        private bool enableRainbowLineAnimation = true;
+        [SerializeField] private bool enableRainbowLineAnimation = true;
 
-        [Header("Rainbow Settings")]
-        [SerializeField]
+        [Header("Rainbow Settings")] [SerializeField]
         private float rainbowSpeed = 0.1f;
 
-        [SerializeField]
-        private float rainbowSaturation = 0.8f;
+        [SerializeField] private float rainbowSaturation = 0.8f;
 
-        [SerializeField]
-        private float rainbowBrightness = 1f;
+        [SerializeField] private float rainbowBrightness = 1f;
 
-        [SerializeField]
-        private float rainbowOutlineSize = 1.5f;
+        [SerializeField] private float rainbowOutlineSize = 1.5f;
 
-        [SerializeField]
-        private float rainbowOutlineAlpha = 0.6f;
+        [SerializeField] private float rainbowOutlineAlpha = 0.6f;
 
-        [SerializeField]
-        private float rainbowComponentOutlineWidth = 2f;
+        [SerializeField] private float rainbowComponentOutlineWidth = 2f;
 
-        [Header("Header")]
-        [SerializeField]
-        private Color scriptNameColor = new(0.35f, 1f, 0.35f, 1f);
+        [Header("Header")] [SerializeField] private Color scriptNameColor = new(0.35f, 1f, 0.35f, 1f);
+
+        [SerializeField] private int minFieldsForHeaderCategory = 3;
 
         public bool EnableRainbowSignature => enableRainbowSignature;
         public bool EnableRainbowSignatureAnimation => enableRainbowSignatureAnimation;
@@ -62,6 +50,7 @@ namespace Neo.Editor
         public float RainbowOutlineAlpha => rainbowOutlineAlpha;
         public float RainbowComponentOutlineWidth => rainbowComponentOutlineWidth;
         public Color ScriptNameColor => scriptNameColor;
+        public int MinFieldsForHeaderCategory => minFieldsForHeaderCategory;
 
         public void SetEnableRainbowSignature(bool value)
         {
@@ -102,6 +91,12 @@ namespace Neo.Editor
         public void SetScriptNameColor(Color value)
         {
             scriptNameColor = value;
+            Save(true);
+        }
+
+        public void SetMinFieldsForHeaderCategory(int value)
+        {
+            minFieldsForHeaderCategory = Mathf.Max(0, value);
             Save(true);
         }
 
@@ -152,4 +147,3 @@ namespace Neo.Editor
         }
     }
 }
-

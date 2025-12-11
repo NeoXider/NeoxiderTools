@@ -10,9 +10,9 @@ namespace Neo.GridSystem
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldSpawner))]
     public class FieldSpawner : MonoBehaviour
     {
-        [Header("Префабы для спавна")] public GameObject[] Prefabs;
+        [Header("Prefabs")] public GameObject[] Prefabs;
 
-        [Header("Событие: объект заспавнен")] public UnityEvent<GameObject, FieldCell> OnObjectSpawned = new();
+        public UnityEvent<GameObject, FieldCell> OnObjectSpawned = new();
 
         private FieldGenerator generator;
 

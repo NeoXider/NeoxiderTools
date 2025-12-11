@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using Neo.Extensions;
 using UnityEngine;
@@ -116,7 +116,7 @@ namespace Neo.Tools
         public LineRenderer poolPrefab;
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
-        [Header("Events")] public LineCreatedEvent OnLineCreated = new();
+        public LineCreatedEvent OnLineCreated = new();
         public UnityEvent<float> OnDistanceChanged = new();
 
         public UnityEvent<int> OnPointChanged = new();

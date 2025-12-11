@@ -8,7 +8,8 @@ namespace Neo
     public class FakeLoad : MonoBehaviour
     {
         private static bool isInitialized;
-        [SerializeField] private bool _loadOnAwake = true;
+
+        [Header("Settings")] [SerializeField] private bool _loadOnAwake = true;
         [SerializeField] private Vector2 timeLoad = new(1.5f, 2);
         [SerializeField] private bool isLoadOne = true;
 

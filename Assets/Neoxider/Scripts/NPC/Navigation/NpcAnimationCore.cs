@@ -16,7 +16,8 @@ namespace Neo.NPC.Navigation
 
         private float speedVelocity;
 
-        public NpcAnimationCore(NavMeshAgent agent, Animator animator, string speedParameter, string isMovingParameter, float dampTime)
+        public NpcAnimationCore(NavMeshAgent agent, Animator animator, string speedParameter, string isMovingParameter,
+            float dampTime)
         {
             this.agent = agent;
             this.animator = animator;
@@ -48,4 +49,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-

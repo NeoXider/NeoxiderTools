@@ -72,7 +72,7 @@ namespace Neo.Tools
         [Header("Rotation Limits (2D)")] [SerializeField]
         private AxisLimit rotationLimitZ = new();
 
-        [Header("Events")] public UnityEvent onStartFollowing;
+        public UnityEvent onStartFollowing;
 
         public UnityEvent onStopFollowing;
 

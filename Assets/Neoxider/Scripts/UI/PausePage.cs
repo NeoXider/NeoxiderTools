@@ -7,7 +7,7 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Tools/" + nameof(PausePage))]
         public class PausePage : MonoBehaviour
         {
-            [SerializeField] private bool useTimeScale = true;
+            [Header("Settings")] [SerializeField] private bool useTimeScale = true;
 
             [SerializeField] private float timeScale;
 

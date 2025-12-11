@@ -71,11 +71,11 @@ namespace Neo.NPC.Navigation
 
             if (patrolZone != null)
             {
-                TryMoveToRandomPointInZone(retries: 5);
+                TryMoveToRandomPointInZone(5);
             }
             else
             {
-                TryMoveToIndexOrAdvance(CurrentIndex, maxAttempts: patrolPoints.Length);
+                TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length);
             }
 
             PatrolStarted?.Invoke();
@@ -155,7 +155,7 @@ namespace Neo.NPC.Navigation
         {
             if (patrolZone != null)
             {
-                TryMoveToRandomPointInZone(retries: 5);
+                TryMoveToRandomPointInZone(5);
                 return;
             }
 
@@ -180,7 +180,7 @@ namespace Neo.NPC.Navigation
                 CurrentIndex = 0;
             }
 
-            TryMoveToIndexOrAdvance(CurrentIndex, maxAttempts: patrolPoints.Length);
+            TryMoveToIndexOrAdvance(CurrentIndex, patrolPoints.Length);
         }
 
         private bool TryMoveToIndexOrAdvance(int index, int maxAttempts)
@@ -280,4 +280,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-

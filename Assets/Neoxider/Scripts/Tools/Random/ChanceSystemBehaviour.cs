@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -11,13 +11,13 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Inline chance configuration")]
+        [Header("Settings")] [SerializeField] [Tooltip("Inline chance configuration")]
         private ChanceManager manager = new();
 
         [SerializeField] [Tooltip("Optional ChanceData asset to copy configuration from at Awake")]
         private ChanceData chanceData;
 
-        [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
+        [Header("Debug")] [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
         private bool logDebugOnce;
 
         public UnityEvent<int> OnIdGenerated;

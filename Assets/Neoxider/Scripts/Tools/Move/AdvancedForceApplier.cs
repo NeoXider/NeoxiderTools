@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 #if ODIN_INSPECTOR
 using Sirenix.OdinInspector;
@@ -31,17 +31,23 @@ namespace Neo.Tools
         [FoldoutGroup("Components")] [SerializeField]
 #endif
         private Rigidbody2D rigidbody2D;
+
+        [Header("General")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("General")]
         [LabelText("Body Type")]
 #endif
         [Tooltip("Auto will try to find 3D first, then 2D. Can be fixed manually.")]
         public BodyType bodyType = BodyType.Auto;
+
+        [Header("Force")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")]
         [LabelText("Base Force (N)")]
 #endif
-        [Min(0f)] [SerializeField] private float defaultForce = 10f;
+        [Min(0f)]
+        [SerializeField]
+        private float defaultForce = 10f;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Force")] [ToggleLeft] [LabelText("Randomize Force")]
 #endif
@@ -62,6 +68,8 @@ namespace Neo.Tools
         [FoldoutGroup("Force")] [ShowIf("Is2DActive")] [LabelText("Force Mode (2D)")] [EnumToggleButtons]
 #endif
         public ForceMode2D forceMode2D = ForceMode2D.Impulse;
+
+        [Header("Limits")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Limits")] [ToggleLeft] [LabelText("Clamp Max Speed")]
 #endif
@@ -70,6 +78,8 @@ namespace Neo.Tools
         [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
 #endif
         public float maxSpeed = 20f;
+
+        [Header("Direction")]
 #if ODIN_INSPECTOR
         [FoldoutGroup("Direction")] [LabelText("Direction Source")]
 #endif
@@ -94,6 +104,7 @@ namespace Neo.Tools
         [LabelText("Target (Transform)")]
 #endif
         public Transform target;
+
 #if ODIN_INSPECTOR
         [FoldoutGroup("Events")]
 #endif

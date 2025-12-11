@@ -10,20 +10,21 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Level/" + nameof(LevelButton))]
         public class LevelButton : MonoBehaviour
         {
-            [SerializeField] private Button _button;
+            [Header("References")] [SerializeField]
+            private Button _button;
 
-            [Space] [SerializeField] private GameObject[] _closes, _opens;
+            [SerializeField] private GameObject[] _closes, _opens;
             [SerializeField] private TextMeshProUGUI _textLvl;
+            [SerializeField] private LevelManager _levelManager;
 
-            public bool activ;
+            [Header("Settings")] public bool activ;
             public int level;
 
-            [Space] public UnityEvent<int> OnChangeVisual;
+            public UnityEvent<int> OnChangeVisual;
 
-            [Space] public UnityEvent OnDisableVisual;
+            public UnityEvent OnDisableVisual;
             public UnityEvent OnEnableVisual;
             public UnityEvent OnCurrentVisual;
-            [SerializeField] private LevelManager _levelManager;
 
             private void Start()
             {
@@ -59,7 +60,7 @@ namespace Neo
                 _levelManager = levelManager;
             }
 
-            public void SetVisual(int idVisual, int level) // 0 ������. 1 ������ 2. �������
+            public void SetVisual(int idVisual, int level)
             {
                 activ = idVisual != 0;
                 this.level = level;

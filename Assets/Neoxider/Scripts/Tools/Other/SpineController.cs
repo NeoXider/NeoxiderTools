@@ -1,4 +1,4 @@
-﻿#if SPINE_UNITY
+#if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
 using Spine;
@@ -39,7 +39,6 @@ public sealed class SpineController : MonoBehaviour
     [SerializeField, FormerlySerializedAs("addId"), Tooltip("Устаревший переключатель для смещения индекса. Используйте 'Skin Index Offset'.")]
     private bool legacyAddIndex;
 
-    [Header("Events")]
     public UnityEvent OnSwapSkin;
 
     public IReadOnlyList<string> Animations => animationNames;

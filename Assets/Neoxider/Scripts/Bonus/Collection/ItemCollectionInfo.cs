@@ -7,11 +7,16 @@ namespace Neo.Bonus
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollectionInfo))]
     public class ItemCollectionInfo : MonoBehaviour
     {
-        [SerializeField] private Collection _collection;
+        [Header("References")] [SerializeField]
+        private Collection _collection;
+
         [SerializeField] private TMP_Text _textName;
         [SerializeField] private TMP_Text _textDescription;
-        [TextArea(1, 4)] [SerializeField] private string _textDefaultValue;
         [SerializeField] private Image _imageItem;
+
+        [Header("Settings")] [TextArea(1, 4)] [SerializeField]
+        private string _textDefaultValue;
+
         [SerializeField] private bool _setNativeSize;
 
         private Collection CollectionInstance => _collection != null ? _collection : Collection.I;

@@ -7,7 +7,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MultiKeyEventTrigger))]
     public class MultiKeyEventTrigger : MonoBehaviour
     {
-        public KeyEventPair[] keyEventPairs =
+        [Header("Key Bindings")] public KeyEventPair[] keyEventPairs =
         {
             new(KeyCode.Escape),
             new(KeyCode.Space),

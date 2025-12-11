@@ -6,7 +6,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ZPositionAdjuster))]
     public class ZPositionAdjuster : MonoBehaviour
     {
-        [SerializeField] private bool _useNormalizeToUnit = true;
+        [Header("Settings")] [SerializeField] private bool _useNormalizeToUnit = true;
 
         [Min(0)] [SerializeField] private float _ratio = 1;
 

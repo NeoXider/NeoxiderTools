@@ -44,7 +44,8 @@ namespace Neo.NPC.Navigation
             this.agent = agent;
         }
 
-        public void Configure(float triggerDistance, bool autoUpdatePath, float pathUpdateInterval, float maxSampleDistance)
+        public void Configure(float triggerDistance, bool autoUpdatePath, float pathUpdateInterval,
+            float maxSampleDistance)
         {
             this.triggerDistance = Mathf.Max(0f, triggerDistance);
             this.autoUpdatePath = autoUpdatePath;
@@ -242,4 +243,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
