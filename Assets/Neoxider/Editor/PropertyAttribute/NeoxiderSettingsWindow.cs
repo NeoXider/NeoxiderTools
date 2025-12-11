@@ -83,6 +83,12 @@ namespace Neo.Editor
             EditorGUILayout.LabelField("Скорость анимации", EditorStyles.miniLabel);
             float speed = EditorGUILayout.Slider("Rainbow Speed", CustomEditorSettings.RainbowSpeed, 0f, 1f);
 
+            GUILayout.Space(8);
+
+            EditorGUILayout.LabelField("Header", EditorStyles.miniLabel);
+            Color scriptNameColor = EditorGUILayout.ColorField("Цвет названия скрипта",
+                CustomEditorSettings.ScriptNameColor);
+
             if (EditorGUI.EndChangeCheck())
             {
                 CustomEditorSettings.SetEnableRainbowSignature(enableSignature);
@@ -91,6 +97,7 @@ namespace Neo.Editor
                 CustomEditorSettings.SetEnableRainbowComponentOutline(enableComponentOutline);
                 CustomEditorSettings.SetEnableRainbowLineAnimation(enableLineAnim);
                 CustomEditorSettings.SetRainbowSpeed(speed);
+                CustomEditorSettings.SetScriptNameColor(scriptNameColor);
 
                 RepaintAllInspectors();
             }
@@ -131,6 +138,7 @@ namespace Neo.Editor
             CustomEditorSettings.SetEnableRainbowComponentOutline(true);
             CustomEditorSettings.SetEnableRainbowLineAnimation(true);
             CustomEditorSettings.SetRainbowSpeed(0.1f);
+            CustomEditorSettings.SetScriptNameColor(new Color(0.35f, 1f, 0.35f, 1f));
 
             RepaintAllInspectors();
         }

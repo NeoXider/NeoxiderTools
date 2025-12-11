@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity",
     "com.unity.ai.navigation": "1.1.7",
     "com.unity.asset-manager-for-unity": "1.7.0",
     "com.unity.burst": "1.8.25",

@@ -23,7 +23,6 @@ namespace Neo
         /// <summary>
         ///     Open settings window in Unity Editor
         /// </summary>
-        [MenuItem("Tools/Neoxider/Settings")]
         public static void OpenSettings()
         {
             NeoxiderSettingsWindow.ShowWindow();

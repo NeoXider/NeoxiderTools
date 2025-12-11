@@ -2,9 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.3.8] - Unreleased
+## [5.4.0] - Unreleased
 
 ### Добавлено
+- **NPC**: новая модульная система навигации (подход «как Cinemachine»)
+  - `NpcNavigation` — хост‑компонент с галочкой активен NPC и контекстным меню удаления модулей
+  - Модули: `NpcNavAgentModule`, `NpcFollowTargetModule` (с `movementBounds`), `NpcPatrolModule` (points/zone), `NpcAggroFollowModule` (Combined), `NpcAnimationModule`
+  - Core‑логика модулей без `MonoBehaviour`/корутин
+- **AiNavigation**: помечен как устаревший, рекомендуется переход на `NpcNavigation`
 - **AiNavigation**: Добавлена поддержка зоны патрулирования через BoxCollider
   - Новое поле `patrolZone` - можно задать BoxCollider для случайного патрулирования
   - Агент будет выбирать случайные точки внутри зоны и перемещаться к ним

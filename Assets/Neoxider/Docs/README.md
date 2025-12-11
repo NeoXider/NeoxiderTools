@@ -16,6 +16,7 @@
 | `Extensions` | Расширения C# и Unity API | [`./Extensions/README.md`](./Extensions/README.md) |
 | `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`./GridSystem.md`](./GridSystem.md) |
 | `Level` | Уровни, карты, прогресс игрока | [`./Level/LevelManager.md`](./Level/LevelManager.md) |
+| `NPC` | Модульная система NPC (навигация и будущие поведения) | [`./NPC/README.md`](./NPC/README.md) |
 | `Parallax` | Универсальный параллакс с предпросмотром | [`./ParallaxLayer.md`](./ParallaxLayer.md) |
 | `Save` | Система сохранений с атрибутами `[SaveField]` | [`./Save/README.md`](./Save/README.md) |
 | `Shop` | Магазин, валюта, кэшбэк | [`./Shop/README.md`](./Shop/README.md) |

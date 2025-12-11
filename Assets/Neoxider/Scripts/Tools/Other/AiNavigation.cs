@@ -7,7 +7,10 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     AI navigation component with pathfinding, movement, patrol, and animation support.
+    ///
+    ///     Deprecated: use Neo.NPC.NpcNavigation + modules.
     /// </summary>
+    [System.Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
     [RequireComponent(typeof(NavMeshAgent))]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AiNavigation))]
     public class AiNavigation : MonoBehaviour
@@ -19,6 +22,7 @@ namespace Neo.Tools
             Combined
         }
 
+        [Header("УСТАРЕВШЕЕ: используйте NPCNavigation (Neo/NPC/NpcNavigation)")]
         [Header("Movement Mode")] [SerializeField]
         private MovementMode movementMode = MovementMode.FollowTarget;
 

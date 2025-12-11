@@ -205,7 +205,7 @@ GameObject:
   - component: {fileID: 4922445070843095242}
   - component: {fileID: 149803830695906687}
   m_Layer: 0
-  m_Name: AI NPC
+  m_Name: OLD AI NPC
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -389,6 +389,7 @@ MonoBehaviour:
   triggerDistance: 0
   stoppingDistance: 2
   patrolPoints: []
+  patrolZone: {fileID: 0}
   patrolWaitTime: 1
   loopPatrol: 1
   aggroDistance: 10

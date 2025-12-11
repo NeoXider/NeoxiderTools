@@ -5,6 +5,7 @@
 ## Файлы
 
 - [AiNavigation](./AiNavigation.md)
+- [NPC Navigation](../../NPC/Navigation/NPCNavigation.md)
 - [CameraShake](./CameraShake.md)
 - [RevertAmount](./RevertAmount.md)
 - [SpineController](./SpineController.md)

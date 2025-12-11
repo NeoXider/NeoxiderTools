@@ -1,4 +1,3 @@
-using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Editor
@@ -8,6 +7,16 @@ namespace Neo.Editor
     /// </summary>
     public static class CustomEditorSettings
     {
+        private static NeoInspectorSettings Settings
+        {
+            get
+            {
+                NeoInspectorSettings settings = NeoInspectorSettings.instance;
+                settings.EnsureMigratedFromEditorPrefs();
+                return settings;
+            }
+        }
+
         // Neo component background (dark cyberpunk)
         public static Color NeoBackgroundColor => new(0.15f, 0.1f, 0.2f, 1f);
 
@@ -36,58 +45,63 @@ namespace Neo.Editor
         public static float GlowIntensity => 0.3f;
 
         // Rainbow effects - Text
-        public static bool EnableRainbowSignature => EditorPrefs.GetBool("Neo.EnableRainbowSignature", true);
+        public static bool EnableRainbowSignature => Settings.EnableRainbowSignature;
 
-        public static bool EnableRainbowSignatureAnimation =>
-            EditorPrefs.GetBool("Neo.EnableRainbowSignatureAnimation", true);
+        public static bool EnableRainbowSignatureAnimation => Settings.EnableRainbowSignatureAnimation;
 
         // Rainbow effects - Line
-        public static bool EnableRainbowOutline => EditorPrefs.GetBool("Neo.EnableRainbowOutline", true);
+        public static bool EnableRainbowOutline => Settings.EnableRainbowOutline;
 
-        public static bool EnableRainbowComponentOutline =>
-            EditorPrefs.GetBool("Neo.EnableRainbowComponentOutline", true);
+        public static bool EnableRainbowComponentOutline => Settings.EnableRainbowComponentOutline;
 
-        public static bool EnableRainbowLineAnimation => EditorPrefs.GetBool("Neo.EnableRainbowLineAnimation", true);
+        public static bool EnableRainbowLineAnimation => Settings.EnableRainbowLineAnimation;
 
         // Rainbow settings
-        public static float RainbowSpeed => EditorPrefs.GetFloat("Neo.RainbowSpeed", 0.1f);
-        public static float RainbowSaturation => EditorPrefs.GetFloat("Neo.RainbowSaturation", 0.8f);
-        public static float RainbowBrightness => EditorPrefs.GetFloat("Neo.RainbowBrightness", 1f);
-        public static float RainbowOutlineSize => EditorPrefs.GetFloat("Neo.RainbowOutlineSize", 1.5f);
-        public static float RainbowOutlineAlpha => EditorPrefs.GetFloat("Neo.RainbowOutlineAlpha", 0.6f);
+        public static float RainbowSpeed => Settings.RainbowSpeed;
+        public static float RainbowSaturation => Settings.RainbowSaturation;
+        public static float RainbowBrightness => Settings.RainbowBrightness;
+        public static float RainbowOutlineSize => Settings.RainbowOutlineSize;
+        public static float RainbowOutlineAlpha => Settings.RainbowOutlineAlpha;
 
         public static float RainbowComponentOutlineWidth =>
-            EditorPrefs.GetFloat("Neo.RainbowComponentOutlineWidth", 2f);
+            Settings.RainbowComponentOutlineWidth;
+
+        public static Color ScriptNameColor => Settings.ScriptNameColor;
 
         // Setters
         public static void SetEnableRainbowSignature(bool value)
         {
-            EditorPrefs.SetBool("Neo.EnableRainbowSignature", value);
+            Settings.SetEnableRainbowSignature(value);
         }
 
         public static void SetEnableRainbowSignatureAnimation(bool value)
         {
-            EditorPrefs.SetBool("Neo.EnableRainbowSignatureAnimation", value);
+            Settings.SetEnableRainbowSignatureAnimation(value);
         }
 
         public static void SetEnableRainbowOutline(bool value)
         {
-            EditorPrefs.SetBool("Neo.EnableRainbowOutline", value);
+            Settings.SetEnableRainbowOutline(value);
         }
 
         public static void SetEnableRainbowComponentOutline(bool value)
         {
-            EditorPrefs.SetBool("Neo.EnableRainbowComponentOutline", value);
+            Settings.SetEnableRainbowComponentOutline(value);
         }
 
         public static void SetEnableRainbowLineAnimation(bool value)
         {
-            EditorPrefs.SetBool("Neo.EnableRainbowLineAnimation", value);
+            Settings.SetEnableRainbowLineAnimation(value);
         }
 
         public static void SetRainbowSpeed(float value)
         {
-            EditorPrefs.SetFloat("Neo.RainbowSpeed", value);
+            Settings.SetRainbowSpeed(value);
+        }
+
+        public static void SetScriptNameColor(Color value)
+        {
+            Settings.SetScriptNameColor(value);
         }
     }
 }
