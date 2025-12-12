@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 #if ODIN_INSPECTOR
 #endif
 
@@ -119,7 +120,7 @@ namespace Neo
             #region Serialized Fields
 
             [Tooltip("Sets the initial index when appearing")]
-            public bool startOnAwake;
+            public bool startOnAwake = true;
 
             [Header("Count Mode")]
             [Tooltip("If set > 0 and items array is empty, selector will work with this count as virtual items")]
@@ -134,9 +135,19 @@ namespace Neo
             [SerializeField]
             private bool _setChild;
 
-            [Tooltip("When enabled, automatically update items array when child objects are added or removed")]
+            [Tooltip("When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update)")]
             [SerializeField]
-            private bool _autoUpdateFromChildren;
+            private bool _autoUpdateFromChildren = true;
+
+            [Header("Random Selection")]
+            [Tooltip("Enables random selection features (e.g. SetRandom)")]
+            [SerializeField]
+            private bool _useRandomSelection;
+
+            [Tooltip("When enabled and random selection is enabled, Next() and Previous() will use SetRandom() instead of stepping by +/- 1")]
+            [FormerlySerializedAs("_randomChangeOnStep")]
+            [SerializeField]
+            private bool _useNextPreviousAsRandom;
 
             [Header("Selection Settings")]
             [Tooltip("Whether to loop back to the beginning when reaching the end")]
@@ -327,7 +338,7 @@ namespace Neo
 
             private void OnEnable()
             {
-                TryInitializeFromChildren();
+                TryInitializeFromChildren(forceSync: startOnAwake);
 
                 if (startOnAwake && Count > 0)
                 {
@@ -337,16 +348,22 @@ namespace Neo
 
             private void OnValidate()
             {
-                if (_items == null)
-                {
-                    Debug.LogWarning("Selector: Items array is null");
-                    return;
-                }
+                _items ??= Array.Empty<GameObject>();
 
                 if (_setChild)
                 {
                     _setChild = false;
                     RefreshItemsFromChildren();
+                }
+
+                if (_autoUpdateFromChildren && _count <= 0 && _items.Length == 0)
+                {
+                    RefreshItemsFromChildren();
+                }
+
+                if (_useNextPreviousAsRandom)
+                {
+                    _useRandomSelection = true;
                 }
 
                 if (_changeDebug && _items != null && Application.isPlaying)
@@ -357,7 +374,7 @@ namespace Neo
 
             private void OnTransformChildrenChanged()
             {
-                if (_autoUpdateFromChildren && Application.isPlaying)
+                if (_autoUpdateFromChildren && _count <= 0)
                 {
                     RefreshItemsFromChildren();
                 }
@@ -384,6 +401,12 @@ namespace Neo
                 {
                     Debug.LogWarning(
                         "Selector: Cannot move to next - no items available (items array is null/empty or count is 0)");
+                    return;
+                }
+
+                if (_useRandomSelection && _useNextPreviousAsRandom)
+                {
+                    SetRandom();
                     return;
                 }
 
@@ -424,6 +447,12 @@ namespace Neo
                 {
                     Debug.LogWarning(
                         "Selector: Cannot move to previous - no items available (items array is null/empty or count is 0)");
+                    return;
+                }
+
+                if (_useRandomSelection && _useNextPreviousAsRandom)
+                {
+                    SetRandom();
                     return;
                 }
 
@@ -502,6 +531,57 @@ namespace Neo
                     _currentIndex = Mathf.Clamp(index, min, max);
                 }
 
+                UpdateSelection();
+            }
+
+            /// <summary>
+            ///     Sets the selection to a random value within the current valid bounds
+            /// </summary>
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [ButtonAttribute]
+#endif
+            public void SetRandom()
+            {
+                TryInitializeFromChildren();
+
+                if (!_useRandomSelection)
+                {
+                    Debug.LogWarning("Selector: Random selection is disabled (_useRandomSelection = false)");
+                    return;
+                }
+
+                int total = Count;
+                if (total == 0)
+                {
+                    Debug.LogWarning(
+                        "Selector: Cannot set random selection - no items available (items array is null/empty or count is 0)");
+                    return;
+                }
+
+                (int min, int max) = GetCurrentBounds();
+                if (min > max)
+                {
+                    return;
+                }
+
+                int range = max - min + 1;
+                if (range <= 1)
+                {
+                    _currentIndex = min;
+                    UpdateSelection();
+                    return;
+                }
+
+                int newIndex = UnityEngine.Random.Range(min, max + 1);
+                if (newIndex == _currentIndex)
+                {
+                    int offset = UnityEngine.Random.Range(1, range);
+                    newIndex = min + ((newIndex - min + offset) % range);
+                }
+
+                _currentIndex = newIndex;
                 UpdateSelection();
             }
 
@@ -745,14 +825,61 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Tries to initialize items from children if list is empty and auto-update is enabled
+            ///     Tries to initialize/sync items from children if auto-update is enabled
             /// </summary>
-            private void TryInitializeFromChildren()
+            private void TryInitializeFromChildren(bool forceSync = false)
             {
-                if (_autoUpdateFromChildren && (_items == null || _items.Length == 0) && _count <= 0)
+                if (!_autoUpdateFromChildren || _count > 0)
+                {
+                    return;
+                }
+
+                if (forceSync)
+                {
+                    RefreshItemsFromChildren();
+                    return;
+                }
+
+                if (_items == null || _items.Length == 0 || !IsItemsSyncedWithChildren())
                 {
                     RefreshItemsFromChildren();
                 }
+            }
+
+            private bool IsItemsSyncedWithChildren()
+            {
+                if (transform == null)
+                {
+                    return true;
+                }
+
+                if (_items == null)
+                {
+                    return false;
+                }
+
+                int index = 0;
+                foreach (Transform child in transform)
+                {
+                    if (child == null || child.gameObject == null || child.gameObject == gameObject)
+                    {
+                        continue;
+                    }
+
+                    if (index >= _items.Length)
+                    {
+                        return false;
+                    }
+
+                    if (_items[index] != child.gameObject)
+                    {
+                        return false;
+                    }
+
+                    index++;
+                }
+
+                return index == _items.Length;
             }
 
             /// <summary>

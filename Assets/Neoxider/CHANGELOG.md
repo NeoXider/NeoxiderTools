@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.4.3] - Unreleased
+
+### Добавлено
+
+- **Tools/View/Selector**: рандомный выбор
+  - `SetRandom()`
+  - Настройки: `_useRandomSelection`, `_useNextPreviousAsRandom`
+
+### Улучшено
+
+- **Tools/View/Selector**: автоподхват дочерних объектов включен по умолчанию (`_autoUpdateFromChildren = true`)
+
+---
+
 ## [5.4.2] - Unreleased
 
 ### Добавлено
