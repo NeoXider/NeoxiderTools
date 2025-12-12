@@ -50,3 +50,4 @@ namespace Neo.NPC.Navigation
     }
 }
 
+

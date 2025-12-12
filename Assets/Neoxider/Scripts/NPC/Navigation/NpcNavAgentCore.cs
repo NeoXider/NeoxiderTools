@@ -87,3 +87,4 @@ namespace Neo.NPC.Navigation
     }
 }
 
+
