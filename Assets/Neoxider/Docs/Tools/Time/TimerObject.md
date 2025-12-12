@@ -30,21 +30,22 @@
 
 ### Timer Settings
 - `duration`: Общая длительность таймера в секундах.
-- `updateInterval`: Как часто (в секундах) будет обновляться таймер и вызываться события `OnTimeChanged` и `OnProgressChanged`.
-- `countUp`: Если `true`, таймер будет считать от 0 до `duration`. Если `false`, будет считать от `duration` до 0.
+- `updateInterval`: Как часто (в секундах) будет обновляться таймер и вызываться события `OnTimeChanged` и `OnProgressChanged`. Минимум: `0.015`.
+- `countUp`: Если `true`, таймер будет считать от 0 до `duration` (время увеличивается). Если `false`, таймер будет считать от `duration` до 0 (обратный отсчёт, время уменьшается). В обратном режиме таймер стартует с `duration` и останавливается на 0.
 - `useUnscaledTime`: Если `true`, таймер будет игнорировать `Time.timeScale` (полезно для UI во время паузы).
 - `looping`: Если `true`, таймер будет автоматически перезапускаться после завершения.
 
-### Initial State
-- `autoStart`: Если `true`, таймер запустится автоматически при старте сцены.
-- `initialProgress`: Начальный прогресс (0-1). 0 = начало, 1 = конец.
+### Random Duration
+- `useRandomDuration`: Если `true`, длительность выбирается случайно при старте (`Play()`/`StartTimer()`). Если `looping = true`, то при каждом новом цикле будет снова выбрана случайная длительность.
+- `randomDurationMin`: Минимальная длительность (секунды).
+- `randomDurationMax`: Максимальная длительность (секунды).
 
-### Auto Actions (No Code Required) - НОВОЕ в v5.2.21
-- `enableAutoActions`: Включить автоматические действия при завершении таймера.
-- `activateOnComplete`: Массив GameObjects для активации при завершении.
-- `deactivateOnComplete`: Массив GameObjects для деактивации при завершении.
-- `autoRestartOtherTimers`: Автоматически перезапускать другие таймеры.
-- `timersToRestart`: Массив других TimerObjects для перезапуска.
+### Infinite Duration
+- `infiniteDuration`: Если `true`, таймер не имеет максимума — время просто увеличивается. Прогресс/процент не обновляются. При включении автоматически отключаются `looping` и `useRandomDuration` (в `OnValidate`).
+
+### Initial State
+- `autoStart`: Если `true`, таймер запустится автоматически при включении компонента (`OnEnable`) в Play Mode. По умолчанию: `true`. Это означает, что при повторном `SetActive(true)`/`enabled = true` таймер снова запустится.
+- `initialProgress`: Начальный прогресс (0-1). 0 = начало, 1 = конец. В режиме `countUp = true` это стартовая позиция от начала (0 = 0 секунд, 1 = duration). В режиме `countUp = false` это стартовая позиция от конца (0 = duration, 1 = 0 секунд).
 
 ### Visual Feedback - НОВОЕ в v5.2.21
 - `enableStartAnimation`: Включить визуальную анимацию при старте.
@@ -52,20 +53,22 @@
 - `startAnimationDuration`: Длительность анимации в секундах.
 
 **Публичные методы (Public Methods)**
-- `Play()`: Запускает или возобновляет таймер с начала.
+- `Play()`: Запускает таймер, выставляя стартовое значение по `initialProgress`.
 - `Pause(bool paused = true)`: Ставит таймер на паузу (`true`) или снимает с паузы (`false`).
 - `TogglePause()`: Переключает состояние паузы.
 - `Stop()`: Останавливает таймер и сбрасывает его.
-- `Reset()`: Сбрасывает таймер в начальное состояние (время = 0).
+- `Reset()`: Сбрасывает таймер в начальное состояние, учитывая `initialProgress` (и обновляет UI/события).
+- `StartTimer(float newDuration = -1, float newUpdateInterval = -1)`: Сбрасывает и запускает таймер, опционально меняя `duration`/`updateInterval`.
 - `SetTime(float time)`: Устанавливает текущее значение времени таймера.
 - `GetProgress()`: Возвращает текущий прогресс таймера (от 0 до 1).
-- `GetCurrentTime()`: Возвращает текущее значение времени таймера.
+- `GetCurrentTime()`: Возвращает текущее значение времени таймера. В режиме `countUp = true` это прошедшее время (0 → duration), в режиме `countUp = false` это оставшееся время (duration → 0).
+- `GetRemainingTime()`: Возвращает оставшееся время до завершения. В режиме `countUp = true` это `duration - currentTime`, в режиме `countUp = false` это `currentTime`.
 
 **Unity Events**
 - `OnTimerStarted`: Вызывается в момент запуска таймера.
 - `OnTimerPaused`: Вызывается при постановке таймера на паузу.
-- `OnTimeChanged` (`UnityEvent<float>`): Вызывается с интервалом `updateInterval`. Передает текущее значение времени.
-- `OnProgressChanged` (`UnityEvent<float>`): Вызывается с интервалом `updateInterval`. Передает текущий прогресс (от 0 до 1).
+- `OnTimeChanged` (`UnityEvent<float>`): Вызывается с интервалом `updateInterval` пока таймер активен. Передает текущее значение времени.
+- `OnProgressChanged` (`UnityEvent<float>`): Вызывается с интервалом `updateInterval` пока таймер активен. Передает текущий прогресс (от 0 до 1).
 - `OnTimerCompleted`: Вызывается, когда таймер завершает отсчет. **Важно**: Вызывается при каждом завершении цикла, включая случаи зацикливания (`looping = true`). Если таймер зациклен, событие будет вызываться каждый раз при достижении `duration`.
 
 ---
@@ -80,11 +83,7 @@
     - Добавьте компонент `Image` на тот же объект для прогресс-бара (автоматически найдет)
     - Или добавьте `TMP_Text` для отображения времени (автоматически найдет)
     - Настройте `timeFormat` для форматирования текста
-4.  **Для автоматических действий** (v5.2.21):
-    - Включите `enableAutoActions`
-    - Добавьте объекты в `activateOnComplete` или `deactivateOnComplete`
-    - Или настройте `autoRestartOtherTimers` для перезапуска других таймеров
-5.  **Для визуальной анимации** (v5.2.21):
+4.  **Для визуальной анимации** (v5.2.21):
     - Включите `enableStartAnimation`
     - Настройте `startAnimationScale` и `startAnimationDuration`
 
@@ -106,12 +105,3 @@ timerObject.OnTimerCompleted.AddListener(() => {
 });
 ```
 
-### Пример: Таймер с автоматическими действиями
-
-1. Создайте GameObject с `TimerObject`
-2. Настройте `duration = 5.0f`, `autoStart = true`
-3. Включите `enableAutoActions = true`
-4. Добавьте объекты в `activateOnComplete` (например, UI панель)
-5. Добавьте другие таймеры в `timersToRestart` для цепочки таймеров
-
-**Результат**: Таймер запустится автоматически, по завершении активирует объекты и перезапустит другие таймеры - всё без кода!

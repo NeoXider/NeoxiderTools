@@ -61,29 +61,168 @@ namespace Neo.Extensions
                 timeSeconds = 0;
             }
 
-            int days = (int)(timeSeconds / 86400);
-            int hours = (int)(timeSeconds % 86400 / 3600);
-            int minutes = (int)(timeSeconds % 3600 / 60);
-            int seconds = (int)(timeSeconds % 60);
-            int milliseconds = (int)((timeSeconds - (int)timeSeconds) * 100);
+            if (string.IsNullOrEmpty(separator))
+            {
+                separator = ":";
+            }
 
+            int totalSeconds = (int)timeSeconds;
+            float fractional = timeSeconds - totalSeconds;
+            if (fractional < 0f)
+            {
+                fractional = 0f;
+            }
+
+            // NOTE: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
+            int centiseconds = (int)(fractional * 100f);
+            if (centiseconds < 0) centiseconds = 0;
+            if (centiseconds > 99) centiseconds = 99;
+
+            // True milliseconds (0..999) for the new MM:SS:ms mode.
+            int milliseconds = (int)(fractional * 1000f);
+            if (milliseconds < 0) milliseconds = 0;
+            if (milliseconds > 999) milliseconds = 999;
+
+            int totalMinutes = totalSeconds / 60;
+            int totalHours = totalSeconds / 3600;
+            int days = totalSeconds / 86400;
+
+            int hoursPart = (totalSeconds % 86400) / 3600;
+            int minutesPart = (totalSeconds % 3600) / 60;
+            int secondsPart = totalSeconds % 60;
+
+            if (separator.Length == 1)
+            {
+                char sep = separator[0];
+
+                // Fast path only when all components fit into 2 digits (and ms into 3 digits).
+                return format switch
+                {
+                    TimeFormat.Milliseconds => centiseconds < 100 ? Create2(centiseconds) : centiseconds.ToString("D2"),
+                    TimeFormat.SecondsMilliseconds => totalSeconds < 100
+                        ? Create2Sep2(totalSeconds, sep, centiseconds)
+                        : totalSeconds.ToString("D2") + sep + centiseconds.ToString("D2"),
+                    TimeFormat.Seconds => totalSeconds < 100 ? Create2(totalSeconds) : totalSeconds.ToString("D2"),
+                    TimeFormat.Minutes => totalMinutes < 100 ? Create2(totalMinutes) : totalMinutes.ToString("D2"),
+                    TimeFormat.MinutesSeconds => totalMinutes < 100
+                        ? Create2Sep2(totalMinutes, sep, secondsPart)
+                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2"),
+                    TimeFormat.MinutesSecondsMilliseconds => totalMinutes < 100
+                        ? Create2Sep2Sep3(totalMinutes, sep, secondsPart, milliseconds)
+                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2") + sep + milliseconds.ToString("D3"),
+                    TimeFormat.Hours => totalHours < 100 ? Create2(totalHours) : totalHours.ToString("D2"),
+                    TimeFormat.HoursMinutes => totalHours < 100
+                        ? Create2Sep2(totalHours, sep, minutesPart)
+                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2"),
+                    TimeFormat.HoursMinutesSeconds => totalHours < 100
+                        ? Create2Sep2Sep2(totalHours, sep, minutesPart, secondsPart)
+                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2") + sep + secondsPart.ToString("D2"),
+                    TimeFormat.Days => days < 100 ? Create2(days) : days.ToString("D2"),
+                    TimeFormat.DaysHours => days < 100
+                        ? Create2Sep2(days, sep, hoursPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2"),
+                    TimeFormat.DaysHoursMinutes => days < 100
+                        ? Create2Sep2Sep2(days, sep, hoursPart, minutesPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2"),
+                    TimeFormat.DaysHoursMinutesSeconds => days < 100
+                        ? Create2Sep2Sep2Sep2(days, sep, hoursPart, minutesPart, secondsPart)
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2") + sep +
+                          secondsPart.ToString("D2"),
+                    _ => "00"
+                };
+            }
+
+            // Fallback (multi-character separator). Less efficient but keeps compatibility.
             return format switch
             {
-                TimeFormat.Milliseconds => $"{milliseconds:D2}",
-                TimeFormat.SecondsMilliseconds => $"{seconds:D2}{separator}{milliseconds:D2}",
-                TimeFormat.Seconds => $"{seconds:D2}",
-                TimeFormat.Minutes => $"{minutes:D2}",
-                TimeFormat.MinutesSeconds => $"{minutes:D2}{separator}{seconds:D2}",
-                TimeFormat.Hours => $"{hours:D2}",
-                TimeFormat.HoursMinutes => $"{hours:D2}{separator}{minutes:D2}",
-                TimeFormat.HoursMinutesSeconds => $"{hours:D2}{separator}{minutes:D2}{separator}{seconds:D2}",
-                TimeFormat.Days => $"{days:D2}",
-                TimeFormat.DaysHours => $"{days:D2}{separator}{hours:D2}",
-                TimeFormat.DaysHoursMinutes => $"{days:D2}{separator}{hours:D2}{separator}{minutes:D2}",
+                TimeFormat.Milliseconds => centiseconds.ToString("D2"),
+                TimeFormat.SecondsMilliseconds => totalSeconds.ToString("D2") + separator + centiseconds.ToString("D2"),
+                TimeFormat.Seconds => totalSeconds.ToString("D2"),
+                TimeFormat.Minutes => totalMinutes.ToString("D2"),
+                TimeFormat.MinutesSeconds => totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2"),
+                TimeFormat.MinutesSecondsMilliseconds =>
+                    totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2") + separator + milliseconds.ToString("D3"),
+                TimeFormat.Hours => totalHours.ToString("D2"),
+                TimeFormat.HoursMinutes => totalHours.ToString("D2") + separator + minutesPart.ToString("D2"),
+                TimeFormat.HoursMinutesSeconds =>
+                    totalHours.ToString("D2") + separator + minutesPart.ToString("D2") + separator + secondsPart.ToString("D2"),
+                TimeFormat.Days => days.ToString("D2"),
+                TimeFormat.DaysHours => days.ToString("D2") + separator + hoursPart.ToString("D2"),
+                TimeFormat.DaysHoursMinutes =>
+                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator + minutesPart.ToString("D2"),
                 TimeFormat.DaysHoursMinutesSeconds =>
-                    $"{days:D2}{separator}{hours:D2}{separator}{minutes:D2}{separator}{seconds:D2}",
+                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator + minutesPart.ToString("D2") +
+                    separator + secondsPart.ToString("D2"),
                 _ => "00"
             };
+        }
+
+        private static string Create2(int a)
+        {
+            return string.Create(2, a, static (span, value) => Write2(span, value));
+        }
+
+        private static string Create2Sep2(int a, char sep, int b)
+        {
+            return string.Create(5, (a, sep, b), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+            });
+        }
+
+        private static string Create2Sep2Sep2(int a, char sep, int b, int c)
+        {
+            return string.Create(8, (a, sep, b, c), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+                span[5] = state.sep;
+                Write2(span.Slice(6, 2), state.c);
+            });
+        }
+
+        private static string Create2Sep2Sep3(int minutes, char sep, int seconds, int milliseconds)
+        {
+            return string.Create(9, (minutes, sep, seconds, milliseconds), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.minutes);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.seconds);
+                span[5] = state.sep;
+                Write3(span.Slice(6, 3), state.milliseconds);
+            });
+        }
+
+        private static string Create2Sep2Sep2Sep2(int a, char sep, int b, int c, int d)
+        {
+            return string.Create(11, (a, sep, b, c, d), static (span, state) =>
+            {
+                Write2(span.Slice(0, 2), state.a);
+                span[2] = state.sep;
+                Write2(span.Slice(3, 2), state.b);
+                span[5] = state.sep;
+                Write2(span.Slice(6, 2), state.c);
+                span[8] = state.sep;
+                Write2(span.Slice(9, 2), state.d);
+            });
+        }
+
+        private static void Write2(Span<char> span, int value)
+        {
+            value = Mathf.Abs(value) % 100;
+            span[0] = (char)('0' + value / 10);
+            span[1] = (char)('0' + value % 10);
+        }
+
+        private static void Write3(Span<char> span, int value)
+        {
+            value = Mathf.Abs(value) % 1000;
+            span[0] = (char)('0' + value / 100);
+            span[1] = (char)('0' + (value / 10) % 10);
+            span[2] = (char)('0' + value % 10);
         }
 
         /// <summary>

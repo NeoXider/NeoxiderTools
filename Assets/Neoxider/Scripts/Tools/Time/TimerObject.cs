@@ -35,6 +35,21 @@ namespace Neo
         [Tooltip("Automatically restart when complete")]
         public bool looping;
 
+        [Tooltip("Infinite time (no max). Time only increases; progress is not updated. Disables looping/random in OnValidate.")]
+        public bool infiniteDuration;
+
+        [Header("Random Duration")]
+        [Tooltip("If enabled, duration is randomized in [min,max] on Play/StartTimer. If looping is enabled, it randomizes each cycle.")]
+        public bool useRandomDuration;
+
+        [Tooltip("Minimum random duration (seconds)")]
+        [Min(0f)]
+        public float randomDurationMin = 1f;
+
+        [Tooltip("Maximum random duration (seconds)")]
+        [Min(0f)]
+        public float randomDurationMax = 2f;
+
         [Header("Initial State")] [Tooltip("Start timer automatically on enable")]
         public bool autoStart = true;
 
@@ -62,21 +77,6 @@ namespace Neo
         [Tooltip("If true, progress image fills from left to right. If false, fills from right to left")]
         public bool fillImageNormal = true;
 
-        [Header("Auto Actions (No Code Required)")] [Tooltip("Enable automatic actions when timer completes")]
-        public bool enableAutoActions;
-
-        [Tooltip("GameObjects to activate when timer completes")]
-        public GameObject[] activateOnComplete;
-
-        [Tooltip("GameObjects to deactivate when timer completes")]
-        public GameObject[] deactivateOnComplete;
-
-        [Tooltip("Enable automatic restart of other TimerObjects when this timer completes")]
-        public bool autoRestartOtherTimers;
-
-        [Tooltip("Other TimerObjects to restart when this timer completes")]
-        public TimerObject[] timersToRestart;
-
         [Header("Visual Feedback")] [Tooltip("Enable visual feedback (scale animation) when timer starts")]
         public bool enableStartAnimation;
 
@@ -85,15 +85,6 @@ namespace Neo
 
         [Tooltip("Duration of start animation in seconds")] [Min(0.01f)]
         public float startAnimationDuration = 0.2f;
-
-        [Header("Progress Milestones")] [Tooltip("Enable milestone events at specific progress percentages")]
-        public bool enableMilestones;
-
-        [Tooltip("Progress percentages (0-1) to trigger milestone events")] [Range(0f, 1f)]
-        public float[] milestonePercentages = { 0.25f, 0.5f, 0.75f };
-
-        [Tooltip("Called when timer reaches a milestone percentage")]
-        public UnityEvent<float> OnMilestoneReached;
 
         [Tooltip("Called when timer starts")] public UnityEvent OnTimerStarted;
 
@@ -117,6 +108,17 @@ namespace Neo
         [Tooltip("Called when timer completes. Also called on each loop completion if looping is enabled")]
         public UnityEvent OnTimerCompleted;
 
+        [Header("Progress Milestones")]
+        [Tooltip("Enable milestone events at specific progress percentages")]
+        public bool enableMilestones;
+
+        [Tooltip("Progress percentages (0-1) to trigger milestone events")]
+        [Range(0f, 1f)]
+        public float[] milestonePercentages = { 0.25f, 0.5f, 0.75f };
+
+        [Tooltip("Called when timer reaches a milestone percentage")]
+        public UnityEvent<float> OnMilestoneReached;
+
         private float timeSinceLastUpdate;
         private bool[] milestoneReached;
         private float lastProgress = -1f;
@@ -130,7 +132,7 @@ namespace Neo
         /// <summary>
         ///     Gets whether timer has completed
         /// </summary>
-        public bool IsCompleted => currentTime >= duration;
+        public bool IsCompleted => !infiniteDuration && (countUp ? currentTime >= duration : currentTime <= 0f);
 
         /// <summary>
         ///     Gets current progress (0-1)
@@ -152,6 +154,28 @@ namespace Neo
             if (updateInterval < 0.015f)
             {
                 updateInterval = 0.015f;
+            }
+
+            if (infiniteDuration)
+            {
+                looping = false;
+                useRandomDuration = false;
+                countUp = true;
+            }
+
+            if (randomDurationMin < 0f)
+            {
+                randomDurationMin = 0f;
+            }
+
+            if (randomDurationMax < 0f)
+            {
+                randomDurationMax = 0f;
+            }
+
+            if (randomDurationMax < randomDurationMin)
+            {
+                randomDurationMax = randomDurationMin;
             }
 
             if (initialProgress < 0)
@@ -218,14 +242,55 @@ namespace Neo
             }
         }
 
+        private void ApplyRandomDurationIfNeeded()
+        {
+            if (!useRandomDuration || infiniteDuration || !Application.isPlaying)
+            {
+                return;
+            }
+
+            float min = Mathf.Max(0f, randomDurationMin);
+            float max = Mathf.Max(min, randomDurationMax);
+            duration = Random.Range(min, max);
+        }
+
+        private float GetStartTimeForCurrentDuration()
+        {
+            if (initialProgress <= 0f)
+            {
+                return countUp ? 0f : duration;
+            }
+
+            return countUp ? initialProgress * duration : (1f - initialProgress) * duration;
+        }
+
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            if (autoStart)
+            {
+                Play();
+            }
+            else
+            {
+                UpdateUI();
+            }
+        }
+
         /// <summary>
         ///     Resets timer to initial state
         /// </summary>
         public void Reset()
         {
-            currentTime = initialProgress > 0
-                ? countUp ? initialProgress * duration : (1f - initialProgress) * duration
-                : 0f;
+            currentTime = infiniteDuration
+                ? 0f
+                : initialProgress > 0
+                    ? countUp ? initialProgress * duration : (1f - initialProgress) * duration
+                    : 0f;
 
             // Сброс milestones
             if (milestoneReached != null)
@@ -238,19 +303,6 @@ namespace Neo
 
             lastProgress = -1f;
             InvokeEvents();
-            UpdateUI();
-        }
-
-        private void Start()
-        {
-            if (autoStart)
-            {
-                Play();
-            }
-            else
-            {
-                UpdateUI(); // Обновляем UI даже если не запускаем автоматически
-            }
         }
 
         private void Update()
@@ -282,17 +334,27 @@ namespace Neo
                 return;
             }
 
-            currentTime += deltaTime;
-
-            if (currentTime >= duration)
+            if (infiniteDuration)
             {
-                currentTime = duration;
+                currentTime += deltaTime;
+                OnTimeChanged?.Invoke(currentTime);
+                UpdateUI(timeValue: currentTime);
+                return;
+            }
+
+            currentTime += countUp ? deltaTime : -deltaTime;
+
+            bool reachedEnd = countUp ? currentTime >= duration : currentTime <= 0f;
+            if (reachedEnd)
+            {
+                currentTime = countUp ? duration : 0f;
                 InvokeEvents();
                 OnTimerCompleted?.Invoke();
 
                 if (looping)
                 {
-                    currentTime = 0f;
+                    ApplyRandomDurationIfNeeded();
+                    currentTime = GetStartTimeForCurrentDuration();
                     isActive = true;
                     timeSinceLastUpdate = 0f;
 
@@ -308,12 +370,11 @@ namespace Neo
                     lastProgress = -1f;
 
                     OnTimerStarted?.Invoke();
-                    HandleAutoActions();
+                    InvokeEvents();
                 }
                 else
                 {
                     isActive = false;
-                    HandleAutoActions();
                 }
             }
             else
@@ -324,40 +385,35 @@ namespace Neo
 
         private void InvokeEvents()
         {
-            float progress;
-            float timeValue;
+            if (infiniteDuration)
+            {
+                float timeValueInfinite = currentTime;
+                OnTimeChanged?.Invoke(timeValueInfinite);
+                UpdateUI(timeValue: timeValueInfinite);
+                return;
+            }
 
-            if (countUp)
-            {
-                timeValue = currentTime;
-                progress = duration > 0 ? currentTime / duration : 0f;
-            }
-            else
-            {
-                timeValue = duration - currentTime;
-                progress = duration > 0 ? 1f - currentTime / duration : 0f;
-            }
+            float timeValue = currentTime;
+            float progress = duration > 0
+                ? countUp ? currentTime / duration : 1f - currentTime / duration
+                : 0f;
 
             progress = Mathf.Clamp01(progress);
 
-            // Вызываем события только если прогресс изменился
-            if (Mathf.Abs(progress - lastProgress) > 0.001f)
-            {
-                OnTimeChanged?.Invoke(timeValue);
-                OnProgressChanged?.Invoke(progress);
-                OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
-                lastProgress = progress;
+            OnTimeChanged?.Invoke(timeValue);
+            OnProgressChanged?.Invoke(progress);
+            OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
+            lastProgress = progress;
 
-                // Проверка milestones
-                if (enableMilestones && milestonePercentages != null && milestoneReached != null)
+            // Проверка milestones
+            if (enableMilestones && milestonePercentages != null && milestoneReached != null)
+            {
+                for (int i = 0; i < milestonePercentages.Length; i++)
                 {
-                    for (int i = 0; i < milestonePercentages.Length; i++)
+                    if (!milestoneReached[i] && progress >= milestonePercentages[i])
                     {
-                        if (!milestoneReached[i] && progress >= milestonePercentages[i])
-                        {
-                            milestoneReached[i] = true;
-                            OnMilestoneReached?.Invoke(milestonePercentages[i]);
-                        }
+                        milestoneReached[i] = true;
+                        OnMilestoneReached?.Invoke(milestonePercentages[i]);
                     }
                 }
             }
@@ -368,6 +424,18 @@ namespace Neo
 
         private void UpdateUI(float progress = -1f, float timeValue = -1f)
         {
+            if (infiniteDuration)
+            {
+#if UNITY_TEXTMESHPRO
+                if (timeText != null)
+                {
+                    float t = timeValue >= 0 ? timeValue : currentTime;
+                    timeText.text = string.Format(timeFormat, t, 0f, 0f);
+                }
+#endif
+                return;
+            }
+
             if (progress < 0)
             {
                 progress = GetProgress();
@@ -422,7 +490,10 @@ namespace Neo
 #endif
         public void Play()
         {
-            currentTime = 0f;
+            ApplyRandomDurationIfNeeded();
+            currentTime = infiniteDuration ? 0f : GetStartTimeForCurrentDuration();
+
+            lastProgress = -1f;
             isActive = true;
             timeSinceLastUpdate = 0f;
 
@@ -482,50 +553,6 @@ namespace Neo
             }
 
             transform.localScale = originalScale;
-        }
-
-        private void HandleAutoActions()
-        {
-            if (!enableAutoActions)
-            {
-                return;
-            }
-
-            // Активация объектов
-            if (activateOnComplete != null)
-            {
-                foreach (GameObject obj in activateOnComplete)
-                {
-                    if (obj != null)
-                    {
-                        obj.SetActive(true);
-                    }
-                }
-            }
-
-            // Деактивация объектов
-            if (deactivateOnComplete != null)
-            {
-                foreach (GameObject obj in deactivateOnComplete)
-                {
-                    if (obj != null)
-                    {
-                        obj.SetActive(false);
-                    }
-                }
-            }
-
-            // Перезапуск других таймеров
-            if (autoRestartOtherTimers && timersToRestart != null)
-            {
-                foreach (TimerObject timer in timersToRestart)
-                {
-                    if (timer != null)
-                    {
-                        timer.Play();
-                    }
-                }
-            }
         }
 
         /// <summary>
@@ -644,6 +671,11 @@ namespace Neo
         /// <returns>Progress value from 0 to 1</returns>
         public float GetProgress()
         {
+            if (infiniteDuration)
+            {
+                return 0f;
+            }
+
             if (duration <= 0)
             {
                 return 0f;
@@ -658,7 +690,7 @@ namespace Neo
         /// <returns>Current time in seconds</returns>
         public float GetCurrentTime()
         {
-            return countUp ? currentTime : duration - currentTime;
+            return currentTime;
         }
 
         /// <summary>
@@ -667,6 +699,11 @@ namespace Neo
         /// <returns>Remaining time in seconds</returns>
         public float GetRemainingTime()
         {
+            if (infiniteDuration)
+            {
+                return 0f;
+            }
+
             return countUp ? duration - currentTime : currentTime;
         }
     }

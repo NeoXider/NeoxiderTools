@@ -10,6 +10,7 @@ namespace Neo.Extensions
         Seconds,
         Minutes,
         MinutesSeconds,
+        MinutesSecondsMilliseconds,
         Hours,
         HoursMinutes,
         HoursMinutesSeconds,

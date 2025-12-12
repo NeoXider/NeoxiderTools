@@ -61,11 +61,6 @@ namespace Neo
             #region Events
 
             /// <summary>
-            ///     Invoked when the time value reaches zero
-            /// </summary>
-            public UnityEvent OnEnd;
-
-            /// <summary>
             ///     Invoked when the time value changes
             /// </summary>
             public UnityEvent<float> OnTimeChanged;
@@ -156,30 +151,33 @@ namespace Neo
                     return;
                 }
 
-                // Store current time
+                float prevTime = lastTime;
+                bool changed = !Mathf.Approximately(prevTime, time);
                 CurrentTime = time;
-
-                // Check if time has changed
-                if (lastTime != time)
-                {
-                    OnTimeChanged?.Invoke(time);
-                    lastTime = time;
-                }
 
                 // Display text based on zero text setting
                 if ((time == 0 && _zeroText) || time > 0)
                 {
-                    text.text = startAddText + FormatTime(time, timeFormat, separator) + endAddText;
+                    string formatted = FormatTime(time, timeFormat, separator);
+
+                    if (string.IsNullOrEmpty(startAddText))
+                    {
+                        text.text = string.IsNullOrEmpty(endAddText) ? formatted : formatted + endAddText;
+                    }
+                    else
+                    {
+                        text.text = string.IsNullOrEmpty(endAddText) ? startAddText + formatted : startAddText + formatted + endAddText;
+                    }
                 }
                 else
                 {
                     text.text = "";
                 }
 
-                // Check if time has reached zero
-                if (lastTime != time && time == 0)
+                if (changed)
                 {
-                    OnEnd?.Invoke();
+                    OnTimeChanged?.Invoke(time);
+                    lastTime = time;
                 }
             }
 

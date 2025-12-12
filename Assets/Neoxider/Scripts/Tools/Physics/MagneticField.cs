@@ -32,7 +32,10 @@ namespace Neo.Tools
             ToTarget,
 
             /// <summary>Притяжение к точке в пространстве</summary>
-            ToPoint
+            ToPoint,
+
+            /// <summary>Притяжение по направлению (вектор)</summary>
+            Direction
         }
 
         /// <summary>
@@ -79,6 +82,20 @@ namespace Neo.Tools
 
         [Tooltip("Точка в пространстве (используется при режиме ToPoint)")] [SerializeField]
         private Vector3 targetPoint = Vector3.zero;
+
+        [Header("Attraction Direction")]
+        [Tooltip("Направление вектора (используется при режиме Direction). Если включено Local Direction — задаётся в локальных координатах объекта.")]
+        [SerializeField]
+        private Vector3 direction = Vector3.forward;
+
+        [Tooltip("Если true — direction интерпретируется в локальных координатах (TransformDirection).")]
+        [SerializeField]
+        private bool directionIsLocal = true;
+
+        [Tooltip("Длина визуализации направления в сцене (и точка-ручка для режима Direction).")]
+        [Min(0.01f)]
+        [SerializeField]
+        private float directionGizmoDistance = 10f;
 
         [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
         private bool addRigidbodyIfNeeded;
@@ -201,6 +218,16 @@ namespace Neo.Tools
             mode = FieldMode.ToPoint;
         }
 
+        /// <summary>
+        ///     Установить направление притяжения (вектор).
+        /// </summary>
+        public void SetDirection(Vector3 newDirection, bool local = true)
+        {
+            direction = newDirection;
+            directionIsLocal = local;
+            mode = FieldMode.Direction;
+        }
+
         private void Awake()
         {
             if (mode == FieldMode.Toggle)
@@ -259,8 +286,8 @@ namespace Neo.Tools
 
             lastUpdateTime = Time.time;
 
-            Vector3 center = GetAttractionPoint();
-            Collider[] colliders = Physics.OverlapSphere(center, radius, affectedLayers);
+            Vector3 fieldCenter = GetFieldCenter();
+            Collider[] colliders = Physics.OverlapSphere(fieldCenter, radius, affectedLayers);
             HashSet<GameObject> currentObjects = new();
 
             foreach (Collider col in colliders)
@@ -307,12 +334,12 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector3 direction = CalculateForceDirection(obj.transform.position);
-            Vector3 center = GetAttractionPoint();
-            float distance = Vector3.Distance(center, obj.transform.position);
+            Vector3 forceDirection = CalculateForceDirection(obj.transform.position);
+            Vector3 fieldCenter = GetFieldCenter();
+            float distance = Vector3.Distance(fieldCenter, obj.transform.position);
             float forceAtDistance = CalculateForceAtDistance(distance, fieldStrength);
 
-            rb.AddForce(direction * forceAtDistance, ForceMode.Force);
+            rb.AddForce(forceDirection * forceAtDistance, ForceMode.Force);
         }
 
         private Rigidbody GetOrAddRigidbody(GameObject obj, Collider col)
@@ -336,22 +363,34 @@ namespace Neo.Tools
             return rb;
         }
 
-        private Vector3 CalculateForceDirection(Vector3 targetPosition)
+        private Vector3 CalculateForceDirection(Vector3 objectPosition)
         {
-            Vector3 attractionPoint = GetAttractionPoint();
-            Vector3 direction = (targetPosition - attractionPoint).normalized;
-
-            if (direction.sqrMagnitude < 0.01f)
+            if (mode == FieldMode.Direction)
             {
-                direction = Random.onUnitSphere;
+                return GetDirectionWorldNormalized();
+            }
+
+            Vector3 attractionPoint = GetAttractionPoint();
+            Vector3 toAttractionPoint = attractionPoint - objectPosition;
+
+            if (toAttractionPoint.sqrMagnitude < 0.0001f)
+            {
+                toAttractionPoint = Random.onUnitSphere;
             }
 
             bool shouldAttract = mode == FieldMode.Attract ||
                                  mode == FieldMode.ToTarget ||
                                  mode == FieldMode.ToPoint ||
+                                 mode == FieldMode.Direction ||
                                  (mode == FieldMode.Toggle && CurrentToggleState);
 
-            return shouldAttract ? -direction : direction;
+            Vector3 dir = toAttractionPoint.normalized;
+            return shouldAttract ? dir : -dir;
+        }
+
+        private Vector3 GetFieldCenter()
+        {
+            return transform.position;
         }
 
         private Vector3 GetAttractionPoint()
@@ -367,6 +406,17 @@ namespace Neo.Tools
                 default:
                     return transform.position;
             }
+        }
+
+        private Vector3 GetDirectionWorldNormalized()
+        {
+            Vector3 dir = directionIsLocal ? transform.TransformDirection(direction) : direction;
+            if (dir.sqrMagnitude < 0.0001f)
+            {
+                dir = transform.forward;
+            }
+
+            return dir.normalized;
         }
 
         private float CalculateForceAtDistance(float distance, float baseForce)
@@ -414,10 +464,11 @@ namespace Neo.Tools
 
         private void OnDrawGizmosSelected()
         {
-            Vector3 center = GetAttractionPoint();
+            Vector3 center = GetFieldCenter();
             bool isAttracting = mode == FieldMode.Attract ||
                                 mode == FieldMode.ToTarget ||
                                 mode == FieldMode.ToPoint ||
+                                mode == FieldMode.Direction ||
                                 (mode == FieldMode.Toggle && CurrentToggleState);
             Gizmos.color = isAttracting ? Color.blue : Color.red;
             Gizmos.DrawWireSphere(center, radius);
@@ -429,6 +480,22 @@ namespace Neo.Tools
             {
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(transform.position, targetTransform.position);
+                Gizmos.DrawSphere(targetTransform.position, 0.075f);
+            }
+
+            if (mode == FieldMode.ToPoint)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, targetPoint);
+                Gizmos.DrawSphere(targetPoint, 0.075f);
+            }
+
+            if (mode == FieldMode.Direction)
+            {
+                Vector3 end = transform.position + GetDirectionWorldNormalized() * Mathf.Max(0.01f, directionGizmoDistance);
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, end);
+                Gizmos.DrawSphere(end, 0.075f);
             }
         }
     }

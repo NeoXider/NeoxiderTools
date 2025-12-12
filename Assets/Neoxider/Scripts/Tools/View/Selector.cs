@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -506,30 +506,6 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Sets the selection to the last item
-            /// </summary>
-#if ODIN_INSPECTOR
-            [Button]
-#else
-            [ButtonAttribute]
-#endif
-            public void SetLast()
-            {
-                TryInitializeFromChildren();
-
-                int total = Count;
-                if (total == 0)
-                {
-                    Debug.LogWarning(
-                        "Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
-                    return;
-                }
-
-                _currentIndex = total - 1;
-                UpdateSelection();
-            }
-
-            /// <summary>
             ///     Sets the selection to the first item
             /// </summary>
 #if ODIN_INSPECTOR
@@ -551,6 +527,30 @@ namespace Neo
 
                 (int min, int max) = GetCurrentBounds();
                 _currentIndex = min;
+                UpdateSelection();
+            }
+
+            /// <summary>
+            ///     Sets the selection to the last item
+            /// </summary>
+#if ODIN_INSPECTOR
+            [Button]
+#else
+            [ButtonAttribute]
+#endif
+            public void SetLast()
+            {
+                TryInitializeFromChildren();
+
+                int total = Count;
+                if (total == 0)
+                {
+                    Debug.LogWarning(
+                        "Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
+                    return;
+                }
+
+                _currentIndex = total - 1;
                 UpdateSelection();
             }
 

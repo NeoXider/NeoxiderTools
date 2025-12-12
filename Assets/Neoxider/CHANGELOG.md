@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.4.2] - Unreleased
+
+### Добавлено
+- **Physics/MagneticField**: новый режим `Direction` (притяжение по направлению)
+  - Параметры: `direction`, `directionIsLocal`, `directionGizmoDistance`
+  - API: `SetDirection(Vector3 newDirection, bool local = true)`
+  - Scene View handle: редактирование точки направления (конец вектора)
+- **Physics/MagneticField**: Scene View handle для `ToPoint` (перемещение `targetPoint` прямо в сцене)
+- **Tools/Time/TimerObject**: рандомная длительность для `looping`
+  - `useRandomDuration` работает и без `looping` (на старте), а при `looping` — на каждый цикл
+  - Выбор `duration` в диапазоне [`randomDurationMin`, `randomDurationMax`]
+- **Tools/Time/TimerObject**: режим `infiniteDuration`
+  - Время увеличивается без максимума, прогресс/процент не обновляются
+  - Автоматически отключает `looping` и `useRandomDuration` (в `OnValidate`)
+
+### Исправлено
+- **Physics/MagneticField**: режимы `ToTarget`/`ToPoint` больше не “переезжают” к цели
+  - Радиус поля считается вокруг магнита, а цель/точка/направление используется как направление силы
+- **Docs**: обновлена документация `MagneticField.md` и `Physics/README.md`
+- **Tools/View/Selector**: порядок методов приведён к `SetFirst()` затем `SetLast()`
+
+### Удалено
+- **Tools/Time/TimerObject**: удалены Auto Actions (no-code автодействия на завершении)
+
+---
+
 ## [5.4.0] - Unreleased
 
 ### Добавлено
