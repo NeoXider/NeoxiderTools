@@ -9,6 +9,11 @@ All notable changes to this project will be documented in this file.
 - **Tools/View/Selector**: рандомный выбор
   - `SetRandom()`
   - Настройки: `_useRandomSelection`, `_useNextPreviousAsRandom`
+- **NeoxiderPages (Neo.Pages)**: опциональный модуль PageManager в `Assets/NeoxiderPages/`
+  - 2 asmdef: `Neo.Pages` (runtime) и `Neo.Pages.Editor`
+  - Документация: `Assets/NeoxiderPages/Docs/README.md`
+- **Level/TextLevel**: UI вывод текущего/лучшего уровня (на базе `Neo.Tools.SetText`)
+- **Tools/Components/TextScore**: UI вывод текущего/лучшего счета (на базе `Neo.Tools.SetText`)
 
 ### Улучшено
 

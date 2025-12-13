@@ -1,0 +1,21 @@
+{
+  "name": "Neo.Pages.Editor",
+  "rootNamespace": "Neo.Pages.Editor",
+  "references": [
+    "Neo.Pages",
+    "Unity.TextMeshPro",
+    "Unity.ugui"
+  ],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}
+

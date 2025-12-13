@@ -1,4 +1,4 @@
-# NeoxiderTools — краткий PROJECT_SUMMARY 
+# NeoxiderTools — краткий PROJECT_SUMMARY
 
 ## Архитектура и структура
 
@@ -7,6 +7,7 @@
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
 - **Документация**: `Assets/Neoxider/Docs/**`
+- **Опциональные модули**: `Assets/NeoxiderPages/**` (PageManager / `Neo.Pages`, отдельные asmdef + свои `Docs/`)
 
 Структура:
 
@@ -17,6 +18,13 @@ Assets/Neoxider/
   Docs/      # документация по модулям/компонентам
   Demo/      # примеры
   Prefabs/   # готовые префабы
+
+Assets/NeoxiderPages/
+  Runtime/   # runtime модуль страниц (Neo.Pages)
+  Editor/    # editor инструменты (Neo.Pages.Editor)
+  Prefabs/   # демо префабы PageManager
+  Scenes/    # демо сцены PageManager
+  Docs/      # документация NeoxiderPages
 ```
 
 ## Правила работы (важно)
@@ -187,6 +195,7 @@ Assets/Neoxider/
 - `Assets/Neoxider/Scripts/Level/LevelButton.cs` — кнопка уровня.
 - `Assets/Neoxider/Scripts/Level/LevelManager.cs` — менеджер уровней.
 - `Assets/Neoxider/Scripts/Level/Map.cs` — карта уровней.
+- `Assets/Neoxider/Scripts/Level/TextLevel.cs` — UI вывод текущего/лучшего уровня (на базе `Neo.Tools.SetText`).
 
 ### NPC (`Assets/Neoxider/Scripts/NPC/`)
 
@@ -319,6 +328,7 @@ Assets/Neoxider/
 
 - `Assets/Neoxider/Scripts/Tools/Components/Loot.cs` — лут.
 - `Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs` — очки/звезды.
+- `Assets/Neoxider/Scripts/Tools/Components/TextScore.cs` — UI вывод текущего/лучшего счета (на базе `Neo.Tools.SetText`).
 - `Assets/Neoxider/Scripts/Tools/Components/TypewriterEffect.cs` — печать текста.
 - `Assets/Neoxider/Scripts/Tools/Components/TypewriterEffectComponent.cs` — обертка печати текста.
 - `Assets/Neoxider/Scripts/Tools/Components/Interface/InterfaceAttack.cs` — интерфейс атаки.
