@@ -222,6 +222,18 @@
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
+Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.4.3`):
+
+```
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.4.3
+```
+
+Если хотите попробовать новые функции — установите библиотеку из ветки `demo`:
+
+```
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
+```
+
 ---
 
 ## <a name="быстрый-старт"></a>Быстрый старт

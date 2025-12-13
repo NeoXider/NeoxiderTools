@@ -1,25 +1,25 @@
 {
-    "name": "Neo.Pages",
-    "rootNamespace": "Neo.Pages",
-    "references": [
-        "Demigiant.DOTween.Modules",
-        "Neo",
-        "Neo.Extensions",
-        "Neo.Tools.Components",
-        "Neo.Tools.Managers",
-        "Neo.Audio",
-        "Neo.Level",
-        "Neo.Shop",
-        "Neo.UI",
-        "Unity.TextMeshPro"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+  "name": "Neo.Pages",
+  "rootNamespace": "Neo.Pages",
+  "references": [
+    "Demigiant.DOTween.Modules",
+    "Neo",
+    "Neo.Extensions",
+    "Neo.Tools.Components",
+    "Neo.Tools.Managers",
+    "Neo.Audio",
+    "Neo.Level",
+    "Neo.Shop",
+    "Neo.UI",
+    "Unity.TextMeshPro"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
 }

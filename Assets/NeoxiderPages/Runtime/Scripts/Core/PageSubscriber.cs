@@ -1,5 +1,4 @@
 using UnityEngine;
-using Page = Neo.Pages.UIKit.Page;
 using UnityEngine.Scripting.APIUpdating;
 using Neo.Extensions;
 
@@ -10,6 +9,7 @@ namespace Neo.Pages
     public class PageSubscriber : MonoBehaviour
     {
         [SerializeField] private PM _pm;
+        [SerializeField] private PageId gamePageId;
 
         private void Awake()
         {
@@ -18,7 +18,13 @@ namespace Neo.Pages
 
         private void Init()
         {
-            G.OnStart.AddListener(() => PM.I.ChangePage(Page.Game));
+            G.OnStart.AddListener(() =>
+            {
+                if (gamePageId != null)
+                {
+                    PM.I.ChangePage(gamePageId);
+                }
+            });
         }
     }
 }

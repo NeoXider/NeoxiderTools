@@ -75,20 +75,34 @@ namespace Neo.Extensions
 
             // NOTE: existing formats use 2-digit fractional (centiseconds). Keep behavior for compatibility.
             int centiseconds = (int)(fractional * 100f);
-            if (centiseconds < 0) centiseconds = 0;
-            if (centiseconds > 99) centiseconds = 99;
+            if (centiseconds < 0)
+            {
+                centiseconds = 0;
+            }
+
+            if (centiseconds > 99)
+            {
+                centiseconds = 99;
+            }
 
             // True milliseconds (0..999) for the new MM:SS:ms mode.
             int milliseconds = (int)(fractional * 1000f);
-            if (milliseconds < 0) milliseconds = 0;
-            if (milliseconds > 999) milliseconds = 999;
+            if (milliseconds < 0)
+            {
+                milliseconds = 0;
+            }
+
+            if (milliseconds > 999)
+            {
+                milliseconds = 999;
+            }
 
             int totalMinutes = totalSeconds / 60;
             int totalHours = totalSeconds / 3600;
             int days = totalSeconds / 86400;
 
-            int hoursPart = (totalSeconds % 86400) / 3600;
-            int minutesPart = (totalSeconds % 3600) / 60;
+            int hoursPart = totalSeconds % 86400 / 3600;
+            int minutesPart = totalSeconds % 3600 / 60;
             int secondsPart = totalSeconds % 60;
 
             if (separator.Length == 1)
@@ -109,14 +123,16 @@ namespace Neo.Extensions
                         : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2"),
                     TimeFormat.MinutesSecondsMilliseconds => totalMinutes < 100
                         ? Create2Sep2Sep3(totalMinutes, sep, secondsPart, milliseconds)
-                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2") + sep + milliseconds.ToString("D3"),
+                        : totalMinutes.ToString("D2") + sep + secondsPart.ToString("D2") + sep +
+                          milliseconds.ToString("D3"),
                     TimeFormat.Hours => totalHours < 100 ? Create2(totalHours) : totalHours.ToString("D2"),
                     TimeFormat.HoursMinutes => totalHours < 100
                         ? Create2Sep2(totalHours, sep, minutesPart)
                         : totalHours.ToString("D2") + sep + minutesPart.ToString("D2"),
                     TimeFormat.HoursMinutesSeconds => totalHours < 100
                         ? Create2Sep2Sep2(totalHours, sep, minutesPart, secondsPart)
-                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2") + sep + secondsPart.ToString("D2"),
+                        : totalHours.ToString("D2") + sep + minutesPart.ToString("D2") + sep +
+                          secondsPart.ToString("D2"),
                     TimeFormat.Days => days < 100 ? Create2(days) : days.ToString("D2"),
                     TimeFormat.DaysHours => days < 100
                         ? Create2Sep2(days, sep, hoursPart)
@@ -126,7 +142,8 @@ namespace Neo.Extensions
                         : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2"),
                     TimeFormat.DaysHoursMinutesSeconds => days < 100
                         ? Create2Sep2Sep2Sep2(days, sep, hoursPart, minutesPart, secondsPart)
-                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2") + sep +
+                        : days.ToString("D2") + sep + hoursPart.ToString("D2") + sep + minutesPart.ToString("D2") +
+                          sep +
                           secondsPart.ToString("D2"),
                     _ => "00"
                 };
@@ -141,17 +158,20 @@ namespace Neo.Extensions
                 TimeFormat.Minutes => totalMinutes.ToString("D2"),
                 TimeFormat.MinutesSeconds => totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2"),
                 TimeFormat.MinutesSecondsMilliseconds =>
-                    totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2") + separator + milliseconds.ToString("D3"),
+                    totalMinutes.ToString("D2") + separator + secondsPart.ToString("D2") + separator +
+                    milliseconds.ToString("D3"),
                 TimeFormat.Hours => totalHours.ToString("D2"),
                 TimeFormat.HoursMinutes => totalHours.ToString("D2") + separator + minutesPart.ToString("D2"),
                 TimeFormat.HoursMinutesSeconds =>
-                    totalHours.ToString("D2") + separator + minutesPart.ToString("D2") + separator + secondsPart.ToString("D2"),
+                    totalHours.ToString("D2") + separator + minutesPart.ToString("D2") + separator +
+                    secondsPart.ToString("D2"),
                 TimeFormat.Days => days.ToString("D2"),
                 TimeFormat.DaysHours => days.ToString("D2") + separator + hoursPart.ToString("D2"),
                 TimeFormat.DaysHoursMinutes =>
                     days.ToString("D2") + separator + hoursPart.ToString("D2") + separator + minutesPart.ToString("D2"),
                 TimeFormat.DaysHoursMinutesSeconds =>
-                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator + minutesPart.ToString("D2") +
+                    days.ToString("D2") + separator + hoursPart.ToString("D2") + separator +
+                    minutesPart.ToString("D2") +
                     separator + secondsPart.ToString("D2"),
                 _ => "00"
             };
@@ -221,7 +241,7 @@ namespace Neo.Extensions
         {
             value = Mathf.Abs(value) % 1000;
             span[0] = (char)('0' + value / 100);
-            span[1] = (char)('0' + (value / 10) % 10);
+            span[1] = (char)('0' + value / 10 % 10);
             span[2] = (char)('0' + value % 10);
         }
 

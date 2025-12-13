@@ -18,7 +18,3 @@ namespace Neo.Cards
         }
     }
 }
-
-
-
-

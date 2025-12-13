@@ -12,7 +12,3 @@ namespace Neo.Cards
         Pool
     }
 }
-
-
-
-

@@ -35,7 +35,7 @@ namespace Neo.Editor.Tools.Physics
             serializedObject.Update();
 
             MagneticField field = (MagneticField)target;
-            var mode = (MagneticField.FieldMode)modeProp.enumValueIndex;
+            MagneticField.FieldMode mode = (MagneticField.FieldMode)modeProp.enumValueIndex;
 
             switch (mode)
             {
@@ -113,4 +113,3 @@ namespace Neo.Editor.Tools.Physics
         }
     }
 }
-

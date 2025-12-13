@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
-using Page = Neo.Pages.UIKit.Page;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -42,26 +41,23 @@ namespace Neo.Pages
         [Header("All Pages In Scene")] [SerializeField]
         private UIPage[] allPages;
 
-        [Header("Sets a page with deactivating others")] [SerializeField]
-        private Page[] onlySettablePageTypes = { Page.Menu, Page.Game };
-
         [Header("Startup Page")] [SerializeField]
-        private Page startupPage = Page.Menu;
+        private PageId startupPage;
 
-        [Space] [Header("Ignore Specific Page Types")] [SerializeField]
-        private Page[] ignoredPageTypes;
+        [Space] [Header("Ignore Specific Pages (do not change active state)")] [SerializeField]
+        private PageId[] ignoredPageIds;
 
         [Space] [Header("Page Change Event")] public UnityEvent<UIPage> OnPageChanged;
 
         [Space] [Header("Editor Settings")] [SerializeField]
         private bool refreshPagesInEditor = true;
 
-        [SerializeField] private Page editorActivePage;
+        [SerializeField] private PageId editorActivePageId;
         [SerializeField] private bool autoSelectEditorPage = true;
 
         public UIPage[] AllPages => allPages;
 
-        private Dictionary<Page, UIPage> pageDict = new();
+        private Dictionary<PageId, UIPage> pageIdDict = new();
 
         private void Awake()
         {
@@ -83,7 +79,11 @@ namespace Neo.Pages
         private void Start()
         {
             ActivateAll(false);
-            SetPage(startupPage);
+            if (startupPage != null)
+            {
+                SetPage(startupPage);
+            }
+
             previousUiPage = null;
 
             Subscribe();
@@ -92,18 +92,14 @@ namespace Neo.Pages
         private void Subscribe()
         {
             UIKit.OnShowPage.AddListener(ChangePage);
-
-            G.OnWin?.AddListener(() => ChangePage(Page.Win));
-            G.OnLose?.AddListener(() => ChangePage(Page.Lose));
-            G.OnEnd?.AddListener(() => ChangePage(Page.End));
         }
 
         /// <summary>
-        /// Пересобирает словарь страниц для быстрого поиска по <see cref="UIKit.Page"/>.
+        /// Пересобирает словарь страниц для быстрого поиска по <see cref="PageId"/>.
         /// </summary>
         public void SetDictPage()
         {
-            pageDict = new Dictionary<Page, UIPage>();
+            pageIdDict = new Dictionary<PageId, UIPage>();
 
             foreach (UIPage page in allPages)
             {
@@ -112,57 +108,81 @@ namespace Neo.Pages
                     continue;
                 }
 
-                if (!pageDict.ContainsKey(page.page))
+                if (page.PageId != null)
                 {
-                    pageDict.Add(page.page, page);
-                }
-                else
-                {
-                    Debug.LogWarning(
-                        $"[PM] Дублирующая страница типа {page.page} — будет использоваться первая найденная.");
+                    if (!pageIdDict.ContainsKey(page.PageId))
+                    {
+                        pageIdDict.Add(page.PageId, page);
+                    }
+                    else
+                    {
+                        Debug.LogWarning(
+                            $"[PM] Дублирующая страница PageId {page.PageId.name} — будет использоваться первая найденная.");
+                    }
                 }
             }
         }
 
 
         /// <summary>
-        /// Переключает страницу по типу (автоматически выбирает режим: SetPage или ActivePage).
+        /// Переключает страницу по ассету-идентификатору.
         /// </summary>
-        /// <param name="page">Тип страницы.</param>
-        public void ChangePage(Page page)
+        public void ChangePage(PageId pageId)
         {
-            if (onlySettablePageTypes.Contains(page))
+            if (pageId == null)
             {
-                SetPage(page);
-            }
-            else
-            {
-                ActivePage(page);
-            }
-        }
-
-        /// <summary>
-        /// Активирует страницу, не выключая остальные (если она не относится к onlySettablePageTypes).
-        /// </summary>
-        /// <param name="page">Тип страницы.</param>
-        public void ActivePage(Page page)
-        {
-            Debug.Log($"[PM] Changing Page to: {page}");
-
-            previousUiPage = currentUiPage;
-
-            if (page == Page.None)
-            {
-                ActivatePages(Page.None, false);
-                currentUiPage = null;
+                Debug.LogWarning("[PM] PageId is null.");
                 return;
             }
 
-            currentUiPage = FindPage(page);
+            if (IsOther(pageId))
+            {
+                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                return;
+            }
+
+            UIPage target = FindPage(pageId);
+            if (target == null)
+            {
+                Debug.LogError($"[PM] PageId {pageId.name} not found in scene!");
+                return;
+            }
+
+            if (target.Popup)
+            {
+                ActivePage(pageId);
+            }
+            else
+            {
+                SetPage(pageId);
+            }
+        }
+
+        /// <summary>
+        /// Активирует страницу, не выключая остальные.
+        /// </summary>
+        public void ActivePage(PageId pageId)
+        {
+            if (pageId == null)
+            {
+                return;
+            }
+
+            if (IsOther(pageId))
+            {
+                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                return;
+            }
+
+            Debug.Log($"[PM] Activating PageId: {pageId.name}");
+
+            previousUiPage = currentUiPage;
+
+            currentUiPage = FindPage(pageId);
 
             if (currentUiPage == null)
             {
-                Debug.LogError($"[PM] Page of type {page} not found!");
+                Debug.LogError($"[PM] PageId {pageId.name} not found!");
                 return;
             }
 
@@ -177,7 +197,7 @@ namespace Neo.Pages
         /// <param name="keepPreviousActive">Если true — предыдущая страница не будет деактивирована.</param>
         public void SwitchToPreviousPage(bool keepPreviousActive = false)
         {
-            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage?.page}");
+            Debug.Log($"[PM] Switching to Previous Page: {previousUiPage?.PageId?.name}");
 
             UIPage temp = previousUiPage;
             previousUiPage = currentUiPage;
@@ -192,13 +212,23 @@ namespace Neo.Pages
         /// <summary>
         /// Делает страницу активной и деактивирует остальные (с учетом ignore списка).
         /// </summary>
-        /// <param name="page">Тип страницы.</param>
-        public void SetPage(Page page)
+        public void SetPage(PageId pageId)
         {
-            Debug.Log($"[PM] Setting Page: {page}");
+            if (pageId == null)
+            {
+                return;
+            }
+
+            if (IsOther(pageId))
+            {
+                Debug.LogWarning("[PM] Switching to PageOther is disabled.");
+                return;
+            }
+
+            Debug.Log($"[PM] Setting PageId: {pageId.name}");
 
             previousUiPage = currentUiPage;
-            currentUiPage = ActivatePages(page, true, ignoredPageTypes);
+            currentUiPage = ActivatePages(pageId, true, ignoredPageIds);
             OnPageChanged?.Invoke(currentUiPage);
         }
 
@@ -210,29 +240,45 @@ namespace Neo.Pages
         /// <param name="ignoreList">Список страниц, которые не трогаем.</param>
         /// <param name="otherActive">Состояние остальных страниц (если их не игнорируем).</param>
         /// <returns>Найденная целевая страница или null.</returns>
-        public UIPage ActivatePages(Page targetPage, bool active = true,
-            Page[] ignoreList = null, bool otherActive = false)
+        /// <summary>
+        /// Активирует целевую страницу по <see cref="PageId"/> и управляет состоянием остальных по фильтрам.
+        /// </summary>
+        public UIPage ActivatePages(PageId targetPageId, bool active = true,
+            PageId[] ignoreList = null, bool otherActive = false)
         {
-            ignoreList ??= new Page[] { };
+            if (targetPageId == null)
+            {
+                return null;
+            }
+
+            ignoreList ??= new PageId[] { };
             UIPage foundUiPage = null;
 
             foreach (UIPage page in allPages)
             {
-                if (targetPage == Page.None)
+                if (page == null)
                 {
-                    page.SetActive(false);
+                    continue;
                 }
-                else if (page.page == targetPage)
+
+                bool ignoreById = page.PageId != null && ignoreList.Contains(page.PageId);
+
+                if (page.PageId == targetPageId)
                 {
                     foundUiPage = page;
-                    if (!ignoreList.Contains(page.page))
+                    if (!ignoreById)
                     {
                         SetPageActive(page, active);
                     }
                 }
                 else
                 {
-                    if (!ignoreList.Contains(page.page))
+                    if (page.IgnoreOnExclusiveChange)
+                    {
+                        continue;
+                    }
+
+                    if (!ignoreById)
                     {
                         SetPageActive(page, otherActive);
                     }
@@ -247,23 +293,12 @@ namespace Neo.Pages
         {
             foreach (UIPage page in allPages)
             {
-                if (!ignoredPageTypes.Contains(page.page))
+                if (page.PageId != null && ignoredPageIds != null && ignoredPageIds.Contains(page.PageId))
                 {
-                    page.SetActive(acteve);
+                    continue;
                 }
-            }
-        }
 
-        public void Deactivate(Page page, bool send = true)
-        {
-            UIPage p = FindPage(page);
-            p.EndActive();
-            currentUiPage = previousUiPage;
-            previousUiPage = null;
-
-            if (send && currentUiPage != null)
-            {
-                OnPageChanged?.Invoke(null);
+                page.SetActive(acteve);
             }
         }
 
@@ -316,21 +351,25 @@ namespace Neo.Pages
         /// <summary>
         /// Находит страницу по типу через внутренний словарь.
         /// </summary>
-        /// <param name="page">Тип страницы.</param>
         /// <returns>Страница или null.</returns>
-        public UIPage FindPage(Page page)
+        public UIPage FindPage(PageId pageId)
         {
-            if (pageDict == null || pageDict.Count == 0)
+            if (pageId == null)
+            {
+                return null;
+            }
+
+            if (pageIdDict == null || pageIdDict.Count == 0)
             {
                 SetDictPage();
             }
 
-            if (pageDict.TryGetValue(page, out UIPage p))
+            if (pageIdDict.TryGetValue(pageId, out UIPage p))
             {
                 return p;
             }
 
-            Debug.LogWarning($"[PM] Страница типа {page} не найдена в словаре.");
+            Debug.LogWarning($"[PM] Страница PageId {pageId.name} не найдена в словаре.");
             return null;
         }
 
@@ -372,11 +411,13 @@ namespace Neo.Pages
             }
 
             ActivateAll(false);
-            Page last = editorActivePage;
-            UIPage page = ActivatePages(editorActivePage, true, ignoredPageTypes, false);
+            PageId last = editorActivePageId;
+            UIPage page = editorActivePageId != null
+                ? ActivatePages(editorActivePageId, true, ignoredPageIds, false)
+                : null;
 
 #if UNITY_EDITOR
-            if (autoSelectEditorPage && page != null && last != page.page)
+            if (autoSelectEditorPage && page != null && last != page.PageId)
             {
                 Selection.activeGameObject = page.gameObject;
             }
@@ -393,6 +434,11 @@ namespace Neo.Pages
 
                 allPages = foundPages;
             }
+        }
+
+        private static bool IsOther(PageId pageId)
+        {
+            return pageId != null && pageId.name == "PageOther";
         }
     }
 }

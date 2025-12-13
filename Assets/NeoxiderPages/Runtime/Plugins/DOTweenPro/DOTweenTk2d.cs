@@ -23,7 +23,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScale(this tk2dBaseSprite target, Vector3 endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, endValue, duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -32,7 +33,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleX(this tk2dBaseSprite target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(endValue, 0, 0), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(endValue, 0, 0), duration);
             t.SetOptions(AxisConstraint.X)
                 .SetTarget(target);
             return t;
@@ -42,7 +44,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleY(this tk2dBaseSprite target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(0, endValue, 0), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(0, endValue, 0), duration);
             t.SetOptions(AxisConstraint.Y)
                 .SetTarget(target);
             return t;
@@ -52,7 +55,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleZ(this tk2dBaseSprite target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(0, 0, endValue), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(0, 0, endValue), duration);
             t.SetOptions(AxisConstraint.Z)
                 .SetTarget(target);
             return t;
@@ -63,7 +67,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Color, Color, ColorOptions> DOColor(this tk2dBaseSprite target, Color endValue, float duration)
         {
-            TweenerCore<Color, Color, ColorOptions> t = DOTween.To(() => target.color, x => target.color = x, endValue, duration);
+            TweenerCore<Color, Color, ColorOptions> t = DOTween.To(() => target.color, x => target.color =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -73,7 +78,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Color, Color, ColorOptions> DOFade(this tk2dBaseSprite target, float endValue, float duration)
         {
-            TweenerCore<Color, Color, ColorOptions> t = DOTween.ToAlpha(() => target.color, x => target.color = x, endValue, duration);
+            TweenerCore<Color, Color, ColorOptions> t = DOTween.ToAlpha(() => target.color, x => target.color =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -111,7 +117,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector2, Vector2, VectorOptions> DOScaleDimensions(this tk2dSlicedSprite target, Vector2 endValue, float duration)
         {
-            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions = x, endValue, duration);
+            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions
+ = x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -120,7 +127,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector2, Vector2, VectorOptions> DOScaleDimensionsX(this tk2dSlicedSprite target, float endValue, float duration)
         {
-            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions = x, new Vector2(endValue, 0), duration);
+            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions
+ = x, new Vector2(endValue, 0), duration);
             t.SetOptions(AxisConstraint.X)
                 .SetTarget(target);
             return t;
@@ -130,7 +138,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector2, Vector2, VectorOptions> DOScaleDimensionsY(this tk2dSlicedSprite target, float endValue, float duration)
         {
-            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions = x, new Vector2(0, endValue), duration);
+            TweenerCore<Vector2, Vector2, VectorOptions> t = DOTween.To(() => target.dimensions, x => target.dimensions
+ = x, new Vector2(0, endValue), duration);
             t.SetOptions(AxisConstraint.Y)
                 .SetTarget(target);
             return t;
@@ -145,7 +154,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScale(this tk2dTextMesh target, Vector3 endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, endValue, duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -154,7 +164,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleX(this tk2dTextMesh target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(endValue, 0, 0), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(endValue, 0, 0), duration);
             t.SetOptions(AxisConstraint.X)
                 .SetTarget(target);
             return t;
@@ -164,7 +175,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleY(this tk2dTextMesh target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(0, endValue, 0), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(0, endValue, 0), duration);
             t.SetOptions(AxisConstraint.Y)
                 .SetTarget(target);
             return t;
@@ -174,7 +186,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Vector3, Vector3, VectorOptions> DOScaleZ(this tk2dTextMesh target, float endValue, float duration)
         {
-            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale = x, new Vector3(0, 0, endValue), duration);
+            TweenerCore<Vector3, Vector3, VectorOptions> t = DOTween.To(() => target.scale, x => target.scale =
+ x, new Vector3(0, 0, endValue), duration);
             t.SetOptions(AxisConstraint.Z)
                 .SetTarget(target);
             return t;
@@ -185,7 +198,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Color, Color, ColorOptions> DOColor(this tk2dTextMesh target, Color endValue, float duration)
         {
-            TweenerCore<Color, Color, ColorOptions> t = DOTween.To(() => target.color, x => target.color = x, endValue, duration);
+            TweenerCore<Color, Color, ColorOptions> t = DOTween.To(() => target.color, x => target.color =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -195,7 +209,8 @@ namespace DG.Tweening
         /// <param name="endValue">The end value to reach</param><param name="duration">The duration of the tween</param>
         public static TweenerCore<Color, Color, ColorOptions> DOFade(this tk2dTextMesh target, float endValue, float duration)
         {
-            TweenerCore<Color, Color, ColorOptions> t = DOTween.ToAlpha(() => target.color, x => target.color = x, endValue, duration);
+            TweenerCore<Color, Color, ColorOptions> t = DOTween.ToAlpha(() => target.color, x => target.color =
+ x, endValue, duration);
             t.SetTarget(target);
             return t;
         }
@@ -233,9 +248,11 @@ namespace DG.Tweening
         /// <param name="scrambleChars">A string containing the characters to use for scrambling.
         /// Use as many characters as possible (minimum 10) because DOTween uses a fast scramble mode which gives better results with more characters.
         /// Leave it to NULL (default) to use default ones</param>
-        public static TweenerCore<string, string, StringOptions> DOText(this tk2dTextMesh target, string endValue, float duration, bool richTextEnabled = true, ScrambleMode scrambleMode = ScrambleMode.None, string scrambleChars = null)
+        public static TweenerCore<string, string, StringOptions> DOText(this tk2dTextMesh target, string endValue, float duration, bool richTextEnabled
+ = true, ScrambleMode scrambleMode = ScrambleMode.None, string scrambleChars = null)
         {
-            TweenerCore<string, string, StringOptions> t = DOTween.To(() => target.text, x => target.text = x, endValue, duration);
+            TweenerCore<string, string, StringOptions> t = DOTween.To(() => target.text, x => target.text =
+ x, endValue, duration);
             t.SetOptions(richTextEnabled, scrambleMode, scrambleChars)
                 .SetTarget(target);
             return t;

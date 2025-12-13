@@ -32,7 +32,7 @@ namespace Neo.Tools
 
         private void Init()
         {
-            var sm = ScoreManager.I;
+            ScoreManager sm = ScoreManager.I;
             if (sm == null)
             {
                 return;
@@ -51,5 +51,3 @@ namespace Neo.Tools
         }
     }
 }
-
-

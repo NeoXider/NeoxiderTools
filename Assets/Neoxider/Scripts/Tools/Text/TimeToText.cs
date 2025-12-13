@@ -166,7 +166,9 @@ namespace Neo
                     }
                     else
                     {
-                        text.text = string.IsNullOrEmpty(endAddText) ? startAddText + formatted : startAddText + formatted + endAddText;
+                        text.text = string.IsNullOrEmpty(endAddText)
+                            ? startAddText + formatted
+                            : startAddText + formatted + endAddText;
                     }
                 }
                 else

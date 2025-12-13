@@ -35,19 +35,19 @@ namespace Neo
         [Tooltip("Automatically restart when complete")]
         public bool looping;
 
-        [Tooltip("Infinite time (no max). Time only increases; progress is not updated. Disables looping/random in OnValidate.")]
+        [Tooltip(
+            "Infinite time (no max). Time only increases; progress is not updated. Disables looping/random in OnValidate.")]
         public bool infiniteDuration;
 
         [Header("Random Duration")]
-        [Tooltip("If enabled, duration is randomized in [min,max] on Play/StartTimer. If looping is enabled, it randomizes each cycle.")]
+        [Tooltip(
+            "If enabled, duration is randomized in [min,max] on Play/StartTimer. If looping is enabled, it randomizes each cycle.")]
         public bool useRandomDuration;
 
-        [Tooltip("Minimum random duration (seconds)")]
-        [Min(0f)]
+        [Tooltip("Minimum random duration (seconds)")] [Min(0f)]
         public float randomDurationMin = 1f;
 
-        [Tooltip("Maximum random duration (seconds)")]
-        [Min(0f)]
+        [Tooltip("Maximum random duration (seconds)")] [Min(0f)]
         public float randomDurationMax = 2f;
 
         [Header("Initial State")] [Tooltip("Start timer automatically on enable")]
@@ -108,12 +108,10 @@ namespace Neo
         [Tooltip("Called when timer completes. Also called on each loop completion if looping is enabled")]
         public UnityEvent OnTimerCompleted;
 
-        [Header("Progress Milestones")]
-        [Tooltip("Enable milestone events at specific progress percentages")]
+        [Header("Progress Milestones")] [Tooltip("Enable milestone events at specific progress percentages")]
         public bool enableMilestones;
 
-        [Tooltip("Progress percentages (0-1) to trigger milestone events")]
-        [Range(0f, 1f)]
+        [Tooltip("Progress percentages (0-1) to trigger milestone events")] [Range(0f, 1f)]
         public float[] milestonePercentages = { 0.25f, 0.5f, 0.75f };
 
         [Tooltip("Called when timer reaches a milestone percentage")]

@@ -3,7 +3,6 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
-using Page = Neo.Pages.UIKit.Page;
 
 namespace Neo.Pages
 {
@@ -15,7 +14,21 @@ namespace Neo.Pages
     /// </summary>
     public class UIPage : MonoBehaviour
     {
-        [FormerlySerializedAs("pageType")] public Page page = Page.Other;
+        [FormerlySerializedAs("pageType")] [FormerlySerializedAs("page")] [Header("Id")] [SerializeField]
+        private PageId pageId;
+
+        [FormerlySerializedAs("overlay")]
+        [Tooltip("Если включено — страница открывается как popup (поверх, не деактивируя остальные).")]
+        [SerializeField]
+        private bool popup;
+
+        [Tooltip("Если включено — PM не будет деактивировать эту страницу при Exclusive переключениях.")]
+        [SerializeField]
+        private bool ignoreOnExclusiveChange;
+
+        public PageId PageId => pageId;
+        public bool Popup => popup;
+        public bool IgnoreOnExclusiveChange => ignoreOnExclusiveChange;
 
         [Space] [Header("Anim")] [SerializeField]
         private DOTweenAnimation _animation;
@@ -62,9 +75,9 @@ namespace Neo.Pages
 
         private void OnValidate()
         {
-            if (page != Page.Other && page != Page.None)
+            if (pageId != null)
             {
-                name = page + " Page";
+                name = pageId.DisplayName + " Page";
             }
 
             _animation ??= GetComponent<DOTweenAnimation>();

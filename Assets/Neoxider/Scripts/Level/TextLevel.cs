@@ -30,7 +30,7 @@ namespace Neo.Level
 
         private void Init()
         {
-            var lm = LevelManager.I;
+            LevelManager lm = LevelManager.I;
             if (lm == null)
             {
                 return;
@@ -51,5 +51,3 @@ namespace Neo.Level
         }
     }
 }
-
-

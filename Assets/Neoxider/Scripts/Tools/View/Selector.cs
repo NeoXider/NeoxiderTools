@@ -135,7 +135,8 @@ namespace Neo
             [SerializeField]
             private bool _setChild;
 
-            [Tooltip("When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update)")]
+            [Tooltip(
+                "When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update)")]
             [SerializeField]
             private bool _autoUpdateFromChildren = true;
 
@@ -144,7 +145,8 @@ namespace Neo
             [SerializeField]
             private bool _useRandomSelection;
 
-            [Tooltip("When enabled and random selection is enabled, Next() and Previous() will use SetRandom() instead of stepping by +/- 1")]
+            [Tooltip(
+                "When enabled and random selection is enabled, Next() and Previous() will use SetRandom() instead of stepping by +/- 1")]
             [FormerlySerializedAs("_randomChangeOnStep")]
             [SerializeField]
             private bool _useNextPreviousAsRandom;
@@ -338,7 +340,7 @@ namespace Neo
 
             private void OnEnable()
             {
-                TryInitializeFromChildren(forceSync: startOnAwake);
+                TryInitializeFromChildren(startOnAwake);
 
                 if (startOnAwake && Count > 0)
                 {
@@ -578,7 +580,7 @@ namespace Neo
                 if (newIndex == _currentIndex)
                 {
                     int offset = UnityEngine.Random.Range(1, range);
-                    newIndex = min + ((newIndex - min + offset) % range);
+                    newIndex = min + (newIndex - min + offset) % range;
                 }
 
                 _currentIndex = newIndex;

@@ -84,7 +84,8 @@ namespace Neo.Tools
         private Vector3 targetPoint = Vector3.zero;
 
         [Header("Attraction Direction")]
-        [Tooltip("Направление вектора (используется при режиме Direction). Если включено Local Direction — задаётся в локальных координатах объекта.")]
+        [Tooltip(
+            "Направление вектора (используется при режиме Direction). Если включено Local Direction — задаётся в локальных координатах объекта.")]
         [SerializeField]
         private Vector3 direction = Vector3.forward;
 
@@ -492,7 +493,8 @@ namespace Neo.Tools
 
             if (mode == FieldMode.Direction)
             {
-                Vector3 end = transform.position + GetDirectionWorldNormalized() * Mathf.Max(0.01f, directionGizmoDistance);
+                Vector3 end = transform.position +
+                              GetDirectionWorldNormalized() * Mathf.Max(0.01f, directionGizmoDistance);
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawLine(transform.position, end);
                 Gizmos.DrawSphere(end, 0.075f);

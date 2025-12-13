@@ -6,7 +6,6 @@ using UnityEngine.EventSystems;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
-using Page = Neo.Pages.UIKit.Page;
 
 namespace Neo.Pages
 {
@@ -18,11 +17,26 @@ namespace Neo.Pages
     /// </summary>
     public class BtnChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
     {
+        public enum Action
+        {
+            OpenPage = 0,
+            Back = 1,
+            CloseCurrent = 2
+        }
+
         public bool intecactable = true;
         [SerializeField] private Image _imageTarget;
 
-        [FormerlySerializedAs("_pageType")] [Space] [Header("Page Settings")] [SerializeField]
-        private Page page = Page.Menu;
+        [FormerlySerializedAs("_pageType")]
+        [FormerlySerializedAs("page")]
+        [FormerlySerializedAs("pageSelectMode")]
+        [Space]
+        [Header("Page Settings")]
+        [SerializeField]
+        private Action action = Action.OpenPage;
+
+        [FormerlySerializedAs("pageId")] [SerializeField]
+        private PageId targetPageId;
 
         [SerializeField] private bool _canSwitchPage = true;
 
@@ -109,21 +123,28 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        /// Выполняет переключение страницы согласно выбранному <see cref="UIKit.Page"/>.
+        /// Выполняет действие (открыть страницу/назад/закрыть текущую).
         /// </summary>
         public void ChangePage()
         {
-            if (page == Page._ChangeLastPage)
+            if (action == Action.Back)
             {
                 PM.I.SwitchToPreviousPage();
             }
-            else if (page == Page._CloseCurrentPage)
+            else if (action == Action.CloseCurrent)
             {
                 PM.I.CloseCurrentPage();
             }
             else
             {
-                PM.I.ChangePage(page);
+                if (targetPageId != null)
+                {
+                    PM.I.ChangePage(targetPageId);
+                }
+                else
+                {
+                    Debug.LogWarning("[BtnChangePage] Target PageId is null.", this);
+                }
             }
         }
 
@@ -133,7 +154,22 @@ namespace Neo.Pages
             {
                 if (_changeText)
                 {
-                    _textPage.text = page == Page._ChangeLastPage ? "Back" : page.ToString();
+                    if (action == Action.Back)
+                    {
+                        _textPage.text = "Back";
+                    }
+                    else if (action == Action.CloseCurrent)
+                    {
+                        _textPage.text = "Close";
+                    }
+                    else if (targetPageId != null)
+                    {
+                        _textPage.text = targetPageId.DisplayName;
+                    }
+                    else
+                    {
+                        _textPage.text = "Page";
+                    }
                 }
             }
 

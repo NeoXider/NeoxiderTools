@@ -56,7 +56,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-
-
-

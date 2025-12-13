@@ -8,52 +8,21 @@ namespace Neo.Pages
     public class UIKit
     {
         /// <summary>
-        /// Идентификатор страницы (используется в <see cref="PM"/> и UI-компонентах).
+        /// Событие запроса показа страницы по <see cref="PageId"/>.
         /// </summary>
-        public enum Page
-        {
-            None,
-
-            _CloseCurrentPage,
-            _ChangeLastPage,
-
-            Menu,
-
-            Settings,
-            Shop,
-            Leader,
-            Info,
-            Levels,
-
-            Game,
-            Win,
-            Lose,
-            Pause,
-            End,
-
-            Main,
-            Grade,
-            Bonus,
-            Inventory,
-            Map,
-
-            Privacy,
-
-            Other
-        }
-
-        /// <summary>
-        /// Событие запроса показа страницы.
-        /// </summary>
-        public static UnityEvent<Page> OnShowPage = new();
+        public static UnityEvent<PageId> OnShowPage = new();
 
         /// <summary>
         /// Запрашивает показ страницы (генерирует событие <see cref="OnShowPage"/>).
         /// </summary>
-        /// <param name="page">Тип страницы.</param>
-        public static void ShowPage(Page page)
+        public static void ShowPage(PageId pageId)
         {
-            OnShowPage.Invoke(page);
+            if (pageId == null)
+            {
+                return;
+            }
+
+            OnShowPage.Invoke(pageId);
         }
     }
 }

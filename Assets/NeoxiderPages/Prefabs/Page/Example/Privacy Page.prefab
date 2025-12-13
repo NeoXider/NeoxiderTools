@@ -137,6 +137,8 @@ MonoBehaviour:
   intecactable: 1
   _imageTarget: {fileID: 2674069103222224143}
   page: 3
+  pageSelectMode: 0
+  pageId: {fileID: 0}
   _canSwitchPage: 1
   _executeState: 0
   _useAnimImage: 1
@@ -342,6 +344,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   page: 19
+  usePageId: 0
+  pageId: {fileID: 0}
   _animation: {fileID: 5146543077879228141}
   _playBackward: 1
   _onlyPlayBackward: 0
