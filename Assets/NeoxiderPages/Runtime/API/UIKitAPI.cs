@@ -10,28 +10,6 @@ using UnityEngine.Events;
 namespace Neo.Pages
 {
     /// <summary>
-    /// Статический фасад к системе денег (<see cref="Money"/>).
-    /// </summary>
-    public class Wallet
-    {
-        public static float Value => Money.I.money;
-        public static float LevelValue => Money.I.levelMoney;
-        public static UnityEvent<float> OnValueChange => Money.I.OnChangedMoney;
-        public static UnityEvent<float> OnLevelValueChange => Money.I.OnChangedLevelMoney;
-    }
-
-    /// <summary>
-    /// Статический фасад к системе очков (<see cref="ScoreManager"/>).
-    /// </summary>
-    public class Score
-    {
-        public static int Best => ScoreManager.I.BestScore;
-        public static int Current => ScoreManager.I.Score;
-        public static UnityEvent<int> OnCurrentChange => ScoreManager.I.OnValueChange;
-        public static UnityEvent<int> OnBestChange => ScoreManager.I.OnBestValueChange;
-    }
-
-    /// <summary>
     /// Статический фасад к игровым событиям/состояниям (через <see cref="GM"/> и <see cref="EM"/>).
     /// </summary>
     public class G
@@ -126,46 +104,7 @@ namespace Neo.Pages
             GM.I?.End();
         }
     }
-
-    /// <summary>
-    /// Статический фасад к аудио-настройкам (через <see cref="AMSettings"/> и <see cref="AM"/>).
-    /// </summary>
-    public class Audio
-    {
-        public static bool IsActiveSound
-        {
-            get => AMSettings.I.IsActiveEfx;
-            set => AMSettings.I?.SetEfx(value);
-        }
-
-        public static bool IsActiveMusic
-        {
-            get => AMSettings.I.IsActiveMusic;
-            set => AMSettings.I?.SetMusic(value);
-        }
-
-        /// <summary>
-        /// Проигрывает стандартный UI звук (клип с ID=0) через <see cref="AM"/>.
-        /// </summary>
-        public static void PlayUI()
-        {
-            AM.I?.Play(0);
-        }
-    }
-
-    /// <summary>
-    /// Статический фасад к уровням (через <see cref="LevelManager"/>).
-    /// </summary>
-    public class Level
-    {
-        public static int Current => LevelManager.I.CurrentLevel;
-        public static int Best => LevelManager.I.MaxLevel;
-
-        public static UnityEvent<int> OnCurrentChange => LevelManager.I.OnChangeLevel;
-        public static UnityEvent<int> OnBestChange => LevelManager.I.OnChangeMaxLevel;
-    }
-
-
+    
     /// <summary>
     /// Утилита для выполнения действий, соответствующих игровому состоянию.
     /// </summary>
@@ -223,5 +162,65 @@ namespace Neo.Pages
                     break;
             }
         }
+    }
+    
+    /// <summary>
+    /// Статический фасад к системе денег (<see cref="Money"/>).
+    /// </summary>
+    public class Wallet
+    {
+        public static float Value => Money.I.money;
+        public static float LevelValue => Money.I.levelMoney;
+        public static UnityEvent<float> OnValueChange => Money.I.OnChangedMoney;
+        public static UnityEvent<float> OnLevelValueChange => Money.I.OnChangedLevelMoney;
+    }
+
+    /// <summary>
+    /// Статический фасад к системе очков (<see cref="ScoreManager"/>).
+    /// </summary>
+    public class Score
+    {
+        public static int Best => ScoreManager.I.BestScore;
+        public static int Current => ScoreManager.I.Score;
+        public static UnityEvent<int> OnCurrentChange => ScoreManager.I.OnValueChange;
+        public static UnityEvent<int> OnBestChange => ScoreManager.I.OnBestValueChange;
+    }
+
+    /// <summary>
+    /// Статический фасад к аудио-настройкам (через <see cref="AMSettings"/> и <see cref="AM"/>).
+    /// </summary>
+    public class Audio
+    {
+        public static bool IsActiveSound
+        {
+            get => AMSettings.I.IsActiveEfx;
+            set => AMSettings.I?.SetEfx(value);
+        }
+
+        public static bool IsActiveMusic
+        {
+            get => AMSettings.I.IsActiveMusic;
+            set => AMSettings.I?.SetMusic(value);
+        }
+
+        /// <summary>
+        /// Проигрывает стандартный UI звук (клип с ID=0) через <see cref="AM"/>.
+        /// </summary>
+        public static void PlayUI()
+        {
+            AM.I?.Play(0);
+        }
+    }
+
+    /// <summary>
+    /// Статический фасад к уровням (через <see cref="LevelManager"/>).
+    /// </summary>
+    public class Level
+    {
+        public static int Current => LevelManager.I.CurrentLevel;
+        public static int Best => LevelManager.I.MaxLevel;
+
+        public static UnityEvent<int> OnCurrentChange => LevelManager.I.OnChangeLevel;
+        public static UnityEvent<int> OnBestChange => LevelManager.I.OnChangeMaxLevel;
     }
 }
