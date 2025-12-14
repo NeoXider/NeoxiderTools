@@ -3,6 +3,7 @@
   "rootNamespace": "Neo.Pages.Editor",
   "references": [
     "Neo.Pages",
+    "Neo.Tools.Managers",
     "Unity.TextMeshPro",
     "Unity.ugui"
   ],

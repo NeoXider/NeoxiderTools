@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Scripting.APIUpdating;
@@ -28,10 +29,8 @@ namespace Neo.Pages
     /// </summary>
     [MovedFrom("")]
     [AddComponentMenu("Neo/Pages/" + nameof(PM))]
-    public class PM : MonoBehaviour
+    public class PM : Singleton<PM>
     {
-        public static PM I;
-
         [FormerlySerializedAs("currentP")] [FormerlySerializedAs("CurrentPage")] [Header("Active Pages")]
         public UIPage currentUiPage;
 
@@ -59,20 +58,13 @@ namespace Neo.Pages
 
         private Dictionary<PageId, UIPage> pageIdDict = new();
 
-        private void Awake()
+        protected override void Init()
         {
-            if (I == null)
-            {
-                I = this;
-                SetAllPages();
-                allPages = allPages.Where(p => p != null).ToArray();
-                SetDictPage();
-                DontDestroyOnLoad(this);
-            }
-            else
-            {
-                Destroy(this);
-            }
+            base.Init();
+            
+            SetAllPages();
+            allPages = allPages.Where(p => p != null).ToArray();
+            SetDictPage();
         }
 
 

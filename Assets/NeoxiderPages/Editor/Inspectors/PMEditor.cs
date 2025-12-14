@@ -9,6 +9,10 @@ namespace Neo.Pages.Editor
     public sealed class PMEditor : UnityEditor.Editor
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
+        private const float ModeButtonHeight = 22f;
+
+        private SerializedProperty dontDestroyOnLoadProp;
+        private SerializedProperty setInstanceOnAwakeProp;
 
         private SerializedProperty currentUiPageProp;
         private SerializedProperty previousUiPageProp;
@@ -28,6 +32,9 @@ namespace Neo.Pages.Editor
 
         private void OnEnable()
         {
+            dontDestroyOnLoadProp = serializedObject.FindProperty("_dontDestroyOnLoad");
+            setInstanceOnAwakeProp = serializedObject.FindProperty("_setInstanceOnAwake");
+
             currentUiPageProp = serializedObject.FindProperty("currentUiPage");
             previousUiPageProp = serializedObject.FindProperty("previousUiPage");
             allPagesProp = serializedObject.FindProperty("allPages");
@@ -48,12 +55,23 @@ namespace Neo.Pages.Editor
         {
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
-            DrawStartupSelector();
+            DrawSingletonSection();
+            EditorGUILayout.Space(8);
 
-            EditorGUILayout.Space(4);
-            DrawIgnoredSelectorMode();
-            ignoredList.DoLayoutList();
+            EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Startup Page", EditorStyles.miniBoldLabel);
+                DrawStartupSelector();
+            }
+
+            EditorGUILayout.Space(6);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.LabelField("Ignored Pages", EditorStyles.miniBoldLabel);
+                DrawIgnoredSelectorMode();
+                ignoredList.DoLayoutList();
+            }
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Debug", EditorStyles.boldLabel);
@@ -64,21 +82,71 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Editor Preview", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(refreshPagesInEditorProp);
-            EditorGUILayout.PropertyField(autoSelectEditorPageProp);
-            DrawEditorActiveSelector();
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.PropertyField(refreshPagesInEditorProp);
+                EditorGUILayout.PropertyField(autoSelectEditorPageProp);
+
+                EditorGUILayout.Space(6);
+                EditorGUILayout.LabelField("Editor Active Page", EditorStyles.miniBoldLabel);
+                DrawEditorActiveSelector();
+            }
 
             serializedObject.ApplyModifiedProperties();
         }
 
+        private void DrawSingletonSection()
+        {
+            EditorGUILayout.LabelField("Singleton", EditorStyles.boldLabel);
+
+            if (dontDestroyOnLoadProp != null)
+            {
+                EditorGUILayout.PropertyField(dontDestroyOnLoadProp, new GUIContent("Dont Destroy On Load"));
+            }
+
+            if (setInstanceOnAwakeProp != null)
+            {
+                EditorGUILayout.PropertyField(setInstanceOnAwakeProp, new GUIContent("Set Instance On Awake"));
+            }
+
+            PM instance = FindInstanceInScene();
+            using (new EditorGUI.DisabledScope(instance == null))
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button("Select Instance", GUILayout.Height(20)))
+                    {
+                        Selection.activeObject = instance;
+                        EditorGUIUtility.PingObject(instance);
+                    }
+
+                    using (new EditorGUI.DisabledScope(!EditorApplication.isPlaying))
+                    {
+                        if (GUILayout.Button("Destroy (Play Mode)", GUILayout.Height(20)))
+                        {
+                            PM.DestroyInstance();
+                        }
+                    }
+                }
+            }
+        }
+
+        private static PM FindInstanceInScene()
+        {
+            return Object.FindFirstObjectByType<PM>(FindObjectsInactive.Include);
+        }
+
         private void DrawStartupSelector()
         {
-            EditorGUILayout.LabelField("Startup Page", EditorStyles.boldLabel);
-            startupSelectMode = GUILayout.Toolbar(startupSelectMode, new[] { "Dropdown", "Asset" });
+            startupSelectMode = DrawSegmentedMode(startupSelectMode,
+                new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
+                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+            EditorGUILayout.Space(2);
 
             if (startupSelectMode == 0)
             {
                 DrawPageIdDropdown(startupPageProp, "Startup Page");
+                EditorGUILayout.LabelField($"Источник: {DefaultFolder}", EditorStyles.miniLabel);
             }
             else
             {
@@ -88,8 +156,10 @@ namespace Neo.Pages.Editor
 
         private void DrawIgnoredSelectorMode()
         {
-            EditorGUILayout.LabelField("Ignored Pages", EditorStyles.boldLabel);
-            ignoredSelectMode = GUILayout.Toolbar(ignoredSelectMode, new[] { "Dropdown", "Asset" });
+            ignoredSelectMode = DrawSegmentedMode(ignoredSelectMode,
+                new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
+                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+            EditorGUILayout.Space(2);
         }
 
         private void DrawIgnoredElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -109,8 +179,11 @@ namespace Neo.Pages.Editor
 
         private void DrawEditorActiveSelector()
         {
-            EditorGUILayout.LabelField("Editor Active Page", EditorStyles.boldLabel);
-            editorSelectMode = GUILayout.Toolbar(editorSelectMode, new[] { "Buttons", "Dropdown", "Asset" });
+            editorSelectMode = DrawSegmentedMode(editorSelectMode,
+                new GUIContent("Buttons", "Быстрые кнопки по всем PageId ассетам в папке"),
+                new GUIContent("Dropdown", "Выбор из списка PageId ассетов в папке"),
+                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+            EditorGUILayout.Space(2);
 
             if (editorSelectMode == 0)
             {
@@ -120,11 +193,75 @@ namespace Neo.Pages.Editor
             else if (editorSelectMode == 1)
             {
                 DrawPageIdDropdown(editorActivePageIdProp, "Editor Active Page");
+                EditorGUILayout.LabelField($"Источник: {DefaultFolder}", EditorStyles.miniLabel);
             }
             else
             {
                 EditorGUILayout.PropertyField(editorActivePageIdProp, new GUIContent("Editor Active Page"));
             }
+        }
+
+        private static int DrawSegmentedMode(int value, GUIContent a, GUIContent b)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                int selected = value;
+
+                Color prevBg = GUI.backgroundColor;
+                Color prevContent = GUI.contentColor;
+
+                DrawModeButton(0, a, ref selected, EditorStyles.miniButtonLeft);
+                DrawModeButton(1, b, ref selected, EditorStyles.miniButtonRight);
+
+                GUI.backgroundColor = prevBg;
+                GUI.contentColor = prevContent;
+
+                return selected;
+            }
+        }
+
+        private static int DrawSegmentedMode(int value, GUIContent a, GUIContent b, GUIContent c)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                int selected = value;
+
+                Color prevBg = GUI.backgroundColor;
+                Color prevContent = GUI.contentColor;
+
+                DrawModeButton(0, a, ref selected, EditorStyles.miniButtonLeft);
+                DrawModeButton(1, b, ref selected, EditorStyles.miniButtonMid);
+                DrawModeButton(2, c, ref selected, EditorStyles.miniButtonRight);
+
+                GUI.backgroundColor = prevBg;
+                GUI.contentColor = prevContent;
+
+                return selected;
+            }
+        }
+
+        private static void DrawModeButton(int index, GUIContent content, ref int selected, GUIStyle style)
+        {
+            bool isSelected = selected == index;
+            GUI.backgroundColor = isSelected ? GetSelectedBackgroundColor() : Color.white;
+            GUI.contentColor = isSelected ? GetSelectedContentColor() : Color.white;
+
+            if (GUILayout.Button(content, style, GUILayout.Height(ModeButtonHeight)))
+            {
+                selected = index;
+            }
+        }
+
+        private static Color GetSelectedBackgroundColor()
+        {
+            return EditorGUIUtility.isProSkin
+                ? new Color(0.25f, 0.55f, 0.95f, 1f)
+                : new Color(0.20f, 0.45f, 0.90f, 1f);
+        }
+
+        private static Color GetSelectedContentColor()
+        {
+            return Color.white;
         }
 
         private void DrawEditorButtons()

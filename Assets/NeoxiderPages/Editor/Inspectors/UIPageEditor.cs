@@ -8,6 +8,7 @@ namespace Neo.Pages.Editor
     public sealed class UIPageEditor : UnityEditor.Editor
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
+        private const float ModeButtonHeight = 22f;
 
         private SerializedProperty pageIdProp;
         private SerializedProperty popupProp;
@@ -49,51 +50,101 @@ namespace Neo.Pages.Editor
 
         private void DrawPageIdSelector(SerializedProperty pageId)
         {
-            selectorMode = GUILayout.Toolbar(selectorMode, new[] { "Dropdown", "Asset" });
-
-            if (selectorMode == 0)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                PageId[] ids = FindAllPageIds(DefaultFolder);
-                if (ids.Length == 0)
-                {
-                    EditorGUILayout.HelpBox(
-                        $"В папке нет PageId ассетов: {DefaultFolder}\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
-                        MessageType.Warning);
-                    return;
-                }
+                EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
+                selectorMode = DrawSegmentedMode(selectorMode,
+                    new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
+                    new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+                EditorGUILayout.Space(2);
 
-                string[] labels = new string[ids.Length + 1];
-                labels[0] = "<None>";
-                for (int i = 0; i < ids.Length; i++)
+                if (selectorMode == 0)
                 {
-                    labels[i + 1] = ids[i].DisplayName;
-                }
+                    PageId[] ids = FindAllPageIds(DefaultFolder);
+                    if (ids.Length == 0)
+                    {
+                        EditorGUILayout.HelpBox(
+                            $"В папке нет PageId ассетов: {DefaultFolder}\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                            MessageType.Warning);
+                        return;
+                    }
 
-                PageId current = pageId.objectReferenceValue as PageId;
-                int currentIdx = current == null ? 0 : System.Array.FindIndex(ids, x => x == current) + 1;
-                if (currentIdx < 0)
-                {
-                    currentIdx = 0;
-                }
+                    string[] labels = new string[ids.Length + 1];
+                    labels[0] = "<None>";
+                    for (int i = 0; i < ids.Length; i++)
+                    {
+                        labels[i + 1] = ids[i].DisplayName;
+                    }
 
-                int newIdx = EditorGUILayout.Popup("Page", currentIdx, labels);
-                if (newIdx == 0)
-                {
-                    pageId.objectReferenceValue = null;
-                }
-                else if (newIdx > 0 && newIdx <= ids.Length)
-                {
-                    pageId.objectReferenceValue = ids[newIdx - 1];
-                }
+                    PageId current = pageId.objectReferenceValue as PageId;
+                    int currentIdx = current == null ? 0 : System.Array.FindIndex(ids, x => x == current) + 1;
+                    if (currentIdx < 0)
+                    {
+                        currentIdx = 0;
+                    }
 
-                EditorGUILayout.HelpBox($"Источник: {DefaultFolder}", MessageType.None);
-            }
-            else
-            {
-                EditorGUILayout.PropertyField(pageId, new GUIContent("Page Id (asset)"));
+                    int newIdx = EditorGUILayout.Popup(new GUIContent("Page"), currentIdx, labels);
+                    if (newIdx == 0)
+                    {
+                        pageId.objectReferenceValue = null;
+                    }
+                    else if (newIdx > 0 && newIdx <= ids.Length)
+                    {
+                        pageId.objectReferenceValue = ids[newIdx - 1];
+                    }
+
+                    EditorGUILayout.LabelField($"Источник: {DefaultFolder}", EditorStyles.miniLabel);
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(pageId, new GUIContent("Page Id (asset)"));
+                }
             }
 
             DrawGenerateAndAssign(pageId);
+        }
+
+        private static int DrawSegmentedMode(int value, GUIContent left, GUIContent right)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                int selected = value;
+
+                Color prevBg = GUI.backgroundColor;
+                Color prevContent = GUI.contentColor;
+
+                DrawModeButton(0, left, ref selected, EditorStyles.miniButtonLeft);
+                DrawModeButton(1, right, ref selected, EditorStyles.miniButtonRight);
+
+                GUI.backgroundColor = prevBg;
+                GUI.contentColor = prevContent;
+
+                return selected;
+            }
+        }
+
+        private static void DrawModeButton(int index, GUIContent content, ref int selected, GUIStyle style)
+        {
+            bool isSelected = selected == index;
+            GUI.backgroundColor = isSelected ? GetSelectedBackgroundColor() : Color.white;
+            GUI.contentColor = isSelected ? GetSelectedContentColor() : Color.white;
+
+            if (GUILayout.Button(content, style, GUILayout.Height(ModeButtonHeight)))
+            {
+                selected = index;
+            }
+        }
+
+        private static Color GetSelectedBackgroundColor()
+        {
+            return EditorGUIUtility.isProSkin
+                ? new Color(0.25f, 0.55f, 0.95f, 1f)
+                : new Color(0.20f, 0.45f, 0.90f, 1f);
+        }
+
+        private static Color GetSelectedContentColor()
+        {
+            return Color.white;
         }
 
         private void DrawGenerateAndAssign(SerializedProperty pageId)
