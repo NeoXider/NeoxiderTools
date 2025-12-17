@@ -7,6 +7,10 @@ using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
 namespace Neo.Pages
 {
     [MovedFrom("")]
@@ -58,6 +62,65 @@ namespace Neo.Pages
         private Vector3 startScale;
         private RectTransform rect;
         private LayoutGroup _layoutGroup;
+
+#if UNITY_EDITOR
+        private const string DefaultPageIdFolder = "Assets/NeoxiderPages/Pages";
+        private const string DefaultPageOpenAssetName = "PageOpen";
+
+        private void Reset()
+        {
+            action = Action.OpenPage;
+
+            if (targetPageId == null)
+            {
+                targetPageId = GetOrCreateDefaultPageOpen();
+            }
+        }
+
+        private static PageId GetOrCreateDefaultPageOpen()
+        {
+            EnsureFolder(DefaultPageIdFolder);
+
+            string assetPath = $"{DefaultPageIdFolder}/{DefaultPageOpenAssetName}.asset";
+            PageId existing = AssetDatabase.LoadAssetAtPath<PageId>(assetPath);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            PageId instance = ScriptableObject.CreateInstance<PageId>();
+            AssetDatabase.CreateAsset(instance, assetPath);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            return instance;
+        }
+
+        private static void EnsureFolder(string folder)
+        {
+            if (AssetDatabase.IsValidFolder(folder))
+            {
+                return;
+            }
+
+            string[] parts = folder.Split('/');
+            if (parts.Length < 2 || parts[0] != "Assets")
+            {
+                return;
+            }
+
+            string current = "Assets";
+            for (int i = 1; i < parts.Length; i++)
+            {
+                string next = $"{current}/{parts[i]}";
+                if (!AssetDatabase.IsValidFolder(next))
+                {
+                    AssetDatabase.CreateFolder(current, parts[i]);
+                }
+
+                current = next;
+            }
+        }
+#endif
 
 
         private void Awake()

@@ -118,3 +118,4 @@ namespace Neo.Save
         void Load();
     }
 }
+

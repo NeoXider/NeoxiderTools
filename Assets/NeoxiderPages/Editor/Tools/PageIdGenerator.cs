@@ -43,6 +43,7 @@ namespace Neo.Pages.Editor
 
             string[] defaults =
             {
+                "PageOpen",
                 "PageMenu",
                 "PageSettings",
                 "PageShop",

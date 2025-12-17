@@ -374,7 +374,14 @@ namespace Neo.Editor
 
             if (hasNeoNamespace && !isOdinActive)
             {
-                DrawNeoPropertiesWithCollapsibleUnityEvents();
+                if (UseCustomNeoxiderInspectorGUI)
+                {
+                    DrawCustomNeoxiderInspectorGUI();
+                }
+                else
+                {
+                    DrawNeoPropertiesWithCollapsibleUnityEvents();
+                }
             }
             else
             {
@@ -414,6 +421,19 @@ namespace Neo.Editor
             }
         }
 
+        /// <summary>
+        /// Позволяет производным редакторам (модулям) рисовать свой UI,
+        /// но внутри фирменного Neoxider-стиля (рамка/фон/радужная линия/Actions).
+        /// </summary>
+        protected virtual bool UseCustomNeoxiderInspectorGUI => false;
+
+        /// <summary>
+        /// Кастомная отрисовка инспектора (вызывается только если <see cref="UseCustomNeoxiderInspectorGUI"/> == true).
+        /// </summary>
+        protected virtual void DrawCustomNeoxiderInspectorGUI()
+        {
+        }
+
         protected virtual void DrawNeoxiderSignature()
         {
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
@@ -427,7 +447,8 @@ namespace Neo.Editor
             EnsureNeoxiderPackageInfo();
             string version = GetNeoxiderVersion();
             string signatureText = $"v{version}";
-            NeoUpdateChecker.State updateState = NeoUpdateChecker.Tick(version, _cachedNeoxiderRootPath);
+            // IMPORTANT: no background logic on repaint. Only read cached state.
+            NeoUpdateChecker.State updateState = NeoUpdateChecker.Peek();
 
             using (new EditorGUILayout.HorizontalScope())
             {

@@ -1,4 +1,5 @@
 using System.Linq;
+using Neo.Editor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
@@ -6,7 +7,7 @@ using UnityEngine;
 namespace Neo.Pages.Editor
 {
     [CustomEditor(typeof(PM))]
-    public sealed class PMEditor : UnityEditor.Editor
+    public sealed class PMEditor : CustomEditorBase
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
         private const float ModeButtonHeight = 22f;
@@ -51,8 +52,12 @@ namespace Neo.Pages.Editor
             ignoredList.drawElementCallback = DrawIgnoredElement;
         }
 
-        public override void OnInspectorGUI()
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
         {
+            NeoxiderModuleInspectorHeader.Draw(typeof(PMEditor).Assembly, "Neoxider Pages");
+
             serializedObject.Update();
 
             DrawSingletonSection();
@@ -93,6 +98,11 @@ namespace Neo.Pages.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        protected override void ProcessAttributeAssignments()
+        {
+            // Pages-инспекторы не используют авто-assign из NeoCustomEditor.
         }
 
         private void DrawSingletonSection()
@@ -362,12 +372,7 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            string[] labels = new string[ids.Length + 1];
-            labels[0] = "<None>";
-            for (int i = 0; i < ids.Length; i++)
-            {
-                labels[i + 1] = ids[i].DisplayName;
-            }
+            string[] labels = PageIdEditorCache.GetLabels(DefaultFolder);
 
             PageId current = prop.objectReferenceValue as PageId;
             int currentIdx = current == null ? 0 : System.Array.FindIndex(ids, x => x == current) + 1;
@@ -398,13 +403,7 @@ namespace Neo.Pages.Editor
 
         private static PageId[] FindAllPageIds(string folder)
         {
-            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { folder });
-            return guids
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(AssetDatabase.LoadAssetAtPath<PageId>)
-                .Where(x => x != null)
-                .OrderBy(x => x.DisplayName)
-                .ToArray();
+            return PageIdEditorCache.GetIds(folder);
         }
     }
 }

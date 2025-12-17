@@ -78,6 +78,20 @@ namespace Neo.Editor
                 : state;
         }
 
+        /// <summary>
+        /// Возвращает текущее состояние без запуска проверки (только чтение кеша).
+        /// </summary>
+        public static State Peek()
+        {
+            if (_isChecking)
+            {
+                State s = ReadState();
+                return new State(UpdateStatus.Checking, s.LatestVersion, s.UpdateUrl, s.Error);
+            }
+
+            return ReadState();
+        }
+
         public static void RequestImmediateCheck(string currentVersion, string packageRootPath)
         {
             if (_isChecking)

@@ -4,6 +4,7 @@
   "references": [
     "Neo.Pages",
     "Neo.Tools.Managers",
+    "Neo.Editor",
     "Unity.TextMeshPro",
     "Unity.ugui"
   ],

@@ -222,10 +222,10 @@
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.4.3`):
+Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.5.0`):
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.4.3
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.0
 ```
 
 Если хотите попробовать новые функции — установите библиотеку из ветки `demo`:
@@ -235,6 +235,25 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
 ```
 
 ---
+
+## Установка модуля Pages (NeoxiderPages) через UPM
+
+Модуль страниц находится в папке `Assets/NeoxiderPages` и поставляется как отдельный UPM-пакет.
+
+- **Важно**: `NeoxiderPages` использует сборки `Neo.*` (Tools/Core), поэтому сначала установите базовый пакет **NeoxiderTools** (папка `Assets/Neoxider`), а затем Pages.
+- **Зависимости**: TextMeshPro, uGUI и DOTween (для анимаций/`DOTweenAnimation`).
+
+### 1) Установить базовый пакет NeoxiderTools
+
+```
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.0
+```
+
+### 2) Установить Pages
+
+```
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.0
+```
 
 ## <a name="быстрый-старт"></a>Быстрый старт
 

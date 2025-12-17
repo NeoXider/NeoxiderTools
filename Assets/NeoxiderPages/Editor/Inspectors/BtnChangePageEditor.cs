@@ -1,11 +1,11 @@
-using System.Linq;
+using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Pages.Editor
 {
     [CustomEditor(typeof(BtnChangePage))]
-    public sealed class BtnChangePageEditor : UnityEditor.Editor
+    public sealed class BtnChangePageEditor : CustomEditorBase
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
         private const float ModeButtonHeight = 22f;
@@ -47,8 +47,12 @@ namespace Neo.Pages.Editor
             onClickProp = serializedObject.FindProperty("OnClick");
         }
 
-        public override void OnInspectorGUI()
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void DrawCustomNeoxiderInspectorGUI()
         {
+            NeoxiderModuleInspectorHeader.Draw(typeof(BtnChangePageEditor).Assembly, "Neoxider Pages");
+
             serializedObject.Update();
 
             EditorGUILayout.PropertyField(intecactableProp);
@@ -89,6 +93,11 @@ namespace Neo.Pages.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
+        protected override void ProcessAttributeAssignments()
+        {
+            // Pages-инспекторы не используют авто-assign из NeoCustomEditor.
+        }
+
         private void DrawPageIdSelector(SerializedProperty pageId)
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
@@ -110,12 +119,7 @@ namespace Neo.Pages.Editor
                         return;
                     }
 
-                    string[] labels = new string[ids.Length + 1];
-                    labels[0] = "<None>";
-                    for (int i = 0; i < ids.Length; i++)
-                    {
-                        labels[i + 1] = ids[i].DisplayName;
-                    }
+                    string[] labels = PageIdEditorCache.GetLabels(DefaultFolder);
 
                     PageId current = pageId.objectReferenceValue as PageId;
                     int currentIdx = current == null ? 0 : System.Array.FindIndex(ids, x => x == current) + 1;
@@ -186,15 +190,6 @@ namespace Neo.Pages.Editor
             return Color.white;
         }
 
-        private static PageId[] FindAllPageIds(string folder)
-        {
-            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { folder });
-            return guids
-                .Select(AssetDatabase.GUIDToAssetPath)
-                .Select(AssetDatabase.LoadAssetAtPath<PageId>)
-                .Where(x => x != null)
-                .OrderBy(x => x.DisplayName)
-                .ToArray();
-        }
+        private static PageId[] FindAllPageIds(string folder) => PageIdEditorCache.GetIds(folder);
     }
 }
