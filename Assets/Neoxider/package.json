@@ -8,7 +8,8 @@
     "name": "Neoxider"
   },
   "dependencies": {
-    "com.unity.textmeshpro": "3.0.6"
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.ai.navigation": "1.1.7"
   },
   "repository": {
     "type": "git",
