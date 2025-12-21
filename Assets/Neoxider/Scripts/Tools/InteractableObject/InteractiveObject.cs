@@ -79,6 +79,7 @@ namespace Neo
             private bool keyHeldPrev;
             private bool mouseHeldPrev;
             private bool wasInRange;
+            private bool wasHoveredByRaycast;
 
             private void Awake()
             {
@@ -118,6 +119,7 @@ namespace Neo
 
                 if (useMouseInteraction)
                 {
+                    UpdateMouseHoverRaycast();
                     UpdateMouseInput();
                 }
 
@@ -177,7 +179,9 @@ namespace Neo
             {
                 if (interactable && useMouseInteraction)
                 {
-                    if (interactionDistance > 0f && !IsInRange())
+                    bool inRange = interactionDistance > 0f ? IsInRange() : true;
+                    
+                    if (interactionDistance > 0f && !inRange)
                     {
                         return;
                     }
@@ -221,6 +225,85 @@ namespace Neo
                 }
 
                 mouseHeldPrev = mouseHeld;
+            }
+
+            private void UpdateMouseHoverRaycast()
+            {
+                var cam = Camera.main ?? FindFirstObjectByType<Camera>();
+                if (cam == null)
+                {
+                    return;
+                }
+
+                var collider = GetComponent<Collider>();
+                if (collider == null || !collider.enabled)
+                {
+                    if (wasHoveredByRaycast)
+                    {
+                        wasHoveredByRaycast = false;
+                        if (IsHovered)
+                        {
+                            OnHoverExitRaycast();
+                        }
+                    }
+                    return;
+                }
+
+                bool inRange = interactionDistance > 0f ? IsInRange() : true;
+
+                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+                RaycastHit hit;
+                bool raycastHit = Physics.Raycast(ray, out hit) && hit.collider == collider;
+                bool isHoveredNow = raycastHit && inRange;
+
+                if (isHoveredNow && !wasHoveredByRaycast)
+                {
+                    wasHoveredByRaycast = true;
+                    if (!IsHovered)
+                    {
+                        OnHoverEnterRaycast();
+                    }
+                }
+                else if ((!isHoveredNow || !inRange) && wasHoveredByRaycast)
+                {
+                    wasHoveredByRaycast = false;
+                    if (IsHovered)
+                    {
+                        OnHoverExitRaycast();
+                    }
+                }
+                else if (IsHovered && !inRange && interactionDistance > 0f)
+                {
+                    OnHoverExitRaycast();
+                }
+            }
+
+            private void OnHoverEnterRaycast()
+            {
+                if (!interactable || !useMouseInteraction)
+                {
+                    return;
+                }
+
+                bool inRange = interactionDistance > 0f ? IsInRange() : true;
+                if (interactionDistance > 0f && !inRange)
+                {
+                    return;
+                }
+
+                IsHovered = true;
+                onHoverEnter?.Invoke();
+            }
+
+            private void OnHoverExitRaycast()
+            {
+                if (!interactable || !useMouseInteraction)
+                {
+                    return;
+                }
+
+                IsHovered = false;
+                onHoverExit?.Invoke();
             }
 
             private void UpdateKeyboardInput()
@@ -329,9 +412,21 @@ namespace Neo
                     return;
                 }
 
-                if (EventSystem.current == null && FindObjectOfType<EventSystem>() == null)
+                bool eventSystemExists = EventSystem.current != null || FindObjectOfType<EventSystem>() != null;
+                var eventSystem = EventSystem.current ?? FindObjectOfType<EventSystem>();
+                bool hasInputModule = eventSystem != null && eventSystem.currentInputModule != null;
+                
+                if (!eventSystemExists)
                 {
                     Debug.LogWarning("InteractiveObject: EventSystem not found in scene");
+                }
+                else if (!hasInputModule)
+                {
+                    Debug.LogWarning("InteractiveObject: EventSystem found but no InputModule. Adding StandaloneInputModule.", this);
+                    if (eventSystem != null)
+                    {
+                        eventSystem.gameObject.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                    }
                 }
 
                 eventSystemChecked = true;
@@ -340,6 +435,9 @@ namespace Neo
             private void TryEnsureNeededRaycasterOnce()
             {
                 Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
+                bool hasCollider3DCheck = TryGetComponent<Collider>(out _);
+                bool hasCollider2DCheck = TryGetComponent<Collider2D>(out _);
+                
                 if (cam == null)
                 {
                     Debug.LogError(
@@ -349,12 +447,13 @@ namespace Neo
                 }
 
                 bool isUI = GetComponentInParent<Canvas>() != null && TryGetComponent<RectTransform>(out _);
+                
                 if (isUI)
                 {
                     return;
                 }
 
-                if (TryGetComponent<Collider2D>(out _) && !physicsRaycasterEnsured2D)
+                if (hasCollider2DCheck && !physicsRaycasterEnsured2D)
                 {
                     if (cam.GetComponent<Physics2DRaycaster>() == null)
                     {
@@ -364,7 +463,7 @@ namespace Neo
                     physicsRaycasterEnsured2D = true;
                 }
 
-                if (TryGetComponent<Collider>(out _) && !physicsRaycasterEnsured3D)
+                if (hasCollider3DCheck && !physicsRaycasterEnsured3D)
                 {
                     if (cam.GetComponent<PhysicsRaycaster>() == null)
                     {
