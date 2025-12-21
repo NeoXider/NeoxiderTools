@@ -29,7 +29,7 @@ namespace Neo
             public bool interactable = true;
 
             [Header("Interaction Settings")] [Tooltip("Enable mouse interaction (hover and click).")] [SerializeField]
-            private bool useMouseInteraction = true;
+            private bool useMouseInteraction = true; 
 
             [Tooltip("Enable keyboard interaction.")] [SerializeField]
             private bool useKeyboardInteraction = true;
@@ -177,6 +177,10 @@ namespace Neo
             {
                 if (interactable && useMouseInteraction)
                 {
+                    if (interactionDistance > 0f && !IsInRange())
+                    {
+                        return;
+                    }
                     IsHovered = true;
                     onHoverEnter.Invoke();
                 }
@@ -200,12 +204,20 @@ namespace Neo
                 {
                     if (IsHovered)
                     {
-                        onInteractDown?.Invoke();
+                        bool inRange = IsInRange();
+                        if (inRange || interactionDistance <= 0f)
+                        {
+                            onInteractDown?.Invoke();
+                        }
                     }
                 }
                 else if (!mouseHeld && mouseHeldPrev)
                 {
-                    onInteractUp?.Invoke();
+                    bool inRange = IsInRange();
+                    if (inRange || interactionDistance <= 0f)
+                    {
+                        onInteractUp?.Invoke();
+                    }
                 }
 
                 mouseHeldPrev = mouseHeld;
@@ -216,16 +228,20 @@ namespace Neo
                 bool keyDown = Input.GetKeyDown(keyboardKey);
                 bool keyUp = Input.GetKeyUp(keyboardKey);
 
-                if (keyDown)
+                if (!keyDown && !keyUp)
                 {
-                    bool inRange = IsInRange();
-                    if (inRange || interactionDistance <= 0f)
-                    {
-                        onInteractDown?.Invoke();
-                    }
+                    return;
                 }
 
-                if (keyUp)
+                bool inRange = interactionDistance > 0f ? IsInRange() : true;
+                bool canInteract = inRange || interactionDistance <= 0f;
+
+                if (keyDown && canInteract)
+                {
+                    onInteractDown?.Invoke();
+                }
+
+                if (keyUp && canInteract)
                 {
                     onInteractUp?.Invoke();
                 }
