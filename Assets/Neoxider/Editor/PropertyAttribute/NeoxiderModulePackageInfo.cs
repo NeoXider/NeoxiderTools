@@ -27,7 +27,9 @@ namespace Neo.Editor
 
     public static class NeoxiderModulePackageInfoUtility
     {
-        private static readonly System.Collections.Generic.Dictionary<string, NeoxiderModulePackageInfo> CacheByAssemblyName = new();
+        private static readonly System.Collections.Generic.Dictionary<string, NeoxiderModulePackageInfo>
+            CacheByAssemblyName = new();
+
         private static readonly System.Collections.Generic.HashSet<string> NegativeCache = new();
         private static bool _cacheHooksInstalled;
 
@@ -73,6 +75,7 @@ namespace Neo.Editor
                     {
                         CacheByAssemblyName[asmName] = info;
                     }
+
                     return true;
                 }
             }
@@ -108,6 +111,7 @@ namespace Neo.Editor
                         {
                             CacheByAssemblyName[asmName] = info;
                         }
+
                         return true;
                     }
 
@@ -123,6 +127,7 @@ namespace Neo.Editor
             {
                 NegativeCache.Add(asmName);
             }
+
             return false;
         }
 
@@ -238,7 +243,8 @@ namespace Neo.Editor
             try
             {
                 string projectPath = Directory.GetCurrentDirectory().Replace('\\', '/');
-                if (!string.IsNullOrEmpty(projectPath) && normalized.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(projectPath) &&
+                    normalized.StartsWith(projectPath, StringComparison.OrdinalIgnoreCase))
                 {
                     return normalized.Substring(projectPath.Length + 1);
                 }
@@ -275,4 +281,3 @@ namespace Neo.Editor
         }
     }
 }
-

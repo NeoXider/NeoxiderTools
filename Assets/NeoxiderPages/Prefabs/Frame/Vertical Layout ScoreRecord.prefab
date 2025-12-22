@@ -93,7 +93,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 44.1
+  m_fontSize: 56.45
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -147,20 +147,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9937e07168f744369966bd377c83eb41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
   text: {fileID: 5407734922897760659}
-  _separator: .
-  _decimal: 0
+  separator: .
+  decimal: 0
   startAdd: 'RECORD: '
   endAdd: 
-  _indexOffset: 0
+  indexOffset: 0
   _timeAnim: 1
   _ease: 6
   _onEnableAnim: 1
   currentNum: 0
-  OnTextUpdated:
-    m_PersistentCalls:
-      m_Calls: []
-  best: 1
+  _best: 1
 --- !u!1 &3540098941612321398
 GameObject:
   m_ObjectHideFlags: 0
@@ -197,7 +197,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 300, y: 100}
+  m_SizeDelta: {x: 300, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8962623252146437628
 CanvasRenderer:
@@ -227,7 +227,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 8e49619b6f4d77d4897cfa0616138d37, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -330,7 +330,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 44.1
+  m_fontSize: 66.15
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -384,20 +384,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9937e07168f744369966bd377c83eb41, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
   text: {fileID: 9117907896913765516}
-  _separator: .
-  _decimal: 0
+  separator: .
+  decimal: 0
   startAdd: 'SCORE: '
   endAdd: 
-  _indexOffset: 0
+  indexOffset: 0
   _timeAnim: 1
   _ease: 6
   _onEnableAnim: 1
   currentNum: 0
-  OnTextUpdated:
-    m_PersistentCalls:
-      m_Calls: []
-  best: 0
+  _best: 0
 --- !u!1 &6259125983806221597
 GameObject:
   m_ObjectHideFlags: 0
@@ -434,7 +434,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 300, y: 100}
+  m_SizeDelta: {x: 300, y: 150}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &4730364770490317726
 CanvasRenderer:
@@ -464,7 +464,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 0}
+  m_Sprite: {fileID: 21300000, guid: 8e49619b6f4d77d4897cfa0616138d37, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1

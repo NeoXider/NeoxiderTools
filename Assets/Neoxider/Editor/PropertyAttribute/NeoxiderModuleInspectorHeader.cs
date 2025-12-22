@@ -105,7 +105,9 @@ namespace Neo.Editor
                             break;
 
                         case NeoxiderUpdateChecker.UpdateStatus.UpdateAvailable:
-                            label = !string.IsNullOrEmpty(s.LatestVersion) ? $"Есть обновление: {s.LatestVersion}" : "Есть обновление";
+                            label = !string.IsNullOrEmpty(s.LatestVersion)
+                                ? $"Есть обновление: {s.LatestVersion}"
+                                : "Есть обновление";
                             color = new Color(1f, 0.25f, 0.25f, 1f);
                             break;
 
@@ -139,4 +141,3 @@ namespace Neo.Editor
         }
     }
 }
-

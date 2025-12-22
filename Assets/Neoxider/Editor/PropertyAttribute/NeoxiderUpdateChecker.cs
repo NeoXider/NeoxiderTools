@@ -126,7 +126,10 @@ namespace Neo.Editor
             return active;
         }
 
-        private static string Key(string prefix, string suffix) => $"{prefix}.{suffix}";
+        private static string Key(string prefix, string suffix)
+        {
+            return $"{prefix}.{suffix}";
+        }
 
         private static State ReadState(string prefix)
         {
@@ -233,7 +236,8 @@ namespace Neo.Editor
             ApplyResult(prefix, currentVersion, latest, updateUrl, null);
         }
 
-        private static void TryCheckTagsFallback(string prefix, string currentVersion, string owner, string repo, string repoWebUrl)
+        private static void TryCheckTagsFallback(string prefix, string currentVersion, string owner, string repo,
+            string repoWebUrl)
         {
             try
             {
@@ -271,7 +275,8 @@ namespace Neo.Editor
             }
         }
 
-        private static void ApplyResult(string prefix, string currentVersion, string latestVersion, string updateUrl, string error)
+        private static void ApplyResult(string prefix, string currentVersion, string latestVersion, string updateUrl,
+            string error)
         {
             SessionState.SetString(Key(prefix, "Error"), error ?? string.Empty);
 
@@ -298,8 +303,16 @@ namespace Neo.Editor
             }
 
             int cmp = currentV.CompareTo(latestV);
-            if (cmp < 0) return UpdateStatus.UpdateAvailable;
-            if (cmp == 0) return UpdateStatus.UpToDate;
+            if (cmp < 0)
+            {
+                return UpdateStatus.UpdateAvailable;
+            }
+
+            if (cmp == 0)
+            {
+                return UpdateStatus.UpToDate;
+            }
+
             return UpdateStatus.Ahead;
         }
 
@@ -362,7 +375,8 @@ namespace Neo.Editor
             return m.Success && m.Groups.Count > 1 ? m.Groups[1].Value : null;
         }
 
-        private static bool TryGetUpdateConfigFromPackageJson(string packageRootPath, out string repoUrl, out string tagPrefix)
+        private static bool TryGetUpdateConfigFromPackageJson(string packageRootPath, out string repoUrl,
+            out string tagPrefix)
         {
             repoUrl = null;
             tagPrefix = null;
@@ -430,7 +444,8 @@ namespace Neo.Editor
             return m.Success && m.Groups.Count > 1 ? m.Groups[1].Value : null;
         }
 
-        private static void TryCheckTagsWithPrefix(string prefix, string currentVersion, string owner, string repo, string repoWebUrl, string tagPrefix)
+        private static void TryCheckTagsWithPrefix(string prefix, string currentVersion, string owner, string repo,
+            string repoWebUrl, string tagPrefix)
         {
             ActiveRequest active = GetOrCreateActive(prefix);
 
@@ -484,7 +499,8 @@ namespace Neo.Editor
             }
 
             // Collect all "name": "tag" matches and select the highest version among tags that start with tagPrefix.
-            MatchCollection matches = Regex.Matches(json, "\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.IgnoreCase);
+            MatchCollection matches =
+                Regex.Matches(json, "\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.IgnoreCase);
             if (matches == null || matches.Count == 0)
             {
                 return null;
@@ -514,7 +530,9 @@ namespace Neo.Editor
                 }
 
                 // For display, keep "vX.Y.Z" format
-                string display = remainder.StartsWith("v", StringComparison.OrdinalIgnoreCase) ? remainder : $"v{remainder}";
+                string display = remainder.StartsWith("v", StringComparison.OrdinalIgnoreCase)
+                    ? remainder
+                    : $"v{remainder}";
 
                 if (!TryParseVersion(display, out Version v))
                 {
@@ -531,7 +549,8 @@ namespace Neo.Editor
             return bestRaw;
         }
 
-        private static bool TryParseGitHubOwnerRepo(string repoUrl, out string owner, out string repo, out string repoWebUrl)
+        private static bool TryParseGitHubOwnerRepo(string repoUrl, out string owner, out string repo,
+            out string repoWebUrl)
         {
             owner = null;
             repo = null;
@@ -574,4 +593,3 @@ namespace Neo.Editor
         }
     }
 }
-

@@ -29,7 +29,7 @@ namespace Neo
             public bool interactable = true;
 
             [Header("Interaction Settings")] [Tooltip("Enable mouse interaction (hover and click).")] [SerializeField]
-            private bool useMouseInteraction = true; 
+            private bool useMouseInteraction = true;
 
             [Tooltip("Enable keyboard interaction.")] [SerializeField]
             private bool useKeyboardInteraction = true;
@@ -180,11 +180,12 @@ namespace Neo
                 if (interactable && useMouseInteraction)
                 {
                     bool inRange = interactionDistance > 0f ? IsInRange() : true;
-                    
+
                     if (interactionDistance > 0f && !inRange)
                     {
                         return;
                     }
+
                     IsHovered = true;
                     onHoverEnter.Invoke();
                 }
@@ -229,13 +230,13 @@ namespace Neo
 
             private void UpdateMouseHoverRaycast()
             {
-                var cam = Camera.main ?? FindFirstObjectByType<Camera>();
+                Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
                 if (cam == null)
                 {
                     return;
                 }
 
-                var collider = GetComponent<Collider>();
+                Collider collider = GetComponent<Collider>();
                 if (collider == null || !collider.enabled)
                 {
                     if (wasHoveredByRaycast)
@@ -246,6 +247,7 @@ namespace Neo
                             OnHoverExitRaycast();
                         }
                     }
+
                     return;
                 }
 
@@ -413,19 +415,20 @@ namespace Neo
                 }
 
                 bool eventSystemExists = EventSystem.current != null || FindObjectOfType<EventSystem>() != null;
-                var eventSystem = EventSystem.current ?? FindObjectOfType<EventSystem>();
+                EventSystem eventSystem = EventSystem.current ?? FindObjectOfType<EventSystem>();
                 bool hasInputModule = eventSystem != null && eventSystem.currentInputModule != null;
-                
+
                 if (!eventSystemExists)
                 {
                     Debug.LogWarning("InteractiveObject: EventSystem not found in scene");
                 }
                 else if (!hasInputModule)
                 {
-                    Debug.LogWarning("InteractiveObject: EventSystem found but no InputModule. Adding StandaloneInputModule.", this);
+                    Debug.LogWarning(
+                        "InteractiveObject: EventSystem found but no InputModule. Adding StandaloneInputModule.", this);
                     if (eventSystem != null)
                     {
-                        eventSystem.gameObject.AddComponent<UnityEngine.EventSystems.StandaloneInputModule>();
+                        eventSystem.gameObject.AddComponent<StandaloneInputModule>();
                     }
                 }
 
@@ -437,7 +440,7 @@ namespace Neo
                 Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
                 bool hasCollider3DCheck = TryGetComponent<Collider>(out _);
                 bool hasCollider2DCheck = TryGetComponent<Collider2D>(out _);
-                
+
                 if (cam == null)
                 {
                     Debug.LogError(
@@ -447,7 +450,7 @@ namespace Neo
                 }
 
                 bool isUI = GetComponentInParent<Canvas>() != null && TryGetComponent<RectTransform>(out _);
-                
+
                 if (isUI)
                 {
                     return;
