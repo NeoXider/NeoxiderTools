@@ -222,10 +222,10 @@
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.5.0`):
+Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.5.1`):
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.0
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.1
 ```
 
 Если хотите попробовать новые функции — установите библиотеку из ветки `demo`:
@@ -246,13 +246,13 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
 ### 1) Установить базовый пакет NeoxiderTools
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.0
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.1
 ```
 
 ### 2) Установить Pages
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.0
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.1
 ```
 
 ## <a name="быстрый-старт"></a>Быстрый старт
