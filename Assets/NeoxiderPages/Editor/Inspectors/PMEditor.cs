@@ -3,10 +3,11 @@ using Neo.Editor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
+using Neo.Pages;
 
 namespace Neo.Pages.Editor
 {
-    [CustomEditor(typeof(PM))]
+    [CustomEditor(typeof(PM))] 
     public sealed class PMEditor : CustomEditorBase
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
