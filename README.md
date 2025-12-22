@@ -252,7 +252,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.1
 ### 2) Установить Pages
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.1
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.2
 ```
 
 ## <a name="быстрый-старт"></a>Быстрый старт
