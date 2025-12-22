@@ -213,15 +213,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _toggle: {fileID: 3970624515484848983}
-  _image: {fileID: 6484542295165674156}
-  _visuals:
-  - {fileID: 2153649090469823606}
-  - {fileID: 1478774815322340895}
-  _setNativeSize: 0
-  sprites:
-  - {fileID: 21300000, guid: 48998fbab56fb06409a1190314cf65b9, type: 3}
-  - {fileID: 21300000, guid: 15072d19a5b994c469683c0b1be66ec6, type: 3}
-  activ: 1
+  _isActive: 1
+  _setOnAwake: 1
+  imageV:
+  - image: {fileID: 6484542295165674156}
+    start: {fileID: 21300000, guid: 48938562e05e06b4e8e52c256e908971, type: 3}
+    end: {fileID: 21300000, guid: e6686283ee240f844b89e38a63b4e986, type: 3}
+    setNativeSize: 1
+  imageC: []
+  textColor: []
+  variants:
+    starts:
+    - {fileID: 2153649090469823606}
+    ends:
+    - {fileID: 1478774815322340895}
   On:
     m_PersistentCalls:
       m_Calls: []
@@ -251,7 +256,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 15072d19a5b994c469683c0b1be66ec6, type: 3}
+  m_Sprite: {fileID: 21300000, guid: e6686283ee240f844b89e38a63b4e986, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -321,3 +326,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6d7a8149d76dde941854f3ac84264028, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _idClip: 0
+  _clips: []
+  _useRandomClip: 0
+  _volume: 1
+  _button: {fileID: 0}

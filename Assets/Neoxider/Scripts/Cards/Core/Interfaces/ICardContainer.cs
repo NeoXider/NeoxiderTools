@@ -20,4 +20,3 @@ namespace Neo.Cards
         void Clear();
     }
 }
-

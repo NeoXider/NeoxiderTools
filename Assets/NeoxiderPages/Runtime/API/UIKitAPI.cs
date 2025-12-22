@@ -104,7 +104,7 @@ namespace Neo.Pages
             GM.I?.End();
         }
     }
-    
+
     /// <summary>
     /// Утилита для выполнения действий, соответствующих игровому состоянию.
     /// </summary>
@@ -163,7 +163,7 @@ namespace Neo.Pages
             }
         }
     }
-    
+
     /// <summary>
     /// Статический фасад к системе денег (<see cref="Money"/>).
     /// </summary>

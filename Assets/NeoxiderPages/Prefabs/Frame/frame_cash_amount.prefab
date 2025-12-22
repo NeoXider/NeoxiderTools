@@ -145,8 +145,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 000
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 5a2c62c43eefc114ea336c838d5c0027, type: 2}
-  m_sharedMaterial: {fileID: 2973569858665379736, guid: 5a2c62c43eefc114ea336c838d5c0027, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -170,7 +170,7 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 80.6
+  m_fontSize: 96
   m_fontSizeBase: 36
   m_fontWeight: 400
   m_enableAutoSizing: 1
@@ -224,20 +224,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 436759aa0f12ef84a98814398dbdbf15, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
   text: {fileID: 2482034769485834533}
-  _separator: .
-  _decimal: 0
+  separator: .
+  decimal: 0
   startAdd: 
   endAdd: 
-  _indexOffset: 0
+  indexOffset: 0
   _timeAnim: 0.25
   _ease: 6
   _onEnableAnim: 1
   currentNum: 0
-  OnTextUpdated:
-    m_PersistentCalls:
-      m_Calls: []
-  level: 0
+  amount: 0
 --- !u!1 &8441254415818114313
 GameObject:
   m_ObjectHideFlags: 0
@@ -265,15 +265,15 @@ RectTransform:
   m_GameObject: {fileID: 8441254415818114313}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.3, y: 0.3, z: 0.3}
+  m_LocalScale: {x: 0.8, y: 0.8, z: 0.8}
   m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 7335977266964760372}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0.5}
   m_AnchorMax: {x: 0, y: 0.5}
-  m_AnchoredPosition: {x: -21.8, y: 0.0000038146973}
-  m_SizeDelta: {x: 206, y: 208}
+  m_AnchoredPosition: {x: -21.8, y: 0}
+  m_SizeDelta: {x: 100, y: 100}
   m_Pivot: {x: 1, y: 0.5}
 --- !u!222 &94434032909407085
 CanvasRenderer:

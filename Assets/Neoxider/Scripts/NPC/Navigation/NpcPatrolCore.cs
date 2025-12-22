@@ -280,4 +280,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-

@@ -155,30 +155,46 @@ namespace Neo.Pages.Editor
         {
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("Generate", EditorStyles.miniBoldLabel);
-            generateName = EditorGUILayout.TextField("Page Name", generateName);
-
-            if (GUILayout.Button("Generate & Assign"))
+            PageId current = pageId.objectReferenceValue as PageId;
+            if (current != null)
             {
-                string normalizedName = generateName;
-                string assetName = normalizedName.Trim().StartsWith("Page")
-                    ? normalizedName.Trim()
-                    : "Page" + normalizedName.Trim();
-                string path = $"{DefaultFolder}/{assetName}.asset";
-                bool alreadyExists = AssetDatabase.LoadAssetAtPath<PageId>(path) != null;
+                generateName = current.DisplayName;
+            }
 
-                PageId id = PageIdGenerator.GetOrCreate(normalizedName, DefaultFolder);
-                if (id != null)
+            using (new EditorGUI.DisabledScope(current != null))
+            {
+                generateName = EditorGUILayout.TextField("Page Name", generateName);
+            }
+
+            using (new EditorGUI.DisabledScope(current != null || string.IsNullOrWhiteSpace(generateName)))
+            {
+                if (GUILayout.Button("Generate & Assign"))
                 {
-                    if (alreadyExists)
-                    {
-                        Debug.LogWarning($"[UIPage] PageId already exists: {path}. Assigned existing.", (UIPage)target);
-                    }
+                    string normalizedName = generateName;
+                    string assetName = normalizedName.Trim().StartsWith("Page")
+                        ? normalizedName.Trim()
+                        : "Page" + normalizedName.Trim();
+                    string path = $"{DefaultFolder}/{assetName}.asset";
+                    bool alreadyExists = AssetDatabase.LoadAssetAtPath<PageId>(path) != null;
 
-                    pageId.objectReferenceValue = id;
+                    PageId id = PageIdGenerator.GetOrCreate(normalizedName, DefaultFolder);
+                    if (id != null)
+                    {
+                        if (alreadyExists)
+                        {
+                            Debug.LogWarning($"[UIPage] PageId already exists: {path}. Assigned existing.",
+                                (UIPage)target);
+                        }
+
+                        pageId.objectReferenceValue = id;
+                    }
                 }
             }
         }
 
-        private static PageId[] FindAllPageIds(string folder) => PageIdEditorCache.GetIds(folder);
+        private static PageId[] FindAllPageIds(string folder)
+        {
+            return PageIdEditorCache.GetIds(folder);
+        }
     }
 }

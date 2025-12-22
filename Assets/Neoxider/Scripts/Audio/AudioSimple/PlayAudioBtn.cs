@@ -60,7 +60,7 @@ namespace Neo
 
                     if (clipToPlay != null)
                     {
-                        AM.I.Play(clipToPlay, _volume);
+                        AM.I?.Play(clipToPlay, _volume);
                     }
                     else
                     {
@@ -69,7 +69,7 @@ namespace Neo
                 }
                 else
                 {
-                    AM.I.Play(_idClip);
+                    AM.I?.Play(_idClip);
                 }
             }
         }

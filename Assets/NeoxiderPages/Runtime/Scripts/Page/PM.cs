@@ -61,7 +61,7 @@ namespace Neo.Pages
         protected override void Init()
         {
             base.Init();
-            
+
             SetAllPages();
             allPages = allPages.Where(p => p != null).ToArray();
             SetDictPage();

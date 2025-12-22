@@ -190,6 +190,9 @@ namespace Neo.Pages.Editor
             return Color.white;
         }
 
-        private static PageId[] FindAllPageIds(string folder) => PageIdEditorCache.GetIds(folder);
+        private static PageId[] FindAllPageIds(string folder)
+        {
+            return PageIdEditorCache.GetIds(folder);
+        }
     }
 }

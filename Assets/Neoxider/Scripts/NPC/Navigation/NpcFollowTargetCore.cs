@@ -243,4 +243,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
