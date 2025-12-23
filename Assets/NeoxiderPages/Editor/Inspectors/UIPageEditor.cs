@@ -1,7 +1,6 @@
 using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
-using Neo.Pages;
 
 namespace Neo.Pages.Editor
 {

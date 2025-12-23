@@ -31,6 +31,26 @@ namespace Neo.Pages
     [AddComponentMenu("Neo/Pages/" + nameof(PM))]
     public class PM : Singleton<PM>
     {
+        [Header("GM Integration")]
+        [SerializeField]
+        private bool integrateWithGM = true;
+
+        private const string WinPageIdName = "PageWin";
+        private const string LosePageIdName = "PageLose";
+        private const string EndPageIdName = "PageEnd";
+
+        private Coroutine gmSubscribeRoutine;
+        private UnityAction onWinHandler;
+        private UnityAction onLoseHandler;
+        private UnityAction onEndHandler;
+
+        public enum KnownPage
+        {
+            Win,
+            Lose,
+            End
+        }
+
         [FormerlySerializedAs("currentP")] [FormerlySerializedAs("CurrentPage")] [Header("Active Pages")]
         public UIPage currentUiPage;
 
@@ -79,11 +99,151 @@ namespace Neo.Pages
             previousUiPage = null;
 
             Subscribe();
+
+            if (integrateWithGM)
+            {
+                StartGMIntegration();
+            }
         }
 
         private void Subscribe()
         {
             UIKit.OnShowPage.AddListener(ChangePage);
+        }
+
+        private void OnDestroy()
+        {
+            UIKit.OnShowPage.RemoveListener(ChangePage);
+            StopGMIntegration();
+        }
+
+        private void StartGMIntegration()
+        {
+            StopGMIntegration();
+            gmSubscribeRoutine = StartCoroutine(WaitAndSubscribeGM());
+        }
+
+        private void StopGMIntegration()
+        {
+            if (gmSubscribeRoutine != null)
+            {
+                StopCoroutine(gmSubscribeRoutine);
+                gmSubscribeRoutine = null;
+            }
+
+            if (onWinHandler != null)
+            {
+                G.OnWin?.RemoveListener(onWinHandler);
+                onWinHandler = null;
+            }
+
+            if (onLoseHandler != null)
+            {
+                G.OnLose?.RemoveListener(onLoseHandler);
+                onLoseHandler = null;
+            }
+
+            if (onEndHandler != null)
+            {
+                G.OnEnd?.RemoveListener(onEndHandler);
+                onEndHandler = null;
+            }
+        }
+
+        private System.Collections.IEnumerator WaitAndSubscribeGM()
+        {
+            while (!G.Inited || G.OnWin == null || G.OnLose == null || G.OnEnd == null)
+            {
+                yield return null;
+            }
+
+            if (!integrateWithGM)
+            {
+                gmSubscribeRoutine = null;
+                yield break;
+            }
+
+            onWinHandler = () => ChangePage(KnownPage.Win);
+            onLoseHandler = () => ChangePage(KnownPage.Lose);
+            onEndHandler = () => ChangePage(KnownPage.End);
+
+            G.OnWin.AddListener(onWinHandler);
+            G.OnLose.AddListener(onLoseHandler);
+            G.OnEnd.AddListener(onEndHandler);
+
+            gmSubscribeRoutine = null;
+        }
+
+        /// <summary>
+        /// Удобный вызов переключения страницы по известному имени (по соглашению: PageWin/PageLose/PageEnd).
+        /// </summary>
+        public void ChangePage(KnownPage page)
+        {
+            switch (page)
+            {
+                case KnownPage.Win:
+                    ChangePageByName(WinPageIdName);
+                    break;
+                case KnownPage.Lose:
+                    ChangePageByName(LosePageIdName);
+                    break;
+                case KnownPage.End:
+                    ChangePageByName(EndPageIdName);
+                    break;
+                default:
+                    Debug.LogWarning($"[PM] Unknown page: {page}");
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Удобный вызов переключения страницы по имени PageId (например, "PageEnd").
+        /// </summary>
+        public void ChangePageByName(string pageIdName)
+        {
+            if (string.IsNullOrWhiteSpace(pageIdName))
+            {
+                Debug.LogWarning("[PM] PageId name is empty.");
+                return;
+            }
+
+            PageId id = TryFindPageIdByName(pageIdName);
+            if (id == null)
+            {
+                Debug.LogError($"[PM] PageId '{pageIdName}' not found in scene pages.");
+                return;
+            }
+
+            ChangePage(id);
+        }
+
+        private PageId TryFindPageIdByName(string pageIdName)
+        {
+            if (allPages == null || allPages.Length == 0)
+            {
+                SetAllPages();
+            }
+
+            if (allPages == null || allPages.Length == 0)
+            {
+                return null;
+            }
+
+            foreach (UIPage page in allPages)
+            {
+                if (page == null)
+                {
+                    continue;
+                }
+
+                PageId id = page.PageId;
+                if (id != null && id.name == pageIdName)
+                {
+                    return id;
+                }
+            }
+
+            return null;
         }
 
         /// <summary>

@@ -1,5 +1,4 @@
 using System;
-using Neo;
 using Neo.Audio;
 using Neo.Level;
 using Neo.Shop;

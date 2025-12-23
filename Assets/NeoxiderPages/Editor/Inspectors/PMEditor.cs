@@ -3,11 +3,10 @@ using Neo.Editor;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEngine;
-using Neo.Pages;
 
 namespace Neo.Pages.Editor
 {
-    [CustomEditor(typeof(PM))] 
+    [CustomEditor(typeof(PM))]
     public sealed class PMEditor : CustomEditorBase
     {
         private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
@@ -25,10 +24,11 @@ namespace Neo.Pages.Editor
         private SerializedProperty refreshPagesInEditorProp;
         private SerializedProperty editorActivePageIdProp;
         private SerializedProperty autoSelectEditorPageProp;
+        private SerializedProperty integrateWithGMProp;
 
-        private int startupSelectMode; // 0 dropdown, 1 asset
-        private int ignoredSelectMode; // 0 dropdown, 1 asset
-        private int editorSelectMode; // 0 buttons, 1 dropdown, 2 asset
+        private int startupSelectMode;
+        private int ignoredSelectMode; 
+        private int editorSelectMode; 
 
         private ReorderableList ignoredList;
 
@@ -46,6 +46,7 @@ namespace Neo.Pages.Editor
             refreshPagesInEditorProp = serializedObject.FindProperty("refreshPagesInEditor");
             editorActivePageIdProp = serializedObject.FindProperty("editorActivePageId");
             autoSelectEditorPageProp = serializedObject.FindProperty("autoSelectEditorPage");
+            integrateWithGMProp = serializedObject.FindProperty("integrateWithGM");
 
             ignoredList = new ReorderableList(serializedObject, ignoredPageIdsProp, true, true, true, true);
             ignoredList.drawHeaderCallback =
@@ -67,6 +68,12 @@ namespace Neo.Pages.Editor
             EditorGUILayout.LabelField("Runtime", EditorStyles.boldLabel);
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
+                if (integrateWithGMProp != null)
+                {
+                    EditorGUILayout.PropertyField(integrateWithGMProp, new GUIContent("Integrate With GM"));
+                    EditorGUILayout.Space(4);
+                }
+
                 EditorGUILayout.LabelField("Startup Page", EditorStyles.miniBoldLabel);
                 DrawStartupSelector();
             }
