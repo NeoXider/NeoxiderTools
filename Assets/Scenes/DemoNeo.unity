@@ -939,17 +939,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 28863501}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &28863503 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 28863501}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1001 &29830147
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1167,17 +1156,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &66883581 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2837091364059585844, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 645565882}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 645565884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &78374208 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 63711135587982160, guid: 1ba88e30c814ff648a6485eb2e6eaf3e, type: 3}
@@ -1454,11 +1432,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 88700914}
+  _zeroText: 1
   timeFormat: 10
   startAddText: 'd h m = '
   endAddText: .
   separator: ':'
-  text: {fileID: 88700914}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &88700916
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1749,11 +1731,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 105004296}
+  _zeroText: 1
   timeFormat: 11
   startAddText: 'd h m s = '
   endAddText: .
   separator: ':'
-  text: {fileID: 105004296}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &105004298
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -2177,11 +2163,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9ef681d121903a348ade07503b9dec30, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  textMesh: {fileID: 1276511350}
-  logTypesToDisplay: 0000000004000000
+  logTypeFilter: 3
   addText: 1
   checkExistingErrors: 1
+  showScriptPath: 0
   errorText: 
+  textMesh: {fileID: 1276511350}
 --- !u!114 &181493553
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2228,6 +2215,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 726312737}
     m_Modifications:
+    - target: {fileID: 2021384429563325320, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
+      propertyPath: m_Name
+      value: WheelFortune
+      objectReference: {fileID: 0}
     - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
       propertyPath: m_AnchorMax.x
       value: 0.5
@@ -2291,30 +2282,6 @@ PrefabInstance:
     - target: {fileID: 249155000453192206, guid: b586f6613fd864343ad741c9b65159fd, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -56
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_AnchorMax.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_AnchorMin.y
-      value: 0.5
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6651754068867186819, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_AnchoredPosition.y
-      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 2191476699462499129, guid: b586f6613fd864343ad741c9b65159fd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -2419,10 +2386,6 @@ PrefabInstance:
     - target: {fileID: 4235943721614420806, guid: b586f6613fd864343ad741c9b65159fd, type: 3}
       propertyPath: m_AnchoredPosition.y
       value: -56
-      objectReference: {fileID: 0}
-    - target: {fileID: 2021384429563325320, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
-      propertyPath: m_Name
-      value: WheelFortune
       objectReference: {fileID: 0}
     - target: {fileID: 5478017442573318336, guid: b586f6613fd864343ad741c9b65159fd, type: 3}
       propertyPath: m_AnchoredPosition.y
@@ -3281,13 +3244,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a468bb59bc985c943bdc60b1768e6e76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _button: {fileID: 250318898}
-  _pageType: 0
-  _change: 1
-  _switchLastPage: 1
-  _textPage: {fileID: 1142716708}
+  intecactable: 1
+  _imageTarget: {fileID: 250318899}
+  action: 0
+  targetPageId: {fileID: 0}
+  _canSwitchPage: 1
+  _executeState: 0
+  _useAnimImage: 1
+  _timeAnimImage: 0.3
+  _scaleAnim: -0.15
   _changeText: 1
-  _pagesManager: {fileID: 630013916}
+  _textPage: {fileID: 1142716708}
+  OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &250318898
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5564,11 +5534,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 601501196}
+  _zeroText: 1
   timeFormat: 6
   startAddText: 'h m = '
   endAddText: .
   separator: ':'
-  text: {fileID: 601501196}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &601501198
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5649,7 +5623,7 @@ GameObject:
   - component: {fileID: 630013917}
   - component: {fileID: 630013916}
   m_Layer: 0
-  m_Name: PagesManager
+  m_Name: PM
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5667,25 +5641,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5d25ac11a6864942a7c2fd53e7def0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  activPage: {fileID: 0}
-  lastPage: {fileID: 0}
-  _pages:
-  - {fileID: 28863503}
-  - {fileID: 645565883}
-  - {fileID: 759321972}
-  - {fileID: 872123702}
-  - {fileID: 1355681234}
-  - {fileID: 1520079863}
-  - {fileID: 1884532509}
-  - {fileID: 2011595693}
-  _onePageTypes: 0d000000
-  _lastPageActiv: 1
-  _setPageTypes: 02000000
-  _startPage: 2
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
+  integrateWithGM: 1
+  currentUiPage: {fileID: 0}
+  previousUiPage: {fileID: 0}
+  allPages: []
+  startupPage: {fileID: 0}
+  ignoredPageIds: []
   OnPageChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1614057107}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: Neoxider.AudioManager, Assembly-CSharp
         m_MethodName: PlaySound
         m_Mode: 3
@@ -5697,10 +5664,9 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
-  _pageNoneActiv: 0
-  _refresh: 1
-  _activPageEditor: 2
-  _selectPage: 0
+  refreshPagesInEditor: 1
+  editorActivePageId: {fileID: 0}
+  autoSelectEditorPage: 1
 --- !u!4 &630013917
 Transform:
   m_ObjectHideFlags: 0
@@ -5751,7 +5717,7 @@ PrefabInstance:
     - target: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: _pageAnim
       value: 
-      objectReference: {fileID: 66883581}
+      objectReference: {fileID: 0}
     - target: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -5864,17 +5830,6 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 645565889}
   m_SourcePrefab: {fileID: 100100000, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
---- !u!114 &645565883 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 645565882}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 645565884}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &645565884 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4679082002473002408, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
@@ -6695,17 +6650,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5796507784786021798, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 759321969}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &759321972 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 759321969}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &790994075
 GameObject:
   m_ObjectHideFlags: 0
@@ -7238,11 +7182,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 833074806}
+  _zeroText: 1
   timeFormat: 0
   startAddText: 'ms = '
   endAddText: .
   separator: ':'
-  text: {fileID: 833074806}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &833074806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7665,11 +7613,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 863805399}
+  _zeroText: 1
   timeFormat: 2
   startAddText: Timer -
   endAddText: .
   separator: ':'
-  text: {fileID: 863805399}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &863805399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8042,17 +7994,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 5796507784786021798, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 872123699}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &872123702 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 872123699}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &875281159 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 9110949974148812215, guid: 1ba88e30c814ff648a6485eb2e6eaf3e, type: 3}
@@ -8353,11 +8294,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 887594911}
+  _zeroText: 1
   timeFormat: 7
   startAddText: 'h m s = '
   endAddText: .
   separator: ':'
-  text: {fileID: 887594911}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &887594913
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -8967,11 +8912,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef413a1a82b5c5e4688c11efcb2b9257, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _money: 0
-  _levelMoney: 0
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
   _moneySave: Money
-  t_money: []
-  t_levelMoney: []
+  _allMoney: 0
+  _lastChangeMoney: 0
+  _levelMoney: 0
+  _money: 0
+  OnChangeAllMoney:
+    m_PersistentCalls:
+      m_Calls: []
   OnChangedLevelMoney:
     m_PersistentCalls:
       m_Calls: []
@@ -8990,6 +8940,13 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  OnChangeLastMoney:
+    m_PersistentCalls:
+      m_Calls: []
+  st_levelMoney: []
+  st_money: []
+  t_levelMoney: []
+  t_money: []
 --- !u!4 &1065506763
 Transform:
   m_ObjectHideFlags: 0
@@ -9718,17 +9675,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1096929600}
   m_CullTransparentMesh: 1
---- !u!114 &1097223128 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2837091364059585844, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1884532506}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1884532511}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1109302473
 GameObject:
   m_ObjectHideFlags: 0
@@ -10061,7 +10007,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Back
+  m_text: Page
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -10273,139 +10219,56 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d556b4db4708b141bc98cd0d847fe73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  time: 7200
-  updateTime: 0.05
-  increasing: 0
-  activ: 1
-  startOnAwake: 1
-  timer: 0
-  OnChange:
+  duration: 1
+  updateInterval: 0.015
+  countUp: 1
+  useUnscaledTime: 0
+  pauseOnTimeScaleZero: 1
+  looping: 0
+  infiniteDuration: 0
+  useRandomDuration: 0
+  randomDurationMin: 1
+  randomDurationMax: 2
+  autoStart: 1
+  initialProgress: 0
+  isActive: 0
+  currentTime: 0
+  progressImage: {fileID: 0}
+  timeFormat: '{0:F1}s'
+  fillImageNormal: 1
+  enableStartAnimation: 0
+  startAnimationScale: 1.2
+  startAnimationDuration: 0.2
+  OnTimerStarted:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 833074805}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1734887210}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1843538809}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 601501197}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 887594912}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1854706079}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 88700915}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 105004297}
-        m_TargetAssemblyTypeName: Neoxider.TimeToText, Assembly-CSharp
-        m_MethodName: UpdateText
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnProgress:
+      m_Calls: []
+  OnTimerPaused:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1732900632}
-        m_TargetAssemblyTypeName: UnityEngine.UI.Slider, UnityEngine.UI
-        m_MethodName: set_value
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 863805399}
-        m_TargetAssemblyTypeName: TMPro.TMP_Text, Unity.TextMeshPro
-        m_MethodName: set_alpha
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnFinish:
+      m_Calls: []
+  OnTimerResumed:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTimerStopped:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnProgressChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnProgressPercentChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTimerCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  enableMilestones: 0
+  milestonePercentages:
+  - 0.25
+  - 0.5
+  - 0.75
+  OnMilestoneReached:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &1243480678
@@ -10453,11 +10316,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef413a1a82b5c5e4688c11efcb2b9257, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _money: 5000
-  _levelMoney: 0
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
   _moneySave: Money
-  t_money: []
-  t_levelMoney: []
+  _allMoney: 0
+  _lastChangeMoney: 0
+  _levelMoney: 0
+  _money: 5000
+  OnChangeAllMoney:
+    m_PersistentCalls:
+      m_Calls: []
   OnChangedLevelMoney:
     m_PersistentCalls:
       m_Calls: []
@@ -10476,6 +10344,13 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
+  OnChangeLastMoney:
+    m_PersistentCalls:
+      m_Calls: []
+  st_levelMoney: []
+  st_money: []
+  t_levelMoney: []
+  t_money: []
 --- !u!1 &1254392657 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6271894678689706946, guid: cd3290feea087f54298dd68e561735bd, type: 3}
@@ -10616,11 +10491,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _text: {fileID: 1275749490}
-  _separator: .
-  _decimal: 2
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
+  text: {fileID: 1275749490}
+  separator: .
+  decimal: 0
   startAdd: 'Money: '
   endAdd: $
+  indexOffset: 0
+  _timeAnim: 0.25
+  _ease: 6
+  _onEnableAnim: 1
+  currentNum: 0
 --- !u!222 &1275749492
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -11356,7 +11239,7 @@ PrefabInstance:
     - target: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: _pageAnim
       value: 
-      objectReference: {fileID: 1355681230}
+      objectReference: {fileID: 0}
     - target: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -11481,17 +11364,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4679082002473002408, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 1355681224}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1355681230 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2837091364059585844, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1355681224}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1355681229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!95 &1355681231
 Animator:
   serializedVersion: 5
@@ -11527,17 +11399,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _animator: {fileID: 1355681231}
   _startAnimTrigger: ScaleUp
---- !u!114 &1355681234 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1355681224}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1355681229}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &1355681237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11551,6 +11412,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _clipType: 2
+  _clips: []
+  _useRandomClip: 0
   _playOnAwake: 1
   _volume: 1
 --- !u!1 &1406338001
@@ -11739,11 +11602,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ed77df36ec163f64abcda80cc1877a32, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _text: {fileID: 1432302162}
-  _separator: .
-  _decimal: 2
+  OnTextUpdated:
+    m_PersistentCalls:
+      m_Calls: []
+  text: {fileID: 1432302162}
+  separator: .
+  decimal: 0
   startAdd: 'Money: '
   endAdd: 
+  indexOffset: 0
+  _timeAnim: 0.25
+  _ease: 6
+  _onEnableAnim: 1
+  currentNum: 0
 --- !u!114 &1432302162
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12361,15 +12232,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 686320238}
-  _followMode: 1
-  _followPosition: 0
-  _smoothSpeed: 0.125
-  _offset: {x: 0, y: 0, z: 0}
-  _followRotation: 1
-  _rotationSpeed: 5
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: 0
+  target: {fileID: 0}
+  followMode: 0
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 5
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!114 &1511207646
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12499,7 +12409,7 @@ PrefabInstance:
     - target: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: _pageAnim
       value: 
-      objectReference: {fileID: 1520079862}
+      objectReference: {fileID: 0}
     - target: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -12628,28 +12538,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4679082002473002408, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 1520079857}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1520079862 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2837091364059585844, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1520079857}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1520079861}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &1520079863 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1520079857}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1520079861}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!95 &1520079864
 Animator:
   serializedVersion: 5
@@ -13241,82 +13129,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1613839667}
   m_CullTransparentMesh: 1
---- !u!1001 &1614057105
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    serializedVersion: 3
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 793452358968983598, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_Name
-      value: AudioManager
-      objectReference: {fileID: 0}
-    - target: {fileID: 3038646004930012986, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_Resource
-      value: 
-      objectReference: {fileID: 8300000, guid: 9cae0211c9233c848aa13b9cfb0d85a2, type: 3}
-    - target: {fileID: 3038646004930012986, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_audioClip
-      value: 
-      objectReference: {fileID: 8300000, guid: 9cae0211c9233c848aa13b9cfb0d85a2, type: 3}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 53.703156
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 2045.7827
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -12.2912445
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 6396627484497859106, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-    m_RemovedGameObjects: []
-    m_AddedGameObjects: []
-    m_AddedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
---- !u!114 &1614057107 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 4910800967612368572, guid: 71962b1c59c3bb54cad4e1d203f916c3, type: 3}
-  m_PrefabInstance: {fileID: 1614057105}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a6bc69079c061d74f881f854b64514a2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1632257795
 GameObject:
   m_ObjectHideFlags: 0
@@ -13367,11 +13179,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 1632257798}
+  _zeroText: 1
   timeFormat: 2
   startAddText: 'Timer = '
   endAddText: .
   separator: ':'
-  text: {fileID: 1632257798}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1632257798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13702,15 +13518,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 686320238}
-  _followMode: 1
-  _followPosition: 0
-  _smoothSpeed: 0.125
-  _offset: {x: 0, y: 0, z: 0}
-  _followRotation: 1
-  _rotationSpeed: 5
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: 0
+  target: {fileID: 0}
+  followMode: 0
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 5
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!114 &1659511209
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14155,11 +14010,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 1734887209}
+  _zeroText: 1
   timeFormat: 2
   startAddText: 's ms = '
   endAddText: .
   separator: ':'
-  text: {fileID: 1734887209}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1734887211
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15090,11 +14949,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 1843538808}
+  _zeroText: 1
   timeFormat: 4
   startAddText: 'm s = '
   endAddText: .
   separator: ':'
-  text: {fileID: 1843538808}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1843538810
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15242,11 +15105,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 1854706078}
+  _zeroText: 1
   timeFormat: 9
   startAddText: 'd h = '
   endAddText: .
   separator: ':'
-  text: {fileID: 1854706078}
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1854706080
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15454,7 +15321,7 @@ PrefabInstance:
     - target: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: _pageAnim
       value: 
-      objectReference: {fileID: 1097223128}
+      objectReference: {fileID: 0}
     - target: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -15569,17 +15436,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6229598031109119155, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 1884532506}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1884532509 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 1884532506}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1884532511}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &1884532510 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6770343019058122561, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
@@ -15713,15 +15569,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 686320238}
-  _followMode: 1
-  _followPosition: 0
-  _smoothSpeed: 0.125
-  _offset: {x: 0, y: 0, z: 0}
-  _followRotation: 1
-  _rotationSpeed: 3
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: -135
+  target: {fileID: 0}
+  followMode: 0
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 5
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!1 &1962163026
 GameObject:
   m_ObjectHideFlags: 0
@@ -15851,15 +15746,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f051b1fc6865b04f98e7e37f0935f3f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 686320238}
-  _followMode: 1
-  _followPosition: 0
-  _smoothSpeed: 0.125
-  _offset: {x: 0, y: 0, z: 0}
-  _followRotation: 1
-  _rotationSpeed: 3
-  _rotationOffset3D: {x: 0, y: 0, z: 0}
-  _rotationOffset2D: -45
+  target: {fileID: 0}
+  followMode: 0
+  followPosition: 1
+  positionSmoothMode: 1
+  positionSpeed: 5
+  offset: {x: 0, y: 0, z: 0}
+  deadzone:
+    enabled: 0
+    radius: 1
+  distanceControl:
+    activationDistance: 0
+    stoppingDistance: 0
+  limitX:
+    enabled: 0
+    min: -10
+    max: 10
+  limitY:
+    enabled: 0
+    min: -10
+    max: 10
+  limitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  followRotation: 1
+  rotationSmoothMode: 2
+  rotationSpeed: 180
+  rotationOffset3D: {x: 0, y: 0, z: 0}
+  rotationOffset2D: 0
+  rotationLimitX:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitY:
+    enabled: 0
+    min: -10
+    max: 10
+  rotationLimitZ:
+    enabled: 0
+    min: -10
+    max: 10
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  showDebugGizmos: 1
 --- !u!1001 &2011595686
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -15903,7 +15837,7 @@ PrefabInstance:
     - target: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: _pageAnim
       value: 
-      objectReference: {fileID: 2011595692}
+      objectReference: {fileID: 0}
     - target: {fileID: 6380429029190850716, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -16033,28 +15967,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 4679082002473002408, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
   m_PrefabInstance: {fileID: 2011595686}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &2011595692 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 2837091364059585844, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 2011595686}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2011595691}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &2011595693 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6215602225964809042, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
-  m_PrefabInstance: {fileID: 2011595686}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2011595691}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: da8854f6edb488448887ab4a5c8f2ed0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!95 &2011595694
 Animator:
   serializedVersion: 5
@@ -18612,5 +18524,4 @@ SceneRoots:
   - {fileID: 37153786}
   - {fileID: 979581753}
   - {fileID: 630013917}
-  - {fileID: 1614057105}
   - {fileID: 686320238}

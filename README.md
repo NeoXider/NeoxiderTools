@@ -72,6 +72,8 @@
 
 📖 **[Полная документация →](Assets/Neoxider/Docs/README.md)**
 
+📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** — краткий обзор структуры и модулей
+
 ### Основные модули (краткий обзор)
 
 #### <a name="tools-инструменты-и-утилиты"></a>Tools — Инструменты и утилиты
@@ -222,10 +224,10 @@
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.5.1`):
+Пример установки **конкретной версии** (закрепление на тег; актуальный на сейчас — `v5.5.2`):
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.1
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.2
 ```
 
 Если хотите попробовать новые функции — установите библиотеку из ветки `demo`:
@@ -246,14 +248,32 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
 ### 1) Установить базовый пакет NeoxiderTools
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.1
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.2
 ```
 
 ### 2) Установить Pages
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.2
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/NeoxiderPages#v1.0.4
 ```
+
+### Быстрый вызов страниц по имени
+
+Если удобнее переключать страницы по строке:
+
+```csharp
+UIKit.ShowPage("PageEnd");
+// или
+PM.I.ChangePageByName("PageEnd");
+```
+
+### Авто‑подписка на состояния игры
+
+`PageSubscriber` может автоматически искать `PageId` по стандартным именам:
+`PageGame`, `PageWin`, `PageLose`, `PageEnd`.
+
+- Включено по умолчанию (`autoResolvePageIds = true`).
+- Можно переопределить имена в инспекторе.
 
 ## <a name="быстрый-старт"></a>Быстрый старт
 

@@ -10,6 +10,14 @@ namespace Neo.Pages
     {
         [SerializeField] private PM _pm;
         [SerializeField] private PageId gamePageId;
+        [SerializeField] private PageId winPageId;
+        [SerializeField] private PageId losePageId;
+        [SerializeField] private PageId endPageId;
+        [SerializeField] private bool autoResolvePageIds = true;
+        [SerializeField] private string gamePageName = "PageGame";
+        [SerializeField] private string winPageName = "PageWin";
+        [SerializeField] private string losePageName = "PageLose";
+        [SerializeField] private string endPageName = "PageEnd";
 
         private void Awake()
         {
@@ -18,13 +26,80 @@ namespace Neo.Pages
 
         private void Init()
         {
-            G.OnStart.AddListener(() =>
+            if (autoResolvePageIds)
             {
-                if (gamePageId != null)
+                ResolvePageIds();
+            }
+
+            G.OnStart.AddListener(() => ChangePage(gamePageId));
+            G.OnRestart.AddListener(() => ChangePage(gamePageId));
+            G.OnWin.AddListener(() => ChangePage(winPageId));
+            G.OnLose.AddListener(() => ChangePage(losePageId));
+            G.OnEnd.AddListener(() => ChangePage(endPageId));
+        }
+
+        private void ChangePage(PageId pageId)
+        {
+            if (pageId == null)
+            {
+                return;
+            }
+
+            PM pm = _pm != null ? _pm : PM.I;
+            if (pm == null)
+            {
+                return;
+            }
+
+            pm.ChangePage(pageId);
+        }
+
+        private void ResolvePageIds()
+        {
+            if (gamePageId == null)
+            {
+                gamePageId = FindPageIdByName(gamePageName);
+            }
+
+            if (winPageId == null)
+            {
+                winPageId = FindPageIdByName(winPageName);
+            }
+
+            if (losePageId == null)
+            {
+                losePageId = FindPageIdByName(losePageName);
+            }
+
+            if (endPageId == null)
+            {
+                endPageId = FindPageIdByName(endPageName);
+            }
+        }
+
+        private static PageId FindPageIdByName(string pageIdName)
+        {
+            if (string.IsNullOrWhiteSpace(pageIdName))
+            {
+                return null;
+            }
+
+            UIPage[] pages = Resources.FindObjectsOfTypeAll<UIPage>();
+            foreach (UIPage page in pages)
+            {
+                if (page == null || !page.gameObject.scene.IsValid())
                 {
-                    PM.I.ChangePage(gamePageId);
+                    continue;
                 }
-            });
+
+                PageId id = page.PageId;
+                if (id != null && id.name == pageIdName)
+                {
+                    return id;
+                }
+            }
+
+            return null;
         }
     }
 }

@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.5.0**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.5.2**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
@@ -157,28 +157,228 @@ Assets/NeoxiderPages/
 
 - `Assets/Neoxider/Scripts/Cards/Editor/DeckConfigEditor.cs` — редактор/инспектор DeckConfig.
 
-### Extensions (`Assets/Neoxider/Scripts/Extensions/`)
+### Extensions (`Assets/Neoxider/Scripts/Extensions/`) — подробности (красивое перечисление)
 
-- `Assets/Neoxider/Scripts/Extensions/AudioExtensions.cs` — расширения аудио.
-- `Assets/Neoxider/Scripts/Extensions/ColorExtension.cs` — расширения Color.
-- `Assets/Neoxider/Scripts/Extensions/ComponentExtensions.cs` — расширения Component.
-- `Assets/Neoxider/Scripts/Extensions/CoroutineExtensions.cs` — расширения корутин.
-- `Assets/Neoxider/Scripts/Extensions/DebugGizmos.cs` — debug gizmos helpers.
-- `Assets/Neoxider/Scripts/Extensions/EnumerableExtensions.cs` — расширения коллекций.
-- `Assets/Neoxider/Scripts/Extensions/Enums.cs` — общие enum’ы.
-- `Assets/Neoxider/Scripts/Extensions/GameObjectArrayExtensions.cs` — расширения массивов GameObject.
-- `Assets/Neoxider/Scripts/Extensions/LayoutExtensions.cs` — расширения layout.
-- `Assets/Neoxider/Scripts/Extensions/LayoutUtils.cs` — утилиты layout.
-- `Assets/Neoxider/Scripts/Extensions/ObjectExtensions.cs` — расширения object/UnityEngine.Object.
-- `Assets/Neoxider/Scripts/Extensions/PlayerPrefsUtils.cs` — утилиты PlayerPrefs.
-- `Assets/Neoxider/Scripts/Extensions/PrimitiveExtensions.cs` — расширения примитивов (в т.ч. FormatTime).
-- `Assets/Neoxider/Scripts/Extensions/RandomExtensions.cs` — random helpers.
-- `Assets/Neoxider/Scripts/Extensions/RandomShapeExtensions.cs` — random shape helpers.
-- `Assets/Neoxider/Scripts/Extensions/ScreenExtensions.cs` — расширения экрана.
-- `Assets/Neoxider/Scripts/Extensions/Shapes.cs` — геометрические helpers.
-- `Assets/Neoxider/Scripts/Extensions/StringExtension.cs` — расширения строк.
-- `Assets/Neoxider/Scripts/Extensions/TransformExtensions.cs` — расширения Transform.
-- `Assets/Neoxider/Scripts/Extensions/UIUtils.cs` — UI утилиты.
+#### `AudioExtensions.cs` — плавные изменения громкости `AudioSource`
+- `AudioExtensions.FadeTo` — плавно меняет громкость `AudioSource` до целевого значения за время.
+- `AudioExtensions.FadeOut` — плавно снижает громкость до нуля и останавливает источник.
+- `AudioExtensions.FadeIn` — плавно повышает громкость и запускает источник при необходимости.
+
+#### `ColorExtension.cs` — утилиты модификации и форматирования `Color`
+- `ColorExtension.WithAlpha` — возвращает цвет с новым альфа‑каналом.
+- `ColorExtension.With` — возвращает цвет с выборочной заменой RGBA‑каналов.
+- `ColorExtension.WithRGB` — возвращает цвет с заменой RGB‑каналов.
+- `ColorExtension.Darken` — затемняет цвет на заданную величину.
+- `ColorExtension.Lighten` — осветляет цвет на заданную величину.
+- `ColorExtension.ToHexString` — конвертирует `Color` в HEX‑строку.
+
+#### `ComponentExtensions.cs` — утилиты для компонентов и иерархий
+- `ComponentExtensions.GetOrAdd<T>` — возвращает компонент `T` или добавляет его к объекту.
+- `ComponentExtensions.GetPath` — возвращает путь к объекту в иерархии.
+
+#### `CoroutineExtensions.cs` — запуск действий по времени и условиям
+- `CoroutineExtensions.Delay(MonoBehaviour)` — запускает действие через задержку на объекте.
+- `CoroutineExtensions.WaitUntil(MonoBehaviour)` — запускает действие, когда условие станет истинным.
+- `CoroutineExtensions.WaitWhile(MonoBehaviour)` — запускает действие, когда условие станет ложным.
+- `CoroutineExtensions.DelayFrames(MonoBehaviour)` — запускает действие через указанное число кадров.
+- `CoroutineExtensions.NextFrame(MonoBehaviour)` — запускает действие на следующем кадре.
+- `CoroutineExtensions.EndOfFrame(MonoBehaviour)` — запускает действие в конце кадра.
+- `CoroutineExtensions.RepeatUntil(MonoBehaviour)` — повторяет действие, пока условие не станет истинным.
+- `CoroutineExtensions.Delay(GameObject)` — запускает действие через задержку на объекте.
+- `CoroutineExtensions.WaitUntil(GameObject)` — запускает действие, когда условие станет истинным на объекте.
+- `CoroutineExtensions.WaitWhile(GameObject)` — запускает действие, когда условие станет ложным на объекте.
+- `CoroutineExtensions.DelayFrames(GameObject)` — запускает действие через число кадров на объекте.
+- `CoroutineExtensions.Delay` — запускает действие через задержку без контекста объекта.
+- `CoroutineExtensions.WaitUntil` — запускает действие при выполнении условия без контекста объекта.
+- `CoroutineExtensions.WaitWhile` — запускает действие при прекращении условия без контекста объекта.
+- `CoroutineExtensions.DelayFrames` — запускает действие через число кадров без контекста объекта.
+- `CoroutineExtensions.Start` — запускает корутину и возвращает `CoroutineHandle`.
+
+#### `DebugGizmos.cs` — отладочная отрисовка Gizmos
+- `DebugGizmos.DrawBounds` — рисует гизмо‑контуры `Bounds`.
+- `DebugGizmos.DrawAveragePosition` — рисует точку среднего положения.
+- `DebugGizmos.DrawLineToClosest` — рисует линию к ближайшему объекту.
+- `DebugGizmos.DrawConnections` — рисует линии от точки к набору целей.
+
+#### `EnumerableExtensions.cs` — удобные операции над коллекциями
+- `EnumerableExtensions.ForEach` — выполняет действие для каждого элемента последовательности.
+- `EnumerableExtensions.GetSafe` — безопасно возвращает элемент по индексу или значение по умолчанию.
+- `EnumerableExtensions.GetWrapped` — возвращает элемент по индексу с циклическим обходом.
+- `EnumerableExtensions.IsValidIndex` — проверяет допустимость индекса для коллекции.
+- `EnumerableExtensions.ToIndexedString` — формирует строку с индексами элементов.
+- `EnumerableExtensions.IsNullOrEmpty` — проверяет последовательность на null или пустоту.
+- `EnumerableExtensions.ToStringJoined` — склеивает элементы в строку через разделитель.
+- `EnumerableExtensions.FindDuplicates` — возвращает повторяющиеся элементы.
+- `EnumerableExtensions.ToDebugString` — формирует отладочную строку списка.
+- `EnumerableExtensions.CountEmptyElements` — подсчитывает пустые элементы массива.
+
+#### `GameObjectArrayExtensions.cs` — пакетные операции для GameObject/Component
+- `GameObjectArrayExtensions.SetActiveAll(IEnumerable<GameObject>)` — массово включает/выключает объекты.
+- `GameObjectArrayExtensions.SetActiveAll(IEnumerable<T>)` — массово включает/выключает объекты по компонентам.
+- `GameObjectArrayExtensions.SetActiveRange` — включает/выключает объекты до заданного индекса.
+- `GameObjectArrayExtensions.SetActiveAtIndex(IList<GameObject>)` — включает/выключает объект по индексу списка.
+- `GameObjectArrayExtensions.SetActiveAtIndex(IList<T>)` — включает/выключает объект по индексу списка компонентов.
+- `GameObjectArrayExtensions.SetActiveAtIndex(IEnumerable<T>)` — включает/выключает объект по индексу перечисления компонентов.
+- `GameObjectArrayExtensions.SetActiveAtIndex(IEnumerable<GameObject>)` — включает/выключает объект по индексу перечисления.
+- `GameObjectArrayExtensions.DestroyAll(IEnumerable<GameObject>)` — уничтожает все объекты коллекции.
+- `GameObjectArrayExtensions.DestroyAll(IEnumerable<T>)` — уничтожает объекты коллекции компонентов.
+- `GameObjectArrayExtensions.GetActiveObjects` — возвращает только активные объекты.
+- `GameObjectArrayExtensions.GetComponentsFromAll<T>` — собирает компоненты `T` из всех объектов.
+- `GameObjectArrayExtensions.GetFirstComponentFromAll<T>` — возвращает первый найденный компонент `T`.
+- `GameObjectArrayExtensions.SetPositionAll` — задаёт позицию всем объектам.
+- `GameObjectArrayExtensions.FindClosest(IEnumerable<GameObject>)` — находит ближайший объект к позиции.
+- `GameObjectArrayExtensions.FindClosest(IEnumerable<T>)` — находит ближайший компонент к позиции.
+- `GameObjectArrayExtensions.WithinDistance(IEnumerable<GameObject>)` — фильтрует объекты по дистанции.
+- `GameObjectArrayExtensions.WithinDistance(IEnumerable<T>)` — фильтрует компоненты по дистанции.
+- `GameObjectArrayExtensions.SetParentAll(IEnumerable<GameObject>)` — массово задаёт родителя объектам.
+- `GameObjectArrayExtensions.SetParentAll(IEnumerable<T>)` — массово задаёт родителя компонентам.
+- `GameObjectArrayExtensions.GetAveragePosition(IEnumerable<GameObject>)` — вычисляет среднюю позицию объектов.
+- `GameObjectArrayExtensions.GetAveragePosition(IEnumerable<T>)` — вычисляет среднюю позицию компонентов.
+- `GameObjectArrayExtensions.GetCombinedBounds(IEnumerable<GameObject>)` — объединяет рендер‑bounds объектов.
+- `GameObjectArrayExtensions.GetCombinedBounds(IEnumerable<T>)` — объединяет рендер‑bounds объектов компонентов.
+
+#### `LayoutExtensions.cs` — раскладки трансформов в пространстве
+- `LayoutExtensions.ArrangeInCircle(Transform)` — размещает объект по окружности с индексом.
+- `LayoutExtensions.ArrangeInLine` — размещает элементы по линии.
+- `LayoutExtensions.ArrangeInGrid` — размещает элементы по сетке.
+- `LayoutExtensions.ArrangeInCircle(IEnumerable<Transform>)` — размещает элементы по окружности.
+- `LayoutExtensions.ArrangeInCircle(Transform pivot)` — размещает элементы вокруг опорного трансформа.
+- `LayoutExtensions.ArrangeInGrid3D` — размещает элементы по 3D‑сетке.
+- `LayoutExtensions.ArrangeInCircle3D` — размещает элементы по окружности в 3D‑плоскости.
+- `LayoutExtensions.ArrangeOnSphereSurface` — размещает элементы на поверхности сферы.
+- `LayoutExtensions.ArrangeInSpiral` — размещает элементы по спирали.
+- `LayoutExtensions.ArrangeOnSineWave` — размещает элементы по синусоиде.
+
+#### `LayoutUtils.cs` — генераторы наборов позиций
+- `LayoutUtils.GetLine` — генерирует позиции на линии.
+- `LayoutUtils.GetGrid` — генерирует позиции на 2D‑сетке.
+- `LayoutUtils.GetCircle` — генерирует позиции по окружности.
+- `LayoutUtils.GetGrid3D` — генерирует позиции на 3D‑сетке.
+- `LayoutUtils.GetCircle3D` — генерирует позиции по окружности в 3D‑плоскости.
+- `LayoutUtils.GetSphereSurface` — генерирует позиции по поверхности сферы.
+- `LayoutUtils.GetSpiral` — генерирует позиции по спирали.
+- `LayoutUtils.GetSineWave` — генерирует позиции по синусоиде.
+
+#### `ObjectExtensions.cs` — безопасность и утилиты для `UnityEngine.Object`
+- `ObjectExtensions.SafeDestroy` — безопасно уничтожает объект с выбором `Destroy`/`DestroyImmediate`.
+- `ObjectExtensions.IsValid` — проверяет объект на null и валидность Unity‑ссылки.
+- `ObjectExtensions.GetName` — возвращает имя объекта с защитой от null.
+- `ObjectExtensions.SetName` — задаёт имя объекта с защитой от null.
+
+#### `PlayerPrefsUtils.cs` — сохранение массивов в `PlayerPrefs`
+- `PlayerPrefsUtils.SetIntArray` — сохраняет массив int в `PlayerPrefs`.
+- `PlayerPrefsUtils.GetIntArray` — читает массив int из `PlayerPrefs`.
+- `PlayerPrefsUtils.SetFloatArray` — сохраняет массив float в `PlayerPrefs`.
+- `PlayerPrefsUtils.GetFloatArray` — читает массив float из `PlayerPrefs`.
+- `PlayerPrefsUtils.SetStringArray` — сохраняет массив string в `PlayerPrefs`.
+- `PlayerPrefsUtils.GetStringArray` — читает массив string из `PlayerPrefs`.
+- `PlayerPrefsUtils.SetBoolArray` — сохраняет массив bool в `PlayerPrefs`.
+- `PlayerPrefsUtils.GetBoolArray` — читает массив bool из `PlayerPrefs`.
+
+#### `PrimitiveExtensions.cs` — форматирование и нормализация примитивов
+- `PrimitiveExtensions.ToInt(bool)` — конвертирует bool в 1/0.
+- `PrimitiveExtensions.RoundToDecimal` — округляет float до заданных знаков.
+- `PrimitiveExtensions.FormatTime` — форматирует секунды в строку по выбранному формату.
+- `PrimitiveExtensions.FormatWithSeparator(float)` — форматирует число с разделителем и точностью.
+- `PrimitiveExtensions.NormalizeToUnit` — нормализует значение в диапазон [0..1] по умолчанию.
+- `PrimitiveExtensions.NormalizeToRange` — нормализует значение в диапазон [-1..1] по умолчанию.
+- `PrimitiveExtensions.NormalizeToRange(float,min,max)` — нормализует значение в диапазон [-1..1] по заданным границам.
+- `PrimitiveExtensions.NormalizeToUnit(float,min,max)` — нормализует значение в диапазон [0..1] по заданным границам.
+- `PrimitiveExtensions.Denormalize` — переводит [0..1] в заданный диапазон.
+- `PrimitiveExtensions.Remap` — переносит значение из одного диапазона в другой.
+- `PrimitiveExtensions.ToBool(int)` — конвертирует int в bool (0=false).
+- `PrimitiveExtensions.FormatWithSeparator(int)` — форматирует int с разделителем тысяч.
+
+#### `RandomExtensions.cs` — случайности и вероятности
+- `RandomExtensions.GetRandomElement` — возвращает случайный элемент списка.
+- `RandomExtensions.Shuffle` — перемешивает список на месте или создаёт копию.
+- `RandomExtensions.GetRandomElements` — возвращает указанное число случайных элементов.
+- `RandomExtensions.GetRandomIndex` — возвращает случайный индекс коллекции.
+- `RandomExtensions.Chance` — возвращает true по вероятности.
+- `RandomExtensions.Random(bool)` — случайно возвращает true/false, игнорируя вход.
+- `RandomExtensions.RandomBool` — возвращает случайный bool.
+- `RandomExtensions.RandomColor` — возвращает случайный цвет с заданной альфой.
+- `RandomExtensions.GetRandomEnumValue` — возвращает случайное значение enum.
+- `RandomExtensions.GetRandomWeightedIndex` — выбирает индекс по весам.
+- `RandomExtensions.RandomizeBetween(float)` — возвращает значение в диапазоне вокруг числа.
+- `RandomExtensions.RandomizeBetween(int)` — возвращает значение в диапазоне вокруг числа.
+- `RandomExtensions.RandomFromValue(float)` — возвращает случайное значение от заданного старта до исходного.
+- `RandomExtensions.RandomFromValue(int)` — возвращает случайное значение от заданного старта до исходного.
+- `RandomExtensions.RandomToValue(float)` — возвращает случайное значение от исходного до заданного конца.
+- `RandomExtensions.RandomToValue(int)` — возвращает случайное значение от исходного до заданного конца.
+- `RandomExtensions.RandomRange(Vector2)` — возвращает случайное число в диапазоне вектора.
+- `RandomExtensions.RandomRange(Vector2Int)` — возвращает случайное число в диапазоне целочисленного вектора.
+
+#### `RandomShapeExtensions.cs` — генерация случайных точек в формах
+- `RandomShapeExtensions.RandomPointInBounds(Bounds)` — возвращает случайную точку внутри `Bounds`.
+- `RandomShapeExtensions.RandomPointOnBounds(Bounds)` — возвращает случайную точку на границе `Bounds`.
+- `RandomShapeExtensions.RandomPointInCircle` — возвращает случайную точку внутри круга.
+- `RandomShapeExtensions.RandomPointOnCircle` — возвращает случайную точку на окружности.
+- `RandomShapeExtensions.RandomPointInSphere` — возвращает случайную точку внутри сферы.
+- `RandomShapeExtensions.RandomPointOnSphere` — возвращает случайную точку на сфере.
+- `RandomShapeExtensions.RandomPointInBounds(Collider)` — возвращает случайную точку внутри 3D‑коллайдера.
+- `RandomShapeExtensions.RandomPointInBounds(Collider2D)` — возвращает случайную точку внутри 2D‑коллайдера.
+
+#### `ScreenExtensions.cs` — проверка видимости и границ экрана
+- `ScreenExtensions.IsOnScreen` — проверяет, находится ли позиция в пределах экрана.
+- `ScreenExtensions.IsOutOfScreen` — проверяет, находится ли позиция вне экрана.
+- `ScreenExtensions.IsOutOfScreenSide` — проверяет, находится ли позиция за конкретной стороной экрана.
+- `ScreenExtensions.GetClosestScreenEdgePoint` — возвращает ближайшую точку на границе экрана.
+- `ScreenExtensions.GetWorldPositionAtScreenEdge` — возвращает мировую позицию на краю экрана.
+- `ScreenExtensions.GetWorldScreenBounds` — возвращает мировые границы экрана на заданной дистанции.
+
+#### `StringExtension.cs` — преобразование и стилизация строк
+- `StringExtension.SplitCamelCase` — разбивает CamelCase на слова.
+- `StringExtension.IsNullOrEmptyAfterTrim` — проверяет строку на пустоту после `Trim`.
+- `StringExtension.ToColor` — парсит HEX‑строку в `Color`.
+- `StringExtension.ToCamelCase` — переводит строку в camelCase.
+- `StringExtension.Truncate` — обрезает строку до длины.
+- `StringExtension.IsNumeric` — проверяет строку на число.
+- `StringExtension.RandomString` — генерирует случайную строку.
+- `StringExtension.Reverse` — разворачивает строку.
+- `StringExtension.ToBool` — парсит строку в bool.
+- `StringExtension.ToInt` — парсит строку в int с значением по умолчанию.
+- `StringExtension.ToFloat` — парсит строку в float с значением по умолчанию.
+- `StringExtension.Bold` — оборачивает строку в тег жирного текста.
+- `StringExtension.Italic` — оборачивает строку в тег курсива.
+- `StringExtension.Size` — оборачивает строку в тег размера.
+- `StringExtension.SetColor` — оборачивает строку в цвет.
+- `StringExtension.Rainbow` — оборачивает строку в радужный градиент.
+- `StringExtension.Gradient` — оборачивает строку в градиент между двумя цветами.
+- `StringExtension.RandomColors` — оборачивает строку в случайные цвета.
+
+#### `TransformExtensions.cs` — позиция, ротация и масштаб `Transform`
+- `TransformExtensions.SetPosition` — задаёт мировую позицию с выборочной заменой осей.
+- `TransformExtensions.AddPosition` — добавляет смещение к мировой позиции.
+- `TransformExtensions.SetLocalPosition` — задаёт локальную позицию с выборочной заменой осей.
+- `TransformExtensions.AddLocalPosition` — добавляет смещение к локальной позиции.
+- `TransformExtensions.SetRotation` — задаёт мировую ротацию через Quaternion или euler.
+- `TransformExtensions.AddRotation` — добавляет мировое вращение через Quaternion или euler.
+- `TransformExtensions.SetLocalRotation` — задаёт локальную ротацию через Quaternion или euler.
+- `TransformExtensions.AddLocalRotation` — добавляет локальное вращение через Quaternion или euler.
+- `TransformExtensions.SetScale` — задаёт локальный масштаб с выборочной заменой осей.
+- `TransformExtensions.AddScale` — добавляет смещение к локальному масштабу.
+- `TransformExtensions.LookAt2D` — поворачивает объект к цели в 2D.
+- `TransformExtensions.SmoothLookAtRoutine` — плавно поворачивает объект к цели в корутине.
+- `TransformExtensions.GetClosest` — возвращает ближайший `Transform` из коллекции.
+- `TransformExtensions.GetChildTransforms` — возвращает массив непосредственных детей.
+- `TransformExtensions.ResetTransform` — сбрасывает мировую позицию/ротацию/масштаб.
+- `TransformExtensions.ResetLocalTransform` — сбрасывает локальную позицию/ротацию/масштаб.
+- `TransformExtensions.CopyFrom` — копирует позицию/ротацию/масштаб из источника.
+- `TransformExtensions.DestroyChildren` — уничтожает всех детей.
+
+#### `UIUtils.cs` — утилиты для UI и Canvas
+- `UIUtils.GetUIElementsUnderCursor` — возвращает UI‑элементы под курсором.
+- `UIUtils.IsPointerOverUI` — проверяет, находится ли курсор над UI.
+- `UIUtils.WorldToCanvasPoint` — переводит мировую позицию в позицию Canvas.
+
+#### `Shapes.cs` — базовые структуры геометрии
+- Файл содержит структуры `Circle` и `Sphere` и не имеет публичных методов.
+
+#### `Enums.cs` — общие enum’ы для разных модулей
+- Файл содержит общие enum’ы и не имеет публичных методов.
+- `Shapes.cs` — файл содержит структуры `Circle` и `Sphere` и не имеет публичных методов.
+- `Enums.cs` — файл содержит общие enum’ы и не имеет публичных методов.
 
 ### GridSystem (`Assets/Neoxider/Scripts/GridSystem/`)
 

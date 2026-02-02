@@ -109,11 +109,13 @@ namespace Neo.Pages
         private void Subscribe()
         {
             UIKit.OnShowPage.AddListener(ChangePage);
+            UIKit.OnShowPageByName.AddListener(ChangePageByName);
         }
 
         private void OnDestroy()
         {
             UIKit.OnShowPage.RemoveListener(ChangePage);
+            UIKit.OnShowPageByName.RemoveListener(ChangePageByName);
             StopGMIntegration();
         }
 

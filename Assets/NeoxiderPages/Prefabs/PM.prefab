@@ -62,6 +62,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
+  integrateWithGM: 1
   currentUiPage: {fileID: 0}
   previousUiPage: {fileID: 0}
   allPages:
