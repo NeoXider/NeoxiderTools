@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.6.0] - Unreleased
+
+### Добавлено
+
+- **Tools/Components/Counter**: универсальный счётчик
+  - Режимы Int/Float, значение по умолчанию 1
+  - Методы Add, Subtract, Multiply, Divide, Set (int/float); Send() по Payload (Counter/Score/Money), Send(value) без изменения счётчика
+  - События по типу: OnValueChangedInt/OnValueChangedFloat, OnSendInt/OnSendFloat (в зависимости от режима), плюс OnValueChanged/OnSend(float)
+  - Опциональное сохранение через SaveProvider по строковому ключу (по умолчанию выключено, как в Money)
+  - Кнопки в инспекторе для всех методов ([Button]/[ButtonAttribute])
+  - Enum'ы CounterValueMode (Int, Float), CounterSendPayload (Counter, Score, Money)
+  - Документация: `Docs/Tools/Components/Counter.md`, запись в `PROJECT_SUMMARY.md`
+
+---
+
 ## [5.5.2] - Unreleased
 
 ### Добавлено

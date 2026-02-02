@@ -4,6 +4,7 @@
 
 ## Файлы
 
+- [Counter](./Counter.md) — универсальный счётчик (Int/Float), Add/Subtract/Set, Send по Payload или произвольное число, OnValueChanged/OnSend
 - [DialogueManager](./DialogueManager.md) — диалоговая система с персонажами, портретами и событиями
 - [Loot](./Loot.md) — система лута и дропа
 - [ScoreManager](./ScoreManager.md) — менеджер очков с системой звезд и сохранением рекордов

@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.5.2**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.6.0**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
@@ -526,7 +526,7 @@ Assets/NeoxiderPages/
 
 #### Tools/Components
 
-- `Assets/Neoxider/Scripts/Tools/Components/Loot.cs` — лут.
+- `Assets/Neoxider/Scripts/Tools/Components/Counter.cs` — универсальный счётчик (Int/Float), Add/Subtract/Multiply/Divide/Set, Send по Payload или число; события по типу; опциональное сохранение по ключу; кнопки в инспекторе. Enum’ы: - `Assets/Neoxider/Scripts/Tools/Components/Loot.cs` — лут.
 - `Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs` — очки/звезды.
 - `Assets/Neoxider/Scripts/Tools/Components/TextScore.cs` — UI вывод текущего/лучшего счета (на базе `Neo.Tools.SetText`).
 - `Assets/Neoxider/Scripts/Tools/Components/TypewriterEffect.cs` — печать текста.
