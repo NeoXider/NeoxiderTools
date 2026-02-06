@@ -7,4 +7,9 @@ if [ -d "$ROOT/Samples" ] && [ ! -d "$ROOT/Samples~" ]; then
 	mv "$ROOT/Samples" "$ROOT/Samples~"
 	git add -A "$ROOT/"
 fi
+# Не допускаем коммит с папкой "Samples" (без тильды) — иначе UPM не найдёт Samples~/...
+if [ -d "$ROOT/Samples" ]; then
+	echo "[pre-commit] ERROR: Folder must be Samples~ for UPM, not Samples. Rename to Samples~ or run hook to fix."
+	exit 1
+fi
 exit 0
