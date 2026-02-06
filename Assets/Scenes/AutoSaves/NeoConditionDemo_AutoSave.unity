@@ -2996,7 +2996,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _health: {fileID: 415127921}
-  _text: {fileID: 0}
 --- !u!114 &1508862198
 MonoBehaviour:
   m_ObjectHideFlags: 0
