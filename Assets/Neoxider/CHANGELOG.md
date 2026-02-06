@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.2] - Unreleased
+## [5.8.3] - Unreleased
+
+### Исправлено
+
+- **UPM Samples** — исправлены пути сэмплов в `package.json`: `"path"` теперь указан как `Samples~/Demo` и `Samples~/NeoxiderPages` (согласно документации Unity). Ранее пути были без префикса `Samples~/`, из-за чего Unity не находил файлы при импорте (папка оставалась пустой, размер 0 KB).
+
+## [5.8.2]
 
 ### Исправлено
 
