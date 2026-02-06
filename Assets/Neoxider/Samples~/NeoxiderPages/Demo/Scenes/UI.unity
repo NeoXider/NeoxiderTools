@@ -378,6 +378,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a46b737512f948c0a1e2352a94d18709, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  bookmarks: []
+  hierarchyBackgrounds: []
 --- !u!4 &625807139
 Transform:
   m_ObjectHideFlags: 1
