@@ -20,12 +20,12 @@
     {
       "displayName": "Demo Scenes",
       "description": "Демо-сцены и примеры использования: Condition, Tools, Audio и другие модули",
-      "path": "Samples~/Demo"
+      "path": "Demo"
     },
     {
       "displayName": "NeoxiderPages",
       "description": "Модуль страниц и экранов (PageManager, UIPage, UIKit). Система навигации между экранами игры.",
-      "path": "Samples~/NeoxiderPages"
+      "path": "NeoxiderPages"
     }
   ],
   "keywords": [
