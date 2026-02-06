@@ -1,10 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Reflection;
 using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.Compilation;
 using CompilationAssembly = UnityEditor.Compilation.Assembly;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 using ReflectionAssembly = System.Reflection.Assembly;
 
 namespace Neo.Editor
@@ -27,10 +28,10 @@ namespace Neo.Editor
 
     public static class NeoxiderModulePackageInfoUtility
     {
-        private static readonly System.Collections.Generic.Dictionary<string, NeoxiderModulePackageInfo>
+        private static readonly Dictionary<string, NeoxiderModulePackageInfo>
             CacheByAssemblyName = new();
 
-        private static readonly System.Collections.Generic.HashSet<string> NegativeCache = new();
+        private static readonly HashSet<string> NegativeCache = new();
         private static bool _cacheHooksInstalled;
 
         public static bool TryGetForAssembly(ReflectionAssembly assembly, out NeoxiderModulePackageInfo info)
@@ -60,8 +61,8 @@ namespace Neo.Editor
             // 1) Preferred: PackageManager can resolve package for the assembly (when installed via UPM)
             try
             {
-                UnityEditor.PackageManager.PackageInfo pkg =
-                    UnityEditor.PackageManager.PackageInfo.FindForAssembly(assembly);
+                PackageInfo pkg =
+                    PackageInfo.FindForAssembly(assembly);
 
                 if (pkg != null)
                 {

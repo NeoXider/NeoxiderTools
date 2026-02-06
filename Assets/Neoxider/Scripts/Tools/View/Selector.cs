@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-#if ODIN_INSPECTOR
-#endif
+using Random = UnityEngine.Random;
 
 namespace Neo
 {
@@ -389,11 +388,7 @@ namespace Neo
             /// <summary>
             ///     Moves to the next item in the selection
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Next()
             {
                 TryInitializeFromChildren();
@@ -435,11 +430,7 @@ namespace Neo
             /// <summary>
             ///     Moves to the previous item in the selection
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Previous()
             {
                 TryInitializeFromChildren();
@@ -498,11 +489,7 @@ namespace Neo
             ///     Sets the current selection index
             /// </summary>
             /// <param name="index">The index to set</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Set(int index)
             {
                 TryInitializeFromChildren();
@@ -539,11 +526,7 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to a random value within the current valid bounds
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void SetRandom()
             {
                 TryInitializeFromChildren();
@@ -576,10 +559,10 @@ namespace Neo
                     return;
                 }
 
-                int newIndex = UnityEngine.Random.Range(min, max + 1);
+                int newIndex = Random.Range(min, max + 1);
                 if (newIndex == _currentIndex)
                 {
-                    int offset = UnityEngine.Random.Range(1, range);
+                    int offset = Random.Range(1, range);
                     newIndex = min + (newIndex - min + offset) % range;
                 }
 
@@ -590,11 +573,7 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to the first item
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void SetFirst()
             {
                 TryInitializeFromChildren();
@@ -615,11 +594,7 @@ namespace Neo
             /// <summary>
             ///     Sets the selection to the last item
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void SetLast()
             {
                 TryInitializeFromChildren();
@@ -703,11 +678,7 @@ namespace Neo
             /// </summary>
             /// <param name="index">Index to toggle</param>
             /// <param name="state">Optional state to set (true to enable, false to disable, null to toggle)</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void ToggleIndex(int index, bool? state = null)
             {
                 if (!HasItems)
@@ -732,11 +703,7 @@ namespace Neo
             /// <summary>
             ///     Refreshes the items array from child GameObjects
             /// </summary>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void RefreshItems()
             {
                 RefreshItemsFromChildren();

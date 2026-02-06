@@ -6,55 +6,46 @@ namespace Neo.Editor.Tools.Physics
 {
     [CustomEditor(typeof(MagneticField))]
     [CanEditMultipleObjects]
-    public sealed class MagneticFieldEditor : UnityEditor.Editor
+    public sealed class MagneticFieldEditor : CustomEditorBase
     {
-        private SerializedProperty modeProp;
-        private SerializedProperty targetPointProp;
-        private SerializedProperty directionProp;
-        private SerializedProperty directionIsLocalProp;
-        private SerializedProperty directionGizmoDistanceProp;
-
-        private void OnEnable()
-        {
-            modeProp = serializedObject.FindProperty("mode");
-            targetPointProp = serializedObject.FindProperty("targetPoint");
-            directionProp = serializedObject.FindProperty("direction");
-            directionIsLocalProp = serializedObject.FindProperty("directionIsLocal");
-            directionGizmoDistanceProp = serializedObject.FindProperty("directionGizmoDistance");
-        }
-
-        public override void OnInspectorGUI()
-        {
-            serializedObject.Update();
-            DrawDefaultInspector();
-            serializedObject.ApplyModifiedProperties();
-        }
-
         private void OnSceneGUI()
         {
-            serializedObject.Update();
+            // Do not use serializedObject in OnSceneGUI — use a SerializedObject created from target.
+            SerializedObject so = new(target);
+            so.Update();
 
             MagneticField field = (MagneticField)target;
-            MagneticField.FieldMode mode = (MagneticField.FieldMode)modeProp.enumValueIndex;
+            SerializedProperty modePropLocal = so.FindProperty("mode");
+            MagneticField.FieldMode mode = (MagneticField.FieldMode)modePropLocal.enumValueIndex;
 
             switch (mode)
             {
                 case MagneticField.FieldMode.ToPoint:
-                    DrawTargetPointHandle(field);
+                    DrawTargetPointHandle(field, so);
                     break;
 
                 case MagneticField.FieldMode.Direction:
-                    DrawDirectionHandle(field);
+                    DrawDirectionHandle(field, so);
                     break;
             }
 
-            serializedObject.ApplyModifiedProperties();
+            so.ApplyModifiedProperties();
         }
 
-        private void DrawTargetPointHandle(MagneticField field)
+        protected override void ProcessAttributeAssignments()
+        {
+            if (target is MonoBehaviour mb)
+            {
+                ComponentDrawer.ProcessComponentAttributes(mb);
+                ResourceDrawer.ProcessResourceAttributes(mb);
+            }
+        }
+
+        private void DrawTargetPointHandle(MagneticField field, SerializedObject so)
         {
             Transform t = field.transform;
-            Vector3 current = targetPointProp.vector3Value;
+            SerializedProperty targetPointPropLocal = so.FindProperty("targetPoint");
+            Vector3 current = targetPointPropLocal.vector3Value;
 
             EditorGUI.BeginChangeCheck();
             Vector3 next = Handles.PositionHandle(current, Quaternion.identity);
@@ -66,16 +57,20 @@ namespace Neo.Editor.Tools.Physics
             }
 
             Undo.RecordObject(field, "Move MagneticField Target Point");
-            targetPointProp.vector3Value = next;
+            targetPointPropLocal.vector3Value = next;
         }
 
-        private void DrawDirectionHandle(MagneticField field)
+        private void DrawDirectionHandle(MagneticField field, SerializedObject so)
         {
             Transform t = field.transform;
 
-            Vector3 dir = directionProp.vector3Value;
-            bool isLocal = directionIsLocalProp.boolValue;
-            float dist = Mathf.Max(0.01f, directionGizmoDistanceProp.floatValue);
+            SerializedProperty directionPropLocal = so.FindProperty("direction");
+            SerializedProperty directionIsLocalPropLocal = so.FindProperty("directionIsLocal");
+            SerializedProperty directionGizmoDistancePropLocal = so.FindProperty("directionGizmoDistance");
+
+            Vector3 dir = directionPropLocal.vector3Value;
+            bool isLocal = directionIsLocalPropLocal.boolValue;
+            float dist = Mathf.Max(0.01f, directionGizmoDistancePropLocal.floatValue);
 
             Vector3 dirWorld = isLocal ? t.TransformDirection(dir) : dir;
             if (dirWorld.sqrMagnitude < 0.0001f)
@@ -108,8 +103,8 @@ namespace Neo.Editor.Tools.Physics
             Vector3 nextDir = isLocal ? t.InverseTransformDirection(nextDirWorld) : nextDirWorld;
 
             Undo.RecordObject(field, "Change MagneticField Direction");
-            directionProp.vector3Value = nextDir;
-            directionGizmoDistanceProp.floatValue = nextDist;
+            directionPropLocal.vector3Value = nextDir;
+            directionGizmoDistancePropLocal.floatValue = nextDist;
         }
     }
 }

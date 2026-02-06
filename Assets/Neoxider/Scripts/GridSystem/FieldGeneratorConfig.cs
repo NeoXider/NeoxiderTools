@@ -1,8 +1,5 @@
 ﻿using System;
 using UnityEngine;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.GridSystem
 {

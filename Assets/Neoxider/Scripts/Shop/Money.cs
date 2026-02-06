@@ -4,8 +4,6 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -47,11 +45,8 @@ namespace Neo
                 SetLevelMoney();
                 ChangeMoneyEvent();
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Add(float amount)
             {
                 _money += amount;
@@ -60,11 +55,8 @@ namespace Neo
                 Save();
                 ChangeMoneyEvent();
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public bool Spend(float amount)
             {
                 if (CanSpend(amount))

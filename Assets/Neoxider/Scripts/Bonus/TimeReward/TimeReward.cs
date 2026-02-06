@@ -3,8 +3,6 @@ using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -86,11 +84,8 @@ namespace Neo
 
                 return 0;
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public bool TakeReward()
             {
                 if (CanTakeReward())

@@ -3,8 +3,6 @@ using System.Collections;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Bonus
 {
@@ -127,11 +125,8 @@ namespace Neo.Bonus
                 }
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Visual()
         {
             if (_items == null || _items.Length == 0)
@@ -197,11 +192,8 @@ namespace Neo.Bonus
 
             return _items[id];
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void RefreshAllItems()
         {
             Visual();

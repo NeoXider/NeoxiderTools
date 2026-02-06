@@ -1,9 +1,6 @@
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Tools
 {
@@ -125,9 +122,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts shake with default settings
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void StartShake()
         {
             StartShake(duration, strength);
@@ -210,9 +205,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Stops the current shake immediately
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void StopShake()
         {
             if (!IsShaking)

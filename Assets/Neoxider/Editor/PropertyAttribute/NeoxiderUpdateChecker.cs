@@ -10,16 +10,6 @@ namespace Neo.Editor
 {
     internal static class NeoxiderUpdateChecker
     {
-        private const int MinCheckIntervalSeconds = 5 * 60;
-
-        private sealed class ActiveRequest
-        {
-            public UnityWebRequest Request;
-            public bool IsChecking;
-        }
-
-        private static readonly Dictionary<string, ActiveRequest> RequestsByPrefix = new();
-
         public enum UpdateStatus
         {
             Unknown = 0,
@@ -29,26 +19,9 @@ namespace Neo.Editor
             Ahead = 4
         }
 
-        public readonly struct State
-        {
-            public readonly UpdateStatus Status;
-            public readonly string LatestVersion;
-            public readonly string UpdateUrl;
-            public readonly string Error;
+        private const int MinCheckIntervalSeconds = 5 * 60;
 
-            public State(UpdateStatus status, string latestVersion, string updateUrl, string error)
-            {
-                Status = status;
-                LatestVersion = latestVersion;
-                UpdateUrl = updateUrl;
-                Error = error;
-            }
-
-            public bool IsChecking => Status == UpdateStatus.Checking;
-            public bool UpdateAvailable => Status == UpdateStatus.UpdateAvailable;
-            public bool IsUpToDate => Status == UpdateStatus.UpToDate;
-            public bool IsAhead => Status == UpdateStatus.Ahead;
-        }
+        private static readonly Dictionary<string, ActiveRequest> RequestsByPrefix = new();
 
         public static State Tick(string stateKeyPrefix, string currentVersion, string packageRootPath)
         {
@@ -590,6 +563,33 @@ namespace Neo.Editor
             {
                 return false;
             }
+        }
+
+        private sealed class ActiveRequest
+        {
+            public bool IsChecking;
+            public UnityWebRequest Request;
+        }
+
+        public readonly struct State
+        {
+            public readonly UpdateStatus Status;
+            public readonly string LatestVersion;
+            public readonly string UpdateUrl;
+            public readonly string Error;
+
+            public State(UpdateStatus status, string latestVersion, string updateUrl, string error)
+            {
+                Status = status;
+                LatestVersion = latestVersion;
+                UpdateUrl = updateUrl;
+                Error = error;
+            }
+
+            public bool IsChecking => Status == UpdateStatus.Checking;
+            public bool UpdateAvailable => Status == UpdateStatus.UpdateAvailable;
+            public bool IsUpToDate => Status == UpdateStatus.UpToDate;
+            public bool IsAhead => Status == UpdateStatus.Ahead;
         }
     }
 }

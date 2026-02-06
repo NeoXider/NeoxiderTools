@@ -2,8 +2,6 @@ using System;
 using System.Reflection;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.StateMachine
 {

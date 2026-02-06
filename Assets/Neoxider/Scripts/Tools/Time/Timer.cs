@@ -3,8 +3,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -223,11 +221,7 @@ namespace Neo
         ///     Starts or resumes the timer (synchronous version - fire and forget)
         ///     Can be called from non-async code. For async usage, use StartAsync().
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Start()
         {
             StartAsync().Forget();
@@ -281,11 +275,7 @@ namespace Neo
         /// <summary>
         ///     Stops the timer
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Stop()
         {
             if (!isRunning)
@@ -309,11 +299,7 @@ namespace Neo
         /// <summary>
         ///     Pauses the timer
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Pause()
         {
             if (!isRunning || isPaused)
@@ -328,11 +314,7 @@ namespace Neo
         /// <summary>
         ///     Resumes the timer from pause
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Resume()
         {
             if (!isRunning || !isPaused)

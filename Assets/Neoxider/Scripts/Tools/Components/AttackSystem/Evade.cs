@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -76,11 +74,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Starts the evade action if not on cooldown
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void StartEvade()
         {
             if (IsOnCooldown)

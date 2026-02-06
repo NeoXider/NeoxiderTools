@@ -4,13 +4,13 @@ using UnityEngine.AI;
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Resolves desired positions to nearest valid NavMesh points.
+    ///     Resolves desired positions to nearest valid NavMesh points.
     /// </summary>
     public static class NpcDestinationResolver
     {
         /// <summary>
-        /// Try to resolve a desired position to a valid NavMesh point.
-        /// Performs a ring search around the desired position.
+        ///     Try to resolve a desired position to a valid NavMesh point.
+        ///     Performs a ring search around the desired position.
         /// </summary>
         public static bool TryResolve(
             Vector3 desired,
@@ -56,5 +56,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-

@@ -1,4 +1,4 @@
-using System;
+using Neo.NPC.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -6,7 +6,7 @@ using UnityEngine.Events;
 namespace Neo.NPC
 {
     /// <summary>
-    /// NPC navigation controller with switchable behaviours.
+    ///     NPC navigation controller with switchable behaviours.
     /// </summary>
     [DisallowMultipleComponent]
     [RequireComponent(typeof(NavMeshAgent))]
@@ -91,17 +91,17 @@ namespace Neo.NPC
 
         private NavMeshAgent agent;
 
-        private Navigation.NpcNavAgentCore agentCore;
-        private Navigation.NpcFollowTargetCore followCore;
-        private Navigation.NpcPatrolCore patrolCore;
+        private NpcNavAgentCore agentCore;
+        private CombinedBehaviour combinedBehaviour;
 
         private INavigationBehaviour currentBehaviour;
         private FollowBehaviour followBehaviour;
+        private NpcFollowTargetCore followCore;
+        private bool isCombinedFollowing;
         private PatrolBehaviour patrolBehaviour;
-        private CombinedBehaviour combinedBehaviour;
+        private NpcPatrolCore patrolCore;
 
         private bool wasMoving;
-        private bool isCombinedFollowing;
 
         public bool IsActive
         {
@@ -111,21 +111,14 @@ namespace Neo.NPC
 
         public NavigationMode Mode => mode;
 
-        private interface INavigationBehaviour
-        {
-            void Enter();
-            void Exit();
-            void Tick(float deltaTime, float time);
-        }
-
         private void Awake()
         {
             agent = GetComponent<NavMeshAgent>();
 
-            agentCore = new Navigation.NpcNavAgentCore(agent);
+            agentCore = new NpcNavAgentCore(agent);
             ApplyAgentSettings();
 
-            followCore = new Navigation.NpcFollowTargetCore(transform, agent);
+            followCore = new NpcFollowTargetCore(transform, agent);
             followCore.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
             followCore.DestinationReached += p => onDestinationReached?.Invoke(p);
             followCore.PathBlocked += p => onPathBlocked?.Invoke(p);
@@ -133,7 +126,7 @@ namespace Neo.NPC
             followCore.PathStatusChanged += s => onPathStatusChanged?.Invoke(s);
             followCore.DestinationUnreachable += OnFollowDestinationUnreachable;
 
-            patrolCore = new Navigation.NpcPatrolCore(transform, agent);
+            patrolCore = new NpcPatrolCore(transform, agent);
             patrolCore.Configure(patrolPoints, patrolZone, patrolWaitTime, loopPatrol, maxSampleDistance);
             patrolCore.PatrolStarted += () => onPatrolStarted?.Invoke();
             patrolCore.PatrolCompleted += () => onPatrolCompleted?.Invoke();
@@ -147,9 +140,92 @@ namespace Neo.NPC
             SetModeInternal(mode, true);
         }
 
+        private void Update()
+        {
+            if (!isActive)
+            {
+                if (agent != null)
+                {
+                    agent.isStopped = true;
+                }
+
+                return;
+            }
+
+            float dt = Time.deltaTime;
+            float time = Time.time;
+
+            currentBehaviour?.Tick(dt, time);
+            UpdateRotation(dt);
+            UpdateMovementEvents();
+        }
+
         private void OnDisable()
         {
             currentBehaviour?.Exit();
+        }
+
+        private void OnDrawGizmos()
+        {
+            if (!drawGizmos)
+            {
+                return;
+            }
+
+            NavMeshAgent a = agent != null ? agent : GetComponent<NavMeshAgent>();
+            if (a != null && drawPathGizmos && a.hasPath)
+            {
+                Gizmos.color = Color.yellow;
+                NavMeshPath path = a.path;
+                Vector3 prev = transform.position;
+                foreach (Vector3 c in path.corners)
+                {
+                    Gizmos.DrawLine(prev, c);
+                    prev = c;
+                }
+            }
+
+            Gizmos.color = Color.red;
+            Gizmos.DrawWireSphere(transform.position, stoppingDistance);
+
+            if (mode == NavigationMode.FollowTarget && triggerDistance > 0f)
+            {
+                Gizmos.color = Color.blue;
+                Gizmos.DrawWireSphere(transform.position, triggerDistance);
+            }
+
+            if (mode == NavigationMode.Combined)
+            {
+                if (aggroDistance > 0f)
+                {
+                    Gizmos.color = Color.yellow;
+                    Gizmos.DrawWireSphere(transform.position, aggroDistance);
+                }
+
+                if (maxFollowDistance > 0f)
+                {
+                    Gizmos.color = Color.cyan;
+                    Gizmos.DrawWireSphere(transform.position, maxFollowDistance);
+                }
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (!drawGizmos)
+            {
+                return;
+            }
+
+            if (followMovementBounds != null)
+            {
+                DrawBoxCollider(followMovementBounds, new Color(0.2f, 0.6f, 1f, 0.2f));
+            }
+
+            if (patrolZone != null)
+            {
+                DrawBoxCollider(patrolZone, new Color(0.2f, 1f, 0.2f, 0.2f));
+            }
         }
 
         private void OnValidate()
@@ -176,26 +252,6 @@ namespace Neo.NPC
 
             followCore?.Configure(triggerDistance, autoUpdatePath, pathUpdateInterval, maxSampleDistance);
             patrolCore?.Configure(patrolPoints, patrolZone, patrolWaitTime, loopPatrol, maxSampleDistance);
-        }
-
-        private void Update()
-        {
-            if (!isActive)
-            {
-                if (agent != null)
-                {
-                    agent.isStopped = true;
-                }
-
-                return;
-            }
-
-            float dt = Time.deltaTime;
-            float time = Time.time;
-
-            currentBehaviour?.Tick(dt, time);
-            UpdateRotation(dt);
-            UpdateMovementEvents();
         }
 
         public void SetMode(NavigationMode newMode)
@@ -297,7 +353,7 @@ namespace Neo.NPC
                     return;
                 }
 
-                agentCore = new Navigation.NpcNavAgentCore(agent);
+                agentCore = new NpcNavAgentCore(agent);
             }
 
             agentCore.Configure(
@@ -410,69 +466,6 @@ namespace Neo.NPC
             }
         }
 
-        private void OnDrawGizmos()
-        {
-            if (!drawGizmos)
-            {
-                return;
-            }
-
-            NavMeshAgent a = agent != null ? agent : GetComponent<NavMeshAgent>();
-            if (a != null && drawPathGizmos && a.hasPath)
-            {
-                Gizmos.color = Color.yellow;
-                NavMeshPath path = a.path;
-                Vector3 prev = transform.position;
-                foreach (Vector3 c in path.corners)
-                {
-                    Gizmos.DrawLine(prev, c);
-                    prev = c;
-                }
-            }
-
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, stoppingDistance);
-
-            if (mode == NavigationMode.FollowTarget && triggerDistance > 0f)
-            {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawWireSphere(transform.position, triggerDistance);
-            }
-
-            if (mode == NavigationMode.Combined)
-            {
-                if (aggroDistance > 0f)
-                {
-                    Gizmos.color = Color.yellow;
-                    Gizmos.DrawWireSphere(transform.position, aggroDistance);
-                }
-
-                if (maxFollowDistance > 0f)
-                {
-                    Gizmos.color = Color.cyan;
-                    Gizmos.DrawWireSphere(transform.position, maxFollowDistance);
-                }
-            }
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            if (!drawGizmos)
-            {
-                return;
-            }
-
-            if (followMovementBounds != null)
-            {
-                DrawBoxCollider(followMovementBounds, new Color(0.2f, 0.6f, 1f, 0.2f));
-            }
-
-            if (patrolZone != null)
-            {
-                DrawBoxCollider(patrolZone, new Color(0.2f, 1f, 0.2f, 0.2f));
-            }
-        }
-
         private static void DrawBoxCollider(BoxCollider box, Color fill)
         {
             Matrix4x4 old = Gizmos.matrix;
@@ -485,6 +478,13 @@ namespace Neo.NPC
             Gizmos.DrawWireCube(box.center, box.size);
 
             Gizmos.matrix = old;
+        }
+
+        private interface INavigationBehaviour
+        {
+            void Enter();
+            void Exit();
+            void Tick(float deltaTime, float time);
         }
 
         private sealed class FollowBehaviour : INavigationBehaviour

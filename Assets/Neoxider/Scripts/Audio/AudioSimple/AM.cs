@@ -1,8 +1,6 @@
 using System;
 using Neo.Tools;
 using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -101,11 +99,7 @@ namespace Neo
             /// </summary>
             /// <param name="id">ID звука в массиве _sounds.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Play(int id, float volume)
             {
                 if (_efx == null)
@@ -133,11 +127,7 @@ namespace Neo
             ///     Воспроизводит звуковой эффект по ID из массива звуков с громкостью по умолчанию из настроек.
             /// </summary>
             /// <param name="id">ID звука в массиве _sounds.</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Play(int id)
             {
                 if (_sounds == null || id < 0 || id >= _sounds.Length)
@@ -179,11 +169,7 @@ namespace Neo
             /// </summary>
             /// <param name="id">ID музыки в массиве _musicClips.</param>
             /// <param name="volume">Громкость воспроизведения (0-1).</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void PlayMusic(int id, float volume)
             {
                 if (_music == null)
@@ -222,11 +208,7 @@ namespace Neo
             ///     Останавливает случайную музыку, если она была включена.
             /// </summary>
             /// <param name="id">ID музыки в массиве _musicClips.</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void PlayMusic(int id)
             {
                 PlayMusic(id, 1f);

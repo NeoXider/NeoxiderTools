@@ -1,16 +1,17 @@
+using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Neo.Tools
 {
     /// <summary>
     ///     AI navigation component with pathfinding, movement, patrol, and animation support.
-    ///
     ///     Deprecated: use Neo.NPC.NpcNavigation + modules.
     /// </summary>
-    [System.Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
+    [Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
     [RequireComponent(typeof(NavMeshAgent))]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AiNavigation))]
     public class AiNavigation : MonoBehaviour

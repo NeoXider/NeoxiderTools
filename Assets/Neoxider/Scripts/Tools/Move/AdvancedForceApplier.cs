@@ -1,8 +1,5 @@
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Tools
 {
@@ -144,11 +141,7 @@ namespace Neo.Tools
         [FoldoutGroup("Controls")]
         [DisableInEditorMode]
 #endif
-#if ODIN_INSPECTOR
         [Button("Apply Now")]
-#else
-        [ButtonAttribute("Apply Now")]
-#endif
         private void ApplyNowButton()
         {
             ApplyForce();

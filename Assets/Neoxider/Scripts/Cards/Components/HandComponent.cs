@@ -5,9 +5,6 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Cards
 {
@@ -294,9 +291,7 @@ namespace Neo.Cards
         ///     Сортирует карты по рангу
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void SortByRank(bool ascending = true)
         {
             SortByRankAsync(ascending).Forget();
@@ -326,9 +321,7 @@ namespace Neo.Cards
         ///     Сортирует карты по масти
         /// </summary>
         /// <param name="ascending">По возрастанию</param>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void SortBySuit(bool ascending = true)
         {
             SortBySuitAsync(ascending).Forget();
@@ -386,9 +379,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Очищает руку
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void Clear()
         {
             foreach (CardComponent card in _cards)

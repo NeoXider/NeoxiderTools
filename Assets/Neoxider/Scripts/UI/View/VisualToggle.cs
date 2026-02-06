@@ -3,8 +3,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.UI
 {
@@ -148,11 +146,7 @@ namespace Neo.UI
         /// <summary>
         ///     Инвертирует текущее состояние переключателя.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Toggle()
         {
             SetActive(!_isActive);
@@ -179,11 +173,7 @@ namespace Neo.UI
         /// </summary>
         /// <param name="isActive">true для активного состояния (end), false для неактивного (start)</param>
         /// <param name="invokeToggleEvent">Если true и есть Toggle, вызовет его событие onValueChanged</param>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SetActive(bool isActive, bool invokeToggleEvent = false)
         {
             if (_toggle != null && !_isUpdatingFromToggle)

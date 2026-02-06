@@ -5,44 +5,42 @@ using UnityEngine.AI;
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Pure C# follow/seek logic for a NavMeshAgent.
+    ///     Pure C# follow/seek logic for a NavMeshAgent.
     /// </summary>
     public sealed class NpcFollowTargetCore
     {
-        public event Action<Vector3> DestinationReached;
-        public event Action<Vector3> PathBlocked;
-        public event Action<Vector3> PathUpdated;
-        public event Action<NavMeshPathStatus> PathStatusChanged;
-        public event Action<Vector3> DestinationUnreachable;
-
-        private readonly Transform self;
         private readonly NavMeshAgent agent;
 
-        private float triggerDistance;
+        private readonly Transform self;
         private bool autoUpdatePath;
-        private float pathUpdateInterval;
-        private float maxSampleDistance;
-
-        private bool followEnabled = true;
-
-        private Transform target;
+        private bool destinationReachedFired;
         private Vector3? explicitDestination;
 
-        private float lastPathUpdateTime;
         private Vector3 lastDesiredPosition;
         private NavMeshPathStatus lastPathStatus;
-        private bool destinationReachedFired;
 
-        public bool HasTarget => target != null;
-        public Transform Target => target;
+        private float lastPathUpdateTime;
+        private float maxSampleDistance;
+        private float pathUpdateInterval;
 
-        public bool FollowEnabled => followEnabled;
+        private float triggerDistance;
 
         public NpcFollowTargetCore(Transform self, NavMeshAgent agent)
         {
             this.self = self;
             this.agent = agent;
         }
+
+        public bool HasTarget => Target != null;
+        public Transform Target { get; private set; }
+
+        public bool FollowEnabled { get; private set; } = true;
+
+        public event Action<Vector3> DestinationReached;
+        public event Action<Vector3> PathBlocked;
+        public event Action<Vector3> PathUpdated;
+        public event Action<NavMeshPathStatus> PathStatusChanged;
+        public event Action<Vector3> DestinationUnreachable;
 
         public void Configure(float triggerDistance, bool autoUpdatePath, float pathUpdateInterval,
             float maxSampleDistance)
@@ -55,8 +53,8 @@ namespace Neo.NPC.Navigation
 
         public void SetFollowEnabled(bool enabled)
         {
-            followEnabled = enabled;
-            if (!followEnabled)
+            FollowEnabled = enabled;
+            if (!FollowEnabled)
             {
                 explicitDestination = null;
             }
@@ -64,14 +62,14 @@ namespace Neo.NPC.Navigation
 
         public void SetTarget(Transform newTarget)
         {
-            target = newTarget;
+            Target = newTarget;
             explicitDestination = null;
             destinationReachedFired = false;
         }
 
         public bool SetDestination(Vector3 destination)
         {
-            target = null;
+            Target = null;
             explicitDestination = destination;
             destinationReachedFired = false;
             return true;
@@ -99,7 +97,7 @@ namespace Neo.NPC.Navigation
 
         public void Tick(float time, Func<Vector3, Vector3> constrainPosition)
         {
-            if (!followEnabled)
+            if (!FollowEnabled)
             {
                 return;
             }
@@ -133,9 +131,9 @@ namespace Neo.NPC.Navigation
 
         private Vector3? GetDesiredDestination()
         {
-            if (target != null)
+            if (Target != null)
             {
-                return target.position;
+                return Target.position;
             }
 
             return explicitDestination;
@@ -143,7 +141,7 @@ namespace Neo.NPC.Navigation
 
         private void HandleTriggerDistance()
         {
-            if (triggerDistance <= 0f || target == null)
+            if (triggerDistance <= 0f || Target == null)
             {
                 if (agent.isStopped)
                 {
@@ -153,7 +151,7 @@ namespace Neo.NPC.Navigation
                 return;
             }
 
-            float dist = Vector3.Distance(self.position, target.position);
+            float dist = Vector3.Distance(self.position, Target.position);
             if (dist > triggerDistance)
             {
                 agent.isStopped = true;
@@ -243,5 +241,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-

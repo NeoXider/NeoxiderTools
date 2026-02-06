@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -91,11 +89,8 @@ namespace Neo
             {
                 SetPage(id);
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void SetPage(int id)
             {
                 this.id = id;
@@ -124,11 +119,8 @@ namespace Neo
                     OnStartPage?.Invoke();
                 }
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void SetOnePage(int id)
             {
                 _pages.SetActiveAtIndex(id, false);

@@ -6,9 +6,6 @@ using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo
 {

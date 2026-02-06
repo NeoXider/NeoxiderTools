@@ -5,8 +5,6 @@ using Neo.Save;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Bonus
 {
@@ -55,11 +53,8 @@ namespace Neo.Bonus
             base.Init();
             Load();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Load()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
@@ -81,11 +76,8 @@ namespace Neo.Bonus
 
             OnLoadItems?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Save()
         {
             if (_enabledItems == null || _itemCollectionDatas == null)
@@ -100,11 +92,8 @@ namespace Neo.Bonus
 
             SaveProvider.Save();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public ItemCollectionData GetPrize()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
@@ -187,11 +176,8 @@ namespace Neo.Bonus
                 RemoveItem(id);
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void ClearCollection()
         {
             if (_enabledItems == null)
@@ -211,11 +197,8 @@ namespace Neo.Bonus
 
             SaveProvider.Save();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void UnlockAllItems()
         {
             if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)

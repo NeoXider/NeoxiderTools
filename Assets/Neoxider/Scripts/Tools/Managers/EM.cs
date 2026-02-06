@@ -1,8 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -36,101 +34,68 @@ namespace Neo.Tools
         public UnityEvent<bool> OnFocusApplication;
         public UnityEvent<bool> OnPauseApplication;
         public UnityEvent OnQuitApplication;
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Preparing()
         {
             I?.OnPreparing?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void GameStart()
         {
             I?.OnGameStart?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Lose()
         {
             I?.OnLose?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Win()
         {
             I?.OnWin?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void End()
         {
             I?.OnEnd?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void StopGame()
         {
             I?.OnStopGame?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void PlayerDied()
         {
             I?.OnPlayerDeath?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Pause()
         {
             I?.OnPause?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Resume()
         {
             I?.OnResume?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Menu()
         {
             I?.OnMenu?.Invoke();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public static void Restart()
         {
             I?.OnRestart?.Invoke();

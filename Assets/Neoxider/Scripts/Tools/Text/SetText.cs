@@ -3,8 +3,6 @@ using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -162,11 +160,7 @@ namespace Neo
             ///     Sets the text to display a float value with separator and decimal places
             /// </summary>
             /// <param name="value">The float value to display</param>
-#if ODIN_INSPECTOR
             [Button(nameof(Set) + "float")]
-#else
-            [ButtonAttribute(nameof(Set) + "float")]
-#endif
             public void Set(float value)
             {
                 if (text == null)
@@ -204,11 +198,7 @@ namespace Neo
             ///     Sets the text to display a string value
             /// </summary>
             /// <param name="value">The string value to display</param>
-#if ODIN_INSPECTOR
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Set(string value = "0")
             {
                 if (this.text == null)

@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -27,20 +25,14 @@ namespace Neo
                     Toggle();
                 }
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Toggle()
             {
                 Set(!value);
             }
-#if ODIN_INSPECTOR
+
             [Button]
-#else
-            [ButtonAttribute]
-#endif
             public void Set(bool value)
             {
                 this.value = value;

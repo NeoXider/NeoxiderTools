@@ -4,26 +4,26 @@ using UnityEngine;
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Pure C# logic that switches between patrol and follow depending on distance to a target.
+    ///     Pure C# logic that switches between patrol and follow depending on distance to a target.
     /// </summary>
     public sealed class NpcAggroFollowCore
     {
-        public event Action StartFollowing;
-        public event Action StopFollowing;
+        private readonly Func<Vector3> getTargetPosition;
 
         private readonly Transform self;
-        private readonly Func<Vector3> getTargetPosition;
 
         private float aggroDistanceSqr;
         private float maxFollowDistanceSqr;
-
-        public bool IsFollowing { get; private set; }
 
         public NpcAggroFollowCore(Transform self, Func<Vector3> getTargetPosition)
         {
             this.self = self;
             this.getTargetPosition = getTargetPosition;
         }
+
+        public bool IsFollowing { get; private set; }
+        public event Action StartFollowing;
+        public event Action StopFollowing;
 
         public void Configure(float aggroDistance, float maxFollowDistance)
         {
@@ -67,5 +67,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-

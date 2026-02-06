@@ -5,8 +5,6 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Bonus
 {
@@ -71,20 +69,14 @@ namespace Neo.Bonus
         {
             AddProgress(addProgress);
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void AddProgress(float amount)
         {
             ChangeProgress(amount);
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void ChangeProgress(float amount)
         {
             progress += amount;
@@ -106,11 +98,8 @@ namespace Neo.Bonus
                 OnProgressNotReached?.Invoke();
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void TakePrize()
         {
             if (CheckProgress)
@@ -139,11 +128,8 @@ namespace Neo.Bonus
                 OnTakePrize?.Invoke();
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         private void Visual(bool openBox = false)
         {
             if (_bar != null)

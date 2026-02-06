@@ -2,9 +2,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Cards
 {
@@ -245,9 +242,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Очищает доску
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void Clear()
         {
             foreach (CardComponent card in _cards)
@@ -287,9 +282,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Переворачивает все карты
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void FlipAll()
         {
             FlipAllAsync().Forget();
@@ -298,9 +291,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Возвращает все карты из указанных источников (рук, других досок и дополнительных корней) обратно на эту доску.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void RestoreAllSourcesToBoard()
         {
             RestoreAllSourcesToBoardAsync().Forget();

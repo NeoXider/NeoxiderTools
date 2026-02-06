@@ -1,8 +1,6 @@
 using System;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.StateMachine
 {

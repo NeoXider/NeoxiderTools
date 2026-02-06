@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.6.0**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.7.0**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
@@ -377,8 +377,17 @@ Assets/NeoxiderPages/
 
 #### `Enums.cs` — общие enum’ы для разных модулей
 - Файл содержит общие enum’ы и не имеет публичных методов.
-- `Shapes.cs` — файл содержит структуры `Circle` и `Sphere` и не имеет публичных методов.
-- `Enums.cs` — файл содержит общие enum’ы и не имеет публичных методов.
+
+### Condition (`Assets/Neoxider/Scripts/Condition/`)
+
+- `Assets/Neoxider/Scripts/Condition/NeoCondition.cs` — No-Code система условий: проверяет поля/свойства любых компонентов и GameObject'ов через Inspector. AND/OR логика, события OnTrue/OnFalse/OnResult/OnInvertedResult. Безопасная обработка уничтоженных объектов.
+- `Assets/Neoxider/Scripts/Condition/ConditionEntry.cs` — одно условие: SourceMode (Component/GameObject), опциональный поиск по имени (Find By Name) с Wait For Object и Prefab Preview, ссылка на GameObject → Component/GO → поле, оператор сравнения, порог, инверсия. Двухуровневый кеш (reflection + Find).
+
+#### Demo Condition (`Assets/Neoxider/Demo/Scripts/Condition/`)
+
+- `Assets/Neoxider/Demo/Scripts/Condition/ConditionDemoUI.cs` — UI контроллер демо-сцены (панели, статус, warning).
+- `Assets/Neoxider/Demo/Scripts/Condition/ConditionDemoSetup.cs` — создание демо-сцены NeoCondition в Edit Mode (использует Health и ScoreManager).
+- `Assets/Neoxider/Demo/Scripts/Condition/HealthTextDisplay.cs` — отображение HP в TMP_Text через Health.OnChange.
 
 ### GridSystem (`Assets/Neoxider/Scripts/GridSystem/`)
 
@@ -526,7 +535,8 @@ Assets/NeoxiderPages/
 
 #### Tools/Components
 
-- `Assets/Neoxider/Scripts/Tools/Components/Counter.cs` — универсальный счётчик (Int/Float), Add/Subtract/Multiply/Divide/Set, Send по Payload или число; события по типу; опциональное сохранение по ключу; кнопки в инспекторе. Enum’ы: - `Assets/Neoxider/Scripts/Tools/Components/Loot.cs` — лут.
+- `Assets/Neoxider/Scripts/Tools/Components/Counter.cs` — универсальный счётчик (Int/Float), Add/Subtract/Multiply/Divide/Set, Send по Payload; события по типу; опциональное сохранение по ключу.
+- `Assets/Neoxider/Scripts/Tools/Components/Loot.cs` — лут.
 - `Assets/Neoxider/Scripts/Tools/Components/ScoreManager.cs` — очки/звезды.
 - `Assets/Neoxider/Scripts/Tools/Components/TextScore.cs` — UI вывод текущего/лучшего счета (на базе `Neo.Tools.SetText`).
 - `Assets/Neoxider/Scripts/Tools/Components/TypewriterEffect.cs` — печать текста.
@@ -639,7 +649,7 @@ Assets/NeoxiderPages/
 - `Assets/Neoxider/Editor/PropertyAttribute/NeoEditorAsmdefFixer.cs` — фиксы asmdef.
 - `Assets/Neoxider/Editor/PropertyAttribute/NeoEditorAutoRegister.cs` — авто-регистрация.
 - `Assets/Neoxider/Editor/PropertyAttribute/NeoInspectorSettings.cs` — настройки инспектора.
-- `Assets/Neoxider/Editor/PropertyAttribute/NeoUpdateChecker.cs` — проверка обновлений.
+- `Assets/Neoxider/Editor/PropertyAttribute/NeoUpdateChecker.cs` — проверка обновлений через GitHub API (авто 10 мин, ручная кнопка с кулдауном 10 сек, обработка rate limit 403, фоллбек поиска package.json).
 - `Assets/Neoxider/Editor/PropertyAttribute/NeoxiderSettingsWindow.cs` — окно настроек (PropertyAttribute).
 - `Assets/Neoxider/Editor/PropertyAttribute/ResourceDrawer.cs` — drawer ресурсов.
 - `Assets/Neoxider/Editor/Tools/Physics/MagneticFieldEditor.cs` — scene handle для MagneticField.

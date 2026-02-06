@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Tools
 {
@@ -14,30 +11,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(MagneticField))]
     public class MagneticField : MonoBehaviour
     {
-        /// <summary>
-        ///     Режим работы магнитного поля.
-        /// </summary>
-        public enum FieldMode
-        {
-            /// <summary>Притяжение объектов к себе</summary>
-            Attract,
-
-            /// <summary>Отталкивание объектов</summary>
-            Repel,
-
-            /// <summary>Переключение между притяжением и отталкиванием</summary>
-            Toggle,
-
-            /// <summary>Притяжение к Transform цели</summary>
-            ToTarget,
-
-            /// <summary>Притяжение к точке в пространстве</summary>
-            ToPoint,
-
-            /// <summary>Притяжение по направлению (вектор)</summary>
-            Direction
-        }
-
         /// <summary>
         ///     Тип затухания силы по расстоянию.
         /// </summary>
@@ -51,6 +24,27 @@ namespace Neo.Tools
 
             /// <summary>Без затухания</summary>
             Constant
+        }
+
+        /// <summary>
+        ///     Режим работы магнитного поля.
+        /// </summary>
+        public enum FieldMode
+        {
+            /// <summary>Притяжение объектов к себе</summary>
+            Attract,
+
+            /// <summary>Отталкивание объектов</summary>
+            Repel,
+
+            /// <summary>Притяжение к Transform цели</summary>
+            ToTarget,
+
+            /// <summary>Притяжение к точке в пространстве</summary>
+            ToPoint,
+
+            /// <summary>Притяжение по направлению (вектор)</summary>
+            Direction
         }
 
         [Header("Settings")] [Tooltip("Режим работы поля")] [SerializeField]
@@ -68,13 +62,19 @@ namespace Neo.Tools
         [Header("Filtering")] [Tooltip("Слои объектов, на которые будет воздействовать поле")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
-        [Header("Toggle Mode")] [Tooltip("Время притяжения в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
+        [Header("Toggle")]
+        [Tooltip(
+            "Включить переключение направления (работает с любым режимом). Сначала в одну сторону, потом в обратную.")]
+        [SerializeField]
+        private bool _toggle;
+
+        [Tooltip("Время действия в прямом направлении (секунды)")] [Min(0.1f)] [SerializeField]
         private float attractDuration = 2f;
 
-        [Tooltip("Время отталкивания в режиме Toggle (секунды)")] [Min(0.1f)] [SerializeField]
+        [Tooltip("Время действия в обратном направлении (секунды)")] [Min(0.1f)] [SerializeField]
         private float repelDuration = 2f;
 
-        [Tooltip("Начальный режим для Toggle (с чего начинать)")] [SerializeField]
+        [Tooltip("Начинать с прямого направления (true) или с обратного (false)")] [SerializeField]
         private bool startWithAttract = true;
 
         [Header("Attraction Target")] [Tooltip("Transform цели (используется при режиме ToTarget)")] [SerializeField]
@@ -116,8 +116,9 @@ namespace Neo.Tools
         [Tooltip("Вызывается при изменении режима (для Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
-        private readonly HashSet<GameObject> objectsInField = new();
         private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();
+
+        private readonly HashSet<GameObject> objectsInField = new();
         private float lastUpdateTime;
         private float toggleStartTime;
 
@@ -140,6 +141,78 @@ namespace Neo.Tools
         ///     Получить текущее активное состояние в режиме Toggle (true = притяжение, false = отталкивание).
         /// </summary>
         public bool CurrentToggleState { get; private set; }
+
+        private void Awake()
+        {
+            if (_toggle)
+            {
+                toggleStartTime = Time.time;
+                CurrentToggleState = startWithAttract;
+            }
+        }
+
+        private void Update()
+        {
+            if (useFixedUpdate)
+            {
+                return;
+            }
+
+            UpdateToggleState();
+            UpdateField();
+        }
+
+        private void FixedUpdate()
+        {
+            if (!useFixedUpdate)
+            {
+                return;
+            }
+
+            UpdateToggleState();
+            UpdateField();
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector3 center = GetFieldCenter();
+            bool isRepel = mode == FieldMode.Repel;
+            bool isAttracting = !isRepel;
+            // Если toggle включён и сейчас обратная фаза — инвертируем визуал
+            if (_toggle && !CurrentToggleState)
+            {
+                isAttracting = !isAttracting;
+            }
+
+            Gizmos.color = isAttracting ? Color.blue : Color.red;
+            Gizmos.DrawWireSphere(center, radius);
+
+            Gizmos.color = new Color(isAttracting ? 0f : 1f, 0f, isAttracting ? 1f : 0f, 0.1f);
+            Gizmos.DrawSphere(center, radius);
+
+            if (mode == FieldMode.ToTarget && targetTransform != null)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, targetTransform.position);
+                Gizmos.DrawSphere(targetTransform.position, 0.075f);
+            }
+
+            if (mode == FieldMode.ToPoint)
+            {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, targetPoint);
+                Gizmos.DrawSphere(targetPoint, 0.075f);
+            }
+
+            if (mode == FieldMode.Direction)
+            {
+                Vector3 end = transform.position +
+                              GetDirectionWorldNormalized() * Mathf.Max(0.01f, directionGizmoDistance);
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawLine(transform.position, end);
+                Gizmos.DrawSphere(end, 0.075f);
+            }
+        }
 
         /// <summary>
         ///     Переключить режим поля (Attract/Repel).
@@ -229,40 +302,9 @@ namespace Neo.Tools
             mode = FieldMode.Direction;
         }
 
-        private void Awake()
-        {
-            if (mode == FieldMode.Toggle)
-            {
-                toggleStartTime = Time.time;
-                CurrentToggleState = startWithAttract;
-            }
-        }
-
-        private void Update()
-        {
-            if (useFixedUpdate)
-            {
-                return;
-            }
-
-            UpdateToggleState();
-            UpdateField();
-        }
-
-        private void FixedUpdate()
-        {
-            if (!useFixedUpdate)
-            {
-                return;
-            }
-
-            UpdateToggleState();
-            UpdateField();
-        }
-
         private void UpdateToggleState()
         {
-            if (mode != FieldMode.Toggle)
+            if (!_toggle)
             {
                 return;
             }
@@ -366,27 +408,39 @@ namespace Neo.Tools
 
         private Vector3 CalculateForceDirection(Vector3 objectPosition)
         {
+            // Определяем базовое направление по режиму
+            Vector3 baseDir;
             if (mode == FieldMode.Direction)
             {
-                return GetDirectionWorldNormalized();
+                baseDir = GetDirectionWorldNormalized();
             }
-
-            Vector3 attractionPoint = GetAttractionPoint();
-            Vector3 toAttractionPoint = attractionPoint - objectPosition;
-
-            if (toAttractionPoint.sqrMagnitude < 0.0001f)
+            else
             {
-                toAttractionPoint = Random.onUnitSphere;
+                Vector3 attractionPoint = GetAttractionPoint();
+                Vector3 toAttractionPoint = attractionPoint - objectPosition;
+
+                if (toAttractionPoint.sqrMagnitude < 0.0001f)
+                {
+                    toAttractionPoint = Random.onUnitSphere;
+                }
+
+                baseDir = toAttractionPoint.normalized;
             }
 
-            bool shouldAttract = mode == FieldMode.Attract ||
-                                 mode == FieldMode.ToTarget ||
-                                 mode == FieldMode.ToPoint ||
-                                 mode == FieldMode.Direction ||
-                                 (mode == FieldMode.Toggle && CurrentToggleState);
+            // В режиме Repel инвертируем
+            bool isRepel = mode == FieldMode.Repel;
+            if (isRepel)
+            {
+                baseDir = -baseDir;
+            }
 
-            Vector3 dir = toAttractionPoint.normalized;
-            return shouldAttract ? dir : -dir;
+            // Если toggle включён и сейчас обратная фаза — инвертируем
+            if (_toggle && !CurrentToggleState)
+            {
+                baseDir = -baseDir;
+            }
+
+            return baseDir;
         }
 
         private Vector3 GetFieldCenter()
@@ -440,65 +494,16 @@ namespace Neo.Tools
             return baseForce * falloff;
         }
 
-#if ODIN_INSPECTOR
-        [FoldoutGroup("Testing")]
         [Button("Toggle Mode")]
-#else
-        [Button("Toggle Mode")]
-#endif
         private void ToggleModeButton()
         {
             ToggleMode();
         }
 
-#if ODIN_INSPECTOR
-        [FoldoutGroup("Testing")]
         [Button("Reset Toggle Timer")]
-        [ShowIf("mode == FieldMode.Toggle")]
-#else
-        [Button("Reset Toggle Timer")]
-#endif
         private void ResetToggleTimerButton()
         {
             ResetToggleTimer();
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Vector3 center = GetFieldCenter();
-            bool isAttracting = mode == FieldMode.Attract ||
-                                mode == FieldMode.ToTarget ||
-                                mode == FieldMode.ToPoint ||
-                                mode == FieldMode.Direction ||
-                                (mode == FieldMode.Toggle && CurrentToggleState);
-            Gizmos.color = isAttracting ? Color.blue : Color.red;
-            Gizmos.DrawWireSphere(center, radius);
-
-            Gizmos.color = new Color(isAttracting ? 0f : 1f, 0f, isAttracting ? 1f : 0f, 0.1f);
-            Gizmos.DrawSphere(center, radius);
-
-            if (mode == FieldMode.ToTarget && targetTransform != null)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, targetTransform.position);
-                Gizmos.DrawSphere(targetTransform.position, 0.075f);
-            }
-
-            if (mode == FieldMode.ToPoint)
-            {
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, targetPoint);
-                Gizmos.DrawSphere(targetPoint, 0.075f);
-            }
-
-            if (mode == FieldMode.Direction)
-            {
-                Vector3 end = transform.position +
-                              GetDirectionWorldNormalized() * Mathf.Max(0.01f, directionGizmoDistance);
-                Gizmos.color = Color.yellow;
-                Gizmos.DrawLine(transform.position, end);
-                Gizmos.DrawSphere(end, 0.075f);
-            }
         }
     }
 }

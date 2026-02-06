@@ -44,7 +44,6 @@ namespace Neo
 
             private void OnValidate()
             {
-                name = nameof(UIReady);
 #if UNITY_2023_1_OR_NEWER
 #else
 #endif

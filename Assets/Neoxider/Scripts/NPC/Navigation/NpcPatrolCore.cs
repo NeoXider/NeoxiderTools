@@ -1,42 +1,43 @@
 using System;
 using UnityEngine;
 using UnityEngine.AI;
+using Random = UnityEngine.Random;
 
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Pure C# patrol logic for a NavMeshAgent.
+    ///     Pure C# patrol logic for a NavMeshAgent.
     /// </summary>
     public sealed class NpcPatrolCore
     {
-        public event Action PatrolStarted;
-        public event Action PatrolCompleted;
-        public event Action<int> PatrolPointReached;
-        public event Action<Vector3> DestinationUnreachable;
-
-        private readonly Transform self;
         private readonly NavMeshAgent agent;
 
-        private Transform[] patrolPoints;
-        private bool loop;
-        private float waitTime;
-        private float maxSampleDistance;
-        private BoxCollider patrolZone;
+        private readonly Transform self;
 
-        private bool isPatrolling;
         private bool isWaiting;
+        private bool loop;
+        private float maxSampleDistance;
+
+        private Transform[] patrolPoints;
+        private BoxCollider patrolZone;
+        private float waitTime;
         private float waitUntilTime;
-
-        public int CurrentIndex { get; private set; }
-
-        public bool IsPatrolling => isPatrolling;
-        public bool UsesPatrolZone => patrolZone != null;
 
         public NpcPatrolCore(Transform self, NavMeshAgent agent)
         {
             this.self = self;
             this.agent = agent;
         }
+
+        public int CurrentIndex { get; private set; }
+
+        public bool IsPatrolling { get; private set; }
+
+        public bool UsesPatrolZone => patrolZone != null;
+        public event Action PatrolStarted;
+        public event Action PatrolCompleted;
+        public event Action<int> PatrolPointReached;
+        public event Action<Vector3> DestinationUnreachable;
 
         public void Configure(Transform[] points, BoxCollider zone, float waitTime, bool loop, float maxSampleDistance)
         {
@@ -64,7 +65,7 @@ namespace Neo.NPC.Navigation
                 CurrentIndex = 0;
             }
 
-            isPatrolling = true;
+            IsPatrolling = true;
             isWaiting = false;
 
             agent.isStopped = false;
@@ -83,7 +84,7 @@ namespace Neo.NPC.Navigation
 
         public void StopPatrol(bool stopAgent)
         {
-            isPatrolling = false;
+            IsPatrolling = false;
             isWaiting = false;
 
             if (stopAgent && agent != null)
@@ -94,7 +95,7 @@ namespace Neo.NPC.Navigation
 
         public void Tick(float time)
         {
-            if (!isPatrolling)
+            if (!IsPatrolling)
             {
                 return;
             }
@@ -161,7 +162,7 @@ namespace Neo.NPC.Navigation
 
             if (patrolPoints == null || patrolPoints.Length == 0)
             {
-                isPatrolling = false;
+                IsPatrolling = false;
                 PatrolCompleted?.Invoke();
                 return;
             }
@@ -172,7 +173,7 @@ namespace Neo.NPC.Navigation
             {
                 if (!loop)
                 {
-                    isPatrolling = false;
+                    IsPatrolling = false;
                     PatrolCompleted?.Invoke();
                     return;
                 }
@@ -213,7 +214,7 @@ namespace Neo.NPC.Navigation
                 {
                     if (!loop)
                     {
-                        isPatrolling = false;
+                        IsPatrolling = false;
                         PatrolCompleted?.Invoke();
                         return false;
                     }
@@ -271,14 +272,12 @@ namespace Neo.NPC.Navigation
             Vector3 half = box.size * 0.5f;
 
             Vector3 local = new(
-                UnityEngine.Random.Range(center.x - half.x, center.x + half.x),
-                UnityEngine.Random.Range(center.y - half.y, center.y + half.y),
-                UnityEngine.Random.Range(center.z - half.z, center.z + half.z)
+                Random.Range(center.x - half.x, center.x + half.x),
+                Random.Range(center.y - half.y, center.y + half.y),
+                Random.Range(center.z - half.z, center.z + half.z)
             );
 
             return t.TransformPoint(local);
         }
     }
 }
-
-

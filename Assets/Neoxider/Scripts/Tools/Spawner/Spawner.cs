@@ -7,8 +7,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -30,7 +28,7 @@ namespace Neo.Tools
         public float destroyDelay;
 
         /// <summary>
-        /// UnityEvent, вызывается после успешного спавна игрового объекта.
+        ///     UnityEvent, вызывается после успешного спавна игрового объекта.
         /// </summary>
         public UnityEvent<GameObject> OnObjectSpawned;
 
@@ -136,11 +134,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Запускает процесс спавна (корутина), если он ещё не запущен.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void StartSpawn()
         {
             if (isSpawning)
@@ -155,11 +149,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Останавливает процесс спавна. Текущие объекты остаются в сцене.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void StopSpawn()
         {
             isSpawning = false;
@@ -193,11 +183,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public GameObject SpawnRandomObject()
         {
             if (_prefabs == null || _prefabs.Length == 0)
@@ -225,11 +211,7 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs" />.</param>
         /// <param name="position">Мировая позиция спавна.</param>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public GameObject SpawnById(int prefabId, Vector3 position)
         {
             if (_prefabs == null || _prefabs.Length == 0)
@@ -364,11 +346,8 @@ namespace Neo.Tools
             Quaternion offset = Quaternion.Euler(rx, ry, rz);
             return _useLocalRotation ? baseRot * offset : offset;
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Clear()
         {
             StopAllCoroutines(); // Останавливаем все корутины (спавн и отложенное удаление)

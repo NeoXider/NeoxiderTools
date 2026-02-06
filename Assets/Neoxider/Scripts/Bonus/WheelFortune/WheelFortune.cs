@@ -1,6 +1,4 @@
-﻿#if ODIN_INSPECTOR
-#endif
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
@@ -376,11 +374,8 @@ namespace Neo.Bonus
             int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
             return (id + items.Length) % items.Length;
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Spin()
         {
             if (items.Length == 0)
@@ -400,11 +395,8 @@ namespace Neo.Bonus
                 Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Stop()
         {
             if (State == SpinState.Idle)

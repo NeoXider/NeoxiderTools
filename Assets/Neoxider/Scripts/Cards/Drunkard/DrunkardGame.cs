@@ -2,9 +2,6 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Cards
 {
@@ -167,9 +164,7 @@ namespace Neo.Cards
         ///     Выполняет ход (для вызова из UI кнопки).
         ///     Не-асинхронная обёртка над PlayRound().
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void Play()
         {
             if (_debug)
@@ -828,9 +823,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Перезапускает игру: создаёт новую колоду и раздаёт карты.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void RestartGame()
         {
             if (_deckConfig == null || _cardPrefab == null)

@@ -1,29 +1,69 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию Neoxider. Здесь собраны ссылки на ключевые разделы и краткие инструкции по запуску.
+Добро пожаловать в документацию **NeoxiderTools** (v5.7.0). Здесь собраны ссылки на все модули и инструкции по запуску.
 
 ---
 
-## Как ориентироваться
+## Индекс модулей
 
-| Каталог | Что внутри | Документация |
-|---------|------------|---------------|
-| `Animations` | Универсальная система анимации значений, цветов, векторов и источников света | [`./Animations/README.md`](./Animations/README.md) |
-| `Audio` | Менеджеры звука, настройки микшера, play-on-click | [`./Audio/README.md`](./Audio/README.md) |
-| `Bonus` | Коллекции, слот‑машины, колёса удачи | [`./Bonus/README.md`](./Bonus/README.md) |
-| `Cards` | Карточные игры: колода, рука, покерные комбинации | [`./Cards/README.md`](./Cards/README.md) |
-| `Editor` | Атрибуты редактора, инспекторные тулзы | [`./Editor/README.md`](./Editor/README.md) |
-| `Extensions` | Расширения C# и Unity API | [`./Extensions/README.md`](./Extensions/README.md) |
-| `GridSystem` | Сетки, перемещение по ячейкам, NavMesh‑интеграция | [`./GridSystem.md`](./GridSystem.md) |
-| `Level` | Уровни, карты, прогресс игрока | [`./Level/LevelManager.md`](./Level/LevelManager.md) |
-| `NPC` | Модульная система NPC (навигация и будущие поведения) | [`./NPC/README.md`](./NPC/README.md) |
-| `Parallax` | Универсальный параллакс с предпросмотром | [`./ParallaxLayer.md`](./ParallaxLayer.md) |
-| `Save` | Система сохранений с атрибутами `[SaveField]` | [`./Save/README.md`](./Save/README.md) |
-| `Shop` | Магазин, валюта, кэшбэк | [`./Shop/README.md`](./Shop/README.md) |
-| `Tools` | Набор «кирпичиков»: спавнеры, таймеры, менеджеры и др. | [`./Tools/README.md`](./Tools/README.md) |
-| `UI` | UI‑анимации, кнопки, страницы, прогресс‑бары | [`./UI/README.md`](./UI/README.md) |
+| Модуль | Описание | Документация |
+|--------|----------|-------------|
+| **Animations** | Анимация значений, цветов, Vector3, света | [`Animations/README.md`](./Animations/README.md) |
+| **Audio** | AudioManager, микшер, play-on-click | [`Audio/README.md`](./Audio/README.md) |
+| **Bonus** | Коллекции, слот-машины, колёса удачи, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
+| **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-Code условия: проверка полей компонентов, AND/OR, события. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
+| **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Генерация сеток, ячейки, спавн объектов | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Менеджер уровней, карта, кнопки | [`Level/LevelManager.md`](./Level/LevelManager.md) |
+| **NPC** | Модульная навигация NPC (патруль, преследование, агро) | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Параллакс-слои с предпросмотром | [`ParallaxLayer.md`](./ParallaxLayer.md) |
+| **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Save** | Система сохранений: PlayerPrefs, JSON, `[SaveField]` | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
+| **StateMachine** | State Machine + NoCode визуальный редактор состояний | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
+| **Tools** | Спавнеры, таймеры, физика, ввод, менеджеры, Counter | [`Tools` (подпапки)](./Tools) |
+| **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
+| **UI Extension** | Готовые UI-префабы: Canvas, Layout, ScrollRect | [`UI Extension/README.md`](./UI%20Extension/README.md) |
 
-Полный список — в соответствующих подпапках `Docs`. Каждый markdown содержит быстрый старт и примеры.
+### Подмодули Tools
+
+| Подмодуль | Описание | Документация |
+|-----------|----------|-------------|
+| Tools/Components | Counter, Health, Evade, ScoreManager, TypewriterEffect | [`Tools/Components/README.md`](./Tools/Components/README.md) |
+| Tools/Physics | MagneticField, ExplosiveForce, ImpulseZone | [`Tools/Physics/README.md`](./Tools/Physics/README.md) |
+| Tools/Move | Follow, KeyboardMover, MouseMover, UniversalRotator | [`Tools/Move/README.md`](./Tools/Move/README.md) |
+| Tools/Spawner | Spawner, SimpleSpawner, ObjectPool | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
+| Tools/Time | Timer, TimerObject | [`Tools/Time/README.md`](./Tools/Time/README.md) |
+| Tools/Input | SwipeController, MultiKeyEventTrigger, MouseEffect | [`Tools/Input`](./Tools/Input) |
+| Tools/Managers | GM, EM, Bootstrap, Singleton | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
+| Tools/View | Selector, BillboardUniversal, StarView | [`Tools/View`](./Tools/View) |
+| Tools/Dialogue | DialogueController, DialogueData, DialogueUI | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
+| Tools/Random | ChanceManager, ChanceData | [`Tools/Random`](./Tools/Random) |
+| Tools/InteractableObject | InteractiveObject, PhysicsEvents, ToggleObject | [`Tools/InteractableObject`](./Tools/InteractableObject) |
+| Tools/FakeLeaderboard | Leaderboard, LeaderboardItem | [`Tools/FakeLeaderboard`](./Tools/FakeLeaderboard) |
+| Tools/Debug | FPS, ErrorLogger | [`Tools/Debug`](./Tools/Debug) |
+| Tools/Draw | Drawer (рисование линий) | [`Tools/Draw`](./Tools/Draw) |
+| Tools/Text | SetText, TimeToText | [`Tools/Text`](./Tools/Text) |
+
+### Опциональные модули
+
+| Модуль | Путь | Документация |
+|--------|------|-------------|
+| **NeoxiderPages** | `Assets/NeoxiderPages/` | `Assets/NeoxiderPages/Docs/README.md` |
+
+### Демо-сцены
+
+| Демо | Сцена | Описание |
+|------|-------|----------|
+| **Chance System** | `Demo/Scenes/Tools/ChanceSystemExample.unity` | Система шансов |
+| **Attributes** | `Demo/Scenes/Tools/AttributeExample.unity` | Демонстрация PropertyAttribute |
+| **Dialogue** | `Demo/Scenes/Tools/Dialogue.unity` | Система диалогов |
+| **Draw** | `Demo/Scenes/Tools/DrawExample.unity` | Рисование линий |
+| **Mouse Effector** | `Demo/Scenes/Tools/MouseEffectorExample.unity` | Эффекты мыши |
+
+Каждый markdown содержит быстрый старт и примеры использования.
 
 ---
 

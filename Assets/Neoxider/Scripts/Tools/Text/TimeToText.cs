@@ -14,6 +14,15 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Tools/" + nameof(TimeToText))]
         public class TimeToText : MonoBehaviour
         {
+            #region Events
+
+            /// <summary>
+            ///     Invoked when the time value changes
+            /// </summary>
+            public UnityEvent<float> OnTimeChanged;
+
+            #endregion
+
             #region Private Fields
 
             private float lastTime;
@@ -55,15 +64,6 @@ namespace Neo
 
             [Tooltip("Character to use as separator between time units")] [SerializeField]
             private string separator = ":";
-
-            #endregion
-
-            #region Events
-
-            /// <summary>
-            ///     Invoked when the time value changes
-            /// </summary>
-            public UnityEvent<float> OnTimeChanged;
 
             #endregion
 

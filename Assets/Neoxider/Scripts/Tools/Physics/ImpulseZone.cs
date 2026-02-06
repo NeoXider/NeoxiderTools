@@ -1,9 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Tools
 {
@@ -63,8 +60,9 @@ namespace Neo.Tools
         [Tooltip("Вызывается при применении импульса")]
         public UnityEvent<GameObject> OnImpulseApplied = new();
 
-        private readonly HashSet<Collider> processedColliders = new();
         private readonly Dictionary<Collider, float> cooldownTimers = new();
+
+        private readonly HashSet<Collider> processedColliders = new();
 
         private Collider zoneCollider;
 
@@ -99,6 +97,38 @@ namespace Neo.Tools
                         processedColliders.Remove(col);
                     }
                 }
+            }
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            if (zoneCollider == null)
+            {
+                zoneCollider = GetComponent<Collider>();
+            }
+
+            if (zoneCollider == null)
+            {
+                return;
+            }
+
+            Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
+            Gizmos.matrix = transform.localToWorldMatrix;
+
+            if (zoneCollider is BoxCollider box)
+            {
+                Gizmos.DrawCube(box.center, box.size);
+            }
+            else if (zoneCollider is SphereCollider sphere)
+            {
+                Gizmos.DrawSphere(sphere.center, sphere.radius);
+            }
+            else if (zoneCollider is CapsuleCollider capsule)
+            {
+                Gizmos.DrawWireSphere(capsule.center + Vector3.up * (capsule.height * 0.5f - capsule.radius),
+                    capsule.radius);
+                Gizmos.DrawWireSphere(capsule.center - Vector3.up * (capsule.height * 0.5f - capsule.radius),
+                    capsule.radius);
             }
         }
 
@@ -243,47 +273,10 @@ namespace Neo.Tools
             return true;
         }
 
-#if ODIN_INSPECTOR
-        [FoldoutGroup("Testing")]
         [Button("Clear Processed Objects")]
-#else
-        [Button("Clear Processed Objects")]
-#endif
         private void ClearProcessedObjectsButton()
         {
             ClearProcessedObjects();
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            if (zoneCollider == null)
-            {
-                zoneCollider = GetComponent<Collider>();
-            }
-
-            if (zoneCollider == null)
-            {
-                return;
-            }
-
-            Gizmos.color = new Color(1f, 1f, 0f, 0.3f);
-            Gizmos.matrix = transform.localToWorldMatrix;
-
-            if (zoneCollider is BoxCollider box)
-            {
-                Gizmos.DrawCube(box.center, box.size);
-            }
-            else if (zoneCollider is SphereCollider sphere)
-            {
-                Gizmos.DrawSphere(sphere.center, sphere.radius);
-            }
-            else if (zoneCollider is CapsuleCollider capsule)
-            {
-                Gizmos.DrawWireSphere(capsule.center + Vector3.up * (capsule.height * 0.5f - capsule.radius),
-                    capsule.radius);
-                Gizmos.DrawWireSphere(capsule.center - Vector3.up * (capsule.height * 0.5f - capsule.radius),
-                    capsule.radius);
-            }
         }
     }
 }

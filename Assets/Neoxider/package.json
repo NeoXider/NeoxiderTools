@@ -1,9 +1,10 @@
 {
   "name": "com.neoxider.tools",
   "displayName": "Neoxider Tools",
-  "version": "5.6.0",
+  "version": "5.7.0",
   "unity": "2022.1",
-  "description": "Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity. ",
+  "unityRelease": "0f1",
+  "description": "Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.",
   "author": {
     "name": "Neoxider"
   },
@@ -15,11 +16,25 @@
     "type": "git",
     "url": "https://github.com/NeoXider/NeoxiderTools.git"
   },
+  "samples": [
+    {
+      "displayName": "Demo Scenes",
+      "description": "Демо-сцены и примеры использования: Condition, Tools, Audio и другие модули",
+      "path": "Samples~/Demo"
+    },
+    {
+      "displayName": "NeoxiderPages",
+      "description": "Модуль страниц и экранов (PageManager, UIPage, UIKit). Система навигации между экранами игры.",
+      "path": "Samples~/NeoxiderPages"
+    }
+  ],
   "keywords": [
     "neoxider",
     "tools",
     "starter",
-    "extensions"
+    "extensions",
+    "no-code",
+    "state-machine"
   ],
   "license": "Custom"
 }

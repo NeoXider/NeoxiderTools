@@ -1,8 +1,5 @@
 using UnityEditor;
 using UnityEngine;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Tools
 {
@@ -236,11 +233,7 @@ namespace Neo.Tools
         [FoldoutGroup("Наведение")]
         [DisableInEditorMode]
 #endif
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         private void ClearTargetButton()
         {
             ClearTarget();
@@ -249,11 +242,7 @@ namespace Neo.Tools
         [FoldoutGroup("Наведение")]
         [ShowIf("@target != null && !useMouseWorld")]
 #endif
-#if ODIN_INSPECTOR
         [Button("Look at Target Instantly")]
-#else
-        [ButtonAttribute("Look at Target Instantly")]
-#endif
         private void LookAtTargetInstant()
         {
             SetTarget(target);

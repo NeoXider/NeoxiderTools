@@ -116,7 +116,7 @@ namespace Neo.Extensions
         public static GameObject SetActiveAtIndex<T>(this IEnumerable<T> components, int index, bool active)
             where T : Component
         {
-            return SetActiveAtIndex(components.ToList(), index, active);
+            return components.ToList().SetActiveAtIndex(index, active);
         }
 
         /// <summary>
@@ -126,7 +126,7 @@ namespace Neo.Extensions
         public static GameObject SetActiveAtIndex(this IEnumerable<GameObject> gameObjects, int index,
             bool active = true)
         {
-            return SetActiveAtIndex(gameObjects.ToList(), index, active);
+            return gameObjects.ToList().SetActiveAtIndex(index, active);
         }
 
         /// <summary>
@@ -448,7 +448,7 @@ namespace Neo.Extensions
             }
 
             IEnumerable<GameObject> gameObjects = components.Where(c => c != null).Select(c => c.gameObject);
-            return GetCombinedBounds(gameObjects);
+            return gameObjects.GetCombinedBounds();
         }
     }
 }

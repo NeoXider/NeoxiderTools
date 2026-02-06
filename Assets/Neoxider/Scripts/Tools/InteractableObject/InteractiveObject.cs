@@ -78,8 +78,8 @@ namespace Neo
             private float clickTime;
             private bool keyHeldPrev;
             private bool mouseHeldPrev;
-            private bool wasInRange;
             private bool wasHoveredByRaycast;
+            private bool wasInRange;
 
             private void Awake()
             {

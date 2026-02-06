@@ -4,15 +4,15 @@ using UnityEngine.AI;
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Pure C# animation driver based on NavMeshAgent velocity.
+    ///     Pure C# animation driver based on NavMeshAgent velocity.
     /// </summary>
     public sealed class NpcAnimationCore
     {
         private readonly NavMeshAgent agent;
         private readonly Animator animator;
-        private readonly int speedHash;
-        private readonly int isMovingHash;
         private readonly float dampTime;
+        private readonly int isMovingHash;
+        private readonly int speedHash;
 
         private float speedVelocity;
 
@@ -49,5 +49,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-

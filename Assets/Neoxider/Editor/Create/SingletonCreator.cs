@@ -169,7 +169,7 @@ public class {0} : Singleton<{0}>
         private bool initialized;
         private string input = "";
         private string message = "";
-        private string title = "";
+        private new string title = "";
 
         private void OnGUI()
         {

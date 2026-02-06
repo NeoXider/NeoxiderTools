@@ -2,18 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.6.0] - Unreleased
+## [5.7.0] - Unreleased
 
 ### Добавлено
 
-- **Tools/Components/Counter**: универсальный счётчик
-  - Режимы Int/Float, значение по умолчанию 1
-  - Методы Add, Subtract, Multiply, Divide, Set (int/float); Send() по Payload (Counter/Score/Money), Send(value) без изменения счётчика
-  - События по типу: OnValueChangedInt/OnValueChangedFloat, OnSendInt/OnSendFloat (в зависимости от режима), плюс OnValueChanged/OnSend(float)
-  - Опциональное сохранение через SaveProvider по строковому ключу (по умолчанию выключено, как в Money)
-  - Кнопки в инспекторе для всех методов ([Button]/[ButtonAttribute])
-  - Enum'ы CounterValueMode (Int, Float), CounterSendPayload (Counter, Score, Money)
-  - Документация: `Docs/Tools/Components/Counter.md`, запись в `PROJECT_SUMMARY.md`
+- **NeoCondition** — No-Code система условий (новый модуль `Neo.Condition`)
+  - Проверяет значения полей/свойств любых компонентов через Inspector без кода
+  - Автопоиск компонентов и полей через dropdown в кастомном редакторе
+  - AND/OR логика, инверсия (NOT) на каждое условие
+  - Режимы проверки: Manual, EveryFrame, Interval
+  - Поддерживаемые типы: int, float, bool, string
+  - События: OnTrue, OnFalse, OnResult(bool), OnInvertedResult(bool)
+  - Only On Change — вызов событий только при изменении результата
+  - Play Mode: отображение текущего значения и результата в Inspector
+  - **Source Mode** — выбор источника данных:
+    - `Component` — чтение полей/свойств компонентов (по умолчанию)
+    - `GameObject` — чтение свойств самого объекта: activeSelf, activeInHierarchy, isStatic, tag, name, layer
+  - **Find By Name** — поиск целевого GameObject в сцене по имени (`GameObject.Find`):
+    - Результат кешируется пока объект жив
+    - Автоматический повторный поиск при уничтожении объекта
+    - Preview найденного объекта в Edit Mode для настройки
+    - **Wait For Object** — ожидание спавна объекта без Warning (для префабов)
+    - **Prefab Preview** — ссылка на префаб из Project для настройки компонентов/свойств до спавна (только Editor)
+  - **Check On Start** — по умолчанию `true` (ранее `false`)
+  - **Защита от null** — безопасная обработка уничтоженных объектов/компонентов:
+    - Однократные Warning-логи (не спамит в EveryFrame)
+    - Автоматический сброс кеша, условие возвращает `false`
+    - Ошибка в одном условии не ломает остальные
+  - **Визуализация** — цветовая полоска в Inspector: голубая (Component), жёлтая (GameObject), зелёная (Find By Name), красная (NOT)
+  - Демо-скрипты: `ConditionDemoUI`, `ConditionDemoSetup`, `HealthTextDisplay` (используют существующие `Health` и `ScoreManager`)
+- **Counter** — универсальный счётчик (Int/Float), Add/Subtract/Multiply/Divide/Set, Send по Payload, события по типу, сохранение по ключу
+
+### Улучшено
+
+- **[Button] атрибут** — унифицирован: убраны `#if ODIN_INSPECTOR` блоки из 43 файлов. Теперь везде используется единый `[Button]` (Neo.ButtonAttribute), который работает и с Odin Inspector, и без него
+- **MagneticField** — Toggle теперь bool-галочка, работает с любым режимом (Attract, Repel, ToTarget, ToPoint, Direction)
+- **MagneticFieldEditor** — наследуется от CustomEditorBase (инспектор в стиле Neo), исправлен serializedObject в OnSceneGUI
+- **NeoUpdateChecker** — автоматическая проверка обновлений раз в 10 минут, ручная кнопка ⟳ с кулдауном 10 секунд; корректная обработка GitHub API rate limit (403); фоллбек поиска package.json; логирование всех этапов проверки
+- **CustomEditorBase** — версия и статус обновления всегда отображаются в инспекторе; ошибки показываются оранжевым цветом
+- **README.md** — полностью переписан: быстрый старт, таблица модулей, примеры использования, установка через UPM
+- **Docs/README.md** — добавлен полный индекс модулей и подмодулей Tools с ссылками на документацию
+- **PROJECT_SUMMARY.md** — исправлены дубли (Shapes.cs, Enums.cs), разделена склеенная строка Counter/Loot
+- **package.json** — добавлено поле `unityRelease`, обновлены keywords (no-code, state-machine)
+
+### Исправлено
+
+- **SingletonCreator** — исправлен CS0108 warning (`title` hides inherited member)
+- **GM.set_State** — исправлен NullReferenceException при обращении к `EM.I` до инициализации (добавлен null-conditional `?.`)
 
 ---
 

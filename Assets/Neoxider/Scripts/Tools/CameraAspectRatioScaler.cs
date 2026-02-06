@@ -1,6 +1,4 @@
 ﻿using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -125,11 +123,7 @@ namespace Neo
         /// <summary>
         ///     Calculates and applies the appropriate camera scale based on current settings.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         private void UpdateCameraScale()
         {
             if (_camera == null)

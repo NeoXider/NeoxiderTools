@@ -6,9 +6,6 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-#if ODIN_INSPECTOR
-using Sirenix.OdinInspector;
-#endif
 
 namespace Neo.Cards
 {
@@ -248,9 +245,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Переворачивает карту
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#endif
         public void Flip()
         {
             _isFaceUp = !_isFaceUp;

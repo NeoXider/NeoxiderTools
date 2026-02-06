@@ -6,8 +6,6 @@ using UnityEngine.UI;
 using TMPro;
 #endif
 
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo
 {
@@ -481,11 +479,7 @@ namespace Neo
         /// <summary>
         ///     Starts or resumes the timer
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Play()
         {
             ApplyRandomDurationIfNeeded();
@@ -557,11 +551,7 @@ namespace Neo
         ///     Pauses or resumes the timer
         /// </summary>
         /// <param name="paused">True to pause, false to resume</param>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Pause(bool paused = true)
         {
             if (isActive == !paused)
@@ -591,11 +581,7 @@ namespace Neo
         /// <summary>
         ///     Stops and resets the timer
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Stop()
         {
             if (!isActive)
@@ -611,11 +597,7 @@ namespace Neo
         /// <summary>
         ///     Resumes the timer from pause
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Resume()
         {
             Pause(false);

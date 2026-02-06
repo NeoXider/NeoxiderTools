@@ -273,7 +273,7 @@ namespace Neo.Extensions
         /// </summary>
         public static float NormalizeToUnit(this float x)
         {
-            return NormalizeToUnit(x, DefaultMinValue, DefaultMaxValue);
+            return x.NormalizeToUnit(DefaultMinValue, DefaultMaxValue);
         }
 
         /// <summary>
@@ -281,7 +281,7 @@ namespace Neo.Extensions
         /// </summary>
         public static float NormalizeToRange(this float x)
         {
-            return NormalizeToRange(x, DefaultMinValue, DefaultMaxValue);
+            return x.NormalizeToRange(DefaultMinValue, DefaultMaxValue);
         }
 
         /// <summary>
@@ -289,7 +289,7 @@ namespace Neo.Extensions
         /// </summary>
         public static float NormalizeToRange(this float x, float min, float max)
         {
-            return Mathf.Clamp(2.0f * NormalizeToUnit(x, min, max) - 1.0f, -1f, 1f);
+            return Mathf.Clamp(2.0f * x.NormalizeToUnit(min, max) - 1.0f, -1f, 1f);
         }
 
         /// <summary>
@@ -328,8 +328,8 @@ namespace Neo.Extensions
         /// </summary>
         public static float Remap(this float value, float fromMin, float fromMax, float toMin, float toMax)
         {
-            float normalizedValue = NormalizeToUnit(value, fromMin, fromMax);
-            return Denormalize(normalizedValue, toMin, toMax);
+            float normalizedValue = value.NormalizeToUnit(fromMin, fromMax);
+            return normalizedValue.Denormalize(toMin, toMax);
         }
 
         #endregion

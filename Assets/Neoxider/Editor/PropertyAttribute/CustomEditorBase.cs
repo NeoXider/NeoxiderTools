@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +9,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 using GUI = UnityEngine.GUI;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace Neo.Editor
 {
@@ -29,10 +31,6 @@ namespace Neo.Editor
         private static Texture2D _cachedLibraryIcon;
         private static bool _isLibraryIconLoadAttempted;
 
-        protected Dictionary<string, bool> _buttonFoldouts = new();
-
-        protected Dictionary<string, object> _buttonParameterValues = new();
-
         private static readonly Dictionary<string, bool> _neoFoldouts = new();
 
         // Reflection helpers (suppress Unity's built-in HeaderAttribute drawing when we already render our own sections)
@@ -46,16 +44,26 @@ namespace Neo.Editor
                 new[] { typeof(SerializedProperty) },
                 null);
 
+        protected Dictionary<string, bool> _buttonFoldouts = new();
+
+        protected Dictionary<string, object> _buttonParameterValues = new();
+
         private Rect _componentOutlineRect;
         protected Dictionary<string, bool> _isFirstRun = new();
 
         private Rect _rainbowLineStartRect;
         private float _rainbowLineStartY;
+        private bool _unityEventOnlyWithListeners;
+
+        private string _unityEventSearch = string.Empty;
 
         private bool _wasResetPressed;
 
-        private string _unityEventSearch = string.Empty;
-        private bool _unityEventOnlyWithListeners;
+        /// <summary>
+        ///     Позволяет производным редакторам (модулям) рисовать свой UI,
+        ///     но внутри фирменного Neoxider-стиля (рамка/фон/радужная линия/Actions).
+        /// </summary>
+        protected virtual bool UseCustomNeoxiderInspectorGUI => false;
 
         protected virtual void OnDisable()
         {
@@ -140,8 +148,8 @@ namespace Neo.Editor
 
             try
             {
-                UnityEditor.PackageManager.PackageInfo packageInfo =
-                    UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(CustomEditorBase).Assembly);
+                PackageInfo packageInfo =
+                    PackageInfo.FindForAssembly(typeof(CustomEditorBase).Assembly);
                 if (packageInfo != null)
                 {
                     if (string.IsNullOrEmpty(_cachedNeoxiderRootPath) && !string.IsNullOrEmpty(packageInfo.assetPath))
@@ -211,6 +219,27 @@ namespace Neo.Editor
             }
             catch
             {
+            }
+
+            // Фоллбек для _cachedNeoxiderRootPath: пробуем известные пути
+            if (string.IsNullOrEmpty(_cachedNeoxiderRootPath))
+            {
+                string[] knownPaths =
+                {
+                    "Assets/Neoxider",
+                    "Packages/com.neoxider.tools"
+                };
+
+                foreach (string kp in knownPaths)
+                {
+                    string testPath = Path.Combine(kp, "package.json");
+                    if (File.Exists(testPath) ||
+                        AssetDatabase.LoadAssetAtPath<TextAsset>(testPath) != null)
+                    {
+                        _cachedNeoxiderRootPath = kp;
+                        break;
+                    }
+                }
             }
 
             if (string.IsNullOrEmpty(_cachedVersion))
@@ -422,16 +451,46 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        /// Позволяет производным редакторам (модулям) рисовать свой UI,
-        /// но внутри фирменного Neoxider-стиля (рамка/фон/радужная линия/Actions).
-        /// </summary>
-        protected virtual bool UseCustomNeoxiderInspectorGUI => false;
-
-        /// <summary>
-        /// Кастомная отрисовка инспектора (вызывается только если <see cref="UseCustomNeoxiderInspectorGUI"/> == true).
+        ///     Кастомная отрисовка инспектора (вызывается только если <see cref="UseCustomNeoxiderInspectorGUI" /> == true).
         /// </summary>
         protected virtual void DrawCustomNeoxiderInspectorGUI()
         {
+        }
+
+        /// <summary>
+        ///     Собирает все UnityEvent-свойства из serializedObject и рисует их
+        ///     в фирменном сворачиваемом разделе «Events». Используйте в <see cref="DrawCustomNeoxiderInspectorGUI" />
+        ///     чтобы отображать события в едином стиле Neoxider.
+        /// </summary>
+        protected void DrawCollapsibleUnityEvents()
+        {
+            if (serializedObject == null)
+            {
+                return;
+            }
+
+            List<SerializedProperty> unityEvents = new();
+            SerializedProperty iterator = serializedObject.GetIterator();
+            bool enterChildren = true;
+            while (iterator.NextVisible(enterChildren))
+            {
+                enterChildren = false;
+                if (iterator.name == "m_Script")
+                {
+                    continue;
+                }
+
+                if (IsUnityEventProperty(iterator))
+                {
+                    unityEvents.Add(iterator.Copy());
+                }
+            }
+
+            if (unityEvents.Count > 0)
+            {
+                EditorGUILayout.Space(4);
+                DrawUnityEventsFoldout(unityEvents);
+            }
         }
 
         protected virtual void DrawNeoxiderSignature()
@@ -447,8 +506,8 @@ namespace Neo.Editor
             EnsureNeoxiderPackageInfo();
             string version = GetNeoxiderVersion();
             string signatureText = $"v{version}";
-            // IMPORTANT: no background logic on repaint. Only read cached state.
-            NeoUpdateChecker.State updateState = NeoUpdateChecker.Peek();
+            // Tick() запускает проверку обновлений если прошёл интервал, иначе читает кеш.
+            NeoUpdateChecker.State updateState = NeoUpdateChecker.Tick(version, _cachedNeoxiderRootPath);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -520,99 +579,104 @@ namespace Neo.Editor
                 GUI.color = originalTextColor;
             }
 
-            if (!string.IsNullOrEmpty(updateState.LatestVersion))
+            // Всегда показываем строку статуса версии с кнопкой обновления
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                switch (updateState.Status)
+                using (new EditorGUILayout.HorizontalScope())
                 {
-                    case NeoUpdateChecker.UpdateStatus.UpdateAvailable:
-                        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
+                    if (refreshContent == null || refreshContent.image == null)
+                    {
+                        refreshContent = new GUIContent("⟳");
+                    }
+
+                    if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
+                    {
+                        // Гарантируем что путь найден перед проверкой
+                        EnsureNeoxiderPackageInfo();
+                        NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
+                        EnsureRepaint();
+                        Repaint();
+                    }
+
+                    switch (updateState.Status)
+                    {
+                        case NeoUpdateChecker.UpdateStatus.UpdateAvailable:
                         {
-                            using (new EditorGUILayout.HorizontalScope())
+                            GUIStyle newVersionStyle = new(EditorStyles.miniBoldLabel)
                             {
-                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
-                                if (refreshContent == null || refreshContent.image == null)
-                                {
-                                    refreshContent = new GUIContent("⟳");
-                                }
+                                normal = { textColor = new Color(1f, 0.25f, 0.25f, 1f) }
+                            };
+                            GUILayout.Label(
+                                $"Новая версия {updateState.LatestVersion}",
+                                newVersionStyle);
+                            GUILayout.FlexibleSpace();
 
-                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
-                                {
-                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
-                                    Repaint();
-                                }
-
-                                GUIStyle newVersionStyle = new(EditorStyles.miniBoldLabel)
-                                {
-                                    normal = { textColor = new Color(1f, 0.25f, 0.25f, 1f) }
-                                };
-
-                                GUILayout.Label($"Новая версия {updateState.LatestVersion}", newVersionStyle);
-                                GUILayout.FlexibleSpace();
-
-                                if (!string.IsNullOrEmpty(updateState.UpdateUrl) &&
-                                    GUILayout.Button("Обновить", GUILayout.Width(90), GUILayout.Height(20)))
-                                {
-                                    Application.OpenURL(updateState.UpdateUrl);
-                                }
+                            if (!string.IsNullOrEmpty(updateState.UpdateUrl) &&
+                                GUILayout.Button("Обновить", GUILayout.Width(90), GUILayout.Height(20)))
+                            {
+                                Application.OpenURL(updateState.UpdateUrl);
                             }
+
+                            break;
                         }
 
-                        break;
-
-                    case NeoUpdateChecker.UpdateStatus.UpToDate:
-                        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                        case NeoUpdateChecker.UpdateStatus.UpToDate:
                         {
-                            using (new EditorGUILayout.HorizontalScope())
+                            GUIStyle okStyle = new(EditorStyles.miniBoldLabel)
                             {
-                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
-                                if (refreshContent == null || refreshContent.image == null)
-                                {
-                                    refreshContent = new GUIContent("⟳");
-                                }
-
-                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
-                                {
-                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
-                                    Repaint();
-                                }
-
-                                GUIStyle okStyle = new(EditorStyles.miniBoldLabel)
-                                {
-                                    normal = { textColor = new Color(0.35f, 1f, 0.35f, 1f) }
-                                };
-                                EditorGUILayout.LabelField("Актуальная версия", okStyle);
-                            }
+                                normal = { textColor = new Color(0.35f, 1f, 0.35f, 1f) }
+                            };
+                            EditorGUILayout.LabelField("Актуальная версия", okStyle);
+                            break;
                         }
 
-                        break;
-
-                    case NeoUpdateChecker.UpdateStatus.Ahead:
-                        using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                        case NeoUpdateChecker.UpdateStatus.Ahead:
                         {
-                            using (new EditorGUILayout.HorizontalScope())
+                            GUIStyle devStyle = new(EditorStyles.miniBoldLabel)
                             {
-                                GUIContent refreshContent = EditorGUIUtility.IconContent("d_Refresh");
-                                if (refreshContent == null || refreshContent.image == null)
-                                {
-                                    refreshContent = new GUIContent("⟳");
-                                }
-
-                                if (GUILayout.Button(refreshContent, GUILayout.Width(20), GUILayout.Height(18)))
-                                {
-                                    NeoUpdateChecker.RequestImmediateCheck(version, _cachedNeoxiderRootPath);
-                                    Repaint();
-                                }
-
-                                GUIStyle devStyle = new(EditorStyles.miniBoldLabel)
-                                {
-                                    normal = { textColor = new Color(1f, 0.75f, 0.25f, 1f) }
-                                };
-                                EditorGUILayout.LabelField($"Не опубликована (последняя: {updateState.LatestVersion})",
-                                    devStyle);
-                            }
+                                normal = { textColor = new Color(1f, 0.75f, 0.25f, 1f) }
+                            };
+                            EditorGUILayout.LabelField(
+                                $"Не опубликована (последняя: {updateState.LatestVersion})",
+                                devStyle);
+                            break;
                         }
 
-                        break;
+                        case NeoUpdateChecker.UpdateStatus.Checking:
+                        {
+                            GUIStyle checkingStyle = new(EditorStyles.miniBoldLabel)
+                            {
+                                normal = { textColor = new Color(0.7f, 0.7f, 0.7f, 1f) }
+                            };
+                            EditorGUILayout.LabelField("Проверка обновлений...", checkingStyle);
+                            EnsureRepaint();
+                            break;
+                        }
+
+                        default: // Unknown
+                        {
+                            string errorMsg = updateState.Error;
+                            if (!string.IsNullOrEmpty(errorMsg))
+                            {
+                                GUIStyle errorStyle = new(EditorStyles.miniBoldLabel)
+                                {
+                                    normal = { textColor = new Color(1f, 0.6f, 0.2f, 1f) }
+                                };
+                                EditorGUILayout.LabelField(errorMsg, errorStyle);
+                            }
+                            else
+                            {
+                                GUIStyle unknownStyle = new(EditorStyles.miniBoldLabel)
+                                {
+                                    normal = { textColor = new Color(0.6f, 0.6f, 0.6f, 1f) }
+                                };
+                                EditorGUILayout.LabelField("Нажмите ⟳ для проверки обновлений", unknownStyle);
+                            }
+
+                            break;
+                        }
+                    }
                 }
             }
 
@@ -992,16 +1056,16 @@ namespace Neo.Editor
             try
             {
                 originalDecorators = decoratorsField.GetValue(handler);
-                if (originalDecorators is not System.Collections.IList list)
+                if (originalDecorators is not IList list)
                 {
                     EditorGUILayout.PropertyField(property, true);
                     return;
                 }
 
-                System.Collections.IList filtered;
+                IList filtered;
                 try
                 {
-                    filtered = (System.Collections.IList)Activator.CreateInstance(decoratorsField.FieldType);
+                    filtered = (IList)Activator.CreateInstance(decoratorsField.FieldType);
                 }
                 catch
                 {
@@ -1088,20 +1152,6 @@ namespace Neo.Editor
             GUI.color = oldColor;
 
             EditorGUI.EndProperty();
-        }
-
-        private readonly struct HeaderSection
-        {
-            public readonly string Title;
-            public readonly List<SerializedProperty> Properties;
-            public readonly bool IsWarningHeader;
-
-            public HeaderSection(string title, List<SerializedProperty> properties, bool isWarningHeader)
-            {
-                Title = title;
-                Properties = properties;
-                IsWarningHeader = isWarningHeader;
-            }
         }
 
         private List<HeaderSection> BuildHeaderSections(List<SerializedProperty> properties)
@@ -2498,6 +2548,20 @@ namespace Neo.Editor
             }
 
             return null;
+        }
+
+        private readonly struct HeaderSection
+        {
+            public readonly string Title;
+            public readonly List<SerializedProperty> Properties;
+            public readonly bool IsWarningHeader;
+
+            public HeaderSection(string title, List<SerializedProperty> properties, bool isWarningHeader)
+            {
+                Title = title;
+                Properties = properties;
+                IsWarningHeader = isWarningHeader;
+            }
         }
 
         /// <summary>

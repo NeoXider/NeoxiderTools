@@ -3,8 +3,6 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -107,11 +105,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Запускает диалог с указанными индексами.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void StartDialogue(int dialogueIndex = 0, int monologIndex = 0, int sentenceIndex = 0)
         {
             CancelAll();
@@ -134,11 +128,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Переходит к следующему предложению.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void NextSentence()
         {
             CancelAll();
@@ -149,11 +139,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Переходит к следующему монологу.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void NextMonolog()
         {
             CancelAll();
@@ -165,11 +151,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Переходит к следующему диалогу.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void NextDialogue()
         {
             CancelAll();
@@ -183,11 +165,7 @@ namespace Neo.Tools
         ///     Пропускает печать или переходит к следующему.
         ///     Если диалог не начат — начинает его.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SkipOrNext()
         {
             // Если диалог не начат — начинаем
@@ -316,11 +294,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Перезапускает текущий диалог.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void RestartDialogue()
         {
             if (!allowRestart)
@@ -334,11 +308,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Перезапускает все диалоги сначала.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void RestartAll()
         {
             StartDialogue();

@@ -4,11 +4,16 @@ using UnityEngine.AI;
 namespace Neo.NPC.Navigation
 {
     /// <summary>
-    /// Pure C# navigation agent configuration.
+    ///     Pure C# navigation agent configuration.
     /// </summary>
     public sealed class NpcNavAgentCore
     {
         private readonly NavMeshAgent agent;
+
+        public NpcNavAgentCore(NavMeshAgent agent)
+        {
+            this.agent = agent;
+        }
 
         public float WalkSpeed { get; private set; }
         public float RunSpeed { get; private set; }
@@ -20,11 +25,6 @@ namespace Neo.NPC.Navigation
         public int AreaMask { get; private set; }
 
         public bool IsRunning { get; private set; }
-
-        public NpcNavAgentCore(NavMeshAgent agent)
-        {
-            this.agent = agent;
-        }
 
         public void Configure(
             float walkSpeed,
@@ -86,5 +86,3 @@ namespace Neo.NPC.Navigation
         }
     }
 }
-
-

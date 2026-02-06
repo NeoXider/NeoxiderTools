@@ -1,7 +1,5 @@
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -85,11 +83,8 @@ namespace Neo.Tools
                 healTimer.Stop();
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void TakeDamage(int count)
         {
             int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
@@ -101,22 +96,16 @@ namespace Neo.Tools
                 Die();
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Heal(int count)
         {
             int heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
             Hp += heal;
             OnHeal?.Invoke(heal); // Передаем фактическое лечение
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Restore()
         {
             Hp = maxHp;
@@ -135,11 +124,8 @@ namespace Neo.Tools
                 Heal(healAmount);
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SetHeal(int amount, float delay = -1)
         {
             healAmount = amount;
@@ -150,11 +136,8 @@ namespace Neo.Tools
                 healTimer.Duration = delay;
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SetMaxHp(int count, bool restore = false)
         {
             maxHp = count;
@@ -166,11 +149,8 @@ namespace Neo.Tools
 
             OnChangeMaxHp?.Invoke(count);
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SetHp(int count)
         {
             Hp = count;

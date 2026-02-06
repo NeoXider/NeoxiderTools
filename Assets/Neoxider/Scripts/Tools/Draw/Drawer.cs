@@ -4,8 +4,6 @@ using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -625,11 +623,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Destroys all lines and clears the list of LineRenderers.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void DeleteAll()
         {
             Debug.Log($"[Drawer] DeleteAll called for: {gameObject.name}");

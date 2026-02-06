@@ -2,8 +2,6 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -105,20 +103,13 @@ namespace Neo.Tools
         /// <summary>
         ///     Добавляет очки к текущему счету и опционально обновляет лучший результат.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Add(int amount, bool updateBestScore = true)
         {
             Set(score + amount, updateBestScore);
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Add(int amount)
         {
             Set(score + amount);
@@ -127,11 +118,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Устанавливает точное количество очков и опционально обновляет лучший результат.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void Set(int amount, bool updateBestScore = true)
         {
             Score = amount;
@@ -141,11 +128,8 @@ namespace Neo.Tools
                 SetBestScore();
             }
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void SetBestScore(int? score = 0)
         {
             if (score != null)
@@ -234,22 +218,15 @@ namespace Neo.Tools
         /// <summary>
         ///     Сбрасывает текущий счет до нуля.
         /// </summary>
-#if ODIN_INSPECTOR
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void ResetScore()
         {
             Score = 0;
             OnValueChange?.Invoke(score);
             SetScoreText();
         }
-#if ODIN_INSPECTOR
+
         [Button]
-#else
-        [ButtonAttribute]
-#endif
         public void ResetBestScore()
         {
             BestScore = 0;

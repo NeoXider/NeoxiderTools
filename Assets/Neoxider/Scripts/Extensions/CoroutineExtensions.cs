@@ -110,7 +110,7 @@ namespace Neo.Extensions
         /// </summary>
         public static CoroutineHandle NextFrame(this MonoBehaviour monoBehaviour, Action action)
         {
-            return DelayFrames(monoBehaviour, 1, action);
+            return monoBehaviour.DelayFrames(1, action);
         }
 
         /// <summary>

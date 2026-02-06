@@ -1,7 +1,5 @@
 ﻿using Neo.Extensions;
 using UnityEngine;
-#if ODIN_INSPECTOR
-#endif
 
 namespace Neo.Tools
 {
@@ -41,11 +39,8 @@ namespace Neo.Tools
                 _targetCamera = Camera.main;
             }
         }
-#if ODIN_INSPECTOR
+
         [Button("Update Position")]
-#else
-        [ButtonAttribute("Update Position")]
-#endif
         private void UpdatePositionAndRotation()
         {
             if (_targetCamera == null)
