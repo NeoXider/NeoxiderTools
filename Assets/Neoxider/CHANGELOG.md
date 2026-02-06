@@ -2,7 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.1] - Unreleased
+## [5.8.2] - Unreleased
+
+### Исправлено
+
+- **UPM Samples** — устранены ошибки CS0101 (duplicate definition) при импорте сэмплов Demo Scenes и NeoxiderPages. Сэмплы перенесены в папку `Samples~`: Unity не компилирует её содержимое в пакете, поэтому после Import классы (BtnChangePageEditor, PMEditor и др.) определяются один раз в проекте.
+
+---
+
+## [5.8.1] - 2025-02-06
+
+- Обновление версии и ссылок в документации.
 
 ## [5.8.0] - 2025-02-06
 
