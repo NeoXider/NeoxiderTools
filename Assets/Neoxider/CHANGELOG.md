@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.3] - Unreleased
+## [5.8.4] - Unreleased
+
+### Исправлено
+
+- **NeoxiderPages** — удалена встроенная копия DOTween Pro (`Runtime/Plugins/DOTweenPro`). При импорте сэмпла в проект, где DOTween Pro уже установлен, возникала ошибка CS0433 (тип `DOTweenAnimation` определён в двух сборках). DOTween Pro теперь является внешней зависимостью.
+
+## [5.8.3]
 
 ### Исправлено
 
