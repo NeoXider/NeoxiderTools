@@ -1,7 +1,7 @@
 {
   "name": "com.neoxider.pages",
   "displayName": "Neoxider Pages",
-  "version": "1.0.4",
+  "version": "1.1.0",
   "unity": "2022.1",
   "description": "UI Pages module for Neoxider Tools (PM, UIPage, PageId, editor tooling).",
   "author": {

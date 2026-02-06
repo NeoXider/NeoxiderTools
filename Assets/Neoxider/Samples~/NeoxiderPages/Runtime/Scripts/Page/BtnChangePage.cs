@@ -193,11 +193,33 @@ namespace Neo.Pages
             }
         }
 
+        private static string GetPreferredPageIdFolder()
+        {
+            if (AssetDatabase.IsValidFolder(DefaultPageIdFolder))
+            {
+                return DefaultPageIdFolder;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { "Assets" });
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string dir = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    return dir;
+                }
+            }
+
+            return DefaultPageIdFolder;
+        }
+
         private static PageId GetOrCreateDefaultPageOpen()
         {
-            EnsureFolder(DefaultPageIdFolder);
+            string folder = GetPreferredPageIdFolder();
+            EnsureFolder(folder);
 
-            string assetPath = $"{DefaultPageIdFolder}/{DefaultPageOpenAssetName}.asset";
+            string assetPath = $"{folder}/{DefaultPageOpenAssetName}.asset";
             PageId existing = AssetDatabase.LoadAssetAtPath<PageId>(assetPath);
             if (existing != null)
             {

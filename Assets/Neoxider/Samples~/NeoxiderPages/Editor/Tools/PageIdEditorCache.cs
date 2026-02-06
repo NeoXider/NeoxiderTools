@@ -21,13 +21,19 @@ namespace Neo.Pages.Editor
             _dirty = true;
         }
 
-        public static PageId[] GetIds(string folder)
+        /// <summary>
+        ///     Получить все PageId в проекте (folder = null) или в указанной папке.
+        /// </summary>
+        public static PageId[] GetIds(string folder = null)
         {
             Ensure(folder);
             return _ids ?? Array.Empty<PageId>();
         }
 
-        public static string[] GetLabels(string folder)
+        /// <summary>
+        ///     Получить подписи для dropdown: &lt;None&gt; + DisplayName всех PageId.
+        /// </summary>
+        public static string[] GetLabels(string folder = null)
         {
             Ensure(folder);
             return _labels ?? new[] { "<None>" };
@@ -35,17 +41,19 @@ namespace Neo.Pages.Editor
 
         private static void Ensure(string folder)
         {
-            folder ??= "Assets";
+            string cacheKey = string.IsNullOrEmpty(folder) ? "Assets" : folder;
 
-            if (!_dirty && _ids != null && string.Equals(_folder, folder, StringComparison.Ordinal))
+            if (!_dirty && _ids != null && string.Equals(_folder, cacheKey, StringComparison.Ordinal))
             {
                 return;
             }
 
-            _folder = folder;
+            _folder = cacheKey;
             _dirty = false;
 
-            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { folder });
+            // null/empty = ищем по всему проекту (все папки)
+            string[] searchIn = string.IsNullOrEmpty(folder) ? new[] { "Assets" } : new[] { folder };
+            string[] guids = AssetDatabase.FindAssets("t:PageId", searchIn);
             _ids = guids
                 .Select(AssetDatabase.GUIDToAssetPath)
                 .Select(AssetDatabase.LoadAssetAtPath<PageId>)

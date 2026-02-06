@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.0] - Unreleased
+
+### Добавлено
+
+- **UPM Samples** — Demo Scenes и NeoxiderPages можно устанавливать через Package Manager (кнопка Import в секции Samples). Папка `Samples~` в пакете; при импорте файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
+
+### Улучшено
+
+- **NeoxiderPages (v1.1.0)** — универсальный поиск PageId по всему проекту:
+  - Режимы Buttons и Dropdown в PM, UIPage и BtnChangePage показывают все PageId из любых папок (в т.ч. после импорта Sample в `Assets/Samples/...`).
+  - Создание новых PageId (Generate & Assign, Generate Default PageIds, Reset на BtnChangePage) использует предпочитаемую папку: существующая папка с PageId или `Assets/NeoxiderPages/Pages`.
+
+---
+
 ## [5.7.0] - Unreleased
 
 ### Добавлено

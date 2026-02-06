@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **5.7.0** | Unity: **2022.1+** | Namespace: `Neo`
+Версия: **5.8.0** | Unity: **2022.1+** | Namespace: `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
@@ -91,7 +91,7 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 | **Demo Scenes** | Демо-сцены и примеры использования |
 | **NeoxiderPages** | PageManager — система страниц/экранов (UIPage, UIKit) |
 
-> **Для разработчиков пакета:** папка `Samples~` невидима для Unity (тильда). Чтобы редактировать демо-сцены или Pages — временно переименуйте `Samples~` в `Samples` (через Проводник), внесите изменения, затем верните `~` обратно.
+> **Для разработчиков пакета:** папка `Samples~` невидима для Unity (тильда). Чтобы редактировать демо-сцены или Pages — временно переименуйте `Samples~` в `Samples` (через Проводник), внесите изменения. При коммите хук переименует `Samples` обратно в `Samples~` автоматически — установка: `cp scripts/git-hooks/pre-commit-Samples-rename.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit` (см. `scripts/git-hooks/README.md`).
 
 ---
 

@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using UnityEngine;
@@ -11,13 +12,38 @@ namespace Neo.Pages.Editor
 
         public static string DefaultFolderPath => DefaultFolder;
 
-        public static PageId GetOrCreate(string pageName, string folder = DefaultFolder)
+        /// <summary>
+        ///     Папка для создания новых PageId: существующая папка с PageId, иначе DefaultFolder.
+        /// </summary>
+        public static string GetPreferredFolder()
+        {
+            if (AssetDatabase.IsValidFolder(DefaultFolder))
+            {
+                return DefaultFolder;
+            }
+
+            string[] guids = AssetDatabase.FindAssets("t:PageId", new[] { "Assets" });
+            foreach (string guid in guids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                string dir = Path.GetDirectoryName(path)?.Replace('\\', '/');
+                if (!string.IsNullOrEmpty(dir))
+                {
+                    return dir;
+                }
+            }
+
+            return DefaultFolder;
+        }
+
+        public static PageId GetOrCreate(string pageName, string folder = null)
         {
             if (string.IsNullOrWhiteSpace(pageName))
             {
                 return null;
             }
 
+            folder ??= GetPreferredFolder();
             EnsureFolder(folder);
 
             string normalized = NormalizeAssetName(pageName);
@@ -39,7 +65,8 @@ namespace Neo.Pages.Editor
         [MenuItem("Tools/Neo/Pages/Generate Default PageIds")]
         public static void GenerateDefaultPageIds()
         {
-            EnsureFolder(DefaultFolder);
+            string folder = GetPreferredFolder();
+            EnsureFolder(folder);
 
             string[] defaults =
             {
@@ -69,10 +96,10 @@ namespace Neo.Pages.Editor
 
             foreach (string name in defaults)
             {
-                string assetPath = $"{DefaultFolder}/{name}.asset";
+                string assetPath = $"{folder}/{name}.asset";
                 bool alreadyExists = AssetDatabase.LoadAssetAtPath<PageId>(assetPath) != null;
 
-                PageId pageId = GetOrCreate(name);
+                PageId pageId = GetOrCreate(name, folder);
                 if (pageId == null)
                 {
                     continue;
@@ -91,7 +118,7 @@ namespace Neo.Pages.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[PageIdGenerator] Done. Created: {created}, existed: {existed}. Folder: {DefaultFolder}");
+            Debug.Log($"[PageIdGenerator] Done. Created: {created}, existed: {existed}. Folder: {folder}");
         }
 
         private static string NormalizeAssetName(string pageName)

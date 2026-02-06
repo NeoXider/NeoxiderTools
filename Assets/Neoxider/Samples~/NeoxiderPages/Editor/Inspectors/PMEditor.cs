@@ -11,8 +11,8 @@ namespace Neo.Pages.Editor
     [CustomEditor(typeof(PM))]
     public sealed class PMEditor : CustomEditorBase
     {
-        private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
         private const float ModeButtonHeight = 22f;
+        private const string SourceLabelAll = "Источник: все папки проекта";
         private SerializedProperty allPagesProp;
         private SerializedProperty autoSelectEditorPageProp;
 
@@ -166,7 +166,7 @@ namespace Neo.Pages.Editor
             if (startupSelectMode == 0)
             {
                 DrawPageIdDropdown(startupPageProp, "Startup Page");
-                EditorGUILayout.LabelField($"Источник: {DefaultFolder}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
             }
             else
             {
@@ -213,7 +213,7 @@ namespace Neo.Pages.Editor
             else if (editorSelectMode == 1)
             {
                 DrawPageIdDropdown(editorActivePageIdProp, "Editor Active Page");
-                EditorGUILayout.LabelField($"Источник: {DefaultFolder}", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField(SourceLabelAll, EditorStyles.miniLabel);
             }
             else
             {
@@ -286,11 +286,11 @@ namespace Neo.Pages.Editor
 
         private void DrawEditorButtons()
         {
-            PageId[] ids = FindAllPageIds(DefaultFolder);
+            PageId[] ids = FindAllPageIds(null);
             if (ids.Length == 0)
             {
                 EditorGUILayout.HelpBox(
-                    $"В папке нет PageId ассетов: {DefaultFolder}\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                    "В проекте нет PageId ассетов.\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
                     MessageType.Warning);
                 return;
             }
@@ -368,7 +368,7 @@ namespace Neo.Pages.Editor
 
         private static void DrawPageIdDropdown(SerializedProperty prop, GUIContent label, Rect? rectOverride = null)
         {
-            PageId[] ids = FindAllPageIds(DefaultFolder);
+            PageId[] ids = FindAllPageIds(null);
             if (ids.Length == 0)
             {
                 if (rectOverride.HasValue)
@@ -377,12 +377,12 @@ namespace Neo.Pages.Editor
                 }
 
                 EditorGUILayout.HelpBox(
-                    $"В папке нет PageId ассетов: {DefaultFolder}\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                    "В проекте нет PageId ассетов.\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
                     MessageType.Warning);
                 return;
             }
 
-            string[] labels = PageIdEditorCache.GetLabels(DefaultFolder);
+            string[] labels = PageIdEditorCache.GetLabels(null);
 
             PageId current = prop.objectReferenceValue as PageId;
             int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
@@ -411,7 +411,7 @@ namespace Neo.Pages.Editor
             }
         }
 
-        private static PageId[] FindAllPageIds(string folder)
+        private static PageId[] FindAllPageIds(string folder = null)
         {
             return PageIdEditorCache.GetIds(folder);
         }
