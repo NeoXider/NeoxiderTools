@@ -330,8 +330,6 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
 
 Файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
 
-> **Ошибка «The path … Samples~/NeoxiderPages does not exist»:** пакет подтянулся по старому коммиту без Samples. Укажите явный ref с samples: добавьте в URL `#main` или тег, например `#v5.8.0`, затем в Package Manager удалите пакет и добавьте снова по новой ссылке.
->
 > Альтернативно: скачайте `.unitypackage` из [Releases](https://github.com/NeoXider/NeoxiderTools/releases)
 
 **Быстрый вызов страниц:**

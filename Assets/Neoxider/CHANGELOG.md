@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Добавлено
 
-- **UPM Samples** — Demo Scenes и NeoxiderPages можно устанавливать через Package Manager (кнопка Import в секции Samples). Папка `Samples~` в пакете; при импорте файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
+- **UPM Samples** — Demo Scenes и NeoxiderPages можно устанавливать через Package Manager (кнопка Import в секции Samples). Папка `Samples` в пакете; при импорте файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
 
 ### Улучшено
 

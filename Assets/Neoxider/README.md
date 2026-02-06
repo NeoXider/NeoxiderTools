@@ -91,7 +91,7 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 | **Demo Scenes** | Демо-сцены и примеры использования |
 | **NeoxiderPages** | PageManager — система страниц/экранов (UIPage, UIKit) |
 
-> **Для разработчиков пакета:** папка `Samples~` невидима для Unity (тильда). Чтобы редактировать демо-сцены или Pages — временно переименуйте `Samples~` в `Samples` (через Проводник), внесите изменения. При коммите хук переименует `Samples` обратно в `Samples~` автоматически — установка: `cp scripts/git-hooks/pre-commit-Samples-rename.sh .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit` (см. `scripts/git-hooks/README.md`).
+> **Для разработчиков пакета:** сэмплы лежат в папке `Samples` (Demo, NeoxiderPages). Хук в `scripts/git-hooks/` не даёт закоммитить папку `Samples~` — в репозитории должна быть только `Samples` для совместимости UPM на Windows (см. `scripts/git-hooks/README.md`).
 
 ---
 
