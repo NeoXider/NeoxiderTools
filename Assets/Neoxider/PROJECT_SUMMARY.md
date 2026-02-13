@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.4**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.5**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
@@ -404,7 +404,7 @@ Assets/NeoxiderPages/
 - `Assets/Neoxider/Scripts/Level/LevelButton.cs` — кнопка уровня.
 - `Assets/Neoxider/Scripts/Level/LevelManager.cs` — менеджер уровней.
 - `Assets/Neoxider/Scripts/Level/Map.cs` — карта уровней.
-- `Assets/Neoxider/Scripts/Level/TextLevel.cs` — UI вывод текущего/лучшего уровня (на базе `Neo.Tools.SetText`).
+- `Assets/Neoxider/Scripts/Level/TextLevel.cs` — UI вывод текущего/максимального уровня (на базе `Neo.Tools.SetText`).
 
 ### NPC (`Assets/Neoxider/Scripts/NPC/`)
 

@@ -8,7 +8,14 @@ namespace Neo.Level
     [AddComponentMenu("Neo/Level/" + nameof(TextLevel))]
     public class TextLevel : SetText
     {
-        [SerializeField] private bool _best;
+        private enum LevelDisplayMode
+        {
+            Current = 0,
+            Max = 1
+        }
+
+        [SerializeField] private LevelDisplayMode _displayMode = LevelDisplayMode.Current;
+        [SerializeField] [HideInInspector] private bool _best;
         [SerializeField] private int _displayOffset = 1;
 
         private UnityEvent<int> _event;
@@ -17,6 +24,14 @@ namespace Neo.Level
         {
             IndexOffset = _displayOffset;
             this.WaitWhile(() => LevelManager.I == null, Init);
+        }
+
+        private void OnValidate()
+        {
+            if (_best)
+            {
+                _displayMode = LevelDisplayMode.Max;
+            }
         }
 
         private void OnDisable()
@@ -36,7 +51,7 @@ namespace Neo.Level
                 return;
             }
 
-            if (_best)
+            if (_displayMode == LevelDisplayMode.Max || _best)
             {
                 Set(lm.MaxLevel);
                 _event = lm.OnChangeMaxLevel;

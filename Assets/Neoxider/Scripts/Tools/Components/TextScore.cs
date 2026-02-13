@@ -6,11 +6,26 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/Tools/" + nameof(TextScore))]
     public class TextScore : SetText
     {
-        [SerializeField] private bool _best;
+        private enum ScoreDisplayMode
+        {
+            Current = 0,
+            Best = 1
+        }
+
+        [SerializeField] private ScoreDisplayMode _displayMode = ScoreDisplayMode.Current;
+        [SerializeField] [HideInInspector] private bool _best;
 
         private void OnEnable()
         {
             this.WaitWhile(() => ScoreManager.I == null, Init);
+        }
+
+        private void OnValidate()
+        {
+            if (_best)
+            {
+                _displayMode = ScoreDisplayMode.Best;
+            }
         }
 
         private void OnDisable()
@@ -20,7 +35,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_best)
+            if (_displayMode == ScoreDisplayMode.Best || _best)
             {
                 ScoreManager.I.OnBestValueChange.RemoveListener(Set);
             }
@@ -38,7 +53,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_best)
+            if (_displayMode == ScoreDisplayMode.Best || _best)
             {
                 Set(sm.BestScore);
                 sm.OnBestValueChange.AddListener(Set);

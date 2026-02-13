@@ -1,12 +1,20 @@
 using Neo.Extensions;
 using Neo.Tools;
+using UnityEngine;
 
 namespace Neo.Shop
 {
     public class TextMoney : SetText
     {
+        private enum MoneyDisplayMode
+        {
+            Money = 0,
+            LevelMoney = 1,
+            AllMoney = 2
+        }
+
+        [SerializeField] private MoneyDisplayMode _displayMode = MoneyDisplayMode.Money;
         public float amount;
-        private readonly bool _levelMoney = false;
         private Money _money;
 
         public TextMoney()
@@ -18,27 +26,41 @@ namespace Neo.Shop
         {
             GetMoney();
 
-            if (_levelMoney)
+            switch (_displayMode)
             {
-                SetAmount(_money.levelMoney);
-                _money.OnChangedLevelMoney.AddListener(SetAmount);
-            }
-            else
-            {
-                SetAmount(_money.money);
-                _money.OnChangedMoney.AddListener(SetAmount);
+                case MoneyDisplayMode.LevelMoney:
+                    SetAmount(_money.levelMoney);
+                    _money.OnChangedLevelMoney.AddListener(SetAmount);
+                    break;
+                case MoneyDisplayMode.AllMoney:
+                    SetAmount(_money.allMoney);
+                    _money.OnChangeAllMoney.AddListener(SetAmount);
+                    break;
+                default:
+                    SetAmount(_money.money);
+                    _money.OnChangedMoney.AddListener(SetAmount);
+                    break;
             }
         }
 
         private void OnDisable()
         {
-            if (_levelMoney)
+            if (_money == null)
             {
-                _money.OnChangedLevelMoney.RemoveListener(SetAmount);
+                return;
             }
-            else
+
+            switch (_displayMode)
             {
-                _money.OnChangedMoney.RemoveListener(SetAmount);
+                case MoneyDisplayMode.LevelMoney:
+                    _money.OnChangedLevelMoney.RemoveListener(SetAmount);
+                    break;
+                case MoneyDisplayMode.AllMoney:
+                    _money.OnChangeAllMoney.RemoveListener(SetAmount);
+                    break;
+                default:
+                    _money.OnChangedMoney.RemoveListener(SetAmount);
+                    break;
             }
         }
 

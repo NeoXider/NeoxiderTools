@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.5] - Unreleased
+
+### Улучшено
+
+- **TextMoney** — добавлены режимы отображения `Money`, `LevelMoney`, `AllMoney` (выбор через `_displayMode`), обновлена подписка на события под выбранный режим.
+- **TextLevel / TextScore** — UI-режимы отображения переведены на enum (`Current/Max` и `Current/Best`) с сохранением обратной совместимости для старого поля `_best`.
+- **Docs** — обновлена документация `Shop/TextMoney.md`, `Shop.md`, `Docs/README.md`, `PROJECT_SUMMARY.md` под новую логику отображения денег/уровня/счета и версию пакета.
+
 ## [5.8.4] - Unreleased
 
 ### Исправлено
