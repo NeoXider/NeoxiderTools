@@ -390,7 +390,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pageId: {fileID: 11400000, guid: 4f101c284507708408ae1e5b71f5ef3c, type: 2}
-  popup: 0
+  popup: 1
   ignoreOnExclusiveChange: 0
   _animation: {fileID: 4400833269697777927}
   _playBackward: 0

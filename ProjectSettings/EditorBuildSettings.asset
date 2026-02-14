@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Neoxider/Demo/Scenes/Shop/Shop.unity
+    path: Assets/Neoxider/~Samples/Demo/Scenes/Shop/Shop.unity
     guid: 2cda990e2423bbf4892e6590ba056729
   m_configObjects: {}

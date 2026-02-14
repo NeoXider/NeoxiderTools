@@ -22,6 +22,12 @@
 | **Card Slots** | Массив Transform для позиций карт |
 | **Slot Spacing** | Расстояние между слотами (при автогенерации) |
 | **Auto Generate Slots** | Автоматически создать слоты |
+| **Mode** | Режим стола: `Table` или `Beat` |
+| **Layout Type** | Общий `CardLayoutType` (`Slots`, `Stack`, `Line`, `Fan`, `Grid`, `Scattered`) |
+| **Layout Settings** | Параметры, используемые `CardLayoutCalculator` |
+| **Stack Z Sorting** | Порядок слоев карт в стопке |
+| **Animation Config** | Локальный `CardAnimationConfig` (optional override) |
+| **Settings Source Deck** | Опциональный `DeckComponent`-источник для анимационного конфига |
 
 ### Settings
 
@@ -53,10 +59,19 @@
 ### PlaceCardAsync
 
 ```csharp
-public async UniTask PlaceCardAsync(CardComponent card, bool animate = true);
+public UniTask PlaceCardAsync(CardComponent card, bool animate = true, bool overrideFaceUp = true);
 ```
 
-Размещает карту в следующий свободный слот.
+Размещает карту в следующий свободный слот или перестраивает layout (в режимах без `Slots`).
+
+### ArrangeCards
+
+```csharp
+[Button("Arrange Cards")]
+public void ArrangeCards();
+```
+
+Перерасставляет все карты согласно текущему layout.
 
 ### PlaceCardsAsync
 
@@ -156,6 +171,26 @@ await board.PlaceCardAsync(deck.DrawCard(true));
 var communityCards = board.GetAllCardData();
 var result = PokerRules.EvaluateTexasHoldem(communityCards, playerHoleCards);
 ```
+
+## Пример: режим "Бита" (случайный разброс)
+
+```csharp
+// Board как "бита" с красивым хаотичным раскладом
+// Mode = Beat
+// Карты раскладываются через общий CardLayoutCalculator
+foreach (var card in beatCards)
+{
+    await board.PlaceCardAsync(card, animate: true);
+}
+```
+
+## Источник настроек (приоритет)
+
+`BoardComponent` выбирает `CardAnimationConfig` в таком порядке:
+
+1. Локальный `Animation Config` в самом Board
+2. `Settings Source Deck.AnimationConfig`
+3. Глобальный fallback: `CardSettingsRuntime.GlobalAnimationConfig`
 
 ---
 

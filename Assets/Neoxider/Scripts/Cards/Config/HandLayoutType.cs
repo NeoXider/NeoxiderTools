@@ -1,9 +1,9 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Тип раскладки карт в руке
+    ///     Общий тип раскладки карт для Hand/Deck/Board.
     /// </summary>
-    public enum HandLayoutType
+    public enum CardLayoutType
     {
         /// <summary>
         ///     Веер - карты расположены дугой
@@ -23,6 +23,28 @@ namespace Neo.Cards
         /// <summary>
         ///     Сетка - карты расположены в несколько рядов
         /// </summary>
-        Grid
+        Grid,
+
+        /// <summary>
+        ///     Слоты - карты размещаются в фиксированные позиции.
+        /// </summary>
+        Slots,
+
+        /// <summary>
+        ///     Случайное расположение карт (для биты/хаоса на столе).
+        /// </summary>
+        Scattered
+    }
+
+    /// <summary>
+    ///     Устаревшее имя типа раскладки. Оставлено для обратной совместимости.
+    /// </summary>
+    [System.Obsolete("Use CardLayoutType instead.")]
+    public enum HandLayoutType
+    {
+        Fan = (int)CardLayoutType.Fan,
+        Line = (int)CardLayoutType.Line,
+        Stack = (int)CardLayoutType.Stack,
+        Grid = (int)CardLayoutType.Grid
     }
 }

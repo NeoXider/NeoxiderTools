@@ -418,7 +418,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pageId: {fileID: 11400000, guid: fed2c4a39ea5aca46aaa03955bfae07b, type: 2}
-  popup: 0
+  popup: 1
   ignoreOnExclusiveChange: 0
   _animation: {fileID: 5043587056089648212}
   _playBackward: 0

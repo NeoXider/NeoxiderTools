@@ -12,7 +12,7 @@ namespace Neo.Cards
     /// </summary>
     public class HandView : MonoBehaviour, IHandView
     {
-        [Header("Layout")] [SerializeField] private HandLayoutType _layoutType = HandLayoutType.Fan;
+        [Header("Layout")] [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Fan;
 
         [SerializeField] private float _spacing = 60f;
         [SerializeField] private float _arcAngle = 30f;
@@ -32,7 +32,7 @@ namespace Neo.Cards
         /// <summary>
         ///     Тип раскладки
         /// </summary>
-        public HandLayoutType LayoutType
+        public CardLayoutType LayoutType
         {
             get => _layoutType;
             set
@@ -126,147 +126,24 @@ namespace Neo.Cards
 
         private List<Vector3> CalculatePositions()
         {
-            return _layoutType switch
-            {
-                HandLayoutType.Fan => CalculateFanPositions(),
-                HandLayoutType.Line => CalculateLinePositions(),
-                HandLayoutType.Stack => CalculateStackPositions(),
-                HandLayoutType.Grid => CalculateGridPositions(),
-                _ => CalculateLinePositions()
-            };
+            return CardLayoutCalculator.CalculatePositions(_layoutType, _cardViews.Count, BuildLayoutSettings());
         }
 
         private List<Quaternion> CalculateRotations()
         {
-            return _layoutType switch
-            {
-                HandLayoutType.Fan => CalculateFanRotations(),
-                _ => CalculateNoRotations()
-            };
+            return CardLayoutCalculator.CalculateRotations(_layoutType, _cardViews.Count, BuildLayoutSettings());
         }
 
-        private List<Vector3> CalculateFanPositions()
+        private CardLayoutSettings BuildLayoutSettings()
         {
-            List<Vector3> positions = new();
-            int count = _cardViews.Count;
-
-            if (count == 0)
-            {
-                return positions;
-            }
-
-            float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
-            float startAngle = totalAngle / 2f;
-
-            for (int i = 0; i < count; i++)
-            {
-                float angle = startAngle - totalAngle / Mathf.Max(1, count - 1) * i;
-                if (count == 1)
-                {
-                    angle = 0;
-                }
-
-                float radians = angle * Mathf.Deg2Rad;
-                float x = Mathf.Sin(radians) * _arcRadius;
-                float y = Mathf.Cos(radians) * _arcRadius - _arcRadius;
-
-                positions.Add(new Vector3(x, y, 0));
-            }
-
-            return positions;
-        }
-
-        private List<Quaternion> CalculateFanRotations()
-        {
-            List<Quaternion> rotations = new();
-            int count = _cardViews.Count;
-
-            if (count == 0)
-            {
-                return rotations;
-            }
-
-            float totalAngle = Mathf.Min(_arcAngle * (count - 1), 60f);
-            float startAngle = totalAngle / 2f;
-
-            for (int i = 0; i < count; i++)
-            {
-                float angle = startAngle - totalAngle / Mathf.Max(1, count - 1) * i;
-                if (count == 1)
-                {
-                    angle = 0;
-                }
-
-                rotations.Add(Quaternion.Euler(0, 0, angle));
-            }
-
-            return rotations;
-        }
-
-        private List<Vector3> CalculateLinePositions()
-        {
-            List<Vector3> positions = new();
-            int count = _cardViews.Count;
-
-            float totalWidth = (count - 1) * _spacing;
-            float startX = -totalWidth / 2f;
-
-            for (int i = 0; i < count; i++)
-            {
-                positions.Add(new Vector3(startX + i * _spacing, 0, 0));
-            }
-
-            return positions;
-        }
-
-        private List<Vector3> CalculateStackPositions()
-        {
-            List<Vector3> positions = new();
-            int count = _cardViews.Count;
-
-            for (int i = 0; i < count; i++)
-            {
-                positions.Add(new Vector3(i * 2f, i * 2f, 0));
-            }
-
-            return positions;
-        }
-
-        private List<Vector3> CalculateGridPositions()
-        {
-            List<Vector3> positions = new();
-            int count = _cardViews.Count;
-
-            int rows = Mathf.CeilToInt((float)count / _gridColumns);
-            float totalWidth = (Mathf.Min(count, _gridColumns) - 1) * _spacing;
-            float totalHeight = (rows - 1) * _gridRowSpacing;
-
-            for (int i = 0; i < count; i++)
-            {
-                int row = i / _gridColumns;
-                int col = i % _gridColumns;
-
-                int itemsInRow = Mathf.Min(_gridColumns, count - row * _gridColumns);
-                float rowWidth = (itemsInRow - 1) * _spacing;
-
-                float x = -rowWidth / 2f + col * _spacing;
-                float y = totalHeight / 2f - row * _gridRowSpacing;
-
-                positions.Add(new Vector3(x, y, 0));
-            }
-
-            return positions;
-        }
-
-        private List<Quaternion> CalculateNoRotations()
-        {
-            List<Quaternion> rotations = new();
-            for (int i = 0; i < _cardViews.Count; i++)
-            {
-                rotations.Add(Quaternion.identity);
-            }
-
-            return rotations;
+            CardLayoutSettings settings = CardLayoutSettings.Default;
+            settings.Spacing = _spacing;
+            settings.ArcAngle = _arcAngle;
+            settings.ArcRadius = _arcRadius;
+            settings.GridColumns = _gridColumns;
+            settings.GridRowSpacing = _gridRowSpacing;
+            settings.StackStep = 2f;
+            return settings;
         }
 
         private async UniTask AnimateCard(ICardView cardView, Vector3 position, Quaternion rotation)

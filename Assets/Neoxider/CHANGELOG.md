@@ -9,6 +9,13 @@ All notable changes to this project will be documented in this file.
 - **TextMoney** — добавлены режимы отображения `Money`, `LevelMoney`, `AllMoney` (выбор через `_displayMode`), обновлена подписка на события под выбранный режим.
 - **TextLevel / TextScore** — UI-режимы отображения переведены на enum (`Current/Max` и `Current/Best`) с сохранением обратной совместимости для старого поля `_best`.
 - **Docs** — обновлена документация `Shop/TextMoney.md`, `Shop.md`, `Docs/README.md`, `PROJECT_SUMMARY.md` под новую логику отображения денег/уровня/счета и версию пакета.
+- **Cards** — унифицирована визуальная раскладка карт между `DeckComponent`, `HandComponent` и `BoardComponent`:
+  - добавлен общий `CardLayoutType` (`Fan`, `Line`, `Stack`, `Grid`, `Slots`, `Scattered`) и `CardLayoutCalculator` для переиспользуемого расчета позиций/поворотов;
+  - добавлены `CardLayoutSettings` и `CardAnimationConfig` для централизованной настройки layout/анимаций;
+  - `DeckComponent` получил визуальный pipeline: `BuildVisualStackAsync`, `ShuffleVisualAsync`, `DealToHandAsync` + `[Button]`-обертки и события (`OnVisualStackBuilt`, `OnShuffleVisualStarted`, `OnCardDealt` и др.);
+  - `BoardComponent` расширен режимом `BoardMode` (`Table/Beat`) и использует тот же `CardLayoutType`, включая случайный режим `Scattered` для "биты";
+  - добавлены/обновлены enum: `CardLayoutType`, `ShuffleVisualType`, `StackZSortingStrategy`, `BoardMode`;
+  - обновлены docs: `Docs/Cards/DeckComponent.md`, `Docs/Cards/BoardComponent.md`.
 
 ## [5.8.4] - Unreleased
 

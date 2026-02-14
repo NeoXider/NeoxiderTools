@@ -11,9 +11,10 @@ namespace Neo.Cards
     /// </summary>
     public class DrunkardGame : MonoBehaviour
     {
-        [Header("Config")] [SerializeField] private DeckConfig _deckConfig;
+        [Header("Config")] [Tooltip("Обязательный источник колоды и префаба карт.")]
+        [SerializeField]
+        private DeckComponent _deckComponent;
 
-        [SerializeField] private CardComponent _cardPrefab;
         [SerializeField] private bool _initializeOnStart = true;
         [SerializeField] private bool _debug;
 
@@ -124,14 +125,20 @@ namespace Neo.Cards
 
         private void ValidateSetup()
         {
-            if (_deckConfig == null)
+            if (_deckComponent == null)
             {
-                Debug.LogError("[DrunkardGame] DeckConfig не назначен!");
+                Debug.LogError("[DrunkardGame] DeckComponent не назначен!");
+                return;
             }
 
-            if (_cardPrefab == null)
+            if (_deckComponent.Config == null)
             {
-                Debug.LogError("[DrunkardGame] CardPrefab не назначен!");
+                Debug.LogError("[DrunkardGame] В DeckComponent не назначен DeckConfig!");
+            }
+
+            if (_deckComponent.CardPrefab == null)
+            {
+                Debug.LogError("[DrunkardGame] В DeckComponent не назначен CardPrefab!");
             }
 
             if (_cardsParent == null)
@@ -442,10 +449,12 @@ namespace Neo.Cards
                     {
                         foreach (CardData data in hiddenCards)
                         {
-                            CardComponent hiddenCardObj = Instantiate(_cardPrefab,
-                                _cardsParent != null ? _cardsParent : transform);
-                            hiddenCardObj.Config = _deckConfig;
-                            hiddenCardObj.SetData(data, false);
+                            CardComponent hiddenCardObj = SpawnCard(data, false);
+                            if (hiddenCardObj == null)
+                            {
+                                continue;
+                            }
+
                             await PlayerHand.AddCardAsync(hiddenCardObj, false);
                         }
                     }
@@ -484,10 +493,12 @@ namespace Neo.Cards
                     {
                         foreach (CardData data in hiddenCards)
                         {
-                            CardComponent hiddenCardObj = Instantiate(_cardPrefab,
-                                _cardsParent != null ? _cardsParent : transform);
-                            hiddenCardObj.Config = _deckConfig;
-                            hiddenCardObj.SetData(data, false);
+                            CardComponent hiddenCardObj = SpawnCard(data, false);
+                            if (hiddenCardObj == null)
+                            {
+                                continue;
+                            }
+
                             await OpponentHand.AddCardAsync(hiddenCardObj, false);
                         }
                     }
@@ -598,9 +609,11 @@ namespace Neo.Cards
         /// </summary>
         private async UniTask ShowAdditionalPlayerCard(CardData playerCard)
         {
-            CardComponent cardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-            cardObj.Config = _deckConfig;
-            cardObj.SetData(playerCard, false);
+            CardComponent cardObj = SpawnCard(playerCard, false);
+            if (cardObj == null)
+            {
+                return;
+            }
 
             if (_playerDeckPosition != null)
             {
@@ -622,9 +635,11 @@ namespace Neo.Cards
         /// </summary>
         private async UniTask ShowAdditionalOpponentCard(CardData opponentCard)
         {
-            CardComponent cardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-            cardObj.Config = _deckConfig;
-            cardObj.SetData(opponentCard, false);
+            CardComponent cardObj = SpawnCard(opponentCard, false);
+            if (cardObj == null)
+            {
+                return;
+            }
 
             if (_opponentDeckPosition != null)
             {
@@ -653,14 +668,14 @@ namespace Neo.Cards
 
             if (_opponentCardView == null)
             {
-                if (_cardPrefab == null)
+                if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
                 {
-                    Debug.LogError("[DrunkardGame] CardPrefab не назначен!");
+                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig не настроены!");
                     return;
                 }
 
-                _opponentCardView = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-                _opponentCardView.Config = _deckConfig;
+                _opponentCardView = Instantiate(_deckComponent.CardPrefab, _cardsParent != null ? _cardsParent : transform);
+                _opponentCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
                     Debug.Log(
@@ -691,8 +706,14 @@ namespace Neo.Cards
         {
             if (_playerCardView == null)
             {
-                _playerCardView = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-                _playerCardView.Config = _deckConfig;
+                if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
+                {
+                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig не настроены!");
+                    return;
+                }
+
+                _playerCardView = Instantiate(_deckComponent.CardPrefab, _cardsParent != null ? _cardsParent : transform);
+                _playerCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
                     Debug.Log($"[DrunkardGame] Создана карта игрока: {_playerCardView.name} в {_cardsParent?.name}");
@@ -826,9 +847,17 @@ namespace Neo.Cards
         [Button]
         public void RestartGame()
         {
-            if (_deckConfig == null || _cardPrefab == null)
+            RestartGameAsync().Forget();
+        }
+
+        /// <summary>
+        ///     Перезапускает игру: создаёт новую колоду и раздаёт карты.
+        /// </summary>
+        private async UniTask RestartGameAsync()
+        {
+            if (_deckComponent == null || _deckComponent.Config == null || _deckComponent.CardPrefab == null)
             {
-                Debug.LogError("[DrunkardGame] DeckConfig или CardPrefab не назначены!");
+                Debug.LogError("[DrunkardGame] DeckComponent не готов (нужны Config и CardPrefab).");
                 return;
             }
 
@@ -867,49 +896,7 @@ namespace Neo.Cards
             GameStarted = false;
             _isInitialized = true;
 
-            DeckModel deck = new();
-            deck.Initialize(_deckConfig.GameDeckType);
-
-            List<CardComponent> allCards = new();
-
-            if (_initialBoard != null)
-            {
-                while (!deck.IsEmpty)
-                {
-                    CardData? card = deck.Draw();
-                    if (!card.HasValue)
-                    {
-                        break;
-                    }
-
-                    CardComponent cardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-                    cardObj.Config = _deckConfig;
-                    cardObj.SetData(card.Value, false);
-                    _initialBoard.RegisterInitialCard(cardObj);
-                    allCards.Add(cardObj);
-                }
-
-                if (_debug)
-                {
-                    Debug.Log($"[DrunkardGame] Карты созданы в Board: {allCards.Count}");
-                }
-            }
-            else
-            {
-                while (!deck.IsEmpty)
-                {
-                    CardData? card = deck.Draw();
-                    if (!card.HasValue)
-                    {
-                        break;
-                    }
-
-                    CardComponent cardObj = Instantiate(_cardPrefab, _cardsParent != null ? _cardsParent : transform);
-                    cardObj.Config = _deckConfig;
-                    cardObj.SetData(card.Value, false);
-                    allCards.Add(cardObj);
-                }
-            }
+            List<CardComponent> allCards = await BuildInitialCardsAsync();
 
             bool toPlayer = true;
             foreach (CardComponent cardObj in allCards)
@@ -973,6 +960,57 @@ namespace Neo.Cards
 
             NotifyCardCountChanged();
             _onGameRestarted?.Invoke();
+        }
+
+        private async UniTask<List<CardComponent>> BuildInitialCardsAsync()
+        {
+            List<CardComponent> allCards = new();
+            _deckComponent.Reset();
+            _deckComponent.Initialize();
+
+            while (!_deckComponent.IsEmpty)
+            {
+                CardComponent cardObj = _deckComponent.DrawCard(false);
+                if (cardObj == null)
+                {
+                    break;
+                }
+
+                if (_cardsParent != null)
+                {
+                    cardObj.transform.SetParent(_cardsParent, true);
+                }
+
+                if (_initialBoard != null)
+                {
+                    await _initialBoard.PlaceCardAsync(cardObj, false, false);
+                    _initialBoard.RegisterInitialCard(cardObj);
+                }
+
+                allCards.Add(cardObj);
+            }
+
+            if (_debug && _initialBoard != null)
+            {
+                Debug.Log($"[DrunkardGame] Карты созданы в Board: {allCards.Count}");
+            }
+
+            return allCards;
+        }
+
+        private CardComponent SpawnCard(CardData data, bool faceUp)
+        {
+            if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
+            {
+                Debug.LogError("[DrunkardGame] Невозможно создать карту: не настроены prefab/config.");
+                return null;
+            }
+
+            Transform parent = _cardsParent != null ? _cardsParent : transform;
+            CardComponent cardObj = Instantiate(_deckComponent.CardPrefab, parent);
+            cardObj.Config = _deckComponent.Config;
+            cardObj.SetData(data, faceUp);
+            return cardObj;
         }
 
         #region Properties

@@ -14,6 +14,14 @@ namespace Neo.Cards
 
         [SerializeField] private float _slotSpacing = 80f;
         [SerializeField] private bool _autoGenerateSlots = true;
+        [SerializeField] private BoardMode _mode = BoardMode.Table;
+        [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Slots;
+        [SerializeField] private CardLayoutSettings _layoutSettings = default;
+        [SerializeField] private StackZSortingStrategy _stackZSorting = StackZSortingStrategy.TopCardFirst;
+        [Tooltip("Локальный override. Если не задан, Board попробует взять конфиг из Deck-источника или глобального fallback.")]
+        [SerializeField] private CardAnimationConfig _animationConfig;
+        [Tooltip("Опциональный Deck-источник настроек. Если локальный конфиг пуст, Board возьмет конфиг отсюда.")]
+        [SerializeField] private DeckComponent _settingsSourceDeck;
 
         [Header("Settings")] [SerializeField] private int _maxCards = 5;
 
@@ -105,14 +113,20 @@ namespace Neo.Cards
             }
 
             _cards.Add(card);
-
-            if (animate && slot != null)
+            if (ShouldUseSlotPlacement())
             {
-                await card.MoveToAsync(slot.position, _placeDuration);
+                if (animate && slot != null)
+                {
+                    await card.MoveToAsync(slot.position, _placeDuration);
+                }
+                else if (slot != null)
+                {
+                    card.transform.position = slot.position;
+                }
             }
-            else if (slot != null)
+            else
             {
-                card.transform.position = slot.position;
+                await ArrangeCardsInternalAsync(animate);
             }
 
             OnCardPlaced?.Invoke(card);
@@ -130,6 +144,15 @@ namespace Neo.Cards
         public void PlaceCard(CardComponent card)
         {
             PlaceCardAsync(card, false).Forget();
+        }
+
+        /// <summary>
+        ///     Перерасставляет карты на столе согласно текущему режиму и layout-настройкам.
+        /// </summary>
+        [Button("Arrange Cards")]
+        public void ArrangeCards()
+        {
+            ArrangeCardsInternalAsync(true).Forget();
         }
 
         /// <summary>
@@ -215,6 +238,10 @@ namespace Neo.Cards
             if (removed)
             {
                 card.transform.SetParent(null, true);
+                if (!ShouldUseSlotPlacement())
+                {
+                    ArrangeCardsInternalAsync(false).Forget();
+                }
             }
 
             return removed;
@@ -235,6 +262,10 @@ namespace Neo.Cards
             CardComponent card = _cards[index];
             _cards.RemoveAt(index);
             card.transform.SetParent(null, true);
+            if (!ShouldUseSlotPlacement())
+            {
+                ArrangeCardsInternalAsync(false).Forget();
+            }
 
             return card;
         }
@@ -445,6 +476,86 @@ namespace Neo.Cards
             }
 
             return _cardSlots[index];
+        }
+
+        private bool ShouldUseSlotPlacement()
+        {
+            return _mode == BoardMode.Table && _layoutType == CardLayoutType.Slots;
+        }
+
+        private CardLayoutType ResolveLayoutType()
+        {
+            if (_mode == BoardMode.Beat)
+            {
+                return CardLayoutType.Scattered;
+            }
+
+            return _layoutType;
+        }
+
+        private async UniTask ArrangeCardsInternalAsync(bool animate)
+        {
+            if (_cards.Count == 0 || ShouldUseSlotPlacement())
+            {
+                return;
+            }
+
+            CardLayoutSettings settings = _layoutSettings;
+            if (settings.Spacing == 0f && settings.ArcRadius == 0f && settings.GridColumns == 0)
+            {
+                settings = CardLayoutSettings.Default;
+                settings.Spacing = _slotSpacing;
+            }
+            CardAnimationConfig resolvedAnimationConfig = ResolveAnimationConfig();
+            if (resolvedAnimationConfig != null)
+            {
+                settings.StackStep = resolvedAnimationConfig.StackStepY;
+                settings.PositionJitter = resolvedAnimationConfig.StackPositionJitter;
+                settings.RotationJitter = resolvedAnimationConfig.StackRotationJitter;
+            }
+
+            CardLayoutType layoutType = ResolveLayoutType();
+            List<Vector3> positions = CardLayoutCalculator.CalculatePositions(layoutType, _cards.Count, settings);
+            List<Quaternion> rotations = CardLayoutCalculator.CalculateRotations(layoutType, _cards.Count, settings);
+
+            for (int i = 0; i < _cards.Count; i++)
+            {
+                CardComponent card = _cards[i];
+                if (card == null)
+                {
+                    continue;
+                }
+
+                int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : (_cards.Count - 1 - i);
+                card.transform.SetSiblingIndex(sibling);
+                Vector3 worldPosition = transform.TransformPoint(positions[i]);
+
+                if (animate)
+                {
+                    await card.MoveToAsync(worldPosition, _placeDuration);
+                }
+                else
+                {
+                    card.transform.position = worldPosition;
+                }
+
+                card.transform.localRotation = rotations[i];
+            }
+        }
+
+        private CardAnimationConfig ResolveAnimationConfig()
+        {
+            if (_animationConfig != null)
+            {
+                return _animationConfig;
+            }
+
+            if (_settingsSourceDeck != null && _settingsSourceDeck.AnimationConfig != null)
+            {
+                return _settingsSourceDeck.AnimationConfig;
+            }
+
+            return CardSettingsRuntime.GlobalAnimationConfig;
         }
 
         private void GenerateSlots()

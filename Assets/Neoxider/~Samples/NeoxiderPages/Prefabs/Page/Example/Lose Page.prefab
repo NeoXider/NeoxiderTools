@@ -590,7 +590,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   pageId: {fileID: 11400000, guid: e7d6eca647c388c4d9f36bbab239d726, type: 2}
-  popup: 0
+  popup: 1
   ignoreOnExclusiveChange: 0
   _animation: {fileID: 4394070271191383668}
   _playBackward: 0
@@ -788,6 +788,22 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 6109498145949630522}
     m_Modifications:
+    - target: {fileID: 110296441051191123, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 110296441051191123, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 110296441051191123, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 110296441051191123, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 2008452364576366353, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
       propertyPath: m_AnchorMax.y
       value: 0
@@ -886,6 +902,22 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4196350642145683984, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232858043508802317, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232858043508802317, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232858043508802317, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchoredPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4232858043508802317, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: m_AnchoredPosition.y
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 5407734922897760659, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}

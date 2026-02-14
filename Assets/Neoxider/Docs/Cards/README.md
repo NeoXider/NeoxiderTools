@@ -65,7 +65,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 | `View` | CardView, DeckView, HandView — визуализация |
 | `Presenter` | Связь Model ↔ View |
 | `Components` | No-code обёртки для инспектора |
-| `Config` | DeckConfig (ScriptableObject), HandLayoutType |
+| `Config` | DeckConfig, CardLayoutSettings, CardAnimationConfig |
 | `Poker` | Покерные комбинации и правила |
 | `Utils` | CardComparer — сортировка |
 
@@ -141,13 +141,15 @@ if (defendCard.CanCover(attackCard, trump))
 
 ---
 
-## Типы раскладки руки
+## Типы раскладки (единые для Hand/Board/Deck)
 
 ```csharp
-handComponent.LayoutType = HandLayoutType.Fan;   // Веер
-handComponent.LayoutType = HandLayoutType.Line;  // Линия
-handComponent.LayoutType = HandLayoutType.Stack; // Стопка
-handComponent.LayoutType = HandLayoutType.Grid;  // Сетка
+handComponent.LayoutType = CardLayoutType.Fan;       // Веер
+handComponent.LayoutType = CardLayoutType.Line;      // Линия
+handComponent.LayoutType = CardLayoutType.Stack;     // Стопка
+handComponent.LayoutType = CardLayoutType.Grid;      // Сетка
+boardComponent.LayoutType = CardLayoutType.Slots;    // Фиксированные слоты
+boardComponent.LayoutType = CardLayoutType.Scattered;// Случайный разброс
 ```
 
 ---
