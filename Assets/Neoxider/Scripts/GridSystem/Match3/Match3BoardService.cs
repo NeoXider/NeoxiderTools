@@ -20,6 +20,7 @@ namespace Neo.GridSystem.Match3
         [SerializeField] private bool _useResolveDelay;
         [SerializeField] private float _resolveDelaySeconds = 0.08f;
         [SerializeField] private int _maxCascadeIterations = 32;
+
         [SerializeField] private List<Match3TileState> _availableTiles = new()
         {
             Match3TileState.Red,
@@ -33,10 +34,12 @@ namespace Neo.GridSystem.Match3
         /// Invoked after board content changes.
         /// </summary>
         public UnityEvent OnBoardChanged = new();
+
         /// <summary>
         /// Invoked after resolve step; argument is number of removed tiles.
         /// </summary>
         public UnityEvent<int> OnMatchesResolved = new();
+
         /// <summary>
         /// Invoked when board was shuffled due to no available moves.
         /// </summary>
@@ -248,7 +251,7 @@ namespace Neo.GridSystem.Match3
 
         private void FillEmptyCells()
         {
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: false))
+            foreach (FieldCell cell in _generator.GetAllCells(false))
             {
                 if (CanUseCell(cell) && cell.ContentId <= 0)
                 {
@@ -328,8 +331,10 @@ namespace Neo.GridSystem.Match3
 
         private bool CreatesImmediateMatch(Vector3Int pos, int candidate)
         {
-            return CountInDirection(pos, Vector3Int.left, candidate) + CountInDirection(pos, Vector3Int.right, candidate) + 1 >= _minMatchLength
-                   || CountInDirection(pos, Vector3Int.down, candidate) + CountInDirection(pos, Vector3Int.up, candidate) + 1 >= _minMatchLength;
+            return CountInDirection(pos, Vector3Int.left, candidate) +
+                   CountInDirection(pos, Vector3Int.right, candidate) + 1 >= _minMatchLength
+                   || CountInDirection(pos, Vector3Int.down, candidate) +
+                   CountInDirection(pos, Vector3Int.up, candidate) + 1 >= _minMatchLength;
         }
 
         private int CountInDirection(Vector3Int origin, Vector3Int dir, int tileId)
@@ -399,13 +404,14 @@ namespace Neo.GridSystem.Match3
             }
 
             snapshot.Swap(aPos, bPos);
-            return snapshot.CreatesImmediateMatch(aPos, _minMatchLength) || snapshot.CreatesImmediateMatch(bPos, _minMatchLength);
+            return snapshot.CreatesImmediateMatch(aPos, _minMatchLength) ||
+                   snapshot.CreatesImmediateMatch(bPos, _minMatchLength);
         }
 
         private bool ShuffleBoardToPlayableState()
         {
             List<FieldCell> cells = new();
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: false))
+            foreach (FieldCell cell in _generator.GetAllCells(false))
             {
                 if (CanUseCell(cell))
                 {
@@ -607,15 +613,18 @@ namespace Neo.GridSystem.Match3
                     return false;
                 }
 
-                return CountInDirection(pos, Vector3Int.left, value) + CountInDirection(pos, Vector3Int.right, value) + 1 >= minMatchLength
-                       || CountInDirection(pos, Vector3Int.down, value) + CountInDirection(pos, Vector3Int.up, value) + 1 >= minMatchLength;
+                return CountInDirection(pos, Vector3Int.left, value) + CountInDirection(pos, Vector3Int.right, value) +
+                       1 >= minMatchLength
+                       || CountInDirection(pos, Vector3Int.down, value) + CountInDirection(pos, Vector3Int.up, value) +
+                       1 >= minMatchLength;
             }
 
             private int CountInDirection(Vector3Int origin, Vector3Int dir, int value)
             {
                 int count = 0;
                 Vector3Int current = origin + dir;
-                while (InBounds(current) && _usable[current.x, current.y, current.z] && _content[current.x, current.y, current.z] == value)
+                while (InBounds(current) && _usable[current.x, current.y, current.z] &&
+                       _content[current.x, current.y, current.z] == value)
                 {
                     count++;
                     current += dir;

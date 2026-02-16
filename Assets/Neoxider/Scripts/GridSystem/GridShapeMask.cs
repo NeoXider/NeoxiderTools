@@ -30,6 +30,7 @@ namespace Neo.GridSystem
         /// Mask interpretation mode.
         /// </summary>
         public GridShapeMaskMode Mode => _mode;
+
         /// <summary>
         /// Raw mask coordinates list.
         /// </summary>

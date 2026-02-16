@@ -56,7 +56,7 @@ namespace Neo.GridSystem
             for (int z = 0; z < size.z; z++)
             {
                 FieldCell cell = generator.Cells[x, y, z];
-                if (generator.IsCellPassable(cell, ignoreOccupied: true))
+                if (generator.IsCellPassable(cell, true))
                 {
                     SpawnAt(cell.Position, prefabIndex);
                 }

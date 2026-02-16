@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.GridSystem;
 using Neo.GridSystem.Match3;
 using TMPro;
@@ -135,7 +136,7 @@ namespace Neo.Demo.GridSystem
 
         private FieldCell GetRandomEnabledCell()
         {
-            var cells = new System.Collections.Generic.List<FieldCell>(_generator.GetAllCells(includeDisabled: false));
+            List<FieldCell> cells = new(_generator.GetAllCells(false));
             if (cells.Count == 0)
             {
                 return null;

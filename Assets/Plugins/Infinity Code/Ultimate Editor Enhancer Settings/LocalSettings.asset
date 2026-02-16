@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f8d45f3740a349d2bf7ea1c582228605, type: 3}
   m_Name: LocalSettings
   m_EditorClassIdentifier: 
-  _askMaximizeGameView: 1
+  _askMaximizeGameView: 0
   _collapseQuickAccessBar: 0
   _enhancedHierarchyShown: 0
   _hideObjectToolbar: 0

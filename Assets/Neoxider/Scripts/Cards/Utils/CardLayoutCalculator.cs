@@ -15,7 +15,8 @@ namespace Neo.Cards
         /// <param name="cardCount">Количество карт.</param>
         /// <param name="settings">Параметры раскладки.</param>
         /// <returns>Список локальных позиций в порядке индексов карт.</returns>
-        public static List<Vector3> CalculatePositions(CardLayoutType layoutType, int cardCount, CardLayoutSettings settings)
+        public static List<Vector3> CalculatePositions(CardLayoutType layoutType, int cardCount,
+            CardLayoutSettings settings)
         {
             List<Vector3> positions = new(cardCount);
             if (cardCount <= 0)
@@ -55,7 +56,8 @@ namespace Neo.Cards
         /// <param name="cardCount">Количество карт.</param>
         /// <param name="settings">Параметры раскладки.</param>
         /// <returns>Список локальных поворотов в порядке индексов карт.</returns>
-        public static List<Quaternion> CalculateRotations(CardLayoutType layoutType, int cardCount, CardLayoutSettings settings)
+        public static List<Quaternion> CalculateRotations(CardLayoutType layoutType, int cardCount,
+            CardLayoutSettings settings)
         {
             List<Quaternion> rotations = new(cardCount);
             if (cardCount <= 0)
@@ -69,7 +71,7 @@ namespace Neo.Cards
                 float step = cardCount > 1 ? totalAngle / (cardCount - 1) : 0f;
                 for (int i = 0; i < cardCount; i++)
                 {
-                    float angle = -totalAngle * 0.5f + (step * i);
+                    float angle = -totalAngle * 0.5f + step * i;
                     rotations.Add(Quaternion.Euler(0f, 0f, -angle));
                 }
             }
@@ -99,7 +101,7 @@ namespace Neo.Cards
             float startX = -totalWidth * 0.5f;
             for (int i = 0; i < count; i++)
             {
-                positions.Add(new Vector3(startX + (i * settings.Spacing), 0f, 0f));
+                positions.Add(new Vector3(startX + i * settings.Spacing, 0f, 0f));
             }
         }
 
@@ -124,8 +126,8 @@ namespace Neo.Cards
                 int itemsInRow = Mathf.Min(columns, count - row * columns);
                 float rowWidth = (itemsInRow - 1) * settings.Spacing;
 
-                float x = -rowWidth * 0.5f + (col * settings.Spacing);
-                float y = totalHeight * 0.5f - (row * settings.GridRowSpacing);
+                float x = -rowWidth * 0.5f + col * settings.Spacing;
+                float y = totalHeight * 0.5f - row * settings.GridRowSpacing;
                 positions.Add(new Vector3(x, y, 0f));
             }
         }
@@ -142,7 +144,7 @@ namespace Neo.Cards
             float step = totalAngle / Mathf.Max(1, count - 1);
             for (int i = 0; i < count; i++)
             {
-                float angle = -totalAngle * 0.5f + (step * i);
+                float angle = -totalAngle * 0.5f + step * i;
                 float radians = angle * Mathf.Deg2Rad;
                 float x = Mathf.Sin(radians) * settings.ArcRadius;
                 float y = -Mathf.Cos(radians) * settings.ArcRadius + settings.ArcRadius;

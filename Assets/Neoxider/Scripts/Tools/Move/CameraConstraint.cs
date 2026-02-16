@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Neo.Tools
 {
@@ -12,20 +12,16 @@ namespace Neo.Tools
         public enum BoundsType
         {
             SpriteRenderer,
-            Collider2D,
-            Collider,
-            Manual
+            BoxCollider2D,
+            BoxCollider
         }
 
         [Header("Bounds Source")] [Tooltip("Type of boundary to use for constraining camera.")] [SerializeField]
         private BoundsType boundsType = BoundsType.SpriteRenderer;
 
         [SerializeField] private SpriteRenderer spriteRenderer;
-        [SerializeField] private Collider2D collider2D;
-        [SerializeField] private Collider collider;
-
-        [Header("Manual Bounds (when BoundsType is Manual)")] [SerializeField]
-        private Bounds manualBounds = new(Vector3.zero, Vector3.one * 100f);
+        [SerializeField] private BoxCollider2D boxCollider2D;
+        [SerializeField] private BoxCollider boxCollider;
 
         [Header("Camera")] [Tooltip("Camera to constrain. Uses component's camera if not set.")] [SerializeField]
         private Camera cam;
@@ -35,41 +31,57 @@ namespace Neo.Tools
 
         [SerializeField] private bool constraintX = true;
         [SerializeField] private bool constraintY = true;
-        [SerializeField] private bool constraintZ = true;
+        [SerializeField] private bool constraintZ;
+
+        [Tooltip("When true, bounds are recalculated each LateUpdate (useful for moving/animated bounds source).")]
+        [SerializeField]
+        private bool autoUpdateBounds = true;
 
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+        [SerializeField] private Color sourceBoundsColor = new(0.25f, 0.8f, 1f, 0.9f);
+        [SerializeField] private Color constraintBoundsColor = new(0.2f, 1f, 0.35f, 0.9f);
+        [SerializeField] private Color clampedPositionColor = new(1f, 0.92f, 0.2f, 0.95f);
 
         private bool _boundsValid;
         private Vector3 _maxBounds;
 
         private Vector3 _minBounds;
+        private Bounds _sourceBounds;
+        private Vector3 _lastConstrainedPosition;
+        private int _lastScreenWidth = -1;
+        private int _lastScreenHeight = -1;
+        private float _lastAspect = -1f;
+        private float _lastOrthoSize = -1f;
+        private float _lastFov = -1f;
 
         private void Start()
         {
-            if (cam == null)
+            if (!TryInitialize())
             {
-                cam = GetComponent<Camera>();
+                return;
             }
 
-            if (cam == null)
+            UpdateBounds();
+        }
+
+        private void LateUpdate()
+        {
+            if (!TryInitialize())
             {
-                Debug.LogError("CameraConstraint: No camera found!");
-                enabled = false;
                 return;
             }
 
             if (!ValidateBoundsSource())
             {
-                Debug.LogError($"CameraConstraint: Bounds source not set for type {boundsType}!");
-                enabled = false;
+                _boundsValid = false;
                 return;
             }
 
-            CalculateBounds();
-        }
+            if (autoUpdateBounds || ShouldRecalculateBounds())
+            {
+                CalculateBounds();
+            }
 
-        private void LateUpdate()
-        {
             if (_boundsValid)
             {
                 ConstrainCamera();
@@ -83,19 +95,16 @@ namespace Neo.Tools
                 return;
             }
 
-            if (cam == null)
-            {
-                cam = GetComponent<Camera>();
-            }
-
-            if (cam == null)
+            if (!TryResolveCamera())
             {
                 return;
             }
 
             if (Application.isPlaying && _boundsValid)
             {
+                DrawSourceBounds(_sourceBounds);
                 DrawConstraintBounds(_minBounds, _maxBounds);
+                DrawClampInfo();
             }
             else if (!Application.isPlaying)
             {
@@ -106,14 +115,43 @@ namespace Neo.Tools
             }
         }
 
+        private bool TryInitialize()
+        {
+            if (!TryResolveCamera())
+            {
+                Debug.LogError("CameraConstraint: No camera found!");
+                enabled = false;
+                return false;
+            }
+
+            if (!ValidateBoundsSource())
+            {
+                Debug.LogError($"CameraConstraint: Bounds source not set for type {boundsType}!");
+                enabled = false;
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool TryResolveCamera()
+        {
+            if (cam != null)
+            {
+                return true;
+            }
+
+            cam = GetComponent<Camera>();
+            return cam != null;
+        }
+
         private bool ValidateBoundsSource()
         {
             return boundsType switch
             {
                 BoundsType.SpriteRenderer => spriteRenderer != null,
-                BoundsType.Collider2D => collider2D != null,
-                BoundsType.Collider => collider != null,
-                BoundsType.Manual => true,
+                BoundsType.BoxCollider2D => boxCollider2D != null,
+                BoundsType.BoxCollider => boxCollider != null,
                 _ => false
             };
         }
@@ -123,49 +161,61 @@ namespace Neo.Tools
             return boundsType switch
             {
                 BoundsType.SpriteRenderer => spriteRenderer.bounds,
-                BoundsType.Collider2D => collider2D.bounds,
-                BoundsType.Collider => collider.bounds,
-                BoundsType.Manual => manualBounds,
+                BoundsType.BoxCollider2D => boxCollider2D.bounds,
+                BoundsType.BoxCollider => boxCollider.bounds,
                 _ => new Bounds()
             };
         }
 
         private void CalculateBounds()
         {
-            Bounds bounds = GetSourceBounds();
-            Vector3 cameraSize = GetCameraSize();
+            _sourceBounds = GetSourceBounds();
+            Vector2 cameraExtents = GetCameraExtentsAtDepth(_sourceBounds.center.z);
 
-            _minBounds = bounds.min + cameraSize + Vector3.one * edgePadding;
-            _maxBounds = bounds.max - cameraSize - Vector3.one * edgePadding;
+            float padding = Mathf.Max(0f, edgePadding);
+            _minBounds.x = _sourceBounds.min.x + cameraExtents.x + padding;
+            _maxBounds.x = _sourceBounds.max.x - cameraExtents.x - padding;
+            _minBounds.y = _sourceBounds.min.y + cameraExtents.y + padding;
+            _maxBounds.y = _sourceBounds.max.y - cameraExtents.y - padding;
+            _minBounds.z = _sourceBounds.min.z + padding;
+            _maxBounds.z = _sourceBounds.max.z - padding;
 
             if (_minBounds.x > _maxBounds.x)
             {
-                float centerX = bounds.center.x;
+                float centerX = _sourceBounds.center.x;
                 _minBounds.x = _maxBounds.x = centerX;
             }
 
             if (_minBounds.y > _maxBounds.y)
             {
-                float centerY = bounds.center.y;
+                float centerY = _sourceBounds.center.y;
                 _minBounds.y = _maxBounds.y = centerY;
             }
 
-            if (_minBounds.z > _maxBounds.z)
+            if (_minBounds.z > _maxBounds.z || !constraintZ)
             {
-                float centerZ = bounds.center.z;
-                _minBounds.z = _maxBounds.z = centerZ;
+                float currentZ = transform.position.z;
+                _minBounds.z = _maxBounds.z = currentZ;
             }
 
+            CacheRuntimeState();
             _boundsValid = true;
         }
 
         private void CalculateBoundsPreview()
         {
             Bounds bounds = GetSourceBounds();
-            Vector3 cameraSize = GetCameraSize();
+            Vector2 cameraExtents = GetCameraExtentsAtDepth(bounds.center.z);
+            float padding = Mathf.Max(0f, edgePadding);
 
-            Vector3 minBounds = bounds.min + cameraSize + Vector3.one * edgePadding;
-            Vector3 maxBounds = bounds.max - cameraSize - Vector3.one * edgePadding;
+            Vector3 minBounds = new(
+                bounds.min.x + cameraExtents.x + padding,
+                bounds.min.y + cameraExtents.y + padding,
+                bounds.min.z + padding);
+            Vector3 maxBounds = new(
+                bounds.max.x - cameraExtents.x - padding,
+                bounds.max.y - cameraExtents.y - padding,
+                bounds.max.z - padding);
 
             if (minBounds.x > maxBounds.x)
             {
@@ -179,28 +229,30 @@ namespace Neo.Tools
                 minBounds.y = maxBounds.y = centerY;
             }
 
-            if (minBounds.z > maxBounds.z)
+            if (minBounds.z > maxBounds.z || !constraintZ)
             {
-                float centerZ = bounds.center.z;
-                minBounds.z = maxBounds.z = centerZ;
+                float currentZ = transform.position.z;
+                minBounds.z = maxBounds.z = currentZ;
             }
 
+            DrawSourceBounds(bounds);
             DrawConstraintBounds(minBounds, maxBounds);
+            DrawClampInfoPreview(minBounds, maxBounds);
         }
 
-        private Vector3 GetCameraSize()
+        private Vector2 GetCameraExtentsAtDepth(float targetDepthZ)
         {
             if (cam.orthographic)
             {
-                float height = cam.orthographicSize;
-                float width = height * cam.aspect;
-                return new Vector3(width, height, 0f);
+                float halfHeight = cam.orthographicSize;
+                float halfWidth = halfHeight * cam.aspect;
+                return new Vector2(halfWidth, halfHeight);
             }
 
-            float distance = Mathf.Abs(transform.position.z);
-            float height3D = distance * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
-            float width3D = height3D * cam.aspect;
-            return new Vector3(width3D, height3D, 0f);
+            float distanceToPlane = Mathf.Abs(transform.position.z - targetDepthZ);
+            float halfHeight3D = distanceToPlane * Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float halfWidth3D = halfHeight3D * cam.aspect;
+            return new Vector2(halfWidth3D, halfHeight3D);
         }
 
         private void ConstrainCamera()
@@ -222,12 +274,53 @@ namespace Neo.Tools
                 position.z = Mathf.Clamp(position.z, _minBounds.z, _maxBounds.z);
             }
 
+            _lastConstrainedPosition = position;
             transform.position = position;
+        }
+
+        private bool ShouldRecalculateBounds()
+        {
+            if (_lastScreenWidth != Screen.width || _lastScreenHeight != Screen.height)
+            {
+                return true;
+            }
+
+            if (cam == null)
+            {
+                return false;
+            }
+
+            if (!Mathf.Approximately(_lastAspect, cam.aspect))
+            {
+                return true;
+            }
+
+            if (cam.orthographic)
+            {
+                return !Mathf.Approximately(_lastOrthoSize, cam.orthographicSize);
+            }
+
+            return !Mathf.Approximately(_lastFov, cam.fieldOfView);
+        }
+
+        private void CacheRuntimeState()
+        {
+            _lastScreenWidth = Screen.width;
+            _lastScreenHeight = Screen.height;
+            _lastAspect = cam != null ? cam.aspect : -1f;
+            _lastOrthoSize = cam != null ? cam.orthographicSize : -1f;
+            _lastFov = cam != null ? cam.fieldOfView : -1f;
+        }
+
+        private void DrawSourceBounds(Bounds bounds)
+        {
+            Gizmos.color = sourceBoundsColor;
+            Gizmos.DrawWireCube(bounds.center, bounds.size);
         }
 
         private void DrawConstraintBounds(Vector3 min, Vector3 max)
         {
-            Gizmos.color = Color.green;
+            Gizmos.color = constraintBoundsColor;
 
             Vector3 topLeftFront = new(min.x, max.y, min.z);
             Vector3 topRightFront = new(max.x, max.y, min.z);
@@ -239,7 +332,7 @@ namespace Neo.Tools
             Gizmos.DrawLine(bottomRightFront, bottomLeftFront);
             Gizmos.DrawLine(bottomLeftFront, topLeftFront);
 
-            if (cam != null && !cam.orthographic)
+            if (cam != null && !cam.orthographic && constraintZ)
             {
                 Vector3 topLeftBack = new(min.x, max.y, max.z);
                 Vector3 topRightBack = new(max.x, max.y, max.z);
@@ -256,12 +349,25 @@ namespace Neo.Tools
                 Gizmos.DrawLine(bottomLeftFront, bottomLeftBack);
                 Gizmos.DrawLine(bottomRightFront, bottomRightBack);
             }
+        }
 
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(new Vector3(min.x, max.y, min.z), 0.2f);
-            Gizmos.DrawWireSphere(new Vector3(max.x, max.y, min.z), 0.2f);
-            Gizmos.DrawWireSphere(new Vector3(min.x, min.y, min.z), 0.2f);
-            Gizmos.DrawWireSphere(new Vector3(max.x, min.y, min.z), 0.2f);
+        private void DrawClampInfo()
+        {
+            Gizmos.color = clampedPositionColor;
+            Gizmos.DrawWireSphere(_lastConstrainedPosition, 0.2f);
+            Gizmos.DrawLine(transform.position, _lastConstrainedPosition);
+        }
+
+        private void DrawClampInfoPreview(Vector3 min, Vector3 max)
+        {
+            Vector3 pos = transform.position;
+            Vector3 clamped = new(
+                constraintX ? Mathf.Clamp(pos.x, min.x, max.x) : pos.x,
+                constraintY ? Mathf.Clamp(pos.y, min.y, max.y) : pos.y,
+                constraintZ ? Mathf.Clamp(pos.z, min.z, max.z) : pos.z);
+            Gizmos.color = clampedPositionColor;
+            Gizmos.DrawWireSphere(clamped, 0.2f);
+            Gizmos.DrawLine(pos, clamped);
         }
 
         #region === Public API ===
@@ -271,6 +377,12 @@ namespace Neo.Tools
         /// </summary>
         public void UpdateBounds()
         {
+            if (!TryResolveCamera() || !ValidateBoundsSource())
+            {
+                _boundsValid = false;
+                return;
+            }
+
             CalculateBounds();
         }
 
@@ -290,32 +402,22 @@ namespace Neo.Tools
                     }
 
                     break;
-                case BoundsType.Collider2D:
-                    if (source is Collider2D col2D)
+                case BoundsType.BoxCollider2D:
+                    if (source is BoxCollider2D col2D)
                     {
-                        collider2D = col2D;
+                        boxCollider2D = col2D;
                     }
 
                     break;
-                case BoundsType.Collider:
-                    if (source is Collider col)
+                case BoundsType.BoxCollider:
+                    if (source is BoxCollider col)
                     {
-                        collider = col;
+                        boxCollider = col;
                     }
 
                     break;
             }
 
-            UpdateBounds();
-        }
-
-        /// <summary>
-        ///     Set manual bounds at runtime.
-        /// </summary>
-        public void SetManualBounds(Bounds bounds)
-        {
-            boundsType = BoundsType.Manual;
-            manualBounds = bounds;
             UpdateBounds();
         }
 

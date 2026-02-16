@@ -42,13 +42,13 @@ namespace Neo.GridSystem.TicTacToe
                 }
             }
 
-            TicTacToeCellState diag = CheckDiagonal(generator, main: true, maxX);
+            TicTacToeCellState diag = CheckDiagonal(generator, true, maxX);
             if (diag != TicTacToeCellState.Empty)
             {
                 return diag;
             }
 
-            return CheckDiagonal(generator, main: false, maxX);
+            return CheckDiagonal(generator, false, maxX);
         }
 
         private static TicTacToeCellState CheckLine(FieldGenerator generator, int fixedIndex, bool row, int len)

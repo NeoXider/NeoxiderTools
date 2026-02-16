@@ -11,8 +11,7 @@ namespace Neo.Cards
     /// </summary>
     public class DrunkardGame : MonoBehaviour
     {
-        [Header("Config")] [Tooltip("Обязательный источник колоды и префаба карт.")]
-        [SerializeField]
+        [Header("Config")] [Tooltip("Обязательный источник колоды и префаба карт.")] [SerializeField]
         private DeckComponent _deckComponent;
 
         [SerializeField] private bool _initializeOnStart = true;
@@ -674,7 +673,8 @@ namespace Neo.Cards
                     return;
                 }
 
-                _opponentCardView = Instantiate(_deckComponent.CardPrefab, _cardsParent != null ? _cardsParent : transform);
+                _opponentCardView = Instantiate(_deckComponent.CardPrefab,
+                    _cardsParent != null ? _cardsParent : transform);
                 _opponentCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
@@ -712,7 +712,8 @@ namespace Neo.Cards
                     return;
                 }
 
-                _playerCardView = Instantiate(_deckComponent.CardPrefab, _cardsParent != null ? _cardsParent : transform);
+                _playerCardView = Instantiate(_deckComponent.CardPrefab,
+                    _cardsParent != null ? _cardsParent : transform);
                 _playerCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {

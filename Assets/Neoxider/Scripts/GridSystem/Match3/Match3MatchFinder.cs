@@ -52,7 +52,8 @@ namespace Neo.GridSystem.Match3
             for (int i = 0; i < length; i++)
             {
                 FieldCell cell = generator.GetCell(posFactory(i));
-                bool valid = cell != null && cell.IsEnabled && cell.IsWalkable && !cell.IsOccupied && cell.ContentId > 0;
+                bool valid = cell != null && cell.IsEnabled && cell.IsWalkable && !cell.IsOccupied &&
+                             cell.ContentId > 0;
                 int id = valid ? cell.ContentId : -1;
 
                 if (valid && id == currentId)

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -56,8 +56,7 @@ namespace Neo.GridSystem
 #endif
         public MovementRule MovementRule = MovementRule.FourDirections2D;
 
-        [Header("Shape")]
-        public GridShapeMask ShapeMask;
+        [Header("Shape")] public GridShapeMask ShapeMask;
 
         public List<Vector3Int> DisabledCells = new();
         public List<Vector3Int> ForcedEnabledCells = new();
@@ -67,8 +66,7 @@ namespace Neo.GridSystem
         [Header("Pathfinding")]
         public CellPassabilityMode PassabilityMode = CellPassabilityMode.WalkableEnabledAndUnoccupied;
 
-        [Header("Origin")]
-        public GridOrigin2D Origin2D = GridOrigin2D.Center;
+        [Header("Origin")] public GridOrigin2D Origin2D = GridOrigin2D.Center;
         public GridOriginDepth OriginDepth = GridOriginDepth.Center;
         public Vector3Int OriginOffset = Vector3Int.zero;
 

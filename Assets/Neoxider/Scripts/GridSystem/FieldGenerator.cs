@@ -21,16 +21,19 @@ namespace Neo.GridSystem
         /// Invoked after field generation is completed.
         /// </summary>
         public UnityEvent OnFieldGenerated = new();
+
         /// <summary>
         /// Invoked when legacy cell data is changed via <see cref="SetCell(Vector3Int,int,bool)"/>.
         /// </summary>
         public CellChangedEvent OnCellChanged = new();
+
         /// <summary>
         /// Invoked when cell runtime state is changed.
         /// </summary>
         public CellStateChangedEvent OnCellStateChanged = new();
 
         private Grid unityGrid;
+
         /// <summary>
         /// Global singleton reference to the latest initialized generator.
         /// </summary>
@@ -452,7 +455,8 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            bool checkOccupied = Config == null || Config.PassabilityMode == CellPassabilityMode.WalkableEnabledAndUnoccupied;
+            bool checkOccupied = Config == null ||
+                                 Config.PassabilityMode == CellPassabilityMode.WalkableEnabledAndUnoccupied;
             if (checkOccupied && !ignoreOccupied && cell.IsOccupied)
             {
                 return false;
@@ -475,7 +479,8 @@ namespace Neo.GridSystem
                 return neighbors;
             }
 
-            IEnumerable<Vector3Int> dirs = directions ?? (Config.MovementRule != null ? Config.MovementRule.Directions : null);
+            IEnumerable<Vector3Int> dirs =
+                directions ?? (Config.MovementRule != null ? Config.MovementRule.Directions : null);
             if (dirs == null)
             {
                 return neighbors;

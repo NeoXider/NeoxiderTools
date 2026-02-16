@@ -1,3 +1,4 @@
+using System.Reflection;
 using Neo.GridSystem;
 using Neo.GridSystem.TicTacToe;
 using Neo.Tools;
@@ -135,7 +136,8 @@ namespace Neo.Demo.GridSystem
             return obj;
         }
 
-        private static void CreateButton(string label, RectTransform parent, Vector2 pos, UnityEngine.Events.UnityAction action)
+        private static void CreateButton(string label, RectTransform parent, Vector2 pos,
+            UnityEngine.Events.UnityAction action)
         {
             GameObject obj = CreateGO("Btn_" + label.Replace(" ", "_"));
             obj.transform.SetParent(parent, false);
@@ -168,7 +170,7 @@ namespace Neo.Demo.GridSystem
 
         private static void SetRef(object target, string fieldName, object value)
         {
-            var field = target.GetType().GetField(fieldName,
+            FieldInfo field = target.GetType().GetField(fieldName,
                 System.Reflection.BindingFlags.NonPublic |
                 System.Reflection.BindingFlags.Instance);
             field?.SetValue(target, value);

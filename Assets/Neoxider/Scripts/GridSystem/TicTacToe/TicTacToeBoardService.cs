@@ -16,14 +16,17 @@ namespace Neo.GridSystem.TicTacToe
         /// Invoked when active player changes. Argument is <see cref="TicTacToeCellState"/> as int.
         /// </summary>
         public UnityEvent<int> OnPlayerChanged = new();
+
         /// <summary>
         /// Invoked when a winner is detected. Argument is winner state as int.
         /// </summary>
         public UnityEvent<int> OnWinnerDetected = new();
+
         /// <summary>
         /// Invoked when the board ends with a draw.
         /// </summary>
         public UnityEvent OnDrawDetected = new();
+
         /// <summary>
         /// Invoked after board reset is complete.
         /// </summary>
@@ -33,10 +36,12 @@ namespace Neo.GridSystem.TicTacToe
         /// Current player that is allowed to make the next move.
         /// </summary>
         public TicTacToeCellState CurrentPlayer { get; private set; } = TicTacToeCellState.PlayerX;
+
         /// <summary>
         /// Winner state. Remains <see cref="TicTacToeCellState.Empty"/> until someone wins.
         /// </summary>
         public TicTacToeCellState Winner { get; private set; } = TicTacToeCellState.Empty;
+
         /// <summary>
         /// True when game is finished (win or draw).
         /// </summary>
@@ -149,7 +154,7 @@ namespace Neo.GridSystem.TicTacToe
         /// <returns>True when no empty enabled cells remain.</returns>
         public bool IsBoardFull()
         {
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: false))
+            foreach (FieldCell cell in _generator.GetAllCells(false))
             {
                 if ((TicTacToeCellState)cell.ContentId == TicTacToeCellState.Empty)
                 {

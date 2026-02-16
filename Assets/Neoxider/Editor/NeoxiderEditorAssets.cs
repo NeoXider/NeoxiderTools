@@ -19,7 +19,11 @@ namespace Neo.Editor
         {
             string filter = string.IsNullOrEmpty(typeFilter) ? nameOrFilter : $"{nameOrFilter} t:{typeFilter}";
             string[] guids = AssetDatabase.FindAssets(filter);
-            if (guids == null || guids.Length == 0) return null;
+            if (guids == null || guids.Length == 0)
+            {
+                return null;
+            }
+
             return AssetDatabase.GUIDToAssetPath(guids[0]);
         }
 
@@ -29,7 +33,11 @@ namespace Neo.Editor
         public static T FindAndLoad<T>(string nameOrFilter, string typeFilter = null) where T : Object
         {
             string path = FindAssetPath(nameOrFilter, typeFilter ?? typeof(T).Name);
-            if (string.IsNullOrEmpty(path)) return null;
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
             return AssetDatabase.LoadAssetAtPath<T>(path);
         }
 

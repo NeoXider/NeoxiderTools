@@ -14,14 +14,17 @@ namespace Neo.Extensions
         /// Plain number without thousand grouping and suffixes.
         /// </summary>
         Plain = 0,
+
         /// <summary>
         /// Number with grouped thousands (for example: 1,234,567).
         /// </summary>
         Grouped = 1,
+
         /// <summary>
         /// Idle/clicker short notation with suffixes (K, M, B, T...).
         /// </summary>
         IdleShort = 2,
+
         /// <summary>
         /// Scientific notation (for example: 1.23e6).
         /// </summary>
@@ -37,18 +40,22 @@ namespace Neo.Extensions
         /// Rounds to nearest value; midpoint goes to even digit.
         /// </summary>
         ToEven = 0,
+
         /// <summary>
         /// Rounds midpoint values away from zero.
         /// </summary>
         AwayFromZero = 1,
+
         /// <summary>
         /// Truncates fractional part toward zero.
         /// </summary>
         ToZero = 2,
+
         /// <summary>
         /// Rounds toward positive infinity (ceiling).
         /// </summary>
         ToPositiveInfinity = 3,
+
         /// <summary>
         /// Rounds toward negative infinity (floor).
         /// </summary>
@@ -65,30 +72,37 @@ namespace Neo.Extensions
         /// Output notation style.
         /// </summary>
         public NumberNotation Notation;
+
         /// <summary>
         /// Rounding mode used before string conversion.
         /// </summary>
         public NumberRoundingMode RoundingMode;
+
         /// <summary>
         /// Count of digits after decimal separator.
         /// </summary>
         public int Decimals;
+
         /// <summary>
         /// When true, trailing zeros in fractional part are removed.
         /// </summary>
         public bool TrimTrailingZeros;
+
         /// <summary>
         /// Thousands group separator.
         /// </summary>
         public string GroupSeparator;
+
         /// <summary>
         /// Fractional separator.
         /// </summary>
         public string DecimalSeparator;
+
         /// <summary>
         /// Prefix appended before formatted numeric value.
         /// </summary>
         public string Prefix;
+
         /// <summary>
         /// Suffix appended after formatted numeric value.
         /// </summary>
@@ -121,13 +135,13 @@ namespace Neo.Extensions
         /// Default grouped format preset.
         /// </summary>
         public static NumberFormatOptions Default =>
-            new NumberFormatOptions(NumberNotation.Grouped, 0, NumberRoundingMode.ToEven, false, ",", ".");
+            new(NumberNotation.Grouped, 0, NumberRoundingMode.ToEven, false, ",", ".");
 
         /// <summary>
         /// Default idle short notation preset.
         /// </summary>
         public static NumberFormatOptions IdleShort =>
-            new NumberFormatOptions(NumberNotation.IdleShort, 1, NumberRoundingMode.ToEven, true, ".", ".");
+            new(NumberNotation.IdleShort, 1, NumberRoundingMode.ToEven, true, ".", ".");
 
         /// <summary>
         /// Clamps decimals to valid range [0..12].
@@ -365,7 +379,8 @@ namespace Neo.Extensions
                 string raw = options.Notation switch
                 {
                     NumberNotation.Plain => value.ToString("F" + options.Decimals, Invariant),
-                    NumberNotation.Grouped => ApplySeparators(value.ToString("N" + options.Decimals, Invariant), options),
+                    NumberNotation.Grouped => ApplySeparators(value.ToString("N" + options.Decimals, Invariant),
+                        options),
                     NumberNotation.IdleShort => FormatIdle(value, options),
                     NumberNotation.Scientific => value.ToString("E" + options.Decimals, Invariant).Replace("E", "e"),
                     _ => value.ToString(Invariant)
@@ -404,7 +419,7 @@ namespace Neo.Extensions
 
             string separator = string.IsNullOrEmpty(options.GroupSeparator) ? "," : options.GroupSeparator;
             int groupCount = (digits.Length - 1) / 3;
-            var sb = new StringBuilder(digits.Length + groupCount * separator.Length + 1);
+            StringBuilder sb = new(digits.Length + groupCount * separator.Length + 1);
 
             if (isNegative)
             {
@@ -612,12 +627,12 @@ namespace Neo.Extensions
             }
 
             int n = tier - BaseSuffixes.Length;
-            var sb = new StringBuilder();
+            StringBuilder sb = new();
 
             do
             {
                 sb.Insert(0, Alphabet[n % 26]);
-                n = (n / 26) - 1;
+                n = n / 26 - 1;
             } while (n >= 0);
 
             return sb.ToString();
@@ -684,7 +699,7 @@ namespace Neo.Extensions
                 return text;
             }
 
-            var sb = new StringBuilder(text.Length + 8);
+            StringBuilder sb = new(text.Length + 8);
             for (int i = 0; i < text.Length; i++)
             {
                 char c = text[i];

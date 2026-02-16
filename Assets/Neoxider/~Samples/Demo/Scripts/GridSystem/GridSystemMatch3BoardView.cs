@@ -97,7 +97,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: true))
+            foreach (FieldCell cell in _generator.GetAllCells(true))
             {
                 CreateCellView(cell);
             }
@@ -113,7 +113,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: true))
+            foreach (FieldCell cell in _generator.GetAllCells(true))
             {
                 RefreshCell(cell);
             }
@@ -190,7 +190,8 @@ namespace Neo.Demo.GridSystem
             outlineGo.transform.SetParent(root.transform, false);
             SpriteRenderer outline = outlineGo.AddComponent<SpriteRenderer>();
             outline.sprite = tile.sprite;
-            outline.transform.localScale = new Vector3(_cellSize.x + _outlineThickness, _cellSize.y + _outlineThickness, 1f);
+            outline.transform.localScale =
+                new Vector3(_cellSize.x + _outlineThickness, _cellSize.y + _outlineThickness, 1f);
             outline.color = new Color(0, 0, 0, 0);
             outline.sortingOrder = tile.sortingOrder - 1;
 
@@ -223,7 +224,7 @@ namespace Neo.Demo.GridSystem
 
         private void RefreshSelectionVisual()
         {
-            foreach (var pair in _views)
+            foreach (KeyValuePair<Vector3Int, CellView> pair in _views)
             {
                 bool selected = _selected.HasValue && pair.Key == _selected.Value;
                 pair.Value.Outline.color = selected ? _selectedOutlineColor : new Color(0, 0, 0, 0);

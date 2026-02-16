@@ -110,7 +110,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: true))
+            foreach (FieldCell cell in _generator.GetAllCells(true))
             {
                 CreateCellView(cell);
             }
@@ -125,7 +125,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            foreach (FieldCell cell in _generator.GetAllCells(includeDisabled: true))
+            foreach (FieldCell cell in _generator.GetAllCells(true))
             {
                 UpdateSingleCell(cell);
             }

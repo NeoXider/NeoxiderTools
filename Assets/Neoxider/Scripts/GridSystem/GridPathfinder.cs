@@ -26,26 +26,32 @@ namespace Neo.GridSystem
         /// Start cell position in grid coordinates.
         /// </summary>
         public Vector3Int Start;
+
         /// <summary>
         /// End cell position in grid coordinates.
         /// </summary>
         public Vector3Int End;
+
         /// <summary>
         /// Optional movement directions override.
         /// </summary>
         public IEnumerable<Vector3Int> Directions;
+
         /// <summary>
         /// Ignores occupied state when evaluating passability.
         /// </summary>
         public bool IgnoreOccupied;
+
         /// <summary>
         /// Ignores enabled/disabled state when evaluating passability.
         /// </summary>
         public bool IgnoreDisabled;
+
         /// <summary>
         /// Ignores walkability flag when evaluating passability.
         /// </summary>
         public bool IgnoreWalkability;
+
         /// <summary>
         /// Optional custom passability callback evaluated per cell.
         /// </summary>
@@ -61,10 +67,12 @@ namespace Neo.GridSystem
         /// Computed path from start to end (inclusive).
         /// </summary>
         public List<FieldCell> Path;
+
         /// <summary>
         /// Failure reason when no path is available.
         /// </summary>
         public NoPathReason Reason;
+
         /// <summary>
         /// Returns true when a non-empty path has been found.
         /// </summary>
@@ -188,7 +196,8 @@ namespace Neo.GridSystem
                 return false;
             }
 
-            return generator.IsCellPassable(cell, request.IgnoreOccupied, request.IgnoreDisabled, request.IgnoreWalkability);
+            return generator.IsCellPassable(cell, request.IgnoreOccupied, request.IgnoreDisabled,
+                request.IgnoreWalkability);
         }
     }
 }

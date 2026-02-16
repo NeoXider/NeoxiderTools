@@ -29,8 +29,10 @@ namespace Neo.Cards
         [SerializeField] private Vector3 _stackOffsetPosition;
         [SerializeField] private Vector3 _stackOffsetRotation;
         [SerializeField] private CardAnimationConfig _animationConfig;
+
         [Tooltip("Если включено, конфиг колоды становится глобальным fallback для остальных Card-компонентов.")]
-        [SerializeField] private bool _setAnimationConfigAsGlobal = true;
+        [SerializeField]
+        private bool _setAnimationConfigAsGlobal = true;
 
         [Header("Trump Display")] [SerializeField]
         private bool _showTrumpCard = true;
@@ -81,6 +83,7 @@ namespace Neo.Cards
         ///     Событие раздачи карты в руку.
         /// </summary>
         public UnityEvent<CardComponent, HandComponent> OnCardDealt;
+
         private readonly List<CardComponent> _activeCards = new();
 
         /// <summary>
@@ -283,13 +286,19 @@ namespace Neo.Cards
                 switch (type)
                 {
                     case ShuffleVisualType.Shake:
-                        await PlayShakeAnimation(duration ?? (_animationConfig != null ? _animationConfig.ShakeDuration : 1f));
+                        await PlayShakeAnimation(duration ??
+                                                 (_animationConfig != null ? _animationConfig.ShakeDuration : 1f));
                         break;
                     case ShuffleVisualType.Cut:
-                        await UniTask.Delay((int)((duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)) * 1000f));
+                        await UniTask.Delay(
+                            (int)((duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)) *
+                                  1000f));
                         break;
                     case ShuffleVisualType.Riffle:
-                        await UniTask.Delay((int)((duration ?? (_animationConfig != null ? _animationConfig.RiffleDuration : 1.2f)) * 1000f));
+                        await UniTask.Delay((int)((duration ??
+                                                   (_animationConfig != null
+                                                       ? _animationConfig.RiffleDuration
+                                                       : 1.2f)) * 1000f));
                         break;
                 }
             }
@@ -330,6 +339,7 @@ namespace Neo.Cards
                 {
                     Model.Draw();
                 }
+
                 card.IsFaceUp = faceUp;
             }
             else
@@ -509,11 +519,14 @@ namespace Neo.Cards
 
             CardLayoutSettings settings = CardLayoutSettings.Default;
             settings.StackStep = _animationConfig != null ? _animationConfig.StackStepY : _stackStepY;
-            settings.PositionJitter = _animationConfig != null ? _animationConfig.StackPositionJitter : _stackPositionJitter;
-            settings.RotationJitter = _animationConfig != null ? _animationConfig.StackRotationJitter : _stackRotationJitter;
+            settings.PositionJitter =
+                _animationConfig != null ? _animationConfig.StackPositionJitter : _stackPositionJitter;
+            settings.RotationJitter =
+                _animationConfig != null ? _animationConfig.StackRotationJitter : _stackRotationJitter;
 
             List<Vector3> positions = CardLayoutCalculator.CalculatePositions(_visualLayoutType, cards.Count, settings);
-            List<Quaternion> rotations = CardLayoutCalculator.CalculateRotations(_visualLayoutType, cards.Count, settings);
+            List<Quaternion> rotations =
+                CardLayoutCalculator.CalculateRotations(_visualLayoutType, cards.Count, settings);
 
             for (int i = 0; i < cards.Count; i++)
             {
@@ -545,7 +558,8 @@ namespace Neo.Cards
             float intensity = _animationConfig != null ? _animationConfig.ShakeIntensity : 0.12f;
 
             List<CardComponent> cards = _visualStackBoard.Cards.ToList();
-            List<Vector3> basePositions = cards.Select(card => card != null ? card.transform.localPosition : Vector3.zero).ToList();
+            List<Vector3> basePositions =
+                cards.Select(card => card != null ? card.transform.localPosition : Vector3.zero).ToList();
 
             for (int i = 0; i < frames; i++)
             {

@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using System;
+using System.Reflection;
 
 namespace Neo
 {
@@ -12,6 +14,12 @@ namespace Neo
         [AddComponentMenu("Neo/" + "Tools/" + nameof(InteractiveObject))]
         public class InteractiveObject : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
         {
+            public enum KeyboardInteractionMode
+            {
+                ViewOrMouse,
+                DistanceOnly
+            }
+
             public enum MouseButton
             {
                 Left = 0,
@@ -34,12 +42,33 @@ namespace Neo
             [Tooltip("Enable keyboard interaction.")] [SerializeField]
             private bool useKeyboardInteraction = true;
 
+            [Tooltip("ViewOrMouse: keyboard requires looking at object. DistanceOnly: only distance check.")]
+            [SerializeField]
+            private KeyboardInteractionMode keyboardInteractionMode = KeyboardInteractionMode.ViewOrMouse;
+
+            [Tooltip("Require looking at object when interacting with keyboard.")] [SerializeField]
+            private bool requireViewForKeyboardInteraction = true;
+
+            [Tooltip("Minimum dot product for look check. Higher value means narrower interaction cone.")]
+            [Range(-1f, 1f)]
+            [SerializeField]
+            private float minLookDot = 0.55f;
+
+            [Tooltip("Require direct line of sight from check point to object.")] [SerializeField]
+            private bool requireDirectLookRay = true;
+
+            [Tooltip("Include trigger colliders in look ray checks.")] [SerializeField]
+            private bool includeTriggerCollidersInLookRay = true;
+
             [Header("Distance Control")] [Tooltip("Maximum interaction distance (0 = unlimited).")] [SerializeField]
             private float interactionDistance = 2f;
 
             [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
             [SerializeField]
             private Transform distanceCheckPoint;
+
+            [Tooltip("Reference point for look direction checks. Uses main camera if not set.")] [SerializeField]
+            private Transform viewCheckPoint;
 
             [Tooltip(
                 "Check for obstacles (walls) between object and check point. Uses raycast to detect blocking colliders.")]
@@ -48,6 +77,10 @@ namespace Neo
 
             [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")] [SerializeField]
             private LayerMask obstacleLayers = -1;
+
+            [Tooltip("Ignore colliders from distance check point hierarchy (e.g. player capsule/camera rig).")]
+            [SerializeField]
+            private bool ignoreDistancePointHierarchyColliders = true;
 
             [Header("Down/Up — Mouse Binding")] [SerializeField]
             private MouseButton downUpMouseButton = MouseButton.Left;
@@ -75,11 +108,23 @@ namespace Neo
 
             public UnityEvent onExitRange;
 
+            [Header("Debug")] [SerializeField] private bool drawInteractionRayForOneSecond;
+            [SerializeField] private float interactionRayDrawDuration = 1f;
+
             private float clickTime;
             private bool keyHeldPrev;
             private bool mouseHeldPrev;
             private bool wasHoveredByRaycast;
             private bool wasInRange;
+            private readonly RaycastHit[] lookHits3D = new RaycastHit[8];
+            private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[8];
+            private Vector3 lastDebugRayStart;
+            private Vector3 lastDebugRayEnd;
+            private Color lastDebugRayColor = Color.cyan;
+            private float lastDebugRayUntilTime;
+
+            private static readonly Type KeyboardType =
+                Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
 
             private void Awake()
             {
@@ -89,6 +134,12 @@ namespace Neo
                 if (distanceCheckPoint == null && Camera.main != null)
                 {
                     distanceCheckPoint = Camera.main.transform;
+                }
+
+                if (viewCheckPoint == null)
+                {
+                    viewCheckPoint = distanceCheckPoint != null ? distanceCheckPoint :
+                        Camera.main != null ? Camera.main.transform : null;
                 }
             }
 
@@ -138,6 +189,13 @@ namespace Neo
 
                 Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
                 Gizmos.DrawWireSphere(transform.position, interactionDistance);
+
+                if (drawInteractionRayForOneSecond && Time.realtimeSinceStartup <= lastDebugRayUntilTime)
+                {
+                    Gizmos.color = lastDebugRayColor;
+                    Gizmos.DrawLine(lastDebugRayStart, lastDebugRayEnd);
+                    Gizmos.DrawWireSphere(lastDebugRayEnd, 0.05f);
+                }
             }
 
             public void OnPointerClick(PointerEventData eventData)
@@ -310,8 +368,8 @@ namespace Neo
 
             private void UpdateKeyboardInput()
             {
-                bool keyDown = Input.GetKeyDown(keyboardKey);
-                bool keyUp = Input.GetKeyUp(keyboardKey);
+                bool keyDown = IsKeyboardActionDown();
+                bool keyUp = IsKeyboardActionUp();
 
                 if (!keyDown && !keyUp)
                 {
@@ -319,7 +377,8 @@ namespace Neo
                 }
 
                 bool inRange = interactionDistance > 0f ? IsInRange() : true;
-                bool canInteract = inRange || interactionDistance <= 0f;
+                bool inView = IsInViewForKeyboardInteraction();
+                bool canInteract = (inRange || interactionDistance <= 0f) && inView;
 
                 if (keyDown && canInteract)
                 {
@@ -345,8 +404,8 @@ namespace Neo
                 }
 
                 Vector3 checkPointPos = distanceCheckPoint.position;
-                Vector3 objectPos = transform.position;
-                float distanceSqr = (objectPos - checkPointPos).sqrMagnitude;
+                Vector3 targetPos = GetInteractionTargetPosition();
+                float distanceSqr = (targetPos - checkPointPos).sqrMagnitude;
 
                 if (interactionDistance > 0f && distanceSqr > interactionDistance * interactionDistance)
                 {
@@ -355,7 +414,7 @@ namespace Neo
 
                 if (checkObstacles)
                 {
-                    Vector3 direction = objectPos - checkPointPos;
+                    Vector3 direction = targetPos - checkPointPos;
                     float distance = Mathf.Sqrt(distanceSqr);
 
                     if (distance < 0.01f)
@@ -376,28 +435,82 @@ namespace Neo
 
                     if (has3DCollider)
                     {
-                        RaycastHit hit;
-                        if (Physics.Raycast(checkPointPos, directionNormalized, out hit, checkDistance, obstacleLayers))
+                        int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
+                            checkDistance,
+                            obstacleLayers, QueryTriggerInteraction.Ignore);
+                        Collider nearestCollider = null;
+                        float nearestDistance = float.MaxValue;
+                        for (int i = 0; i < hitCount; i++)
                         {
-                            if (hit.collider != selfCollider3D)
+                            Collider hitCollider = lookHits3D[i].collider;
+                            if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
                             {
-                                return false;
+                                continue;
                             }
+
+                            if (lookHits3D[i].distance < nearestDistance)
+                            {
+                                nearestDistance = lookHits3D[i].distance;
+                                nearestCollider = hitCollider;
+                            }
+                        }
+
+                        if (nearestCollider != null && !IsTargetHierarchyCollider(nearestCollider))
+                        {
+                            return false;
                         }
                     }
                     else if (has2DCollider)
                     {
                         Vector2 origin2D = new(checkPointPos.x, checkPointPos.y);
                         Vector2 direction2D = new(directionNormalized.x, directionNormalized.y);
-                        RaycastHit2D hit = Physics2D.Raycast(origin2D, direction2D, checkDistance, obstacleLayers);
-                        if (hit.collider != null && hit.collider != selfCollider2D)
+                        int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, direction2D, lookHits2D, checkDistance,
+                            obstacleLayers);
+                        Collider2D nearestCollider2D = null;
+                        float nearestDistance2D = float.MaxValue;
+                        for (int i = 0; i < hitCount2D; i++)
+                        {
+                            Collider2D hitCollider = lookHits2D[i].collider;
+                            if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
+                            {
+                                continue;
+                            }
+
+                            if (lookHits2D[i].distance < nearestDistance2D)
+                            {
+                                nearestDistance2D = lookHits2D[i].distance;
+                                nearestCollider2D = hitCollider;
+                            }
+                        }
+
+                        if (nearestCollider2D != null && !IsTargetHierarchyCollider(nearestCollider2D))
                         {
                             return false;
                         }
                     }
                     else
                     {
-                        if (Physics.Raycast(checkPointPos, directionNormalized, checkDistance, obstacleLayers))
+                        int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
+                            checkDistance,
+                            obstacleLayers, QueryTriggerInteraction.Ignore);
+                        Collider nearestCollider = null;
+                        float nearestDistance = float.MaxValue;
+                        for (int i = 0; i < hitCount; i++)
+                        {
+                            Collider hitCollider = lookHits3D[i].collider;
+                            if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
+                            {
+                                continue;
+                            }
+
+                            if (lookHits3D[i].distance < nearestDistance)
+                            {
+                                nearestDistance = lookHits3D[i].distance;
+                                nearestCollider = hitCollider;
+                            }
+                        }
+
+                        if (nearestCollider != null && !IsTargetHierarchyCollider(nearestCollider))
                         {
                             return false;
                         }
@@ -405,6 +518,305 @@ namespace Neo
                 }
 
                 return true;
+            }
+
+            private bool IsInViewForKeyboardInteraction()
+            {
+                if (keyboardInteractionMode == KeyboardInteractionMode.DistanceOnly)
+                {
+                    return true;
+                }
+
+                if (keyboardInteractionMode == KeyboardInteractionMode.ViewOrMouse &&
+                    (IsHovered || wasHoveredByRaycast))
+                {
+                    return true;
+                }
+
+                if (!requireViewForKeyboardInteraction)
+                {
+                    return true;
+                }
+
+                if (distanceCheckPoint == null)
+                {
+                    return true;
+                }
+
+                Transform lookSource = ResolveLookSource();
+                if (lookSource == null)
+                {
+                    return true;
+                }
+
+                Vector3 origin = lookSource.position;
+                Vector3 target = GetInteractionTargetPosition();
+                Vector3 toTarget = target - origin;
+                float distance = toTarget.magnitude;
+                if (distance <= 0.001f)
+                {
+                    return true;
+                }
+
+                Vector3 forward = lookSource.forward.normalized;
+                float dot = Vector3.Dot(forward, toTarget / distance);
+                if (dot < minLookDot)
+                {
+                    CacheDebugRay(origin, target, Color.yellow);
+                    return false;
+                }
+
+                if (!requireDirectLookRay)
+                {
+                    CacheDebugRay(origin, target, Color.cyan);
+                    return true;
+                }
+
+                if (TryGetComponent(out Collider _))
+                {
+                    float maxRayDistance = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
+                    QueryTriggerInteraction triggerMode = includeTriggerCollidersInLookRay
+                        ? QueryTriggerInteraction.Collide
+                        : QueryTriggerInteraction.Ignore;
+                    int hitCount = Physics.RaycastNonAlloc(origin, forward, lookHits3D, maxRayDistance,
+                        ~0, triggerMode);
+                    float nearestDistance = float.MaxValue;
+                    Collider nearestCollider = null;
+                    Vector3 nearestPoint = origin + forward * maxRayDistance;
+                    for (int i = 0; i < hitCount; i++)
+                    {
+                        Collider hitCollider = lookHits3D[i].collider;
+                        if (hitCollider == null)
+                        {
+                            continue;
+                        }
+
+                        if (ShouldIgnoreHitCollider(hitCollider))
+                        {
+                            continue;
+                        }
+
+                        float hitDistance = lookHits3D[i].distance;
+                        if (hitDistance < nearestDistance)
+                        {
+                            nearestDistance = hitDistance;
+                            nearestCollider = hitCollider;
+                            nearestPoint = lookHits3D[i].point;
+                        }
+                    }
+
+                    bool hasTargetHit = nearestCollider != null && IsTargetHierarchyCollider(nearestCollider);
+                    Vector3 debugEnd = hasTargetHit
+                        ? nearestCollider.ClosestPoint(origin)
+                        : nearestPoint;
+                    CacheDebugRay(origin, debugEnd,
+                        hasTargetHit ? Color.green : Color.red);
+                    return hasTargetHit;
+                }
+
+                if (TryGetComponent(out Collider2D _))
+                {
+                    Vector2 origin2D = new(origin.x, origin.y);
+                    Vector2 dir2D = new Vector2(toTarget.x, toTarget.y).normalized;
+                    int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, distance + 0.05f, ~0);
+                    float nearestDistance2D = float.MaxValue;
+                    Collider2D nearestCollider2D = null;
+                    for (int i = 0; i < hitCount2D; i++)
+                    {
+                        Collider2D hitCollider = lookHits2D[i].collider;
+                        if (hitCollider == null)
+                        {
+                            continue;
+                        }
+
+                        if (ShouldIgnoreHitCollider(hitCollider))
+                        {
+                            continue;
+                        }
+
+                        float hitDistance = lookHits2D[i].distance;
+                        if (hitDistance < nearestDistance2D)
+                        {
+                            nearestDistance2D = hitDistance;
+                            nearestCollider2D = hitCollider;
+                        }
+                    }
+
+                    bool hasTargetHit = nearestCollider2D != null && nearestCollider2D.transform.IsChildOf(transform);
+                    Vector3 debugEnd = hasTargetHit ? nearestCollider2D.bounds.center : target;
+                    CacheDebugRay(origin, debugEnd, hasTargetHit ? Color.green : Color.red);
+                    return hasTargetHit;
+                }
+
+                CacheDebugRay(origin, target, Color.cyan);
+                return true;
+            }
+
+            private Vector3 GetInteractionTargetPosition()
+            {
+                if (TryGetComponent(out Collider col3D))
+                {
+                    return col3D.bounds.center;
+                }
+
+                if (TryGetComponent(out Collider2D col2D))
+                {
+                    return col2D.bounds.center;
+                }
+
+                return transform.position;
+            }
+
+            private bool ShouldIgnoreHitCollider(Component hitCollider)
+            {
+                if (hitCollider == null || !ignoreDistancePointHierarchyColliders)
+                {
+                    return false;
+                }
+
+                Transform hitTransform = hitCollider.transform;
+                return IsSameHierarchy(hitTransform, distanceCheckPoint) ||
+                       IsSameHierarchy(hitTransform, viewCheckPoint);
+            }
+
+            private bool IsTargetHierarchyCollider(Component hitCollider)
+            {
+                return hitCollider != null && hitCollider.transform.IsChildOf(transform);
+            }
+
+            private Transform ResolveLookSource()
+            {
+                if (viewCheckPoint != null)
+                {
+                    return viewCheckPoint;
+                }
+
+                if (Camera.main != null)
+                {
+                    return Camera.main.transform;
+                }
+
+                return distanceCheckPoint;
+            }
+
+            private static bool IsSameHierarchy(Transform a, Transform b)
+            {
+                if (a == null || b == null)
+                {
+                    return false;
+                }
+
+                return a == b || a.IsChildOf(b) || b.IsChildOf(a) || a.root == b.root;
+            }
+
+            private void CacheDebugRay(Vector3 start, Vector3 end, Color color)
+            {
+                if (!drawInteractionRayForOneSecond)
+                {
+                    return;
+                }
+
+                lastDebugRayStart = start;
+                lastDebugRayEnd = end;
+                lastDebugRayColor = color;
+                lastDebugRayUntilTime = Time.realtimeSinceStartup + Mathf.Max(0.05f, interactionRayDrawDuration);
+            }
+
+
+            private bool IsKeyboardActionDown()
+            {
+                return Input.GetKeyDown(keyboardKey) || ReadNewInputKeyState(keyboardKey, "wasPressedThisFrame");
+            }
+
+            private bool IsKeyboardActionUp()
+            {
+                return Input.GetKeyUp(keyboardKey) || ReadNewInputKeyState(keyboardKey, "wasReleasedThisFrame");
+            }
+
+            private static bool ReadNewInputKeyState(KeyCode keyCode, string statePropertyName)
+            {
+                if (KeyboardType == null)
+                {
+                    return false;
+                }
+
+                string keyProperty = GetInputSystemKeyPropertyName(keyCode);
+                if (string.IsNullOrEmpty(keyProperty))
+                {
+                    return false;
+                }
+
+                PropertyInfo currentProperty =
+                    KeyboardType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+                object keyboard = currentProperty?.GetValue(null);
+                if (keyboard == null)
+                {
+                    return false;
+                }
+
+                PropertyInfo keyControlProperty =
+                    KeyboardType.GetProperty(keyProperty, BindingFlags.Public | BindingFlags.Instance);
+                object keyControl = keyControlProperty?.GetValue(keyboard);
+                if (keyControl == null)
+                {
+                    return false;
+                }
+
+                PropertyInfo stateProperty = keyControl.GetType()
+                    .GetProperty(statePropertyName, BindingFlags.Public | BindingFlags.Instance);
+                return stateProperty != null && stateProperty.PropertyType == typeof(bool) &&
+                       (bool)stateProperty.GetValue(keyControl);
+            }
+
+            private static string GetInputSystemKeyPropertyName(KeyCode keyCode)
+            {
+                if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
+                {
+                    return char.ToLowerInvariant((char)('a' + (keyCode - KeyCode.A))) + "Key";
+                }
+
+                if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
+                {
+                    int digit = keyCode - KeyCode.Alpha0;
+                    return "digit" + digit + "Key";
+                }
+
+                switch (keyCode)
+                {
+                    case KeyCode.Space:
+                        return "spaceKey";
+                    case KeyCode.Return:
+                    case KeyCode.KeypadEnter:
+                        return "enterKey";
+                    case KeyCode.Escape:
+                        return "escapeKey";
+                    case KeyCode.Tab:
+                        return "tabKey";
+                    case KeyCode.Backspace:
+                        return "backspaceKey";
+                    case KeyCode.LeftShift:
+                        return "leftShiftKey";
+                    case KeyCode.RightShift:
+                        return "rightShiftKey";
+                    case KeyCode.LeftControl:
+                        return "leftCtrlKey";
+                    case KeyCode.RightControl:
+                        return "rightCtrlKey";
+                    case KeyCode.LeftAlt:
+                        return "leftAltKey";
+                    case KeyCode.RightAlt:
+                        return "rightAltKey";
+                    case KeyCode.UpArrow:
+                        return "upArrowKey";
+                    case KeyCode.DownArrow:
+                        return "downArrowKey";
+                    case KeyCode.LeftArrow:
+                        return "leftArrowKey";
+                    case KeyCode.RightArrow:
+                        return "rightArrowKey";
+                    default:
+                        return null;
+                }
             }
 
             private void CheckEventSystemOnce()

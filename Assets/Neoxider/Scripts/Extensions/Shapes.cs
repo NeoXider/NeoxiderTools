@@ -11,6 +11,7 @@ namespace Neo.Extensions
         ///     Circle center in 2D space.
         /// </summary>
         public Vector2 center;
+
         /// <summary>
         ///     Circle radius.
         /// </summary>
@@ -35,6 +36,7 @@ namespace Neo.Extensions
         ///     Sphere center in 3D space.
         /// </summary>
         public Vector3 center;
+
         /// <summary>
         ///     Sphere radius.
         /// </summary>

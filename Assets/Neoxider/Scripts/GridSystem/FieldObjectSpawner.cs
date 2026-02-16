@@ -13,10 +13,12 @@ namespace Neo.GridSystem
         /// Cell where object is currently registered.
         /// </summary>
         public FieldCell Cell;
+
         /// <summary>
         /// Spawned GameObject instance.
         /// </summary>
         public GameObject GameObject;
+
         /// <summary>
         /// True if object blocks cell occupancy.
         /// </summary>
@@ -49,14 +51,17 @@ namespace Neo.GridSystem
         /// Raised when a new object is spawned.
         /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectSpawned = new();
+
         /// <summary>
         /// Raised after object is removed.
         /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectRemoved = new();
+
         /// <summary>
         /// Raised when cell becomes occupied.
         /// </summary>
         public UnityEvent<FieldCell> OnCellOccupied = new();
+
         /// <summary>
         /// Raised when cell is no longer occupied.
         /// </summary>

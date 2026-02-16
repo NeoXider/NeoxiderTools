@@ -275,7 +275,7 @@ namespace Neo
                     return;
                 }
 
-                NumberFormatOptions options = BuildNumberFormatOptions(prefix: currencySymbol);
+                NumberFormatOptions options = BuildNumberFormatOptions(currencySymbol);
                 Set(value.ToPrettyString(options));
             }
 

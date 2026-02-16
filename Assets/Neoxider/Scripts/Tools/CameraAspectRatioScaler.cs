@@ -12,7 +12,7 @@ namespace Neo
     ///     It automatically adjusts the camera's view to match the target resolution while maintaining the desired aspect
     ///     ratio.
     /// </remarks>
-    [ExecuteInEditMode]
+    [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraAspectRatioScaler))]
     public class CameraAspectRatioScaler : MonoBehaviour
@@ -51,6 +51,10 @@ namespace Neo
         [SerializeField]
         private float scaleMultiplier = 1f;
 
+        [Tooltip("Use viewport letterbox/pillarbox in FitBoth mode to preserve target aspect exactly.")]
+        [SerializeField]
+        private bool useViewportRectInFitBoth = true;
+
         [Header("Scaling Limits")]
         [Tooltip("The minimum allowed size for orthographic cameras or field of view for perspective cameras.")]
         [SerializeField]
@@ -68,24 +72,27 @@ namespace Neo
         [Tooltip("If enabled, updates the camera scale in the Unity Editor when values are modified.")] [SerializeField]
         private bool updateInEditor = true;
 
+        [Tooltip("Restores full viewport rect when component is disabled.")] [SerializeField]
+        private bool resetViewportRectOnDisable = true;
+
         private Camera _camera;
-        private float _defaultFOV;
-        private float _defaultSize;
+        private float _referenceFov;
+        private float _referenceSize;
+        private int _lastScreenWidth = -1;
+        private int _lastScreenHeight = -1;
+        private ScaleMode _lastScaleMode;
+        private bool _lastUseTargetResolution;
+        private Vector2 _lastTargetResolution;
+        private float _lastScaleMultiplier;
+        private bool _lastUseViewportRectInFitBoth;
+        private bool _referenceCaptured;
 
         /// <summary>
         ///     Initializes the component and stores the camera's default values.
         /// </summary>
         private void Awake()
         {
-            _camera = GetComponent<Camera>();
-            if (_camera.orthographic)
-            {
-                _defaultSize = _camera.orthographicSize;
-            }
-            else
-            {
-                _defaultFOV = _camera.fieldOfView;
-            }
+            EnsureInitialized();
         }
 
         /// <summary>
@@ -93,7 +100,21 @@ namespace Neo
         /// </summary>
         private void Start()
         {
-            UpdateCameraScale();
+            ApplyCameraScale(true);
+        }
+
+        private void OnEnable()
+        {
+            EnsureInitialized();
+            ApplyCameraScale(true);
+        }
+
+        private void OnDisable()
+        {
+            if (_camera != null && resetViewportRectOnDisable)
+            {
+                _camera.rect = new Rect(0f, 0f, 1f, 1f);
+            }
         }
 
         /// <summary>
@@ -103,7 +124,7 @@ namespace Neo
         {
             if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
             {
-                UpdateCameraScale();
+                ApplyCameraScale();
             }
         }
 
@@ -112,27 +133,53 @@ namespace Neo
         /// </summary>
         private void OnValidate()
         {
-            if (_camera == null)
-            {
-                _camera = GetComponent<Camera>();
-            }
-
-            UpdateCameraScale();
+            EnsureInitialized();
+            targetResolution.x = Mathf.Max(1f, targetResolution.x);
+            targetResolution.y = Mathf.Max(1f, targetResolution.y);
+            minSize = Mathf.Max(0.01f, minSize);
+            maxSize = Mathf.Max(minSize, maxSize);
+            scaleMultiplier = Mathf.Max(0.01f, scaleMultiplier);
+            ApplyCameraScale(true);
         }
 
         /// <summary>
         ///     Calculates and applies the appropriate camera scale based on current settings.
         /// </summary>
-        [Button]
-        private void UpdateCameraScale()
+        [Button("Apply Camera Scale")]
+        private void ApplyCameraScaleButton()
+        {
+            ApplyCameraScale(true);
+        }
+
+        private void ApplyCameraScale(bool force = false)
         {
             if (_camera == null)
             {
                 return;
             }
 
-            float targetAspect = useTargetResolution ? targetResolution.x / targetResolution.y : 16f / 9f;
-            float currentAspect = (float)Screen.width / Screen.height;
+            if (!force && !HasRuntimeDataChanged())
+            {
+                return;
+            }
+
+            float targetAspect = GetTargetAspect();
+            float currentAspect = GetCurrentAspect();
+            if (currentAspect <= 0f)
+            {
+                return;
+            }
+
+            if (scaleMode == ScaleMode.Manual)
+            {
+                if (_camera.rect != new Rect(0f, 0f, 1f, 1f))
+                {
+                    _camera.rect = new Rect(0f, 0f, 1f, 1f);
+                }
+
+                CacheCurrentState();
+                return;
+            }
 
             if (_camera.orthographic)
             {
@@ -142,6 +189,9 @@ namespace Neo
             {
                 UpdatePerspectiveCamera(targetAspect, currentAspect);
             }
+
+            UpdateViewportRect(targetAspect, currentAspect);
+            CacheCurrentState();
         }
 
         /// <summary>
@@ -151,18 +201,20 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdateOrthographicCamera(float targetAspect, float currentAspect)
         {
-            float newSize = _defaultSize;
+            float baseSize = GetReferenceSize();
+            float fitWidthSize = baseSize * (targetAspect / currentAspect);
+            float newSize = baseSize;
 
             switch (scaleMode)
             {
                 case ScaleMode.FitWidth:
-                    newSize = _defaultSize * (targetAspect / currentAspect);
+                    newSize = fitWidthSize;
                     break;
                 case ScaleMode.FitHeight:
-                    newSize = _defaultSize;
+                    newSize = baseSize;
                     break;
                 case ScaleMode.FitBoth:
-                    newSize = _defaultSize * Mathf.Max(1f, targetAspect / currentAspect);
+                    newSize = useViewportRectInFitBoth ? baseSize : Mathf.Max(baseSize, fitWidthSize);
                     break;
                 case ScaleMode.Manual:
                     return;
@@ -180,18 +232,20 @@ namespace Neo
         /// <param name="currentAspect">The current screen aspect ratio.</param>
         private void UpdatePerspectiveCamera(float targetAspect, float currentAspect)
         {
-            float newFOV = _defaultFOV;
+            float baseFov = GetReferenceFov();
+            float fitWidthFov = ConvertVerticalFovForConstantWidth(baseFov, targetAspect, currentAspect);
+            float newFOV = baseFov;
 
             switch (scaleMode)
             {
                 case ScaleMode.FitWidth:
-                    newFOV = _defaultFOV * (currentAspect / targetAspect);
+                    newFOV = fitWidthFov;
                     break;
                 case ScaleMode.FitHeight:
-                    newFOV = _defaultFOV;
+                    newFOV = baseFov;
                     break;
                 case ScaleMode.FitBoth:
-                    newFOV = _defaultFOV * Mathf.Min(1f, currentAspect / targetAspect);
+                    newFOV = useViewportRectInFitBoth ? baseFov : Mathf.Max(baseFov, fitWidthFov);
                     break;
                 case ScaleMode.Manual:
                     return;
@@ -200,6 +254,131 @@ namespace Neo
             newFOV *= scaleMultiplier;
             newFOV = Mathf.Clamp(newFOV, minSize, maxSize);
             _camera.fieldOfView = newFOV;
+        }
+
+        private void EnsureInitialized()
+        {
+            if (_camera == null)
+            {
+                _camera = GetComponent<Camera>();
+            }
+
+            if (!_referenceCaptured && _camera != null)
+            {
+                _referenceSize = _camera.orthographicSize;
+                _referenceFov = _camera.fieldOfView;
+                _referenceCaptured = true;
+            }
+        }
+
+        private bool HasRuntimeDataChanged()
+        {
+            return _lastScreenWidth != Screen.width
+                   || _lastScreenHeight != Screen.height
+                   || _lastScaleMode != scaleMode
+                   || _lastUseTargetResolution != useTargetResolution
+                   || _lastTargetResolution != targetResolution
+                   || !Mathf.Approximately(_lastScaleMultiplier, scaleMultiplier)
+                   || _lastUseViewportRectInFitBoth != useViewportRectInFitBoth;
+        }
+
+        private void CacheCurrentState()
+        {
+            _lastScreenWidth = Screen.width;
+            _lastScreenHeight = Screen.height;
+            _lastScaleMode = scaleMode;
+            _lastUseTargetResolution = useTargetResolution;
+            _lastTargetResolution = targetResolution;
+            _lastScaleMultiplier = scaleMultiplier;
+            _lastUseViewportRectInFitBoth = useViewportRectInFitBoth;
+        }
+
+        private float GetTargetAspect()
+        {
+            if (!useTargetResolution)
+            {
+                return 16f / 9f;
+            }
+
+            float width = Mathf.Max(1f, targetResolution.x);
+            float height = Mathf.Max(1f, targetResolution.y);
+            return width / height;
+        }
+
+        private static float GetCurrentAspect()
+        {
+            float h = Mathf.Max(1f, Screen.height);
+            return Screen.width / h;
+        }
+
+        private float GetReferenceSize()
+        {
+            if (_camera == null)
+            {
+                return 5f;
+            }
+
+            if (!_referenceCaptured)
+            {
+                EnsureInitialized();
+            }
+
+            return Mathf.Max(0.01f, _referenceSize);
+        }
+
+        private float GetReferenceFov()
+        {
+            if (_camera == null)
+            {
+                return 60f;
+            }
+
+            if (!_referenceCaptured)
+            {
+                EnsureInitialized();
+            }
+
+            return Mathf.Clamp(_referenceFov, 1f, 179f);
+        }
+
+        private void UpdateViewportRect(float targetAspect, float currentAspect)
+        {
+            if (scaleMode != ScaleMode.FitBoth || !useViewportRectInFitBoth)
+            {
+                _camera.rect = new Rect(0f, 0f, 1f, 1f);
+                return;
+            }
+
+            if (Mathf.Approximately(currentAspect, targetAspect))
+            {
+                _camera.rect = new Rect(0f, 0f, 1f, 1f);
+                return;
+            }
+
+            if (currentAspect > targetAspect)
+            {
+                float width = targetAspect / currentAspect;
+                float x = (1f - width) * 0.5f;
+                _camera.rect = new Rect(x, 0f, width, 1f);
+            }
+            else
+            {
+                float height = currentAspect / targetAspect;
+                float y = (1f - height) * 0.5f;
+                _camera.rect = new Rect(0f, y, 1f, height);
+            }
+        }
+
+        private static float ConvertVerticalFovForConstantWidth(float referenceVerticalFov, float referenceAspect,
+            float currentAspect)
+        {
+            float safeReferenceAspect = Mathf.Max(0.01f, referenceAspect);
+            float safeCurrentAspect = Mathf.Max(0.01f, currentAspect);
+
+            float refHalfVerticalRad = referenceVerticalFov * Mathf.Deg2Rad * 0.5f;
+            float refHalfHorizontalRad = Mathf.Atan(Mathf.Tan(refHalfVerticalRad) * safeReferenceAspect);
+            float newHalfVerticalRad = Mathf.Atan(Mathf.Tan(refHalfHorizontalRad) / safeCurrentAspect);
+            return Mathf.Clamp(newHalfVerticalRad * 2f * Mathf.Rad2Deg, 1f, 179f);
         }
     }
 }

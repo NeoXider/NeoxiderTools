@@ -18,10 +18,15 @@ namespace Neo.Cards
         [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Slots;
         [SerializeField] private CardLayoutSettings _layoutSettings = default;
         [SerializeField] private StackZSortingStrategy _stackZSorting = StackZSortingStrategy.TopCardFirst;
-        [Tooltip("Локальный override. Если не задан, Board попробует взять конфиг из Deck-источника или глобального fallback.")]
-        [SerializeField] private CardAnimationConfig _animationConfig;
+
+        [Tooltip(
+            "Локальный override. Если не задан, Board попробует взять конфиг из Deck-источника или глобального fallback.")]
+        [SerializeField]
+        private CardAnimationConfig _animationConfig;
+
         [Tooltip("Опциональный Deck-источник настроек. Если локальный конфиг пуст, Board возьмет конфиг отсюда.")]
-        [SerializeField] private DeckComponent _settingsSourceDeck;
+        [SerializeField]
+        private DeckComponent _settingsSourceDeck;
 
         [Header("Settings")] [SerializeField] private int _maxCards = 5;
 
@@ -506,6 +511,7 @@ namespace Neo.Cards
                 settings = CardLayoutSettings.Default;
                 settings.Spacing = _slotSpacing;
             }
+
             CardAnimationConfig resolvedAnimationConfig = ResolveAnimationConfig();
             if (resolvedAnimationConfig != null)
             {
@@ -526,7 +532,7 @@ namespace Neo.Cards
                     continue;
                 }
 
-                int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : (_cards.Count - 1 - i);
+                int sibling = _stackZSorting == StackZSortingStrategy.TopCardFirst ? i : _cards.Count - 1 - i;
                 card.transform.SetSiblingIndex(sibling);
                 Vector3 worldPosition = transform.TransformPoint(positions[i]);
 

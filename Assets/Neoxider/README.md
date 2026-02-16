@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **5.8.6** | Unity: **2022.1+** | Namespace: `Neo`
+Версия: **5.8.7** | Unity: **2022.1+** | Namespace: `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
@@ -43,11 +43,11 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 
 ### Зависимости
 
-| Пакет | Как подключить |
-|-------|---------------|
-| TextMeshPro | Устанавливается автоматически через UPM |
-| AI Navigation | Устанавливается автоматически через UPM |
-| DOTween (опционально) | Asset Store или [GitHub](https://github.com/Demigiant/dotween) |
+| Пакет                        | Как подключить                                                          |
+|------------------------------|-------------------------------------------------------------------------|
+| TextMeshPro                  | Устанавливается автоматически через UPM                                 |
+| AI Navigation                | Устанавливается автоматически через UPM                                 |
+| DOTween (опционально)        | Asset Store или [GitHub](https://github.com/Demigiant/dotween)          |
 | Odin Inspector (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
 
 ---
@@ -62,36 +62,38 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 
 ## Модули
 
-| Модуль | Описание | Документация |
-|--------|----------|-------------|
-| **Animations** | Анимация значений, цветов, Vector3 | [Docs](./Docs/Animations/README.md) |
-| **Audio** | AudioManager, микшер, play-on-click | [Docs](./Docs/Audio/README.md) |
-| **Bonus** | Коллекции, слот-машины, колесо удачи, награды по времени | [Docs](./Docs/Bonus/README.md) |
-| **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [Docs](./Docs/Cards/README.md) |
-| **Condition** | No-Code условия: проверка полей компонентов, AND/OR, события | [Docs](./Docs/Condition/NeoCondition.md) |
-| **Extensions** | 300+ extension-методов для C# и Unity API | [Docs](./Docs/Extensions/README.md) |
-| **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md) |
-| **Level** | Менеджер уровней, карта, кнопки | [Docs](./Docs/Level/LevelManager.md) |
-| **NPC** | Модульная навигация NPC (патруль, преследование, агро) | [Docs](./Docs/NPC/README.md) |
-| **Parallax** | Параллакс-слои с предпросмотром | [Docs](./Docs/ParallaxLayer.md) |
-| **Save** | Система сохранений: PlayerPrefs, JSON, атрибут `[SaveField]` | [Docs](./Docs/Save/README.md) |
-| **Shop** | Магазин, валюта, покупки | [Docs](./Docs/Shop/README.md) |
-| **StateMachine** | State Machine + NoCode визуальный редактор | [Docs](./Docs/StateMachine/StateMachine.md) |
-| **Tools** | Спавнеры, таймеры, физика, ввод, менеджеры, Counter и др. | [Docs](./Docs/Tools) |
-| **UI** | UI-анимации, кнопки, страницы, toggle | [Docs](./Docs/UI/README.md) |
-| **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты | [Docs](./Docs/PropertyAttribute/README.md) |
-| **Editor** | Кастом-инспектор, авто-билд, Scene Saver | [Docs](./Docs/Editor/README.md) |
+| Модуль                | Описание                                                         | Документация                                |
+|-----------------------|------------------------------------------------------------------|---------------------------------------------|
+| **Animations**        | Анимация значений, цветов, Vector3                               | [Docs](./Docs/Animations/README.md)         |
+| **Audio**             | AudioManager, микшер, play-on-click                              | [Docs](./Docs/Audio/README.md)              |
+| **Bonus**             | Коллекции, слот-машины, колесо удачи, награды по времени         | [Docs](./Docs/Bonus/README.md)              |
+| **Cards**             | Карточные игры (MVP): колода, рука, покер, "Пьяница"             | [Docs](./Docs/Cards/README.md)              |
+| **Condition**         | No-Code условия: проверка полей компонентов, AND/OR, события     | [Docs](./Docs/Condition/NeoCondition.md)    |
+| **Extensions**        | 300+ extension-методов для C# и Unity API                        | [Docs](./Docs/Extensions/README.md)         |
+| **GridSystem**        | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md)                |
+| **Level**             | Менеджер уровней, карта, кнопки                                  | [Docs](./Docs/Level/LevelManager.md)        |
+| **NPC**               | Модульная навигация NPC (патруль, преследование, агро)           | [Docs](./Docs/NPC/README.md)                |
+| **Parallax**          | Параллакс-слои с предпросмотром                                  | [Docs](./Docs/ParallaxLayer.md)             |
+| **Save**              | Система сохранений: PlayerPrefs, JSON, атрибут `[SaveField]`     | [Docs](./Docs/Save/README.md)               |
+| **Shop**              | Магазин, валюта, покупки                                         | [Docs](./Docs/Shop/README.md)               |
+| **StateMachine**      | State Machine + NoCode визуальный редактор                       | [Docs](./Docs/StateMachine/StateMachine.md) |
+| **Tools**             | Спавнеры, таймеры, физика, ввод, менеджеры, Counter и др.        | [Docs](./Docs/Tools)                        |
+| **UI**                | UI-анимации, кнопки, страницы, toggle                            | [Docs](./Docs/UI/README.md)                 |
+| **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты  | [Docs](./Docs/PropertyAttribute/README.md)  |
+| **Editor**            | Кастом-инспектор, авто-билд, Scene Saver                         | [Docs](./Docs/Editor/README.md)             |
 
 ### Опциональные модули (UPM Samples)
 
 Устанавливаются через **Package Manager -> Neoxider Tools -> Samples -> Import**:
 
-| Модуль | Описание |
-|--------|----------|
-| **Demo Scenes** | Демо-сцены и примеры использования |
+| Модуль            | Описание                                              |
+|-------------------|-------------------------------------------------------|
+| **Demo Scenes**   | Демо-сцены и примеры использования                    |
 | **NeoxiderPages** | PageManager — система страниц/экранов (UIPage, UIKit) |
 
-> **Для разработчиков пакета:** сэмплы лежат в папке `Samples` (Demo, NeoxiderPages). Хук в `scripts/git-hooks/` не даёт закоммитить папку `Samples~` — в репозитории должна быть только `Samples` для совместимости UPM на Windows (см. `scripts/git-hooks/README.md`).
+> **Для разработчиков пакета:** сэмплы лежат в папке `Samples` (Demo, NeoxiderPages). Хук в `scripts/git-hooks/` не даёт
+> закоммитить папку `Samples~` — в репозитории должна быть только `Samples` для совместимости UPM на Windows (см.
+`scripts/git-hooks/README.md`).
 
 ---
 
@@ -149,4 +151,5 @@ Assets/Neoxider/
 
 ## Поддержка
 
-Нашли проблему или есть предложения? Создайте [issue](https://github.com/NeoXider/NeoxiderTools/issues) или PR в основном репозитории.
+Нашли проблему или есть предложения? Создайте [issue](https://github.com/NeoXider/NeoxiderTools/issues) или PR в
+основном репозитории.
