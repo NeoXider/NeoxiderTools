@@ -1,6 +1,6 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию **NeoxiderTools** (v5.8.5). Здесь собраны ссылки на все модули и инструкции по запуску.
+Добро пожаловать в документацию **NeoxiderTools** (v5.8.6). Здесь собраны ссылки на все модули и инструкции по запуску.
 
 ---
 
@@ -15,7 +15,7 @@
 | **Condition** | No-Code условия: проверка полей компонентов, AND/OR, события. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
 | **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
-| **GridSystem** | Генерация сеток, ячейки, спавн объектов | [`GridSystem.md`](./GridSystem.md) |
+| **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
 | **Level** | Менеджер уровней, карта, кнопки | [`Level/LevelManager.md`](./Level/LevelManager.md) |
 | **NPC** | Модульная навигация NPC (патруль, преследование, агро) | [`NPC/README.md`](./NPC/README.md) |
 | **Parallax** | Параллакс-слои с предпросмотром | [`ParallaxLayer.md`](./ParallaxLayer.md) |
@@ -62,6 +62,8 @@
 | **Dialogue** | `Demo/Scenes/Tools/Dialogue.unity` | Система диалогов |
 | **Draw** | `Demo/Scenes/Tools/DrawExample.unity` | Рисование линий |
 | **Mouse Effector** | `Demo/Scenes/Tools/MouseEffectorExample.unity` | Эффекты мыши |
+| **GridSystem Match3** | `Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity` | Сетка, формы, origin-якорь, pathfinding, Match3 |
+| **GridSystem TicTacToe** | `Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | Сетка, кликабельное поле, состояния клеток, TicTacToe |
 
 Каждый markdown содержит быстрый старт и примеры использования.
 

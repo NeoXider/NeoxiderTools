@@ -4,6 +4,9 @@ using UnityEngine;
 
 namespace Neo.Extensions
 {
+    /// <summary>
+    ///     Extension methods for running delayed and conditional coroutine actions.
+    /// </summary>
     public static class CoroutineExtensions
     {
         private static CoroutineHelper instance;
@@ -23,17 +26,26 @@ namespace Neo.Extensions
             }
         }
 
+        /// <summary>
+        ///     Handle for controlling and tracking a started coroutine.
+        /// </summary>
         public class CoroutineHandle
         {
             private readonly MonoBehaviour owner;
             private Coroutine coroutine;
 
+            /// <summary>
+            ///     Initializes a new coroutine handle.
+            /// </summary>
             internal CoroutineHandle(MonoBehaviour owner)
             {
                 this.owner = owner;
                 IsRunning = false;
             }
 
+            /// <summary>
+            ///     Current coroutine instance associated with this handle.
+            /// </summary>
             public Coroutine Coroutine
             {
                 get => coroutine;
@@ -44,8 +56,14 @@ namespace Neo.Extensions
                 }
             }
 
+            /// <summary>
+            ///     Indicates whether coroutine is currently running.
+            /// </summary>
             public bool IsRunning { get; private set; }
 
+            /// <summary>
+            ///     Stops the coroutine if it is running.
+            /// </summary>
             public void Stop()
             {
                 if (!IsRunning || owner == null)
@@ -131,6 +149,9 @@ namespace Neo.Extensions
 
         #region GameObject Extensions
 
+        /// <summary>
+        ///     Executes an action after a delay using a coroutine runner on the target GameObject.
+        /// </summary>
         public static CoroutineHandle Delay(this GameObject gameObject, float seconds, Action action,
             bool useUnscaledTime = false)
         {
@@ -138,18 +159,27 @@ namespace Neo.Extensions
             return owner.Delay(seconds, action, useUnscaledTime);
         }
 
+        /// <summary>
+        ///     Waits until predicate is true, then executes an action using a runner on the GameObject.
+        /// </summary>
         public static CoroutineHandle WaitUntil(this GameObject gameObject, Func<bool> predicate, Action action)
         {
             MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.WaitUntil(predicate, action);
         }
 
+        /// <summary>
+        ///     Waits while predicate is true, then executes an action using a runner on the GameObject.
+        /// </summary>
         public static CoroutineHandle WaitWhile(this GameObject gameObject, Func<bool> predicate, Action action)
         {
             MonoBehaviour owner = GetOrAddCoroutineComponent(gameObject);
             return owner.WaitWhile(predicate, action);
         }
 
+        /// <summary>
+        ///     Executes an action after a number of frames using a runner on the target GameObject.
+        /// </summary>
         public static CoroutineHandle DelayFrames(this GameObject gameObject, int frameCount, Action action,
             bool useFixedUpdate = false)
         {
@@ -161,21 +191,33 @@ namespace Neo.Extensions
 
         #region Global Methods
 
+        /// <summary>
+        ///     Executes an action after a delay using global coroutine helper instance.
+        /// </summary>
         public static CoroutineHandle Delay(float seconds, Action action, bool useUnscaledTime = false)
         {
             return Instance.Delay(seconds, action, useUnscaledTime);
         }
 
+        /// <summary>
+        ///     Waits until predicate is true, then executes an action using global helper.
+        /// </summary>
         public static CoroutineHandle WaitUntil(Func<bool> predicate, Action action)
         {
             return Instance.WaitUntil(predicate, action);
         }
 
+        /// <summary>
+        ///     Waits while predicate is true, then executes an action using global helper.
+        /// </summary>
         public static CoroutineHandle WaitWhile(Func<bool> predicate, Action action)
         {
             return Instance.WaitWhile(predicate, action);
         }
 
+        /// <summary>
+        ///     Executes an action after a number of frames using global helper.
+        /// </summary>
         public static CoroutineHandle DelayFrames(int frameCount, Action action, bool useFixedUpdate = false)
         {
             return Instance.DelayFrames(frameCount, action, useFixedUpdate);
@@ -336,13 +378,17 @@ namespace Neo.Extensions
         #endregion
     }
 
-    // Helper component for running coroutines on GameObjects
+    /// <summary>
+    ///     Internal helper MonoBehaviour used as coroutine owner on regular GameObjects.
+    /// </summary>
     [AddComponentMenu("")]
     public class CoroutineRunner : MonoBehaviour
     {
     }
 
-    // Helper class for managing global coroutines
+    /// <summary>
+    ///     Global helper MonoBehaviour used for coroutines without explicit owner.
+    /// </summary>
     [AddComponentMenu("")]
     public class CoroutineHelper : MonoBehaviour
     {

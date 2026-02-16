@@ -323,12 +323,7 @@ namespace Neo.Editor
             {
                 try
                 {
-                    string[] guids = AssetDatabase.FindAssets("NeoLogo t:Texture2D");
-                    if (guids != null && guids.Length > 0)
-                    {
-                        string path = AssetDatabase.GUIDToAssetPath(guids[0]);
-                        _cachedLibraryIcon = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                    }
+                    _cachedLibraryIcon = NeoxiderEditorAssets.FindNeoLogo();
                 }
                 catch
                 {

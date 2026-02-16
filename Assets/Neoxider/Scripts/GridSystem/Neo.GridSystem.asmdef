@@ -1,3 +1,6 @@
 {
-  "name": "Neo.GridSystem"
+  "name": "Neo.GridSystem",
+  "references": [
+    "Neo.PropertyAttribute"
+  ]
 }

@@ -141,6 +141,30 @@ namespace Neo.Cards
         }
 
         /// <summary>
+        ///     Возвращает название ранга на английском языке
+        /// </summary>
+        public static string ToEnglishName(this Rank rank)
+        {
+            return rank switch
+            {
+                Rank.Two => "Two",
+                Rank.Three => "Three",
+                Rank.Four => "Four",
+                Rank.Five => "Five",
+                Rank.Six => "Six",
+                Rank.Seven => "Seven",
+                Rank.Eight => "Eight",
+                Rank.Nine => "Nine",
+                Rank.Ten => "Ten",
+                Rank.Jack => "Jack",
+                Rank.Queen => "Queen",
+                Rank.King => "King",
+                Rank.Ace => "Ace",
+                _ => "Unknown"
+            };
+        }
+
+        /// <summary>
         ///     Возвращает числовое значение ранга для подсчёта очков
         /// </summary>
         /// <param name="rank">Ранг карты</param>

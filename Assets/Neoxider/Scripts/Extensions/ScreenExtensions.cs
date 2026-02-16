@@ -2,6 +2,9 @@ using UnityEngine;
 
 namespace Neo.Extensions
 {
+    /// <summary>
+    ///     Extension methods for checking screen visibility and computing screen-edge positions.
+    /// </summary>
     public static class ScreenExtensions
     {
         /// <summary>

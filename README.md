@@ -101,7 +101,7 @@
 | [**Editor**](#editor--инструменты-редактора) | Окна настроек, поиск missing scripts, авто-билд |
 | [**Level**](#level--уровни) | Менеджер уровней, карта |
 | [**Parallax**](#parallax) | Параллакс-слои |
-| [**GridSystem**](#gridsystem) | Генерация сеток |
+| [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
 | [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
 
 ---
@@ -253,6 +253,9 @@
 - **FieldGenerator** — генератор поля
 - **FieldCell** — ячейка поля
 - **FieldSpawner** — спавн объектов на поле
+- **GridShapeMask + Origin** — произвольные формы и якорь построения поля
+- **GridPathfinder** — pathfinding с диагностикой причин отсутствия пути
+- **Match3 / TicTacToe** — прикладные игровые надстройки + demo-сцены
 
 ### PropertyAttribute
 

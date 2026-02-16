@@ -8,6 +8,9 @@ namespace Neo.Extensions
     /// <summary>
     ///     Extension methods for the Unity Transform component.
     /// </summary>
+    /// <remarks>
+    ///     Most methods in this class are null-safe and become no-op when <see cref="Transform"/> is null.
+    /// </remarks>
     public static class TransformExtensions
     {
         #region Position Methods

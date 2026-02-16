@@ -2,6 +2,47 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.6] - Unreleased
+
+### Добавлено
+
+- **GridSystem** — крупное расширение модуля сеток:
+  - добавлены состояния клетки: `IsEnabled`, `IsOccupied`, `ContentId`, `FieldCellFlags`;
+  - добавлен shape pipeline: `GridType`, `GridShapeMask` (SO), ручные override (`DisabledCells`, `ForcedEnabledCells`, `BlockedCells`, `ForcedWalkableCells`);
+  - добавлено origin-позиционирование поля относительно объекта: `Origin2D`, `OriginDepth`, `OriginOffset` (по умолчанию центр);
+  - pathfinding вынесен в сервис `GridPathfinder` с `GridPathRequest`, `GridPathResult`, `NoPathReason`;
+  - добавлены игровые надстройки:
+    - `Neo.GridSystem.Match3` (`Match3BoardService`, `Match3MatchFinder`, `Match3TileState`);
+    - `Neo.GridSystem.TicTacToe` (`TicTacToeBoardService`, `TicTacToeWinChecker`, `TicTacToeCellState`);
+  - добавлены demo-сцены:
+    - `~Samples/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity`
+    - `~Samples/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity`
+  - добавлены demo setup/UI скрипты для обеих сцен.
+- **Extensions/NumberFormatExtensions** — новый универсальный форматтер чисел для `int`, `long`, `float`, `double`, `decimal`, `BigInteger`:
+  - нотации: `Plain`, `Grouped`, `IdleShort`, `Scientific`;
+  - режимы округления: `ToEven`, `AwayFromZero`, `ToZero`, `ToPositiveInfinity`, `ToNegativeInfinity`;
+  - новый конфиг `NumberFormatOptions`;
+  - extension API: `ToPrettyString(...)`, `ToIdleString(...)`.
+
+### Улучшено
+
+- **GridSystem API docs** — добавлена/обновлена XML-документация (EN) для публичных методов и свойств во всех скриптах `Assets/Neoxider/Scripts/GridSystem/**`.
+- **GridSystem docs** — полностью переработана `Docs/GridSystem.md`: архитектура, shape/passing rules, pathfinding, Match3/TicTacToe API, практические примеры и запуск demo.
+- **PROJECT_SUMMARY** — обновлён раздел `GridSystem` с новыми runtime-файлами (`GridPathfinder`, `GridShapeMask`, `Match3/*`, `TicTacToe/*`).
+- **Extensions** — точечные улучшения стабильности и производительности:
+  - `NumberFormatExtensions.ApplySeparators` переписан на односканирующий алгоритм без каскадных `Replace`;
+  - `RandomExtensions.GetRandomEnumValue` получил кеш значений enum;
+  - `RandomExtensions.GetRandomWeightedIndex` валидирует отрицательные веса и нулевую сумму;
+  - `StringExtension` получил `ToColorSafe(...)`, а `ToColor(...)` использует безопасный парсинг;
+  - `PrimitiveExtensions.NormalizeToUnit/Denormalize` проверяют входные значения на `NaN/Infinity`;
+  - уточнены null-контракты в XML-документации `TransformExtensions` и `EnumerableExtensions`.
+- **SetText** — интегрирован с новым форматтером:
+  - форматирование в `Set(float)` переведено на `NumberFormatOptions`;
+  - добавлены настройки нотации/округления в Inspector;
+  - добавлены `SetBigInteger(BigInteger)`, `SetBigInteger(string)`, `SetFormatted(...)`.
+- **Docs** — обновлены `Docs/Tools/Text/README.md` и `Docs/Tools/Text/SetText.md` с описанием нового API форматирования.
+- **Versioning** — повышена версия пакета до `5.8.6` (`package.json`, `Assets/Neoxider/README.md`, `Docs/README.md`).
+
 ## [5.8.5] - Unreleased
 
 ### Улучшено

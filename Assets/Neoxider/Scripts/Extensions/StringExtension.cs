@@ -6,6 +6,9 @@ using Random = UnityEngine.Random;
 
 namespace Neo.Extensions
 {
+    /// <summary>
+    ///     Extension methods and helpers for string transformation, parsing and rich text formatting.
+    /// </summary>
     public static class StringExtension
     {
         /// <summary>
@@ -47,8 +50,20 @@ namespace Neo.Extensions
         /// </summary>
         public static Color ToColor(this string hex)
         {
-            ColorUtility.TryParseHtmlString(hex, out Color color);
+            if (!TryParseColor(hex, out Color color))
+            {
+                return default;
+            }
+
             return color;
+        }
+
+        /// <summary>
+        ///     Tries to convert HEX string to Unity Color.
+        /// </summary>
+        public static bool ToColorSafe(this string hex, out Color color)
+        {
+            return TryParseColor(hex, out color);
         }
 
         /// <summary>
@@ -272,5 +287,22 @@ namespace Neo.Extensions
         }
 
         #endregion
+
+        private static bool TryParseColor(string hex, out Color color)
+        {
+            color = default;
+            if (string.IsNullOrWhiteSpace(hex))
+            {
+                return false;
+            }
+
+            string normalized = hex.Trim();
+            if (normalized[0] != '#')
+            {
+                normalized = "#" + normalized;
+            }
+
+            return ColorUtility.TryParseHtmlString(normalized, out color);
+        }
     }
 }

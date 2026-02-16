@@ -18,6 +18,8 @@ namespace Neo.GridSystem
         public Color PathColor = Color.cyan;
         public Color BlockedCellColor = new(1f, 0f, 0f, 0.3f); // полупрозрачный красный
         public Color WalkableCellColor = new(0f, 1f, 0f, 0.3f); // полупрозрачный зелёный
+        public Color DisabledCellColor = new(0.4f, 0.4f, 0.4f, 0.25f);
+        public Color OccupiedCellColor = new(1f, 0.6f, 0f, 0.35f);
         public Color CoordinatesColor = Color.white;
 
         [Header("Settings")] public bool DrawCoordinates = true;
@@ -54,11 +56,11 @@ namespace Neo.GridSystem
             for (int x = 0; x <= size.x; x++)
             for (int y = 0; y <= size.y; y++)
             {
-                Vector3 from = unityGrid.CellToWorld(new Vector3Int(x, 0, 0));
-                Vector3 to = unityGrid.CellToWorld(new Vector3Int(x, size.y, 0));
+                Vector3 from = generator.GetCellCornerWorld(new Vector3Int(x, 0, 0));
+                Vector3 to = generator.GetCellCornerWorld(new Vector3Int(x, size.y, 0));
                 Gizmos.DrawLine(from, to);
-                from = unityGrid.CellToWorld(new Vector3Int(0, y, 0));
-                to = unityGrid.CellToWorld(new Vector3Int(size.x, y, 0));
+                from = generator.GetCellCornerWorld(new Vector3Int(0, y, 0));
+                to = generator.GetCellCornerWorld(new Vector3Int(size.x, y, 0));
                 Gizmos.DrawLine(from, to);
             }
 
@@ -68,8 +70,25 @@ namespace Neo.GridSystem
             for (int z = 0; z < size.z; z++)
             {
                 FieldCell cell = generator.Cells[x, y, z];
-                Vector3 pos = unityGrid.GetCellCenterWorld(cell.Position);
-                Gizmos.color = cell.IsWalkable ? WalkableCellColor : BlockedCellColor;
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                Vector3 pos = generator.GetCellWorldCenter(cell.Position);
+                if (!cell.IsEnabled)
+                {
+                    Gizmos.color = DisabledCellColor;
+                }
+                else if (cell.IsOccupied)
+                {
+                    Gizmos.color = OccupiedCellColor;
+                }
+                else
+                {
+                    Gizmos.color = cell.IsWalkable ? WalkableCellColor : BlockedCellColor;
+                }
+
                 Gizmos.DrawCube(pos, unityGrid.cellSize * 0.9f);
 #if UNITY_EDITOR
                 if (DrawCoordinates)

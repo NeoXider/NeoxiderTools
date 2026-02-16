@@ -1,4 +1,6 @@
-﻿using DG.Tweening;
+using System;
+using System.Numerics;
+using DG.Tweening;
 using Neo.Extensions;
 using TMPro;
 using UnityEngine;
@@ -39,6 +41,18 @@ namespace Neo
 
             [Tooltip("Number of decimal places to display for float values")] [SerializeField] [Range(0, 10)]
             protected int @decimal;
+
+            [Tooltip("Number notation style used for numeric values")] [SerializeField]
+            protected NumberNotation numberNotation = NumberNotation.Grouped;
+
+            [Tooltip("Rounding strategy used before converting number to string")] [SerializeField]
+            protected NumberRoundingMode roundingMode = NumberRoundingMode.ToEven;
+
+            [Tooltip("Trim trailing zeros in decimal part")] [SerializeField]
+            protected bool trimTrailingZeros = true;
+
+            [Tooltip("Decimal separator used in the final text")] [SerializeField]
+            protected string decimalSeparator = ".";
 
             [Tooltip("Text to add before the value")] [SerializeField]
             protected string startAdd = "";
@@ -103,6 +117,18 @@ namespace Neo
                 }
             }
 
+            public NumberNotation NumberNotationStyle
+            {
+                get => numberNotation;
+                set => numberNotation = value;
+            }
+
+            public NumberRoundingMode RoundingMode
+            {
+                get => roundingMode;
+                set => roundingMode = value;
+            }
+
             /// <summary>
             ///     Gets or sets the index offset
             /// </summary>
@@ -135,6 +161,11 @@ namespace Neo
 
                 // Ensure decimal places is within valid range
                 @decimal = Mathf.Clamp(@decimal, 0, 10);
+
+                if (string.IsNullOrEmpty(decimalSeparator))
+                {
+                    decimalSeparator = ".";
+                }
             }
 
             #endregion
@@ -185,7 +216,7 @@ namespace Neo
                 _tween = DOTween.To(() => startValue, x =>
                 {
                     currentNum = x;
-                    Set(x.FormatWithSeparator(separator, @decimal));
+                    Set(FormatNumber(x));
                 }, endValue, _timeAnim).SetEase(_ease);
 
                 if (_onEnableAnim && !gameObject.activeSelf)
@@ -227,17 +258,8 @@ namespace Neo
 
                 // Clamp value between 0 and 100
                 value = Mathf.Clamp(value, 0, 100);
-
-                // Format with decimal places
-                string formattedValue = value.FormatWithSeparator(separator, @decimal);
-
-                // Add percent sign if requested
-                if (addPercentSign)
-                {
-                    formattedValue += "%";
-                }
-
-                Set(formattedValue);
+                NumberFormatOptions options = BuildNumberFormatOptions(suffix: addPercentSign ? "%" : "");
+                Set(value.ToPrettyString(options));
             }
 
             /// <summary>
@@ -253,11 +275,52 @@ namespace Neo
                     return;
                 }
 
-                // Format with decimal places
-                string formattedValue = value.FormatWithSeparator(separator, @decimal);
+                NumberFormatOptions options = BuildNumberFormatOptions(prefix: currencySymbol);
+                Set(value.ToPrettyString(options));
+            }
 
-                // Add currency symbol
-                Set(currencySymbol + formattedValue);
+            /// <summary>
+            ///     Sets the text to display a BigInteger value without animation.
+            /// </summary>
+            public void SetBigInteger(BigInteger value)
+            {
+                Set(value.ToPrettyString(BuildNumberFormatOptions()));
+            }
+
+            /// <summary>
+            ///     Parses string as BigInteger and sets formatted value.
+            /// </summary>
+            public void SetBigInteger(string value)
+            {
+                if (string.IsNullOrWhiteSpace(value))
+                {
+                    Set("0");
+                    return;
+                }
+
+                if (!BigInteger.TryParse(value, out BigInteger parsed))
+                {
+                    Debug.LogWarning($"SetText: Cannot parse BigInteger from '{value}'");
+                    return;
+                }
+
+                SetBigInteger(parsed);
+            }
+
+            /// <summary>
+            ///     Sets value using custom format options.
+            /// </summary>
+            public void SetFormatted(float value, NumberFormatOptions options)
+            {
+                Set(value.ToPrettyString(options));
+            }
+
+            /// <summary>
+            ///     Sets value using custom format options.
+            /// </summary>
+            public void SetFormatted(BigInteger value, NumberFormatOptions options)
+            {
+                Set(value.ToPrettyString(options));
             }
 
             /// <summary>
@@ -276,6 +339,25 @@ namespace Neo
             }
 
             #endregion
+
+            private NumberFormatOptions BuildNumberFormatOptions(string prefix = "", string suffix = "")
+            {
+                return new NumberFormatOptions(
+                    numberNotation,
+                    @decimal,
+                    roundingMode,
+                    trimTrailingZeros,
+                    separator,
+                    decimalSeparator,
+                    prefix,
+                    suffix);
+            }
+
+            private string FormatNumber(float value)
+            {
+                NumberFormatOptions options = BuildNumberFormatOptions();
+                return value.ToPrettyString(options);
+            }
         }
     }
 }

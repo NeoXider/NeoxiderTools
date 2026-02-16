@@ -76,5 +76,20 @@ namespace Neo.Cards
                 _ => "Неизвестно"
             };
         }
+
+        /// <summary>
+        ///     Возвращает название масти на английском языке
+        /// </summary>
+        public static string ToEnglishName(this Suit suit)
+        {
+            return suit switch
+            {
+                Suit.Hearts => "Hearts",
+                Suit.Diamonds => "Diamonds",
+                Suit.Clubs => "Clubs",
+                Suit.Spades => "Spades",
+                _ => "Unknown"
+            };
+        }
     }
 }

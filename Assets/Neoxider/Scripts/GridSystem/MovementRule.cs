@@ -4,25 +4,26 @@ using UnityEngine;
 namespace Neo.GridSystem
 {
     /// <summary>
-    ///     Описывает правила движения по полю (например, 4/8/6/18/26 направлений, 3D-соседство, гекс, кастомные).
+    /// Defines neighbor offset rules used to traverse grid cells.
     /// </summary>
     public class MovementRule
     {
+        /// <summary>
+        /// Creates movement rule from explicit direction offsets.
+        /// </summary>
+        /// <param name="directions">Neighbor offset collection.</param>
         public MovementRule(IEnumerable<Vector3Int> directions)
         {
             Directions = new List<Vector3Int>(directions);
         }
 
         /// <summary>
-        ///     Список смещений для соседей (например, (1,0,0), (0,1,0), ...)
+        /// Neighbor offsets used by this rule.
         /// </summary>
         public List<Vector3Int> Directions { get; private set; }
 
         /// <summary>
-        ///     FourDirections2D (4 стороны):
-        ///     ↑
-        ///     ←  ■  →
-        ///     ↓
+        /// 2D orthogonal (4-way) movement rule.
         /// </summary>
         public static MovementRule FourDirections2D => new(new[]
         {
@@ -33,10 +34,7 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     EightDirections2D (8 направлений):
-        ///     ↖  ↑  ↗
-        ///     ←  ■  →
-        ///     ↙  ↓  ↘
+        /// 2D 8-way movement rule (orthogonal + diagonal).
         /// </summary>
         public static MovementRule EightDirections2D => new(new[]
         {
@@ -45,10 +43,7 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     DiagonalDirections2D (только диагонали):
-        ///     ↖     ↗
-        ///     ■
-        ///     ↙     ↘
+        /// 2D diagonal-only movement rule.
         /// </summary>
         public static MovementRule DiagonalDirections2D => new(new[]
         {
@@ -56,10 +51,7 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     SixDirections3D (ортогональные, 3D):
-        ///     x: ← →
-        ///     y: ↑ ↓
-        ///     z: ⬆ (вверх по Z), ⬇ (вниз по Z)
+        /// 3D orthogonal (6-way) movement rule.
         /// </summary>
         public static MovementRule SixDirections3D => new(new[]
         {
@@ -69,8 +61,7 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     EighteenDirections3D (ортогональные + рёберные, 3D):
-        ///     Вокруг центральной ячейки ■ — 6 ортогональных + 12 рёберных направлений
+        /// 3D 18-way movement rule (orthogonal + edge neighbors).
         /// </summary>
         public static MovementRule EighteenDirections3D => new(new[]
         {
@@ -85,16 +76,12 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     TwentySixDirections3D (все возможные соседи, 3D):
-        ///     Вокруг центральной ячейки ■ — все возможные смещения x, y, z ∈ {-1, 0, 1}, кроме (0,0,0)
+        /// 3D full 26-neighbor movement rule.
         /// </summary>
         public static MovementRule TwentySixDirections3D => new(Get26Directions3D());
 
         /// <summary>
-        ///     HexDirectionsX (гексагональная сетка, ось X):
-        ///     ↗   ↖
-        ///     →  ■  ←
-        ///     ↘   ↙
+        /// Hex-like movement rule in X-oriented axial layout.
         /// </summary>
         public static MovementRule HexDirectionsX => new(new[]
         {
@@ -104,10 +91,7 @@ namespace Neo.GridSystem
         });
 
         /// <summary>
-        ///     HexDirectionsY (гексагональная сетка, ось Y):
-        ///     ↑   ↓
-        ///     ↗  ■  ↙
-        ///     →   ←
+        /// Hex-like movement rule in Y-oriented axial layout.
         /// </summary>
         public static MovementRule HexDirectionsY => new(new[]
         {

@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.5**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.6**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и `Assets/Neoxider/Editor/Neo.Editor.asmdef`)
@@ -283,11 +283,19 @@ Assets/NeoxiderPages/
 - `PrimitiveExtensions.NormalizeToUnit` — нормализует значение в диапазон [0..1] по умолчанию.
 - `PrimitiveExtensions.NormalizeToRange` — нормализует значение в диапазон [-1..1] по умолчанию.
 - `PrimitiveExtensions.NormalizeToRange(float,min,max)` — нормализует значение в диапазон [-1..1] по заданным границам.
-- `PrimitiveExtensions.NormalizeToUnit(float,min,max)` — нормализует значение в диапазон [0..1] по заданным границам.
-- `PrimitiveExtensions.Denormalize` — переводит [0..1] в заданный диапазон.
+- `PrimitiveExtensions.NormalizeToUnit(float,min,max)` — нормализует значение в диапазон [0..1] по заданным границам (с проверкой на NaN/Infinity).
+- `PrimitiveExtensions.Denormalize` — переводит [0..1] в заданный диапазон (с проверкой на NaN/Infinity).
 - `PrimitiveExtensions.Remap` — переносит значение из одного диапазона в другой.
 - `PrimitiveExtensions.ToBool(int)` — конвертирует int в bool (0=false).
 - `PrimitiveExtensions.FormatWithSeparator(int)` — форматирует int с разделителем тысяч.
+
+#### `NumberFormatExtensions.cs` — универсальное форматирование чисел для idle/UI
+- `NumberNotation` — стили: `Plain`, `Grouped`, `IdleShort`, `Scientific`.
+- `NumberRoundingMode` — режимы округления: `ToEven`, `AwayFromZero`, `ToZero`, `ToPositiveInfinity`, `ToNegativeInfinity`.
+- `NumberFormatOptions` — конфиг форматирования (нотация, точность, округление, разделители, префикс/суффикс).
+- `NumberFormatExtensions.ToPrettyString(...)` — универсальное форматирование для `int/long/float/double/decimal/BigInteger`.
+- `NumberFormatExtensions.ToIdleString(...)` — быстрый idle-вывод с суффиксами.
+- `NumberFormatExtensions.FormatNumber(...)` — базовый API форматтера для `decimal` и `BigInteger`.
 
 #### `RandomExtensions.cs` — случайности и вероятности
 - `RandomExtensions.GetRandomElement` — возвращает случайный элемент списка.
@@ -298,8 +306,8 @@ Assets/NeoxiderPages/
 - `RandomExtensions.Random(bool)` — случайно возвращает true/false, игнорируя вход.
 - `RandomExtensions.RandomBool` — возвращает случайный bool.
 - `RandomExtensions.RandomColor` — возвращает случайный цвет с заданной альфой.
-- `RandomExtensions.GetRandomEnumValue` — возвращает случайное значение enum.
-- `RandomExtensions.GetRandomWeightedIndex` — выбирает индекс по весам.
+- `RandomExtensions.GetRandomEnumValue` — возвращает случайное значение enum (с кешированием enum-значений).
+- `RandomExtensions.GetRandomWeightedIndex` — выбирает индекс по весам (с валидацией отрицательных и нулевой суммы весов).
 - `RandomExtensions.RandomizeBetween(float)` — возвращает значение в диапазоне вокруг числа.
 - `RandomExtensions.RandomizeBetween(int)` — возвращает значение в диапазоне вокруг числа.
 - `RandomExtensions.RandomFromValue(float)` — возвращает случайное значение от заданного старта до исходного.
@@ -331,6 +339,7 @@ Assets/NeoxiderPages/
 - `StringExtension.SplitCamelCase` — разбивает CamelCase на слова.
 - `StringExtension.IsNullOrEmptyAfterTrim` — проверяет строку на пустоту после `Trim`.
 - `StringExtension.ToColor` — парсит HEX‑строку в `Color`.
+- `StringExtension.ToColorSafe` — безопасный парсинг HEX‑строки в `Color` с `bool` результатом.
 - `StringExtension.ToCamelCase` — переводит строку в camelCase.
 - `StringExtension.Truncate` — обрезает строку до длины.
 - `StringExtension.IsNumeric` — проверяет строку на число.
@@ -397,7 +406,24 @@ Assets/NeoxiderPages/
 - `Assets/Neoxider/Scripts/GridSystem/FieldGeneratorConfig.cs` — конфиг генерации.
 - `Assets/Neoxider/Scripts/GridSystem/FieldObjectSpawner.cs` — спавн объектов на поле.
 - `Assets/Neoxider/Scripts/GridSystem/FieldSpawner.cs` — спавнер.
+- `Assets/Neoxider/Scripts/GridSystem/GridPathfinder.cs` — сервис pathfinding (`GridPathRequest`, `GridPathResult`, `NoPathReason`).
+- `Assets/Neoxider/Scripts/GridSystem/GridShapeMask.cs` — ScriptableObject-маска формы поля.
 - `Assets/Neoxider/Scripts/GridSystem/MovementRule.cs` — правила перемещения.
+- `Assets/Neoxider/Scripts/GridSystem/Match3/Match3TileState.cs` — состояния тайлов Match3.
+- `Assets/Neoxider/Scripts/GridSystem/Match3/Match3MatchFinder.cs` — поиск комбинаций Match3.
+- `Assets/Neoxider/Scripts/GridSystem/Match3/Match3BoardService.cs` — логика board-сервиса Match3 (swap/resolve/refill).
+- `Assets/Neoxider/Scripts/GridSystem/TicTacToe/TicTacToeCellState.cs` — состояния клетки для крестиков-ноликов.
+- `Assets/Neoxider/Scripts/GridSystem/TicTacToe/TicTacToeWinChecker.cs` — проверка победителя TicTacToe.
+- `Assets/Neoxider/Scripts/GridSystem/TicTacToe/TicTacToeBoardService.cs` — board-сервис TicTacToe (ходы/победа/ничья/reset).
+
+#### Demo GridSystem (`Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/`)
+
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemMatch3DemoSetup.cs` — setup demo-сцены Match3 в Edit Mode.
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemMatch3DemoUI.cs` — UI-контроллер demo Match3.
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemMatch3BoardView.cs` — runtime-визуализация интерактивного поля Match3.
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemTicTacToeDemoSetup.cs` — setup demo-сцены TicTacToe в Edit Mode.
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemTicTacToeDemoUI.cs` — UI-контроллер demo TicTacToe.
+- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemTicTacToeBoardView.cs` — runtime-визуализация кликабельного поля TicTacToe.
 
 ### Level (`Assets/Neoxider/Scripts/Level/`)
 
@@ -484,7 +510,7 @@ Assets/NeoxiderPages/
 
 #### Tools/Text
 
-- `Assets/Neoxider/Scripts/Tools/Text/SetText.cs` — установка текста.
+- `Assets/Neoxider/Scripts/Tools/Text/SetText.cs` — установка текста с анимацией и форматированием (`NumberNotation`, `NumberRoundingMode`, `SetBigInteger`, `SetFormatted`).
 - `Assets/Neoxider/Scripts/Tools/Text/TimeToText.cs` — вывод времени в текст.
 
 #### Tools/Physics

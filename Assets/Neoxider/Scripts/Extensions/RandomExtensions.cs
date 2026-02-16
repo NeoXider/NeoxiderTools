@@ -10,6 +10,8 @@ namespace Neo.Extensions
     /// </summary>
     public static class RandomExtensions
     {
+        private static readonly Dictionary<Type, Array> EnumValuesCache = new();
+
         #region Private Helper Methods
 
         private static void ValidateCollection<T>(ICollection<T> collection)
@@ -145,7 +147,13 @@ namespace Neo.Extensions
         /// </summary>
         public static T GetRandomEnumValue<T>() where T : Enum
         {
-            Array values = Enum.GetValues(typeof(T));
+            Type enumType = typeof(T);
+            if (!EnumValuesCache.TryGetValue(enumType, out Array values))
+            {
+                values = Enum.GetValues(enumType);
+                EnumValuesCache[enumType] = values;
+            }
+
             return (T)values.GetValue(UnityEngine.Random.Range(0, values.Length));
         }
 
@@ -162,7 +170,19 @@ namespace Neo.Extensions
             float totalWeight = 0;
             foreach (float weight in weights)
             {
+                if (weight < 0f)
+                {
+                    Debug.LogError("[RandomExtensions] Weights cannot contain negative values.");
+                    return -1;
+                }
+
                 totalWeight += weight;
+            }
+
+            if (totalWeight <= 0f)
+            {
+                Debug.LogWarning("[RandomExtensions] Total weight must be greater than zero.");
+                return -1;
             }
 
             float randomPoint = UnityEngine.Random.value * totalWeight;

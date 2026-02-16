@@ -5,14 +5,29 @@ using UnityEngine.Events;
 namespace Neo.GridSystem
 {
     /// <summary>
-    ///     Информация о заспавненном объекте на поле
+    /// Runtime info about a spawned object bound to a cell.
     /// </summary>
     public class SpawnedObjectInfo
     {
+        /// <summary>
+        /// Cell where object is currently registered.
+        /// </summary>
         public FieldCell Cell;
+        /// <summary>
+        /// Spawned GameObject instance.
+        /// </summary>
         public GameObject GameObject;
+        /// <summary>
+        /// True if object blocks cell occupancy.
+        /// </summary>
         public bool OccupiesSpace;
 
+        /// <summary>
+        /// Creates spawned object metadata container.
+        /// </summary>
+        /// <param name="go">Spawned object instance.</param>
+        /// <param name="cell">Target grid cell.</param>
+        /// <param name="occupiesSpace">Whether object should occupy this cell.</param>
         public SpawnedObjectInfo(GameObject go, FieldCell cell, bool occupiesSpace)
         {
             GameObject = go;
@@ -22,7 +37,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    ///     Универсальный спавнер для работы с сеткой. Хранит объекты по ячейкам, поддерживает флаг "занимает место".
+    /// Spawner with per-cell object tracking and occupancy support.
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldObjectSpawner))]
@@ -30,9 +45,21 @@ namespace Neo.GridSystem
     {
         [Header("Prefabs")] public GameObject[] Prefabs;
 
+        /// <summary>
+        /// Raised when a new object is spawned.
+        /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectSpawned = new();
+        /// <summary>
+        /// Raised after object is removed.
+        /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectRemoved = new();
+        /// <summary>
+        /// Raised when cell becomes occupied.
+        /// </summary>
         public UnityEvent<FieldCell> OnCellOccupied = new();
+        /// <summary>
+        /// Raised when cell is no longer occupied.
+        /// </summary>
         public UnityEvent<FieldCell> OnCellFreed = new();
 
         // Для каждой ячейки — список объектов
@@ -49,8 +76,13 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Спавнит объект в ячейку
+        /// Spawns prefab into target cell and registers tracking metadata.
         /// </summary>
+        /// <param name="cellPos">Target cell position.</param>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
+        /// <param name="occupiesSpace">Whether spawned object marks cell occupied.</param>
+        /// <param name="layer">Reserved for compatibility.</param>
+        /// <returns>Spawn metadata or null when spawn fails.</returns>
         public SpawnedObjectInfo SpawnAt(Vector3Int cellPos, int prefabIndex = 0, bool occupiesSpace = true,
             string layer = "Default")
         {
@@ -73,6 +105,7 @@ namespace Neo.GridSystem
             OnObjectSpawned.Invoke(info);
             if (occupiesSpace && cellObjects[cell].FindAll(o => o.OccupiesSpace).Count == 1)
             {
+                generator.SetOccupied(cell.Position, true);
                 OnCellOccupied.Invoke(cell);
             }
 
@@ -80,8 +113,10 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Получить все объекты в ячейке
+        /// Returns all tracked objects assigned to a cell.
         /// </summary>
+        /// <param name="cellPos">Cell position.</param>
+        /// <returns>Copy of object list for that cell.</returns>
         public List<SpawnedObjectInfo> GetObjectsInCell(Vector3Int cellPos)
         {
             FieldCell cell = generator.GetCell(cellPos);
@@ -94,12 +129,24 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Проверить, занята ли ячейка (учитывая только объекты, которые занимают место)
+        /// Checks whether a cell is occupied by at least one blocking object.
         /// </summary>
+        /// <param name="cellPos">Cell position.</param>
+        /// <returns>True when occupied; otherwise false.</returns>
         public bool IsCellOccupied(Vector3Int cellPos)
         {
             FieldCell cell = generator.GetCell(cellPos);
-            if (cell == null || !cellObjects.ContainsKey(cell))
+            if (cell == null)
+            {
+                return false;
+            }
+
+            if (cell.IsOccupied)
+            {
+                return true;
+            }
+
+            if (!cellObjects.ContainsKey(cell))
             {
                 return false;
             }
@@ -108,8 +155,9 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Удалить объект с поля
+        /// Removes object from tracking and destroys it.
         /// </summary>
+        /// <param name="go">Tracked object instance.</param>
         public void RemoveObject(GameObject go)
         {
             if (!objectLookup.ContainsKey(go))
@@ -125,13 +173,15 @@ namespace Neo.GridSystem
             OnObjectRemoved.Invoke(info);
             if (info.OccupiesSpace && !cellObjects[cell].Exists(o => o.OccupiesSpace))
             {
+                generator.SetOccupied(cell.Position, false);
                 OnCellFreed.Invoke(cell);
             }
         }
 
         /// <summary>
-        ///     Получить все объекты на поле
+        /// Returns all tracked objects across all cells.
         /// </summary>
+        /// <returns>Flat list of tracked objects.</returns>
         public List<SpawnedObjectInfo> GetAllObjects()
         {
             List<SpawnedObjectInfo> all = new();

@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **5.8.2** | Unity: **2022.1+** | Namespace: `Neo`
+Версия: **5.8.6** | Unity: **2022.1+** | Namespace: `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
@@ -70,7 +70,7 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 | **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [Docs](./Docs/Cards/README.md) |
 | **Condition** | No-Code условия: проверка полей компонентов, AND/OR, события | [Docs](./Docs/Condition/NeoCondition.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [Docs](./Docs/Extensions/README.md) |
-| **GridSystem** | Генерация сеток, ячейки, спавн объектов | [Docs](./Docs/GridSystem.md) |
+| **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md) |
 | **Level** | Менеджер уровней, карта, кнопки | [Docs](./Docs/Level/LevelManager.md) |
 | **NPC** | Модульная навигация NPC (патруль, преследование, агро) | [Docs](./Docs/NPC/README.md) |
 | **Parallax** | Параллакс-слои с предпросмотром | [Docs](./Docs/ParallaxLayer.md) |

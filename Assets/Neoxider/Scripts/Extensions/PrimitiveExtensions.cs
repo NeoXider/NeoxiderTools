@@ -297,6 +297,21 @@ namespace Neo.Extensions
         /// </summary>
         public static float NormalizeToUnit(this float x, float min, float max)
         {
+            if (float.IsNaN(x) || float.IsInfinity(x))
+            {
+                throw new ArgumentException("Value must be a finite number", nameof(x));
+            }
+
+            if (float.IsNaN(min) || float.IsInfinity(min))
+            {
+                throw new ArgumentException("Min must be a finite number", nameof(min));
+            }
+
+            if (float.IsNaN(max) || float.IsInfinity(max))
+            {
+                throw new ArgumentException("Max must be a finite number", nameof(max));
+            }
+
             if (min >= max)
             {
                 throw new ArgumentException($"Min value ({min}) must be less than max value ({max})");
@@ -310,6 +325,21 @@ namespace Neo.Extensions
         /// </summary>
         public static float Denormalize(this float normalizedValue, float min, float max)
         {
+            if (float.IsNaN(normalizedValue) || float.IsInfinity(normalizedValue))
+            {
+                throw new ArgumentException("Normalized value must be a finite number", nameof(normalizedValue));
+            }
+
+            if (float.IsNaN(min) || float.IsInfinity(min))
+            {
+                throw new ArgumentException("Min must be a finite number", nameof(min));
+            }
+
+            if (float.IsNaN(max) || float.IsInfinity(max))
+            {
+                throw new ArgumentException("Max must be a finite number", nameof(max));
+            }
+
             if (normalizedValue < 0f || normalizedValue > 1f)
             {
                 throw new ArgumentException("Normalized value must be between 0 and 1", nameof(normalizedValue));

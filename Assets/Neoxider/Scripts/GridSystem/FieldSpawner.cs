@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace Neo.GridSystem
 {
     /// <summary>
-    ///     Компонент для размещения игровых объектов на поле. Не зависит от структуры поля.
+    ///     Spawns prefabs into cells of a generated field.
     /// </summary>
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldSpawner))]
@@ -12,6 +12,9 @@ namespace Neo.GridSystem
     {
         [Header("Prefabs")] public GameObject[] Prefabs;
 
+        /// <summary>
+        /// Raised after an object is spawned. Provides spawned object and target cell.
+        /// </summary>
         public UnityEvent<GameObject, FieldCell> OnObjectSpawned = new();
 
         private FieldGenerator generator;
@@ -22,8 +25,11 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Спавнит объект на указанной ячейке
+        /// Spawns prefab instance at target cell center.
         /// </summary>
+        /// <param name="cellPos">Target cell position.</param>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
+        /// <returns>Spawned GameObject or null when spawn fails.</returns>
         public GameObject SpawnAt(Vector3Int cellPos, int prefabIndex = 0)
         {
             FieldCell cell = generator.GetCell(cellPos);
@@ -39,8 +45,9 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        ///     Спавнит объекты на всех проходимых ячейках (пример массового спавна)
+        /// Spawns prefab on all currently passable cells.
         /// </summary>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
         public void SpawnOnAllWalkable(int prefabIndex = 0)
         {
             Vector3Int size = generator.Config.Size;
@@ -49,7 +56,7 @@ namespace Neo.GridSystem
             for (int z = 0; z < size.z; z++)
             {
                 FieldCell cell = generator.Cells[x, y, z];
-                if (cell.IsWalkable)
+                if (generator.IsCellPassable(cell, ignoreOccupied: true))
                 {
                     SpawnAt(cell.Position, prefabIndex);
                 }
