@@ -34,7 +34,12 @@ namespace Neo
             /// <summary>
             /// Timer update interval in seconds.
             /// </summary>
-            public float updateTime = 1f;
+            public float updateTime = 0.2f;
+
+            [SerializeField] private bool _rewardAvailableOnStart = false;
+
+            [SerializeField] [Tooltip("-1 = take all accumulated; 1 = one per take; N = cap at N per take")]
+            private int _maxRewardsPerTake = 1;
 
             [SerializeField] private string _addKey = "Bonus1";
 
@@ -70,9 +75,14 @@ namespace Neo
             public UnityEvent<float> OnTimeUpdated = new();
 
             /// <summary>
-            /// Invoked when reward claim succeeds.
+            /// Invoked when reward claim succeeds (once per claim when multiple are given).
             /// </summary>
             public UnityEvent OnRewardClaimed = new();
+
+            /// <summary>
+            /// Invoked once per take with the number of claims given.
+            /// </summary>
+            public UnityEvent<int> OnRewardsClaimed = new();
 
             /// <summary>
             /// Invoked once when reward becomes available.
@@ -136,6 +146,11 @@ namespace Neo
 
             private void Start()
             {
+                if (!_rewardAvailableOnStart && !TryGetLastRewardTimeUtc(out _))
+                {
+                    SaveCurrentTimeAsLastRewardTime();
+                }
+
                 if (startTakeReward)
                 {
                     TakeReward();
@@ -197,7 +212,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Returns remaining seconds before reward becomes available.
+            /// Returns remaining seconds before the next reward becomes available (for the first claim in queue).
             /// </summary>
             /// <returns>Remaining cooldown in seconds.</returns>
             public float GetSecondsUntilReward()
@@ -210,12 +225,38 @@ namespace Neo
                 lastRewardTimeStr = SaveProvider.GetString(BuildRewardTimeKey(), string.Empty);
                 if (!lastRewardTimeStr.TryParseUtcRoundTrip(out DateTime lastRewardTimeUtc))
                 {
-                    return 0f;
+                    if (_rewardAvailableOnStart)
+                    {
+                        return 0f;
+                    }
+
+                    SaveCurrentTimeAsLastRewardTime();
+                    return secondsToWaitForReward;
                 }
 
                 float secondsPassed = lastRewardTimeUtc.GetSecondsSinceUtc(DateTime.UtcNow);
                 float secondsUntilReward = secondsToWaitForReward - secondsPassed;
                 return Mathf.Max(0f, secondsUntilReward);
+            }
+
+            /// <summary>
+            /// Returns how many rewards can be claimed right now (capped by max rewards per take).
+            /// </summary>
+            public int GetClaimableCount()
+            {
+                if (secondsToWaitForReward <= 0f)
+                {
+                    return 0;
+                }
+
+                if (!TryGetLastRewardTimeUtc(out DateTime lastUtc))
+                {
+                    return _rewardAvailableOnStart ? 1 : 0;
+                }
+
+                DateTime now = DateTime.UtcNow;
+                int accumulated = lastUtc.GetAccumulatedClaimCount(secondsToWaitForReward, now);
+                return CooldownRewardExtensions.CapToMaxPerTake(accumulated, _maxRewardsPerTake);
             }
 
             /// <summary>
@@ -229,22 +270,37 @@ namespace Neo
             }
 
             /// <summary>
-            /// Attempts to claim reward.
+            /// Attempts to claim reward(s). Gives up to GetClaimableCount() (capped by max per take).
             /// </summary>
-            /// <returns>True when claim succeeds, otherwise false.</returns>
+            /// <returns>True when at least one claim succeeds.</returns>
             [Button]
             public bool TakeReward()
             {
-                if (!CanTakeReward())
+                int count = GetClaimableCount();
+                if (count < 1)
                 {
                     return false;
                 }
 
-                OnRewardClaimed?.Invoke();
+                for (int i = 0; i < count; i++)
+                {
+                    OnRewardClaimed?.Invoke();
+                }
+
+                OnRewardsClaimed?.Invoke(count);
 
                 if (_saveTimeOnTakeReward)
                 {
-                    SaveCurrentTimeAsLastRewardTime();
+                    if (TryGetLastRewardTimeUtc(out DateTime lastUtc))
+                    {
+                        DateTime newLast = lastUtc.AdvanceLastClaimTime(count, secondsToWaitForReward);
+                        SaveLastRewardTime(newLast);
+                    }
+                    else
+                    {
+                        SaveCurrentTimeAsLastRewardTime();
+                    }
+
                     _waitingForManualStart = false;
                     RefreshTimeState();
                     return true;
@@ -266,9 +322,9 @@ namespace Neo
             }
 
             /// <summary>
-            /// Checks whether reward can be claimed right now.
+            /// Checks whether at least one reward can be claimed right now.
             /// </summary>
-            /// <returns>True when reward is available.</returns>
+            /// <returns>True when at least one reward is available.</returns>
             public bool CanTakeReward()
             {
                 if (_waitingForManualStart)
@@ -276,7 +332,7 @@ namespace Neo
                     return false;
                 }
 
-                return GetSecondsUntilReward() <= Mathf.Epsilon;
+                return GetClaimableCount() >= 1;
             }
 
             /// <summary>
@@ -405,7 +461,7 @@ namespace Neo
                 timeLeft = GetSecondsUntilReward();
                 OnTimeUpdated?.Invoke(timeLeft);
 
-                bool rewardAvailable = timeLeft <= Mathf.Epsilon;
+                bool rewardAvailable = GetClaimableCount() >= 1;
                 if (rewardAvailable && !canTakeReward)
                 {
                     canTakeReward = true;
@@ -500,6 +556,12 @@ namespace Neo
             {
                 canTakeReward = false;
                 lastRewardTimeStr = DateTime.UtcNow.ToRoundTripUtcString();
+                SaveProvider.SetString(BuildRewardTimeKey(), lastRewardTimeStr);
+            }
+
+            private void SaveLastRewardTime(DateTime utc)
+            {
+                lastRewardTimeStr = utc.ToRoundTripUtcString();
                 SaveProvider.SetString(BuildRewardTimeKey(), lastRewardTimeStr);
             }
         }

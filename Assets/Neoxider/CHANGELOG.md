@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.9] - Unreleased
+
+### Добавлено
+
+- **TimeReward** — накопление наград и гибкий первый запуск:
+  - `_rewardAvailableOnStart` (по умолчанию `false`): при отсутствии сохранения награда доступна сразу (true) или после полного кулдауна (false).
+  - `_maxRewardsPerTake`: -1 = забрать все накопленные, 1 = одна за раз, N = не больше N за раз.
+  - `GetClaimableCount()` — количество наград, доступных к выдаче.
+  - `OnRewardsClaimed(int)` — событие с количеством выданных за один Take.
+  - Интервал обновления таймера по умолчанию изменён на `updateTime = 0.2f`.
+- **CooldownRewardExtensions** — утилиты для кулдаун-наград:
+  - `GetAccumulatedClaimCount(DateTime, float, DateTime)` — число накопленных наград;
+  - `CapToMaxPerTake(int, int)` — ограничение числа за один забор;
+  - `AdvanceLastClaimTime(DateTime, int, float)` — сдвиг времени последней выдачи.
+
+### Улучшено
+
+- **TimeReward** — `TakeReward()` выдаёт до `GetClaimableCount()` наград за раз; при сохранении времени используется сдвиг на число выданных наград. Документация: полная схема работы (flowchart), таблица «механика → настройки», примеры.
+- **Docs** — добавлена страница `CooldownRewardExtensions.md`, обновлён `TimeReward.md`, индекс `Extensions/README.md`.
+
 ## [5.8.8] - Unreleased
 
 ### Добавлено

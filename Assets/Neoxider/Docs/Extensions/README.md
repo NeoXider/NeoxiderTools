@@ -16,6 +16,7 @@
 - [**DateTimeExtensions**](./DateTimeExtensions.md): Сериализация UTC, парсинг round-trip, `GetSecondsSinceUtc`/`GetSecondsUntilUtc`.
 - [**TimeParsingExtensions**](./TimeParsingExtensions.md): Парсинг длительностей из строк (SS, MM:SS, HH:MM:SS, DD:HH:MM:SS).
 - [**TimeSpanExtensions**](./TimeSpanExtensions.md): `ToCompactString`, `ToClockString` для `TimeSpan`.
+- [**CooldownRewardExtensions**](./CooldownRewardExtensions.md): расчёт накопленных наград по кулдауну, `CapToMaxPerTake`, `AdvanceLastClaimTime`.
 - [**StringExtension**](./StringExtension.md): Парсинг, форматирование и Rich Text для `string`.
 - [**ColorExtension**](./ColorExtension.md): Манипуляция цветом (`WithAlpha`, `Darken`, `Lighten`).
 
