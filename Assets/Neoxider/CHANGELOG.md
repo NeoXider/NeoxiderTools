@@ -2,9 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.12] - Unreleased
+## [5.8.13] - Unreleased
 
 ### Добавлено
+
+- **NeoCondition** — сравнение переменной с переменной другого объекта:
+  - В условии добавлен режим **Compare With** → **Other Object**: вместо порога (число/текст) можно указать второй объект, компонент и поле/свойство. Условие проверяет «левая переменная op правая переменная» (==, !=, >, <, >=, <=). Поддерживаются оба источника с Find By Name и режимом GameObject.
 
 - **TimerObject** — опциональное сохранение состояния (по умолчанию выключено):
   - `saveProgress`: включить сохранение/восстановление текущего времени и признака «идёт/на паузе»; работает при счётчике вверх и вниз.
@@ -15,6 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Исправлено
 
+- **NeoCondition** — при пустом **Other Source Object** (сравнение с другой переменной) теперь используется **тот же объект, что и слева**. Условия вида `Health.Hp == Health.MaxHp` на одном GameObject работают без указания второго объекта (раньше подставлялся объект с NeoCondition и сравнение давало неверный результат).
 - **TimeReward** — логика накопления наград и сдвига времени перенесена в сам компонент; зависимость от `CooldownRewardExtensions` убрана для корректной сборки во всех конфигурациях (в т.ч. UPM).
 - **InteractiveObject** — поддержка новой Input System (мышь и клавиатура через рефлексию при Active Input Handling = Input System Package); учёт trigger-коллайдеров в mouse hover raycast (настраивается через `includeTriggerCollidersInMouseRaycast`).
 

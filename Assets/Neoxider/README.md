@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **5.8.12** | Unity: **2022.1+** | Namespace: `Neo`
+Версия: **5.8.13** | Unity: **2022.1+** | Namespace: `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
