@@ -56,6 +56,19 @@ namespace Neo.Extensions
         public static string FormatTime(this float timeSeconds, TimeFormat format = TimeFormat.Seconds,
             string separator = ":")
         {
+            return FormatTime(timeSeconds, format, separator, false);
+        }
+
+        /// <summary>
+        ///     Formats a time value in seconds to a string representation.
+        /// </summary>
+        /// <param name="timeSeconds">Duration in seconds.</param>
+        /// <param name="format">Output time format.</param>
+        /// <param name="separator">Separator between time parts.</param>
+        /// <param name="trimLeadingZeros">If true, trims leading zeros from the first token (e.g. "01:05" -> "1:05").</param>
+        /// <returns>Formatted time string.</returns>
+        public static string FormatTime(this float timeSeconds, TimeFormat format, string separator, bool trimLeadingZeros)
+        {
             if (timeSeconds < 0)
             {
                 timeSeconds = 0;
@@ -110,7 +123,7 @@ namespace Neo.Extensions
                 char sep = separator[0];
 
                 // Fast path only when all components fit into 2 digits (and ms into 3 digits).
-                return format switch
+                string result = format switch
                 {
                     TimeFormat.Milliseconds => centiseconds < 100 ? Create2(centiseconds) : centiseconds.ToString("D2"),
                     TimeFormat.SecondsMilliseconds => totalSeconds < 100
@@ -147,10 +160,11 @@ namespace Neo.Extensions
                           secondsPart.ToString("D2"),
                     _ => "00"
                 };
+                return trimLeadingZeros ? TrimLeadingZeros(result, sep) : result;
             }
 
             // Fallback (multi-character separator). Less efficient but keeps compatibility.
-            return format switch
+            string fallback = format switch
             {
                 TimeFormat.Milliseconds => centiseconds.ToString("D2"),
                 TimeFormat.SecondsMilliseconds => totalSeconds.ToString("D2") + separator + centiseconds.ToString("D2"),
@@ -175,6 +189,35 @@ namespace Neo.Extensions
                     separator + secondsPart.ToString("D2"),
                 _ => "00"
             };
+            return trimLeadingZeros && separator.Length > 0 ? TrimLeadingZeros(fallback, separator[0]) : fallback;
+        }
+
+        private static string TrimLeadingZeros(string value, char separator)
+        {
+            if (string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            int idx = value.IndexOf(separator);
+            if (idx <= 0)
+            {
+                return value;
+            }
+
+            string first = value.Substring(0, idx);
+            int i = 0;
+            while (i < first.Length && first[i] == '0')
+            {
+                i++;
+            }
+
+            if (i == first.Length)
+            {
+                i = Math.Max(0, first.Length - 1);
+            }
+
+            return first.Substring(i) + value.Substring(idx);
         }
 
         private static string Create2(int a)

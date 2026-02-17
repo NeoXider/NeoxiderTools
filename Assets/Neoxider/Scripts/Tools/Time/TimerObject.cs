@@ -646,6 +646,35 @@ namespace Neo
         }
 
         /// <summary>
+        ///     Sets the timer duration. Optionally preserves progress ratio.
+        /// </summary>
+        /// <param name="newDuration">New duration in seconds.</param>
+        /// <param name="keepProgress">If true, scales current time to preserve progress; otherwise clamps current time.</param>
+        public void SetDuration(float newDuration, bool keepProgress = true)
+        {
+            if (newDuration < 0f)
+            {
+                newDuration = 0f;
+            }
+
+            if (keepProgress && duration > 0f && !infiniteDuration)
+            {
+                float ratio = countUp ? currentTime / duration : 1f - currentTime / duration;
+                ratio = Mathf.Clamp01(ratio);
+                duration = newDuration;
+                currentTime = countUp ? ratio * duration : (1f - ratio) * duration;
+            }
+            else
+            {
+                duration = newDuration;
+                currentTime = Mathf.Clamp(currentTime, 0f, duration);
+            }
+
+            lastProgress = -1f;
+            InvokeEvents();
+        }
+
+        /// <summary>
         ///     Gets current progress (0-1)
         /// </summary>
         /// <returns>Progress value from 0 to 1</returns>

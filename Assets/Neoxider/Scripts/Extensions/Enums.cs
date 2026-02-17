@@ -72,6 +72,22 @@ namespace Neo.Extensions
     }
 
     /// <summary>
+    ///     Display mode for time values in TimeToText (compact "11d 11m" vs clock "11:11").
+    /// </summary>
+    public enum TimeDisplayMode
+    {
+        /// <summary>
+        ///     Colon-separated clock format (e.g. "11:11", "01:23:45").
+        /// </summary>
+        Clock,
+
+        /// <summary>
+        ///     Compact unit format (e.g. "11d 11m", "2h 30m").
+        /// </summary>
+        Compact
+    }
+
+    /// <summary>
     ///     Represents an edge or corner of the screen.
     /// </summary>
     public enum ScreenEdge

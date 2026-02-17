@@ -14,7 +14,8 @@
 
 **Статические методы для `float`**
 - `RoundToDecimal(this float value, int places)`: Округляет число до указанного количества знаков после запятой.
-- `FormatTime(this float timeSeconds, ...)`: Форматирует время в секундах в строку (например, `"MM:SS"`).
+- `FormatTime(this float timeSeconds, TimeFormat format, string separator)`: Форматирует время в секундах в строку.
+- `FormatTime(this float timeSeconds, TimeFormat format, string separator, bool trimLeadingZeros)`: Форматирует время с опцией обрезки ведущих нулей в первом токене (`01:05` → `1:05`).
 - `FormatWithSeparator(this float number, ...)`: Форматирует число, добавляя разделители разрядов (например, `1 000 000.00`).
 - `NormalizeToUnit(this float x, ...)`: Нормализует значение в диапазон от 0 до 1.
 - `Remap(this float value, ...)`: Переводит значение из одного диапазона в другой (например, из `0-100` в `0-1`).

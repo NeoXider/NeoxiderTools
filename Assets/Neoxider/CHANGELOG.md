@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.8] - Unreleased
+
+### Добавлено
+
+- **Extensions/Time** — новые расширения для работы со временем:
+    - `DateTimeExtensions`: `ToRoundTripUtcString`, `TryParseUtcRoundTrip`, `GetSecondsSinceUtc`, `GetSecondsUntilUtc`, `EnsureUtc`;
+    - `TimeParsingExtensions`: `TryParseDuration` — парсинг SS, MM:SS, HH:MM:SS, DD:HH:MM:SS;
+    - `TimeSpanExtensions`: `ToCompactString`, `ToClockString`.
+- **TimeReward** — `GetFormattedTimeLeft`, `TryGetLastRewardTimeUtc`, `GetElapsedSinceLastReward`; настройки `_displayTimeFormat`, `_displaySeparator`.
+- **Timer** — `Play()`, `SetRemainingTime(float)`, `SetProgress(float)`.
+- **TimerObject** — `SetDuration(float newDuration, bool keepProgress = true)`.
+- **TimeToText** — `TrySetFromString(string raw, string separator = null)`, опция `_allowNegative`.
+- **PrimitiveExtensions.FormatTime** — перегрузка с `trimLeadingZeros` (например `01:05` → `1:05`).
+
+### Улучшено
+
+- **TimeReward** — интеграция с `DateTimeExtensions` и `TimeParsingExtensions`; `FormatTime(float, TimeFormat, string, bool)`.
+- **Docs** — добавлены `TimeFormatting.md`, `DateTimeExtensions.md`, `TimeParsingExtensions.md`, `TimeSpanExtensions.md`; обновлены `TimeReward`, `Timer`, `TimerObject`, `TimeToText`, `PrimitiveExtensions`, `Tools/Time/README.md`, `Extensions/README.md`.
+
 ## [5.8.7] - Unreleased
 
 ### Добавлено
@@ -74,6 +93,14 @@ All notable changes to this project will be documented in this file.
     - добавлен режим `keyboardInteractionMode` (`ViewOrMouse` / `DistanceOnly`).
     - добавлен debug-луч проверки взаимодействия (`drawInteractionRayForOneSecond`, `interactionRayDrawDuration`) с
       цветовой индикацией результата.
+- **Bonus/TimeReward** — расширен runtime API и сценарии запуска кулдауна:
+    - добавлены публичные методы управления таймером: `StartTime`, `StopTime`, `PauseTime`, `ResumeTime`, `RestartTime`,
+      `SetRewardAvailableNow`, `RefreshTimeState`, `SetAdditionalKey`;
+    - добавлены статусные свойства: `IsTimerRunning`, `IsTimerPaused`, `IsRewardAvailable`, `RewardTimeKey`,
+      `SaveTimeOnTakeReward`;
+    - добавлены события: `OnTimerStarted`, `OnTimerStopped`, `OnTimerPaused`, `OnTimerResumed`;
+    - добавлен режим ручного старта кулдауна: при `saveTimeOnTakeReward = false` время может сохраняться в `StartTime()`;
+    - сохранение времени переведено на UTC round-trip формат (`"o"`) с поддержкой чтения legacy-значений.
 
 ## [5.8.5] - Unreleased
 

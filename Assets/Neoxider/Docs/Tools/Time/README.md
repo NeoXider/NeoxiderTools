@@ -6,3 +6,4 @@
 
 - [Timer](./Timer.md)
 - [TimerObject](./TimerObject.md)
+- [TimeFormatting](./TimeFormatting.md) — форматирование и парсинг времени, расширения (DateTimeExtensions, TimeParsingExtensions, TimeSpanExtensions), выбор компонента.

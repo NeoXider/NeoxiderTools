@@ -73,7 +73,7 @@ namespace InfinityCode.UltimateEditorEnhancer.SceneTools
         {
             bool state = false;
             HighlightUI(go, ref state);
-            if (GraphicsSettings.renderPipelineAsset == null) HighlightRenderers(go, ref state);
+            if (GraphicsSettings.defaultRenderPipeline == null) HighlightRenderers(go, ref state);
             HighlightWithoutRenderer(go, ref state);
 
             if (state) SceneView.RepaintAll();

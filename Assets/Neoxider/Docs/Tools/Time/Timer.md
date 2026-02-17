@@ -36,8 +36,11 @@
 - `Progress`: Прогресс таймера от 0 (начало) до 1 (конец).
 
 **Публичные методы (Public Methods)**
-- `Start(CancellationToken cancellationToken = default)`: Запускает или возобновляет таймер. **Возвращает `UniTask`, поэтому должен быть вызван с `await`**. Поддерживает внешний `CancellationToken` для отмены.
+- `Start()` / `StartAsync(CancellationToken cancellationToken = default)`: Запускает или возобновляет таймер. `Start()` — fire-and-forget, `StartAsync` возвращает `UniTask`.
+- `Play()`: Алиас для `Start()`.
 - `Stop()`: Останавливает таймер и сбрасывает его.
+- `SetRemainingTime(float seconds)`: Устанавливает оставшееся время.
+- `SetProgress(float progress)`: Устанавливает прогресс (0–1).
 - `Pause()`: Ставит таймер на паузу.
 - `Resume()`: Снимает таймер с паузы.
 - `Restart(CancellationToken cancellationToken = default)`: Останавливает и немедленно запускает таймер заново. Поддерживает внешний `CancellationToken`.

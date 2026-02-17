@@ -1,27 +1,55 @@
-﻿### Класс TimeReward
+### Класс TimeReward
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs`
 
-**Краткое описание**:
-`TimeReward` — это компонент, который реализует механику выдачи наград по истечении заданного времени. Он отслеживает время с момента последнего получения награды и предоставляет события для обновления UI и выдачи приза.
+`TimeReward` — компонент таймера награды с сохранением времени в `SaveProvider`, расширенным публичным API управления жизненным циклом таймера и поддержкой двух режимов запуска кулдауна.
 
-**Ключевые особенности**:
-- **Настраиваемый таймер**: Позволяет легко задать время ожидания награды в секундах.
-- **Сохранение времени**: Автоматически сохраняет и загружает время последнего получения награды с помощью `PlayerPrefs`, что делает таймер устойчивым к перезапуску игры.
-- **Уникальный ключ**: Позволяет использовать несколько независимых таймеров в проекте, указывая разный `_addKey`.
-- **Событийная модель**: Предоставляет набор `UnityEvent` для гибкой реакции на события таймера (обновление времени, доступность награды, получение награды).
+## Что улучшено
+- Добавлены публичные методы управления: `StartTime()`, `StopTime()`, `PauseTime()`, `ResumeTime()`, `RestartTime()`, `SetRewardAvailableNow()`, `RefreshTimeState()`, `SetAdditionalKey(...)`.
+- Добавлены статусные публичные свойства: `IsTimerRunning`, `IsTimerPaused`, `IsRewardAvailable`, `RewardTimeKey`, `SaveTimeOnTakeReward`.
+- Добавлены события таймера: `OnTimerStarted`, `OnTimerStopped`, `OnTimerPaused`, `OnTimerResumed`.
+- Сохранение времени переведено на UTC `round-trip` формат (`"o"`) с обратной совместимостью чтения старых сохранений.
 
-**Публичные свойства и поля**:
-- `timeLeft`: `float` - Оставшееся время до получения следующей награды в секундах.
+## Ключевой режим (по вашему запросу)
+- `saveTimeOnTakeReward = true` (по умолчанию): при `TakeReward()` время сразу сохраняется, и кулдаун стартует автоматически.
+- `saveTimeOnTakeReward = false`: `TakeReward()` только подтверждает выдачу награды, а кулдаун стартует через `StartTime()` (если включен флаг `saveTimeOnStartWhenSaveOnTakeDisabled`).
 
-**Публичные методы**:
-- `FormatTime(int seconds)`: Статический метод, который форматирует переданное количество секунд в строку вида `чч:мм:сс`.
-- `GetSecondsUntilReward()`: Возвращает оставшееся время до награды в секундах. Если время вышло, возвращает 0.
-- `TakeReward()`: Пытается забрать награду. Если награда доступна, сохраняет новое время, вызывает событие `OnRewardClaimed` и возвращает `true`. В противном случае возвращает `false`.
-- `Take()`: Упрощенный публичный метод-обертка для вызова `TakeReward()` из Unity-событий (например, с кнопки).
-- `CanTakeReward()`: Возвращает `true`, если награду можно забрать (таймер дошел до нуля).
+## Основные поля (Inspector)
+- `secondsToWaitForReward`: длительность кулдауна в секундах.
+- `updateTime`: интервал обновления таймера.
+- `startTakeReward`: попытка забрать награду при `Start()`.
+- `startTimerOnStart`: запуск таймера автоматически при `Start()`.
+- `saveTimeOnTakeReward`: сохранять ли время в момент взятия.
+- `saveTimeOnStartWhenSaveOnTakeDisabled`: при отключенном сохранении на взятии, сохранять ли время в `StartTime()`.
+- `timeLeft`: оставшееся время до награды.
 
-**Unity Events**:
-- `OnTimeUpdated`: `UnityEvent<float>` - Вызывается периодически (раз в `_updateTime` секунд). Передает `float` (оставшееся время).
-- `OnRewardClaimed`: `UnityEvent` - Вызывается в момент успешного получения награды.
-- `OnRewardAvailable`: `UnityEvent` - Вызывается один раз, когда таймер достигает нуля и награда становится доступной.
+## Публичные методы
+- `TakeReward()`: попытка взять награду.
+- `Take()`: обертка для UnityEvent.
+- `CanTakeReward()`: проверка доступности награды.
+- `GetSecondsUntilReward()`: оставшееся время до награды.
+- `StartTime()`: запуск/возобновление отсчета.
+- `StopTime()`: остановка отсчета.
+- `PauseTime()`: пауза.
+- `ResumeTime()`: снятие с паузы.
+- `RestartTime()`: перезапуск кулдауна от текущего времени.
+- `SetRewardAvailableNow()`: мгновенно сделать награду доступной (очистить сохраненный timestamp).
+- `RefreshTimeState()`: принудительно пересчитать таймер и отправить события.
+- `SetAdditionalKey(string addKey, bool refreshAfterChange = true)`: сменить суффикс ключа сохранения.
+- `FormatTime(int seconds)` / `FormatTime(float seconds)` / `FormatTime(float, TimeFormat, string, bool trimLeadingZeros)`: форматирование времени.
+- `GetFormattedTimeLeft(bool trimLeadingZeros)`: оставшееся время в формате по настройкам `_displayTimeFormat` / `_displaySeparator`.
+- `TryGetLastRewardTimeUtc(out DateTime)`: чтение сохранённого timestamp последней награды.
+- `GetElapsedSinceLastReward()`: секунды с момента последней награды.
+
+## Inspector (дополнительно)
+- `_displayTimeFormat`: формат вывода (TimeFormat).
+- `_displaySeparator`: разделитель для отображения.
+
+## Unity Events
+- `OnTimeUpdated(float)`: периодическое обновление остатка времени.
+- `OnRewardClaimed`: успешное получение награды.
+- `OnRewardAvailable`: награда стала доступной.
+- `OnTimerStarted`: таймер запущен.
+- `OnTimerStopped`: таймер остановлен.
+- `OnTimerPaused`: таймер поставлен на паузу.
+- `OnTimerResumed`: таймер возобновлен.

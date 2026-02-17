@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -218,13 +218,40 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Starts or resumes the timer (synchronous version - fire and forget)
+        ///     Starts or resumes the timer (synchronous version - fire and forget).
         ///     Can be called from non-async code. For async usage, use StartAsync().
         /// </summary>
         [Button]
         public void Start()
         {
             StartAsync().Forget();
+        }
+
+        /// <summary>
+        ///     Alias for <see cref="Start"/>. Starts or resumes the timer (fire and forget).
+        /// </summary>
+        public void Play()
+        {
+            Start();
+        }
+
+        /// <summary>
+        ///     Sets the remaining time in seconds. Clamped to valid range.
+        /// </summary>
+        /// <param name="seconds">Remaining seconds.</param>
+        public void SetRemainingTime(float seconds)
+        {
+            RemainingTime = Mathf.Clamp(seconds, 0f, duration);
+        }
+
+        /// <summary>
+        ///     Sets the timer progress (0–1). 0 = start, 1 = end.
+        /// </summary>
+        /// <param name="progress">Progress value.</param>
+        public void SetProgress(float progress)
+        {
+            progress = Mathf.Clamp01(progress);
+            RemainingTime = duration > 0f ? duration * (1f - progress) : 0f;
         }
 
         /// <summary>

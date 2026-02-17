@@ -25,11 +25,15 @@
 #### Time Format
 
 - `_zeroText` (`bool`): Если `true`, текст будет отображаться, даже если время равно нулю. В противном случае текстовое поле будет очищено.
-- `timeFormat` (`TimeFormat`): Формат отображения времени. Доступные варианты:
+- `_allowNegative` (`bool`): Если `true`, разрешено и отображается отрицательное время.
+- `_displayMode` (`TimeDisplayMode`): Режим отображения — `Clock` (формат `11:11`) или `Compact` (формат `11d 11m`).
+- `timeFormat` (`TimeFormat`): Формат отображения в режиме Clock. Доступные варианты:
   - `Seconds`: Просто секунды (например, `120`).
   - `MinutesSeconds`: Минуты и секунды (например, `02:00`).
   - `MinutesSecondsMilliseconds`: Минуты, секунды и миллисекунды (например, `02:00:123`).
   - `HoursMinutesSeconds`: Часы, минуты и секунды (например, `00:02:00`).
+- `_compactIncludeSeconds` (`bool`): Включать секунды в Compact-режиме.
+- `_compactMaxParts` (`int`): Максимальное число единиц в Compact-режиме (напр. 3 → `11d 11m 5s`).
 
 #### Text Formatting
 
@@ -39,14 +43,19 @@
 
 ### Публичные свойства (Public Properties)
 
-- `TimeFormat` (`TimeFormat`): Позволяет программно изменять формат времени.
+- `TimeFormat` (`TimeFormat`): Позволяет программно изменять формат времени (режим Clock).
 - `ZeroText` (`bool`): Позволяет программно управлять отображением нулевого значения.
-- `Separator` (`string`): Позволяет программно изменять символ-разделитель.
+- `AllowNegative` (`bool`): Разрешает отрицательное время и его отображение.
+- `DisplayMode` (`TimeDisplayMode`): Режим Clock (`11:11`) или Compact (`11d 11m`).
+- `CompactIncludeSeconds` (`bool`): Включать секунды в Compact-режиме.
+- `CompactMaxParts` (`int`): Макс. число единиц в Compact-режиме.
+- `Separator` (`string`): Позволяет программно изменять символ-разделитель (режим Clock).
 - `CurrentTime` (`float`): Возвращает текущее установленное значение времени в секундах.
 
 ### Публичные методы (Public Methods)
 
 - `Set(float time = 0)`: Основной метод, который устанавливает время для отображения. Принимает время в секундах.
+- `TrySetFromString(string raw, string separator = null)`: Парсит длительность (SS, MM:SS, HH:MM:SS, DD:HH:MM:SS) и обновляет отображаемое время. Возвращает `true` при успешном парсинге.
 
 ### Статические методы (Static Methods)
 

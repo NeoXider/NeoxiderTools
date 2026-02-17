@@ -1,6 +1,6 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию **NeoxiderTools** (v5.8.7). Здесь собраны ссылки на все модули и инструкции по запуску.
+Добро пожаловать в документацию **NeoxiderTools** (v5.8.8). Здесь собраны ссылки на все модули и инструкции по запуску.
 
 ---
 
@@ -35,7 +35,7 @@
 | Tools/Physics | MagneticField, ExplosiveForce, ImpulseZone | [`Tools/Physics/README.md`](./Tools/Physics/README.md) |
 | Tools/Move | Follow, KeyboardMover, MouseMover, UniversalRotator | [`Tools/Move/README.md`](./Tools/Move/README.md) |
 | Tools/Spawner | Spawner, SimpleSpawner, ObjectPool | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
-| Tools/Time | Timer, TimerObject | [`Tools/Time/README.md`](./Tools/Time/README.md) |
+| Tools/Time | Timer, TimerObject, TimeFormatting (расширения времени) | [`Tools/Time/README.md`](./Tools/Time/README.md) |
 | Tools/Input | SwipeController, MultiKeyEventTrigger, MouseEffect | [`Tools/Input`](./Tools/Input) |
 | Tools/Managers | GM, EM, Bootstrap, Singleton | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
 | Tools/View | Selector, BillboardUniversal, StarView | [`Tools/View`](./Tools/View) |

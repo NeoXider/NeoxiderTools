@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.7**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.8**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и
@@ -88,7 +88,7 @@ Assets/NeoxiderPages/
 
 #### Bonus/TimeReward
 
-- `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs` — награда по времени.
+- `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs` — награда по времени. GetFormattedTimeLeft, TryGetLastRewardTimeUtc, GetElapsedSinceLastReward.
 
 #### Bonus/WheelFortune
 
@@ -290,11 +290,26 @@ Assets/NeoxiderPages/
 - `PlayerPrefsUtils.SetBoolArray` — сохраняет массив bool в `PlayerPrefs`.
 - `PlayerPrefsUtils.GetBoolArray` — читает массив bool из `PlayerPrefs`.
 
+#### `DateTimeExtensions.cs` — сериализация и расчёты с DateTime (UTC)
+
+- `ToRoundTripUtcString` — сохранение в UTC round-trip строку.
+- `TryParseUtcRoundTrip` — парсинг с fallback на legacy-форматы.
+- `GetSecondsSinceUtc`, `GetSecondsUntilUtc`, `EnsureUtc`.
+
+#### `TimeParsingExtensions.cs` — парсинг длительностей из строк
+
+- `TryParseDuration` — парсинг SS, MM:SS, HH:MM:SS, DD:HH:MM:SS.
+
+#### `TimeSpanExtensions.cs` — форматирование TimeSpan
+
+- `ToCompactString` — компактный вывод (2d 3h 15m).
+- `ToClockString` — вывод в формате часов.
+
 #### `PrimitiveExtensions.cs` — форматирование и нормализация примитивов
 
 - `PrimitiveExtensions.ToInt(bool)` — конвертирует bool в 1/0.
 - `PrimitiveExtensions.RoundToDecimal` — округляет float до заданных знаков.
-- `PrimitiveExtensions.FormatTime` — форматирует секунды в строку по выбранному формату.
+- `PrimitiveExtensions.FormatTime` — форматирует секунды в строку по выбранному формату (в т.ч. trimLeadingZeros).
 - `PrimitiveExtensions.FormatWithSeparator(float)` — форматирует число с разделителем и точностью.
 - `PrimitiveExtensions.NormalizeToUnit` — нормализует значение в диапазон [0..1] по умолчанию.
 - `PrimitiveExtensions.NormalizeToRange` — нормализует значение в диапазон [-1..1] по умолчанию.
@@ -533,8 +548,8 @@ Assets/NeoxiderPages/
 
 #### Tools/Time
 
-- `Assets/Neoxider/Scripts/Tools/Time/Timer.cs` — таймер (класс).
-- `Assets/Neoxider/Scripts/Tools/Time/TimerObject.cs` — MonoBehaviour таймер (события/режимы).
+- `Assets/Neoxider/Scripts/Tools/Time/Timer.cs` — таймер (класс). Play, SetRemainingTime, SetProgress.
+- `Assets/Neoxider/Scripts/Tools/Time/TimerObject.cs` — MonoBehaviour таймер (события/режимы). SetDuration.
 
 #### Tools/View
 
@@ -551,7 +566,7 @@ Assets/NeoxiderPages/
 
 - `Assets/Neoxider/Scripts/Tools/Text/SetText.cs` — установка текста с анимацией и форматированием (`NumberNotation`,
   `NumberRoundingMode`, `SetBigInteger`, `SetFormatted`).
-- `Assets/Neoxider/Scripts/Tools/Text/TimeToText.cs` — вывод времени в текст.
+- `Assets/Neoxider/Scripts/Tools/Text/TimeToText.cs` — вывод времени в текст. TrySetFromString, AllowNegative.
 
 #### Tools/Physics
 

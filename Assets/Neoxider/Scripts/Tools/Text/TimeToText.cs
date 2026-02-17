@@ -1,3 +1,4 @@
+using System;
 using Neo.Extensions;
 using TMPro;
 using UnityEngine;
@@ -53,8 +54,21 @@ namespace Neo
             [Header("Time Format")] [Tooltip("Whether to display text when time is zero")] [SerializeField]
             private bool _zeroText = true;
 
-            [Tooltip("The format to use when displaying time")] [SerializeField]
+            [Tooltip("Whether to allow and display negative time values")] [SerializeField]
+            private bool _allowNegative;
+
+            [Tooltip("Display mode: Clock = colon-separated (11:11), Compact = unit format (11d 11m)")] [SerializeField]
+            private TimeDisplayMode _displayMode = TimeDisplayMode.Clock;
+
+            [Tooltip("The format to use when displaying time (Clock mode only)")] [SerializeField]
             private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
+
+            [Tooltip("Include seconds in compact output (Compact mode only)")] [SerializeField]
+            private bool _compactIncludeSeconds = true;
+
+            [Tooltip("Maximum number of units in compact output (Compact mode only)")] [SerializeField]
+            [Min(1)]
+            private int _compactMaxParts = 3;
 
             [Header("Text Formatting")] [Tooltip("Text to add before the time value")] [SerializeField]
             private string startAddText = "";
@@ -96,6 +110,19 @@ namespace Neo
             }
 
             /// <summary>
+            ///     Gets or sets whether negative time values are allowed and displayed
+            /// </summary>
+            public bool AllowNegative
+            {
+                get => _allowNegative;
+                set
+                {
+                    _allowNegative = value;
+                    UpdateDisplay();
+                }
+            }
+
+            /// <summary>
             ///     Gets or sets the separator character
             /// </summary>
             public string Separator
@@ -104,6 +131,45 @@ namespace Neo
                 set
                 {
                     separator = value;
+                    UpdateDisplay();
+                }
+            }
+
+            /// <summary>
+            ///     Gets or sets the display mode (Clock or Compact)
+            /// </summary>
+            public TimeDisplayMode DisplayMode
+            {
+                get => _displayMode;
+                set
+                {
+                    _displayMode = value;
+                    UpdateDisplay();
+                }
+            }
+
+            /// <summary>
+            ///     Gets or sets whether to include seconds in compact output
+            /// </summary>
+            public bool CompactIncludeSeconds
+            {
+                get => _compactIncludeSeconds;
+                set
+                {
+                    _compactIncludeSeconds = value;
+                    UpdateDisplay();
+                }
+            }
+
+            /// <summary>
+            ///     Gets or sets the maximum number of units in compact output
+            /// </summary>
+            public int CompactMaxParts
+            {
+                get => _compactMaxParts;
+                set
+                {
+                    _compactMaxParts = Mathf.Max(1, value);
                     UpdateDisplay();
                 }
             }
@@ -128,11 +194,12 @@ namespace Neo
 
             private void OnValidate()
             {
-                // Auto-assign text component if not set
                 if (text == null)
                 {
                     text = GetComponent<TMP_Text>();
                 }
+
+                _compactMaxParts = Mathf.Max(1, _compactMaxParts);
             }
 
             #endregion
@@ -151,14 +218,26 @@ namespace Neo
                     return;
                 }
 
+                if (!_allowNegative && time < 0f)
+                {
+                    time = 0f;
+                }
+
                 float prevTime = lastTime;
                 bool changed = !Mathf.Approximately(prevTime, time);
                 CurrentTime = time;
 
-                // Display text based on zero text setting
-                if ((time == 0 && _zeroText) || time > 0)
+                bool shouldDisplay = (time == 0 && _zeroText) || time > 0 || (_allowNegative && time < 0);
+                if (shouldDisplay)
                 {
-                    string formatted = FormatTime(time, timeFormat, separator);
+                    float displayValue = _allowNegative && time < 0 ? Mathf.Abs(time) : time;
+                    string formatted = _displayMode == TimeDisplayMode.Compact
+                        ? TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts)
+                        : displayValue.FormatTime(timeFormat, separator);
+                    if (_allowNegative && time < 0)
+                    {
+                        formatted = "-" + formatted;
+                    }
 
                     if (string.IsNullOrEmpty(startAddText))
                     {
@@ -181,6 +260,23 @@ namespace Neo
                     OnTimeChanged?.Invoke(time);
                     lastTime = time;
                 }
+            }
+
+            /// <summary>
+            ///     Tries to parse a duration string (SS, MM:SS, HH:MM:SS, DD:HH:MM:SS) and set the displayed time.
+            /// </summary>
+            /// <param name="raw">Input duration text.</param>
+            /// <param name="separator">Optional token separator.</param>
+            /// <returns>True when parsing succeeds and text is updated.</returns>
+            public bool TrySetFromString(string raw, string separator = null)
+            {
+                if (TimeParsingExtensions.TryParseDuration(raw, out float seconds, separator ?? this.separator))
+                {
+                    Set(seconds);
+                    return true;
+                }
+
+                return false;
             }
 
             /// <summary>

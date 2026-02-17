@@ -54,6 +54,7 @@
 
 **Публичные методы (Public Methods)**
 - `Play()`: Запускает таймер, выставляя стартовое значение по `initialProgress`.
+- `SetDuration(float newDuration, bool keepProgress = true)`: Устанавливает длительность. `keepProgress = true` сохраняет соотношение прогресса.
 - `Pause(bool paused = true)`: Ставит таймер на паузу (`true`) или снимает с паузы (`false`).
 - `TogglePause()`: Переключает состояние паузы.
 - `Stop()`: Останавливает таймер и сбрасывает его.
