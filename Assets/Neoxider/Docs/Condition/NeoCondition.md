@@ -2,6 +2,8 @@
 
 No-Code система условий для NeoxiderTools. Проверяет значения полей/свойств любых компонентов и GameObject'ов через Inspector, без написания кода.
 
+См. roadmap развития Editor/архитектуры: [`NeoCondition_Editor_Roadmap.md`](./NeoCondition_Editor_Roadmap.md)
+
 ## Быстрый старт
 
 1. Добавить `NeoCondition` на GameObject (Add Component → Neo → Condition → NeoCondition)

@@ -255,8 +255,28 @@ namespace Neo
                 }
 
                 DateTime now = DateTime.UtcNow;
-                int accumulated = lastUtc.GetAccumulatedClaimCount(secondsToWaitForReward, now);
-                return CooldownRewardExtensions.CapToMaxPerTake(accumulated, _maxRewardsPerTake);
+                int accumulated = GetAccumulatedClaimCount(lastUtc, secondsToWaitForReward, now);
+                return CapToMaxPerTake(accumulated, _maxRewardsPerTake);
+            }
+
+            private static int GetAccumulatedClaimCount(DateTime lastClaimUtc, float cooldownSeconds, DateTime nowUtc)
+            {
+                if (cooldownSeconds <= 0f) return 0;
+                double elapsed = (nowUtc - lastClaimUtc).TotalSeconds;
+                return elapsed < 0 ? 0 : (int)(elapsed / cooldownSeconds);
+            }
+
+            private static int CapToMaxPerTake(int accumulated, int maxPerTake)
+            {
+                if (accumulated <= 0) return 0;
+                if (maxPerTake < 0) return accumulated;
+                return Math.Min(accumulated, maxPerTake);
+            }
+
+            private static DateTime AdvanceLastClaimTime(DateTime lastClaimUtc, int claimsGiven, float cooldownSeconds)
+            {
+                if (claimsGiven <= 0 || cooldownSeconds <= 0f) return lastClaimUtc;
+                return lastClaimUtc.AddSeconds(claimsGiven * cooldownSeconds);
             }
 
             /// <summary>
@@ -293,7 +313,7 @@ namespace Neo
                 {
                     if (TryGetLastRewardTimeUtc(out DateTime lastUtc))
                     {
-                        DateTime newLast = lastUtc.AdvanceLastClaimTime(count, secondsToWaitForReward);
+                        DateTime newLast = AdvanceLastClaimTime(lastUtc, count, secondsToWaitForReward);
                         SaveLastRewardTime(newLast);
                     }
                     else

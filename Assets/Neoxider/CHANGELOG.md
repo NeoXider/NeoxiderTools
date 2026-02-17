@@ -2,7 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.9] - Unreleased
+## [5.8.10] - Unreleased
+
+### Исправлено
+
+- **TimeReward** — логика накопления наград и сдвига времени перенесена в сам компонент; зависимость от `CooldownRewardExtensions` убрана для корректной сборки во всех конфигурациях (в т.ч. UPM).
+
+## [5.8.9] - 2025-02-17
 
 ### Добавлено
 
