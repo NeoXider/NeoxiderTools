@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -9,6 +11,16 @@ using TMPro;
 
 namespace Neo
 {
+    /// <summary>How to persist timer state: by current seconds or by real end/start time (UTC).</summary>
+    public enum TimerSaveMode
+    {
+        /// <summary>Save current time value; on load continue from that value.</summary>
+        Seconds,
+
+        /// <summary>Save target time (UTC); on load remaining time is recalculated from now.</summary>
+        RealTime
+    }
+
     /// <summary>
     ///     MonoBehaviour-based timer with Unity events support and automatic UI updates
     /// </summary>
@@ -115,6 +127,17 @@ namespace Neo
         [Tooltip("Called when timer reaches a milestone percentage")]
         public UnityEvent<float> OnMilestoneReached;
 
+        [Header("Save")]
+        [Tooltip("Save and restore timer state (current time and running state). Disabled by default.")]
+        [SerializeField] private bool saveProgress;
+
+        [Tooltip("Seconds: save current time value; on load continue from that value. RealTime: save target time (UTC); on load remaining time is recalculated (e.g. re-enter after 1 min → countdown continues from real end time).")]
+        [SerializeField] private TimerSaveMode saveMode = TimerSaveMode.Seconds;
+
+        [Tooltip("Unique key for SaveProvider. Required when Save Progress is enabled.")]
+        [SerializeField] private string saveKey = "TimerObject";
+
+        private bool _loadedFromSave;
         private float timeSinceLastUpdate;
         private bool[] milestoneReached;
         private float lastProgress = -1f;
@@ -236,6 +259,11 @@ namespace Neo
             {
                 currentTime = countUp ? initialProgress * duration : (1f - initialProgress) * duration;
             }
+
+            if (saveProgress && !string.IsNullOrEmpty(saveKey))
+            {
+                _loadedFromSave = LoadState();
+            }
         }
 
         private void ApplyRandomDurationIfNeeded()
@@ -267,7 +295,13 @@ namespace Neo
                 return;
             }
 
-            if (autoStart)
+            if (_loadedFromSave)
+            {
+                _loadedFromSave = false;
+                InvokeEvents();
+                UpdateUI();
+            }
+            else if (autoStart)
             {
                 Play();
             }
@@ -275,6 +309,124 @@ namespace Neo
             {
                 UpdateUI();
             }
+        }
+
+        private void OnDisable()
+        {
+            if (saveProgress && !string.IsNullOrEmpty(saveKey))
+            {
+                SaveState();
+            }
+        }
+
+        private void SaveState()
+        {
+            if (saveMode == TimerSaveMode.Seconds)
+            {
+                SaveProvider.SetFloat(saveKey + "_t", currentTime);
+                SaveProvider.SetBool(saveKey + "_a", isActive);
+                SaveProvider.Save();
+                return;
+            }
+
+            if (infiniteDuration)
+            {
+                if (saveMode == TimerSaveMode.RealTime)
+                {
+                    DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
+                    SaveProvider.SetString(saveKey + "_rt", startUtc.ToString("o"));
+                    SaveProvider.SetBool(saveKey + "_a", isActive);
+                }
+                else
+                {
+                    SaveProvider.SetFloat(saveKey + "_t", currentTime);
+                    SaveProvider.SetBool(saveKey + "_a", isActive);
+                }
+                SaveProvider.Save();
+                return;
+            }
+
+            if (countUp)
+            {
+                DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
+                SaveProvider.SetString(saveKey + "_rt", startUtc.ToString("o"));
+            }
+            else
+            {
+                DateTime endUtc = DateTime.UtcNow.AddSeconds(currentTime);
+                SaveProvider.SetString(saveKey + "_rt", endUtc.ToString("o"));
+            }
+
+            SaveProvider.Save();
+        }
+
+        private bool LoadState()
+        {
+            if (infiniteDuration && saveMode == TimerSaveMode.RealTime)
+            {
+                if (!SaveProvider.HasKey(saveKey + "_rt"))
+                {
+                    return false;
+                }
+
+                string raw = SaveProvider.GetString(saveKey + "_rt", null);
+                if (string.IsNullOrEmpty(raw) || !DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime startUtc))
+                {
+                    return false;
+                }
+
+                currentTime = (float)(DateTime.UtcNow - startUtc).TotalSeconds;
+                currentTime = Mathf.Max(0f, currentTime);
+                isActive = SaveProvider.GetBool(saveKey + "_a", true);
+                lastProgress = -1f;
+                return true;
+            }
+
+            if (saveMode == TimerSaveMode.Seconds || infiniteDuration)
+            {
+                if (!SaveProvider.HasKey(saveKey + "_t"))
+                {
+                    return false;
+                }
+
+                currentTime = SaveProvider.GetFloat(saveKey + "_t", countUp ? 0f : duration);
+                if (!infiniteDuration)
+                {
+                    currentTime = Mathf.Clamp(currentTime, 0f, duration);
+                }
+
+                isActive = SaveProvider.GetBool(saveKey + "_a", false);
+                lastProgress = -1f;
+                return true;
+            }
+
+            if (!SaveProvider.HasKey(saveKey + "_rt"))
+            {
+                return false;
+            }
+
+            string rawRt = SaveProvider.GetString(saveKey + "_rt", null);
+            if (string.IsNullOrEmpty(rawRt) || !DateTime.TryParse(rawRt, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime savedUtc))
+            {
+                return false;
+            }
+
+            DateTime now = DateTime.UtcNow;
+            if (countUp)
+            {
+                currentTime = (float)(now - savedUtc).TotalSeconds;
+                currentTime = Mathf.Clamp(currentTime, 0f, duration);
+                isActive = currentTime < duration;
+            }
+            else
+            {
+                currentTime = (float)(savedUtc - now).TotalSeconds;
+                currentTime = Mathf.Clamp(currentTime, 0f, duration);
+                isActive = currentTime > 0f;
+            }
+
+            lastProgress = -1f;
+            return true;
         }
 
         /// <summary>

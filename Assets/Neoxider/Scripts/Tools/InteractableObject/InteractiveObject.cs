@@ -60,8 +60,11 @@ namespace Neo
             [Tooltip("Include trigger colliders in look ray checks.")] [SerializeField]
             private bool includeTriggerCollidersInLookRay = true;
 
+            [Tooltip("Include trigger colliders in mouse hover raycast. Enable for objects with Trigger Collider.")] [SerializeField]
+            private bool includeTriggerCollidersInMouseRaycast = true;
+
             [Header("Distance Control")] [Tooltip("Maximum interaction distance (0 = unlimited).")] [SerializeField]
-            private float interactionDistance = 2f;
+            private float interactionDistance = 3f;
 
             [Tooltip("Reference point for distance check (player/camera). Uses main camera if not set.")]
             [SerializeField]
@@ -125,6 +128,9 @@ namespace Neo
 
             private static readonly Type KeyboardType =
                 Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
+
+            private static readonly Type MouseType =
+                Type.GetType("UnityEngine.InputSystem.Mouse, Unity.InputSystem");
 
             private void Awake()
             {
@@ -261,7 +267,11 @@ namespace Neo
             private void UpdateMouseInput()
             {
                 int mouseIndex = (int)downUpMouseButton;
-                bool mouseHeld = Input.GetMouseButton(mouseIndex);
+                if (!TryGetMouseButton(mouseIndex, out bool mouseHeld))
+                {
+                    mouseHeldPrev = false;
+                    return;
+                }
 
                 if (mouseHeld && !mouseHeldPrev)
                 {
@@ -311,9 +321,15 @@ namespace Neo
 
                 bool inRange = interactionDistance > 0f ? IsInRange() : true;
 
-                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+                if (!TryGetMousePosition(out Vector3 mousePos))
+                {
+                    return;
+                }
+
+                Ray ray = cam.ScreenPointToRay(mousePos);
                 RaycastHit hit;
-                bool raycastHit = Physics.Raycast(ray, out hit) && hit.collider == collider;
+                QueryTriggerInteraction triggerInteraction = includeTriggerCollidersInMouseRaycast ? QueryTriggerInteraction.Collide : QueryTriggerInteraction.Ignore;
+                bool raycastHit = Physics.Raycast(ray, out hit, float.MaxValue, ~0, triggerInteraction) && hit.collider == collider;
                 bool isHoveredNow = raycastHit && inRange;
 
                 if (isHoveredNow && !wasHoveredByRaycast)
@@ -725,12 +741,24 @@ namespace Neo
 
             private bool IsKeyboardActionDown()
             {
-                return Input.GetKeyDown(keyboardKey) || ReadNewInputKeyState(keyboardKey, "wasPressedThisFrame");
+                try
+                {
+                    if (Input.GetKeyDown(keyboardKey)) return true;
+                }
+                catch (InvalidOperationException) { }
+
+                return ReadNewInputKeyState(keyboardKey, "wasPressedThisFrame");
             }
 
             private bool IsKeyboardActionUp()
             {
-                return Input.GetKeyUp(keyboardKey) || ReadNewInputKeyState(keyboardKey, "wasReleasedThisFrame");
+                try
+                {
+                    if (Input.GetKeyUp(keyboardKey)) return true;
+                }
+                catch (InvalidOperationException) { }
+
+                return ReadNewInputKeyState(keyboardKey, "wasReleasedThisFrame");
             }
 
             private static bool ReadNewInputKeyState(KeyCode keyCode, string statePropertyName)
@@ -817,6 +845,99 @@ namespace Neo
                     default:
                         return null;
                 }
+            }
+
+            private static bool TryGetMousePosition(out Vector3 position)
+            {
+                try
+                {
+                    position = Input.mousePosition;
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    if (TryGetMousePositionFromNewInputSystem(out position))
+                    {
+                        return true;
+                    }
+
+                    position = Vector3.zero;
+                    return false;
+                }
+            }
+
+            private static bool TryGetMousePositionFromNewInputSystem(out Vector3 position)
+            {
+                position = Vector3.zero;
+                if (MouseType == null) return false;
+
+                PropertyInfo currentProperty = MouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+                object mouse = currentProperty?.GetValue(null);
+                if (mouse == null) return false;
+
+                PropertyInfo positionProperty = MouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
+                object positionControl = positionProperty?.GetValue(mouse);
+                if (positionControl == null) return false;
+
+                MethodInfo readValueMethod = positionControl.GetType().GetMethod("ReadValue", Type.EmptyTypes);
+                if (readValueMethod == null) return false;
+
+                object value = readValueMethod.Invoke(positionControl, null);
+                if (value is Vector2 v2)
+                {
+                    position = new Vector3(v2.x, v2.y, 0f);
+                    return true;
+                }
+
+                return false;
+            }
+
+            private static bool TryGetMouseButton(int buttonIndex, out bool isPressed)
+            {
+                try
+                {
+                    isPressed = Input.GetMouseButton(buttonIndex);
+                    return true;
+                }
+                catch (InvalidOperationException)
+                {
+                    if (TryGetMouseButtonFromNewInputSystem(buttonIndex, out isPressed))
+                    {
+                        return true;
+                    }
+
+                    isPressed = false;
+                    return false;
+                }
+            }
+
+            private static bool TryGetMouseButtonFromNewInputSystem(int buttonIndex, out bool isPressed)
+            {
+                isPressed = false;
+                if (MouseType == null) return false;
+
+                PropertyInfo currentProperty = MouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+                object mouse = currentProperty?.GetValue(null);
+                if (mouse == null) return false;
+
+                string buttonName = buttonIndex switch
+                {
+                    0 => "leftButton",
+                    1 => "rightButton",
+                    2 => "middleButton",
+                    _ => null
+                };
+                if (buttonName == null) return false;
+
+                PropertyInfo buttonProperty = MouseType.GetProperty(buttonName, BindingFlags.Public | BindingFlags.Instance);
+                object buttonControl = buttonProperty?.GetValue(mouse);
+                if (buttonControl == null) return false;
+
+                PropertyInfo isPressedProperty = buttonControl.GetType().GetProperty("isPressed", BindingFlags.Public | BindingFlags.Instance);
+                if (isPressedProperty?.PropertyType != typeof(bool)) return false;
+
+                isPressed = (bool)isPressedProperty.GetValue(buttonControl);
+                return true;
             }
 
             private void CheckEventSystemOnce()

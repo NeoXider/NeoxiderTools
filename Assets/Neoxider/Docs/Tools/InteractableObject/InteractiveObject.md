@@ -34,6 +34,7 @@
 - `minLookDot`: Порог направления взгляда (`dot`), чем выше значение — тем уже конус взаимодействия
 - `requireDirectLookRay`: Требовать прямую видимость объекта по лучу от точки проверки
 - `includeTriggerCollidersInLookRay` (по умолчанию `true`): Учитывать trigger-коллайдеры в проверке взгляда (важно для интерактивных объектов с Trigger Collider)
+- `includeTriggerCollidersInMouseRaycast` (по умолчанию `true`): Учитывать trigger-коллайдеры в луче наведения мыши (hover). Включено — объекты с Trigger Collider реагируют на курсор; выключено — только обычные коллайдеры.
 
 ### Debug
 - `drawInteractionRayForOneSecond`: Отрисовывать debug-луч проверки взаимодействия
@@ -45,7 +46,7 @@
   - голубой: проверка без прямого луча (`requireDirectLookRay = false`).
 
 ### Distance Control (контроль дистанции)
-- `interactionDistance` (по умолчанию `2`): Максимальная дистанция взаимодействия в метрах
+- `interactionDistance` (по умолчанию `3`): Максимальная дистанция взаимодействия в метрах
   - `0` = без ограничений (можно взаимодействовать с любого расстояния)
   - `> 0` = только в пределах указанного радиуса
 - `distanceCheckPoint`: Точка отсчёта для проверки дистанции (обычно игрок или камера)
@@ -114,7 +115,7 @@
 ### Дверь с проверкой дистанции
 ```csharp
 // Настройки в инспекторе:
-interactionDistance = 2       // можно открыть с 2 метров
+interactionDistance = 3       // можно открыть с 3 метров
 distanceCheckPoint = Player   // проверка от игрока
 keyboardKey = E
 
@@ -184,7 +185,7 @@ onInteractDown → Interact()   // работает только если нет
 ### Сундук с визуализацией радиуса
 ```csharp
 // Настройки:
-interactionDistance = 2
+interactionDistance = 3
 keyboardKey = E
 
 // События:
