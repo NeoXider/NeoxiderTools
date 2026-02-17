@@ -348,6 +348,28 @@ namespace Neo.Condition
             _hasLoggedSearchNotFoundWarning = false;
         }
 
+        /// <summary>
+        ///     Если режим OtherObject и Other Source Object не задан — подставляет объект левой стороны (source).
+        ///     Вызывать из NeoCondition в Start, чтобы при None (в инспекторе) сравнение шло с тем же объектом.
+        /// </summary>
+        public void BindOtherToSourceIfNull(GameObject fallbackObject)
+        {
+            if (_thresholdSource != ThresholdSource.OtherObject)
+            {
+                return;
+            }
+            if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
+            {
+                return;
+            }
+            if (_otherSourceObject != null)
+            {
+                return;
+            }
+            _otherSourceObject = ResolveTargetObject(fallbackObject);
+            InvalidateOtherCache();
+        }
+
         private void InvalidateOtherCache()
         {
             _cacheOtherValid = false;
@@ -408,8 +430,7 @@ namespace Neo.Condition
 
             if (_thresholdSource == ThresholdSource.OtherObject)
             {
-                GameObject leftSideTarget = GetLeftSideTarget();
-                if (!EnsureCacheOther(fallbackObject, leftSideTarget))
+                if (!EnsureCacheOther(fallbackObject))
                 {
                     return false;
                 }
@@ -802,18 +823,9 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Объект левой стороны (уже разрешённый после EnsureCache). Нужен, чтобы при пустом Other Source использовать тот же объект.
+        ///     Разрешает объект для правой стороны. При пустом Other Source Object — тот же объект, что и слева (через ResolveTargetObject).
         /// </summary>
-        private GameObject GetLeftSideTarget()
-        {
-            if (_cachedComponent != null)
-            {
-                return _cachedComponent.gameObject;
-            }
-            return _cachedGameObject;
-        }
-
-        private GameObject ResolveOtherTargetObject(GameObject fallbackObject, GameObject leftSideTarget)
+        private GameObject ResolveOtherTargetObject(GameObject fallbackObject)
         {
             if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
             {
@@ -842,7 +854,7 @@ namespace Neo.Condition
             {
                 return _otherSourceObject;
             }
-            return leftSideTarget != null ? leftSideTarget : fallbackObject;
+            return ResolveTargetObject(fallbackObject);
         }
 
         private bool IsOtherSourceObjectDestroyed()
@@ -859,14 +871,14 @@ namespace Neo.Condition
             }
         }
 
-        private bool EnsureCacheOther(GameObject fallbackObject, GameObject leftSideTarget = null)
+        private bool EnsureCacheOther(GameObject fallbackObject)
         {
             return _otherSourceMode == SourceMode.GameObject
-                ? EnsureCacheOtherGameObject(fallbackObject, leftSideTarget)
-                : EnsureCacheOtherComponent(fallbackObject, leftSideTarget);
+                ? EnsureCacheOtherGameObject(fallbackObject)
+                : EnsureCacheOtherComponent(fallbackObject);
         }
 
-        private bool EnsureCacheOtherComponent(GameObject fallbackObject, GameObject leftSideTarget = null)
+        private bool EnsureCacheOtherComponent(GameObject fallbackObject)
         {
             if (_cacheOtherValid && _cachedOtherMember != null)
             {
@@ -885,7 +897,7 @@ namespace Neo.Condition
             _cachedOtherGameObject = null;
             _cachedOtherMember = null;
 
-            GameObject target = ResolveOtherTargetObject(fallbackObject, leftSideTarget);
+            GameObject target = ResolveOtherTargetObject(fallbackObject);
             if (target == null)
             {
                 return false;
@@ -937,7 +949,7 @@ namespace Neo.Condition
             return false;
         }
 
-        private bool EnsureCacheOtherGameObject(GameObject fallbackObject, GameObject leftSideTarget = null)
+        private bool EnsureCacheOtherGameObject(GameObject fallbackObject)
         {
             if (_cacheOtherValid && _cachedOtherMember != null)
             {
@@ -956,7 +968,7 @@ namespace Neo.Condition
             _cachedOtherGameObject = null;
             _cachedOtherMember = null;
 
-            GameObject target = ResolveOtherTargetObject(fallbackObject, leftSideTarget);
+            GameObject target = ResolveOtherTargetObject(fallbackObject);
             if (target == null || string.IsNullOrEmpty(_otherPropertyName))
             {
                 return false;

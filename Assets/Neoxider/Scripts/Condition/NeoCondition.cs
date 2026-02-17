@@ -122,6 +122,11 @@ namespace Neo.Condition
 
         private void Start()
         {
+            for (int i = 0; i < _conditions?.Count; i++)
+            {
+                _conditions[i]?.BindOtherToSourceIfNull(gameObject);
+            }
+
             if (_checkOnStart)
             {
                 Check();
