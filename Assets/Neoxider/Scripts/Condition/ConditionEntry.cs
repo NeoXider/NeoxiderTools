@@ -18,6 +18,18 @@ namespace Neo.Condition
     }
 
     /// <summary>
+    ///     С чем сравнивать: с константой (число/текст) или с переменной другого объекта.
+    /// </summary>
+    public enum ThresholdSource
+    {
+        /// <summary>Сравнивать с заданным числом или текстом (порог).</summary>
+        Constant,
+
+        /// <summary>Сравнивать с полем/свойством другого объекта.</summary>
+        OtherObject
+    }
+
+    /// <summary>
     ///     Тип значения, считанного из компонента.
     /// </summary>
     public enum ValueType
@@ -87,11 +99,24 @@ namespace Neo.Condition
         [Tooltip("Инвертировать результат (NOT).")] [SerializeField]
         private bool _invert;
 
-        // Threshold values by type
+        [Tooltip("Сравнивать с константой (число/текст) или с переменной другого объекта.")] [SerializeField]
+        private ThresholdSource _thresholdSource = ThresholdSource.Constant;
+
+        // Threshold values by type (when _thresholdSource == Constant)
         [SerializeField] private int _thresholdInt;
         [SerializeField] private float _thresholdFloat;
         [SerializeField] private bool _thresholdBool = true;
         [SerializeField] private string _thresholdString = "";
+
+        // Other object reference (when _thresholdSource == OtherObject)
+        [SerializeField] private SourceMode _otherSourceMode = SourceMode.Component;
+        [SerializeField] private bool _otherUseSceneSearch;
+        [SerializeField] private string _otherSearchObjectName = "";
+        [SerializeField] private bool _otherWaitForObject;
+        [SerializeField] private GameObject _otherSourceObject;
+        [SerializeField] private int _otherComponentIndex;
+        [SerializeField] private string _otherComponentTypeName = "";
+        [SerializeField] private string _otherPropertyName = "";
 
         // Cached reflection data
         [NonSerialized] private Component _cachedComponent;
@@ -101,6 +126,16 @@ namespace Neo.Condition
 
         // Кеш поиска по имени
         [NonSerialized] private GameObject _foundByNameObject;
+
+        // Кеш для "other" объекта (второй источник при ThresholdSource.OtherObject)
+        [NonSerialized] private Component _cachedOtherComponent;
+        [NonSerialized] private GameObject _cachedOtherGameObject;
+        [NonSerialized] private MemberInfo _cachedOtherMember;
+        [NonSerialized] private bool _cacheOtherValid;
+        [NonSerialized] private GameObject _foundOtherByNameObject;
+        [NonSerialized] private bool _hasSearchedOtherByName;
+        [NonSerialized] private bool _hasLoggedOtherDestroyedWarning;
+        [NonSerialized] private bool _hasLoggedOtherMissingWarning;
 
         // Флаг: предупреждение уже показано (чтобы не спамить каждый кадр)
         [NonSerialized] private bool _hasLoggedDestroyedWarning;
@@ -249,6 +284,19 @@ namespace Neo.Condition
             set => _invert = value;
         }
 
+        /// <summary>
+        ///     Сравнивать с константой или с переменной другого объекта.
+        /// </summary>
+        public ThresholdSource ThresholdSource
+        {
+            get => _thresholdSource;
+            set
+            {
+                _thresholdSource = value;
+                InvalidateOtherCache();
+            }
+        }
+
         public int ThresholdInt
         {
             get => _thresholdInt;
@@ -289,14 +337,27 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Полный сброс кеша, включая кеш поиска по имени.
+        ///     Полный сброс кеша, включая кеш поиска по имени и кеш второго объекта.
         /// </summary>
         public void InvalidateCacheFull()
         {
             InvalidateCache();
+            InvalidateOtherCache();
             _foundByNameObject = null;
             _hasSearchedByName = false;
             _hasLoggedSearchNotFoundWarning = false;
+        }
+
+        private void InvalidateOtherCache()
+        {
+            _cacheOtherValid = false;
+            _cachedOtherComponent = null;
+            _cachedOtherGameObject = null;
+            _cachedOtherMember = null;
+            _foundOtherByNameObject = null;
+            _hasSearchedOtherByName = false;
+            _hasLoggedOtherDestroyedWarning = false;
+            _hasLoggedOtherMissingWarning = false;
         }
 
         /// <summary>
@@ -343,6 +404,69 @@ namespace Neo.Condition
             if (rawValue == null)
             {
                 return false;
+            }
+
+            if (_thresholdSource == ThresholdSource.OtherObject)
+            {
+                GameObject leftSideTarget = GetLeftSideTarget();
+                if (!EnsureCacheOther(fallbackObject, leftSideTarget))
+                {
+                    return false;
+                }
+
+                object otherValue;
+                try
+                {
+                    otherValue = ReadOtherValue();
+                }
+                catch (MissingReferenceException)
+                {
+                    LogOtherDestroyedWarning("Второй объект/компонент уничтожен при чтении");
+                    InvalidateOtherCache();
+                    return false;
+                }
+                catch (Exception ex)
+                {
+                    if (!_hasLoggedOtherMissingWarning)
+                    {
+                        Debug.LogWarning($"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
+                        _hasLoggedOtherMissingWarning = true;
+                    }
+                    InvalidateOtherCache();
+                    return false;
+                }
+
+                if (otherValue == null)
+                {
+                    return false;
+                }
+
+                try
+                {
+                    switch (_valueType)
+                    {
+                        case ValueType.Int:
+                            return CompareInt(Convert.ToInt32(rawValue), Convert.ToInt32(otherValue));
+                        case ValueType.Float:
+                            return CompareFloat(Convert.ToSingle(rawValue), Convert.ToSingle(otherValue));
+                        case ValueType.Bool:
+                            return CompareBool(Convert.ToBoolean(rawValue), Convert.ToBoolean(otherValue));
+                        case ValueType.String:
+                            return CompareString(rawValue.ToString(), otherValue.ToString());
+                        default:
+                            return false;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (!_hasLoggedMissingMemberWarning)
+                    {
+                        Debug.LogWarning(
+                            $"[NeoCondition] Ошибка сравнения двух переменных ({_propertyName} vs {_otherPropertyName}): {ex.Message}");
+                        _hasLoggedMissingMemberWarning = true;
+                    }
+                    return false;
+                }
             }
 
             try
@@ -677,54 +801,304 @@ namespace Neo.Condition
             return null;
         }
 
+        /// <summary>
+        ///     Объект левой стороны (уже разрешённый после EnsureCache). Нужен, чтобы при пустом Other Source использовать тот же объект.
+        /// </summary>
+        private GameObject GetLeftSideTarget()
+        {
+            if (_cachedComponent != null)
+            {
+                return _cachedComponent.gameObject;
+            }
+            return _cachedGameObject;
+        }
+
+        private GameObject ResolveOtherTargetObject(GameObject fallbackObject, GameObject leftSideTarget)
+        {
+            if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
+            {
+                if (_foundOtherByNameObject != null)
+                {
+                    return _foundOtherByNameObject;
+                }
+                if (_hasSearchedOtherByName && _foundOtherByNameObject == null)
+                {
+                    _hasSearchedOtherByName = false;
+                }
+                _foundOtherByNameObject = GameObject.Find(_otherSearchObjectName);
+                _hasSearchedOtherByName = true;
+                if (_foundOtherByNameObject == null && !_otherWaitForObject && !_hasLoggedOtherMissingWarning)
+                {
+                    Debug.LogWarning($"[NeoCondition] Второй объект: GameObject.Find(\"{_otherSearchObjectName}\") не найден.");
+                    _hasLoggedOtherMissingWarning = true;
+                }
+                return _foundOtherByNameObject;
+            }
+            if (IsOtherSourceObjectDestroyed())
+            {
+                return null;
+            }
+            if (_otherSourceObject != null)
+            {
+                return _otherSourceObject;
+            }
+            return leftSideTarget != null ? leftSideTarget : fallbackObject;
+        }
+
+        private bool IsOtherSourceObjectDestroyed()
+        {
+            return !ReferenceEquals(_otherSourceObject, null) && _otherSourceObject == null;
+        }
+
+        private void LogOtherDestroyedWarning(string message)
+        {
+            if (!_hasLoggedOtherDestroyedWarning)
+            {
+                Debug.LogWarning($"[NeoCondition] {message}. Условие вернёт false.");
+                _hasLoggedOtherDestroyedWarning = true;
+            }
+        }
+
+        private bool EnsureCacheOther(GameObject fallbackObject, GameObject leftSideTarget = null)
+        {
+            return _otherSourceMode == SourceMode.GameObject
+                ? EnsureCacheOtherGameObject(fallbackObject, leftSideTarget)
+                : EnsureCacheOtherComponent(fallbackObject, leftSideTarget);
+        }
+
+        private bool EnsureCacheOtherComponent(GameObject fallbackObject, GameObject leftSideTarget = null)
+        {
+            if (_cacheOtherValid && _cachedOtherMember != null)
+            {
+                if (_cachedOtherComponent == null)
+                {
+                    LogOtherDestroyedWarning($"Второй объект: компонент '{_otherComponentTypeName}' уничтожен");
+                    InvalidateOtherCache();
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            _cacheOtherValid = false;
+            _cachedOtherComponent = null;
+            _cachedOtherGameObject = null;
+            _cachedOtherMember = null;
+
+            GameObject target = ResolveOtherTargetObject(fallbackObject, leftSideTarget);
+            if (target == null)
+            {
+                return false;
+            }
+            if (string.IsNullOrEmpty(_otherComponentTypeName) || string.IsNullOrEmpty(_otherPropertyName))
+            {
+                return false;
+            }
+            Component[] components = target.GetComponents<Component>();
+            foreach (Component comp in components)
+            {
+                if (comp == null) continue;
+                if (comp.GetType().FullName == _otherComponentTypeName || comp.GetType().Name == _otherComponentTypeName)
+                {
+                    _cachedOtherComponent = comp;
+                    break;
+                }
+            }
+            if (_cachedOtherComponent == null)
+            {
+                if (!_hasLoggedOtherMissingWarning)
+                {
+                    Debug.LogWarning($"[NeoCondition] Второй объект: компонент '{_otherComponentTypeName}' не найден на '{target.name}'.");
+                    _hasLoggedOtherMissingWarning = true;
+                }
+                return false;
+            }
+            Type type = _cachedOtherComponent.GetType();
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            PropertyInfo prop = type.GetProperty(_otherPropertyName, flags);
+            if (prop != null && prop.CanRead)
+            {
+                _cachedOtherMember = prop;
+                _cacheOtherValid = true;
+                return true;
+            }
+            FieldInfo otherField = type.GetField(_otherPropertyName, flags);
+            if (otherField != null)
+            {
+                _cachedOtherMember = otherField;
+                _cacheOtherValid = true;
+                return true;
+            }
+            if (!_hasLoggedOtherMissingWarning)
+            {
+                Debug.LogWarning($"[NeoCondition] Второй объект: свойство/поле '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
+                _hasLoggedOtherMissingWarning = true;
+            }
+            return false;
+        }
+
+        private bool EnsureCacheOtherGameObject(GameObject fallbackObject, GameObject leftSideTarget = null)
+        {
+            if (_cacheOtherValid && _cachedOtherMember != null)
+            {
+                if (_cachedOtherGameObject == null)
+                {
+                    LogOtherDestroyedWarning("Второй объект (GameObject) уничтожен");
+                    InvalidateOtherCache();
+                }
+                else
+                {
+                    return true;
+                }
+            }
+            _cacheOtherValid = false;
+            _cachedOtherComponent = null;
+            _cachedOtherGameObject = null;
+            _cachedOtherMember = null;
+
+            GameObject target = ResolveOtherTargetObject(fallbackObject, leftSideTarget);
+            if (target == null || string.IsNullOrEmpty(_otherPropertyName))
+            {
+                return false;
+            }
+            _cachedOtherGameObject = target;
+            Type type = typeof(GameObject);
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
+            PropertyInfo goProp = type.GetProperty(_otherPropertyName, flags);
+            if (goProp != null && goProp.CanRead)
+            {
+                _cachedOtherMember = goProp;
+                _cacheOtherValid = true;
+                return true;
+            }
+            FieldInfo goField = type.GetField(_otherPropertyName, flags);
+            if (goField != null)
+            {
+                _cachedOtherMember = goField;
+                _cacheOtherValid = true;
+                return true;
+            }
+            if (!_hasLoggedOtherMissingWarning)
+            {
+                Debug.LogWarning($"[NeoCondition] Второй объект: свойство '{_otherPropertyName}' не найдено на GameObject.");
+                _hasLoggedOtherMissingWarning = true;
+            }
+            return false;
+        }
+
+        private object ReadOtherValue()
+        {
+            if (_otherSourceMode == SourceMode.GameObject)
+            {
+                if (_cachedOtherGameObject == null)
+                {
+                    InvalidateOtherCache();
+                    return null;
+                }
+                if (_cachedOtherMember is PropertyInfo goProp)
+                {
+                    return goProp.GetValue(_cachedOtherGameObject);
+                }
+                if (_cachedOtherMember is FieldInfo goField)
+                {
+                    return goField.GetValue(_cachedOtherGameObject);
+                }
+                return null;
+            }
+            if (_cachedOtherComponent == null)
+            {
+                InvalidateOtherCache();
+                return null;
+            }
+            if (_cachedOtherMember is PropertyInfo prop)
+            {
+                return prop.GetValue(_cachedOtherComponent);
+            }
+            if (_cachedOtherMember is FieldInfo field)
+            {
+                return field.GetValue(_cachedOtherComponent);
+            }
+            return null;
+        }
+
         private bool CompareInt(int value)
         {
-            switch (_compareOp)
+            return CompareInt(value, _thresholdInt);
+        }
+
+        private static bool ApplyCompareOp(int a, int b, CompareOp op)
+        {
+            switch (op)
             {
-                case CompareOp.Equal: return value == _thresholdInt;
-                case CompareOp.NotEqual: return value != _thresholdInt;
-                case CompareOp.Greater: return value > _thresholdInt;
-                case CompareOp.Less: return value < _thresholdInt;
-                case CompareOp.GreaterOrEqual: return value >= _thresholdInt;
-                case CompareOp.LessOrEqual: return value <= _thresholdInt;
+                case CompareOp.Equal: return a == b;
+                case CompareOp.NotEqual: return a != b;
+                case CompareOp.Greater: return a > b;
+                case CompareOp.Less: return a < b;
+                case CompareOp.GreaterOrEqual: return a >= b;
+                case CompareOp.LessOrEqual: return a <= b;
                 default: return false;
             }
+        }
+
+        private bool CompareInt(int a, int b)
+        {
+            return ApplyCompareOp(a, b, _compareOp);
         }
 
         private bool CompareFloat(float value)
         {
-            switch (_compareOp)
+            return CompareFloat(value, _thresholdFloat);
+        }
+
+        private static bool ApplyCompareOp(float a, float b, CompareOp op)
+        {
+            switch (op)
             {
-                case CompareOp.Equal: return Mathf.Approximately(value, _thresholdFloat);
-                case CompareOp.NotEqual: return !Mathf.Approximately(value, _thresholdFloat);
-                case CompareOp.Greater: return value > _thresholdFloat;
-                case CompareOp.Less: return value < _thresholdFloat;
-                case CompareOp.GreaterOrEqual: return value >= _thresholdFloat;
-                case CompareOp.LessOrEqual: return value <= _thresholdFloat;
+                case CompareOp.Equal: return Mathf.Approximately(a, b);
+                case CompareOp.NotEqual: return !Mathf.Approximately(a, b);
+                case CompareOp.Greater: return a > b;
+                case CompareOp.Less: return a < b;
+                case CompareOp.GreaterOrEqual: return a >= b;
+                case CompareOp.LessOrEqual: return a <= b;
                 default: return false;
             }
         }
 
+        private bool CompareFloat(float a, float b)
+        {
+            return ApplyCompareOp(a, b, _compareOp);
+        }
+
         private bool CompareBool(bool value)
+        {
+            return CompareBool(value, _thresholdBool);
+        }
+
+        private bool CompareBool(bool a, bool b)
         {
             switch (_compareOp)
             {
-                case CompareOp.Equal: return value == _thresholdBool;
-                case CompareOp.NotEqual: return value != _thresholdBool;
-                default: return value == _thresholdBool;
+                case CompareOp.Equal: return a == b;
+                case CompareOp.NotEqual: return a != b;
+                default: return a == b;
             }
         }
 
         private bool CompareString(string value)
         {
+            return CompareString(value, _thresholdString);
+        }
+
+        private bool CompareString(string a, string b)
+        {
             switch (_compareOp)
             {
                 case CompareOp.Equal:
-                    return string.Equals(value, _thresholdString, StringComparison.Ordinal);
+                    return string.Equals(a, b, StringComparison.Ordinal);
                 case CompareOp.NotEqual:
-                    return !string.Equals(value, _thresholdString, StringComparison.Ordinal);
+                    return !string.Equals(a, b, StringComparison.Ordinal);
                 default:
-                    return string.Equals(value, _thresholdString, StringComparison.Ordinal);
+                    return string.Equals(a, b, StringComparison.Ordinal);
             }
         }
 
@@ -746,23 +1120,38 @@ namespace Neo.Condition
 
             string prop = string.IsNullOrEmpty(_propertyName) ? "?" : _propertyName;
             string op = _compareOp.ToString();
-            string threshold = _valueType switch
+            string thresholdStr;
+            if (_thresholdSource == ThresholdSource.OtherObject)
             {
-                ValueType.Int => _thresholdInt.ToString(),
-                ValueType.Float => _thresholdFloat.ToString("F2"),
-                ValueType.Bool => _thresholdBool.ToString(),
-                ValueType.String => $"\"{_thresholdString}\"",
-                _ => "?"
-            };
+                string otherSrc = _otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName)
+                    ? $"Find(\"{_otherSearchObjectName}\")"
+                    : _otherSourceObject != null ? _otherSourceObject.name : "self";
+                string otherComp = string.IsNullOrEmpty(_otherComponentTypeName) ? "?" : _otherComponentTypeName;
+                string otherProp = string.IsNullOrEmpty(_otherPropertyName) ? "?" : _otherPropertyName;
+                thresholdStr = _otherSourceMode == SourceMode.GameObject
+                    ? $"{otherSrc}.GO.{otherProp}"
+                    : $"{otherSrc}.{otherComp}.{otherProp}";
+            }
+            else
+            {
+                thresholdStr = _valueType switch
+                {
+                    ValueType.Int => _thresholdInt.ToString(),
+                    ValueType.Float => _thresholdFloat.ToString("F2"),
+                    ValueType.Bool => _thresholdBool.ToString(),
+                    ValueType.String => $"\"{_thresholdString}\"",
+                    _ => "?"
+                };
+            }
             string inv = _invert ? " [NOT]" : "";
 
             if (_sourceMode == SourceMode.GameObject)
             {
-                return $"{src}.GO.{prop} {op} {threshold}{inv}";
+                return $"{src}.GO.{prop} {op} {thresholdStr}{inv}";
             }
 
             string comp = string.IsNullOrEmpty(_componentTypeName) ? "?" : _componentTypeName;
-            return $"{src}.{comp}.{prop} {op} {threshold}{inv}";
+            return $"{src}.{comp}.{prop} {op} {thresholdStr}{inv}";
         }
     }
 }
