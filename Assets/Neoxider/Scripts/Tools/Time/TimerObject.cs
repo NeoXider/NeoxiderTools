@@ -4,6 +4,7 @@ using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using Random = UnityEngine.Random;
 #if UNITY_TEXTMESHPRO
 using TMPro;
 #endif
