@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **5.8.15** | Unity: **2022.1+** | Namespace: `Neo`
+Версия: **6.0.0** | Unity: **2022.1+** | Namespace: `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
@@ -49,6 +49,15 @@ Window -> Package Manager -> **+** -> Add package from git URL.
 | AI Navigation                | Устанавливается автоматически через UPM                                 |
 | DOTween (опционально)        | Asset Store или [GitHub](https://github.com/Demigiant/dotween)          |
 | Odin Inspector (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
+| Markdown Renderer (опционально) | Для отображения документации в инспекторе (блок «Documentation» и кнопка «Open in window»). См. ниже. |
+
+**Установка Markdown Renderer (опционально):** Window → Package Manager → **+** → Add package from git URL → вставить:
+
+```
+https://github.com/NeoXider/MarkdownRenderer.git
+```
+
+Без этого пакета **ничего не ломается**: блок «Documentation» в инспекторе по-прежнему показывает превью и кнопку «Open in window» (открывает .md в стандартном инспекторе или выделяет ассет в Project). Пакет подключается только через рефлексию при нажатии «Open in window».
 
 ---
 

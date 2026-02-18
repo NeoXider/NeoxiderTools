@@ -1,6 +1,7 @@
 {
   "dependencies": {
     "com.coplaydev.unity-mcp": "https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity",
+    "com.rtl.markdownrenderer": "https://github.com/NeoXider/MarkdownRenderer.git",
     "com.unity.ai.navigation": "1.1.7",
     "com.unity.asset-manager-for-unity": "1.9.1",
     "com.unity.burst": "1.8.27",

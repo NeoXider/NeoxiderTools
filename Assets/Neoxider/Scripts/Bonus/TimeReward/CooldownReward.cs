@@ -10,6 +10,7 @@ namespace Neo.Bonus
     /// Time-based reward with persistent cooldown, built on TimerObject (RealTime countdown).
     /// Use this instead of the deprecated TimeReward for new code.
     /// </summary>
+    [NeoDoc("Bonus/TimeReward/CooldownReward.md")]
     [AddComponentMenu("Neo/Bonus/" + nameof(CooldownReward))]
     public class CooldownReward : TimerObject
     {

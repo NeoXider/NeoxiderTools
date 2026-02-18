@@ -2,7 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
-## [5.8.15] - Unreleased
+## [6.0.0] - Unreleased
+
+### Документация в инспекторе
+
+- В блоке **Documentation** (в стиле Events/Actions) отображается превью .md и кнопка **Open in window**. Документ привязывается к компоненту через атрибут `[NeoDoc("path/from/Docs.md")]` или по соглашению `TypeName.md` в Docs.
+- Опциональный пакет **Markdown Renderer** для рендера Markdown в окне: установка через **Package Manager → Add package from git URL** → `https://github.com/NeoXider/MarkdownRenderer.git`. Без пакета по кнопке открывается выбор .md-ассета в Project.
+
+### Прочее
+
+- Мажорное обновление версии: 5.8.x → 6.0.0.
+
+## [5.8.15] - 2025
 
 ### Bonus — CooldownReward и устаревание TimeReward
 

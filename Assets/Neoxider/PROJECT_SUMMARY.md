@@ -2,7 +2,7 @@
 
 ## Архитектура и структура
 
-, н- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **5.8.15**)
+, н- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **6.0.0**)
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и

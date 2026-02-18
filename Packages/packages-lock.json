@@ -9,6 +9,13 @@
       },
       "hash": "8c6cefdd3feb98a2bd03d15b722cda1aa352b75d"
     },
+    "com.rtl.markdownrenderer": {
+      "version": "https://github.com/NeoXider/MarkdownRenderer.git",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "1fc0ca72d9bd4f4110bc7ddf338cc75cb453a12a"
+    },
     "com.unity.2d.animation": {
       "version": "9.2.0",
       "depth": 1,

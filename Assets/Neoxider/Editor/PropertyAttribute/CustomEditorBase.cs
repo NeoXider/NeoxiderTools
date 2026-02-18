@@ -32,6 +32,7 @@ namespace Neo.Editor
         private static bool _isLibraryIconLoadAttempted;
 
         private static readonly Dictionary<string, bool> _neoFoldouts = new();
+        private static readonly Dictionary<string, Vector2> _neoDocScrollPositions = new();
 
         // Reflection helpers (suppress Unity's built-in HeaderAttribute drawing when we already render our own sections)
         private static readonly Type _scriptAttributeUtilityType =
@@ -384,6 +385,7 @@ namespace Neo.Editor
             if (hasNeoNamespace)
             {
                 DrawNeoxiderSignature();
+                DrawDocumentationFoldout();
 
                 Color originalBgColor = GUI.backgroundColor;
                 GUI.backgroundColor = CustomEditorSettings.NeoBackgroundColor;
@@ -676,6 +678,86 @@ namespace Neo.Editor
             }
 
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
+        }
+
+        private void DrawDocumentationFoldout()
+        {
+            if (target == null || string.IsNullOrEmpty(_cachedNeoxiderRootPath)) return;
+            Type type = target.GetType();
+            string docPath = NeoDocHelper.GetDocPathForType(_cachedNeoxiderRootPath, type);
+            string key = "NeoDoc_Foldout_" + type.FullName;
+            string scrollKey = "NeoDoc_Scroll_" + type.FullName;
+            bool expanded = _neoFoldouts.TryGetValue(key, out bool v) && v;
+
+            using (new EditorGUILayout.VerticalScope())
+            {
+                Color accentBase = new(0.35f, 0.6f, 1f, 1f);
+                Color accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
+                Color accent = expanded ? accentDark : accentBase;
+                int count = string.IsNullOrEmpty(docPath) ? 0 : 1;
+
+                expanded = DrawNeoSectionHeader(expanded, "Documentation", count, accent, "d_TextAsset Icon",
+                    expanded ? Color.white : accentBase,
+                    expanded ? new Color(1f, 1f, 1f, 0.75f) : new Color(accentBase.r, accentBase.g, accentBase.b, 0.75f));
+
+                if (expanded)
+                {
+                    using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    {
+                        if (!string.IsNullOrEmpty(docPath))
+                        {
+                            string preview = NeoDocHelper.GetDocPreview(docPath, 40);
+                            if (!string.IsNullOrEmpty(preview))
+                            {
+                                if (!_neoDocScrollPositions.TryGetValue(scrollKey, out Vector2 scroll))
+                                    scroll = Vector2.zero;
+                                const float docAreaMinHeight = 220f;
+                                const float docAreaMaxHeight = 420f;
+                                GUIStyle docStyle = new(EditorStyles.label) { wordWrap = true, richText = false };
+                                float contentWidth = EditorGUIUtility.currentViewWidth - 60f;
+                                float contentHeight = docStyle.CalcHeight(new GUIContent(preview), Mathf.Max(100f, contentWidth));
+                                EditorGUILayout.Space(4);
+                                scroll = EditorGUILayout.BeginScrollView(scroll, false, true, GUILayout.MinHeight(docAreaMinHeight), GUILayout.MaxHeight(docAreaMaxHeight));
+                                _neoDocScrollPositions[scrollKey] = scroll;
+                                EditorGUILayout.BeginVertical(GUILayout.MinHeight(contentHeight));
+                                EditorGUILayout.LabelField(preview, docStyle);
+                                EditorGUILayout.EndVertical();
+                                EditorGUILayout.EndScrollView();
+                                EditorGUILayout.Space(4);
+                            }
+                            Color docAccent = new(0.35f, 0.6f, 1f, 1f);
+                            GUIStyle openBtnStyle = new(EditorStyles.miniButton)
+                            {
+                                fixedHeight = 24,
+                                fontStyle = FontStyle.Bold,
+                                alignment = TextAnchor.MiddleCenter,
+                                normal = { textColor = Color.white },
+                                hover = { textColor = Color.white },
+                                active = { textColor = Color.white },
+                                focused = { textColor = Color.white }
+                            };
+                            using (new EditorGUILayout.HorizontalScope())
+                            {
+                                GUILayout.FlexibleSpace();
+                                Rect btnRect = GUILayoutUtility.GetRect(new GUIContent(" Open in window "), openBtnStyle, GUILayout.MinWidth(140), GUILayout.Height(24));
+                                bool isHover = btnRect.Contains(Event.current.mousePosition);
+                                Color prevBg = GUI.backgroundColor;
+                                GUI.backgroundColor = isHover ? Color.Lerp(docAccent, Color.white, 0.3f) : docAccent;
+                                if (GUI.Button(btnRect, " Open in window ", openBtnStyle))
+                                    NeoDocHelper.OpenDocInWindow(docPath);
+                                GUI.backgroundColor = prevBg;
+                                GUILayout.FlexibleSpace();
+                            }
+                        }
+                        else
+                        {
+                            EditorGUILayout.HelpBox("No documentation linked. Add [NeoDoc(\"Module/File.md\")] or place " + type.Name + ".md in Docs.", MessageType.Info);
+                        }
+                    }
+                }
+            }
+
+            _neoFoldouts[key] = expanded;
         }
 
         private void DrawTextWithColorOutline(string text, GUIStyle baseStyle, Color outlineColor, float outlineSize,
