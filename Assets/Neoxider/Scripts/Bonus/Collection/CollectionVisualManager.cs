@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using Neo.Tools;
 using UnityEngine;
@@ -12,6 +12,8 @@ namespace Neo.Bonus
 
         [SerializeField] private bool _enableSetItem = true;
         public UnityEvent<int> OnSetItem;
+
+        private UnityAction[] _buttonActions;
 
         public ItemCollection[] Items => _items;
         public int ItemsCount => _items != null ? _items.Length : 0;
@@ -106,22 +108,33 @@ namespace Neo.Bonus
                 return;
             }
 
+            if (subscribe)
+            {
+                if (_buttonActions == null || _buttonActions.Length != _items.Length)
+                {
+                    _buttonActions = new UnityAction[_items.Length];
+                    for (int i = 0; i < _items.Length; i++)
+                    {
+                        int id = i;
+                        _buttonActions[i] = () => SetItem(id);
+                    }
+                }
+            }
+
             for (int i = 0; i < _items.Length; i++)
             {
-                if (_items[i] == null || _items[i].button == null)
+                if (_items[i] == null || _items[i].Button == null || (subscribe && (_buttonActions == null || i >= _buttonActions.Length)))
                 {
                     continue;
                 }
 
-                int id = i;
-
                 if (subscribe)
                 {
-                    _items[i].button.onClick.AddListener(() => SetItem(id));
+                    _items[i].Button.onClick.AddListener(_buttonActions[i]);
                 }
                 else
                 {
-                    _items[i].button.onClick.RemoveListener(() => SetItem(id));
+                    _items[i].Button.onClick.RemoveListener(_buttonActions[i]);
                 }
             }
         }
@@ -165,6 +178,8 @@ namespace Neo.Bonus
             {
                 return;
             }
+
+            _items[id].SetItemId(id);
 
             ItemCollectionData itemData = Collection.I.GetItemData(id);
             if (itemData != null)

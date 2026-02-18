@@ -24,7 +24,7 @@ namespace Neo.Tools
 
         [FormerlySerializedAs("_destroyDelay")]
         [SerializeField]
-        [Tooltip("Задержка перед удалением объекта. Если 0, объект не будет удаляться автоматически.")]
+        [Tooltip("Delay before destroying object. If 0, object will not be destroyed automatically.")]
         public float destroyDelay;
 
         /// <summary>
@@ -53,10 +53,10 @@ namespace Neo.Tools
         [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
 
         [SerializeField]
-        [Tooltip("Если true, поворот задаётся относительно спавнера (локально). Если false — в мировых координатах.")]
+        [Tooltip("If true, rotation is relative to spawner (local). If false — in world space.")]
         private bool _useLocalRotation = true;
 
-        [SerializeField] [Tooltip("Если true, берет поворот от _spawnTransform")]
+        [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
         private bool _useParentRotation;
 
         [Space] [Header("Other Settings")] [SerializeField]
@@ -69,7 +69,7 @@ namespace Neo.Tools
 
         [Header("Parenting")]
         [SerializeField]
-        [Tooltip("Родитель для заспавненных объектов. Если null — спавн без родителя.")]
+        [Tooltip("Parent for spawned objects. If null — spawn without parent.")]
         /// <summary>
         /// Родитель для заспавненных объектов. Если null — объект не получает родителя.
         /// </summary>

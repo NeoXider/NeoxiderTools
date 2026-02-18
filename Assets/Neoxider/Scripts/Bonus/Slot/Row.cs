@@ -31,23 +31,23 @@ namespace Neo.Bonus
 
         [Header("Layout")] public float spaceY = 1f; // шаг сетки (в юнитах)
 
-        [Tooltip("Нижняя граница окна (локальный Y), откуда считаются видимые слоты")]
+        [Tooltip("Bottom bound of window (local Y) for visible slots")]
         public float offsetY = 1f; // <-- ГЛАВНЫЙ якорь окна
 
-        [Tooltip("Отражение offsetY (для совместимости/инспектора)")]
+        [Tooltip("Mirror of offsetY (compatibility/inspector)")]
         public float windowStartY = 1f; // зеркало offsetY (не используется напрямую в расчётах)
 
         [Header("Hidden Paddings")]
-        [Tooltip("Сколько НИЖЕ окна появляется элемент при wrap сверху (рекоменд. ≥ 0.6 * spaceY)")]
+        [Tooltip("How far below window element appears when wrapping from top (recomm. ≥ 0.6 * spaceY)")]
         public float hiddenPaddingBottom = 0.6f;
 
-        [Tooltip("Сколько ВЫШЕ окна появляется элемент при wrap снизу (рекоменд. ≥ 0.6 * spaceY)")]
+        [Tooltip("How far above window element appears when wrapping from bottom (recomm. ≥ 0.6 * spaceY)")]
         public float hiddenPaddingTop = 0.6f;
 
-        [Header("Stop look&feel")] [Tooltip("Мин. добавочные целые шаги до цели при авто-торможении (инерция)")]
+        [Header("Stop look&feel")] [Tooltip("Min extra whole steps to target when auto-braking (inertia)")]
         public int extraStepsAtDecel = 3;
 
-        [Tooltip("Ограничение по |a| при торможении (юн/с²). 0 = без ограничения (идеально по формуле)")]
+        [Tooltip("|a| limit when braking (units/s²). 0 = no limit (ideal formula)")]
         public float maxDecel;
 
         public UnityEvent OnStop = new();

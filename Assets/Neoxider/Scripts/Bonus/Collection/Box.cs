@@ -1,4 +1,4 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using Neo.Extensions;
 using Neo.Save;
 using TMPro;
@@ -28,9 +28,12 @@ namespace Neo.Bonus
         [SerializeField] private Ease _ease = Ease.InCubic;
         [SerializeField] private Image _itemPrize;
 
-        public float addProgress = 100;
-        public float maxProgress = 300;
+        [SerializeField] private float _addProgress = 100f;
+        [SerializeField] private float _maxProgress = 300f;
         [SerializeField] private float _progress;
+
+        public float AddProgressAmount => _addProgress;
+        public float MaxProgress => _maxProgress;
 
         [Space] public UnityEvent OnTakePrize;
         public UnityEvent OnProgressReached;
@@ -44,10 +47,11 @@ namespace Neo.Bonus
             {
                 _progress = value;
                 SaveProvider.SetFloat(_saveName + nameof(progress), value);
+                SaveProvider.Save();
             }
         }
 
-        public bool CheckProgress => progress >= maxProgress;
+        public bool CheckProgress => progress >= _maxProgress;
 
         private void Awake()
         {
@@ -67,7 +71,7 @@ namespace Neo.Bonus
 
         public void AddProgress()
         {
-            AddProgress(addProgress);
+            AddProgress(_addProgress);
         }
 
         [Button]
@@ -113,7 +117,7 @@ namespace Neo.Bonus
 
                 if (_itemPrize != null)
                 {
-                    _itemPrize.sprite = itemData.sprite;
+                    _itemPrize.sprite = itemData.Sprite;
                 }
 
                 if (_animItem != null)
@@ -121,7 +125,8 @@ namespace Neo.Bonus
                     _animItem.transform.DOScale(1, 2).SetEase(_ease);
                 }
 
-                ChangeProgress(-maxProgress);
+                ChangeProgress(-_maxProgress);
+                progress = Mathf.Max(0, progress);
 
                 Visual(true);
 
@@ -134,7 +139,7 @@ namespace Neo.Bonus
         {
             if (_bar != null)
             {
-                _bar.fillAmount = progress / maxProgress;
+                _bar.fillAmount = progress / _maxProgress;
             }
 
             if (_boxImage != null)
@@ -150,12 +155,12 @@ namespace Neo.Bonus
 
             if (_textMaxProgress != null)
             {
-                _textMaxProgress.text = $"{maxProgress.RoundToDecimal(0)}";
+                _textMaxProgress.text = $"{_maxProgress.RoundToDecimal(0)}";
             }
 
             if (_textProgressMaxProgress != null)
             {
-                _textProgressMaxProgress.text = $"{progress.RoundToDecimal(0)}/{maxProgress.RoundToDecimal(0)}";
+                _textProgressMaxProgress.text = $"{progress.RoundToDecimal(0)}/{_maxProgress.RoundToDecimal(0)}";
             }
         }
     }

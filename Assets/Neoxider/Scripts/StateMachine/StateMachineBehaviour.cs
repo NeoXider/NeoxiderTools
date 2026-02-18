@@ -28,19 +28,19 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neo/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {
-        [Header("Settings")] [SerializeField] [Tooltip("Начальное состояние (тип состояния для кода)")]
+        [Header("Settings")] [SerializeField] [Tooltip("Initial state (state type for code)")]
         private string initialStateTypeName;
 
-        [SerializeField] [Tooltip("Включить логирование переходов состояний")]
+        [SerializeField] [Tooltip("Enable state transition logging")]
         private bool enableDebugLog;
 
-        [SerializeField] [Tooltip("Показывать текущее состояние в инспекторе")]
+        [SerializeField] [Tooltip("Show current state in inspector")]
         private bool showStateInInspector = true;
 
-        [SerializeField] [Tooltip("Автоматически оценивать переходы каждый кадр")]
+        [SerializeField] [Tooltip("Evaluate transitions every frame")]
         private bool autoEvaluateTransitions = true;
 
-        [Header("References")] [SerializeField] [Tooltip("NoCode конфигурация State Machine (опционально)")]
+        [Header("References")] [SerializeField] [Tooltip("NoCode State Machine config (optional)")]
         private StateMachineData stateMachineData;
 
         private Type initialStateType;

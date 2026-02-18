@@ -73,7 +73,7 @@ namespace Neo.Bonus
         [SerializeField] [Min(0)] private int _betsId;
         [SerializeField] private bool _logFinalVisuals;
 
-        [Tooltip("С какого числа печатать координаты в Debug: 0 (по умолчанию) или 1 и т.п.")] [SerializeField]
+        [Tooltip("From which index to print coordinates in Debug: 0 (default) or 1, etc.")] [SerializeField]
         private int _gridIndexBase = 1;
 
         public SlotVisualData[,] finalVisuals; // собираем ИЗ экрана после стопа

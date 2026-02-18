@@ -60,29 +60,29 @@ namespace Neo.Tools
 
         [Space]
         [Header("Sorting")]
-        [Tooltip("Направление сортировки: по убыванию (больше к меньше) или по возрастанию (меньше к больше)")]
+        [Tooltip("Sort direction: descending (high to low) or ascending (low to high)")]
         public SortOrder sortOrder = SortOrder.Descending;
 
-        [Space] [Header("Score Formatting")] [Tooltip("Форматировать ли счет (добавлять разделители)")]
+        [Space] [Header("Score Formatting")] [Tooltip("Whether to format score (add separators)")]
         public bool formatScore;
 
-        [Space] [Header("Time Formatting")] [Tooltip("Использовать ли форматирование времени для счета")]
+        [Space] [Header("Time Formatting")] [Tooltip("Use time formatting for score display")]
         public bool useTimeFormat;
 
-        [Tooltip("Формат времени для отображения счета")]
+        [Tooltip("Time format for score display")]
         public TimeFormat timeFormat = TimeFormat.Seconds;
 
-        [Tooltip("Разделитель для формата времени")]
+        [Tooltip("Separator for time format")]
         public string timeSeparator = ":";
 
         [Space]
         [Header("Save Settings")]
-        [Tooltip("Ключ для сохранения данных игрока (можно изменить для разных лидербордов)")]
+        [Tooltip("Key for saving player data (change for different leaderboards)")]
         public string playerSaveKey = "LeaderboardPlayer";
 
         [Space]
         [Header("Player Score Display")]
-        [Tooltip("Текст, отображаемый если у игрока нет счета (по умолчанию: --)")]
+        [Tooltip("Text shown when player has no score (default: --)")]
         public string noScoreText = "--";
 
         private void Start()

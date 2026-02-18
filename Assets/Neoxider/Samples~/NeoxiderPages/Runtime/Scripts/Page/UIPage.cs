@@ -17,11 +17,11 @@ namespace Neo.Pages
         private PageId pageId;
 
         [FormerlySerializedAs("overlay")]
-        [Tooltip("Если включено — страница открывается как popup (поверх, не деактивируя остальные).")]
+        [Tooltip("When enabled, page opens as popup (on top, without deactivating others).")]
         [SerializeField]
         private bool popup;
 
-        [Tooltip("Если включено — PM не будет деактивировать эту страницу при Exclusive переключениях.")]
+        [Tooltip("When enabled, PM will not deactivate this page on Exclusive switches.")]
         [SerializeField]
         private bool ignoreOnExclusiveChange;
 

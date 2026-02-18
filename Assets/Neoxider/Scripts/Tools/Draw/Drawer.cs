@@ -34,13 +34,13 @@ namespace Neo.Tools
         /* ───────── LOOK & FEEL (fallbacks if template not used) ────────── */
 
         [Header("Line Visual")]
-        [Tooltip("Если задан, используется этот материал. Иначе — Sprite, иначе — Texture2D, иначе дефолтный.")]
+        [Tooltip("If set, this material is used. Otherwise Sprite, else Texture2D, else default.")]
         public Material lineMaterial;
 
-        [Tooltip("Если материал не задан, используется этот спрайт (текстура спрайта).")]
+        [Tooltip("If material is not set, this sprite (sprite texture) is used.")]
         public Sprite lineSprite;
 
-        [Tooltip("Если материал и спрайт не заданы, используется эта текстура.")]
+        [Tooltip("If material and sprite are not set, this texture is used.")]
         public Texture2D lineTexture;
 
         [FormerlySerializedAs("colour")] public Gradient color = new()
@@ -107,10 +107,10 @@ namespace Neo.Tools
 
         public bool colliderAfterCreation;
 
-        [Header("Pooling")] [Tooltip("Использовать PoolManager для переиспользования LineRenderer объектов")]
+        [Header("Pooling")] [Tooltip("Use PoolManager for reusing LineRenderer objects")]
         public bool usePooling;
 
-        [Tooltip("Префаб LineRenderer для пулинга. Если не указан, создаётся автоматически")]
+        [Tooltip("LineRenderer prefab for pooling. If not set, created automatically")]
         public LineRenderer poolPrefab;
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
@@ -123,7 +123,7 @@ namespace Neo.Tools
 
         public UnityEvent<float> OnRemainingPercent = new();
 
-        [Tooltip("Событие: начало рисования линии (точка старта)")]
+        [Tooltip("Event: line drawing start (start point)")]
         public UnityEvent<Vector3> OnLineStarted = new();
 
         public List<LineRenderer> lines = new();

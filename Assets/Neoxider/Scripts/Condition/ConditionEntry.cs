@@ -59,16 +59,16 @@ namespace Neo.Condition
     [Serializable]
     public class ConditionEntry
     {
-        [Tooltip("Источник данных: Component (поля компонента) или GameObject (свойства объекта).")] [SerializeField]
+        [Tooltip("Data source: Component (component fields) or GameObject (object properties).")] [SerializeField]
         private SourceMode _sourceMode = SourceMode.Component;
 
-        [Tooltip("Искать целевой GameObject по имени в сцене (вместо прямой ссылки).")] [SerializeField]
+        [Tooltip("Find target GameObject by name in scene (instead of direct reference).")] [SerializeField]
         private bool _useSceneSearch;
 
-        [Tooltip("Имя GameObject для поиска в сцене через GameObject.Find().")] [SerializeField]
+        [Tooltip("GameObject name to find in scene via GameObject.Find().")] [SerializeField]
         private string _searchObjectName = "";
 
-        [Tooltip("Не выводить Warning если объект не найден. Полезно для префабов, которые появятся позже (спавн).")]
+        [Tooltip("Do not log Warning if object is not found. Useful for prefabs that will appear later (spawn).")]
         [SerializeField]
         private bool _waitForObject;
 
@@ -77,29 +77,29 @@ namespace Neo.Condition
         [SerializeField]
         private GameObject _prefabPreview;
 
-        [Tooltip("GameObject, на котором искать компонент. Если пусто — используется объект NeoCondition.")]
+        [Tooltip("GameObject on which to find the component. If empty — NeoCondition's object is used.")]
         [SerializeField]
         private GameObject _sourceObject;
 
-        [Tooltip("Индекс компонента в списке (заполняется через Editor).")] [SerializeField]
+        [Tooltip("Component index in list (filled by Editor).")] [SerializeField]
         private int _componentIndex;
 
-        [Tooltip("Полное имя типа компонента (для восстановления после перезагрузки).")] [SerializeField]
+        [Tooltip("Full component type name (for restore after reload).")] [SerializeField]
         private string _componentTypeName = "";
 
-        [Tooltip("Имя поля или свойства для чтения значения.")] [SerializeField]
+        [Tooltip("Field or property name to read value from.")] [SerializeField]
         private string _propertyName = "";
 
-        [Tooltip("Определённый тип значения.")] [SerializeField]
+        [Tooltip("Value type.")] [SerializeField]
         private ValueType _valueType = ValueType.Int;
 
-        [Tooltip("Оператор сравнения.")] [SerializeField]
+        [Tooltip("Comparison operator.")] [SerializeField]
         private CompareOp _compareOp = CompareOp.Equal;
 
-        [Tooltip("Инвертировать результат (NOT).")] [SerializeField]
+        [Tooltip("Invert result (NOT).")] [SerializeField]
         private bool _invert;
 
-        [Tooltip("Сравнивать с константой (число/текст) или с переменной другого объекта.")] [SerializeField]
+        [Tooltip("Compare with constant (number/text) or with another object's variable.")] [SerializeField]
         private ThresholdSource _thresholdSource = ThresholdSource.Constant;
 
         // Threshold values by type (when _thresholdSource == Constant)

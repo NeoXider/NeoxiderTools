@@ -1,4 +1,4 @@
-﻿using Neo.Tools;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Events;
@@ -8,16 +8,16 @@ namespace Neo.Audio
     [AddComponentMenu("Neo/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
-        [Tooltip("Опциональный микшер для управления громкостью.")]
+        [Tooltip("Optional mixer for volume control.")]
         public AudioMixer audioMixer;
 
-        [Tooltip("Имя параметра для громкости эффектов в микшере.")]
+        [Tooltip("Mixer parameter name for effects volume.")]
         public string EfxVolume = "EfxVolume";
 
-        [Header("Mixer Parameters")] [Tooltip("Имя параметра для общей громкости в микшере.")]
+        [Header("Mixer Parameters")] [Tooltip("Mixer parameter name for master volume.")]
         public string MasterVolume = "MasterVolume";
 
-        [Tooltip("Имя параметра для громкости музыки в микшере.")]
+        [Tooltip("Mixer parameter name for music volume.")]
         public string MusicVolume = "MusicVolume";
 
         public UnityEvent<bool> OnMuteEfx;

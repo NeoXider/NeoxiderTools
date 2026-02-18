@@ -18,25 +18,25 @@ public sealed class SpineController : MonoBehaviour
     [Header("Animations")]
     [SerializeField] private bool autoPopulateAnimations = true;
     [SerializeField, FormerlySerializedAs("_animationName")] private List<string> animationNames = new();
-    [SerializeField, Tooltip("Имя анимации, которая должна играть в режиме ожидания.")]
+    [SerializeField, Tooltip("Animation name to play in idle mode.")]
     private string defaultAnimationName = string.Empty;
-    [SerializeField, FormerlySerializedAs("_idleId"), Tooltip("Индекс анимации по умолчанию в списке (используется, если имя не задано)."), Min(0)]
+    [SerializeField, FormerlySerializedAs("_idleId"), Tooltip("Default animation index in list (used when name is not set)."), Min(0)]
     private int defaultAnimationIndex;
-    [SerializeField, Tooltip("Проигрывать анимацию по умолчанию при включении компонента.")]
+    [SerializeField, Tooltip("Play default animation when component is enabled.")]
     private bool playDefaultOnEnable = true;
-    [SerializeField, Tooltip("Автоматически возвращаться к анимации по умолчанию после завершения нецикличной анимации.")]
+    [SerializeField, Tooltip("Auto-return to default animation after non-looping animation ends.")]
     private bool queueDefaultAfterNonLooping = true;
 
     [Header("Skins")]
     [SerializeField] private bool autoPopulateSkins = true;
     [SerializeField, FormerlySerializedAs("_skinNames")] private List<string> skinNames = new();
-    [SerializeField, FormerlySerializedAs("startSkin"), Tooltip("Индекс скина по умолчанию в списке.")]
+    [SerializeField, FormerlySerializedAs("startSkin"), Tooltip("Default skin index in list.")]
     private int defaultSkinIndex;
-    [SerializeField, Tooltip("Сохранять выбранный скин в PlayerPrefs.")]
+    [SerializeField, Tooltip("Save selected skin in PlayerPrefs.")]
     private bool persistSkinSelection = true;
     [SerializeField, FormerlySerializedAs("_keySaveSkin")] private string skinPrefsKey = "SkinChanger";
-    [SerializeField, Tooltip("Дополнительный сдвиг индекса (полезно, если первый скин в списке служебный)."), FormerlySerializedAs("skinIndexOffset")] private int skinIndexOffset;
-    [SerializeField, FormerlySerializedAs("addId"), Tooltip("Устаревший переключатель для смещения индекса. Используйте 'Skin Index Offset'.")]
+    [SerializeField, Tooltip("Additional index offset (e.g. when first skin in list is utility)."), FormerlySerializedAs("skinIndexOffset")] private int skinIndexOffset;
+    [SerializeField, FormerlySerializedAs("addId"), Tooltip("Deprecated index offset toggle. Use 'Skin Index Offset' instead.")]
     private bool legacyAddIndex;
 
     public UnityEvent OnSwapSkin;

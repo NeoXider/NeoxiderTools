@@ -19,39 +19,39 @@ namespace Neo.UI
     {
         [GetComponent] [SerializeField] private Toggle _toggle;
 
-        [Header("State")] [Tooltip("Текущее состояние переключателя (false = start, true = end)")] [SerializeField]
+        [Header("State")] [Tooltip("Current toggle state (false = start, true = end)")] [SerializeField]
         private bool _isActive;
 
         /// <summary>
         ///     Если включено, вызывает события текущего состояния при старте (Start).
         ///     Полезно для инициализации связанных систем в соответствии с начальным состоянием.
         /// </summary>
-        [Tooltip("Если включено, вызывает события текущего состояния при старте (Start)")] [SerializeField]
+        [Tooltip("If enabled, invokes events for current state on Start")] [SerializeField]
         private bool _setOnAwake = true;
 
         [Header("Image Variants")]
-        [Tooltip("Массив Image для переключения спрайтов между состояниями")]
+        [Tooltip("Image array for switching sprites between states")]
         [SerializeField]
         private ImageVariant[] imageV = new ImageVariant[0];
 
-        [Header("Image Colors")] [Tooltip("Массив Image для переключения цветов между состояниями")] [SerializeField]
+        [Header("Image Colors")] [Tooltip("Image array for switching colors between states")] [SerializeField]
         private ImageColor[] imageC = new ImageColor[0];
 
         [Header("Text Variants")]
-        [Tooltip("Массив TextMeshPro для переключения цветов и/или текста между состояниями")]
+        [Tooltip("TextMeshPro array for switching colors and/or text between states")]
         [SerializeField]
         private TmpColorTextVariant[] textColor = new TmpColorTextVariant[0];
 
-        [Header("GameObject Variants")] [Tooltip("Группы GameObject'ов для переключения активности")] [SerializeField]
+        [Header("GameObject Variants")] [Tooltip("GameObject groups for switching active state")] [SerializeField]
         private GameObjectVariant variants;
 
-        [Tooltip("Вызывается при переходе в активное состояние (end)")]
+        [Tooltip("Invoked when switching to active state (end)")]
         public UnityEvent On;
 
-        [Tooltip("Вызывается при переходе в неактивное состояние (start)")]
+        [Tooltip("Invoked when switching to inactive state (start)")]
         public UnityEvent Off;
 
-        [Tooltip("Вызывается при любом изменении состояния. Передает новое значение (true = активен)")]
+        [Tooltip("Invoked on any state change. Passes new value (true = active)")]
         public UnityEvent<bool> OnValueChanged;
 
         private bool _isUpdatingFromToggle;
@@ -343,16 +343,16 @@ namespace Neo.UI
         [Serializable]
         public class ImageVariant
         {
-            [Tooltip("Image компонент для переключения спрайта")]
+            [Tooltip("Image component for sprite switching")]
             public Image image;
 
-            [Tooltip("Спрайт для начального состояния (start)")]
+            [Tooltip("Sprite for initial state (start)")]
             public Sprite start;
 
-            [Tooltip("Спрайт для конечного состояния (end)")]
+            [Tooltip("Sprite for end state (end)")]
             public Sprite end;
 
-            [Tooltip("Автоматически устанавливать размер Image по размеру спрайта")]
+            [Tooltip("Automatically set Image size to sprite size")]
             public bool setNativeSize;
         }
 
@@ -362,13 +362,13 @@ namespace Neo.UI
         [Serializable]
         public class ImageColor
         {
-            [Tooltip("Image компонент для переключения цвета")]
+            [Tooltip("Image component for color switching")]
             public Image image;
 
-            [Tooltip("Цвет для начального состояния (start)")]
+            [Tooltip("Color for initial state (start)")]
             public Color start = Color.white;
 
-            [Tooltip("Цвет для конечного состояния (end)")]
+            [Tooltip("Color for end state (end)")]
             public Color end = Color.white;
         }
 
@@ -378,22 +378,22 @@ namespace Neo.UI
         [Serializable]
         public class TmpColorTextVariant
         {
-            [Tooltip("TextMeshPro компонент для переключения")]
+            [Tooltip("TextMeshPro component for switching")]
             public TextMeshProUGUI tmp;
 
-            [Tooltip("Цвет для начального состояния (start)")]
+            [Tooltip("Color for initial state (start)")]
             public Color start = Color.white;
 
-            [Tooltip("Цвет для конечного состояния (end)")]
+            [Tooltip("Color for end state (end)")]
             public Color end = Color.white;
 
-            [Tooltip("Переключать ли текст вместе с цветом")]
+            [Tooltip("Whether to switch text along with color")]
             public bool useText;
 
-            [Tooltip("Текст для начального состояния (start). Используется только если useText = true")]
+            [Tooltip("Text for initial state (start). Used only if useText = true")]
             public string startText;
 
-            [Tooltip("Текст для конечного состояния (end). Используется только если useText = true")]
+            [Tooltip("Text for end state (end). Used only if useText = true")]
             public string endText;
         }
 
@@ -403,10 +403,10 @@ namespace Neo.UI
         [Serializable]
         public class GameObjectVariant
         {
-            [Tooltip("GameObject'ы, которые активны в начальном состоянии (start)")]
+            [Tooltip("GameObjects active in initial state (start)")]
             public GameObject[] starts;
 
-            [Tooltip("GameObject'ы, которые активны в конечном состоянии (end)")]
+            [Tooltip("GameObjects active in end state (end)")]
             public GameObject[] ends;
         }
     }

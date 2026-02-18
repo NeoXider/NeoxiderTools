@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -29,7 +29,7 @@ namespace Neo
         private bool generateInEditor = true;
 
         [Header("Spacing")]
-        [Tooltip("Дополнительный зазор между тайлами (мировые единицы). Положительные значения добавляют промежуток.")]
+        [Tooltip("Extra gap between tiles (world units). Positive values add spacing.")]
         [SerializeField]
         private Vector2 tileSpacing = Vector2.zero;
 

@@ -1,4 +1,4 @@
-﻿# Модуль "Коллекции" (Collection)
+# Модуль "Коллекции" (Collection)
 
 Этот модуль предоставляет систему для создания и управления коллекционными предметами. Он позволяет отслеживать собранные предметы, отображать их в UI, а также включает механику открытия "коробок" или "контейнеров" с предметами.
 
@@ -8,8 +8,9 @@
 - ✅ **Полный API для работы через код**: Добавление, удаление, проверка предметов программно
 - ✅ **Автоматическая синхронизация**: `CollectionVisualManager` автоматически обновляется при изменении коллекции
 - ✅ **Безопасная инициализация**: Предотвращает баги с отображением при неправильном порядке инициализации
-- ✅ **События**: Подписка на изменения коллекции через UnityEvents
-- ✅ **Сохранение прогресса**: Автоматическое сохранение в `PlayerPrefs`
+- ✅ **События**: Подписка на изменения коллекции через UnityEvents; при изменении состава вызываются `OnCompletionChanged` (unlocked, total) и `OnCompletionPercentageChanged` (0–1)
+- ✅ **Сохранение прогресса**: Автоматическое сохранение через **SaveProvider** (единое хранилище с остальной системой сохранений)
+- ✅ **Несколько коллекций**: На дополнительных GameObject с `Collection` выставите **Set Instance On Awake = false** — экземпляр не будет регистрироваться как `Collection.I`. Работайте с ним по ссылке (поле Collection в ItemCollectionInfo, ItemCollection). Свойство `IsSingleton` показывает, является ли экземпляр глобальным.
 
 ## Оглавление
 
@@ -38,6 +39,12 @@ if (Collection.I.HasItem(0)) { ... }
 
 // Получение статистики
 Debug.Log($"Разблокировано: {Collection.I.UnlockedCount}/{Collection.I.ItemCount}");
+Debug.Log(Collection.I.GetCompletionCountText()); // "1/5"
+Debug.Log(Collection.I.GetCompletionPercentage()); // 0–1
+
+// Подписка на изменение прогресса (без кода)
+// Collection.I.OnCompletionChanged (int unlocked, int total)
+// Collection.I.OnCompletionPercentageChanged (float 0–1)
 ```
 
 ## Примеры использования
@@ -59,6 +66,12 @@ Collection.I.OnItemAdded.AddListener((id) => {
 
 // Разблокировка всех предметов (для тестирования)
 Collection.I.UnlockAllItems();
+
+// Добавление по данным или по индексу
+Collection.I.AddItem(itemCollectionData);
+bool added = Collection.I.TryAddItem(3);
+
+// Разблокировка из UI: на кнопке карточки вызовите ItemCollection.Unlock() через UnityEvent
 ```
 
 ### Работа с визуализацией
@@ -75,4 +88,11 @@ if (item != null && item.IsEnabled)
 {
     Debug.Log("Предмет 0 разблокирован и отображается");
 }
+
+// Фильтрация
+int[] unlocked = Collection.I.GetUnlockedIds();
+int[] locked = Collection.I.GetLockedIds();
+int[] byCategory = Collection.I.GetIdsByCategory(1);
+int[] byRarity = Collection.I.GetIdsByRarity(ItemRarity.Epic);
+int countByRarity = Collection.I.GetUnlockedCountByRarity(ItemRarity.Legendary);
 ```

@@ -12,14 +12,14 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/" + "Tools/Dialogue/" + nameof(DialogueController))]
     public class DialogueController : MonoBehaviour
     {
-        [Header("Components")] [Tooltip("UI компонент. Если не указан, ищется на этом объекте")] [SerializeField]
+        [Header("Components")] [Tooltip("UI component. If not set, searched on this object")] [SerializeField]
         private DialogueUI _dialogueUI;
 
         [Header("Typewriter Settings")] public bool useTypewriterEffect = true;
 
         [SerializeField] private TypewriterEffect _typewriter = new();
 
-        [Header("Auto Start")] [Tooltip("Автоматически запустить первый диалог при Start")]
+        [Header("Auto Start")] [Tooltip("Automatically start first dialogue on Start")]
         public bool autoStart;
 
         [Header("Auto Advance")] public bool autoNextSentence;

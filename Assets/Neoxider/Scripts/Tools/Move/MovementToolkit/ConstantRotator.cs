@@ -23,10 +23,10 @@ namespace Neo.Tools
 
         [Header("Mode")] public RotationMode mode = RotationMode.Transform;
 
-        [Tooltip("Если true — ось берётся в локальном пространстве, иначе — в мировом")]
+        [Tooltip("If true, axis is in local space; otherwise world space")]
         public bool spaceLocal = true;
 
-        [Tooltip("Вычитать время из скорости")]
+        [Tooltip("Subtract time from speed")]
         public bool useDeltaTime = true;
 
         [Header("Axis")] public AxisSource axisSource = AxisSource.None;

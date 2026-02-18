@@ -13,17 +13,17 @@ namespace Neo.Tools
     public class TypewriterEffectComponent : MonoBehaviour
     {
         [Header("Target")]
-        [Tooltip("Текстовый компонент для вывода. Если не указан, ищется на этом объекте")]
+        [Tooltip("Text component for output. If not set, searched on this object")]
         [SerializeField]
         private TMP_Text _targetText;
 
-        [Header("Settings")] [Tooltip("Автоматически запустить эффект при Start")] [SerializeField]
+        [Header("Settings")] [Tooltip("Auto-start effect on Start")] [SerializeField]
         private bool _autoStart = true;
 
-        [Tooltip("Запускать эффект каждый раз при OnEnable")] [SerializeField]
+        [Tooltip("Start effect every time on OnEnable")] [SerializeField]
         private bool _playOnEnable;
 
-        [Tooltip("Текст для автозапуска. Если пусто, берётся из TargetText")] [SerializeField] [TextArea(2, 5)]
+        [Tooltip("Text for auto-start. If empty, taken from TargetText")] [SerializeField] [TextArea(2, 5)]
         private string _autoStartText;
 
         [SerializeField] private TypewriterEffect _effect = new();

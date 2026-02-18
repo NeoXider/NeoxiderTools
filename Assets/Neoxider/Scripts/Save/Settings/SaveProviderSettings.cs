@@ -9,11 +9,11 @@ namespace Neo.Save
     [CreateAssetMenu(fileName = "SaveProviderSettings", menuName = "Neo/Save/Save Provider Settings", order = 1)]
     public class SaveProviderSettings : ScriptableObject
     {
-        [Header("Provider Type")] [Tooltip("Тип провайдера для сохранения данных")] [SerializeField]
+        [Header("Provider Type")] [Tooltip("Provider type for saving data")] [SerializeField]
         private SaveProviderType _providerType = SaveProviderType.PlayerPrefs;
 
         [Header("File Settings")]
-        [Tooltip("Имя файла для сохранения (используется только для File провайдера). По умолчанию: save.json")]
+        [Tooltip("Save file name (used only for File provider). Default: save.json")]
         [SerializeField]
         private string _fileName = "save.json";
 

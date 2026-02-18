@@ -22,10 +22,10 @@ namespace Neo.Tools
 
         [Header("Mode")] public MovementMode mode = MovementMode.Transform;
 
-        [Tooltip("Если true — направление/ось берутся в локальном пространстве, иначе — в мировом")]
+        [Tooltip("If true, direction/axis is in local space; otherwise world space")]
         public bool spaceLocal = true;
 
-        [Tooltip("Вычитать время из скорости")]
+        [Tooltip("Subtract time from speed")]
         public bool useDeltaTime = true;
 
         [Header("Direction")] public DirectionSource directionSource = DirectionSource.LocalForward3D;

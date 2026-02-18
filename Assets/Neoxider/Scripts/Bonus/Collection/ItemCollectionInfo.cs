@@ -31,14 +31,14 @@ namespace Neo.Bonus
 
             if (_textName != null)
             {
-                _textName.text = itemCollectionData.itemName ?? string.Empty;
+                _textName.text = itemCollectionData.ItemName ?? string.Empty;
             }
 
             if (_textDescription != null)
             {
-                if (!string.IsNullOrEmpty(itemCollectionData.description))
+                if (!string.IsNullOrEmpty(itemCollectionData.Description))
                 {
-                    _textDescription.text = itemCollectionData.description;
+                    _textDescription.text = itemCollectionData.Description;
                 }
                 else
                 {
@@ -48,9 +48,9 @@ namespace Neo.Bonus
 
             if (_imageItem != null)
             {
-                if (itemCollectionData.sprite != null)
+                if (itemCollectionData.Sprite != null)
                 {
-                    _imageItem.sprite = itemCollectionData.sprite;
+                    _imageItem.sprite = itemCollectionData.Sprite;
                     if (_setNativeSize)
                     {
                         _imageItem.SetNativeSize();

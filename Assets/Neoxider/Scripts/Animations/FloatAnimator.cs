@@ -10,42 +10,42 @@ namespace Neo.Animations
     [AddComponentMenu("Neo/" + "Animations/" + nameof(FloatAnimator))]
     public class FloatAnimator : MonoBehaviour
     {
-        [Header("Animation Settings")] [Tooltip("Тип анимации")]
+        [Header("Animation Settings")] [Tooltip("Animation type")]
         public AnimationType animationType = AnimationType.PerlinNoise;
 
-        [Header("Value Settings")] [Tooltip("Минимальное значение")]
+        [Header("Value Settings")] [Tooltip("Min value")]
         public float minValue;
 
-        [Tooltip("Максимальное значение")] public float maxValue = 1f;
+        [Tooltip("Max value")] public float maxValue = 1f;
 
-        [Tooltip("Скорость анимации (0 = анимация отключена)")] [Range(0f, 30f)]
+        [Tooltip("Animation speed (0 = disabled)")] [Range(0f, 30f)]
         public float animationSpeed = 1.0f;
 
-        [Header("Noise Settings")] [Tooltip("Масштаб шума для PerlinNoise")] [Range(0.1f, 20f)]
+        [Header("Noise Settings")] [Tooltip("Noise scale for PerlinNoise")] [Range(0.1f, 20f)]
         public float noiseScale = 1f;
 
-        [Tooltip("Использовать 2D шум вместо 1D")]
+        [Tooltip("Use 2D noise instead of 1D")]
         public bool use2DNoise = true;
 
-        [Tooltip("Дополнительное смещение шума")]
+        [Tooltip("Additional noise offset")]
         public Vector2 noiseOffset;
 
-        [Header("Custom Curve")] [Tooltip("Пользовательская кривая для CustomCurve типа")]
+        [Header("Custom Curve")] [Tooltip("Custom curve for CustomCurve type")]
         public AnimationCurve customCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        [Header("Control")] [Tooltip("Автоматически запускать анимацию при старте")]
+        [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
-        [Tooltip("Вызывается при изменении значения")]
+        [Tooltip("Invoked when value changes")]
         public UnityEvent<float> OnValueChanged;
 
-        [Tooltip("Вызывается при запуске анимации")]
+        [Tooltip("Invoked when animation starts")]
         public UnityEvent OnAnimationStarted;
 
-        [Tooltip("Вызывается при остановке анимации")]
+        [Tooltip("Invoked when animation stops")]
         public UnityEvent OnAnimationStopped;
 
-        [Tooltip("Вызывается при паузе анимации")]
+        [Tooltip("Invoked when animation is paused")]
         public UnityEvent OnAnimationPaused;
 
         private float animationTime;

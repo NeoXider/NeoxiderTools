@@ -15,30 +15,30 @@ namespace Neo.Tools.View
         private static readonly int EmissionColorID = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissiveColorID = Shader.PropertyToID("_EmissiveColor");
 
-        [Header("Sync Mode")] [Tooltip("Включить синхронизацию с источником света")]
+        [Header("Sync Mode")] [Tooltip("Enable sync with light source")]
         public bool syncWithLight = true;
 
-        [Tooltip("Источник света для синхронизации (может быть на другом объекте)")]
+        [Tooltip("Light source to sync with (can be on another object)")]
         public Light targetLight;
 
-        [Header("Sync Settings")] [Tooltip("Синхронизировать интенсивность")]
+        [Header("Sync Settings")] [Tooltip("Sync intensity")]
         public bool syncIntensity = true;
 
-        [Tooltip("Синхронизировать цвет")] public bool syncColor = true;
+        [Tooltip("Sync color")] public bool syncColor = true;
 
-        [Tooltip("Множитель интенсивности (1.0 = точно как у света)")] [Range(0f, 10f)]
+        [Tooltip("Intensity multiplier (1.0 = same as light)")] [Range(0f, 10f)]
         public float intensityMultiplier = 0.1f;
 
         [Header("Color Enhancement")]
-        [Tooltip("Интенсивность, при которой начинается осветление цвета")]
+        [Tooltip("Intensity at which color brightening starts")]
         [Range(0f, 50f)]
         public float whiteThreshold = 10f;
 
-        [Tooltip("Диапазон осветления (интенсивность от whiteThreshold до whiteThreshold + whiteRange)")]
+        [Tooltip("Brightening range (intensity from whiteThreshold to whiteThreshold + whiteRange)")]
         [Range(1f, 50f)]
         public float whiteRange = 10f;
 
-        [Header("Visibility")] [Tooltip("Порог, ниже которого эмиссия полностью отключается")] [Range(0f, 5f)]
+        [Header("Visibility")] [Tooltip("Threshold below which emission is fully disabled")] [Range(0f, 5f)]
         public float emissionCutoff = 0.3f;
 
         private Material _material;

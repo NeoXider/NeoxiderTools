@@ -30,34 +30,34 @@ namespace Neo.Tools
             Custom
         }
 
-        [Header("Settings")] [Tooltip("Сила импульса")] [Min(0f)] [SerializeField]
+        [Header("Settings")] [Tooltip("Impulse force")] [Min(0f)] [SerializeField]
         private float impulseForce = 50f;
 
-        [Tooltip("Направление импульса")] [SerializeField]
+        [Tooltip("Impulse direction")] [SerializeField]
         private ImpulseDirection direction = ImpulseDirection.AwayFromCenter;
 
-        [Tooltip("Кастомное направление (используется при режиме Custom)")] [SerializeField]
+        [Tooltip("Custom direction (used in Custom mode)")] [SerializeField]
         private Vector3 customDirection = Vector3.up;
 
-        [Header("Filtering")] [Tooltip("Слои объектов, на которые будет воздействовать импульс")] [SerializeField]
+        [Header("Filtering")] [Tooltip("Layers of objects affected by impulse")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
-        [Tooltip("Тег объектов (пусто = игнорировать фильтр по тегу)")] [SerializeField]
+        [Tooltip("Object tag (empty = ignore tag filter)")] [SerializeField]
         private string requiredTag = "";
 
-        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Automatically add Rigidbody to objects without physics")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Одноразовое срабатывание (каждый объект может получить импульс только один раз)")] [SerializeField]
+        [Tooltip("One-shot (each object can receive impulse only once)")] [SerializeField]
         private bool oneTimeOnly;
 
-        [Tooltip("Задержка между срабатываниями для одного объекта")] [Min(0f)] [SerializeField]
+        [Tooltip("Cooldown between triggers per object")] [Min(0f)] [SerializeField]
         private float cooldown;
 
-        [Tooltip("Вызывается при входе объекта в зону")]
+        [Tooltip("Invoked when object enters zone")]
         public UnityEvent<GameObject> OnObjectEntered = new();
 
-        [Tooltip("Вызывается при применении импульса")]
+        [Tooltip("Invoked when impulse is applied")]
         public UnityEvent<GameObject> OnImpulseApplied = new();
 
         private readonly Dictionary<Collider, float> cooldownTimers = new();

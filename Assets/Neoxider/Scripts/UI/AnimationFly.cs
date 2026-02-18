@@ -17,7 +17,7 @@ namespace Neo
 #endif
         public List<BonusPrefabData> bonusPrefabList = new();
 
-        [Tooltip("Множитель количества спавнящихся объектов")]
+        [Tooltip("Multiplier for number of spawned objects")]
         public float countMultiplier = 1f;
 
         public float delayBetweenBonuses = 0.1f;
@@ -28,7 +28,7 @@ namespace Neo
         [Header("Animation")] public float flyDuration = 1.0f;
         public bool ignoreZ;
 
-        [Tooltip("Максимальное количество объектов за один вызов")]
+        [Tooltip("Max number of objects per call")]
         public int maxBonusCount = 1000;
 
         [Range(0, 1)] public float middlePoint = 0.4f;
@@ -38,7 +38,7 @@ namespace Neo
 
         public float scaleMult = 1;
 
-        [Header("Spawn")] [Tooltip("Родительский объект для спавна бонусов")]
+        [Header("Spawn")] [Tooltip("Parent object for bonus spawn")]
         public Transform spawnParent;
 
         public bool useUnscaledTime;
@@ -270,7 +270,7 @@ namespace Neo
         }
 
         [Serializable]
-        [Tooltip("Префабы бонусов по типу и конечная точка")]
+        [Tooltip("Bonus prefabs by type and end point")]
         public struct BonusPrefabData
         {
             public int bonusType;

@@ -11,7 +11,7 @@ namespace Neo.Cards
     /// </summary>
     public class DrunkardGame : MonoBehaviour
     {
-        [Header("Config")] [Tooltip("Обязательный источник колоды и префаба карт.")] [SerializeField]
+        [Header("Config")] [Tooltip("Required deck and card prefab source.")] [SerializeField]
         private DeckComponent _deckComponent;
 
         [SerializeField] private bool _initializeOnStart = true;
@@ -24,7 +24,7 @@ namespace Neo.Cards
         [SerializeField]
         private BoardComponent _initialBoard;
 
-        [Tooltip("Позиция колоды игрока (откуда выезжает карта). Можно указать HandComponent.")] [SerializeField]
+        [Tooltip("Player deck position (where card moves from). Can reference HandComponent.")] [SerializeField]
         private Transform _playerDeckPosition;
 
         [SerializeField] private Transform _playerCardPosition;
@@ -36,13 +36,13 @@ namespace Neo.Cards
 
         [SerializeField] private float _roundDelay = 1f;
 
-        [Tooltip("Задержка между ходами игроков")] [SerializeField]
+        [Tooltip("Delay between player turns")] [SerializeField]
         private float _turnDelay = 0.3f;
 
         [SerializeField] private float _warContinueDelay = 0.5f;
         [SerializeField] private float _cardReturnDelay = 0.1f;
 
-        [Header("Game Rules")] [Tooltip("Если true - игрок ходит первым, если false - соперник")] [SerializeField]
+        [Header("Game Rules")] [Tooltip("If true — player moves first; if false — opponent")] [SerializeField]
         private bool _playerGoesFirst = true;
 
         [Header("Events - Card Count")] [SerializeField]

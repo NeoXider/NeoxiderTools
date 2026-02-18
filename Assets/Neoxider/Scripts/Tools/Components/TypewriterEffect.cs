@@ -13,9 +13,9 @@ namespace Neo.Tools
     [Serializable]
     public class PunctuationPause
     {
-        [Tooltip("Символ знака препинания")] public char character;
+        [Tooltip("Punctuation character")] public char character;
 
-        [Tooltip("Дополнительная пауза в секундах после этого символа")] [Min(0)]
+        [Tooltip("Extra delay in seconds after this character")] [Min(0)]
         public float pause;
 
         public PunctuationPause()

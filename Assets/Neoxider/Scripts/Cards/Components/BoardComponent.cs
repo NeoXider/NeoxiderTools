@@ -24,7 +24,7 @@ namespace Neo.Cards
         [SerializeField]
         private CardAnimationConfig _animationConfig;
 
-        [Tooltip("Опциональный Deck-источник настроек. Если локальный конфиг пуст, Board возьмет конфиг отсюда.")]
+        [Tooltip("Optional Deck source for settings. If local config is empty, Board will use config from here.")]
         [SerializeField]
         private DeckComponent _settingsSourceDeck;
 
@@ -32,24 +32,24 @@ namespace Neo.Cards
 
         [SerializeField] private bool _faceUp;
 
-        [Tooltip("Допустимо ли автоматически увеличивать максимальное количество карт при возврате")] [SerializeField]
+        [Tooltip("Whether to automatically increase max card count when returning")] [SerializeField]
         private bool _autoExpandCapacity = true;
 
         [Header("Sources (for reset)")]
-        [Tooltip("Руки, из которых нужно забирать карты при сбросе/рестарте")]
+        [Tooltip("Hands from which to take cards on reset/restart")]
         [SerializeField]
         private List<HandComponent> _handSources = new();
 
-        [Tooltip("Другие BoardComponent, которые нужно очищать в этот Board")] [SerializeField]
+        [Tooltip("Other BoardComponents to clear into this Board")] [SerializeField]
         private List<BoardComponent> _boardSources = new();
 
-        [Tooltip("Дополнительные корневые объекты, из которых будут собраны CardComponent")] [SerializeField]
+        [Tooltip("Additional root objects from which CardComponents will be collected")] [SerializeField]
         private List<Transform> _extraRoots = new();
 
-        [Header("Debug")] [Tooltip("Последний собранный список карт при RestoreAllSourcesToBoard")] [SerializeField]
+        [Header("Debug")] [Tooltip("Last collected list of cards from RestoreAllSourcesToBoard")] [SerializeField]
         private List<CardComponent> _lastCollectedCards = new();
 
-        [Tooltip("Карты, созданные при первоначальном спавне (Initial Board)")] [SerializeField]
+        [Tooltip("Cards created at initial spawn (Initial Board)")] [SerializeField]
         private List<CardComponent> _initialSpawnedCards = new();
 
         [Header("Animation")] [SerializeField] private float _placeDuration = 0.3f;

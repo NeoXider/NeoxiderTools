@@ -38,7 +38,7 @@ namespace Neo.Cards
         [Header("Hover Effect")] [SerializeField]
         private bool _enableHoverEffect = true;
 
-        [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")] [SerializeField]
+        [Tooltip("Scale delta on hover (0.1 = 10% scale increase)")] [SerializeField]
         private float _hoverScale = 0.1f;
 
         [SerializeField] private float _hoverYOffset = 20f;

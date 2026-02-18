@@ -27,7 +27,7 @@ namespace Neo.Cards
         [Header("Limits")] [SerializeField] private int _maxCards = 36;
 
         [Header("Card Order")]
-        [Tooltip("Если true - новые карты добавляются под низ (sibling index 0)")]
+        [Tooltip("If true — new cards are added at bottom (sibling index 0)")]
         [SerializeField]
         private bool _addToBottom;
 

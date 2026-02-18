@@ -24,19 +24,19 @@ namespace Neo.StateMachine.NoCode
     [CreateAssetMenu(fileName = "New State Machine", menuName = "Neo/State Machine/State Machine Data")]
     public class StateMachineData : ScriptableObject
     {
-        [SerializeField] [Tooltip("Все состояния State Machine")]
+        [SerializeField] [Tooltip("All State Machine states")]
         private StateData[] states = new StateData[0];
 
-        [SerializeField] [Tooltip("Начальное состояние (ScriptableObject)")]
+        [SerializeField] [Tooltip("Initial state (ScriptableObject)")]
         private StateData initialState;
 
-        [SerializeField] [Tooltip("Имя начального состояния (legacy, используется если initialState не задан)")]
+        [SerializeField] [Tooltip("Initial state name (legacy, used when initialState not set)")]
         private string initialStateName = "";
 
-        [SerializeField] [Tooltip("Глобальные переходы между состояниями")]
+        [SerializeField] [Tooltip("Global transitions between states")]
         private List<StateTransition> transitions = new();
 
-        [SerializeField] [Tooltip("Позиции узлов (legacy, не используется)")]
+        [SerializeField] [Tooltip("Node positions (legacy, unused)")]
         private List<StatePosition> statePositions = new();
 
         /// <summary>

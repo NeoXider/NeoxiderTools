@@ -13,6 +13,8 @@ namespace Neo
         /// <summary>
         /// Provides time-based reward logic with persistent cooldown and timer control API.
         /// </summary>
+        /// <remarks>Consider using CooldownReward for new implementations (inherits TimerObject).</remarks>
+        [Obsolete("Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
         [AddComponentMenu("Neo/" + "Bonus/" + nameof(TimeReward))]
         public class TimeReward : MonoBehaviour
         {

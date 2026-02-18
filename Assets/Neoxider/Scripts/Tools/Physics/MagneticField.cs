@@ -47,19 +47,19 @@ namespace Neo.Tools
             Direction
         }
 
-        [Header("Settings")] [Tooltip("Режим работы поля")] [SerializeField]
+        [Header("Settings")] [Tooltip("Field mode")] [SerializeField]
         private FieldMode mode = FieldMode.Attract;
 
-        [Tooltip("Сила магнитного поля")] [Min(0f)] [SerializeField]
+        [Tooltip("Magnetic field strength")] [Min(0f)] [SerializeField]
         private float fieldStrength = 10f;
 
-        [Tooltip("Радиус действия поля")] [Min(0f)] [SerializeField]
+        [Tooltip("Field radius")] [Min(0f)] [SerializeField]
         private float radius = 5f;
 
-        [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
+        [Tooltip("Force falloff type over distance")] [SerializeField]
         private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Filtering")] [Tooltip("Слои объектов, на которые будет воздействовать поле")] [SerializeField]
+        [Header("Filtering")] [Tooltip("Layers of objects affected by the field")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
         [Header("Toggle")]
@@ -68,19 +68,19 @@ namespace Neo.Tools
         [SerializeField]
         private bool _toggle;
 
-        [Tooltip("Время действия в прямом направлении (секунды)")] [Min(0.1f)] [SerializeField]
+        [Tooltip("Duration in forward direction (seconds)")] [Min(0.1f)] [SerializeField]
         private float attractDuration = 2f;
 
-        [Tooltip("Время действия в обратном направлении (секунды)")] [Min(0.1f)] [SerializeField]
+        [Tooltip("Duration in reverse direction (seconds)")] [Min(0.1f)] [SerializeField]
         private float repelDuration = 2f;
 
-        [Tooltip("Начинать с прямого направления (true) или с обратного (false)")] [SerializeField]
+        [Tooltip("Start with forward direction (true) or reverse (false)")] [SerializeField]
         private bool startWithAttract = true;
 
-        [Header("Attraction Target")] [Tooltip("Transform цели (используется при режиме ToTarget)")] [SerializeField]
+        [Header("Attraction Target")] [Tooltip("Target transform (used in ToTarget mode)")] [SerializeField]
         private Transform targetTransform;
 
-        [Tooltip("Точка в пространстве (используется при режиме ToPoint)")] [SerializeField]
+        [Tooltip("Point in space (used in ToPoint mode)")] [SerializeField]
         private Vector3 targetPoint = Vector3.zero;
 
         [Header("Attraction Direction")]
@@ -89,31 +89,31 @@ namespace Neo.Tools
         [SerializeField]
         private Vector3 direction = Vector3.forward;
 
-        [Tooltip("Если true — direction интерпретируется в локальных координатах (TransformDirection).")]
+        [Tooltip("If true — direction is in local space (TransformDirection).")]
         [SerializeField]
         private bool directionIsLocal = true;
 
-        [Tooltip("Длина визуализации направления в сцене (и точка-ручка для режима Direction).")]
+        [Tooltip("Direction visualization length in scene (and handle for Direction mode).")]
         [Min(0.01f)]
         [SerializeField]
         private float directionGizmoDistance = 10f;
 
-        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Automatically add Rigidbody to objects without physics")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Использовать FixedUpdate вместо Update для более стабильной физики")] [SerializeField]
+        [Tooltip("Use FixedUpdate instead of Update for more stable physics")] [SerializeField]
         private bool useFixedUpdate = true;
 
-        [Tooltip("Интервал обновления объектов в поле (0 = каждый кадр)")] [Min(0f)] [SerializeField]
+        [Tooltip("Update interval for objects in field (0 = every frame)")] [Min(0f)] [SerializeField]
         private float updateInterval;
 
-        [Tooltip("Вызывается при входе объекта в поле")]
+        [Tooltip("Invoked when object enters field")]
         public UnityEvent<GameObject> OnObjectEntered = new();
 
-        [Tooltip("Вызывается при выходе объекта из поля")]
+        [Tooltip("Invoked when object exits field")]
         public UnityEvent<GameObject> OnObjectExited = new();
 
-        [Tooltip("Вызывается при изменении режима (для Toggle)")]
+        [Tooltip("Invoked when mode changes (for Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
         private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();

@@ -8,7 +8,7 @@ namespace Neo.Tools
     public class LeaderboardMove : MonoBehaviour
     {
         [Header("Leaderboard Reference")]
-        [Tooltip("Конкретный лидерборд для использования. Если не указан, используется синглтон")]
+        [Tooltip("Specific leaderboard to use. If not set, singleton is used")]
         public Leaderboard leaderboard;
 
         public bool useMove = true;
@@ -19,7 +19,7 @@ namespace Neo.Tools
 
         [Space] public bool useAnimPlayer = true;
 
-        [Tooltip("Насколько будет увеличен элемент игрока относительно его базового размера")]
+        [Tooltip("How much the player entry is scaled up relative to its base size")]
         public float scaleDelta = 0.1f;
 
         public float durationAnimPlayer = 0.3f;

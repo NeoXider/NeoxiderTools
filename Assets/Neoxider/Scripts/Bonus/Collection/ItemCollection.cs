@@ -7,9 +7,16 @@ namespace Neo.Bonus
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {
-        [Header("References")] [GetComponent] public Button button;
+        [Header("References")] [GetComponent] [SerializeField] private Button _button;
         [SerializeField] private Image _itemImage;
+        [SerializeField] private Collection _collection;
         [SerializeField] private ItemCollectionInfo _itemInfo;
+
+        public Button Button => _button;
+        private int _itemId = -1;
+
+        private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
+        public int ItemId => _itemId;
 
         public UnityEvent<bool> OnChangeEnabled;
         public UnityEvent OnActive;
@@ -62,7 +69,7 @@ namespace Neo.Bonus
             }
 
             _currentData = itemCollectionData;
-            SetSprite(itemCollectionData.sprite);
+            SetSprite(itemCollectionData.Sprite);
 
             if (_itemInfo != null)
             {
@@ -73,6 +80,26 @@ namespace Neo.Bonus
         public ItemCollectionData GetCurrentData()
         {
             return _currentData;
+        }
+
+        public void SetItemId(int id)
+        {
+            _itemId = id;
+        }
+
+        /// <summary>Добавляет текущий предмет в коллекцию (по ItemId). Удобно вызывать из UnityEvent (кнопка).</summary>
+        public void Unlock()
+        {
+            if (_itemId < 0)
+            {
+                return;
+            }
+
+            Collection col = CollectionInstance;
+            if (col != null && col.ItemCount > _itemId)
+            {
+                col.AddItem(_itemId);
+            }
         }
     }
 }

@@ -30,7 +30,7 @@ namespace Neo.Cards
         [SerializeField] private Vector3 _stackOffsetRotation;
         [SerializeField] private CardAnimationConfig _animationConfig;
 
-        [Tooltip("Если включено, конфиг колоды становится глобальным fallback для остальных Card-компонентов.")]
+        [Tooltip("If enabled, deck config becomes global fallback for other Card components.")]
         [SerializeField]
         private bool _setAnimationConfigAsGlobal = true;
 

@@ -37,37 +37,37 @@ namespace Neo.Tools
     [AddComponentMenu("Neo/Tools/" + nameof(Counter))]
     public class Counter : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Режим: целое (Int) или дробное (Float).")]
+        [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
         private CounterValueMode _valueMode = CounterValueMode.Int;
 
-        [SerializeField] [Tooltip("Текущее значение счётчика (по умолчанию 1).")]
+        [SerializeField] [Tooltip("Current counter value (default 1).")]
         private float _value = 1f;
 
-        [SerializeField] [Tooltip("Какое значение передавать в OnSend при вызове Send() без аргумента.")]
+        [SerializeField] [Tooltip("Value to pass to OnSend when calling Send() with no argument.")]
         private CounterSendPayload _sendPayload = CounterSendPayload.Counter;
 
         [Header("Сохранение")]
         [SerializeField]
-        [Tooltip("Включить сохранение значения при изменении (через SaveProvider). По умолчанию выключено.")]
+        [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
         private bool _saveEnabled;
 
         [SerializeField]
-        [Tooltip("Ключ для сохранения (уникальный для каждого счётчика). Используется с SaveProvider, как в Money.")]
+        [Tooltip("Save key (unique per counter). Used with SaveProvider, as in Money.")]
         private string _saveKey = "Counter";
 
         [Space]
         [Header("События по типу (вызывается одно в зависимости от режима)")]
-        [Tooltip("Вызывается при изменении значения в режиме Int. Передаётся новое целое значение.")]
+        [Tooltip("Invoked when value changes in Int mode. Passes new integer value.")]
         public UnityEvent<int> OnValueChangedInt = new();
 
-        [Tooltip("Вызывается при изменении значения в режиме Float. Передаётся новое значение.")]
+        [Tooltip("Invoked when value changes in Float mode. Passes new value.")]
         public UnityEvent<float> OnValueChangedFloat = new();
 
         [Space]
-        [Tooltip("Вызывается при Send() в режиме Int. Передаётся целое значение (Payload или переданное число).")]
+        [Tooltip("Invoked on Send() in Int mode. Passes integer (Payload or argument).")]
         public UnityEvent<int> OnSendInt = new();
 
-        [Tooltip("Вызывается при Send() в режиме Float. Передаётся значение (Payload или переданное число).")]
+        [Tooltip("Invoked on Send() in Float mode. Passes value (Payload or argument).")]
         public UnityEvent<float> OnSendFloat = new();
 
         [Space]

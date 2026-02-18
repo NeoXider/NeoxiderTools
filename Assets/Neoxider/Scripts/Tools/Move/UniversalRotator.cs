@@ -42,17 +42,17 @@ namespace Neo.Tools
 
         // ========== РЕЖИМЫ ==========
         [Header("Mode")]
-        [Tooltip("Режим вращения: 3D (по forward) или 2D (в плоскости XY, поворот по Z).")]
+        [Tooltip("Rotation mode: 3D (along forward) or 2D (XY plane, Z rotation).")]
 #if ODIN_INSPECTOR
         [LabelText("Режим вращения")]
 #endif
         [SerializeField]
         private RotationMode rotationMode = RotationMode.Mode3D;
 
-        [Tooltip("Где исполнять логику вращения.")]
+        [Tooltip("Where to run rotation logic.")]
         public UpdateMode updateMode = UpdateMode.Update;
 
-        [Tooltip("Использовать нескалированное время.")]
+        [Tooltip("Use unscaled time.")]
         public bool useUnscaledTime;
 
         // ========== СКОРОСТЬ И ОФСЕТ ==========
@@ -60,11 +60,11 @@ namespace Neo.Tools
 #if ODIN_INSPECTOR
         [LabelText("Скорость (°/сек)")]
 #endif
-        [Tooltip("Скорость вращения (град/сек).")]
+        [Tooltip("Rotation speed (deg/sec).")]
         [Min(0f)]
         public float rotationSpeed = 360f;
 
-        [Tooltip("Офсет вращения. В 3D — полный Euler. В 2D используется только Z.")]
+        [Tooltip("Rotation offset. In 3D — full Euler. In 2D only Z is used.")]
 #if ODIN_INSPECTOR
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
         [LabelText("Офсет (Euler)")]
@@ -88,7 +88,7 @@ namespace Neo.Tools
         [FoldoutGroup("Ограничения")]
         [LabelText("Относительно стартовой позы")]
 #endif
-        [Tooltip("Если включено — диапазон считается от локальных эйлеров при старте, иначе — от 0.")]
+        [Tooltip("If enabled — range is from local eulers at start; otherwise from 0.")]
         public bool limitsRelativeToInitial = true;
 
         // ========== НАВЕДЕНИЕ ==========
@@ -110,7 +110,7 @@ namespace Neo.Tools
         [InlineButton(nameof(UseMainCamera), "Main")]
 #endif
 
-        [Tooltip("Камера для режима мыши. Если пусто — будет подставлена Camera.main.")]
+        [Tooltip("Camera for mouse mode. If empty — Camera.main is used.")]
         public Camera targetCamera;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение/MOUSE 3D")]
@@ -124,7 +124,7 @@ namespace Neo.Tools
         [LabelText("Нормаль плоскости")]
 #endif
 
-        [Tooltip("Для PlaneThroughObject. Y = горизонтальная плоскость.")]
+        [Tooltip("For PlaneThroughObject. Y = horizontal plane.")]
         public Axis planeAxis = Axis.Y;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Наведение/MOUSE 3D")]
@@ -138,7 +138,7 @@ namespace Neo.Tools
         [LabelText("World Up")]
 #endif
 
-        [Tooltip("Up-вектор для LookRotation в 3D.")]
+        [Tooltip("Up vector for LookRotation in 3D.")]
         public Vector3 worldUp = Vector3.up;
 
         private Transform cachedParent;
@@ -160,7 +160,7 @@ namespace Neo.Tools
         [PropertyRange(-180, 180)]
 #endif
 
-        [Tooltip("Офсет по Z для 2D (спрайтов).")]
+        [Tooltip("Z offset for 2D (sprites).")]
         public float rotationOffsetZ2D
         {
             get => rotationOffsetEuler.z;

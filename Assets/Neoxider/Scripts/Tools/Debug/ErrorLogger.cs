@@ -21,16 +21,16 @@ namespace Neo
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
-        [Header("Log Type Filters")] [Tooltip("Выберите типы логов для отображения")]
+        [Header("Log Type Filters")] [Tooltip("Select log types to display")]
         public LogTypeFilter logTypeFilter = LogTypeFilter.Error | LogTypeFilter.Exception;
 
-        [Header("Display Settings")] [Tooltip("Добавлять текст в конец (true) или заменять (false)")]
+        [Header("Display Settings")] [Tooltip("Append text (true) or replace (false)")]
         public bool addText = true;
 
-        [Tooltip("Проверять на дубликаты ошибок")]
+        [Tooltip("Check for duplicate errors")]
         public bool checkExistingErrors = true;
 
-        [Tooltip("Добавлять путь к скрипту откуда был вызван лог")]
+        [Tooltip("Include script path where log was called")]
         public bool showScriptPath;
 
         public string errorText;

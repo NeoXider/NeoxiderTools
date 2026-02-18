@@ -14,57 +14,57 @@ namespace Neo.Tools.View
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LightAnimator))]
     public class LightAnimator : MonoBehaviour
     {
-        [Header("Animation Settings")] [Tooltip("Тип анимации")]
+        [Header("Animation Settings")] [Tooltip("Animation type")]
         public AnimationType animationType = AnimationType.PerlinNoise;
 
-        [Header("Intensity Settings")] [Tooltip("Минимальная интенсивность")] [Range(0f, 100)]
+        [Header("Intensity Settings")] [Tooltip("Min intensity")] [Range(0f, 100)]
         public float minIntensity = 0.5f;
 
-        [Tooltip("Максимальная интенсивность")] [Range(0f, 200f)]
+        [Tooltip("Max intensity")] [Range(0f, 200f)]
         public float maxIntensity = 1.5f;
 
-        [Tooltip("Скорость анимации (0 = анимация отключена)")] [Range(0f, 30f)]
+        [Tooltip("Animation speed (0 = disabled)")] [Range(0f, 30f)]
         public float animationSpeed = 1.0f;
 
-        [Header("Noise Settings")] [Tooltip("Масштаб шума для PerlinNoise")] [Range(0.1f, 20f)]
+        [Header("Noise Settings")] [Tooltip("Noise scale for PerlinNoise")] [Range(0.1f, 20f)]
         public float noiseScale = 1f;
 
-        [Tooltip("Использовать 2D шум вместо 1D")]
+        [Tooltip("Use 2D noise instead of 1D")]
         public bool use2DNoise = true;
 
-        [Tooltip("Дополнительное смещение шума")]
+        [Tooltip("Additional noise offset")]
         public Vector2 noiseOffset;
 
-        [Header("Color Settings")] [Tooltip("Изменять ли цвет света")]
+        [Header("Color Settings")] [Tooltip("Whether to change light color")]
         public bool changeColor;
 
-        [Tooltip("Целевой цвет")] public Color targetColor = Color.white;
+        [Tooltip("Target color")] public Color targetColor = Color.white;
 
-        [Tooltip("Скорость смешивания цветов")] [Range(0f, 1f)]
+        [Tooltip("Color blend speed")] [Range(0f, 1f)]
         public float colorBlendSpeed = 1f;
 
-        [Header("Custom Curve")] [Tooltip("Пользовательская кривая для CustomCurve типа")]
+        [Header("Custom Curve")] [Tooltip("Custom curve for CustomCurve type")]
         public AnimationCurve customCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
 
-        [Header("Control")] [Tooltip("Автоматически запускать анимацию при старте")]
+        [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
-        [Header("Debug Settings")] [Tooltip("Включить отладочные сообщения")]
+        [Header("Debug Settings")] [Tooltip("Enable debug messages")]
         public bool enableDebugging;
 
-        [Tooltip("Вызывается при изменении интенсивности")]
+        [Tooltip("Invoked when intensity changes")]
         public UnityEvent<float> OnIntensityChanged;
 
-        [Tooltip("Вызывается при изменении цвета")]
+        [Tooltip("Invoked when color changes")]
         public UnityEvent<Color> OnColorChanged;
 
-        [Tooltip("Вызывается при запуске анимации")]
+        [Tooltip("Invoked when animation starts")]
         public UnityEvent OnAnimationStarted;
 
-        [Tooltip("Вызывается при остановке анимации")]
+        [Tooltip("Invoked when animation stops")]
         public UnityEvent OnAnimationStopped;
 
-        [Tooltip("Вызывается при паузе анимации")]
+        [Tooltip("Invoked when animation is paused")]
         public UnityEvent OnAnimationPaused;
 
         private ILightAccessor _light;

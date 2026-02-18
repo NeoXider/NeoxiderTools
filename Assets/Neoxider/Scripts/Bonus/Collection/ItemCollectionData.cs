@@ -21,29 +21,29 @@ namespace Neo.Bonus
         order = 10)]
     public class ItemCollectionData : ScriptableObject
     {
-        [Tooltip("Название коллекционного предмета")] [SerializeField]
+        [Tooltip("Display name of the collection item")] [SerializeField]
         private string _itemName;
 
-        [Tooltip("Описание предмета")] [TextArea(1, 5)] [SerializeField]
+        [Tooltip("Item description")] [TextArea(1, 5)] [SerializeField]
         private string _description;
 
-        [Tooltip("Иконка предмета для отображения в коллекции")] [SerializeField]
+        [Tooltip("Item icon for display in collection")] [SerializeField]
         private Sprite _sprite;
 
-        [Tooltip("Тип предмета (числовой идентификатор)")] [SerializeField]
+        [Tooltip("Item type (numeric identifier)")] [SerializeField]
         private int _itemType;
 
-        [Tooltip("Редкость предмета")] [SerializeField]
+        [Tooltip("Item rarity")] [SerializeField]
         private ItemRarity _rarity = ItemRarity.Common;
 
-        [Tooltip("Категория предмета (числовой идентификатор)")] [SerializeField]
+        [Tooltip("Item category (numeric identifier)")] [SerializeField]
         private int _category;
 
-        public string itemName => _itemName;
-        public string description => _description;
-        public Sprite sprite => _sprite;
-        public int itemType => _itemType;
-        public ItemRarity rarity => _rarity;
-        public int category => _category;
+        public string ItemName => _itemName;
+        public string Description => _description;
+        public Sprite Sprite => _sprite;
+        public int ItemType => _itemType;
+        public ItemRarity Rarity => _rarity;
+        public int Category => _category;
     }
 }

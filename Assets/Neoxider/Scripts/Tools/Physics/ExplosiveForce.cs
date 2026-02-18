@@ -53,42 +53,42 @@ namespace Neo.Tools
             AddExplosionForce
         }
 
-        [Header("Activation")] [Tooltip("Режим активации взрыва")] [SerializeField]
+        [Header("Activation")] [Tooltip("Explosion activation mode")] [SerializeField]
         private ActivationMode activationMode = ActivationMode.OnStart;
 
-        [Tooltip("Задержка перед взрывом (используется при режиме Delayed)")] [SerializeField]
+        [Tooltip("Delay before explosion (used in Delayed mode)")] [SerializeField]
         private float delay;
 
-        [Header("Explosion Force")] [Tooltip("Базовая сила взрыва")] [Min(0f)] [SerializeField]
+        [Header("Explosion Force")] [Tooltip("Base explosion force")] [Min(0f)] [SerializeField]
         private float force = 100f;
 
-        [Tooltip("Случайная вариация силы (добавляется к базовой силе)")] [SerializeField]
+        [Tooltip("Random force variation (added to base force)")] [SerializeField]
         private float forceRandomness;
 
-        [Tooltip("Режим применения силы")] [SerializeField]
+        [Tooltip("Force application mode")] [SerializeField]
         private ForceMode forceMode = ForceMode.AddExplosionForce;
 
-        [Tooltip("Тип затухания силы по расстоянию")] [SerializeField]
+        [Tooltip("Force falloff type over distance")] [SerializeField]
         private FalloffType falloffType = FalloffType.Quadratic;
 
-        [Header("Radius & Filtering")] [Tooltip("Радиус действия взрыва")] [Min(0f)] [SerializeField]
+        [Header("Radius & Filtering")] [Tooltip("Explosion radius")] [Min(0f)] [SerializeField]
         private float radius = 5f;
 
-        [Tooltip("Слои объектов, на которые будет воздействовать взрыв")] [SerializeField]
+        [Tooltip("Layers of objects affected by explosion")] [SerializeField]
         private LayerMask affectedLayers = -1;
 
-        [Header("Options")] [Tooltip("Автоматически добавлять Rigidbody на объекты без физики")] [SerializeField]
+        [Header("Options")] [Tooltip("Automatically add Rigidbody to objects without physics")] [SerializeField]
         private bool addRigidbodyIfNeeded;
 
-        [Tooltip("Уничтожить этот объект после взрыва")] [SerializeField]
+        [Tooltip("Destroy this object after explosion")] [SerializeField]
         private bool destroyAfterExplosion;
 
-        [Tooltip("Задержка перед уничтожением (если destroyAfterExplosion = true)")] [SerializeField]
+        [Tooltip("Delay before destroy (if destroyAfterExplosion = true)")] [SerializeField]
         private float destroyDelay;
 
-        [Tooltip("Вызывается при взрыве")] public UnityEvent OnExplode = new();
+        [Tooltip("Invoked on explosion")] public UnityEvent OnExplode = new();
 
-        [Tooltip("Вызывается для каждого затронутого объекта")]
+        [Tooltip("Invoked for each affected object")]
         public UnityEvent<GameObject> OnObjectAffected = new();
 
         /// <summary>

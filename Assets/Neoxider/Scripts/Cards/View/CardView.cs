@@ -24,7 +24,7 @@ namespace Neo.Cards
         [SerializeField] private Ease _flipEase = Ease.OutQuad;
         [SerializeField] private Ease _moveEase = Ease.OutQuad;
 
-        [Header("Hover")] [Tooltip("Дельта увеличения масштаба (0.1 = увеличение на 10%)")] [SerializeField]
+        [Header("Hover")] [Tooltip("Scale delta on hover (0.1 = 10% scale increase)")] [SerializeField]
         private float _hoverScale = 0.1f;
 
         [SerializeField] private float _hoverDuration = 0.15f;

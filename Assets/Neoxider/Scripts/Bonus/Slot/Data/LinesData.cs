@@ -10,7 +10,7 @@ namespace Neo.Bonus
     [CreateAssetMenu(fileName = "Lines Data", menuName = "Neo/Bonus/Slot/Lines Data", order = 2)]
     public class LinesData : ScriptableObject
     {
-        [Tooltip("Массив линий выигрыша. Каждая линия содержит координаты Y для каждого столбца.")] [SerializeField]
+        [Tooltip("Win lines array. Each line contains Y coordinates per column.")] [SerializeField]
         private InnerArray[] _lines =
         {
             new() { corY = new[] { 0, 0, 0 } },
@@ -29,7 +29,7 @@ namespace Neo.Bonus
         [Serializable]
         public class InnerArray
         {
-            [Tooltip("Координаты Y для каждого столбца линии")]
+            [Tooltip("Y coordinates for each column of the line")]
             public int[] corY;
         }
     }

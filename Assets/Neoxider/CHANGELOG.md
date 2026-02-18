@@ -2,6 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [5.8.15] - Unreleased
+
+### Bonus — CooldownReward и устаревание TimeReward
+
+- **CooldownReward** — новый компонент наград по кулдауну, наследник **TimerObject**: один скрипт объединяет таймер (RealTime), сохранение и логику наград (TakeReward, GetClaimableCount, накопление, max per take). Рекомендуется для нового кода. Меню: GameObject → Neoxider → Bonus → CooldownReward.
+- **TimeReward** — помечен `[Obsolete]` с рекомендацией использовать CooldownReward; остаётся рабочим для обратной совместимости.
+- **Docs** — в Bonus/TimeReward/README.md описан CooldownReward как рекомендуемый компонент, TimeReward — как устаревший.
+
+### Tools/Time — расширение для наследования
+
+- **TimerObject** — точки расширения для наследников: `protected virtual string GetSaveKey() => saveKey` (подстановка ключа в SaveState/LoadState), `protected virtual void SaveState()` (вызов сохранения из производного класса). Поля `saveProgress` и `saveMode` сделаны `protected` для настройки в наследниках.
+
+### Зависимости
+
+- **Neo.Bonus.asmdef** — добавлена ссылка на Neo.Tools.Time (для CooldownReward).
+
+## [5.8.14] - Unreleased
+
+### Bonus/Collection — улучшения и исправления
+
+- **CollectionVisualManager** — подписки на кнопки теперь корректно снимаются при уничтожении: делегаты кешируются в массиве и передаются в `RemoveListener` той же ссылкой, что и в `AddListener` (раньше лямбды создавали новые делегаты и отписка не срабатывала).
+- **Collection** — единое хранилище: запись состояния предметов переведена с `PlayerPrefs.SetInt` на `SaveProvider.SetInt` в `AddItem`, `RemoveItem`, `ClearCollection` для согласованности с `Load()`/`Save()`.
+- **Collection.GetPrize** — оптимизация с O(n²) до O(n): выбор из ещё не полученных предметов по списку индексов без повторного поиска.
+- **Collection** — защитные проверки в `UnlockAllItems` и `ClearCollection`: синхронизация длины `_enabledItems` с `_itemCollectionDatas`, проверка `_itemCollectionDatas` в `ClearCollection`.
+- **Box** — прогресс не уходит в минус после `TakePrize` (clamp ≥ 0); в сеттере `progress` вызывается `SaveProvider.Save()` для сохранения данных.
+- **ItemCollectionData** — публичные свойства переименованы в PascalCase: `ItemName`, `Description`, `Sprite`, `ItemType`, `Rarity`, `Category` (вместо `itemName`, `description`, `sprite` и т.д.).
+- **Box** — поля `addProgress`/`maxProgress` заменены на `[SerializeField] private` с публичными свойствами `AddProgressAmount`, `MaxProgress`.
+- **ItemCollection** — поле `button` заменено на приватное с публичным свойством `Button`.
+
 ## [5.8.13] - Unreleased
 
 ### Добавлено

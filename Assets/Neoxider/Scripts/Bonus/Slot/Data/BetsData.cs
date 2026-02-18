@@ -9,7 +9,7 @@ namespace Neo.Bonus
     [CreateAssetMenu(fileName = "Bets Data", menuName = "Neo/Bonus/Slot/Bets Data", order = 1)]
     public class BetsData : ScriptableObject
     {
-        [Tooltip("Массив доступных ставок для слот-машины")] [SerializeField]
+        [Tooltip("Available bets array for slot machine")] [SerializeField]
         private int[] _bets = { 10, 20, 50, 100, 200, 500, 1000 };
 
         /// <summary>

@@ -1,4 +1,5 @@
-﻿using System;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
 using Neo.Save;
@@ -19,6 +20,12 @@ namespace Neo.Bonus
         public UnityEvent OnLoadItems;
         public UnityEvent<int> OnItemAdded;
         public UnityEvent<int> OnItemRemoved;
+
+        [Space] [Tooltip("Invoked when collection composition changes: (unlockedCount, totalCount).")]
+        public UnityEvent<int, int> OnCompletionChanged;
+
+        [Tooltip("Invoked when collection composition changes: ratio 0–1.")]
+        public UnityEvent<float> OnCompletionPercentageChanged;
 
         public string SaveKeyPrefix
         {
@@ -48,6 +55,30 @@ namespace Neo.Bonus
         public int UnlockedCount => _enabledItems != null ? _enabledItems.Count(x => x) : 0;
         public int LockedCount => ItemCount - UnlockedCount;
 
+        /// <summary>True, если этот экземпляр зарегистрирован как Collection.I (глобальный синглтон). При false — работа по ссылке для нескольких коллекций.</summary>
+        public bool IsSingleton => SetInstanceOnAwakeEnabled;
+
+        /// <summary>Доля завершения коллекции (0–1). При пустой коллекции — 0.</summary>
+        public float GetCompletionPercentage()
+        {
+            int total = ItemCount;
+            return total == 0 ? 0f : (float)UnlockedCount / total;
+        }
+
+        /// <summary>Строка вида "1/5" для отображения в UI.</summary>
+        public string GetCompletionCountText()
+        {
+            return $"{UnlockedCount}/{ItemCount}";
+        }
+
+        private void InvokeCompletionEvents()
+        {
+            int unlocked = UnlockedCount;
+            int total = ItemCount;
+            OnCompletionChanged?.Invoke(unlocked, total);
+            OnCompletionPercentageChanged?.Invoke(GetCompletionPercentage());
+        }
+
         protected override void Init()
         {
             base.Init();
@@ -61,6 +92,7 @@ namespace Neo.Bonus
             {
                 _enabledItems = new bool[0];
                 OnLoadItems?.Invoke();
+                InvokeCompletionEvents();
                 return;
             }
 
@@ -75,6 +107,7 @@ namespace Neo.Bonus
             }
 
             OnLoadItems?.Invoke();
+            InvokeCompletionEvents();
         }
 
         [Button]
@@ -96,20 +129,27 @@ namespace Neo.Bonus
         [Button]
         public ItemCollectionData GetPrize()
         {
-            if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0)
+            if (_itemCollectionDatas == null || _itemCollectionDatas.Length == 0 ||
+                _enabledItems == null || _enabledItems.Length != _itemCollectionDatas.Length)
             {
                 return null;
             }
 
-            ItemCollectionData[] uniqs = _itemCollectionDatas
-                .Where(x => !_enabledItems[Array.IndexOf(_itemCollectionDatas, x)]).ToArray();
+            var lockedIndices = new List<int>();
+            for (int i = 0; i < _enabledItems.Length; i++)
+            {
+                if (!_enabledItems[i])
+                {
+                    lockedIndices.Add(i);
+                }
+            }
 
-            if (uniqs.Length == 0)
+            if (lockedIndices.Count == 0)
             {
                 return null;
             }
 
-            int prizeId = Array.IndexOf(_itemCollectionDatas, _randomPrize ? uniqs.GetRandomElement() : uniqs.First());
+            int prizeId = _randomPrize ? lockedIndices.GetRandomElement() : lockedIndices[0];
 
             AddItem(prizeId);
             OnGetItem?.Invoke(prizeId);
@@ -129,21 +169,44 @@ namespace Neo.Bonus
 
         public void AddItem(int id)
         {
+            TryAddItem(id);
+        }
+
+        /// <summary>Добавляет предмет по индексу. Возвращает true, если предмет был добавлен (раньше не был разблокирован).</summary>
+        public bool TryAddItem(int id)
+        {
             if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
             {
-                return;
+                return false;
             }
 
             if (_enabledItems[id])
             {
-                return;
+                return false;
             }
 
             _enabledItems[id] = true;
-            PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
+            SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
             SaveProvider.Save();
 
             OnItemAdded?.Invoke(id);
+            InvokeCompletionEvents();
+            return true;
+        }
+
+        /// <summary>Добавляет предмет по данным (ищет индекс в ItemCollectionDatas).</summary>
+        public void AddItem(ItemCollectionData data)
+        {
+            if (data == null || _itemCollectionDatas == null)
+            {
+                return;
+            }
+
+            int index = Array.IndexOf(_itemCollectionDatas, data);
+            if (index >= 0)
+            {
+                AddItem(index);
+            }
         }
 
         public void RemoveItem(int id)
@@ -159,10 +222,11 @@ namespace Neo.Bonus
             }
 
             _enabledItems[id] = false;
-            PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
+            SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
             SaveProvider.Save();
 
             OnItemRemoved?.Invoke(id);
+            InvokeCompletionEvents();
         }
 
         public void SetItemEnabled(int id, bool enabled)
@@ -180,22 +244,24 @@ namespace Neo.Bonus
         [Button]
         public void ClearCollection()
         {
-            if (_enabledItems == null)
+            if (_enabledItems == null || _itemCollectionDatas == null)
             {
                 return;
             }
 
-            for (int i = 0; i < _enabledItems.Length; i++)
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
             {
                 if (_enabledItems[i])
                 {
                     _enabledItems[i] = false;
-                    PlayerPrefs.SetInt($"{_saveKeyPrefix}Item_{i}", 0);
+                    SaveProvider.SetInt($"{_saveKeyPrefix}Item_{i}", 0);
                     OnItemRemoved?.Invoke(i);
                 }
             }
 
             SaveProvider.Save();
+            InvokeCompletionEvents();
         }
 
         [Button]
@@ -206,6 +272,11 @@ namespace Neo.Bonus
                 return;
             }
 
+            if (_enabledItems == null || _enabledItems.Length != _itemCollectionDatas.Length)
+            {
+                _enabledItems = new bool[_itemCollectionDatas.Length];
+            }
+
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 if (!_enabledItems[i])
@@ -213,6 +284,8 @@ namespace Neo.Bonus
                     AddItem(i);
                 }
             }
+
+            InvokeCompletionEvents();
         }
 
         public ItemCollectionData GetItemData(int id)
@@ -223,6 +296,163 @@ namespace Neo.Bonus
             }
 
             return _itemCollectionDatas[id];
+        }
+
+        public int[] GetUnlockedIds()
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var list = new List<int>();
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (_enabledItems[i])
+                {
+                    list.Add(i);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        public int[] GetLockedIds()
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var list = new List<int>();
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (!_enabledItems[i])
+                {
+                    list.Add(i);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        public int[] GetIdsByCategory(int category)
+        {
+            if (_itemCollectionDatas == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var list = new List<int>();
+            for (int i = 0; i < _itemCollectionDatas.Length; i++)
+            {
+                if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].Category == category)
+                {
+                    list.Add(i);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        public int[] GetIdsByRarity(ItemRarity rarity)
+        {
+            if (_itemCollectionDatas == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var list = new List<int>();
+            for (int i = 0; i < _itemCollectionDatas.Length; i++)
+            {
+                if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].Rarity == rarity)
+                {
+                    list.Add(i);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        public int[] GetIdsByType(int itemType)
+        {
+            if (_itemCollectionDatas == null)
+            {
+                return Array.Empty<int>();
+            }
+
+            var list = new List<int>();
+            for (int i = 0; i < _itemCollectionDatas.Length; i++)
+            {
+                if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].ItemType == itemType)
+                {
+                    list.Add(i);
+                }
+            }
+
+            return list.ToArray();
+        }
+
+        public int GetUnlockedCountByCategory(int category)
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null)
+            {
+                return 0;
+            }
+
+            int n = 0;
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (_enabledItems[i] && _itemCollectionDatas[i] != null && _itemCollectionDatas[i].Category == category)
+                {
+                    n++;
+                }
+            }
+
+            return n;
+        }
+
+        public int GetUnlockedCountByRarity(ItemRarity rarity)
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null)
+            {
+                return 0;
+            }
+
+            int n = 0;
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (_enabledItems[i] && _itemCollectionDatas[i] != null && _itemCollectionDatas[i].Rarity == rarity)
+                {
+                    n++;
+                }
+            }
+
+            return n;
+        }
+
+        public int GetUnlockedCountByType(int itemType)
+        {
+            if (_enabledItems == null || _itemCollectionDatas == null)
+            {
+                return 0;
+            }
+
+            int n = 0;
+            int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
+            for (int i = 0; i < count; i++)
+            {
+                if (_enabledItems[i] && _itemCollectionDatas[i] != null && _itemCollectionDatas[i].ItemType == itemType)
+                {
+                    n++;
+                }
+            }
+
+            return n;
         }
     }
 }

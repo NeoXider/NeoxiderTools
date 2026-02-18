@@ -49,34 +49,34 @@ namespace Neo.Condition
     [AddComponentMenu("Neo/Condition/NeoCondition")]
     public class NeoCondition : MonoBehaviour
     {
-        [Header("Logic")] [Tooltip("Логика объединения: AND (все true) или OR (хотя бы одно true).")] [SerializeField]
+        [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]
         private LogicMode _logicMode = LogicMode.AND;
 
-        [Header("Conditions")] [Tooltip("Список условий для проверки.")] [SerializeField]
+        [Header("Conditions")] [Tooltip("List of conditions to evaluate.")] [SerializeField]
         private List<ConditionEntry> _conditions = new();
 
-        [Header("Check Mode")] [Tooltip("Когда проверять условия.")] [SerializeField]
+        [Header("Check Mode")] [Tooltip("When to evaluate conditions.")] [SerializeField]
         private CheckMode _checkMode = CheckMode.Interval;
 
-        [Tooltip("Интервал проверки в секундах (для режима Interval).")] [SerializeField]
+        [Tooltip("Check interval in seconds (for Interval mode).")] [SerializeField]
         private float _checkInterval = 0.2f;
 
-        [Tooltip("Проверить один раз при старте.")] [SerializeField]
+        [Tooltip("Check once on start.")] [SerializeField]
         private bool _checkOnStart = true;
 
-        [Tooltip("Вызывать события только при изменении результата (не каждый тик).")] [SerializeField]
+        [Tooltip("Invoke events only when result changes (not every tick).")] [SerializeField]
         private bool _onlyOnChange = true;
 
-        [Header("Events")] [Tooltip("Вызывается когда все условия выполнены (результат = true).")] [SerializeField]
+        [Header("Events")] [Tooltip("Invoked when all conditions are met (result = true).")] [SerializeField]
         private UnityEvent _onTrue = new();
 
-        [Tooltip("Вызывается когда условия НЕ выполнены (результат = false).")] [SerializeField]
+        [Tooltip("Invoked when conditions are NOT met (result = false).")] [SerializeField]
         private UnityEvent _onFalse = new();
 
-        [Tooltip("Вызывается при каждой проверке с результатом.")] [SerializeField]
+        [Tooltip("Invoked on each check with the result.")] [SerializeField]
         private UnityEvent<bool> _onResult = new();
 
-        [Tooltip("Вызывается при каждой проверке с инвертированным результатом (!result).")] [SerializeField]
+        [Tooltip("Invoked on each check with inverted result (!result).")] [SerializeField]
         private UnityEvent<bool> _onInvertedResult = new();
 
         private readonly HashSet<int> _loggedEntryErrors = new();

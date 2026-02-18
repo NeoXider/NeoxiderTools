@@ -23,7 +23,7 @@ namespace Neo.Shop
 
         [SerializeField] private bool _autoSubscribe = true;
 
-        [Tooltip("Если true, при загрузке автоматически активируется сохраненный ShopEquipped элемент")]
+        [Tooltip("If true, saved ShopEquipped item is auto-activated on load")]
         [SerializeField]
         private bool _activateSavedEquipped = true;
 

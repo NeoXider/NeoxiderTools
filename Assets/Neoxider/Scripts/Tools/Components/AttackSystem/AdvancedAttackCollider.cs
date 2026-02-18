@@ -15,10 +15,10 @@ namespace Neo.Tools
     {
         [Header("Attack")] [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию
 
-        [Tooltip("Вид атаки: урон или лечение")] [SerializeField]
+        [Tooltip("Attack type: damage or healing")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
 
-        [Tooltip("Ограничивать повторные столкновения с одним и тем же объектом (по умолчанию выключено)")]
+        [Tooltip("Limit repeated hits on the same object (off by default)")]
         [SerializeField]
         private bool preventRepeatHits;
 
@@ -26,22 +26,22 @@ namespace Neo.Tools
 
         [Header("Auto")]
         [SerializeField]
-        [Tooltip("Если включено, компонент сам включает/выключает коллайдеры на время активации триггера.")]
+        [Tooltip("When enabled, component toggles colliders during trigger activation.")]
         private bool autoManageColliders; // По умолчанию не управляем коллайдерами автоматически
 
         [SerializeField] private new Collider2D collider2D; // 2D коллайдер
         [SerializeField] private Collider collider3D; // 3D коллайдер
 
-        [Header("Modes")] [Tooltip("Обрабатывать 2D столкновения/триггеры")]
+        [Header("Modes")] [Tooltip("Handle 2D collisions/triggers")]
         public bool use2D = true;
 
-        [Tooltip("Обрабатывать 3D столкновения/триггеры")]
+        [Tooltip("Handle 3D collisions/triggers")]
         public bool use3D = true;
 
-        [Tooltip("Обрабатывать события триггеров")]
+        [Tooltip("Handle trigger events")]
         public bool useTrigger = true;
 
-        [Tooltip("Обрабатывать события коллизий")]
+        [Tooltip("Handle collision events")]
         public bool useCollision = true;
 
         [Header("Filtering")]
@@ -51,29 +51,29 @@ namespace Neo.Tools
         public float forceMagnitude = 20f; // Величина силы
         public float forceDuration = 0.3f; // Длительность действия силы (зарезервировано)
 
-        [Tooltip("Режим силы для 3D Rigidbody")]
+        [Tooltip("Force mode for 3D Rigidbody")]
         public ForceMode forceMode3D = ForceMode.Impulse;
 
-        [Tooltip("Режим силы для 2D Rigidbody")]
+        [Tooltip("Force mode for 2D Rigidbody")]
         public ForceMode2D forceMode2D = ForceMode2D.Impulse;
 
-        [Tooltip("Масштабировать силу по массе Rigidbody")]
+        [Tooltip("Scale force by Rigidbody mass")]
         public bool scaleForceByMass = true;
 
-        [Tooltip("Использовать AdvancedForceApplier как запасной вариант")]
+        [Tooltip("Use AdvancedForceApplier as fallback")]
         public bool useAdvancedForceApplier = true;
 
         [Header("Effects")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
 
         [Header("Ignore")]
-        [Tooltip("Список объектов, которым НЕ наносится урон и не триггерится попадание")]
+        [Tooltip("Objects that are not damaged and do not trigger hit")]
         [SerializeField]
         private GameObject[] ignoreObjects;
 
-        [Header("Destroy")] [Tooltip("Если true — уничтожает этот объект при столкновении/попадании")]
+        [Header("Destroy")] [Tooltip("If true, destroys this object on collision/hit")]
         public bool destroySelfOnHit;
 
-        [Tooltip("Если true — уничтожает объект цели при столкновении/попадании")]
+        [Tooltip("If true, destroys target object on collision/hit")]
         public bool destroyTargetOnHit;
 
         [Header("Gizmos")] [SerializeField] private bool _showGizmo = true; // Показывать ли Gizmo в редакторе
@@ -85,7 +85,7 @@ namespace Neo.Tools
         public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D (триггер)
         public UnityEvent OnDeactivateTrigger; // Событие при деактивации триггера
 
-        [Tooltip("Единое событие попадания: цель GameObject")]
+        [Tooltip("Single hit event: target GameObject")]
         public UnityEvent<GameObject> OnHit;
 
         private readonly HashSet<Collider2D> hitColliders2D = new();

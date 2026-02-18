@@ -10,7 +10,7 @@ namespace Neo.Cards
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neo/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
     {
-        [Header("Settings")] [Tooltip("Тип колоды для спрайтов (сколько карт загружено в конфиг)")] [SerializeField]
+        [Header("Settings")] [Tooltip("Deck type for sprites (how many cards loaded in config)")] [SerializeField]
         private DeckType _deckType = DeckType.Standard52;
 
         [Tooltip(

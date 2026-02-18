@@ -22,7 +22,7 @@ namespace Neo.StateMachine.NoCode
     [CreateAssetMenu(fileName = "New State", menuName = "Neo/State Machine/State Data")]
     public class StateData : ScriptableObject, IState
     {
-        [SerializeField] [Tooltip("Имя состояния для идентификации")]
+        [SerializeField] [Tooltip("State name for identification")]
         private string stateName = "New State";
 
         /// <summary>
@@ -37,19 +37,19 @@ namespace Neo.StateMachine.NoCode
         /// <summary>
         ///     Действия при входе в состояние.
         /// </summary>
-        [field: Tooltip("Действия, выполняемые при входе в состояние")]
+        [field: Tooltip("Actions on state enter")]
         public List<StateAction> OnEnterActions { get; } = new();
 
         /// <summary>
         ///     Действия при обновлении состояния.
         /// </summary>
-        [field: Tooltip("Действия, выполняемые каждый кадр в состоянии")]
+        [field: Tooltip("Actions every frame while in state")]
         public List<StateAction> OnUpdateActions { get; } = new();
 
         /// <summary>
         ///     Действия при выходе из состояния.
         /// </summary>
-        [field: Tooltip("Действия, выполняемые при выходе из состояния")]
+        [field: Tooltip("Actions on state exit")]
         public List<StateAction> OnExitActions { get; } = new();
 
         /// <summary>

@@ -28,7 +28,7 @@ namespace Neo
     [AddComponentMenu("Neo/" + "Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour
     {
-        [Header("Timer Settings")] [Tooltip("Total duration of the timer in seconds")]
+        [Header("Timer Settings")] [Tooltip("Total duration of the timer in seconds")] [Min(0f)]
         public float duration = 1f;
 
         [Tooltip("Update frequency in seconds")] [Min(0.015f)]
@@ -40,7 +40,7 @@ namespace Neo
         [Tooltip("Use unscaled time (ignores time scale)")]
         public bool useUnscaledTime;
 
-        [Tooltip("Автоматически ставить на паузу при Time.timeScale == 0")]
+        [Tooltip("Automatically pause when Time.timeScale == 0")]
         public bool pauseOnTimeScaleZero = true;
 
         [Tooltip("Automatically restart when complete")]
@@ -130,13 +130,18 @@ namespace Neo
 
         [Header("Save")]
         [Tooltip("Save and restore timer state (current time and running state). Disabled by default.")]
-        [SerializeField] private bool saveProgress;
+        [SerializeField] protected bool saveProgress;
 
         [Tooltip("Seconds: save current time value; on load continue from that value. RealTime: save target time (UTC); on load remaining time is recalculated (e.g. re-enter after 1 min → countdown continues from real end time).")]
-        [SerializeField] private TimerSaveMode saveMode = TimerSaveMode.Seconds;
+        [SerializeField] protected TimerSaveMode saveMode = TimerSaveMode.Seconds;
 
         [Tooltip("Unique key for SaveProvider. Required when Save Progress is enabled.")]
         [SerializeField] private string saveKey = "TimerObject";
+
+        /// <summary>
+        ///     Returns the save key used for persistence. Override in derived classes to use a custom key.
+        /// </summary>
+        protected virtual string GetSaveKey() => saveKey;
 
         private bool _loadedFromSave;
         private float timeSinceLastUpdate;
@@ -166,16 +171,6 @@ namespace Neo
 
         private void OnValidate()
         {
-            if (duration < 0)
-            {
-                duration = 0;
-            }
-
-            if (updateInterval < 0.015f)
-            {
-                updateInterval = 0.015f;
-            }
-
             if (infiniteDuration)
             {
                 looping = false;
@@ -183,85 +178,44 @@ namespace Neo
                 countUp = true;
             }
 
-            if (randomDurationMin < 0f)
-            {
-                randomDurationMin = 0f;
-            }
-
-            if (randomDurationMax < 0f)
-            {
-                randomDurationMax = 0f;
-            }
-
             if (randomDurationMax < randomDurationMin)
-            {
                 randomDurationMax = randomDurationMin;
-            }
 
-            if (initialProgress < 0)
-            {
-                initialProgress = 0;
-            }
-
-            if (initialProgress > 1)
-            {
-                initialProgress = 1;
-            }
-
-            // Автоматически находим компоненты, если не заданы
             if (progressImage == null)
-            {
                 progressImage = GetComponent<Image>();
-            }
 
 #if UNITY_TEXTMESHPRO
             if (timeText == null)
                 timeText = GetComponent<TMP_Text>();
 #endif
 
-            // Валидация milestones
             if (milestonePercentages != null)
             {
                 for (int i = 0; i < milestonePercentages.Length; i++)
-                {
                     milestonePercentages[i] = Mathf.Clamp01(milestonePercentages[i]);
-                }
-            }
-
-            // Валидация визуальных настроек
-            if (startAnimationScale < 0.5f)
-            {
-                startAnimationScale = 0.5f;
-            }
-
-            if (startAnimationScale > 2f)
-            {
-                startAnimationScale = 2f;
-            }
-
-            if (startAnimationDuration < 0.01f)
-            {
-                startAnimationDuration = 0.01f;
             }
         }
 
         private void Awake()
         {
+            Init();
+        }
+
+        protected virtual void Init()
+        {
             originalScale = transform.localScale;
 
-            // Инициализация milestones
             if (enableMilestones && milestonePercentages != null && milestonePercentages.Length > 0)
             {
                 milestoneReached = new bool[milestonePercentages.Length];
             }
 
-            // Установка начального времени
             if (initialProgress > 0)
             {
                 currentTime = countUp ? initialProgress * duration : (1f - initialProgress) * duration;
             }
 
-            if (saveProgress && !string.IsNullOrEmpty(saveKey))
+            if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
             {
                 _loadedFromSave = LoadState();
             }
@@ -314,18 +268,22 @@ namespace Neo
 
         private void OnDisable()
         {
-            if (saveProgress && !string.IsNullOrEmpty(saveKey))
+            if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
             {
                 SaveState();
             }
         }
 
-        private void SaveState()
+        /// <summary>
+        ///     Saves current timer state to SaveProvider. Override or call from derived classes when restarting cooldown.
+        /// </summary>
+        protected virtual void SaveState()
         {
+            string key = GetSaveKey();
             if (saveMode == TimerSaveMode.Seconds)
             {
-                SaveProvider.SetFloat(saveKey + "_t", currentTime);
-                SaveProvider.SetBool(saveKey + "_a", isActive);
+                SaveProvider.SetFloat(key + "_t", currentTime);
+                SaveProvider.SetBool(key + "_a", isActive);
                 SaveProvider.Save();
                 return;
             }
@@ -335,13 +293,13 @@ namespace Neo
                 if (saveMode == TimerSaveMode.RealTime)
                 {
                     DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
-                    SaveProvider.SetString(saveKey + "_rt", startUtc.ToString("o"));
-                    SaveProvider.SetBool(saveKey + "_a", isActive);
+                    SaveProvider.SetString(key + "_rt", startUtc.ToString("o"));
+                    SaveProvider.SetBool(key + "_a", isActive);
                 }
                 else
                 {
-                    SaveProvider.SetFloat(saveKey + "_t", currentTime);
-                    SaveProvider.SetBool(saveKey + "_a", isActive);
+                    SaveProvider.SetFloat(key + "_t", currentTime);
+                    SaveProvider.SetBool(key + "_a", isActive);
                 }
                 SaveProvider.Save();
                 return;
@@ -350,12 +308,12 @@ namespace Neo
             if (countUp)
             {
                 DateTime startUtc = DateTime.UtcNow.AddSeconds(-currentTime);
-                SaveProvider.SetString(saveKey + "_rt", startUtc.ToString("o"));
+                SaveProvider.SetString(key + "_rt", startUtc.ToString("o"));
             }
             else
             {
                 DateTime endUtc = DateTime.UtcNow.AddSeconds(currentTime);
-                SaveProvider.SetString(saveKey + "_rt", endUtc.ToString("o"));
+                SaveProvider.SetString(key + "_rt", endUtc.ToString("o"));
             }
 
             SaveProvider.Save();
@@ -363,14 +321,15 @@ namespace Neo
 
         private bool LoadState()
         {
+            string key = GetSaveKey();
             if (infiniteDuration && saveMode == TimerSaveMode.RealTime)
             {
-                if (!SaveProvider.HasKey(saveKey + "_rt"))
+                if (!SaveProvider.HasKey(key + "_rt"))
                 {
                     return false;
                 }
 
-                string raw = SaveProvider.GetString(saveKey + "_rt", null);
+                string raw = SaveProvider.GetString(key + "_rt", null);
                 if (string.IsNullOrEmpty(raw) || !DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime startUtc))
                 {
                     return false;
@@ -378,35 +337,35 @@ namespace Neo
 
                 currentTime = (float)(DateTime.UtcNow - startUtc).TotalSeconds;
                 currentTime = Mathf.Max(0f, currentTime);
-                isActive = SaveProvider.GetBool(saveKey + "_a", true);
+                isActive = SaveProvider.GetBool(key + "_a", true);
                 lastProgress = -1f;
                 return true;
             }
 
             if (saveMode == TimerSaveMode.Seconds || infiniteDuration)
             {
-                if (!SaveProvider.HasKey(saveKey + "_t"))
+                if (!SaveProvider.HasKey(key + "_t"))
                 {
                     return false;
                 }
 
-                currentTime = SaveProvider.GetFloat(saveKey + "_t", countUp ? 0f : duration);
+                currentTime = SaveProvider.GetFloat(key + "_t", countUp ? 0f : duration);
                 if (!infiniteDuration)
                 {
                     currentTime = Mathf.Clamp(currentTime, 0f, duration);
                 }
 
-                isActive = SaveProvider.GetBool(saveKey + "_a", false);
+                isActive = SaveProvider.GetBool(key + "_a", false);
                 lastProgress = -1f;
                 return true;
             }
 
-            if (!SaveProvider.HasKey(saveKey + "_rt"))
+            if (!SaveProvider.HasKey(key + "_rt"))
             {
                 return false;
             }
 
-            string rawRt = SaveProvider.GetString(saveKey + "_rt", null);
+            string rawRt = SaveProvider.GetString(key + "_rt", null);
             if (string.IsNullOrEmpty(rawRt) || !DateTime.TryParse(rawRt, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime savedUtc))
             {
                 return false;

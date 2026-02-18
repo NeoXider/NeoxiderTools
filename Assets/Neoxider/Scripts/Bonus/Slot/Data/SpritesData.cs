@@ -9,13 +9,13 @@ namespace Neo.Bonus
     [Serializable]
     public class SlotVisualData
     {
-        [Tooltip("ID элемента, присваивается автоматически на основе его индекса в массиве.")]
+        [Tooltip("Element ID, assigned automatically from array index.")]
         public int id;
 
-        [Tooltip("Спрайт символа для отображения в слот-машине")]
+        [Tooltip("Symbol sprite for slot machine display")]
         public Sprite sprite;
 
-        [Tooltip("Описание символа")] [TextArea(1, 3)]
+        [Tooltip("Symbol description")] [TextArea(1, 3)]
         public string description;
     }
 
@@ -26,7 +26,7 @@ namespace Neo.Bonus
     [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neo/Bonus/Slot/Sprites Data", order = 3)]
     public class SpritesData : ScriptableObject
     {
-        [Tooltip("Массив визуальных данных для всех символов слот-машины")] [SerializeField]
+        [Tooltip("Visual data array for all slot machine symbols")] [SerializeField]
         private SlotVisualData[] _visuals;
 
         /// <summary>

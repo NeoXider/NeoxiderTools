@@ -682,6 +682,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f9be7d5ed9dca824b823407130b6419f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  text: {fileID: 9767685}
 --- !u!114 &9767685
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1431,19 +1432,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 88700914}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 10
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'd h m = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &88700916
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -1734,19 +1731,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 105004296}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 11
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'd h m s = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &105004298
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -3251,6 +3244,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a468bb59bc985c943bdc60b1768e6e76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  intecactable: 1
+  _imageTarget: {fileID: 250318899}
+  action: 0
+  targetPageId: {fileID: 0}
+  _canSwitchPage: 1
+  _executeState: 0
+  _useAnimImage: 1
+  _timeAnimImage: 0.3
+  _scaleAnim: -0.15
+  _changeText: 1
+  _textPage: {fileID: 1142716708}
+  OnClick:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &250318898
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5527,19 +5534,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 601501196}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 6
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'h m = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &601501198
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -5638,6 +5641,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5d25ac11a6864942a7c2fd53e7def0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
+  integrateWithGM: 1
+  currentUiPage: {fileID: 0}
+  previousUiPage: {fileID: 0}
+  allPages: []
+  startupPage: {fileID: 0}
+  ignoredPageIds: []
+  OnPageChanged:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 0}
+        m_TargetAssemblyTypeName: Neoxider.AudioManager, Assembly-CSharp
+        m_MethodName: PlaySound
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  refreshPagesInEditor: 1
+  editorActivePageId: {fileID: 0}
+  autoSelectEditorPage: 1
 --- !u!4 &630013917
 Transform:
   m_ObjectHideFlags: 0
@@ -5833,6 +5862,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _animator: {fileID: 645565889}
+  _startAnimTrigger: MoveUp
 --- !u!95 &645565889
 Animator:
   serializedVersion: 5
@@ -6144,6 +6175,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1fcdb3fbbecb8348bb68bbb322a438c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  move:
+    moveSpeed: 10
+    useLerp: 1
+    moveX: 1
+    useLimitX: 0
+    xLimit: {x: -10, y: 10}
+    moveY: 1
+    useLimitY: 0
+    yLimit: {x: -10, y: 10}
+    moveZ: 0
+    useLimitZ: 0
+    zLimit: {x: -10, y: 10}
+  inputMouse: 1
+  direction: {x: 0, y: 0}
 --- !u!114 &709606412
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7137,19 +7182,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 833074806}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 0
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'ms = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &833074806
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7572,19 +7613,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 863805399}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 2
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: Timer -
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &863805399
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8257,19 +8294,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 887594911}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 7
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'h m s = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &887594913
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -10238,9 +10271,6 @@ MonoBehaviour:
   OnMilestoneReached:
     m_PersistentCalls:
       m_Calls: []
-  saveProgress: 0
-  saveMode: 0
-  saveKey: TimerObject
 --- !u!1 &1243480678
 GameObject:
   m_ObjectHideFlags: 0
@@ -10467,10 +10497,6 @@ MonoBehaviour:
   text: {fileID: 1275749490}
   separator: .
   decimal: 0
-  numberNotation: 1
-  roundingMode: 0
-  trimTrailingZeros: 1
-  decimalSeparator: .
   startAdd: 'Money: '
   endAdd: $
   indexOffset: 0
@@ -11371,6 +11397,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _animator: {fileID: 1355681231}
+  _startAnimTrigger: ScaleUp
 --- !u!114 &1355681237
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -11580,10 +11608,6 @@ MonoBehaviour:
   text: {fileID: 1432302162}
   separator: .
   decimal: 0
-  numberNotation: 1
-  roundingMode: 0
-  trimTrailingZeros: 1
-  decimalSeparator: .
   startAdd: 'Money: '
   endAdd: 
   indexOffset: 0
@@ -11912,8 +11936,6 @@ GameObject:
   - component: {fileID: 1480364083}
   - component: {fileID: 1480364082}
   - component: {fileID: 1480364081}
-  - component: {fileID: 1480364085}
-  - component: {fileID: 1480364086}
   m_Layer: 5
   m_Name: vert
   m_TagString: Untagged
@@ -12025,130 +12047,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1480364079}
   m_CullTransparentMesh: 1
---- !u!114 &1480364085
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1480364079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8542c7b0e4b379d4182c4f43b3c93da9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationType: 3
-  minValue: 0
-  maxValue: 1
-  animationSpeed: 1
-  noiseScale: 1
-  use2DNoise: 1
-  noiseOffset: {x: 0, y: 0}
-  customCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  playOnStart: 1
-  OnValueChanged:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationStopped:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationPaused:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &1480364086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1480364079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73a683d1b2f6fcd49830ebfd02912b40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationType: 3
-  startVector: {x: 0, y: 0, z: 0}
-  endVector: {x: 1, y: 1, z: 1}
-  animationSpeed: 1
-  noiseScale: 1
-  use2DNoise: 1
-  noiseOffset: {x: 0, y: 0}
-  customCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  playOnStart: 1
-  OnVectorChanged:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1480364080}
-        m_TargetAssemblyTypeName: UnityEngine.Transform, UnityEngine
-        m_MethodName: set_localPosition
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnAnimationStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationStopped:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationPaused:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!224 &1501804488 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 3059836845465407564, guid: ec4e48c8003b44d44b58d595d7238253, type: 3}
@@ -12673,6 +12571,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _animator: {fileID: 1520079864}
+  _startAnimTrigger: ScaleUp
 --- !u!224 &1521502121 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 678517848462292837, guid: 1ba88e30c814ff648a6485eb2e6eaf3e, type: 3}
@@ -13279,19 +13179,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 1632257798}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 2
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'Timer = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!114 &1632257798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14114,19 +14010,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 1734887209}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 2
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 's ms = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1734887211
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15057,19 +14949,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 1843538808}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 4
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'm s = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1843538810
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15217,19 +15105,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 88c85b63290b3d841b373f13eaece05e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
   text: {fileID: 1854706078}
   _zeroText: 1
-  _allowNegative: 0
-  _displayMode: 0
   timeFormat: 9
-  _compactIncludeSeconds: 1
-  _compactMaxParts: 3
   startAddText: 'd h = '
   endAddText: .
   separator: ':'
+  OnTimeChanged:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!222 &1854706080
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -15574,6 +15458,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _animator: {fileID: 1884532513}
+  _startAnimTrigger: ScaleUp
 --- !u!95 &1884532513
 Animator:
   serializedVersion: 5
@@ -16114,6 +16000,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 73162b4b7688de843a0093cc13893d21, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _animator: {fileID: 2011595694}
+  _startAnimTrigger: ScaleUp
 --- !u!1 &2014415014
 GameObject:
   m_ObjectHideFlags: 0
@@ -16389,6 +16277,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8578cc581ef80694298f2e8aca3af744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  activ: 0
+  OnChange:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 261694236}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  On:
+    m_PersistentCalls:
+      m_Calls: []
+  Off:
+    m_PersistentCalls:
+      m_Calls: []
+  _button: {fileID: 2022451888}
+  _sprites:
+  - {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
+  - {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
+  _visuals: []
 --- !u!222 &2022451891
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -16625,6 +16540,45 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8578cc581ef80694298f2e8aca3af744, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  activ: 0
+  OnChange:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 822033078}
+        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
+        m_MethodName: SetActive
+        m_Mode: 0
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  On:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 175547021}
+        m_TargetAssemblyTypeName: Neoxider.UI.ButtonPrice, Assembly-CSharp
+        m_MethodName: SetPrice
+        m_Mode: 3
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  Off:
+    m_PersistentCalls:
+      m_Calls: []
+  _button: {fileID: 2043299712}
+  _sprites:
+  - {fileID: 21300000, guid: c63131227555d054ca2accb1b18857ed, type: 3}
+  - {fileID: 21300000, guid: 73fc8ebad29d0aa47b69715a320b4ed1, type: 3}
+  _visuals: []
 --- !u!222 &2043299715
 CanvasRenderer:
   m_ObjectHideFlags: 0

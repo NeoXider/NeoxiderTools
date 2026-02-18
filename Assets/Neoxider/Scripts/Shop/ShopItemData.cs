@@ -9,22 +9,22 @@ namespace Neo.Shop
     [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neo/Shop/Shop Item Data", order = 32)]
     public class ShopItemData : ScriptableObject
     {
-        [Tooltip("Можно ли купить этот товар только один раз?")] [SerializeField]
+        [Tooltip("Can this item be bought only once?")] [SerializeField]
         private bool _isSinglePurchase = true;
 
-        [Tooltip("Название товара, которое будет отображаться в магазине")] [SerializeField]
+        [Tooltip("Item name shown in shop")] [SerializeField]
         private string _nameItem;
 
-        [Tooltip("Описание товара")] [SerializeField] [TextArea(2, 4)]
+        [Tooltip("Item description")] [SerializeField] [TextArea(2, 4)]
         private string _description;
 
-        [Tooltip("Начальная цена товара")] [SerializeField]
+        [Tooltip("Initial item price")] [SerializeField]
         private int _price = 10;
 
-        [Tooltip("Основное изображение товара (например, для превью)")] [SerializeField]
+        [Tooltip("Main item image (e.g. for preview)")] [SerializeField]
         private Sprite _sprite;
 
-        [Tooltip("Иконка товара (например, для отображения в списке)")] [SerializeField]
+        [Tooltip("Item icon (e.g. for list display)")] [SerializeField]
         private Sprite _icon;
 
         /// <summary>

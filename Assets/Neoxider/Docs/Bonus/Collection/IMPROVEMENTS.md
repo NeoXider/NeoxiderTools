@@ -4,6 +4,15 @@
 
 ---
 
+## Реализовано (текущая версия)
+
+- **Статистика и завершение:** `GetCompletionPercentage()` (0–1), `GetCompletionCountText()` ("1/5"), события `OnCompletionChanged` (int, int), `OnCompletionPercentageChanged` (float).
+- **Фильтрация:** `GetUnlockedIds()`, `GetLockedIds()`, `GetIdsByCategory(int)`, `GetIdsByRarity(ItemRarity)`, `GetIdsByType(int)`; `GetUnlockedCountByCategory`, `GetUnlockedCountByRarity`, `GetUnlockedCountByType`.
+- **Удобные методы:** `AddItem(ItemCollectionData)`, `TryAddItem(int)`; в **ItemCollection** — `SetItemId(int)`, `Unlock()`, поле `Collection` (fallback на `Collection.I`). В **CollectionVisualManager** при обновлении вызывается `SetItemId(id)`.
+- **Несколько коллекций:** На втором и далее компоненте `Collection` выставить **Set Instance On Awake = false** (в инспекторе Singleton). Тогда экземпляр не регистрируется как `Collection.I`; работа по ссылке (поле Collection в ItemCollectionInfo / ItemCollection). Свойство `Collection.IsSingleton` — признак глобального экземпляра.
+
+---
+
 ## 1. Расширение функциональности: Категории, Редкость, Статистика
 
 ### 1.1. Редкость предметов (ItemRarity)
@@ -388,7 +397,7 @@ var weapons = Collection.I.GetItemsByCategory(CollectionCategories.Weapons);
 foreach (var id in weapons)
 {
     var item = Collection.I.GetItemData(id);
-    Debug.Log($"Оружие: {item.itemName}");
+    Debug.Log($"Оружие: {item.ItemName}");
 }
 ```
 
@@ -408,7 +417,7 @@ Debug.Log($"Коллекция завершена на {completion:F1}%");
 ### Визуализация редкости
 ```csharp
 var itemData = Collection.I.GetItemData(id);
-switch (itemData.rarity)
+switch (itemData.Rarity)
 {
     case ItemRarity.Common:
         // Серый цвет рамки

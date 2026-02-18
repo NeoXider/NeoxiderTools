@@ -11913,7 +11913,6 @@ GameObject:
   - component: {fileID: 1480364082}
   - component: {fileID: 1480364081}
   - component: {fileID: 1480364085}
-  - component: {fileID: 1480364086}
   m_Layer: 5
   m_Name: vert
   m_TagString: Untagged
@@ -12072,74 +12071,6 @@ MonoBehaviour:
   OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
-  OnAnimationStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationStopped:
-    m_PersistentCalls:
-      m_Calls: []
-  OnAnimationPaused:
-    m_PersistentCalls:
-      m_Calls: []
---- !u!114 &1480364086
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1480364079}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 73a683d1b2f6fcd49830ebfd02912b40, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  animationType: 3
-  startVector: {x: 0, y: 0, z: 0}
-  endVector: {x: 1, y: 1, z: 1}
-  animationSpeed: 1
-  noiseScale: 1
-  use2DNoise: 1
-  noiseOffset: {x: 0, y: 0}
-  customCurve:
-    serializedVersion: 2
-    m_Curve:
-    - serializedVersion: 3
-      time: 0
-      value: 0
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    - serializedVersion: 3
-      time: 1
-      value: 1
-      inSlope: 0
-      outSlope: 0
-      tangentMode: 0
-      weightedMode: 0
-      inWeight: 0
-      outWeight: 0
-    m_PreInfinity: 2
-    m_PostInfinity: 2
-    m_RotationOrder: 4
-  playOnStart: 1
-  OnVectorChanged:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1480364080}
-        m_TargetAssemblyTypeName: UnityEngine.Transform, UnityEngine
-        m_MethodName: set_localPosition
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
   OnAnimationStarted:
     m_PersistentCalls:
       m_Calls: []

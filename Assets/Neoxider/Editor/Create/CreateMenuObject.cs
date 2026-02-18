@@ -121,10 +121,10 @@ namespace Neo
             VisualToggle script = Create<VisualToggle>("Prefabs/UI/" + nameof(VisualToggle) + ".prefab");
         }
 
-        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(TimeReward), false, 0)]
-        private static void CreateTimeReward()
+        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(CooldownReward), false, 0)]
+        private static void CreateCooldownReward()
         {
-            TimeReward script = Create<TimeReward>();
+            CooldownReward script = Create<CooldownReward>();
         }
 
         [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(ErrorLogger), false, 0)]

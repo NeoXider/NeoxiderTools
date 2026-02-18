@@ -12,25 +12,25 @@ namespace Neo.Bonus
         order = 4)]
     public class SpriteMultiplayerData : ScriptableObject
     {
-        [Tooltip("Конфигурация множителей для каждого символа")] [SerializeField]
+        [Tooltip("Multiplier config per symbol")] [SerializeField]
         private SpritesMultiplier _spritesMultiplier;
 
         [Space]
         [Header("Auto Generate")]
-        [Tooltip("Включить автоматическую генерацию множителей на основе SpritesData")]
+        [Tooltip("Enable auto-generation of multipliers from SpritesData")]
         [SerializeField]
         private bool _generate;
 
-        [Tooltip("Минимальное количество символов для генерации")] [SerializeField]
+        [Tooltip("Min number of symbols to generate")] [SerializeField]
         private int _minCount = 3;
 
-        [Tooltip("Максимальное количество символов для генерации")] [SerializeField]
+        [Tooltip("Max number of symbols to generate")] [SerializeField]
         private int _maxCount = 3;
 
-        [Tooltip("Множитель по умолчанию для всех комбинаций")] [SerializeField]
+        [Tooltip("Default multiplier for all combinations")] [SerializeField]
         private int defaultMultiplayer = 1;
 
-        [Tooltip("Ссылка на SpritesData для автоматической генерации")] [SerializeField]
+        [Tooltip("Reference to SpritesData for auto-generation")] [SerializeField]
         private SpritesData _spritesData;
 
         /// <summary>
@@ -88,7 +88,7 @@ namespace Neo.Bonus
         [Serializable]
         public struct IdMult
         {
-            [Tooltip("ID элемента из SpritesData")]
+            [Tooltip("Element ID from SpritesData")]
             public int id;
 
             public CountMultiplayer[] countMult;

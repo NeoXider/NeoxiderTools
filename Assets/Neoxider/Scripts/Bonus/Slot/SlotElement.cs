@@ -1,4 +1,4 @@
-﻿using System.Linq;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,34 +16,34 @@ namespace Neo.Bonus
         [SerializeField] public SpriteRenderer spriteRenderer;
         [SerializeField] public TMP_Text textDescription;
 
-        [Header("Debug Gizmo")] [Tooltip("Включить/выключить гизмо-лейбл над элементом")]
+        [Header("Debug Gizmo")] [Tooltip("Enable/disable gizmo label above element")]
         public bool gizmoEnabled = true;
 
-        [Tooltip("Автоматически определять [col,row] по позициям в иерархии")]
+        [Tooltip("Auto-detect [col,row] from hierarchy positions")]
         public bool gizmoAutoDetect = true;
 
-        [Tooltip("Ручной индекс колонки (если AutoDetect выключен)")]
+        [Tooltip("Manual column index (when AutoDetect off)")]
         public int gizmoManualCol = -1;
 
-        [Tooltip("Ручной индекс строки (если AutoDetect выключен)")]
+        [Tooltip("Manual row index (when AutoDetect off)")]
         public int gizmoManualRow = -1;
 
-        [Tooltip("Смещение лейбла в мировых координатах")]
+        [Tooltip("Label offset in world coordinates")]
         public Vector3 gizmoLabelOffset = new(0f, 0.25f, 0f);
 
-        [Tooltip("Размер маркера-точки гизмо")]
+        [Tooltip("Gizmo marker dot size")]
         public float gizmoIconSize = 0.15f;
 
-        [Tooltip("Цвет текста лейбла")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // ярче (почти жёлтый)
+        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // ярче (почти жёлтый)
 
-        [Tooltip("Размер шрифта лейбла")] public int gizmoFontSize = 16; // больше по умолчанию
+        [Tooltip("Label font size")] public int gizmoFontSize = 16; // больше по умолчанию
 
-        [Tooltip("Рисовать чёрную обводку для читаемости")]
+        [Tooltip("Draw black outline for readability")]
         public bool gizmoOutline = true;
 
-        [Tooltip("Цвет обводки")] public Color gizmoOutlineColor = new(0f, 0f, 0f, 1f);
+        [Tooltip("Outline color")] public Color gizmoOutlineColor = new(0f, 0f, 0f, 1f);
 
-        [Tooltip("Толщина обводки в юнитах сцены")]
+        [Tooltip("Outline thickness in scene units")]
         public float gizmoOutlineOffset = 0.022f;
 
         public int id { get; private set; }
