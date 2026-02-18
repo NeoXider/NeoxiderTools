@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 namespace Neo.Demo.GridSystem
 {
-    [AddComponentMenu("Neo/Demo/GridSystem/GridSystemMatch3BoardView")]
+    [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemMatch3BoardView")]
     public class GridSystemMatch3BoardView : MonoBehaviour
     {
         [SerializeField] private FieldGenerator _generator;

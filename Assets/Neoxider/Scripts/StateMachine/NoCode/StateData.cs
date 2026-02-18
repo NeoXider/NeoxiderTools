@@ -19,7 +19,7 @@ namespace Neo.StateMachine.NoCode
     /// // Использовать в StateMachineData
     /// </code>
     /// </example>
-    [CreateAssetMenu(fileName = "New State", menuName = "Neo/State Machine/State Data")]
+    [CreateAssetMenu(fileName = "New State", menuName = "Neoxider/State Machine/State Data")]
     public class StateData : ScriptableObject, IState
     {
         [SerializeField] [Tooltip("State name for identification")]

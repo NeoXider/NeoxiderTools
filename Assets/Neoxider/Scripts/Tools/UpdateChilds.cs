@@ -6,7 +6,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("Tools/UpdateChilds.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(UpdateChilds))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UpdateChilds))]
         public class UpdateChilds : MonoBehaviour
         {
             public UnityEvent OnChangeChildsCount;

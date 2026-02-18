@@ -13,6 +13,7 @@ namespace Neo.Tools
         public NeoObjectPool OwnerPool { get; set; }
 
         /// <summary>Возвращает объект в пул. Эквивалентно PoolManager.Release(gameObject).</summary>
+        [Button("Return to pool")]
         public void Return()
         {
             if (OwnerPool != null)

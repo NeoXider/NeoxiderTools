@@ -12,7 +12,7 @@ namespace Neo.GridSystem
     [ExecuteAlways]
     [NeoDoc("GridSystem/FieldDebugDrawer.md")]
     [RequireComponent(typeof(FieldGenerator))]
-    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldDebugDrawer))]
+    [AddComponentMenu("Neoxider/" + "GridSystem/" + nameof(FieldDebugDrawer))]
     public class FieldDebugDrawer : MonoBehaviour
     {
         [Header("Colors")] public Color GridColor = new(1f, 1f, 0f, 0.3f);

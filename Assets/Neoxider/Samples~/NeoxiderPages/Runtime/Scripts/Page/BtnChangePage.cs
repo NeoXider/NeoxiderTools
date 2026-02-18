@@ -15,7 +15,7 @@ namespace Neo.Pages
 {
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/BtnChangePage.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(BtnChangePage))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(BtnChangePage))]
     /// <summary>
     /// UI-кнопка для смены страниц через <see cref="PM"/>.
     /// Поддерживает анимацию нажатия и опциональное выполнение <see cref="GameState.State"/> перед переключением.

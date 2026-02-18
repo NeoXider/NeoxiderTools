@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/MovementToolkit/ConstantRotator.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(ConstantRotator))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ConstantRotator))]
     public class ConstantRotator : MonoBehaviour
     {
         public enum AxisSource

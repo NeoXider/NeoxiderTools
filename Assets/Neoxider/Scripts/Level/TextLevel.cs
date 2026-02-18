@@ -5,7 +5,7 @@ using UnityEngine.Events;
 
 namespace Neo.Level
 {
-    [AddComponentMenu("Neo/Level/" + nameof(TextLevel))]
+    [AddComponentMenu("Neoxider/Level/" + nameof(TextLevel))]
     public class TextLevel : SetText
     {
         private enum LevelDisplayMode

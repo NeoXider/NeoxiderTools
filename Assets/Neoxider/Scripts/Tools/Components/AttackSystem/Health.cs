@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Component that handles health system with damage, healing and auto-healing capabilities
     /// </summary>
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(Health))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Health))]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {
         [Header("Health Settings")] [Tooltip("Maximum health points")]

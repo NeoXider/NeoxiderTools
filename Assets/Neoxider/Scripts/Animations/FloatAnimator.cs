@@ -8,7 +8,7 @@ namespace Neo.Animations
     ///     Предоставляет простой способ анимации любого числового значения с различными типами анимации.
     /// </summary>
     [NeoDoc("Animations/FloatAnimator.md")]
-    [AddComponentMenu("Neo/" + "Animations/" + nameof(FloatAnimator))]
+    [AddComponentMenu("Neoxider/" + "Animations/" + nameof(FloatAnimator))]
     public class FloatAnimator : MonoBehaviour
     {
         [Header("Animation Settings")] [Tooltip("Animation type")]

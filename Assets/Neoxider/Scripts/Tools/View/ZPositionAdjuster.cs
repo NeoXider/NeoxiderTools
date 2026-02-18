@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/View/ZPositionAdjuster.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(ZPositionAdjuster))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ZPositionAdjuster))]
     public class ZPositionAdjuster : MonoBehaviour
     {
         [Header("Settings")] [SerializeField] private bool _useNormalizeToUnit = true;

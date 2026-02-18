@@ -11,7 +11,7 @@ namespace Neo
         ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
         [NeoDoc("Audio/PlayAudioBtn.md")]
-        [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudioBtn))]
+        [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudioBtn))]
         public class PlayAudioBtn : MonoBehaviour
         {
             [Header("Legacy Mode (by ID)")] [SerializeField]

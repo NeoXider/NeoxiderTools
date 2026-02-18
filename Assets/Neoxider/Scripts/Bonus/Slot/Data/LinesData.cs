@@ -7,7 +7,7 @@ namespace Neo.Bonus
     ///     ScriptableObject для хранения конфигурации линий выигрыша в слот-машине.
     ///     Определяет координаты символов для каждой выигрышной линии.
     /// </summary>
-    [CreateAssetMenu(fileName = "Lines Data", menuName = "Neo/Bonus/Slot/Lines Data", order = 2)]
+    [CreateAssetMenu(fileName = "Lines Data", menuName = "Neoxider/Bonus/Slot/Lines Data", order = 2)]
     public class LinesData : ScriptableObject
     {
         [Tooltip("Win lines array. Each line contains Y coordinates per column.")] [SerializeField]

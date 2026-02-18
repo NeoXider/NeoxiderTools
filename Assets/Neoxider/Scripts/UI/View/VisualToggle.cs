@@ -15,7 +15,7 @@ namespace Neo.UI
     ///     TextMeshPro (цвета и текст) и GameObject'ов. Автоматически подписывается на события Toggle при наличии.
     /// </remarks>
     [NeoDoc("UI/VisualToggle.md")]
-    [AddComponentMenu("Neo/" + "UI/" + nameof(VisualToggle))]
+    [AddComponentMenu("Neoxider/" + "UI/" + nameof(VisualToggle))]
     public class VisualToggle : MonoBehaviour
     {
         [GetComponent] [SerializeField] private Toggle _toggle;

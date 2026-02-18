@@ -5,7 +5,7 @@ using UnityEngine.UI;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Collection/ItemCollection.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollection))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {
         [Header("References")] [GetComponent] [SerializeField] private Button _button;

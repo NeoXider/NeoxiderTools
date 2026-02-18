@@ -11,7 +11,7 @@ namespace Neo.Tools
     }
 
     [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedAttackCollider))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {
         [Header("Attack")] [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию

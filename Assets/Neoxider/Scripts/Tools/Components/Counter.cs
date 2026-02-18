@@ -35,7 +35,7 @@ namespace Neo.Tools
     ///     Опционально сохраняет значение через SaveProvider по ключу (по умолчанию выключено).
     /// </summary>
     [NeoDoc("Tools/Components/Counter.md")]
-    [AddComponentMenu("Neo/Tools/" + nameof(Counter))]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
     public class Counter : MonoBehaviour
     {
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]

@@ -13,7 +13,7 @@ namespace Neo
         ///     Useful for countdown timers, elapsed time displays, or any time-based UI elements.
         /// </summary>
         [NeoDoc("Tools/Text/TimeToText.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(TimeToText))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TimeToText))]
         public class TimeToText : MonoBehaviour
         {
             #region Events

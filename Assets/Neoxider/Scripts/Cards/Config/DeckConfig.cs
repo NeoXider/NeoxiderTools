@@ -7,7 +7,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Конфигурация колоды карт со спрайтами
     /// </summary>
-    [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neo/Cards/Deck Config")]
+    [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neoxider/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
     {
         [Header("Settings")] [Tooltip("Deck type for sprites (how many cards loaded in config)")] [SerializeField]

@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/FakeLeaderboard/LeaderboardItem.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardItem))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(LeaderboardItem))]
     public class LeaderboardItem : MonoBehaviour
     {
         [Header("References")] public TMP_Text textId;

@@ -43,7 +43,7 @@ namespace Neo.GridSystem
     /// </summary>
     [NeoDoc("GridSystem/FieldObjectSpawner.md")]
     [RequireComponent(typeof(FieldGenerator))]
-    [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldObjectSpawner))]
+    [AddComponentMenu("Neoxider/" + "GridSystem/" + nameof(FieldObjectSpawner))]
     public class FieldObjectSpawner : MonoBehaviour
     {
         [Header("Prefabs")] public GameObject[] Prefabs;

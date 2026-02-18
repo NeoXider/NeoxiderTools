@@ -8,7 +8,7 @@ using UnityEditor;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelFortune))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelFortune))]
     public class WheelFortune : MonoBehaviour
     {
         public enum SpinState

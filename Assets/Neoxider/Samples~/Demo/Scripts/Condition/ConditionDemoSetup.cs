@@ -24,7 +24,7 @@ namespace Neo.Demo.Condition
     ///     Canvas              — UI
     ///     DemoUIController    — ConditionDemoUI
     /// </summary>
-    [AddComponentMenu("Neo/Demo/Condition/ConditionDemoSetup")]
+    [AddComponentMenu("Neoxider/Demo/Condition/ConditionDemoSetup")]
     public class ConditionDemoSetup : MonoBehaviour
     {
         [Header("Settings")] [SerializeField] private int _startHealth = 100;

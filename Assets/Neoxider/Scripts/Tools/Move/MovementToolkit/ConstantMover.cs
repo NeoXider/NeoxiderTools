@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/MovementToolkit/ConstantMover.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(ConstantMover))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ConstantMover))]
     public class ConstantMover : MonoBehaviour
     {
         public enum DirectionSource

@@ -19,7 +19,7 @@ namespace Neo.Bonus
     ///     Здесь НЕТ анимаций — весь движок вращения/торможения внутри Row.
     /// </summary>
     [NeoDoc("Bonus/Slot/SpinController.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(SpinController))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SpinController))]
     public class SpinController : MonoBehaviour
     {
         [SerializeField] public CheckSpin checkSpin = new();

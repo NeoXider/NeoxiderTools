@@ -14,7 +14,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/InteractableObject/PhysicsEvents3D.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(PhysicsEvents3D))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PhysicsEvents3D))]
     public sealed class PhysicsEvents3D : MonoBehaviour
     {
         [Tooltip("If OFF, callbacks are suppressed without disabling this GO")]

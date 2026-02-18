@@ -7,7 +7,7 @@ namespace Neo.Pages
 {
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/PageSubscriber.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(PageSubscriber))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(PageSubscriber))]
     public class PageSubscriber : MonoBehaviour
     {
         [SerializeField] private PM _pm;

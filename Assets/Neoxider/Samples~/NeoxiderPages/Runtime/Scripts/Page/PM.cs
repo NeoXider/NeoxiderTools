@@ -30,7 +30,7 @@ namespace Neo.Pages
     /// </summary>
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/PM.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(PM))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(PM))]
     public class PM : Singleton<PM>
     {
         public enum KnownPage

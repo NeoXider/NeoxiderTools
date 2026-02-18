@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     ScriptableObject wrapper over <see cref="ChanceManager" />. Stores reusable chance configurations
     ///     that can be referenced across scenes and assets.
     /// </summary>
-    [CreateAssetMenu(fileName = "Chance Data", menuName = "Neo/Tools/Random/Chance Data", order = 20)]
+    [CreateAssetMenu(fileName = "Chance Data", menuName = "Neoxider/Tools/Random/Chance Data", order = 20)]
     public class ChanceData : ScriptableObject
     {
         [SerializeField] [Tooltip("Chance configuration")]

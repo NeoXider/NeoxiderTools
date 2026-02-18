@@ -21,7 +21,7 @@ namespace Neo.StateMachine.NoCode
     /// // StateMachineBehaviour автоматически загрузит конфигурацию в Start()
     /// </code>
     /// </example>
-    [CreateAssetMenu(fileName = "New State Machine", menuName = "Neo/State Machine/State Machine Data")]
+    [CreateAssetMenu(fileName = "New State Machine", menuName = "Neoxider/State Machine/State Machine Data")]
     public class StateMachineData : ScriptableObject
     {
         [SerializeField] [Tooltip("All State Machine states")]

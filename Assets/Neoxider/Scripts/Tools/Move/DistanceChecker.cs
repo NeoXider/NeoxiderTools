@@ -8,7 +8,7 @@ namespace Neo.Tools
     ///     Optimized using squared distance calculations.
     /// </summary>
     [NeoDoc("Tools/Move/DistanceChecker.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(DistanceChecker))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(DistanceChecker))]
     public class DistanceChecker : MonoBehaviour
     {
         public enum UpdateMode

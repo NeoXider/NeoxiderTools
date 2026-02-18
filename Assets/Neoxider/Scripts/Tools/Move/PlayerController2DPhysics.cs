@@ -8,7 +8,7 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(PlayerController2DPhysics))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
     public class PlayerController2DPhysics : MonoBehaviour
     {
         private enum InputBackend

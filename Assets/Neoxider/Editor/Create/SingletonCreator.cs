@@ -13,7 +13,7 @@ namespace Neo.Editor
     /// </summary>
     public static class SingletonCreator
     {
-        private const string MenuPath = "Assets/Create/Neo/Singleton";
+        private const string MenuPath = "Assets/Create/Neoxider/Singleton";
         private const string DefaultFileName = "NewSingleton";
         private const string FileExtension = ".cs";
         private const string DialogTitle = "Create New Singleton Script";

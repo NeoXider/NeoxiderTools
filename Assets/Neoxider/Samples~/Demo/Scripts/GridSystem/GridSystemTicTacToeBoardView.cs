@@ -7,7 +7,7 @@ using UnityEngine.EventSystems;
 
 namespace Neo.Demo.GridSystem
 {
-    [AddComponentMenu("Neo/Demo/GridSystem/GridSystemTicTacToeBoardView")]
+    [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemTicTacToeBoardView")]
     public class GridSystemTicTacToeBoardView : MonoBehaviour
     {
         [SerializeField] private FieldGenerator _generator;

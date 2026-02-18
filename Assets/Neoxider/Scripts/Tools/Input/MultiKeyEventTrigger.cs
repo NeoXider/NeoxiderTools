@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Input/MultiKeyEventTrigger.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(MultiKeyEventTrigger))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MultiKeyEventTrigger))]
     public class MultiKeyEventTrigger : MonoBehaviour
     {
         [Header("Key Bindings")] public KeyEventPair[] keyEventPairs =

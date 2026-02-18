@@ -8,7 +8,7 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(PlayerController3DPhysics))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics : MonoBehaviour
     {
         private enum MovementReferenceMode

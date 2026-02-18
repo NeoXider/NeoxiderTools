@@ -6,7 +6,7 @@ namespace Neo.Pages
     ///     Идентификатор страницы как ассет (ScriptableObject).
     ///     Используется для расширяемого выбора страниц без правки enum.
     /// </summary>
-    [CreateAssetMenu(menuName = "Neo/Pages/Page Id", fileName = "Page")]
+    [CreateAssetMenu(menuName = "Neoxider/Pages/Page Id", fileName = "Page")]
     public sealed class PageId : ScriptableObject
     {
         /// <summary>

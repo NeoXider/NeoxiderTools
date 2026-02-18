@@ -9,7 +9,7 @@ using UnityEngine.UI;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Collection/Box.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(Box))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(Box))]
     public class Box : MonoBehaviour
     {
         [SerializeField] private string _saveName = "BoxPrize";

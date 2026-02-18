@@ -6,7 +6,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("Tools/Components/Loot.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(Loot))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Loot))]
         public class Loot : MonoBehaviour
         {
             public GameObject[] lootItems;

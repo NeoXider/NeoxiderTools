@@ -17,7 +17,7 @@ namespace Neo.Bonus
     ///     - Окно считается от offsetY (нижняя граница окна). windowStartY — зеркало для инспектора.
     /// </summary>
     [NeoDoc("Bonus/Slot/Row.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(Row))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(Row))]
     public class Row : MonoBehaviour
     {
         private const float EPS = 1e-4f;

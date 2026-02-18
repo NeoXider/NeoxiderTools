@@ -8,7 +8,7 @@ namespace Neo.GridSystem.TicTacToe
     /// </summary>
     [NeoDoc("GridSystem/TicTacToe/TicTacToeBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
-    [AddComponentMenu("Neo/GridSystem/TicTacToe/TicTacToeBoardService")]
+    [AddComponentMenu("Neoxider/GridSystem/TicTacToe/TicTacToeBoardService")]
     public class TicTacToeBoardService : MonoBehaviour
     {
         [SerializeField] private bool _resetOnStart = true;

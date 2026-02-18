@@ -11,7 +11,7 @@ namespace Neo.NPC
     [DisallowMultipleComponent]
     [NeoDoc("NPC/Navigation/NPCNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
-    [AddComponentMenu("Neo/NPC/" + nameof(NpcNavigation))]
+    [AddComponentMenu("Neoxider/NPC/" + nameof(NpcNavigation))]
     public sealed class NpcNavigation : MonoBehaviour
     {
         public enum NavigationMode

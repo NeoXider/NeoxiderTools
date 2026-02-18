@@ -10,7 +10,7 @@ namespace Neo
     namespace Shop
     {
         [NeoDoc("Shop/Money.md")]
-        [AddComponentMenu("Neo/" + "Shop/" + nameof(Money))]
+        [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {
             [Space] [SerializeField] private string _moneySave = "Money";

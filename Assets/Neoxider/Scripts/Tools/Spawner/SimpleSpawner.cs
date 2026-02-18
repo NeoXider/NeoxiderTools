@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Spawner/SimpleSpawner.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(SimpleSpawner))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SimpleSpawner))]
     public class SimpleSpawner : MonoBehaviour
     {
         [Header("Prefabs")] public GameObject prefab;

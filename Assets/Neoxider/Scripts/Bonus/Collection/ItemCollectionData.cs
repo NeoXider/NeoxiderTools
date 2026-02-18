@@ -17,7 +17,7 @@ namespace Neo.Bonus
     ///     ScriptableObject для хранения данных одного коллекционного предмета.
     ///     Используется в системе коллекций для определения свойств предмета.
     /// </summary>
-    [CreateAssetMenu(fileName = "Item Collection Data", menuName = "Neo/Bonus/Collection/Item Collection Data",
+    [CreateAssetMenu(fileName = "Item Collection Data", menuName = "Neoxider/Bonus/Collection/Item Collection Data",
         order = 10)]
     public class ItemCollectionData : ScriptableObject
     {

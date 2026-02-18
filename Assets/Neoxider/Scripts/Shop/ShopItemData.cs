@@ -6,7 +6,7 @@ namespace Neo.Shop
     ///     ScriptableObject для хранения данных товара в магазине.
     ///     Позволяет настраивать свойства товара через инспектор без изменения кода.
     /// </summary>
-    [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neo/Shop/Shop Item Data", order = 32)]
+    [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neoxider/Shop/Shop Item Data", order = 32)]
     public class ShopItemData : ScriptableObject
     {
         [Tooltip("Can this item be bought only once?")] [SerializeField]

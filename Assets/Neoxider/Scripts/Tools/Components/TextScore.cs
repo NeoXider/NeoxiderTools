@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
-    [AddComponentMenu("Neo/Tools/" + nameof(TextScore))]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(TextScore))]
     public class TextScore : SetText
     {
         private enum ScoreDisplayMode

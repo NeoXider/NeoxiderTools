@@ -9,7 +9,7 @@ namespace Neo.Tools
     ///     Useful for drop tables, random events etc.
     /// </summary>
     [NeoDoc("Tools/Random/ChanceSystemBehaviour.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(ChanceSystemBehaviour))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {
         [Header("Settings")] [SerializeField] [Tooltip("Inline chance configuration")]

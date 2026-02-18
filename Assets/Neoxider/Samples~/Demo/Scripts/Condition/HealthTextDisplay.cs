@@ -9,7 +9,7 @@ namespace Neo.Demo.Condition
     ///     Формат: "HP: {current} / {max}"
     /// </summary>
     [RequireComponent(typeof(TMP_Text))]
-    [AddComponentMenu("Neo/Demo/Condition/HealthTextDisplay")]
+    [AddComponentMenu("Neoxider/Demo/Condition/HealthTextDisplay")]
     public class HealthTextDisplay : MonoBehaviour
     {
         [SerializeField] private Health _health;

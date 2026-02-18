@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Neo.Demo.GridSystem
 {
-    [AddComponentMenu("Neo/Demo/GridSystem/GridSystemTicTacToeDemoUI")]
+    [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemTicTacToeDemoUI")]
     public class GridSystemTicTacToeDemoUI : MonoBehaviour
     {
         [SerializeField] private FieldGenerator _generator;

@@ -62,7 +62,7 @@ namespace Neo.Pages.Editor
             return instance;
         }
 
-        [MenuItem("Tools/Neo/Pages/Generate Default PageIds")]
+        [MenuItem("Tools/Neoxider/Pages/Generate Default PageIds")]
         public static void GenerateDefaultPageIds()
         {
             string folder = GetPreferredFolder();

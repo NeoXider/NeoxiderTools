@@ -9,7 +9,7 @@ namespace Neo.Tools
     ///     Поддерживает фильтрацию по слоям, опциональное добавление физики и различные режимы активации.
     /// </summary>
     [NeoDoc("Tools/Physics/ExplosiveForce.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(ExplosiveForce))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + "Physics/" + nameof(ExplosiveForce))]
     public class ExplosiveForce : MonoBehaviour
     {
         /// <summary>

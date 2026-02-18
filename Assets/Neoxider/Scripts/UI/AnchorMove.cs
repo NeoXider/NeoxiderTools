@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.UI
 {
     [NeoDoc("UI/AnchorMove.md")]
-    [AddComponentMenu("Neo/" + "UI/" + nameof(AnchorMove))]
+    [AddComponentMenu("Neoxider/" + "UI/" + nameof(AnchorMove))]
     public class AnchorMove : MonoBehaviour
     {
         [Header("Settings")] [Range(0, 1)] public float x = 0.5f;

@@ -13,7 +13,7 @@ using UnityEditor.Events;
 
 namespace Neo.Demo.GridSystem
 {
-    [AddComponentMenu("Neo/Demo/GridSystem/GridSystemMatch3DemoSetup")]
+    [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemMatch3DemoSetup")]
     public class GridSystemMatch3DemoSetup : MonoBehaviour
     {
 #if UNITY_EDITOR

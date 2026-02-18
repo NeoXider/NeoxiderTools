@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Supports both 2D and 3D cameras with multiple boundary types.
     /// </summary>
     [NeoDoc("Tools/Move/CameraConstraint.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraConstraint))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraConstraint))]
     public class CameraConstraint : MonoBehaviour
     {
         public enum BoundsType

@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace Neo.Shop
 {
     [NeoDoc("Shop/ShopItem.md")]
-    [AddComponentMenu("Neo/" + "Shop/" + nameof(ShopItem))]
+    [AddComponentMenu("Neoxider/" + "Shop/" + nameof(ShopItem))]
     public class ShopItem : MonoBehaviour
     {
         [SerializeField] private int _id;

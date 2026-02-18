@@ -31,7 +31,7 @@ namespace Neo
         }
 
         [NeoDoc("Tools/Move/CameraRotationController.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraRotationController))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraRotationController))]
         public class CameraRotationController : MonoBehaviour
         {
             [Header("Settings")] public AxisRotationSettings xAxisSettings = new(true, 10);

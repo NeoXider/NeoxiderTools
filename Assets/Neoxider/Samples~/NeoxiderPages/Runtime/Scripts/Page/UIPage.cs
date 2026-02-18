@@ -8,7 +8,7 @@ namespace Neo.Pages
 {
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/UIPage.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(UIPage))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(UIPage))]
     /// <summary>
     /// Компонент страницы UI для работы с <see cref="PM"/>.
     /// Поддерживает проигрывание анимации через DOTween Animation (если компонент присутствует).

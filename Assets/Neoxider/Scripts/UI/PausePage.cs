@@ -5,7 +5,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("UI/PausePage.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(PausePage))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PausePage))]
         public class PausePage : MonoBehaviour
         {
             [Header("Settings")] [SerializeField] private bool useTimeScale = true;

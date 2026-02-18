@@ -29,7 +29,7 @@ namespace Neo.Tools
     ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
     [NeoDoc("Tools/Managers/Bootstrap.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(Bootstrap))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Bootstrap))]
     public class Bootstrap : Singleton<Bootstrap>
     {
         [Header("References")] [SerializeField] [Tooltip("List of components to initialize manually")]

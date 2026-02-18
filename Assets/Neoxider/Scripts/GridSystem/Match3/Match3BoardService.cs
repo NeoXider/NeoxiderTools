@@ -11,7 +11,7 @@ namespace Neo.GridSystem.Match3
     /// </summary>
     [NeoDoc("GridSystem/Match3/Match3BoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
-    [AddComponentMenu("Neo/GridSystem/Match3/Match3BoardService")]
+    [AddComponentMenu("Neoxider/GridSystem/Match3/Match3BoardService")]
     public class Match3BoardService : MonoBehaviour
     {
         [SerializeField] private int _minMatchLength = 3;

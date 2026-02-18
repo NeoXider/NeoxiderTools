@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Components/AttackSystem/AttackExecution.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(AttackExecution))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AttackExecution))]
     public class AttackExecution : MonoBehaviour
     {
         public enum AttackState

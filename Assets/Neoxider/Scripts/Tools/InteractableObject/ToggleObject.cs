@@ -6,7 +6,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("Tools/InteractableObject/ToggleObject.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(ToggleObject))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {
             [Header("Settings")] public bool value;

@@ -6,7 +6,7 @@ namespace Neo.Bonus
     ///     ScriptableObject для хранения доступных ставок в слот-машине.
     ///     Позволяет настраивать список ставок через инспектор.
     /// </summary>
-    [CreateAssetMenu(fileName = "Bets Data", menuName = "Neo/Bonus/Slot/Bets Data", order = 1)]
+    [CreateAssetMenu(fileName = "Bets Data", menuName = "Neoxider/Bonus/Slot/Bets Data", order = 1)]
     public class BetsData : ScriptableObject
     {
         [Tooltip("Available bets array for slot machine")] [SerializeField]

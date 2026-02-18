@@ -1122,10 +1122,19 @@ MonoBehaviour:
     _valueType: 0
     _compareOp: 5
     _invert: 0
+    _thresholdSource: 0
     _thresholdInt: 30
     _thresholdFloat: 0
     _thresholdBool: 1
     _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -1417,10 +1426,19 @@ MonoBehaviour:
     _valueType: 0
     _compareOp: 4
     _invert: 0
+    _thresholdSource: 0
     _thresholdInt: 100
     _thresholdFloat: 0
     _thresholdBool: 1
     _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -2509,10 +2527,19 @@ MonoBehaviour:
     _valueType: 2
     _compareOp: 5
     _invert: 0
+    _thresholdSource: 0
     _thresholdInt: 100
     _thresholdFloat: 0
     _thresholdBool: 0
     _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1

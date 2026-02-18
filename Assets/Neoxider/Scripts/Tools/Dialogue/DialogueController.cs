@@ -10,7 +10,7 @@ namespace Neo.Tools
     ///     Основной контроллер диалоговой системы (на UniTask).
     /// </summary>
     [NeoDoc("Tools/Dialogue/DialogueController.md")]
-    [AddComponentMenu("Neo/" + "Tools/Dialogue/" + nameof(DialogueController))]
+    [AddComponentMenu("Neoxider/" + "Tools/Dialogue/" + nameof(DialogueController))]
     public class DialogueController : MonoBehaviour
     {
         [Header("Components")] [Tooltip("UI component. If not set, searched on this object")] [SerializeField]

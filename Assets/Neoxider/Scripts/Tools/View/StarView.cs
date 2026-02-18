@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/View/StarView.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(StarView))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(StarView))]
     public class StarView : MonoBehaviour
     {
         [Header("GameObjects")] public GameObject[] starObjects;

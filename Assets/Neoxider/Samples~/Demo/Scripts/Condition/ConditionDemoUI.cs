@@ -9,7 +9,7 @@ namespace Neo.Demo.Condition
     ///     Управляет панелями (GameOver, Win, Warning) и статусом.
     ///     Обновление текста HP/Score — через встроенные поля Health.OnChange и ScoreManager.textScores.
     /// </summary>
-    [AddComponentMenu("Neo/Demo/Condition/ConditionDemoUI")]
+    [AddComponentMenu("Neoxider/Demo/Condition/ConditionDemoUI")]
     public class ConditionDemoUI : MonoBehaviour
     {
         [Header("References")] [SerializeField]

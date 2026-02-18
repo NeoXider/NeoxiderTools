@@ -8,7 +8,7 @@ namespace Neo.Bonus
     ///     ScriptableObject для хранения множителей выигрыша в зависимости от количества символов.
     ///     Поддерживает автоматическую генерацию множителей на основе SpritesData.
     /// </summary>
-    [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neo/Bonus/Slot/Sprite Multiplier Data",
+    [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neoxider/Bonus/Slot/Sprite Multiplier Data",
         order = 4)]
     public class SpriteMultiplayerData : ScriptableObject
     {

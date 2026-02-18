@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/AdvancedForceApplier.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedForceApplier))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedForceApplier))]
     public class AdvancedForceApplier : MonoBehaviour
     {
         public enum BodyType

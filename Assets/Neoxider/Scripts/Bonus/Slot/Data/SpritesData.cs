@@ -23,7 +23,7 @@ namespace Neo.Bonus
     ///     ScriptableObject для хранения визуальных данных всех символов слот-машины.
     ///     Автоматически присваивает ID каждому символу на основе индекса.
     /// </summary>
-    [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neo/Bonus/Slot/Sprites Data", order = 3)]
+    [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neoxider/Bonus/Slot/Sprites Data", order = 3)]
     public class SpritesData : ScriptableObject
     {
         [Tooltip("Visual data array for all slot machine symbols")] [SerializeField]

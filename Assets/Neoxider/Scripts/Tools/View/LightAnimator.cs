@@ -12,7 +12,7 @@ namespace Neo.Tools.View
     ///     Поддерживает различные типы анимации интенсивности и цвета.
     /// </summary>
     [NeoDoc("Tools/View/LightAnimator.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(LightAnimator))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(LightAnimator))]
     public class LightAnimator : MonoBehaviour
     {
         [Header("Animation Settings")] [Tooltip("Animation type")]

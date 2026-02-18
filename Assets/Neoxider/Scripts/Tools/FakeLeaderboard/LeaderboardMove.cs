@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/FakeLeaderboard/LeaderboardMove.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardMove))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {
         [Header("Leaderboard Reference")]

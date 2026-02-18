@@ -8,7 +8,7 @@ namespace Neo.Pages
 {
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/FakeLoad.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(FakeLoad))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(FakeLoad))]
     /// <summary>
     /// Фейковая загрузка: имитирует прогресс в диапазоне времени и генерирует события.
     /// </summary>

@@ -7,7 +7,7 @@ namespace Neo
     namespace Bonus
     {
         [NeoDoc("Bonus/WheelFortune/WheelMoneyWin.md")]
-        [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelMoneyWin))]
+        [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelMoneyWin))]
         public class WheelMoneyWin : MonoBehaviour
         {
             [Header("References")] public TMP_Text prize;

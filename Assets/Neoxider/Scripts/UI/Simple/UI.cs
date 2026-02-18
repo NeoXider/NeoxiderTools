@@ -9,7 +9,7 @@ namespace Neo
     namespace UI
     {
         [NeoDoc("UI/Simple/UI.md")]
-        [AddComponentMenu("Neo/" + "UI/" + nameof(UI))]
+        [AddComponentMenu("Neoxider/" + "UI/" + nameof(UI))]
         public class UI : MonoBehaviour
         {
             public static UI I;

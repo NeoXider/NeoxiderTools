@@ -10,7 +10,7 @@ using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [NeoDoc("Tools/Other/SpineController.md")]
-[AddComponentMenu("Neo/" + "Tools/" + nameof(SpineController))]
+[AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {
     [Header("References")]
@@ -534,7 +534,7 @@ public sealed class SpineController : MonoBehaviour
 #else
 using UnityEngine;
 
-[AddComponentMenu("Neo/" + "Tools/" + nameof(SpineController))]
+[AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {
     [SerializeField]

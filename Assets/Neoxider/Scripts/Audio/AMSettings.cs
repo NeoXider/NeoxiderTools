@@ -6,7 +6,7 @@ using UnityEngine.Events;
 namespace Neo.Audio
 {
     [NeoDoc("Audio/AMSettings.md")]
-    [AddComponentMenu("Neo/" + "Audio/" + nameof(AMSettings))]
+    [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
         [Tooltip("Optional mixer for volume control.")]

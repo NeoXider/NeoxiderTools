@@ -22,7 +22,7 @@ namespace Neo.StateMachine
     /// </code>
     /// </example>
     [NeoDoc("StateMachine/StateMachineBehaviourBase.md")]
-    [AddComponentMenu("Neo/Tools/State Machine Behaviour")]
+    [AddComponentMenu("Neoxider/Tools/State Machine Behaviour")]
     public class StateMachineBehaviourBase : MonoBehaviour
     {
         [Header("Settings")] [SerializeField] [Tooltip("Enable state transition logging")]

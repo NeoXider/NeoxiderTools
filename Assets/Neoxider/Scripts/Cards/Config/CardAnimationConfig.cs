@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Neo.Cards
 {
-    [CreateAssetMenu(fileName = "CardAnimationConfig", menuName = "Neo/Cards/Card Animation Config")]
+    [CreateAssetMenu(fileName = "CardAnimationConfig", menuName = "Neoxider/Cards/Card Animation Config")]
     public class CardAnimationConfig : ScriptableObject
     {
         [Header("Deal")] [SerializeField] private float _dealMoveDuration = 0.3f;

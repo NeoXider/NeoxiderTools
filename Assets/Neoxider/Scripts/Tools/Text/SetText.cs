@@ -15,7 +15,7 @@ namespace Neo
         ///     Useful for displaying numeric values with separators and decimal places.
         /// </summary>
         [NeoDoc("Tools/Text/SetText.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(SetText))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SetText))]
         public class SetText : MonoBehaviour
         {
             #region Events

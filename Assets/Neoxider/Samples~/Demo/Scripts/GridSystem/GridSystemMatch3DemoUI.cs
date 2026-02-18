@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Neo.Demo.GridSystem
 {
-    [AddComponentMenu("Neo/Demo/GridSystem/GridSystemMatch3DemoUI")]
+    [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemMatch3DemoUI")]
     public class GridSystemMatch3DemoUI : MonoBehaviour
     {
         [SerializeField] private FieldGenerator _generator;

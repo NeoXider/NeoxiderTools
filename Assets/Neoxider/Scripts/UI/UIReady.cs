@@ -27,7 +27,7 @@ namespace Neo
         }
 
         [NeoDoc("UI/UIReady.md")]
-        [AddComponentMenu("Neo/" + "UI/" + nameof(UIReady))]
+        [AddComponentMenu("Neoxider/" + "UI/" + nameof(UIReady))]
         public class UIReady : MonoBehaviour
         {
             [Header("Scene Loading")] public SceneLoadMode loadMode = SceneLoadMode.Sync;

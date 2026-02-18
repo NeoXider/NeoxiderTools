@@ -26,7 +26,7 @@ namespace Neo.StateMachine
     /// </code>
     /// </example>
     [NeoDoc("StateMachine/StateMachineBehaviour.md")]
-    [AddComponentMenu("Neo/Tools/" + nameof(StateMachineBehaviour))]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {
         [Header("Settings")] [SerializeField] [Tooltip("Initial state (state type for code)")]

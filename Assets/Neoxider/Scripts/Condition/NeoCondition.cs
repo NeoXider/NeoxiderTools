@@ -47,7 +47,7 @@ namespace Neo.Condition
     ///     Для ручного режима — вызвать Check() из UnityEvent другого компонента.
     /// </remarks>
     [NeoDoc("Condition/NeoCondition.md")]
-    [AddComponentMenu("Neo/Condition/NeoCondition")]
+    [AddComponentMenu("Neoxider/Condition/NeoCondition")]
     public class NeoCondition : MonoBehaviour
     {
         [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]

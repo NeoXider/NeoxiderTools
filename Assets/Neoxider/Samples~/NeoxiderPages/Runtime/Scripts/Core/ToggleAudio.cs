@@ -9,7 +9,7 @@ namespace Neo.Pages
 {
     [MovedFrom("")]
     [NeoDoc("NeoxiderPages/ToggleAudio.md")]
-    [AddComponentMenu("Neo/Pages/" + nameof(ToggleAudio))]
+    [AddComponentMenu("Neoxider/Pages/" + nameof(ToggleAudio))]
     public class ToggleAudio : MonoBehaviour
     {
         [FormerlySerializedAs("_toggleView")] [SerializeField]

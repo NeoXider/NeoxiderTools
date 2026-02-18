@@ -9,7 +9,7 @@ using UnityEditor;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Slot/SlotElement.md")]
-    [AddComponentMenu("Neo/" + "Bonus/" + nameof(SlotElement))]
+    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SlotElement))]
     public class SlotElement : MonoBehaviour
     {
         [Header("Refs")] [SerializeField] public Image image;

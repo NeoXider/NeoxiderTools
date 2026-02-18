@@ -11,7 +11,7 @@ namespace Neo
     /// </summary>
     [DisallowMultipleComponent]
     [NeoDoc("Parallax/ParallaxLayer.md")]
-    [AddComponentMenu("Neo/" + "Parallax/" + nameof(ParallaxLayer))]
+    [AddComponentMenu("Neoxider/" + "Parallax/" + nameof(ParallaxLayer))]
     public class ParallaxLayer : MonoBehaviour
     {
         [Header("Camera Binding")] [SerializeField]

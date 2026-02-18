@@ -12,7 +12,7 @@ namespace Neo
         ///     Universal interactive object component with mouse, keyboard, and distance-based interaction support.
         /// </summary>
         [NeoDoc("Tools/InteractableObject/InteractiveObject.md")]
-        [AddComponentMenu("Neo/" + "Tools/" + nameof(InteractiveObject))]
+        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
         public class InteractiveObject : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
         {
             public enum KeyboardInteractionMode

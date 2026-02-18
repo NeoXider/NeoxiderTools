@@ -9,7 +9,7 @@ namespace Neo
     namespace UI
     {
         [NeoDoc("UI/ButtonChangePage.md")]
-        [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonChangePage))]
+        [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonChangePage))]
         public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {
             [Header("Settings")] public bool intecactable = true;

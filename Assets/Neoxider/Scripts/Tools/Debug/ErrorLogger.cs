@@ -19,7 +19,7 @@ namespace Neo
     }
 
     [NeoDoc("Tools/Debug/ErrorLogger.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(ErrorLogger))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {
         [Header("Log Type Filters")] [Tooltip("Select log types to display")]

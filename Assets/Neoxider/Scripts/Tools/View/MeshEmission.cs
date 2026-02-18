@@ -7,7 +7,7 @@ namespace Neo.Tools.View
     ///     Копирует интенсивность и цвет от Light компонента в реальном времени.
     /// </summary>
     [NeoDoc("Tools/View/MeshEmission.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(MeshEmission))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MeshEmission))]
     public class MeshEmission : MonoBehaviour
     {
         private const string EmissionKW = "_EMISSION";

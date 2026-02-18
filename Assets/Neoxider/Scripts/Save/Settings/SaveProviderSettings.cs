@@ -6,7 +6,7 @@ namespace Neo.Save
     ///     Настройки для системы сохранения данных.
     ///     ScriptableObject для конфигурации провайдера сохранения.
     /// </summary>
-    [CreateAssetMenu(fileName = "SaveProviderSettings", menuName = "Neo/Save/Save Provider Settings", order = 1)]
+    [CreateAssetMenu(fileName = "SaveProviderSettings", menuName = "Neoxider/Save/Save Provider Settings", order = 1)]
     public class SaveProviderSettings : ScriptableObject
     {
         [Header("Provider Type")] [Tooltip("Provider type for saving data")] [SerializeField]

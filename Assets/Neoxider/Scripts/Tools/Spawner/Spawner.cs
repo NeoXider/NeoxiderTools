@@ -15,7 +15,7 @@ namespace Neo.Tools
     ///     опциональным родителем и режимом применения поворота в локальных или мировых координатах.
     /// </summary>
     [NeoDoc("Tools/Spawner/Spawner.md")]
-    [AddComponentMenu("Neo/" + "Tools/" + nameof(Spawner))]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Spawner))]
     public class Spawner : MonoBehaviour
     {
         [Header("Spawn Settings")] [SerializeField]
