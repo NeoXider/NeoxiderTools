@@ -6,6 +6,8 @@ namespace Neo.Cards
     /// <summary>
     ///     Визуальное представление колоды карт
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/DeckView")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(DeckView))]
     [NeoDoc("Cards/View/DeckView.md")]
     public class DeckView : MonoBehaviour, IDeckView
     {

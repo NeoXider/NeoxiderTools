@@ -9,6 +9,8 @@ using Random = UnityEngine.Random;
 
 namespace Neo
 {
+    [CreateFromMenu("Neoxider/UI/AnimationFly")]
+    [AddComponentMenu("Neoxider/UI/" + nameof(AnimationFly))]
     [NeoDoc("UI/AnimationFly.md")]
     public class AnimationFly : Singleton<AnimationFly>
     {

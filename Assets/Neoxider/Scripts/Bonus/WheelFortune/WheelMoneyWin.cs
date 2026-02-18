@@ -1,4 +1,3 @@
-using Neo;
 using Neo.Shop;
 using TMPro;
 using UnityEngine;

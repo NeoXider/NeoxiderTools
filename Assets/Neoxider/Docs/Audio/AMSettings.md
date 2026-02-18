@@ -2,7 +2,7 @@
 
 Синглтон настроек аудио: привязка к AudioMixer (Master, Music, Efx), имена параметров громкости, события mute.
 
-**Добавить:** Neo → Audio → AMSettings.
+**Добавить:** Neoxider → Audio → AMSettings.
 
 ## Поля
 

@@ -10,6 +10,8 @@ using UnityEngine.SceneManagement;
 
 namespace Neo.Save
 {
+    [CreateFromMenu("Neoxider/Save/SaveManager")]
+    [AddComponentMenu("Neoxider/Save/" + nameof(SaveManager))]
     [NeoDoc("Save/README.md")]
     public class SaveManager : Singleton<SaveManager>
     {

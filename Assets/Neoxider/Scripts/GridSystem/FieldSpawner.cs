@@ -15,7 +15,7 @@ namespace Neo.GridSystem
         [Header("Prefabs")] public GameObject[] Prefabs;
 
         /// <summary>
-        /// Raised after an object is spawned. Provides spawned object and target cell.
+        ///     Raised after an object is spawned. Provides spawned object and target cell.
         /// </summary>
         public UnityEvent<GameObject, FieldCell> OnObjectSpawned = new();
 
@@ -27,10 +27,10 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Spawns prefab instance at target cell center.
+        ///     Spawns prefab instance at target cell center.
         /// </summary>
         /// <param name="cellPos">Target cell position.</param>
-        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs" /> array.</param>
         /// <returns>Spawned GameObject or null when spawn fails.</returns>
         public GameObject SpawnAt(Vector3Int cellPos, int prefabIndex = 0)
         {
@@ -47,9 +47,9 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Spawns prefab on all currently passable cells.
+        ///     Spawns prefab on all currently passable cells.
         /// </summary>
-        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs" /> array.</param>
         public void SpawnOnAllWalkable(int prefabIndex = 0)
         {
             Vector3Int size = generator.Config.Size;

@@ -1,4 +1,3 @@
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -30,8 +29,7 @@ namespace Neo.Animations
         [Tooltip("Use 2D noise instead of 1D")]
         public bool use2DNoise = true;
 
-        [Tooltip("Additional noise offset")]
-        public Vector2 noiseOffset;
+        [Tooltip("Additional noise offset")] public Vector2 noiseOffset;
 
         [Header("Custom Curve")] [Tooltip("Custom curve for CustomCurve type")]
         public AnimationCurve customCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);

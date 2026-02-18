@@ -12,6 +12,8 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент карты для работы без кода
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/CardComponent")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(CardComponent))]
     [NeoDoc("Cards/CardComponent.md")]
     public class CardComponent : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {

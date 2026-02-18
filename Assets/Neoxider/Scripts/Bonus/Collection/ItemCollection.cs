@@ -1,4 +1,3 @@
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -10,22 +9,23 @@ namespace Neo.Bonus
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {
-        [Header("References")] [GetComponent] [SerializeField] private Button _button;
+        [Header("References")] [GetComponent] [SerializeField]
+        private Button _button;
+
         [SerializeField] private Image _itemImage;
         [SerializeField] private Collection _collection;
         [SerializeField] private ItemCollectionInfo _itemInfo;
-
-        public Button Button => _button;
-        private int _itemId = -1;
-
-        private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
-        public int ItemId => _itemId;
 
         public UnityEvent<bool> OnChangeEnabled;
         public UnityEvent OnActive;
         public UnityEvent OnDeactivated;
         private ItemCollectionData _currentData;
         private bool _isInitialized;
+
+        public Button Button => _button;
+
+        private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
+        public int ItemId { get; private set; } = -1;
 
         public Image ItemImage => _itemImage;
         public ItemCollectionInfo ItemInfo => _itemInfo;
@@ -87,21 +87,21 @@ namespace Neo.Bonus
 
         public void SetItemId(int id)
         {
-            _itemId = id;
+            ItemId = id;
         }
 
         /// <summary>Добавляет текущий предмет в коллекцию (по ItemId). Удобно вызывать из UnityEvent (кнопка).</summary>
         public void Unlock()
         {
-            if (_itemId < 0)
+            if (ItemId < 0)
             {
                 return;
             }
 
             Collection col = CollectionInstance;
-            if (col != null && col.ItemCount > _itemId)
+            if (col != null && col.ItemCount > ItemId)
             {
-                col.AddItem(_itemId);
+                col.AddItem(ItemId);
             }
         }
     }

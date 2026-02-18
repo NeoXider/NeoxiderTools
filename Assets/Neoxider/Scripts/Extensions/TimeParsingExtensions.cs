@@ -4,12 +4,12 @@ using System.Globalization;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Provides parsing helpers for converting text durations into seconds.
+    ///     Provides parsing helpers for converting text durations into seconds.
     /// </summary>
     public static class TimeParsingExtensions
     {
         /// <summary>
-        /// Tries to parse a duration string into total seconds.
+        ///     Tries to parse a duration string into total seconds.
         /// </summary>
         /// <param name="raw">Input duration text.</param>
         /// <param name="seconds">Parsed total seconds when successful.</param>
@@ -80,7 +80,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Tries to parse a duration string into total seconds.
+        ///     Tries to parse a duration string into total seconds.
         /// </summary>
         /// <param name="raw">Input duration text.</param>
         /// <param name="seconds">Parsed total seconds when successful.</param>

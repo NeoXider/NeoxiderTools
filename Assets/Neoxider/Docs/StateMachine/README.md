@@ -179,7 +179,7 @@ transition.AddPredicate(andPredicate);
 ScriptableObject для создания состояний без кода.
 
 **Создание:**
-1. В меню Unity: `Create > Neo > State Machine > State Data`
+1. В меню Unity: `Create > Neoxider > State Machine > State Data`
 2. Настроить имя состояния
 3. Добавить действия при входе, обновлении и выходе
 
@@ -196,7 +196,7 @@ ScriptableObject для создания состояний без кода.
 ScriptableObject для полной конфигурации State Machine.
 
 **Создание:**
-1. В меню Unity: `Create > Neo > State Machine > State Machine Data`
+1. В меню Unity: `Create > Neoxider > State Machine > State Machine Data`
 2. Добавить состояния (StateData)
 3. Установить начальное состояние
 4. Настроить переходы между состояниями

@@ -16,7 +16,7 @@ namespace Neo.Tools
         public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100)
         {
             _prefab = prefab;
-            int effectiveMax = expandPool ? (maxSize > 0 ? maxSize : 100) : initialSize;
+            int effectiveMax = expandPool ? maxSize > 0 ? maxSize : 100 : initialSize;
 
             _pool = new ObjectPool<GameObject>(
                 CreatePooledObject,
@@ -62,12 +62,17 @@ namespace Neo.Tools
             GameObject instance = Object.Instantiate(_prefab);
 
             if (!instance.TryGetComponent(out PooledObjectInfo info))
+            {
                 info = instance.AddComponent<PooledObjectInfo>();
+            }
+
             info.OwnerPool = this;
 
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
+            {
                 poolable.OnPoolCreate();
+            }
 
             return instance;
         }

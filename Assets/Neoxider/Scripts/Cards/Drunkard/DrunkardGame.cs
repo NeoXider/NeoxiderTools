@@ -9,6 +9,8 @@ namespace Neo.Cards
     ///     Игра "Пьяница" (War Card Game).
     ///     Классическая карточная игра где побеждает тот, кто соберёт все карты.
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/DrunkardGame")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(DrunkardGame))]
     [NeoDoc("Cards/Examples/Drunkard.md")]
     public class DrunkardGame : MonoBehaviour
     {

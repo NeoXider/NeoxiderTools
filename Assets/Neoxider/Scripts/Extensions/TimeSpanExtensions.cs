@@ -4,12 +4,12 @@ using System.Text;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Provides formatting helpers for <see cref="TimeSpan"/>.
+    ///     Provides formatting helpers for <see cref="TimeSpan" />.
     /// </summary>
     public static class TimeSpanExtensions
     {
         /// <summary>
-        /// Converts a <see cref="TimeSpan"/> to a compact human-readable string.
+        ///     Converts a <see cref="TimeSpan" /> to a compact human-readable string.
         /// </summary>
         /// <param name="value">Source time span.</param>
         /// <param name="includeSeconds">Whether to include seconds in output.</param>
@@ -29,7 +29,7 @@ namespace Neo.Extensions
             }
 
             int added = 0;
-            StringBuilder builder = new StringBuilder(24);
+            StringBuilder builder = new(24);
             AppendPart(abs.Days, "d");
             AppendPart(abs.Hours, "h");
             AppendPart(abs.Minutes, "m");
@@ -60,7 +60,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Converts a <see cref="TimeSpan"/> to a clock-like string.
+        ///     Converts a <see cref="TimeSpan" /> to a clock-like string.
         /// </summary>
         /// <param name="value">Source time span.</param>
         /// <param name="includeDays">Whether to prefix output with days.</param>

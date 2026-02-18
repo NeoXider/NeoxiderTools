@@ -14,7 +14,7 @@ namespace Neo.Tools
     [Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
     [NeoDoc("Tools/Other/AiNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
-    [CreateFromMenu("Neoxider/Tools/AiNavigation")]
+    [CreateFromMenu("Neoxider/Tools/Other/AiNavigation")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AiNavigation))]
     public class AiNavigation : MonoBehaviour
     {
@@ -25,7 +25,9 @@ namespace Neo.Tools
             Combined
         }
 
-        [Header("DEPRECATED: use NPCNavigation (Neoxider/NPC/NpcNavigation)")] [Header("Movement Mode")] [SerializeField]
+        [Header("DEPRECATED: use NPCNavigation (Neoxider/NPC/NpcNavigation)")]
+        [Header("Movement Mode")]
+        [SerializeField]
         private MovementMode movementMode = MovementMode.FollowTarget;
 
         [Header("Follow Target")] [SerializeField]

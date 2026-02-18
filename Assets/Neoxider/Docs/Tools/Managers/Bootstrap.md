@@ -2,7 +2,7 @@
 
 Синглтон инициализации: запускает компоненты, реализующие **IInit**, в порядке приоритета (InitPriority). Ручной список или авто-поиск по сцене.
 
-**Добавить:** GameObject → Neo → Tools → Bootstrap.
+**Добавить:** GameObject → Neoxider → Tools → Bootstrap.
 
 ## Поля
 

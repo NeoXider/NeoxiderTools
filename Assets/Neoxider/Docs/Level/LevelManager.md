@@ -2,7 +2,7 @@
 
 Синглтон уровней и карт (Map). Хранит текущий уровень и карту, сохраняет прогресс, даёт доступ к LevelButton и переходам на следующий уровень/карту.
 
-**Добавить:** GameObject → Neo → Level → LevelManager.
+**Добавить:** GameObject → Neoxider → Level → LevelManager.
 
 ## Основное
 

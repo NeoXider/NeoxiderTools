@@ -5,6 +5,8 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [CreateFromMenu("Neoxider/Tools/Components/ScoreManager")]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(ScoreManager))]
     [NeoDoc("Tools/Components/ScoreManager.md")]
     public class ScoreManager : Singleton<ScoreManager>
     {

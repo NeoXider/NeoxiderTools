@@ -44,7 +44,7 @@ Canvas
 
 ### Шаг 2: Создайте DeckConfig
 
-1. ПКМ в Project → **Create → Neo → Cards → Deck Config**
+1. ПКМ в Project → **Create → Neoxider → Cards → Deck Config**
 2. Настройте типы колоды:
    - **Deck Type** — тип для спрайтов (можно `Standard52` если хотите универсальный конфиг)
    - **Game Deck Type** — установите `Standard36` для классической «Пьяницы»

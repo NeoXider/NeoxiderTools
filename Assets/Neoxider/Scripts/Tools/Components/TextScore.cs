@@ -3,30 +3,16 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
-    [CreateFromMenu("Neoxider/Tools/TextScore")]
+    [CreateFromMenu("Neoxider/Tools/Components/TextScore")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(TextScore))]
     public class TextScore : SetText
     {
-        private enum ScoreDisplayMode
-        {
-            Current = 0,
-            Best = 1
-        }
-
         [SerializeField] private ScoreDisplayMode _displayMode = ScoreDisplayMode.Current;
         [SerializeField] [HideInInspector] private bool _best;
 
         private void OnEnable()
         {
             this.WaitWhile(() => ScoreManager.I == null, Init);
-        }
-
-        private void OnValidate()
-        {
-            if (_best)
-            {
-                _displayMode = ScoreDisplayMode.Best;
-            }
         }
 
         private void OnDisable()
@@ -43,6 +29,14 @@ namespace Neo.Tools
             else
             {
                 ScoreManager.I.OnValueChange.RemoveListener(Set);
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (_best)
+            {
+                _displayMode = ScoreDisplayMode.Best;
             }
         }
 
@@ -64,6 +58,12 @@ namespace Neo.Tools
                 Set(sm.Score);
                 sm.OnValueChange.AddListener(Set);
             }
+        }
+
+        private enum ScoreDisplayMode
+        {
+            Current = 0,
+            Best = 1
         }
     }
 }

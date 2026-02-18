@@ -2,7 +2,7 @@
 
 Синглтон валюты: общая сумма, уровеньовая валюта, сохранение через SaveProvider. Реализует IMoneySpend, IMoneyAdd для трат и начислений.
 
-**Добавить:** GameObject → Neo → Shop → Money.
+**Добавить:** GameObject → Neoxider → Shop → Money.
 
 ## Поля
 

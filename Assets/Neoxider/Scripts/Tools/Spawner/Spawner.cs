@@ -15,7 +15,7 @@ namespace Neo.Tools
     ///     опциональным родителем и режимом применения поворота в локальных или мировых координатах.
     /// </summary>
     [NeoDoc("Tools/Spawner/Spawner.md")]
-    [CreateFromMenu("Neoxider/Tools/Spawner")]
+    [CreateFromMenu("Neoxider/Tools/Spawner/Spawner")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Spawner))]
     public class Spawner : MonoBehaviour
     {
@@ -54,8 +54,7 @@ namespace Neo.Tools
         /// <summary>Диапазон поворота вокруг оси Z (roll), градусов.</summary>
         [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
 
-        [SerializeField]
-        [Tooltip("If true, rotation is relative to spawner (local). If false — in world space.")]
+        [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false — in world space.")]
         private bool _useLocalRotation = true;
 
         [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
@@ -69,9 +68,7 @@ namespace Neo.Tools
 
         [SerializeField] private bool _spawnOnAwake;
 
-        [Header("Parenting")]
-        [SerializeField]
-        [Tooltip("Parent for spawned objects. If null — spawn without parent.")]
+        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null — spawn without parent.")]
         /// <summary>
         /// Родитель для заспавненных объектов. Если null — объект не получает родителя.
         /// </summary>
@@ -265,7 +262,9 @@ namespace Neo.Tools
                 spawnedObject = Instantiate(prefab, position, rotation);
                 spawnedObject.SetActive(true);
                 if (parent != null)
+                {
                     spawnedObject.transform.SetParent(parent, true);
+                }
             }
 
             SpawnedObjects.Add(spawnedObject);

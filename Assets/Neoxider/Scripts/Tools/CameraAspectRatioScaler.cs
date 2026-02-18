@@ -15,7 +15,7 @@ namespace Neo
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     [NeoDoc("Tools/CameraAspectRatioScaler.md")]
-    [CreateFromMenu("Neoxider/Tools/CameraAspectRatioScaler")]
+    [CreateFromMenu("Neoxider/Tools/Camera/CameraAspectRatioScaler")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraAspectRatioScaler))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {
@@ -78,16 +78,16 @@ namespace Neo
         private bool resetViewportRectOnDisable = true;
 
         private Camera _camera;
-        private float _referenceFov;
-        private float _referenceSize;
-        private int _lastScreenWidth = -1;
-        private int _lastScreenHeight = -1;
         private ScaleMode _lastScaleMode;
-        private bool _lastUseTargetResolution;
-        private Vector2 _lastTargetResolution;
         private float _lastScaleMultiplier;
+        private int _lastScreenHeight = -1;
+        private int _lastScreenWidth = -1;
+        private Vector2 _lastTargetResolution;
+        private bool _lastUseTargetResolution;
         private bool _lastUseViewportRectInFitBoth;
         private bool _referenceCaptured;
+        private float _referenceFov;
+        private float _referenceSize;
 
         /// <summary>
         ///     Initializes the component and stores the camera's default values.
@@ -105,6 +105,17 @@ namespace Neo
             ApplyCameraScale(true);
         }
 
+        /// <summary>
+        ///     Updates the camera scale based on the current screen resolution and settings.
+        /// </summary>
+        private void Update()
+        {
+            if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
+            {
+                ApplyCameraScale();
+            }
+        }
+
         private void OnEnable()
         {
             EnsureInitialized();
@@ -116,17 +127,6 @@ namespace Neo
             if (_camera != null && resetViewportRectOnDisable)
             {
                 _camera.rect = new Rect(0f, 0f, 1f, 1f);
-            }
-        }
-
-        /// <summary>
-        ///     Updates the camera scale based on the current screen resolution and settings.
-        /// </summary>
-        private void Update()
-        {
-            if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
-            {
-                ApplyCameraScale();
             }
         }
 

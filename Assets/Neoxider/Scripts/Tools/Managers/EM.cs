@@ -7,6 +7,8 @@ namespace Neo.Tools
     /// <summary>
     ///     EventManager GameStates
     /// </summary>
+    [CreateFromMenu("Neoxider/Tools/Managers/EM")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(EM))]
     [NeoDoc("Tools/Managers/EM.md")]
     public class EM : Singleton<EM>
     {

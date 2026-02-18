@@ -3,6 +3,7 @@
 ## Архитектура и структура
 
 , н- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **6.0.0**)
+
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)
 - **Модульность**: модули изолированы через `.asmdef` (см. `Assets/Neoxider/Scripts/**/Neo.*.asmdef` и
@@ -88,8 +89,11 @@ Assets/NeoxiderPages/
 
 #### Bonus/TimeReward
 
-- `Assets/Neoxider/Scripts/Bonus/TimeReward/CooldownReward.cs` — награда по кулдауну, наследник TimerObject (рекомендуется). TakeReward, GetClaimableCount, GetSecondsUntilReward, GetFormattedTimeLeft, TryGetLastRewardTimeUtc, события OnRewardAvailable/OnRewardsClaimed/OnTimeUpdated.
-- `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs` — награда по времени (устарел, см. CooldownReward). GetFormattedTimeLeft, TryGetLastRewardTimeUtc, GetElapsedSinceLastReward.
+- `Assets/Neoxider/Scripts/Bonus/TimeReward/CooldownReward.cs` — награда по кулдауну, наследник TimerObject (
+  рекомендуется). TakeReward, GetClaimableCount, GetSecondsUntilReward, GetFormattedTimeLeft, TryGetLastRewardTimeUtc,
+  события OnRewardAvailable/OnRewardsClaimed/OnTimeUpdated.
+- `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs` — награда по времени (устарел, см. CooldownReward).
+  GetFormattedTimeLeft, TryGetLastRewardTimeUtc, GetElapsedSinceLastReward.
 
 #### Bonus/WheelFortune
 
@@ -550,7 +554,8 @@ Assets/NeoxiderPages/
 #### Tools/Time
 
 - `Assets/Neoxider/Scripts/Tools/Time/Timer.cs` — таймер (класс). Play, SetRemainingTime, SetProgress.
-- `Assets/Neoxider/Scripts/Tools/Time/TimerObject.cs` — MonoBehaviour таймер (события/режимы). SetDuration. Для наследования: `protected virtual GetSaveKey()`, `protected virtual SaveState()`, `protected saveProgress`/`saveMode`.
+- `Assets/Neoxider/Scripts/Tools/Time/TimerObject.cs` — MonoBehaviour таймер (события/режимы). SetDuration. Для
+  наследования: `protected virtual GetSaveKey()`, `protected virtual SaveState()`, `protected saveProgress`/`saveMode`.
 
 #### Tools/View
 

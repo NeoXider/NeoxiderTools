@@ -6,7 +6,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("Tools/UpdateChilds.md")]
-        [CreateFromMenu("Neoxider/Tools/UpdateChilds")]
+        [CreateFromMenu("Neoxider/Tools/Other/UpdateChilds")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UpdateChilds))]
         public class UpdateChilds : MonoBehaviour
         {

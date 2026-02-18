@@ -8,7 +8,7 @@ namespace Neo
     ///     Provides visual feedback about performance with color coding.
     /// </summary>
     [NeoDoc("Tools/Debug/FPS.md")]
-    [CreateFromMenu("Neoxider/Tools/FPS")]
+    [CreateFromMenu("Neoxider/Tools/Debug/FPS")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {

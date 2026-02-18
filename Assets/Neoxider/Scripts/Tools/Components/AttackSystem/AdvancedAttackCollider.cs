@@ -11,7 +11,7 @@ namespace Neo.Tools
     }
 
     [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
-    [CreateFromMenu("Neoxider/Tools/AdvancedAttackCollider")]
+    [CreateFromMenu("Neoxider/Tools/Components/AdvancedAttackCollider")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {
@@ -20,8 +20,7 @@ namespace Neo.Tools
         [Tooltip("Attack type: damage or healing")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
 
-        [Tooltip("Limit repeated hits on the same object (off by default)")]
-        [SerializeField]
+        [Tooltip("Limit repeated hits on the same object (off by default)")] [SerializeField]
         private bool preventRepeatHits;
 
         public float triggerDuration = 0.2f; // Длительность активации триггера
@@ -40,11 +39,9 @@ namespace Neo.Tools
         [Tooltip("Handle 3D collisions/triggers")]
         public bool use3D = true;
 
-        [Tooltip("Handle trigger events")]
-        public bool useTrigger = true;
+        [Tooltip("Handle trigger events")] public bool useTrigger = true;
 
-        [Tooltip("Handle collision events")]
-        public bool useCollision = true;
+        [Tooltip("Handle collision events")] public bool useCollision = true;
 
         [Header("Filtering")]
         public LayerMask hittableLayers = -1; // Слои, на которые реагирует атака. По умолчанию - все
@@ -67,9 +64,7 @@ namespace Neo.Tools
 
         [Header("Effects")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
 
-        [Header("Ignore")]
-        [Tooltip("Objects that are not damaged and do not trigger hit")]
-        [SerializeField]
+        [Header("Ignore")] [Tooltip("Objects that are not damaged and do not trigger hit")] [SerializeField]
         private GameObject[] ignoreObjects;
 
         [Header("Destroy")] [Tooltip("If true, destroys this object on collision/hit")]

@@ -6,7 +6,7 @@ ScriptableObject для конфигурации колоды карт со сп
 
 ## Создание
 
-**ПКМ в Project → Create → Neo → Cards → Deck Config**
+**ПКМ в Project → Create → Neoxider → Cards → Deck Config**
 
 ---
 

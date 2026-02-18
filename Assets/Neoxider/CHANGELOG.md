@@ -2,33 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.4] - Unreleased
+
+### Selector — уникальная выборка и события
+
+- **Уникальная выборка (по умолчанию выключена):** опция `_uniqueSelectionMode` — при случайном выборе и при ручном `Set(index)` индексы не повторяются до сброса или до конца цикла. Когда все индексы использованы: вызывается `OnUniqueCycleComplete`; при `_resetUniqueWhenCycleComplete = true` набор сбрасывается и цикл начинается заново.
+- **Сброс:** `ResetUnique()` — сбрасывает учёт использованных индексов (кнопка **Reset Unique** в Inspector). `ResetAll()` — сброс выбора на первый индекс и сброс unique-набора.
+- **События:** `OnUniqueCycleComplete` (цикл завершён), `OnUniqueReset` (вызван `ResetUnique()`).
+- **Свойства:** `UniqueSelectionMode`, `UniqueRemainingCount` (сколько индексов ещё не выбраны в текущем цикле).
+- **Документация:** обновлён Selector.md (описание unique-режима, методов, событий, раздел 3.4).
+
+## [6.0.3] - Unreleased
+
+### Create Neoxider Object (окно и меню)
+
+- **Цвета категорий** — в окне Create Neoxider Object категории верхнего уровня (UI, Tools, Bonus, Shop, Audio, Level, Save, Condition, Animations, GridSystem, Parallax, NPC) выделены разными цветами для быстрого распознавания.
+- **Подпапки Tools** — в меню и в окне Tools разбит на подкатегории: **Physics**, **Movement**, **Spawner**, **Components**, **Dialogue**, **Input**, **View**, **Debug**, **Time**, **Text**, **Interact**, **Random**, **Other**, **State Machine**, **FakeLeaderboard**, **Managers**, **Camera**. Пути CreateFromMenu обновлены (например Neoxider/Tools/Movement/PlayerController3DPhysics, Neoxider/Tools/Physics/ExplosiveForce).
+- **Документация** — UsefulComponents.md обновлён: описание подкатегорий Tools и цветов в окне.
+
 ## [6.0.2] - Unreleased
 
 ### GameObject → Neoxider (CreateFromMenu)
 
-- **CreateFromMenu** — атрибут `[CreateFromMenu("Neoxider/…", PrefabPath = "…")]` добавлен на все основные компоненты с AddComponentMenu: UI, Tools, Shop, Audio, Bonus (в т.ч. TimeReward, SpinController, SlotElement, Row, Box, ItemCollection, ItemCollectionInfo, WheelMoneyWin), Condition (NeoCondition), Animations (ColorAnimator, FloatAnimator, Vector3Animator), GridSystem (FieldGenerator, FieldSpawner, FieldDebugDrawer, FieldObjectSpawner, Match3BoardService, TicTacToeBoardService), Bootstrap. Компонент и объект можно создавать и через Add Component, и через **GameObject → Neoxider → Create Neoxider Object…**; при указанном префабе создаётся из префаба, иначе — объект с компонентом (fallback).
-- **UsefulComponents.md** — раздел «GameObject → Neoxider» обновлён: список пунктов строится по рефлексии из типов с атрибутом, перечислены категории меню.
+- **CreateFromMenu** — атрибут `[CreateFromMenu("Neoxider/…", PrefabPath = "…")]` добавлен на все основные компоненты с
+  AddComponentMenu: UI, Tools, Shop, Audio, Bonus (в т.ч. TimeReward, SpinController, SlotElement, Row, Box,
+  ItemCollection, ItemCollectionInfo, WheelMoneyWin), Condition (NeoCondition), Animations (ColorAnimator,
+  FloatAnimator, Vector3Animator), GridSystem (FieldGenerator, FieldSpawner, FieldDebugDrawer, FieldObjectSpawner,
+  Match3BoardService, TicTacToeBoardService), Bootstrap. Компонент и объект можно создавать и через Add Component, и
+  через **GameObject → Neoxider → Create Neoxider Object…**; при указанном префабе создаётся из префаба, иначе — объект
+  с компонентом (fallback).
+- **UsefulComponents.md** — раздел «GameObject → Neoxider» обновлён: список пунктов строится по рефлексии из типов с
+  атрибутом, перечислены категории меню.
+
+### Документация: меню Create и Add Component через Neoxider
+
+- Во всей документации пути создания ассетов (ScriptableObject) и пункты Add Component приведены к **Neoxider** вместо *
+  *Neo**: «Create > Neo > …» → «Create > Neoxider > …», «Add Component → Neo → …» / «GameObject → Neo → …» → «Neoxider».
+  Обновлены IMPROVEMENTS.md (CreateAssetMenu в примерах), RainbowSignature.md, README модулей (Collection, Cards, Shop,
+  StateMachine, Level, NeoxiderPages, NPC, ChanceManager, DeckConfig, ItemCollectionData и др.), разделы «Добавить» в
+  описаниях компонентов (GM, EM, Bootstrap, Money, Leaderboard, PoolManager, UIPage, PageSubscriber,
+  StateMachineBehaviour и т.д.), NeoCondition.md, UI Extension README.
 
 ### UI / Tools
 
 - **PausePage** — опциональное и универсальное поведение:
-  - Все функции опциональны: масштаб времени (`_useTimeScale`), уведомление GM (`_sendPause`), управление курсором (`_controlCursor`).
-  - При включённом **Control Cursor** при открытии паузы курсор показывается и разблокируется, при закрытии восстанавливается предыдущее состояние (совместимо с CursorLockController и PlayerController 2D/3D).
-  - Масштаб времени во время паузы задаётся полем `_timeScaleOnPause` (0 = полная пауза), при снятии паузы восстанавливается сохранённый `Time.timeScale`.
+    - Все функции опциональны: масштаб времени (`_useTimeScale`), уведомление GM (`_sendPause`), управление курсором (
+      `_controlCursor`).
+    - При включённом **Control Cursor** при открытии паузы курсор показывается и разблокируется, при закрытии
+      восстанавливается предыдущее состояние (совместимо с CursorLockController и PlayerController 2D/3D).
+    - Масштаб времени во время паузы задаётся полем `_timeScaleOnPause` (0 = полная пауза), при снятии паузы
+      восстанавливается сохранённый `Time.timeScale`.
 - **CursorLockController** — опциональное применение состояния по жизненному циклу:
-  - **Apply On Enable** / **Lock On Enable** — при включении компонента (OnEnable) выставить lock/unlock курсора.
-  - **Apply On Disable** / **Lock On Disable** — при выключении компонента (OnDisable) выставить lock/unlock.
-  - В документации уточнено совместное использование с PausePage и PlayerController3DPhysics / PlayerController2DPhysics без конфликтов.
+    - **Apply On Enable** / **Lock On Enable** — при включении компонента (OnEnable) выставить lock/unlock курсора.
+    - **Apply On Disable** / **Lock On Disable** — при выключении компонента (OnDisable) выставить lock/unlock.
+    - В документации уточнено совместное использование с PausePage и PlayerController3DPhysics /
+      PlayerController2DPhysics без конфликтов.
 - **Документация** — обновлены PausePage.md и CursorLockController.md.
 
 ## [6.0.1] - Unreleased
 
 ### Пул объектов (PoolManager, Spawner)
 
-- **Дефолтный max size пула** — 100 (раньше 10000). В **PoolConfig** и настройках по умолчанию добавлено поле **maxSize**; при 0 используется 100.
-- **PooledObjectInfo** — выставляется один раз при создании объекта в **NeoObjectPool.CreatePooledObject()**, а не при каждом Get. Добавлен метод **Return()** для возврата в пул без вызова PoolManager.Release.
-- **Spawner** — при использовании пула родитель передаётся в **PoolManager.Get(..., parent)** и больше не задаётся вторым вызовом SetParent.
-- **Расширения (Neo.Extensions)** — **ReturnToPool()** для GameObject, **SpawnFromPool(position, rotation, parent)** для префаба; при отсутствии PoolManager SpawnFromPool делает Instantiate.
+- **Дефолтный max size пула** — 100 (раньше 10000). В **PoolConfig** и настройках по умолчанию добавлено поле **maxSize
+  **; при 0 используется 100.
+- **PooledObjectInfo** — выставляется один раз при создании объекта в **NeoObjectPool.CreatePooledObject()**, а не при
+  каждом Get. Добавлен метод **Return()** для возврата в пул без вызова PoolManager.Release.
+- **Spawner** — при использовании пула родитель передаётся в **PoolManager.Get(..., parent)** и больше не задаётся
+  вторым вызовом SetParent.
+- **Расширения (Neo.Extensions)** — **ReturnToPool()** для GameObject, **SpawnFromPool(position, rotation, parent)** для
+  префаба; при отсутствии PoolManager SpawnFromPool делает Instantiate.
 - **PoolableBehaviour** — базовый класс с виртуальными OnPoolCreate/OnPoolGet/OnPoolRelease для объектов из пула.
 - **Документация** — обновлены PoolManager.md, добавлены PooledObjectInfo.md, PoolableBehaviour.md.
 
@@ -36,8 +78,11 @@ All notable changes to this project will be documented in this file.
 
 ### Документация в инспекторе
 
-- В блоке **Documentation** (в стиле Events/Actions) отображается превью .md и кнопка **Open in window**. Документ привязывается к компоненту через атрибут `[NeoDoc("path/from/Docs.md")]` или по соглашению `TypeName.md` в Docs.
-- Опциональный пакет **Markdown Renderer** для рендера Markdown в окне: установка через **Package Manager → Add package from git URL** → `https://github.com/NeoXider/MarkdownRenderer.git`. Без пакета по кнопке открывается выбор .md-ассета в Project.
+- В блоке **Documentation** (в стиле Events/Actions) отображается превью .md и кнопка **Open in window**. Документ
+  привязывается к компоненту через атрибут `[NeoDoc("path/from/Docs.md")]` или по соглашению `TypeName.md` в Docs.
+- Опциональный пакет **Markdown Renderer** для рендера Markdown в окне: установка через **Package Manager → Add package
+  from git URL** → `https://github.com/NeoXider/MarkdownRenderer.git`. Без пакета по кнопке открывается выбор .md-ассета
+  в Project.
 
 ### Прочее
 
@@ -47,13 +92,19 @@ All notable changes to this project will be documented in this file.
 
 ### Bonus — CooldownReward и устаревание TimeReward
 
-- **CooldownReward** — новый компонент наград по кулдауну, наследник **TimerObject**: один скрипт объединяет таймер (RealTime), сохранение и логику наград (TakeReward, GetClaimableCount, накопление, max per take). Рекомендуется для нового кода. Меню: GameObject → Neoxider → Bonus → CooldownReward.
-- **TimeReward** — помечен `[Obsolete]` с рекомендацией использовать CooldownReward; остаётся рабочим для обратной совместимости.
-- **Docs** — в Bonus/TimeReward/README.md описан CooldownReward как рекомендуемый компонент, TimeReward — как устаревший.
+- **CooldownReward** — новый компонент наград по кулдауну, наследник **TimerObject**: один скрипт объединяет таймер (
+  RealTime), сохранение и логику наград (TakeReward, GetClaimableCount, накопление, max per take). Рекомендуется для
+  нового кода. Меню: GameObject → Neoxider → Bonus → CooldownReward.
+- **TimeReward** — помечен `[Obsolete]` с рекомендацией использовать CooldownReward; остаётся рабочим для обратной
+  совместимости.
+- **Docs** — в Bonus/TimeReward/README.md описан CooldownReward как рекомендуемый компонент, TimeReward — как
+  устаревший.
 
 ### Tools/Time — расширение для наследования
 
-- **TimerObject** — точки расширения для наследников: `protected virtual string GetSaveKey() => saveKey` (подстановка ключа в SaveState/LoadState), `protected virtual void SaveState()` (вызов сохранения из производного класса). Поля `saveProgress` и `saveMode` сделаны `protected` для настройки в наследниках.
+- **TimerObject** — точки расширения для наследников: `protected virtual string GetSaveKey() => saveKey` (подстановка
+  ключа в SaveState/LoadState), `protected virtual void SaveState()` (вызов сохранения из производного класса). Поля
+  `saveProgress` и `saveMode` сделаны `protected` для настройки в наследниках.
 
 ### Зависимости
 
@@ -63,13 +114,21 @@ All notable changes to this project will be documented in this file.
 
 ### Bonus/Collection — улучшения и исправления
 
-- **CollectionVisualManager** — подписки на кнопки теперь корректно снимаются при уничтожении: делегаты кешируются в массиве и передаются в `RemoveListener` той же ссылкой, что и в `AddListener` (раньше лямбды создавали новые делегаты и отписка не срабатывала).
-- **Collection** — единое хранилище: запись состояния предметов переведена с `PlayerPrefs.SetInt` на `SaveProvider.SetInt` в `AddItem`, `RemoveItem`, `ClearCollection` для согласованности с `Load()`/`Save()`.
-- **Collection.GetPrize** — оптимизация с O(n²) до O(n): выбор из ещё не полученных предметов по списку индексов без повторного поиска.
-- **Collection** — защитные проверки в `UnlockAllItems` и `ClearCollection`: синхронизация длины `_enabledItems` с `_itemCollectionDatas`, проверка `_itemCollectionDatas` в `ClearCollection`.
-- **Box** — прогресс не уходит в минус после `TakePrize` (clamp ≥ 0); в сеттере `progress` вызывается `SaveProvider.Save()` для сохранения данных.
-- **ItemCollectionData** — публичные свойства переименованы в PascalCase: `ItemName`, `Description`, `Sprite`, `ItemType`, `Rarity`, `Category` (вместо `itemName`, `description`, `sprite` и т.д.).
-- **Box** — поля `addProgress`/`maxProgress` заменены на `[SerializeField] private` с публичными свойствами `AddProgressAmount`, `MaxProgress`.
+- **CollectionVisualManager** — подписки на кнопки теперь корректно снимаются при уничтожении: делегаты кешируются в
+  массиве и передаются в `RemoveListener` той же ссылкой, что и в `AddListener` (раньше лямбды создавали новые делегаты
+  и отписка не срабатывала).
+- **Collection** — единое хранилище: запись состояния предметов переведена с `PlayerPrefs.SetInt` на
+  `SaveProvider.SetInt` в `AddItem`, `RemoveItem`, `ClearCollection` для согласованности с `Load()`/`Save()`.
+- **Collection.GetPrize** — оптимизация с O(n²) до O(n): выбор из ещё не полученных предметов по списку индексов без
+  повторного поиска.
+- **Collection** — защитные проверки в `UnlockAllItems` и `ClearCollection`: синхронизация длины `_enabledItems` с
+  `_itemCollectionDatas`, проверка `_itemCollectionDatas` в `ClearCollection`.
+- **Box** — прогресс не уходит в минус после `TakePrize` (clamp ≥ 0); в сеттере `progress` вызывается
+  `SaveProvider.Save()` для сохранения данных.
+- **ItemCollectionData** — публичные свойства переименованы в PascalCase: `ItemName`, `Description`, `Sprite`,
+  `ItemType`, `Rarity`, `Category` (вместо `itemName`, `description`, `sprite` и т.д.).
+- **Box** — поля `addProgress`/`maxProgress` заменены на `[SerializeField] private` с публичными свойствами
+  `AddProgressAmount`, `MaxProgress`.
 - **ItemCollection** — поле `button` заменено на приватное с публичным свойством `Button`.
 
 ## [5.8.13] - Unreleased
@@ -77,39 +136,53 @@ All notable changes to this project will be documented in this file.
 ### Добавлено
 
 - **NeoCondition** — сравнение переменной с переменной другого объекта:
-  - В условии добавлен режим **Compare With** → **Other Object**: вместо порога (число/текст) можно указать второй объект, компонент и поле/свойство. Условие проверяет «левая переменная op правая переменная» (==, !=, >, <, >=, <=). Поддерживаются оба источника с Find By Name и режимом GameObject.
+    - В условии добавлен режим **Compare With** → **Other Object**: вместо порога (число/текст) можно указать второй
+      объект, компонент и поле/свойство. Условие проверяет «левая переменная op правая
+      переменная» (==, !=, >, <, >=, <=). Поддерживаются оба источника с Find By Name и режимом GameObject.
 
 - **TimerObject** — опциональное сохранение состояния (по умолчанию выключено):
-  - `saveProgress`: включить сохранение/восстановление текущего времени и признака «идёт/на паузе»; работает при счётчике вверх и вниз.
-  - `saveMode`: **Seconds** (по умолчанию) — сохранять текущее значение в секундах, при загрузке продолжить с него; **RealTime** — сохранять целевое время (UTC), при загрузке пересчитывать оставшееся время от текущего момента.
-  - `saveKey`: ключ для SaveProvider. Состояние сохраняется при OnDisable, загружается в Awake.
+    - `saveProgress`: включить сохранение/восстановление текущего времени и признака «идёт/на паузе»; работает при
+      счётчике вверх и вниз.
+    - `saveMode`: **Seconds** (по умолчанию) — сохранять текущее значение в секундах, при загрузке продолжить с него; *
+      *RealTime** — сохранять целевое время (UTC), при загрузке пересчитывать оставшееся время от текущего момента.
+    - `saveKey`: ключ для SaveProvider. Состояние сохраняется при OnDisable, загружается в Awake.
 
-- **InteractiveObject** — опция `includeTriggerCollidersInMouseRaycast` (по умолчанию `true`): учитывать или игнорировать trigger-коллайдеры в луче наведения мыши (hover). Позволяет отключить реакцию на триггеры, если нужен только «твёрдый» коллайдер.
+- **InteractiveObject** — опция `includeTriggerCollidersInMouseRaycast` (по умолчанию `true`): учитывать или
+  игнорировать trigger-коллайдеры в луче наведения мыши (hover). Позволяет отключить реакцию на триггеры, если нужен
+  только «твёрдый» коллайдер.
 
 ### Исправлено
 
-- **NeoCondition** — при пустом **Other Source Object** (сравнение с другой переменной) теперь используется **тот же объект, что и слева**. Условия вида `Health.Hp == Health.MaxHp` на одном GameObject работают без указания второго объекта (раньше подставлялся объект с NeoCondition и сравнение давало неверный результат).
-- **TimeReward** — логика накопления наград и сдвига времени перенесена в сам компонент; зависимость от `CooldownRewardExtensions` убрана для корректной сборки во всех конфигурациях (в т.ч. UPM).
-- **InteractiveObject** — поддержка новой Input System (мышь и клавиатура через рефлексию при Active Input Handling = Input System Package); учёт trigger-коллайдеров в mouse hover raycast (настраивается через `includeTriggerCollidersInMouseRaycast`).
+- **NeoCondition** — при пустом **Other Source Object** (сравнение с другой переменной) теперь используется **тот же
+  объект, что и слева**. Условия вида `Health.Hp == Health.MaxHp` на одном GameObject работают без указания второго
+  объекта (раньше подставлялся объект с NeoCondition и сравнение давало неверный результат).
+- **TimeReward** — логика накопления наград и сдвига времени перенесена в сам компонент; зависимость от
+  `CooldownRewardExtensions` убрана для корректной сборки во всех конфигурациях (в т.ч. UPM).
+- **InteractiveObject** — поддержка новой Input System (мышь и клавиатура через рефлексию при Active Input Handling =
+  Input System Package); учёт trigger-коллайдеров в mouse hover raycast (настраивается через
+  `includeTriggerCollidersInMouseRaycast`).
 
 ## [5.8.9] - 2025-02-17
 
 ### Добавлено
 
 - **TimeReward** — накопление наград и гибкий первый запуск:
-  - `_rewardAvailableOnStart` (по умолчанию `false`): при отсутствии сохранения награда доступна сразу (true) или после полного кулдауна (false).
-  - `_maxRewardsPerTake`: -1 = забрать все накопленные, 1 = одна за раз, N = не больше N за раз.
-  - `GetClaimableCount()` — количество наград, доступных к выдаче.
-  - `OnRewardsClaimed(int)` — событие с количеством выданных за один Take.
-  - Интервал обновления таймера по умолчанию изменён на `updateTime = 0.2f`.
+    - `_rewardAvailableOnStart` (по умолчанию `false`): при отсутствии сохранения награда доступна сразу (true) или
+      после полного кулдауна (false).
+    - `_maxRewardsPerTake`: -1 = забрать все накопленные, 1 = одна за раз, N = не больше N за раз.
+    - `GetClaimableCount()` — количество наград, доступных к выдаче.
+    - `OnRewardsClaimed(int)` — событие с количеством выданных за один Take.
+    - Интервал обновления таймера по умолчанию изменён на `updateTime = 0.2f`.
 - **CooldownRewardExtensions** — утилиты для кулдаун-наград:
-  - `GetAccumulatedClaimCount(DateTime, float, DateTime)` — число накопленных наград;
-  - `CapToMaxPerTake(int, int)` — ограничение числа за один забор;
-  - `AdvanceLastClaimTime(DateTime, int, float)` — сдвиг времени последней выдачи.
+    - `GetAccumulatedClaimCount(DateTime, float, DateTime)` — число накопленных наград;
+    - `CapToMaxPerTake(int, int)` — ограничение числа за один забор;
+    - `AdvanceLastClaimTime(DateTime, int, float)` — сдвиг времени последней выдачи.
 
 ### Улучшено
 
-- **TimeReward** — `TakeReward()` выдаёт до `GetClaimableCount()` наград за раз; при сохранении времени используется сдвиг на число выданных наград. Документация: полная схема работы (flowchart), таблица «механика → настройки», примеры.
+- **TimeReward** — `TakeReward()` выдаёт до `GetClaimableCount()` наград за раз; при сохранении времени используется
+  сдвиг на число выданных наград. Документация: полная схема работы (flowchart), таблица «механика → настройки»,
+  примеры.
 - **Docs** — добавлена страница `CooldownRewardExtensions.md`, обновлён `TimeReward.md`, индекс `Extensions/README.md`.
 
 ## [5.8.8] - Unreleased
@@ -117,10 +190,12 @@ All notable changes to this project will be documented in this file.
 ### Добавлено
 
 - **Extensions/Time** — новые расширения для работы со временем:
-    - `DateTimeExtensions`: `ToRoundTripUtcString`, `TryParseUtcRoundTrip`, `GetSecondsSinceUtc`, `GetSecondsUntilUtc`, `EnsureUtc`;
+    - `DateTimeExtensions`: `ToRoundTripUtcString`, `TryParseUtcRoundTrip`, `GetSecondsSinceUtc`, `GetSecondsUntilUtc`,
+      `EnsureUtc`;
     - `TimeParsingExtensions`: `TryParseDuration` — парсинг SS, MM:SS, HH:MM:SS, DD:HH:MM:SS;
     - `TimeSpanExtensions`: `ToCompactString`, `ToClockString`.
-- **TimeReward** — `GetFormattedTimeLeft`, `TryGetLastRewardTimeUtc`, `GetElapsedSinceLastReward`; настройки `_displayTimeFormat`, `_displaySeparator`.
+- **TimeReward** — `GetFormattedTimeLeft`, `TryGetLastRewardTimeUtc`, `GetElapsedSinceLastReward`; настройки
+  `_displayTimeFormat`, `_displaySeparator`.
 - **Timer** — `Play()`, `SetRemainingTime(float)`, `SetProgress(float)`.
 - **TimerObject** — `SetDuration(float newDuration, bool keepProgress = true)`.
 - **TimeToText** — `TrySetFromString(string raw, string separator = null)`, опция `_allowNegative`.
@@ -128,8 +203,11 @@ All notable changes to this project will be documented in this file.
 
 ### Улучшено
 
-- **TimeReward** — интеграция с `DateTimeExtensions` и `TimeParsingExtensions`; `FormatTime(float, TimeFormat, string, bool)`.
-- **Docs** — добавлены `TimeFormatting.md`, `DateTimeExtensions.md`, `TimeParsingExtensions.md`, `TimeSpanExtensions.md`; обновлены `TimeReward`, `Timer`, `TimerObject`, `TimeToText`, `PrimitiveExtensions`, `Tools/Time/README.md`, `Extensions/README.md`.
+- **TimeReward** — интеграция с `DateTimeExtensions` и `TimeParsingExtensions`;
+  `FormatTime(float, TimeFormat, string, bool)`.
+- **Docs** — добавлены `TimeFormatting.md`, `DateTimeExtensions.md`, `TimeParsingExtensions.md`,
+  `TimeSpanExtensions.md`; обновлены `TimeReward`, `Timer`, `TimerObject`, `TimeToText`, `PrimitiveExtensions`,
+  `Tools/Time/README.md`, `Extensions/README.md`.
 
 ## [5.8.7] - Unreleased
 
@@ -209,7 +287,8 @@ All notable changes to this project will be documented in this file.
     - добавлены статусные свойства: `IsTimerRunning`, `IsTimerPaused`, `IsRewardAvailable`, `RewardTimeKey`,
       `SaveTimeOnTakeReward`;
     - добавлены события: `OnTimerStarted`, `OnTimerStopped`, `OnTimerPaused`, `OnTimerResumed`;
-    - добавлен режим ручного старта кулдауна: при `saveTimeOnTakeReward = false` время может сохраняться в `StartTime()`;
+    - добавлен режим ручного старта кулдауна: при `saveTimeOnTakeReward = false` время может сохраняться в
+      `StartTime()`;
     - сохранение времени переведено на UTC round-trip формат (`"o"`) с поддержкой чтения legacy-значений.
 
 ## [5.8.5] - Unreleased

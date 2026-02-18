@@ -6,7 +6,7 @@ No-Code система условий для NeoxiderTools. Проверяет �
 
 ## Быстрый старт
 
-1. Добавить `NeoCondition` на GameObject (Add Component → Neo → Condition → NeoCondition)
+1. Добавить `NeoCondition` на GameObject (Add Component → Neoxider → Condition → NeoCondition)
 2. Нажать **+** чтобы добавить условие
 3. Выбрать **Source** — режим источника данных:
    - **Component** — читать поле/свойство из компонента

@@ -9,12 +9,12 @@ namespace Neo
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class NeoDocAttribute : Attribute
     {
-        /// <summary>Path to .md file relative to PackageRoot/Docs/ (e.g. "Bonus/TimeReward/README.md").</summary>
-        public string DocPath { get; }
-
         public NeoDocAttribute(string docPathRelativeToDocs)
         {
             DocPath = docPathRelativeToDocs?.Trim().Replace('\\', '/').TrimStart('/') ?? string.Empty;
         }
+
+        /// <summary>Path to .md file relative to PackageRoot/Docs/ (e.g. "Bonus/TimeReward/README.md").</summary>
+        public string DocPath { get; }
     }
 }

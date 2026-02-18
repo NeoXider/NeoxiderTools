@@ -8,31 +8,11 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/PlayerController3DPhysics")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
+        "Prefabs/Tools/First Person Controller.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics : MonoBehaviour
     {
-        private enum MovementReferenceMode
-        {
-            CharacterRotation,
-            CameraYaw,
-            WorldAxes
-        }
-
-        private enum LookYawMode
-        {
-            RotateCharacter,
-            RotateCameraPivot,
-            RotateBoth
-        }
-
-        private enum InputBackend
-        {
-            AutoPreferNew,
-            NewInputSystem,
-            LegacyInputManager
-        }
-
         [Header("References")] [SerializeField]
         private Rigidbody _rigidbody;
 
@@ -75,31 +55,37 @@ namespace Neo.Tools
 
         [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
 
+        [Tooltip(
+            "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
+        [SerializeField]
+        private bool _pauseLookWhenCursorVisible = true;
+
         [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
+        private readonly Collider[] _groundHits = new Collider[16];
+        private float _coyoteTimer;
+        private float _jumpBufferTimer;
+        private bool _lookEnabled = true;
+        private Vector2 _lookInput;
 
         private Vector2 _moveInput;
-        private Vector2 _lookInput;
-        private float _pitch;
-        private float _yaw;
-        private float _jumpBufferTimer;
-        private float _coyoteTimer;
         private bool _movementEnabled = true;
-        private bool _lookEnabled = true;
-        private bool _isGrounded;
-        private bool _wasGrounded;
-        private readonly Collider[] _groundHits = new Collider[16];
         private bool _newInputUnavailableWarningShown;
+        private float _pitch;
+        private bool _wasGrounded;
+        private float _yaw;
 
         /// <summary>
         ///     Gets whether the character is currently grounded.
         /// </summary>
-        public bool IsGrounded => _isGrounded;
+        public bool IsGrounded { get; private set; }
 
         /// <summary>
         ///     Gets whether sprint input is active.
         /// </summary>
         public bool IsRunning { get; private set; }
+
+        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
 
         private void Awake()
         {
@@ -141,6 +127,14 @@ namespace Neo.Tools
             HandleMovement(Time.fixedDeltaTime);
             HandleJump();
             ApplyExtraGravity();
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector3 probe = (_groundCheck != null ? _groundCheck.position : transform.position) +
+                            Vector3.down * _groundProbeOffset;
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(probe, _groundCheckRadius);
         }
 
         /// <summary>
@@ -208,7 +202,7 @@ namespace Neo.Tools
                 IsRunning = false;
             }
 
-            if (_lookEnabled)
+            if (IsLookActive)
             {
                 _lookInput = ReadLookInput();
             }
@@ -225,7 +219,7 @@ namespace Neo.Tools
 
         private void UpdateGroundState()
         {
-            _wasGrounded = _isGrounded;
+            _wasGrounded = IsGrounded;
             Vector3 probe = (_groundCheck != null ? _groundCheck.position : transform.position) +
                             Vector3.down * _groundProbeOffset;
             int hitCount = Physics.OverlapSphereNonAlloc(probe, _groundCheckRadius, _groundHits, _groundMask,
@@ -246,14 +240,14 @@ namespace Neo.Tools
                 }
             }
 
-            _isGrounded = grounded;
+            IsGrounded = grounded;
 
-            if (_isGrounded)
+            if (IsGrounded)
             {
                 _coyoteTimer = _coyoteTime;
             }
 
-            if (!_wasGrounded && _isGrounded)
+            if (!_wasGrounded && IsGrounded)
             {
                 _onLanded?.Invoke();
             }
@@ -262,7 +256,7 @@ namespace Neo.Tools
         private void UpdateJumpTimers(float deltaTime)
         {
             _jumpBufferTimer = Mathf.Max(0f, _jumpBufferTimer - deltaTime);
-            if (!_isGrounded)
+            if (!IsGrounded)
             {
                 _coyoteTimer = Mathf.Max(0f, _coyoteTimer - deltaTime);
             }
@@ -279,7 +273,7 @@ namespace Neo.Tools
             Vector3 desiredVelocity = desiredDirection * speed;
 
             Vector3 currentHorizontalVelocity = new(_rigidbody.velocity.x, 0f, _rigidbody.velocity.z);
-            float acceleration = _isGrounded ? _groundAcceleration : _airAcceleration;
+            float acceleration = IsGrounded ? _groundAcceleration : _airAcceleration;
             Vector3 nextHorizontalVelocity =
                 Vector3.MoveTowards(currentHorizontalVelocity, desiredVelocity, acceleration * deltaTime);
 
@@ -304,13 +298,13 @@ namespace Neo.Tools
 
             _rigidbody.velocity = velocity;
             _rigidbody.AddForce(Vector3.up * _jumpImpulse, ForceMode.Impulse);
-            _isGrounded = false;
+            IsGrounded = false;
             _onJumped?.Invoke();
         }
 
         private void ApplyExtraGravity()
         {
-            if (_isGrounded || _extraGravityMultiplier <= 1f)
+            if (IsGrounded || _extraGravityMultiplier <= 1f)
             {
                 return;
             }
@@ -321,7 +315,7 @@ namespace Neo.Tools
 
         private void HandleLookInput()
         {
-            if (!_canLook || !_lookEnabled)
+            if (!_canLook || !IsLookActive)
             {
                 return;
             }
@@ -335,7 +329,7 @@ namespace Neo.Tools
 
         private void ApplyLookRotation()
         {
-            if (!_canLook || !_lookEnabled)
+            if (!_canLook || !IsLookActive)
             {
                 return;
             }
@@ -463,12 +457,25 @@ namespace Neo.Tools
             return normalized;
         }
 
-        private void OnDrawGizmosSelected()
+        private enum MovementReferenceMode
         {
-            Vector3 probe = (_groundCheck != null ? _groundCheck.position : transform.position) +
-                            Vector3.down * _groundProbeOffset;
-            Gizmos.color = _isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(probe, _groundCheckRadius);
+            CharacterRotation,
+            CameraYaw,
+            WorldAxes
+        }
+
+        private enum LookYawMode
+        {
+            RotateCharacter,
+            RotateCameraPivot,
+            RotateBoth
+        }
+
+        private enum InputBackend
+        {
+            AutoPreferNew,
+            NewInputSystem,
+            LegacyInputManager
         }
     }
 }

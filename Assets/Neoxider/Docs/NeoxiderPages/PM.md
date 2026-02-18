@@ -2,7 +2,7 @@
 
 Синглтон управления UI-страницами в NeoxiderPages: включение/выключение по PageId, переключение, возврат назад, интеграция с GM (Win/Lose/End).
 
-**Добавить:** GameObject → Neo → Pages → PM.
+**Добавить:** GameObject → Neoxider → Pages → PM.
 
 ## Основное
 

@@ -181,6 +181,23 @@ namespace Neo.Extensions
             return defaultValue;
         }
 
+        private static bool TryParseColor(string hex, out Color color)
+        {
+            color = default;
+            if (string.IsNullOrWhiteSpace(hex))
+            {
+                return false;
+            }
+
+            string normalized = hex.Trim();
+            if (normalized[0] != '#')
+            {
+                normalized = "#" + normalized;
+            }
+
+            return ColorUtility.TryParseHtmlString(normalized, out color);
+        }
+
         #region Rich Text
 
         /// <summary>
@@ -287,22 +304,5 @@ namespace Neo.Extensions
         }
 
         #endregion
-
-        private static bool TryParseColor(string hex, out Color color)
-        {
-            color = default;
-            if (string.IsNullOrWhiteSpace(hex))
-            {
-                return false;
-            }
-
-            string normalized = hex.Trim();
-            if (normalized[0] != '#')
-            {
-                normalized = "#" + normalized;
-            }
-
-            return ColorUtility.TryParseHtmlString(normalized, out color);
-        }
     }
 }

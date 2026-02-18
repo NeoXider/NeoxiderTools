@@ -9,7 +9,7 @@ namespace Neo.Tools
     ///     Useful for drop tables, random events etc.
     /// </summary>
     [NeoDoc("Tools/Random/ChanceSystemBehaviour.md")]
-    [CreateFromMenu("Neoxider/Tools/ChanceSystemBehaviour")]
+    [CreateFromMenu("Neoxider/Tools/Random/ChanceSystemBehaviour")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {

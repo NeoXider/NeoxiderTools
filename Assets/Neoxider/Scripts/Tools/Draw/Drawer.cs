@@ -15,7 +15,7 @@ namespace Neo.Tools
     ///     • Can clone most settings from a “template” <see cref="LineRenderer" />.
     /// </summary>
     [NeoDoc("Tools/Draw/Drawer.md")]
-    [CreateFromMenu("Neoxider/Tools/Drawer")]
+    [CreateFromMenu("Neoxider/Tools/Other/Drawer")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Drawer))]
     public sealed class Drawer : MonoBehaviour
     {

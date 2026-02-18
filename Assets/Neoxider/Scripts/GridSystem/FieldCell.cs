@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Bit flags for optional gameplay markers on a cell.
+    ///     Bit flags for optional gameplay markers on a cell.
     /// </summary>
     [Flags]
     public enum FieldCellFlags
@@ -23,47 +23,47 @@ namespace Neo.GridSystem
     public class FieldCell
     {
         /// <summary>
-        /// Grid coordinates of this cell.
+        ///     Grid coordinates of this cell.
         /// </summary>
         public Vector3Int Position;
 
         /// <summary>
-        /// Custom terrain/type identifier.
+        ///     Custom terrain/type identifier.
         /// </summary>
         public int Type;
 
         /// <summary>
-        /// Whether this cell can be traversed.
+        ///     Whether this cell can be traversed.
         /// </summary>
         public bool IsWalkable;
 
         /// <summary>
-        /// Whether this cell is enabled in current board shape.
+        ///     Whether this cell is enabled in current board shape.
         /// </summary>
         public bool IsEnabled;
 
         /// <summary>
-        /// Whether this cell is currently occupied by gameplay object.
+        ///     Whether this cell is currently occupied by gameplay object.
         /// </summary>
         public bool IsOccupied;
 
         /// <summary>
-        /// Integer content state (for example Match3 tile or TicTacToe mark).
+        ///     Integer content state (for example Match3 tile or TicTacToe mark).
         /// </summary>
         public int ContentId;
 
         /// <summary>
-        /// Optional gameplay markers.
+        ///     Optional gameplay markers.
         /// </summary>
         public FieldCellFlags Flags;
 
         /// <summary>
-        /// Optional user payload for custom systems.
+        ///     Optional user payload for custom systems.
         /// </summary>
         public object UserData;
 
         /// <summary>
-        /// Creates a grid cell with optional state values.
+        ///     Creates a grid cell with optional state values.
         /// </summary>
         /// <param name="position">Cell coordinates.</param>
         /// <param name="type">Custom terrain/type identifier.</param>

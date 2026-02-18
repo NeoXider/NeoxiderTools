@@ -2,7 +2,7 @@
 
 Связывает UI-переключатель (VisualToggle) с аудио: музыка или эффекты (вкл/выкл) через центральный **AM**.
 
-**Добавить:** Neo → Pages → ToggleAudio.
+**Добавить:** Neoxider → Pages → ToggleAudio.
 
 ## Поля
 

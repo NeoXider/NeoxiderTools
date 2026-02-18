@@ -9,6 +9,8 @@ using UnityEngine.Events;
 
 namespace Neo.Bonus
 {
+    [CreateFromMenu("Neoxider/Bonus/Collection")]
+    [AddComponentMenu("Neoxider/Bonus/" + nameof(Collection))]
     [NeoDoc("Bonus/Collection/README.md")]
     public class Collection : Singleton<Collection>
     {
@@ -56,7 +58,10 @@ namespace Neo.Bonus
         public int UnlockedCount => _enabledItems != null ? _enabledItems.Count(x => x) : 0;
         public int LockedCount => ItemCount - UnlockedCount;
 
-        /// <summary>True, если этот экземпляр зарегистрирован как Collection.I (глобальный синглтон). При false — работа по ссылке для нескольких коллекций.</summary>
+        /// <summary>
+        ///     True, если этот экземпляр зарегистрирован как Collection.I (глобальный синглтон). При false — работа по ссылке
+        ///     для нескольких коллекций.
+        /// </summary>
         public bool IsSingleton => SetInstanceOnAwakeEnabled;
 
         /// <summary>Доля завершения коллекции (0–1). При пустой коллекции — 0.</summary>
@@ -136,7 +141,7 @@ namespace Neo.Bonus
                 return null;
             }
 
-            var lockedIndices = new List<int>();
+            List<int> lockedIndices = new();
             for (int i = 0; i < _enabledItems.Length; i++)
             {
                 if (!_enabledItems[i])
@@ -306,7 +311,7 @@ namespace Neo.Bonus
                 return Array.Empty<int>();
             }
 
-            var list = new List<int>();
+            List<int> list = new();
             int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
             for (int i = 0; i < count; i++)
             {
@@ -326,7 +331,7 @@ namespace Neo.Bonus
                 return Array.Empty<int>();
             }
 
-            var list = new List<int>();
+            List<int> list = new();
             int count = Mathf.Min(_enabledItems.Length, _itemCollectionDatas.Length);
             for (int i = 0; i < count; i++)
             {
@@ -346,7 +351,7 @@ namespace Neo.Bonus
                 return Array.Empty<int>();
             }
 
-            var list = new List<int>();
+            List<int> list = new();
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].Category == category)
@@ -365,7 +370,7 @@ namespace Neo.Bonus
                 return Array.Empty<int>();
             }
 
-            var list = new List<int>();
+            List<int> list = new();
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].Rarity == rarity)
@@ -384,7 +389,7 @@ namespace Neo.Bonus
                 return Array.Empty<int>();
             }
 
-            var list = new List<int>();
+            List<int> list = new();
             for (int i = 0; i < _itemCollectionDatas.Length; i++)
             {
                 if (_itemCollectionDatas[i] != null && _itemCollectionDatas[i].ItemType == itemType)

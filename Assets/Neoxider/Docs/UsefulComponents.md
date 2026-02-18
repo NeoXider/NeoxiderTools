@@ -28,25 +28,29 @@
 | **ButtonChangePage** | Смена страницы/панели по клику. |
 | **PausePage** | Страница паузы (в Tools). |
 
-### Neoxider/Tools
-| Компонент | Кратко |
-|-----------|--------|
-| **Spawner**, **SimpleSpawner** | Спавн префабов с задержками, пулом. |
-| **TimerObject** | Таймер на GameObject (события по истечении). |
-| **FPS**, **ErrorLogger** | FPS-счётчик и лог ошибок в консоль/UI. |
-| **SwipeController** | Распознавание свайпов. |
-| **Bootstrap** | Ранний запуск инициализации сцены. |
-| **Counter** | Счётчик (инкремент/сброс, события). |
-| **Health**, **Evade**, **AttackExecution** | Здоровье, уклонение, исполнение атаки. |
-| **Loot**, **ChanceSystemBehaviour** | Дроп лута, шансы. |
-| **Follow**, **DistanceChecker** | Следование за целью, проверка дистанции. |
-| **CameraConstraint**, **CameraRotationController**, **CursorLockController** | Ограничение камеры, вращение, блокировка курсора. |
-| **PhysicsEvents2D/3D**, **InteractiveObject**, **ToggleObject** | События физики, интерактивный объект, вкл/выкл объекта. |
-| **DialogueController**, **DialogueUI** | Диалоги. |
-| **SetText**, **TimeToText** | Установка текста, форматирование времени. |
-| **Selector**, **StarView**, **BillboardUniversal** | Выбор варианта, отображение звёзд, billboard. |
-| **AiNavigation**, **CameraShake**, **Drawer** | Навигация ИИ, тряска камеры, рисование линий. |
-| **StateMachineBehaviour** | Конечный автомат (Tools). |
+### Neoxider/Tools (подкатегории в окне Create Neoxider Object)
+
+В окне **Create Neoxider Object** и в путях меню Tools разбит на подпапки:
+
+| Подкатегория | Компоненты |
+|--------------|------------|
+| **Physics** | ExplosiveForce, ImpulseZone, MagneticField, PhysicsEvents2D, PhysicsEvents3D |
+| **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
+| **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
+| **Components** | Health, Evade, AttackExecution, AdvancedAttackCollider, Counter, Loot, TextScore, TypewriterEffectComponent |
+| **Dialogue** | DialogueController, DialogueUI |
+| **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |
+| **View** | Selector, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster |
+| **Debug** | FPS, ErrorLogger |
+| **Time** | TimerObject |
+| **Text** | SetText, TimeToText |
+| **Interact** | InteractiveObject, ToggleObject |
+| **Random** | ChanceSystemBehaviour |
+| **Other** | AiNavigation, CameraShake, Drawer, RevertAmount, SpineController, UpdateChilds, PausePage |
+| **State Machine** | StateMachineBehaviour, State Machine Behaviour |
+| **FakeLeaderboard** | LeaderboardMove, LeaderboardItem |
+| **Managers** | Bootstrap |
+| **Camera** | CameraAspectRatioScaler |
 
 ### Neoxider/Shop
 | Компонент | Кратко |
@@ -109,6 +113,6 @@
 - Путь в меню (MenuPath) совпадает с **Add Component** и разделами выше: Neoxider/UI, Neoxider/Tools, Neoxider/Bonus, Neoxider/Shop, Neoxider/Audio и т.д.
 - Пути к префабам в пакете по возможности повторяют структуру папок скриптов (например `Prefabs/UI/`, `Prefabs/Tools/`, `Prefabs/Bonus/`). При установке из Git или пакета префабы подгружаются из корня пакета; если префаб не найден — создаётся только объект с компонентом.
 
-**Доступные пункты:** список строится по рефлексии из всех типов с атрибутом `[CreateFromMenu]`. В меню входят категории: **UI**, **Tools**, **Shop**, **Audio**, **Bonus**, **Level**, **Save**, **Condition**, **Animations**, **GridSystem** (в т.ч. Match3, TicTacToe), **Parallax**, **NPC** и др. Путь пункта совпадает с Add Component (например Neoxider/UI/VisualToggle, Neoxider/Bonus/TimeReward). У части пунктов задан префаб — тогда создаётся объект из префаба; иначе — пустой объект с компонентом.
+**Доступные пункты:** список строится по рефлексии из всех типов с атрибутом `[CreateFromMenu]`. Категории верхнего уровня (UI, Tools, Bonus, Shop, Audio и т.д.) в окне выделены цветом для быстрого распознавания. У **Tools** есть подпапки: Physics, Movement, Spawner, Components, Dialogue, Input, View, Debug, Time, Text, Interact, Random, Other, State Machine, FakeLeaderboard, Managers, Camera. Путь пункта совпадает с Add Component (например Neoxider/Tools/Movement/PlayerController3DPhysics). У части пунктов задан префаб — тогда создаётся объект из префаба; иначе — пустой объект с компонентом.
 
 Чтобы добавить новый пункт, повесьте на класс `[CreateFromMenu("Neoxider/Категория/Имя", PrefabPath = "Prefabs/...")]` (PrefabPath опционален).

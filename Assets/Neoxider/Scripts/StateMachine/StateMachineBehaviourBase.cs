@@ -22,7 +22,7 @@ namespace Neo.StateMachine
     /// </code>
     /// </example>
     [NeoDoc("StateMachine/StateMachineBehaviourBase.md")]
-    [CreateFromMenu("Neoxider/Tools/State Machine Behaviour")]
+    [CreateFromMenu("Neoxider/Tools/State Machine/State Machine Behaviour")]
     [AddComponentMenu("Neoxider/Tools/State Machine Behaviour")]
     public class StateMachineBehaviourBase : MonoBehaviour
     {

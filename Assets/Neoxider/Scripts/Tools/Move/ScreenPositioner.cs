@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/ScreenPositioner.md")]
-    [CreateFromMenu("Neoxider/Tools/ScreenPositioner")]
+    [CreateFromMenu("Neoxider/Tools/Movement/ScreenPositioner")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ScreenPositioner))]
     public class ScreenPositioner : MonoBehaviour
     {

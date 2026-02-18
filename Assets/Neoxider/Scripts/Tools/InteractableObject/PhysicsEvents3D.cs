@@ -14,7 +14,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/InteractableObject/PhysicsEvents3D.md")]
-    [CreateFromMenu("Neoxider/Tools/PhysicsEvents3D")]
+    [CreateFromMenu("Neoxider/Tools/Physics/PhysicsEvents3D")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PhysicsEvents3D))]
     public sealed class PhysicsEvents3D : MonoBehaviour
     {

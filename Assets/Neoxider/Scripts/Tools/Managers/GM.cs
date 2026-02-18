@@ -6,6 +6,8 @@ namespace Neo.Tools
     /// <summary>
     ///     GameManager
     /// </summary>
+    [CreateFromMenu("Neoxider/Tools/Managers/GM")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(GM))]
     [NeoDoc("Tools/Managers/GM.md")]
     public class GM : Singleton<GM>
     {

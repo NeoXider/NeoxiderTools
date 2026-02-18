@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Cards
@@ -5,7 +6,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Настройки раскладки карт для CardLayoutCalculator.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public struct CardLayoutSettings
     {
         public float Spacing;

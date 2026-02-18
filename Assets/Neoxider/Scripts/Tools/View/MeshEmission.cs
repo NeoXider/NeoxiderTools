@@ -7,7 +7,7 @@ namespace Neo.Tools.View
     ///     Копирует интенсивность и цвет от Light компонента в реальном времени.
     /// </summary>
     [NeoDoc("Tools/View/MeshEmission.md")]
-    [CreateFromMenu("Neoxider/Tools/MeshEmission")]
+    [CreateFromMenu("Neoxider/Tools/View/MeshEmission")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MeshEmission))]
     public class MeshEmission : MonoBehaviour
     {
@@ -31,13 +31,10 @@ namespace Neo.Tools.View
         [Tooltip("Intensity multiplier (1.0 = same as light)")] [Range(0f, 10f)]
         public float intensityMultiplier = 0.1f;
 
-        [Header("Color Enhancement")]
-        [Tooltip("Intensity at which color brightening starts")]
-        [Range(0f, 50f)]
+        [Header("Color Enhancement")] [Tooltip("Intensity at which color brightening starts")] [Range(0f, 50f)]
         public float whiteThreshold = 10f;
 
-        [Tooltip("Brightening range (intensity from whiteThreshold to whiteThreshold + whiteRange)")]
-        [Range(1f, 50f)]
+        [Tooltip("Brightening range (intensity from whiteThreshold to whiteThreshold + whiteRange)")] [Range(1f, 50f)]
         public float whiteRange = 10f;
 
         [Header("Visibility")] [Tooltip("Threshold below which emission is fully disabled")] [Range(0f, 5f)]

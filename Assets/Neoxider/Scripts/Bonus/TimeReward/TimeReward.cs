@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using Neo;
 using Neo.Extensions;
 using Neo.Save;
 using UnityEngine;
@@ -12,10 +11,11 @@ namespace Neo
     namespace Bonus
     {
         /// <summary>
-        /// Provides time-based reward logic with persistent cooldown and timer control API.
+        ///     Provides time-based reward logic with persistent cooldown and timer control API.
         /// </summary>
         /// <remarks>Consider using CooldownReward for new implementations (inherits TimerObject).</remarks>
-        [Obsolete("Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
+        [Obsolete(
+            "Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
         [NeoDoc("Bonus/TimeReward/TimeReward.md")]
         [CreateFromMenu("Neoxider/Bonus/TimeReward", "Prefabs/Bonus/TimeReward.prefab")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(TimeReward))]
@@ -24,32 +24,26 @@ namespace Neo
             private const string LastRewardTimeKeyPrefix = "LastRewardTime";
             private const float MinUpdateInterval = 0.02f;
 
-            [Header("Settings")]
-            [FormerlySerializedAs("_secondsToWaitForReward")]
-            [SerializeField]
-            [Min(0)]
+            [Header("Settings")] [FormerlySerializedAs("_secondsToWaitForReward")] [SerializeField] [Min(0)]
             /// <summary>
             /// Reward cooldown duration in seconds.
             /// </summary>
             public float secondsToWaitForReward = 60f * 60f;
 
-            [FormerlySerializedAs("_updateTime")]
-            [SerializeField]
-            [Min(0)]
+            [FormerlySerializedAs("_updateTime")] [SerializeField] [Min(0)]
             /// <summary>
             /// Timer update interval in seconds.
             /// </summary>
             public float updateTime = 0.2f;
 
-            [SerializeField] private bool _rewardAvailableOnStart = false;
+            [SerializeField] private bool _rewardAvailableOnStart;
 
             [SerializeField] [Tooltip("-1 = take all accumulated; 1 = one per take; N = cap at N per take")]
             private int _maxRewardsPerTake = 1;
 
             [SerializeField] private string _addKey = "Bonus1";
 
-            [FormerlySerializedAs("_startTakeReward")]
-            [SerializeField]
+            [FormerlySerializedAs("_startTakeReward")] [SerializeField]
             /// <summary>
             /// If enabled, attempts to claim reward on start.
             /// </summary>
@@ -61,87 +55,83 @@ namespace Neo
             [SerializeField] private TimeFormat _displayTimeFormat = TimeFormat.HoursMinutesSeconds;
             [SerializeField] private string _displaySeparator = ":";
 
-            [Header("Debug")]
-            [FormerlySerializedAs("_lastRewardTimeStr")]
-            [SerializeField]
+            [Header("Debug")] [FormerlySerializedAs("_lastRewardTimeStr")] [SerializeField]
             /// <summary>
             /// Raw saved UTC time string.
             /// </summary>
             public string lastRewardTimeStr;
 
             /// <summary>
-            /// Remaining time until the reward becomes available.
+            ///     Remaining time until the reward becomes available.
             /// </summary>
             public float timeLeft;
 
             /// <summary>
-            /// Invoked on each timer update with remaining seconds.
+            ///     Invoked on each timer update with remaining seconds.
             /// </summary>
             public UnityEvent<float> OnTimeUpdated = new();
 
             /// <summary>
-            /// Invoked when reward claim succeeds (once per claim when multiple are given).
+            ///     Invoked when reward claim succeeds (once per claim when multiple are given).
             /// </summary>
             public UnityEvent OnRewardClaimed = new();
 
             /// <summary>
-            /// Invoked once per take with the number of claims given.
+            ///     Invoked once per take with the number of claims given.
             /// </summary>
             public UnityEvent<int> OnRewardsClaimed = new();
 
             /// <summary>
-            /// Invoked once when reward becomes available.
+            ///     Invoked once when reward becomes available.
             /// </summary>
             public UnityEvent OnRewardAvailable = new();
 
             /// <summary>
-            /// Invoked when timer starts.
+            ///     Invoked when timer starts.
             /// </summary>
             public UnityEvent OnTimerStarted = new();
 
             /// <summary>
-            /// Invoked when timer stops.
+            ///     Invoked when timer stops.
             /// </summary>
             public UnityEvent OnTimerStopped = new();
 
             /// <summary>
-            /// Invoked when timer is paused.
+            ///     Invoked when timer is paused.
             /// </summary>
             public UnityEvent OnTimerPaused = new();
 
             /// <summary>
-            /// Invoked when timer is resumed.
+            ///     Invoked when timer is resumed.
             /// </summary>
             public UnityEvent OnTimerResumed = new();
 
             private Coroutine _timerRoutine;
-            private bool _isTimerRunning;
-            private bool _isTimerPaused;
             private bool _waitingForManualStart;
             private bool canTakeReward;
 
             /// <summary>
-            /// Gets a value indicating whether timer loop is active.
+            ///     Gets a value indicating whether timer loop is active.
             /// </summary>
-            public bool IsTimerRunning => _isTimerRunning;
+            public bool IsTimerRunning { get; private set; }
 
             /// <summary>
-            /// Gets a value indicating whether timer is paused.
+            ///     Gets a value indicating whether timer is paused.
             /// </summary>
-            public bool IsTimerPaused => _isTimerPaused;
+            public bool IsTimerPaused { get; private set; }
 
             /// <summary>
-            /// Gets a value indicating whether reward can be claimed right now.
+            ///     Gets a value indicating whether reward can be claimed right now.
             /// </summary>
             public bool IsRewardAvailable => canTakeReward && !_waitingForManualStart;
 
             /// <summary>
-            /// Gets the full save key used for reward timestamp.
+            ///     Gets the full save key used for reward timestamp.
             /// </summary>
             public string RewardTimeKey => BuildRewardTimeKey();
 
             /// <summary>
-            /// Gets or sets whether successful claim immediately starts cooldown persistence.
+            ///     Gets or sets whether successful claim immediately starts cooldown persistence.
             /// </summary>
             public bool SaveTimeOnTakeReward
             {
@@ -184,40 +174,41 @@ namespace Neo
             }
 
             /// <summary>
-            /// Formats seconds to hh:mm:ss.
+            ///     Formats seconds to hh:mm:ss.
             /// </summary>
             /// <param name="seconds">Duration in seconds.</param>
             /// <returns>Formatted duration string.</returns>
             public static string FormatTime(int seconds)
             {
-                return FormatTime((float)seconds, TimeFormat.HoursMinutesSeconds, ":", false);
+                return FormatTime(seconds, TimeFormat.HoursMinutesSeconds);
             }
 
             /// <summary>
-            /// Formats seconds to hh:mm:ss.
+            ///     Formats seconds to hh:mm:ss.
             /// </summary>
             /// <param name="seconds">Duration in seconds.</param>
             /// <returns>Formatted duration string.</returns>
             public static string FormatTime(float seconds)
             {
-                return FormatTime(seconds, TimeFormat.HoursMinutesSeconds, ":", false);
+                return FormatTime(seconds, TimeFormat.HoursMinutesSeconds);
             }
 
             /// <summary>
-            /// Formats seconds using a configurable time format.
+            ///     Formats seconds using a configurable time format.
             /// </summary>
             /// <param name="seconds">Duration in seconds.</param>
             /// <param name="format">Output time format.</param>
             /// <param name="separator">Separator between time parts.</param>
             /// <param name="trimLeadingZeros">Whether to trim leading zeros in the first token.</param>
             /// <returns>Formatted duration string.</returns>
-            public static string FormatTime(float seconds, TimeFormat format, string separator = ":", bool trimLeadingZeros = false)
+            public static string FormatTime(float seconds, TimeFormat format, string separator = ":",
+                bool trimLeadingZeros = false)
             {
                 return Mathf.Max(0f, seconds).FormatTime(format, separator, trimLeadingZeros);
             }
 
             /// <summary>
-            /// Returns remaining seconds before the next reward becomes available (for the first claim in queue).
+            ///     Returns remaining seconds before the next reward becomes available (for the first claim in queue).
             /// </summary>
             /// <returns>Remaining cooldown in seconds.</returns>
             public float GetSecondsUntilReward()
@@ -245,7 +236,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Returns how many rewards can be claimed right now (capped by max rewards per take).
+            ///     Returns how many rewards can be claimed right now (capped by max rewards per take).
             /// </summary>
             public int GetClaimableCount()
             {
@@ -266,26 +257,42 @@ namespace Neo
 
             private static int GetAccumulatedClaimCount(DateTime lastClaimUtc, float cooldownSeconds, DateTime nowUtc)
             {
-                if (cooldownSeconds <= 0f) return 0;
+                if (cooldownSeconds <= 0f)
+                {
+                    return 0;
+                }
+
                 double elapsed = (nowUtc - lastClaimUtc).TotalSeconds;
                 return elapsed < 0 ? 0 : (int)(elapsed / cooldownSeconds);
             }
 
             private static int CapToMaxPerTake(int accumulated, int maxPerTake)
             {
-                if (accumulated <= 0) return 0;
-                if (maxPerTake < 0) return accumulated;
+                if (accumulated <= 0)
+                {
+                    return 0;
+                }
+
+                if (maxPerTake < 0)
+                {
+                    return accumulated;
+                }
+
                 return Math.Min(accumulated, maxPerTake);
             }
 
             private static DateTime AdvanceLastClaimTime(DateTime lastClaimUtc, int claimsGiven, float cooldownSeconds)
             {
-                if (claimsGiven <= 0 || cooldownSeconds <= 0f) return lastClaimUtc;
+                if (claimsGiven <= 0 || cooldownSeconds <= 0f)
+                {
+                    return lastClaimUtc;
+                }
+
                 return lastClaimUtc.AddSeconds(claimsGiven * cooldownSeconds);
             }
 
             /// <summary>
-            /// Returns remaining time using the component output format settings.
+            ///     Returns remaining time using the component output format settings.
             /// </summary>
             /// <param name="trimLeadingZeros">Whether to trim leading zeros in the first token.</param>
             /// <returns>Formatted remaining time string.</returns>
@@ -295,7 +302,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Attempts to claim reward(s). Gives up to GetClaimableCount() (capped by max per take).
+            ///     Attempts to claim reward(s). Gives up to GetClaimableCount() (capped by max per take).
             /// </summary>
             /// <returns>True when at least one claim succeeds.</returns>
             [Button]
@@ -339,7 +346,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Shortcut for reward claim, useful for UnityEvent bindings.
+            ///     Shortcut for reward claim, useful for UnityEvent bindings.
             /// </summary>
             public void Take()
             {
@@ -347,7 +354,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Checks whether at least one reward can be claimed right now.
+            ///     Checks whether at least one reward can be claimed right now.
             /// </summary>
             /// <returns>True when at least one reward is available.</returns>
             public bool CanTakeReward()
@@ -361,7 +368,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Starts timer updates. If save-on-claim is disabled, optionally starts cooldown from current UTC time.
+            ///     Starts timer updates. If save-on-claim is disabled, optionally starts cooldown from current UTC time.
             /// </summary>
             [Button]
             public void StartTime()
@@ -373,11 +380,11 @@ namespace Neo
 
                 _waitingForManualStart = false;
 
-                if (_isTimerRunning)
+                if (IsTimerRunning)
                 {
-                    if (_isTimerPaused)
+                    if (IsTimerPaused)
                     {
-                        _isTimerPaused = false;
+                        IsTimerPaused = false;
                         OnTimerResumed?.Invoke();
                     }
 
@@ -385,15 +392,15 @@ namespace Neo
                     return;
                 }
 
-                _isTimerRunning = true;
-                _isTimerPaused = false;
+                IsTimerRunning = true;
+                IsTimerPaused = false;
                 _timerRoutine = StartCoroutine(TimerRoutine());
                 OnTimerStarted?.Invoke();
                 RefreshTimeState();
             }
 
             /// <summary>
-            /// Stops timer updates.
+            ///     Stops timer updates.
             /// </summary>
             [Button]
             public void StopTime()
@@ -402,38 +409,38 @@ namespace Neo
             }
 
             /// <summary>
-            /// Pauses timer updates without resetting state.
+            ///     Pauses timer updates without resetting state.
             /// </summary>
             [Button]
             public void PauseTime()
             {
-                if (!_isTimerRunning || _isTimerPaused)
+                if (!IsTimerRunning || IsTimerPaused)
                 {
                     return;
                 }
 
-                _isTimerPaused = true;
+                IsTimerPaused = true;
                 OnTimerPaused?.Invoke();
             }
 
             /// <summary>
-            /// Resumes timer updates after pause.
+            ///     Resumes timer updates after pause.
             /// </summary>
             [Button]
             public void ResumeTime()
             {
-                if (!_isTimerRunning || !_isTimerPaused)
+                if (!IsTimerRunning || !IsTimerPaused)
                 {
                     return;
                 }
 
-                _isTimerPaused = false;
+                IsTimerPaused = false;
                 OnTimerResumed?.Invoke();
                 RefreshTimeState();
             }
 
             /// <summary>
-            /// Restarts cooldown from current UTC time and refreshes timer state.
+            ///     Restarts cooldown from current UTC time and refreshes timer state.
             /// </summary>
             [Button]
             public void RestartTime()
@@ -441,14 +448,14 @@ namespace Neo
                 SaveCurrentTimeAsLastRewardTime();
                 _waitingForManualStart = false;
 
-                if (!_isTimerRunning)
+                if (!IsTimerRunning)
                 {
                     StartTime();
                     return;
                 }
 
-                bool wasPaused = _isTimerPaused;
-                _isTimerPaused = false;
+                bool wasPaused = IsTimerPaused;
+                IsTimerPaused = false;
                 if (wasPaused)
                 {
                     OnTimerResumed?.Invoke();
@@ -458,7 +465,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Clears saved cooldown and makes reward available immediately.
+            ///     Clears saved cooldown and makes reward available immediately.
             /// </summary>
             [Button]
             public void SetRewardAvailableNow()
@@ -470,7 +477,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Forces immediate timer refresh and event dispatch.
+            ///     Forces immediate timer refresh and event dispatch.
             /// </summary>
             [Button]
             public void RefreshTimeState()
@@ -499,7 +506,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Changes additional save key suffix.
+            ///     Changes additional save key suffix.
             /// </summary>
             /// <param name="addKey">Key suffix for reward timer slot.</param>
             /// <param name="refreshAfterChange">If true, recalculates timer right away.</param>
@@ -515,7 +522,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Tries to read last reward timestamp from persistent storage.
+            ///     Tries to read last reward timestamp from persistent storage.
             /// </summary>
             /// <param name="lastRewardUtc">Parsed UTC timestamp.</param>
             /// <returns>True when timestamp exists and is valid.</returns>
@@ -526,7 +533,7 @@ namespace Neo
             }
 
             /// <summary>
-            /// Gets elapsed seconds since the last reward claim.
+            ///     Gets elapsed seconds since the last reward claim.
             /// </summary>
             /// <returns>Elapsed seconds or zero when timestamp is missing.</returns>
             public float GetElapsedSinceLastReward()
@@ -538,11 +545,11 @@ namespace Neo
 
             private IEnumerator TimerRoutine()
             {
-                while (_isTimerRunning)
+                while (IsTimerRunning)
                 {
                     yield return new WaitForSecondsRealtime(GetSafeUpdateInterval());
 
-                    if (_isTimerRunning && !_isTimerPaused)
+                    if (IsTimerRunning && !IsTimerPaused)
                     {
                         RefreshTimeState();
                     }
@@ -557,9 +564,9 @@ namespace Neo
                     _timerRoutine = null;
                 }
 
-                bool wasRunning = _isTimerRunning;
-                _isTimerRunning = false;
-                _isTimerPaused = false;
+                bool wasRunning = IsTimerRunning;
+                IsTimerRunning = false;
+                IsTimerPaused = false;
 
                 if (invokeEvent && wasRunning)
                 {

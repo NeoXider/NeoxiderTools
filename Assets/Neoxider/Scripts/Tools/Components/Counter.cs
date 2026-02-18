@@ -35,7 +35,7 @@ namespace Neo.Tools
     ///     Опционально сохраняет значение через SaveProvider по ключу (по умолчанию выключено).
     /// </summary>
     [NeoDoc("Tools/Components/Counter.md")]
-    [CreateFromMenu("Neoxider/Tools/Counter")]
+    [CreateFromMenu("Neoxider/Tools/Components/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
     public class Counter : MonoBehaviour
     {
@@ -53,8 +53,7 @@ namespace Neo.Tools
         [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
         private bool _saveEnabled;
 
-        [SerializeField]
-        [Tooltip("Save key (unique per counter). Used with SaveProvider, as in Money.")]
+        [SerializeField] [Tooltip("Save key (unique per counter). Used with SaveProvider, as in Money.")]
         private string _saveKey = "Counter";
 
         [Space]
@@ -65,8 +64,7 @@ namespace Neo.Tools
         [Tooltip("Invoked when value changes in Float mode. Passes new value.")]
         public UnityEvent<float> OnValueChangedFloat = new();
 
-        [Space]
-        [Tooltip("Invoked on Send() in Int mode. Passes integer (Payload or argument).")]
+        [Space] [Tooltip("Invoked on Send() in Int mode. Passes integer (Payload or argument).")]
         public UnityEvent<int> OnSendInt = new();
 
         [Tooltip("Invoked on Send() in Float mode. Passes value (Payload or argument).")]

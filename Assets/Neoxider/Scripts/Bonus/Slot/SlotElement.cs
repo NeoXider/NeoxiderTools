@@ -1,5 +1,4 @@
 using System.Linq;
-using Neo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -34,8 +33,7 @@ namespace Neo.Bonus
         [Tooltip("Label offset in world coordinates")]
         public Vector3 gizmoLabelOffset = new(0f, 0.25f, 0f);
 
-        [Tooltip("Gizmo marker dot size")]
-        public float gizmoIconSize = 0.15f;
+        [Tooltip("Gizmo marker dot size")] public float gizmoIconSize = 0.15f;
 
         [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // ярче (почти жёлтый)
 

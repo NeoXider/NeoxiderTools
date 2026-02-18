@@ -14,6 +14,8 @@
 - **Update**: при `_allowToggle` переключает состояние по клавише `_toggleKey` (по умолчанию Escape).
 - **События**: `_onCursorLocked`, `_onCursorUnlocked`.
 
+Вращение камеры при видимом курсоре отключается **в самом** `PlayerController3DPhysics` (опция **Pause Look When Cursor Visible**), без вызовов FindObjectsOfType и без связи между компонентами.
+
 ---
 
 ## 3. Настройка
@@ -41,4 +43,4 @@
 ## 5. Совместное использование с PausePage и контроллерами игрока
 
 - **PausePage** с опцией **Control Cursor** при открытии паузы сохраняет состояние курсора и показывает его, при закрытии — восстанавливает. Отдельно вешать/снимать `CursorLockController` не обязательно.
-- **PlayerController3DPhysics** / **PlayerController2DPhysics** сами выставляют курсор (например, lock on start). Используйте один источник истины в каждом контексте: в геймплее — контроллер игрока или один `CursorLockController`; при паузе — поведение задаёт `PausePage` через сохранение/восстановление.
+- **PlayerController3DPhysics** сам не вращает камеру при видимом курсоре, если у него включена опция **Pause Look When Cursor Visible** (по умолчанию включена). Связи между CursorLockController и контроллером игрока не требуется.

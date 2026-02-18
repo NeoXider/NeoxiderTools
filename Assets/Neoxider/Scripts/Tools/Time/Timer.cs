@@ -228,7 +228,7 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Alias for <see cref="Start"/>. Starts or resumes the timer (fire and forget).
+        ///     Alias for <see cref="Start" />. Starts or resumes the timer (fire and forget).
         /// </summary>
         public void Play()
         {

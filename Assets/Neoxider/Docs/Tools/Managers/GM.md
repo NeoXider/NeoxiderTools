@@ -2,7 +2,7 @@
 
 Синглтон-менеджер состояний игры. Хранит текущее и предыдущее состояние (Menu, Preparing, Game, Win, Lose и т.д.), управляет паузой (Time.timeScale) и FPS.
 
-**Добавить:** GameObject → Neo → Tools → GM (или через Singleton).
+**Добавить:** GameObject → Neoxider → Tools → GM (или через Singleton).
 
 ## Основное
 

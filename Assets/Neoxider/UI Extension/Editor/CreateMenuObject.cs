@@ -13,7 +13,7 @@ namespace Neo
             private static string _startPath;
 
             /// <summary>
-            ///     Динамически определяет путь к папке префабов, работая как при установке через Git, так и как обычный пакет
+            ///     Dynamically resolves the prefabs folder path, whether the project is in Assets or installed as a package.
             /// </summary>
             public static string startPath
             {
@@ -38,13 +38,44 @@ namespace Neo
                         }
                     }
 
+                    if (string.IsNullOrEmpty(scriptPath))
+                    {
+                        string[] prefabGuids = AssetDatabase.FindAssets("Canvas LandScape t:Prefab");
+                        foreach (string guid in prefabGuids)
+                        {
+                            string path = AssetDatabase.GUIDToAssetPath(guid);
+                            if (path.Contains("UI Extension"))
+                            {
+                                scriptPath = path;
+                                break;
+                            }
+                        }
+
+                        if (!string.IsNullOrEmpty(scriptPath))
+                        {
+                            string prefabsDir = Path.GetDirectoryName(scriptPath);
+                            if (prefabsDir != null && (prefabsDir.EndsWith("Canvas") || prefabsDir.EndsWith("Layout")))
+                            {
+                                prefabsDir = Path.GetDirectoryName(prefabsDir);
+                            }
+
+                            _startPath = prefabsDir + "/";
+                            scriptPath = null;
+                        }
+                    }
+
                     if (!string.IsNullOrEmpty(scriptPath))
                     {
-                        // Определяем базовый путь на основе расположения скрипта
-                        string basePath = Path.GetDirectoryName(scriptPath);
-                        // Убираем "Editor" из пути и добавляем "Prefabs"
-                        basePath = basePath.Replace("\\Editor", "").Replace("/Editor", "");
-                        _startPath = basePath + "/Prefabs/";
+                        if (scriptPath.EndsWith("/"))
+                        {
+                            _startPath = scriptPath;
+                        }
+                        else
+                        {
+                            string basePath = Path.GetDirectoryName(scriptPath);
+                            basePath = basePath?.Replace("\\Editor", "").Replace("/Editor", "");
+                            _startPath = basePath + "/Prefabs/";
+                        }
                     }
                     else
                     {
@@ -102,18 +133,31 @@ namespace Neo
 
             public static GameObject Create(string path)
             {
-                GameObject parentObject = Selection.activeGameObject;
-                GameObject obj = GameObject.Instantiate(GetResources<GameObject>(path), parentObject?.transform);
-                Selection.activeGameObject = obj.gameObject;
-                obj.name = GetResources<GameObject>(path).name;
+                GameObject prefab = GetResources<GameObject>(path);
+                if (prefab == null)
+                {
+                    Debug.LogWarning($"[Neoxider UI] Prefab not found: {startPath}{path}");
+                    return null;
+                }
+
+                Transform parent = Selection.activeGameObject != null ? Selection.activeGameObject.transform : null;
+                GameObject obj = GameObject.Instantiate(prefab, parent);
+                obj.name = prefab.name;
+                Selection.activeGameObject = obj;
                 return obj;
             }
 
-            private static GameObject CreatePrefab(string name, string path)
+            private static GameObject CreatePrefab(string name, string subfolder)
             {
-                GameObject obj = Create(path + "/" + name + ".prefab");
-                ;
-                Selection.activeObject = obj;
+                string relativePath = string.IsNullOrEmpty(subfolder)
+                    ? name + ".prefab"
+                    : subfolder + "/" + name + ".prefab";
+                GameObject obj = Create(relativePath);
+                if (obj != null)
+                {
+                    Selection.activeObject = obj;
+                }
+
                 return obj;
             }
 

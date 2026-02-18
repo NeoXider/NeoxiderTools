@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Defines horizontal/vertical board anchor relative to generator transform.
+    ///     Defines horizontal/vertical board anchor relative to generator transform.
     /// </summary>
     public enum GridOrigin2D
     {
@@ -21,7 +21,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Defines depth anchor relative to generator transform.
+    ///     Defines depth anchor relative to generator transform.
     /// </summary>
     public enum GridOriginDepth
     {
@@ -31,7 +31,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Defines default passability interpretation for pathfinding calls.
+    ///     Defines default passability interpretation for pathfinding calls.
     /// </summary>
     public enum CellPassabilityMode
     {
@@ -40,7 +40,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Serializable configuration for <see cref="FieldGenerator"/>.
+    ///     Serializable configuration for <see cref="FieldGenerator" />.
     /// </summary>
     [Serializable]
     public class FieldGeneratorConfig
@@ -71,14 +71,14 @@ namespace Neo.GridSystem
         public Vector3Int OriginOffset = Vector3Int.zero;
 
         /// <summary>
-        /// Creates default field generator configuration.
+        ///     Creates default field generator configuration.
         /// </summary>
         public FieldGeneratorConfig()
         {
         }
 
         /// <summary>
-        /// Creates field generator configuration with explicit size, movement and shape type.
+        ///     Creates field generator configuration with explicit size, movement and shape type.
         /// </summary>
         /// <param name="size">Grid dimensions in cells.</param>
         /// <param name="movementRule">Neighbor offsets rule. Uses 4-way 2D when null.</param>
@@ -95,7 +95,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Supported base grid topology presets.
+    ///     Supported base grid topology presets.
     /// </summary>
     public enum GridType
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Globalization;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -26,7 +27,7 @@ namespace Neo
     ///     MonoBehaviour-based timer with Unity events support and automatic UI updates
     /// </summary>
     [NeoDoc("Tools/Time/TimerObject.md")]
-    [CreateFromMenu("Neoxider/Tools/TimerObject")]
+    [CreateFromMenu("Neoxider/Tools/Time/TimerObject")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour
     {
@@ -132,18 +133,24 @@ namespace Neo
 
         [Header("Save")]
         [Tooltip("Save and restore timer state (current time and running state). Disabled by default.")]
-        [SerializeField] protected bool saveProgress;
+        [SerializeField]
+        protected bool saveProgress;
 
-        [Tooltip("Seconds: save current time value; on load continue from that value. RealTime: save target time (UTC); on load remaining time is recalculated (e.g. re-enter after 1 min → countdown continues from real end time).")]
-        [SerializeField] protected TimerSaveMode saveMode = TimerSaveMode.Seconds;
+        [Tooltip(
+            "Seconds: save current time value; on load continue from that value. RealTime: save target time (UTC); on load remaining time is recalculated (e.g. re-enter after 1 min → countdown continues from real end time).")]
+        [SerializeField]
+        protected TimerSaveMode saveMode = TimerSaveMode.Seconds;
 
-        [Tooltip("Unique key for SaveProvider. Required when Save Progress is enabled.")]
-        [SerializeField] private string saveKey = "TimerObject";
+        [Tooltip("Unique key for SaveProvider. Required when Save Progress is enabled.")] [SerializeField]
+        private string saveKey = "TimerObject";
 
         /// <summary>
         ///     Returns the save key used for persistence. Override in derived classes to use a custom key.
         /// </summary>
-        protected virtual string GetSaveKey() => saveKey;
+        protected virtual string GetSaveKey()
+        {
+            return saveKey;
+        }
 
         private bool _loadedFromSave;
         private float timeSinceLastUpdate;
@@ -181,10 +188,14 @@ namespace Neo
             }
 
             if (randomDurationMax < randomDurationMin)
+            {
                 randomDurationMax = randomDurationMin;
+            }
 
             if (progressImage == null)
+            {
                 progressImage = GetComponent<Image>();
+            }
 
 #if UNITY_TEXTMESHPRO
             if (timeText == null)
@@ -194,7 +205,9 @@ namespace Neo
             if (milestonePercentages != null)
             {
                 for (int i = 0; i < milestonePercentages.Length; i++)
+                {
                     milestonePercentages[i] = Mathf.Clamp01(milestonePercentages[i]);
+                }
             }
         }
 
@@ -303,6 +316,7 @@ namespace Neo
                     SaveProvider.SetFloat(key + "_t", currentTime);
                     SaveProvider.SetBool(key + "_a", isActive);
                 }
+
                 SaveProvider.Save();
                 return;
             }
@@ -332,7 +346,8 @@ namespace Neo
                 }
 
                 string raw = SaveProvider.GetString(key + "_rt", null);
-                if (string.IsNullOrEmpty(raw) || !DateTime.TryParse(raw, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime startUtc))
+                if (string.IsNullOrEmpty(raw) ||
+                    !DateTime.TryParse(raw, null, DateTimeStyles.RoundtripKind, out DateTime startUtc))
                 {
                     return false;
                 }
@@ -357,7 +372,7 @@ namespace Neo
                     currentTime = Mathf.Clamp(currentTime, 0f, duration);
                 }
 
-                isActive = SaveProvider.GetBool(key + "_a", false);
+                isActive = SaveProvider.GetBool(key + "_a");
                 lastProgress = -1f;
                 return true;
             }
@@ -368,7 +383,8 @@ namespace Neo
             }
 
             string rawRt = SaveProvider.GetString(key + "_rt", null);
-            if (string.IsNullOrEmpty(rawRt) || !DateTime.TryParse(rawRt, null, System.Globalization.DateTimeStyles.RoundtripKind, out DateTime savedUtc))
+            if (string.IsNullOrEmpty(rawRt) ||
+                !DateTime.TryParse(rawRt, null, DateTimeStyles.RoundtripKind, out DateTime savedUtc))
             {
                 return false;
             }

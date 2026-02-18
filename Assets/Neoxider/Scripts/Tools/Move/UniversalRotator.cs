@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/UniversalRotator.md")]
-    [CreateFromMenu("Neoxider/Tools/UniversalRotator")]
+    [CreateFromMenu("Neoxider/Tools/Movement/UniversalRotator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UniversalRotator))]
     public class UniversalRotator : MonoBehaviour
     {
@@ -54,8 +54,7 @@ namespace Neo.Tools
         [Tooltip("Where to run rotation logic.")]
         public UpdateMode updateMode = UpdateMode.Update;
 
-        [Tooltip("Use unscaled time.")]
-        public bool useUnscaledTime;
+        [Tooltip("Use unscaled time.")] public bool useUnscaledTime;
 
         // ========== СКОРОСТЬ И ОФСЕТ ==========
         [Header("Speed")]

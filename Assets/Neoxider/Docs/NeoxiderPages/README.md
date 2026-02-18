@@ -138,10 +138,10 @@ public class PageAnalytics : MonoBehaviour
 
 ### Как создать PageId ассет
 
-1. В Project: `Create → Neo → Pages → Page Id`.
+1. В Project: `Create → Neoxider → Pages → Page Id`.
 2. Переименуй ассет в формате `Page{Name}` (например `PageMenu`, `PageShop`, `PageSettings`).
    - Ключ `PageId.Id` **генерируется автоматически из имени ассета**.
-3. Если хочешь создать стандартный набор страниц одним кликом: `Tools → Neo → Pages → Generate Default PageIds`.
+3. Если хочешь создать стандартный набор страниц одним кликом: `Tools → Neoxider → Pages → Generate Default PageIds`.
 
 ### UIPage: назначение страницы
 
@@ -254,7 +254,7 @@ public class OpenPagesExamples
 
 - `Assets/NeoxiderPages/Editor/Tools/PageIdGenerator.cs`
   - генератор `PageId` ассетов (в т.ч. дефолтный набор)
-  - меню: `Tools/Neo/Pages/Generate Default PageIds`
+  - меню: `Tools/Neoxider/Pages/Generate Default PageIds`
 
 ### Editor Inspectors
 

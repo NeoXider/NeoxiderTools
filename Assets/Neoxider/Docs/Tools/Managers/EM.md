@@ -2,7 +2,7 @@
 
 Синглтон для событий по состояниям игры. UnityEvent на каждое состояние: Menu, Preparing, GameStart, Restart, StopGame, Win, Lose, End.
 
-**Добавить:** GameObject → Neo → Tools → EM (или через Singleton).
+**Добавить:** GameObject → Neoxider → Tools → EM (или через Singleton).
 
 ## События
 

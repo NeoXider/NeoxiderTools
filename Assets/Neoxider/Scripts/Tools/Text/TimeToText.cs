@@ -13,7 +13,7 @@ namespace Neo
         ///     Useful for countdown timers, elapsed time displays, or any time-based UI elements.
         /// </summary>
         [NeoDoc("Tools/Text/TimeToText.md")]
-        [CreateFromMenu("Neoxider/Tools/TimeToText")]
+        [CreateFromMenu("Neoxider/Tools/Text/TimeToText")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TimeToText))]
         public class TimeToText : MonoBehaviour
         {
@@ -68,8 +68,7 @@ namespace Neo
             [Tooltip("Include seconds in compact output (Compact mode only)")] [SerializeField]
             private bool _compactIncludeSeconds = true;
 
-            [Tooltip("Maximum number of units in compact output (Compact mode only)")] [SerializeField]
-            [Min(1)]
+            [Tooltip("Maximum number of units in compact output (Compact mode only)")] [SerializeField] [Min(1)]
             private int _compactMaxParts = 3;
 
             [Header("Text Formatting")] [Tooltip("Text to add before the time value")] [SerializeField]

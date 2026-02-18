@@ -7,8 +7,8 @@ using UnityEngine.Events;
 namespace Neo.Bonus
 {
     /// <summary>
-    /// Time-based reward with persistent cooldown, built on TimerObject (RealTime countdown).
-    /// Use this instead of the deprecated TimeReward for new code.
+    ///     Time-based reward with persistent cooldown, built on TimerObject (RealTime countdown).
+    ///     Use this instead of the deprecated TimeReward for new code.
     /// </summary>
     [NeoDoc("Bonus/TimeReward/CooldownReward.md")]
     [CreateFromMenu("Neoxider/Bonus/CooldownReward")]
@@ -17,12 +17,15 @@ namespace Neo.Bonus
     {
         private const string LastRewardTimeKeyPrefix = "LastRewardTime";
 
-        [Header("Reward Settings")]
-        [SerializeField] [Min(0)] private float _cooldownSeconds = 60f * 60f;
+        [Header("Reward Settings")] [SerializeField] [Min(0)]
+        private float _cooldownSeconds = 60f * 60f;
+
         [SerializeField] [Min(0.015f)] private float _updateInterval = 0.2f;
         [SerializeField] private bool _rewardAvailableOnStart;
+
         [SerializeField] [Tooltip("-1 = take all accumulated; 1 = one per take; N = cap at N per take")]
         private int _maxRewardsPerTake = 1;
+
         [SerializeField] private string _addKey = "Bonus1";
         [SerializeField] private bool _startTakeReward;
         [SerializeField] private bool _startTimerOnStart = true;
@@ -31,14 +34,15 @@ namespace Neo.Bonus
         [SerializeField] private TimeFormat _displayTimeFormat = TimeFormat.HoursMinutesSeconds;
         [SerializeField] private string _displaySeparator = ":";
 
-        [Header("Reward Events")]
-        [SerializeField] private UnityEvent<float> _onTimeUpdated = new();
+        [Header("Reward Events")] [SerializeField]
+        private UnityEvent<float> _onTimeUpdated = new();
+
         [SerializeField] private UnityEvent _onRewardClaimed = new();
         [SerializeField] private UnityEvent<int> _onRewardsClaimed = new();
         [SerializeField] private UnityEvent _onRewardAvailable = new();
+        private bool _canTakeReward;
 
         private bool _waitingForManualStart;
-        private bool _canTakeReward;
 
         /// <summary>Invoked on each timer update with remaining seconds.</summary>
         public UnityEvent<float> OnTimeUpdated => _onTimeUpdated;
@@ -59,16 +63,10 @@ namespace Neo.Bonus
         public string RewardTimeKey => GetSaveKey();
 
         /// <summary>Whether successful claim immediately persists cooldown.</summary>
-        public bool SaveTimeOnTakeReward { get => _saveTimeOnTakeReward; set => _saveTimeOnTakeReward = value; }
-
-        protected override string GetSaveKey() => LastRewardTimeKeyPrefix + _addKey;
-
-        protected override void Init()
+        public bool SaveTimeOnTakeReward
         {
-            base.Init();
-            SyncTimerConfig();
-            if (!SaveProvider.HasKey(GetSaveKey() + "_rt") && !_rewardAvailableOnStart)
-                SetTime(duration);
+            get => _saveTimeOnTakeReward;
+            set => _saveTimeOnTakeReward = value;
         }
 
         private void Start()
@@ -97,6 +95,30 @@ namespace Neo.Bonus
             OnTimeChanged.RemoveListener(OnBaseTimeChanged);
         }
 
+        private void OnValidate()
+        {
+            _cooldownSeconds = Mathf.Max(0f, _cooldownSeconds);
+            _updateInterval = Mathf.Max(0.015f, _updateInterval);
+            _addKey = string.IsNullOrWhiteSpace(_addKey) ? "Bonus1" : _addKey.Trim();
+            _displaySeparator = string.IsNullOrEmpty(_displaySeparator) ? ":" : _displaySeparator;
+            SyncTimerConfig();
+        }
+
+        protected override string GetSaveKey()
+        {
+            return LastRewardTimeKeyPrefix + _addKey;
+        }
+
+        protected override void Init()
+        {
+            base.Init();
+            SyncTimerConfig();
+            if (!SaveProvider.HasKey(GetSaveKey() + "_rt") && !_rewardAvailableOnStart)
+            {
+                SetTime(duration);
+            }
+        }
+
         private void SyncTimerConfig()
         {
             duration = _cooldownSeconds;
@@ -111,15 +133,6 @@ namespace Neo.Bonus
             autoStart = _startTimerOnStart;
         }
 
-        private void OnValidate()
-        {
-            _cooldownSeconds = Mathf.Max(0f, _cooldownSeconds);
-            _updateInterval = Mathf.Max(0.015f, _updateInterval);
-            _addKey = string.IsNullOrWhiteSpace(_addKey) ? "Bonus1" : _addKey.Trim();
-            _displaySeparator = string.IsNullOrEmpty(_displaySeparator) ? ":" : _displaySeparator;
-            SyncTimerConfig();
-        }
-
         private void OnBaseTimerCompleted()
         {
             _canTakeReward = true;
@@ -132,7 +145,10 @@ namespace Neo.Bonus
         }
 
         /// <summary>Remaining seconds until the next reward is available.</summary>
-        public float GetSecondsUntilReward() => GetRemainingTime();
+        public float GetSecondsUntilReward()
+        {
+            return GetRemainingTime();
+        }
 
         /// <summary>Formatted remaining time using component format settings.</summary>
         public string GetFormattedTimeLeft(bool trimLeadingZeros = false)
@@ -143,9 +159,16 @@ namespace Neo.Bonus
         /// <summary>Number of rewards that can be claimed now (capped by max per take).</summary>
         public int GetClaimableCount()
         {
-            if (duration <= 0f) return 0;
+            if (duration <= 0f)
+            {
+                return 0;
+            }
+
             if (!TryGetEndUtcFromSave(out DateTime endUtc))
+            {
                 return _rewardAvailableOnStart ? 1 : 0;
+            }
+
             DateTime lastRewardUtc = endUtc.AddSeconds(-duration);
             int accumulated = lastRewardUtc.GetAccumulatedClaimCount(duration, DateTime.UtcNow);
             return CooldownRewardExtensions.CapToMaxPerTake(accumulated, _maxRewardsPerTake);
@@ -156,10 +179,16 @@ namespace Neo.Bonus
         public bool TakeReward()
         {
             int count = GetClaimableCount();
-            if (count < 1) return false;
+            if (count < 1)
+            {
+                return false;
+            }
 
             for (int i = 0; i < count; i++)
+            {
                 OnRewardClaimed?.Invoke();
+            }
+
             OnRewardsClaimed?.Invoke(count);
 
             if (_saveTimeOnTakeReward)
@@ -177,10 +206,16 @@ namespace Neo.Bonus
         }
 
         /// <summary>Shortcut for UnityEvent bindings.</summary>
-        public void Take() => TakeReward();
+        public void Take()
+        {
+            TakeReward();
+        }
 
         /// <summary>Whether at least one reward can be claimed now.</summary>
-        public bool CanTakeReward() => !_waitingForManualStart && GetClaimableCount() >= 1;
+        public bool CanTakeReward()
+        {
+            return !_waitingForManualStart && GetClaimableCount() >= 1;
+        }
 
         /// <summary>Starts timer. If save-on-claim is disabled, optionally starts cooldown from now.</summary>
         [Button]
@@ -191,19 +226,29 @@ namespace Neo.Bonus
                 SetTime(duration);
                 SaveState();
             }
+
             _waitingForManualStart = false;
             Play();
         }
 
         /// <summary>Stops timer updates.</summary>
         [Button]
-        public void StopTime() => Stop();
+        public void StopTime()
+        {
+            Stop();
+        }
 
         /// <summary>Pauses timer.</summary>
-        public void PauseTime() => Pause(true);
+        public void PauseTime()
+        {
+            Pause();
+        }
 
         /// <summary>Resumes timer after pause.</summary>
-        public void ResumeTime() => Resume();
+        public void ResumeTime()
+        {
+            Resume();
+        }
 
         /// <summary>Restarts cooldown from current time.</summary>
         public void RestartTime()
@@ -211,8 +256,14 @@ namespace Neo.Bonus
             SetTime(duration);
             SaveState();
             _waitingForManualStart = false;
-            if (!IsRunning) Play();
-            else RefreshTimeState();
+            if (!IsRunning)
+            {
+                Play();
+            }
+            else
+            {
+                RefreshTimeState();
+            }
         }
 
         /// <summary>Clears saved cooldown and makes reward available immediately.</summary>
@@ -238,6 +289,7 @@ namespace Neo.Bonus
                 _onTimeUpdated?.Invoke(0f);
                 return;
             }
+
             _onTimeUpdated?.Invoke(GetRemainingTime());
             bool available = GetClaimableCount() >= 1;
             if (available && !_canTakeReward)
@@ -246,7 +298,9 @@ namespace Neo.Bonus
                 OnRewardAvailable?.Invoke();
             }
             else if (!available)
+            {
                 _canTakeReward = false;
+            }
         }
 
         /// <summary>Changes additional save key suffix.</summary>
@@ -268,6 +322,7 @@ namespace Neo.Bonus
                 lastRewardUtc = default;
                 return false;
             }
+
             lastRewardUtc = endUtc.AddSeconds(-duration);
             return true;
         }
@@ -285,10 +340,12 @@ namespace Neo.Bonus
             endUtc = default;
             string key = GetSaveKey() + "_rt";
             if (!SaveProvider.HasKey(key))
+            {
                 return false;
+            }
+
             string raw = SaveProvider.GetString(key, null);
             return !string.IsNullOrEmpty(raw) && raw.TryParseUtcRoundTrip(out endUtc);
         }
     }
 }
-

@@ -67,7 +67,8 @@ namespace Neo.Extensions
         /// <param name="separator">Separator between time parts.</param>
         /// <param name="trimLeadingZeros">If true, trims leading zeros from the first token (e.g. "01:05" -> "1:05").</param>
         /// <returns>Formatted time string.</returns>
-        public static string FormatTime(this float timeSeconds, TimeFormat format, string separator, bool trimLeadingZeros)
+        public static string FormatTime(this float timeSeconds, TimeFormat format, string separator,
+            bool trimLeadingZeros)
         {
             if (timeSeconds < 0)
             {

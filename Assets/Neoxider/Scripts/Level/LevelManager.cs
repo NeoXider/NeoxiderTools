@@ -7,6 +7,8 @@ namespace Neo
 {
     namespace Level
     {
+        [CreateFromMenu("Neoxider/Level/LevelManager")]
+        [AddComponentMenu("Neoxider/Level/" + nameof(LevelManager))]
         [NeoDoc("Level/LevelManager.md")]
         public class LevelManager : Singleton<LevelManager>
         {

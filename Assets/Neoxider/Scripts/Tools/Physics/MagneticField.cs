@@ -91,8 +91,7 @@ namespace Neo.Tools
         [SerializeField]
         private Vector3 direction = Vector3.forward;
 
-        [Tooltip("If true — direction is in local space (TransformDirection).")]
-        [SerializeField]
+        [Tooltip("If true — direction is in local space (TransformDirection).")] [SerializeField]
         private bool directionIsLocal = true;
 
         [Tooltip("Direction visualization length in scene (and handle for Direction mode).")]

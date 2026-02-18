@@ -1,13 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Neo.GridSystem.Match3
 {
     /// <summary>
-    /// Runtime board service for Match3: initialization, swap validation, match resolve and refill.
+    ///     Runtime board service for Match3: initialization, swap validation, match resolve and refill.
     /// </summary>
     [NeoDoc("GridSystem/Match3/Match3BoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
@@ -15,6 +16,15 @@ namespace Neo.GridSystem.Match3
     [AddComponentMenu("Neoxider/GridSystem/Match3/Match3BoardService")]
     public class Match3BoardService : MonoBehaviour
     {
+        public enum Match3ResolvePhase
+        {
+            Swap,
+            Clear,
+            Collapse,
+            Refill,
+            Completed
+        }
+
         [SerializeField] private int _minMatchLength = 3;
         [SerializeField] private bool _autoGenerateOnStart = true;
         [SerializeField] private bool _avoidStartMatches = true;
@@ -33,21 +43,19 @@ namespace Neo.GridSystem.Match3
         };
 
         /// <summary>
-        /// Invoked after board content changes.
+        ///     Invoked after board content changes.
         /// </summary>
         public UnityEvent OnBoardChanged = new();
 
         /// <summary>
-        /// Invoked after resolve step; argument is number of removed tiles.
+        ///     Invoked after resolve step; argument is number of removed tiles.
         /// </summary>
         public UnityEvent<int> OnMatchesResolved = new();
 
         /// <summary>
-        /// Invoked when board was shuffled due to no available moves.
+        ///     Invoked when board was shuffled due to no available moves.
         /// </summary>
         public UnityEvent OnBoardShuffled = new();
-
-        public event System.Action<Match3ResolvePhase, int> OnResolvePhase;
 
         private FieldGenerator _generator;
         private Coroutine _resolveRoutine;
@@ -64,6 +72,8 @@ namespace Neo.GridSystem.Match3
                 InitializeBoard();
             }
         }
+
+        public event Action<Match3ResolvePhase, int> OnResolvePhase;
 
         [Button("Initialize Board")]
         public void InitializeBoardButton()
@@ -105,7 +115,7 @@ namespace Neo.GridSystem.Match3
         }
 
         /// <summary>
-        /// Fills all enabled cells with random tiles from configured set.
+        ///     Fills all enabled cells with random tiles from configured set.
         /// </summary>
         public void InitializeBoard()
         {
@@ -145,13 +155,13 @@ namespace Neo.GridSystem.Match3
         }
 
         /// <summary>
-        /// Tries to swap two adjacent cells and resolves all resulting cascades.
+        ///     Tries to swap two adjacent cells and resolves all resulting cascades.
         /// </summary>
         /// <param name="a">First cell position.</param>
         /// <param name="b">Second cell position.</param>
         /// <returns>
-        /// True if swap produced at least one valid match and was resolved;
-        /// false when swap is invalid or reverted.
+        ///     True if swap produced at least one valid match and was resolved;
+        ///     false when swap is invalid or reverted.
         /// </returns>
         public bool TrySwapAndResolve(Vector3Int a, Vector3Int b)
         {
@@ -192,7 +202,7 @@ namespace Neo.GridSystem.Match3
         }
 
         /// <summary>
-        /// Finds all current match groups on the board.
+        ///     Finds all current match groups on the board.
         /// </summary>
         /// <returns>List of match groups.</returns>
         public List<List<FieldCell>> FindMatches()
@@ -562,20 +572,11 @@ namespace Neo.GridSystem.Match3
             return snapshot;
         }
 
-        public enum Match3ResolvePhase
-        {
-            Swap,
-            Clear,
-            Collapse,
-            Refill,
-            Completed
-        }
-
         private sealed class BoardSnapshot
         {
-            private readonly bool[,,] _usable;
             private readonly int[,,] _content;
             private readonly Vector3Int _size;
+            private readonly bool[,,] _usable;
 
             public BoardSnapshot(Vector3Int size)
             {

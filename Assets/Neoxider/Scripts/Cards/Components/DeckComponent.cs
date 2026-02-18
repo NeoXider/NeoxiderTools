@@ -9,6 +9,8 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент колоды для работы без кода
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/DeckComponent")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(DeckComponent))]
     [NeoDoc("Cards/DeckComponent.md")]
     public class DeckComponent : MonoBehaviour
     {
@@ -31,8 +33,7 @@ namespace Neo.Cards
         [SerializeField] private Vector3 _stackOffsetRotation;
         [SerializeField] private CardAnimationConfig _animationConfig;
 
-        [Tooltip("If enabled, deck config becomes global fallback for other Card components.")]
-        [SerializeField]
+        [Tooltip("If enabled, deck config becomes global fallback for other Card components.")] [SerializeField]
         private bool _setAnimationConfigAsGlobal = true;
 
         [Header("Trump Display")] [SerializeField]
@@ -362,7 +363,7 @@ namespace Neo.Cards
                 await card.MoveToAsync(hand.transform.position, _animationConfig.DealMoveDuration);
             }
 
-            await hand.AddCardAsync(card, true);
+            await hand.AddCardAsync(card);
             OnCardDealt?.Invoke(card, hand);
             OnVisualStackChanged?.Invoke();
             return card;

@@ -3,20 +3,13 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Drives Animator parameters from <see cref="PlayerController3DPhysics"/> and Rigidbody velocity.
+    ///     Drives Animator parameters from <see cref="PlayerController3DPhysics" /> and Rigidbody velocity.
     /// </summary>
     [NeoDoc("Tools/Move/PlayerController3DAnimatorDriver.md")]
-    [CreateFromMenu("Neoxider/Tools/PlayerController3DAnimatorDriver")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DAnimatorDriver")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DAnimatorDriver))]
     public class PlayerController3DAnimatorDriver : MonoBehaviour
     {
-        private enum VelocitySpace
-        {
-            World,
-            Local,
-            CameraRelative
-        }
-
         [Header("References")] [SerializeField]
         private Animator _animator;
 
@@ -250,6 +243,13 @@ namespace Neo.Tools
             {
                 _animator.SetTrigger(param);
             }
+        }
+
+        private enum VelocitySpace
+        {
+            World,
+            Local,
+            CameraRelative
         }
     }
 }

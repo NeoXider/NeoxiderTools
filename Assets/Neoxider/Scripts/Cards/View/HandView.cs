@@ -10,6 +10,8 @@ namespace Neo.Cards
     /// <summary>
     ///     Визуальное представление руки игрока
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/HandView")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(HandView))]
     [NeoDoc("Cards/View/HandView.md")]
     public class HandView : MonoBehaviour, IHandView
     {

@@ -2,7 +2,7 @@
 
 Компонент страницы UI для работы с **PM** (Page Manager). Указывает тип страницы (PageId), режим popup и опционально анимацию (DOTween).
 
-**Добавить:** GameObject → Neo → Pages → UIPage.
+**Добавить:** GameObject → Neoxider → Pages → UIPage.
 
 ## Основное
 

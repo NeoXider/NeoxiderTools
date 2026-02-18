@@ -14,7 +14,7 @@ MonoBehaviour версия State Machine для использования на 
 
 ## Добавление компонента
 
-В меню Unity: `Component > Neo > Tools > StateMachineBehaviour`
+В меню Unity: `Component > Neoxider > Tools > StateMachineBehaviour`
 
 ## Ключевые поля
 

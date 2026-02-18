@@ -50,7 +50,7 @@
 
 ### CreateMenuObject
 
-Класс `CreateMenuObject` в пространстве имен `Neo.UI` предоставляет:
+Класс `CreateMenuObject` (пространство имён `Neo.UI`) добавляет пункты в меню **GameObject → UI → Neoxider** и предоставляет:
 
 - **Динамическое определение пути**: свойство `startPath` автоматически определяет правильный путь к префабам
 - **Методы создания**: `Create<T>()`, `Create<T>(string path)`, `Create(string path)`

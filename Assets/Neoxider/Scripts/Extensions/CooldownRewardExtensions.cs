@@ -3,12 +3,12 @@ using System;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Helpers for cooldown-based reward logic: accumulated claims and advancing last-claim time.
+    ///     Helpers for cooldown-based reward logic: accumulated claims and advancing last-claim time.
     /// </summary>
     public static class CooldownRewardExtensions
     {
         /// <summary>
-        /// Gets the number of full cooldown cycles elapsed since the last claim.
+        ///     Gets the number of full cooldown cycles elapsed since the last claim.
         /// </summary>
         /// <param name="lastClaimUtc">UTC time of last claim.</param>
         /// <param name="cooldownSeconds">Cooldown duration in seconds.</param>
@@ -33,7 +33,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Caps the claim count by max per take. Use -1 for no limit.
+        ///     Caps the claim count by max per take. Use -1 for no limit.
         /// </summary>
         /// <param name="accumulated">Number of accumulated claims.</param>
         /// <param name="maxPerTake">Maximum to give in one take; -1 = all.</param>
@@ -54,7 +54,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Returns the new last-claim UTC time after giving the specified number of claims.
+        ///     Returns the new last-claim UTC time after giving the specified number of claims.
         /// </summary>
         /// <param name="lastClaimUtc">Current last claim time.</param>
         /// <param name="claimsGiven">Number of claims just given.</param>

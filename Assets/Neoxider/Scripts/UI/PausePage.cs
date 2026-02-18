@@ -8,28 +8,32 @@ namespace Neo.Tools
     ///     and PlayerController3DPhysics / PlayerController2DPhysics without conflict.
     /// </summary>
     [NeoDoc("UI/PausePage.md")]
-    [CreateFromMenu("Neoxider/Tools/PausePage")]
+    [CreateFromMenu("Neoxider/Tools/Other/PausePage")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PausePage))]
     public class PausePage : MonoBehaviour
     {
         [Header("Time")]
         [Tooltip("When enabled, sets Time.timeScale on pause and restores it on resume.")]
-        [SerializeField] private bool _useTimeScale = true;
+        [SerializeField]
+        private bool _useTimeScale = true;
 
-        [Tooltip("Time scale while this pause page is active (0 = full pause).")]
-        [SerializeField] [Min(0f)] private float _timeScaleOnPause;
+        [Tooltip("Time scale while this pause page is active (0 = full pause).")] [SerializeField] [Min(0f)]
+        private float _timeScaleOnPause;
 
         [Header("Game Manager")]
         [Tooltip("When enabled, calls GM.I.Pause() on enable and GM.I.Resume() on disable.")]
-        [SerializeField] private bool _sendPause = true;
+        [SerializeField]
+        private bool _sendPause = true;
 
         [Header("Cursor")]
         [Tooltip("When enabled, shows and unlocks cursor while pause is active; restores previous state on disable.")]
-        [SerializeField] private bool _controlCursor;
+        [SerializeField]
+        private bool _controlCursor;
+
+        private bool _savedCursorVisible;
+        private CursorLockMode _savedLockState;
 
         private float _savedTimeScale;
-        private CursorLockMode _savedLockState;
-        private bool _savedCursorVisible;
 
         private void OnEnable()
         {

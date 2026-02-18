@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Other/RevertAmount.md")]
-    [CreateFromMenu("Neoxider/Tools/RevertAmount")]
+    [CreateFromMenu("Neoxider/Tools/Other/RevertAmount")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(RevertAmount))]
     public class RevertAmount : MonoBehaviour
     {

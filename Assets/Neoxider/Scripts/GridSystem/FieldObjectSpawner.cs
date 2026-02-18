@@ -5,27 +5,27 @@ using UnityEngine.Events;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Runtime info about a spawned object bound to a cell.
+    ///     Runtime info about a spawned object bound to a cell.
     /// </summary>
     public class SpawnedObjectInfo
     {
         /// <summary>
-        /// Cell where object is currently registered.
+        ///     Cell where object is currently registered.
         /// </summary>
         public FieldCell Cell;
 
         /// <summary>
-        /// Spawned GameObject instance.
+        ///     Spawned GameObject instance.
         /// </summary>
         public GameObject GameObject;
 
         /// <summary>
-        /// True if object blocks cell occupancy.
+        ///     True if object blocks cell occupancy.
         /// </summary>
         public bool OccupiesSpace;
 
         /// <summary>
-        /// Creates spawned object metadata container.
+        ///     Creates spawned object metadata container.
         /// </summary>
         /// <param name="go">Spawned object instance.</param>
         /// <param name="cell">Target grid cell.</param>
@@ -39,7 +39,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Spawner with per-cell object tracking and occupancy support.
+    ///     Spawner with per-cell object tracking and occupancy support.
     /// </summary>
     [NeoDoc("GridSystem/FieldObjectSpawner.md")]
     [RequireComponent(typeof(FieldGenerator))]
@@ -50,22 +50,22 @@ namespace Neo.GridSystem
         [Header("Prefabs")] public GameObject[] Prefabs;
 
         /// <summary>
-        /// Raised when a new object is spawned.
+        ///     Raised when a new object is spawned.
         /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectSpawned = new();
 
         /// <summary>
-        /// Raised after object is removed.
+        ///     Raised after object is removed.
         /// </summary>
         public UnityEvent<SpawnedObjectInfo> OnObjectRemoved = new();
 
         /// <summary>
-        /// Raised when cell becomes occupied.
+        ///     Raised when cell becomes occupied.
         /// </summary>
         public UnityEvent<FieldCell> OnCellOccupied = new();
 
         /// <summary>
-        /// Raised when cell is no longer occupied.
+        ///     Raised when cell is no longer occupied.
         /// </summary>
         public UnityEvent<FieldCell> OnCellFreed = new();
 
@@ -83,10 +83,10 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Spawns prefab into target cell and registers tracking metadata.
+        ///     Spawns prefab into target cell and registers tracking metadata.
         /// </summary>
         /// <param name="cellPos">Target cell position.</param>
-        /// <param name="prefabIndex">Index in <see cref="Prefabs"/> array.</param>
+        /// <param name="prefabIndex">Index in <see cref="Prefabs" /> array.</param>
         /// <param name="occupiesSpace">Whether spawned object marks cell occupied.</param>
         /// <param name="layer">Reserved for compatibility.</param>
         /// <returns>Spawn metadata or null when spawn fails.</returns>
@@ -120,7 +120,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns all tracked objects assigned to a cell.
+        ///     Returns all tracked objects assigned to a cell.
         /// </summary>
         /// <param name="cellPos">Cell position.</param>
         /// <returns>Copy of object list for that cell.</returns>
@@ -136,7 +136,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Checks whether a cell is occupied by at least one blocking object.
+        ///     Checks whether a cell is occupied by at least one blocking object.
         /// </summary>
         /// <param name="cellPos">Cell position.</param>
         /// <returns>True when occupied; otherwise false.</returns>
@@ -162,7 +162,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Removes object from tracking and destroys it.
+        ///     Removes object from tracking and destroys it.
         /// </summary>
         /// <param name="go">Tracked object instance.</param>
         public void RemoveObject(GameObject go)
@@ -186,7 +186,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns all tracked objects across all cells.
+        ///     Returns all tracked objects across all cells.
         /// </summary>
         /// <returns>Flat list of tracked objects.</returns>
         public List<SpawnedObjectInfo> GetAllObjects()

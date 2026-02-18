@@ -147,7 +147,7 @@ public static float RainbowOutlineAlpha => 0.8f; // Более видимая о
 ```csharp
 namespace Neo.Tools.View
 {
-    [AddComponentMenu("Neo/Tools/Rainbow Test")]
+    [AddComponentMenu("Neoxider/Tools/Rainbow Test")]
     public class RainbowTestComponent : MonoBehaviour
     {
         public string testMessage = "Посмотрите на надпись 'by Neoxider' сверху!";

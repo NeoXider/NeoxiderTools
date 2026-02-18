@@ -11,6 +11,7 @@ namespace Neo.Tools
         public GameObject prefab;
         public int initialSize = 10;
         public bool expandPool = true;
+
         [Tooltip("Max pool size when expandPool is true. 0 = no limit (use with care).")]
         public int maxSize = 100;
     }
@@ -18,6 +19,8 @@ namespace Neo.Tools
     /// <summary>
     ///     Центральный менеджер для управления всеми пулами объектов в игре.
     /// </summary>
+    [CreateFromMenu("Neoxider/Tools/Spawner/PoolManager")]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(PoolManager))]
     [NeoDoc("Tools/Spawner/PoolManager.md")]
     public class PoolManager : Singleton<PoolManager>
     {
@@ -67,7 +70,7 @@ namespace Neo.Tools
             {
                 if (config.prefab != null && !_pools.ContainsKey(config.prefab))
                 {
-                    int max = config.expandPool ? (config.maxSize > 0 ? config.maxSize : 100) : config.initialSize;
+                    int max = config.expandPool ? config.maxSize > 0 ? config.maxSize : 100 : config.initialSize;
                     NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool, max);
                     _pools[config.prefab] = pool;
                 }
@@ -78,7 +81,7 @@ namespace Neo.Tools
         {
             if (!_pools.TryGetValue(prefab, out NeoObjectPool pool))
             {
-                int max = _defaultExpandPool ? (_defaultMaxSize > 0 ? _defaultMaxSize : 100) : _defaultInitialSize;
+                int max = _defaultExpandPool ? _defaultMaxSize > 0 ? _defaultMaxSize : 100 : _defaultInitialSize;
                 pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool, max);
                 _pools[prefab] = pool;
             }

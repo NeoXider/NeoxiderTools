@@ -1,13 +1,12 @@
 using System;
 using System.Collections.Generic;
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Generates and manages a runtime grid field with shape, state and pathfinding helpers.
+    ///     Generates and manages a runtime grid field with shape, state and pathfinding helpers.
     /// </summary>
     [NeoDoc("GridSystem/FieldGenerator.md")]
     [RequireComponent(typeof(Grid))]
@@ -20,34 +19,34 @@ namespace Neo.GridSystem
         [Header("Debug")] public bool DebugEnabled = true;
 
         /// <summary>
-        /// Invoked after field generation is completed.
+        ///     Invoked after field generation is completed.
         /// </summary>
         public UnityEvent OnFieldGenerated = new();
 
         /// <summary>
-        /// Invoked when legacy cell data is changed via <see cref="SetCell(Vector3Int,int,bool)"/>.
+        ///     Invoked when legacy cell data is changed via <see cref="SetCell(Vector3Int,int,bool)" />.
         /// </summary>
         public CellChangedEvent OnCellChanged = new();
 
         /// <summary>
-        /// Invoked when cell runtime state is changed.
+        ///     Invoked when cell runtime state is changed.
         /// </summary>
         public CellStateChangedEvent OnCellStateChanged = new();
 
         private Grid unityGrid;
 
         /// <summary>
-        /// Global singleton reference to the latest initialized generator.
+        ///     Global singleton reference to the latest initialized generator.
         /// </summary>
         public static FieldGenerator I { get; private set; }
 
         /// <summary>
-        /// Backing 3D cell array.
+        ///     Backing 3D cell array.
         /// </summary>
         public FieldCell[,,] Cells { get; private set; }
 
         /// <summary>
-        /// Returns a 2D projection (z=0) of the current grid.
+        ///     Returns a 2D projection (z=0) of the current grid.
         /// </summary>
         public FieldCell[,] Cells2D
         {
@@ -73,7 +72,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Cached Unity <see cref="Grid"/> component used for world-grid conversion.
+        ///     Cached Unity <see cref="Grid" /> component used for world-grid conversion.
         /// </summary>
         public Grid UnityGrid
         {
@@ -85,6 +84,33 @@ namespace Neo.GridSystem
                 }
 
                 return unityGrid;
+            }
+        }
+
+        private void Awake()
+        {
+            I = this;
+            if (unityGrid == null)
+            {
+                unityGrid = GetComponent<Grid>();
+            }
+
+            if (Cells == null || Cells.Length == 0)
+            {
+                GenerateField();
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (!Application.isPlaying)
+            {
+                if (unityGrid == null)
+                {
+                    unityGrid = GetComponent<Grid>();
+                }
+
+                GenerateField();
             }
         }
 
@@ -132,35 +158,8 @@ namespace Neo.GridSystem
             GenerateField();
         }
 
-        private void Awake()
-        {
-            I = this;
-            if (unityGrid == null)
-            {
-                unityGrid = GetComponent<Grid>();
-            }
-
-            if (Cells == null || Cells.Length == 0)
-            {
-                GenerateField();
-            }
-        }
-
-        private void OnValidate()
-        {
-            if (!Application.isPlaying)
-            {
-                if (unityGrid == null)
-                {
-                    unityGrid = GetComponent<Grid>();
-                }
-
-                GenerateField();
-            }
-        }
-
         /// <summary>
-        /// Generates grid cells using the current or provided configuration.
+        ///     Generates grid cells using the current or provided configuration.
         /// </summary>
         /// <param name="config">Optional config override.</param>
         public void GenerateField(FieldGeneratorConfig config = null)
@@ -193,7 +192,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Reapplies current shape mask and state overrides to existing cells.
+        ///     Reapplies current shape mask and state overrides to existing cells.
         /// </summary>
         public void ApplyShapeMask()
         {
@@ -217,7 +216,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Gets cell by 3D position.
+        ///     Gets cell by 3D position.
         /// </summary>
         /// <param name="pos">Cell coordinates.</param>
         /// <returns>Cell instance or null when out of bounds.</returns>
@@ -237,7 +236,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Gets cell by 2D coordinates (z=0).
+        ///     Gets cell by 2D coordinates (z=0).
         /// </summary>
         public FieldCell GetCell(int x, int y)
         {
@@ -245,7 +244,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Gets cell by <see cref="Vector2Int"/> (z=0).
+        ///     Gets cell by <see cref="Vector2Int" /> (z=0).
         /// </summary>
         public FieldCell GetCell(Vector2Int pos)
         {
@@ -253,7 +252,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Gets cell from world position via Unity Grid conversion.
+        ///     Gets cell from world position via Unity Grid conversion.
         /// </summary>
         /// <param name="worldPosition">World-space position.</param>
         /// <returns>Cell instance or null.</returns>
@@ -270,7 +269,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Enumerates all cells in backing array.
+        ///     Enumerates all cells in backing array.
         /// </summary>
         /// <param name="includeDisabled">Include disabled cells when true.</param>
         /// <returns>Cell sequence.</returns>
@@ -302,7 +301,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Checks whether 3D position is inside configured bounds.
+        ///     Checks whether 3D position is inside configured bounds.
         /// </summary>
         public bool InBounds(Vector3Int pos)
         {
@@ -311,7 +310,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Checks whether 2D coordinates (z=0) are inside configured bounds.
+        ///     Checks whether 2D coordinates (z=0) are inside configured bounds.
         /// </summary>
         public bool InBounds(int x, int y)
         {
@@ -319,7 +318,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Checks whether 2D vector (z=0) is inside configured bounds.
+        ///     Checks whether 2D vector (z=0) is inside configured bounds.
         /// </summary>
         public bool InBounds(Vector2Int pos)
         {
@@ -327,7 +326,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Sets legacy cell type and walkability.
+        ///     Sets legacy cell type and walkability.
         /// </summary>
         /// <param name="pos">Target position.</param>
         /// <param name="type">Custom type id.</param>
@@ -347,7 +346,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Sets legacy cell type and walkability using 2D coordinates.
+        ///     Sets legacy cell type and walkability using 2D coordinates.
         /// </summary>
         public void SetCell(int x, int y, int type, bool isWalkable)
         {
@@ -355,7 +354,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Sets legacy cell type and walkability using 2D vector.
+        ///     Sets legacy cell type and walkability using 2D vector.
         /// </summary>
         public void SetCell(Vector2Int pos, int type, bool isWalkable)
         {
@@ -363,7 +362,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Sets walkability for a cell.
+        ///     Sets walkability for a cell.
         /// </summary>
         public void SetWalkable(Vector3Int pos, bool isWalkable)
         {
@@ -378,7 +377,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Enables or disables a cell in active board shape.
+        ///     Enables or disables a cell in active board shape.
         /// </summary>
         public void SetEnabled(Vector3Int pos, bool isEnabled)
         {
@@ -399,7 +398,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Marks a cell as occupied or free.
+        ///     Marks a cell as occupied or free.
         /// </summary>
         public void SetOccupied(Vector3Int pos, bool isOccupied)
         {
@@ -414,7 +413,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Sets content state id for a cell.
+        ///     Sets content state id for a cell.
         /// </summary>
         public void SetContentId(Vector3Int pos, int contentId)
         {
@@ -429,7 +428,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Evaluates whether cell is passable under current passability settings.
+        ///     Evaluates whether cell is passable under current passability settings.
         /// </summary>
         /// <param name="cell">Cell to evaluate.</param>
         /// <param name="ignoreOccupied">Ignore occupied state if true.</param>
@@ -468,7 +467,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns neighbor cells for a source cell.
+        ///     Returns neighbor cells for a source cell.
         /// </summary>
         /// <param name="cell">Source cell.</param>
         /// <param name="directions">Optional movement rule override.</param>
@@ -502,7 +501,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns neighbors for cell position.
+        ///     Returns neighbors for cell position.
         /// </summary>
         public List<FieldCell> GetNeighbors(Vector3Int pos, IEnumerable<Vector3Int> directions = null)
         {
@@ -510,7 +509,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns neighbors for 2D coordinates.
+        ///     Returns neighbors for 2D coordinates.
         /// </summary>
         public List<FieldCell> GetNeighbors(int x, int y, IEnumerable<Vector3Int> directions = null)
         {
@@ -518,7 +517,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns neighbors for 2D vector.
+        ///     Returns neighbors for 2D vector.
         /// </summary>
         public List<FieldCell> GetNeighbors(Vector2Int pos, IEnumerable<Vector3Int> directions = null)
         {
@@ -526,7 +525,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Finds a path from start to end using current passability settings.
+        ///     Finds a path from start to end using current passability settings.
         /// </summary>
         /// <param name="start">Start position.</param>
         /// <param name="end">End position.</param>
@@ -546,7 +545,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Finds path using cell references.
+        ///     Finds path using cell references.
         /// </summary>
         public List<FieldCell> FindPath(FieldCell start, FieldCell end, IEnumerable<Vector3Int> directions = null)
         {
@@ -555,7 +554,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Finds path using 2D coordinates.
+        ///     Finds path using 2D coordinates.
         /// </summary>
         public List<FieldCell> FindPath(Vector2Int start, Vector2Int end, IEnumerable<Vector3Int> directions = null)
         {
@@ -563,7 +562,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Finds a path and returns detailed reason metadata.
+        ///     Finds a path and returns detailed reason metadata.
         /// </summary>
         public GridPathResult FindPathDetailed(GridPathRequest request)
         {
@@ -571,7 +570,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Finds a path with direct request arguments and diagnostic output.
+        ///     Finds a path with direct request arguments and diagnostic output.
         /// </summary>
         public GridPathResult FindPathDetailed(
             Vector3Int start,
@@ -595,7 +594,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Converts logical cell coordinates to Unity Grid coordinates with configured origin.
+        ///     Converts logical cell coordinates to Unity Grid coordinates with configured origin.
         /// </summary>
         /// <param name="logicalPos">Logical coordinates in field array space.</param>
         /// <returns>Unity Grid cell coordinates.</returns>
@@ -605,7 +604,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Converts Unity Grid coordinates to logical field coordinates.
+        ///     Converts Unity Grid coordinates to logical field coordinates.
         /// </summary>
         /// <param name="gridPos">Unity Grid cell coordinates.</param>
         /// <returns>Logical field coordinates.</returns>
@@ -615,7 +614,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns world position of cell center.
+        ///     Returns world position of cell center.
         /// </summary>
         /// <param name="cellPos">Cell coordinates.</param>
         /// <returns>World-space center point.</returns>
@@ -631,7 +630,7 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns world-space cell corner position.
+        ///     Returns world-space cell corner position.
         /// </summary>
         public Vector3 GetCellCornerWorld(Vector3Int cellPos)
         {
@@ -645,27 +644,11 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
-        /// Returns world-space cell corner position for 2D coordinates.
+        ///     Returns world-space cell corner position for 2D coordinates.
         /// </summary>
         public Vector3 GetCellCornerWorld(Vector2Int cellPos)
         {
             return GetCellCornerWorld(new Vector3Int(cellPos.x, cellPos.y, 0));
-        }
-
-        /// <summary>
-        /// UnityEvent wrapper carrying changed <see cref="FieldCell"/>.
-        /// </summary>
-        [Serializable]
-        public class CellChangedEvent : UnityEvent<FieldCell>
-        {
-        }
-
-        /// <summary>
-        /// UnityEvent wrapper for cell state changes.
-        /// </summary>
-        [Serializable]
-        public class CellStateChangedEvent : UnityEvent<FieldCell>
-        {
         }
 
         private bool ResolveCellEnabled(Vector3Int pos)
@@ -867,6 +850,22 @@ namespace Neo.GridSystem
                 default:
                     return 0;
             }
+        }
+
+        /// <summary>
+        ///     UnityEvent wrapper carrying changed <see cref="FieldCell" />.
+        /// </summary>
+        [Serializable]
+        public class CellChangedEvent : UnityEvent<FieldCell>
+        {
+        }
+
+        /// <summary>
+        ///     UnityEvent wrapper for cell state changes.
+        /// </summary>
+        [Serializable]
+        public class CellStateChangedEvent : UnityEvent<FieldCell>
+        {
         }
     }
 }

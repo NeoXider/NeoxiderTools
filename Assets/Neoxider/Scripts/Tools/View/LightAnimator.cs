@@ -12,7 +12,7 @@ namespace Neo.Tools.View
     ///     Поддерживает различные типы анимации интенсивности и цвета.
     /// </summary>
     [NeoDoc("Tools/View/LightAnimator.md")]
-    [CreateFromMenu("Neoxider/Tools/LightAnimator")]
+    [CreateFromMenu("Neoxider/Tools/View/LightAnimator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(LightAnimator))]
     public class LightAnimator : MonoBehaviour
     {
@@ -34,8 +34,7 @@ namespace Neo.Tools.View
         [Tooltip("Use 2D noise instead of 1D")]
         public bool use2DNoise = true;
 
-        [Tooltip("Additional noise offset")]
-        public Vector2 noiseOffset;
+        [Tooltip("Additional noise offset")] public Vector2 noiseOffset;
 
         [Header("Color Settings")] [Tooltip("Whether to change light color")]
         public bool changeColor;

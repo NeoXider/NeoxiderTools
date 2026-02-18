@@ -7,7 +7,7 @@ namespace Neo.Tools
     ///     Supports both 2D and 3D cameras with multiple boundary types.
     /// </summary>
     [NeoDoc("Tools/Move/CameraConstraint.md")]
-    [CreateFromMenu("Neoxider/Tools/CameraConstraint")]
+    [CreateFromMenu("Neoxider/Tools/Movement/CameraConstraint")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraConstraint))]
     public class CameraConstraint : MonoBehaviour
     {
@@ -45,16 +45,16 @@ namespace Neo.Tools
         [SerializeField] private Color clampedPositionColor = new(1f, 0.92f, 0.2f, 0.95f);
 
         private bool _boundsValid;
+        private float _lastAspect = -1f;
+        private Vector3 _lastConstrainedPosition;
+        private float _lastFov = -1f;
+        private float _lastOrthoSize = -1f;
+        private int _lastScreenHeight = -1;
+        private int _lastScreenWidth = -1;
         private Vector3 _maxBounds;
 
         private Vector3 _minBounds;
         private Bounds _sourceBounds;
-        private Vector3 _lastConstrainedPosition;
-        private int _lastScreenWidth = -1;
-        private int _lastScreenHeight = -1;
-        private float _lastAspect = -1f;
-        private float _lastOrthoSize = -1f;
-        private float _lastFov = -1f;
 
         private void Start()
         {

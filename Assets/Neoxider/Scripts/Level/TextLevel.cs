@@ -9,12 +9,6 @@ namespace Neo.Level
     [AddComponentMenu("Neoxider/Level/" + nameof(TextLevel))]
     public class TextLevel : SetText
     {
-        private enum LevelDisplayMode
-        {
-            Current = 0,
-            Max = 1
-        }
-
         [SerializeField] private LevelDisplayMode _displayMode = LevelDisplayMode.Current;
         [SerializeField] [HideInInspector] private bool _best;
         [SerializeField] private int _displayOffset = 1;
@@ -27,20 +21,20 @@ namespace Neo.Level
             this.WaitWhile(() => LevelManager.I == null, Init);
         }
 
-        private void OnValidate()
-        {
-            if (_best)
-            {
-                _displayMode = LevelDisplayMode.Max;
-            }
-        }
-
         private void OnDisable()
         {
             if (_event != null)
             {
                 _event.RemoveListener(Set);
                 _event = null;
+            }
+        }
+
+        private void OnValidate()
+        {
+            if (_best)
+            {
+                _displayMode = LevelDisplayMode.Max;
             }
         }
 
@@ -64,6 +58,12 @@ namespace Neo.Level
             }
 
             _event?.AddListener(Set);
+        }
+
+        private enum LevelDisplayMode
+        {
+            Current = 0,
+            Max = 1
         }
     }
 }

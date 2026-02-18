@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -5,12 +6,15 @@ using DG.Tweening.Core;
 using DG.Tweening.Plugins.Options;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Neo.Cards
 {
     /// <summary>
     ///     Компонент руки для работы без кода
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/HandComponent")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(HandComponent))]
     [NeoDoc("Cards/HandComponent.md")]
     public class HandComponent : MonoBehaviour
     {
@@ -27,9 +31,7 @@ namespace Neo.Cards
 
         [Header("Limits")] [SerializeField] private int _maxCards = 36;
 
-        [Header("Card Order")]
-        [Tooltip("If true — new cards are added at bottom (sibling index 0)")]
-        [SerializeField]
+        [Header("Card Order")] [Tooltip("If true — new cards are added at bottom (sibling index 0)")] [SerializeField]
         private bool _addToBottom;
 
         [Header("Animation")] [SerializeField] private float _arrangeDuration = 0.3f;
@@ -104,6 +106,21 @@ namespace Neo.Cards
             set
             {
                 _layoutType = value;
+                ArrangeCardsAsync().Forget();
+            }
+        }
+
+        /// <summary>
+        ///     Устаревшее свойство для обратной совместимости со старыми сценами.
+        ///     Используйте LayoutType (CardLayoutType).
+        /// </summary>
+        [Obsolete("Use LayoutType with CardLayoutType.")]
+        public HandLayoutType LegacyLayoutType
+        {
+            get => (HandLayoutType)(int)_layoutType;
+            set
+            {
+                _layoutType = (CardLayoutType)(int)value;
                 ArrangeCardsAsync().Forget();
             }
         }
@@ -475,21 +492,6 @@ namespace Neo.Cards
         private void ArrangeByButton()
         {
             ArrangeCardsAsync().Forget();
-        }
-
-        /// <summary>
-        ///     Устаревшее свойство для обратной совместимости со старыми сценами.
-        ///     Используйте LayoutType (CardLayoutType).
-        /// </summary>
-        [System.Obsolete("Use LayoutType with CardLayoutType.")]
-        public HandLayoutType LegacyLayoutType
-        {
-            get => (HandLayoutType)(int)_layoutType;
-            set
-            {
-                _layoutType = (CardLayoutType)(int)value;
-                ArrangeCardsAsync().Forget();
-            }
         }
 
         private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation)

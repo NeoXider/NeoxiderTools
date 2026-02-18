@@ -8,7 +8,7 @@
 
 1. На объект NPC добавьте:
    - `NavMeshAgent`
-   - `Neo/NPC/NpcNavigation`
+   - `Neoxider/NPC/NpcNavigation`
 2. Выберите режим в инспекторе `NpcNavigation`:
    - `FollowTarget`
    - `Patrol`

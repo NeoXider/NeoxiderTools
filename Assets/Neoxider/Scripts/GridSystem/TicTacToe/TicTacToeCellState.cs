@@ -1,7 +1,7 @@
 namespace Neo.GridSystem.TicTacToe
 {
     /// <summary>
-    /// Represents possible cell states in TicTacToe.
+    ///     Represents possible cell states in TicTacToe.
     /// </summary>
     public enum TicTacToeCellState
     {

@@ -9,10 +9,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/Spawner/PoolableBehaviour.md")]
     public abstract class PoolableBehaviour : MonoBehaviour, IPoolable
     {
-        public virtual void OnPoolCreate() { }
+        public virtual void OnPoolCreate()
+        {
+        }
 
-        public virtual void OnPoolGet() { }
+        public virtual void OnPoolGet()
+        {
+        }
 
-        public virtual void OnPoolRelease() { }
+        public virtual void OnPoolRelease()
+        {
+        }
     }
 }

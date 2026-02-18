@@ -4,13 +4,13 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    /// Поиск ассетов по проекту (Assets + Packages). Используется в инструментах редактора
-    /// (иконки скриптов, NeoLogo и т.д.), чтобы не дублировать логику при разном расположении библиотеки.
+    ///     Поиск ассетов по проекту (Assets + Packages). Используется в инструментах редактора
+    ///     (иконки скриптов, NeoLogo и т.д.), чтобы не дублировать логику при разном расположении библиотеки.
     /// </summary>
     public static class NeoxiderEditorAssets
     {
         /// <summary>
-        /// Ищет первый ассет по имени и типу по всему проекту (Assets и Packages).
+        ///     Ищет первый ассет по имени и типу по всему проекту (Assets и Packages).
         /// </summary>
         /// <param name="nameOrFilter">Имя ассета или фильтр поиска (например "NeoLogo" или "NeoLogo t:Texture2D")</param>
         /// <param name="typeFilter">Опциональный фильтр типа для FindAssets, например "Texture2D", "MonoScript"</param>
@@ -28,7 +28,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        /// Загружает первый найденный ассет по имени/фильтру по всему проекту (Assets + Packages).
+        ///     Загружает первый найденный ассет по имени/фильтру по всему проекту (Assets + Packages).
         /// </summary>
         public static T FindAndLoad<T>(string nameOrFilter, string typeFilter = null) where T : Object
         {
@@ -42,7 +42,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        /// Ищет текстуру NeoLogo в проекте или пакетах (для иконок компонентов и т.п.).
+        ///     Ищет текстуру NeoLogo в проекте или пакетах (для иконок компонентов и т.п.).
         /// </summary>
         public static Texture2D FindNeoLogo()
         {

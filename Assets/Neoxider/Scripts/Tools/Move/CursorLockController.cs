@@ -10,30 +10,31 @@ namespace Neo.Tools
     ///     player controller for gameplay).
     /// </summary>
     [NeoDoc("Tools/Move/CursorLockController.md")]
-    [CreateFromMenu("Neoxider/Tools/CursorLockController")]
+    [CreateFromMenu("Neoxider/Tools/Movement/CursorLockController")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CursorLockController))]
     public class CursorLockController : MonoBehaviour
     {
-        [Header("Start State")]
-        [SerializeField] private bool _lockOnStart = true;
+        [Header("Start State")] [SerializeField]
+        private bool _lockOnStart = true;
 
         [Header("Lifecycle (optional)")]
         [Tooltip("Apply cursor state when this component is enabled (e.g. when returning to gameplay).")]
-        [SerializeField] private bool _applyOnEnable;
+        [SerializeField]
+        private bool _applyOnEnable;
 
         [SerializeField] private bool _lockOnEnable = true;
 
-        [Tooltip("Apply cursor state when this component is disabled (e.g. when opening menu/pause).")]
-        [SerializeField] private bool _applyOnDisable;
+        [Tooltip("Apply cursor state when this component is disabled (e.g. when opening menu/pause).")] [SerializeField]
+        private bool _applyOnDisable;
 
         [SerializeField] private bool _lockOnDisable;
 
-        [Header("Toggle")]
-        [SerializeField] private bool _allowToggle = true;
+        [Header("Toggle")] [SerializeField] private bool _allowToggle = true;
+
         [SerializeField] private KeyCode _toggleKey = KeyCode.Escape;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onCursorLocked = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onCursorLocked = new();
+
         [SerializeField] private UnityEvent _onCursorUnlocked = new();
 
         /// <summary>
@@ -44,6 +45,14 @@ namespace Neo.Tools
         private void Start()
         {
             SetCursorLocked(_lockOnStart);
+        }
+
+        private void Update()
+        {
+            if (_allowToggle && Input.GetKeyDown(_toggleKey))
+            {
+                ToggleCursorState();
+            }
         }
 
         private void OnEnable()
@@ -59,14 +68,6 @@ namespace Neo.Tools
             if (_applyOnDisable)
             {
                 SetCursorLocked(_lockOnDisable);
-            }
-        }
-
-        private void Update()
-        {
-            if (_allowToggle && Input.GetKeyDown(_toggleKey))
-            {
-                ToggleCursorState();
             }
         }
 

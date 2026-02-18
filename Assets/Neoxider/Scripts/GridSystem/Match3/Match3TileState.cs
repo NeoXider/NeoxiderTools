@@ -1,7 +1,7 @@
 namespace Neo.GridSystem.Match3
 {
     /// <summary>
-    /// Built-in tile identifiers used by Match3 services.
+    ///     Built-in tile identifiers used by Match3 services.
     /// </summary>
     public enum Match3TileState
     {

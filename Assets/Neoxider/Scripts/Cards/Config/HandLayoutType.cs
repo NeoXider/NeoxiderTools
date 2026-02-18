@@ -1,3 +1,5 @@
+using System;
+
 namespace Neo.Cards
 {
     /// <summary>
@@ -39,12 +41,12 @@ namespace Neo.Cards
     /// <summary>
     ///     Устаревшее имя типа раскладки. Оставлено для обратной совместимости.
     /// </summary>
-    [System.Obsolete("Use CardLayoutType instead.")]
+    [Obsolete("Use CardLayoutType instead.")]
     public enum HandLayoutType
     {
-        Fan = (int)CardLayoutType.Fan,
-        Line = (int)CardLayoutType.Line,
-        Stack = (int)CardLayoutType.Stack,
-        Grid = (int)CardLayoutType.Grid
+        Fan = CardLayoutType.Fan,
+        Line = CardLayoutType.Line,
+        Stack = CardLayoutType.Stack,
+        Grid = CardLayoutType.Grid
     }
 }

@@ -66,7 +66,7 @@ float chance = manager.GetNormalizedWeight(1);   // нормализованна
 
 ### ChanceData
 
-`ChanceData` — ScriptableObject с тем же набором настроек. Создайте через `Create > Neo > Tools > Random > Chance Data`, настройте и используйте:
+`ChanceData` — ScriptableObject с тем же набором настроек. Создайте через `Create > Neoxider > Tools > Random > Chance Data`, настройте и используйте:
 
 ```csharp
 [SerializeField] private ChanceData dropTable;

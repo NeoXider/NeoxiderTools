@@ -31,6 +31,8 @@ namespace Neo.Tools
         }
     }
 
+    [CreateFromMenu("Neoxider/Tools/FakeLeaderboard/Leaderboard")]
+    [AddComponentMenu("Neoxider/Tools/" + nameof(Leaderboard))]
     [NeoDoc("Tools/FakeLeaderboard/Leaderboard.md")]
     public class Leaderboard : Singleton<Leaderboard>
     {
@@ -59,9 +61,7 @@ namespace Neo.Tools
         [Space] public List<LeaderboardUser> users = new();
         public bool useZero = true;
 
-        [Space]
-        [Header("Sorting")]
-        [Tooltip("Sort direction: descending (high to low) or ascending (low to high)")]
+        [Space] [Header("Sorting")] [Tooltip("Sort direction: descending (high to low) or ascending (low to high)")]
         public SortOrder sortOrder = SortOrder.Descending;
 
         [Space] [Header("Score Formatting")] [Tooltip("Whether to format score (add separators)")]
@@ -73,17 +73,12 @@ namespace Neo.Tools
         [Tooltip("Time format for score display")]
         public TimeFormat timeFormat = TimeFormat.Seconds;
 
-        [Tooltip("Separator for time format")]
-        public string timeSeparator = ":";
+        [Tooltip("Separator for time format")] public string timeSeparator = ":";
 
-        [Space]
-        [Header("Save Settings")]
-        [Tooltip("Key for saving player data (change for different leaderboards)")]
+        [Space] [Header("Save Settings")] [Tooltip("Key for saving player data (change for different leaderboards)")]
         public string playerSaveKey = "LeaderboardPlayer";
 
-        [Space]
-        [Header("Player Score Display")]
-        [Tooltip("Text shown when player has no score (default: --)")]
+        [Space] [Header("Player Score Display")] [Tooltip("Text shown when player has no score (default: --)")]
         public string noScoreText = "--";
 
         private void Start()

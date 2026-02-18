@@ -122,26 +122,26 @@ namespace Neo.Condition
         [NonSerialized] private Component _cachedComponent;
         [NonSerialized] private GameObject _cachedGameObject;
         [NonSerialized] private MemberInfo _cachedMember;
-        [NonSerialized] private bool _cacheValid;
-
-        // Кеш поиска по имени
-        [NonSerialized] private GameObject _foundByNameObject;
 
         // Кеш для "other" объекта (второй источник при ThresholdSource.OtherObject)
         [NonSerialized] private Component _cachedOtherComponent;
         [NonSerialized] private GameObject _cachedOtherGameObject;
         [NonSerialized] private MemberInfo _cachedOtherMember;
         [NonSerialized] private bool _cacheOtherValid;
+        [NonSerialized] private bool _cacheValid;
+
+        // Кеш поиска по имени
+        [NonSerialized] private GameObject _foundByNameObject;
         [NonSerialized] private GameObject _foundOtherByNameObject;
-        [NonSerialized] private bool _hasSearchedOtherByName;
-        [NonSerialized] private bool _hasLoggedOtherDestroyedWarning;
-        [NonSerialized] private bool _hasLoggedOtherMissingWarning;
 
         // Флаг: предупреждение уже показано (чтобы не спамить каждый кадр)
         [NonSerialized] private bool _hasLoggedDestroyedWarning;
         [NonSerialized] private bool _hasLoggedMissingMemberWarning;
+        [NonSerialized] private bool _hasLoggedOtherDestroyedWarning;
+        [NonSerialized] private bool _hasLoggedOtherMissingWarning;
         [NonSerialized] private bool _hasLoggedSearchNotFoundWarning;
         [NonSerialized] private bool _hasSearchedByName;
+        [NonSerialized] private bool _hasSearchedOtherByName;
 
         /// <summary>
         ///     Источник данных: Component или GameObject.
@@ -358,14 +358,17 @@ namespace Neo.Condition
             {
                 return;
             }
+
             if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
             {
                 return;
             }
+
             if (_otherSourceObject != null)
             {
                 return;
             }
+
             _otherSourceObject = ResolveTargetObject(fallbackObject);
             InvalidateOtherCache();
         }
@@ -450,9 +453,11 @@ namespace Neo.Condition
                 {
                     if (!_hasLoggedOtherMissingWarning)
                     {
-                        Debug.LogWarning($"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
+                        Debug.LogWarning(
+                            $"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
                         _hasLoggedOtherMissingWarning = true;
                     }
+
                     InvalidateOtherCache();
                     return false;
                 }
@@ -486,6 +491,7 @@ namespace Neo.Condition
                             $"[NeoCondition] Ошибка сравнения двух переменных ({_propertyName} vs {_otherPropertyName}): {ex.Message}");
                         _hasLoggedMissingMemberWarning = true;
                     }
+
                     return false;
                 }
             }
@@ -823,7 +829,8 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Разрешает объект для правой стороны. При пустом Other Source Object — тот же объект, что и слева (через ResolveTargetObject).
+        ///     Разрешает объект для правой стороны. При пустом Other Source Object — тот же объект, что и слева (через
+        ///     ResolveTargetObject).
         /// </summary>
         private GameObject ResolveOtherTargetObject(GameObject fallbackObject)
         {
@@ -833,27 +840,34 @@ namespace Neo.Condition
                 {
                     return _foundOtherByNameObject;
                 }
+
                 if (_hasSearchedOtherByName && _foundOtherByNameObject == null)
                 {
                     _hasSearchedOtherByName = false;
                 }
+
                 _foundOtherByNameObject = GameObject.Find(_otherSearchObjectName);
                 _hasSearchedOtherByName = true;
                 if (_foundOtherByNameObject == null && !_otherWaitForObject && !_hasLoggedOtherMissingWarning)
                 {
-                    Debug.LogWarning($"[NeoCondition] Второй объект: GameObject.Find(\"{_otherSearchObjectName}\") не найден.");
+                    Debug.LogWarning(
+                        $"[NeoCondition] Второй объект: GameObject.Find(\"{_otherSearchObjectName}\") не найден.");
                     _hasLoggedOtherMissingWarning = true;
                 }
+
                 return _foundOtherByNameObject;
             }
+
             if (IsOtherSourceObjectDestroyed())
             {
                 return null;
             }
+
             if (_otherSourceObject != null)
             {
                 return _otherSourceObject;
             }
+
             return ResolveTargetObject(fallbackObject);
         }
 
@@ -892,6 +906,7 @@ namespace Neo.Condition
                     return true;
                 }
             }
+
             _cacheOtherValid = false;
             _cachedOtherComponent = null;
             _cachedOtherGameObject = null;
@@ -902,29 +917,40 @@ namespace Neo.Condition
             {
                 return false;
             }
+
             if (string.IsNullOrEmpty(_otherComponentTypeName) || string.IsNullOrEmpty(_otherPropertyName))
             {
                 return false;
             }
+
             Component[] components = target.GetComponents<Component>();
             foreach (Component comp in components)
             {
-                if (comp == null) continue;
-                if (comp.GetType().FullName == _otherComponentTypeName || comp.GetType().Name == _otherComponentTypeName)
+                if (comp == null)
+                {
+                    continue;
+                }
+
+                if (comp.GetType().FullName == _otherComponentTypeName ||
+                    comp.GetType().Name == _otherComponentTypeName)
                 {
                     _cachedOtherComponent = comp;
                     break;
                 }
             }
+
             if (_cachedOtherComponent == null)
             {
                 if (!_hasLoggedOtherMissingWarning)
                 {
-                    Debug.LogWarning($"[NeoCondition] Второй объект: компонент '{_otherComponentTypeName}' не найден на '{target.name}'.");
+                    Debug.LogWarning(
+                        $"[NeoCondition] Второй объект: компонент '{_otherComponentTypeName}' не найден на '{target.name}'.");
                     _hasLoggedOtherMissingWarning = true;
                 }
+
                 return false;
             }
+
             Type type = _cachedOtherComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
             PropertyInfo prop = type.GetProperty(_otherPropertyName, flags);
@@ -934,6 +960,7 @@ namespace Neo.Condition
                 _cacheOtherValid = true;
                 return true;
             }
+
             FieldInfo otherField = type.GetField(_otherPropertyName, flags);
             if (otherField != null)
             {
@@ -941,11 +968,14 @@ namespace Neo.Condition
                 _cacheOtherValid = true;
                 return true;
             }
+
             if (!_hasLoggedOtherMissingWarning)
             {
-                Debug.LogWarning($"[NeoCondition] Второй объект: свойство/поле '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
+                Debug.LogWarning(
+                    $"[NeoCondition] Второй объект: свойство/поле '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
                 _hasLoggedOtherMissingWarning = true;
             }
+
             return false;
         }
 
@@ -963,6 +993,7 @@ namespace Neo.Condition
                     return true;
                 }
             }
+
             _cacheOtherValid = false;
             _cachedOtherComponent = null;
             _cachedOtherGameObject = null;
@@ -973,6 +1004,7 @@ namespace Neo.Condition
             {
                 return false;
             }
+
             _cachedOtherGameObject = target;
             Type type = typeof(GameObject);
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
@@ -983,6 +1015,7 @@ namespace Neo.Condition
                 _cacheOtherValid = true;
                 return true;
             }
+
             FieldInfo goField = type.GetField(_otherPropertyName, flags);
             if (goField != null)
             {
@@ -990,11 +1023,14 @@ namespace Neo.Condition
                 _cacheOtherValid = true;
                 return true;
             }
+
             if (!_hasLoggedOtherMissingWarning)
             {
-                Debug.LogWarning($"[NeoCondition] Второй объект: свойство '{_otherPropertyName}' не найдено на GameObject.");
+                Debug.LogWarning(
+                    $"[NeoCondition] Второй объект: свойство '{_otherPropertyName}' не найдено на GameObject.");
                 _hasLoggedOtherMissingWarning = true;
             }
+
             return false;
         }
 
@@ -1007,29 +1043,36 @@ namespace Neo.Condition
                     InvalidateOtherCache();
                     return null;
                 }
+
                 if (_cachedOtherMember is PropertyInfo goProp)
                 {
                     return goProp.GetValue(_cachedOtherGameObject);
                 }
+
                 if (_cachedOtherMember is FieldInfo goField)
                 {
                     return goField.GetValue(_cachedOtherGameObject);
                 }
+
                 return null;
             }
+
             if (_cachedOtherComponent == null)
             {
                 InvalidateOtherCache();
                 return null;
             }
+
             if (_cachedOtherMember is PropertyInfo prop)
             {
                 return prop.GetValue(_cachedOtherComponent);
             }
+
             if (_cachedOtherMember is FieldInfo field)
             {
                 return field.GetValue(_cachedOtherComponent);
             }
+
             return null;
         }
 
@@ -1137,7 +1180,9 @@ namespace Neo.Condition
             {
                 string otherSrc = _otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName)
                     ? $"Find(\"{_otherSearchObjectName}\")"
-                    : _otherSourceObject != null ? _otherSourceObject.name : "self";
+                    : _otherSourceObject != null
+                        ? _otherSourceObject.name
+                        : "self";
                 string otherComp = string.IsNullOrEmpty(_otherComponentTypeName) ? "?" : _otherComponentTypeName;
                 string otherProp = string.IsNullOrEmpty(_otherPropertyName) ? "?" : _otherPropertyName;
                 thresholdStr = _otherSourceMode == SourceMode.GameObject
@@ -1155,6 +1200,7 @@ namespace Neo.Condition
                     _ => "?"
                 };
             }
+
             string inv = _invert ? " [NOT]" : "";
 
             if (_sourceMode == SourceMode.GameObject)

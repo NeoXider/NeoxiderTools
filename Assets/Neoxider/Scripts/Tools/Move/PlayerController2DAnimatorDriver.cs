@@ -3,19 +3,13 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Drives Animator parameters from <see cref="PlayerController2DPhysics"/> and Rigidbody2D velocity.
+    ///     Drives Animator parameters from <see cref="PlayerController2DPhysics" /> and Rigidbody2D velocity.
     /// </summary>
     [NeoDoc("Tools/Move/PlayerController2DAnimatorDriver.md")]
-    [CreateFromMenu("Neoxider/Tools/PlayerController2DAnimatorDriver")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DAnimatorDriver")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DAnimatorDriver))]
     public class PlayerController2DAnimatorDriver : MonoBehaviour
     {
-        private enum BlendMode2D
-        {
-            HorizontalOnly,
-            TwoAxis
-        }
-
         [Header("References")] [SerializeField]
         private Animator _animator;
 
@@ -212,6 +206,12 @@ namespace Neo.Tools
             {
                 _animator.SetTrigger(param);
             }
+        }
+
+        private enum BlendMode2D
+        {
+            HorizontalOnly,
+            TwoAxis
         }
     }
 }

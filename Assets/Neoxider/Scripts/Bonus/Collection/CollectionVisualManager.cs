@@ -6,6 +6,8 @@ using UnityEngine.Events;
 
 namespace Neo.Bonus
 {
+    [CreateFromMenu("Neoxider/Bonus/CollectionVisualManager")]
+    [AddComponentMenu("Neoxider/Bonus/" + nameof(CollectionVisualManager))]
     [NeoDoc("Bonus/Collection/CollectionVisualManager.md")]
     public class CollectionVisualManager : Singleton<CollectionVisualManager>
     {
@@ -124,7 +126,8 @@ namespace Neo.Bonus
 
             for (int i = 0; i < _items.Length; i++)
             {
-                if (_items[i] == null || _items[i].Button == null || (subscribe && (_buttonActions == null || i >= _buttonActions.Length)))
+                if (_items[i] == null || _items[i].Button == null ||
+                    (subscribe && (_buttonActions == null || i >= _buttonActions.Length)))
                 {
                     continue;
                 }

@@ -6,13 +6,6 @@ namespace Neo.Shop
 {
     public class TextMoney : SetText
     {
-        private enum MoneyDisplayMode
-        {
-            Money = 0,
-            LevelMoney = 1,
-            AllMoney = 2
-        }
-
         [SerializeField] private MoneyDisplayMode _displayMode = MoneyDisplayMode.Money;
         public float amount;
         private Money _money;
@@ -76,6 +69,13 @@ namespace Neo.Shop
         {
             amount = count;
             Set(amount.RoundToDecimal(@decimal).ToString());
+        }
+
+        private enum MoneyDisplayMode
+        {
+            Money = 0,
+            LevelMoney = 1,
+            AllMoney = 2
         }
     }
 }

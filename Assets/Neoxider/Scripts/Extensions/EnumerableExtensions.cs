@@ -14,7 +14,7 @@ namespace Neo.Extensions
         ///     Performs an action on each item in the enumeration.
         /// </summary>
         /// <remarks>
-        ///     If <paramref name="enumeration"/> or <paramref name="action"/> is null, method does nothing.
+        ///     If <paramref name="enumeration" /> or <paramref name="action" /> is null, method does nothing.
         /// </remarks>
         /// <param name="action">The action to perform.</param>
         public static void ForEach<T>(this IEnumerable<T> enumeration, Action<T> action)

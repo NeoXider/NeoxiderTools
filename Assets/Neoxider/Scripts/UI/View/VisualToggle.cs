@@ -31,9 +31,7 @@ namespace Neo.UI
         [Tooltip("If enabled, invokes events for current state on Start")] [SerializeField]
         private bool _setOnAwake = true;
 
-        [Header("Image Variants")]
-        [Tooltip("Image array for switching sprites between states")]
-        [SerializeField]
+        [Header("Image Variants")] [Tooltip("Image array for switching sprites between states")] [SerializeField]
         private ImageVariant[] imageV = new ImageVariant[0];
 
         [Header("Image Colors")] [Tooltip("Image array for switching colors between states")] [SerializeField]
@@ -370,8 +368,7 @@ namespace Neo.UI
             [Tooltip("Color for initial state (start)")]
             public Color start = Color.white;
 
-            [Tooltip("Color for end state (end)")]
-            public Color end = Color.white;
+            [Tooltip("Color for end state (end)")] public Color end = Color.white;
         }
 
         /// <summary>
@@ -386,8 +383,7 @@ namespace Neo.UI
             [Tooltip("Color for initial state (start)")]
             public Color start = Color.white;
 
-            [Tooltip("Color for end state (end)")]
-            public Color end = Color.white;
+            [Tooltip("Color for end state (end)")] public Color end = Color.white;
 
             [Tooltip("Whether to switch text along with color")]
             public bool useText;

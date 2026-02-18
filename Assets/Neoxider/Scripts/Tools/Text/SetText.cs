@@ -1,4 +1,3 @@
-using System;
 using System.Numerics;
 using DG.Tweening;
 using Neo.Extensions;
@@ -15,7 +14,7 @@ namespace Neo
         ///     Useful for displaying numeric values with separators and decimal places.
         /// </summary>
         [NeoDoc("Tools/Text/SetText.md")]
-        [CreateFromMenu("Neoxider/Tools/SetText")]
+        [CreateFromMenu("Neoxider/Tools/Text/SetText")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SetText))]
         public class SetText : MonoBehaviour
         {
@@ -31,6 +30,25 @@ namespace Neo
             private void OnEnable()
             {
                 _tween?.Play();
+            }
+
+            private NumberFormatOptions BuildNumberFormatOptions(string prefix = "", string suffix = "")
+            {
+                return new NumberFormatOptions(
+                    numberNotation,
+                    @decimal,
+                    roundingMode,
+                    trimTrailingZeros,
+                    separator,
+                    decimalSeparator,
+                    prefix,
+                    suffix);
+            }
+
+            private string FormatNumber(float value)
+            {
+                NumberFormatOptions options = BuildNumberFormatOptions();
+                return value.ToPrettyString(options);
             }
 
             #region Serialized Fields
@@ -296,7 +314,7 @@ namespace Neo
             {
                 if (string.IsNullOrWhiteSpace(value))
                 {
-                    Set("0");
+                    Set();
                     return;
                 }
 
@@ -341,25 +359,6 @@ namespace Neo
             }
 
             #endregion
-
-            private NumberFormatOptions BuildNumberFormatOptions(string prefix = "", string suffix = "")
-            {
-                return new NumberFormatOptions(
-                    numberNotation,
-                    @decimal,
-                    roundingMode,
-                    trimTrailingZeros,
-                    separator,
-                    decimalSeparator,
-                    prefix,
-                    suffix);
-            }
-
-            private string FormatNumber(float value)
-            {
-                NumberFormatOptions options = BuildNumberFormatOptions();
-                return value.ToPrettyString(options);
-            }
         }
     }
 }

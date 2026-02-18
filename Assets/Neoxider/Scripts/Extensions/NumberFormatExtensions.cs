@@ -6,110 +6,110 @@ using System.Text;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Defines output notation style for numeric formatting.
+    ///     Defines output notation style for numeric formatting.
     /// </summary>
     public enum NumberNotation
     {
         /// <summary>
-        /// Plain number without thousand grouping and suffixes.
+        ///     Plain number without thousand grouping and suffixes.
         /// </summary>
         Plain = 0,
 
         /// <summary>
-        /// Number with grouped thousands (for example: 1,234,567).
+        ///     Number with grouped thousands (for example: 1,234,567).
         /// </summary>
         Grouped = 1,
 
         /// <summary>
-        /// Idle/clicker short notation with suffixes (K, M, B, T...).
+        ///     Idle/clicker short notation with suffixes (K, M, B, T...).
         /// </summary>
         IdleShort = 2,
 
         /// <summary>
-        /// Scientific notation (for example: 1.23e6).
+        ///     Scientific notation (for example: 1.23e6).
         /// </summary>
         Scientific = 3
     }
 
     /// <summary>
-    /// Defines rounding behavior used before number-to-string conversion.
+    ///     Defines rounding behavior used before number-to-string conversion.
     /// </summary>
     public enum NumberRoundingMode
     {
         /// <summary>
-        /// Rounds to nearest value; midpoint goes to even digit.
+        ///     Rounds to nearest value; midpoint goes to even digit.
         /// </summary>
         ToEven = 0,
 
         /// <summary>
-        /// Rounds midpoint values away from zero.
+        ///     Rounds midpoint values away from zero.
         /// </summary>
         AwayFromZero = 1,
 
         /// <summary>
-        /// Truncates fractional part toward zero.
+        ///     Truncates fractional part toward zero.
         /// </summary>
         ToZero = 2,
 
         /// <summary>
-        /// Rounds toward positive infinity (ceiling).
+        ///     Rounds toward positive infinity (ceiling).
         /// </summary>
         ToPositiveInfinity = 3,
 
         /// <summary>
-        /// Rounds toward negative infinity (floor).
+        ///     Rounds toward negative infinity (floor).
         /// </summary>
         ToNegativeInfinity = 4
     }
 
     /// <summary>
-    /// Formatting options for NumberFormatExtensions.
+    ///     Formatting options for NumberFormatExtensions.
     /// </summary>
     [Serializable]
     public struct NumberFormatOptions
     {
         /// <summary>
-        /// Output notation style.
+        ///     Output notation style.
         /// </summary>
         public NumberNotation Notation;
 
         /// <summary>
-        /// Rounding mode used before string conversion.
+        ///     Rounding mode used before string conversion.
         /// </summary>
         public NumberRoundingMode RoundingMode;
 
         /// <summary>
-        /// Count of digits after decimal separator.
+        ///     Count of digits after decimal separator.
         /// </summary>
         public int Decimals;
 
         /// <summary>
-        /// When true, trailing zeros in fractional part are removed.
+        ///     When true, trailing zeros in fractional part are removed.
         /// </summary>
         public bool TrimTrailingZeros;
 
         /// <summary>
-        /// Thousands group separator.
+        ///     Thousands group separator.
         /// </summary>
         public string GroupSeparator;
 
         /// <summary>
-        /// Fractional separator.
+        ///     Fractional separator.
         /// </summary>
         public string DecimalSeparator;
 
         /// <summary>
-        /// Prefix appended before formatted numeric value.
+        ///     Prefix appended before formatted numeric value.
         /// </summary>
         public string Prefix;
 
         /// <summary>
-        /// Suffix appended after formatted numeric value.
+        ///     Suffix appended after formatted numeric value.
         /// </summary>
         public string Suffix;
 
         /// <summary>
-        /// Creates custom number formatting options.
+        ///     Creates custom number formatting options.
         /// </summary>
         public NumberFormatOptions(
             NumberNotation notation,
@@ -132,19 +132,19 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Default grouped format preset.
+        ///     Default grouped format preset.
         /// </summary>
         public static NumberFormatOptions Default =>
-            new(NumberNotation.Grouped, 0, NumberRoundingMode.ToEven, false, ",", ".");
+            new(NumberNotation.Grouped, 0, NumberRoundingMode.ToEven, false);
 
         /// <summary>
-        /// Default idle short notation preset.
+        ///     Default idle short notation preset.
         /// </summary>
         public static NumberFormatOptions IdleShort =>
-            new(NumberNotation.IdleShort, 1, NumberRoundingMode.ToEven, true, ".", ".");
+            new(NumberNotation.IdleShort, 1, NumberRoundingMode.ToEven, true, ".");
 
         /// <summary>
-        /// Clamps decimals to valid range [0..12].
+        ///     Clamps decimals to valid range [0..12].
         /// </summary>
         public static int ClampDecimals(int decimals)
         {
@@ -153,10 +153,11 @@ namespace Neo.Extensions
     }
 
     /// <summary>
-    /// Extension helpers and core formatter for large and regular numeric values.
+    ///     Extension helpers and core formatter for large and regular numeric values.
     /// </summary>
     public static class NumberFormatExtensions
     {
+        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
         private static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
         private static readonly string[] BaseSuffixes =
@@ -164,10 +165,8 @@ namespace Neo.Extensions
             "", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"
         };
 
-        private const string Alphabet = "abcdefghijklmnopqrstuvwxyz";
-
         /// <summary>
-        /// Formats an int using provided format options.
+        ///     Formats an int using provided format options.
         /// </summary>
         /// <param name="value">Source integer value.</param>
         /// <param name="options">Formatting options.</param>
@@ -178,7 +177,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a long using provided format options.
+        ///     Formats a long using provided format options.
         /// </summary>
         /// <param name="value">Source long value.</param>
         /// <param name="options">Formatting options.</param>
@@ -189,18 +188,18 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a float using provided format options.
+        ///     Formats a float using provided format options.
         /// </summary>
         /// <param name="value">Source float value.</param>
         /// <param name="options">Formatting options.</param>
         /// <returns>Formatted string representation.</returns>
         public static string ToPrettyString(this float value, NumberFormatOptions options)
         {
-            return FormatNumber((double)value, options);
+            return FormatNumber(value, options);
         }
 
         /// <summary>
-        /// Formats a double using provided format options.
+        ///     Formats a double using provided format options.
         /// </summary>
         /// <param name="value">Source double value.</param>
         /// <param name="options">Formatting options.</param>
@@ -216,7 +215,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a decimal using provided format options.
+        ///     Formats a decimal using provided format options.
         /// </summary>
         /// <param name="value">Source decimal value.</param>
         /// <param name="options">Formatting options.</param>
@@ -227,7 +226,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats a BigInteger using provided format options.
+        ///     Formats a BigInteger using provided format options.
         /// </summary>
         /// <param name="value">Source BigInteger value.</param>
         /// <param name="options">Formatting options.</param>
@@ -238,7 +237,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats BigInteger with default idle short notation and selected rounding.
+        ///     Formats BigInteger with default idle short notation and selected rounding.
         /// </summary>
         /// <param name="value">Source BigInteger value.</param>
         /// <param name="decimals">Fraction digits count.</param>
@@ -254,7 +253,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats long with default idle short notation and selected rounding.
+        ///     Formats long with default idle short notation and selected rounding.
         /// </summary>
         /// <param name="value">Source long value.</param>
         /// <param name="decimals">Fraction digits count.</param>
@@ -267,7 +266,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats int with default idle short notation and selected rounding.
+        ///     Formats int with default idle short notation and selected rounding.
         /// </summary>
         /// <param name="value">Source int value.</param>
         /// <param name="decimals">Fraction digits count.</param>
@@ -280,7 +279,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats double with default idle short notation and selected rounding.
+        ///     Formats double with default idle short notation and selected rounding.
         /// </summary>
         /// <param name="value">Source double value.</param>
         /// <param name="decimals">Fraction digits count.</param>
@@ -296,7 +295,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Formats float with default idle short notation and selected rounding.
+        ///     Formats float with default idle short notation and selected rounding.
         /// </summary>
         /// <param name="value">Source float value.</param>
         /// <param name="decimals">Fraction digits count.</param>
@@ -312,7 +311,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Core formatter for BigInteger values.
+        ///     Core formatter for BigInteger values.
         /// </summary>
         /// <param name="value">Source BigInteger value.</param>
         /// <param name="options">Formatting options.</param>
@@ -333,7 +332,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Core formatter for decimal values.
+        ///     Core formatter for decimal values.
         /// </summary>
         /// <param name="value">Source decimal value.</param>
         /// <param name="options">Formatting options.</param>
@@ -355,7 +354,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Core formatter for double values.
+        ///     Core formatter for double values.
         /// </summary>
         /// <param name="value">Source double value.</param>
         /// <param name="options">Formatting options.</param>

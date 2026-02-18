@@ -8,6 +8,8 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент доски для общих карт (например, 5 карт на столе в Texas Hold'em или биты в "Дураке")
     /// </summary>
+    [CreateFromMenu("Neoxider/Cards/BoardComponent")]
+    [AddComponentMenu("Neoxider/Cards/" + nameof(BoardComponent))]
     [NeoDoc("Cards/BoardComponent.md")]
     public class BoardComponent : MonoBehaviour
     {
@@ -17,7 +19,7 @@ namespace Neo.Cards
         [SerializeField] private bool _autoGenerateSlots = true;
         [SerializeField] private BoardMode _mode = BoardMode.Table;
         [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Slots;
-        [SerializeField] private CardLayoutSettings _layoutSettings = default;
+        [SerializeField] private CardLayoutSettings _layoutSettings;
         [SerializeField] private StackZSortingStrategy _stackZSorting = StackZSortingStrategy.TopCardFirst;
 
         [Tooltip(
@@ -36,9 +38,7 @@ namespace Neo.Cards
         [Tooltip("Whether to automatically increase max card count when returning")] [SerializeField]
         private bool _autoExpandCapacity = true;
 
-        [Header("Sources (for reset)")]
-        [Tooltip("Hands from which to take cards on reset/restart")]
-        [SerializeField]
+        [Header("Sources (for reset)")] [Tooltip("Hands from which to take cards on reset/restart")] [SerializeField]
         private List<HandComponent> _handSources = new();
 
         [Tooltip("Other BoardComponents to clear into this Board")] [SerializeField]

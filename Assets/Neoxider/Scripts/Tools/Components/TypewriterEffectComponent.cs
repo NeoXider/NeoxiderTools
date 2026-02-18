@@ -10,13 +10,11 @@ namespace Neo.Tools
     ///     MonoBehaviour-обёртка для TypewriterEffect (на UniTask).
     /// </summary>
     [NeoDoc("Tools/Components/TypewriterEffect.md")]
-    [CreateFromMenu("Neoxider/Tools/TypewriterEffectComponent")]
+    [CreateFromMenu("Neoxider/Tools/Components/TypewriterEffectComponent")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(TypewriterEffectComponent))]
     public class TypewriterEffectComponent : MonoBehaviour
     {
-        [Header("Target")]
-        [Tooltip("Text component for output. If not set, searched on this object")]
-        [SerializeField]
+        [Header("Target")] [Tooltip("Text component for output. If not set, searched on this object")] [SerializeField]
         private TMP_Text _targetText;
 
         [Header("Settings")] [Tooltip("Auto-start effect on Start")] [SerializeField]

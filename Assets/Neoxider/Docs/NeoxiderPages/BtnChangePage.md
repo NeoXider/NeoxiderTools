@@ -2,7 +2,7 @@
 
 UI-кнопка для смены страниц через **PM**. Поддерживает анимацию нажатия и опциональное выполнение состояния (GameState) перед переключением.
 
-**Добавить:** GameObject с Button/Image → Neo → Pages → BtnChangePage.
+**Добавить:** GameObject с Button/Image → Neoxider → Pages → BtnChangePage.
 
 ## Действия (Action)
 

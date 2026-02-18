@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Describes why a path request failed.
+    ///     Describes why a path request failed.
     /// </summary>
     public enum NoPathReason
     {
@@ -17,75 +17,75 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Contains input parameters for a pathfinding query.
+    ///     Contains input parameters for a pathfinding query.
     /// </summary>
     [Serializable]
     public class GridPathRequest
     {
         /// <summary>
-        /// Start cell position in grid coordinates.
+        ///     Start cell position in grid coordinates.
         /// </summary>
         public Vector3Int Start;
 
         /// <summary>
-        /// End cell position in grid coordinates.
+        ///     End cell position in grid coordinates.
         /// </summary>
         public Vector3Int End;
 
         /// <summary>
-        /// Optional movement directions override.
-        /// </summary>
-        public IEnumerable<Vector3Int> Directions;
-
-        /// <summary>
-        /// Ignores occupied state when evaluating passability.
+        ///     Ignores occupied state when evaluating passability.
         /// </summary>
         public bool IgnoreOccupied;
 
         /// <summary>
-        /// Ignores enabled/disabled state when evaluating passability.
+        ///     Ignores enabled/disabled state when evaluating passability.
         /// </summary>
         public bool IgnoreDisabled;
 
         /// <summary>
-        /// Ignores walkability flag when evaluating passability.
+        ///     Ignores walkability flag when evaluating passability.
         /// </summary>
         public bool IgnoreWalkability;
 
         /// <summary>
-        /// Optional custom passability callback evaluated per cell.
+        ///     Optional custom passability callback evaluated per cell.
         /// </summary>
         public Func<FieldCell, bool> CustomPassabilityPredicate;
+
+        /// <summary>
+        ///     Optional movement directions override.
+        /// </summary>
+        public IEnumerable<Vector3Int> Directions;
     }
 
     /// <summary>
-    /// Contains result data for a pathfinding query.
+    ///     Contains result data for a pathfinding query.
     /// </summary>
     public class GridPathResult
     {
         /// <summary>
-        /// Computed path from start to end (inclusive).
+        ///     Computed path from start to end (inclusive).
         /// </summary>
         public List<FieldCell> Path;
 
         /// <summary>
-        /// Failure reason when no path is available.
+        ///     Failure reason when no path is available.
         /// </summary>
         public NoPathReason Reason;
 
         /// <summary>
-        /// Returns true when a non-empty path has been found.
+        ///     Returns true when a non-empty path has been found.
         /// </summary>
         public bool HasPath => Path != null && Path.Count > 0;
     }
 
     /// <summary>
-    /// Static BFS pathfinding service for <see cref="FieldGenerator"/>.
+    ///     Static BFS pathfinding service for <see cref="FieldGenerator" />.
     /// </summary>
     public static class GridPathfinder
     {
         /// <summary>
-        /// Finds a path using BFS and returns detailed result metadata.
+        ///     Finds a path using BFS and returns detailed result metadata.
         /// </summary>
         /// <param name="generator">Grid source.</param>
         /// <param name="request">Path request parameters.</param>

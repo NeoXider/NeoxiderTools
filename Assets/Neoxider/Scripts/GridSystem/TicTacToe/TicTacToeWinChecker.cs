@@ -3,12 +3,12 @@ using UnityEngine;
 namespace Neo.GridSystem.TicTacToe
 {
     /// <summary>
-    /// Provides winner detection utilities for TicTacToe boards.
+    ///     Provides winner detection utilities for TicTacToe boards.
     /// </summary>
     public static class TicTacToeWinChecker
     {
         /// <summary>
-        /// Evaluates the board and returns the winning player or <see cref="TicTacToeCellState.Empty"/>.
+        ///     Evaluates the board and returns the winning player or <see cref="TicTacToeCellState.Empty" />.
         /// </summary>
         /// <param name="generator">Grid generator that stores board data in <c>ContentId</c>.</param>
         /// <returns>Winner state if a winning line exists; otherwise <c>Empty</c>.</returns>

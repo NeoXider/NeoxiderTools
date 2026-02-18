@@ -1,5 +1,4 @@
 using DG.Tweening;
-using Neo;
 using Neo.Extensions;
 using Neo.Save;
 using TMPro;
@@ -35,13 +34,13 @@ namespace Neo.Bonus
         [SerializeField] private float _maxProgress = 300f;
         [SerializeField] private float _progress;
 
-        public float AddProgressAmount => _addProgress;
-        public float MaxProgress => _maxProgress;
-
         [Space] public UnityEvent OnTakePrize;
         public UnityEvent OnProgressReached;
         public UnityEvent OnProgressNotReached;
         public UnityEvent<bool> OnChangeProgress;
+
+        public float AddProgressAmount => _addProgress;
+        public float MaxProgress => _maxProgress;
 
         public float progress
         {

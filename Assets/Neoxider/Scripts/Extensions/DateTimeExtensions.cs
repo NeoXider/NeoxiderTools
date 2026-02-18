@@ -4,14 +4,14 @@ using System.Globalization;
 namespace Neo.Extensions
 {
     /// <summary>
-    /// Provides helper methods for safe UTC date-time serialization and calculations.
+    ///     Provides helper methods for safe UTC date-time serialization and calculations.
     /// </summary>
     public static class DateTimeExtensions
     {
         private const string RoundTripFormat = "o";
 
         /// <summary>
-        /// Converts a <see cref="DateTime"/> value to a round-trip UTC string.
+        ///     Converts a <see cref="DateTime" /> value to a round-trip UTC string.
         /// </summary>
         /// <param name="utc">Source date-time value.</param>
         /// <returns>UTC string formatted with round-trip ISO format.</returns>
@@ -21,7 +21,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Tries to parse a persisted UTC string in round-trip format with legacy fallbacks.
+        ///     Tries to parse a persisted UTC string in round-trip format with legacy fallbacks.
         /// </summary>
         /// <param name="raw">Serialized date-time string.</param>
         /// <param name="utc">Parsed UTC value when successful.</param>
@@ -61,7 +61,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets elapsed seconds from a UTC timestamp to another UTC timestamp.
+        ///     Gets elapsed seconds from a UTC timestamp to another UTC timestamp.
         /// </summary>
         /// <param name="utc">Start UTC timestamp.</param>
         /// <param name="nowUtc">End UTC timestamp.</param>
@@ -74,7 +74,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Gets remaining seconds until a UTC target timestamp.
+        ///     Gets remaining seconds until a UTC target timestamp.
         /// </summary>
         /// <param name="targetUtc">Target UTC timestamp.</param>
         /// <param name="nowUtc">Current UTC timestamp.</param>
@@ -87,7 +87,7 @@ namespace Neo.Extensions
         }
 
         /// <summary>
-        /// Converts the value to UTC preserving semantic intent.
+        ///     Converts the value to UTC preserving semantic intent.
         /// </summary>
         /// <param name="value">Input date-time value.</param>
         /// <returns>UTC normalized date-time.</returns>

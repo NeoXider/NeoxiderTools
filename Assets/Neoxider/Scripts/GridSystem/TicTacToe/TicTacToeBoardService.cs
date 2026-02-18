@@ -4,7 +4,7 @@ using UnityEngine.Events;
 namespace Neo.GridSystem.TicTacToe
 {
     /// <summary>
-    /// Runtime service that controls turns, moves, win checks and reset flow for TicTacToe.
+    ///     Runtime service that controls turns, moves, win checks and reset flow for TicTacToe.
     /// </summary>
     [NeoDoc("GridSystem/TicTacToe/TicTacToeBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
@@ -15,41 +15,41 @@ namespace Neo.GridSystem.TicTacToe
         [SerializeField] private bool _resetOnStart = true;
 
         /// <summary>
-        /// Invoked when active player changes. Argument is <see cref="TicTacToeCellState"/> as int.
+        ///     Invoked when active player changes. Argument is <see cref="TicTacToeCellState" /> as int.
         /// </summary>
         public UnityEvent<int> OnPlayerChanged = new();
 
         /// <summary>
-        /// Invoked when a winner is detected. Argument is winner state as int.
+        ///     Invoked when a winner is detected. Argument is winner state as int.
         /// </summary>
         public UnityEvent<int> OnWinnerDetected = new();
 
         /// <summary>
-        /// Invoked when the board ends with a draw.
+        ///     Invoked when the board ends with a draw.
         /// </summary>
         public UnityEvent OnDrawDetected = new();
 
         /// <summary>
-        /// Invoked after board reset is complete.
+        ///     Invoked after board reset is complete.
         /// </summary>
         public UnityEvent OnBoardReset = new();
 
+        private FieldGenerator _generator;
+
         /// <summary>
-        /// Current player that is allowed to make the next move.
+        ///     Current player that is allowed to make the next move.
         /// </summary>
         public TicTacToeCellState CurrentPlayer { get; private set; } = TicTacToeCellState.PlayerX;
 
         /// <summary>
-        /// Winner state. Remains <see cref="TicTacToeCellState.Empty"/> until someone wins.
+        ///     Winner state. Remains <see cref="TicTacToeCellState.Empty" /> until someone wins.
         /// </summary>
         public TicTacToeCellState Winner { get; private set; } = TicTacToeCellState.Empty;
 
         /// <summary>
-        /// True when game is finished (win or draw).
+        ///     True when game is finished (win or draw).
         /// </summary>
         public bool IsFinished { get; private set; }
-
-        private FieldGenerator _generator;
 
         private void Awake()
         {
@@ -65,7 +65,7 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        /// Clears board state and starts a new round from player X.
+        ///     Clears board state and starts a new round from player X.
         /// </summary>
         public void ResetBoard()
         {
@@ -93,7 +93,7 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        /// Attempts to place a mark at a 2D grid position.
+        ///     Attempts to place a mark at a 2D grid position.
         /// </summary>
         /// <param name="pos">Target position in board coordinates.</param>
         /// <returns>True if move is accepted; otherwise false.</returns>
@@ -103,7 +103,7 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        /// Attempts to place a mark at a 3D grid position.
+        ///     Attempts to place a mark at a 3D grid position.
         /// </summary>
         /// <param name="pos">Target position in board coordinates.</param>
         /// <returns>True if move is accepted; otherwise false.</returns>
@@ -151,7 +151,7 @@ namespace Neo.GridSystem.TicTacToe
         }
 
         /// <summary>
-        /// Checks whether every enabled cell is already occupied by a move.
+        ///     Checks whether every enabled cell is already occupied by a move.
         /// </summary>
         /// <returns>True when no empty enabled cells remain.</returns>
         public bool IsBoardFull()

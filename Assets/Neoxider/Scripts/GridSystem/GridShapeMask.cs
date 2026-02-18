@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.GridSystem
 {
     /// <summary>
-    /// Defines how mask coordinates are interpreted.
+    ///     Defines how mask coordinates are interpreted.
     /// </summary>
     public enum GridShapeMaskMode
     {
@@ -14,7 +14,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    /// Scriptable shape asset used to enable/disable selected grid cells.
+    ///     Scriptable shape asset used to enable/disable selected grid cells.
     /// </summary>
     [CreateAssetMenu(
         fileName = "GridShapeMask",
@@ -27,17 +27,22 @@ namespace Neo.GridSystem
         [NonSerialized] private HashSet<Vector3Int> _cache;
 
         /// <summary>
-        /// Mask interpretation mode.
+        ///     Mask interpretation mode.
         /// </summary>
         public GridShapeMaskMode Mode => _mode;
 
         /// <summary>
-        /// Raw mask coordinates list.
+        ///     Raw mask coordinates list.
         /// </summary>
         public IReadOnlyList<Vector3Int> Cells => _cells;
 
+        private void OnValidate()
+        {
+            _cache = null;
+        }
+
         /// <summary>
-        /// Evaluates whether a cell should be enabled after applying this mask.
+        ///     Evaluates whether a cell should be enabled after applying this mask.
         /// </summary>
         /// <param name="baseEnabled">Enabled value produced by base shape.</param>
         /// <param name="pos">Cell position.</param>
@@ -54,11 +59,6 @@ namespace Neo.GridSystem
             }
 
             return gridType == GridType.Custom ? contains : baseEnabled && contains;
-        }
-
-        private void OnValidate()
-        {
-            _cache = null;
         }
 
         private void EnsureCache()

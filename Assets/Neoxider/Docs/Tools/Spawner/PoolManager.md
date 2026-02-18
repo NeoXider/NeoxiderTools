@@ -2,7 +2,7 @@
 
 Синглтон пулов объектов: предзаполнение по конфигу (prefab + initial size + max size), получение/возврат через Get/Release, опциональное расширение пула с лимитом.
 
-**Добавить:** Neo → Tools → PoolManager (или через Singleton).
+**Добавить:** Neoxider → Tools → PoolManager (или через Singleton).
 
 ## Основное
 

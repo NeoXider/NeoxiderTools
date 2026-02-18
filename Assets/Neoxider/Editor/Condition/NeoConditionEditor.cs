@@ -57,6 +57,8 @@ namespace Neo.Editor.Condition
         private static readonly string[] BoolCompareOps = { "==  Equal", "!=  Not Equal" };
         private static readonly string[] BoolThresholdNames = { "true", "false" };
 
+        private static readonly string[] ThresholdSourceNames = { "Constant (number/text)", "Other Object (variable)" };
+
         /// <summary>
         ///     Включаем кастомный UI внутри фирменного Neoxider-стиля.
         /// </summary>
@@ -249,7 +251,8 @@ namespace Neo.Editor.Condition
             string summary = BuildConditionSummary(sourceModeProp, useSceneSearchProp, searchNameProp,
                 compTypeProp, propNameProp, compareOpProp, valueTypeProp,
                 thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp,
-                otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherCompTypeProp, otherPropNameProp, invertProp);
+                otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherCompTypeProp, otherPropNameProp,
+                invertProp);
             GUIStyle summaryStyle = new(EditorStyles.miniLabel)
             {
                 fontStyle = FontStyle.Italic,
@@ -426,8 +429,10 @@ namespace Neo.Editor.Condition
 
                     if (!string.IsNullOrEmpty(propNameProp.stringValue))
                     {
-                        DrawCompareAndThresholdOrOther(entryProp, condition, index, targetObj, compareOpProp, valueTypeProp,
-                            thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp,
+                        DrawCompareAndThresholdOrOther(entryProp, condition, index, targetObj, compareOpProp,
+                            valueTypeProp,
+                            thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
+                            thresholdStringProp,
                             otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherWaitForObjectProp,
                             otherSourceObjProp, otherCompTypeProp, otherCompIdxProp, otherPropNameProp);
                     }
@@ -451,9 +456,12 @@ namespace Neo.Editor.Condition
 
                             if (!string.IsNullOrEmpty(propNameProp.stringValue))
                             {
-                                DrawCompareAndThresholdOrOther(entryProp, condition, index, targetObj, compareOpProp, valueTypeProp,
-                                    thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp,
-                                    otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherWaitForObjectProp,
+                                DrawCompareAndThresholdOrOther(entryProp, condition, index, targetObj, compareOpProp,
+                                    valueTypeProp,
+                                    thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
+                                    thresholdStringProp,
+                                    otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp,
+                                    otherWaitForObjectProp,
                                     otherSourceObjProp, otherCompTypeProp, otherCompIdxProp, otherPropNameProp);
                             }
                         }
@@ -467,8 +475,6 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.EndVertical();
         }
-
-        private static readonly string[] ThresholdSourceNames = { "Constant (number/text)", "Other Object (variable)" };
 
         private void DrawCompareAndThresholdOrOther(
             SerializedProperty entryProp,
@@ -508,7 +514,8 @@ namespace Neo.Editor.Condition
                 EditorGUILayout.Space(4);
                 EditorGUILayout.LabelField("Other Object (right side)", EditorStyles.boldLabel);
 
-                int otherModeIdx = EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
+                int otherModeIdx =
+                    EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
                 if (otherModeIdx != otherSourceModeProp.enumValueIndex)
                 {
                     otherSourceModeProp.enumValueIndex = otherModeIdx;
@@ -523,7 +530,8 @@ namespace Neo.Editor.Condition
                 if (otherUseSceneSearchProp.boolValue)
                 {
                     EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
-                    otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(new GUIContent("Other: Wait For Object"), otherWaitForObjectProp.boolValue);
+                    otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(new GUIContent("Other: Wait For Object"),
+                        otherWaitForObjectProp.boolValue);
                     if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
                     {
                         otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
@@ -531,13 +539,17 @@ namespace Neo.Editor.Condition
                 }
                 else
                 {
-                    EditorGUILayout.PropertyField(otherSourceObjProp, new GUIContent("Other Source Object", "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
+                    EditorGUILayout.PropertyField(otherSourceObjProp,
+                        new GUIContent("Other Source Object",
+                            "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
                     otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
                 }
+
                 if (otherTargetObj == null)
                 {
                     otherTargetObj = leftTargetObj;
                 }
+
                 if (otherTargetObj == null && condition != null)
                 {
                     otherTargetObj = condition.gameObject;
@@ -548,7 +560,7 @@ namespace Neo.Editor.Condition
                     bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
                     if (otherIsGO)
                     {
-                        DrawGameObjectPropertyDropdown(otherPropNameProp, null);
+                        DrawGameObjectPropertyDropdown(otherPropNameProp);
                         if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
                         {
                             DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
@@ -563,7 +575,7 @@ namespace Neo.Editor.Condition
                             Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
                             if (otherComp != null)
                             {
-                                DrawPropertyDropdown(otherComp, otherPropNameProp, null);
+                                DrawPropertyDropdown(otherComp, otherPropNameProp);
                                 if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
                                 {
                                     DrawCurrentValue(otherComp, otherPropNameProp.stringValue);
@@ -574,7 +586,9 @@ namespace Neo.Editor.Condition
                 }
                 else
                 {
-                    EditorGUILayout.HelpBox("Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.", MessageType.Info);
+                    EditorGUILayout.HelpBox(
+                        "Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.",
+                        MessageType.Info);
                 }
             }
             else
@@ -603,6 +617,7 @@ namespace Neo.Editor.Condition
                 {
                     compareOpProp.enumValueIndex = newBoolOp;
                 }
+
                 int thresholdIdx = thresholdBoolProp.boolValue ? 0 : 1;
                 int newThresholdIdx = EditorGUILayout.Popup(thresholdIdx, BoolThresholdNames, GUILayout.Width(60));
                 thresholdBoolProp.boolValue = newThresholdIdx == 0;
@@ -617,18 +632,23 @@ namespace Neo.Editor.Condition
                 {
                     compareOpProp.enumValueIndex = newOp;
                 }
+
                 switch (vt)
                 {
                     case ValueType.Int:
-                        thresholdIntProp.intValue = EditorGUILayout.IntField(thresholdIntProp.intValue, GUILayout.MinWidth(50));
+                        thresholdIntProp.intValue =
+                            EditorGUILayout.IntField(thresholdIntProp.intValue, GUILayout.MinWidth(50));
                         break;
                     case ValueType.Float:
-                        thresholdFloatProp.floatValue = EditorGUILayout.FloatField(thresholdFloatProp.floatValue, GUILayout.MinWidth(50));
+                        thresholdFloatProp.floatValue =
+                            EditorGUILayout.FloatField(thresholdFloatProp.floatValue, GUILayout.MinWidth(50));
                         break;
                     case ValueType.String:
-                        thresholdStringProp.stringValue = EditorGUILayout.TextField(thresholdStringProp.stringValue, GUILayout.MinWidth(50));
+                        thresholdStringProp.stringValue = EditorGUILayout.TextField(thresholdStringProp.stringValue,
+                            GUILayout.MinWidth(50));
                         break;
                 }
+
                 EditorGUILayout.EndHorizontal();
             }
         }
@@ -804,7 +824,8 @@ namespace Neo.Editor.Condition
         //  GameObject property dropdown
         // ============================
 
-        private void DrawGameObjectPropertyDropdown(SerializedProperty propNameProp, SerializedProperty valueTypeProp = null)
+        private void DrawGameObjectPropertyDropdown(SerializedProperty propNameProp,
+            SerializedProperty valueTypeProp = null)
         {
             string[] displayNames = new string[GameObjectProperties.Length];
             for (int i = 0; i < GameObjectProperties.Length; i++)
@@ -1006,13 +1027,18 @@ namespace Neo.Editor.Condition
             string thresholdStr;
             if (isOtherObject)
             {
-                string otherPrefix = otherUseSceneSearchProp.boolValue && !string.IsNullOrEmpty(otherSearchNameProp.stringValue)
+                string otherPrefix = otherUseSceneSearchProp.boolValue &&
+                                     !string.IsNullOrEmpty(otherSearchNameProp.stringValue)
                     ? $"\"{otherSearchNameProp.stringValue}\"."
                     : "";
-                string otherComp = string.IsNullOrEmpty(otherCompTypeProp.stringValue) ? "?" : otherCompTypeProp.stringValue;
+                string otherComp = string.IsNullOrEmpty(otherCompTypeProp.stringValue)
+                    ? "?"
+                    : otherCompTypeProp.stringValue;
                 int lastDot = otherComp.LastIndexOf('.');
                 string shortOtherComp = lastDot >= 0 ? otherComp.Substring(lastDot + 1) : otherComp;
-                string otherProp = string.IsNullOrEmpty(otherPropNameProp.stringValue) ? "?" : otherPropNameProp.stringValue;
+                string otherProp = string.IsNullOrEmpty(otherPropNameProp.stringValue)
+                    ? "?"
+                    : otherPropNameProp.stringValue;
                 thresholdStr = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject
                     ? $"{otherPrefix}GO.{otherProp}"
                     : $"{otherPrefix}{shortOtherComp}.{otherProp}";
@@ -1020,7 +1046,8 @@ namespace Neo.Editor.Condition
             else
             {
                 ValueType vt = (ValueType)valueTypeProp.enumValueIndex;
-                thresholdStr = FormatThreshold(vt, thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp);
+                thresholdStr = FormatThreshold(vt, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
+                    thresholdStringProp);
             }
 
             int opIdx = compareOpProp.enumValueIndex;
@@ -1033,15 +1060,17 @@ namespace Neo.Editor.Condition
                 {
                     return isSceneSearch ? $"Find(\"{searchNameProp.stringValue}\") → ?" : "(not configured)";
                 }
+
                 return $"{prefix}{srcPrefix}GO.{propName} {opSymbol} {thresholdStr}";
             }
-            else
+
             {
                 string compName = compTypeProp.stringValue;
                 if (string.IsNullOrEmpty(compName) || string.IsNullOrEmpty(propName))
                 {
                     return isSceneSearch ? $"Find(\"{searchNameProp.stringValue}\") → ?" : "(not configured)";
                 }
+
                 int lastDot = compName.LastIndexOf('.');
                 string shortComp = lastDot >= 0 ? compName.Substring(lastDot + 1) : compName;
                 return $"{prefix}{srcPrefix}{shortComp}.{propName} {opSymbol} {thresholdStr}";

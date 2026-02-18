@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/MovementToolkit/ConstantRotator.md")]
-    [CreateFromMenu("Neoxider/Tools/ConstantRotator")]
+    [CreateFromMenu("Neoxider/Tools/Movement/ConstantRotator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ConstantRotator))]
     public class ConstantRotator : MonoBehaviour
     {
@@ -28,8 +28,7 @@ namespace Neo.Tools
         [Tooltip("If true, axis is in local space; otherwise world space")]
         public bool spaceLocal = true;
 
-        [Tooltip("Subtract time from speed")]
-        public bool useDeltaTime = true;
+        [Tooltip("Subtract time from speed")] public bool useDeltaTime = true;
 
         [Header("Axis")] public AxisSource axisSource = AxisSource.None;
 

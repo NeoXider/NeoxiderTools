@@ -25,8 +25,7 @@ namespace Neo.Shop
 
         [SerializeField] private bool _autoSubscribe = true;
 
-        [Tooltip("If true, saved ShopEquipped item is auto-activated on load")]
-        [SerializeField]
+        [Tooltip("If true, saved ShopEquipped item is auto-activated on load")] [SerializeField]
         private bool _activateSavedEquipped = true;
 
         [SerializeField] private string _keySave = "Shop";

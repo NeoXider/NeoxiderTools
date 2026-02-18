@@ -8,17 +8,10 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
     [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/PlayerController2DPhysics")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DPhysics")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
     public class PlayerController2DPhysics : MonoBehaviour
     {
-        private enum InputBackend
-        {
-            AutoPreferNew,
-            NewInputSystem,
-            LegacyInputManager
-        }
-
         [Header("References")] [SerializeField]
         private Rigidbody2D _rigidbody;
 
@@ -53,20 +46,19 @@ namespace Neo.Tools
 
         [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
-
-        private float _moveInputX;
-        private bool _jumpPressedThisFrame;
-        private bool _movementEnabled = true;
         private float _coyoteTimer;
         private float _jumpBufferTimer;
-        private bool _isGrounded;
-        private bool _wasGrounded;
+        private bool _jumpPressedThisFrame;
+
+        private float _moveInputX;
+        private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
+        private bool _wasGrounded;
 
         /// <summary>
         ///     Gets whether the character is currently grounded.
         /// </summary>
-        public bool IsGrounded => _isGrounded;
+        public bool IsGrounded { get; private set; }
 
         /// <summary>
         ///     Gets whether sprint input is active.
@@ -102,6 +94,15 @@ namespace Neo.Tools
         private void LateUpdate()
         {
             UpdateCameraFollow(Time.deltaTime);
+        }
+
+        private void OnDrawGizmosSelected()
+        {
+            Vector2 checkPos = _groundCheck != null
+                ? _groundCheck.position
+                : (Vector2)transform.position + Vector2.down * 0.5f;
+            Gizmos.color = IsGrounded ? Color.green : Color.red;
+            Gizmos.DrawWireSphere(checkPos, _groundCheckRadius);
         }
 
         /// <summary>
@@ -212,12 +213,12 @@ namespace Neo.Tools
 
         private void UpdateGroundState()
         {
-            _wasGrounded = _isGrounded;
+            _wasGrounded = IsGrounded;
             Vector2 checkPos = _groundCheck != null
-                ? (Vector2)_groundCheck.position
+                ? _groundCheck.position
                 : (Vector2)transform.position + Vector2.down * 0.5f;
-            _isGrounded = Physics2D.OverlapCircle(checkPos, _groundCheckRadius, _groundMask);
-            if (!_wasGrounded && _isGrounded)
+            IsGrounded = Physics2D.OverlapCircle(checkPos, _groundCheckRadius, _groundMask);
+            if (!_wasGrounded && IsGrounded)
             {
                 _onLanded?.Invoke();
             }
@@ -225,7 +226,7 @@ namespace Neo.Tools
 
         private void UpdateJumpTimers()
         {
-            if (_isGrounded)
+            if (IsGrounded)
             {
                 _coyoteTimer = _coyoteTime;
             }
@@ -300,13 +301,11 @@ namespace Neo.Tools
                 1f - Mathf.Exp(-_cameraFollowSpeed * deltaTime));
         }
 
-        private void OnDrawGizmosSelected()
+        private enum InputBackend
         {
-            Vector2 checkPos = _groundCheck != null
-                ? (Vector2)_groundCheck.position
-                : (Vector2)transform.position + Vector2.down * 0.5f;
-            Gizmos.color = _isGrounded ? Color.green : Color.red;
-            Gizmos.DrawWireSphere(checkPos, _groundCheckRadius);
+            AutoPreferNew,
+            NewInputSystem,
+            LegacyInputManager
         }
     }
 }

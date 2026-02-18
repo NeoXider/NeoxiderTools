@@ -14,7 +14,7 @@ namespace Neo
         ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
         /// </summary>
         [NeoDoc("Tools/View/Selector.md")]
-        [CreateFromMenu("Neoxider/Tools/Selector")]
+        [CreateFromMenu("Neoxider/Tools/View/Selector")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
         public class Selector : MonoBehaviour
         {
@@ -152,6 +152,17 @@ namespace Neo
             [SerializeField]
             private bool _useNextPreviousAsRandom;
 
+            [Header("Unique Selection (no repeats until reset)")]
+            [Tooltip(
+                "When enabled (and random is used), each index is selected at most once until ResetUnique() or cycle completes. Off by default.")]
+            [SerializeField]
+            private bool _uniqueSelectionMode;
+
+            [Tooltip(
+                "When unique mode is on and all indices have been used once: if true, auto-clear and start a new cycle; if false, next random does nothing until ResetUnique().")]
+            [SerializeField]
+            private bool _resetUniqueWhenCycleComplete = true;
+
             [Header("Selection Settings")]
             [Tooltip("Whether to loop back to the beginning when reaching the end")]
             [SerializeField]
@@ -175,6 +186,7 @@ namespace Neo
             private bool _changeDebug = true;
 
             private int _startIndex;
+            private HashSet<int> _usedIndicesForUnique;
 
             /// <summary>
             ///     Returns the number of selectable items (GameObjects or virtual count)
@@ -224,6 +236,17 @@ namespace Neo
             ///     Invoked when reaching the end of the items array (only if loop is disabled)
             /// </summary>
             public UnityEvent OnFinished;
+
+            /// <summary>
+            ///     Invoked when unique mode is on and all indices have been selected once (cycle complete). If auto-reset is enabled,
+            ///     the set is cleared right after.
+            /// </summary>
+            public UnityEvent OnUniqueCycleComplete;
+
+            /// <summary>
+            ///     Invoked when ResetUnique() is called (unique mode tracking is cleared).
+            /// </summary>
+            public UnityEvent OnUniqueReset;
 
             #endregion
 
@@ -297,6 +320,44 @@ namespace Neo
             ///     Gets the current index with offset applied
             /// </summary>
             public int IndexWithOffset => _currentIndex + _indexOffset;
+
+            /// <summary>
+            ///     Gets whether unique selection mode is enabled (no index repeats until reset).
+            /// </summary>
+            public bool UniqueSelectionMode => _uniqueSelectionMode;
+
+            /// <summary>
+            ///     In unique mode, gets how many indices have not been used yet in the current cycle. 0 when cycle is complete or when
+            ///     unique mode is off.
+            /// </summary>
+            public int UniqueRemainingCount
+            {
+                get
+                {
+                    if (!_uniqueSelectionMode || _usedIndicesForUnique == null)
+                    {
+                        return 0;
+                    }
+
+                    (int min, int max) = GetCurrentBounds();
+                    int range = max - min + 1;
+                    if (range <= 0)
+                    {
+                        return 0;
+                    }
+
+                    int used = 0;
+                    for (int i = min; i <= max; i++)
+                    {
+                        if (_usedIndicesForUnique.Contains(i))
+                        {
+                            used++;
+                        }
+                    }
+
+                    return range - used;
+                }
+            }
 
             /// <summary>
             ///     Gets the currently selected GameObject
@@ -522,11 +583,14 @@ namespace Neo
                     _currentIndex = Mathf.Clamp(index, min, max);
                 }
 
+                MarkIndexUsedInUniqueMode(_currentIndex);
                 UpdateSelection();
             }
 
             /// <summary>
-            ///     Sets the selection to a random value within the current valid bounds
+            ///     Sets the selection to a random value within the current valid bounds.
+            ///     In unique mode, picks only from indices not yet used in the current cycle; when all are used, invokes
+            ///     OnUniqueCycleComplete and optionally starts a new cycle.
             /// </summary>
             [Button]
             public void SetRandom()
@@ -557,7 +621,18 @@ namespace Neo
                 if (range <= 1)
                 {
                     _currentIndex = min;
+                    if (_uniqueSelectionMode)
+                    {
+                        MarkIndexUsedInUniqueMode(min);
+                    }
+
                     UpdateSelection();
+                    return;
+                }
+
+                if (_uniqueSelectionMode)
+                {
+                    SetRandomUnique(min, max, range);
                     return;
                 }
 
@@ -570,6 +645,53 @@ namespace Neo
 
                 _currentIndex = newIndex;
                 UpdateSelection();
+            }
+
+            private void SetRandomUnique(int min, int max, int range)
+            {
+                _usedIndicesForUnique ??= new HashSet<int>();
+
+                List<int> available = new(range);
+                for (int i = min; i <= max; i++)
+                {
+                    if (!_usedIndicesForUnique.Contains(i))
+                    {
+                        available.Add(i);
+                    }
+                }
+
+                if (available.Count == 0)
+                {
+                    OnUniqueCycleComplete?.Invoke();
+                    if (_resetUniqueWhenCycleComplete)
+                    {
+                        _usedIndicesForUnique.Clear();
+                        for (int i = min; i <= max; i++)
+                        {
+                            available.Add(i);
+                        }
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+
+                int chosen = available[Random.Range(0, available.Count)];
+                _usedIndicesForUnique.Add(chosen);
+                _currentIndex = chosen;
+                UpdateSelection();
+            }
+
+            private void MarkIndexUsedInUniqueMode(int index)
+            {
+                if (!_uniqueSelectionMode)
+                {
+                    return;
+                }
+
+                _usedIndicesForUnique ??= new HashSet<int>();
+                _usedIndicesForUnique.Add(index);
             }
 
             /// <summary>
@@ -666,13 +788,37 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Resets the selection to the start index
+            ///     Resets the selection to the start index (first valid index).
             /// </summary>
             public void Reset()
             {
                 (int min, int max) = GetCurrentBounds();
                 _currentIndex = min;
                 UpdateSelection();
+            }
+
+            /// <summary>
+            ///     Clears the unique-selection tracking so indices can repeat again. Use when unique mode is on and you want the next
+            ///     random (or manual Set) to be allowed to repeat. Invokes OnUniqueReset.
+            /// </summary>
+            [Button("Reset Unique")]
+            public void ResetUnique()
+            {
+                if (_usedIndicesForUnique != null && _usedIndicesForUnique.Count > 0)
+                {
+                    _usedIndicesForUnique.Clear();
+                    OnUniqueReset?.Invoke();
+                }
+            }
+
+            /// <summary>
+            ///     Resets selection to first index and clears unique-mode tracking (so next random can repeat).
+            /// </summary>
+            [Button("Reset All")]
+            public void ResetAll()
+            {
+                Reset();
+                ResetUnique();
             }
 
             /// <summary>

@@ -26,7 +26,7 @@
 
 ## Быстрый старт
 
-1. **Создайте данные предметов**: Создайте `ItemCollectionData` через меню `Create > Neo > Bonus > Collection > Item Collection Data`
+1. **Создайте данные предметов**: Создайте `ItemCollectionData` через меню `Create > Neoxider > Bonus > Collection > Item Collection Data`
 2. **Настройте Collection**: Добавьте компонент `Collection` на GameObject в сцене и заполните массив `ItemCollectionDatas`
 3. **Настройте UI**: Создайте UI элементы с компонентом `ItemCollection` и добавьте `CollectionVisualManager` для управления ими
 4. **Используйте через код**:

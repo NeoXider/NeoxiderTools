@@ -1,15 +1,16 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Neo.GridSystem.Match3
 {
     /// <summary>
-    /// Finds horizontal and vertical match groups for Match3 boards.
+    ///     Finds horizontal and vertical match groups for Match3 boards.
     /// </summary>
     public static class Match3MatchFinder
     {
         /// <summary>
-        /// Scans the board and returns all match groups that satisfy minimum length.
+        ///     Scans the board and returns all match groups that satisfy minimum length.
         /// </summary>
         /// <param name="generator">Grid source containing tile values in <c>ContentId</c>.</param>
         /// <param name="minMatchLength">Minimum run length to treat as a match.</param>
@@ -44,7 +45,7 @@ namespace Neo.GridSystem.Match3
             List<List<FieldCell>> matches,
             int minMatchLength,
             int length,
-            System.Func<int, Vector3Int> posFactory)
+            Func<int, Vector3Int> posFactory)
         {
             List<FieldCell> run = new();
             int currentId = -1;
