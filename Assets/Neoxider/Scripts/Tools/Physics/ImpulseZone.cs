@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Зона импульса, которая применяет импульс к объектам при входе в триггер.
     ///     Поддерживает различные направления импульса, фильтрацию и опциональное добавление физики.
     /// </summary>
+    [NeoDoc("Tools/Physics/ImpulseZone.md")]
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(ImpulseZone))]
     [RequireComponent(typeof(Collider))]
     public class ImpulseZone : MonoBehaviour

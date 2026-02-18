@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 namespace Neo.Audio
 {
+    [NeoDoc("Audio/AMSettings.md")]
     [AddComponentMenu("Neo/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {

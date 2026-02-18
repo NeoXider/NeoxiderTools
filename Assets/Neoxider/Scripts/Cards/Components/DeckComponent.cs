@@ -9,6 +9,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент колоды для работы без кода
     /// </summary>
+    [NeoDoc("Cards/DeckComponent.md")]
     public class DeckComponent : MonoBehaviour
     {
         [Header("Config")] [SerializeField] private DeckConfig _config;

@@ -7,6 +7,7 @@ namespace Neo.Tools
     ///     Monitors distance between two objects and triggers events on approach/departure.
     ///     Optimized using squared distance calculations.
     /// </summary>
+    [NeoDoc("Tools/Move/DistanceChecker.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(DistanceChecker))]
     public class DistanceChecker : MonoBehaviour
     {

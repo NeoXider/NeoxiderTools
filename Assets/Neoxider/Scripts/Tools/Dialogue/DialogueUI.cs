@@ -9,6 +9,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Компонент для управления UI элементами диалога.
     /// </summary>
+    [NeoDoc("Tools/Dialogue/DialogueUI.md")]
     [AddComponentMenu("Neo/" + "Tools/Dialogue/" + nameof(DialogueUI))]
     public class DialogueUI : MonoBehaviour
     {

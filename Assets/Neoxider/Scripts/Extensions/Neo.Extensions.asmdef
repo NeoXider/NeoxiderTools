@@ -1,3 +1,16 @@
 {
-  "name": "Neo.Extensions"
+    "name": "Neo.Extensions",
+    "rootNamespace": "",
+    "references": [
+        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

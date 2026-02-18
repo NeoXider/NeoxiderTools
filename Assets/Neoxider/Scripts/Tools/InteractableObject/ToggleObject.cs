@@ -5,6 +5,7 @@ namespace Neo
 {
     namespace Tools
     {
+        [NeoDoc("Tools/InteractableObject/ToggleObject.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {

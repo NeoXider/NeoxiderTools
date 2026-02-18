@@ -37,6 +37,7 @@ namespace Neo
     ///  ]]>
     /// </code>
     /// </example>
+    [NeoDoc("Tools/Input/SwipeController.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(SwipeController))]
     public class SwipeController : MonoBehaviour
     {

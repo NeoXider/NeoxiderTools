@@ -7,6 +7,7 @@ namespace Neo
 {
     namespace UI
     {
+        [NeoDoc("UI/View/Points.md")]
         [AddComponentMenu("Neo/" + "UI/" + nameof(Points))]
         public class Points : MonoBehaviour
         {

@@ -1,4 +1,4 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using Neo.Extensions;
 using UnityEngine;
@@ -8,6 +8,7 @@ namespace Neo
 {
     namespace UI
     {
+        [NeoDoc("UI/Simple/UI.md")]
         [AddComponentMenu("Neo/" + "UI/" + nameof(UI))]
         public class UI : MonoBehaviour
         {

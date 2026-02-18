@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/Spawner/SimpleSpawner.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(SimpleSpawner))]
     public class SimpleSpawner : MonoBehaviour
     {

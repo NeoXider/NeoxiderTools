@@ -6,6 +6,7 @@ namespace Neo.Save
     ///     A base class for MonoBehaviours that should be part of the save system.
     ///     Automatically handles registration and unregistration with the SaveManager.
     /// </summary>
+    [NeoDoc("Save/README.md")]
     public abstract class SaveableBehaviour : MonoBehaviour, ISaveableComponent
     {
         protected virtual void OnEnable()

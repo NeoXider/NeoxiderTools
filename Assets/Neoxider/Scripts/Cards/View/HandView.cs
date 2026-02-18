@@ -10,6 +10,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Визуальное представление руки игрока
     /// </summary>
+    [NeoDoc("Cards/View/HandView.md")]
     public class HandView : MonoBehaviour, IHandView
     {
         [Header("Layout")] [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Fan;

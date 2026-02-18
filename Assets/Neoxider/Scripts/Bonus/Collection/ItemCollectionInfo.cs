@@ -4,6 +4,7 @@ using UnityEngine.UI;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/Collection/ItemCollectionInfo.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(ItemCollectionInfo))]
     public class ItemCollectionInfo : MonoBehaviour
     {

@@ -28,6 +28,7 @@ namespace Neo.Tools
     ///     This class handles both manual and automatic component initialization.
     ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
+    [NeoDoc("Tools/Managers/Bootstrap.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Bootstrap))]
     public class Bootstrap : Singleton<Bootstrap>
     {

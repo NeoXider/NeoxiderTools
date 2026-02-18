@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 namespace Neo
 {
+    [NeoDoc("UI/Simple/FakeLoad.md")]
     [AddComponentMenu("Neo/" + "UI/" + nameof(FakeLoad))]
     public class FakeLoad : MonoBehaviour
     {

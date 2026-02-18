@@ -8,6 +8,7 @@ namespace Neo
 {
     namespace UI
     {
+        [NeoDoc("Shop/ButtonPrice.md")]
         [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonPrice))]
         public class ButtonPrice : MonoBehaviour
         {

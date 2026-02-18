@@ -14,6 +14,7 @@ namespace Neo
         ///     A component that sets text on a TMP_Text component with formatting options.
         ///     Useful for displaying numeric values with separators and decimal places.
         /// </summary>
+        [NeoDoc("Tools/Text/SetText.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(SetText))]
         public class SetText : MonoBehaviour
         {

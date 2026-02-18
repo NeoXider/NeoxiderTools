@@ -41,6 +41,7 @@ namespace Neo.GridSystem
     /// <summary>
     /// Spawner with per-cell object tracking and occupancy support.
     /// </summary>
+    [NeoDoc("GridSystem/FieldObjectSpawner.md")]
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldObjectSpawner))]
     public class FieldObjectSpawner : MonoBehaviour

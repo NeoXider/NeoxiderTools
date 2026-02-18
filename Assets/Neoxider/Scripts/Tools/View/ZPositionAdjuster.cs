@@ -3,6 +3,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/View/ZPositionAdjuster.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ZPositionAdjuster))]
     public class ZPositionAdjuster : MonoBehaviour
     {

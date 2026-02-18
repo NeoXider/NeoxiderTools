@@ -9,6 +9,7 @@ namespace Neo.Tools
     /// <summary>
     ///     MonoBehaviour-обёртка для TypewriterEffect (на UniTask).
     /// </summary>
+    [NeoDoc("Tools/Components/TypewriterEffect.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(TypewriterEffectComponent))]
     public class TypewriterEffectComponent : MonoBehaviour
     {

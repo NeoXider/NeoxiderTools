@@ -6,6 +6,7 @@ namespace Neo.Tools.View
     ///     Компонент для синхронизации эмиссии меша с источником света.
     ///     Копирует интенсивность и цвет от Light компонента в реальном времени.
     /// </summary>
+    [NeoDoc("Tools/View/MeshEmission.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MeshEmission))]
     public class MeshEmission : MonoBehaviour
     {

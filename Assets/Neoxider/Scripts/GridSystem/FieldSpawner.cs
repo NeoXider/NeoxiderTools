@@ -6,6 +6,7 @@ namespace Neo.GridSystem
     /// <summary>
     ///     Spawns prefabs into cells of a generated field.
     /// </summary>
+    [NeoDoc("GridSystem/FieldSpawner.md")]
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldSpawner))]
     public class FieldSpawner : MonoBehaviour

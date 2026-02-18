@@ -14,6 +14,7 @@ namespace Neo.Tools
     ///     • Optional 2-D collider & timed self-destruct,
     ///     • Can clone most settings from a “template” <see cref="LineRenderer" />.
     /// </summary>
+    [NeoDoc("Tools/Draw/Drawer.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Drawer))]
     public sealed class Drawer : MonoBehaviour
     {

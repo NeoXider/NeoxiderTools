@@ -8,6 +8,7 @@ using UnityEditor;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/Slot/SlotElement.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(SlotElement))]
     public class SlotElement : MonoBehaviour
     {

@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Extensions;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
@@ -5,6 +6,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Neo.Pages
 {
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/PageSubscriber.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(PageSubscriber))]
     public class PageSubscriber : MonoBehaviour
     {

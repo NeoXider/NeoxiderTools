@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Universal component for following a target with position and rotation.
     ///     Supports multiple smoothing modes, deadzone, distance controls, and position/rotation limits.
     /// </summary>
+    [NeoDoc("Tools/Move/Follow.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Follow))]
     public class Follow : MonoBehaviour
     {

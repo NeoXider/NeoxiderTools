@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Neo;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
 using UnityEngine.Serialization;
@@ -6,6 +7,7 @@ using UnityEngine.Serialization;
 namespace Neo.Pages
 {
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/UIPage.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(UIPage))]
     /// <summary>
     /// Компонент страницы UI для работы с <see cref="PM"/>.

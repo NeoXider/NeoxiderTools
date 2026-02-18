@@ -10,6 +10,7 @@ namespace Neo.GridSystem
     ///     Компонент для визуализации сетки, путей и информации о ячейках через Gizmos и UnityEngine.Grid.
     /// </summary>
     [ExecuteAlways]
+    [NeoDoc("GridSystem/FieldDebugDrawer.md")]
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldDebugDrawer))]
     public class FieldDebugDrawer : MonoBehaviour

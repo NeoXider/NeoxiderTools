@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Neo;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,6 +29,7 @@ namespace Neo.Pages
     ///     PageManager — компонент управления страницами UI (включение/выключение, переключение, возврат на предыдущую).
     /// </summary>
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/PM.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(PM))]
     public class PM : Singleton<PM>
     {

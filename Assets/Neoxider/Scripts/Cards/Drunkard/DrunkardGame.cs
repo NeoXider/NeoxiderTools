@@ -9,6 +9,7 @@ namespace Neo.Cards
     ///     Игра "Пьяница" (War Card Game).
     ///     Классическая карточная игра где побеждает тот, кто соберёт все карты.
     /// </summary>
+    [NeoDoc("Cards/Examples/Drunkard.md")]
     public class DrunkardGame : MonoBehaviour
     {
         [Header("Config")] [Tooltip("Required deck and card prefab source.")] [SerializeField]

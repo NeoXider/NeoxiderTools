@@ -1,8 +1,9 @@
-﻿using Neo.Extensions;
+using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/Move/ScreenPositioner.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ScreenPositioner))]
     public class ScreenPositioner : MonoBehaviour
     {

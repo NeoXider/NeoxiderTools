@@ -6,6 +6,7 @@ namespace Neo.GridSystem.TicTacToe
     /// <summary>
     /// Runtime service that controls turns, moves, win checks and reset flow for TicTacToe.
     /// </summary>
+    [NeoDoc("GridSystem/TicTacToe/TicTacToeBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/GridSystem/TicTacToe/TicTacToeBoardService")]
     public class TicTacToeBoardService : MonoBehaviour

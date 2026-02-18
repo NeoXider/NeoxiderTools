@@ -7,6 +7,7 @@ namespace Neo.Animations
     ///     Универсальный аниматор для float значений.
     ///     Предоставляет простой способ анимации любого числового значения с различными типами анимации.
     /// </summary>
+    [NeoDoc("Animations/FloatAnimator.md")]
     [AddComponentMenu("Neo/" + "Animations/" + nameof(FloatAnimator))]
     public class FloatAnimator : MonoBehaviour
     {

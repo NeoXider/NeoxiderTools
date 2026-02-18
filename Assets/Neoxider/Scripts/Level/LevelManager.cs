@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,6 +7,7 @@ namespace Neo
 {
     namespace Level
     {
+        [NeoDoc("Level/LevelManager.md")]
         public class LevelManager : Singleton<LevelManager>
         {
             [SerializeField] private string _saveKey = "LevelManager";

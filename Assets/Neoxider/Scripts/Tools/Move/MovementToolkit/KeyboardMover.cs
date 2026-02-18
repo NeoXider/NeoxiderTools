@@ -11,6 +11,7 @@ namespace Neo.Tools
     ///     <c>Update</c>. Fires UnityEvents when motion begins or ends and
     ///     implements <see cref="IMover" /> for external control.
     /// </summary>
+    [NeoDoc("Tools/Move/MovementToolkit/KeyboardMover.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(KeyboardMover))]
     public class KeyboardMover : MonoBehaviour, IMover
     {

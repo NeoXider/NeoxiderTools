@@ -31,6 +31,7 @@ namespace Neo.Tools
         }
     }
 
+    [NeoDoc("Tools/FakeLeaderboard/Leaderboard.md")]
     public class Leaderboard : Singleton<Leaderboard>
     {
         public Transform container;

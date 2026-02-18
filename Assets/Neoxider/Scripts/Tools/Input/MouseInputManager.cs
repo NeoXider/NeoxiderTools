@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Neo.Tools;
 using UnityEditor;
 using UnityEngine;
@@ -7,6 +7,7 @@ using UnityEngine;
 ///     Optimised mouse input manager – zero GC allocations per frame.
 ///     Provides Press, Hold, Release, Click events with MouseEventData struct.
 /// </summary>
+[Neo.NeoDoc("Tools/Input/MouseInputManager.md")]
 public class MouseInputManager : Singleton<MouseInputManager>
 {
     public delegate void MouseEventHandler(in MouseEventData data);

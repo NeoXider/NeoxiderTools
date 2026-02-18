@@ -8,6 +8,7 @@ namespace Neo
 {
     namespace UI
     {
+        [NeoDoc("UI/ButtonChangePage.md")]
         [AddComponentMenu("Neo/" + "UI/" + nameof(ButtonChangePage))]
         public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
         {

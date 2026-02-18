@@ -10,6 +10,7 @@ namespace Neo
     ///     Tiles recycle seamlessly as the camera moves, optionally randomising their appearance.
     /// </summary>
     [DisallowMultipleComponent]
+    [NeoDoc("Parallax/ParallaxLayer.md")]
     [AddComponentMenu("Neo/" + "Parallax/" + nameof(ParallaxLayer))]
     public class ParallaxLayer : MonoBehaviour
     {

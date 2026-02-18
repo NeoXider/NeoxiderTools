@@ -7,6 +7,7 @@ namespace Neo.Animations
     ///     Универсальный аниматор для цветов.
     ///     Предоставляет простой способ анимации цвета с различными типами анимации.
     /// </summary>
+    [NeoDoc("Animations/ColorAnimator.md")]
     [AddComponentMenu("Neo/" + "Animations/" + nameof(ColorAnimator))]
     public class ColorAnimator : MonoBehaviour
     {

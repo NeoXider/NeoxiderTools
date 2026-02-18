@@ -6,6 +6,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Controls cursor visibility and lock state with optional runtime toggle key.
     /// </summary>
+    [NeoDoc("Tools/Move/CursorLockController.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(CursorLockController))]
     public class CursorLockController : MonoBehaviour
     {

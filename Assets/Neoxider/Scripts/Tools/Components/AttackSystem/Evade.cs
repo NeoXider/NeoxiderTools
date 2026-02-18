@@ -6,6 +6,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Component that handles evade mechanics with cooldown system
     /// </summary>
+    [NeoDoc("Tools/Components/AttackSystem/Evade.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Evade))]
     public class Evade : MonoBehaviour
     {

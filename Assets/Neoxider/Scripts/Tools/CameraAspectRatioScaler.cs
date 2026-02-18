@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Neo
 {
@@ -14,6 +14,7 @@ namespace Neo
     /// </remarks>
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
+    [NeoDoc("Tools/CameraAspectRatioScaler.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraAspectRatioScaler))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {

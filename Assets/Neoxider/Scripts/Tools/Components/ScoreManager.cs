@@ -1,10 +1,11 @@
-﻿using Neo.Save;
+using Neo.Save;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/Components/ScoreManager.md")]
     public class ScoreManager : Singleton<ScoreManager>
     {
         [SerializeField] private string _keySave = "BestScore";

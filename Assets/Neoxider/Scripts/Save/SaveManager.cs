@@ -10,6 +10,7 @@ using UnityEngine.SceneManagement;
 
 namespace Neo.Save
 {
+    [NeoDoc("Save/README.md")]
     public class SaveManager : Singleton<SaveManager>
     {
         private const string DefaultJson = "{\"AllSavedComponents\":[]}";

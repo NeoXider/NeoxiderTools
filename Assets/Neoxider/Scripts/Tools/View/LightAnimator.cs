@@ -11,6 +11,7 @@ namespace Neo.Tools.View
     ///     Компонент для анимации источников света (Light и Light2D).
     ///     Поддерживает различные типы анимации интенсивности и цвета.
     /// </summary>
+    [NeoDoc("Tools/View/LightAnimator.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LightAnimator))]
     public class LightAnimator : MonoBehaviour
     {

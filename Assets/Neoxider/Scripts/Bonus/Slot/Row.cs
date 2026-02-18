@@ -16,6 +16,7 @@ namespace Neo.Bonus
     ///     - Смена спрайтов только вне окна (ниже/выше маски)
     ///     - Окно считается от offsetY (нижняя граница окна). windowStartY — зеркало для инспектора.
     /// </summary>
+    [NeoDoc("Bonus/Slot/Row.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(Row))]
     public class Row : MonoBehaviour
     {

@@ -8,6 +8,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент доски для общих карт (например, 5 карт на столе в Texas Hold'em или биты в "Дураке")
     /// </summary>
+    [NeoDoc("Cards/BoardComponent.md")]
     public class BoardComponent : MonoBehaviour
     {
         [Header("Layout")] [SerializeField] private Transform[] _cardSlots;

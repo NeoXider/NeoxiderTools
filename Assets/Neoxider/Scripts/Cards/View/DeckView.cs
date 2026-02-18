@@ -6,6 +6,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Визуальное представление колоды карт
     /// </summary>
+    [NeoDoc("Cards/View/DeckView.md")]
     public class DeckView : MonoBehaviour, IDeckView
     {
         [Header("References")] [SerializeField]

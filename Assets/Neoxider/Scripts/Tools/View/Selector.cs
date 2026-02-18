@@ -13,6 +13,7 @@ namespace Neo
         ///     A component that manages selection between multiple GameObjects, with support for different selection modes.
         ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
         /// </summary>
+        [NeoDoc("Tools/View/Selector.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(Selector))]
         public class Selector : MonoBehaviour
         {

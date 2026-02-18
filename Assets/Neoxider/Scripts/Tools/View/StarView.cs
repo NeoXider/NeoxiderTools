@@ -1,8 +1,9 @@
-﻿using Neo.UI;
+using Neo.UI;
 using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/View/StarView.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(StarView))]
     public class StarView : MonoBehaviour
     {

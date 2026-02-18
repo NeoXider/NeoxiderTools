@@ -46,6 +46,7 @@ namespace Neo.Condition
     ///     4. Выбрать режим проверки (Manual / EveryFrame / Interval)
     ///     Для ручного режима — вызвать Check() из UnityEvent другого компонента.
     /// </remarks>
+    [NeoDoc("Condition/NeoCondition.md")]
     [AddComponentMenu("Neo/Condition/NeoCondition")]
     public class NeoCondition : MonoBehaviour
     {

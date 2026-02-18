@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     seconds.
     ///     • Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
     /// </summary>
+    [NeoDoc("Tools/Input/MouseEffect.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MouseEffect))]
     public class MouseEffect : MonoBehaviour
     {

@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Магнитное поле, которое притягивает или отталкивает объекты в радиусе.
     ///     Поддерживает постоянное воздействие, фильтрацию по слоям и опциональное добавление физики.
     /// </summary>
+    [NeoDoc("Tools/Physics/MagneticField.md")]
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(MagneticField))]
     public class MagneticField : MonoBehaviour
     {

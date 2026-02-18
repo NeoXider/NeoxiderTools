@@ -9,6 +9,7 @@ namespace Neo.GridSystem.Match3
     /// <summary>
     /// Runtime board service for Match3: initialization, swap validation, match resolve and refill.
     /// </summary>
+    [NeoDoc("GridSystem/Match3/Match3BoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
     [AddComponentMenu("Neo/GridSystem/Match3/Match3BoardService")]
     public class Match3BoardService : MonoBehaviour

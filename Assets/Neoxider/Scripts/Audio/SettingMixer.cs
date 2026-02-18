@@ -5,6 +5,7 @@ namespace Neo
 {
     namespace Audio
     {
+        [NeoDoc("Audio/SettingMixer.md")]
         [AddComponentMenu("Neo/" + "Audio/" + nameof(SettingMixer))]
         public class SettingMixer : MonoBehaviour
         {

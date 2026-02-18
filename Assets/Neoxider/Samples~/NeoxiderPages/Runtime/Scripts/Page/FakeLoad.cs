@@ -1,4 +1,5 @@
 using System.Collections;
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Scripting.APIUpdating;
@@ -6,6 +7,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace Neo.Pages
 {
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/FakeLoad.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(FakeLoad))]
     /// <summary>
     /// Фейковая загрузка: имитирует прогресс в диапазоне времени и генерирует события.

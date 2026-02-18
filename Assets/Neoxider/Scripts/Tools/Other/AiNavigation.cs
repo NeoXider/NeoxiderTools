@@ -12,6 +12,7 @@ namespace Neo.Tools
     ///     Deprecated: use Neo.NPC.NpcNavigation + modules.
     /// </summary>
     [Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
+    [NeoDoc("Tools/Other/AiNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AiNavigation))]
     public class AiNavigation : MonoBehaviour

@@ -8,6 +8,7 @@ using UnityEngine.UI;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/Collection/Box.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(Box))]
     public class Box : MonoBehaviour
     {

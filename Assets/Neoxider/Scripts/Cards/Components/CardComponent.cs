@@ -12,6 +12,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент карты для работы без кода
     /// </summary>
+    [NeoDoc("Cards/CardComponent.md")]
     public class CardComponent : MonoBehaviour, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [Header("Config")] [SerializeField] private DeckConfig _config;

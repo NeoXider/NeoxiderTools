@@ -9,6 +9,7 @@ namespace Neo.GridSystem
     /// <summary>
     /// Generates and manages a runtime grid field with shape, state and pathfinding helpers.
     /// </summary>
+    [NeoDoc("GridSystem/FieldGenerator.md")]
     [RequireComponent(typeof(Grid))]
     [AddComponentMenu("Neo/" + "GridSystem/" + nameof(FieldGenerator))]
     public class FieldGenerator : MonoBehaviour

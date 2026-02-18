@@ -10,6 +10,7 @@ namespace Neo.Tools
         Heal
     }
 
+    [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {

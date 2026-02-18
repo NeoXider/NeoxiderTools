@@ -6,6 +6,7 @@ namespace Neo.Tools
     /// <summary>
     ///     GameManager
     /// </summary>
+    [NeoDoc("Tools/Managers/GM.md")]
     public class GM : Singleton<GM>
     {
         [GUIColor(1, 0.5, 0.5)] [SerializeField]

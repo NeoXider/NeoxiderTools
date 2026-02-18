@@ -5,6 +5,7 @@ namespace Neo
 {
     namespace Tools
     {
+        [NeoDoc("Tools/Components/Loot.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(Loot))]
         public class Loot : MonoBehaviour
         {

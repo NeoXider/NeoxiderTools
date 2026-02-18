@@ -6,6 +6,7 @@ namespace Neo
 {
     namespace Bonus
     {
+        [NeoDoc("Bonus/WheelFortune/WheelMoneyWin.md")]
         [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelMoneyWin))]
         public class WheelMoneyWin : MonoBehaviour
         {

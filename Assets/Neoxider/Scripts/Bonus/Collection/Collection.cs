@@ -9,6 +9,7 @@ using UnityEngine.Events;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/Collection/README.md")]
     public class Collection : Singleton<Collection>
     {
         [SerializeField] private string _saveKeyPrefix = "Collection_";

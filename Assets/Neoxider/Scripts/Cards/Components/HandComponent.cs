@@ -11,6 +11,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Компонент руки для работы без кода
     /// </summary>
+    [NeoDoc("Cards/HandComponent.md")]
     public class HandComponent : MonoBehaviour
     {
         [Header("Layout")] [SerializeField] private CardLayoutType _layoutType = CardLayoutType.Fan;

@@ -6,6 +6,7 @@ namespace Neo.Save
     ///     MonoBehaviour компонент для настройки провайдера сохранения через Inspector.
     ///     Позволяет инициализировать SaveProvider с настройками из ScriptableObject без необходимости размещения в Resources.
     /// </summary>
+    [NeoDoc("Save/SaveProviderSettingsComponent.md")]
     [AddComponentMenu("Neo/" + "Save/" + nameof(SaveProviderSettingsComponent))]
     public class SaveProviderSettingsComponent : MonoBehaviour
     {

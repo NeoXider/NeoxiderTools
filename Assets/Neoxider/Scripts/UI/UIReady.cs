@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -26,6 +26,7 @@ namespace Neo
             AsyncManual
         }
 
+        [NeoDoc("UI/UIReady.md")]
         [AddComponentMenu("Neo/" + "UI/" + nameof(UIReady))]
         public class UIReady : MonoBehaviour
         {

@@ -9,6 +9,7 @@ namespace Neo
         ///     Компонент для воспроизведения звукового эффекта из AM.
         ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
+        [NeoDoc("Audio/PlayAudio.md")]
         [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {

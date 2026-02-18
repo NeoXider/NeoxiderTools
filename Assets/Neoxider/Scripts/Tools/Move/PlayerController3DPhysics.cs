@@ -7,6 +7,7 @@ namespace Neo.Tools
     ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
+    [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics : MonoBehaviour
     {

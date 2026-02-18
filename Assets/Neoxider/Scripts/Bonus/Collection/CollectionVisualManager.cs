@@ -6,6 +6,7 @@ using UnityEngine.Events;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/Collection/CollectionVisualManager.md")]
     public class CollectionVisualManager : Singleton<CollectionVisualManager>
     {
         [SerializeField] [GetComponents(true)] private ItemCollection[] _items;

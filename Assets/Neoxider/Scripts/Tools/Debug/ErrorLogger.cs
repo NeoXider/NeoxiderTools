@@ -18,6 +18,7 @@ namespace Neo
         Assert = 1 << 4
     }
 
+    [NeoDoc("Tools/Debug/ErrorLogger.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {

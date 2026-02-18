@@ -33,6 +33,8 @@ namespace Neo.Editor
 
         private static readonly Dictionary<string, bool> _neoFoldouts = new();
         private static readonly Dictionary<string, Vector2> _neoDocScrollPositions = new();
+        private static Texture2D _neoDocDarkTexture;
+        private static GUIStyle _neoDocBoxStyle;
 
         // Reflection helpers (suppress Unity's built-in HeaderAttribute drawing when we already render our own sections)
         private static readonly Type _scriptAttributeUtilityType =
@@ -680,6 +682,20 @@ namespace Neo.Editor
             EditorGUILayout.Space(CustomEditorSettings.SignatureSpacing);
         }
 
+        private static GUIStyle GetNeoDocBoxStyle()
+        {
+            if (_neoDocBoxStyle != null) return _neoDocBoxStyle;
+            _neoDocDarkTexture = new Texture2D(1, 1);
+            _neoDocDarkTexture.SetPixel(0, 0, new Color(0.14f, 0.15f, 0.18f, 1f));
+            _neoDocDarkTexture.Apply();
+            _neoDocBoxStyle = new GUIStyle
+            {
+                padding = new RectOffset(18, 18, 14, 14),
+                normal = { background = _neoDocDarkTexture }
+            };
+            return _neoDocBoxStyle;
+        }
+
         private void DrawDocumentationFoldout()
         {
             if (target == null || string.IsNullOrEmpty(_cachedNeoxiderRootPath)) return;
@@ -709,18 +725,26 @@ namespace Neo.Editor
                             string preview = NeoDocHelper.GetDocPreview(docPath, 40);
                             if (!string.IsNullOrEmpty(preview))
                             {
+                                string richText = NeoDocHelper.MarkdownToUnityRichText(preview);
                                 if (!_neoDocScrollPositions.TryGetValue(scrollKey, out Vector2 scroll))
                                     scroll = Vector2.zero;
                                 const float docAreaMinHeight = 220f;
                                 const float docAreaMaxHeight = 420f;
-                                GUIStyle docStyle = new(EditorStyles.label) { wordWrap = true, richText = false };
-                                float contentWidth = EditorGUIUtility.currentViewWidth - 60f;
-                                float contentHeight = docStyle.CalcHeight(new GUIContent(preview), Mathf.Max(100f, contentWidth));
+                                const float docHorizontalPadding = 18f * 2f;
+                                GUIStyle docStyle = new GUIStyle(EditorStyles.label)
+                                {
+                                    wordWrap = true,
+                                    richText = true,
+                                    normal = { textColor = new Color(0.88f, 0.90f, 0.92f, 1f) }
+                                };
+                                float contentWidth = Mathf.Max(100f, EditorGUIUtility.currentViewWidth - 60f - docHorizontalPadding);
+                                float contentHeight = docStyle.CalcHeight(new GUIContent(richText), contentWidth);
                                 EditorGUILayout.Space(4);
                                 scroll = EditorGUILayout.BeginScrollView(scroll, false, true, GUILayout.MinHeight(docAreaMinHeight), GUILayout.MaxHeight(docAreaMaxHeight));
                                 _neoDocScrollPositions[scrollKey] = scroll;
-                                EditorGUILayout.BeginVertical(GUILayout.MinHeight(contentHeight));
-                                EditorGUILayout.LabelField(preview, docStyle);
+                                GUIStyle boxStyle = GetNeoDocBoxStyle();
+                                EditorGUILayout.BeginVertical(boxStyle, GUILayout.MinHeight(contentHeight + 28));
+                                EditorGUILayout.LabelField(richText, docStyle);
                                 EditorGUILayout.EndVertical();
                                 EditorGUILayout.EndScrollView();
                                 EditorGUILayout.Space(4);

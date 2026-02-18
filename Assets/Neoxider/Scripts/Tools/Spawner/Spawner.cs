@@ -14,6 +14,7 @@ namespace Neo.Tools
     ///     Спавнер префабов с настраиваемыми задержками, диапазонами поворота по осям (Эйлер),
     ///     опциональным родителем и режимом применения поворота в локальных или мировых координатах.
     /// </summary>
+    [NeoDoc("Tools/Spawner/Spawner.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(Spawner))]
     public class Spawner : MonoBehaviour
     {

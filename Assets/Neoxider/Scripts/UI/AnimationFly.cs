@@ -9,6 +9,7 @@ using Random = UnityEngine.Random;
 
 namespace Neo
 {
+    [NeoDoc("UI/AnimationFly.md")]
     public class AnimationFly : Singleton<AnimationFly>
     {
         public float arcStrength = 2.0f;

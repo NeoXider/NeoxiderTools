@@ -7,6 +7,7 @@ namespace Neo
 {
     namespace Level
     {
+        [NeoDoc("Level/LevelButton.md")]
         [AddComponentMenu("Neo/" + "Level/" + nameof(LevelButton))]
         public class LevelButton : MonoBehaviour
         {

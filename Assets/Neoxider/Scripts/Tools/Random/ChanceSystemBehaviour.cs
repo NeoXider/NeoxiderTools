@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Scene wrapper over <see cref="ChanceManager" /> with UnityEvents and optional ScriptableObject source.
     ///     Useful for drop tables, random events etc.
     /// </summary>
+    [NeoDoc("Tools/Random/ChanceSystemBehaviour.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {

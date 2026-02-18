@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 
@@ -7,6 +7,7 @@ namespace Neo.Tools
     /// <summary>
     ///     EventManager GameStates
     /// </summary>
+    [NeoDoc("Tools/Managers/EM.md")]
     public class EM : Singleton<EM>
     {
         [FormerlySerializedAs("OnMenuState")] [Header("Game Events")]

@@ -7,6 +7,7 @@ namespace Neo
 {
     namespace Bonus
     {
+        [NeoDoc("Bonus/LineRoulett.md")]
         [AddComponentMenu("Neo/" + "Bonus/" + nameof(LineRoulett))]
         public class LineRoulett : MonoBehaviour
         {

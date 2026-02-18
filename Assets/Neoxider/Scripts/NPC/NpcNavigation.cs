@@ -9,6 +9,7 @@ namespace Neo.NPC
     ///     NPC navigation controller with switchable behaviours.
     /// </summary>
     [DisallowMultipleComponent]
+    [NeoDoc("NPC/Navigation/NPCNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
     [AddComponentMenu("Neo/NPC/" + nameof(NpcNavigation))]
     public sealed class NpcNavigation : MonoBehaviour

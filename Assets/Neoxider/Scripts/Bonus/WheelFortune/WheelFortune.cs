@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 #if UNITY_EDITOR
@@ -7,6 +7,7 @@ using UnityEditor;
 
 namespace Neo.Bonus
 {
+    [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(WheelFortune))]
     public class WheelFortune : MonoBehaviour
     {

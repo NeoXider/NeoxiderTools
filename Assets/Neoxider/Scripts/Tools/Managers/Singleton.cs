@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/Managers/Singleton.md")]
     public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         public static bool CreateInstance = false;

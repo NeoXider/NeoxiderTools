@@ -2,6 +2,7 @@ using UnityEngine;
 
 namespace Neo.UI
 {
+    [NeoDoc("UI/AnchorMove.md")]
     [AddComponentMenu("Neo/" + "UI/" + nameof(AnchorMove))]
     public class AnchorMove : MonoBehaviour
     {

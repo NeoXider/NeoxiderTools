@@ -30,6 +30,7 @@ namespace Neo
             }
         }
 
+        [NeoDoc("Tools/Move/CameraRotationController.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(CameraRotationController))]
         public class CameraRotationController : MonoBehaviour
         {

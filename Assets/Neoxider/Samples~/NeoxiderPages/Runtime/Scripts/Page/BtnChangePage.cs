@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Neo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,6 +14,7 @@ using UnityEditor;
 namespace Neo.Pages
 {
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/BtnChangePage.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(BtnChangePage))]
     /// <summary>
     /// UI-кнопка для смены страниц через <see cref="PM"/>.

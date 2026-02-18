@@ -4,6 +4,7 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [NeoDoc("Tools/FakeLeaderboard/LeaderboardItem.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(LeaderboardItem))]
     public class LeaderboardItem : MonoBehaviour
     {

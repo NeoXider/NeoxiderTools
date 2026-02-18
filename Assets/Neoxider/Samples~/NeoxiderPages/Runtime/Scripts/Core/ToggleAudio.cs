@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Extensions;
 using Neo.UI;
 using UnityEngine;
@@ -7,6 +8,7 @@ using UnityEngine.Serialization;
 namespace Neo.Pages
 {
     [MovedFrom("")]
+    [NeoDoc("NeoxiderPages/ToggleAudio.md")]
     [AddComponentMenu("Neo/Pages/" + nameof(ToggleAudio))]
     public class ToggleAudio : MonoBehaviour
     {

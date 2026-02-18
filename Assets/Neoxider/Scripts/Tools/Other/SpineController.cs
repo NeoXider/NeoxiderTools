@@ -1,6 +1,7 @@
 #if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
+using Neo;
 using Spine;
 using Spine.Unity;
 using UnityEngine;
@@ -8,6 +9,7 @@ using UnityEngine.Events;
 using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
+[NeoDoc("Tools/Other/SpineController.md")]
 [AddComponentMenu("Neo/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {

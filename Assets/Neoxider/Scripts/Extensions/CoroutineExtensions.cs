@@ -381,6 +381,7 @@ namespace Neo.Extensions
     /// <summary>
     ///     Internal helper MonoBehaviour used as coroutine owner on regular GameObjects.
     /// </summary>
+    [NeoDoc("Extensions/README.md")]
     [AddComponentMenu("")]
     public class CoroutineRunner : MonoBehaviour
     {
@@ -389,6 +390,7 @@ namespace Neo.Extensions
     /// <summary>
     ///     Global helper MonoBehaviour used for coroutines without explicit owner.
     /// </summary>
+    [NeoDoc("Extensions/README.md")]
     [AddComponentMenu("")]
     public class CoroutineHelper : MonoBehaviour
     {

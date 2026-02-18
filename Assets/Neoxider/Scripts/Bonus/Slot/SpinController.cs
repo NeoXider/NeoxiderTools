@@ -18,6 +18,7 @@ namespace Neo.Bonus
     ///     - Даёт доступ к двумерной матрице видимых элементов (Elements) для эффектов
     ///     Здесь НЕТ анимаций — весь движок вращения/торможения внутри Row.
     /// </summary>
+    [NeoDoc("Bonus/Slot/SpinController.md")]
     [AddComponentMenu("Neo/" + "Bonus/" + nameof(SpinController))]
     public class SpinController : MonoBehaviour
     {

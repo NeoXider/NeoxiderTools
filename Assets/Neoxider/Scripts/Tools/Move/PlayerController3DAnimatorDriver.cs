@@ -5,6 +5,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Drives Animator parameters from <see cref="PlayerController3DPhysics"/> and Rigidbody velocity.
     /// </summary>
+    [NeoDoc("Tools/Move/PlayerController3DAnimatorDriver.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(PlayerController3DAnimatorDriver))]
     public class PlayerController3DAnimatorDriver : MonoBehaviour
     {

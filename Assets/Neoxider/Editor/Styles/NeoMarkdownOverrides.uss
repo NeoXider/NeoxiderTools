@@ -1,0 +1,116 @@
+/* Neoxider overlay: dark theme + accent headings for Markdown Viewer window */
+
+.mainBody {
+    margin: 12px 20px 20px 20px;
+    padding: 18px 22px;
+    background-color: rgb(22, 23, 27);
+    border-radius: 6px;
+    color: rgb(224, 226, 232);
+}
+
+.header {
+    margin-top: 4px;
+    margin-bottom: 4px;
+}
+
+.block {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+    color: rgb(224, 226, 232);
+}
+
+.line {
+    height: 2px;
+    border-width: 1px;
+    border-color: rgb(92, 154, 255);
+    margin-top: 14px;
+    margin-bottom: 14px;
+}
+
+.codeblock {
+    margin: 10px 0;
+    border-width: 1px;
+    border-radius: 6px;
+    border-color: rgb(50, 52, 60);
+    background-color: rgb(32, 33, 38);
+    padding: 12px 14px;
+}
+
+.codeblock Label {
+    color: rgb(200, 204, 212);
+}
+
+.quote {
+    margin-left: 6px;
+    padding: 8px 12px;
+    padding-left: 14px;
+    border-left-width: 3px;
+    border-left-color: rgb(92, 154, 255);
+    background-color: rgb(28, 30, 35);
+    border-radius: 0 4px 4px 0;
+    color: rgb(200, 204, 212);
+}
+
+.list {
+    white-space: normal;
+    color: rgb(224, 226, 232);
+}
+
+.paragraph {
+    white-space: normal;
+    color: rgb(224, 226, 232);
+}
+
+.h1 {
+    font-size: 220%;
+    -unity-font-style: bold;
+    color: rgb(200, 220, 255);
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+.h2 {
+    font-size: 170%;
+    -unity-font-style: bold;
+    color: rgb(180, 208, 255);
+    margin-top: 14px;
+    margin-bottom: 8px;
+}
+
+.h3 {
+    font-size: 130%;
+    -unity-font-style: bold;
+    color: rgb(160, 196, 255);
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+.h4 {
+    font-size: 115%;
+    -unity-font-style: bold;
+    color: rgb(145, 185, 255);
+    margin-top: 10px;
+    margin-bottom: 4px;
+}
+
+.h5 {
+    font-size: 105%;
+    -unity-font-style: bold;
+    color: rgb(130, 175, 255);
+}
+
+.h6 {
+    font-size: 100%;
+    -unity-font-style: bold;
+    color: rgb(120, 168, 255);
+}
+
+.linkHovered {
+    cursor: link;
+}
+
+.md-image {
+    width: 100%;
+    border-radius: 4px;
+}

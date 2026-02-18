@@ -10,6 +10,7 @@ namespace Neo
         ///     Компонент для воспроизведения звука при нажатии на кнопку.
         ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
+        [NeoDoc("Audio/PlayAudioBtn.md")]
         [AddComponentMenu("Neo/" + "Audio/" + nameof(PlayAudioBtn))]
         public class PlayAudioBtn : MonoBehaviour
         {

@@ -7,6 +7,7 @@ namespace Neo
     ///     Displays and monitors FPS (Frames Per Second) in the game.
     ///     Provides visual feedback about performance with color coding.
     /// </summary>
+    [NeoDoc("Tools/Debug/FPS.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {

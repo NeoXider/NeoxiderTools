@@ -25,6 +25,7 @@ namespace Neo
     /// <summary>
     ///     MonoBehaviour-based timer with Unity events support and automatic UI updates
     /// </summary>
+    [NeoDoc("Tools/Time/TimerObject.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(TimerObject))]
     public class TimerObject : MonoBehaviour
     {

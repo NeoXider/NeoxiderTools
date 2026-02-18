@@ -12,6 +12,7 @@ namespace Neo.Cards
     /// <summary>
     ///     Визуальное представление карты
     /// </summary>
+    [NeoDoc("Cards/View/CardView.md")]
     public class CardView : MonoBehaviour, ICardView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
     {
         [Header("Visual")] [SerializeField] private Image _cardImage;

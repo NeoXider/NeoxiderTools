@@ -17,6 +17,7 @@ namespace Neo
         ///     Центральный аудио менеджер для воспроизведения звуковых эффектов и музыки.
         ///     Поддерживает как конкретную музыку из списка, так и случайное воспроизведение.
         /// </summary>
+        [NeoDoc("Audio/AM.md")]
         [AddComponentMenu("Neo/" + "Audio/" + nameof(AM))]
         public class AM : Singleton<AM>
         {

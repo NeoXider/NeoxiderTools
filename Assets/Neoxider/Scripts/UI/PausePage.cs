@@ -4,6 +4,7 @@ namespace Neo
 {
     namespace Tools
     {
+        [NeoDoc("UI/PausePage.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(PausePage))]
         public class PausePage : MonoBehaviour
         {

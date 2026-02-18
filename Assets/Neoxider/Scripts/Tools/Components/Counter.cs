@@ -34,6 +34,7 @@ namespace Neo.Tools
     ///     События по типу: OnValueChangedInt / OnValueChangedFloat, OnSendInt / OnSendFloat (в зависимости от режима).
     ///     Опционально сохраняет значение через SaveProvider по ключу (по умолчанию выключено).
     /// </summary>
+    [NeoDoc("Tools/Components/Counter.md")]
     [AddComponentMenu("Neo/Tools/" + nameof(Counter))]
     public class Counter : MonoBehaviour
     {

@@ -16,6 +16,7 @@ namespace Neo.Tools
     /// <summary>
     ///     Центральный менеджер для управления всеми пулами объектов в игре.
     /// </summary>
+    [NeoDoc("Tools/Spawner/PoolManager.md")]
     public class PoolManager : Singleton<PoolManager>
     {
         [Header("Defaults")] [SerializeField] private int _defaultInitialSize = 10;

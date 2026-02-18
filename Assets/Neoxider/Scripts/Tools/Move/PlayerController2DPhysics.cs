@@ -7,6 +7,7 @@ namespace Neo.Tools
     ///     Rigidbody2D-based side-scroller controller with run, jump and optional camera follow.
     /// </summary>
     [RequireComponent(typeof(Rigidbody2D))]
+    [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(PlayerController2DPhysics))]
     public class PlayerController2DPhysics : MonoBehaviour
     {

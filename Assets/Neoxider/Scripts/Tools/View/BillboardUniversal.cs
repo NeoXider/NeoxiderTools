@@ -4,6 +4,7 @@ namespace Neo
 {
     namespace Tools
     {
+        [NeoDoc("Tools/View/BillboardUniversal.md")]
         [AddComponentMenu("Neo/" + "Tools/" + nameof(BillboardUniversal))]
         public class BillboardUniversal : MonoBehaviour
         {

@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Компонент взрывной силы, который применяет взрывную силу ко всем объектам в заданном радиусе.
     ///     Поддерживает фильтрацию по слоям, опциональное добавление физики и различные режимы активации.
     /// </summary>
+    [NeoDoc("Tools/Physics/ExplosiveForce.md")]
     [AddComponentMenu("Neo/" + "Tools/" + "Physics/" + nameof(ExplosiveForce))]
     public class ExplosiveForce : MonoBehaviour
     {

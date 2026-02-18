@@ -22,6 +22,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [RequireComponent(typeof(Transform))]
+    [NeoDoc("Tools/Move/MovementToolkit/MouseMover3D.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MouseMover3D))]
     public class MouseMover3D : MonoBehaviour
     {

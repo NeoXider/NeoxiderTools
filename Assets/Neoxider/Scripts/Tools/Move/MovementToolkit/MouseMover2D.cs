@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Provides multiple movement modes for different gameplay mechanics.
     /// </summary>
     [RequireComponent(typeof(Transform))]
+    [NeoDoc("Tools/Move/MovementToolkit/MouseMover2D.md")]
     [AddComponentMenu("Neo/" + "Tools/" + nameof(MouseMover2D))]
     public class MouseMover2D : MonoBehaviour, IMover
     {
