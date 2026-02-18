@@ -50,15 +50,11 @@ namespace Neo
                                 break;
                             }
                         }
-
                         if (!string.IsNullOrEmpty(scriptPath))
                         {
                             string prefabsDir = Path.GetDirectoryName(scriptPath);
                             if (prefabsDir != null && (prefabsDir.EndsWith("Canvas") || prefabsDir.EndsWith("Layout")))
-                            {
                                 prefabsDir = Path.GetDirectoryName(prefabsDir);
-                            }
-
                             _startPath = prefabsDir + "/";
                             scriptPath = null;
                         }
@@ -67,9 +63,7 @@ namespace Neo
                     if (!string.IsNullOrEmpty(scriptPath))
                     {
                         if (scriptPath.EndsWith("/"))
-                        {
                             _startPath = scriptPath;
-                        }
                         else
                         {
                             string basePath = Path.GetDirectoryName(scriptPath);
@@ -139,9 +133,8 @@ namespace Neo
                     Debug.LogWarning($"[Neoxider UI] Prefab not found: {startPath}{path}");
                     return null;
                 }
-
                 Transform parent = Selection.activeGameObject != null ? Selection.activeGameObject.transform : null;
-                GameObject obj = GameObject.Instantiate(prefab, parent);
+                GameObject obj = (GameObject)GameObject.Instantiate(prefab, parent);
                 obj.name = prefab.name;
                 Selection.activeGameObject = obj;
                 return obj;
@@ -149,15 +142,10 @@ namespace Neo
 
             private static GameObject CreatePrefab(string name, string subfolder)
             {
-                string relativePath = string.IsNullOrEmpty(subfolder)
-                    ? name + ".prefab"
-                    : subfolder + "/" + name + ".prefab";
+                string relativePath = string.IsNullOrEmpty(subfolder) ? name + ".prefab" : subfolder + "/" + name + ".prefab";
                 GameObject obj = Create(relativePath);
                 if (obj != null)
-                {
                     Selection.activeObject = obj;
-                }
-
                 return obj;
             }
 

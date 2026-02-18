@@ -8,8 +8,7 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
-        "Prefabs/Tools/First Person Controller.prefab")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics", "Prefabs/Tools/First Person Controller.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics : MonoBehaviour
     {
@@ -53,12 +52,10 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
-
-        [Tooltip(
-            "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
-        [SerializeField]
-        private bool _pauseLookWhenCursorVisible = true;
+        [Header("Cursor")]
+        [SerializeField] private bool _lockCursorOnStart = true;
+        [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
+        [SerializeField] private bool _pauseLookWhenCursorVisible = true;
 
         [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
@@ -84,8 +81,6 @@ namespace Neo.Tools
         ///     Gets whether sprint input is active.
         /// </summary>
         public bool IsRunning { get; private set; }
-
-        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
 
         private void Awake()
         {
@@ -312,6 +307,8 @@ namespace Neo.Tools
             Vector3 extraGravity = Physics.gravity * (_extraGravityMultiplier - 1f);
             _rigidbody.AddForce(extraGravity, ForceMode.Acceleration);
         }
+
+        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
 
         private void HandleLookInput()
         {

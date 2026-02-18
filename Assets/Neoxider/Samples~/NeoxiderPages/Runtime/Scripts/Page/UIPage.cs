@@ -7,8 +7,9 @@ using UnityEngine.Serialization;
 namespace Neo.Pages
 {
     [MovedFrom("")]
-    [NeoDoc("NeoxiderPages/UIPage.md")]
+    [CreateFromMenu("Neoxider/Pages/UIPage")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(UIPage))]
+    [NeoDoc("NeoxiderPages/UIPage.md")]
     /// <summary>
     /// Компонент страницы UI для работы с <see cref="PM"/>.
     /// Поддерживает проигрывание анимации через DOTween Animation (если компонент присутствует).

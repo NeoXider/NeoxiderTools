@@ -1,20 +1,15 @@
 using System;
 using System.IO;
-using System.Text.RegularExpressions;
+using Neo.Pages;
 using UnityEditor;
 using UnityEngine;
 
 namespace Neo.Pages.Editor
 {
-    public static class PageIdGenerator
+    internal static class PageIdGenerator
     {
-        private const string DefaultFolder = "Assets/NeoxiderPages/Pages";
+        private const string DefaultFolder = "Assets/Neoxider/NeoxiderPages/Pages";
 
-        public static string DefaultFolderPath => DefaultFolder;
-
-        /// <summary>
-        ///     Папка для создания новых PageId: существующая папка с PageId, иначе DefaultFolder.
-        /// </summary>
         public static string GetPreferredFolder()
         {
             if (AssetDatabase.IsValidFolder(DefaultFolder))
@@ -36,19 +31,21 @@ namespace Neo.Pages.Editor
             return DefaultFolder;
         }
 
-        public static PageId GetOrCreate(string pageName, string folder = null)
+        public static PageId GetOrCreate(string displayName, string folder)
         {
-            if (string.IsNullOrWhiteSpace(pageName))
+            if (string.IsNullOrWhiteSpace(displayName))
             {
                 return null;
             }
 
-            folder ??= GetPreferredFolder();
             EnsureFolder(folder);
 
-            string normalized = NormalizeAssetName(pageName);
-            string assetPath = $"{folder}/{normalized}.asset";
+            string normalized = displayName.Trim();
+            string assetName = normalized.StartsWith("Page", StringComparison.OrdinalIgnoreCase)
+                ? normalized
+                : "Page" + normalized;
 
+            string assetPath = $"{folder}/{assetName}.asset";
             PageId existing = AssetDatabase.LoadAssetAtPath<PageId>(assetPath);
             if (existing != null)
             {
@@ -62,80 +59,6 @@ namespace Neo.Pages.Editor
             return instance;
         }
 
-        [MenuItem("Tools/Neoxider/Pages/Generate Default PageIds")]
-        public static void GenerateDefaultPageIds()
-        {
-            string folder = GetPreferredFolder();
-            EnsureFolder(folder);
-
-            string[] defaults =
-            {
-                "PageOpen",
-                "PageMenu",
-                "PageSettings",
-                "PageShop",
-                "PageLeader",
-                "PageInfo",
-                "PageLevels",
-                "PageGame",
-                "PageWin",
-                "PageLose",
-                "PagePause",
-                "PageEnd",
-                "PageMain",
-                "PageGrade",
-                "PageBonus",
-                "PageInventory",
-                "PageMap",
-                "PagePrivacy",
-                "PageOther"
-            };
-
-            int created = 0;
-            int existed = 0;
-
-            foreach (string name in defaults)
-            {
-                string assetPath = $"{folder}/{name}.asset";
-                bool alreadyExists = AssetDatabase.LoadAssetAtPath<PageId>(assetPath) != null;
-
-                PageId pageId = GetOrCreate(name, folder);
-                if (pageId == null)
-                {
-                    continue;
-                }
-
-                if (alreadyExists)
-                {
-                    existed++;
-                }
-                else
-                {
-                    created++;
-                }
-            }
-
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Debug.Log($"[PageIdGenerator] Done. Created: {created}, existed: {existed}. Folder: {folder}");
-        }
-
-        private static string NormalizeAssetName(string pageName)
-        {
-            string trimmed = pageName.Trim();
-
-            // Разрешаем ввод как "Menu", так и "PageMenu"
-            if (!trimmed.StartsWith("Page", StringComparison.Ordinal))
-            {
-                trimmed = "Page" + trimmed;
-            }
-
-            // Чистим запрещенные символы для имени ассета
-            trimmed = Regex.Replace(trimmed, @"[^a-zA-Z0-9_]+", "");
-            return string.IsNullOrWhiteSpace(trimmed) ? "Page" : trimmed;
-        }
-
         private static void EnsureFolder(string folder)
         {
             if (AssetDatabase.IsValidFolder(folder))
@@ -146,7 +69,7 @@ namespace Neo.Pages.Editor
             string[] parts = folder.Split('/');
             if (parts.Length < 2 || parts[0] != "Assets")
             {
-                throw new ArgumentException($"Invalid folder path: {folder}");
+                return;
             }
 
             string current = "Assets";
@@ -157,7 +80,6 @@ namespace Neo.Pages.Editor
                 {
                     AssetDatabase.CreateFolder(current, parts[i]);
                 }
-
                 current = next;
             }
         }

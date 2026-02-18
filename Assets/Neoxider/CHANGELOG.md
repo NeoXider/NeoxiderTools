@@ -2,22 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
-## [6.0.4] - Unreleased
-
-### Selector — уникальная выборка и события
-
-- **Уникальная выборка (по умолчанию выключена):** опция `_uniqueSelectionMode` — при случайном выборе и при ручном `Set(index)` индексы не повторяются до сброса или до конца цикла. Когда все индексы использованы: вызывается `OnUniqueCycleComplete`; при `_resetUniqueWhenCycleComplete = true` набор сбрасывается и цикл начинается заново.
-- **Сброс:** `ResetUnique()` — сбрасывает учёт использованных индексов (кнопка **Reset Unique** в Inspector). `ResetAll()` — сброс выбора на первый индекс и сброс unique-набора.
-- **События:** `OnUniqueCycleComplete` (цикл завершён), `OnUniqueReset` (вызван `ResetUnique()`).
-- **Свойства:** `UniqueSelectionMode`, `UniqueRemainingCount` (сколько индексов ещё не выбраны в текущем цикле).
-- **Документация:** обновлён Selector.md (описание unique-режима, методов, событий, раздел 3.4).
-
 ## [6.0.3] - Unreleased
 
 ### Create Neoxider Object (окно и меню)
 
-- **Цвета категорий** — в окне Create Neoxider Object категории верхнего уровня (UI, Tools, Bonus, Shop, Audio, Level, Save, Condition, Animations, GridSystem, Parallax, NPC) выделены разными цветами для быстрого распознавания.
-- **Подпапки Tools** — в меню и в окне Tools разбит на подкатегории: **Physics**, **Movement**, **Spawner**, **Components**, **Dialogue**, **Input**, **View**, **Debug**, **Time**, **Text**, **Interact**, **Random**, **Other**, **State Machine**, **FakeLeaderboard**, **Managers**, **Camera**. Пути CreateFromMenu обновлены (например Neoxider/Tools/Movement/PlayerController3DPhysics, Neoxider/Tools/Physics/ExplosiveForce).
+- **Цвета категорий** — в окне Create Neoxider Object категории верхнего уровня (UI, Tools, Bonus, Shop, Audio, Level,
+  Save, Condition, Animations, GridSystem, Parallax, NPC) выделены разными цветами для быстрого распознавания.
+- **Подпапки Tools** — в меню и в окне Tools разбит на подкатегории: **Physics**, **Movement**, **Spawner**, *
+  *Components**, **Dialogue**, **Input**, **View**, **Debug**, **Time**, **Text**, **Interact**, **Random**, **Other**,
+  **State Machine**, **FakeLeaderboard**, **Managers**, **Camera**. Пути CreateFromMenu обновлены (например
+  Neoxider/Tools/Movement/PlayerController3DPhysics, Neoxider/Tools/Physics/ExplosiveForce).
 - **Документация** — UsefulComponents.md обновлён: описание подкатегорий Tools и цветов в окне.
 
 ## [6.0.2] - Unreleased

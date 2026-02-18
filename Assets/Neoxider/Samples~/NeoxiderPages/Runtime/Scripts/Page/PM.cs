@@ -29,8 +29,9 @@ namespace Neo.Pages
     ///     PageManager — компонент управления страницами UI (включение/выключение, переключение, возврат на предыдущую).
     /// </summary>
     [MovedFrom("")]
-    [NeoDoc("NeoxiderPages/PM.md")]
+    [CreateFromMenu("Neoxider/Pages/PM")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(PM))]
+    [NeoDoc("NeoxiderPages/PM.md")]
     public class PM : Singleton<PM>
     {
         public enum KnownPage

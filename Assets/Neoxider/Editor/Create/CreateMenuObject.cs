@@ -121,7 +121,8 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Creates an object with a component of type <paramref name="componentType" />. If <paramref name="prefabPath" /> is set
+        ///     Creates an object with a component of type <paramref name="componentType" />. If <paramref name="prefabPath" /> is
+        ///     set
         ///     and the prefab is found, instantiates it; otherwise creates an empty GameObject and adds the component.
         /// </summary>
         public static MonoBehaviour Create(Type componentType, string prefabPath)
@@ -329,21 +330,24 @@ namespace Neo
         private static readonly Color EntryBg = new(0.25f, 0.38f, 0.55f, 0.25f);
         private static readonly Color EntryBgLight = new(0.45f, 0.65f, 0.9f, 0.2f);
 
-        /// <summary>Meaningful color palette by category: UI/looks — purple, audio — pink, control/conditions — orange, data — teal, mechanics — green, game/levels — blue, etc.</summary>
+        /// <summary>
+        ///     Meaningful color palette by category: UI/looks — purple, audio — pink, control/conditions — orange, data —
+        ///     teal, mechanics — green, game/levels — blue, etc.
+        /// </summary>
         private static readonly Dictionary<string, Color> CategoryColors = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) },           // Внешний вид / интерфейс — фиолетовый
-            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) },   // Инструменты, механика — зелёный (операторы)
-            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) },          // Магазин, валюта — жёлтый/золотой
-            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) },    // Звук — розовый/маджента (как в примере)
-            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) },       // Награды, активность — оранжевый
-            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) },        // Уровни, игра — синий (движение/игра)
-            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) },     // Сохранения, данные — бирюзовый (сенсоры)
-            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) },   // Условия, логика — оранжевый (управление)
+            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) }, // Внешний вид / интерфейс — фиолетовый
+            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) }, // Инструменты, механика — зелёный (операторы)
+            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) }, // Магазин, валюта — жёлтый/золотой
+            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) }, // Звук — розовый/маджента (как в примере)
+            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) }, // Награды, активность — оранжевый
+            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Уровни, игра — синий (движение/игра)
+            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Сохранения, данные — бирюзовый (сенсоры)
+            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) }, // Условия, логика — оранжевый (управление)
             { "Animations", new Color(0.65f, 0.45f, 0.95f, 0.9f) }, // Анимация, вид — фиолетовый
-            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) },  // Сетка, структура — бирюзовый
-            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) },    // Параллакс, движение — синий
-            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) }      // Персонажи, взаимодействие — бирюзовый
+            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Сетка, структура — бирюзовый
+            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Параллакс, движение — синий
+            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) } // Персонажи, взаимодействие — бирюзовый
         };
 
         private static readonly Dictionary<string, string> CategoryIcons = new(StringComparer.OrdinalIgnoreCase)
@@ -379,22 +383,6 @@ namespace Neo
             { "Camera", "d_Camera Icon" }
         };
 
-        private static GUIContent GetFolderContent(string name, int depth)
-        {
-            Texture2D icon = null;
-            if (CategoryIcons.TryGetValue(name, out string iconName))
-            {
-                GUIContent c = EditorGUIUtility.IconContent(iconName);
-                if (c?.image != null)
-                    icon = c.image as Texture2D;
-            }
-            if (icon == null)
-            {
-                GUIContent folder = EditorGUIUtility.IconContent("Folder Icon") ?? EditorGUIUtility.IconContent("d_Folder Icon");
-                icon = folder?.image as Texture2D;
-            }
-            return new GUIContent(" " + name, icon, name);
-        }
         private readonly Dictionary<string, bool> _expanded = new(StringComparer.OrdinalIgnoreCase);
 
         private CreateMenuObject.CreateMenuEntry[] _entries = Array.Empty<CreateMenuObject.CreateMenuEntry>();
@@ -418,6 +406,28 @@ namespace Neo
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private static GUIContent GetFolderContent(string name, int depth)
+        {
+            Texture2D icon = null;
+            if (CategoryIcons.TryGetValue(name, out string iconName))
+            {
+                GUIContent c = EditorGUIUtility.IconContent(iconName);
+                if (c?.image != null)
+                {
+                    icon = c.image as Texture2D;
+                }
+            }
+
+            if (icon == null)
+            {
+                GUIContent folder = EditorGUIUtility.IconContent("Folder Icon") ??
+                                    EditorGUIUtility.IconContent("d_Folder Icon");
+                icon = folder?.image as Texture2D;
+            }
+
+            return new GUIContent(" " + name, icon, name);
         }
 
         public static void ShowWindow(CreateMenuObject.CreateMenuEntry[] entries)
@@ -546,10 +556,12 @@ namespace Neo
                     _search = "";
                     GUI.FocusControl(null);
                 }
+
                 GUI.contentColor = prev;
             }
 
-            GUIContent refreshIcon = EditorGUIUtility.IconContent("d_Refresh") ?? EditorGUIUtility.IconContent("Refresh");
+            GUIContent refreshIcon =
+                EditorGUIUtility.IconContent("d_Refresh") ?? EditorGUIUtility.IconContent("Refresh");
             if (refreshIcon != null && refreshIcon.image != null)
             {
                 if (GUILayout.Button(refreshIcon, EditorStyles.toolbarButton, GUILayout.Width(28)))
@@ -614,7 +626,8 @@ namespace Neo
                 }
             }
 
-            GUIContent scriptIconContent = EditorGUIUtility.IconContent("d_cs Script Icon") ?? EditorGUIUtility.IconContent("cs Script Icon");
+            GUIContent scriptIconContent = EditorGUIUtility.IconContent("d_cs Script Icon") ??
+                                           EditorGUIUtility.IconContent("cs Script Icon");
             Texture2D scriptIcon = scriptIconContent?.image as Texture2D;
             foreach (CreateMenuObject.CreateMenuEntry entry in node.Entries.OrderBy(e => e.MenuPath))
             {
@@ -624,7 +637,9 @@ namespace Neo
                 }
 
                 string label = GetLeafName(entry.MenuPath);
-                GUIContent entryContent = scriptIcon != null ? new GUIContent(" " + label, scriptIcon, entry.MenuPath) : new GUIContent(label, entry.MenuPath);
+                GUIContent entryContent = scriptIcon != null
+                    ? new GUIContent(" " + label, scriptIcon, entry.MenuPath)
+                    : new GUIContent(label, entry.MenuPath);
                 EditorGUILayout.BeginHorizontal();
                 GUILayout.Space((depth + 1) * indentPerLevel);
                 if (GUILayout.Button(entryContent, _entryButtonStyle))

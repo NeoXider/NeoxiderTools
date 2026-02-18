@@ -153,13 +153,11 @@ namespace Neo
             private bool _useNextPreviousAsRandom;
 
             [Header("Unique Selection (no repeats until reset)")]
-            [Tooltip(
-                "When enabled (and random is used), each index is selected at most once until ResetUnique() or cycle completes. Off by default.")]
+            [Tooltip("When enabled (and random is used), each index is selected at most once until ResetUnique() or cycle completes. Off by default.")]
             [SerializeField]
             private bool _uniqueSelectionMode;
 
-            [Tooltip(
-                "When unique mode is on and all indices have been used once: if true, auto-clear and start a new cycle; if false, next random does nothing until ResetUnique().")]
+            [Tooltip("When unique mode is on and all indices have been used once: if true, auto-clear and start a new cycle; if false, next random does nothing until ResetUnique().")]
             [SerializeField]
             private bool _resetUniqueWhenCycleComplete = true;
 
@@ -238,8 +236,7 @@ namespace Neo
             public UnityEvent OnFinished;
 
             /// <summary>
-            ///     Invoked when unique mode is on and all indices have been selected once (cycle complete). If auto-reset is enabled,
-            ///     the set is cleared right after.
+            ///     Invoked when unique mode is on and all indices have been selected once (cycle complete). If auto-reset is enabled, the set is cleared right after.
             /// </summary>
             public UnityEvent OnUniqueCycleComplete;
 
@@ -327,8 +324,7 @@ namespace Neo
             public bool UniqueSelectionMode => _uniqueSelectionMode;
 
             /// <summary>
-            ///     In unique mode, gets how many indices have not been used yet in the current cycle. 0 when cycle is complete or when
-            ///     unique mode is off.
+            ///     In unique mode, gets how many indices have not been used yet in the current cycle. 0 when cycle is complete or when unique mode is off.
             /// </summary>
             public int UniqueRemainingCount
             {
@@ -338,23 +334,14 @@ namespace Neo
                     {
                         return 0;
                     }
-
                     (int min, int max) = GetCurrentBounds();
                     int range = max - min + 1;
-                    if (range <= 0)
-                    {
-                        return 0;
-                    }
-
+                    if (range <= 0) return 0;
                     int used = 0;
                     for (int i = min; i <= max; i++)
                     {
-                        if (_usedIndicesForUnique.Contains(i))
-                        {
-                            used++;
-                        }
+                        if (_usedIndicesForUnique.Contains(i)) used++;
                     }
-
                     return range - used;
                 }
             }
@@ -589,8 +576,7 @@ namespace Neo
 
             /// <summary>
             ///     Sets the selection to a random value within the current valid bounds.
-            ///     In unique mode, picks only from indices not yet used in the current cycle; when all are used, invokes
-            ///     OnUniqueCycleComplete and optionally starts a new cycle.
+            ///     In unique mode, picks only from indices not yet used in the current cycle; when all are used, invokes OnUniqueCycleComplete and optionally starts a new cycle.
             /// </summary>
             [Button]
             public void SetRandom()
@@ -625,7 +611,6 @@ namespace Neo
                     {
                         MarkIndexUsedInUniqueMode(min);
                     }
-
                     UpdateSelection();
                     return;
                 }
@@ -651,7 +636,7 @@ namespace Neo
             {
                 _usedIndicesForUnique ??= new HashSet<int>();
 
-                List<int> available = new(range);
+                List<int> available = new List<int>(range);
                 for (int i = min; i <= max; i++)
                 {
                     if (!_usedIndicesForUnique.Contains(i))
@@ -685,11 +670,7 @@ namespace Neo
 
             private void MarkIndexUsedInUniqueMode(int index)
             {
-                if (!_uniqueSelectionMode)
-                {
-                    return;
-                }
-
+                if (!_uniqueSelectionMode) return;
                 _usedIndicesForUnique ??= new HashSet<int>();
                 _usedIndicesForUnique.Add(index);
             }
@@ -798,8 +779,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Clears the unique-selection tracking so indices can repeat again. Use when unique mode is on and you want the next
-            ///     random (or manual Set) to be allowed to repeat. Invokes OnUniqueReset.
+            ///     Clears the unique-selection tracking so indices can repeat again. Use when unique mode is on and you want the next random (or manual Set) to be allowed to repeat. Invokes OnUniqueReset.
             /// </summary>
             [Button("Reset Unique")]
             public void ResetUnique()
