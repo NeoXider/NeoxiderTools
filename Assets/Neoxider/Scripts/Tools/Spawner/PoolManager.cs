@@ -11,6 +11,8 @@ namespace Neo.Tools
         public GameObject prefab;
         public int initialSize = 10;
         public bool expandPool = true;
+        [Tooltip("Max pool size when expandPool is true. 0 = no limit (use with care).")]
+        public int maxSize = 100;
     }
 
     /// <summary>
@@ -22,6 +24,9 @@ namespace Neo.Tools
         [Header("Defaults")] [SerializeField] private int _defaultInitialSize = 10;
 
         [SerializeField] private bool _defaultExpandPool = true;
+
+        [SerializeField] [Tooltip("Max size when pool can expand. 0 = no limit.")]
+        private int _defaultMaxSize = 100;
 
         [Header("Preconfigured Pools")] [SerializeField]
         private List<PoolConfig> _preconfiguredPools;
@@ -62,7 +67,8 @@ namespace Neo.Tools
             {
                 if (config.prefab != null && !_pools.ContainsKey(config.prefab))
                 {
-                    NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool);
+                    int max = config.expandPool ? (config.maxSize > 0 ? config.maxSize : 100) : config.initialSize;
+                    NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool, max);
                     _pools[config.prefab] = pool;
                 }
             }
@@ -72,7 +78,8 @@ namespace Neo.Tools
         {
             if (!_pools.TryGetValue(prefab, out NeoObjectPool pool))
             {
-                pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool);
+                int max = _defaultExpandPool ? (_defaultMaxSize > 0 ? _defaultMaxSize : 100) : _defaultInitialSize;
+                pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool, max);
                 _pools[prefab] = pool;
             }
 
@@ -89,17 +96,7 @@ namespace Neo.Tools
 
             NeoObjectPool pool = I.GetOrCreatePool(prefab);
             GameObject instance = pool.GetObject(position, rotation);
-
-            // Если родитель не указан, делаем объект дочерним для самого PoolManager
             instance.transform.SetParent(parent == null ? I.transform : parent);
-
-            if (!instance.TryGetComponent(out PooledObjectInfo info))
-            {
-                info = instance.AddComponent<PooledObjectInfo>();
-            }
-
-            info.OwnerPool = pool;
-
             return instance;
         }
 

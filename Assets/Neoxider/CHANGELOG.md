@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.1] - Unreleased
+
+### Пул объектов (PoolManager, Spawner)
+
+- **Дефолтный max size пула** — 100 (раньше 10000). В **PoolConfig** и настройках по умолчанию добавлено поле **maxSize**; при 0 используется 100.
+- **PooledObjectInfo** — выставляется один раз при создании объекта в **NeoObjectPool.CreatePooledObject()**, а не при каждом Get. Добавлен метод **Return()** для возврата в пул без вызова PoolManager.Release.
+- **Spawner** — при использовании пула родитель передаётся в **PoolManager.Get(..., parent)** и больше не задаётся вторым вызовом SetParent.
+- **Расширения (Neo.Extensions)** — **ReturnToPool()** для GameObject, **SpawnFromPool(position, rotation, parent)** для префаба; при отсутствии PoolManager SpawnFromPool делает Instantiate.
+- **PoolableBehaviour** — базовый класс с виртуальными OnPoolCreate/OnPoolGet/OnPoolRelease для объектов из пула.
+- **Документация** — обновлены PoolManager.md, добавлены PooledObjectInfo.md, PoolableBehaviour.md.
+
 ## [6.0.0] - Unreleased
 
 ### Документация в инспекторе

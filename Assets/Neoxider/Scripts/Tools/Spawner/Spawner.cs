@@ -253,15 +253,18 @@ namespace Neo.Tools
                 return null;
             }
 
-            GameObject spawnedObject = _useObjectPool && PoolManager.I != null
-                ? PoolManager.Get(prefab, position, rotation)
-                : Instantiate(prefab, position, rotation);
-
-            spawnedObject.SetActive(true);
-
-            if (parent != null)
+            GameObject spawnedObject;
+            if (_useObjectPool && PoolManager.I != null)
             {
-                spawnedObject.transform.SetParent(parent, true);
+                spawnedObject = PoolManager.Get(prefab, position, rotation, parent);
+                spawnedObject.SetActive(true);
+            }
+            else
+            {
+                spawnedObject = Instantiate(prefab, position, rotation);
+                spawnedObject.SetActive(true);
+                if (parent != null)
+                    spawnedObject.transform.SetParent(parent, true);
             }
 
             SpawnedObjects.Add(spawnedObject);

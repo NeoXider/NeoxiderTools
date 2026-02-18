@@ -13,18 +13,19 @@ namespace Neo.Tools
         private readonly IObjectPool<GameObject> _pool;
         private readonly GameObject _prefab;
 
-        public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool)
+        public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100)
         {
             _prefab = prefab;
+            int effectiveMax = expandPool ? (maxSize > 0 ? maxSize : 100) : initialSize;
 
             _pool = new ObjectPool<GameObject>(
                 CreatePooledObject,
                 OnGetFromPool,
                 OnReleaseToPool,
                 OnDestroyObject,
-                true, // Защита от двойного возврата в пул
+                true,
                 initialSize,
-                expandPool ? 10000 : initialSize
+                effectiveMax
             );
 
             // "Прогреваем" пул, чтобы избежать лагов при первом использовании
@@ -60,12 +61,13 @@ namespace Neo.Tools
         {
             GameObject instance = Object.Instantiate(_prefab);
 
-            // Вызываем метод инициализации у всех компонентов, реализующих IPoolable
+            if (!instance.TryGetComponent(out PooledObjectInfo info))
+                info = instance.AddComponent<PooledObjectInfo>();
+            info.OwnerPool = this;
+
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
-            {
                 poolable.OnPoolCreate();
-            }
 
             return instance;
         }
