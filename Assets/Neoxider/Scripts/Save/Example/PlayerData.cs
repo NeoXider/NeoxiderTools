@@ -3,6 +3,7 @@ using UnityEngine;
 namespace Neo.Save.Examples
 {
     [NeoDoc("Save/PlayerData.md")]
+    [CreateFromMenu("Neoxider/Save/PlayerData")]
     [AddComponentMenu("Neoxider/" + "Save/" + nameof(PlayerData))]
     public class PlayerData : MonoBehaviour, ISaveableComponent
     {

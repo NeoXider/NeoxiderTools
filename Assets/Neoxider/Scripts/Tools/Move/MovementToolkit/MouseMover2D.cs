@@ -9,6 +9,7 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Transform))]
     [NeoDoc("Tools/Move/MovementToolkit/MouseMover2D.md")]
+    [CreateFromMenu("Neoxider/Tools/MouseMover2D")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MouseMover2D))]
     public class MouseMover2D : MonoBehaviour, IMover
     {

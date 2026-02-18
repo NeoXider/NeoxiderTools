@@ -8,6 +8,7 @@ namespace Neo.GridSystem.TicTacToe
     /// </summary>
     [NeoDoc("GridSystem/TicTacToe/TicTacToeBoardService.md")]
     [RequireComponent(typeof(FieldGenerator))]
+    [CreateFromMenu("Neoxider/GridSystem/TicTacToe/TicTacToeBoardService")]
     [AddComponentMenu("Neoxider/GridSystem/TicTacToe/TicTacToeBoardService")]
     public class TicTacToeBoardService : MonoBehaviour
     {

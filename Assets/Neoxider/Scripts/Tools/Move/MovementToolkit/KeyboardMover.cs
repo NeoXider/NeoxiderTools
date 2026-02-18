@@ -12,6 +12,7 @@ namespace Neo.Tools
     ///     implements <see cref="IMover" /> for external control.
     /// </summary>
     [NeoDoc("Tools/Move/MovementToolkit/KeyboardMover.md")]
+    [CreateFromMenu("Neoxider/Tools/KeyboardMover")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(KeyboardMover))]
     public class KeyboardMover : MonoBehaviour, IMover
     {

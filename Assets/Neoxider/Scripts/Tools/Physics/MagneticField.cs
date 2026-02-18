@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     Поддерживает постоянное воздействие, фильтрацию по слоям и опциональное добавление физики.
     /// </summary>
     [NeoDoc("Tools/Physics/MagneticField.md")]
+    [CreateFromMenu("Neoxider/Tools/Physics/MagneticField")]
     [AddComponentMenu("Neoxider/" + "Tools/" + "Physics/" + nameof(MagneticField))]
     public class MagneticField : MonoBehaviour
     {

@@ -5,6 +5,7 @@ using UnityEngine.UI;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/View/ImageFillAmountAnimator.md")]
+    [CreateFromMenu("Neoxider/Tools/ImageFillAmountAnimator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ImageFillAmountAnimator))]
     public class ImageFillAmountAnimator : MonoBehaviour
     {

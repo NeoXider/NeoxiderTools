@@ -11,6 +11,7 @@ namespace Neo.Tools
     }
 
     [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
+    [CreateFromMenu("Neoxider/Tools/AdvancedAttackCollider")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedAttackCollider))]
     public class AdvancedAttackCollider : MonoBehaviour
     {

@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Audio;
 
@@ -6,6 +7,7 @@ namespace Neo
     namespace Audio
     {
         [NeoDoc("Audio/SettingMixer.md")]
+        [CreateFromMenu("Neoxider/Audio/SettingMixer")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
         public class SettingMixer : MonoBehaviour
         {

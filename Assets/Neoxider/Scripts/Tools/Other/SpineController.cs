@@ -10,6 +10,7 @@ using UnityEngine.Serialization;
 
 [DisallowMultipleComponent]
 [NeoDoc("Tools/Other/SpineController.md")]
+[CreateFromMenu("Neoxider/Tools/SpineController")]
 [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {

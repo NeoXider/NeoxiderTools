@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Shop;
 using TMPro;
 using UnityEngine;
@@ -7,6 +8,7 @@ namespace Neo
     namespace Bonus
     {
         [NeoDoc("Bonus/WheelFortune/WheelMoneyWin.md")]
+        [CreateFromMenu("Neoxider/Bonus/WheelMoneyWin")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelMoneyWin))]
         public class WheelMoneyWin : MonoBehaviour
         {

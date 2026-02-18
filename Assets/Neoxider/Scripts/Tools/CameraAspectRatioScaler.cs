@@ -15,6 +15,7 @@ namespace Neo
     [ExecuteAlways]
     [RequireComponent(typeof(Camera))]
     [NeoDoc("Tools/CameraAspectRatioScaler.md")]
+    [CreateFromMenu("Neoxider/Tools/CameraAspectRatioScaler")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraAspectRatioScaler))]
     public class CameraAspectRatioScaler : MonoBehaviour
     {

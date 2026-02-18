@@ -8,6 +8,7 @@ namespace Neo.Tools
     ///     Camera shake component using DOTween with support for position and rotation shake
     /// </summary>
     [NeoDoc("Tools/Other/CameraShake.md")]
+    [CreateFromMenu("Neoxider/Tools/CameraShake")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraShake))]
     public class CameraShake : MonoBehaviour
     {

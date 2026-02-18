@@ -1,4 +1,5 @@
 using DG.Tweening;
+using Neo;
 using Neo.Extensions;
 using Neo.Save;
 using TMPro;
@@ -9,6 +10,7 @@ using UnityEngine.UI;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Collection/Box.md")]
+    [CreateFromMenu("Neoxider/Bonus/Box")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(Box))]
     public class Box : MonoBehaviour
     {

@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,7 @@ namespace Neo.Animations
     ///     Предоставляет простой способ анимации любого числового значения с различными типами анимации.
     /// </summary>
     [NeoDoc("Animations/FloatAnimator.md")]
+    [CreateFromMenu("Neoxider/Animations/FloatAnimator")]
     [AddComponentMenu("Neoxider/" + "Animations/" + nameof(FloatAnimator))]
     public class FloatAnimator : MonoBehaviour
     {

@@ -8,6 +8,7 @@ using UnityEditor;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
+    [CreateFromMenu("Neoxider/Bonus/WheelFortune", "Prefabs/Bonus/WheelFortune.prefab")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelFortune))]
     public class WheelFortune : MonoBehaviour
     {

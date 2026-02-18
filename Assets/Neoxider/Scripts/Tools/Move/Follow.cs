@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     Supports multiple smoothing modes, deadzone, distance controls, and position/rotation limits.
     /// </summary>
     [NeoDoc("Tools/Move/Follow.md")]
+    [CreateFromMenu("Neoxider/Tools/Follow")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Follow))]
     public class Follow : MonoBehaviour
     {

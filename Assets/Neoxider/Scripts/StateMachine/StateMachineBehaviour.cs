@@ -26,6 +26,7 @@ namespace Neo.StateMachine
     /// </code>
     /// </example>
     [NeoDoc("StateMachine/StateMachineBehaviour.md")]
+    [CreateFromMenu("Neoxider/Tools/StateMachineBehaviour")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(StateMachineBehaviour))]
     public class StateMachineBehaviour<TState> : MonoBehaviour where TState : class, IState
     {

@@ -7,6 +7,7 @@ namespace Neo.Tools
     ///     Component that handles health system with damage, healing and auto-healing capabilities
     /// </summary>
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
+    [CreateFromMenu("Neoxider/Tools/Health")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Health))]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {

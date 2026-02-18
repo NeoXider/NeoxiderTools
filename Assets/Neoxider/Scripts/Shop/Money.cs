@@ -10,6 +10,7 @@ namespace Neo
     namespace Shop
     {
         [NeoDoc("Shop/Money.md")]
+        [CreateFromMenu("Neoxider/Shop/Money")]
         [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
         public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
         {

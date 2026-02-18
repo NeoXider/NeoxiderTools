@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Neo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -19,6 +20,7 @@ namespace Neo.Bonus
     ///     Здесь НЕТ анимаций — весь движок вращения/торможения внутри Row.
     /// </summary>
     [NeoDoc("Bonus/Slot/SpinController.md")]
+    [CreateFromMenu("Neoxider/Bonus/SpinController")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SpinController))]
     public class SpinController : MonoBehaviour
     {

@@ -11,6 +11,7 @@ namespace Neo.Bonus
     /// Use this instead of the deprecated TimeReward for new code.
     /// </summary>
     [NeoDoc("Bonus/TimeReward/CooldownReward.md")]
+    [CreateFromMenu("Neoxider/Bonus/CooldownReward")]
     [AddComponentMenu("Neoxider/Bonus/" + nameof(CooldownReward))]
     public class CooldownReward : TimerObject
     {

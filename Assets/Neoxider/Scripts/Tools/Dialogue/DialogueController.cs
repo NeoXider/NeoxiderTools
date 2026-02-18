@@ -10,6 +10,7 @@ namespace Neo.Tools
     ///     Основной контроллер диалоговой системы (на UniTask).
     /// </summary>
     [NeoDoc("Tools/Dialogue/DialogueController.md")]
+    [CreateFromMenu("Neoxider/Tools/Dialogue/DialogueController")]
     [AddComponentMenu("Neoxider/" + "Tools/Dialogue/" + nameof(DialogueController))]
     public class DialogueController : MonoBehaviour
     {

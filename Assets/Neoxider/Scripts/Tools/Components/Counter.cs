@@ -35,6 +35,7 @@ namespace Neo.Tools
     ///     Опционально сохраняет значение через SaveProvider по ключу (по умолчанию выключено).
     /// </summary>
     [NeoDoc("Tools/Components/Counter.md")]
+    [CreateFromMenu("Neoxider/Tools/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
     public class Counter : MonoBehaviour
     {

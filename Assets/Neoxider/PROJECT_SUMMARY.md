@@ -688,7 +688,6 @@ Assets/NeoxiderPages/
 - `Assets/Neoxider/Scripts/UI/Simple/ButtonChangePage.cs` — смена страниц.
 - `Assets/Neoxider/Scripts/UI/Simple/FakeLoad.cs` — fake load.
 - `Assets/Neoxider/Scripts/UI/Simple/UI.cs` — UI менеджер.
-- `Assets/Neoxider/Scripts/UI/View/Points.cs` — points индикатор.
 - `Assets/Neoxider/Scripts/UI/View/VariantView.cs` — варианты.
 - `Assets/Neoxider/Scripts/UI/View/VisualToggle.cs` — визуальный toggle.
 

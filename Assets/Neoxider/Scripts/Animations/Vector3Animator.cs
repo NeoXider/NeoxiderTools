@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,7 @@ namespace Neo.Animations
     ///     Предоставляет простой способ анимации позиции, масштаба, поворота и других Vector3 параметров.
     /// </summary>
     [NeoDoc("Animations/Vector3Animator.md")]
+    [CreateFromMenu("Neoxider/Animations/Vector3Animator")]
     [AddComponentMenu("Neoxider/" + "Animations/" + nameof(Vector3Animator))]
     public class Vector3Animator : MonoBehaviour
     {

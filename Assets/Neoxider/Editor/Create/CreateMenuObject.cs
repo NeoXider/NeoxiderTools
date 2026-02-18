@@ -1,10 +1,10 @@
+using System;
 using System.IO;
-using Neo.Audio;
-using Neo.Bonus;
-using Neo.Shop;
-using Neo.UI;
+using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo
 {
@@ -101,8 +101,14 @@ namespace Neo
 
         public static T Create<T>(string path) where T : MonoBehaviour
         {
+            T prefab = GetResources<T>(path);
+            if (prefab == null)
+            {
+                return Create<T>();
+            }
+
             GameObject parentObject = Selection.activeGameObject;
-            T component = GameObject.Instantiate(GetResources<T>(path), parentObject?.transform);
+            T component = Object.Instantiate(prefab, parentObject?.transform);
             component.name = typeof(T).Name;
             Selection.activeGameObject = component.gameObject;
             return component;
@@ -113,97 +119,79 @@ namespace Neo
             return AssetDatabase.LoadAssetAtPath<T>(startPath + path);
         }
 
-        #region MenuItem
-
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(VisualToggle), false, 0)]
-        private static void CreateVisualToggle()
+        /// <summary>
+        ///     Создаёт объект с компонентом типа <paramref name="componentType" />. Если задан <paramref name="prefabPath" /> и префаб найден — инстанциирует префаб, иначе создаёт пустой GameObject и добавляет компонент.
+        /// </summary>
+        public static MonoBehaviour Create(Type componentType, string prefabPath)
         {
-            VisualToggle script = Create<VisualToggle>("Prefabs/UI/" + nameof(VisualToggle) + ".prefab");
+            if (componentType == null || !typeof(MonoBehaviour).IsAssignableFrom(componentType))
+            {
+                return null;
+            }
+
+            MethodInfo createNoArg = typeof(CreateMenuObject).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m => m.Name == "Create" && m.IsGenericMethod && m.GetParameters().Length == 0);
+            MethodInfo createWithPath = typeof(CreateMenuObject).GetMethods(BindingFlags.Public | BindingFlags.Static)
+                .FirstOrDefault(m => m.Name == "Create" && m.IsGenericMethod && m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string));
+
+            if (string.IsNullOrEmpty(prefabPath))
+            {
+                if (createNoArg == null) return null;
+                object result = createNoArg.MakeGenericMethod(componentType).Invoke(null, null);
+                return result as MonoBehaviour;
+            }
+
+            if (createWithPath == null) return null;
+            object created = createWithPath.MakeGenericMethod(componentType).Invoke(null, new object[] { prefabPath });
+            return created as MonoBehaviour;
         }
 
-        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(CooldownReward), false, 0)]
-        private static void CreateCooldownReward()
+        #region Dynamic Menu
+
+        [MenuItem("GameObject/Neoxider/Create Neoxider Object...", false, 0)]
+        private static void ShowCreateNeoxiderMenu()
         {
-            CooldownReward script = Create<CooldownReward>();
+            GenericMenu menu = new GenericMenu();
+            Type[] types = GetTypesWithCreateFromMenu();
+            foreach (Type type in types)
+            {
+                CreateFromMenuAttribute attr = type.GetCustomAttribute<CreateFromMenuAttribute>(false);
+                if (attr == null)
+                {
+                    continue;
+                }
+
+                string label = attr.MenuPath.Replace("Neoxider/", "");
+                string prefabPath = attr.PrefabPath;
+                menu.AddItem(new GUIContent(label), false, () => Create(type, prefabPath));
+            }
+
+            menu.ShowAsContext();
         }
 
-        [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(ErrorLogger), false, 0)]
-        public static void CreateErrorLogger()
+        private static Type[] GetTypesWithCreateFromMenu()
         {
-            ErrorLogger script = Create<ErrorLogger>("Prefabs/Tools/" + nameof(ErrorLogger) + ".prefab");
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Shop/" + nameof(Money), false, 0)]
-        public static void CreateMoney()
-        {
-            Money script = Create<Money>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(TimerObject), false, 0)]
-        public static void CreateTimerObject()
-        {
-            TimerObject script = Create<TimerObject>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(WheelFortune), false, 0)]
-        public static void CreateRoulette()
-        {
-            WheelFortune script = Create<WheelFortune>("Prefabs/UI/" + nameof(WheelFortune) + ".prefab");
-        }
-
-        [MenuItem("GameObject/Neoxider/UI/" + nameof(UIReady), false, 0)]
-        public static void CreateUIReady()
-        {
-            UIReady script = Create<UIReady>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(ButtonPrice), false, 0)]
-        public static void CreateButtonPrice()
-        {
-            ButtonPrice script = Create<ButtonPrice>("Prefabs/UI/ButtonPrice.prefab");
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(UI.UI), false, 0)]
-        public static void CreateSimpleUI()
-        {
-            UI.UI script = Create<UI.UI>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Shop/" + nameof(ShopItem), false, 0)]
-        public static void CreateShopItem()
-        {
-            ShopItem script = Create<ShopItem>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Audio/" + nameof(AM), false, 0)]
-        public static void CreateAM()
-        {
-            AM script = Create<AM>();
-        }
-
-
-        [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(SwipeController), false, 0)]
-        public static void CreateSwipeController()
-        {
-            SwipeController script = Create<SwipeController>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "UI/" + nameof(Points), false, 0)]
-        public static void CreatePoints()
-        {
-            Points script = Create<Points>("Prefabs/UI/" + nameof(Points) + ".prefab");
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Tools/" + nameof(FPS), false, 0)]
-        public static void CreateFPS()
-        {
-            FPS script = Create<FPS>();
-        }
-
-        [MenuItem("GameObject/Neoxider/" + "Bonus/" + nameof(LineRoulett), false, 0)]
-        public static void CreateLineRoulett()
-        {
-            LineRoulett script = Create<LineRoulett>("Prefabs/Bonus/" + nameof(LineRoulett) + ".prefab");
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .Where(a => !a.IsDynamic && !a.ReflectionOnly)
+                .SelectMany(a =>
+                {
+                    try
+                    {
+                        return a.GetExportedTypes();
+                    }
+                    catch
+                    {
+                        return Array.Empty<Type>();
+                    }
+                })
+                .Where(t => t != null && t.IsClass && !t.IsAbstract && typeof(MonoBehaviour).IsAssignableFrom(t) &&
+                            t.GetCustomAttribute<CreateFromMenuAttribute>(false) != null)
+                .OrderBy(t =>
+                {
+                    CreateFromMenuAttribute a = t.GetCustomAttribute<CreateFromMenuAttribute>(false);
+                    return a?.MenuPath ?? t.FullName ?? "";
+                })
+                .ToArray();
         }
 
         #endregion

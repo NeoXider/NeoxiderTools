@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -47,6 +48,7 @@ namespace Neo.Condition
     ///     Для ручного режима — вызвать Check() из UnityEvent другого компонента.
     /// </remarks>
     [NeoDoc("Condition/NeoCondition.md")]
+    [CreateFromMenu("Neoxider/Condition/NeoCondition")]
     [AddComponentMenu("Neoxider/Condition/NeoCondition")]
     public class NeoCondition : MonoBehaviour
     {

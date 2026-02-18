@@ -7,6 +7,7 @@ using UnityEngine.UI;
 namespace Neo.Shop
 {
     [NeoDoc("Shop/ShopItem.md")]
+    [CreateFromMenu("Neoxider/Shop/ShopItem")]
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(ShopItem))]
     public class ShopItem : MonoBehaviour
     {

@@ -5,6 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/FakeLeaderboard/LeaderboardMove.md")]
+    [CreateFromMenu("Neoxider/Tools/LeaderboardMove", "Prefabs/FakeLeaderboard/Leaderboard.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(LeaderboardMove))]
     public class LeaderboardMove : MonoBehaviour
     {

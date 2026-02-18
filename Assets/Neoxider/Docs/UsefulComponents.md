@@ -20,7 +20,7 @@
 |-----------|--------|
 | **VisualToggle** | Вкл/выкл видимости (GameObject, Renderer, CanvasGroup и т.д.) по событиям. |
 | **UIReady** | Координация «готовности» UI (например, перед показом экрана). |
-| **ButtonPrice**, **Points** | Отображение цены/очков, блокировка кнопки при нехватке валюты. |
+| **ButtonPrice** | Отображение цены, блокировка кнопки при нехватке валюты. Индикатор очков/звёзд — см. **Selector** (режим fill). |
 | **UI** (Simple) | Простой контейнер кнопок/страниц. |
 | **VariantView**, **AnchorMove** | Варианты отображения, сдвиг по якорям. |
 | **ButtonScale**, **ButtonShake** | Анимация кнопок при нажатии. |
@@ -103,13 +103,12 @@
 
 ## GameObject → Neoxider (быстрое создание)
 
-Через **GameObject → Neoxider** можно сразу создать объект с компонентом (и при необходимости подтянуть префаб):
+Через **GameObject → Neoxider → Create Neoxider Object…** открывается список компонентов с атрибутом `[CreateFromMenu]`. Выбор пункта создаёт объект с компонентом; если указан префаб и он найден в пакете — создаётся из префаба, иначе — пустой объект с компонентом (fallback).
 
-- **UI:** VisualToggle, UIReady, ButtonPrice, UI, Points  
-- **Bonus:** CooldownReward, WheelFortune, LineRoulett  
-- **Shop:** Money, ShopItem  
-- **Audio:** AM  
-- **Tools:** ErrorLogger, TimerObject, FPS, SwipeController  
-- **Btn:** Create Scene Hierarchy, Sort Hierarchy Objects  
+**Соответствие путям и документации:**
+- Путь в меню (MenuPath) совпадает с **Add Component** и разделами выше: Neoxider/UI, Neoxider/Tools, Neoxider/Bonus, Neoxider/Shop, Neoxider/Audio и т.д.
+- Пути к префабам в пакете по возможности повторяют структуру папок скриптов (например `Prefabs/UI/`, `Prefabs/Tools/`, `Prefabs/Bonus/`). При установке из Git или пакета префабы подгружаются из корня пакета; если префаб не найден — создаётся только объект с компонентом.
 
-Подробнее по каждому компоненту — в соответствующих разделах [документации](./README.md).
+**Доступные пункты:** список строится по рефлексии из всех типов с атрибутом `[CreateFromMenu]`. В меню входят категории: **UI**, **Tools**, **Shop**, **Audio**, **Bonus**, **Level**, **Save**, **Condition**, **Animations**, **GridSystem** (в т.ч. Match3, TicTacToe), **Parallax**, **NPC** и др. Путь пункта совпадает с Add Component (например Neoxider/UI/VisualToggle, Neoxider/Bonus/TimeReward). У части пунктов задан префаб — тогда создаётся объект из префаба; иначе — пустой объект с компонентом.
+
+Чтобы добавить новый пункт, повесьте на класс `[CreateFromMenu("Neoxider/Категория/Имя", PrefabPath = "Prefabs/...")]` (PrefabPath опционален).

@@ -6,6 +6,7 @@ namespace Neo
     namespace Tools
     {
         [NeoDoc("Tools/InteractableObject/ToggleObject.md")]
+        [CreateFromMenu("Neoxider/Tools/ToggleObject", "Prefabs/Tools/Interact/Toggle Interactive.prefab")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {

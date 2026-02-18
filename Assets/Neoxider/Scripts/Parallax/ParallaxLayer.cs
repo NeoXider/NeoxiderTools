@@ -11,6 +11,7 @@ namespace Neo
     /// </summary>
     [DisallowMultipleComponent]
     [NeoDoc("Parallax/ParallaxLayer.md")]
+    [CreateFromMenu("Neoxider/Parallax/ParallaxLayer")]
     [AddComponentMenu("Neoxider/" + "Parallax/" + nameof(ParallaxLayer))]
     public class ParallaxLayer : MonoBehaviour
     {

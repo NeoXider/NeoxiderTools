@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -5,6 +6,7 @@ using UnityEngine.UI;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Collection/ItemCollection.md")]
+    [CreateFromMenu("Neoxider/Bonus/ItemCollection")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(ItemCollection))]
     public class ItemCollection : MonoBehaviour
     {

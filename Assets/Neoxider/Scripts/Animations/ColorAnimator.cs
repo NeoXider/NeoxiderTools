@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -8,6 +9,7 @@ namespace Neo.Animations
     ///     Предоставляет простой способ анимации цвета с различными типами анимации.
     /// </summary>
     [NeoDoc("Animations/ColorAnimator.md")]
+    [CreateFromMenu("Neoxider/Animations/ColorAnimator")]
     [AddComponentMenu("Neoxider/" + "Animations/" + nameof(ColorAnimator))]
     public class ColorAnimator : MonoBehaviour
     {

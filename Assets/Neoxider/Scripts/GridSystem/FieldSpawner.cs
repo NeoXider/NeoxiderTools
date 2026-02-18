@@ -8,6 +8,7 @@ namespace Neo.GridSystem
     /// </summary>
     [NeoDoc("GridSystem/FieldSpawner.md")]
     [RequireComponent(typeof(FieldGenerator))]
+    [CreateFromMenu("Neoxider/GridSystem/FieldSpawner")]
     [AddComponentMenu("Neoxider/" + "GridSystem/" + nameof(FieldSpawner))]
     public class FieldSpawner : MonoBehaviour
     {

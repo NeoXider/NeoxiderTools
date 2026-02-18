@@ -3,6 +3,7 @@ using UnityEngine;
 namespace Neo.UI
 {
     [NeoDoc("UI/AnchorMove.md")]
+    [CreateFromMenu("Neoxider/UI/AnchorMove")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(AnchorMove))]
     public class AnchorMove : MonoBehaviour
     {

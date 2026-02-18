@@ -12,6 +12,7 @@ namespace Neo.GridSystem
     [ExecuteAlways]
     [NeoDoc("GridSystem/FieldDebugDrawer.md")]
     [RequireComponent(typeof(FieldGenerator))]
+    [CreateFromMenu("Neoxider/GridSystem/FieldDebugDrawer")]
     [AddComponentMenu("Neoxider/" + "GridSystem/" + nameof(FieldDebugDrawer))]
     public class FieldDebugDrawer : MonoBehaviour
     {

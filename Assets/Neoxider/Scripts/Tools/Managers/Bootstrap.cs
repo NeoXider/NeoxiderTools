@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using Neo;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -29,6 +30,7 @@ namespace Neo.Tools
     ///     Components can be added manually through the inspector or found automatically in the scene.
     /// </remarks>
     [NeoDoc("Tools/Managers/Bootstrap.md")]
+    [CreateFromMenu("Neoxider/Tools/Bootstrap")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Bootstrap))]
     public class Bootstrap : Singleton<Bootstrap>
     {

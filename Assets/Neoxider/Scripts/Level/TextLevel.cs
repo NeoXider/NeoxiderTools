@@ -5,6 +5,7 @@ using UnityEngine.Events;
 
 namespace Neo.Level
 {
+    [CreateFromMenu("Neoxider/Level/TextLevel")]
     [AddComponentMenu("Neoxider/Level/" + nameof(TextLevel))]
     public class TextLevel : SetText
     {

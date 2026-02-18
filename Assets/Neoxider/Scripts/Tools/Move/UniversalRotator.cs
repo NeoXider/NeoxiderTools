@@ -4,6 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     [NeoDoc("Tools/Move/UniversalRotator.md")]
+    [CreateFromMenu("Neoxider/Tools/UniversalRotator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UniversalRotator))]
     public class UniversalRotator : MonoBehaviour
     {

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.2] - Unreleased
+
+### GameObject → Neoxider (CreateFromMenu)
+
+- **CreateFromMenu** — атрибут `[CreateFromMenu("Neoxider/…", PrefabPath = "…")]` добавлен на все основные компоненты с AddComponentMenu: UI, Tools, Shop, Audio, Bonus (в т.ч. TimeReward, SpinController, SlotElement, Row, Box, ItemCollection, ItemCollectionInfo, WheelMoneyWin), Condition (NeoCondition), Animations (ColorAnimator, FloatAnimator, Vector3Animator), GridSystem (FieldGenerator, FieldSpawner, FieldDebugDrawer, FieldObjectSpawner, Match3BoardService, TicTacToeBoardService), Bootstrap. Компонент и объект можно создавать и через Add Component, и через **GameObject → Neoxider → Create Neoxider Object…**; при указанном префабе создаётся из префаба, иначе — объект с компонентом (fallback).
+- **UsefulComponents.md** — раздел «GameObject → Neoxider» обновлён: список пунктов строится по рефлексии из типов с атрибутом, перечислены категории меню.
+
+### UI / Tools
+
+- **PausePage** — опциональное и универсальное поведение:
+  - Все функции опциональны: масштаб времени (`_useTimeScale`), уведомление GM (`_sendPause`), управление курсором (`_controlCursor`).
+  - При включённом **Control Cursor** при открытии паузы курсор показывается и разблокируется, при закрытии восстанавливается предыдущее состояние (совместимо с CursorLockController и PlayerController 2D/3D).
+  - Масштаб времени во время паузы задаётся полем `_timeScaleOnPause` (0 = полная пауза), при снятии паузы восстанавливается сохранённый `Time.timeScale`.
+- **CursorLockController** — опциональное применение состояния по жизненному циклу:
+  - **Apply On Enable** / **Lock On Enable** — при включении компонента (OnEnable) выставить lock/unlock курсора.
+  - **Apply On Disable** / **Lock On Disable** — при выключении компонента (OnDisable) выставить lock/unlock.
+  - В документации уточнено совместное использование с PausePage и PlayerController3DPhysics / PlayerController2DPhysics без конфликтов.
+- **Документация** — обновлены PausePage.md и CursorLockController.md.
+
 ## [6.0.1] - Unreleased
 
 ### Пул объектов (PoolManager, Spawner)

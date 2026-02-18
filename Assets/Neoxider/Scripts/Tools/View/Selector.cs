@@ -14,6 +14,7 @@ namespace Neo
         ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
         /// </summary>
         [NeoDoc("Tools/View/Selector.md")]
+        [CreateFromMenu("Neoxider/Tools/Selector")]
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
         public class Selector : MonoBehaviour
         {

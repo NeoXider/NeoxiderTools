@@ -11,6 +11,7 @@ namespace Neo.NPC
     [DisallowMultipleComponent]
     [NeoDoc("NPC/Navigation/NPCNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
+    [CreateFromMenu("Neoxider/NPC/NpcNavigation", "Prefabs/Tools/AI/Npc.prefab")]
     [AddComponentMenu("Neoxider/NPC/" + nameof(NpcNavigation))]
     public sealed class NpcNavigation : MonoBehaviour
     {

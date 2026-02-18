@@ -6,6 +6,7 @@ namespace Neo.Tools
     ///     Drives Animator parameters from <see cref="PlayerController2DPhysics"/> and Rigidbody2D velocity.
     /// </summary>
     [NeoDoc("Tools/Move/PlayerController2DAnimatorDriver.md")]
+    [CreateFromMenu("Neoxider/Tools/PlayerController2DAnimatorDriver")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DAnimatorDriver))]
     public class PlayerController2DAnimatorDriver : MonoBehaviour
     {

@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using Neo;
 using Neo.Extensions;
 using Neo.Save;
 using UnityEngine;
@@ -16,6 +17,7 @@ namespace Neo
         /// <remarks>Consider using CooldownReward for new implementations (inherits TimerObject).</remarks>
         [Obsolete("Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
         [NeoDoc("Bonus/TimeReward/TimeReward.md")]
+        [CreateFromMenu("Neoxider/Bonus/TimeReward", "Prefabs/Bonus/TimeReward.prefab")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(TimeReward))]
         public class TimeReward : MonoBehaviour
         {

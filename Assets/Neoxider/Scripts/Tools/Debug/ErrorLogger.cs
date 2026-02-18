@@ -19,6 +19,7 @@ namespace Neo
     }
 
     [NeoDoc("Tools/Debug/ErrorLogger.md")]
+    [CreateFromMenu("Neoxider/Tools/ErrorLogger", "Prefabs/Tools/ErrorLogger.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ErrorLogger))]
     public class ErrorLogger : MonoBehaviour
     {

@@ -8,6 +8,7 @@ namespace Neo
     namespace Bonus
     {
         [NeoDoc("Bonus/LineRoulett.md")]
+        [CreateFromMenu("Neoxider/Bonus/LineRoulett", "Prefabs/Bonus/LineRoulett.prefab")]
         [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(LineRoulett))]
         public class LineRoulett : MonoBehaviour
         {

@@ -18,6 +18,7 @@ namespace Neo
         ///     Поддерживает как конкретную музыку из списка, так и случайное воспроизведение.
         /// </summary>
         [NeoDoc("Audio/AM.md")]
+        [CreateFromMenu("Neoxider/Audio/AM")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AM))]
         public class AM : Singleton<AM>
         {

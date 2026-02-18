@@ -1,4 +1,5 @@
 using System.Linq;
+using Neo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,6 +10,7 @@ using UnityEditor;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Slot/SlotElement.md")]
+    [CreateFromMenu("Neoxider/Bonus/SlotElement", "Prefabs/Bonus/Slot/SlotElement.prefab")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SlotElement))]
     public class SlotElement : MonoBehaviour
     {

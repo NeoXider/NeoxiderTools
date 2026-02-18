@@ -1,3 +1,4 @@
+using Neo;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -5,6 +6,7 @@ using UnityEngine.UI;
 namespace Neo.Bonus
 {
     [NeoDoc("Bonus/Collection/ItemCollectionInfo.md")]
+    [CreateFromMenu("Neoxider/Bonus/ItemCollectionInfo")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(ItemCollectionInfo))]
     public class ItemCollectionInfo : MonoBehaviour
     {

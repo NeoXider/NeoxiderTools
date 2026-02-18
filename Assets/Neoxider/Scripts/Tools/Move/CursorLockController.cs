@@ -4,19 +4,36 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Controls cursor visibility and lock state with optional runtime toggle key.
+    ///     Controls cursor visibility and lock state. Supports optional apply on Enable/Disable
+    ///     and runtime toggle key. Does not conflict with PlayerController3DPhysics / PlayerController2DPhysics:
+    ///     they manage cursor independently; use one source of truth per context (e.g. CursorLockController for menu,
+    ///     player controller for gameplay).
     /// </summary>
     [NeoDoc("Tools/Move/CursorLockController.md")]
+    [CreateFromMenu("Neoxider/Tools/CursorLockController")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CursorLockController))]
     public class CursorLockController : MonoBehaviour
     {
-        [Header("Start State")] [SerializeField]
-        private bool _lockOnStart = true;
+        [Header("Start State")]
+        [SerializeField] private bool _lockOnStart = true;
 
-        [Header("Toggle")] [SerializeField] private bool _allowToggle = true;
+        [Header("Lifecycle (optional)")]
+        [Tooltip("Apply cursor state when this component is enabled (e.g. when returning to gameplay).")]
+        [SerializeField] private bool _applyOnEnable;
+
+        [SerializeField] private bool _lockOnEnable = true;
+
+        [Tooltip("Apply cursor state when this component is disabled (e.g. when opening menu/pause).")]
+        [SerializeField] private bool _applyOnDisable;
+
+        [SerializeField] private bool _lockOnDisable;
+
+        [Header("Toggle")]
+        [SerializeField] private bool _allowToggle = true;
         [SerializeField] private KeyCode _toggleKey = KeyCode.Escape;
 
-        [Header("Events")] [SerializeField] private UnityEvent _onCursorLocked = new();
+        [Header("Events")]
+        [SerializeField] private UnityEvent _onCursorLocked = new();
         [SerializeField] private UnityEvent _onCursorUnlocked = new();
 
         /// <summary>
@@ -27,6 +44,22 @@ namespace Neo.Tools
         private void Start()
         {
             SetCursorLocked(_lockOnStart);
+        }
+
+        private void OnEnable()
+        {
+            if (_applyOnEnable)
+            {
+                SetCursorLocked(_lockOnEnable);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_applyOnDisable)
+            {
+                SetCursorLocked(_lockOnDisable);
+            }
         }
 
         private void Update()

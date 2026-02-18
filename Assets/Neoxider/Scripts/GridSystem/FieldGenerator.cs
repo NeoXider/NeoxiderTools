@@ -11,6 +11,7 @@ namespace Neo.GridSystem
     /// </summary>
     [NeoDoc("GridSystem/FieldGenerator.md")]
     [RequireComponent(typeof(Grid))]
+    [CreateFromMenu("Neoxider/GridSystem/FieldGenerator")]
     [AddComponentMenu("Neoxider/" + "GridSystem/" + nameof(FieldGenerator))]
     public class FieldGenerator : MonoBehaviour
     {

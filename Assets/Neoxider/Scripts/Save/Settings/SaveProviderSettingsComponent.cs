@@ -7,6 +7,7 @@ namespace Neo.Save
     ///     Позволяет инициализировать SaveProvider с настройками из ScriptableObject без необходимости размещения в Resources.
     /// </summary>
     [NeoDoc("Save/SaveProviderSettingsComponent.md")]
+    [CreateFromMenu("Neoxider/Save/SaveProviderSettingsComponent")]
     [AddComponentMenu("Neoxider/" + "Save/" + nameof(SaveProviderSettingsComponent))]
     public class SaveProviderSettingsComponent : MonoBehaviour
     {

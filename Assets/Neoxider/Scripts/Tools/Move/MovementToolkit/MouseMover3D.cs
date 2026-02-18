@@ -23,6 +23,7 @@ namespace Neo.Tools
 {
     [RequireComponent(typeof(Transform))]
     [NeoDoc("Tools/Move/MovementToolkit/MouseMover3D.md")]
+    [CreateFromMenu("Neoxider/Tools/MouseMover3D")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MouseMover3D))]
     public class MouseMover3D : MonoBehaviour
     {

@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Extensions;
 using UnityEngine;
 
@@ -10,6 +11,7 @@ namespace Neo
         ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
         /// </summary>
         [NeoDoc("Audio/PlayAudio.md")]
+        [CreateFromMenu("Neoxider/Audio/PlayAudio")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudio))]
         public class PlayAudio : MonoBehaviour
         {

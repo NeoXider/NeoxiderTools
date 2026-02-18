@@ -9,6 +9,7 @@ namespace Neo
     namespace UI
     {
         [NeoDoc("Shop/ButtonPrice.md")]
+        [CreateFromMenu("Neoxider/UI/ButtonPrice", "Prefabs/UI/ButtonPrice.prefab")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonPrice))]
         public class ButtonPrice : MonoBehaviour
         {

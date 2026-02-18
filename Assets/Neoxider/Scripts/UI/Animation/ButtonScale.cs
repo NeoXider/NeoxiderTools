@@ -7,6 +7,7 @@ using UnityEngine.EventSystems;
 namespace Neo.UI
 {
     [NeoDoc("UI/Animation/ButtonScale.md")]
+    [CreateFromMenu("Neoxider/UI/ButtonScale")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonScale))]
     public class ButtonScale : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
     {

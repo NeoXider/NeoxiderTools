@@ -27,6 +27,7 @@ namespace Neo
         }
 
         [NeoDoc("UI/UIReady.md")]
+        [CreateFromMenu("Neoxider/UI/UIReady")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(UIReady))]
         public class UIReady : MonoBehaviour
         {

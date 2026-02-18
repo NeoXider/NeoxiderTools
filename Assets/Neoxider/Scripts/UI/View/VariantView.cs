@@ -6,6 +6,7 @@ using UnityEngine.UI;
 namespace Neo.UI
 {
     [NeoDoc("UI/View/VariantView.md")]
+    [CreateFromMenu("Neoxider/UI/VariantView")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(VariantView))]
     public class VariantView : MonoBehaviour
     {

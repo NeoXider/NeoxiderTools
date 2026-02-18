@@ -9,6 +9,7 @@ namespace Neo.Tools
     ///     Поддерживает различные направления импульса, фильтрацию и опциональное добавление физики.
     /// </summary>
     [NeoDoc("Tools/Physics/ImpulseZone.md")]
+    [CreateFromMenu("Neoxider/Tools/Physics/ImpulseZone")]
     [AddComponentMenu("Neoxider/" + "Tools/" + "Physics/" + nameof(ImpulseZone))]
     [RequireComponent(typeof(Collider))]
     public class ImpulseZone : MonoBehaviour
