@@ -19,7 +19,7 @@
 | Компонент | Кратко |
 |-----------|--------|
 | **VisualToggle** | Вкл/выкл видимости (GameObject, Renderer, CanvasGroup и т.д.) по событиям. |
-| **UIReady** | Координация «готовности» UI (например, перед показом экрана). |
+| **UIReady** | Устаревший. Используйте SceneFlowController (Neoxider/Level). |
 | **ButtonPrice** | Отображение цены, блокировка кнопки при нехватке валюты. Индикатор очков/звёзд — см. **Selector** (режим fill). |
 | **UI** (Simple) | Простой контейнер кнопок/страниц. |
 | **VariantView**, **AnchorMove** | Варианты отображения, сдвиг по якорям. |
@@ -78,6 +78,8 @@
 ### Neoxider/Level
 | Компонент | Кратко |
 |-----------|--------|
+| **SceneFlowController** | Загрузка сцен (по id/имени/полям), прогресс (текст, Slider, Image), события, Quit/Restart/Pause/Proceed. |
+| **LevelManager** | Менеджер уровней и карт. |
 | **LevelButton** | Кнопка выбора/запуска уровня. |
 
 ### Neoxider/Save

@@ -10,7 +10,7 @@
 - [**AnchorMove**](./AnchorMove.md): Утилита для удобного редактирования якорей `RectTransform`.
 - [**AnimationFly**](./AnimationFly.md): Менеджер для создания анимации "летящих" UI-элементов (монеты, бонусы).
 - [**PausePage**](./PausePage.md): Компонент для создания окон, ставящих игру на паузу.
-- [**UIReady**](./UIReady.md): Набор готовых методов для кнопок (управление сценами, выход, пауза).
+- [**UIReady**](./UIReady.md): Устаревший. Набор методов для кнопок (сцены, выход, пауза). Используйте [SceneFlowController](../Level/SceneFlowController.md) (модуль Level).
 
 ### Подмодули
 

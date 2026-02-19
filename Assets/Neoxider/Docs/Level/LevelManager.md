@@ -13,5 +13,6 @@
 
 ## См. также
 
+- [SceneFlowController](./SceneFlowController.md) — загрузка сцен (sync/async/additive), прогресс, Quit/Restart/Pause.
 - [LevelButton](./LevelButton.md)
 - [SaveManager](../Save/README.md)

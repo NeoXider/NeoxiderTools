@@ -26,6 +26,7 @@ namespace Neo
             AsyncManual
         }
 
+        [Obsolete("Use SceneFlowController for new code. UIReady remains functional but is deprecated.")]
         [NeoDoc("UI/UIReady.md")]
         [CreateFromMenu("Neoxider/UI/UIReady")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(UIReady))]

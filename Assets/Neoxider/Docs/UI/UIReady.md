@@ -1,5 +1,9 @@
 # Компонент UIReady
 
+**[Obsolete]** Для нового кода используйте [**SceneFlowController**](../Level/SceneFlowController.md) (модуль Level, Neoxider/Level/SceneFlowController). UIReady остаётся рабочим, но помечен как устаревший. Миграция: замените компонент на SceneFlowController; поля ALS (gameObjectLoad, textProgress, loadEndText) настройте в секции Progress UI; методы LoadScene/Restart/Quit/Pause/ProceedScene совпадают по смыслу.
+
+---
+
 ## 1. Введение
 
 `UIReady` — это многоцелевой компонент для управления базовыми UI-взаимодействиями и сценами. Он предоставляет готовые публичные методы, которые можно легко назначить на кнопки в инспекторе Unity для выполнения таких действий, как перезапуск уровня, загрузка другой сцены или выход из игры.

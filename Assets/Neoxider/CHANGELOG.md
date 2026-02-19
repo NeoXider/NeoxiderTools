@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [6.0.3] - Unreleased
 
+### UI: SceneFlowController и реестр устаревших
+
+- **SceneFlowController** — новый компонент загрузки сцен и действий приложения: LoadScene(int), LoadScene(string), LoadScene() без параметров; режимы Sync, Async, AsyncManual, Additive; прогресс через Text/TMP, Slider, Image и UnityEvent\<float\> OnProgress; события OnLoadStarted, OnReadyToProceed, OnLoadCompleted; Quit, Restart, Pause, ProceedScene. Документация: Docs/UI/SceneFlowController.md.
+- **UIReady** — помечен `[Obsolete]` с рекомендацией использовать SceneFlowController; остаётся рабочим для обратной совместимости.
+- **DEPRECATED_OR_REMOVAL_CANDIDATES.md** — добавлен реестр устаревших скриптов и кандидатов на удаление (TimeReward, AiNavigation, HandLayoutType, HandComponent.LegacyLayoutType, UIReady) со ссылками на замены.
+
 ### Create Neoxider Object (окно и меню)
 
 - **Цвета категорий** — в окне Create Neoxider Object категории верхнего уровня (UI, Tools, Bonus, Shop, Audio, Level,

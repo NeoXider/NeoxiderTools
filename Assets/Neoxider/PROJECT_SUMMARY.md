@@ -487,6 +487,7 @@ Assets/NeoxiderPages/
 ### Level (`Assets/Neoxider/Scripts/Level/`)
 
 - `Assets/Neoxider/Scripts/Level/LevelButton.cs` — кнопка уровня.
+- `Assets/Neoxider/Scripts/Level/SceneFlowController.cs` — загрузка сцен (sync/async/additive), прогресс, события, Quit/Restart/Pause/Proceed.
 - `Assets/Neoxider/Scripts/Level/LevelManager.cs` — менеджер уровней.
 - `Assets/Neoxider/Scripts/Level/Map.cs` — карта уровней.
 - `Assets/Neoxider/Scripts/Level/TextLevel.cs` — UI вывод текущего/максимального уровня (на базе `Neo.Tools.SetText`).
@@ -687,7 +688,7 @@ Assets/NeoxiderPages/
 - `Assets/Neoxider/Scripts/UI/AnchorMove.cs` — движение UI.
 - `Assets/Neoxider/Scripts/UI/AnimationFly.cs` — UI fly анимация.
 - `Assets/Neoxider/Scripts/UI/PausePage.cs` — пауза.
-- `Assets/Neoxider/Scripts/UI/UIReady.cs` — готовность UI.
+- `Assets/Neoxider/Scripts/UI/UIReady.cs` — готовность UI (устарел, см. Level/SceneFlowController).
 - `Assets/Neoxider/Scripts/UI/Animation/ButtonScale.cs` — scale кнопки.
 - `Assets/Neoxider/Scripts/UI/Animation/ButtonShake.cs` — shake кнопки.
 - `Assets/Neoxider/Scripts/UI/Simple/ButtonChangePage.cs` — смена страниц.

@@ -18,7 +18,7 @@
 | **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Менеджер уровней, карта, кнопки | [`Level/LevelManager.md`](./Level/LevelManager.md) |
+| **Level** | Менеджер уровней, загрузка сцен (SceneFlowController), карта, кнопки | [`Level/LevelManager.md`](./Level/LevelManager.md), [`Level/SceneFlowController.md`](./Level/SceneFlowController.md) |
 | **NPC** | Модульная навигация NPC (патруль, преследование, агро) | [`NPC/README.md`](./NPC/README.md) |
 | **Parallax** | Параллакс-слои с предпросмотром | [`ParallaxLayer.md`](./ParallaxLayer.md) |
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
