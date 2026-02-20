@@ -2,7 +2,53 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.6] - 2026-02-19
+
+### Editor — Presets в окне Create Neoxider Object
+
+- В окне **GameObject → Neoxider → Create Neoxider Object...** в начале списка добавлена секция **Presets (готовые префабы)**.
+- Категории: System (System Root), Combat (Simple Weapon, Bullet), Player (First Person Controller), Interaction (Interactive Sphere, Trigger Cube, Toggle Interactive).
+- Секция и подкатегории сворачиваются; по клику создаётся экземпляр префаба в сцене.
+- В `NeoxiderPresetCreateMenu` добавлен публичный метод `CreatePreset(string relativePrefabPath)` для вызова из окна и других редакторских скриптов.
+
+### Editor — создание спрайта из префаба
+
+- **Tools → Neoxider → Create Sprite from Prefab...** — окно выбора префаба и сохранения его превью как Sprite-ассет (диалог выбора пути в проекте, PNG + TextureImporter Sprite).
+- Утилита `PrefabToSpriteUtility`: копирование не-readable превью через RenderTexture, сохранение PNG, импорт как Sprite.
+- В инспекторе **InventoryItemData** добавлена кнопка **Create Icon from World Drop Prefab** — создаёт спрайт из `WorldDropPrefab`, сохраняет в проект и присваивает полю Icon.
+
 ## [6.0.5] - Unreleased
+
+### Tools / Inventory — новый модуль инвентаря и подбора предметов
+
+- Добавлен новый подмодуль **Inventory** (`Neo.Tools.Inventory`) с разделением на Data/Core/Runtime/UI.
+- **Core API**: `InventoryManager`, `InventoryEntry`, `InventorySaveData` — чистая C# логика инвентаря без MonoBehaviour (Add/Remove/Has/GetCount, лимиты, snapshot/load).
+- **Data**: `InventoryItemData` (id, имя, иконка, maxStack, category) и `InventoryDatabase` (lookup/валидация id, источник maxStack).
+- **No-Code Runtime**:
+  - `InventoryComponent` — события `OnItemAdded`, `OnItemRemoved`, `OnItemCountChanged`, `OnCapacityRejected`, `OnInventoryChanged`, сохранение/загрузка через SaveProvider, свойства для NeoCondition (`TotalItemCount`, `UniqueItemCount`, `SelectedItemCount`, `IsEmpty`).
+  - `PickableItem` — подбор по trigger 2D/3D и ручной `Collect()` через UnityEvent, фильтр по тегу, пост-обработка (disable colliders / deactivate / destroy).
+  - `InventoryPickupBridge` — мост для вызовов подбора из UnityEvent (`InteractiveObject`, `PhysicsEvents` и др.).
+- **UI binders**: `InventoryItemCountText`, `InventoryTotalCountText` переведены на **TextMeshPro** (`TMP_Text`).
+- **UI Views**: добавлены `InventoryView` и `InventoryItemView` (режим auto-spawn префаба и manual-режим), с опциональными полями иконки/названия/количества.
+- **Drop module**: добавлен `InventoryDropper` как отдельный подключаемый компонент дропа (делегирование из InventoryComponent), с опциями авто-добавления `Rigidbody`/`Rigidbody2D`, коллайдера, импульса и автоконфигурации `PickableItem`.
+- `InventoryComponent` переведен на базовый `Singleton<InventoryComponent>` с поддержкой multi-instance через `Set Instance On Awake`.
+- **Initial state**: добавлен `InventoryInitialStateData` и режимы загрузки `UseSaveIfExists`, `MergeSaveWithInitial`, `InitialOnlyIgnoreSave`.
+- **Runtime events/API**: в `InventoryComponent` добавлен `OnBeforeLoad` и `GetSnapshotEntries()` для UI и внешних систем.
+- **InventoryView**: расширен выбор источника данных (`DatabaseItems`, `SnapshotItems`, `Hybrid`), подписка на `OnLoaded` и опциональный refresh на следующий кадр для корректного стартового отображения.
+- **Prefab preview/icon fallback**: добавлен extension `PrefabPreviewExtensions` (`GetPreviewTexture`, `GetPreviewSprite`); если у `InventoryItemData` не задан `Icon`, он автоматически берется из `WorldDropPrefab` (sprite/preview).
+- **InventoryDropper input**: дроп по умолчанию на клавишу `G`, master bool `CanDrop`, и дополнительные методы `DropByIdOne`, `DropConfiguredById`, `SetDropEnabled`, `SetDropItemId`.
+- Документация обновлена: добавлены `InventoryDropper.md`, `InventoryView.md`; индексы `Docs/Tools/README.md` и `Docs/README.md` обновлены.
+
+### Editor / Create — готовые preset-префабы в меню
+
+- Добавлен новый editor-скрипт `NeoxiderPresetCreateMenu` с разделом **GameObject → Neoxider → Presets** (в верхней части меню).
+- В Presets доступны быстрые готовые сборки из префабов:
+  - System Root (`--System--`)
+  - Player (`Player (First Person Controller)`)
+  - Combat: `Simple Weapon`, `Bullet`
+  - Player: `First Person Controller`
+  - Interaction: `Interactive Sphere`, `Trigger Cube`, `Toggle Interactive`
+- Логика сделана отдельной категорией **Presets** (а не смешана с компонентами), чтобы не перегружать динамический список `Create Neoxider Object...` и держать готовые сборки в одном месте.
 
 ### Tools / Move — недоработки и улучшения модуля
 

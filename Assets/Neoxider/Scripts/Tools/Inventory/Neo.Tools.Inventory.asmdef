@@ -1,0 +1,20 @@
+{
+  "name": "Neo.Tools.Inventory",
+  "rootNamespace": "",
+  "references": [
+    "Neo.Extensions",
+    "Neo.PropertyAttribute",
+    "Neo.Save",
+    "Unity.TextMeshPro",
+    "Neo.Tools.Managers"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

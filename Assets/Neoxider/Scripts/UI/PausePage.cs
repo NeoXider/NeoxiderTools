@@ -26,9 +26,12 @@ namespace Neo.Tools
         private bool _sendPause = true;
 
         [Header("Cursor")]
-        [Tooltip("When enabled, shows and unlocks cursor while pause is active; restores previous state on disable.")]
+        [Tooltip("When enabled, shows and unlocks cursor while pause is active; restores or applies lock on disable.")]
         [SerializeField]
         private bool _controlCursor;
+
+        [Tooltip("When true, cursor is locked and hidden when leaving pause (recommended for FPS/camera look). When false, restores state from when pause was opened.")]
+        [SerializeField] private bool _lockCursorOnResume = true;
 
         private bool _savedCursorVisible;
         private CursorLockMode _savedLockState;
@@ -72,8 +75,16 @@ namespace Neo.Tools
 
             if (_controlCursor)
             {
-                Cursor.lockState = _savedLockState;
-                Cursor.visible = _savedCursorVisible;
+                if (_lockCursorOnResume)
+                {
+                    Cursor.lockState = CursorLockMode.Locked;
+                    Cursor.visible = false;
+                }
+                else
+                {
+                    Cursor.lockState = _savedLockState;
+                    Cursor.visible = _savedCursorVisible;
+                }
             }
         }
 

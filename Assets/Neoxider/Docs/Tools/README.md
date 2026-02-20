@@ -44,6 +44,12 @@
   - [MultiKeyEventTrigger](./Input/MultiKeyEventTrigger.md)
   - [SwipeController](./Input/SwipeController.md)
   - [README](./Input/README.md)
+- **Inventory**
+  - [README](./Inventory/README.md)
+  - [InventoryComponent](./Inventory/InventoryComponent.md)
+  - [PickableItem](./Inventory/PickableItem.md)
+  - [InventoryDropper](./Inventory/InventoryDropper.md)
+  - [InventoryView](./Inventory/InventoryView.md)
 - **InteractableObject**
   - [InteractiveObject](./InteractableObject/InteractiveObject.md)
   - [PhysicsEvents2D](./InteractableObject/PhysicsEvents2D.md)

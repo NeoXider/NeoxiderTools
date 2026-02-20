@@ -186,7 +186,7 @@ SpriteRenderer:
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
-  m_Size: {x: 1, y: 1}
+  m_Size: {x: 12.901464, y: 27.96}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 1
@@ -244,7 +244,7 @@ BoxCollider2D:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0.5, y: 0.5}
     oldSize: {x: 12.901464, y: 27.96}
-    newSize: {x: 1, y: 1}
+    newSize: {x: 12.901464, y: 27.96}
     adaptiveTilingThreshold: 0.5
     drawMode: 0
     adaptiveTiling: 0
@@ -498,6 +498,8 @@ MonoBehaviour:
   pxToWorld: 0.01
   mouseButton: 0
   deltaOnlyWhenButtonHeld: 1
+  invertDeltaX: 0
+  invertDeltaY: 0
   arrivalThreshold: 0.02
   offset: {x: 0, y: 0}
   OnMoveStart:

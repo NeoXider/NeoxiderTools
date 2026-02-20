@@ -399,13 +399,89 @@ namespace Neo
             DrawHeader();
             DrawSearchBar();
             _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            DrawPresetsSection();
             int shown = DrawTree(_root, 0);
-            if (shown == 0)
+            if (shown == 0 && string.IsNullOrWhiteSpace(_search))
             {
                 EditorGUILayout.HelpBox("Ничего не найдено. Измени поиск или очисти поле.", MessageType.Info);
             }
 
             EditorGUILayout.EndScrollView();
+        }
+
+        private static readonly (string Category, string Label, string Path)[] PresetEntries =
+        {
+            ("System", "System Root (--System--)", "Prefabs/-System--.prefab"),
+            ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
+            ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
+            ("Player", "Player (First Person Controller)", "Prefabs/Tools/First Person Controller.prefab"),
+            ("Player", "First Person Controller", "Prefabs/Tools/First Person Controller.prefab"),
+            ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
+            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab"),
+            ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab")
+        };
+
+        private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
+
+        private readonly Dictionary<string, bool> _presetsExpanded = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "System", true },
+            { "Combat", true },
+            { "Player", true },
+            { "Interaction", true }
+        };
+
+        private void DrawPresetsSection()
+        {
+            const float indent = 14f;
+            GUIContent prefabIcon = EditorGUIUtility.IconContent("d_Prefab Icon") ?? EditorGUIUtility.IconContent("Prefab Icon");
+            Texture2D prefabTex = prefabIcon?.image as Texture2D;
+
+            EditorGUILayout.Space(4f);
+            bool presetsExpanded = !_presetsExpanded.TryGetValue("Presets", out bool v) || v;
+            Rect presetsHeaderRect = GUILayoutUtility.GetRect(20, _folderStyle.fixedHeight);
+            EditorGUI.DrawRect(presetsHeaderRect, PresetsCategoryColor);
+            _presetsExpanded["Presets"] = EditorGUI.Foldout(presetsHeaderRect, presetsExpanded,
+                new GUIContent(" Presets (готовые префабы)"), true, _folderStyle);
+
+            if (!_presetsExpanded["Presets"])
+            {
+                return;
+            }
+
+            string lastCategory = null;
+            bool categoryExpanded = true;
+            foreach ((string category, string label, string path) in PresetEntries)
+            {
+                if (lastCategory != category)
+                {
+                    lastCategory = category;
+                    categoryExpanded = _presetsExpanded.TryGetValue($"Presets/{category}", out bool ce) && ce;
+                    categoryExpanded = EditorGUI.Foldout(
+                        GUILayoutUtility.GetRect(20, _folderStyle.fixedHeight),
+                        categoryExpanded, " " + category, true, _folderStyle);
+                    _presetsExpanded[$"Presets/{category}"] = categoryExpanded;
+                }
+
+                if (!categoryExpanded)
+                {
+                    continue;
+                }
+
+                GUIContent entryContent = prefabTex != null
+                    ? new GUIContent(" " + label, prefabTex, path)
+                    : new GUIContent(" " + label, path);
+                EditorGUILayout.BeginHorizontal();
+                GUILayout.Space(indent * 2f);
+                if (GUILayout.Button(entryContent, _entryButtonStyle))
+                {
+                    NeoxiderPresetCreateMenu.CreatePreset(path);
+                }
+
+                EditorGUILayout.EndHorizontal();
+            }
+
+            EditorGUILayout.Space(8f);
         }
 
         private static GUIContent GetFolderContent(string name, int depth)

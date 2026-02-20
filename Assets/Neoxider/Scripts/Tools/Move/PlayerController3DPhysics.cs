@@ -56,6 +56,12 @@ namespace Neo.Tools
         [SerializeField] private bool _lockCursorOnStart = true;
         [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
         [SerializeField] private bool _pauseLookWhenCursorVisible = true;
+        [Tooltip("Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
+        [SerializeField] private bool _lookEnabled = true;
+        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")]
+        [SerializeField] private bool _disableLookOnPause = true;
+        [Tooltip("When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
+        [SerializeField] private bool _toggleCursorOnEscape = true;
 
         [Header("Events")]
         [SerializeField] private UnityEvent _onJumped = new();
@@ -65,7 +71,6 @@ namespace Neo.Tools
         private readonly Collider[] _groundHits = new Collider[16];
         private float _coyoteTimer;
         private float _jumpBufferTimer;
-        private bool _lookEnabled = true;
         private Vector2 _lookInput;
 
         private Vector2 _moveInput;
@@ -104,6 +109,27 @@ namespace Neo.Tools
             _yaw = transform.eulerAngles.y;
         }
 
+        private void OnEnable()
+        {
+            if (_disableLookOnPause && EM.I != null)
+            {
+                EM.I.OnPause.AddListener(OnPauseLook);
+                EM.I.OnResume.AddListener(OnResumeLook);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_disableLookOnPause && EM.I != null)
+            {
+                EM.I.OnPause.RemoveListener(OnPauseLook);
+                EM.I.OnResume.RemoveListener(OnResumeLook);
+            }
+        }
+
+        private void OnPauseLook() => SetLookEnabled(false);
+        private void OnResumeLook() => SetLookEnabled(true);
+
         private void Start()
         {
             if (_lockCursorOnStart)
@@ -114,6 +140,20 @@ namespace Neo.Tools
 
         private void Update()
         {
+            if (_toggleCursorOnEscape && Input.GetKeyDown(KeyCode.Escape))
+            {
+                if (Cursor.visible)
+                {
+                    SetCursorLocked(true);
+                    SetLookEnabled(true);
+                }
+                else
+                {
+                    SetCursorLocked(false);
+                    SetLookEnabled(false);
+                }
+            }
+
             CaptureInput();
             HandleLookInput();
             bool movingNow = _movementEnabled && _moveInput.sqrMagnitude > 0.001f;
@@ -159,13 +199,20 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>Gets whether look (camera rotation) is enabled. Change via SetLookEnabled(bool) or automatically by pause when Disable Look On Pause is on.</summary>
+        public bool LookEnabled => _lookEnabled;
+
         /// <summary>
-        ///     Enables or disables look processing.
+        ///     Enables or disables look processing. When enabling and Pause Look When Cursor Visible is on, also locks the cursor. Callable from UnityEvent (dynamic bool).
         /// </summary>
         /// <param name="enabled">True to process look input; otherwise false.</param>
         public void SetLookEnabled(bool enabled)
         {
             _lookEnabled = enabled;
+            if (enabled && _pauseLookWhenCursorVisible)
+            {
+                SetCursorLocked(true);
+            }
             if (!enabled)
             {
                 _lookInput = Vector2.zero;

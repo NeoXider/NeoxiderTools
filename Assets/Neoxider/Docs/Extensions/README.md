@@ -9,6 +9,7 @@
 - [**ComponentExtensions**](./ComponentExtensions.md): `GetOrAdd` компонент и получение пути в иерархии.
 - [**TransformExtensions**](./TransformExtensions.md): Манипуляция позицией, вращением и масштабом.
 - [**GameObjectArrayExtensions**](./GameObjectArrayExtensions.md): Массовые операции над коллекциями `GameObject`'ов.
+- [**PrefabPreviewExtensions**](./PrefabPreviewExtensions.md): Получение preview `Texture2D`/`Sprite` для префабов.
 
 ### Коллекции и типы данных
 - [**EnumerableExtensions**](./EnumerableExtensions.md): Утилиты для `IEnumerable` и `IList` (`ForEach`, `GetSafe` и др.).
