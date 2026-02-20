@@ -5,17 +5,26 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Controls cursor visibility and lock state. Supports optional apply on Enable/Disable
-    ///     and runtime toggle key. Does not conflict with PlayerController3DPhysics / PlayerController2DPhysics:
-    ///     they manage cursor independently; use one source of truth per context (e.g. CursorLockController for menu,
-    ///     player controller for gameplay).
+    ///     and runtime toggle key. For New Input System, call SetCursorLocked or ToggleCursorState from your action's callback.
     /// </summary>
     [NeoDoc("Tools/Move/CursorLockController.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/CursorLockController")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CursorLockController))]
     public class CursorLockController : MonoBehaviour
     {
-        [Header("Start State")] [SerializeField]
-        private bool _lockOnStart = true;
+        public enum CursorStateMode
+        {
+            LockAndHide,
+            OnlyHide,
+            OnlyLock
+        }
+
+        [Header("Mode")]
+        [Tooltip("LockAndHide = lock + hide; OnlyHide = visibility only; OnlyLock = lock only.")]
+        [SerializeField] private CursorStateMode _mode = CursorStateMode.LockAndHide;
+
+        [Header("Start State")]
+        [SerializeField] private bool _lockOnStart = true;
 
         [Header("Lifecycle (optional)")]
         [Tooltip("Apply cursor state when this component is enabled (e.g. when returning to gameplay).")]
@@ -72,22 +81,29 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Locks or unlocks cursor and updates visibility.
+        ///     Applies cursor state according to Mode: lock and/or visibility.
         /// </summary>
-        /// <param name="locked">True to lock and hide cursor, false to unlock and show it.</param>
+        /// <param name="locked">True = apply "locked" state (lock and/or hide by mode), false = apply "unlocked" state.</param>
         public void SetCursorLocked(bool locked)
         {
-            Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
-            Cursor.visible = !locked;
+            switch (_mode)
+            {
+                case CursorStateMode.LockAndHide:
+                    Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+                    Cursor.visible = !locked;
+                    break;
+                case CursorStateMode.OnlyHide:
+                    Cursor.visible = !locked;
+                    break;
+                case CursorStateMode.OnlyLock:
+                    Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
+                    break;
+            }
 
             if (locked)
-            {
                 _onCursorLocked?.Invoke();
-            }
             else
-            {
                 _onCursorUnlocked?.Invoke();
-            }
         }
 
         /// <summary>

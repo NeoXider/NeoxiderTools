@@ -43,6 +43,21 @@ namespace Neo.Tools
         [Header("Δ-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
         private float pxToWorld = .01f;
 
+        [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
+        private int mouseButton = 0;
+
+        [Tooltip("If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
+        [SerializeField] private bool deltaOnlyWhenButtonHeld = true;
+
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")]
+        [SerializeField] private bool invertDeltaX;
+
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")]
+        [SerializeField] private bool invertDeltaY;
+
+        [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
+        private float arrivalThreshold = 0.02f;
+
         [Header("Point Offset")] [SerializeField]
         private Vector2 offset;
 
@@ -59,9 +74,17 @@ namespace Neo.Tools
         private Vector2 targetPoint; // ClickToPoint mode
         private bool wasMoving;
 
+        private bool _cameraWarningShown;
+
         private void Awake()
         {
-            cam = Camera.main;
+            if (cam == null)
+                cam = Camera.main;
+            if (cam == null && !_cameraWarningShown)
+            {
+                _cameraWarningShown = true;
+                Debug.LogWarning("[MouseMover2D] No camera assigned and Camera.main is null. ScreenToWorld will return screen coordinates.", this);
+            }
             rb = GetComponent<Rigidbody2D>();
             lastMouse = Input.mousePosition;
         }
@@ -81,7 +104,7 @@ namespace Neo.Tools
                     break;
 
                 case MoveMode.ClickToPoint:
-                    if (Input.GetMouseButtonDown(0))
+                    if (Input.GetMouseButtonDown(mouseButton))
                     {
                         targetPoint = ScreenToWorld(Input.mousePosition) + offset;
                         hasTarget = true;
@@ -90,7 +113,7 @@ namespace Neo.Tools
                     break;
 
                 case MoveMode.Direction:
-                    if (Input.GetMouseButtonDown(0))
+                    if (Input.GetMouseButtonDown(mouseButton))
                     {
                         clickPoint = ScreenToWorld(Input.mousePosition);
                     }
@@ -130,7 +153,7 @@ namespace Neo.Tools
 
                 case MoveMode.MoveToPointHold:
                 {
-                    if (!Input.GetMouseButton(0))
+                    if (!Input.GetMouseButton(mouseButton))
                     {
                         return Vector2.zero;
                     }
@@ -157,7 +180,7 @@ namespace Neo.Tools
 
                 case MoveMode.Direction:
                 {
-                    if (!Input.GetMouseButton(0))
+                    if (!Input.GetMouseButton(mouseButton))
                     {
                         return Vector2.zero;
                     }
@@ -179,7 +202,16 @@ namespace Neo.Tools
         private void ReadDeltaInput()
         {
             Vector2 cur = Input.mousePosition;
+            if (deltaOnlyWhenButtonHeld && !Input.GetMouseButton(mouseButton))
+            {
+                lastMouse = cur;
+                desiredVelocity = Vector2.zero;
+                return;
+            }
+
             Vector2 deltaPx = cur - lastMouse;
+            if (invertDeltaX) deltaPx.x = -deltaPx.x;
+            if (invertDeltaY) deltaPx.y = -deltaPx.y;
             lastMouse = cur;
 
             Vector2 vel = deltaPx * pxToWorld / Time.deltaTime; // px→м, /dt => m/s
@@ -195,9 +227,9 @@ namespace Neo.Tools
         {
             Vector2 diff = ApplyMask(worldTarget - (Vector2)transform.position);
             float dist = diff.magnitude;
-            if (dist < .02f)
+            if (dist < arrivalThreshold)
             {
-                return Vector2.zero; // уже почти там
+                return Vector2.zero;
             }
 
             float step = speed * dt;

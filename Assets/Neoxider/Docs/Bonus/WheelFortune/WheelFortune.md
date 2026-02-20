@@ -1,4 +1,7 @@
-﻿### Класс WheelFortune
+### Класс WheelFortune (устаревший)
+
+**Рекомендуется использовать [WheelFortuneImproved](./WheelFortuneImproved.md)** для новых настроек. Текущий тип сохранён для обратной совместимости; существующие префабы и сцены продолжают работать.
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelFortune.cs`
 

@@ -259,6 +259,38 @@ namespace Neo.Tools
             return index >= 0 ? entries[index] : null;
         }
 
+        /// <summary>
+        ///     Evaluates and returns both index and entry. Returns false if no entries or zero total weight.
+        /// </summary>
+        public bool TryEvaluate(out int index, out Entry entry)
+        {
+            index = GetChanceId();
+            if (index >= 0 && index < entries.Count)
+            {
+                entry = entries[index];
+                return true;
+            }
+
+            entry = null;
+            return false;
+        }
+
+        /// <summary>
+        ///     Same as TryEvaluate but uses the given random value in [0..1] for deterministic roll.
+        /// </summary>
+        public bool TryEvaluate(float randomValue, out int index, out Entry entry)
+        {
+            index = GetId(randomValue);
+            if (index >= 0 && index < entries.Count)
+            {
+                entry = entries[index];
+                return true;
+            }
+
+            entry = null;
+            return false;
+        }
+
         public void Normalize()
         {
             Normalize(normalizeTarget);

@@ -11,7 +11,8 @@
   - `DirectionSource directionSource` — LocalForward3D | Up2D | Right2D | Custom
   - `Vector3 customDirection` — пользовательское направление
 - Speed
-  - `float speed` — ед/сек
+  - `float speed` — ед/сек (при `useDeltaTime == true`; при `false` — за кадр)
+  - `void SetSpeed(float)` — публичный метод для скриптов и анимаций
 - Axis Locks (world)
   - `lockX`, `lockY`, `lockZ` — обнулить соответствующие компоненты смещения в мировом пространстве
 

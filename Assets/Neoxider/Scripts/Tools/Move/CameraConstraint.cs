@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Tools
 {
@@ -39,12 +40,17 @@ namespace Neo.Tools
         [SerializeField]
         private bool autoUpdateBounds = true;
 
+        [Header("Events")]
+        [Tooltip("Invoked when constraint fails to initialize (no camera or bounds source).")]
+        [SerializeField] private UnityEvent onConstraintFailed;
+
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
         [SerializeField] private Color sourceBoundsColor = new(0.25f, 0.8f, 1f, 0.9f);
         [SerializeField] private Color constraintBoundsColor = new(0.2f, 1f, 0.35f, 0.9f);
         [SerializeField] private Color clampedPositionColor = new(1f, 0.92f, 0.2f, 0.95f);
 
         private bool _boundsValid;
+        private bool _failureWarningShown;
         private float _lastAspect = -1f;
         private Vector3 _lastConstrainedPosition;
         private float _lastFov = -1f;
@@ -121,14 +127,24 @@ namespace Neo.Tools
         {
             if (!TryResolveCamera())
             {
-                Debug.LogError("CameraConstraint: No camera found!");
+                if (!_failureWarningShown)
+                {
+                    _failureWarningShown = true;
+                    Debug.LogWarning("CameraConstraint: No camera found. Disabling.", this);
+                }
+                onConstraintFailed?.Invoke();
                 enabled = false;
                 return false;
             }
 
             if (!ValidateBoundsSource())
             {
-                Debug.LogError($"CameraConstraint: Bounds source not set for type {boundsType}!");
+                if (!_failureWarningShown)
+                {
+                    _failureWarningShown = true;
+                    Debug.LogWarning($"CameraConstraint: Bounds source not set for type {boundsType}. Disabling.", this);
+                }
+                onConstraintFailed?.Invoke();
                 enabled = false;
                 return false;
             }
@@ -389,11 +405,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Set bounds type and source at runtime.
+        ///     Set bounds type and source at runtime. Returns true if source type matched and was assigned.
         /// </summary>
-        public void SetBoundsSource(BoundsType type, Object source = null)
+        public bool SetBoundsSource(BoundsType type, Object source = null)
         {
             boundsType = type;
+            bool assigned = false;
 
             switch (type)
             {
@@ -401,26 +418,27 @@ namespace Neo.Tools
                     if (source is SpriteRenderer sr)
                     {
                         spriteRenderer = sr;
+                        assigned = true;
                     }
-
                     break;
                 case BoundsType.BoxCollider2D:
                     if (source is BoxCollider2D col2D)
                     {
                         boxCollider2D = col2D;
+                        assigned = true;
                     }
-
                     break;
                 case BoundsType.BoxCollider:
                     if (source is BoxCollider col)
                     {
                         boxCollider = col;
+                        assigned = true;
                     }
-
                     break;
             }
 
             UpdateBounds();
+            return assigned;
         }
 
         /// <summary>

@@ -28,7 +28,12 @@ namespace Neo.Tools
             Exponential
         }
 
-        [Header("Target")] [SerializeField] private Transform target;
+        [Header("Target")]
+        [SerializeField] private Transform target;
+        [Tooltip("If target is null at Start, find by tag.")]
+        [SerializeField] private bool findTargetByTag;
+        [Tooltip("Tag to search when Find Target By Tag is enabled (e.g. Player).")]
+        [SerializeField] private string targetTag = "Player";
 
         [SerializeField] private FollowMode followMode = FollowMode.ThreeD;
 
@@ -78,9 +83,13 @@ namespace Neo.Tools
 
         public UnityEvent onStopFollowing;
 
+        [Tooltip("Invoked once when target becomes null (e.g. destroyed).")]
+        public UnityEvent onTargetLost;
+
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
 
         private bool _isFollowing;
+        private bool _hadTargetLastFrame;
         private Vector3 _lastTargetPosition;
 
         private Vector3 _positionVelocity;
@@ -88,18 +97,30 @@ namespace Neo.Tools
 
         private void Start()
         {
-            if (target != null)
+            if (target == null && findTargetByTag && !string.IsNullOrEmpty(targetTag))
             {
-                _lastTargetPosition = target.position;
+                GameObject go = GameObject.FindWithTag(targetTag);
+                if (go != null)
+                    target = go.transform;
             }
+            if (target != null)
+                _lastTargetPosition = target.position;
+            _hadTargetLastFrame = target != null;
         }
 
         private void LateUpdate()
         {
             if (target == null)
             {
+                if (_hadTargetLastFrame)
+                {
+                    _hadTargetLastFrame = false;
+                    _isFollowing = false;
+                    onTargetLost?.Invoke();
+                }
                 return;
             }
+            _hadTargetLastFrame = true;
 
             if (followPosition)
             {
@@ -381,7 +402,7 @@ namespace Neo.Tools
         [Serializable]
         public class DistanceSettings
         {
-            [Tooltip("Minimum distance to start following (0 = no limit).")]
+            [Tooltip("Do not follow when target is closer than this distance (0 = always follow).")]
             public float activationDistance;
 
             [Tooltip("Stop moving when this close to target (0 = move to target).")]
@@ -419,12 +440,22 @@ namespace Neo.Tools
         }
 
         /// <summary>
+        ///     Returns whether position following is enabled.
+        /// </summary>
+        public bool GetFollowPosition() => followPosition;
+
+        /// <summary>
         ///     Enable or disable rotation following.
         /// </summary>
         public void SetFollowRotation(bool enabled)
         {
             followRotation = enabled;
         }
+
+        /// <summary>
+        ///     Returns whether rotation following is enabled.
+        /// </summary>
+        public bool GetFollowRotation() => followRotation;
 
         /// <summary>
         ///     Set position movement speed.

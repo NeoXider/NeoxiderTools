@@ -1,8 +1,10 @@
 using System;
 using Neo;
 using Neo.Tools;
-using UnityEditor;
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 /// <summary>
 ///     Optimised mouse input manager – zero GC allocations per frame.

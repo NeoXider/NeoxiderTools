@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo
 {
@@ -35,12 +36,26 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CameraRotationController))]
         public class CameraRotationController : MonoBehaviour
         {
-            [Header("Settings")] public AxisRotationSettings xAxisSettings = new(true, 10);
+            [Header("Input")]
+            [Tooltip("Mouse button for drag rotation (0 = left, 1 = right, 2 = middle).")]
+            [SerializeField] private int mouseButton = 0;
+            [Tooltip("When set, rotation only active while this key is held (e.g. Alt). None = no modifier.")]
+            [SerializeField] private KeyCode modifierKey = KeyCode.None;
+            [Tooltip("Multiplier for mouse delta (resolution-independent sensitivity).")]
+            [SerializeField] private float mouseSensitivity = 0.1f;
+
+            [Header("Settings")]
+            public AxisRotationSettings xAxisSettings = new(true, 10);
             public AxisRotationSettings yAxisSettings = new(true, 10);
             public AxisRotationSettings zAxisSettings = new(false);
 
+            [Header("Events")]
+            [SerializeField] private UnityEvent onRotateStart = new UnityEvent();
+            [SerializeField] private UnityEvent onRotateEnd = new UnityEvent();
+
             private Vector3 currentRotation;
             private Vector3 lastMousePosition;
+            private bool _wasRotating;
 
             private void Start()
             {
@@ -49,14 +64,27 @@ namespace Neo
 
             private void Update()
             {
-                if (Input.GetMouseButtonDown(0))
+                bool modifierOk = modifierKey == KeyCode.None || Input.GetKey(modifierKey);
+                bool buttonDown = Input.GetMouseButtonDown(mouseButton);
+                bool buttonHeld = Input.GetMouseButton(mouseButton);
+                bool buttonUp = Input.GetMouseButtonUp(mouseButton);
+
+                if (buttonDown && modifierOk)
                 {
                     lastMousePosition = Input.mousePosition;
+                    _wasRotating = true;
+                    onRotateStart?.Invoke();
                 }
 
-                if (Input.GetMouseButton(0))
+                if (buttonUp && _wasRotating)
                 {
-                    Vector3 mouseDelta = Input.mousePosition - lastMousePosition;
+                    _wasRotating = false;
+                    onRotateEnd?.Invoke();
+                }
+
+                if (buttonHeld && modifierOk)
+                {
+                    Vector3 mouseDelta = (Input.mousePosition - lastMousePosition) * mouseSensitivity;
                     lastMousePosition = Input.mousePosition;
 
                     float mouseX = mouseDelta.x;

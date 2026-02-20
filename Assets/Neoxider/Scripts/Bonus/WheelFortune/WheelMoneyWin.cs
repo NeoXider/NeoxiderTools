@@ -17,12 +17,17 @@ namespace Neo
 
             public void Win(int id)
             {
+                if (wins == null || id < 0 || id >= wins.Length)
+                {
+                    if (wins != null)
+                        Debug.LogWarning($"[WheelMoneyWin] Win(id={id}) out of range [0, {wins.Length}).", this);
+                    return;
+                }
+
                 Money.I.Add(wins[id]);
 
                 if (prize != null)
-                {
                     prize.text = wins[id].ToString();
-                }
             }
         }
     }

@@ -50,11 +50,13 @@ namespace Neo.Tools
 
             if (_displayMode == ScoreDisplayMode.Best || _best)
             {
+                sm.OnBestValueChange.RemoveListener(Set);
                 Set(sm.BestScore);
                 sm.OnBestValueChange.AddListener(Set);
             }
             else
             {
+                sm.OnValueChange.RemoveListener(Set);
                 Set(sm.Score);
                 sm.OnValueChange.AddListener(Set);
             }

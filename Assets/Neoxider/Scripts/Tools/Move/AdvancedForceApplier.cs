@@ -77,6 +77,8 @@ namespace Neo.Tools
         [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
 #endif
         public float maxSpeed = 20f;
+        [Tooltip("When enabled, velocity is clamped every FixedUpdate (avoids overshoot with frequent ApplyForce calls).")]
+        public bool clampSpeedEveryFixedUpdate;
 
         [Header("Direction")]
 #if ODIN_INSPECTOR
@@ -108,6 +110,11 @@ namespace Neo.Tools
         [FoldoutGroup("Events")]
 #endif
         public UnityEvent OnApplyForce;
+#if ODIN_INSPECTOR
+        [FoldoutGroup("Events")]
+#endif
+        [Tooltip("Invoked when ApplyForce is called but no Rigidbody is available.")]
+        public UnityEvent OnApplyFailed;
 #if ODIN_INSPECTOR
         [FoldoutGroup("Debug")]
         [InfoBox("No suitable Rigidbody found. Component won't be able to apply force.", InfoMessageType.Warning,
@@ -168,21 +175,40 @@ namespace Neo.Tools
             {
                 rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
                 if (clampMaxSpeed && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
-                {
                     rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
-                }
+                OnApplyForce?.Invoke();
             }
             else if (Resolve2D())
             {
                 rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
                 if (clampMaxSpeed && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
-                {
                     rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
-                }
+                OnApplyForce?.Invoke();
             }
-
-            OnApplyForce?.Invoke();
+            else
+            {
+                OnApplyFailed?.Invoke();
+            }
         }
+
+        private void FixedUpdate()
+        {
+            if (!clampMaxSpeed || !clampSpeedEveryFixedUpdate)
+                return;
+            if (Resolve3D() && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+                rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
+            else if (Resolve2D() && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+                rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
+        }
+
+        /// <summary>Set target transform for DirectionMode.ToTarget.</summary>
+        public void SetTarget(Transform newTarget) => target = newTarget;
+
+        /// <summary>Set direction source mode.</summary>
+        public void SetDirectionMode(DirectionMode mode) => directionMode = mode;
+
+        /// <summary>Set custom direction vector (used when DirectionMode is CustomVector).</summary>
+        public void SetCustomDirection(Vector3 direction) => customDirection = direction;
 
         /// <summary>
         ///     Получает направление для применения силы.

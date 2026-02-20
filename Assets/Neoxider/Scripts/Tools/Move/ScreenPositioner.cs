@@ -8,24 +8,33 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ScreenPositioner))]
     public class ScreenPositioner : MonoBehaviour
     {
-        [Header("Position Settings")] public bool _useScreenPosition;
-        public Vector2 _positionScreen = Vector2.zero;
-
-        [Space] public Vector2 _offsetScreen = Vector2.zero;
-        public Vector2 _offset = Vector2.zero;
+        [Header("Position Settings")]
+        [SerializeField] private bool _useScreenPosition;
+        [SerializeField] private Vector2 _positionScreen = Vector2.zero;
+        [Tooltip("When Use Screen Position is off: edge of screen and pixel offset from it.")]
+        [SerializeField] private Vector2 _offsetScreen = Vector2.zero;
+        [SerializeField] private Vector2 _offset = Vector2.zero;
+        [Tooltip("When on, position is updated every frame (e.g. for moving camera or resolution change).")]
+        [SerializeField] private bool _updateEveryFrame;
 
         [SerializeField] private bool _useDepth;
         [SerializeField] private float _depth = 10f;
 
-        [Header("References")] [SerializeField]
-        private Camera _targetCamera;
-
-        [Space] public ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
+        [Header("References")]
+        [SerializeField] private Camera _targetCamera;
+        [Tooltip("Screen edge used as anchor. For Use Screen Position mode this is the edge from which Position Screen offset is applied.")]
+        [SerializeField] private ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
 
         private void Start()
         {
             InitializeComponents();
             UpdatePositionAndRotation();
+        }
+
+        private void LateUpdate()
+        {
+            if (_updateEveryFrame)
+                UpdatePositionAndRotation();
         }
 
         private void OnValidate()
@@ -56,12 +65,18 @@ namespace Neo.Tools
 
         private void ApplyScreenPosition()
         {
+            if (_targetCamera == null)
+            {
+                Debug.LogError("[ScreenPositioner] Camera reference is missing. Cannot apply position.", this);
+                return;
+            }
+
             float z = transform.position.z;
 
             if (_useScreenPosition)
             {
                 transform.position = _targetCamera.GetWorldPositionAtScreenEdge(
-                    ScreenEdge.BottomLeft,
+                    _screenEdge,
                     _positionScreen,
                     _depth
                 );

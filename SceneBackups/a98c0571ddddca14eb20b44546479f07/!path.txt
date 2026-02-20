@@ -1,0 +1,1 @@
+﻿Assets/Neoxider/Samples/Demo/Scenes/_ExampleGame/Shooter2D.unity

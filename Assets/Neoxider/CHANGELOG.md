@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.5] - Unreleased
+
+### Tools / Move — недоработки и улучшения модуля
+
+- **UniversalRotator** — `using UnityEditor` обёрнут в `#if UNITY_EDITOR` (исправление для билдов).
+- **ScreenPositioner** — проверка `_targetCamera == null` в ApplyScreenPosition с логом; режим «use screen position» использует `_screenEdge` вместо жёсткого BottomLeft; опция `_updateEveryFrame` и обновление в LateUpdate для динамического размещения; поля унифицированы в `[SerializeField] private`.
+- **DistanceChecker** — гистерезис (`hysteresisOffset`, пороги approach/depart); настраиваемый `continuousEventThreshold` для onDistanceChanged; метод `SetCurrentObject(Transform)`; пересчёт порогов в Awake/OnValidate/SetDistanceThreshold.
+- **Follow** — опциональный автопоиск цели по тегу (`findTargetByTag`, `targetTag`); событие `onTargetLost` при потере цели; тултип для `activationDistance`; публичные геттеры `GetFollowPosition()`, `GetFollowRotation()`.
+- **AdvancedForceApplier** — события `OnApplyFailed` (при отсутствии Rigidbody) и `OnApplyForce`; опция `clampSpeedEveryFixedUpdate`; публичные методы `SetTarget(Transform)`, `SetDirectionMode(DirectionMode)`, `SetCustomDirection(Vector3)`.
+- **CameraConstraint** — событие `onConstraintFailed` и однократный `Debug.LogWarning` при ошибке инициализации; `SetBoundsSource(Object)` возвращает `bool`.
+- **CameraRotationController** — выбор кнопки мыши (`mouseButton`) и опциональный модификатор (`modifierKey`); отдельный множитель `mouseSensitivity`; события `onRotateStart`, `onRotateEnd`.
+- **CursorLockController** — режимы курсора: **LockAndHide**, **OnlyHide**, **OnlyLock** (enum `CursorStateMode`); в документации — описание режимов и использование с New Input System (вызов `SetCursorLocked`/`ToggleCursorState` из callback).
+- **PlayerController2DPhysics / PlayerController3DPhysics** — события `OnMoveStart`, `OnMoveStop` при начале/окончании движения; при `_groundCheck == null` в Awake выводится однократный `Debug.LogWarning`; `Teleport` уже присутствовал в обоих.
+- **KeyboardMover** — настраиваемые имена осей `horizontalAxis`, `verticalAxis`; опция ввода **Input Backend** (Legacy / New Input System / AutoPreferNew) с использованием `OptionalInputSystemBridge.ReadMove()`.
+- **ConstantMover / ConstantRotator** — тултип для `useDeltaTime` (units per second vs per frame); публичные методы `SetSpeed(float)` и `SetDegreesPerSecond(float)`.
+- **MouseMover2D / MouseMover3D** — в Awake при отсутствии камеры подставляется `Camera.main`, при отсутствии — однократный `Debug.LogWarning`; настраиваемые `mouseButton` и `arrivalThreshold`; **MouseMover3D** реализует интерфейс `IMover` (`MoveDelta(Vector2)`, `MoveToPoint(Vector2)` с проекцией на плоскость); в `RaycastCursor` проверка `cam == null`.
+- Документация обновлена: CursorLockController.md, KeyboardMover.md, MouseMover3D.md, ConstantMover.md, IMover.md, PlayerController2DPhysics.md, PlayerController3DPhysics.md, README Move.
+
+### Tools / Components — исправления и устойчивость
+
+- **ScoreManager** — исправлена логика `SetBestScore(int?)`: без аргумента обновляет рекорд из текущего счёта, с аргументом — заданное значение (если больше текущего рекорда). Убран лишний вызов `OnValueChange` в `ResetScore()` (сеттер Score уже вызывает событие).
+- **Counter** — в `SaveValue()` после `SetFloat` вызывается `SaveProvider.Save()` (соответствие документации и поведению Money).
+- **Loot** — проверка `lootItems == null || lootItems.Length == 0` в `DropLoot()` и `GetRandomPrefab()` (защита от NullReferenceException). Namespace приведён к `Neo.Tools`.
+- **TextScore** — в `Init()` перед подпиской вызывается `RemoveListener(Set)` для исключения двойной подписки при повторной инициализации.
+- **Health** — в XML-документации класса указана реализация IDamageable, IHealable, IRestorable для интеграции с AttackExecution.
+- Документация: ScoreManager.md (описание SetBestScore), SCRIPT_IMPROVEMENTS.md — актуализирован (выполненные пункты отмечены).
+
+## [6.0.4] - Unreleased
+
+### Tools / Random — универсальный No-Code и API
+
+- **ChanceSystemBehaviour** — расширены события для настройки и подписки без кода:
+  - **On Index And Weight Selected (int, float)** — выбранный индекс и нормализованная вероятность (0..1).
+  - **On Roll Complete** — вызывается один раз после каждого броска (UI, звук).
+  - **Events By Index** — список UnityEvent по исходам: при выпадении индекса N вызывается событие на позиции N (разные действия на каждый исход без кода).
+  - **LastSelectedIndex**, **LastSelectedEntry** — результат последнего броска.
+  - **EvaluateAndNotify()** — бросок с вызовом всех событий, возврат Entry.
+  - **SetResultAndNotify(int)** — задать результат по индексу и вызвать события.
+  - **GetNormalizedWeight(int)**, **GetOrAddEventForIndex(int)** — для кода.
+  - Обратная совместимость: **OnIdGenerated** и **OnIndexSelected** сохранены.
+- **ChanceManager** — **TryEvaluate(out int index, out Entry entry)** и **TryEvaluate(float randomValue, out int index, out Entry entry)** для удобного доступа к индексу и записи одним вызовом (в т.ч. детерминированный бросок).
+- **ChanceData** — в документации указано использовать ChanceSystemBehaviour для сценарных событий по индексу.
+- Документация: ChanceSystemBehaviour.md, ChanceManager.md, README Random обновлены.
+
 ## [6.0.3] - Unreleased
 
 ### UI: SceneFlowController и реестр устаревших

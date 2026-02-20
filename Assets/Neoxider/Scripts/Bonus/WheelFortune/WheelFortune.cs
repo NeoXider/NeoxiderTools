@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -7,6 +8,7 @@ using UnityEditor;
 
 namespace Neo.Bonus
 {
+    [Obsolete("Use Neo.Bonus.WheelFortuneImproved for new setups. This type remains supported for backward compatibility.")]
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
     [CreateFromMenu("Neoxider/Bonus/WheelFortune", "Prefabs/Bonus/WheelFortune.prefab")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelFortune))]
@@ -394,7 +396,7 @@ namespace Neo.Bonus
 
             if (_autoStopTime > 0)
             {
-                Invoke(nameof(Stop), Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
+                Invoke(nameof(Stop), UnityEngine.Random.Range(_autoStopTime, _autoStopTime + _extraSpinTime));
             }
         }
 

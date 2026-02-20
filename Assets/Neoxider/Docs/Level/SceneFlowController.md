@@ -23,6 +23,7 @@
 - **Scene Name** — имя сцены (для LoadScene() при Use Scene Name = true).
 - **Use Scene Name** — при вызове LoadScene() без аргументов: true = грузить по Scene Name, false = по Scene Build Index.
 - **Activate On Ready** — для Async: активировать сцену сразу по готовности; для AsyncManual не используется.
+- **Load On Start** — при старте (Start) автоматически вызвать LoadScene() по полям компонента (сцена загрузки/меню и т.п.).
 
 ### Прогресс UI
 - **Text Progress** (UnityEngine.UI.Text) — опционально, текст прогресса.

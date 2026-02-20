@@ -56,6 +56,10 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Save key (unique per counter). Used with SaveProvider, as in Money.")]
         private string _saveKey = "Counter";
 
+        [SerializeField]
+        [Tooltip("При загрузке значения в Start вызывать OnValueChanged* (чтобы UI и подписчики применили загруженное значение). По умолчанию вкл.")]
+        private bool _invokeEventsOnLoad = true;
+
         [Space]
         [Header("События по типу (вызывается одно в зависимости от режима)")]
         [Tooltip("Invoked when value changes in Int mode. Passes new integer value.")]
@@ -90,6 +94,10 @@ namespace Neo.Tools
             if (_saveEnabled && !string.IsNullOrEmpty(_saveKey))
             {
                 Load();
+                if (_invokeEventsOnLoad)
+                {
+                    InvokeValueChanged();
+                }
             }
         }
 
@@ -202,6 +210,7 @@ namespace Neo.Tools
             }
 
             SaveProvider.SetFloat(_saveKey, _value);
+            SaveProvider.Save();
         }
 
         private void InvokeSend(float payload)
@@ -252,6 +261,12 @@ namespace Neo.Tools
             }
 
             _value = newValue;
+            InvokeValueChanged();
+            SaveValue();
+        }
+
+        private void InvokeValueChanged()
+        {
             OnValueChanged?.Invoke(_value);
             if (_valueMode == CounterValueMode.Int)
             {
@@ -261,8 +276,6 @@ namespace Neo.Tools
             {
                 OnValueChangedFloat?.Invoke(_value);
             }
-
-            SaveValue();
         }
 
         private float GetSendPayloadValue()

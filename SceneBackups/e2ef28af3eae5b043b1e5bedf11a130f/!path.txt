@@ -1,0 +1,1 @@
+﻿Assets/Neoxider/Samples/Demo/Scenes/Tools/Dialogue.unity

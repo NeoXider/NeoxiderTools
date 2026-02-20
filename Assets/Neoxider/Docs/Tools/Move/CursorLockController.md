@@ -6,9 +6,15 @@
 
 ---
 
-## 2. Поведение
+## 2. Режим (Mode)
 
-- **Start**: при включённом `_lockOnStart` выставляет lock и скрывает курсор.
+- **LockAndHide** — при «locked» блокирует и скрывает курсор; при «unlocked» разблокирует и показывает.
+- **OnlyHide** — управляет только видимостью (Cursor.visible).
+- **OnlyLock** — управляет только блокировкой (Cursor.lockState).
+
+## 3. Поведение
+
+- **Start**: при включённом `_lockOnStart` применяет выбранное состояние (по Mode).
 - **OnEnable** (опционально): если включено `_applyOnEnable`, применяет состояние `_lockOnEnable` (lock/unlock). Удобно, когда объект с контроллером включается при возврате в геймплей.
 - **OnDisable** (опционально): если включено `_applyOnDisable`, применяет состояние `_lockOnDisable`. Удобно при открытии меню или паузы.
 - **Update**: при `_allowToggle` переключает состояние по клавише `_toggleKey` (по умолчанию Escape).
@@ -16,9 +22,11 @@
 
 Вращение камеры при видимом курсоре отключается **в самом** `PlayerController3DPhysics` (опция **Pause Look When Cursor Visible**), без вызовов FindObjectsOfType и без связи между компонентами.
 
+**New Input System:** встроенной привязки к Input System нет. Вызывайте `SetCursorLocked(bool)` или `ToggleCursorState()` из callback вашего Input Action (например, UI или PlayerInput).
+
 ---
 
-## 3. Настройка
+## 4. Настройка
 
 1. Добавьте `CursorLockController` на активный объект (камера, GameManager, корень геймплея).
 2. **Start State**: `_lockOnStart` — lock курсора при старте.
@@ -28,7 +36,7 @@
 
 ---
 
-## 4. Публичный API
+## 5. Публичный API
 
 | Член | Описание |
 |------|----------|
@@ -40,7 +48,7 @@
 
 ---
 
-## 5. Совместное использование с PausePage и контроллерами игрока
+## 6. Совместное использование с PausePage и контроллерами игрока
 
 - **PausePage** с опцией **Control Cursor** при открытии паузы сохраняет состояние курсора и показывает его, при закрытии — восстанавливает. Отдельно вешать/снимать `CursorLockController` не обязательно.
 - **PlayerController3DPhysics** сам не вращает камеру при видимом курсоре, если у него включена опция **Pause Look When Cursor Visible** (по умолчанию включена). Связи между CursorLockController и контроллером игрока не требуется.

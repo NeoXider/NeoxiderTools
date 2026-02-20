@@ -24,8 +24,11 @@ namespace Neo.Tools
         [Tooltip("Target object to measure distance to.")] [SerializeField]
         private Transform targetObject;
 
-        [Header("Distance Settings")] [Tooltip("Distance threshold for triggering events.")] [SerializeField]
-        private float distanceThreshold = 5f;
+        [Header("Distance Settings")]
+        [Tooltip("Distance threshold for triggering approach/depart events.")]
+        [SerializeField] private float distanceThreshold = 5f;
+        [Tooltip("Optional hysteresis: depart event when distance > threshold + this value. Reduces flicker at boundary.")]
+        [SerializeField] [Min(0f)] private float hysteresisOffset = 0f;
 
         [Header("Update Settings")] [SerializeField]
         private UpdateMode updateMode = UpdateMode.EveryFrame;
@@ -33,8 +36,11 @@ namespace Neo.Tools
         [Tooltip("Update interval in seconds (only for FixedInterval mode).")] [SerializeField]
         private float updateInterval = 0.1f;
 
-        [Header("Continuous Tracking")] [Tooltip("Enable continuous distance tracking with events.")] [SerializeField]
-        private bool enableContinuousTracking;
+        [Header("Continuous Tracking")]
+        [Tooltip("Enable continuous distance tracking with events.")]
+        [SerializeField] private bool enableContinuousTracking;
+        [Tooltip("Minimum distance change to invoke On Distance Changed (avoids spam).")]
+        [SerializeField] private float continuousEventThreshold = 0.01f;
 
         public UnityEvent onApproach;
 
@@ -45,6 +51,7 @@ namespace Neo.Tools
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
 
         private float _distanceThresholdSqr;
+        private float _departThresholdSqr;
 
         private bool _isWithinDistance;
         private float _lastDistance;
@@ -57,7 +64,14 @@ namespace Neo.Tools
                 currentObject = transform;
             }
 
+            RecalculateThresholdSqr();
+        }
+
+        private void RecalculateThresholdSqr()
+        {
             _distanceThresholdSqr = distanceThreshold * distanceThreshold;
+            float departThreshold = distanceThreshold + hysteresisOffset;
+            _departThresholdSqr = departThreshold * departThreshold;
         }
 
         private void Update()
@@ -101,20 +115,21 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            _distanceThresholdSqr = distanceThreshold * distanceThreshold;
+            RecalculateThresholdSqr();
         }
 
         private void CheckDistance()
         {
             float distanceSqr = (targetObject.position - currentObject.position).sqrMagnitude;
-            bool isWithinDistanceNow = distanceSqr < _distanceThresholdSqr;
+            bool approachNow = distanceSqr < _distanceThresholdSqr;
+            bool departNow = distanceSqr > _departThresholdSqr;
 
-            if (isWithinDistanceNow && !_isWithinDistance)
+            if (approachNow && !_isWithinDistance)
             {
                 _isWithinDistance = true;
                 onApproach?.Invoke();
             }
-            else if (!isWithinDistanceNow && _isWithinDistance)
+            else if (departNow && _isWithinDistance)
             {
                 _isWithinDistance = false;
                 onDepart?.Invoke();
@@ -123,7 +138,7 @@ namespace Neo.Tools
             if (enableContinuousTracking)
             {
                 float distance = Mathf.Sqrt(distanceSqr);
-                if (Mathf.Abs(distance - _lastDistance) > 0.01f)
+                if (Mathf.Abs(distance - _lastDistance) > continuousEventThreshold)
                 {
                     _lastDistance = distance;
                     onDistanceChanged?.Invoke(distance);
@@ -168,7 +183,15 @@ namespace Neo.Tools
         public void SetDistanceThreshold(float threshold)
         {
             distanceThreshold = Mathf.Max(0f, threshold);
-            _distanceThresholdSqr = distanceThreshold * distanceThreshold;
+            RecalculateThresholdSqr();
+        }
+
+        /// <summary>
+        ///     Set current (source) object at runtime.
+        /// </summary>
+        public void SetCurrentObject(Transform newCurrent)
+        {
+            currentObject = newCurrent != null ? newCurrent : transform;
         }
 
         /// <summary>

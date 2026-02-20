@@ -25,7 +25,7 @@ namespace Neo.Tools
     [NeoDoc("Tools/Move/MovementToolkit/MouseMover3D.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/MouseMover3D")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MouseMover3D))]
-    public class MouseMover3D : MonoBehaviour
+    public class MouseMover3D : MonoBehaviour, IMover
     {
         public enum AxisPlane
         {
@@ -61,6 +61,21 @@ namespace Neo.Tools
         [Header("Raycast mask (optional ground)")] [SerializeField]
         private LayerMask groundMask;
 
+        [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
+        private int mouseButton = 0;
+
+        [Tooltip("If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
+        [SerializeField] private bool deltaOnlyWhenButtonHeld = true;
+
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")]
+        [SerializeField] private bool invertDeltaX;
+
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")]
+        [SerializeField] private bool invertDeltaY;
+
+        [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
+        private float arrivalThreshold = 0.05f;
+
         public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
 
@@ -73,14 +88,40 @@ namespace Neo.Tools
         private Rigidbody rb;
         private Vector3 targetPoint; // ClickToPoint-mode
         private bool wasMoving;
+        private bool _cameraWarningShown;
 
         // ── STATE ───────────────────────────────────────────────────────
         public bool IsMoving { get; private set; }
 
+        // ── IMover ──────────────────────────────────────────────────────
+        public void MoveDelta(Vector2 delta)
+        {
+            Vector3 d = MapVector2ToPlaneDelta(delta);
+            if (rb)
+                rb.MovePosition(rb.position + d);
+            else
+                transform.Translate(d, Space.World);
+        }
+
+        public void MoveToPoint(Vector2 worldTarget)
+        {
+            Vector3 pos = Vector2ToPlanePosition(worldTarget);
+            if (rb)
+                rb.MovePosition(pos);
+            else
+                transform.position = pos;
+        }
+
         // ── UNITY ───────────────────────────────────────────────────────
         private void Awake()
         {
-            cam = Camera.main;
+            if (cam == null)
+                cam = Camera.main;
+            if (cam == null && !_cameraWarningShown)
+            {
+                _cameraWarningShown = true;
+                Debug.LogWarning("[MouseMover3D] No camera assigned and Camera.main is null. Raycast and plane projection may fail.", this);
+            }
             rb = GetComponent<Rigidbody>();
             lastMousePos = Input.mousePosition;
         }
@@ -99,7 +140,7 @@ namespace Neo.Tools
         // ── INPUT --------------------------------------------------------
         private void ReadInput()
         {
-            if (Input.GetMouseButtonDown(0))
+            if (Input.GetMouseButtonDown(mouseButton))
             {
                 if (mode == MoveMode.ClickToPoint)
                 {
@@ -118,16 +159,26 @@ namespace Neo.Tools
             if (mode == MoveMode.DeltaNormalized || mode == MoveMode.DeltaRaw)
             {
                 Vector3 cur = Input.mousePosition;
-                Vector2 px = cur - lastMousePos;
-                lastMousePos = cur;
-
-                Vector3 vel = PxToWorld(px) / Time.deltaTime; // m/s
-                if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-4f)
+                if (deltaOnlyWhenButtonHeld && !Input.GetMouseButton(mouseButton))
                 {
-                    vel = vel.normalized * speed;
+                    lastMousePos = cur;
+                    desiredVel = Vector3.zero;
                 }
+                else
+                {
+                    Vector2 px = (Vector2)cur - (Vector2)lastMousePos;
+                    if (invertDeltaX) px.x = -px.x;
+                    if (invertDeltaY) px.y = -px.y;
+                    lastMousePos = cur;
 
-                desiredVel = RestrictAxes(vel);
+                    Vector3 vel = PxToWorld(px) / Time.deltaTime; // m/s
+                    if (mode == MoveMode.DeltaNormalized && vel.sqrMagnitude > 1e-4f)
+                    {
+                        vel = vel.normalized * speed;
+                    }
+
+                    desiredVel = RestrictAxes(vel);
+                }
             }
         }
 
@@ -142,7 +193,7 @@ namespace Neo.Tools
 
                 case MoveMode.MoveToPointHold:
                 {
-                    if (!Input.GetMouseButton(0) || !RaycastCursor(out Vector3 cur))
+                    if (!Input.GetMouseButton(mouseButton) || !RaycastCursor(out Vector3 cur))
                     {
                         return Vector3.zero;
                     }
@@ -168,7 +219,7 @@ namespace Neo.Tools
 
                 case MoveMode.Direction:
                 {
-                    if (!Input.GetMouseButton(0) || !RaycastCursor(out Vector3 cur))
+                    if (!Input.GetMouseButton(mouseButton) || !RaycastCursor(out Vector3 cur))
                     {
                         return Vector3.zero;
                     }
@@ -222,7 +273,7 @@ namespace Neo.Tools
         private Vector3 MoveTowards(Vector3 target, float dt)
         {
             Vector3 diff = RestrictAxes(target - transform.position);
-            if (diff.magnitude < 0.05f)
+            if (diff.magnitude < arrivalThreshold)
             {
                 return Vector3.zero;
             }
@@ -259,8 +310,42 @@ namespace Neo.Tools
             };
         }
 
+        private Vector3 MapVector2ToPlaneDelta(Vector2 d)
+        {
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(d.x, 0, d.y),
+                AxisPlane.XY => new Vector3(d.x, d.y, 0),
+                AxisPlane.YZ => new Vector3(0, d.x, d.y),
+                AxisPlane.X => new Vector3(d.x, 0, 0),
+                AxisPlane.Y => new Vector3(0, d.y, 0),
+                AxisPlane.Z => new Vector3(0, 0, d.y),
+                _ => new Vector3(d.x, 0, d.y)
+            };
+        }
+
+        private Vector3 Vector2ToPlanePosition(Vector2 p)
+        {
+            Vector3 pos = transform.position;
+            return plane switch
+            {
+                AxisPlane.XZ => new Vector3(p.x, pos.y, p.y),
+                AxisPlane.XY => new Vector3(p.x, p.y, pos.z),
+                AxisPlane.YZ => new Vector3(pos.x, p.x, p.y),
+                AxisPlane.X => new Vector3(p.x, pos.y, pos.z),
+                AxisPlane.Y => new Vector3(pos.x, p.y, pos.z),
+                AxisPlane.Z => new Vector3(pos.x, pos.y, p.y),
+                _ => new Vector3(p.x, pos.y, p.y)
+            };
+        }
+
         private bool RaycastCursor(out Vector3 world)
         {
+            if (cam == null)
+            {
+                world = Vector3.zero;
+                return false;
+            }
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
             // 1) Physics raycast, если указан mask

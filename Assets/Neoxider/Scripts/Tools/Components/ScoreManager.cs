@@ -132,20 +132,21 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Обновляет лучший результат: без аргумента — из текущего счёта; с аргументом — заданное значение (если больше текущего рекорда).
+        /// </summary>
         [Button]
-        public void SetBestScore(int? score = 0)
+        public void SetBestScore(int? candidate = null)
         {
-            if (score != null)
+            int value = candidate ?? score;
+            if (value <= _bestScore)
             {
-                score = this.score;
+                return;
             }
 
-            if (score > _bestScore)
-            {
-                BestScore = this.score;
-                SaveProvider.SetInt(_keySave, _bestScore);
-                SetBestScoreText();
-            }
+            BestScore = value;
+            SaveProvider.SetInt(_keySave, _bestScore);
+            SetBestScoreText();
         }
 
         /// <summary>
@@ -225,7 +226,6 @@ namespace Neo.Tools
         public void ResetScore()
         {
             Score = 0;
-            OnValueChange?.Invoke(score);
             SetScoreText();
         }
 

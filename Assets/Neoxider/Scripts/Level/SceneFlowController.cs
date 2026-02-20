@@ -43,6 +43,8 @@ namespace Neo
             [SerializeField] private bool _useSceneName = false;
             [Tooltip("Для Async: активировать сцену сразу по готовности. Для AsyncManual не используется.")]
             [SerializeField] private bool _activateOnReady = true;
+            [Tooltip("При старте (Start) автоматически вызвать LoadScene() по полям компонента.")]
+            [SerializeField] private bool _loadOnStart = false;
 
             [Header("Progress UI")]
             [SerializeField] private Text _textProgress;
@@ -65,6 +67,12 @@ namespace Neo
 
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
+
+            private void Start()
+            {
+                if (_loadOnStart)
+                    LoadScene();
+            }
 
             /// <summary>Режим загрузки (из настроек компонента).</summary>
             public SceneFlowLoadMode LoadMode { get => _loadMode; set => _loadMode = value; }

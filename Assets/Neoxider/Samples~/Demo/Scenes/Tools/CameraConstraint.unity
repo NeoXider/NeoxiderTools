@@ -465,17 +465,17 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   boundsType: 1
   spriteRenderer: {fileID: 0}
-  collider2D: {fileID: 487199782}
-  collider: {fileID: 0}
-  manualBounds:
-    m_Center: {x: 0, y: 0, z: 0}
-    m_Extent: {x: 50, y: 50, z: 50}
+  boxCollider2D: {fileID: 487199782}
+  boxCollider: {fileID: 0}
   cam: {fileID: 1934867642}
   edgePadding: 0
   constraintX: 1
   constraintY: 1
   constraintZ: 0
   autoUpdateBounds: 1
+  onConstraintFailed:
+    m_PersistentCalls:
+      m_Calls: []
   showDebugGizmos: 1
   sourceBoundsColor: {r: 0.25, g: 0.8, b: 1, a: 0.9}
   constraintBoundsColor: {r: 0.2, g: 1, b: 0.35, a: 0.9}
@@ -496,6 +496,9 @@ MonoBehaviour:
   axes: 0
   speed: 5
   pxToWorld: 0.01
+  mouseButton: 0
+  deltaOnlyWhenButtonHeld: 1
+  arrivalThreshold: 0.02
   offset: {x: 0, y: 0}
   OnMoveStart:
     m_PersistentCalls:

@@ -40,6 +40,14 @@ namespace Neo.Tools
         [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
+        [Header("Input")]
+        [Tooltip("Legacy = Input Manager axes only; New = Input System bridge; Auto = try New, fallback Legacy.")]
+        [SerializeField] private InputBackend inputBackend = InputBackend.AutoPreferNew;
+        [Tooltip("Input Manager axis name for horizontal (e.g. Horizontal).")]
+        [SerializeField] private string horizontalAxis = "Horizontal";
+        [Tooltip("Input Manager axis name for vertical (e.g. Vertical).")]
+        [SerializeField] private string verticalAxis = "Vertical";
+
         public UnityEvent OnMoveStart;
 
         public UnityEvent OnMoveStop;
@@ -74,6 +82,7 @@ namespace Neo.Tools
         private Rigidbody2D _rb;
         private Vector3 _cachedDelta;
         private bool _wasMovingLast;
+        private bool _newInputUnavailableWarningShown;
 
         #endregion
 
@@ -84,6 +93,20 @@ namespace Neo.Tools
         private void Awake()
         {
             _rb = GetComponent<Rigidbody2D>();
+        }
+
+        private bool ShouldUseNewInput()
+        {
+            if (inputBackend == InputBackend.LegacyInputManager)
+                return false;
+            if (OptionalInputSystemBridge.IsAvailable)
+                return true;
+            if ((inputBackend == InputBackend.NewInputSystem || inputBackend == InputBackend.AutoPreferNew) && !_newInputUnavailableWarningShown)
+            {
+                Debug.LogWarning("[KeyboardMover] New Input System is not available. Falling back to Legacy Input Manager.", this);
+                _newInputUnavailableWarningShown = true;
+            }
+            return false;
         }
 
         private void Update()
@@ -116,9 +139,11 @@ namespace Neo.Tools
 
         private Vector3 ComputeDelta(float dt)
         {
-            float h = Input.GetAxisRaw("Horizontal");
-            float v = Input.GetAxisRaw("Vertical");
-            Vector2 dir = new(h, v);
+            Vector2 dir;
+            if (ShouldUseNewInput())
+                dir = OptionalInputSystemBridge.ReadMove();
+            else
+                dir = new Vector2(Input.GetAxisRaw(horizontalAxis), Input.GetAxisRaw(verticalAxis));
 
             if (axisMode == AxisMode.AxisNormalized && dir.sqrMagnitude > 0.001f)
             {
@@ -138,6 +163,13 @@ namespace Neo.Tools
                 MovementPlane.YZ => new Vector3(0f, input.x, input.y),
                 _ => new Vector3(input.x, input.y, 0f)
             };
+        }
+
+        private enum InputBackend
+        {
+            LegacyInputManager,
+            NewInputSystem,
+            AutoPreferNew
         }
 
         private void ApplyDelta(Vector3 delta)

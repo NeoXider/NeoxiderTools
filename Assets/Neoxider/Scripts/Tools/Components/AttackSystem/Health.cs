@@ -4,7 +4,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Component that handles health system with damage, healing and auto-healing capabilities
+    ///     Component that handles health system with damage, healing and auto-healing capabilities.
+    ///     Implements IDamageable, IHealable, IRestorable for use with AttackExecution and other combat components.
     /// </summary>
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Health")]

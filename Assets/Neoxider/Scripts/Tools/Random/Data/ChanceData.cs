@@ -5,7 +5,8 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     ScriptableObject wrapper over <see cref="ChanceManager" />. Stores reusable chance configurations
-    ///     that can be referenced across scenes and assets.
+    ///     that can be referenced across scenes and assets. For No-Code events (by index, on roll complete)
+    ///     use <see cref="ChanceSystemBehaviour" /> with this asset assigned in the Inspector.
     /// </summary>
     [CreateAssetMenu(fileName = "Chance Data", menuName = "Neoxider/Tools/Random/Chance Data", order = 20)]
     public class ChanceData : ScriptableObject
@@ -13,6 +14,7 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Chance configuration")]
         private ChanceManager manager = new();
 
+        [Tooltip("Invoked when GenerateId() is called on this asset (e.g. from code). For scene events use ChanceSystemBehaviour.")]
         public UnityEvent<int> OnIdGenerated;
 
         public ChanceManager Manager => manager;

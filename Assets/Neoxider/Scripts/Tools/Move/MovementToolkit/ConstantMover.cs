@@ -27,7 +27,8 @@ namespace Neo.Tools
         [Tooltip("If true, direction/axis is in local space; otherwise world space")]
         public bool spaceLocal = true;
 
-        [Tooltip("Subtract time from speed")] public bool useDeltaTime = true;
+        [Tooltip("When true, speed is in units per second; when false, speed is applied per frame.")]
+        public bool useDeltaTime = true;
 
         [Header("Direction")] public DirectionSource directionSource = DirectionSource.LocalForward3D;
 
@@ -42,6 +43,9 @@ namespace Neo.Tools
         private Rigidbody2D _rb2D;
 
         private Rigidbody _rb3D;
+
+        /// <summary>Sets movement speed (units per second when Use Delta Time is true; otherwise per frame).</summary>
+        public void SetSpeed(float value) => speed = value;
 
         private void Awake()
         {

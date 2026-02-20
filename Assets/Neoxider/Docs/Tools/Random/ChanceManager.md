@@ -39,6 +39,8 @@ manager.Normalize();
 
 int index = manager.GetChanceId();               // возвращает индекс выбранной записи
 var entry = manager.Evaluate();                  // возвращает саму запись
+manager.TryEvaluate(out int idx, out var ent);   // один вызов: индекс и запись, false если пусто
+manager.TryEvaluate(random01, out idx, out ent); // детерминированный бросок по значению [0..1]
 float chance = manager.GetNormalizedWeight(1);   // нормализованная вероятность записи с индексом 1
 ```
 

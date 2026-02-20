@@ -522,6 +522,10 @@ PrefabInstance:
       value: 272.2
       objectReference: {fileID: 0}
     - target: {fileID: 7127308335697873792, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
+      propertyPath: _alignmentDuration
+      value: 0.3
+      objectReference: {fileID: 0}
+    - target: {fileID: 7127308335697873792, guid: fe17a43c9caff1443bfcad1dc0d3475e, type: 3}
       propertyPath: _autoArrangePrizes
       value: 1
       objectReference: {fileID: 0}

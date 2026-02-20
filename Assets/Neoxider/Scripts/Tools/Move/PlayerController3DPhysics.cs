@@ -57,8 +57,11 @@ namespace Neo.Tools
         [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
         [SerializeField] private bool _pauseLookWhenCursorVisible = true;
 
-        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
+        [Header("Events")]
+        [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
+        [SerializeField] private UnityEvent _onMoveStart = new();
+        [SerializeField] private UnityEvent _onMoveStop = new();
         private readonly Collider[] _groundHits = new Collider[16];
         private float _coyoteTimer;
         private float _jumpBufferTimer;
@@ -67,6 +70,7 @@ namespace Neo.Tools
 
         private Vector2 _moveInput;
         private bool _movementEnabled = true;
+        private bool _wasMoving;
         private bool _newInputUnavailableWarningShown;
         private float _pitch;
         private bool _wasGrounded;
@@ -90,9 +94,9 @@ namespace Neo.Tools
             }
 
             if (_cameraPivot == null && Camera.main != null)
-            {
                 _cameraPivot = Camera.main.transform;
-            }
+            if (_groundCheck == null)
+                Debug.LogWarning("[PlayerController3DPhysics] Ground Check transform is not set. Ground detection will use transform position.", this);
 
             _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             _rigidbody.freezeRotation = true;
@@ -112,6 +116,15 @@ namespace Neo.Tools
         {
             CaptureInput();
             HandleLookInput();
+            bool movingNow = _movementEnabled && _moveInput.sqrMagnitude > 0.001f;
+            if (movingNow != _wasMoving)
+            {
+                _wasMoving = movingNow;
+                if (movingNow)
+                    _onMoveStart?.Invoke();
+                else
+                    _onMoveStop?.Invoke();
+            }
         }
 
         private void FixedUpdate()
