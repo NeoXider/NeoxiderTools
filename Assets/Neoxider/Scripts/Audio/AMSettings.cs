@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -10,6 +11,10 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
     public class AMSettings : Singleton<AMSettings>
     {
+        public const int AudioGroupMaster = 0;
+        public const int AudioGroupMusic = 1;
+        public const int AudioGroupSfx = 2;
+
         [Tooltip("Optional mixer for volume control.")]
         public AudioMixer audioMixer;
 
@@ -24,10 +29,13 @@ namespace Neo.Audio
 
         public UnityEvent<bool> OnMuteEfx;
         public UnityEvent<bool> OnMuteMusic;
+        public UnityEvent<bool> OnMuteMaster;
 
-        public float startEfxVolume = 1;
+        public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
         private AM _am;
+        private bool _masterMuted;
+        private float _savedMasterVolume = 1f;
 
         public AudioSource efx { get; private set; }
         public AudioSource music { get; private set; }
@@ -221,6 +229,93 @@ namespace Neo.Audio
 
             SetEfx(music.mute);
             SetMusic(music.mute);
+        }
+
+        /// <summary>
+        ///     Включает или выключает общую громкость (Master) в микшере. Сохраняет текущую громкость при выключении.
+        /// </summary>
+        [Button("Toggle Master")]
+        public void ToggleMaster()
+        {
+            if (audioMixer == null)
+            {
+                return;
+            }
+
+            if (_masterMuted)
+            {
+                SetMixerVolume(audioMixer, MasterVolume, _savedMasterVolume);
+                _masterMuted = false;
+                OnMuteMaster?.Invoke(false);
+            }
+            else
+            {
+                if (audioMixer.GetFloat(MasterVolume, out float db))
+                {
+                    _savedMasterVolume = db > -80f ? Mathf.Pow(10f, db / 20f) : 1f;
+                }
+
+                audioMixer.SetFloat(MasterVolume, -80f);
+                _masterMuted = true;
+                OnMuteMaster?.Invoke(true);
+            }
+        }
+
+        /// <summary>
+        ///     Переключает вкл/выкл по группе: 0 = Master, 1 = Music, 2 = Sfx (звуки). Для NeoCondition и кода (один int).
+        /// </summary>
+        [Button("Toggle Audio (0=Master, 1=Music, 2=Sfx)", 180)]
+        public void ToggleAudio(int group)
+        {
+            switch (group)
+            {
+                case AudioGroupMaster:
+                    ToggleMaster();
+                    break;
+                case AudioGroupMusic:
+                    ToggleMusic();
+                    break;
+                case AudioGroupSfx:
+                    ToggleEfx();
+                    break;
+                default:
+                    Debug.LogWarning($"[AMSettings] ToggleAudio: неизвестная группа {group}. Используйте 0=Master, 1=Music, 2=Sfx.");
+                    break;
+            }
+        }
+
+        /// <summary>
+        ///     Переключает все каналы сразу: Master, Music и Sfx (вкл или выкл).
+        /// </summary>
+        [Button("Toggle All Audio")]
+        public void ToggleAllAudio()
+        {
+            bool anyMuted = _masterMuted || (music != null && music.mute);
+            bool turnOn = anyMuted;
+
+            if (!turnOn && audioMixer != null && !_masterMuted && audioMixer.GetFloat(MasterVolume, out float db))
+            {
+                _savedMasterVolume = db > -80f ? Mathf.Pow(10f, db / 20f) : 1f;
+            }
+
+            if (audioMixer != null)
+            {
+                SetMixerVolume(audioMixer, MasterVolume, turnOn ? _savedMasterVolume : 0f);
+                _masterMuted = !turnOn;
+                OnMuteMaster?.Invoke(_masterMuted);
+            }
+
+            if (music != null)
+            {
+                music.mute = !turnOn;
+                OnMuteMusic?.Invoke(music.mute);
+            }
+
+            if (efx != null)
+            {
+                efx.mute = !turnOn;
+                OnMuteEfx?.Invoke(efx.mute);
+            }
         }
     }
 }
