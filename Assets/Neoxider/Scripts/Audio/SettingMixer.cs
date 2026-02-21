@@ -8,16 +8,9 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
     public class SettingMixer : MonoBehaviour
     {
-        public const int GroupMaster = 0;
-        public const int GroupMusic = 1;
-        public const int GroupSfx = 2;
-
         [Header("Settings")]
-        public string nameMixer = "Master";
-
-        [Tooltip("Parameter names: [0]=Master, [1]=Music, [2]=Sfx. Used by GetVolumeByGroup/SetVolumeByGroup.")]
-        [SerializeField]
-        private string[] _groupParameterNames = { "MasterVolume", "MusicVolume", "EfxVolume" };
+        [Tooltip("Имя параметра экспозиции в AudioMixer (например MasterVolume, MusicVolume, EfxVolume).")]
+        public string parameterName = "MasterVolume";
 
         [Header("References")]
         public AudioMixer audioMixer;
@@ -25,31 +18,24 @@ namespace Neo.Audio
         public const float MaxDb = 20f;
         public const float MinDb = -80f;
 
-        public void SetVolume(string name = "", float volumeDb = 0f)
+        public void SetVolumeDb(string name, float volumeDb)
         {
             if (audioMixer == null)
             {
-                Debug.LogWarning($"[SettingMixer] AudioMixer не установлен! Нельзя установить громкость для '{nameMixer}'.");
+                Debug.LogWarning("[SettingMixer] AudioMixer не установлен.");
                 return;
             }
 
-            name = string.IsNullOrEmpty(name) ? nameMixer : name;
-            audioMixer.SetFloat(name, Mathf.Clamp(volumeDb, MinDb, MaxDb));
+            string param = string.IsNullOrEmpty(name) ? parameterName : name;
+            audioMixer.SetFloat(param, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
         /// <summary>
-        ///     Возвращает нормализованную громкость (0–1) группы по индексу. 0=Master, 1=Music, 2=Sfx.
-        ///     Для NeoCondition: Property = GetVolumeByGroup, Argument = 0/1/2.
+        ///     Возвращает нормализованную громкость (0–1) текущего параметра микшера.
         /// </summary>
-        public float GetVolumeByGroup(int groupIndex)
+        public float GetVolume()
         {
-            if (audioMixer == null || _groupParameterNames == null || groupIndex < 0 || groupIndex >= _groupParameterNames.Length)
-            {
-                return 0f;
-            }
-
-            string param = _groupParameterNames[groupIndex];
-            if (string.IsNullOrEmpty(param) || !audioMixer.GetFloat(param, out float db))
+            if (audioMixer == null || string.IsNullOrEmpty(parameterName) || !audioMixer.GetFloat(parameterName, out float db))
             {
                 return 0f;
             }
@@ -58,23 +44,17 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Устанавливает громкость группы по индексу (0=Master, 1=Music, 2=Sfx). Нормализованное значение 0–1.
+        ///     Устанавливает громкость по нормализованному значению 0–1. Один параметр — задаётся в parameterName.
         /// </summary>
-        public void SetVolumeByGroup(int groupIndex, float normalizedVolume)
+        public void SetVolume(float normalizedVolume)
         {
-            if (audioMixer == null || _groupParameterNames == null || groupIndex < 0 || groupIndex >= _groupParameterNames.Length)
-            {
-                return;
-            }
-
-            string param = _groupParameterNames[groupIndex];
-            if (string.IsNullOrEmpty(param))
+            if (audioMixer == null || string.IsNullOrEmpty(parameterName))
             {
                 return;
             }
 
             float db = normalizedVolume > 0f ? Mathf.Log10(Mathf.Clamp01(normalizedVolume)) * 20f : MinDb;
-            audioMixer.SetFloat(param, Mathf.Clamp(db, MinDb, MaxDb));
+            audioMixer.SetFloat(parameterName, Mathf.Clamp(db, MinDb, MaxDb));
         }
     }
 }
