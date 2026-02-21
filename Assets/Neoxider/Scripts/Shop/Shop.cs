@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 
 namespace Neo.Shop
 {
@@ -41,7 +43,8 @@ namespace Neo.Shop
 
         [SerializeField] private ShopItem _prefab;
 
-        [Space] [SerializeField] public GameObject IMoneySpend;
+        [Space] [Tooltip("GameObject with IMoneySpend (e.g. Money). If null, Money.I is used.")]
+        [FormerlySerializedAs("IMoneySpend")] [SerializeField] public GameObject moneySpendSource;
 
         [Space] public UnityEvent<int> OnSelect;
         public UnityEvent<int> OnPurchased;
@@ -53,6 +56,8 @@ namespace Neo.Shop
         private int _savedEquippedId;
 
         private bool load;
+
+        private List<UnityEngine.Events.UnityAction> _buyDelegates;
 
         public int[] Prices => _prices;
         public ShopItemData[] ShopItemDatas => _shopItemDatas;
@@ -77,9 +82,9 @@ namespace Neo.Shop
 
         private void Start()
         {
-            if (IMoneySpend != null)
+            if (moneySpendSource != null)
             {
-                _money = IMoneySpend?.GetComponent<IMoneySpend>() ?? Money.I;
+                _money = moneySpendSource.GetComponent<IMoneySpend>() ?? Money.I;
             }
             else
             {
@@ -154,22 +159,30 @@ namespace Neo.Shop
 
         private void Subscriber(bool subscribe)
         {
-            for (int i = 0; i < _shopItems.Length; i++)
-            {
-                int id = i;
+            if (_shopItems == null || _shopItems.Length == 0)
+                return;
 
-                if (subscribe)
+            if (subscribe)
+            {
+                _buyDelegates ??= new List<UnityEngine.Events.UnityAction>();
+                _buyDelegates.Clear();
+                for (int i = 0; i < _shopItems.Length; i++)
                 {
-                    if (_autoSubscribe)
-                    {
-                        _shopItems[i].buttonBuy.onClick.AddListener(() => Buy(id));
-                    }
+                    int id = i;
+                    UnityEngine.Events.UnityAction action = () => Buy(id);
+                    _buyDelegates.Add(action);
+                    if (_autoSubscribe && _shopItems[i].buttonBuy != null)
+                        _shopItems[i].buttonBuy.onClick.AddListener(action);
                 }
-                else
+            }
+            else
+            {
+                if (_buyDelegates != null && _autoSubscribe)
                 {
-                    if (_autoSubscribe)
+                    for (int i = 0; i < _shopItems.Length && i < _buyDelegates.Count; i++)
                     {
-                        _shopItems[i].buttonBuy.onClick.RemoveListener(() => Buy(id));
+                        if (_shopItems[i].buttonBuy != null)
+                            _shopItems[i].buttonBuy.onClick.RemoveListener(_buyDelegates[i]);
                     }
                 }
             }
@@ -177,11 +190,24 @@ namespace Neo.Shop
 
         private void Load()
         {
-            int[] prices = new int[NotNullDatas() ? _shopItemDatas.Length : _prices.Length];
+            if (NotNullDatas())
+            {
+                _prices ??= _shopItemDatas.Select(p => p.price).ToArray();
+            }
+            else if (_prices == null)
+            {
+                _prices = Array.Empty<int>();
+                return;
+            }
 
+            if (_prices.Length == 0)
+                return;
+
+            int[] prices = new int[_prices.Length];
             for (int i = 0; i < _prices.Length; i++)
             {
-                prices[i] = SaveProvider.GetInt(_keySave + i, NotNullDatas() ? _shopItemDatas[i].price : _prices[i]);
+                int defaultValue = NotNullDatas() && i < _shopItemDatas.Length ? _shopItemDatas[i].price : _prices[i];
+                prices[i] = SaveProvider.GetInt(_keySave + i, defaultValue);
             }
 
             _prices = prices;
@@ -189,10 +215,14 @@ namespace Neo.Shop
 
         private void Save()
         {
+            if (_prices == null)
+                return;
             for (int i = 0; i < _prices.Length; i++)
             {
                 SaveProvider.SetInt(_keySave + i, _prices[i]);
             }
+
+            SaveProvider.Save();
         }
 
         private void LoadEquipped()
@@ -211,7 +241,9 @@ namespace Neo.Shop
 
         private void VisualPreview()
         {
-            ShopItemData data = PreviewId < _shopItemDatas.Length ? _shopItemDatas[PreviewId] : null;
+            if (_prices == null || PreviewId < 0 || PreviewId >= _prices.Length)
+                return;
+            ShopItemData data = _shopItemDatas != null && PreviewId < _shopItemDatas.Length ? _shopItemDatas[PreviewId] : null;
             _shopItemPreview?.Visual(data, _prices[PreviewId], PreviewId);
         }
 
@@ -222,37 +254,33 @@ namespace Neo.Shop
 
         public void Buy(int id)
         {
+            if (_prices == null || id < 0 || id >= _prices.Length)
+                return;
+            if (NotNullDatas() && id >= _shopItemDatas.Length)
+                return;
+
             if (_prices[id] == 0)
             {
                 Visual();
-
                 Select(id);
-
-                // Бесплатный/уже купленный товар — всегда обновляем превью
                 ShowPreview(id);
             }
-            else if (_money.Spend(_prices[id]))
+            else if (_money != null && _money.Spend(_prices[id]))
             {
-                if (_shopItemDatas[id].isSinglePurchase)
+                if (NotNullDatas() && _shopItemDatas[id].isSinglePurchase)
                 {
                     _prices[id] = 0;
                 }
 
                 Save();
-
                 Visual();
-
                 Select(id);
-
                 OnPurchased?.Invoke(id);
-
-                // Покупка успешна — обновляем превью
                 ShowPreview(id);
             }
             else
             {
                 OnPurchaseFailed?.Invoke(id);
-                // При неудаче — меняем превью только если включён флаг
                 if (_changePreviewOnPurchaseFailed)
                 {
                     ShowPreview(id);
@@ -277,9 +305,13 @@ namespace Neo.Shop
 
         public void Visual()
         {
+            if (_shopItems == null || _prices == null)
+                return;
             for (int i = 0; i < _shopItems.Length; i++)
             {
-                _shopItems[i].Visual(_shopItemDatas[i], _prices[i], i);
+                ShopItemData data = _shopItemDatas != null && i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
+                int price = i < _prices.Length ? _prices[i] : 0;
+                _shopItems[i].Visual(data, price, i);
             }
         }
 

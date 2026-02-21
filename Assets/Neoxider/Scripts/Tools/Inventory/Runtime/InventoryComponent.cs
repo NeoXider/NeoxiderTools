@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -126,11 +127,13 @@ namespace Neo.Tools
             return I != null ? I : FindObjectOfType<InventoryComponent>();
         }
 
+        [Button("Add 1", 100)]
         public int AddItemById(int itemId)
         {
             return AddItemByIdAmount(itemId, 1);
         }
 
+        [Button("Add N", 100)]
         public int AddItemByIdAmount(int itemId, int amount)
         {
             if (amount <= 0)
@@ -178,11 +181,13 @@ namespace Neo.Tools
             return AddItemByIdAmount(itemData.ItemId, amount);
         }
 
+        [Button("Remove 1", 100)]
         public int RemoveItemById(int itemId)
         {
             return RemoveItemByIdAmount(itemId, 1);
         }
 
+        [Button("Remove N", 100)]
         public int RemoveItemByIdAmount(int itemId, int amount)
         {
             if (amount <= 0)
@@ -273,11 +278,13 @@ namespace Neo.Tools
             return _database != null ? _database.GetItemData(itemId) : null;
         }
 
+        [Button("Drop Selected", 110)]
         public int DropSelected(int amount = 1)
         {
             return _dropper != null ? _dropper.DropSelected(amount) : 0;
         }
 
+        [Button("Drop By Id", 110)]
         public int DropById(int itemId, int amount = 1)
         {
             return _dropper != null ? _dropper.DropById(itemId, amount) : 0;
@@ -289,18 +296,32 @@ namespace Neo.Tools
         }
 
         /// <summary>Drops the first item (by snapshot order). Returns amount dropped, or 0 if no dropper or empty.</summary>
+        [Button("Drop First", 100)]
         public int DropFirst(int amount = 1)
         {
             return _dropper != null ? _dropper.DropFirst(amount) : 0;
         }
 
         /// <summary>Drops the last item (by snapshot order). Returns amount dropped, or 0 if no dropper or empty.</summary>
+        [Button("Drop Last", 100)]
         public int DropLast(int amount = 1)
         {
             return _dropper != null ? _dropper.DropLast(amount) : 0;
         }
 
-        [Button]
+        [Button("Add 1 (Selected Id)", 140)]
+        public int TestAdd1Selected()
+        {
+            return AddItemById(_selectedItemId);
+        }
+
+        [Button("Remove 1 (Selected Id)", 140)]
+        public int TestRemove1Selected()
+        {
+            return RemoveItemById(_selectedItemId);
+        }
+
+        [Button("Clear", 80)]
         public void ClearInventory()
         {
             if (_manager.TotalCount <= 0)
@@ -317,7 +338,7 @@ namespace Neo.Tools
             }
         }
 
-        [Button]
+        [Button("Save", 80)]
         public void Save()
         {
             if (string.IsNullOrWhiteSpace(_saveKey))
@@ -337,7 +358,7 @@ namespace Neo.Tools
             OnSaved?.Invoke();
         }
 
-        [Button]
+        [Button("Load", 80)]
         public void Load()
         {
             OnBeforeLoad?.Invoke();

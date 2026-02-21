@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [6.0.7] - 2026-02-19
+
+### Condition — NeoCondition: вызов методов с аргументом (int/float/string)
+
+- **ConditionEntry** — добавлена поддержка вызова методов с одним параметром в дополнение к свойствам и полям.
+  - Новый enum `ArgumentKind { Int, Float, String }` и поля: `_isMethodWithArgument`, `_propertyArgumentKind`, `_propertyArgumentInt`, `_propertyArgumentFloat`, `_propertyArgumentString`.
+  - В выпадающем списке Property отображаются методы с одним параметром (int/float/string) и возвращаемым типом int/float/bool/string, с подписью вида `GetCount (int) → Int [method]`.
+  - Под полем Property при выборе метода отображается поле аргумента (Argument int/float/string).
+  - Аналогичная поддержка для **Other Object** (сравнение с переменной-методом): `_otherIsMethodWithArgument`, `_otherPropertyArgumentKind`, `_otherPropertyArgumentInt/Float/String`.
+- **NeoConditionEditor** — в `DrawPropertyDropdown` добавлен сбор методов с одним параметром, отрисовка полей аргумента по типу; для Other Object — тот же dropdown и поля аргументов; сброс флагов/аргументов при смене компонента; в `ResetConditionEntry` сброс всех новых полей; в Play Mode — preview значения для методов с текущим аргументом.
+- **Обратная совместимость**: старые условия без флагов работают как раньше (только свойства/поля).
+- **Документация**: в NeoCondition.md добавлены описание Property/Argument, пример 8 «Проверка количества предмета по id» (InventoryComponent.GetCount(int), Argument = itemId).
+
+### Tools / Inventory — кнопки в инспекторе для тестирования
+
+- **InventoryComponent** — добавлены атрибуты `[Button]` для быстрой проверки в Inspector:
+  - Add: «Add 1», «Add N» (AddItemById, AddItemByIdAmount), «Add 1 (Selected Id)» — по выбранному Condition Helper id.
+  - Remove: «Remove 1», «Remove N», «Remove 1 (Selected Id)».
+  - Drop: «Drop Selected», «Drop By Id», «Drop First», «Drop Last».
+  - «Clear», «Save», «Load» — с явными подписями кнопок.
+- Добавлен `using Neo` для атрибута `[Button]`.
+
 ## [6.0.6] - 2026-02-19
 
 ### Editor — Presets в окне Create Neoxider Object
@@ -15,7 +37,14 @@ All notable changes to this project will be documented in this file.
 
 - **Tools → Neoxider → Create Sprite from Prefab...** — окно выбора префаба и сохранения его превью как Sprite-ассет (диалог выбора пути в проекте, PNG + TextureImporter Sprite).
 - Утилита `PrefabToSpriteUtility`: копирование не-readable превью через RenderTexture, сохранение PNG, импорт как Sprite.
-- В инспекторе **InventoryItemData** добавлена кнопка **Create Icon from World Drop Prefab** — создаёт спрайт из `WorldDropPrefab`, сохраняет в проект и присваивает полю Icon.
+
+### Shop — исправления и устойчивость
+
+- **Money** — namespace приведён к `Neo.Shop`; в `Save()` после SetFloat вызывается `SaveProvider.Save()`; в ChangeMoneyEvent/ChangeLevelMoneyEvent/SetText добавлены проверки массивов и элементов на null.
+- **Shop** — подписки на кнопки: делегаты хранятся в списке, отписка выполняется тем же экземпляром (RemoveListener корректно снимает подписки). Проверка границ id в Buy(id), Visual(), VisualPreview(); Load() при null/пустых _prices инициализирует массив; в Save() вызывается SaveProvider.Save(). Поле переименовано в `moneySpendSource` с `[FormerlySerializedAs("IMoneySpend")]`.
+- **TextMoney** — отложенная инициализация: при отсутствии Money.I используется WaitWhile (как в TextScore), затем Init() с RemoveListener перед AddListener.
+- **ButtonPrice** — в SetButtonText/SetPriceText добавлены проверки массивов _textButton/_textPrice на null.
+- Документация: Money.md, Shop.md, SHOP_IMPROVEMENTS.md обновлены.
 
 ## [6.0.5] - Unreleased
 

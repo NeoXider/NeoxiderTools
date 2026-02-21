@@ -189,6 +189,16 @@ namespace Neo.Editor.Condition
             SerializedProperty otherCompTypeProp = entryProp.FindPropertyRelative("_otherComponentTypeName");
             SerializedProperty otherCompIdxProp = entryProp.FindPropertyRelative("_otherComponentIndex");
             SerializedProperty otherPropNameProp = entryProp.FindPropertyRelative("_otherPropertyName");
+            SerializedProperty isMethodProp = entryProp.FindPropertyRelative("_isMethodWithArgument");
+            SerializedProperty argKindProp = entryProp.FindPropertyRelative("_propertyArgumentKind");
+            SerializedProperty argIntProp = entryProp.FindPropertyRelative("_propertyArgumentInt");
+            SerializedProperty argFloatProp = entryProp.FindPropertyRelative("_propertyArgumentFloat");
+            SerializedProperty argStringProp = entryProp.FindPropertyRelative("_propertyArgumentString");
+            SerializedProperty otherIsMethodProp = entryProp.FindPropertyRelative("_otherIsMethodWithArgument");
+            SerializedProperty otherArgKindProp = entryProp.FindPropertyRelative("_otherPropertyArgumentKind");
+            SerializedProperty otherArgIntProp = entryProp.FindPropertyRelative("_otherPropertyArgumentInt");
+            SerializedProperty otherArgFloatProp = entryProp.FindPropertyRelative("_otherPropertyArgumentFloat");
+            SerializedProperty otherArgStringProp = entryProp.FindPropertyRelative("_otherPropertyArgumentString");
 
             NeoCondition condition = (NeoCondition)target;
             SerializedProperty logicProp = serializedObject.FindProperty("_logicMode");
@@ -292,10 +302,10 @@ namespace Neo.Editor.Condition
             if (EditorGUI.EndChangeCheck())
             {
                 sourceModeProp.enumValueIndex = newModeIdx;
-                // Reset selections when switching mode
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
                 propNameProp.stringValue = "";
+                if (isMethodProp != null) isMethodProp.boolValue = false;
             }
 
             // --- Scene Search toggle ---
@@ -306,10 +316,10 @@ namespace Neo.Editor.Condition
                 useSceneSearchProp.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
-                // При переключении сбрасываем привязки
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
                 propNameProp.stringValue = "";
+                if (isMethodProp != null) isMethodProp.boolValue = false;
             }
 
             // --- Source Object or Search Name ---
@@ -407,6 +417,7 @@ namespace Neo.Editor.Condition
                     compTypeProp.stringValue = "";
                     compIdxProp.intValue = 0;
                     propNameProp.stringValue = "";
+                    if (isMethodProp != null) isMethodProp.boolValue = false;
                 }
 
                 targetObj = (GameObject)sourceObjProp.objectReferenceValue;
@@ -439,7 +450,7 @@ namespace Neo.Editor.Condition
                 }
                 else
                 {
-                    DrawComponentDropdown(targetObj, compTypeProp, compIdxProp, propNameProp);
+                    DrawComponentDropdown(targetObj, compTypeProp, compIdxProp, propNameProp, isMethodProp);
 
                     string selectedCompType = compTypeProp.stringValue;
                     if (!string.IsNullOrEmpty(selectedCompType))
@@ -447,11 +458,13 @@ namespace Neo.Editor.Condition
                         Component selectedComp = FindComponentByTypeName(targetObj, selectedCompType);
                         if (selectedComp != null)
                         {
-                            DrawPropertyDropdown(selectedComp, propNameProp, valueTypeProp);
+                            DrawPropertyDropdown(selectedComp, propNameProp, valueTypeProp,
+                                isMethodProp, argKindProp, argIntProp, argFloatProp, argStringProp);
 
                             if (Application.isPlaying && !string.IsNullOrEmpty(propNameProp.stringValue))
                             {
-                                DrawCurrentValue(selectedComp, propNameProp.stringValue);
+                                DrawCurrentValue(selectedComp, propNameProp, valueTypeProp,
+                                    isMethodProp, argKindProp, argIntProp, argFloatProp, argStringProp);
                             }
 
                             if (!string.IsNullOrEmpty(propNameProp.stringValue))
@@ -504,6 +517,12 @@ namespace Neo.Editor.Condition
 
             if (isOtherObject)
             {
+                SerializedProperty otherIsMethodProp = entryProp.FindPropertyRelative("_otherIsMethodWithArgument");
+                SerializedProperty otherArgKindProp = entryProp.FindPropertyRelative("_otherPropertyArgumentKind");
+                SerializedProperty otherArgIntProp = entryProp.FindPropertyRelative("_otherPropertyArgumentInt");
+                SerializedProperty otherArgFloatProp = entryProp.FindPropertyRelative("_otherPropertyArgumentFloat");
+                SerializedProperty otherArgStringProp = entryProp.FindPropertyRelative("_otherPropertyArgumentString");
+
                 int currentOp = compareOpProp.enumValueIndex;
                 int newOp = EditorGUILayout.Popup("Operator", currentOp, CompareOpDisplayNames);
                 if (newOp != currentOp)
@@ -521,6 +540,7 @@ namespace Neo.Editor.Condition
                     otherSourceModeProp.enumValueIndex = otherModeIdx;
                     otherCompTypeProp.stringValue = "";
                     otherPropNameProp.stringValue = "";
+                    if (otherIsMethodProp != null) otherIsMethodProp.boolValue = false;
                 }
 
                 otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
@@ -562,24 +582,22 @@ namespace Neo.Editor.Condition
                     {
                         DrawGameObjectPropertyDropdown(otherPropNameProp);
                         if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
-                        {
                             DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
-                        }
                     }
                     else
                     {
-                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp);
+                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp, otherIsMethodProp);
                         string otherCompType = otherCompTypeProp.stringValue;
                         if (!string.IsNullOrEmpty(otherCompType))
                         {
                             Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
                             if (otherComp != null)
                             {
-                                DrawPropertyDropdown(otherComp, otherPropNameProp);
+                                DrawPropertyDropdown(otherComp, otherPropNameProp, null,
+                                    otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp, otherArgStringProp);
                                 if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
-                                {
-                                    DrawCurrentValue(otherComp, otherPropNameProp.stringValue);
-                                }
+                                    DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
+                                        otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp, otherArgStringProp);
                             }
                         }
                     }
@@ -658,7 +676,8 @@ namespace Neo.Editor.Condition
         // ============================
 
         private void DrawComponentDropdown(GameObject targetObj, SerializedProperty compTypeProp,
-            SerializedProperty compIdxProp, SerializedProperty propNameProp)
+            SerializedProperty compIdxProp, SerializedProperty propNameProp,
+            SerializedProperty isMethodProp = null)
         {
             Component[] components = targetObj.GetComponents<Component>();
             List<string> names = new();
@@ -667,31 +686,19 @@ namespace Neo.Editor.Condition
             for (int i = 0; i < components.Length; i++)
             {
                 if (components[i] == null)
-                {
                     continue;
-                }
-
                 Type t = components[i].GetType();
                 if (t == typeof(Transform))
-                {
                     continue;
-                }
-
                 string displayName = t.Name;
                 int duplicateCount = 0;
                 for (int j = 0; j < i; j++)
                 {
                     if (components[j] != null && components[j].GetType() == t)
-                    {
                         duplicateCount++;
-                    }
                 }
-
                 if (duplicateCount > 0)
-                {
                     displayName += $" ({duplicateCount + 1})";
-                }
-
                 names.Add(displayName);
                 typeNames.Add(t.FullName);
             }
@@ -720,14 +727,13 @@ namespace Neo.Editor.Condition
             int newIndex = EditorGUILayout.Popup("Component", Mathf.Max(currentIndex, 0), names.ToArray());
             if (EditorGUI.EndChangeCheck() || (currentIndex == -1 && names.Count > 0))
             {
-                if (newIndex >= 0 && newIndex < typeNames.Count)
+                if (newIndex >= 0 && newIndex < typeNames.Count && compTypeProp.stringValue != typeNames[newIndex])
                 {
-                    if (compTypeProp.stringValue != typeNames[newIndex])
-                    {
-                        compTypeProp.stringValue = typeNames[newIndex];
-                        compIdxProp.intValue = newIndex;
-                        propNameProp.stringValue = "";
-                    }
+                    compTypeProp.stringValue = typeNames[newIndex];
+                    compIdxProp.intValue = newIndex;
+                    propNameProp.stringValue = "";
+                    if (isMethodProp != null)
+                        isMethodProp.boolValue = false;
                 }
             }
         }
@@ -737,87 +743,155 @@ namespace Neo.Editor.Condition
         // ============================
 
         private void DrawPropertyDropdown(Component comp, SerializedProperty propNameProp,
-            SerializedProperty valueTypeProp = null)
+            SerializedProperty valueTypeProp = null,
+            SerializedProperty isMethodProp = null,
+            SerializedProperty argKindProp = null,
+            SerializedProperty argIntProp = null,
+            SerializedProperty argFloatProp = null,
+            SerializedProperty argStringProp = null)
         {
             Type compType = comp.GetType();
             List<string> propertyNames = new();
             List<ValueType> propertyTypes = new();
             List<string> displayNames = new();
+            List<bool> isMethodList = new();
+            List<ArgumentKind> argumentKinds = new();
 
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
             foreach (PropertyInfo prop in compType.GetProperties(flags))
             {
-                if (!prop.CanRead)
-                {
+                if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
                     continue;
-                }
-
-                if (prop.GetIndexParameters().Length > 0)
-                {
-                    continue;
-                }
-
                 ValueType? vt = GetValueType(prop.PropertyType);
-                if (vt == null)
-                {
+                if (vt == null || IsUnityNoiseMember(prop.Name))
                     continue;
-                }
-
-                if (IsUnityNoiseMember(prop.Name))
-                {
-                    continue;
-                }
-
                 propertyNames.Add(prop.Name);
                 propertyTypes.Add(vt.Value);
                 displayNames.Add($"{prop.Name}  ({vt.Value})  [prop]");
+                isMethodList.Add(false);
+                argumentKinds.Add(ArgumentKind.Int);
             }
 
             foreach (FieldInfo field in compType.GetFields(flags))
             {
                 ValueType? vt = GetValueType(field.FieldType);
-                if (vt == null)
-                {
+                if (vt == null || IsUnityNoiseMember(field.Name))
                     continue;
-                }
-
-                if (IsUnityNoiseMember(field.Name))
-                {
-                    continue;
-                }
-
                 propertyNames.Add(field.Name);
                 propertyTypes.Add(vt.Value);
                 displayNames.Add($"{field.Name}  ({vt.Value})");
+                isMethodList.Add(false);
+                argumentKinds.Add(ArgumentKind.Int);
+            }
+
+            if (isMethodProp != null)
+            {
+                foreach (MethodInfo method in compType.GetMethods(flags))
+                {
+                    if (IsUnityNoiseMember(method.Name))
+                        continue;
+                    ParameterInfo[] parameters = method.GetParameters();
+                    if (parameters.Length != 1)
+                        continue;
+                    ArgumentKind? argKind = GetArgumentKind(parameters[0].ParameterType);
+                    if (argKind == null)
+                        continue;
+                    ValueType? returnVt = GetValueType(method.ReturnType);
+                    if (returnVt == null)
+                        continue;
+                    string paramLabel = argKind switch
+                    {
+                        ArgumentKind.Int => "int",
+                        ArgumentKind.Float => "float",
+                        ArgumentKind.String => "string",
+                        _ => "?"
+                    };
+                    propertyNames.Add(method.Name);
+                    propertyTypes.Add(returnVt.Value);
+                    displayNames.Add($"{method.Name} ({paramLabel}) → {returnVt.Value} [method]");
+                    isMethodList.Add(true);
+                    argumentKinds.Add(argKind.Value);
+                }
             }
 
             if (displayNames.Count == 0)
             {
-                EditorGUILayout.HelpBox("No readable int/float/bool/string fields found.", MessageType.Info);
+                EditorGUILayout.HelpBox("No readable int/float/bool/string fields or methods found.", MessageType.Info);
                 return;
             }
 
             int currentIndex = -1;
             string currentPropName = propNameProp.stringValue;
-            if (!string.IsNullOrEmpty(currentPropName))
+            bool currentIsMethod = isMethodProp != null && isMethodProp.boolValue;
+            int currentArgKind = argKindProp != null ? argKindProp.enumValueIndex : 0;
+            for (int i = 0; i < propertyNames.Count; i++)
             {
-                currentIndex = propertyNames.IndexOf(currentPropName);
+                if (propertyNames[i] != currentPropName)
+                    continue;
+                if (isMethodProp == null)
+                {
+                    currentIndex = i;
+                    break;
+                }
+                if (isMethodList[i] == currentIsMethod && (!isMethodList[i] || (int)argumentKinds[i] == currentArgKind))
+                {
+                    currentIndex = i;
+                    break;
+                }
             }
+            if (currentIndex < 0)
+                currentIndex = 0;
 
             EditorGUI.BeginChangeCheck();
-            int newIndex = EditorGUILayout.Popup("Property", Mathf.Max(currentIndex, 0), displayNames.ToArray());
-            if (EditorGUI.EndChangeCheck() || currentIndex == -1)
+            int newIndex = EditorGUILayout.Popup("Property", currentIndex, displayNames.ToArray());
+            if (EditorGUI.EndChangeCheck() || (currentIndex == 0 && string.IsNullOrEmpty(currentPropName)))
             {
                 if (newIndex >= 0 && newIndex < propertyNames.Count)
                 {
                     propNameProp.stringValue = propertyNames[newIndex];
                     if (valueTypeProp != null)
-                    {
                         valueTypeProp.enumValueIndex = (int)propertyTypes[newIndex];
+                    if (isMethodProp != null)
+                    {
+                        isMethodProp.boolValue = isMethodList[newIndex];
+                        if (argKindProp != null)
+                            argKindProp.enumValueIndex = (int)argumentKinds[newIndex];
                     }
                 }
             }
+
+            if (isMethodProp == null || !isMethodProp.boolValue)
+                return;
+
+            if (argKindProp == null || argIntProp == null)
+                return;
+
+            EditorGUI.indentLevel++;
+            switch ((ArgumentKind)argKindProp.enumValueIndex)
+            {
+                case ArgumentKind.Int:
+                    EditorGUILayout.PropertyField(argIntProp, new GUIContent("Argument (int)"));
+                    break;
+                case ArgumentKind.Float:
+                    EditorGUILayout.PropertyField(argFloatProp, new GUIContent("Argument (float)"));
+                    break;
+                case ArgumentKind.String:
+                    EditorGUILayout.PropertyField(argStringProp, new GUIContent("Argument (string)"));
+                    break;
+            }
+            EditorGUI.indentLevel--;
+        }
+
+        private static ArgumentKind? GetArgumentKind(Type parameterType)
+        {
+            if (parameterType == typeof(int) || parameterType == typeof(long) || parameterType == typeof(short) || parameterType == typeof(byte))
+                return ArgumentKind.Int;
+            if (parameterType == typeof(float) || parameterType == typeof(double))
+                return ArgumentKind.Float;
+            if (parameterType == typeof(string))
+                return ArgumentKind.String;
+            return null;
         }
 
         // ============================
@@ -907,44 +981,81 @@ namespace Neo.Editor.Condition
         private void DrawCurrentValue(Component comp, string propertyName)
         {
             if (comp == null || string.IsNullOrEmpty(propertyName))
-            {
                 return;
+            object value = GetCurrentValueFromComponent(comp, propertyName, false, null, null, null, null);
+            if (value != null)
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                GUIStyle valueStyle = new(EditorStyles.textField) { fontStyle = FontStyle.Bold };
+                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
+                EditorGUI.EndDisabledGroup();
             }
+        }
 
+        private void DrawCurrentValue(Component comp, SerializedProperty propNameProp, SerializedProperty valueTypeProp,
+            SerializedProperty isMethodProp, SerializedProperty argKindProp, SerializedProperty argIntProp,
+            SerializedProperty argFloatProp, SerializedProperty argStringProp)
+        {
+            if (comp == null || propNameProp == null || string.IsNullOrEmpty(propNameProp.stringValue))
+                return;
+            bool isMethod = isMethodProp != null && isMethodProp.boolValue;
+            object value = GetCurrentValueFromComponent(comp, propNameProp.stringValue, isMethod,
+                argKindProp, argIntProp, argFloatProp, argStringProp);
+            if (value != null)
+            {
+                EditorGUI.BeginDisabledGroup(true);
+                GUIStyle valueStyle = new(EditorStyles.textField) { fontStyle = FontStyle.Bold };
+                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
+                EditorGUI.EndDisabledGroup();
+            }
+        }
+
+        private static object GetCurrentValueFromComponent(Component comp, string propertyName, bool isMethod,
+            SerializedProperty argKindProp, SerializedProperty argIntProp, SerializedProperty argFloatProp,
+            SerializedProperty argStringProp)
+        {
             Type type = comp.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            object value = null;
+            if (isMethod && argKindProp != null && argIntProp != null)
+            {
+                ArgumentKind kind = (ArgumentKind)argKindProp.enumValueIndex;
+                object arg = kind switch
+                {
+                    ArgumentKind.Int => argIntProp.intValue,
+                    ArgumentKind.Float => argFloatProp != null ? argFloatProp.floatValue : 0f,
+                    ArgumentKind.String => argStringProp != null ? argStringProp.stringValue : "",
+                    _ => argIntProp.intValue
+                };
+                foreach (MethodInfo method in type.GetMethods(flags))
+                {
+                    if (method.Name != propertyName || method.GetParameters().Length != 1)
+                        continue;
+                    if (GetArgumentKind(method.GetParameters()[0].ParameterType) != kind)
+                        continue;
+                    try
+                    {
+                        return method.Invoke(comp, new[] { arg });
+                    }
+                    catch
+                    {
+                        return null;
+                    }
+                }
+                return null;
+            }
+
             try
             {
                 PropertyInfo prop = type.GetProperty(propertyName, flags);
                 if (prop != null && prop.CanRead)
-                {
-                    value = prop.GetValue(comp);
-                }
-                else
-                {
-                    FieldInfo field = type.GetField(propertyName, flags);
-                    if (field != null)
-                    {
-                        value = field.GetValue(comp);
-                    }
-                }
+                    return prop.GetValue(comp);
+                FieldInfo field = type.GetField(propertyName, flags);
+                return field?.GetValue(comp);
             }
             catch
             {
-                return;
-            }
-
-            if (value != null)
-            {
-                EditorGUI.BeginDisabledGroup(true);
-                GUIStyle valueStyle = new(EditorStyles.textField)
-                {
-                    fontStyle = FontStyle.Bold
-                };
-                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
-                EditorGUI.EndDisabledGroup();
+                return null;
             }
         }
 
@@ -1179,6 +1290,11 @@ namespace Neo.Editor.Condition
             entry.FindPropertyRelative("_thresholdFloat").floatValue = 0f;
             entry.FindPropertyRelative("_thresholdBool").boolValue = true;
             entry.FindPropertyRelative("_thresholdString").stringValue = "";
+            entry.FindPropertyRelative("_isMethodWithArgument").boolValue = false;
+            entry.FindPropertyRelative("_propertyArgumentKind").enumValueIndex = 0;
+            entry.FindPropertyRelative("_propertyArgumentInt").intValue = 0;
+            entry.FindPropertyRelative("_propertyArgumentFloat").floatValue = 0f;
+            entry.FindPropertyRelative("_propertyArgumentString").stringValue = "";
             entry.FindPropertyRelative("_otherSourceMode").enumValueIndex = (int)SourceMode.Component;
             entry.FindPropertyRelative("_otherUseSceneSearch").boolValue = false;
             entry.FindPropertyRelative("_otherSearchObjectName").stringValue = "";
@@ -1187,6 +1303,11 @@ namespace Neo.Editor.Condition
             entry.FindPropertyRelative("_otherComponentIndex").intValue = 0;
             entry.FindPropertyRelative("_otherComponentTypeName").stringValue = "";
             entry.FindPropertyRelative("_otherPropertyName").stringValue = "";
+            entry.FindPropertyRelative("_otherIsMethodWithArgument").boolValue = false;
+            entry.FindPropertyRelative("_otherPropertyArgumentKind").enumValueIndex = 0;
+            entry.FindPropertyRelative("_otherPropertyArgumentInt").intValue = 0;
+            entry.FindPropertyRelative("_otherPropertyArgumentFloat").floatValue = 0f;
+            entry.FindPropertyRelative("_otherPropertyArgumentString").stringValue = "";
         }
 
         // ============================

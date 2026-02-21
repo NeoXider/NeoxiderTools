@@ -17,19 +17,35 @@ namespace Neo.Shop
 
         private void OnEnable()
         {
-            GetMoney();
+            if (Money.I == null)
+            {
+                this.WaitWhile(() => Money.I == null, Init);
+                return;
+            }
+
+            Init();
+        }
+
+        private void Init()
+        {
+            _money = Money.I;
+            if (_money == null)
+                return;
 
             switch (_displayMode)
             {
                 case MoneyDisplayMode.LevelMoney:
+                    _money.OnChangedLevelMoney.RemoveListener(SetAmount);
                     SetAmount(_money.levelMoney);
                     _money.OnChangedLevelMoney.AddListener(SetAmount);
                     break;
                 case MoneyDisplayMode.AllMoney:
+                    _money.OnChangeAllMoney.RemoveListener(SetAmount);
                     SetAmount(_money.allMoney);
                     _money.OnChangeAllMoney.AddListener(SetAmount);
                     break;
                 default:
+                    _money.OnChangedMoney.RemoveListener(SetAmount);
                     SetAmount(_money.money);
                     _money.OnChangedMoney.AddListener(SetAmount);
                     break;
@@ -54,14 +70,6 @@ namespace Neo.Shop
                 default:
                     _money.OnChangedMoney.RemoveListener(SetAmount);
                     break;
-            }
-        }
-
-        private void GetMoney()
-        {
-            if (_money == null)
-            {
-                _money = Money.I;
             }
         }
 

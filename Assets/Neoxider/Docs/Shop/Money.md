@@ -1,6 +1,6 @@
 # Money
 
-Синглтон валюты: общая сумма, уровеньовая валюта, сохранение через SaveProvider. Реализует IMoneySpend, IMoneyAdd для трат и начислений.
+Синглтон валюты: общая сумма, уровеньовая валюта, сохранение через SaveProvider (при изменении вызывается SaveProvider.Save()). Реализует IMoneySpend, IMoneyAdd для трат и начислений. Массивы SetText/TMP_Text для вывода опциональны — при null обновление пропускается.
 
 **Добавить:** GameObject → Neoxider → Shop → Money.
 

@@ -2,7 +2,7 @@
 
 **Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
 
-Версия: **6.0.0** | Unity: **2022.1+** | Namespace: `Neo`
+**Версия 6.0.7** · Unity 2022.1+ · Namespace `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Changelog](./CHANGELOG.md)
@@ -11,19 +11,19 @@
 
 ---
 
-## No-Code условия — проектируй логику без единой строчки кода
+## No-Code условия — логика без кода
 
-С компонентом **NeoCondition** вы можете строить сложную игровую логику прямо в Inspector:
+**NeoCondition** — собирайте условия прямо в Inspector:
 
-- **Проверяйте любые данные** — HP, очки, состояние объекта, любое поле любого компонента
-- **Комбинируйте условия** — AND/OR логика, инверсия, несколько проверок в одном компоненте
-- **Реагируйте на изменения** — события `OnTrue`, `OnFalse`, `OnResult` подключаются к любым UnityEvent
-- **Работайте с префабами** — находите объекты по имени, настраивайте условия до спавна через Prefab Preview
-- **Без написания кода** — выбирайте компонент, свойство, оператор и порог из выпадающих списков
+- **Поля и свойства** — HP, очки, счёт, состояние объекта, любые int/float/bool/string компонента или GameObject
+- **Методы с аргументом** — вызов методов вида `GetCount(int)`: выберите метод в Property, укажите Argument (itemId и т.п.), сравните с порогом или с другой переменной. Удобно для проверки «количество предмета в инвентаре ≥ N» без кода
+- **AND/OR** — несколько условий в одном компоненте, инверсия (NOT)
+- **События** — `OnTrue`, `OnFalse`, `OnResult` подключаются к любым UnityEvent
+- **Поиск по имени и префабы** — Find By Name, Prefab Preview для настройки до спавна
 
-> Пример: «Когда `Health.Hp <= 0` — показать Game Over» — одна строка в Inspector, ноль строк в коде.
+> Примеры: «Health.Hp ≤ 0 → Game Over»; «InventoryComponent.GetCount(itemId) ≥ 3 → открыть дверь» — всё в Inspector.
 
-Подробнее: [NeoCondition Documentation](./Docs/Condition/NeoCondition.md)
+Подробнее: [NeoCondition](./Docs/Condition/NeoCondition.md)
 
 ---
 
@@ -65,9 +65,9 @@ in window» (открывает .md в стандартном инспектор
 
 ## Быстрый старт
 
-1. Импортируйте пакет
-2. Добавьте системный префаб `Prefabs/--System--.prefab` в сцену (менеджеры событий, UI)
-3. Перетаскивайте нужные компоненты из инспектора — большинство работает без кода через UnityEvent
+1. Импортируйте пакет (UPM Git URL или копирование папки `Assets/Neoxider`)
+2. Добавьте в сцену системный префаб `Prefabs/--System--.prefab` (менеджеры, UI)
+3. Добавляйте компоненты через **Add Component → Neoxider** — большинство настраивается без кода через Inspector и UnityEvent
 
 ---
 
@@ -79,7 +79,7 @@ in window» (открывает .md в стандартном инспектор
 | **Audio**             | AudioManager, микшер, play-on-click                              | [Docs](./Docs/Audio/README.md)              |
 | **Bonus**             | Коллекции, слот-машины, колесо удачи, награды по времени         | [Docs](./Docs/Bonus/README.md)              |
 | **Cards**             | Карточные игры (MVP): колода, рука, покер, "Пьяница"             | [Docs](./Docs/Cards/README.md)              |
-| **Condition**         | No-Code условия: проверка полей компонентов, AND/OR, события     | [Docs](./Docs/Condition/NeoCondition.md)    |
+| **Condition**         | No-Code условия: поля, свойства, методы с аргументом (int/float/string), AND/OR, события | [Docs](./Docs/Condition/NeoCondition.md)    |
 | **Extensions**        | 300+ extension-методов для C# и Unity API                        | [Docs](./Docs/Extensions/README.md)         |
 | **GridSystem**        | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md)                |
 | **Level**             | Менеджер уровней, карта, кнопки                                  | [Docs](./Docs/Level/LevelManager.md)        |
@@ -88,7 +88,7 @@ in window» (открывает .md в стандартном инспектор
 | **Save**              | Система сохранений: PlayerPrefs, JSON, атрибут `[SaveField]`     | [Docs](./Docs/Save/README.md)               |
 | **Shop**              | Магазин, валюта, покупки                                         | [Docs](./Docs/Shop/README.md)               |
 | **StateMachine**      | State Machine + NoCode визуальный редактор                       | [Docs](./Docs/StateMachine/StateMachine.md) |
-| **Tools**             | Спавнеры, таймеры, физика, ввод, менеджеры, Counter и др.        | [Docs](./Docs/Tools)                        |
+| **Tools**             | Спавнеры, таймеры, физика, ввод, Counter, **Inventory** (подбор, дроп, NeoCondition) | [Docs](./Docs/Tools)                        |
 | **UI**                | UI-анимации, кнопки, страницы, toggle                            | [Docs](./Docs/UI/README.md)                 |
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты  | [Docs](./Docs/PropertyAttribute/README.md)  |
 | **Editor**            | Кастом-инспектор, авто-билд, Scene Saver                         | [Docs](./Docs/Editor/README.md)             |
@@ -112,11 +112,10 @@ in window» (открывает .md в стандартном инспектор
 
 ### NeoCondition (No-Code условия)
 
-1. Добавьте `NeoCondition` на GameObject (Add Component -> Neo -> Condition -> NeoCondition)
-2. Добавьте условие кнопкой **+**
-3. Выберите **Source Object**, **Component** и **Property** из dropdown
-4. Задайте оператор сравнения и порог
-5. Подключите события **On True** / **On False** — готово, без кода!
+1. Добавьте **NeoCondition** (Add Component → Neo → Condition → NeoCondition)
+2. Кнопка **+** → выберите **Source Object**, **Component** и **Property** (или метод с аргументом, например `GetCount (int) → Int [method]` и укажите **Argument**)
+3. Задайте оператор (≥, ==, …) и порог или сравнение с **Other Object**
+4. Подключите **On True** / **On False** — логика без кода готова
 
 ### Counter (без кода)
 
@@ -131,14 +130,17 @@ in window» (открывает .md в стандартном инспектор
 2. Укажите длительность, looping, режим
 3. Подпишитесь на `OnTimerComplete`, `OnTimerUpdate` в инспекторе
 
+### Inventory + NeoCondition (количество предмета)
+
+1. На объекте — **InventoryComponent**, на другом (или том же) — **NeoCondition**
+2. Условие: Source = Component → InventoryComponent → Property = **GetCount (int) → Int [method]** → Argument = itemId (например 5) → Compare ≥ 3
+3. On True → открыть дверь, выдать квест и т.д. Без кода.
+
 ### Save
 
 ```csharp
-// Сохранить значение
 SaveProvider.SetInt("score", 100);
 SaveProvider.Save();
-
-// Загрузить значение
 int score = SaveProvider.GetInt("score", 0);
 ```
 

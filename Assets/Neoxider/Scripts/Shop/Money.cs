@@ -5,15 +5,13 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.Shop
 {
-    namespace Shop
+    [NeoDoc("Shop/Money.md")]
+    [CreateFromMenu("Neoxider/Shop/Money")]
+    [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
+    public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
     {
-        [NeoDoc("Shop/Money.md")]
-        [CreateFromMenu("Neoxider/Shop/Money")]
-        [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
-        public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
-        {
             [Space] [SerializeField] private string _moneySave = "Money";
 
             [SerializeField] private float _allMoney;
@@ -88,6 +86,7 @@ namespace Neo
             {
                 SaveProvider.SetFloat(_moneySave, _money);
                 SaveProvider.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
+                SaveProvider.Save();
             }
 
             public void AddLevelMoney(float count)
@@ -135,10 +134,13 @@ namespace Neo
             private void ChangeMoneyEvent()
             {
                 SetText(t_money, _money);
-
-                foreach (SetText item in st_money)
+                if (st_money != null)
                 {
-                    item.Set(_money);
+                    foreach (SetText item in st_money)
+                    {
+                        if (item != null)
+                            item.Set(_money);
+                    }
                 }
 
                 OnChangedMoney?.Invoke(_money);
@@ -149,10 +151,13 @@ namespace Neo
             private void ChangeLevelMoneyEvent()
             {
                 SetText(t_levelMoney, _levelMoney);
-
-                foreach (SetText item in st_levelMoney)
+                if (st_levelMoney != null)
                 {
-                    item.Set(_levelMoney);
+                    foreach (SetText item in st_levelMoney)
+                    {
+                        if (item != null)
+                            item.Set(_levelMoney);
+                    }
                 }
 
                 OnChangedLevelMoney?.Invoke(_levelMoney);
@@ -160,11 +165,14 @@ namespace Neo
 
             private void SetText(TMP_Text[] text, float count)
             {
+                if (text == null)
+                    return;
+                string s = count.RoundToDecimal(_roundToDecimal).ToString();
                 foreach (TMP_Text item in text)
                 {
-                    item.text = count.RoundToDecimal(_roundToDecimal).ToString();
+                    if (item != null)
+                        item.text = s;
                 }
             }
         }
-    }
 }

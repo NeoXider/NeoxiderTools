@@ -165,20 +165,23 @@ namespace Neo
 
             private void SetButtonText(string textBuy)
             {
+                if (_textButton == null)
+                    return;
                 foreach (TMP_Text item in _textButton)
                 {
-                    item.text = textBuy;
+                    if (item != null)
+                        item.text = textBuy;
                 }
             }
 
             private void SetPriceText(string textPrice)
             {
+                if (_textPrice == null)
+                    return;
                 foreach (TMP_Text item in _textPrice)
                 {
                     if (item != null)
-                    {
                         item.text = textPrice;
-                    }
                 }
             }
 

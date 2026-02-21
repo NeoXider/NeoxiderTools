@@ -53,6 +53,16 @@ namespace Neo.Condition
     }
 
     /// <summary>
+    ///     Тип аргумента для вызова метода с одним параметром (int/float/string).
+    /// </summary>
+    public enum ArgumentKind
+    {
+        Int,
+        Float,
+        String
+    }
+
+    /// <summary>
     ///     Одна запись условия: ссылка на GameObject → Component/GameObject → поле/свойство, оператор сравнения и порог.
     ///     В рантайме через reflection (с кешированием) читает значение и сравнивает.
     /// </summary>
@@ -117,6 +127,18 @@ namespace Neo.Condition
         [SerializeField] private int _otherComponentIndex;
         [SerializeField] private string _otherComponentTypeName = "";
         [SerializeField] private string _otherPropertyName = "";
+
+        [SerializeField] private bool _isMethodWithArgument;
+        [SerializeField] private ArgumentKind _propertyArgumentKind = ArgumentKind.Int;
+        [SerializeField] private int _propertyArgumentInt;
+        [SerializeField] private float _propertyArgumentFloat;
+        [SerializeField] private string _propertyArgumentString = "";
+
+        [SerializeField] private bool _otherIsMethodWithArgument;
+        [SerializeField] private ArgumentKind _otherPropertyArgumentKind = ArgumentKind.Int;
+        [SerializeField] private int _otherPropertyArgumentInt;
+        [SerializeField] private float _otherPropertyArgumentFloat;
+        [SerializeField] private string _otherPropertyArgumentString = "";
 
         // Cached reflection data
         [NonSerialized] private Component _cachedComponent;
@@ -664,34 +686,105 @@ namespace Neo.Condition
                 return false;
             }
 
-            // Find member (field or property)
             Type type = _cachedComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
 
-            PropertyInfo prop = type.GetProperty(_propertyName, flags);
-            if (prop != null && prop.CanRead)
+            if (_isMethodWithArgument)
             {
-                _cachedMember = prop;
-                _cacheValid = true;
-                return true;
+                MethodInfo method = FindMethodWithOneArgument(type, _propertyName, _propertyArgumentKind, flags);
+                if (method != null)
+                {
+                    _cachedMember = method;
+                    _cacheValid = true;
+                    return true;
+                }
             }
-
-            FieldInfo field = type.GetField(_propertyName, flags);
-            if (field != null)
+            else
             {
-                _cachedMember = field;
-                _cacheValid = true;
-                return true;
+                PropertyInfo prop = type.GetProperty(_propertyName, flags);
+                if (prop != null && prop.CanRead)
+                {
+                    _cachedMember = prop;
+                    _cacheValid = true;
+                    return true;
+                }
+
+                FieldInfo field = type.GetField(_propertyName, flags);
+                if (field != null)
+                {
+                    _cachedMember = field;
+                    _cacheValid = true;
+                    return true;
+                }
             }
 
             if (!_hasLoggedMissingMemberWarning)
             {
                 Debug.LogWarning(
-                    $"[NeoCondition] Свойство/поле '{_propertyName}' не найдено в '{_componentTypeName}' на '{target.name}'.");
+                    $"[NeoCondition] Свойство/поле/метод '{_propertyName}' не найдено в '{_componentTypeName}' на '{target.name}'.");
                 _hasLoggedMissingMemberWarning = true;
             }
 
             return false;
+        }
+
+        private static bool IsSupportedParameterType(Type type, ArgumentKind kind)
+        {
+            if (kind == ArgumentKind.Int)
+                return type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte);
+            if (kind == ArgumentKind.Float)
+                return type == typeof(float) || type == typeof(double);
+            if (kind == ArgumentKind.String)
+                return type == typeof(string);
+            return false;
+        }
+
+        private static bool IsSupportedReturnType(Type type)
+        {
+            return type == typeof(int) || type == typeof(float) || type == typeof(double) ||
+                   type == typeof(bool) || type == typeof(string) ||
+                   type == typeof(long) || type == typeof(short) || type == typeof(byte);
+        }
+
+        private static MethodInfo FindMethodWithOneArgument(Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags)
+        {
+            foreach (MethodInfo method in type.GetMethods(flags))
+            {
+                if (method.Name != methodName)
+                    continue;
+                ParameterInfo[] parameters = method.GetParameters();
+                if (parameters.Length != 1)
+                    continue;
+                if (!IsSupportedParameterType(parameters[0].ParameterType, argumentKind))
+                    continue;
+                if (!IsSupportedReturnType(method.ReturnType))
+                    continue;
+                return method;
+            }
+
+            return null;
+        }
+
+        private object GetPropertyArgumentValue()
+        {
+            return _propertyArgumentKind switch
+            {
+                ArgumentKind.Int => _propertyArgumentInt,
+                ArgumentKind.Float => _propertyArgumentFloat,
+                ArgumentKind.String => _propertyArgumentString,
+                _ => _propertyArgumentInt
+            };
+        }
+
+        private object GetOtherPropertyArgumentValue()
+        {
+            return _otherPropertyArgumentKind switch
+            {
+                ArgumentKind.Int => _otherPropertyArgumentInt,
+                ArgumentKind.Float => _otherPropertyArgumentFloat,
+                ArgumentKind.String => _otherPropertyArgumentString,
+                _ => _otherPropertyArgumentInt
+            };
         }
 
         private bool EnsureCacheGameObject(GameObject fallbackObject)
@@ -825,6 +918,12 @@ namespace Neo.Condition
                 return field.GetValue(_cachedComponent);
             }
 
+            if (_cachedMember is MethodInfo method)
+            {
+                object arg = GetPropertyArgumentValue();
+                return method.Invoke(_cachedComponent, new[] { arg });
+            }
+
             return null;
         }
 
@@ -953,26 +1052,40 @@ namespace Neo.Condition
 
             Type type = _cachedOtherComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            PropertyInfo prop = type.GetProperty(_otherPropertyName, flags);
-            if (prop != null && prop.CanRead)
-            {
-                _cachedOtherMember = prop;
-                _cacheOtherValid = true;
-                return true;
-            }
 
-            FieldInfo otherField = type.GetField(_otherPropertyName, flags);
-            if (otherField != null)
+            if (_otherIsMethodWithArgument)
             {
-                _cachedOtherMember = otherField;
-                _cacheOtherValid = true;
-                return true;
+                MethodInfo method = FindMethodWithOneArgument(type, _otherPropertyName, _otherPropertyArgumentKind, flags);
+                if (method != null)
+                {
+                    _cachedOtherMember = method;
+                    _cacheOtherValid = true;
+                    return true;
+                }
+            }
+            else
+            {
+                PropertyInfo prop = type.GetProperty(_otherPropertyName, flags);
+                if (prop != null && prop.CanRead)
+                {
+                    _cachedOtherMember = prop;
+                    _cacheOtherValid = true;
+                    return true;
+                }
+
+                FieldInfo otherField = type.GetField(_otherPropertyName, flags);
+                if (otherField != null)
+                {
+                    _cachedOtherMember = otherField;
+                    _cacheOtherValid = true;
+                    return true;
+                }
             }
 
             if (!_hasLoggedOtherMissingWarning)
             {
                 Debug.LogWarning(
-                    $"[NeoCondition] Второй объект: свойство/поле '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
+                    $"[NeoCondition] Второй объект: свойство/поле/метод '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
                 _hasLoggedOtherMissingWarning = true;
             }
 
@@ -1071,6 +1184,12 @@ namespace Neo.Condition
             if (_cachedOtherMember is FieldInfo field)
             {
                 return field.GetValue(_cachedOtherComponent);
+            }
+
+            if (_cachedOtherMember is MethodInfo method)
+            {
+                object arg = GetOtherPropertyArgumentValue();
+                return method.Invoke(_cachedOtherComponent, new[] { arg });
             }
 
             return null;
