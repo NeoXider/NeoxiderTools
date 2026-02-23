@@ -38,7 +38,7 @@
 | **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
 | **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
 | **Components** | Health, Evade, AttackExecution, AdvancedAttackCollider, Counter, Loot, TextScore, TypewriterEffectComponent |
-| **Dialogue** | DialogueController, DialogueUI |
+| **Dialogue** | DialogueController, DialogueUI. Редактор: кнопка в инспекторе или **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
 | **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |
 | **View** | Selector, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster |
 | **Debug** | FPS, ErrorLogger |

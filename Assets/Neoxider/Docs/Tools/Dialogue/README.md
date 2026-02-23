@@ -10,6 +10,16 @@
 | [DialogueUI](DialogueUI.md) | Управление UI элементами |
 | [DialogueData](DialogueData.md) | Структуры данных (Dialogue, Monolog, Sentence) |
 
+## Редактор диалогов
+
+Визуальный редактор на **UI Toolkit** (окно без обрезки полей справа).
+
+- **Открыть:** кнопка **Open Dialogue Editor** в инспекторе `DialogueController` или меню **Neoxider → Tools → Dialogue → Open Dialogue Editor**.
+- В окне: поле **Controller** (можно выбрать другой контроллер), кнопки **Select In Scene** и **Docs**.
+- **Левая панель** — структура: Dialogues → Monologues → Sentences. Кнопки `+` / `−` / `↑` / `↓` для добавления, удаления и перемещения. Выбор элемента — клик по строке.
+- **Правая панель** — детали выбранного: события (On Change Dialogue / Monolog / Sentence), поля (Character, Sprite, Text), блок **Preview** для реплики.
+- События настраиваются no-code в окне или через код.
+
 ## Быстрый старт
 
 1. Добавьте `DialogueController` на GameObject

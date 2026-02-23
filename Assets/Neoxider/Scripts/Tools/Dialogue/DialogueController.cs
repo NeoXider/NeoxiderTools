@@ -320,6 +320,33 @@ namespace Neo.Tools
             StartDialogue();
         }
 
+#if UNITY_EDITOR
+        [Button("Open Dialogue Editor", 180)]
+        private void OpenDialogueEditor()
+        {
+            Type windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
+            if (windowType == null)
+            {
+                Debug.LogError(
+                    "[DialogueController] DialogueEditorWindow not found. Ensure Neo.Editor assembly is compiled.",
+                    this);
+                return;
+            }
+
+            System.Reflection.MethodInfo showForMethod = windowType.GetMethod(
+                "ShowFor",
+                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+
+            if (showForMethod == null)
+            {
+                Debug.LogError("[DialogueController] DialogueEditorWindow.ShowFor method not found.", this);
+                return;
+            }
+
+            showForMethod.Invoke(null, new object[] { this });
+        }
+#endif
+
         /// <summary>
         ///     Возвращает текущий диалог по CurrentDialogueId или null.
         /// </summary>

@@ -6192,6 +6192,7 @@ GameObject:
   - component: {fileID: 681128293}
   - component: {fileID: 681128294}
   - component: {fileID: 681128295}
+  - component: {fileID: 681128296}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -6314,6 +6315,75 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   _onInvertedResult:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &681128296
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681128292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71337843216d68f4783830fa5ea1d87d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _dialogueUI: {fileID: 0}
+  useTypewriterEffect: 1
+  _typewriter:
+    _charactersPerSecond: 70
+    _useUnscaledTime: 0
+    _usePunctuationPauses: 1
+    _punctuationPauses:
+    - character: 46
+      pause: 0.3
+    - character: 33
+      pause: 0.3
+    - character: 63
+      pause: 0.3
+    - character: 44
+      pause: 0.15
+    - character: 59
+      pause: 0.15
+    - character: 58
+      pause: 0.2
+    - character: 8212
+      pause: 0.2
+    - character: 45
+      pause: 0.1
+    - character: 8230
+      pause: 0.5
+    - character: 10
+      pause: 0.2
+  autoStart: 0
+  autoNextSentence: 0
+  autoNextMonolog: 0
+  autoNextDialogue: 0
+  allowRestart: 0
+  autoNextSentenceDelay: 3
+  autoNextMonologDelay: 3
+  autoNextDialogueDelay: 3
+  dialogues: []
+  OnSentenceEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMonologEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDialogueEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAllDialoguesEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCharacterChange:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCharacterTyped:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTypewriterProgress:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &686320236
@@ -6985,6 +7055,7 @@ GameObject:
   m_Component:
   - component: {fileID: 774832230}
   - component: {fileID: 774832231}
+  - component: {fileID: 774832232}
   m_Layer: 0
   m_Name: SaveManager
   m_TagString: Untagged
@@ -7021,6 +7092,197 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
+--- !u!114 &774832232
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 774832229}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 71337843216d68f4783830fa5ea1d87d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _dialogueUI: {fileID: 0}
+  useTypewriterEffect: 1
+  _typewriter:
+    _charactersPerSecond: 70
+    _useUnscaledTime: 0
+    _usePunctuationPauses: 1
+    _punctuationPauses:
+    - character: 46
+      pause: 0.3
+    - character: 33
+      pause: 0.3
+    - character: 63
+      pause: 0.3
+    - character: 44
+      pause: 0.15
+    - character: 59
+      pause: 0.15
+    - character: 58
+      pause: 0.2
+    - character: 8212
+      pause: 0.2
+    - character: 45
+      pause: 0.1
+    - character: 8230
+      pause: 0.5
+    - character: 10
+      pause: 0.2
+  autoStart: 0
+  autoNextSentence: 0
+  autoNextMonolog: 0
+  autoNextDialogue: 0
+  allowRestart: 0
+  autoNextSentenceDelay: 3
+  autoNextMonologDelay: 3
+  autoNextDialogueDelay: 3
+  dialogues:
+  - OnChangeDialog:
+      m_PersistentCalls:
+        m_Calls: []
+    monologues: []
+  - OnChangeDialog:
+      m_PersistentCalls:
+        m_Calls: []
+    monologues: []
+  - OnChangeDialog:
+      m_PersistentCalls:
+        m_Calls: []
+    monologues:
+    - OnChangeMonolog:
+        m_PersistentCalls:
+          m_Calls: []
+      characterName: "\u0435\u043D\u0433\u0435\u043D\u0433\u0435\u043D\u0433\u0435\u043D\u0433\u043D\u0435"
+      sentences:
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 21300000, guid: d12255bf6f25ef24690c629f083b09bd, type: 3}
+        sentence: "\u0440\u043E\u043F\u043F\u043E\u0440\u043F\u0440\u043E\u043F\u0440\u043E\u043F\u043E\u0440\u043F\u043E\u0440\u043F\u0440\u043E\u043F\u043E\u0440\u043F\u0440\u043E\u0435\u043D\u0433\u0435\u043D\u0433\u0435"
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: 
+      - OnChangeSentence:
+          m_PersistentCalls:
+            m_Calls: []
+        sprite: {fileID: 0}
+        sentence: "\u0446\u0443\u043A\u0446\u0443\u043A\u0446\u0443\u043A\u0446\u0443\u043A\u0443\u0446\u043A\u0446\u043A\u0443\u0446\u0443\u0439\u043A\u0439\u0446\u0443\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\u0443\u0439\u0446\u043A\u0443\u0439\u0446\u043A\u0446\u0443\u043A\u0439\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u043A\u0446\u0443\u0439\u0446\u043A\u0443\u0439\u043A\u0446\u0443\u043A\u0439\u0446\u0439\u0443\u043A\u0446\u0443\u0439\u043A\u0446\u0443\u0439\u043A\u0446\u0439\u0446\u0443\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u043A\u0446\u0439\u0443\u043A\u0446\u0439\u0443\u0446\u043A\u0443\u0439\u043A\u0446\u0443\u0439\u043A\u0446\u0439\u0443\u0446\u043A\u0446\u0439\u0443\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\u0439\u0443\u0446\u043A\n\u0439\u0446\u0443\u043A\u0439\u0446\u0443\n\u043A\n\u0446\u0439\u0443\u043A\u0439\u0446\u0443\n\u043A\n\u0439\u0446\u0443\u043A\n\u0439\u0446\u0443\u043A\n\u0439\u0446\u0443\u043A"
+  OnSentenceEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnMonologEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnDialogueEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnAllDialoguesEnd:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCharacterChange:
+    m_PersistentCalls:
+      m_Calls: []
+  OnCharacterTyped:
+    m_PersistentCalls:
+      m_Calls: []
+  OnTypewriterProgress:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &790994075
 GameObject:
   m_ObjectHideFlags: 0
