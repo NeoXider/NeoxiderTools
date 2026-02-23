@@ -1,19 +1,20 @@
 {
-  "name": "Neo.Tools.Draw",
-  "rootNamespace": "",
-  "references": [
-    "GUID:699bb923824f1724b91c66f5ba9ace74",
-    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-    "GUID:6164c446845493941856ab4fc67d0de7",
-    "GUID:fc2c2e8c20e00494ea983f7a9158e1a2"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Neo.Tools.Draw",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+        "GUID:699bb923824f1724b91c66f5ba9ace74",
+        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+        "GUID:6164c446845493941856ab4fc67d0de7",
+        "GUID:fc2c2e8c20e00494ea983f7a9158e1a2"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

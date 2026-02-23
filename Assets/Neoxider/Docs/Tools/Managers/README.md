@@ -8,3 +8,4 @@
 - [EM (EventManager)](./EM.md)
 - [GM (GameManager)](./GM.md)
 - [Singleton](./Singleton.md)
+- [SingletonById](./SingletonById.md) — один экземпляр типа на каждый уникальный Id; опция DontDestroyOnLoad; при совпадении Id предыдущий экземпляр уничтожается.

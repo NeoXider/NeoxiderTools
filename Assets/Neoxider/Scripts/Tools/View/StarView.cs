@@ -14,7 +14,7 @@ namespace Neo.Tools
 
         public void Awake()
         {
-            scoreManager.OnStarChange.AddListener(OnStarChange);
+            scoreManager.CountStarsReactive.OnChanged.AddListener(OnStarChange);
             OnStarChange(scoreManager.CountStars);
         }
 

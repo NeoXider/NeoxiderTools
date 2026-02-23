@@ -10,7 +10,9 @@ namespace Neo.Tools
     [Serializable]
     public class Dialogue
     {
+        [Header("Events")]
         public UnityEvent<int> OnChangeDialog;
+        [Header("Content")]
         public Monolog[] monologues;
     }
 
@@ -20,7 +22,9 @@ namespace Neo.Tools
     [Serializable]
     public class Monolog
     {
+        [Header("Events")]
         public UnityEvent<int> OnChangeMonolog;
+        [Header("Content")]
         public string characterName;
         public Sentence[] sentences;
     }
@@ -31,7 +35,9 @@ namespace Neo.Tools
     [Serializable]
     public class Sentence
     {
+        [Header("Events")]
         public UnityEvent OnChangeSentence;
+        [Header("Content")]
         public Sprite sprite;
         [TextArea(3, 7)] public string sentence;
     }

@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,11 +11,14 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {
-            [Header("Settings")] public bool value;
+            [Header("Settings")]
+            public ReactivePropertyBool Value = new();
+
+            /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
+            public bool ValueBool => Value.CurrentValue;
 
             [Header("Debug")] public bool toggleDebug;
 
-            public UnityEvent<bool> OnChange;
             public UnityEvent<bool> OnChangeFlip;
             public UnityEvent ON;
             public UnityEvent OFF;
@@ -31,15 +35,13 @@ namespace Neo
             [Button]
             public void Toggle()
             {
-                Set(!value);
+                Set(!Value.CurrentValue);
             }
 
             [Button]
             public void Set(bool value)
             {
-                this.value = value;
-
-                OnChange?.Invoke(value);
+                Value.Value = value;
                 OnChangeFlip?.Invoke(!value);
 
                 if (value)

@@ -1,18 +1,19 @@
 {
-  "name": "Neo.Tools.Time",
-  "references": [
-    "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-    "GUID:f51ebe6a0ceec4240a699833d6309b23",
-    "GUID:0dce7003042d59947888919f20c2d48e",
-    "GUID:699bb923824f1724b91c66f5ba9ace74"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Neo.Tools.Time",
+    "references": [
+        "GUID:7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
+        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:0dce7003042d59947888919f20c2d48e",
+        "GUID:699bb923824f1724b91c66f5ba9ace74"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

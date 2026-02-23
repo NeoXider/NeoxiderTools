@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Neo.Extensions;
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -117,9 +118,12 @@ namespace Neo.Tools
         /* ───────── EVENTS ──────────────────────────────────────────────── */
 
         public LineCreatedEvent OnLineCreated = new();
-        public UnityEvent<float> OnDistanceChanged = new();
 
-        public UnityEvent<int> OnPointChanged = new();
+        [Tooltip("Reactive total drawn distance; subscribe via Distance.OnChanged")]
+        public ReactivePropertyFloat Distance = new();
+
+        [Tooltip("Reactive point count; subscribe via PointCount.OnChanged")]
+        public ReactivePropertyInt PointCount = new();
 
         public UnityEvent<float> OnTimerChanged = new();
 
@@ -134,22 +138,15 @@ namespace Neo.Tools
         private Vector3[] _cachedPositionsArray;
 
         private LineRenderer _currentLR;
-        private float _distance;
         private EdgeCollider2D _liveCol;
         private float _timer;
         private Camera cam;
 
         /* ───────── INTERNAL ────────────────────────────────────────────── */
 
-        public float Distance
-        {
-            get => _distance;
-            private set
-            {
-                _distance = value;
-                OnDistanceChanged?.Invoke(value);
-            }
-        }
+        public float DistanceValue => Distance.CurrentValue;
+        /// <summary>Количество точек (для NeoCondition и рефлексии).</summary>
+        public int PointCountValue => (int)PointCount.CurrentValue;
 
         public int CountPoints => rawPoints.Count;
 
@@ -270,10 +267,10 @@ namespace Neo.Tools
         /// </summary>
         public void ResetPoints()
         {
-            Distance = 0;
+            Distance.Value = 0;
             rawPoints.Clear();
             _currentLR.positionCount = 0;
-            OnPointChanged?.Invoke(CountPoints);
+            PointCount.Value = CountPoints;
         }
 
         /// <summary>
@@ -415,7 +412,7 @@ namespace Neo.Tools
             if (CountPoints == 0)
             {
                 rawPoints.Add(pos);
-                OnPointChanged?.Invoke(rawPoints.Count);
+                PointCount.Value = rawPoints.Count;
                 return;
             }
 
@@ -454,8 +451,8 @@ namespace Neo.Tools
 
             // 3. Добавляем точку
             rawPoints.Add(pos);
-            OnPointChanged?.Invoke(rawPoints.Count);
-            Distance += Vector3.Distance(last, pos);
+            PointCount.Value = rawPoints.Count;
+            Distance.Value = Distance.CurrentValue + Vector3.Distance(last, pos);
 
             // 4. Сглаживаем, ограничиваем, перезаписываем
             List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
@@ -473,7 +470,7 @@ namespace Neo.Tools
                 UpdateColliderPoints(_liveCol, processed);
             }
 
-            if (maxDistanceCreate > 0 && Distance >= maxDistanceCreate)
+            if (maxDistanceCreate > 0 && Distance.CurrentValue >= maxDistanceCreate)
             {
                 EndLine();
             }
@@ -529,7 +526,7 @@ namespace Neo.Tools
             }
 
             if (rawPoints.Count < minCountCreate ||
-                (minDistanceCreate > 0 && Distance < minDistanceCreate)) // too short – discard
+                (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate)) // too short – discard
             {
                 Destroy(_currentLR.gameObject);
                 return;

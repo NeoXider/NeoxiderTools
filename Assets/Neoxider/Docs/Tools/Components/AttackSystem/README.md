@@ -1,10 +1,10 @@
 # Система атаки (Attack System)
 
-Этот раздел содержит компоненты, связанные с боевой системой: нанесение урона, здоровье, уклонения и т.д.
+Компоненты для боевой системы: урон, здоровье, уклонение (Evade), коллайдеры атак.
 
-## Файлы
+## Компоненты
 
-- [AdvancedAttackCollider](./AdvancedAttackCollider.md)
-- [AttackExecution](./AttackExecution.md)
-- [Evade](./Evade.md)
-- [Health](./Health.md)
+- [AdvancedAttackCollider](./AdvancedAttackCollider.md) — расширенный коллайдер атаки.
+- [AttackExecution](./AttackExecution.md) — исполнение атаки.
+- [Evade](./Evade.md) — уклонение/рывок с перезарядкой, реактивные поля для UI, события и API (TryStartEvade, ResetCooldown, SetCooldownDuration и др.).
+- [Health](./Health.md) — здоровье, урон, лечение, авто-хил.

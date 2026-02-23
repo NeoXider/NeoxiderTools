@@ -24,10 +24,14 @@ namespace Neo.Tools
         [Header("Auto Start")] [Tooltip("Automatically start first dialogue on Start")]
         public bool autoStart;
 
-        [Header("Auto Advance")] public bool autoNextSentence;
-
+        [Header("Auto Advance")]
+        [Tooltip("Advance to next sentence after typewriter finishes")]
+        public bool autoNextSentence;
+        [Tooltip("Advance to next monolog when current ends")]
         public bool autoNextMonolog;
+        [Tooltip("Advance to next dialogue when current ends")]
         public bool autoNextDialogue;
+        [Tooltip("Allow restarting current dialogue via RestartDialogue()")]
         public bool allowRestart;
 
         [Header("Auto Advance Delays")] [Min(0f)]
@@ -316,6 +320,47 @@ namespace Neo.Tools
             StartDialogue();
         }
 
+        /// <summary>
+        ///     Возвращает текущий диалог по CurrentDialogueId или null.
+        /// </summary>
+        public Dialogue GetCurrentDialogue()
+        {
+            if (dialogues == null || CurrentDialogueId < 0 || CurrentDialogueId >= dialogues.Length)
+            {
+                return null;
+            }
+
+            return dialogues[CurrentDialogueId];
+        }
+
+        /// <summary>
+        ///     Возвращает текущий монолог по CurrentMonologId или null.
+        /// </summary>
+        public Monolog GetCurrentMonolog()
+        {
+            Dialogue d = GetCurrentDialogue();
+            if (d?.monologues == null || CurrentMonologId < 0 || CurrentMonologId >= d.monologues.Length)
+            {
+                return null;
+            }
+
+            return d.monologues[CurrentMonologId];
+        }
+
+        /// <summary>
+        ///     Возвращает текущее предложение по CurrentSentenceId или null.
+        /// </summary>
+        public Sentence GetCurrentSentence()
+        {
+            Monolog m = GetCurrentMonolog();
+            if (m?.sentences == null || CurrentSentenceId < 0 || CurrentSentenceId >= m.sentences.Length)
+            {
+                return null;
+            }
+
+            return m.sentences[CurrentSentenceId];
+        }
+
         private void ShowCurrentSentence()
         {
             if (dialogues == null || dialogues.Length == 0)
@@ -323,7 +368,6 @@ namespace Neo.Tools
                 return;
             }
 
-            // Проверяем границы диалога
             if (CurrentDialogueId >= dialogues.Length)
             {
                 OnAllDialoguesEnd?.Invoke();
@@ -331,7 +375,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Dialogue currentDialogue = dialogues[CurrentDialogueId];
+            Dialogue currentDialogue = GetCurrentDialogue();
             if (currentDialogue == null)
             {
                 Debug.LogWarning($"[DialogueController] Dialogue [{CurrentDialogueId}] is null.", this);
@@ -340,31 +384,28 @@ namespace Neo.Tools
 
             currentDialogue.OnChangeDialog?.Invoke(CurrentDialogueId);
 
-            // Проверяем границы монолога
             if (currentDialogue.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
             {
                 GoToNextDialogue();
                 return;
             }
 
-            Monolog currentMonolog = currentDialogue.monologues[CurrentMonologId];
+            Monolog currentMonolog = GetCurrentMonolog();
             if (currentMonolog == null)
             {
-                Debug.LogWarning($"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
-                    this);
+                Debug.LogWarning($"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.", this);
                 return;
             }
 
             currentMonolog.OnChangeMonolog?.Invoke(CurrentMonologId);
 
-            // Проверяем границы предложения
             if (currentMonolog.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length)
             {
                 GoToNextMonolog();
                 return;
             }
 
-            Sentence sentence = currentMonolog.sentences[CurrentSentenceId];
+            Sentence sentence = GetCurrentSentence();
             if (sentence == null)
             {
                 Debug.LogWarning(
@@ -375,12 +416,10 @@ namespace Neo.Tools
 
             sentence.OnChangeSentence?.Invoke();
 
-            // Обновляем UI
             _dialogueUI?.SetCharacterName(currentMonolog.characterName);
             _dialogueUI?.SetCharacterSprite(sentence.sprite);
             OnCharacterChange?.Invoke(currentMonolog.characterName);
 
-            // Показываем текст
             _currentSentenceCached = sentence.sentence ?? string.Empty;
 
             if (useTypewriterEffect && !string.IsNullOrEmpty(_currentSentenceCached))

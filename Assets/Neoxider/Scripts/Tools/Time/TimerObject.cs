@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Globalization;
+using Neo.Reactive;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -110,8 +111,11 @@ namespace Neo
 
         [Tooltip("Called when timer stops")] public UnityEvent OnTimerStopped;
 
-        [Tooltip("Called with current time value on each update")]
-        public UnityEvent<float> OnTimeChanged;
+        [Tooltip("Reactive current time; subscribe via Time.OnChanged")]
+        public ReactivePropertyFloat Time = new();
+
+        /// <summary>Текущее значение таймера в секундах (для NeoCondition и рефлексии).</summary>
+        public float TimeValue => Time.CurrentValue;
 
         [Tooltip("Called with progress (0-1) on each update")]
         public UnityEvent<float> OnProgressChanged;
@@ -234,6 +238,8 @@ namespace Neo
             {
                 _loadedFromSave = LoadState();
             }
+
+            Time.Value = GetCurrentTime();
         }
 
         private void ApplyRandomDurationIfNeeded()
@@ -370,6 +376,7 @@ namespace Neo
 
                 isActive = SaveProvider.GetBool(key + "_a");
                 lastProgress = -1f;
+                Time.Value = currentTime;
                 return true;
             }
 
@@ -400,6 +407,7 @@ namespace Neo
             }
 
             lastProgress = -1f;
+            Time.Value = currentTime;
             return true;
         }
 
@@ -413,6 +421,7 @@ namespace Neo
                 : initialProgress > 0
                     ? countUp ? initialProgress * duration : (1f - initialProgress) * duration
                     : 0f;
+            Time.Value = currentTime;
 
             // Сброс milestones
             if (milestoneReached != null)
@@ -434,12 +443,12 @@ namespace Neo
                 return;
             }
 
-            if (pauseOnTimeScaleZero && !useUnscaledTime && Time.timeScale == 0f)
+            if (pauseOnTimeScaleZero && !useUnscaledTime && UnityEngine.Time.timeScale == 0f)
             {
                 return;
             }
 
-            float deltaTime = useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
+            float deltaTime = useUnscaledTime ? UnityEngine.Time.unscaledDeltaTime : UnityEngine.Time.deltaTime;
             timeSinceLastUpdate += deltaTime;
 
             if (timeSinceLastUpdate >= updateInterval)
@@ -459,7 +468,7 @@ namespace Neo
             if (infiniteDuration)
             {
                 currentTime += deltaTime;
-                OnTimeChanged?.Invoke(currentTime);
+                Time.Value = currentTime;
                 UpdateUI(timeValue: currentTime);
                 return;
             }
@@ -510,7 +519,7 @@ namespace Neo
             if (infiniteDuration)
             {
                 float timeValueInfinite = currentTime;
-                OnTimeChanged?.Invoke(timeValueInfinite);
+                Time.Value = timeValueInfinite;
                 UpdateUI(timeValue: timeValueInfinite);
                 return;
             }
@@ -522,7 +531,7 @@ namespace Neo
 
             progress = Mathf.Clamp01(progress);
 
-            OnTimeChanged?.Invoke(timeValue);
+            Time.Value = timeValue;
             OnProgressChanged?.Invoke(progress);
             OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
             lastProgress = progress;
@@ -651,7 +660,7 @@ namespace Neo
             // Scale up
             while (elapsed < halfDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += UnityEngine.Time.deltaTime;
                 float t = elapsed / halfDuration;
                 float scale = Mathf.Lerp(1f, startAnimationScale, t);
                 transform.localScale = originalScale * scale;
@@ -663,7 +672,7 @@ namespace Neo
             // Scale down
             while (elapsed < halfDuration)
             {
-                elapsed += Time.deltaTime;
+                elapsed += UnityEngine.Time.deltaTime;
                 float t = elapsed / halfDuration;
                 float scale = Mathf.Lerp(startAnimationScale, 1f, t);
                 transform.localScale = originalScale * scale;

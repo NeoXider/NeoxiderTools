@@ -1,4 +1,5 @@
 using Neo.Extensions;
+using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
 using TMPro;
@@ -14,18 +15,11 @@ namespace Neo.Shop
     {
             [Space] [SerializeField] private string _moneySave = "Money";
 
-            [SerializeField] private float _allMoney;
-            [SerializeField] private float _lastChangeMoney;
+            public ReactivePropertyFloat CurrentMoney = new();
+            public ReactivePropertyFloat LevelMoney = new();
+            public ReactivePropertyFloat AllMoney = new();
+            public ReactivePropertyFloat LastChangeMoney = new();
 
-            [SerializeField] [GUIColor(0, 1, 1)] private float _levelMoney;
-
-            [SerializeField] [GUIColor(0, 1, 0)] private float _money;
-
-            public UnityEvent<float> OnChangeAllMoney;
-
-            [Space] public UnityEvent<float> OnChangedLevelMoney;
-            public UnityEvent<float> OnChangedMoney;
-            public UnityEvent<float> OnChangeLastMoney;
             [SerializeField] private SetText[] st_levelMoney;
             [SerializeField] private SetText[] st_money;
             [SerializeField] private TMP_Text[] t_levelMoney;
@@ -33,27 +27,28 @@ namespace Neo.Shop
             [SerializeField] private TMP_Text[] t_money;
 
             [Space] [Header("Text")] private readonly int _roundToDecimal = 2;
-            public float levelMoney => _levelMoney;
-            public float money => _money;
-            public float allMoney => _allMoney;
-
-            public float LastChangeMoney => _lastChangeMoney;
+            public float levelMoney => LevelMoney.CurrentValue;
+            public float money => CurrentMoney.CurrentValue;
+            public float allMoney => AllMoney.CurrentValue;
+            /// <summary>Последнее изменение суммы (для NeoCondition и рефлексии).</summary>
+            public float LastChangeMoneyValue => LastChangeMoney.CurrentValue;
 
             private void Start()
             {
                 Load();
                 SetLevelMoney();
-                ChangeMoneyEvent();
+                ApplyMoneyToText();
+                ApplyLevelMoneyToText();
             }
 
             [Button]
             public void Add(float amount)
             {
-                _money += amount;
-                _allMoney += amount;
-                _lastChangeMoney = amount;
+                CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
+                AllMoney.Value = AllMoney.CurrentValue + amount;
+                LastChangeMoney.Value = amount;
                 Save();
-                ChangeMoneyEvent();
+                ApplyMoneyToText();
             }
 
             [Button]
@@ -61,9 +56,9 @@ namespace Neo.Shop
             {
                 if (CanSpend(amount))
                 {
-                    _money -= amount;
-                    _lastChangeMoney = amount;
-                    ChangeMoneyEvent();
+                    CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
+                    LastChangeMoney.Value = amount;
+                    ApplyMoneyToText();
                     Save();
                     return true;
                 }
@@ -78,88 +73,85 @@ namespace Neo.Shop
 
             private void Load()
             {
-                _money = SaveProvider.GetFloat(_moneySave, _money);
-                _allMoney = SaveProvider.GetFloat(_moneySave + nameof(_allMoney));
+                CurrentMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue));
+                AllMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue));
             }
 
             private void Save()
             {
-                SaveProvider.SetFloat(_moneySave, _money);
-                SaveProvider.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
+                SaveProvider.SetFloat(_moneySave, CurrentMoney.CurrentValue);
+                SaveProvider.SetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
             }
 
             public void AddLevelMoney(float count)
             {
-                _levelMoney += count;
-                ChangeLevelMoneyEvent();
+                LevelMoney.Value = LevelMoney.CurrentValue + count;
+                ApplyLevelMoneyToText();
             }
 
             public float SetLevelMoney(float count = 0)
             {
-                float levelMoney = _levelMoney;
-                _levelMoney = count;
-                ChangeLevelMoneyEvent();
-                return levelMoney;
+                float prev = LevelMoney.CurrentValue;
+                LevelMoney.Value = count;
+                ApplyLevelMoneyToText();
+                return prev;
             }
 
             public float SetMoney(float count = 0)
             {
-                _lastChangeMoney = count - _money;
-                _money = count;
-                ChangeMoneyEvent();
-                return _money;
+                LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
+                CurrentMoney.Value = count;
+                ApplyMoneyToText();
+                return CurrentMoney.CurrentValue;
             }
 
             public float SetMoneyForLevel(bool resetLevelMoney = true)
             {
-                float count = _levelMoney;
-                _money += _levelMoney;
+                float count = LevelMoney.CurrentValue;
+                CurrentMoney.Value = CurrentMoney.CurrentValue + LevelMoney.CurrentValue;
 
                 if (resetLevelMoney)
                 {
-                    SetLevelMoney();
+                    LevelMoney.Value = 0f;
+                    ApplyLevelMoneyToText();
                 }
 
-                ChangeMoneyEvent();
+                ApplyMoneyToText();
                 Save();
                 return count;
             }
 
             public bool CanSpend(float count)
             {
-                return _money >= count;
+                return CurrentMoney.CurrentValue >= count;
             }
 
-            private void ChangeMoneyEvent()
+            private void ApplyMoneyToText()
             {
-                SetText(t_money, _money);
+                float v = CurrentMoney.CurrentValue;
+                SetText(t_money, v);
                 if (st_money != null)
                 {
                     foreach (SetText item in st_money)
                     {
                         if (item != null)
-                            item.Set(_money);
+                            item.Set(v);
                     }
                 }
-
-                OnChangedMoney?.Invoke(_money);
-                OnChangeLastMoney?.Invoke(_lastChangeMoney);
-                OnChangeAllMoney?.Invoke(_allMoney);
             }
 
-            private void ChangeLevelMoneyEvent()
+            private void ApplyLevelMoneyToText()
             {
-                SetText(t_levelMoney, _levelMoney);
+                float v = LevelMoney.CurrentValue;
+                SetText(t_levelMoney, v);
                 if (st_levelMoney != null)
                 {
                     foreach (SetText item in st_levelMoney)
                     {
                         if (item != null)
-                            item.Set(_levelMoney);
+                            item.Set(v);
                     }
                 }
-
-                OnChangedLevelMoney?.Invoke(_levelMoney);
             }
 
             private void SetText(TMP_Text[] text, float count)

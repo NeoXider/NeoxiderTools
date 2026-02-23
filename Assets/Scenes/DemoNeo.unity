@@ -1000,7 +1000,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -1008,7 +1008,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -1048,11 +1048,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -415
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -4982,7 +4982,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -4990,7 +4990,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -5030,11 +5030,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -75
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5278,7 +5278,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -5286,7 +5286,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -5326,11 +5326,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -1095
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -5420,21 +5420,31 @@ MonoBehaviour:
   - 0.25
   - 0.5
   - 0.75
-  OnValueChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnBestValueChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnTargetChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnProgressChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnStarChange:
-    m_PersistentCalls:
-      m_Calls: []
+  Score:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  BestScore:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  TargetScore:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  Progress:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  CountStarsReactive:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   setTextBestScores: []
   setTextScore: []
   textBestScores: []
@@ -6181,6 +6191,7 @@ GameObject:
   m_Component:
   - component: {fileID: 681128293}
   - component: {fileID: 681128294}
+  - component: {fileID: 681128295}
   m_Layer: 0
   m_Name: GameObject
   m_TagString: Untagged
@@ -6216,7 +6227,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _valueMode: 0
-  ValueReactive:
+  Value:
     _value: 0
     _onChanged:
       m_PersistentCalls:
@@ -6238,6 +6249,71 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   OnSend:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &681128295
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 681128292}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deda62a1dd14fb647b7844aadb429aff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _logicMode: 0
+  _conditions:
+  - _sourceMode: 0
+    _useSceneSearch: 0
+    _searchObjectName: 
+    _waitForObject: 0
+    _prefabPreview: {fileID: 0}
+    _sourceObject: {fileID: 1639885423}
+    _componentIndex: 0
+    _componentTypeName: Neo.Shop.Money
+    _propertyName: money
+    _valueType: 1
+    _compareOp: 0
+    _invert: 0
+    _thresholdSource: 0
+    _thresholdInt: 0
+    _thresholdFloat: 0
+    _thresholdBool: 1
+    _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
+  _checkMode: 2
+  _checkInterval: 0.2
+  _checkOnStart: 1
+  _onlyOnChange: 1
+  _onTrue:
+    m_PersistentCalls:
+      m_Calls: []
+  _onFalse:
+    m_PersistentCalls:
+      m_Calls: []
+  _onResult:
+    m_PersistentCalls:
+      m_Calls: []
+  _onInvertedResult:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &686320236
@@ -9279,34 +9355,26 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _moneySave: Money
-  _allMoney: 0
-  _lastChangeMoney: 0
-  _levelMoney: 0
-  _money: 0
-  OnChangeAllMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedLevelMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedMoney:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1275749491}
-        m_TargetAssemblyTypeName: SetText, Assembly-CSharp
-        m_MethodName: Set
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnChangeLastMoney:
-    m_PersistentCalls:
-      m_Calls: []
+  CurrentMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LevelMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  AllMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LastChangeMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   st_levelMoney: []
   st_money: []
   t_levelMoney: []
@@ -10620,9 +10688,11 @@ MonoBehaviour:
   OnTimerStopped:
     m_PersistentCalls:
       m_Calls: []
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
+  Time:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   OnProgressChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -10691,34 +10761,26 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _moneySave: Money
-  _allMoney: 0
-  _lastChangeMoney: 0
-  _levelMoney: 0
-  _money: 5000
-  OnChangeAllMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedLevelMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedMoney:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1432302161}
-        m_TargetAssemblyTypeName: SetText, Assembly-CSharp
-        m_MethodName: Set
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnChangeLastMoney:
-    m_PersistentCalls:
-      m_Calls: []
+  CurrentMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LevelMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  AllMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LastChangeMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   st_levelMoney: []
   st_money: []
   t_levelMoney: []
@@ -11133,7 +11195,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -11141,7 +11203,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -11181,11 +11243,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -245
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -11493,7 +11555,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -11501,7 +11563,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -11541,11 +11603,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -755
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -12409,7 +12471,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0}
   m_AnchorMax: {x: 0.5, y: 0}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 400, y: 1170}
+  m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0}
 --- !u!114 &1480364081
 MonoBehaviour:
@@ -12533,9 +12595,11 @@ MonoBehaviour:
     m_PostInfinity: 2
     m_RotationOrder: 4
   playOnStart: 1
-  OnValueChanged:
-    m_PersistentCalls:
-      m_Calls: []
+  Value:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   OnAnimationStarted:
     m_PersistentCalls:
       m_Calls: []
@@ -13943,9 +14007,11 @@ MonoBehaviour:
   OnTimerStopped:
     m_PersistentCalls:
       m_Calls: []
-  OnTimeChanged:
-    m_PersistentCalls:
-      m_Calls: []
+  Time:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   OnProgressChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -13977,9 +14043,11 @@ MonoBehaviour:
   _saveTimeOnStartWhenSaveOnTakeDisabled: 1
   _displayTimeFormat: 8
   _displaySeparator: ':'
-  _onTimeUpdated:
-    m_PersistentCalls:
-      m_Calls: []
+  RemainingTime:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   _onRewardClaimed:
     m_PersistentCalls:
       m_Calls: []
@@ -14036,22 +14104,26 @@ MonoBehaviour:
   _dontDestroyOnLoad: 0
   _setInstanceOnAwake: 1
   _moneySave: Money
-  _allMoney: 0
-  _lastChangeMoney: 0
-  _levelMoney: 0
-  _money: 0
-  OnChangeAllMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedLevelMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangedMoney:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangeLastMoney:
-    m_PersistentCalls:
-      m_Calls: []
+  CurrentMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LevelMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  AllMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LastChangeMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   st_levelMoney: []
   st_money: []
   t_levelMoney: []
@@ -14152,7 +14224,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -14160,7 +14232,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -14200,11 +14272,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -925
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -18568,7 +18640,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMax.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.x
@@ -18576,7 +18648,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchorMin.y
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_SizeDelta.x
@@ -18616,11 +18688,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.x
-      value: 200
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -585
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7947735101264386476, guid: cd3290feea087f54298dd68e561735bd, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x

@@ -35,19 +35,19 @@ namespace Neo.Shop
             switch (_displayMode)
             {
                 case MoneyDisplayMode.LevelMoney:
-                    _money.OnChangedLevelMoney.RemoveListener(SetAmount);
+                    _money.LevelMoney.OnChanged.RemoveListener(SetAmount);
                     SetAmount(_money.levelMoney);
-                    _money.OnChangedLevelMoney.AddListener(SetAmount);
+                    _money.LevelMoney.OnChanged.AddListener(SetAmount);
                     break;
                 case MoneyDisplayMode.AllMoney:
-                    _money.OnChangeAllMoney.RemoveListener(SetAmount);
+                    _money.AllMoney.OnChanged.RemoveListener(SetAmount);
                     SetAmount(_money.allMoney);
-                    _money.OnChangeAllMoney.AddListener(SetAmount);
+                    _money.AllMoney.OnChanged.AddListener(SetAmount);
                     break;
                 default:
-                    _money.OnChangedMoney.RemoveListener(SetAmount);
+                    _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
                     SetAmount(_money.money);
-                    _money.OnChangedMoney.AddListener(SetAmount);
+                    _money.CurrentMoney.OnChanged.AddListener(SetAmount);
                     break;
             }
         }
@@ -62,13 +62,13 @@ namespace Neo.Shop
             switch (_displayMode)
             {
                 case MoneyDisplayMode.LevelMoney:
-                    _money.OnChangedLevelMoney.RemoveListener(SetAmount);
+                    _money.LevelMoney.OnChanged.RemoveListener(SetAmount);
                     break;
                 case MoneyDisplayMode.AllMoney:
-                    _money.OnChangeAllMoney.RemoveListener(SetAmount);
+                    _money.AllMoney.OnChanged.RemoveListener(SetAmount);
                     break;
                 default:
-                    _money.OnChangedMoney.RemoveListener(SetAmount);
+                    _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
                     break;
             }
         }

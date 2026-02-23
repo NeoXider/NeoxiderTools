@@ -1,5 +1,6 @@
 using DG.Tweening;
 using Neo.Extensions;
+using Neo.Reactive;
 using Neo.Save;
 using TMPro;
 using UnityEngine;
@@ -39,8 +40,13 @@ namespace Neo.Bonus
         public UnityEvent OnProgressNotReached;
         public UnityEvent<bool> OnChangeProgress;
 
+        [Tooltip("Reactive progress value; subscribe via Progress.OnChanged")]
+        public ReactivePropertyFloat Progress = new();
+
         public float AddProgressAmount => _addProgress;
         public float MaxProgress => _maxProgress;
+        /// <summary>Текущий прогресс (для NeoCondition и рефлексии).</summary>
+        public float ProgressValue => Progress.CurrentValue;
 
         public float progress
         {
@@ -49,6 +55,7 @@ namespace Neo.Bonus
             {
                 _progress = value;
                 SaveProvider.SetFloat(_saveName + nameof(progress), value);
+                Progress.Value = value;
             }
         }
 
@@ -57,6 +64,7 @@ namespace Neo.Bonus
         private void Awake()
         {
             _progress = SaveProvider.GetFloat(_saveName + nameof(progress));
+            Progress.Value = _progress;
         }
 
         private void OnEnable()

@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using Neo.Save;
 using Neo.Shop;
 using UnityEngine;
@@ -48,7 +49,7 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Value to pass to OnSend when calling Send() with no argument.")]
         private CounterSendPayload _sendPayload = CounterSendPayload.Counter;
 
-        [Header("Сохранение")]
+        [Header("Save")]
         [SerializeField]
         [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
         private bool _saveEnabled;
@@ -61,7 +62,7 @@ namespace Neo.Tools
         private bool _invokeEventsOnLoad = true;
 
         [Space]
-        [Header("События по типу (вызывается одно в зависимости от режима)")]
+        [Header("Events by type (one fired depending on mode)")]
         [Tooltip("Invoked when value changes in Int mode. Passes new integer value.")]
         public UnityEvent<int> OnValueChangedInt = new();
 
@@ -287,7 +288,7 @@ namespace Neo.Tools
                 case CounterSendPayload.Counter:
                     return Value.CurrentValue;
                 case CounterSendPayload.Score:
-                    return ScoreManager.I != null ? ScoreManager.I.Score : 0f;
+                    return ScoreManager.I != null ? (float)ScoreManager.I.ScoreValue : 0f;
                 case CounterSendPayload.Money:
                     return Money.I != null ? Money.I.money : 0f;
                 default:

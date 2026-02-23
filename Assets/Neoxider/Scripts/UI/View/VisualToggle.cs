@@ -1,4 +1,5 @@
 using System;
+using Neo.Reactive;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -51,8 +52,11 @@ namespace Neo.UI
         [Tooltip("Invoked when switching to inactive state (start)")]
         public UnityEvent Off;
 
-        [Tooltip("Invoked on any state change. Passes new value (true = active)")]
-        public UnityEvent<bool> OnValueChanged;
+        [Tooltip("Reactive state (true = active); subscribe via Value.OnChanged")]
+        public ReactivePropertyBool Value = new();
+
+        /// <summary>Текущее состояние (для NeoCondition и рефлексии).</summary>
+        public bool ValueBool => Value.CurrentValue;
 
         private bool _isUpdatingFromToggle;
 
@@ -213,7 +217,7 @@ namespace Neo.UI
                 Off?.Invoke();
             }
 
-            OnValueChanged?.Invoke(isActive);
+            Value.Value = isActive;
         }
 
         private void AutoSaveStartValues()

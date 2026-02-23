@@ -24,11 +24,11 @@ namespace Neo.Tools
 
             if (_displayMode == ScoreDisplayMode.Best || _best)
             {
-                ScoreManager.I.OnBestValueChange.RemoveListener(Set);
+                ScoreManager.I.BestScore.OnChanged.RemoveListener(Set);
             }
             else
             {
-                ScoreManager.I.OnValueChange.RemoveListener(Set);
+                ScoreManager.I.Score.OnChanged.RemoveListener(Set);
             }
         }
 
@@ -50,15 +50,15 @@ namespace Neo.Tools
 
             if (_displayMode == ScoreDisplayMode.Best || _best)
             {
-                sm.OnBestValueChange.RemoveListener(Set);
-                Set(sm.BestScore);
-                sm.OnBestValueChange.AddListener(Set);
+                sm.BestScore.OnChanged.RemoveListener(Set);
+                Set(sm.BestScoreValue);
+                sm.BestScore.OnChanged.AddListener(Set);
             }
             else
             {
-                sm.OnValueChange.RemoveListener(Set);
-                Set(sm.Score);
-                sm.OnValueChange.AddListener(Set);
+                sm.Score.OnChanged.RemoveListener(Set);
+                Set(sm.ScoreValue);
+                sm.Score.OnChanged.AddListener(Set);
             }
         }
 

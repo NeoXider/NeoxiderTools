@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Neo.Animations;
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -53,8 +54,11 @@ namespace Neo.Tools.View
         [Header("Debug Settings")] [Tooltip("Enable debug messages")]
         public bool enableDebugging;
 
-        [Tooltip("Invoked when intensity changes")]
-        public UnityEvent<float> OnIntensityChanged;
+        [Tooltip("Reactive intensity; subscribe via Intensity.OnChanged")]
+        public ReactivePropertyFloat Intensity = new();
+
+        /// <summary>Текущая интенсивность (для NeoCondition и рефлексии).</summary>
+        public float IntensityValue => Intensity.CurrentValue;
 
         [Tooltip("Invoked when color changes")]
         public UnityEvent<Color> OnColorChanged;
@@ -79,7 +83,7 @@ namespace Neo.Tools.View
         /// <summary>
         ///     Текущая интенсивность света (только для чтения)
         /// </summary>
-        public float CurrentIntensity { get; private set; }
+        public float CurrentIntensity => Intensity.CurrentValue;
 
         /// <summary>
         ///     Текущий цвет света (только для чтения)
@@ -157,7 +161,7 @@ namespace Neo.Tools.View
             randomOffset = new Vector2(Random.Range(-1000f, 1000f),
                 Random.Range(-1000f, 1000f));
 
-            CurrentIntensity = originalIntensity;
+            Intensity.Value = originalIntensity;
             CurrentColor = originalColor;
             lastIntensity = originalIntensity;
             lastColor = originalColor;
@@ -197,15 +201,13 @@ namespace Neo.Tools.View
                 targetColor,
                 colorBlendFactor);
 
-            CurrentIntensity = _light.Intensity;
-            CurrentColor = _light.Color;
-
-            // Вызываем события при изменении значений
             if (Mathf.Abs(_light.Intensity - lastIntensity) > 0.001f)
             {
-                OnIntensityChanged?.Invoke(_light.Intensity);
+                Intensity.Value = _light.Intensity;
                 lastIntensity = _light.Intensity;
             }
+
+            CurrentColor = _light.Color;
 
             if (changeColor && ColorDistance(_light.Color, lastColor) > 0.001f)
             {
@@ -294,7 +296,7 @@ namespace Neo.Tools.View
             {
                 _light.Intensity = originalIntensity;
                 _light.Color = originalColor;
-                CurrentIntensity = originalIntensity;
+                Intensity.Value = originalIntensity;
                 CurrentColor = originalColor;
             }
         }

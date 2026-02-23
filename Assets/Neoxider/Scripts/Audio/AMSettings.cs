@@ -1,4 +1,5 @@
 using Neo;
+using Neo.Reactive;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -27,9 +28,17 @@ namespace Neo.Audio
         [Tooltip("Mixer parameter name for music volume.")]
         public string MusicVolume = "MusicVolume";
 
-        public UnityEvent<bool> OnMuteEfx;
-        public UnityEvent<bool> OnMuteMusic;
-        public UnityEvent<bool> OnMuteMaster;
+        [Tooltip("Reactive mute state; subscribe via MuteEfx.OnChanged")]
+        public ReactivePropertyBool MuteEfx = new();
+        [Tooltip("Reactive mute state; subscribe via MuteMusic.OnChanged")]
+        public ReactivePropertyBool MuteMusic = new();
+        [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
+        public ReactivePropertyBool MuteMaster = new();
+
+        /// <summary>Текущее состояние mute (для NeoCondition и рефлексии).</summary>
+        public bool MuteEfxValue => MuteEfx.CurrentValue;
+        public bool MuteMusicValue => MuteMusic.CurrentValue;
+        public bool MuteMasterValue => MuteMaster.CurrentValue;
 
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
@@ -84,7 +93,7 @@ namespace Neo.Audio
             }
 
             efx.mute = !active;
-            OnMuteEfx?.Invoke(efx.mute);
+            MuteEfx.Value = efx.mute;
         }
 
         [Button]
@@ -96,7 +105,7 @@ namespace Neo.Audio
             }
 
             music.mute = !active;
-            OnMuteMusic?.Invoke(music.mute);
+            MuteMusic.Value = music.mute;
         }
 
         [Button]
@@ -246,7 +255,7 @@ namespace Neo.Audio
             {
                 SetMixerVolume(audioMixer, MasterVolume, _savedMasterVolume);
                 _masterMuted = false;
-                OnMuteMaster?.Invoke(false);
+                MuteMaster.Value = false;
             }
             else
             {
@@ -257,7 +266,7 @@ namespace Neo.Audio
 
                 audioMixer.SetFloat(MasterVolume, -80f);
                 _masterMuted = true;
-                OnMuteMaster?.Invoke(true);
+                MuteMaster.Value = true;
             }
         }
 
@@ -302,19 +311,19 @@ namespace Neo.Audio
             {
                 SetMixerVolume(audioMixer, MasterVolume, turnOn ? _savedMasterVolume : 0f);
                 _masterMuted = !turnOn;
-                OnMuteMaster?.Invoke(_masterMuted);
+                MuteMaster.Value = _masterMuted;
             }
 
             if (music != null)
             {
                 music.mute = !turnOn;
-                OnMuteMusic?.Invoke(music.mute);
+                MuteMusic.Value = music.mute;
             }
 
             if (efx != null)
             {
                 efx.mute = !turnOn;
-                OnMuteEfx?.Invoke(efx.mute);
+                MuteEfx.Value = efx.mute;
             }
         }
     }

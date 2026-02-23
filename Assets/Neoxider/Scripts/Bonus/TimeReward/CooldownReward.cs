@@ -1,5 +1,6 @@
 using System;
 using Neo.Extensions;
+using Neo.Reactive;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -34,8 +35,11 @@ namespace Neo.Bonus
         [SerializeField] private TimeFormat _displayTimeFormat = TimeFormat.HoursMinutesSeconds;
         [SerializeField] private string _displaySeparator = ":";
 
-        [Header("Reward Events")] [SerializeField]
-        private UnityEvent<float> _onTimeUpdated = new();
+        [Header("Reward Events")]
+        public ReactivePropertyFloat RemainingTime = new();
+
+        /// <summary>Оставшееся время в секундах (для NeoCondition и рефлексии).</summary>
+        public float RemainingTimeValue => RemainingTime.CurrentValue;
 
         [SerializeField] private UnityEvent _onRewardClaimed = new();
         [SerializeField] private UnityEvent<int> _onRewardsClaimed = new();
@@ -43,9 +47,6 @@ namespace Neo.Bonus
         private bool _canTakeReward;
 
         private bool _waitingForManualStart;
-
-        /// <summary>Invoked on each timer update with remaining seconds.</summary>
-        public UnityEvent<float> OnTimeUpdated => _onTimeUpdated;
 
         /// <summary>Invoked when reward claim succeeds (once per claim when multiple are given).</summary>
         public UnityEvent OnRewardClaimed => _onRewardClaimed;
@@ -86,13 +87,13 @@ namespace Neo.Bonus
             }
 
             OnTimerCompleted.AddListener(OnBaseTimerCompleted);
-            OnTimeChanged.AddListener(OnBaseTimeChanged);
+            Time.OnChanged.AddListener(OnBaseTimeChanged);
         }
 
         private void OnDestroy()
         {
             OnTimerCompleted.RemoveListener(OnBaseTimerCompleted);
-            OnTimeChanged.RemoveListener(OnBaseTimeChanged);
+            Time.OnChanged.RemoveListener(OnBaseTimeChanged);
         }
 
         private void OnValidate()
@@ -141,7 +142,7 @@ namespace Neo.Bonus
 
         private void OnBaseTimeChanged(float _)
         {
-            _onTimeUpdated?.Invoke(GetRemainingTime());
+            RemainingTime.Value = GetRemainingTime();
         }
 
         /// <summary>Remaining seconds until the next reward is available.</summary>
@@ -201,7 +202,7 @@ namespace Neo.Bonus
 
             _waitingForManualStart = true;
             _canTakeReward = false;
-            _onTimeUpdated?.Invoke(0f);
+            RemainingTime.Value = 0f;
             return true;
         }
 
@@ -285,11 +286,11 @@ namespace Neo.Bonus
         {
             if (_waitingForManualStart)
             {
-                _onTimeUpdated?.Invoke(0f);
+                RemainingTime.Value = 0f;
                 return;
             }
 
-            _onTimeUpdated?.Invoke(GetRemainingTime());
+            RemainingTime.Value = GetRemainingTime();
             bool available = GetClaimableCount() >= 1;
             if (available && !_canTakeReward)
             {

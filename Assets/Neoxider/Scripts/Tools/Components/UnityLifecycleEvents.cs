@@ -19,7 +19,7 @@ namespace Neo.Tools
         [SerializeField] private UnityEvent _onDisable = new UnityEvent();
         [SerializeField] private UnityEvent _onDestroy = new UnityEvent();
 
-        [Header("Per frame (включать только при необходимости)")]
+        [Header("Per frame (enable only when needed)")]
         [Tooltip("Вызывать On Update каждый кадр; аргумент — deltaTime.")]
         [SerializeField] private bool _emitUpdate = false;
         [SerializeField] private UnityEvent<float> _onUpdate = new UnityEvent<float>();

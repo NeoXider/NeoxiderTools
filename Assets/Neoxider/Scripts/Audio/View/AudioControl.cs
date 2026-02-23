@@ -78,8 +78,8 @@ namespace Neo.Audio
             {
                 SyncToggleState();
                 toggle.onValueChanged.AddListener(OnToggleValueChanged);
-                settings.OnMuteMusic.AddListener(_ => SyncToggleState());
-                settings.OnMuteEfx.AddListener(_ => SyncToggleState());
+                settings.MuteMusic.OnChanged.AddListener(OnMuteChanged);
+                settings.MuteEfx.OnChanged.AddListener(OnMuteChanged);
             }
             else if (uiType == UIType.Slider && slider != null)
             {
@@ -92,8 +92,8 @@ namespace Neo.Audio
         {
             if (settings != null)
             {
-                settings.OnMuteMusic.RemoveListener(_ => SyncToggleState());
-                settings.OnMuteEfx.RemoveListener(_ => SyncToggleState());
+                settings.MuteMusic.OnChanged.RemoveListener(OnMuteChanged);
+                settings.MuteEfx.OnChanged.RemoveListener(OnMuteChanged);
             }
 
             if (toggle != null)
@@ -106,6 +106,8 @@ namespace Neo.Audio
                 slider.onValueChanged.RemoveListener(OnSliderValueChanged);
             }
         }
+
+        private void OnMuteChanged(bool _) => SyncToggleState();
 
         private void OnToggleValueChanged(bool value)
         {

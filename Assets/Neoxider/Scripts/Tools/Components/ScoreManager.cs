@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using Neo.Save;
 using TMPro;
 using UnityEngine;
@@ -21,12 +22,16 @@ namespace Neo.Tools
         [Space] [Header("Stars")] public bool useProgress = true;
         public float[] starScores = { 0.25f, 0.5f, 0.75f };
 
-        [Space] public UnityEvent<int> OnValueChange = new();
-        public UnityEvent<int> OnBestValueChange = new();
-        public UnityEvent<int> OnTargetChange = new();
-
-        [Space] public UnityEvent<float> OnProgressChange = new();
-        public UnityEvent<int> OnStarChange = new();
+        [Tooltip("Reactive score; subscribe via Score.OnChanged")]
+        public ReactivePropertyInt Score = new();
+        [Tooltip("Reactive best score; subscribe via BestScore.OnChanged")]
+        public ReactivePropertyInt BestScore = new();
+        [Tooltip("Reactive target score; subscribe via TargetScore.OnChanged")]
+        public ReactivePropertyInt TargetScore = new();
+        [Tooltip("Reactive progress (0-1); subscribe via Progress.OnChanged")]
+        public ReactivePropertyFloat Progress = new();
+        [Tooltip("Reactive star count; subscribe via CountStarsReactive.OnChanged")]
+        public ReactivePropertyInt CountStarsReactive = new();
 
         [Space] [Header("Text")] public SetText[] setTextBestScores;
         public SetText[] setTextScore;
@@ -43,61 +48,60 @@ namespace Neo.Tools
         private int _countStars;
         private int _lastCountStars;
 
-        public int BestScore
+        public int BestScoreValue
         {
             get => _bestScore;
             private set
             {
                 _bestScore = value;
-                OnBestValueChange?.Invoke(value);
+                BestScore.Value = value;
             }
         }
 
-        public int Score
+        public int ScoreValue
         {
             get => score;
             private set
             {
                 score = value;
-                OnValueChange?.Invoke(value);
-                OnProgressChange.Invoke(Progress);
+                Score.Value = value;
+                Progress.Value = _targetScore > 0 ? Mathf.Clamp01((float)score / _targetScore) : 0f;
                 CountStars = GetCountStars();
             }
         }
 
-        public int TargetScore
+        public int TargetScoreValue
         {
             get => _targetScore;
             set
             {
                 _targetScore = value;
-                OnTargetChange?.Invoke(_targetScore);
+                TargetScore.Value = value;
+                Progress.Value = _targetScore > 0 ? Mathf.Clamp01((float)score / _targetScore) : 0f;
             }
         }
 
         public bool IsTarget => score >= _targetScore;
-        public float Progress => Mathf.Clamp01((float)score / _targetScore);
+        public float ProgressValue => Progress.CurrentValue;
+        /// <summary>Количество звёзд (для NeoCondition и рефлексии).</summary>
+        public int CountStarsValue => (int)CountStarsReactive.CurrentValue;
 
         public int CountStars
         {
             get => _countStars;
             set
             {
-                if (_lastCountStars != value)
-                {
-                    _lastCountStars = value;
-                    OnStarChange?.Invoke(value);
-                }
-
+                _lastCountStars = _countStars;
                 _countStars = value;
+                CountStarsReactive.Value = value;
             }
         }
 
         protected override void Init()
         {
             base.Init();
-            BestScore = SaveProvider.GetInt(_keySave);
-            Score = 0;
+            BestScoreValue = SaveProvider.GetInt(_keySave);
+            ScoreValue = 0;
             CountStars = 0;
             SetBestScoreText();
             SetScoreText();
@@ -124,7 +128,7 @@ namespace Neo.Tools
         [Button]
         public void Set(int amount, bool updateBestScore = true)
         {
-            Score = amount;
+            ScoreValue = amount;
             SetScoreText();
             if (updateBestScore)
             {
@@ -144,7 +148,7 @@ namespace Neo.Tools
                 return;
             }
 
-            BestScore = value;
+            BestScoreValue = value;
             SaveProvider.SetInt(_keySave, _bestScore);
             SetBestScoreText();
         }
@@ -225,14 +229,14 @@ namespace Neo.Tools
         [Button]
         public void ResetScore()
         {
-            Score = 0;
+            ScoreValue = 0;
             SetScoreText();
         }
 
         [Button]
         public void ResetBestScore()
         {
-            BestScore = 0;
+            BestScoreValue = 0;
             SaveProvider.DeleteKey(_keySave);
         }
 

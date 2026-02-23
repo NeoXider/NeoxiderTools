@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -37,8 +38,8 @@ namespace Neo.Animations
         [Header("Control")] [Tooltip("Auto-start animation on Start")]
         public bool playOnStart = true;
 
-        [Tooltip("Invoked when value changes")]
-        public UnityEvent<float> OnValueChanged;
+        [Tooltip("Reactive value; subscribe via Value.OnChanged")]
+        public ReactivePropertyFloat Value = new();
 
         [Tooltip("Invoked when animation starts")]
         public UnityEvent OnAnimationStarted;
@@ -56,7 +57,10 @@ namespace Neo.Animations
         /// <summary>
         ///     Текущее анимированное значение (только для чтения)
         /// </summary>
-        public float CurrentValue { get; private set; }
+        public float CurrentValue => Value.CurrentValue;
+
+        /// <summary>Текущее значение (для NeoCondition и рефлексии).</summary>
+        public float ValueFloat => Value.CurrentValue;
 
         /// <summary>
         ///     Проигрывается ли анимация
@@ -133,12 +137,9 @@ namespace Neo.Animations
                 use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
-            CurrentValue = newValue;
-
-            // Вызываем событие если значение изменилось
             if (Mathf.Abs(newValue - lastValue) > 0.001f)
             {
-                OnValueChanged?.Invoke(newValue);
+                Value.Value = newValue;
                 lastValue = newValue;
             }
         }

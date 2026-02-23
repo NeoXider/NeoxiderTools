@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo.Tools
+namespace Neo.Reactive
 {
     [Serializable]
     public class UnityEventFloat : UnityEvent<float> { }

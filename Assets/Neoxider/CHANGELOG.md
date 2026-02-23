@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.0.0] - 2026-02-23
+
+### BREAKING: мажорная версия — подписки и события
+
+Мажорная версия из‑за **breaking changes**:
+
+- **Подписки сломаются:** во многих компонентах удалены отдельные события (UnityEvent&lt;float&gt;, UnityEvent&lt;int&gt;, UnityEvent&lt;bool&gt;). Вместо них используются реактивные поля (ReactivePropertyFloat, ReactivePropertyInt, ReactivePropertyBool). Подписка теперь только через поле компонента и его `.OnChanged` (например `counter.Value.OnChanged`, `money.Money.OnChanged`). Свойства вида `OnValueChanged => Value.OnChanged` не добавлялись — подписывайтесь напрямую на реактивное поле.
+- **Удалённые скрипты (запланировано на отдельный шаг):** устаревшие TimeReward, AiNavigation, WheelFortune, UIReady планируются к удалению; префабы и сцены нужно будет обновить. См. `Docs/Plan_RemoveDeprecatedScripts.md`.
+
+Необходимо в проектах: перенести подписки на новые реактивные поля (`.OnChanged`) и при появлении удаления скриптов — заменить или убрать использование TimeReward, AiNavigation, WheelFortune, UIReady.
+
+**Переименования (breaking):** в **ScoreManager** — целочисленные значения счётчиков через свойства `ScoreValue`, `BestScoreValue`, `TargetScoreValue` (реактивы: `Score`, `BestScore`, `TargetScore`, `Progress`, `CountStarsReactive`). В **Health** — текущее HP через `HpValue` и реактивы `Hp`, `HpPercent`. В **Drawer** — число через `DistanceValue`, в **TypewriterEffectComponent** — через `ProgressValue`.
+
+### Реактивные поля (ReactiveProperty)
+
+- Добавлены **ReactivePropertyFloat**, **ReactivePropertyInt**, **ReactivePropertyBool** (API в стиле R3: CurrentValue, Value, OnChanged, OnNext, SetValueWithoutNotify, ForceNotify, AddListener, RemoveListener, RemoveAllListeners). Отдельная сборка **Neo.Reactive**: папка `Scripts/Reactive/`, файл `ReactiveProperty.cs`, пространство имён `Neo.Reactive`. Подключение: ссылка на сборку Neo.Reactive и `using Neo.Reactive;` в скриптах, использующих реактивные типы.
+- **Counter** переведён на реактивное поле `Value` (ReactivePropertyFloat); типизированные события OnValueChangedInt/Float и Send сохранены.
+- Множество компонентов переведены на реактивные поля вместо пары «поле + UnityEvent»: ToggleObject, Money, LightAnimator, CooldownReward, Evade, TimerObject, Drawer, TypewriterEffectComponent, AMSettings, VisualToggle, FloatAnimator, DistanceChecker, MagneticField, ItemCollection, Box, Health, ScoreManager, HandComponent, Selector, FakeLoad, TicTacToeBoardService, DrunkardGame, LevelManager, UI (Simple), NpcNavigation, NeoCondition, LeaderboardItem, TextLevel, LevelButton, DialogueData, TimeToText, SpinController (по плану). Подписка везде через соответствующее реактивное поле и его `.OnChanged`.
+
 ## [6.0.7] - 2026-02-19
 
 ### Condition — NeoCondition: вызов методов с аргументом (int/float/string)

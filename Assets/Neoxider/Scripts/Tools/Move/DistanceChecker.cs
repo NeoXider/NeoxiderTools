@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -46,7 +47,12 @@ namespace Neo.Tools
 
         public UnityEvent onDepart;
 
-        [Header("Continuous Distance Event")] public UnityEvent<float> onDistanceChanged;
+        [Header("Continuous Distance Event")]
+        [Tooltip("Reactive distance to target; subscribe via Distance.OnChanged")]
+        public ReactivePropertyFloat Distance = new();
+
+        /// <summary>Текущая дистанция до цели (для NeoCondition и рефлексии).</summary>
+        public float DistanceValue => Distance.CurrentValue;
 
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
 
@@ -141,7 +147,7 @@ namespace Neo.Tools
                 if (Mathf.Abs(distance - _lastDistance) > continuousEventThreshold)
                 {
                     _lastDistance = distance;
-                    onDistanceChanged?.Invoke(distance);
+                    Distance.Value = distance;
                 }
             }
         }

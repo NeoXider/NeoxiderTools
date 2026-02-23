@@ -1,5 +1,6 @@
 using System.Threading;
 using Cysharp.Threading.Tasks;
+using Neo.Reactive;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -32,7 +33,9 @@ namespace Neo.Tools
 
         public UnityEvent OnComplete;
         public UnityEvent<char> OnCharacterTyped;
-        public UnityEvent<float> OnProgressChanged;
+
+        [Tooltip("Reactive progress (0-1); subscribe via Progress.OnChanged")]
+        public ReactivePropertyFloat Progress = new();
 
         private CancellationTokenSource _cts;
         private bool _hasStarted;
@@ -46,7 +49,7 @@ namespace Neo.Tools
         }
 
         public bool IsTyping => _effect?.IsTyping ?? false;
-        public float Progress => _effect?.Progress ?? 0f;
+        public float ProgressValue => Progress.CurrentValue;
 
         private void Awake()
         {
@@ -65,7 +68,7 @@ namespace Neo.Tools
             _effect.OnStart += () => OnStart?.Invoke();
             _effect.OnComplete += () => OnComplete?.Invoke();
             _effect.OnCharacterTyped += c => OnCharacterTyped?.Invoke(c);
-            _effect.OnProgressChanged += p => OnProgressChanged?.Invoke(p);
+            _effect.OnProgressChanged += p => Progress.Value = p;
 
             if (string.IsNullOrEmpty(_autoStartText) && _targetText != null && !string.IsNullOrEmpty(_targetText.text))
             {

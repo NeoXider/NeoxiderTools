@@ -1,3 +1,4 @@
+using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -38,8 +39,11 @@ namespace Neo.Tools
         [Tooltip("Maximum healing that can be received at once (-1 for no limit)")] [Min(-1)]
         public int maxHealAmount = -1;
 
-        public UnityEvent<int> OnChange;
-        public UnityEvent<float> OnChangePercent;
+        [Tooltip("Reactive current HP; subscribe via Hp.OnChanged")]
+        public ReactivePropertyInt Hp = new();
+        [Tooltip("Reactive HP percent (0-1); subscribe via HpPercent.OnChanged")]
+        public ReactivePropertyFloat HpPercent = new();
+
         public UnityEvent<int> OnDamage;
         public UnityEvent<int> OnHeal;
         public UnityEvent OnDeath;
@@ -48,21 +52,21 @@ namespace Neo.Tools
         private Timer healTimer;
 
         public int MaxHp => maxHp;
+        /// <summary>Текущее HP (для NeoCondition и рефлексии).</summary>
+        public int HpValue => (int)Hp.CurrentValue;
+        /// <summary>Доля HP 0–1 (для NeoCondition и рефлексии).</summary>
+        public float HpPercentValue => HpPercent.CurrentValue;
 
-        public int Hp
-        {
-            get => hp;
-            set
-            {
-                hp = Mathf.Clamp(value, 0, maxHp);
-                OnChange?.Invoke(hp);
-                OnChangePercent?.Invoke(Mathf.Clamp01((float)hp / maxHp));
-            }
-        }
-
-        public bool IsAlive => hp > 0;
+        public bool IsAlive => HpValue > 0;
         public bool CanHeal => (IsAlive && !ignoreIsAlive) || ignoreIsAlive;
-        public bool NeedHeal => hp < maxHp;
+        public bool NeedHeal => HpValue < maxHp;
+
+        private void SetHpValue(int value)
+        {
+            int c = Mathf.Clamp(value, 0, maxHp);
+            Hp.Value = c;
+            HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)c / maxHp) : 0f;
+        }
 
         private void Awake()
         {
@@ -75,7 +79,7 @@ namespace Neo.Tools
             }
             else
             {
-                Hp = hp; // Применяем значение из инспектора, вызывая логику сеттера
+                SetHpValue(hp);
             }
         }
 
@@ -91,8 +95,8 @@ namespace Neo.Tools
         public void TakeDamage(int count)
         {
             int damage = maxDamageAmount == -1 ? count : Mathf.Min(count, maxDamageAmount);
-            Hp -= damage;
-            OnDamage?.Invoke(damage); // Передаем фактический урон
+            SetHpValue(HpValue - damage);
+            OnDamage?.Invoke(damage);
 
             if (!IsAlive)
             {
@@ -104,14 +108,14 @@ namespace Neo.Tools
         public void Heal(int count)
         {
             int heal = maxHealAmount == -1 ? count : Mathf.Min(count, maxHealAmount);
-            Hp += heal;
-            OnHeal?.Invoke(heal); // Передаем фактическое лечение
+            SetHpValue(HpValue + heal);
+            OnHeal?.Invoke(heal);
         }
 
         [Button]
         public void Restore()
         {
-            Hp = maxHp;
+            SetHpValue(maxHp);
         }
 
         private void InitializeHealTimer()
@@ -149,6 +153,10 @@ namespace Neo.Tools
             {
                 Restore();
             }
+            else
+            {
+                HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)HpValue / maxHp) : 0f;
+            }
 
             OnChangeMaxHp?.Invoke(count);
         }
@@ -156,7 +164,7 @@ namespace Neo.Tools
         [Button]
         public void SetHp(int count)
         {
-            Hp = count;
+            SetHpValue(count);
         }
 
         private void Die()

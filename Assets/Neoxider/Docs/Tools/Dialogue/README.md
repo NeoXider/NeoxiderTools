@@ -29,6 +29,11 @@ dialogueController.SkipOrNext();
 
 // Перезапуск
 dialogueController.RestartDialogue();
+
+// Текущий контекст (для условий, аналитики, саунда)
+Dialogue d = dialogueController.GetCurrentDialogue();
+Monolog m = dialogueController.GetCurrentMonolog();
+Sentence s = dialogueController.GetCurrentSentence();
 ```
 
 ## TypewriterEffect
