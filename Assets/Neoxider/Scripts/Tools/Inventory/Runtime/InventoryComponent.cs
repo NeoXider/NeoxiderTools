@@ -40,7 +40,7 @@ namespace Neo.Tools
         [Header("Save")] [SerializeField] [Tooltip("Enable auto loading in Awake.")]
         private bool _autoLoad = true;
 
-        [SerializeField] [Tooltip("Enable auto save on inventory changes.")]
+        [SerializeField] [Tooltip("При изменении инвентаря автоматически записывать состояние в SaveProvider по Save Key. Запись на диск — через SaveProvider.Save() при выходе/паузе по необходимости.")]
         private bool _autoSave = true;
 
         [SerializeField] [Tooltip("SaveProvider key for this inventory instance.")]
@@ -62,6 +62,10 @@ namespace Neo.Tools
 
         [Header("Drop")] [SerializeField] [Tooltip("Optional drop module connected to this inventory.")]
         private InventoryDropper _dropper;
+
+        [Header("Debug")]
+        [SerializeField] [Tooltip("Текущее содержимое инвентаря (только для просмотра в Play mode, обновляется при изменениях).")]
+        private List<InventoryEntry> _debugEntries = new();
 
         [Header("Events")] public UnityEvent OnInventoryChanged = new();
         public UnityEvent<int, int> OnItemAdded = new();
@@ -119,6 +123,43 @@ namespace Neo.Tools
             if (_maxTotalItems < 0)
             {
                 _maxTotalItems = 0;
+            }
+        }
+
+        private void OnEnable()
+        {
+            if (!Application.isPlaying)
+            {
+                return;
+            }
+
+            OnInventoryChanged.AddListener(RefreshDebugContent);
+            OnLoaded.AddListener(RefreshDebugContent);
+            RefreshDebugContent();
+        }
+
+        private void OnDisable()
+        {
+            OnInventoryChanged.RemoveListener(RefreshDebugContent);
+            OnLoaded.RemoveListener(RefreshDebugContent);
+        }
+
+        private void RefreshDebugContent()
+        {
+            if (!Application.isPlaying || _manager == null)
+            {
+                return;
+            }
+
+            List<InventoryEntry> entries = _manager.CreateSnapshot();
+            _debugEntries.Clear();
+            for (int i = 0; i < entries.Count; i++)
+            {
+                InventoryEntry e = entries[i];
+                if (e.Count > 0)
+                {
+                    _debugEntries.Add(new InventoryEntry(e.ItemId, e.Count));
+                }
             }
         }
 
@@ -219,6 +260,21 @@ namespace Neo.Tools
             return removed;
         }
 
+        /// <summary>
+        ///     Удаляет amount предметов только если хватает. Возвращает true, если удалено ровно amount.
+        ///     Удобно для трат: if (inventory.TryConsume(itemId, cost)) { ... }
+        /// </summary>
+        public bool TryConsume(int itemId, int amount)
+        {
+            if (amount <= 0 || !HasItemAmount(itemId, amount))
+            {
+                return false;
+            }
+
+            RemoveItemByIdAmount(itemId, amount);
+            return true;
+        }
+
         public bool HasItem(int itemId)
         {
             return _manager.Has(itemId, 1);
@@ -237,6 +293,28 @@ namespace Neo.Tools
         public List<InventoryEntry> GetSnapshotEntries()
         {
             return _manager.CreateSnapshot();
+        }
+
+        /// <summary>
+        ///     Количество слотов с ненулевым количеством (порядок = порядок добавления).
+        /// </summary>
+        public int GetNonEmptySlotCount()
+        {
+            return GetSnapshotEntries().Count;
+        }
+
+        /// <summary>
+        ///     ItemId в слоте по индексу (0..GetNonEmptySlotCount()-1). -1 если индекс вне диапазона.
+        /// </summary>
+        public int GetItemIdAtSlotIndex(int slotIndex)
+        {
+            List<InventoryEntry> entries = GetSnapshotEntries();
+            if (slotIndex < 0 || slotIndex >= entries.Count)
+            {
+                return -1;
+            }
+
+            return entries[slotIndex].ItemId;
         }
 
         /// <summary>
@@ -329,6 +407,20 @@ namespace Neo.Tools
                 return;
             }
 
+            List<InventoryEntry> snapshot = _manager.CreateSnapshot();
+            for (int i = 0; i < snapshot.Count; i++)
+            {
+                InventoryEntry e = snapshot[i];
+                if (e.Count <= 0)
+                {
+                    continue;
+                }
+
+                OnItemRemoved?.Invoke(e.ItemId, e.Count);
+                OnItemCountChanged?.Invoke(e.ItemId, 0);
+                OnItemBecameZero?.Invoke(e.ItemId);
+            }
+
             _manager.Clear();
             OnInventoryChanged?.Invoke();
 
@@ -354,7 +446,6 @@ namespace Neo.Tools
 
             string json = JsonUtility.ToJson(data);
             SaveProvider.SetString(_saveKey, json);
-            SaveProvider.Save();
             OnSaved?.Invoke();
         }
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
+using Neo.StateMachine.NoCode;
 
 namespace Neo.StateMachine
 {
@@ -199,12 +200,16 @@ namespace Neo.StateMachine
                 {
                     Type fromType = transition.FromStateType;
                     if (!transitionCache.ContainsKey(fromType))
-                    {
                         transitionCache[fromType] = new List<StateTransition>();
-                    }
-
                     transitionCache[fromType].Add(transition);
                 }
+            }
+            else if (transition.FromStateData != null && enableTransitionCaching)
+            {
+                Type stateDataType = typeof(StateData);
+                if (!transitionCache.ContainsKey(stateDataType))
+                    transitionCache[stateDataType] = new List<StateTransition>();
+                transitionCache[stateDataType].Add(transition);
             }
             else
             {
@@ -230,9 +235,17 @@ namespace Neo.StateMachine
                 {
                     transitions.Remove(transition);
                     if (transitions.Count == 0)
-                    {
                         transitionCache.Remove(fromType);
-                    }
+                }
+            }
+            else if (transition.FromStateData != null && enableTransitionCaching)
+            {
+                Type stateDataType = typeof(StateData);
+                if (transitionCache.TryGetValue(stateDataType, out List<StateTransition> transitions))
+                {
+                    transitions.Remove(transition);
+                    if (transitions.Count == 0)
+                        transitionCache.Remove(stateDataType);
                 }
             }
             else
@@ -283,9 +296,13 @@ namespace Neo.StateMachine
                 bool canTransition = transition.CanTransition(CurrentState);
                 OnTransitionEvaluated?.Invoke(transition, canTransition);
 
-                if (canTransition && transition.ToStateType != null)
+                if (!canTransition)
                 {
-                    ChangeStateByType(transition.ToStateType);
+                    continue;
+                }
+
+                if (TryApplyTransitionTarget(transition))
+                {
                     break; // Выполняем только первый подходящий переход
                 }
             }
@@ -330,6 +347,23 @@ namespace Neo.StateMachine
         {
             transitionCache.Clear();
             globalTransitions.Clear();
+        }
+
+        private bool TryApplyTransitionTarget(StateTransition transition)
+        {
+            if (transition.ToStateType != null)
+            {
+                ChangeStateByType(transition.ToStateType);
+                return true;
+            }
+
+            if (transition.ToStateData is TState noCodeState)
+            {
+                ChangeState(noCodeState);
+                return true;
+            }
+
+            return false;
         }
 
         private void ChangeStateByType(Type stateType)

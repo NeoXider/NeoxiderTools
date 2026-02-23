@@ -1,6 +1,6 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию **NeoxiderTools** (v6.0.7). Ссылки на модули и инструкции по запуску.
+Добро пожаловать в документацию **NeoxiderTools** (v6.0.8). Ссылки на модули и инструкции по запуску.
 
 - **[Полезные компоненты (Add Component / GameObject)](./UsefulComponents.md)** — что удобно добавлять через меню **Neoxider/** (UI, Tools, Shop, Audio, Bonus и т.д.).
 - **[Новые скрипты и улучшения для функциональности](./NEXT_IMPROVEMENTS.md)** — идеи для следующих релизов (ValueDisplay, интеграции Shop+Inventory, ToggleByIndex и др.).
@@ -15,7 +15,7 @@
 | **Audio** | AudioManager, микшер, play-on-click | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Коллекции, слот-машины, колёса удачи, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
 | **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [`Cards/README.md`](./Cards/README.md) |
-| **Condition** | No-Code условия: поля, свойства, методы с аргументом (int/float/string), AND/OR, события. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
+| **Condition** | No-Code условия: поля, свойства, методы с аргументом (int/float/string), AND/OR, события. Переиспользование в State Machine и своих системах. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [Condition_Reuse.md](./Condition/Condition_Reuse.md) |
 | **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |

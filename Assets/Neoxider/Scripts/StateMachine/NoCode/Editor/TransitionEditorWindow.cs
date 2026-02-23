@@ -1,3 +1,6 @@
+using System;
+using System.Linq;
+using Neo.StateMachine;
 using UnityEditor;
 using UnityEngine;
 
@@ -77,6 +80,33 @@ namespace Neo.StateMachine.NoCode.Editor
                         EditorGUILayout.LabelField("Type", predicate.GetType().Name);
                         EditorGUILayout.LabelField("Name", predicate.PredicateName);
                         predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
+
+                        if (predicate is ConditionEntryPredicate && data != null)
+                        {
+                            int transIndex = data.Transitions.IndexOf(transition);
+                            if (transIndex >= 0)
+                            {
+                                SerializedObject so = new SerializedObject(data);
+                                SerializedProperty transitionsProp = so.FindProperty("transitions");
+                                if (transitionsProp != null && transIndex < transitionsProp.arraySize)
+                                {
+                                    SerializedProperty transEl = transitionsProp.GetArrayElementAtIndex(transIndex);
+                                    SerializedProperty predicatesProp = transEl.FindPropertyRelative("predicates");
+                                    if (predicatesProp != null && i < predicatesProp.arraySize)
+                                    {
+                                        SerializedProperty predProp = predicatesProp.GetArrayElementAtIndex(i);
+                                        SerializedProperty contextSlotProp = predProp.FindPropertyRelative("contextSlot");
+                                        SerializedProperty entryProp = predProp.FindPropertyRelative("conditionEntry");
+                                        so.Update();
+                                        if (contextSlotProp != null)
+                                            EditorGUILayout.PropertyField(contextSlotProp, new GUIContent("Context Slot", "Owner = object with StateMachine; Override1..5 = from Context Overrides on component (set in scene)."));
+                                        if (entryProp != null)
+                                            EditorGUILayout.PropertyField(entryProp, true);
+                                        so.ApplyModifiedProperties();
+                                    }
+                                }
+                            }
+                        }
                     }
                     else
                     {
@@ -140,26 +170,71 @@ namespace Neo.StateMachine.NoCode.Editor
         private void ShowAddPredicateMenu()
         {
             GenericMenu menu = new();
+            Type[] predicateTypes = TypeCache.GetTypesDerivedFrom<StatePredicate>()
+                .Where(t => !t.IsAbstract && !t.IsGenericType && t.GetConstructor(Type.EmptyTypes) != null)
+                .OrderBy(GetPredicateOrder)
+                .ThenBy(t => t.Name)
+                .ToArray();
 
-            // Добавляем типы предикатов, которые можно создать
-            // TODO: Использовать рефлексию для автоматического поиска всех типов StatePredicate
-            menu.AddItem(new GUIContent("Float Comparison"), false, () =>
+            if (predicateTypes.Length == 0)
             {
-                // TODO: Создать FloatComparisonPredicate
-                Debug.LogWarning("[TransitionEditorWindow] FloatComparisonPredicate creation not yet implemented.");
-            });
-
-            menu.AddItem(new GUIContent("Bool Comparison"), false, () =>
+                menu.AddDisabledItem(new GUIContent("No predicate types available"));
+            }
+            else
             {
-                // TODO: Создать BoolComparisonPredicate
-                Debug.LogWarning("[TransitionEditorWindow] BoolComparisonPredicate creation not yet implemented.");
-            });
-
-            menu.AddSeparator("");
-            menu.AddItem(new GUIContent("Custom Predicate..."), false,
-                () => { Debug.LogWarning("[TransitionEditorWindow] Custom predicate creation not yet implemented."); });
+                foreach (Type type in predicateTypes)
+                {
+                    string menuPath = GetPredicateMenuPath(type);
+                    menu.AddItem(new GUIContent(menuPath), false, () => AddPredicate(type));
+                }
+            }
 
             menu.ShowAsContext();
+        }
+
+        private void AddPredicate(Type predicateType)
+        {
+            if (predicateType == null)
+            {
+                return;
+            }
+
+            if (Activator.CreateInstance(predicateType) is not StatePredicate predicate)
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(predicate.PredicateName) || predicate.PredicateName == "Unnamed Predicate")
+            {
+                predicate.PredicateName = predicateType.Name;
+            }
+
+            transition.AddPredicate(predicate);
+
+            if (data != null)
+            {
+                EditorUtility.SetDirty(data);
+            }
+        }
+
+        private static int GetPredicateOrder(Type type)
+        {
+            if (type == typeof(ConditionEntryPredicate))
+            {
+                return 0;
+            }
+
+            return 1;
+        }
+
+        private static string GetPredicateMenuPath(Type type)
+        {
+            if (type == typeof(ConditionEntryPredicate))
+            {
+                return "Neoxider/Condition Entry";
+            }
+
+            return $"Built-in/{type.Name}";
         }
     }
 }

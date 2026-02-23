@@ -405,7 +405,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class AndPredicate : StatePredicate
     {
-        [SerializeField] private List<StatePredicate> predicates = new();
+        [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
         ///     Список предикатов для комбинирования.
@@ -463,7 +463,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class OrPredicate : StatePredicate
     {
-        [SerializeField] private List<StatePredicate> predicates = new();
+        [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
         ///     Список предикатов для комбинирования.
@@ -521,7 +521,7 @@ namespace Neo.StateMachine
     [Serializable]
     public class NotPredicate : StatePredicate
     {
-        [SerializeField] private StatePredicate predicate;
+        [SerializeReference] [SerializeField] private StatePredicate predicate;
 
         /// <summary>
         ///     Предикат для инверсии.

@@ -42,8 +42,8 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
         private CounterValueMode _valueMode = CounterValueMode.Int;
 
-        [SerializeField] [Tooltip("Current counter value (default 1).")]
-        private float _value = 1f;
+        [Tooltip("Current counter value. Initial value used when save is disabled.")]
+        public ReactivePropertyFloat Value = new();
 
         [SerializeField] [Tooltip("Value to pass to OnSend when calling Send() with no argument.")]
         private CounterSendPayload _sendPayload = CounterSendPayload.Counter;
@@ -74,20 +74,15 @@ namespace Neo.Tools
         [Tooltip("Invoked on Send() in Float mode. Passes value (Payload or argument).")]
         public UnityEvent<float> OnSendFloat = new();
 
-        [Space]
-        [Tooltip(
-            "Вызывается при любом изменении значения. Передаётся новое значение (float). Для типизированных подписок используйте OnValueChangedInt / OnValueChangedFloat.")]
-        public UnityEvent<float> OnValueChanged = new();
-
         [Tooltip(
             "Вызывается при Send(). Передаётся значение (float). Для типизированных подписок используйте OnSendInt / OnSendFloat.")]
         public UnityEvent<float> OnSend = new();
 
         /// <summary>Текущее значение счётчика (целое в режиме Int).</summary>
-        public int ValueInt => _valueMode == CounterValueMode.Int ? Mathf.RoundToInt(_value) : (int)_value;
+        public int ValueInt => _valueMode == CounterValueMode.Int ? Mathf.RoundToInt(Value.CurrentValue) : (int)Value.CurrentValue;
 
         /// <summary>Текущее значение счётчика как float.</summary>
-        public float ValueFloat => _value;
+        public float ValueFloat => Value.CurrentValue;
 
         private void Start()
         {
@@ -199,7 +194,7 @@ namespace Neo.Tools
 
         private void Load()
         {
-            _value = SaveProvider.GetFloat(_saveKey, _value);
+            Value.SetValueWithoutNotify(SaveProvider.GetFloat(_saveKey, Value.CurrentValue));
         }
 
         private void SaveValue()
@@ -209,8 +204,7 @@ namespace Neo.Tools
                 return;
             }
 
-            SaveProvider.SetFloat(_saveKey, _value);
-            SaveProvider.Save();
+            SaveProvider.SetFloat(_saveKey, Value.CurrentValue);
         }
 
         private void InvokeSend(float payload)
@@ -228,7 +222,7 @@ namespace Neo.Tools
 
         private void ApplyDelta(float delta)
         {
-            float next = _value + delta;
+            float next = Value.CurrentValue + delta;
             if (_valueMode == CounterValueMode.Int)
             {
                 next = Mathf.RoundToInt(next);
@@ -239,7 +233,7 @@ namespace Neo.Tools
 
         private void ApplyFactor(float factor)
         {
-            float next = _value * factor;
+            float next = Value.CurrentValue * factor;
             if (_valueMode == CounterValueMode.Int)
             {
                 next = Mathf.RoundToInt(next);
@@ -255,26 +249,34 @@ namespace Neo.Tools
                 newValue = Mathf.RoundToInt(newValue);
             }
 
-            if (Mathf.Approximately(_value, newValue))
+            if (Mathf.Approximately(Value.CurrentValue, newValue))
             {
                 return;
             }
 
-            _value = newValue;
-            InvokeValueChanged();
-            SaveValue();
-        }
-
-        private void InvokeValueChanged()
-        {
-            OnValueChanged?.Invoke(_value);
+            Value.Value = newValue;
             if (_valueMode == CounterValueMode.Int)
             {
                 OnValueChangedInt?.Invoke(ValueInt);
             }
             else
             {
-                OnValueChangedFloat?.Invoke(_value);
+                OnValueChangedFloat?.Invoke(Value.CurrentValue);
+            }
+
+            SaveValue();
+        }
+
+        private void InvokeValueChanged()
+        {
+            Value.ForceNotify();
+            if (_valueMode == CounterValueMode.Int)
+            {
+                OnValueChangedInt?.Invoke(ValueInt);
+            }
+            else
+            {
+                OnValueChangedFloat?.Invoke(Value.CurrentValue);
             }
         }
 
@@ -283,13 +285,13 @@ namespace Neo.Tools
             switch (_sendPayload)
             {
                 case CounterSendPayload.Counter:
-                    return _value;
+                    return Value.CurrentValue;
                 case CounterSendPayload.Score:
                     return ScoreManager.I != null ? ScoreManager.I.Score : 0f;
                 case CounterSendPayload.Money:
                     return Money.I != null ? Money.I.money : 0f;
                 default:
-                    return _value;
+                    return Value.CurrentValue;
             }
         }
     }

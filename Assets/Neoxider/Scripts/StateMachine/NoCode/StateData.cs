@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Neo.StateMachine.NoCode
 {
@@ -34,23 +35,32 @@ namespace Neo.StateMachine.NoCode
             set => stateName = value;
         }
 
+        [FormerlySerializedAs("<OnEnterActions>k__BackingField")]
+        [SerializeReference] [SerializeField] [Tooltip("Actions on state enter")]
+        private List<StateAction> onEnterActions = new();
+
+        [FormerlySerializedAs("<OnUpdateActions>k__BackingField")]
+        [SerializeReference] [SerializeField] [Tooltip("Actions every frame while in state")]
+        private List<StateAction> onUpdateActions = new();
+
+        [FormerlySerializedAs("<OnExitActions>k__BackingField")]
+        [SerializeReference] [SerializeField] [Tooltip("Actions on state exit")]
+        private List<StateAction> onExitActions = new();
+
         /// <summary>
         ///     Действия при входе в состояние.
         /// </summary>
-        [field: Tooltip("Actions on state enter")]
-        public List<StateAction> OnEnterActions { get; } = new();
+        public List<StateAction> OnEnterActions => onEnterActions;
 
         /// <summary>
         ///     Действия при обновлении состояния.
         /// </summary>
-        [field: Tooltip("Actions every frame while in state")]
-        public List<StateAction> OnUpdateActions { get; } = new();
+        public List<StateAction> OnUpdateActions => onUpdateActions;
 
         /// <summary>
         ///     Действия при выходе из состояния.
         /// </summary>
-        [field: Tooltip("Actions on state exit")]
-        public List<StateAction> OnExitActions { get; } = new();
+        public List<StateAction> OnExitActions => onExitActions;
 
         /// <summary>
         ///     Вызывается при входе в состояние.

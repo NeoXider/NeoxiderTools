@@ -140,10 +140,15 @@ namespace Neo.Tools
 
         private InventoryItemView GetOrCreateSpawnedView(int itemId)
         {
-            if (_spawnedByItemId.TryGetValue(itemId, out InventoryItemView cached) && cached != null)
+            if (_spawnedByItemId.TryGetValue(itemId, out InventoryItemView cached))
             {
-                cached.gameObject.SetActive(true);
-                return cached;
+                if (cached != null)
+                {
+                    cached.gameObject.SetActive(true);
+                    return cached;
+                }
+
+                _spawnedByItemId.Remove(itemId);
             }
 
             InventoryItemView created = Instantiate(_itemViewPrefab, _itemsRoot);
@@ -217,16 +222,18 @@ namespace Neo.Tools
 
         private List<int> BuildDisplayItemIds()
         {
-            HashSet<int> uniqueIds = new();
+            List<int> ordered = new();
+            HashSet<int> seen = new();
+
             if ((_sourceMode == InventoryViewSourceMode.DatabaseItems || _sourceMode == InventoryViewSourceMode.Hybrid) &&
                 _inventory.Database != null && _inventory.Database.Items != null)
             {
                 for (int i = 0; i < _inventory.Database.Items.Count; i++)
                 {
                     InventoryItemData data = _inventory.Database.Items[i];
-                    if (data != null)
+                    if (data != null && seen.Add(data.ItemId))
                     {
-                        uniqueIds.Add(data.ItemId);
+                        ordered.Add(data.ItemId);
                     }
                 }
             }
@@ -237,14 +244,14 @@ namespace Neo.Tools
                 for (int i = 0; i < snapshot.Count; i++)
                 {
                     InventoryEntry entry = snapshot[i];
-                    if (entry != null && entry.Count > 0)
+                    if (entry != null && entry.Count > 0 && seen.Add(entry.ItemId))
                     {
-                        uniqueIds.Add(entry.ItemId);
+                        ordered.Add(entry.ItemId);
                     }
                 }
             }
 
-            return new List<int>(uniqueIds);
+            return ordered;
         }
 
         private IEnumerator RefreshNextFrame()

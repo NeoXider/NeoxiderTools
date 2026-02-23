@@ -197,7 +197,6 @@ namespace Neo.Save
 
             string jsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
-            SaveProvider.Save();
         }
 
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
@@ -451,10 +450,6 @@ namespace Neo.Save
 
             string newJsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", newJsonData);
-            if (isSave)
-            {
-                SaveProvider.Save();
-            }
 
             Debug.Log($"[SaveManager] Manually saved {componentKey}");
         }

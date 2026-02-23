@@ -45,6 +45,11 @@ namespace Neo.StateMachine
         [Header("References")] [SerializeField] [Tooltip("NoCode State Machine config (optional)")]
         private StateMachineData stateMachineData;
 
+        [Header("Context for conditions")]
+        [SerializeField]
+        [Tooltip("GameObjects for transition conditions. In conditions use Context Slot: Owner / Override1..5. Assign here in scene.")]
+        private GameObject[] contextOverrides = new GameObject[0];
+
         private Type initialStateType;
 
         private StateMachine<TState> stateMachine;
@@ -99,7 +104,7 @@ namespace Neo.StateMachine
 
             if (autoEvaluateTransitions)
             {
-                StateMachine.EvaluateTransitions();
+                EvaluateTransitionsInternal();
             }
         }
 
@@ -202,6 +207,7 @@ namespace Neo.StateMachine
                 return;
             }
 
+            StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
             if (stateMachineData.InitialState != null)
@@ -236,6 +242,19 @@ namespace Neo.StateMachine
                     Debug.Log($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
                 }
             });
+        }
+
+        private void EvaluateTransitionsInternal()
+        {
+            StateMachineEvaluationContext.Push(gameObject, contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            try
+            {
+                StateMachine.EvaluateTransitions();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
         }
 
         private void ChangeStateByType(Type stateType)

@@ -67,7 +67,7 @@ namespace Neo.Condition
     ///     В рантайме через reflection (с кешированием) читает значение и сравнивает.
     /// </summary>
     [Serializable]
-    public class ConditionEntry
+    public class ConditionEntry : IConditionEvaluator
     {
         [Tooltip("Data source: Component (component fields) or GameObject (object properties).")] [SerializeField]
         private SourceMode _sourceMode = SourceMode.Component;
@@ -140,30 +140,11 @@ namespace Neo.Condition
         [SerializeField] private float _otherPropertyArgumentFloat;
         [SerializeField] private string _otherPropertyArgumentString = "";
 
-        // Cached reflection data
-        [NonSerialized] private Component _cachedComponent;
-        [NonSerialized] private GameObject _cachedGameObject;
-        [NonSerialized] private MemberInfo _cachedMember;
+        [NonSerialized] private ConditionValueSource _leftSource;
+        [NonSerialized] private ConditionValueSource _rightSource;
 
-        // Кеш для "other" объекта (второй источник при ThresholdSource.OtherObject)
-        [NonSerialized] private Component _cachedOtherComponent;
-        [NonSerialized] private GameObject _cachedOtherGameObject;
-        [NonSerialized] private MemberInfo _cachedOtherMember;
-        [NonSerialized] private bool _cacheOtherValid;
-        [NonSerialized] private bool _cacheValid;
-
-        // Кеш поиска по имени
-        [NonSerialized] private GameObject _foundByNameObject;
-        [NonSerialized] private GameObject _foundOtherByNameObject;
-
-        // Флаг: предупреждение уже показано (чтобы не спамить каждый кадр)
-        [NonSerialized] private bool _hasLoggedDestroyedWarning;
-        [NonSerialized] private bool _hasLoggedMissingMemberWarning;
-        [NonSerialized] private bool _hasLoggedOtherDestroyedWarning;
-        [NonSerialized] private bool _hasLoggedOtherMissingWarning;
-        [NonSerialized] private bool _hasLoggedSearchNotFoundWarning;
-        [NonSerialized] private bool _hasSearchedByName;
-        [NonSerialized] private bool _hasSearchedOtherByName;
+        private ConditionValueSource GetLeftSource() => _leftSource ??= new ConditionValueSource(this, false);
+        private ConditionValueSource GetRightSource() => _rightSource ??= new ConditionValueSource(this, true);
 
         /// <summary>
         ///     Источник данных: Component или GameObject.
@@ -238,7 +219,7 @@ namespace Neo.Condition
         /// <summary>
         ///     Найденный через поиск по имени объект (runtime, read-only).
         /// </summary>
-        public GameObject FoundByNameObject => _foundByNameObject;
+        public GameObject FoundByNameObject => _leftSource?.FoundByNameObject;
 
         /// <summary>
         ///     Индекс компонента на объекте.
@@ -315,7 +296,7 @@ namespace Neo.Condition
             set
             {
                 _thresholdSource = value;
-                InvalidateOtherCache();
+                _rightSource?.InvalidateCacheFull();
             }
         }
 
@@ -343,19 +324,31 @@ namespace Neo.Condition
             set => _thresholdString = value;
         }
 
+        internal bool IsMethodWithArgument => _isMethodWithArgument;
+        internal ArgumentKind PropertyArgumentKind => _propertyArgumentKind;
+        internal int PropertyArgumentInt => _propertyArgumentInt;
+        internal float PropertyArgumentFloat => _propertyArgumentFloat;
+        internal string PropertyArgumentString => _propertyArgumentString;
+        internal SourceMode OtherSourceMode => _otherSourceMode;
+        internal bool OtherUseSceneSearch => _otherUseSceneSearch;
+        internal string OtherSearchObjectName => _otherSearchObjectName;
+        internal bool OtherWaitForObject => _otherWaitForObject;
+        internal GameObject OtherSourceObject => _otherSourceObject;
+        internal int OtherComponentIndex => _otherComponentIndex;
+        internal string OtherComponentTypeName => _otherComponentTypeName;
+        internal string OtherPropertyName => _otherPropertyName;
+        internal bool OtherIsMethodWithArgument => _otherIsMethodWithArgument;
+        internal ArgumentKind OtherPropertyArgumentKind => _otherPropertyArgumentKind;
+        internal int OtherPropertyArgumentInt => _otherPropertyArgumentInt;
+        internal float OtherPropertyArgumentFloat => _otherPropertyArgumentFloat;
+        internal string OtherPropertyArgumentString => _otherPropertyArgumentString;
+
         /// <summary>
         ///     Сбросить кеш reflection и флаги предупреждений.
-        ///     Кеш поиска по имени НЕ сбрасывается (объект мог остаться живым).
-        ///     Для полного сброса используйте <see cref="InvalidateCacheFull" />.
         /// </summary>
         public void InvalidateCache()
         {
-            _cacheValid = false;
-            _cachedComponent = null;
-            _cachedGameObject = null;
-            _cachedMember = null;
-            _hasLoggedDestroyedWarning = false;
-            _hasLoggedMissingMemberWarning = false;
+            _leftSource?.InvalidateCache();
         }
 
         /// <summary>
@@ -363,11 +356,8 @@ namespace Neo.Condition
         /// </summary>
         public void InvalidateCacheFull()
         {
-            InvalidateCache();
-            InvalidateOtherCache();
-            _foundByNameObject = null;
-            _hasSearchedByName = false;
-            _hasLoggedSearchNotFoundWarning = false;
+            _leftSource?.InvalidateCacheFull();
+            _rightSource?.InvalidateCacheFull();
         }
 
         /// <summary>
@@ -377,34 +367,13 @@ namespace Neo.Condition
         public void BindOtherToSourceIfNull(GameObject fallbackObject)
         {
             if (_thresholdSource != ThresholdSource.OtherObject)
-            {
                 return;
-            }
-
             if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
-            {
                 return;
-            }
-
             if (_otherSourceObject != null)
-            {
                 return;
-            }
-
-            _otherSourceObject = ResolveTargetObject(fallbackObject);
-            InvalidateOtherCache();
-        }
-
-        private void InvalidateOtherCache()
-        {
-            _cacheOtherValid = false;
-            _cachedOtherComponent = null;
-            _cachedOtherGameObject = null;
-            _cachedOtherMember = null;
-            _foundOtherByNameObject = null;
-            _hasSearchedOtherByName = false;
-            _hasLoggedOtherDestroyedWarning = false;
-            _hasLoggedOtherMissingWarning = false;
+            _otherSourceObject = GetLeftSource().GetResolvedTarget(fallbackObject);
+            _rightSource?.InvalidateCacheFull();
         }
 
         /// <summary>
@@ -419,316 +388,96 @@ namespace Neo.Condition
 
         private bool EvaluateInternal(GameObject fallbackObject)
         {
-            if (!EnsureCache(fallbackObject))
-            {
+            ConditionValueSource left = GetLeftSource();
+            if (!left.EnsureCache(fallbackObject))
                 return false;
-            }
 
             object rawValue;
             try
             {
-                rawValue = ReadValue();
+                rawValue = left.ReadValue();
             }
             catch (MissingReferenceException)
             {
-                // Объект или компонент был уничтожен между проверкой кеша и чтением
-                LogDestroyedWarning("Объект/компонент уничтожен во время чтения значения");
-                InvalidateCache();
+                left.InvalidateCache();
                 return false;
             }
             catch (Exception ex)
             {
-                if (!_hasLoggedMissingMemberWarning)
-                {
-                    Debug.LogWarning($"[NeoCondition] Ошибка чтения значения ({_propertyName}): {ex.Message}");
-                    _hasLoggedMissingMemberWarning = true;
-                }
-
-                InvalidateCache();
+                Debug.LogWarning($"[NeoCondition] Ошибка чтения значения ({_propertyName}): {ex.Message}");
+                left.InvalidateCache();
                 return false;
             }
 
             if (rawValue == null)
-            {
                 return false;
-            }
 
+            object thresholdValue;
             if (_thresholdSource == ThresholdSource.OtherObject)
             {
-                if (!EnsureCacheOther(fallbackObject))
-                {
+                ConditionValueSource right = GetRightSource();
+                if (!right.EnsureCache(fallbackObject))
                     return false;
-                }
-
-                object otherValue;
                 try
                 {
-                    otherValue = ReadOtherValue();
+                    thresholdValue = right.ReadValue();
                 }
                 catch (MissingReferenceException)
                 {
-                    LogOtherDestroyedWarning("Второй объект/компонент уничтожен при чтении");
-                    InvalidateOtherCache();
+                    right.InvalidateCache();
                     return false;
                 }
                 catch (Exception ex)
                 {
-                    if (!_hasLoggedOtherMissingWarning)
-                    {
-                        Debug.LogWarning(
-                            $"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
-                        _hasLoggedOtherMissingWarning = true;
-                    }
-
-                    InvalidateOtherCache();
+                    Debug.LogWarning($"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
+                    right.InvalidateCache();
                     return false;
                 }
-
-                if (otherValue == null)
-                {
+                if (thresholdValue == null)
                     return false;
-                }
-
-                try
-                {
-                    switch (_valueType)
-                    {
-                        case ValueType.Int:
-                            return CompareInt(Convert.ToInt32(rawValue), Convert.ToInt32(otherValue));
-                        case ValueType.Float:
-                            return CompareFloat(Convert.ToSingle(rawValue), Convert.ToSingle(otherValue));
-                        case ValueType.Bool:
-                            return CompareBool(Convert.ToBoolean(rawValue), Convert.ToBoolean(otherValue));
-                        case ValueType.String:
-                            return CompareString(rawValue.ToString(), otherValue.ToString());
-                        default:
-                            return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    if (!_hasLoggedMissingMemberWarning)
-                    {
-                        Debug.LogWarning(
-                            $"[NeoCondition] Ошибка сравнения двух переменных ({_propertyName} vs {_otherPropertyName}): {ex.Message}");
-                        _hasLoggedMissingMemberWarning = true;
-                    }
-
-                    return false;
-                }
-            }
-
-            try
-            {
-                switch (_valueType)
-                {
-                    case ValueType.Int:
-                        return CompareInt(Convert.ToInt32(rawValue));
-                    case ValueType.Float:
-                        return CompareFloat(Convert.ToSingle(rawValue));
-                    case ValueType.Bool:
-                        return CompareBool(Convert.ToBoolean(rawValue));
-                    case ValueType.String:
-                        return CompareString(rawValue.ToString());
-                    default:
-                        return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                if (!_hasLoggedMissingMemberWarning)
-                {
-                    Debug.LogWarning(
-                        $"[NeoCondition] Ошибка сравнения значения ({_propertyName}={rawValue}, тип={_valueType}): {ex.Message}");
-                    _hasLoggedMissingMemberWarning = true;
-                }
-
-                return false;
-            }
-        }
-
-        /// <summary>
-        ///     Определяет целевой GameObject: через прямую ссылку, поиск по имени или fallback.
-        /// </summary>
-        private GameObject ResolveTargetObject(GameObject fallbackObject)
-        {
-            // Режим поиска по имени
-            if (_useSceneSearch && !string.IsNullOrEmpty(_searchObjectName))
-            {
-                // Если уже нашли и объект жив — возвращаем кеш
-                if (_foundByNameObject != null)
-                {
-                    return _foundByNameObject;
-                }
-
-                // Если объект был найден ранее, но уничтожен — ищем заново
-                if (_hasSearchedByName && _foundByNameObject == null)
-                {
-                    // Объект уничтожен — сбросить флаг, искать снова
-                    _hasSearchedByName = false;
-                    _hasLoggedSearchNotFoundWarning = false;
-                }
-
-                // Поиск
-                _foundByNameObject = GameObject.Find(_searchObjectName);
-                _hasSearchedByName = true;
-
-                if (_foundByNameObject == null)
-                {
-                    if (!_waitForObject && !_hasLoggedSearchNotFoundWarning)
-                    {
-                        Debug.LogWarning(
-                            $"[NeoCondition] GameObject.Find(\"{_searchObjectName}\") — объект не найден в сцене.");
-                        _hasLoggedSearchNotFoundWarning = true;
-                    }
-
-                    return null;
-                }
-
-                // Нашли — сброс предупреждения (объект мог появиться позже)
-                _hasLoggedSearchNotFoundWarning = false;
-                return _foundByNameObject;
-            }
-
-            // Прямая ссылка или fallback
-            if (IsSourceObjectDestroyed())
-            {
-                return null; // warning будет в EnsureCache*
-            }
-
-            return _sourceObject != null ? _sourceObject : fallbackObject;
-        }
-
-        private bool EnsureCache(GameObject fallbackObject)
-        {
-            if (_sourceMode == SourceMode.GameObject)
-            {
-                return EnsureCacheGameObject(fallbackObject);
-            }
-
-            return EnsureCacheComponent(fallbackObject);
-        }
-
-        private bool EnsureCacheComponent(GameObject fallbackObject)
-        {
-            // Проверка: закешированный компонент мог быть уничтожен
-            if (_cacheValid && _cachedMember != null)
-            {
-                if (_cachedComponent == null)
-                {
-                    // Компонент уничтожен — сбрасываем кеш
-                    LogDestroyedWarning($"Компонент '{_componentTypeName}' был уничтожен");
-                    InvalidateCache();
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            _cacheValid = false;
-            _cachedComponent = null;
-            _cachedGameObject = null;
-            _cachedMember = null;
-
-            GameObject target = ResolveTargetObject(fallbackObject);
-            if (target == null)
-            {
-                if (!_useSceneSearch && IsSourceObjectDestroyed())
-                {
-                    LogDestroyedWarning(
-                        $"Source GameObject был уничтожен (ожидался объект для компонента '{_componentTypeName}')");
-                }
-
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(_componentTypeName) || string.IsNullOrEmpty(_propertyName))
-            {
-                return false;
-            }
-
-            // Find component by type name
-            Component[] components;
-            try
-            {
-                components = target.GetComponents<Component>();
-            }
-            catch (MissingReferenceException)
-            {
-                LogDestroyedWarning($"GameObject уничтожен при поиске компонента '{_componentTypeName}'");
-                return false;
-            }
-
-            foreach (Component comp in components)
-            {
-                if (comp == null)
-                {
-                    continue;
-                }
-
-                if (comp.GetType().FullName == _componentTypeName ||
-                    comp.GetType().Name == _componentTypeName)
-                {
-                    _cachedComponent = comp;
-                    break;
-                }
-            }
-
-            if (_cachedComponent == null)
-            {
-                if (!_hasLoggedMissingMemberWarning)
-                {
-                    Debug.LogWarning($"[NeoCondition] Компонент '{_componentTypeName}' не найден на '{target.name}'.");
-                    _hasLoggedMissingMemberWarning = true;
-                }
-
-                return false;
-            }
-
-            Type type = _cachedComponent.GetType();
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-            if (_isMethodWithArgument)
-            {
-                MethodInfo method = FindMethodWithOneArgument(type, _propertyName, _propertyArgumentKind, flags);
-                if (method != null)
-                {
-                    _cachedMember = method;
-                    _cacheValid = true;
-                    return true;
-                }
             }
             else
             {
-                PropertyInfo prop = type.GetProperty(_propertyName, flags);
-                if (prop != null && prop.CanRead)
+                thresholdValue = _valueType switch
                 {
-                    _cachedMember = prop;
-                    _cacheValid = true;
-                    return true;
-                }
-
-                FieldInfo field = type.GetField(_propertyName, flags);
-                if (field != null)
-                {
-                    _cachedMember = field;
-                    _cacheValid = true;
-                    return true;
-                }
+                    ValueType.Int => _thresholdInt,
+                    ValueType.Float => _thresholdFloat,
+                    ValueType.Bool => _thresholdBool,
+                    ValueType.String => _thresholdString,
+                    _ => null
+                };
             }
 
-            if (!_hasLoggedMissingMemberWarning)
+            try
             {
-                Debug.LogWarning(
-                    $"[NeoCondition] Свойство/поле/метод '{_propertyName}' не найдено в '{_componentTypeName}' на '{target.name}'.");
-                _hasLoggedMissingMemberWarning = true;
+                if (_thresholdSource == ThresholdSource.OtherObject)
+                {
+                    return _valueType switch
+                    {
+                        ValueType.Int => CompareInt(Convert.ToInt32(rawValue), Convert.ToInt32(thresholdValue)),
+                        ValueType.Float => CompareFloat(Convert.ToSingle(rawValue), Convert.ToSingle(thresholdValue)),
+                        ValueType.Bool => CompareBool(Convert.ToBoolean(rawValue), Convert.ToBoolean(thresholdValue)),
+                        ValueType.String => CompareString(rawValue.ToString(), thresholdValue.ToString()),
+                        _ => false
+                    };
+                }
+                return _valueType switch
+                {
+                    ValueType.Int => CompareInt(Convert.ToInt32(rawValue)),
+                    ValueType.Float => CompareFloat(Convert.ToSingle(rawValue)),
+                    ValueType.Bool => CompareBool(Convert.ToBoolean(rawValue)),
+                    ValueType.String => CompareString(rawValue.ToString()),
+                    _ => false
+                };
             }
-
-            return false;
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[NeoCondition] Ошибка сравнения: {ex.Message}");
+                return false;
+            }
         }
 
-        private static bool IsSupportedParameterType(Type type, ArgumentKind kind)
+        internal static bool IsSupportedParameterType(Type type, ArgumentKind kind)
         {
             if (kind == ArgumentKind.Int)
                 return type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte);
@@ -739,14 +488,14 @@ namespace Neo.Condition
             return false;
         }
 
-        private static bool IsSupportedReturnType(Type type)
+        internal static bool IsSupportedReturnType(Type type)
         {
             return type == typeof(int) || type == typeof(float) || type == typeof(double) ||
                    type == typeof(bool) || type == typeof(string) ||
                    type == typeof(long) || type == typeof(short) || type == typeof(byte);
         }
 
-        private static MethodInfo FindMethodWithOneArgument(Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags)
+        internal static MethodInfo FindMethodWithOneArgument(Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags)
         {
             foreach (MethodInfo method in type.GetMethods(flags))
             {
@@ -760,436 +509,6 @@ namespace Neo.Condition
                 if (!IsSupportedReturnType(method.ReturnType))
                     continue;
                 return method;
-            }
-
-            return null;
-        }
-
-        private object GetPropertyArgumentValue()
-        {
-            return _propertyArgumentKind switch
-            {
-                ArgumentKind.Int => _propertyArgumentInt,
-                ArgumentKind.Float => _propertyArgumentFloat,
-                ArgumentKind.String => _propertyArgumentString,
-                _ => _propertyArgumentInt
-            };
-        }
-
-        private object GetOtherPropertyArgumentValue()
-        {
-            return _otherPropertyArgumentKind switch
-            {
-                ArgumentKind.Int => _otherPropertyArgumentInt,
-                ArgumentKind.Float => _otherPropertyArgumentFloat,
-                ArgumentKind.String => _otherPropertyArgumentString,
-                _ => _otherPropertyArgumentInt
-            };
-        }
-
-        private bool EnsureCacheGameObject(GameObject fallbackObject)
-        {
-            // Проверка: закешированный GO мог быть уничтожен
-            if (_cacheValid && _cachedMember != null)
-            {
-                if (_cachedGameObject == null)
-                {
-                    LogDestroyedWarning("Целевой GameObject был уничтожен (режим GameObject)");
-                    InvalidateCache();
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            _cacheValid = false;
-            _cachedComponent = null;
-            _cachedGameObject = null;
-            _cachedMember = null;
-
-            GameObject target = ResolveTargetObject(fallbackObject);
-            if (target == null)
-            {
-                if (!_useSceneSearch && IsSourceObjectDestroyed())
-                {
-                    LogDestroyedWarning("Source GameObject был уничтожен (режим GameObject)");
-                }
-
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(_propertyName))
-            {
-                return false;
-            }
-
-            _cachedGameObject = target;
-
-            // Find member on GameObject
-            Type type = typeof(GameObject);
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
-
-            PropertyInfo prop = type.GetProperty(_propertyName, flags);
-            if (prop != null && prop.CanRead)
-            {
-                _cachedMember = prop;
-                _cacheValid = true;
-                return true;
-            }
-
-            FieldInfo field = type.GetField(_propertyName, flags);
-            if (field != null)
-            {
-                _cachedMember = field;
-                _cacheValid = true;
-                return true;
-            }
-
-            if (!_hasLoggedMissingMemberWarning)
-            {
-                Debug.LogWarning($"[NeoCondition] Свойство '{_propertyName}' не найдено на GameObject.");
-                _hasLoggedMissingMemberWarning = true;
-            }
-
-            return false;
-        }
-
-        /// <summary>
-        ///     Проверяет, был ли _sourceObject задан (не через fallback), но уничтожен.
-        ///     Unity: уничтоженный объект == null, но ReferenceEquals(obj, null) == false.
-        /// </summary>
-        private bool IsSourceObjectDestroyed()
-        {
-            // Если _sourceObject никогда не задавался — это нормально (используется fallback на self)
-            // Unity: если ссылка была задана, но объект уничтожен, то:
-            //   _sourceObject == null (Unity override) → true
-            //   ReferenceEquals(_sourceObject, null) → false (C# ссылка жива, но обёртка мертва)
-            return !ReferenceEquals(_sourceObject, null) && _sourceObject == null;
-        }
-
-        private void LogDestroyedWarning(string message)
-        {
-            if (!_hasLoggedDestroyedWarning)
-            {
-                Debug.LogWarning($"[NeoCondition] {message}. Условие будет возвращать false.");
-                _hasLoggedDestroyedWarning = true;
-            }
-        }
-
-        private object ReadValue()
-        {
-            if (_sourceMode == SourceMode.GameObject)
-            {
-                // Повторная проверка: GO мог быть уничтожен после EnsureCache
-                if (_cachedGameObject == null)
-                {
-                    InvalidateCache();
-                    return null;
-                }
-
-                if (_cachedMember is PropertyInfo goProp)
-                {
-                    return goProp.GetValue(_cachedGameObject);
-                }
-
-                if (_cachedMember is FieldInfo goField)
-                {
-                    return goField.GetValue(_cachedGameObject);
-                }
-
-                return null;
-            }
-
-            // Повторная проверка: компонент мог быть уничтожен после EnsureCache
-            if (_cachedComponent == null)
-            {
-                InvalidateCache();
-                return null;
-            }
-
-            if (_cachedMember is PropertyInfo prop)
-            {
-                return prop.GetValue(_cachedComponent);
-            }
-
-            if (_cachedMember is FieldInfo field)
-            {
-                return field.GetValue(_cachedComponent);
-            }
-
-            if (_cachedMember is MethodInfo method)
-            {
-                object arg = GetPropertyArgumentValue();
-                return method.Invoke(_cachedComponent, new[] { arg });
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        ///     Разрешает объект для правой стороны. При пустом Other Source Object — тот же объект, что и слева (через
-        ///     ResolveTargetObject).
-        /// </summary>
-        private GameObject ResolveOtherTargetObject(GameObject fallbackObject)
-        {
-            if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
-            {
-                if (_foundOtherByNameObject != null)
-                {
-                    return _foundOtherByNameObject;
-                }
-
-                if (_hasSearchedOtherByName && _foundOtherByNameObject == null)
-                {
-                    _hasSearchedOtherByName = false;
-                }
-
-                _foundOtherByNameObject = GameObject.Find(_otherSearchObjectName);
-                _hasSearchedOtherByName = true;
-                if (_foundOtherByNameObject == null && !_otherWaitForObject && !_hasLoggedOtherMissingWarning)
-                {
-                    Debug.LogWarning(
-                        $"[NeoCondition] Второй объект: GameObject.Find(\"{_otherSearchObjectName}\") не найден.");
-                    _hasLoggedOtherMissingWarning = true;
-                }
-
-                return _foundOtherByNameObject;
-            }
-
-            if (IsOtherSourceObjectDestroyed())
-            {
-                return null;
-            }
-
-            if (_otherSourceObject != null)
-            {
-                return _otherSourceObject;
-            }
-
-            return ResolveTargetObject(fallbackObject);
-        }
-
-        private bool IsOtherSourceObjectDestroyed()
-        {
-            return !ReferenceEquals(_otherSourceObject, null) && _otherSourceObject == null;
-        }
-
-        private void LogOtherDestroyedWarning(string message)
-        {
-            if (!_hasLoggedOtherDestroyedWarning)
-            {
-                Debug.LogWarning($"[NeoCondition] {message}. Условие вернёт false.");
-                _hasLoggedOtherDestroyedWarning = true;
-            }
-        }
-
-        private bool EnsureCacheOther(GameObject fallbackObject)
-        {
-            return _otherSourceMode == SourceMode.GameObject
-                ? EnsureCacheOtherGameObject(fallbackObject)
-                : EnsureCacheOtherComponent(fallbackObject);
-        }
-
-        private bool EnsureCacheOtherComponent(GameObject fallbackObject)
-        {
-            if (_cacheOtherValid && _cachedOtherMember != null)
-            {
-                if (_cachedOtherComponent == null)
-                {
-                    LogOtherDestroyedWarning($"Второй объект: компонент '{_otherComponentTypeName}' уничтожен");
-                    InvalidateOtherCache();
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            _cacheOtherValid = false;
-            _cachedOtherComponent = null;
-            _cachedOtherGameObject = null;
-            _cachedOtherMember = null;
-
-            GameObject target = ResolveOtherTargetObject(fallbackObject);
-            if (target == null)
-            {
-                return false;
-            }
-
-            if (string.IsNullOrEmpty(_otherComponentTypeName) || string.IsNullOrEmpty(_otherPropertyName))
-            {
-                return false;
-            }
-
-            Component[] components = target.GetComponents<Component>();
-            foreach (Component comp in components)
-            {
-                if (comp == null)
-                {
-                    continue;
-                }
-
-                if (comp.GetType().FullName == _otherComponentTypeName ||
-                    comp.GetType().Name == _otherComponentTypeName)
-                {
-                    _cachedOtherComponent = comp;
-                    break;
-                }
-            }
-
-            if (_cachedOtherComponent == null)
-            {
-                if (!_hasLoggedOtherMissingWarning)
-                {
-                    Debug.LogWarning(
-                        $"[NeoCondition] Второй объект: компонент '{_otherComponentTypeName}' не найден на '{target.name}'.");
-                    _hasLoggedOtherMissingWarning = true;
-                }
-
-                return false;
-            }
-
-            Type type = _cachedOtherComponent.GetType();
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-
-            if (_otherIsMethodWithArgument)
-            {
-                MethodInfo method = FindMethodWithOneArgument(type, _otherPropertyName, _otherPropertyArgumentKind, flags);
-                if (method != null)
-                {
-                    _cachedOtherMember = method;
-                    _cacheOtherValid = true;
-                    return true;
-                }
-            }
-            else
-            {
-                PropertyInfo prop = type.GetProperty(_otherPropertyName, flags);
-                if (prop != null && prop.CanRead)
-                {
-                    _cachedOtherMember = prop;
-                    _cacheOtherValid = true;
-                    return true;
-                }
-
-                FieldInfo otherField = type.GetField(_otherPropertyName, flags);
-                if (otherField != null)
-                {
-                    _cachedOtherMember = otherField;
-                    _cacheOtherValid = true;
-                    return true;
-                }
-            }
-
-            if (!_hasLoggedOtherMissingWarning)
-            {
-                Debug.LogWarning(
-                    $"[NeoCondition] Второй объект: свойство/поле/метод '{_otherPropertyName}' не найдено в '{_otherComponentTypeName}'.");
-                _hasLoggedOtherMissingWarning = true;
-            }
-
-            return false;
-        }
-
-        private bool EnsureCacheOtherGameObject(GameObject fallbackObject)
-        {
-            if (_cacheOtherValid && _cachedOtherMember != null)
-            {
-                if (_cachedOtherGameObject == null)
-                {
-                    LogOtherDestroyedWarning("Второй объект (GameObject) уничтожен");
-                    InvalidateOtherCache();
-                }
-                else
-                {
-                    return true;
-                }
-            }
-
-            _cacheOtherValid = false;
-            _cachedOtherComponent = null;
-            _cachedOtherGameObject = null;
-            _cachedOtherMember = null;
-
-            GameObject target = ResolveOtherTargetObject(fallbackObject);
-            if (target == null || string.IsNullOrEmpty(_otherPropertyName))
-            {
-                return false;
-            }
-
-            _cachedOtherGameObject = target;
-            Type type = typeof(GameObject);
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
-            PropertyInfo goProp = type.GetProperty(_otherPropertyName, flags);
-            if (goProp != null && goProp.CanRead)
-            {
-                _cachedOtherMember = goProp;
-                _cacheOtherValid = true;
-                return true;
-            }
-
-            FieldInfo goField = type.GetField(_otherPropertyName, flags);
-            if (goField != null)
-            {
-                _cachedOtherMember = goField;
-                _cacheOtherValid = true;
-                return true;
-            }
-
-            if (!_hasLoggedOtherMissingWarning)
-            {
-                Debug.LogWarning(
-                    $"[NeoCondition] Второй объект: свойство '{_otherPropertyName}' не найдено на GameObject.");
-                _hasLoggedOtherMissingWarning = true;
-            }
-
-            return false;
-        }
-
-        private object ReadOtherValue()
-        {
-            if (_otherSourceMode == SourceMode.GameObject)
-            {
-                if (_cachedOtherGameObject == null)
-                {
-                    InvalidateOtherCache();
-                    return null;
-                }
-
-                if (_cachedOtherMember is PropertyInfo goProp)
-                {
-                    return goProp.GetValue(_cachedOtherGameObject);
-                }
-
-                if (_cachedOtherMember is FieldInfo goField)
-                {
-                    return goField.GetValue(_cachedOtherGameObject);
-                }
-
-                return null;
-            }
-
-            if (_cachedOtherComponent == null)
-            {
-                InvalidateOtherCache();
-                return null;
-            }
-
-            if (_cachedOtherMember is PropertyInfo prop)
-            {
-                return prop.GetValue(_cachedOtherComponent);
-            }
-
-            if (_cachedOtherMember is FieldInfo field)
-            {
-                return field.GetValue(_cachedOtherComponent);
-            }
-
-            if (_cachedOtherMember is MethodInfo method)
-            {
-                object arg = GetOtherPropertyArgumentValue();
-                return method.Invoke(_cachedOtherComponent, new[] { arg });
             }
 
             return null;

@@ -49,7 +49,6 @@ namespace Neo.Bonus
             {
                 _progress = value;
                 SaveProvider.SetFloat(_saveName + nameof(progress), value);
-                SaveProvider.Save();
             }
         }
 

@@ -221,8 +221,6 @@ namespace Neo.Shop
             {
                 SaveProvider.SetInt(_keySave + i, _prices[i]);
             }
-
-            SaveProvider.Save();
         }
 
         private void LoadEquipped()

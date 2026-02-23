@@ -6,7 +6,8 @@
     "Neo.PropertyAttribute",
     "Neo.Save",
     "Unity.TextMeshPro",
-    "Neo.Tools.Managers"
+    "Neo.Tools.Managers",
+    "Neo.Tools.View"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

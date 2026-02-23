@@ -128,8 +128,6 @@ namespace Neo.Bonus
             {
                 SaveProvider.SetInt($"{_saveKeyPrefix}Item_{i}", _enabledItems[i] ? 1 : 0);
             }
-
-            SaveProvider.Save();
         }
 
         [Button]
@@ -193,7 +191,6 @@ namespace Neo.Bonus
 
             _enabledItems[id] = true;
             SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 1);
-            SaveProvider.Save();
 
             OnItemAdded?.Invoke(id);
             InvokeCompletionEvents();
@@ -229,7 +226,6 @@ namespace Neo.Bonus
 
             _enabledItems[id] = false;
             SaveProvider.SetInt($"{_saveKeyPrefix}Item_{id}", 0);
-            SaveProvider.Save();
 
             OnItemRemoved?.Invoke(id);
             InvokeCompletionEvents();
@@ -266,7 +262,6 @@ namespace Neo.Bonus
                 }
             }
 
-            SaveProvider.Save();
             InvokeCompletionEvents();
         }
 

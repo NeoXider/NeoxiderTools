@@ -4317,40 +4317,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92c367cd37a2f974c8463dfa3b175c67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _points:
-  - {fileID: 1859694197}
-  - {fileID: 236781494}
-  - {fileID: 2014415016}
-  - {fileID: 1840439001}
-  - {fileID: 1527211106}
-  _findChildPoints: 1
-  _interactablePoints: 0
-  _imageSetNativeSize: 0
-  _spritesOff: {fileID: 21300000, guid: 9ba8d64801e83b340afd9ac5b67749d5, type: 3}
-  _spritesPoints:
-  - {fileID: 1127569699, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: -2120184961, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: -1056704597, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: 1620105851, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  - {fileID: 2059601153, guid: d270d0f8f97915e42ae4168625e2e6c4, type: 3}
-  useOneSprite: 0
-  _colors_off_on:
-  - {r: 1, g: 1, b: 1, a: 1}
-  - {r: 1, g: 1, b: 1, a: 1}
-  _fill: 0
-  _flip: 0
-  _zeroPoints: 0
-  _visualClick: 1
-  _id: -1
-  _looping: 0
-  useMaxInt: 0
-  _maxCount: 3
-  OnChangeId:
-    m_PersistentCalls:
-      m_Calls: []
-  OnClickPoint:
-    m_PersistentCalls:
-      m_Calls: []
 --- !u!114 &359104798
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7076,17 +7042,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 218261634154851857, guid: f64311fe3f6ce3146b7cfd93d94eb82d, type: 3}
   m_PrefabInstance: {fileID: 830204905}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &830204907 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 354450539114561422, guid: f64311fe3f6ce3146b7cfd93d94eb82d, type: 3}
-  m_PrefabInstance: {fileID: 830204905}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 334f26d65aa95d943b167a42c400a8fb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &833074803
 GameObject:
   m_ObjectHideFlags: 0
@@ -13241,60 +13196,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 92c367cd37a2f974c8463dfa3b175c67, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _points:
-  - {fileID: 251378600}
-  - {fileID: 211197144}
-  - {fileID: 876835499}
-  - {fileID: 478472127}
-  - {fileID: 1046992636}
-  _findChildPoints: 1
-  _interactablePoints: 1
-  _imageSetNativeSize: 0
-  _spritesOff: {fileID: 21300000, guid: 9ba8d64801e83b340afd9ac5b67749d5, type: 3}
-  _spritesPoints:
-  - {fileID: 21300000, guid: 45ee898503815314d8c6ea6b28234040, type: 3}
-  useOneSprite: 1
-  _colors_off_on:
-  - {r: 1, g: 1, b: 1, a: 1}
-  - {r: 0.5543667, g: 1, b: 0.28773582, a: 1}
-  _fill: 0
-  _flip: 0
-  _zeroPoints: 0
-  _visualClick: 1
-  _id: 0
-  _looping: 0
-  useMaxInt: 0
-  _maxCount: 3
-  OnChangeId:
-    m_PersistentCalls:
-      m_Calls: []
-  OnClickPoint:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1613839671}
-        m_TargetAssemblyTypeName: Neoxider.UI.Points, Assembly-CSharp
-        m_MethodName: SetPoint
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 830204907}
-        m_TargetAssemblyTypeName: Neoxider.Shop.ShopItem, Assembly-CSharp
-        m_MethodName: ChangeId
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!114 &1613839672
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -14079,6 +13980,151 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1680867298}
   m_CullTransparentMesh: 1
+--- !u!1 &1683820354
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1683820355}
+  - component: {fileID: 1683820356}
+  - component: {fileID: 1683820357}
+  m_Layer: 0
+  m_Name: State
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1683820355
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683820354}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 124.69767, y: 66.72673, z: -11.46773}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1683820356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683820354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 09779170d3b760846a3f3f40ccc605fe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enableDebugLog: 0
+  showStateInInspector: 1
+  autoEvaluateTransitions: 1
+  stateMachineData: {fileID: 11400000, guid: 75e2c98cfea46424e9652e2fb5ef146e, type: 2}
+  onInitialized:
+    m_PersistentCalls:
+      m_Calls: []
+  onStateEntered:
+    m_PersistentCalls:
+      m_Calls: []
+  onStateExited:
+    m_PersistentCalls:
+      m_Calls: []
+  onStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onTransitionEvaluated:
+    m_PersistentCalls:
+      m_Calls: []
+  currentStateName: 
+  previousStateName: 
+  stateChangeCount: 0
+  stateEnterTime: 0
+--- !u!114 &1683820357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1683820354}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: deda62a1dd14fb647b7844aadb429aff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _logicMode: 0
+  _conditions:
+  - _sourceMode: 0
+    _useSceneSearch: 0
+    _searchObjectName: 
+    _waitForObject: 0
+    _prefabPreview: {fileID: 0}
+    _sourceObject: {fileID: 0}
+    _componentIndex: 0
+    _componentTypeName: Neo.StateMachine.StateMachineBehaviourBase
+    _propertyName: CurrentStateName
+    _valueType: 3
+    _compareOp: 0
+    _invert: 0
+    _thresholdSource: 0
+    _thresholdInt: 0
+    _thresholdFloat: 0
+    _thresholdBool: 1
+    _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
+  _checkMode: 2
+  _checkInterval: 0.2
+  _checkOnStart: 1
+  _onlyOnChange: 1
+  _onTrue:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1683820354}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+  _onFalse:
+    m_PersistentCalls:
+      m_Calls: []
+  _onResult:
+    m_PersistentCalls:
+      m_Calls: []
+  _onInvertedResult:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1718385532 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6271894678689706946, guid: cd3290feea087f54298dd68e561735bd, type: 3}
@@ -15686,6 +15732,7 @@ MonoBehaviour:
   _applyInitialIfResultEmpty: 1
   _selectedItemId: 0
   _dropper: {fileID: 0}
+  _debugEntries: []
   OnInventoryChanged:
     m_PersistentCalls:
       m_Calls: []
@@ -15735,12 +15782,12 @@ MonoBehaviour:
     _sourceObject: {fileID: 1873391497}
     _componentIndex: 1
     _componentTypeName: Neo.Tools.InventoryComponent
-    _propertyName: SelectedItemCount
+    _propertyName: GetCount
     _valueType: 0
     _compareOp: 0
     _invert: 0
     _thresholdSource: 0
-    _thresholdInt: 0
+    _thresholdInt: 1
     _thresholdFloat: 0
     _thresholdBool: 1
     _thresholdString: 
@@ -15752,6 +15799,16 @@ MonoBehaviour:
     _otherComponentIndex: 0
     _otherComponentTypeName: 
     _otherPropertyName: 
+    _isMethodWithArgument: 1
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -18957,3 +19014,4 @@ SceneRoots:
   - {fileID: 686320238}
   - {fileID: 1539592343}
   - {fileID: 1873391498}
+  - {fileID: 1683820355}

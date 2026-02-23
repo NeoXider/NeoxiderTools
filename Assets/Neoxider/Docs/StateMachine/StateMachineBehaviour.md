@@ -24,6 +24,31 @@ MonoBehaviour версия State Machine для использования на 
 - `stateMachineData` - NoCode конфигурация (опционально)
 - `autoEvaluateTransitions` - автоматически оценивать переходы каждый кадр
 
+## Runtime свойства (для условий/отладки)
+
+- `CurrentStateName` (`string`)
+- `PreviousStateName` (`string`)
+- `CurrentStateElapsedTime` (`float`)
+- `StateChangeCount` (`int`)
+- `HasCurrentState` (`bool`)
+
+Эти свойства можно читать через `ConditionEntry` (компонент `StateMachineBehaviourBase`) в переходах no-code.
+
+## События (Inspector)
+
+- `On Initialized`
+- `On State Entered`
+- `On State Exited`
+- `On State Changed` (`from`, `to`)
+- `On Transition Evaluated` (`transitionName`, `result`)
+
+## Runtime Controls (Inspector)
+
+- `Reload Data`
+- `Evaluate Now`
+- `Go To Initial State`
+- `Change State` (ручной выбор состояния из `StateMachineData`)
+
 ## Основные методы
 
 ### ChangeState<T>()
@@ -46,6 +71,10 @@ ChangeState("Idle");
 ```csharp
 LoadFromStateMachineData();
 ```
+
+## No-Code использование
+
+Полная настройка без кода: конфигурация в State Machine Data и условия переходов через Neoxider Condition. Пошаговая инструкция: [NoCode_StateMachine_Usage.md](NoCode_StateMachine_Usage.md).
 
 ## Примеры
 

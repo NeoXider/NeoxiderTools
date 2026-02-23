@@ -199,8 +199,10 @@ ScriptableObject для полной конфигурации State Machine.
 1. В меню Unity: `Create > Neoxider > State Machine > State Machine Data`
 2. Добавить состояния (StateData)
 3. Установить начальное состояние
-4. Настроить переходы между состояниями
-5. Присвоить в `StateMachineBehaviour.stateMachineData`
+4. Добавить переходы (From State, To State), у каждого перехода нажать **Edit Conditions** и добавить условия (например, **Neoxider Condition**)
+5. Присвоить ассет в `StateMachineBehaviour.stateMachineData`
+
+Условия переходов (предикаты) оцениваются каждый кадр при включённом **Auto Evaluate Transitions**. **SO не хранит ссылки на объекты сцены** — в условиях задаётся только **Context Slot** (Owner / Override1..5); сами объекты для слотов задаются на компоненте в сцене в **Context for conditions**. Подробно: [NoCode_StateMachine_Usage.md](NoCode_StateMachine_Usage.md).
 
 **Использование:**
 ```csharp
@@ -262,10 +264,11 @@ stateMachine.OnStateChanged.AddListener((from, to) =>
 
 ## 7. Кастомный редактор Inspector
 
-Кастомный редактор для `StateMachineData` и `StateMachineBehaviour` предоставляет:
-- Улучшенный инспектор с валидацией
-- Отображение текущего состояния в Play Mode
-- Кнопки для тестирования переходов
+Кастомный редактор для `StateMachineData`, `StateData` и `StateMachineBehaviourBase` предоставляет:
+- Улучшенный no-code workflow для состояний/переходов
+- Меню добавления полиморфных `StateAction` и `StatePredicate`
+- Runtime controls и runtime-информацию о состоянии
+- Секции UnityEvents для интеграции без кода
 
 ---
 
@@ -359,6 +362,8 @@ public class PlayerStateMachine : StateMachineBehaviour<IState>
 
 - [StateMachine](StateMachine.md) - Документация по основному классу StateMachine
 - [StateMachineBehaviour](StateMachineBehaviour.md) - Документация по MonoBehaviour компоненту
+- [StateMachineBehaviourBase](StateMachineBehaviourBase.md) - Документация по no-code компоненту
+- [NoCode_StateMachine_Usage](NoCode_StateMachine_Usage.md) - Пошаговая настройка без кода
 
 ### XML документация
 

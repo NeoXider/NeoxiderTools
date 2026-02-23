@@ -1,6 +1,7 @@
 using System;
 using Neo.StateMachine.NoCode;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.StateMachine
 {
@@ -26,6 +27,16 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neoxider/Tools/State Machine Behaviour")]
     public class StateMachineBehaviourBase : MonoBehaviour
     {
+        [Serializable]
+        public class StateChangedEvent : UnityEvent<string, string>
+        {
+        }
+
+        [Serializable]
+        public class TransitionEvaluatedEvent : UnityEvent<string, bool>
+        {
+        }
+
         [Header("Settings")] [SerializeField] [Tooltip("Enable state transition logging")]
         private bool enableDebugLog;
 
@@ -37,6 +48,29 @@ namespace Neo.StateMachine
 
         [Header("References")] [SerializeField] [Tooltip("NoCode State Machine config (optional)")]
         private StateMachineData stateMachineData;
+
+        [Header("Context for conditions")]
+        [SerializeField]
+        [Tooltip("GameObjects for transition conditions. In StateMachineData set Condition Context Slot: Owner = this object, Override1 = element 0, Override2 = element 1, etc. SO cannot reference scene objects — assign here in scene.")]
+        private GameObject[] contextOverrides = new GameObject[0];
+
+        [Header("Events")] [SerializeField]
+        private UnityEvent onInitialized = new();
+
+        [SerializeField] private UnityEvent onStateEntered = new();
+
+        [SerializeField] private UnityEvent onStateExited = new();
+
+        [SerializeField] private StateChangedEvent onStateChanged = new();
+
+        [SerializeField] private TransitionEvaluatedEvent onTransitionEvaluated = new();
+
+        [Header("Runtime State")] [SerializeField]
+        private string currentStateName = "";
+
+        [SerializeField] private string previousStateName = "";
+        [SerializeField] private int stateChangeCount;
+        [SerializeField] private float stateEnterTime;
 
         private StateMachine<IState> stateMachine;
 
@@ -67,6 +101,19 @@ namespace Neo.StateMachine
         /// </summary>
         public IState PreviousState => StateMachine.PreviousState;
 
+        public string CurrentStateName => currentStateName;
+
+        public string PreviousStateName => previousStateName;
+
+        public int StateChangeCount => stateChangeCount;
+
+        public float CurrentStateElapsedTime => CurrentState == null ? 0f : Mathf.Max(0f, Time.time - stateEnterTime);
+
+        public bool HasCurrentState => CurrentState != null;
+
+        /// <summary>Объекты для слотов Override1..5 в условиях переходов (задаются в сцене).</summary>
+        public GameObject[] ContextOverrides => contextOverrides ?? new GameObject[0];
+
         private void Awake()
         {
             InitializeStateMachine();
@@ -86,7 +133,7 @@ namespace Neo.StateMachine
 
             if (autoEvaluateTransitions)
             {
-                StateMachine.EvaluateTransitions();
+                EvaluateTransitionsInternal();
             }
         }
 
@@ -160,6 +207,44 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
+        ///     Оценить переходы один раз вручную.
+        /// </summary>
+        public void EvaluateTransitionsNow()
+        {
+            EvaluateTransitionsInternal();
+        }
+
+        /// <summary>
+        ///     Перезагрузить конфигурацию из StateMachineData.
+        /// </summary>
+        public void ReloadFromStateMachineData()
+        {
+            LoadFromStateMachineData();
+        }
+
+        /// <summary>
+        ///     Попробовать перейти в начальное состояние из StateMachineData.
+        /// </summary>
+        public void GoToInitialState()
+        {
+            if (stateMachineData == null)
+            {
+                return;
+            }
+
+            if (stateMachineData.InitialState != null)
+            {
+                StateMachine.ChangeState(stateMachineData.InitialState);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(stateMachineData.InitialStateName))
+            {
+                ChangeState(stateMachineData.InitialStateName);
+            }
+        }
+
+        /// <summary>
         ///     Загрузить конфигурацию из StateMachineData.
         /// </summary>
         public void LoadFromStateMachineData()
@@ -170,6 +255,7 @@ namespace Neo.StateMachine
                 return;
             }
 
+            StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
             if (stateMachineData.InitialState != null)
@@ -186,19 +272,93 @@ namespace Neo.StateMachine
         {
             stateMachine = new StateMachine<IState>();
             SetupEvents();
+            currentStateName = "";
+            previousStateName = "";
+            stateChangeCount = 0;
+            stateEnterTime = Time.time;
+            onInitialized?.Invoke();
         }
 
         private void SetupEvents()
         {
+            StateMachine.OnStateEntered.AddListener(state =>
+            {
+                currentStateName = GetStateName(state);
+                stateEnterTime = Time.time;
+                onStateEntered?.Invoke();
+            });
+
+            StateMachine.OnStateExited.AddListener(_ =>
+            {
+                onStateExited?.Invoke();
+            });
+
             StateMachine.OnStateChanged.AddListener((from, to) =>
             {
+                previousStateName = GetStateName(from);
+                currentStateName = GetStateName(to);
+                stateChangeCount++;
+                onStateChanged?.Invoke(previousStateName, currentStateName);
+
                 if (enableDebugLog)
                 {
-                    string fromName = from?.GetType().Name ?? "None";
-                    string toName = to?.GetType().Name ?? "None";
+                    string fromName = string.IsNullOrEmpty(previousStateName) ? "None" : previousStateName;
+                    string toName = string.IsNullOrEmpty(currentStateName) ? "None" : currentStateName;
                     Debug.Log($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
                 }
             });
+
+            StateMachine.OnTransitionEvaluated.AddListener((transition, result) =>
+            {
+                string transitionName = GetTransitionName(transition);
+                onTransitionEvaluated?.Invoke(transitionName, result);
+            });
+        }
+
+        private void EvaluateTransitionsInternal()
+        {
+            StateMachineEvaluationContext.Push(gameObject, contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            try
+            {
+                StateMachine.EvaluateTransitions();
+            }
+            finally
+            {
+                StateMachineEvaluationContext.Pop();
+            }
+        }
+
+        private static string GetStateName(IState state)
+        {
+            if (state == null)
+            {
+                return "";
+            }
+
+            if (state is StateData stateData)
+            {
+                return stateData.StateName;
+            }
+
+            return state.GetType().Name;
+        }
+
+        private static string GetTransitionName(StateTransition transition)
+        {
+            if (transition == null)
+            {
+                return "";
+            }
+
+            if (!string.IsNullOrEmpty(transition.TransitionName))
+            {
+                return transition.TransitionName;
+            }
+
+            string from = transition.FromStateData != null ? transition.FromStateData.StateName : transition.FromStateType?.Name;
+            string to = transition.ToStateData != null ? transition.ToStateData.StateName : transition.ToStateType?.Name;
+
+            return $"{from ?? "Any"} -> {to ?? "None"}";
         }
     }
 }

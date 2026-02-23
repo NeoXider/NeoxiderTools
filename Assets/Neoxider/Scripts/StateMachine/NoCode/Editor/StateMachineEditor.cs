@@ -1,3 +1,4 @@
+using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -9,16 +10,22 @@ namespace Neo.StateMachine.NoCode.Editor
     /// </summary>
     [CustomEditor(typeof(StateMachineData))]
     [CanEditMultipleObjects]
-    public class StateMachineDataEditor : UnityEditor.Editor
+    public class StateMachineDataEditor : CustomEditorBase
     {
         private StateMachineData data;
+
+        protected override bool UseCustomNeoxiderInspectorGUI => true;
+
+        protected override void ProcessAttributeAssignments()
+        {
+        }
 
         private void OnEnable()
         {
             data = target as StateMachineData;
         }
 
-        public override void OnInspectorGUI()
+        protected override void DrawCustomNeoxiderInspectorGUI()
         {
             serializedObject.Update();
 
@@ -35,34 +42,15 @@ namespace Neo.StateMachine.NoCode.Editor
                     MessageType.Warning);
             }
 
-            // Отображение состояний
-            EditorGUILayout.LabelField("States", EditorStyles.boldLabel);
-            SerializedProperty statesProp = serializedObject.FindProperty("states");
-            EditorGUILayout.PropertyField(statesProp, true);
+            DrawStatesSection();
 
             EditorGUILayout.Space();
 
-            // Начальное состояние
-            EditorGUILayout.LabelField("Initial State", EditorStyles.boldLabel);
-            SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
-            EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
-
-            // Legacy поле для обратной совместимости (скрыто, но сохраняется)
-            SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
-            if (initialStateProp.objectReferenceValue == null &&
-                !string.IsNullOrEmpty(initialStateNameProp.stringValue))
-            {
-                EditorGUILayout.HelpBox(
-                    $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
-                    MessageType.Warning);
-            }
+            DrawInitialStateSection();
 
             EditorGUILayout.Space();
 
-            // Переходы
-            EditorGUILayout.LabelField("Transitions", EditorStyles.boldLabel);
-            SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
-            EditorGUILayout.PropertyField(transitionsProp, true);
+            DrawTransitionsSection();
 
             EditorGUILayout.Space();
 
@@ -82,6 +70,157 @@ namespace Neo.StateMachine.NoCode.Editor
             }
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawStatesSection()
+        {
+            EditorGUILayout.LabelField("States", EditorStyles.boldLabel);
+            SerializedProperty statesProp = serializedObject.FindProperty("states");
+            EditorGUILayout.PropertyField(statesProp, true);
+        }
+
+        private void DrawInitialStateSection()
+        {
+            EditorGUILayout.LabelField("Initial State", EditorStyles.boldLabel);
+            SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
+            EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
+
+            SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
+            if (initialStateProp.objectReferenceValue == null && !string.IsNullOrEmpty(initialStateNameProp.stringValue))
+            {
+                EditorGUILayout.HelpBox(
+                    $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
+                    MessageType.Warning);
+            }
+        }
+
+        private void DrawTransitionsSection()
+        {
+            EditorGUILayout.LabelField("Transitions", EditorStyles.boldLabel);
+            SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
+            if (transitionsProp == null)
+            {
+                EditorGUILayout.HelpBox("Transitions property is missing.", MessageType.Error);
+                return;
+            }
+
+            int removeIndex = -1;
+            int moveUpIndex = -1;
+            int moveDownIndex = -1;
+
+            for (int i = 0; i < transitionsProp.arraySize; i++)
+            {
+                SerializedProperty transitionProp = transitionsProp.GetArrayElementAtIndex(i);
+                SerializedProperty fromProp = transitionProp.FindPropertyRelative("fromStateData");
+                SerializedProperty toProp = transitionProp.FindPropertyRelative("toStateData");
+                SerializedProperty priorityProp = transitionProp.FindPropertyRelative("priority");
+                SerializedProperty enabledProp = transitionProp.FindPropertyRelative("isEnabled");
+                SerializedProperty nameProp = transitionProp.FindPropertyRelative("transitionName");
+
+                EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+                EditorGUILayout.BeginHorizontal();
+                EditorGUILayout.LabelField($"Transition {i + 1}", EditorStyles.boldLabel);
+                if (GUILayout.Button("X", GUILayout.Width(24)))
+                {
+                    removeIndex = i;
+                }
+                EditorGUILayout.EndHorizontal();
+
+                if (nameProp != null)
+                {
+                    EditorGUILayout.PropertyField(nameProp, new GUIContent("Name"));
+                }
+                if (fromProp != null)
+                {
+                    EditorGUILayout.PropertyField(fromProp, new GUIContent("From State"));
+                }
+                if (toProp != null)
+                {
+                    EditorGUILayout.PropertyField(toProp, new GUIContent("To State"));
+                }
+                if (priorityProp != null)
+                {
+                    EditorGUILayout.PropertyField(priorityProp, new GUIContent("Priority"));
+                }
+                if (enabledProp != null)
+                {
+                    EditorGUILayout.PropertyField(enabledProp, new GUIContent("Is Enabled"));
+                }
+
+                EditorGUILayout.BeginHorizontal();
+                if (GUILayout.Button("Edit Conditions"))
+                {
+                    serializedObject.ApplyModifiedProperties();
+                    if (i < data.Transitions.Count && data.Transitions[i] != null)
+                    {
+                        TransitionEditorWindow.ShowWindow(data.Transitions[i], data);
+                    }
+                    GUIUtility.ExitGUI();
+                }
+
+                if (GUILayout.Button("Up", GUILayout.Width(48)))
+                {
+                    moveUpIndex = i;
+                }
+
+                if (GUILayout.Button("Down", GUILayout.Width(48)))
+                {
+                    moveDownIndex = i;
+                }
+                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.Space(4);
+            }
+
+            if (removeIndex >= 0)
+            {
+                transitionsProp.DeleteArrayElementAtIndex(removeIndex);
+            }
+            else if (moveUpIndex > 0)
+            {
+                transitionsProp.MoveArrayElement(moveUpIndex, moveUpIndex - 1);
+            }
+            else if (moveDownIndex >= 0 && moveDownIndex < transitionsProp.arraySize - 1)
+            {
+                transitionsProp.MoveArrayElement(moveDownIndex, moveDownIndex + 1);
+            }
+
+            if (GUILayout.Button("Add Transition", GUILayout.Height(24)))
+            {
+                int index = transitionsProp.arraySize;
+                transitionsProp.InsertArrayElementAtIndex(index);
+                SerializedProperty newTransition = transitionsProp.GetArrayElementAtIndex(index);
+                SerializedProperty fromProp = newTransition.FindPropertyRelative("fromStateData");
+                SerializedProperty toProp = newTransition.FindPropertyRelative("toStateData");
+                SerializedProperty enabledProp = newTransition.FindPropertyRelative("isEnabled");
+                SerializedProperty nameProp = newTransition.FindPropertyRelative("transitionName");
+                SerializedProperty priorityProp = newTransition.FindPropertyRelative("priority");
+                SerializedProperty predicatesProp = newTransition.FindPropertyRelative("predicates");
+                if (fromProp != null)
+                {
+                    fromProp.objectReferenceValue = null;
+                }
+                if (toProp != null)
+                {
+                    toProp.objectReferenceValue = null;
+                }
+                if (enabledProp != null)
+                {
+                    enabledProp.boolValue = true;
+                }
+                if (priorityProp != null)
+                {
+                    priorityProp.intValue = 0;
+                }
+                if (nameProp != null)
+                {
+                    nameProp.stringValue = "New Transition";
+                }
+                if (predicatesProp != null)
+                {
+                    predicatesProp.ClearArray();
+                }
+            }
         }
     }
 

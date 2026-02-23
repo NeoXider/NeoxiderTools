@@ -277,10 +277,22 @@ namespace Neo.GridSystem.Match3
             return cell != null && cell.IsEnabled && !cell.IsOccupied && cell.IsWalkable;
         }
 
-        private static bool AreAdjacent(Vector3Int a, Vector3Int b)
+        private bool AreAdjacent(Vector3Int a, Vector3Int b)
         {
-            Vector3Int delta = a - b;
-            return Mathf.Abs(delta.x) + Mathf.Abs(delta.y) + Mathf.Abs(delta.z) == 1;
+            FieldCell cellA = _generator.GetCell(a);
+            if (cellA == null)
+            {
+                return false;
+            }
+
+            FieldCell cellB = _generator.GetCell(b);
+            if (cellB == null)
+            {
+                return false;
+            }
+
+            List<FieldCell> neighbors = _generator.GetNeighbors(cellA, null);
+            return neighbors.Contains(cellB);
         }
 
         private void SwapContent(FieldCell a, FieldCell b)
@@ -386,21 +398,24 @@ namespace Neo.GridSystem.Match3
 
         private bool HasAnyValidSwap()
         {
-            Vector3Int size = _generator.Config.Size;
-            for (int z = 0; z < size.z; z++)
-            for (int y = 0; y < size.y; y++)
-            for (int x = 0; x < size.x; x++)
+            foreach (FieldCell cell in _generator.GetAllCells(false))
             {
-                Vector3Int pos = new(x, y, z);
-                FieldCell cell = _generator.GetCell(pos);
                 if (!CanUseCell(cell))
                 {
                     continue;
                 }
 
-                if (WouldSwapCreateMatch(pos, pos + Vector3Int.right) || WouldSwapCreateMatch(pos, pos + Vector3Int.up))
+                foreach (FieldCell neighbor in _generator.GetNeighbors(cell, null))
                 {
-                    return true;
+                    if (!CanUseCell(neighbor))
+                    {
+                        continue;
+                    }
+
+                    if (WouldSwapCreateMatch(cell.Position, neighbor.Position))
+                    {
+                        return true;
+                    }
                 }
             }
 

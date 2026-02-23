@@ -10,6 +10,7 @@ namespace Neo.Tools
     public sealed class InventoryManager
     {
         private readonly Dictionary<int, int> _counts = new();
+        private readonly List<int> _order = new();
         private readonly Dictionary<int, int> _maxStackByItemId = new();
         private int _totalCount;
 
@@ -65,6 +66,11 @@ namespace Neo.Tools
                 return 0;
             }
 
+            if (current <= 0)
+            {
+                _order.Add(itemId);
+            }
+
             int next = current + addable;
             _counts[itemId] = next;
             _totalCount += addable;
@@ -87,6 +93,7 @@ namespace Neo.Tools
             if (next <= 0)
             {
                 _counts.Remove(itemId);
+                _order.Remove(itemId);
             }
             else
             {
@@ -106,16 +113,21 @@ namespace Neo.Tools
         public void Clear()
         {
             _counts.Clear();
+            _order.Clear();
             _totalCount = 0;
         }
 
-        /// <summary>Снимок инвентаря в виде списка записей.</summary>
+        /// <summary>Снимок инвентаря в виде списка записей (порядок = порядок добавления).</summary>
         public List<InventoryEntry> CreateSnapshot()
         {
-            List<InventoryEntry> entries = new(_counts.Count);
-            foreach (KeyValuePair<int, int> pair in _counts)
+            List<InventoryEntry> entries = new(_order.Count);
+            for (int i = 0; i < _order.Count; i++)
             {
-                entries.Add(new InventoryEntry(pair.Key, pair.Value));
+                int id = _order[i];
+                if (_counts.TryGetValue(id, out int count) && count > 0)
+                {
+                    entries.Add(new InventoryEntry(id, count));
+                }
             }
 
             return entries;

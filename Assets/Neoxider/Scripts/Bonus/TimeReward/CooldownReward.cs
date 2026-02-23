@@ -273,7 +273,6 @@ namespace Neo.Bonus
             SaveProvider.DeleteKey(GetSaveKey());
             SaveProvider.DeleteKey(GetSaveKey() + "_rt");
             SaveProvider.DeleteKey(GetSaveKey() + "_a");
-            SaveProvider.Save();
             _waitingForManualStart = false;
             SetTime(0f);
             _canTakeReward = true;

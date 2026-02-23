@@ -9,9 +9,9 @@
   - `SpawnFromPrefab` — автоматически спавнит `InventoryItemView` по данным из `InventoryDatabase`.
   - `ManualList` — использует заранее заданные `InventoryItemView`.
 - Источник данных для списка:
-  - `DatabaseItems` — только из `InventoryDatabase`.
-  - `SnapshotItems` — только из фактического содержимого инвентаря (`GetSnapshotEntries()`).
-  - `Hybrid` — объединяет database и snapshot.
+  - `DatabaseItems` — только из `InventoryDatabase` (порядок как в базе).
+  - `SnapshotItems` — только из фактического содержимого инвентаря (порядок = порядок добавления).
+  - `Hybrid` — сначала слоты из базы в порядке базы, затем недостающие из снимка.
 - Обновляется по `OnInventoryChanged` и (опционально) `OnLoaded`.
 - Есть опция refresh на следующий кадр при `OnEnable`, чтобы корректно отображать стартовое состояние после загрузки.
 

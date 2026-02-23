@@ -86,7 +86,6 @@ namespace Neo.Shop
             {
                 SaveProvider.SetFloat(_moneySave, _money);
                 SaveProvider.SetFloat(_moneySave + nameof(_allMoney), _allMoney);
-                SaveProvider.Save();
             }
 
             public void AddLevelMoney(float count)

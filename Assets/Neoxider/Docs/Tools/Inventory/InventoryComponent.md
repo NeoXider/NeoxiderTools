@@ -6,9 +6,10 @@
 
 - Добавление/удаление предметов по `itemId` или `InventoryItemData`.
 - Ограничения: `Max Unique Items`, `Max Total Items`, `maxStack` из `InventoryDatabase`.
-- Сохранение/загрузка (`Save`, `Load`) по `Save Key`.
-- События UnityEvent для UI/геймплея.
-- Свойства для условий в `NeoCondition`: `TotalItemCount`, `UniqueItemCount`, `SelectedItemCount`, `IsEmpty`.
+- Сохранение/загрузка: при включённом **Auto Save** (по умолчанию) каждое изменение инвентаря автоматически записывается в SaveProvider по `Save Key`. Явно вызывать `Save()` не нужно. Запись на диск — по необходимости через `SaveProvider.Save()` (например при выходе или паузе).
+- События UnityEvent для UI/геймплея. При `ClearInventory()` вызываются те же события по каждому предмету (`OnItemRemoved`, `OnItemCountChanged`, `OnItemBecameZero`), затем `OnInventoryChanged`.
+- Порядок слотов: снимок и `GetFirstItemId()` / `GetLastItemId()` следуют порядку добавления предметов.
+- Свойства для условий в `NeoCondition`: `TotalItemCount`, `UniqueItemCount`, `SelectedItemCount` (при заданном `SelectedItemId`), `IsEmpty`. Для проверки по конкретному id: `GetCount(itemId)` (например `inventory.GetCount(5) >= 3`).
 - Опциональный делегат дропа через отдельный компонент `InventoryDropper`.
 - Может работать как singleton или как обычный компонент для нескольких инвентарей (через `Set Instance On Awake` из `Singleton<T>`).
 
@@ -21,7 +22,8 @@
 | `Initial State Data` | SO с начальным наполнением (`InventoryInitialStateData`). |
 | `Max Unique Items` | Лимит уникальных предметов (0 = без лимита). |
 | `Max Total Items` | Лимит общего количества (0 = без лимита). |
-| `Save Key` | Ключ сохранения для SaveProvider. |
+| `Auto Save` | По умолчанию включено: при Add/Remove/Clear состояние пишется в SaveProvider по Save Key. |
+| `Save Key` | Ключ сохранения для SaveProvider. Запись на диск — при вызове `SaveProvider.Save()` (например при выходе). |
 | `Load Mode` | Режим комбинирования save и initial state (`UseSaveIfExists`, `MergeSaveWithInitial`, `InitialOnlyIgnoreSave`). |
 | `Apply Initial If Result Empty` | Если после загрузки инвентарь пуст, повторно применить initial state. |
 | `Selected Item Id` | Вспомогательный id для `SelectedItemCount`. |
@@ -55,25 +57,31 @@
 - `int DropLast(int amount = 1)` — дроп последнего предмета в инвентаре (делегирует в Dropper).
 - `bool HasItem(int itemId)`
 - `bool HasItemAmount(int itemId, int amount)`
-- `int GetCount(int itemId)`
-- `List<InventoryEntry> GetSnapshotEntries()`
+- `int GetCount(int itemId)` — количество предмета; удобно для условий вида `inventory.GetCount(5) >= 3`.
+- `bool TryConsume(int itemId, int amount)` — удаляет ровно `amount`, если хватает; возвращает `true` только при успехе. Удобно для трат: `if (inventory.TryConsume(currencyId, price)) { ... }`.
+- `int GetNonEmptySlotCount()` — число слотов с count &gt; 0 (для системы «руки» / Selector).
+- `int GetItemIdAtSlotIndex(int slotIndex)` — itemId по индексу слота (0 .. GetNonEmptySlotCount()-1); -1 если вне диапазона.
+- `List<InventoryEntry> GetSnapshotEntries()` — снимок в порядке добавления.
 - `int GetFirstItemId()` — первый предмет с count &gt; 0 по порядку снимка; -1 если пусто.
 - `int GetLastItemId()` — последний предмет с count &gt; 0 по порядку снимка; -1 если пусто.
-- `void ClearInventory()`
-- `void Save()`
+- `void ClearInventory()` — очистка; перед очисткой вызываются события по каждому предмету.
+- `void Save()` — принудительно записывает инвентарь в SaveProvider по Save Key (при Auto Save вызывается автоматически).
 - `void Load()`
 
-## Пример
+## Примеры
 
 ```csharp
 [SerializeField] private InventoryComponent inventory;
 
 private void Buy(int itemId, int price, int currencyItemId)
 {
-    if (!inventory.HasItemAmount(currencyItemId, price))
+    if (!inventory.TryConsume(currencyItemId, price))
         return;
 
-    inventory.RemoveItemByIdAmount(currencyItemId, price);
     inventory.AddItemById(itemId);
 }
+
+// Условие по количеству предмета
+if (inventory.GetCount(5) >= 3)
+    DoSomething();
 ```

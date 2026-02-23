@@ -3,7 +3,7 @@
   "rootNamespace": "Neo.StateMachine",
   "references": [
     "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-    "GUID:699bb923824f1724b91c66f5ba9ace74"
+    "GUID:699bb923824f1724b91c66f5ba9ace74","GUID:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],

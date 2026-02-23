@@ -48,7 +48,7 @@ namespace Neo.StateMachine
 
         private Type fromStateType;
 
-        [SerializeField] private List<StatePredicate> predicates = new();
+        [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
 
         private Type toStateType;
 
@@ -156,7 +156,23 @@ namespace Neo.StateMachine
                 }
             }
 
-            return Evaluate();
+            // Проверка состояния-источника для NoCode
+            if (fromStateData != null)
+            {
+                if (currentState is StateData currentStateData)
+                {
+                    if (currentStateData != fromStateData)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            return EvaluatePredicates(currentState);
         }
 
         /// <summary>
@@ -187,16 +203,19 @@ namespace Neo.StateMachine
         public bool EvaluatePredicates(IState currentState)
         {
             if (!isEnabled)
-            {
                 return false;
-            }
 
-            if (predicates.Count == 0)
-            {
+            if (predicates == null || predicates.Count == 0)
                 return true;
-            }
 
-            return predicates.All(p => p != null && p.Evaluate(currentState));
+            foreach (StatePredicate p in predicates)
+            {
+                if (p == null)
+                    return false;
+                if (!p.Evaluate(currentState))
+                    return false;
+            }
+            return true;
         }
 
         /// <summary>

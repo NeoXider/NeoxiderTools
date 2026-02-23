@@ -299,7 +299,6 @@ namespace Neo
             {
                 SaveProvider.SetFloat(key + "_t", currentTime);
                 SaveProvider.SetBool(key + "_a", isActive);
-                SaveProvider.Save();
                 return;
             }
 
@@ -317,7 +316,6 @@ namespace Neo
                     SaveProvider.SetBool(key + "_a", isActive);
                 }
 
-                SaveProvider.Save();
                 return;
             }
 
@@ -331,8 +329,6 @@ namespace Neo
                 DateTime endUtc = DateTime.UtcNow.AddSeconds(currentTime);
                 SaveProvider.SetString(key + "_rt", endUtc.ToString("o"));
             }
-
-            SaveProvider.Save();
         }
 
         private bool LoadState()

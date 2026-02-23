@@ -2,15 +2,17 @@
   "name": "Neo.StateMachine.Editor",
   "rootNamespace": "Neo.StateMachine",
   "references": [
-    "GUID:b86d3b465747c5244a16a0298b3c8eb4",
-    "GUID:9834a790bd826c4449125155ed09b637"
+    "Neo.Editor",
+    "Neo.Tools.Time",
+    "Neo.StateMachine",
+    "Neo.Condition"
   ],
   "includePlatforms": [
     "Editor"
   ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "overrideReferences": true,
+  "overrideReferences": false,
   "precompiledReferences": [],
   "autoReferenced": true,
   "defineConstraints": [],

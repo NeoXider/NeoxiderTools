@@ -2,7 +2,8 @@
 
 No-Code система условий для NeoxiderTools. Проверяет значения полей/свойств любых компонентов и GameObject'ов через Inspector, без написания кода.
 
-См. roadmap развития Editor/архитектуры: [`NeoCondition_Editor_Roadmap.md`](./NeoCondition_Editor_Roadmap.md)
+- **Переиспользование условий** в State Machine, триггерах и своих системах: [Condition_Reuse.md](./Condition_Reuse.md)
+- Roadmap развития Editor/архитектуры: [NeoCondition_Editor_Roadmap.md](./NeoCondition_Editor_Roadmap.md)
 
 ## Быстрый старт
 
@@ -301,3 +302,7 @@ GameObject found = entry.FoundByNameObject; // найденный объект (
 ## Assembly
 
 `Neo.Condition` (`Assets/Neoxider/Scripts/Condition/Neo.Condition.asmdef`)
+
+## См. также
+
+- [Переиспользование условий в других системах](./Condition_Reuse.md) — как добавлять и использовать условия (IConditionEvaluator, ConditionEntry) в State Machine и своих компонентах.

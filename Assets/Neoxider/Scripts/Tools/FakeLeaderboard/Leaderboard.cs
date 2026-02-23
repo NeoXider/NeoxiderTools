@@ -302,7 +302,6 @@ namespace Neo.Tools
 
             SaveProvider.SetString($"{playerSaveKey}_Name", player.name);
             SaveProvider.SetInt($"{playerSaveKey}_Score", player.score);
-            SaveProvider.Save();
         }
 
         private void LoadPlayerData()
