@@ -15,13 +15,15 @@
 
 ---
 
-## Публичные методы
+## Публичные методы (три режима ввода)
 
 | Метод | Описание |
 |-------|----------|
-| **SetVolume(float normalizedVolume)** | Устанавливает громкость по значению 0–1 для параметра из `parameterName`. Удобно вызывать из кода или UnityEvent (например слайдер). |
-| **GetVolume()** | Возвращает текущую нормализованную громкость (0–1) этого параметра. Подходит для NeoCondition: Property = GetVolume, сравнение с порогом. |
-| **SetVolumeDb(string name, float volumeDb)** | Устанавливает значение в дБ (-80…20) для указанного параметра. Если `name` пустой, используется `parameterName`. |
+| **SetVolumeDb(float volumeDb)** | Режим дБ: значение −80…20 для `parameterName`. Удобно для слайдера в дБ или UnityEvent с одним float. |
+| **SetVolumeDb(string name, float volumeDb)** | То же в дБ для произвольного параметра. Если `name` пустой — используется `parameterName`. |
+| **SetVolume(float normalizedVolume)** | Режим 0–1: нормализованная громкость. Ноль гарантированно ставит mute (−80 дБ). Для слайдера: `SetVolume(slider.value)`. |
+| **SetVolumeEnabled(bool enabled)** | Режим bool: `true` — полная громкость, `false` — mute. Для чекбокта/переключателя. |
+| **GetVolume()** | Возвращает текущую нормализованную громкость (0–1). Для NeoCondition: Property = GetVolume, сравнение с порогом. |
 
 ---
 
