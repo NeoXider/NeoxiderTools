@@ -96,13 +96,16 @@
 **Пространство имен:** `Neo.Audio`
 **Путь:** `Scripts/Audio/SettingMixer.cs`
 
-Компонент для управления параметром в `AudioMixer`.
+Компонент для управления одним параметром экспозиции в `AudioMixer`. Три режима ввода: дБ (−80…20), нормализованный 0–1, bool (вкл/выкл).
 
 **Публичные поля:**
-- `nameMixer` (`string`): Параметр микшера по умолчанию для управления.
-- `audioMixer` (`AudioMixer`): `AudioMixer` для управления.
-- `readonly float Max = 20`: Максимальное значение громкости в дБ.
-- `readonly float Min = -80`: Минимальное значение громкости в дБ (тишина).
+- `parameterName` (`string`): Имя параметра экспозиции в микшере (например MasterVolume, MusicVolume, EfxVolume).
+- `audioMixer` (`AudioMixer`): Ссылка на AudioMixer.
+- `readonly float MaxDb = 20`, `MinDb = -80`: Диапазон громкости в дБ.
 
-**Публичные методы:**
-- `SetVolume(string name = "", float volume = 0)`: Устанавливает громкость указанного параметра микшера. Если `name` не указан, используется `nameMixer`.
+**Публичные методы (три режима):**
+- `SetVolumeDb(float volumeDb)`: Громкость в дБ (−80…20) для `parameterName`.
+- `SetVolumeDb(string name, float volumeDb)`: То же для произвольного параметра.
+- `SetVolume(float normalizedVolume)`: Нормализованная громкость 0–1; ноль гарантированно ставит mute.
+- `SetVolumeEnabled(bool enabled)`: Вкл/выкл по флагу (true = полная громкость, false = mute).
+- `GetVolume()`: Возвращает текущую нормализованную громкость (0–1).

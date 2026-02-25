@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Demo.Condition
 {
     /// <summary>
-    ///     Отображает HP в TMP_Text, подписываясь на Health.OnChange.
+    ///     Отображает HP в TMP_Text, подписываясь на Health.Hp.OnChanged.
     ///     Формат: "HP: {current} / {max}"
     /// </summary>
     [RequireComponent(typeof(TMP_Text))]
@@ -25,8 +25,8 @@ namespace Neo.Demo.Condition
         {
             if (_health != null)
             {
-                _health.OnChange.AddListener(UpdateText);
-                UpdateText(_health.Hp);
+                _health.Hp.OnChanged.AddListener(UpdateText);
+                UpdateText(_health.HpValue);
             }
         }
 
@@ -34,7 +34,7 @@ namespace Neo.Demo.Condition
         {
             if (_health != null)
             {
-                _health.OnChange.RemoveListener(UpdateText);
+                _health.Hp.OnChanged.RemoveListener(UpdateText);
             }
         }
 

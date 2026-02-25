@@ -34,6 +34,11 @@
 | `SetDropEnabled(bool)` | Включить/выключить дроп в рантайме. |
 | `SetDropItemId(int)` | Задать id для режима по кнопке и для DropConfiguredById (-1 = последний предмет). |
 
+## Свойство AllowDropInput и интеграция с InventoryHand
+
+- **AllowDropInput** (get/set) — разрешать ли дроп по клавише. Если Dropper назначен в **InventoryHand** (поле Dropper), Hand при включении выставляет `AllowDropInput = false`, чтобы по клавише G дроп обрабатывала только рука (Hand вызывает DropEquipped). При отключении Hand значение восстанавливается.
+- Без Hand можно оставить `Allow Drop Input = true` — тогда по G дропается выбранный предмет (SelectedItemId).
+
 ## Настройки ввода (по умолчанию)
 
 - `Allow Drop Input` = `true`

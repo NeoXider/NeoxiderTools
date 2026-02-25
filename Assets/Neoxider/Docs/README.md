@@ -49,7 +49,7 @@
 | Tools/Debug | FPS, ErrorLogger | [`Tools/Debug`](./Tools/Debug) |
 | Tools/Draw | Drawer (рисование линий) | [`Tools/Draw`](./Tools/Draw) |
 | Tools/Text | SetText, TimeToText | [`Tools/Text`](./Tools/Text) |
-| Tools/Inventory | InventoryComponent, PickableItem, InventoryItemData | [`Tools/Inventory`](./Tools/Inventory) |
+| Tools/Inventory | InventoryComponent, PickableItem, InventoryHand, InventoryDropper, InventoryItemData | [`Tools/Inventory`](./Tools/Inventory) |
 
 ### Опциональные модули
 

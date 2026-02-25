@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.2.0] - 2026-02-23
+
+### Tools / Input
+
+- **KeyInputCompat** — новый статический класс совместимости со старой (Input Manager) и новой (Input System Package) системой ввода: `GetKeyDown(KeyCode)`, `GetKeyUp(KeyCode)`, `GetKey(KeyCode)`. Сначала вызывается legacy Input; при `InvalidOperationException` используется новая система через рефлексию. Используется в MultiKeyEventTrigger, InventoryHand, InventoryDropper, CursorLockController — все они работают при любой активной системе ввода.
+- **MultiKeyEventTrigger** — опция **Debug** (bool): при включении в консоль пишется лог о нажатой клавише.
+
+### Tools / Inventory
+
+- **HandView** — новый компонент «вьюшка руки» на префабе предмета (тот же, что WorldDropPrefab): смещение позиции (**Position Offset**), поворота (**Rotation Offset**) и базовый масштаб (**Scale In Hand**). InventoryHand при отображении ищет HandView на экземпляре и применяет эти значения первыми; затем применяется общий масштаб руки (Fixed или Relative).
+- **InventoryHand** — масштаб в руке: режим задаётся enum **HandScaleMode** (Fixed / Relative); по умолчанию **Relative** (дельта). Итоговый масштаб = базовый (из HandView или 1) × handScale. Разрешён **индекс слота -1** (ничего не в руке): при включённом **Allow Empty Slot** и **Allow Empty Effective Index** у Selector допустимы SetSlotIndex(-1) и переход на -1 через Selector.Previous() с 0; в руке ничего не отображается, EquippedItemId = −1.
+- Документация: HandView.md, обновлены InventoryHand.md, Tools/Inventory/README.md, UsefulComponents.md.
+
+### Tools / View
+
+- **Selector** — при режиме «только Count» (без списка Items) в UpdateSelection добавлена привязка _currentIndex к допустимым границам (GetCurrentBounds), чтобы Next/Previous стабильно работали при виртуальном Count.
+
 ## [7.0.0] - 2026-02-23
 
 ### BREAKING: мажорная версия — подписки и события

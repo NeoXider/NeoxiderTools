@@ -36,11 +36,11 @@ namespace Neo.Pages
         {
             if (isMusic)
             {
-                uiToggleView?.OnValueChanged.AddListener(value => Audio.IsActiveMusic = value);
+                uiToggleView?.Value.OnChanged.AddListener(value => Audio.IsActiveMusic = value);
             }
             else
             {
-                uiToggleView?.OnValueChanged.AddListener(value => Audio.IsActiveSound = value);
+                uiToggleView?.Value.OnChanged.AddListener(value => Audio.IsActiveSound = value);
             }
         }
     }

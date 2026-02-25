@@ -169,8 +169,8 @@ namespace Neo.Pages
     {
         public static float Value => Money.I.money;
         public static float LevelValue => Money.I.levelMoney;
-        public static UnityEvent<float> OnValueChange => Money.I.OnChangedMoney;
-        public static UnityEvent<float> OnLevelValueChange => Money.I.OnChangedLevelMoney;
+        public static UnityEvent<float> OnValueChange => Money.I.CurrentMoney.OnChanged;
+        public static UnityEvent<float> OnLevelValueChange => Money.I.LevelMoney.OnChanged;
     }
 
     /// <summary>
@@ -178,10 +178,10 @@ namespace Neo.Pages
     /// </summary>
     public class Score
     {
-        public static int Best => ScoreManager.I.BestScore;
-        public static int Current => ScoreManager.I.Score;
-        public static UnityEvent<int> OnCurrentChange => ScoreManager.I.OnValueChange;
-        public static UnityEvent<int> OnBestChange => ScoreManager.I.OnBestValueChange;
+        public static int Best => ScoreManager.I.BestScoreValue;
+        public static int Current => ScoreManager.I.ScoreValue;
+        public static UnityEvent<int> OnCurrentChange => ScoreManager.I.Score.OnChanged;
+        public static UnityEvent<int> OnBestChange => ScoreManager.I.BestScore.OnChanged;
     }
 
     /// <summary>

@@ -1,7 +1,7 @@
 {
   "name": "com.neoxider.tools",
   "displayName": "Neoxider Tools",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "unity": "2022.1",
   "unityRelease": "0f1",
   "description": "Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.",

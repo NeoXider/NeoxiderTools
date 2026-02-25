@@ -78,6 +78,14 @@ namespace Neo.Tools
         public UnityEvent<int, int> OnDropFailed = new();
 
         public InventoryComponent Inventory => _inventory;
+
+        /// <summary>Ввод по клавише дропа. InventoryHand при подключённом Dropper выставляет false, чтобы дроп по G обрабатывала только рука.</summary>
+        public bool AllowDropInput
+        {
+            get => _allowDropInput;
+            set => _allowDropInput = value;
+        }
+
         public bool CanDrop
         {
             get => _canDrop;
@@ -86,7 +94,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (!_allowDropInput || !_canDrop || !Input.GetKeyDown(_dropKey))
+            if (!_allowDropInput || !_canDrop || !KeyInputCompat.GetKeyDown(_dropKey))
             {
                 return;
             }

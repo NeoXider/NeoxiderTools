@@ -58,7 +58,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (_allowToggle && Input.GetKeyDown(_toggleKey))
+            if (_allowToggle && KeyInputCompat.GetKeyDown(_toggleKey))
             {
                 ToggleCursorState();
             }

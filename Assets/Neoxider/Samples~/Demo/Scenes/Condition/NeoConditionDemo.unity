@@ -1118,7 +1118,7 @@ MonoBehaviour:
     _sourceObject: {fileID: 415127919}
     _componentIndex: 0
     _componentTypeName: Neo.Tools.Health
-    _propertyName: Hp
+    _propertyName: HpValue
     _valueType: 0
     _compareOp: 5
     _invert: 0
@@ -1135,6 +1135,16 @@ MonoBehaviour:
     _otherComponentIndex: 0
     _otherComponentTypeName: 
     _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -1232,12 +1242,16 @@ MonoBehaviour:
   ignoreIsAlive: 0
   maxDamageAmount: -1
   maxHealAmount: -1
-  OnChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChangePercent:
-    m_PersistentCalls:
-      m_Calls: []
+  Hp:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  HpPercent:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   OnDamage:
     m_PersistentCalls:
       m_Calls: []
@@ -1422,7 +1436,7 @@ MonoBehaviour:
     _sourceObject: {fileID: 2058589021}
     _componentIndex: 0
     _componentTypeName: Neo.Tools.ScoreManager
-    _propertyName: Score
+    _propertyName: ScoreValue
     _valueType: 0
     _compareOp: 4
     _invert: 0
@@ -1439,6 +1453,16 @@ MonoBehaviour:
     _otherComponentIndex: 0
     _otherComponentTypeName: 
     _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -2540,6 +2564,16 @@ MonoBehaviour:
     _otherComponentIndex: 0
     _otherComponentTypeName: 
     _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -3627,33 +3661,31 @@ MonoBehaviour:
   - 0.25
   - 0.5
   - 0.75
-  OnValueChange:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1701559145}
-        m_TargetAssemblyTypeName: Neo.Demo.Condition.ConditionDemoUI, Assembly-CSharp
-        m_MethodName: CheckWinCondition
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: 
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnBestValueChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnTargetChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnProgressChange:
-    m_PersistentCalls:
-      m_Calls: []
-  OnStarChange:
-    m_PersistentCalls:
-      m_Calls: []
+  Score:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  BestScore:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  TargetScore:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  Progress:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  CountStarsReactive:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
   setTextBestScores: []
   setTextScore: []
   textBestScores: []

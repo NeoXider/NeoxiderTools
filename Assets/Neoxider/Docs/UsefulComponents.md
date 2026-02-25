@@ -39,6 +39,7 @@
 | **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
 | **Components** | Health, Evade, AttackExecution, AdvancedAttackCollider, Counter, Loot, TextScore, TypewriterEffectComponent |
 | **Dialogue** | DialogueController, DialogueUI. Редактор: кнопка в инспекторе или **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
+| **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView. Рука: Hand Anchor + Selector; HandView на префабе — офсеты и масштаб в руке; применение E, дроп G через Dropper; масштаб руки — HandScaleMode (по умолчанию Relative). |
 | **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |
 | **View** | Selector, StarView, BillboardUniversal, LightAnimator, MeshEmission, ImageFillAmountAnimator, ZPositionAdjuster |
 | **Debug** | FPS, ErrorLogger |

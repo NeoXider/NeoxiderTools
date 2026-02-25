@@ -32,6 +32,14 @@ namespace Neo
                     return;
                 }
 
+                (int min, int max) = GetCurrentBounds();
+                bool virtualOnly = _items == null || _items.Length == 0;
+                if (virtualOnly)
+                {
+                    if (_currentIndex < min) _currentIndex = min;
+                    else if (_currentIndex > max) _currentIndex = max;
+                }
+
                 int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
                 int effectiveIndex = _currentIndex + _indexOffset;
                 if (effectiveIndex < minEff)

@@ -39,10 +39,7 @@
    - Collect On Trigger 3D/2D — по желанию.
 
 4. **Выброс**  
-   На том же объекте, что инвентарь: **InventoryDropper**  
-   - **Inventory** — тот же InventoryComponent.  
-   - Drop Key (например, G), Drop Selected On Key = true.  
-   - В коде/UnityEvent можно вызывать `inventory.DropSelected(1)` или `dropper.DropSelected(1)`.
+   На том же объекте, что инвентарь: **InventoryDropper**. В **InventoryHand** в поле **Dropper** укажите этот Dropper — по клавише **G** будет вызываться **DropEquipped()**, у Dropper ввод по клавише временно отключится. Либо без связи: Dropper сам обрабатывает G (Drop Selected On Key = true). В коде: `hand.DropEquipped(1)` или `dropper.DropSelected(1)`.
 
 5. **Использование предмета**  
    На **InventoryHand** подписаться на **OnUseItemRequested(int itemId)**:  
@@ -55,7 +52,7 @@
 
 - Подбор → предмет в единственный слот инвентаря → рука показывает его в Hand Anchor.  
 - **UseEquippedItem()** → OnUseItemRequested → ваша логика (трата через TryConsume при необходимости).  
-- Выброс → **InventoryDropper** (DropSelected / по клавише).
+- Выброс → **InventoryDropper** (по G — через Hand.DropEquipped при назначенном Dropper, иначе Dropper сам по клавише; или вызов DropSelected).
 
 ---
 
@@ -70,7 +67,7 @@
 | **InventoryComponent** | Полный инвентарь (лимиты по желанию), автосохранение. |
 | **Selector** | Текущий «слот»: виртуальный Count = число слотов с предметами. Next/Previous меняют выбранный слот. |
 | **InventoryHand** | Показывает в Hand Anchor предмет выбранного слота; синхронизация с Selector и SelectedItemId. |
-| **InventoryDropper** | Выброс выбранного предмета (SelectedItemId). |
+| **InventoryDropper** | Выброс выбранного предмета. Если назначен в Hand → Dropper, по G рука вызывает DropEquipped(); иначе Dropper сам по клавише. |
 | **PickableItem** | Добавляет предметы в тот же InventoryComponent. |
 
 ### Пошаговый план настройки
@@ -108,10 +105,7 @@
 
 **Шаг 5. Выброс**
 
-- На том же объекте: **InventoryDropper**.  
-  - **Inventory** — тот же InventoryComponent.  
-  - **Drop Selected On Key** = true (выбрасывается текущий в руке).  
-  - Клавиша выброса или вызов **DropSelected(amount)** из кода/событий.
+- На том же объекте: **InventoryDropper**. В **InventoryHand** в поле **Dropper** укажите этот Dropper — по **G** будет сбрасываться предмет из руки (DropEquipped), у Dropper ввод по клавише отключится. Либо не связывать: Dropper сам обрабатывает G (Drop Selected On Key = true). В коде: **hand.DropEquipped(amount)** или **dropper.DropSelected(amount)**.
 
 **Шаг 6. Использование предмета**
 
@@ -138,6 +132,6 @@
 ## Общее
 
 - **Использовать**: всегда через **InventoryHand.UseEquippedItem()** и подписку на **OnUseItemRequested**; трату реализуете через **TryConsume** там, где нужно.  
-- **Выброс**: **InventoryDropper** (DropSelected / по клавише).  
+- **Выброс**: **InventoryDropper** (при Dropper в Hand — по G через DropEquipped(); иначе по клавише / DropSelected).  
 - **Один предмет в руке**: те же компоненты, инвентарь с Max Unique = 1, Max Total = 1, без Selector.  
 - **Много предметов**: полный инвентарь + Selector + InventoryHand + Dropper по плану выше.

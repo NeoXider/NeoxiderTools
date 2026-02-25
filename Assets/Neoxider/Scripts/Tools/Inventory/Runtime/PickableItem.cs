@@ -55,6 +55,10 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Deactivate object if destroy is disabled.")]
         private bool _deactivateAfterCollect;
 
+        [Header("Activation (when used in hand)")]
+        [Tooltip("Вызывается при активации предмета (рука вызывает Activate() при применении). Подпишите для эффекта использования в руке.")]
+        public UnityEvent OnActivate = new();
+
         [Header("Events")] public UnityEvent OnCollectStarted = new();
         public UnityEvent<int, int> OnCollected = new();
         public UnityEvent OnCollectFailed = new();
@@ -109,6 +113,14 @@ namespace Neo.Tools
         public void SetTargetInventory(InventoryComponent inventory)
         {
             _targetInventory = inventory;
+        }
+
+        /// <summary>
+        ///     Вызвать активацию предмета (например при применении в руке). Вызывает OnActivate.
+        /// </summary>
+        public void Activate()
+        {
+            OnActivate?.Invoke();
         }
 
         public void Configure(InventoryItemData itemData, int fallbackItemId, int amount, InventoryComponent targetInventory = null)
