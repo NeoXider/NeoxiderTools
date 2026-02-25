@@ -1,6 +1,6 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию **NeoxiderTools** (v6.0.8). Ссылки на модули и инструкции по запуску.
+Добро пожаловать в документацию **NeoxiderTools** (v7.3.1). Ссылки на модули и инструкции по запуску.
 
 - **[Полезные компоненты (Add Component / GameObject)](./UsefulComponents.md)** — что удобно добавлять через меню **Neoxider/** (UI, Tools, Shop, Audio, Bonus и т.д.).
 - **[Новые скрипты и улучшения для функциональности](./NEXT_IMPROVEMENTS.md)** — идеи для следующих релизов (ValueDisplay, интеграции Shop+Inventory, ToggleByIndex и др.).

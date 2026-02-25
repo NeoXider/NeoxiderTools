@@ -19,7 +19,15 @@ namespace Neo.Tools
             {
                 if (_instance == null)
                 {
-                    _instance = FindFirstObjectByType<T>(FindObjectsInactive.Include);
+                    T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+                    for (int i = 0; i < all.Length; i++)
+                    {
+                        if (all[i].SetInstanceOnAwakeEnabled)
+                        {
+                            _instance = all[i];
+                            break;
+                        }
+                    }
 
                     if (_instance == null && CreateInstance)
                     {

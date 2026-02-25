@@ -9,26 +9,47 @@ namespace Neo.Tools
     {
         [SerializeField] private ScoreDisplayMode _displayMode = ScoreDisplayMode.Current;
         [SerializeField] [HideInInspector] private bool _best;
+        [SerializeField]
+        [Tooltip("Источник счёта. Если не задан — ScoreManager.I. Задайте при нескольких ScoreManager в сцене.")]
+        private ScoreManager _scoreSource;
+
+        private ScoreManager _scoreManager;
+
+        private ScoreManager GetScoreManager()
+        {
+            return _scoreSource != null ? _scoreSource : ScoreManager.I;
+        }
+
+        private void Start()
+        {
+            if (GetScoreManager() == null)
+            {
+                this.WaitWhile(() => GetScoreManager() == null, Init);
+                return;
+            }
+            Init();
+        }
 
         private void OnEnable()
         {
-            this.WaitWhile(() => ScoreManager.I == null, Init);
+            if (_scoreManager != null)
+                Init();
         }
 
         private void OnDisable()
         {
-            if (ScoreManager.I == null)
+            if (_scoreManager == null)
             {
                 return;
             }
 
             if (_displayMode == ScoreDisplayMode.Best || _best)
             {
-                ScoreManager.I.BestScore.OnChanged.RemoveListener(Set);
+                _scoreManager.BestScore.OnChanged.RemoveListener(Set);
             }
             else
             {
-                ScoreManager.I.Score.OnChanged.RemoveListener(Set);
+                _scoreManager.Score.OnChanged.RemoveListener(Set);
             }
         }
 
@@ -42,11 +63,13 @@ namespace Neo.Tools
 
         private void Init()
         {
-            ScoreManager sm = ScoreManager.I;
+            ScoreManager sm = GetScoreManager();
             if (sm == null)
             {
                 return;
             }
+
+            _scoreManager = sm;
 
             if (_displayMode == ScoreDisplayMode.Best || _best)
             {

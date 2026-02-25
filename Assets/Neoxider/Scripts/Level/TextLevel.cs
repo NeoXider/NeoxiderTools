@@ -12,13 +12,32 @@ namespace Neo.Level
         [SerializeField] private LevelDisplayMode _displayMode = LevelDisplayMode.Current;
         [SerializeField] [HideInInspector] private bool _best;
         [SerializeField] private int _displayOffset = 1;
+        [SerializeField]
+        [Tooltip("Источник уровня. Если не задан — LevelManager.I. Задайте при нескольких LevelManager в сцене.")]
+        private LevelManager _levelSource;
 
         private UnityEvent<int> _event;
 
-        private void OnEnable()
+        private LevelManager GetLevelManager()
+        {
+            return _levelSource != null ? _levelSource : LevelManager.I;
+        }
+
+        private void Start()
         {
             IndexOffset = _displayOffset;
-            this.WaitWhile(() => LevelManager.I == null, Init);
+            if (GetLevelManager() == null)
+            {
+                this.WaitWhile(() => GetLevelManager() == null, Init);
+                return;
+            }
+            Init();
+        }
+
+        private void OnEnable()
+        {
+            if (_event != null)
+                Init();
         }
 
         private void OnDisable()
@@ -40,7 +59,7 @@ namespace Neo.Level
 
         private void Init()
         {
-            LevelManager lm = LevelManager.I;
+            LevelManager lm = GetLevelManager();
             if (lm == null)
             {
                 return;

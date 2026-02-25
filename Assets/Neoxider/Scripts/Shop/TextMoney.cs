@@ -7,6 +7,10 @@ namespace Neo.Shop
     public class TextMoney : SetText
     {
         [SerializeField] private MoneyDisplayMode _displayMode = MoneyDisplayMode.Money;
+        [SerializeField]
+        [Tooltip("Источник значения. Если не задан — используется Money.I (глобальный синглтон). Задайте для отображения энергии или другого отдельного счётчика.")]
+        private Money _moneySource;
+
         public float amount;
         private Money _money;
 
@@ -15,20 +19,31 @@ namespace Neo.Shop
             @decimal = 0;
         }
 
-        private void OnEnable()
+        private Money GetMoney()
         {
-            if (Money.I == null)
+            return _moneySource != null ? _moneySource : Money.I;
+        }
+
+        private void Start()
+        {
+            if (GetMoney() == null)
             {
-                this.WaitWhile(() => Money.I == null, Init);
+                this.WaitWhile(() => GetMoney() == null, Init);
                 return;
             }
 
             Init();
         }
 
+        private void OnEnable()
+        {
+            if (_money != null)
+                Init();
+        }
+
         private void Init()
         {
-            _money = Money.I;
+            _money = GetMoney();
             if (_money == null)
                 return;
 
