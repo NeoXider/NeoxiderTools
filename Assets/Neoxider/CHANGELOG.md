@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.3.2] - 2026-02-23
+
+### Tools / Components
+
+- **AnimatorParameterDriver** — имена параметров можно задать в переменных в инспекторе (Trigger/Bool/Float/Int Parameter Name); добавлены методы без имени параметра: **SetTrigger()**, **SetBool(bool)**, **SetFloat(float)**, **SetInt(int)** — имя берётся из соответствующего поля. Удобно для UnityEvent: кнопка вызывает SetTrigger(), значение передаётся в SetBool(bool) / SetFloat(float) / SetInt(int). Документация обновлена.
+
 ## [7.3.1] - 2026-02-23
 
 ### Shop / Level / Components (patch)

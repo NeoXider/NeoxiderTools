@@ -71,6 +71,10 @@
 - `onStartFollowing`, `onStopFollowing`
 - `onSpeedChanged`
 
+## Анимации
+
+Чтобы аниматор NPC автоматически реагировал на движение (ходьба/бег по скорости агента), добавьте на тот же объект компонент **[NpcAnimatorDriver](../NpcAnimatorDriver.md)** и укажите Animator и имена параметров (по умолчанию `Speed`, `IsMoving`).
+
 ## Совместимость с AiNavigation
 
 `AiNavigation` остаётся для старых проектов, но помечен как устаревший. Для новых проектов используйте `NpcNavigation`.

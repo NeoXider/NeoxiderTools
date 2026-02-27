@@ -4,6 +4,7 @@
 
 ## Файлы
 
+- [AnimatorParameterDriver](./AnimatorParameterDriver.md) — вызов параметров Animator (триггер, bool, float, int) из кода и UnityEvent.
 - [UnityLifecycleEvents](./UnityLifecycleEvents.md) — проброс событий жизненного цикла Unity (Awake, OnEnable, OnDisable, Start, Destroy, Update/FixedUpdate/LateUpdate с deltaTime) в UnityEvent
 - [Counter](./Counter.md) — универсальный счётчик (Int/Float), Add/Subtract/Set, Send по Payload или произвольное число, OnValueChanged/OnSend
 - [TextScore](./TextScore.md) — отображение очков (ScoreManager): текущий счёт или рекорд, без кода

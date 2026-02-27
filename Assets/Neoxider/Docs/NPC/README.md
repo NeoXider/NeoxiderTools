@@ -1,10 +1,11 @@
 # NPC
 
-Этот раздел содержит модульную систему NPC (подход «как Cinemachine»): добавляете компоненты‑модули на один объект — получаете новое поведение.
+Модульная система NPC: добавляете компоненты на один объект — получаете навигацию, анимации и т.д.
 
-## Разделы
+## Компоненты
 
-- [Navigation](./Navigation/NPCNavigation.md)
+- **[NpcNavigation](./Navigation/NPCNavigation.md)** — навигация (Follow / Patrol / Combined).
+- **[NpcAnimatorDriver](./NpcAnimatorDriver.md)** — автоматическое управление аниматором по скорости NavMeshAgent (параметры Speed и IsMoving). Добавьте на тот же объект, что NpcNavigation и Animator — анимации ходьбы/бега включаются при движении.
 
 
 
