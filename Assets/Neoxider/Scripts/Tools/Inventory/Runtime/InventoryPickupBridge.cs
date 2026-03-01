@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
-    [NeoDoc("Tools/Inventory/PickableItem.md")]
+    [NeoDoc("Tools/Inventory/InventoryPickupBridge.md")]
     [CreateFromMenu("Neoxider/Tools/Inventory/InventoryPickupBridge")]
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventoryPickupBridge))]
     public sealed class InventoryPickupBridge : MonoBehaviour

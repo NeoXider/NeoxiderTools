@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Neo.Extensions;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,7 +9,7 @@ using UnityEngine.Serialization;
 
 namespace Neo.Shop
 {
-    [NeoDoc("Shop.md")]
+    [NeoDoc("Shop/Shop.md")]
     [CreateFromMenu("Neoxider/Shop/Shop")]
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Shop))]
     public class Shop : MonoBehaviour
@@ -54,7 +55,7 @@ namespace Neo.Shop
         public UnityEvent<int> OnPurchaseFailed;
         public UnityEvent OnLoad;
 
-        private List<UnityAction> _buyDelegates;
+        private UnityEventDelegateCache _buyDelegates;
         private int _id;
 
         private IMoneySpend _money;
@@ -169,16 +170,14 @@ namespace Neo.Shop
 
             if (subscribe)
             {
-                _buyDelegates ??= new List<UnityAction>();
+                _buyDelegates ??= new UnityEventDelegateCache();
                 _buyDelegates.Clear();
                 for (int i = 0; i < _shopItems.Length; i++)
                 {
                     int id = i;
-                    UnityAction action = () => Buy(id);
-                    _buyDelegates.Add(action);
                     if (_autoSubscribe && _shopItems[i].buttonBuy != null)
                     {
-                        _shopItems[i].buttonBuy.onClick.AddListener(action);
+                        _buyDelegates.SubscribeAt(i, _shopItems[i].buttonBuy.onClick, () => Buy(id));
                     }
                 }
             }
@@ -190,7 +189,7 @@ namespace Neo.Shop
                     {
                         if (_shopItems[i].buttonBuy != null)
                         {
-                            _shopItems[i].buttonBuy.onClick.RemoveListener(_buyDelegates[i]);
+                            _buyDelegates.UnsubscribeAt(i, _shopItems[i].buttonBuy.onClick);
                         }
                     }
                 }

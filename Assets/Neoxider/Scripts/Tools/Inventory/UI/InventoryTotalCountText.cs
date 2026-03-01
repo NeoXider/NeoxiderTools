@@ -10,7 +10,7 @@ namespace Neo.Tools
         Selected = 2
     }
 
-    [NeoDoc("Tools/Inventory/InventoryComponent.md")]
+    [NeoDoc("Tools/Inventory/InventoryTotalCountText.md")]
     [CreateFromMenu("Neoxider/Tools/Inventory/InventoryTotalCountText")]
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventoryTotalCountText))]
     public sealed class InventoryTotalCountText : MonoBehaviour

@@ -26,6 +26,9 @@
 - [**RandomShapeExtensions**](./RandomShapeExtensions.md): Случайные точки внутри и на поверхности фигур.
 - [**Shapes**](./Shapes.md): Определения структур `Circle` и `Sphere`.
 
+### События (UnityEvent)
+- [**UnityEventDelegateCache**](./UnityEventDelegateCache.md): кэш делегатов для корректной отписки от UnityEvent при динамических подписках по индексу (кнопки, элементы списка). Используется в Shop.
+
 ### Системные утилиты
 - [**CoroutineExtensions**](./CoroutineExtensions.md): Улучшенная система для запуска и контроля корутин.
 - [**PlayerPrefsUtils**](./PlayerPrefsUtils.md): Сохранение и загрузка массивов в `PlayerPrefs`.

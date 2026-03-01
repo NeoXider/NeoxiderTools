@@ -7,7 +7,7 @@ using Random = UnityEngine.Random;
 
 namespace Neo.UI
 {
-    [NeoDoc("UI/Animation/ButtonShake.md")]
+    [NeoDoc("UI/ButtonShake.md")]
     [CreateFromMenu("Neoxider/UI/ButtonShake")]
     [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonShake))]
     public class ButtonShake : MonoBehaviour, IPointerDownHandler, IPointerUpHandler

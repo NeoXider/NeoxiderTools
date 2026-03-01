@@ -33,5 +33,4 @@
 - При перспективной камере задайте `targetCamera` явно и подберите `paddingTiles` экспериментально.
 
 **Файлы:**
-- Скрипт: `Assets/_source/Scripts/Parallax/ParallaxLayer.cs`
-- Документация: `Assets/_source/Scripts/Parallax/ParallaxLayer.md`
+- Скрипт: `Assets/Neoxider/Scripts/Parallax/ParallaxLayer.cs`

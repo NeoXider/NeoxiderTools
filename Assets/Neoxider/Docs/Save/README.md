@@ -16,12 +16,14 @@
 - [**SaveProvider**](./SaveProvider.md): Статический класс с API как PlayerPrefs для работы с провайдерами сохранения.
 - [**ISaveProvider**](./ISaveProvider.md): Интерфейс для всех провайдеров сохранения.
 - [**SaveProviderSettings**](./SaveProviderSettings.md): ScriptableObject для настройки провайдеров.
+- [**SaveProviderSettingsComponent**](./SaveProviderSettingsComponent.md): MonoBehaviour для инициализации провайдера из настроек в Inspector.
 
 ### Система сохранения компонентов
 - [**ISaveableComponent**](./ISaveableComponent.md): Интерфейс, который должны реализовывать все сохраняемые компоненты.
 - [**SaveableBehaviour**](./SaveableBehaviour.md): Базовый класс для быстрой реализации сохраняемых компонентов.
 - [**SaveField (Атрибут)**](./SaveField.md): Атрибут для пометки полей, которые нужно сохранить.
 - [**SaveManager**](./SaveManager.md): Ядро системы, управляющее процессом сохранения и загрузки.
+- [**PlayerData**](./PlayerData.md): Пример сохраняемого компонента (ISaveableComponent + SaveField).
 
 ### Глобальное хранилище
 - [**GlobalData**](./GlobalData.md): Класс-контейнер для ваших глобальных данных.

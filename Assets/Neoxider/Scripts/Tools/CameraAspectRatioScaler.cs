@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Tools
 {
     /// <summary>
     ///     Provides automatic camera scaling functionality to maintain consistent view proportions across different screen

@@ -5,7 +5,7 @@ using Neo.Extensions;
 using TMPro;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Tools
 {
     [Flags]
     public enum LogTypeFilter

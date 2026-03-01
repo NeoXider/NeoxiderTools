@@ -1,7 +1,7 @@
 using TMPro;
 using UnityEngine;
 
-namespace Neo
+namespace Neo.Tools
 {
     /// <summary>
     ///     Displays and monitors FPS (Frames Per Second) in the game.

@@ -12,7 +12,7 @@ using TMPro;
 #endif
 
 
-namespace Neo
+namespace Neo.Tools
 {
     /// <summary>How to persist timer state: by current seconds or by real end/start time (UTC).</summary>
     public enum TimerSaveMode

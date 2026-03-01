@@ -8,36 +8,20 @@ namespace Neo.Tools
     public static class PoolExtensions
     {
         /// <summary>
-        ///     Возвращает объект в пул. Если объект из пула — возвращает в PoolManager; иначе уничтожает.
+        ///     Деспавнит объект: возвращает в пул или уничтожает (через <see cref="SpawnUtility.Despawn" />).
         /// </summary>
         public static void ReturnToPool(this GameObject go)
         {
-            PoolManager.Release(go);
+            SpawnUtility.Despawn(go);
         }
 
         /// <summary>
-        ///     Спавнит префаб из пула (если PoolManager есть) или через Instantiate. Родитель задаётся одним вызовом.
+        ///     Спавнит префаб через единую точку входа: пул (если есть PoolManager) или Instantiate.
         /// </summary>
         public static GameObject SpawnFromPool(this GameObject prefab, Vector3 position, Quaternion rotation,
             Transform parent = null)
         {
-            if (prefab == null)
-            {
-                return null;
-            }
-
-            if (PoolManager.I != null)
-            {
-                return PoolManager.Get(prefab, position, rotation, parent);
-            }
-
-            GameObject instance = Object.Instantiate(prefab, position, rotation);
-            if (parent != null)
-            {
-                instance.transform.SetParent(parent, true);
-            }
-
-            return instance;
+            return SpawnUtility.Spawn(prefab, position, rotation, parent);
         }
     }
 }

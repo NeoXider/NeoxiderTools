@@ -3,7 +3,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.Tools
 {
     public struct SwipeData
     {

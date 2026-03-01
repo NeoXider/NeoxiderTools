@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace Neo.Tools
 {
-    [NeoDoc("Tools/Inventory/InventoryView.md")]
+    [NeoDoc("Tools/Inventory/InventoryItemView.md")]
     [CreateFromMenu("Neoxider/Tools/Inventory/InventoryItemView")]
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventoryItemView))]
     public sealed class InventoryItemView : MonoBehaviour

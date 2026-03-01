@@ -62,12 +62,25 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 | `Core/Enums` | Suit, Rank, DeckType |
 | `Core/Data` | CardData — неизменяемая структура карты |
 | `Model` | DeckModel, HandModel — логика без визуала |
-| `View` | CardView, DeckView, HandView — визуализация |
+| `View` | CardView, CardViewUniversal, DeckView, HandView, CardViewAnimationTemplates — визуализация и анимации |
 | `Presenter` | Связь Model ↔ View |
 | `Components` | No-code обёртки для инспектора |
 | `Config` | DeckConfig, CardLayoutSettings, CardAnimationConfig |
 | `Poker` | Покерные комбинации и правила |
-| `Utils` | CardComparer — сортировка |
+| `Utils` | CardComparer, CardLayoutCalculator — сортировка и раскладки |
+
+---
+
+## Что переиспользовать в разных карточных играх
+
+В любых карточных играх (классика, CCG, deckbuilder) удобно переиспользовать:
+
+- **CardViewAnimationTemplates** — готовые анимации (Bounce, Pulse, Shake, Highlight, FlyIn, Idle); вызывать из любой вью по [CardViewUniversal](View/CardViewUniversal.md#переиспользование-шаблонов).
+- **CardLayoutCalculator** и **CardLayoutSettings** — расчёт позиций и поворотов для Fan, Line, Grid, Stack и др.
+- **HandView / IHandView** — контейнер карт с раскладкой; для нескольких зон — несколько HandView.
+- **MoveToAsync / FlipAsync** — перемещение и переворот, не привязаны к типу данных.
+
+Подробнее: [Interfaces](Interfaces.md) и [CustomCardViewGuide](View/CustomCardViewGuide.md) (игры с собственной моделью карты).
 
 ---
 
@@ -79,6 +92,9 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 - [DeckComponent](./DeckComponent.md) — компонент колоды
 - [HandComponent](./HandComponent.md) — компонент руки
 - [BoardComponent](./BoardComponent.md) — компонент доски
+- **Интерфейсы и переиспользование:** [Interfaces](./Interfaces.md) — ICardView, ICardDisplayMode, ICardViewAnimations; что переиспользовать в разных карточных играх
+- **View (MVP):** [CardView](./View/CardView.md), [CardViewUniversal](./View/CardViewUniversal.md), [DeckView](./View/DeckView.md), [HandView](./View/HandView.md)
+- [Custom Card View Guide](./View/CustomCardViewGuide.md) — пошаговая своя реализация карты
 - [Poker](./Poker/README.md) — покерные правила
 
 ---

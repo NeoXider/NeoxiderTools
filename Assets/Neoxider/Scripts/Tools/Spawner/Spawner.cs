@@ -22,7 +22,10 @@ namespace Neo.Tools
         [Header("Spawn Settings")] [SerializeField]
         private GameObject[] _prefabs;
 
-        [SerializeField] private bool _useObjectPool = true;
+        [Tooltip(
+            "При true спавн через пул (если есть PoolManager), иначе Instantiate. Пул создаётся при первом запросе для префаба.")]
+        [SerializeField]
+        private bool _useObjectPool = true;
 
         [FormerlySerializedAs("_destroyDelay")]
         [SerializeField]
@@ -238,7 +241,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Базовый метод спавна/получения из пула.
+        ///     Базовый метод спавна: всегда идёт через <see cref="SpawnUtility" /> — пул используется, если доступен
+        ///     (при <see cref="_useObjectPool" /> и наличии PoolManager), иначе Instantiate.
         /// </summary>
         /// <param name="prefab">Префаб для спавна.</param>
         /// <param name="position">Мировая позиция.</param>
@@ -251,20 +255,13 @@ namespace Neo.Tools
                 return null;
             }
 
-            GameObject spawnedObject;
-            if (_useObjectPool && PoolManager.I != null)
+            GameObject spawnedObject = _useObjectPool
+                ? SpawnUtility.Spawn(prefab, position, rotation, parent)
+                : Instantiate(prefab, position, rotation, parent);
+
+            if (spawnedObject == null)
             {
-                spawnedObject = PoolManager.Get(prefab, position, rotation, parent);
-                spawnedObject.SetActive(true);
-            }
-            else
-            {
-                spawnedObject = Instantiate(prefab, position, rotation);
-                spawnedObject.SetActive(true);
-                if (parent != null)
-                {
-                    spawnedObject.transform.SetParent(parent, true);
-                }
+                return null;
             }
 
             SpawnedObjects.Add(spawnedObject);
@@ -288,7 +285,7 @@ namespace Neo.Tools
                 SpawnedObjects.Remove(objectToDestroy);
                 if (_useObjectPool)
                 {
-                    PoolManager.Release(objectToDestroy);
+                    SpawnUtility.Despawn(objectToDestroy);
                 }
                 else
                 {
@@ -363,7 +360,7 @@ namespace Neo.Tools
                 {
                     if (_useObjectPool)
                     {
-                        PoolManager.Release(obj);
+                        SpawnUtility.Despawn(obj);
                     }
                     else
                     {

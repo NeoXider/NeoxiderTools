@@ -3,7 +3,7 @@ using UnityEngine.UI;
 
 namespace Neo.Audio
 {
-    [NeoDoc("Audio/View/AudioControl.md")]
+    [NeoDoc("Audio/AudioControl.md")]
     [CreateFromMenu("Neoxider/Audio/AudioControl")]
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AudioControl))]
     public class AudioControl : MonoBehaviour

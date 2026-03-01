@@ -2,55 +2,52 @@ using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.Tools
 {
-    namespace Tools
+    [NeoDoc("Tools/InteractableObject/ToggleObject.md")]
+    [CreateFromMenu("Neoxider/Tools/Interact/ToggleObject", "Prefabs/Tools/Interact/Toggle Interactive.prefab")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
+    public class ToggleObject : MonoBehaviour
     {
-        [NeoDoc("Tools/InteractableObject/ToggleObject.md")]
-        [CreateFromMenu("Neoxider/Tools/Interact/ToggleObject", "Prefabs/Tools/Interact/Toggle Interactive.prefab")]
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
-        public class ToggleObject : MonoBehaviour
+        [Header("Settings")] public ReactivePropertyBool Value = new();
+
+        [Header("Debug")] public bool toggleDebug;
+
+        public UnityEvent<bool> OnChangeFlip;
+        public UnityEvent ON;
+        public UnityEvent OFF;
+
+        /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
+        public bool ValueBool => Value.CurrentValue;
+
+        private void OnValidate()
         {
-            [Header("Settings")] public ReactivePropertyBool Value = new();
-
-            [Header("Debug")] public bool toggleDebug;
-
-            public UnityEvent<bool> OnChangeFlip;
-            public UnityEvent ON;
-            public UnityEvent OFF;
-
-            /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
-            public bool ValueBool => Value.CurrentValue;
-
-            private void OnValidate()
+            if (toggleDebug)
             {
-                if (toggleDebug)
-                {
-                    toggleDebug = false;
-                    Toggle();
-                }
+                toggleDebug = false;
+                Toggle();
             }
+        }
 
-            [Button]
-            public void Toggle()
+        [Button]
+        public void Toggle()
+        {
+            Set(!Value.CurrentValue);
+        }
+
+        [Button]
+        public void Set(bool value)
+        {
+            Value.Value = value;
+            OnChangeFlip?.Invoke(!value);
+
+            if (value)
             {
-                Set(!Value.CurrentValue);
+                ON?.Invoke();
             }
-
-            [Button]
-            public void Set(bool value)
+            else
             {
-                Value.Value = value;
-                OnChangeFlip?.Invoke(!value);
-
-                if (value)
-                {
-                    ON?.Invoke();
-                }
-                else
-                {
-                    OFF?.Invoke();
-                }
+                OFF?.Invoke();
             }
         }
     }

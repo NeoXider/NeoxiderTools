@@ -1,21 +1,18 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.Tools
 {
-    namespace Tools
+    [NeoDoc("Tools/UpdateChilds.md")]
+    [CreateFromMenu("Neoxider/Tools/Other/UpdateChilds")]
+    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UpdateChilds))]
+    public class UpdateChilds : MonoBehaviour
     {
-        [NeoDoc("Tools/UpdateChilds.md")]
-        [CreateFromMenu("Neoxider/Tools/Other/UpdateChilds")]
-        [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UpdateChilds))]
-        public class UpdateChilds : MonoBehaviour
-        {
-            public UnityEvent OnChangeChildsCount;
+        public UnityEvent OnChangeChildsCount;
 
-            private void OnTransformChildrenChanged()
-            {
-                OnChangeChildsCount?.Invoke();
-            }
+        private void OnTransformChildrenChanged()
+        {
+            OnChangeChildsCount?.Invoke();
         }
     }
 }

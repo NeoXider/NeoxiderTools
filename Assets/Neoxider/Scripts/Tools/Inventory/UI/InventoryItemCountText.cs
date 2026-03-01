@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Neo.Tools
 {
-    [NeoDoc("Tools/Inventory/InventoryComponent.md")]
+    [NeoDoc("Tools/Inventory/InventoryItemCountText.md")]
     [CreateFromMenu("Neoxider/Tools/Inventory/InventoryItemCountText")]
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventoryItemCountText))]
     public sealed class InventoryItemCountText : MonoBehaviour

@@ -8,7 +8,7 @@ namespace Neo
 {
     namespace UI
     {
-        [NeoDoc("UI/Simple/UI.md")]
+        [NeoDoc("UI/UI.md")]
         [CreateFromMenu("Neoxider/UI/UI")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(UI))]
         public class UI : MonoBehaviour

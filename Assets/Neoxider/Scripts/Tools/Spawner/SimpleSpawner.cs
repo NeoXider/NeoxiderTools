@@ -14,6 +14,8 @@ namespace Neo.Tools
 
         [Header("Behavior")] public bool useParent = true;
 
+        [Tooltip(
+            "При true используется пул, если на сцене есть PoolManager; иначе Instantiate. Пул можно добавить позже — спавн всегда работает.")]
         public bool useObjectPool = true;
 
         public void Spawn()
@@ -26,11 +28,11 @@ namespace Neo.Tools
 
             Vector3 spawnPosition = transform.position + offset;
             Quaternion spawnRotation = Quaternion.Euler(eulerAngle);
-            Transform parent = useParent ? transform : null; // Улучшена логика родительства
+            Transform parent = useParent ? transform : null;
 
             if (useObjectPool)
             {
-                PoolManager.Get(prefab, spawnPosition, spawnRotation, parent);
+                SpawnUtility.Spawn(prefab, spawnPosition, spawnRotation, parent);
             }
             else
             {

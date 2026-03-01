@@ -4,7 +4,7 @@ using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace Neo
+namespace Neo.Tools
 {
     /// <summary>
     ///     Interface for objects that need to subscribe to timer events
