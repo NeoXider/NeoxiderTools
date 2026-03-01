@@ -13,16 +13,16 @@ namespace Neo.StateMachine.NoCode.Editor
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
-        protected override void ProcessAttributeAssignments()
-        {
-        }
-
         private void OnEnable()
         {
             actionTypes = TypeCache.GetTypesDerivedFrom<StateAction>()
                 .Where(t => !t.IsAbstract && !t.IsGenericType && t.GetConstructor(Type.EmptyTypes) != null)
                 .OrderBy(t => t.Name)
                 .ToArray();
+        }
+
+        protected override void ProcessAttributeAssignments()
+        {
         }
 
         protected override void DrawCustomNeoxiderInspectorGUI()
@@ -63,6 +63,7 @@ namespace Neo.StateMachine.NoCode.Editor
                 {
                     removeIndex = i;
                 }
+
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.PropertyField(element, GUIContent.none, true);
                 EditorGUILayout.EndVertical();

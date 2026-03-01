@@ -12,27 +12,34 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/" + nameof(UnityLifecycleEvents))]
     public class UnityLifecycleEvents : MonoBehaviour
     {
-        [Header("Lifecycle")]
-        [SerializeField] private UnityEvent _onAwake = new UnityEvent();
-        [SerializeField] private UnityEvent _onEnable = new UnityEvent();
-        [SerializeField] private UnityEvent _onStart = new UnityEvent();
-        [SerializeField] private UnityEvent _onDisable = new UnityEvent();
-        [SerializeField] private UnityEvent _onDestroy = new UnityEvent();
+        [Header("Lifecycle")] [SerializeField] private UnityEvent _onAwake = new();
+
+        [SerializeField] private UnityEvent _onEnable = new();
+        [SerializeField] private UnityEvent _onStart = new();
+        [SerializeField] private UnityEvent _onDisable = new();
+        [SerializeField] private UnityEvent _onDestroy = new();
 
         [Header("Per frame (enable only when needed)")]
         [Tooltip("Вызывать On Update каждый кадр; аргумент — deltaTime.")]
-        [SerializeField] private bool _emitUpdate = false;
-        [SerializeField] private UnityEvent<float> _onUpdate = new UnityEvent<float>();
-        [Tooltip("Вызывать On Fixed Update каждый фиксированный кадр; аргумент — fixedDeltaTime.")]
-        [SerializeField] private bool _emitFixedUpdate = false;
-        [SerializeField] private UnityEvent<float> _onFixedUpdate = new UnityEvent<float>();
-        [Tooltip("Вызывать On Late Update каждый кадр после Update; аргумент — deltaTime.")]
-        [SerializeField] private bool _emitLateUpdate = false;
-        [SerializeField] private UnityEvent<float> _onLateUpdate = new UnityEvent<float>();
+        [SerializeField]
+        private bool _emitUpdate;
 
-        [Header("Application")]
-        [SerializeField] private UnityEvent<bool> _onApplicationPause = new UnityEvent<bool>();
-        [SerializeField] private UnityEvent<bool> _onApplicationFocus = new UnityEvent<bool>();
+        [SerializeField] private UnityEvent<float> _onUpdate = new();
+
+        [Tooltip("Вызывать On Fixed Update каждый фиксированный кадр; аргумент — fixedDeltaTime.")] [SerializeField]
+        private bool _emitFixedUpdate;
+
+        [SerializeField] private UnityEvent<float> _onFixedUpdate = new();
+
+        [Tooltip("Вызывать On Late Update каждый кадр после Update; аргумент — deltaTime.")] [SerializeField]
+        private bool _emitLateUpdate;
+
+        [SerializeField] private UnityEvent<float> _onLateUpdate = new();
+
+        [Header("Application")] [SerializeField]
+        private UnityEvent<bool> _onApplicationPause = new();
+
+        [SerializeField] private UnityEvent<bool> _onApplicationFocus = new();
 
         public UnityEvent OnAwake => _onAwake;
         public UnityEvent OnEnableEvent => _onEnable;
@@ -45,31 +52,63 @@ namespace Neo.Tools
         public UnityEvent<bool> OnApplicationPauseEvent => _onApplicationPause;
         public UnityEvent<bool> OnApplicationFocusEvent => _onApplicationFocus;
 
-        private void Awake() => _onAwake?.Invoke();
-        private void OnEnable() => _onEnable?.Invoke();
-        private void Start() => _onStart?.Invoke();
-        private void OnDisable() => _onDisable?.Invoke();
-        private void OnDestroy() => _onDestroy?.Invoke();
+        private void Awake()
+        {
+            _onAwake?.Invoke();
+        }
+
+        private void Start()
+        {
+            _onStart?.Invoke();
+        }
 
         private void Update()
         {
             if (_emitUpdate)
+            {
                 _onUpdate?.Invoke(Time.deltaTime);
+            }
         }
 
         private void FixedUpdate()
         {
             if (_emitFixedUpdate)
+            {
                 _onFixedUpdate?.Invoke(Time.fixedDeltaTime);
+            }
         }
 
         private void LateUpdate()
         {
             if (_emitLateUpdate)
+            {
                 _onLateUpdate?.Invoke(Time.deltaTime);
+            }
         }
 
-        private void OnApplicationPause(bool pauseStatus) => _onApplicationPause?.Invoke(pauseStatus);
-        private void OnApplicationFocus(bool hasFocus) => _onApplicationFocus?.Invoke(hasFocus);
+        private void OnEnable()
+        {
+            _onEnable?.Invoke();
+        }
+
+        private void OnDisable()
+        {
+            _onDisable?.Invoke();
+        }
+
+        private void OnDestroy()
+        {
+            _onDestroy?.Invoke();
+        }
+
+        private void OnApplicationFocus(bool hasFocus)
+        {
+            _onApplicationFocus?.Invoke(hasFocus);
+        }
+
+        private void OnApplicationPause(bool pauseStatus)
+        {
+            _onApplicationPause?.Invoke(pauseStatus);
+        }
     }
 }

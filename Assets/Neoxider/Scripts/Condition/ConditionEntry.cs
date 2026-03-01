@@ -143,9 +143,6 @@ namespace Neo.Condition
         [NonSerialized] private ConditionValueSource _leftSource;
         [NonSerialized] private ConditionValueSource _rightSource;
 
-        private ConditionValueSource GetLeftSource() => _leftSource ??= new ConditionValueSource(this, false);
-        private ConditionValueSource GetRightSource() => _rightSource ??= new ConditionValueSource(this, true);
-
         /// <summary>
         ///     Источник данных: Component или GameObject.
         /// </summary>
@@ -344,6 +341,26 @@ namespace Neo.Condition
         internal string OtherPropertyArgumentString => _otherPropertyArgumentString;
 
         /// <summary>
+        ///     Оценить условие. Возвращает true если условие выполнено.
+        /// </summary>
+        /// <param name="fallbackObject">GameObject-владелец (используется если sourceObject пуст).</param>
+        public bool Evaluate(GameObject fallbackObject)
+        {
+            bool result = EvaluateInternal(fallbackObject);
+            return _invert ? !result : result;
+        }
+
+        private ConditionValueSource GetLeftSource()
+        {
+            return _leftSource ??= new ConditionValueSource(this, false);
+        }
+
+        private ConditionValueSource GetRightSource()
+        {
+            return _rightSource ??= new ConditionValueSource(this, true);
+        }
+
+        /// <summary>
         ///     Сбросить кеш reflection и флаги предупреждений.
         /// </summary>
         public void InvalidateCache()
@@ -367,30 +384,31 @@ namespace Neo.Condition
         public void BindOtherToSourceIfNull(GameObject fallbackObject)
         {
             if (_thresholdSource != ThresholdSource.OtherObject)
+            {
                 return;
+            }
+
             if (_otherUseSceneSearch && !string.IsNullOrEmpty(_otherSearchObjectName))
+            {
                 return;
+            }
+
             if (_otherSourceObject != null)
+            {
                 return;
+            }
+
             _otherSourceObject = GetLeftSource().GetResolvedTarget(fallbackObject);
             _rightSource?.InvalidateCacheFull();
-        }
-
-        /// <summary>
-        ///     Оценить условие. Возвращает true если условие выполнено.
-        /// </summary>
-        /// <param name="fallbackObject">GameObject-владелец (используется если sourceObject пуст).</param>
-        public bool Evaluate(GameObject fallbackObject)
-        {
-            bool result = EvaluateInternal(fallbackObject);
-            return _invert ? !result : result;
         }
 
         private bool EvaluateInternal(GameObject fallbackObject)
         {
             ConditionValueSource left = GetLeftSource();
             if (!left.EnsureCache(fallbackObject))
+            {
                 return false;
+            }
 
             object rawValue;
             try
@@ -410,14 +428,19 @@ namespace Neo.Condition
             }
 
             if (rawValue == null)
+            {
                 return false;
+            }
 
             object thresholdValue;
             if (_thresholdSource == ThresholdSource.OtherObject)
             {
                 ConditionValueSource right = GetRightSource();
                 if (!right.EnsureCache(fallbackObject))
+                {
                     return false;
+                }
+
                 try
                 {
                     thresholdValue = right.ReadValue();
@@ -429,12 +452,16 @@ namespace Neo.Condition
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
+                    Debug.LogWarning(
+                        $"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
                     right.InvalidateCache();
                     return false;
                 }
+
                 if (thresholdValue == null)
+                {
                     return false;
+                }
             }
             else
             {
@@ -461,6 +488,7 @@ namespace Neo.Condition
                         _ => false
                     };
                 }
+
                 return _valueType switch
                 {
                     ValueType.Int => CompareInt(Convert.ToInt32(rawValue)),
@@ -480,11 +508,20 @@ namespace Neo.Condition
         internal static bool IsSupportedParameterType(Type type, ArgumentKind kind)
         {
             if (kind == ArgumentKind.Int)
+            {
                 return type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte);
+            }
+
             if (kind == ArgumentKind.Float)
+            {
                 return type == typeof(float) || type == typeof(double);
+            }
+
             if (kind == ArgumentKind.String)
+            {
                 return type == typeof(string);
+            }
+
             return false;
         }
 
@@ -495,19 +532,32 @@ namespace Neo.Condition
                    type == typeof(long) || type == typeof(short) || type == typeof(byte);
         }
 
-        internal static MethodInfo FindMethodWithOneArgument(Type type, string methodName, ArgumentKind argumentKind, BindingFlags flags)
+        internal static MethodInfo FindMethodWithOneArgument(Type type, string methodName, ArgumentKind argumentKind,
+            BindingFlags flags)
         {
             foreach (MethodInfo method in type.GetMethods(flags))
             {
                 if (method.Name != methodName)
+                {
                     continue;
+                }
+
                 ParameterInfo[] parameters = method.GetParameters();
                 if (parameters.Length != 1)
+                {
                     continue;
+                }
+
                 if (!IsSupportedParameterType(parameters[0].ParameterType, argumentKind))
+                {
                     continue;
+                }
+
                 if (!IsSupportedReturnType(method.ReturnType))
+                {
                     continue;
+                }
+
                 return method;
             }
 

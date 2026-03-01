@@ -77,7 +77,9 @@ namespace Neo.Tools
         [FoldoutGroup("Limits")] [ShowIf("clampMaxSpeed")] [Min(0f)] [LabelText("Max Speed")]
 #endif
         public float maxSpeed = 20f;
-        [Tooltip("When enabled, velocity is clamped every FixedUpdate (avoids overshoot with frequent ApplyForce calls).")]
+
+        [Tooltip(
+            "When enabled, velocity is clamped every FixedUpdate (avoids overshoot with frequent ApplyForce calls).")]
         public bool clampSpeedEveryFixedUpdate;
 
         [Header("Direction")]
@@ -175,14 +177,20 @@ namespace Neo.Tools
             {
                 rigidbody3D.AddForce(dir * chosenForce, forceMode3D);
                 if (clampMaxSpeed && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+                {
                     rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
+                }
+
                 OnApplyForce?.Invoke();
             }
             else if (Resolve2D())
             {
                 rigidbody2D.AddForce(dir * chosenForce, forceMode2D);
                 if (clampMaxSpeed && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+                {
                     rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
+                }
+
                 OnApplyForce?.Invoke();
             }
             else
@@ -194,21 +202,37 @@ namespace Neo.Tools
         private void FixedUpdate()
         {
             if (!clampMaxSpeed || !clampSpeedEveryFixedUpdate)
+            {
                 return;
+            }
+
             if (Resolve3D() && rigidbody3D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+            {
                 rigidbody3D.velocity = rigidbody3D.velocity.normalized * maxSpeed;
+            }
             else if (Resolve2D() && rigidbody2D.velocity.sqrMagnitude > maxSpeed * maxSpeed)
+            {
                 rigidbody2D.velocity = rigidbody2D.velocity.normalized * maxSpeed;
+            }
         }
 
         /// <summary>Set target transform for DirectionMode.ToTarget.</summary>
-        public void SetTarget(Transform newTarget) => target = newTarget;
+        public void SetTarget(Transform newTarget)
+        {
+            target = newTarget;
+        }
 
         /// <summary>Set direction source mode.</summary>
-        public void SetDirectionMode(DirectionMode mode) => directionMode = mode;
+        public void SetDirectionMode(DirectionMode mode)
+        {
+            directionMode = mode;
+        }
 
         /// <summary>Set custom direction vector (used when DirectionMode is CustomVector).</summary>
-        public void SetCustomDirection(Vector3 direction) => customDirection = direction;
+        public void SetCustomDirection(Vector3 direction)
+        {
+            customDirection = direction;
+        }
 
         /// <summary>
         ///     Получает направление для применения силы.

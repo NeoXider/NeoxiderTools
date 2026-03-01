@@ -62,22 +62,25 @@ namespace Neo.Tools
         private LayerMask groundMask;
 
         [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
-        private int mouseButton = 0;
+        private int mouseButton;
 
-        [Tooltip("If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
-        [SerializeField] private bool deltaOnlyWhenButtonHeld = true;
+        [Tooltip(
+            "If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
+        [SerializeField]
+        private bool deltaOnlyWhenButtonHeld = true;
 
-        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")]
-        [SerializeField] private bool invertDeltaX;
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")] [SerializeField]
+        private bool invertDeltaX;
 
-        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")]
-        [SerializeField] private bool invertDeltaY;
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")] [SerializeField]
+        private bool invertDeltaY;
 
         [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
         private float arrivalThreshold = 0.05f;
 
         public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
+        private bool _cameraWarningShown;
 
         private Camera cam;
         private Vector3 clickPoint; // Direction-mode
@@ -88,40 +91,23 @@ namespace Neo.Tools
         private Rigidbody rb;
         private Vector3 targetPoint; // ClickToPoint-mode
         private bool wasMoving;
-        private bool _cameraWarningShown;
-
-        // ── STATE ───────────────────────────────────────────────────────
-        public bool IsMoving { get; private set; }
-
-        // ── IMover ──────────────────────────────────────────────────────
-        public void MoveDelta(Vector2 delta)
-        {
-            Vector3 d = MapVector2ToPlaneDelta(delta);
-            if (rb)
-                rb.MovePosition(rb.position + d);
-            else
-                transform.Translate(d, Space.World);
-        }
-
-        public void MoveToPoint(Vector2 worldTarget)
-        {
-            Vector3 pos = Vector2ToPlanePosition(worldTarget);
-            if (rb)
-                rb.MovePosition(pos);
-            else
-                transform.position = pos;
-        }
 
         // ── UNITY ───────────────────────────────────────────────────────
         private void Awake()
         {
             if (cam == null)
+            {
                 cam = Camera.main;
+            }
+
             if (cam == null && !_cameraWarningShown)
             {
                 _cameraWarningShown = true;
-                Debug.LogWarning("[MouseMover3D] No camera assigned and Camera.main is null. Raycast and plane projection may fail.", this);
+                Debug.LogWarning(
+                    "[MouseMover3D] No camera assigned and Camera.main is null. Raycast and plane projection may fail.",
+                    this);
             }
+
             rb = GetComponent<Rigidbody>();
             lastMousePos = Input.mousePosition;
         }
@@ -135,6 +121,36 @@ namespace Neo.Tools
         {
             Vector3 step = ComputeStep(Time.fixedDeltaTime);
             ApplyStep(step);
+        }
+
+        // ── STATE ───────────────────────────────────────────────────────
+        public bool IsMoving { get; private set; }
+
+        // ── IMover ──────────────────────────────────────────────────────
+        public void MoveDelta(Vector2 delta)
+        {
+            Vector3 d = MapVector2ToPlaneDelta(delta);
+            if (rb)
+            {
+                rb.MovePosition(rb.position + d);
+            }
+            else
+            {
+                transform.Translate(d, Space.World);
+            }
+        }
+
+        public void MoveToPoint(Vector2 worldTarget)
+        {
+            Vector3 pos = Vector2ToPlanePosition(worldTarget);
+            if (rb)
+            {
+                rb.MovePosition(pos);
+            }
+            else
+            {
+                transform.position = pos;
+            }
         }
 
         // ── INPUT --------------------------------------------------------
@@ -167,8 +183,16 @@ namespace Neo.Tools
                 else
                 {
                     Vector2 px = (Vector2)cur - (Vector2)lastMousePos;
-                    if (invertDeltaX) px.x = -px.x;
-                    if (invertDeltaY) px.y = -px.y;
+                    if (invertDeltaX)
+                    {
+                        px.x = -px.x;
+                    }
+
+                    if (invertDeltaY)
+                    {
+                        px.y = -px.y;
+                    }
+
                     lastMousePos = cur;
 
                     Vector3 vel = PxToWorld(px) / Time.deltaTime; // m/s
@@ -346,6 +370,7 @@ namespace Neo.Tools
                 world = Vector3.zero;
                 return false;
             }
+
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
             // 1) Physics raycast, если указан mask

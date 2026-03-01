@@ -1,6 +1,5 @@
 using System.Linq;
 using Neo.Editor;
-using Neo.StateMachine;
 using UnityEditor;
 using UnityEngine;
 
@@ -99,9 +98,11 @@ namespace Neo.StateMachine.NoCode.Editor
             }
 
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
-            if (GUILayout.Button("Go To Initial State"))
             {
-                behaviour.GoToInitialState();
+                if (GUILayout.Button("Go To Initial State"))
+                {
+                    behaviour.GoToInitialState();
+                }
             }
 
             if (data == null || data.States == null || data.States.Length == 0)
@@ -124,9 +125,11 @@ namespace Neo.StateMachine.NoCode.Editor
             selectedStateIndex = EditorGUILayout.Popup("Target State", selectedStateIndex, stateNames);
 
             using (new EditorGUI.DisabledScope(!Application.isPlaying))
-            if (GUILayout.Button("Change State"))
             {
-                behaviour.ChangeState(stateNames[selectedStateIndex]);
+                if (GUILayout.Button("Change State"))
+                {
+                    behaviour.ChangeState(stateNames[selectedStateIndex]);
+                }
             }
         }
     }

@@ -43,21 +43,24 @@ namespace Neo.Shop
 
         [SerializeField] private ShopItem _prefab;
 
-        [Space] [Tooltip("GameObject with IMoneySpend (e.g. Money). If null, Money.I is used.")]
-        [FormerlySerializedAs("IMoneySpend")] [SerializeField] public GameObject moneySpendSource;
+        [Space]
+        [Tooltip("GameObject with IMoneySpend (e.g. Money). If null, Money.I is used.")]
+        [FormerlySerializedAs("IMoneySpend")]
+        [SerializeField]
+        public GameObject moneySpendSource;
 
         [Space] public UnityEvent<int> OnSelect;
         public UnityEvent<int> OnPurchased;
         public UnityEvent<int> OnPurchaseFailed;
         public UnityEvent OnLoad;
+
+        private List<UnityAction> _buyDelegates;
         private int _id;
 
         private IMoneySpend _money;
         private int _savedEquippedId;
 
         private bool load;
-
-        private List<UnityEngine.Events.UnityAction> _buyDelegates;
 
         public int[] Prices => _prices;
         public ShopItemData[] ShopItemDatas => _shopItemDatas;
@@ -160,19 +163,23 @@ namespace Neo.Shop
         private void Subscriber(bool subscribe)
         {
             if (_shopItems == null || _shopItems.Length == 0)
+            {
                 return;
+            }
 
             if (subscribe)
             {
-                _buyDelegates ??= new List<UnityEngine.Events.UnityAction>();
+                _buyDelegates ??= new List<UnityAction>();
                 _buyDelegates.Clear();
                 for (int i = 0; i < _shopItems.Length; i++)
                 {
                     int id = i;
-                    UnityEngine.Events.UnityAction action = () => Buy(id);
+                    UnityAction action = () => Buy(id);
                     _buyDelegates.Add(action);
                     if (_autoSubscribe && _shopItems[i].buttonBuy != null)
+                    {
                         _shopItems[i].buttonBuy.onClick.AddListener(action);
+                    }
                 }
             }
             else
@@ -182,7 +189,9 @@ namespace Neo.Shop
                     for (int i = 0; i < _shopItems.Length && i < _buyDelegates.Count; i++)
                     {
                         if (_shopItems[i].buttonBuy != null)
+                        {
                             _shopItems[i].buttonBuy.onClick.RemoveListener(_buyDelegates[i]);
+                        }
                     }
                 }
             }
@@ -201,7 +210,9 @@ namespace Neo.Shop
             }
 
             if (_prices.Length == 0)
+            {
                 return;
+            }
 
             int[] prices = new int[_prices.Length];
             for (int i = 0; i < _prices.Length; i++)
@@ -216,7 +227,10 @@ namespace Neo.Shop
         private void Save()
         {
             if (_prices == null)
+            {
                 return;
+            }
+
             for (int i = 0; i < _prices.Length; i++)
             {
                 SaveProvider.SetInt(_keySave + i, _prices[i]);
@@ -240,8 +254,13 @@ namespace Neo.Shop
         private void VisualPreview()
         {
             if (_prices == null || PreviewId < 0 || PreviewId >= _prices.Length)
+            {
                 return;
-            ShopItemData data = _shopItemDatas != null && PreviewId < _shopItemDatas.Length ? _shopItemDatas[PreviewId] : null;
+            }
+
+            ShopItemData data = _shopItemDatas != null && PreviewId < _shopItemDatas.Length
+                ? _shopItemDatas[PreviewId]
+                : null;
             _shopItemPreview?.Visual(data, _prices[PreviewId], PreviewId);
         }
 
@@ -253,9 +272,14 @@ namespace Neo.Shop
         public void Buy(int id)
         {
             if (_prices == null || id < 0 || id >= _prices.Length)
+            {
                 return;
+            }
+
             if (NotNullDatas() && id >= _shopItemDatas.Length)
+            {
                 return;
+            }
 
             if (_prices[id] == 0)
             {
@@ -304,7 +328,10 @@ namespace Neo.Shop
         public void Visual()
         {
             if (_shopItems == null || _prices == null)
+            {
                 return;
+            }
+
             for (int i = 0; i < _shopItems.Length; i++)
             {
                 ShopItemData data = _shopItemDatas != null && i < _shopItemDatas.Length ? _shopItemDatas[i] : null;

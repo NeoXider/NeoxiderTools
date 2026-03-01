@@ -30,8 +30,10 @@ namespace Neo.Tools
         [SerializeField]
         private bool _controlCursor;
 
-        [Tooltip("When true, cursor is locked and hidden when leaving pause (recommended for FPS/camera look). When false, restores state from when pause was opened.")]
-        [SerializeField] private bool _lockCursorOnResume = true;
+        [Tooltip(
+            "When true, cursor is locked and hidden when leaving pause (recommended for FPS/camera look). When false, restores state from when pause was opened.")]
+        [SerializeField]
+        private bool _lockCursorOnResume = true;
 
         private bool _savedCursorVisible;
         private CursorLockMode _savedLockState;

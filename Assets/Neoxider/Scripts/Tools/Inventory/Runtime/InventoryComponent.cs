@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Neo;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -40,14 +39,15 @@ namespace Neo.Tools
         [Header("Save")] [SerializeField] [Tooltip("Enable auto loading in Awake.")]
         private bool _autoLoad = true;
 
-        [SerializeField] [Tooltip("При изменении инвентаря автоматически записывать состояние в SaveProvider по Save Key. Запись на диск — через SaveProvider.Save() при выходе/паузе по необходимости.")]
+        [SerializeField]
+        [Tooltip(
+            "При изменении инвентаря автоматически записывать состояние в SaveProvider по Save Key. Запись на диск — через SaveProvider.Save() при выходе/паузе по необходимости.")]
         private bool _autoSave = true;
 
         [SerializeField] [Tooltip("SaveProvider key for this inventory instance.")]
         private string _saveKey = "Inventory_Default";
 
-        [SerializeField]
-        [Tooltip("Invoke OnInventoryChanged after Load(), so UI can refresh immediately.")]
+        [SerializeField] [Tooltip("Invoke OnInventoryChanged after Load(), so UI can refresh immediately.")]
         private bool _invokeEventsOnLoad = true;
 
         [SerializeField] [Tooltip("Load strategy for combining SaveProvider data and initial state.")]
@@ -56,7 +56,8 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("If enabled, initial state is applied when resulting inventory is empty.")]
         private bool _applyInitialIfResultEmpty = true;
 
-        [Header("Condition Helper")] [SerializeField]
+        [Header("Condition Helper")]
+        [SerializeField]
         [Tooltip("Selected id used by SelectedItemCount property for NeoCondition-friendly checks.")]
         private int _selectedItemId;
 
@@ -64,7 +65,8 @@ namespace Neo.Tools
         private InventoryDropper _dropper;
 
         [Header("Debug")]
-        [SerializeField] [Tooltip("Текущее содержимое инвентаря (только для просмотра в Play mode, обновляется при изменениях).")]
+        [SerializeField]
+        [Tooltip("Текущее содержимое инвентаря (только для просмотра в Play mode, обновляется при изменениях).")]
         private List<InventoryEntry> _debugEntries = new();
 
         [Header("Events")] public UnityEvent OnInventoryChanged = new();
@@ -107,25 +109,6 @@ namespace Neo.Tools
             EnsureRuntimeInitialized();
         }
 
-        protected override void Init()
-        {
-            base.Init();
-            EnsureRuntimeInitialized();
-        }
-
-        private void OnValidate()
-        {
-            if (_maxUniqueItems < 0)
-            {
-                _maxUniqueItems = 0;
-            }
-
-            if (_maxTotalItems < 0)
-            {
-                _maxTotalItems = 0;
-            }
-        }
-
         private void OnEnable()
         {
             if (!Application.isPlaying)
@@ -142,6 +125,25 @@ namespace Neo.Tools
         {
             OnInventoryChanged.RemoveListener(RefreshDebugContent);
             OnLoaded.RemoveListener(RefreshDebugContent);
+        }
+
+        private void OnValidate()
+        {
+            if (_maxUniqueItems < 0)
+            {
+                _maxUniqueItems = 0;
+            }
+
+            if (_maxTotalItems < 0)
+            {
+                _maxTotalItems = 0;
+            }
+        }
+
+        protected override void Init()
+        {
+            base.Init();
+            EnsureRuntimeInitialized();
         }
 
         private void RefreshDebugContent()
@@ -277,7 +279,7 @@ namespace Neo.Tools
 
         public bool HasItem(int itemId)
         {
-            return _manager.Has(itemId, 1);
+            return _manager.Has(itemId);
         }
 
         public bool HasItemAmount(int itemId, int amount)

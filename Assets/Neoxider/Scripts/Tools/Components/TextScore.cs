@@ -9,16 +9,12 @@ namespace Neo.Tools
     {
         [SerializeField] private ScoreDisplayMode _displayMode = ScoreDisplayMode.Current;
         [SerializeField] [HideInInspector] private bool _best;
+
         [SerializeField]
         [Tooltip("Источник счёта. Если не задан — ScoreManager.I. Задайте при нескольких ScoreManager в сцене.")]
         private ScoreManager _scoreSource;
 
         private ScoreManager _scoreManager;
-
-        private ScoreManager GetScoreManager()
-        {
-            return _scoreSource != null ? _scoreSource : ScoreManager.I;
-        }
 
         private void Start()
         {
@@ -27,13 +23,16 @@ namespace Neo.Tools
                 this.WaitWhile(() => GetScoreManager() == null, Init);
                 return;
             }
+
             Init();
         }
 
         private void OnEnable()
         {
             if (_scoreManager != null)
+            {
                 Init();
+            }
         }
 
         private void OnDisable()
@@ -59,6 +58,11 @@ namespace Neo.Tools
             {
                 _displayMode = ScoreDisplayMode.Best;
             }
+        }
+
+        private ScoreManager GetScoreManager()
+        {
+            return _scoreSource != null ? _scoreSource : ScoreManager.I;
         }
 
         private void Init()

@@ -6,7 +6,8 @@ namespace Neo.Tools
     /// <summary>
     ///     ScriptableObject с начальным наполнением инвентаря.
     /// </summary>
-    [CreateAssetMenu(fileName = "Inventory Initial State", menuName = "Neoxider/Tools/Inventory/Inventory Initial State",
+    [CreateAssetMenu(fileName = "Inventory Initial State",
+        menuName = "Neoxider/Tools/Inventory/Inventory Initial State",
         order = 22)]
     public sealed class InventoryInitialStateData : ScriptableObject
     {

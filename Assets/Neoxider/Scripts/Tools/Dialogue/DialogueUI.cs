@@ -19,9 +19,10 @@ namespace Neo.Tools
         public TMP_Text characterNameText;
         public TMP_Text dialogueText;
 
-        [Header("Settings")]
-        public bool setNativeSize = true;
-        [Tooltip("If true, clear/hide character image when sprite is null. If false, keep previous image (e.g. one character speaking)")]
+        [Header("Settings")] public bool setNativeSize = true;
+
+        [Tooltip(
+            "If true, clear/hide character image when sprite is null. If false, keep previous image (e.g. one character speaking)")]
         public bool clearImageWhenNoSprite;
 
         public UnityEvent<string> OnCharacterChange;
@@ -174,6 +175,7 @@ namespace Neo.Tools
                     characterImage.sprite = null;
                     characterImage.enabled = false;
                 }
+
                 return;
             }
 

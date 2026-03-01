@@ -11,17 +11,16 @@ namespace Neo
         [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ToggleObject))]
         public class ToggleObject : MonoBehaviour
         {
-            [Header("Settings")]
-            public ReactivePropertyBool Value = new();
-
-            /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
-            public bool ValueBool => Value.CurrentValue;
+            [Header("Settings")] public ReactivePropertyBool Value = new();
 
             [Header("Debug")] public bool toggleDebug;
 
             public UnityEvent<bool> OnChangeFlip;
             public UnityEvent ON;
             public UnityEvent OFF;
+
+            /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
+            public bool ValueBool => Value.CurrentValue;
 
             private void OnValidate()
             {

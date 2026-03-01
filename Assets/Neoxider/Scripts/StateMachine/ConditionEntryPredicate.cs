@@ -39,7 +39,9 @@ namespace Neo.StateMachine
         [SerializeField] [Tooltip("Condition to evaluate (same as NeoCondition entries).")]
         private ConditionEntry conditionEntry;
 
-        [SerializeField] [Tooltip("Which GameObject to read from: Owner = object with StateMachine; Override1..5 = from Context Overrides list on the component (set in scene). SO cannot store scene refs — use slot.")]
+        [SerializeField]
+        [Tooltip(
+            "Which GameObject to read from: Owner = object with StateMachine; Override1..5 = from Context Overrides list on the component (set in scene). SO cannot store scene refs — use slot.")]
         private ConditionContextSlot contextSlot = ConditionContextSlot.Owner;
 
         /// <summary>Condition entry (object, component, property, compare, threshold).</summary>
@@ -59,19 +61,27 @@ namespace Neo.StateMachine
         protected override bool EvaluateInternal(IState currentState)
         {
             if (conditionEntry == null)
+            {
                 return false;
+            }
 
             int slot = (int)contextSlot;
             GameObject context = StateMachineEvaluationContext.GetContextBySlot(slot);
 
             if (context == null)
+            {
                 context = (currentState as MonoBehaviour)?.gameObject;
+            }
 
             if (context == null)
+            {
                 context = StateMachineEvaluationContext.CurrentContextObject;
+            }
 
             if (context == null || !context)
+            {
                 return false;
+            }
 
             return conditionEntry.Evaluate(context);
         }

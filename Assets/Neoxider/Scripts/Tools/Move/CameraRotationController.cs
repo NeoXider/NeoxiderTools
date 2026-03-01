@@ -38,24 +38,28 @@ namespace Neo
         {
             [Header("Input")]
             [Tooltip("Mouse button for drag rotation (0 = left, 1 = right, 2 = middle).")]
-            [SerializeField] private int mouseButton = 0;
-            [Tooltip("When set, rotation only active while this key is held (e.g. Alt). None = no modifier.")]
-            [SerializeField] private KeyCode modifierKey = KeyCode.None;
-            [Tooltip("Multiplier for mouse delta (resolution-independent sensitivity).")]
-            [SerializeField] private float mouseSensitivity = 0.1f;
+            [SerializeField]
+            private int mouseButton;
 
-            [Header("Settings")]
-            public AxisRotationSettings xAxisSettings = new(true, 10);
+            [Tooltip("When set, rotation only active while this key is held (e.g. Alt). None = no modifier.")]
+            [SerializeField]
+            private KeyCode modifierKey = KeyCode.None;
+
+            [Tooltip("Multiplier for mouse delta (resolution-independent sensitivity).")] [SerializeField]
+            private float mouseSensitivity = 0.1f;
+
+            [Header("Settings")] public AxisRotationSettings xAxisSettings = new(true, 10);
+
             public AxisRotationSettings yAxisSettings = new(true, 10);
             public AxisRotationSettings zAxisSettings = new(false);
 
-            [Header("Events")]
-            [SerializeField] private UnityEvent onRotateStart = new UnityEvent();
-            [SerializeField] private UnityEvent onRotateEnd = new UnityEvent();
+            [Header("Events")] [SerializeField] private UnityEvent onRotateStart = new();
+
+            [SerializeField] private UnityEvent onRotateEnd = new();
+            private bool _wasRotating;
 
             private Vector3 currentRotation;
             private Vector3 lastMousePosition;
-            private bool _wasRotating;
 
             private void Start()
             {

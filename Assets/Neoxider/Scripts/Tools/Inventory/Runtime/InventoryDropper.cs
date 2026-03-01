@@ -8,7 +8,8 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventoryDropper))]
     public sealed class InventoryDropper : MonoBehaviour
     {
-        [Header("Links")] [SerializeField]
+        [Header("Links")]
+        [SerializeField]
         [Tooltip("Inventory source. If null and Auto Find enabled, InventoryComponent.FindDefault() is used.")]
         private InventoryComponent _inventory;
 
@@ -30,10 +31,14 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Use inventory.SelectedItemId when pressing drop key.")]
         private bool _dropSelectedOnKey = true;
 
-        [SerializeField] [Tooltip("Fallback item id when Drop Selected On Key is disabled. Use -1 to drop the last item (by snapshot order).")]
+        [SerializeField]
+        [Tooltip(
+            "Fallback item id when Drop Selected On Key is disabled. Use -1 to drop the last item (by snapshot order).")]
         private int _dropItemIdOnKey;
 
-        [SerializeField] [Tooltip("When current item (selected or configured id) has count 0, drop the next available item from inventory.")]
+        [SerializeField]
+        [Tooltip(
+            "When current item (selected or configured id) has count 0, drop the next available item from inventory.")]
         private bool _dropNextWhenEmpty = true;
 
         [SerializeField] [Min(1)] [Tooltip("Amount dropped by keyboard action.")]
@@ -42,15 +47,13 @@ namespace Neo.Tools
         [Header("Spawn")] [SerializeField] [Tooltip("Fallback prefab when item has no WorldDropPrefab.")]
         private GameObject _fallbackDropPrefab;
 
-        [SerializeField] [Tooltip("Random offset radius around drop point.")]
-        [Min(0f)]
+        [SerializeField] [Tooltip("Random offset radius around drop point.")] [Min(0f)]
         private float _randomRadius;
 
         [SerializeField] [Tooltip("Forward force direction in local space.")]
         private Vector3 _throwDirection = Vector3.forward;
 
-        [SerializeField] [Tooltip("Impulse force applied to spawned rigidbody.")]
-        [Min(0f)]
+        [SerializeField] [Tooltip("Impulse force applied to spawned rigidbody.")] [Min(0f)]
         private float _throwImpulse = 2f;
 
         [Header("Physics")] [SerializeField] [Tooltip("Ensure Rigidbody on spawned object.")]
@@ -67,7 +70,8 @@ namespace Neo.Tools
 
         [SerializeField] [Min(0.01f)] private float _defaultColliderRadius = 0.35f;
 
-        [Header("Pickup")] [SerializeField]
+        [Header("Pickup")]
+        [SerializeField]
         [Tooltip("Ensure PickableItem component and configure it for dropped item.")]
         private bool _configurePickableItem = true;
 
@@ -79,7 +83,10 @@ namespace Neo.Tools
 
         public InventoryComponent Inventory => _inventory;
 
-        /// <summary>Ввод по клавише дропа. InventoryHand при подключённом Dropper выставляет false, чтобы дроп по G обрабатывала только рука.</summary>
+        /// <summary>
+        ///     Ввод по клавише дропа. InventoryHand при подключённом Dropper выставляет false, чтобы дроп по G обрабатывала
+        ///     только рука.
+        /// </summary>
         public bool AllowDropInput
         {
             get => _allowDropInput;
@@ -117,13 +124,16 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Resolves which item id to drop on key press: selected, configured id, or -1 = last; with fallback to next available when empty.
+        ///     Resolves which item id to drop on key press: selected, configured id, or -1 = last; with fallback to next available
+        ///     when empty.
         /// </summary>
         private int ResolveItemIdForKeyDrop(InventoryComponent inv)
         {
             int candidate = _dropSelectedOnKey
                 ? inv.SelectedItemId
-                : (_dropItemIdOnKey == -1 ? inv.GetLastItemId() : _dropItemIdOnKey);
+                : _dropItemIdOnKey == -1
+                    ? inv.GetLastItemId()
+                    : _dropItemIdOnKey;
 
             if (_dropNextWhenEmpty && (candidate < 0 || inv.GetCount(candidate) <= 0))
             {
@@ -207,11 +217,12 @@ namespace Neo.Tools
 
         public int DropByIdOne(int itemId)
         {
-            return DropById(itemId, 1);
+            return DropById(itemId);
         }
 
         /// <summary>
-        ///     Drops the first item (by snapshot order) from inventory. Returns amount actually dropped, or 0 if empty or CanDrop is false.
+        ///     Drops the first item (by snapshot order) from inventory. Returns amount actually dropped, or 0 if empty or CanDrop
+        ///     is false.
         /// </summary>
         public int DropFirst(int amount = 1)
         {
@@ -233,7 +244,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Drops the last item (by snapshot order) from inventory. Returns amount actually dropped, or 0 if empty or CanDrop is false.
+        ///     Drops the last item (by snapshot order) from inventory. Returns amount actually dropped, or 0 if empty or CanDrop
+        ///     is false.
         /// </summary>
         public int DropLast(int amount = 1)
         {
@@ -295,7 +307,9 @@ namespace Neo.Tools
 
         private void SpawnDroppedItem(InventoryComponent inventory, InventoryItemData itemData, int itemId, int amount)
         {
-            GameObject prefab = itemData != null && itemData.WorldDropPrefab != null ? itemData.WorldDropPrefab : _fallbackDropPrefab;
+            GameObject prefab = itemData != null && itemData.WorldDropPrefab != null
+                ? itemData.WorldDropPrefab
+                : _fallbackDropPrefab;
             if (prefab == null)
             {
                 OnDropFailed?.Invoke(itemId, amount);
@@ -411,7 +425,8 @@ namespace Neo.Tools
             }
         }
 
-        private void ConfigurePickable(GameObject dropped, InventoryComponent inventory, InventoryItemData itemData, int itemId,
+        private void ConfigurePickable(GameObject dropped, InventoryComponent inventory, InventoryItemData itemData,
+            int itemId,
             int amount)
         {
             PickableItem pickable = dropped.GetComponent<PickableItem>();

@@ -17,6 +17,12 @@ namespace Neo.Tools
 
         public IReadOnlyList<InventoryItemData> Items => _items;
 
+        private void OnValidate()
+        {
+            _cacheById = null;
+            ValidateDuplicateIds();
+        }
+
         public bool ContainsId(int itemId)
         {
             BuildCacheIfNeeded();
@@ -34,12 +40,6 @@ namespace Neo.Tools
         {
             BuildCacheIfNeeded();
             return _cacheById.TryGetValue(itemId, out data);
-        }
-
-        private void OnValidate()
-        {
-            _cacheById = null;
-            ValidateDuplicateIds();
         }
 
         private void BuildCacheIfNeeded()

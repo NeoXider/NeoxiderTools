@@ -55,10 +55,10 @@ namespace Neo.UI
         [Tooltip("Reactive state (true = active); subscribe via Value.OnChanged")]
         public ReactivePropertyBool Value = new();
 
+        private bool _isUpdatingFromToggle;
+
         /// <summary>Текущее состояние (для NeoCondition и рефлексии).</summary>
         public bool ValueBool => Value.CurrentValue;
-
-        private bool _isUpdatingFromToggle;
 
         /// <summary>
         ///     Текущее состояние переключателя.

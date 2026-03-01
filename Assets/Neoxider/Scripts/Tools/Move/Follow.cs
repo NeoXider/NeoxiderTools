@@ -28,12 +28,13 @@ namespace Neo.Tools
             Exponential
         }
 
-        [Header("Target")]
-        [SerializeField] private Transform target;
-        [Tooltip("If target is null at Start, find by tag.")]
-        [SerializeField] private bool findTargetByTag;
-        [Tooltip("Tag to search when Find Target By Tag is enabled (e.g. Player).")]
-        [SerializeField] private string targetTag = "Player";
+        [Header("Target")] [SerializeField] private Transform target;
+
+        [Tooltip("If target is null at Start, find by tag.")] [SerializeField]
+        private bool findTargetByTag;
+
+        [Tooltip("Tag to search when Find Target By Tag is enabled (e.g. Player).")] [SerializeField]
+        private string targetTag = "Player";
 
         [SerializeField] private FollowMode followMode = FollowMode.ThreeD;
 
@@ -87,9 +88,9 @@ namespace Neo.Tools
         public UnityEvent onTargetLost;
 
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
+        private bool _hadTargetLastFrame;
 
         private bool _isFollowing;
-        private bool _hadTargetLastFrame;
         private Vector3 _lastTargetPosition;
 
         private Vector3 _positionVelocity;
@@ -101,10 +102,16 @@ namespace Neo.Tools
             {
                 GameObject go = GameObject.FindWithTag(targetTag);
                 if (go != null)
+                {
                     target = go.transform;
+                }
             }
+
             if (target != null)
+            {
                 _lastTargetPosition = target.position;
+            }
+
             _hadTargetLastFrame = target != null;
         }
 
@@ -118,8 +125,10 @@ namespace Neo.Tools
                     _isFollowing = false;
                     onTargetLost?.Invoke();
                 }
+
                 return;
             }
+
             _hadTargetLastFrame = true;
 
             if (followPosition)
@@ -442,7 +451,10 @@ namespace Neo.Tools
         /// <summary>
         ///     Returns whether position following is enabled.
         /// </summary>
-        public bool GetFollowPosition() => followPosition;
+        public bool GetFollowPosition()
+        {
+            return followPosition;
+        }
 
         /// <summary>
         ///     Enable or disable rotation following.
@@ -455,7 +467,10 @@ namespace Neo.Tools
         /// <summary>
         ///     Returns whether rotation following is enabled.
         /// </summary>
-        public bool GetFollowRotation() => followRotation;
+        public bool GetFollowRotation()
+        {
+            return followRotation;
+        }
 
         /// <summary>
         ///     Set position movement speed.

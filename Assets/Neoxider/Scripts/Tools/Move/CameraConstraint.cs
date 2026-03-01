@@ -42,7 +42,8 @@ namespace Neo.Tools
 
         [Header("Events")]
         [Tooltip("Invoked when constraint fails to initialize (no camera or bounds source).")]
-        [SerializeField] private UnityEvent onConstraintFailed;
+        [SerializeField]
+        private UnityEvent onConstraintFailed;
 
         [Header("Debug")] [SerializeField] private bool showDebugGizmos = true;
         [SerializeField] private Color sourceBoundsColor = new(0.25f, 0.8f, 1f, 0.9f);
@@ -132,6 +133,7 @@ namespace Neo.Tools
                     _failureWarningShown = true;
                     Debug.LogWarning("CameraConstraint: No camera found. Disabling.", this);
                 }
+
                 onConstraintFailed?.Invoke();
                 enabled = false;
                 return false;
@@ -142,8 +144,10 @@ namespace Neo.Tools
                 if (!_failureWarningShown)
                 {
                     _failureWarningShown = true;
-                    Debug.LogWarning($"CameraConstraint: Bounds source not set for type {boundsType}. Disabling.", this);
+                    Debug.LogWarning($"CameraConstraint: Bounds source not set for type {boundsType}. Disabling.",
+                        this);
                 }
+
                 onConstraintFailed?.Invoke();
                 enabled = false;
                 return false;
@@ -420,6 +424,7 @@ namespace Neo.Tools
                         spriteRenderer = sr;
                         assigned = true;
                     }
+
                     break;
                 case BoundsType.BoxCollider2D:
                     if (source is BoxCollider2D col2D)
@@ -427,6 +432,7 @@ namespace Neo.Tools
                         boxCollider2D = col2D;
                         assigned = true;
                     }
+
                     break;
                 case BoundsType.BoxCollider:
                     if (source is BoxCollider col)
@@ -434,6 +440,7 @@ namespace Neo.Tools
                         boxCollider = col;
                         assigned = true;
                     }
+
                     break;
             }
 

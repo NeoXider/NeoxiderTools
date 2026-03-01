@@ -107,7 +107,10 @@ namespace Neo.Audio
             }
         }
 
-        private void OnMuteChanged(bool _) => SyncToggleState();
+        private void OnMuteChanged(bool _)
+        {
+            SyncToggleState();
+        }
 
         private void OnToggleValueChanged(bool value)
         {

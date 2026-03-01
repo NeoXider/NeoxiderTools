@@ -49,16 +49,15 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Value to pass to OnSend when calling Send() with no argument.")]
         private CounterSendPayload _sendPayload = CounterSendPayload.Counter;
 
-        [Header("Save")]
-        [SerializeField]
-        [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
+        [Header("Save")] [SerializeField] [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
         private bool _saveEnabled;
 
         [SerializeField] [Tooltip("Save key (unique per counter). Used with SaveProvider, as in Money.")]
         private string _saveKey = "Counter";
 
         [SerializeField]
-        [Tooltip("При загрузке значения в Start вызывать OnValueChanged* (чтобы UI и подписчики применили загруженное значение). По умолчанию вкл.")]
+        [Tooltip(
+            "При загрузке значения в Start вызывать OnValueChanged* (чтобы UI и подписчики применили загруженное значение). По умолчанию вкл.")]
         private bool _invokeEventsOnLoad = true;
 
         [Space]
@@ -80,7 +79,9 @@ namespace Neo.Tools
         public UnityEvent<float> OnSend = new();
 
         /// <summary>Текущее значение счётчика (целое в режиме Int).</summary>
-        public int ValueInt => _valueMode == CounterValueMode.Int ? Mathf.RoundToInt(Value.CurrentValue) : (int)Value.CurrentValue;
+        public int ValueInt => _valueMode == CounterValueMode.Int
+            ? Mathf.RoundToInt(Value.CurrentValue)
+            : (int)Value.CurrentValue;
 
         /// <summary>Текущее значение счётчика как float.</summary>
         public float ValueFloat => Value.CurrentValue;
@@ -288,7 +289,7 @@ namespace Neo.Tools
                 case CounterSendPayload.Counter:
                     return Value.CurrentValue;
                 case CounterSendPayload.Score:
-                    return ScoreManager.I != null ? (float)ScoreManager.I.ScoreValue : 0f;
+                    return ScoreManager.I != null ? ScoreManager.I.ScoreValue : 0f;
                 case CounterSendPayload.Money:
                     return Money.I != null ? Money.I.money : 0f;
                 default:

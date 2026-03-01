@@ -2,7 +2,6 @@ using Neo.Reactive;
 using Neo.Save;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace Neo.Tools
 {
@@ -24,12 +23,16 @@ namespace Neo.Tools
 
         [Tooltip("Reactive score; subscribe via Score.OnChanged")]
         public ReactivePropertyInt Score = new();
+
         [Tooltip("Reactive best score; subscribe via BestScore.OnChanged")]
         public ReactivePropertyInt BestScore = new();
+
         [Tooltip("Reactive target score; subscribe via TargetScore.OnChanged")]
         public ReactivePropertyInt TargetScore = new();
+
         [Tooltip("Reactive progress (0-1); subscribe via Progress.OnChanged")]
         public ReactivePropertyFloat Progress = new();
+
         [Tooltip("Reactive star count; subscribe via CountStarsReactive.OnChanged")]
         public ReactivePropertyInt CountStarsReactive = new();
 
@@ -83,8 +86,9 @@ namespace Neo.Tools
 
         public bool IsTarget => score >= _targetScore;
         public float ProgressValue => Progress.CurrentValue;
+
         /// <summary>Количество звёзд (для NeoCondition и рефлексии).</summary>
-        public int CountStarsValue => (int)CountStarsReactive.CurrentValue;
+        public int CountStarsValue => CountStarsReactive.CurrentValue;
 
         public int CountStars
         {
@@ -137,7 +141,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет лучший результат: без аргумента — из текущего счёта; с аргументом — заданное значение (если больше текущего рекорда).
+        ///     Обновляет лучший результат: без аргумента — из текущего счёта; с аргументом — заданное значение (если больше
+        ///     текущего рекорда).
         /// </summary>
         [Button]
         public void SetBestScore(int? candidate = null)

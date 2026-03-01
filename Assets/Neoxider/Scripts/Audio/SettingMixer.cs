@@ -8,17 +8,16 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
     public class SettingMixer : MonoBehaviour
     {
-        [Header("Settings")]
-        [Tooltip("Имя параметра экспозиции в AudioMixer (например MasterVolume, MusicVolume, EfxVolume).")]
-        public string parameterName = "MasterVolume";
-
-        [Header("References")]
-        public AudioMixer audioMixer;
-
         public const float MaxDb = 20f;
         public const float MinDb = -80f;
 
         private const float MuteThreshold = 0.0001f;
+
+        [Header("Settings")]
+        [Tooltip("Имя параметра экспозиции в AudioMixer (например MasterVolume, MusicVolume, EfxVolume).")]
+        public string parameterName = "MasterVolume";
+
+        [Header("References")] public AudioMixer audioMixer;
 
         /// <summary>
         ///     Громкость в дБ (−80…20). Для UnityEvent и слайдера в дБ.
@@ -29,6 +28,7 @@ namespace Neo.Audio
             {
                 return;
             }
+
             audioMixer.SetFloat(parameterName, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
@@ -42,6 +42,7 @@ namespace Neo.Audio
                 Debug.LogWarning("[SettingMixer] AudioMixer не установлен.");
                 return;
             }
+
             string param = string.IsNullOrEmpty(name) ? parameterName : name;
             audioMixer.SetFloat(param, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
@@ -55,6 +56,7 @@ namespace Neo.Audio
             {
                 return;
             }
+
             float clamped = Mathf.Clamp01(normalizedVolume);
             float db = clamped <= MuteThreshold ? MinDb : Mathf.Log10(clamped) * 20f;
             audioMixer.SetFloat(parameterName, Mathf.Clamp(db, MinDb, MaxDb));
@@ -73,10 +75,12 @@ namespace Neo.Audio
         /// </summary>
         public float GetVolume()
         {
-            if (audioMixer == null || string.IsNullOrEmpty(parameterName) || !audioMixer.GetFloat(parameterName, out float db))
+            if (audioMixer == null || string.IsNullOrEmpty(parameterName) ||
+                !audioMixer.GetFloat(parameterName, out float db))
             {
                 return 0f;
             }
+
             return db <= MinDb ? 0f : Mathf.Clamp01(Mathf.Pow(10f, db / 20f));
         }
     }

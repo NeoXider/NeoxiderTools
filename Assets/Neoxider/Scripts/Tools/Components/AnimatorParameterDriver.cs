@@ -10,8 +10,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/" + nameof(AnimatorParameterDriver))]
     public sealed class AnimatorParameterDriver : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Animator. Если не задан — ищется на этом объекте.")]
+        [SerializeField] [Tooltip("Animator. Если не задан — ищется на этом объекте.")]
         private Animator animator;
 
         [Header("Имя параметра в переменной (для методов без имени)")]
@@ -19,19 +18,16 @@ namespace Neo.Tools
         [Tooltip("Имя триггера для SetTrigger() без аргумента.")]
         private string triggerParameterName;
 
-        [SerializeField]
-        [Tooltip("Имя bool-параметра для SetBool(bool).")]
+        [SerializeField] [Tooltip("Имя bool-параметра для SetBool(bool).")]
         private string boolParameterName;
 
-        [SerializeField]
-        [Tooltip("Имя float-параметра для SetFloat(float).")]
+        [SerializeField] [Tooltip("Имя float-параметра для SetFloat(float).")]
         private string floatParameterName;
 
-        [SerializeField]
-        [Tooltip("Имя int-параметра для SetInt(int).")]
+        [SerializeField] [Tooltip("Имя int-параметра для SetInt(int).")]
         private string intParameterName;
 
-        private Animator Anim => animator != null ? animator : (animator = GetComponent<Animator>());
+        private Animator Anim => animator != null ? animator : animator = GetComponent<Animator>();
 
         private void Reset()
         {
@@ -47,7 +43,11 @@ namespace Neo.Tools
         /// <summary>Вызвать триггер по имени.</summary>
         public void SetTrigger(string triggerName)
         {
-            if (Anim == null || string.IsNullOrEmpty(triggerName)) return;
+            if (Anim == null || string.IsNullOrEmpty(triggerName))
+            {
+                return;
+            }
+
             Anim.SetTrigger(triggerName);
         }
 
@@ -60,7 +60,11 @@ namespace Neo.Tools
         /// <summary>Установить bool-параметр.</summary>
         public void SetBool(string parameterName, bool value)
         {
-            if (Anim == null || string.IsNullOrEmpty(parameterName)) return;
+            if (Anim == null || string.IsNullOrEmpty(parameterName))
+            {
+                return;
+            }
+
             Anim.SetBool(parameterName, value);
         }
 
@@ -85,7 +89,11 @@ namespace Neo.Tools
         /// <summary>Установить float-параметр.</summary>
         public void SetFloat(string parameterName, float value)
         {
-            if (Anim == null || string.IsNullOrEmpty(parameterName)) return;
+            if (Anim == null || string.IsNullOrEmpty(parameterName))
+            {
+                return;
+            }
+
             Anim.SetFloat(parameterName, value);
         }
 
@@ -98,7 +106,11 @@ namespace Neo.Tools
         /// <summary>Установить int-параметр.</summary>
         public void SetInt(string parameterName, int value)
         {
-            if (Anim == null || string.IsNullOrEmpty(parameterName)) return;
+            if (Anim == null || string.IsNullOrEmpty(parameterName))
+            {
+                return;
+            }
+
             Anim.SetInteger(parameterName, value);
         }
     }

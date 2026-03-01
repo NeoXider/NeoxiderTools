@@ -57,9 +57,6 @@ namespace Neo.Tools.View
         [Tooltip("Reactive intensity; subscribe via Intensity.OnChanged")]
         public ReactivePropertyFloat Intensity = new();
 
-        /// <summary>Текущая интенсивность (для NeoCondition и рефлексии).</summary>
-        public float IntensityValue => Intensity.CurrentValue;
-
         [Tooltip("Invoked when color changes")]
         public UnityEvent<Color> OnColorChanged;
 
@@ -79,6 +76,9 @@ namespace Neo.Tools.View
         private Color originalColor;
         private float originalIntensity;
         private Vector2 randomOffset;
+
+        /// <summary>Текущая интенсивность (для NeoCondition и рефлексии).</summary>
+        public float IntensityValue => Intensity.CurrentValue;
 
         /// <summary>
         ///     Текущая интенсивность света (только для чтения)

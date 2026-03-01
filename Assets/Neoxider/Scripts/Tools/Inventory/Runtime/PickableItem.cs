@@ -17,7 +17,8 @@ namespace Neo.Tools
         [SerializeField] [Min(1)] [Tooltip("Amount to add on pickup.")]
         private int _amount = 1;
 
-        [Header("Inventory")] [SerializeField]
+        [Header("Inventory")]
+        [SerializeField]
         [Tooltip("Optional target inventory. If null, FindDefault() will be used.")]
         private InventoryComponent _targetInventory;
 
@@ -33,7 +34,8 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Secondary collector tag filter (empty = disabled).")]
         private string _requiredCollectorTag = "";
 
-        [Header("Collector Validation")] [SerializeField]
+        [Header("Collector Validation")]
+        [SerializeField]
         [Tooltip("Require InventoryComponent on collector object (or its parents if enabled). Enabled by default.")]
         private bool _requireCollectorInventory = true;
 
@@ -56,7 +58,8 @@ namespace Neo.Tools
         private bool _deactivateAfterCollect;
 
         [Header("Activation (when used in hand)")]
-        [Tooltip("Вызывается при активации предмета (рука вызывает Activate() при применении). Подпишите для эффекта использования в руке.")]
+        [Tooltip(
+            "Вызывается при активации предмета (рука вызывает Activate() при применении). Подпишите для эффекта использования в руке.")]
         public UnityEvent OnActivate = new();
 
         [Header("Events")] public UnityEvent OnCollectStarted = new();
@@ -69,6 +72,26 @@ namespace Neo.Tools
         public int ResolvedItemId => _itemData != null ? _itemData.ItemId : _itemId;
         public int Amount => _amount;
         public InventoryComponent TargetInventory => _targetInventory;
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (!_collectOnTrigger3D)
+            {
+                return;
+            }
+
+            TryCollect(other != null ? other.gameObject : null);
+        }
+
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (!_collectOnTrigger2D)
+            {
+                return;
+            }
+
+            TryCollect(other != null ? other.gameObject : null);
+        }
 
         public bool Collect()
         {
@@ -123,32 +146,13 @@ namespace Neo.Tools
             OnActivate?.Invoke();
         }
 
-        public void Configure(InventoryItemData itemData, int fallbackItemId, int amount, InventoryComponent targetInventory = null)
+        public void Configure(InventoryItemData itemData, int fallbackItemId, int amount,
+            InventoryComponent targetInventory = null)
         {
             _itemData = itemData;
             _itemId = itemData != null ? itemData.ItemId : fallbackItemId;
             _amount = Mathf.Max(1, amount);
             _targetInventory = targetInventory;
-        }
-
-        private void OnTriggerEnter(Collider other)
-        {
-            if (!_collectOnTrigger3D)
-            {
-                return;
-            }
-
-            TryCollect(other != null ? other.gameObject : null);
-        }
-
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (!_collectOnTrigger2D)
-            {
-                return;
-            }
-
-            TryCollect(other != null ? other.gameObject : null);
         }
 
         private bool TryCollect(GameObject collector)

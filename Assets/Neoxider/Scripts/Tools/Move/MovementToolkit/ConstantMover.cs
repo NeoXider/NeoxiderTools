@@ -44,9 +44,6 @@ namespace Neo.Tools
 
         private Rigidbody _rb3D;
 
-        /// <summary>Sets movement speed (units per second when Use Delta Time is true; otherwise per frame).</summary>
-        public void SetSpeed(float value) => speed = value;
-
         private void Awake()
         {
             _rb3D = GetComponent<Rigidbody>();
@@ -83,6 +80,12 @@ namespace Neo.Tools
 
                 MoveRigidbody2D();
             }
+        }
+
+        /// <summary>Sets movement speed (units per second when Use Delta Time is true; otherwise per frame).</summary>
+        public void SetSpeed(float value)
+        {
+            speed = value;
         }
 
         private Vector3 ResolveDirectionWorld()

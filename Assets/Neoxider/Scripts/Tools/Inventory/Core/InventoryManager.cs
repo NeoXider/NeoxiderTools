@@ -10,9 +10,8 @@ namespace Neo.Tools
     public sealed class InventoryManager
     {
         private readonly Dictionary<int, int> _counts = new();
-        private readonly List<int> _order = new();
         private readonly Dictionary<int, int> _maxStackByItemId = new();
-        private int _totalCount;
+        private readonly List<int> _order = new();
 
         /// <summary>
         ///     Максимум разных itemId в инвентаре. 0 = без лимита.
@@ -25,7 +24,7 @@ namespace Neo.Tools
         public int MaxTotalItems { get; set; }
 
         /// <summary>Суммарное количество всех предметов.</summary>
-        public int TotalCount => _totalCount;
+        public int TotalCount { get; private set; }
 
         /// <summary>Количество уникальных itemId в инвентаре.</summary>
         public int UniqueCount => _counts.Count;
@@ -73,7 +72,7 @@ namespace Neo.Tools
 
             int next = current + addable;
             _counts[itemId] = next;
-            _totalCount += addable;
+            TotalCount += addable;
             return addable;
         }
 
@@ -100,10 +99,10 @@ namespace Neo.Tools
                 _counts[itemId] = next;
             }
 
-            _totalCount -= removed;
-            if (_totalCount < 0)
+            TotalCount -= removed;
+            if (TotalCount < 0)
             {
-                _totalCount = 0;
+                TotalCount = 0;
             }
 
             return removed;
@@ -114,7 +113,7 @@ namespace Neo.Tools
         {
             _counts.Clear();
             _order.Clear();
-            _totalCount = 0;
+            TotalCount = 0;
         }
 
         /// <summary>Снимок инвентаря в виде списка записей (порядок = порядок добавления).</summary>
@@ -154,7 +153,6 @@ namespace Neo.Tools
                 int added = Add(entry.ItemId, entry.Count);
                 if (added <= 0)
                 {
-                    continue;
                 }
             }
         }
@@ -202,7 +200,7 @@ namespace Neo.Tools
 
             if (MaxTotalItems > 0)
             {
-                int totalRoom = MaxTotalItems - _totalCount;
+                int totalRoom = MaxTotalItems - TotalCount;
                 if (totalRoom <= 0)
                 {
                     return 0;

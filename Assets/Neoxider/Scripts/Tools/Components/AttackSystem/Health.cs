@@ -41,6 +41,7 @@ namespace Neo.Tools
 
         [Tooltip("Reactive current HP; subscribe via Hp.OnChanged")]
         public ReactivePropertyInt Hp = new();
+
         [Tooltip("Reactive HP percent (0-1); subscribe via HpPercent.OnChanged")]
         public ReactivePropertyFloat HpPercent = new();
 
@@ -52,21 +53,16 @@ namespace Neo.Tools
         private Timer healTimer;
 
         public int MaxHp => maxHp;
+
         /// <summary>Текущее HP (для NeoCondition и рефлексии).</summary>
-        public int HpValue => (int)Hp.CurrentValue;
+        public int HpValue => Hp.CurrentValue;
+
         /// <summary>Доля HP 0–1 (для NeoCondition и рефлексии).</summary>
         public float HpPercentValue => HpPercent.CurrentValue;
 
         public bool IsAlive => HpValue > 0;
         public bool CanHeal => (IsAlive && !ignoreIsAlive) || ignoreIsAlive;
         public bool NeedHeal => HpValue < maxHp;
-
-        private void SetHpValue(int value)
-        {
-            int c = Mathf.Clamp(value, 0, maxHp);
-            Hp.Value = c;
-            HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)c / maxHp) : 0f;
-        }
 
         private void Awake()
         {
@@ -116,6 +112,13 @@ namespace Neo.Tools
         public void Restore()
         {
             SetHpValue(maxHp);
+        }
+
+        private void SetHpValue(int value)
+        {
+            int c = Mathf.Clamp(value, 0, maxHp);
+            Hp.Value = c;
+            HpPercent.Value = maxHp > 0 ? Mathf.Clamp01((float)c / maxHp) : 0f;
         }
 
         private void InitializeHealTimer()

@@ -17,7 +17,6 @@ namespace Neo.Condition
         private GameObject _cachedGameObject;
         private MemberInfo _cachedMember;
         private bool _cacheValid;
-        private GameObject _foundByNameObject;
         private bool _hasLoggedDestroyedWarning;
         private bool _hasLoggedMissingMemberWarning;
         private bool _hasLoggedSearchNotFoundWarning;
@@ -28,6 +27,8 @@ namespace Neo.Condition
             _entry = entry ?? throw new ArgumentNullException(nameof(entry));
             _isOther = isOther;
         }
+
+        internal GameObject FoundByNameObject { get; private set; }
 
         public bool EnsureCache(GameObject fallbackObject)
         {
@@ -49,9 +50,15 @@ namespace Neo.Condition
                 }
 
                 if (_cachedMember is PropertyInfo goProp)
+                {
                     return goProp.GetValue(_cachedGameObject);
+                }
+
                 if (_cachedMember is FieldInfo goField)
+                {
                     return goField.GetValue(_cachedGameObject);
+                }
+
                 return null;
             }
 
@@ -62,9 +69,15 @@ namespace Neo.Condition
             }
 
             if (_cachedMember is PropertyInfo prop)
+            {
                 return prop.GetValue(_cachedComponent);
+            }
+
             if (_cachedMember is FieldInfo field)
+            {
                 return field.GetValue(_cachedComponent);
+            }
+
             if (_cachedMember is MethodInfo method)
             {
                 object arg = GetArgumentValue();
@@ -87,12 +100,10 @@ namespace Neo.Condition
         public void InvalidateCacheFull()
         {
             InvalidateCache();
-            _foundByNameObject = null;
+            FoundByNameObject = null;
             _hasSearchedByName = false;
             _hasLoggedSearchNotFoundWarning = false;
         }
-
-        internal GameObject FoundByNameObject => _foundByNameObject;
 
         /// <summary>
         ///     Возвращает целевой GameObject без построения кеша компонента (для BindOtherToSourceIfNull и т.п.).
@@ -111,31 +122,40 @@ namespace Neo.Condition
 
             if (useSearch && !string.IsNullOrEmpty(searchName))
             {
-                if (_foundByNameObject != null)
-                    return _foundByNameObject;
-                if (_hasSearchedByName && _foundByNameObject == null)
+                if (FoundByNameObject != null)
+                {
+                    return FoundByNameObject;
+                }
+
+                if (_hasSearchedByName && FoundByNameObject == null)
                 {
                     _hasSearchedByName = false;
                     _hasLoggedSearchNotFoundWarning = false;
                 }
 
-                _foundByNameObject = GameObject.Find(searchName);
+                FoundByNameObject = GameObject.Find(searchName);
                 _hasSearchedByName = true;
-                if (_foundByNameObject == null)
+                if (FoundByNameObject == null)
                 {
                     if (!wait && !_hasLoggedSearchNotFoundWarning)
                     {
-                        Debug.LogWarning($"[NeoCondition] GameObject.Find(\"{searchName}\") — объект не найден в сцене.");
+                        Debug.LogWarning(
+                            $"[NeoCondition] GameObject.Find(\"{searchName}\") — объект не найден в сцене.");
                         _hasLoggedSearchNotFoundWarning = true;
                     }
+
                     return null;
                 }
+
                 _hasLoggedSearchNotFoundWarning = false;
-                return _foundByNameObject;
+                return FoundByNameObject;
             }
 
             if (IsSourceObjectDestroyed(sourceObj))
+            {
                 return null;
+            }
+
             return sourceObj != null ? sourceObj : fallbackObject;
         }
 
@@ -173,12 +193,18 @@ namespace Neo.Condition
             if (target == null)
             {
                 if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
-                    LogDestroyedWarning($"Source GameObject был уничтожен (ожидался объект для компонента '{componentTypeName}')");
+                {
+                    LogDestroyedWarning(
+                        $"Source GameObject был уничтожен (ожидался объект для компонента '{componentTypeName}')");
+                }
+
                 return false;
             }
 
             if (string.IsNullOrEmpty(componentTypeName) || string.IsNullOrEmpty(propertyName))
+            {
                 return false;
+            }
 
             Component[] components;
             try
@@ -193,7 +219,11 @@ namespace Neo.Condition
 
             foreach (Component comp in components)
             {
-                if (comp == null) continue;
+                if (comp == null)
+                {
+                    continue;
+                }
+
                 if (comp.GetType().FullName == componentTypeName || comp.GetType().Name == componentTypeName)
                 {
                     _cachedComponent = comp;
@@ -208,6 +238,7 @@ namespace Neo.Condition
                     Debug.LogWarning($"[NeoCondition] Компонент '{componentTypeName}' не найден на '{target.name}'.");
                     _hasLoggedMissingMemberWarning = true;
                 }
+
                 return false;
             }
 
@@ -235,6 +266,7 @@ namespace Neo.Condition
                     _cacheValid = true;
                     return true;
                 }
+
                 FieldInfo field = type.GetField(propertyName, flags);
                 if (field != null)
                 {
@@ -246,9 +278,11 @@ namespace Neo.Condition
 
             if (!_hasLoggedMissingMemberWarning)
             {
-                Debug.LogWarning($"[NeoCondition] Свойство/поле/метод '{propertyName}' не найдено в '{componentTypeName}' на '{target.name}'.");
+                Debug.LogWarning(
+                    $"[NeoCondition] Свойство/поле/метод '{propertyName}' не найдено в '{componentTypeName}' на '{target.name}'.");
                 _hasLoggedMissingMemberWarning = true;
             }
+
             return false;
         }
 
@@ -279,12 +313,17 @@ namespace Neo.Condition
             if (target == null)
             {
                 if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
+                {
                     LogDestroyedWarning("Source GameObject был уничтожен (режим GameObject)");
+                }
+
                 return false;
             }
 
             if (string.IsNullOrEmpty(propertyName))
+            {
                 return false;
+            }
 
             _cachedGameObject = target;
             Type type = typeof(GameObject);
@@ -297,6 +336,7 @@ namespace Neo.Condition
                 _cacheValid = true;
                 return true;
             }
+
             FieldInfo field = type.GetField(propertyName, flags);
             if (field != null)
             {
@@ -310,6 +350,7 @@ namespace Neo.Condition
                 Debug.LogWarning($"[NeoCondition] Свойство '{propertyName}' не найдено на GameObject.");
                 _hasLoggedMissingMemberWarning = true;
             }
+
             return false;
         }
 

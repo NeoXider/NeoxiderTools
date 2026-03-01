@@ -5,7 +5,8 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Controls cursor visibility and lock state. Supports optional apply on Enable/Disable
-    ///     and runtime toggle key. For New Input System, call SetCursorLocked or ToggleCursorState from your action's callback.
+    ///     and runtime toggle key. For New Input System, call SetCursorLocked or ToggleCursorState from your action's
+    ///     callback.
     /// </summary>
     [NeoDoc("Tools/Move/CursorLockController.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/CursorLockController")]
@@ -21,10 +22,11 @@ namespace Neo.Tools
 
         [Header("Mode")]
         [Tooltip("LockAndHide = lock + hide; OnlyHide = visibility only; OnlyLock = lock only.")]
-        [SerializeField] private CursorStateMode _mode = CursorStateMode.LockAndHide;
+        [SerializeField]
+        private CursorStateMode _mode = CursorStateMode.LockAndHide;
 
-        [Header("Start State")]
-        [SerializeField] private bool _lockOnStart = true;
+        [Header("Start State")] [SerializeField]
+        private bool _lockOnStart = true;
 
         [Header("Lifecycle (optional)")]
         [Tooltip("Apply cursor state when this component is enabled (e.g. when returning to gameplay).")]
@@ -101,9 +103,13 @@ namespace Neo.Tools
             }
 
             if (locked)
+            {
                 _onCursorLocked?.Invoke();
+            }
             else
+            {
                 _onCursorUnlocked?.Invoke();
+            }
         }
 
         /// <summary>

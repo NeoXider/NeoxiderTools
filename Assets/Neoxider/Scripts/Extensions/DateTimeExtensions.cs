@@ -17,7 +17,7 @@ namespace Neo.Extensions
         /// <returns>UTC string formatted with round-trip ISO format.</returns>
         public static string ToRoundTripUtcString(this DateTime utc)
         {
-            return EnsureUtc(utc).ToString(RoundTripFormat, CultureInfo.InvariantCulture);
+            return utc.EnsureUtc().ToString(RoundTripFormat, CultureInfo.InvariantCulture);
         }
 
         /// <summary>
@@ -41,7 +41,7 @@ namespace Neo.Extensions
                     DateTimeStyles.RoundtripKind,
                     out DateTime parsedRoundTrip))
             {
-                utc = EnsureUtc(parsedRoundTrip);
+                utc = parsedRoundTrip.EnsureUtc();
                 return true;
             }
 
@@ -52,7 +52,7 @@ namespace Neo.Extensions
                     out DateTime parsedInvariant) ||
                 DateTime.TryParse(raw, out parsedInvariant))
             {
-                utc = EnsureUtc(parsedInvariant);
+                utc = parsedInvariant.EnsureUtc();
                 return true;
             }
 
@@ -68,8 +68,8 @@ namespace Neo.Extensions
         /// <returns>Elapsed seconds as a float.</returns>
         public static float GetSecondsSinceUtc(this DateTime utc, DateTime nowUtc)
         {
-            DateTime start = EnsureUtc(utc);
-            DateTime end = EnsureUtc(nowUtc);
+            DateTime start = utc.EnsureUtc();
+            DateTime end = nowUtc.EnsureUtc();
             return (float)(end - start).TotalSeconds;
         }
 
@@ -81,8 +81,8 @@ namespace Neo.Extensions
         /// <returns>Remaining seconds as a float.</returns>
         public static float GetSecondsUntilUtc(this DateTime targetUtc, DateTime nowUtc)
         {
-            DateTime target = EnsureUtc(targetUtc);
-            DateTime now = EnsureUtc(nowUtc);
+            DateTime target = targetUtc.EnsureUtc();
+            DateTime now = nowUtc.EnsureUtc();
             return (float)(target - now).TotalSeconds;
         }
 

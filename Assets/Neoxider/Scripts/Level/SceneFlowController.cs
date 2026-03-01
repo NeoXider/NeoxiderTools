@@ -11,7 +11,8 @@ namespace Neo
     namespace Level
     {
         /// <summary>
-        ///     Режим загрузки сцены: синхронно, асинхронно с автоактивацией, асинхронно с ручной активацией или добавление сцены (Additive).
+        ///     Режим загрузки сцены: синхронно, асинхронно с автоактивацией, асинхронно с ручной активацией или добавление сцены
+        ///     (Additive).
         /// </summary>
         public enum SceneFlowLoadMode
         {
@@ -35,19 +36,24 @@ namespace Neo
         [AddComponentMenu("Neoxider/Level/" + nameof(SceneFlowController))]
         public class SceneFlowController : MonoBehaviour
         {
-            [Header("Scene")]
-            [SerializeField] private SceneFlowLoadMode _loadMode = SceneFlowLoadMode.Sync;
+            [Header("Scene")] [SerializeField] private SceneFlowLoadMode _loadMode = SceneFlowLoadMode.Sync;
+
             [SerializeField] private int _sceneBuildIndex;
             [SerializeField] private string _sceneName = "";
-            [Tooltip("При вызове LoadScene() без аргументов: true = по имени, false = по build index")]
-            [SerializeField] private bool _useSceneName = false;
-            [Tooltip("Для Async: активировать сцену сразу по готовности. Для AsyncManual не используется.")]
-            [SerializeField] private bool _activateOnReady = true;
-            [Tooltip("При старте (Start) автоматически вызвать LoadScene() по полям компонента.")]
-            [SerializeField] private bool _loadOnStart = false;
 
-            [Header("Progress UI")]
-            [SerializeField] private Text _textProgress;
+            [Tooltip("При вызове LoadScene() без аргументов: true = по имени, false = по build index")] [SerializeField]
+            private bool _useSceneName;
+
+            [Tooltip("Для Async: активировать сцену сразу по готовности. Для AsyncManual не используется.")]
+            [SerializeField]
+            private bool _activateOnReady = true;
+
+            [Tooltip("При старте (Start) автоматически вызвать LoadScene() по полям компонента.")] [SerializeField]
+            private bool _loadOnStart;
+
+            [Header("Progress UI")] [SerializeField]
+            private Text _textProgress;
+
             [SerializeField] private TextMeshProUGUI _textMeshProgress;
             [SerializeField] private Slider _sliderProgress;
             [SerializeField] private Image _imageProgress;
@@ -56,45 +62,60 @@ namespace Neo
             [SerializeField] private string _readyToProceedText = "Press to continue";
             [SerializeField] private GameObject _progressPanel;
 
-            [Header("Events")]
-            [SerializeField] private UnityEvent _onLoadStarted = new UnityEvent();
-            [SerializeField] private UnityEventFloat _onProgress = new UnityEventFloat();
-            [SerializeField] private UnityEvent _onReadyToProceed = new UnityEvent();
-            [SerializeField] private UnityEvent _onLoadCompleted = new UnityEvent();
+            [Header("Events")] [SerializeField] private UnityEvent _onLoadStarted = new();
 
-            [Serializable]
-            public class UnityEventFloat : UnityEvent<float> { }
+            [SerializeField] private UnityEventFloat _onProgress = new();
+            [SerializeField] private UnityEvent _onReadyToProceed = new();
+            [SerializeField] private UnityEvent _onLoadCompleted = new();
 
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
 
-            private void Start()
+            /// <summary>Режим загрузки (из настроек компонента).</summary>
+            public SceneFlowLoadMode LoadMode
             {
-                if (_loadOnStart)
-                    LoadScene();
+                get => _loadMode;
+                set => _loadMode = value;
             }
 
-            /// <summary>Режим загрузки (из настроек компонента).</summary>
-            public SceneFlowLoadMode LoadMode { get => _loadMode; set => _loadMode = value; }
-
             /// <summary>Индекс сцены в Build Settings.</summary>
-            public int SceneBuildIndex { get => _sceneBuildIndex; set => _sceneBuildIndex = value; }
+            public int SceneBuildIndex
+            {
+                get => _sceneBuildIndex;
+                set => _sceneBuildIndex = value;
+            }
 
             /// <summary>Имя сцены.</summary>
-            public string SceneName { get => _sceneName; set => _sceneName = value ?? ""; }
+            public string SceneName
+            {
+                get => _sceneName;
+                set => _sceneName = value ?? "";
+            }
 
             public UnityEvent OnLoadStarted => _onLoadStarted;
             public UnityEventFloat OnProgress => _onProgress;
             public UnityEvent OnReadyToProceed => _onReadyToProceed;
             public UnityEvent OnLoadCompleted => _onLoadCompleted;
 
+            private void Start()
+            {
+                if (_loadOnStart)
+                {
+                    LoadScene();
+                }
+            }
+
             /// <summary>Загружает сцену по build index. Режим берётся из настроек компонента.</summary>
             public void LoadScene(int buildIndex)
             {
                 if (_loadMode == SceneFlowLoadMode.Additive)
+                {
                     LoadSceneAdditiveInternal(buildIndex, null);
+                }
                 else
+                {
                     LoadSceneInternal(buildIndex, null);
+                }
             }
 
             /// <summary>Загружает сцену по имени. Режим из настроек.</summary>
@@ -105,19 +126,28 @@ namespace Neo
                     Debug.LogWarning("[SceneFlowController] LoadScene(string): scene name is null or empty.");
                     return;
                 }
+
                 if (_loadMode == SceneFlowLoadMode.Additive)
+                {
                     LoadSceneAdditiveInternal(-1, sceneName);
+                }
                 else
+                {
                     LoadSceneInternal(-1, sceneName);
+                }
             }
 
             /// <summary>Загружает сцену по полям компонента: если задано имя — по имени, иначе по sceneBuildIndex.</summary>
             public void LoadScene()
             {
                 if (_useSceneName && !string.IsNullOrEmpty(_sceneName))
+                {
                     LoadScene(_sceneName);
+                }
                 else
+                {
                     LoadScene(_sceneBuildIndex);
+                }
             }
 
             /// <summary>Перезагружает текущую активную сцену.</summary>
@@ -143,7 +173,9 @@ namespace Neo
             public void ProceedScene()
             {
                 if (_currentOperation != null)
+                {
                     _currentOperation.allowSceneActivation = true;
+                }
             }
 
             private void LoadSceneInternal(int buildIndex, string sceneName)
@@ -159,9 +191,14 @@ namespace Neo
                 {
                     case SceneFlowLoadMode.Sync:
                         if (byName)
+                        {
                             SceneManager.LoadScene(sceneName);
+                        }
                         else
+                        {
                             SceneManager.LoadScene(buildIndex);
+                        }
+
                         return;
                     case SceneFlowLoadMode.Async:
                         StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, true));
@@ -175,11 +212,17 @@ namespace Neo
             private void LoadSceneAdditiveInternal(int buildIndex, string sceneName)
             {
                 if (!string.IsNullOrEmpty(sceneName))
+                {
                     SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+                }
                 else if (buildIndex >= 0)
+                {
                     SceneManager.LoadScene(buildIndex, LoadSceneMode.Additive);
+                }
                 else
+                {
                     Debug.LogWarning("[SceneFlowController] Additive: need scene name or valid build index.");
+                }
             }
 
             private IEnumerator LoadSceneCoroutine(int buildIndex, string sceneName, bool autoActivate)
@@ -199,7 +242,9 @@ namespace Neo
                 _currentOperation.allowSceneActivation = autoActivate;
 
                 if (_progressPanel != null)
+                {
                     _progressPanel.SetActive(true);
+                }
 
                 _onLoadStarted?.Invoke();
 
@@ -221,7 +266,9 @@ namespace Neo
 
                 _currentOperation = null;
                 if (_progressPanel != null)
+                {
                     _progressPanel.SetActive(false);
+                }
 
                 _onLoadCompleted?.Invoke();
             }
@@ -229,11 +276,19 @@ namespace Neo
             private void ApplyProgressToUI(float progress)
             {
                 if (_sliderProgress != null)
+                {
                     _sliderProgress.value = progress;
+                }
+
                 if (_imageProgress != null)
+                {
                     _imageProgress.fillAmount = progress;
+                }
+
                 if (_progressTextFormat != ProgressTextFormat.Plain || progress < 0.9f)
+                {
                     SetProgressText(progress);
+                }
             }
 
             private void SetProgressText(float progress)
@@ -242,15 +297,34 @@ namespace Neo
                 {
                     int percent = Mathf.RoundToInt(progress * 100f);
                     string t = _progressPrefix + percent + "%";
-                    if (_textProgress != null) _textProgress.text = t;
-                    if (_textMeshProgress != null) _textMeshProgress.text = t;
+                    if (_textProgress != null)
+                    {
+                        _textProgress.text = t;
+                    }
+
+                    if (_textMeshProgress != null)
+                    {
+                        _textMeshProgress.text = t;
+                    }
                 }
             }
 
             private void SetProgressText(string text)
             {
-                if (_textProgress != null) _textProgress.text = text;
-                if (_textMeshProgress != null) _textMeshProgress.text = text;
+                if (_textProgress != null)
+                {
+                    _textProgress.text = text;
+                }
+
+                if (_textMeshProgress != null)
+                {
+                    _textMeshProgress.text = text;
+                }
+            }
+
+            [Serializable]
+            public class UnityEventFloat : UnityEvent<float>
+            {
             }
         }
     }

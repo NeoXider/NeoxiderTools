@@ -29,10 +29,13 @@ namespace Neo.Tools
         [SerializeField] private bool _refreshOnLoaded = true;
         [SerializeField] private bool _refreshNextFrameOnEnable = true;
 
-        [Header("Spawn Mode")] [SerializeField] private InventoryItemView _itemViewPrefab;
+        [Header("Spawn Mode")] [SerializeField]
+        private InventoryItemView _itemViewPrefab;
+
         [SerializeField] private Transform _itemsRoot;
 
-        [Header("Manual Mode")] [SerializeField] private List<InventoryItemView> _manualViews = new();
+        [Header("Manual Mode")] [SerializeField]
+        private List<InventoryItemView> _manualViews = new();
 
         private readonly Dictionary<int, InventoryItemView> _spawnedByItemId = new();
 
@@ -225,7 +228,8 @@ namespace Neo.Tools
             List<int> ordered = new();
             HashSet<int> seen = new();
 
-            if ((_sourceMode == InventoryViewSourceMode.DatabaseItems || _sourceMode == InventoryViewSourceMode.Hybrid) &&
+            if ((_sourceMode == InventoryViewSourceMode.DatabaseItems ||
+                 _sourceMode == InventoryViewSourceMode.Hybrid) &&
                 _inventory.Database != null && _inventory.Database.Items != null)
             {
                 for (int i = 0; i < _inventory.Database.Items.Count; i++)

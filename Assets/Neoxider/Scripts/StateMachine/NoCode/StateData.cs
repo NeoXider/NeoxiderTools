@@ -26,6 +26,24 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] [Tooltip("State name for identification")]
         private string stateName = "New State";
 
+        [FormerlySerializedAs("<OnEnterActions>k__BackingField")]
+        [SerializeReference]
+        [SerializeField]
+        [Tooltip("Actions on state enter")]
+        private List<StateAction> onEnterActions = new();
+
+        [FormerlySerializedAs("<OnUpdateActions>k__BackingField")]
+        [SerializeReference]
+        [SerializeField]
+        [Tooltip("Actions every frame while in state")]
+        private List<StateAction> onUpdateActions = new();
+
+        [FormerlySerializedAs("<OnExitActions>k__BackingField")]
+        [SerializeReference]
+        [SerializeField]
+        [Tooltip("Actions on state exit")]
+        private List<StateAction> onExitActions = new();
+
         /// <summary>
         ///     Имя состояния.
         /// </summary>
@@ -34,18 +52,6 @@ namespace Neo.StateMachine.NoCode
             get => stateName;
             set => stateName = value;
         }
-
-        [FormerlySerializedAs("<OnEnterActions>k__BackingField")]
-        [SerializeReference] [SerializeField] [Tooltip("Actions on state enter")]
-        private List<StateAction> onEnterActions = new();
-
-        [FormerlySerializedAs("<OnUpdateActions>k__BackingField")]
-        [SerializeReference] [SerializeField] [Tooltip("Actions every frame while in state")]
-        private List<StateAction> onUpdateActions = new();
-
-        [FormerlySerializedAs("<OnExitActions>k__BackingField")]
-        [SerializeReference] [SerializeField] [Tooltip("Actions on state exit")]
-        private List<StateAction> onExitActions = new();
 
         /// <summary>
         ///     Действия при входе в состояние.

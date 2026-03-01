@@ -8,22 +8,30 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ScreenPositioner))]
     public class ScreenPositioner : MonoBehaviour
     {
-        [Header("Position Settings")]
-        [SerializeField] private bool _useScreenPosition;
+        [Header("Position Settings")] [SerializeField]
+        private bool _useScreenPosition;
+
         [SerializeField] private Vector2 _positionScreen = Vector2.zero;
-        [Tooltip("When Use Screen Position is off: edge of screen and pixel offset from it.")]
-        [SerializeField] private Vector2 _offsetScreen = Vector2.zero;
+
+        [Tooltip("When Use Screen Position is off: edge of screen and pixel offset from it.")] [SerializeField]
+        private Vector2 _offsetScreen = Vector2.zero;
+
         [SerializeField] private Vector2 _offset = Vector2.zero;
+
         [Tooltip("When on, position is updated every frame (e.g. for moving camera or resolution change).")]
-        [SerializeField] private bool _updateEveryFrame;
+        [SerializeField]
+        private bool _updateEveryFrame;
 
         [SerializeField] private bool _useDepth;
         [SerializeField] private float _depth = 10f;
 
-        [Header("References")]
-        [SerializeField] private Camera _targetCamera;
-        [Tooltip("Screen edge used as anchor. For Use Screen Position mode this is the edge from which Position Screen offset is applied.")]
-        [SerializeField] private ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
+        [Header("References")] [SerializeField]
+        private Camera _targetCamera;
+
+        [Tooltip(
+            "Screen edge used as anchor. For Use Screen Position mode this is the edge from which Position Screen offset is applied.")]
+        [SerializeField]
+        private ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
 
         private void Start()
         {
@@ -34,7 +42,9 @@ namespace Neo.Tools
         private void LateUpdate()
         {
             if (_updateEveryFrame)
+            {
                 UpdatePositionAndRotation();
+            }
         }
 
         private void OnValidate()

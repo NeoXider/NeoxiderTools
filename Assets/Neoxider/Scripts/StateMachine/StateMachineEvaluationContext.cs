@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,20 +10,22 @@ namespace Neo.StateMachine
     /// </summary>
     internal static class StateMachineEvaluationContext
     {
-        [System.ThreadStatic] private static GameObject currentContextObject;
-        [System.ThreadStatic] private static IReadOnlyList<GameObject> currentOverrides;
-        [System.ThreadStatic] private static Stack<GameObject> contextStack;
-        [System.ThreadStatic] private static Stack<IReadOnlyList<GameObject>> overridesStack;
+        [ThreadStatic] private static IReadOnlyList<GameObject> currentOverrides;
+        [ThreadStatic] private static Stack<GameObject> contextStack;
+        [ThreadStatic] private static Stack<IReadOnlyList<GameObject>> overridesStack;
 
-        public static GameObject CurrentContextObject => currentContextObject;
+        [field: ThreadStatic] public static GameObject CurrentContextObject { get; private set; }
 
         /// <summary>
-        ///     Контекст по слоту: 0 = владелец (GameObject с StateMachine), 1+ = элемент из списка Context Overrides на компоненте.
+        ///     Контекст по слоту: 0 = владелец (GameObject с StateMachine), 1+ = элемент из списка Context Overrides на
+        ///     компоненте.
         /// </summary>
         public static GameObject GetContextBySlot(int slot)
         {
             if (slot <= 0)
-                return currentContextObject;
+            {
+                return CurrentContextObject;
+            }
 
             if (currentOverrides != null && slot <= currentOverrides.Count)
             {
@@ -37,9 +40,9 @@ namespace Neo.StateMachine
         {
             contextStack ??= new Stack<GameObject>();
             overridesStack ??= new Stack<IReadOnlyList<GameObject>>();
-            contextStack.Push(currentContextObject);
+            contextStack.Push(CurrentContextObject);
             overridesStack.Push(currentOverrides);
-            currentContextObject = contextObject;
+            CurrentContextObject = contextObject;
             currentOverrides = overrides;
         }
 
@@ -47,12 +50,12 @@ namespace Neo.StateMachine
         {
             if (contextStack == null || contextStack.Count == 0)
             {
-                currentContextObject = null;
+                CurrentContextObject = null;
                 currentOverrides = null;
                 return;
             }
 
-            currentContextObject = contextStack.Pop();
+            CurrentContextObject = contextStack.Pop();
             currentOverrides = overridesStack.Count > 0 ? overridesStack.Pop() : null;
         }
     }

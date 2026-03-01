@@ -305,7 +305,10 @@ namespace Neo.Editor.Condition
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
                 propNameProp.stringValue = "";
-                if (isMethodProp != null) isMethodProp.boolValue = false;
+                if (isMethodProp != null)
+                {
+                    isMethodProp.boolValue = false;
+                }
             }
 
             // --- Scene Search toggle ---
@@ -319,7 +322,10 @@ namespace Neo.Editor.Condition
                 compTypeProp.stringValue = "";
                 compIdxProp.intValue = 0;
                 propNameProp.stringValue = "";
-                if (isMethodProp != null) isMethodProp.boolValue = false;
+                if (isMethodProp != null)
+                {
+                    isMethodProp.boolValue = false;
+                }
             }
 
             // --- Source Object or Search Name ---
@@ -417,7 +423,10 @@ namespace Neo.Editor.Condition
                     compTypeProp.stringValue = "";
                     compIdxProp.intValue = 0;
                     propNameProp.stringValue = "";
-                    if (isMethodProp != null) isMethodProp.boolValue = false;
+                    if (isMethodProp != null)
+                    {
+                        isMethodProp.boolValue = false;
+                    }
                 }
 
                 targetObj = (GameObject)sourceObjProp.objectReferenceValue;
@@ -540,7 +549,10 @@ namespace Neo.Editor.Condition
                     otherSourceModeProp.enumValueIndex = otherModeIdx;
                     otherCompTypeProp.stringValue = "";
                     otherPropNameProp.stringValue = "";
-                    if (otherIsMethodProp != null) otherIsMethodProp.boolValue = false;
+                    if (otherIsMethodProp != null)
+                    {
+                        otherIsMethodProp.boolValue = false;
+                    }
                 }
 
                 otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
@@ -582,11 +594,14 @@ namespace Neo.Editor.Condition
                     {
                         DrawGameObjectPropertyDropdown(otherPropNameProp);
                         if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                        {
                             DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
+                        }
                     }
                     else
                     {
-                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp, otherIsMethodProp);
+                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
+                            otherIsMethodProp);
                         string otherCompType = otherCompTypeProp.stringValue;
                         if (!string.IsNullOrEmpty(otherCompType))
                         {
@@ -594,10 +609,14 @@ namespace Neo.Editor.Condition
                             if (otherComp != null)
                             {
                                 DrawPropertyDropdown(otherComp, otherPropNameProp, null,
-                                    otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp, otherArgStringProp);
+                                    otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
+                                    otherArgStringProp);
                                 if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                                {
                                     DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
-                                        otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp, otherArgStringProp);
+                                        otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
+                                        otherArgStringProp);
+                                }
                             }
                         }
                     }
@@ -686,19 +705,31 @@ namespace Neo.Editor.Condition
             for (int i = 0; i < components.Length; i++)
             {
                 if (components[i] == null)
+                {
                     continue;
+                }
+
                 Type t = components[i].GetType();
                 if (t == typeof(Transform))
+                {
                     continue;
+                }
+
                 string displayName = t.Name;
                 int duplicateCount = 0;
                 for (int j = 0; j < i; j++)
                 {
                     if (components[j] != null && components[j].GetType() == t)
+                    {
                         duplicateCount++;
+                    }
                 }
+
                 if (duplicateCount > 0)
+                {
                     displayName += $" ({duplicateCount + 1})";
+                }
+
                 names.Add(displayName);
                 typeNames.Add(t.FullName);
             }
@@ -733,7 +764,9 @@ namespace Neo.Editor.Condition
                     compIdxProp.intValue = newIndex;
                     propNameProp.stringValue = "";
                     if (isMethodProp != null)
+                    {
                         isMethodProp.boolValue = false;
+                    }
                 }
             }
         }
@@ -762,10 +795,16 @@ namespace Neo.Editor.Condition
             foreach (PropertyInfo prop in compType.GetProperties(flags))
             {
                 if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
+                {
                     continue;
+                }
+
                 ValueType? vt = GetValueType(prop.PropertyType);
                 if (vt == null || IsUnityNoiseMember(prop.Name))
+                {
                     continue;
+                }
+
                 propertyNames.Add(prop.Name);
                 propertyTypes.Add(vt.Value);
                 displayNames.Add($"{prop.Name}  ({vt.Value})  [prop]");
@@ -777,7 +816,10 @@ namespace Neo.Editor.Condition
             {
                 ValueType? vt = GetValueType(field.FieldType);
                 if (vt == null || IsUnityNoiseMember(field.Name))
+                {
                     continue;
+                }
+
                 propertyNames.Add(field.Name);
                 propertyTypes.Add(vt.Value);
                 displayNames.Add($"{field.Name}  ({vt.Value})");
@@ -790,16 +832,28 @@ namespace Neo.Editor.Condition
                 foreach (MethodInfo method in compType.GetMethods(flags))
                 {
                     if (IsUnityNoiseMember(method.Name))
+                    {
                         continue;
+                    }
+
                     ParameterInfo[] parameters = method.GetParameters();
                     if (parameters.Length != 1)
+                    {
                         continue;
+                    }
+
                     ArgumentKind? argKind = GetArgumentKind(parameters[0].ParameterType);
                     if (argKind == null)
+                    {
                         continue;
+                    }
+
                     ValueType? returnVt = GetValueType(method.ReturnType);
                     if (returnVt == null)
+                    {
                         continue;
+                    }
+
                     string paramLabel = argKind switch
                     {
                         ArgumentKind.Int => "int",
@@ -828,20 +882,27 @@ namespace Neo.Editor.Condition
             for (int i = 0; i < propertyNames.Count; i++)
             {
                 if (propertyNames[i] != currentPropName)
+                {
                     continue;
+                }
+
                 if (isMethodProp == null)
                 {
                     currentIndex = i;
                     break;
                 }
+
                 if (isMethodList[i] == currentIsMethod && (!isMethodList[i] || (int)argumentKinds[i] == currentArgKind))
                 {
                     currentIndex = i;
                     break;
                 }
             }
+
             if (currentIndex < 0)
+            {
                 currentIndex = 0;
+            }
 
             EditorGUI.BeginChangeCheck();
             int newIndex = EditorGUILayout.Popup("Property", currentIndex, displayNames.ToArray());
@@ -851,21 +912,30 @@ namespace Neo.Editor.Condition
                 {
                     propNameProp.stringValue = propertyNames[newIndex];
                     if (valueTypeProp != null)
+                    {
                         valueTypeProp.enumValueIndex = (int)propertyTypes[newIndex];
+                    }
+
                     if (isMethodProp != null)
                     {
                         isMethodProp.boolValue = isMethodList[newIndex];
                         if (argKindProp != null)
+                        {
                             argKindProp.enumValueIndex = (int)argumentKinds[newIndex];
+                        }
                     }
                 }
             }
 
             if (isMethodProp == null || !isMethodProp.boolValue)
+            {
                 return;
+            }
 
             if (argKindProp == null || argIntProp == null)
+            {
                 return;
+            }
 
             EditorGUI.indentLevel++;
             switch ((ArgumentKind)argKindProp.enumValueIndex)
@@ -880,17 +950,28 @@ namespace Neo.Editor.Condition
                     EditorGUILayout.PropertyField(argStringProp, new GUIContent("Argument (string)"));
                     break;
             }
+
             EditorGUI.indentLevel--;
         }
 
         private static ArgumentKind? GetArgumentKind(Type parameterType)
         {
-            if (parameterType == typeof(int) || parameterType == typeof(long) || parameterType == typeof(short) || parameterType == typeof(byte))
+            if (parameterType == typeof(int) || parameterType == typeof(long) || parameterType == typeof(short) ||
+                parameterType == typeof(byte))
+            {
                 return ArgumentKind.Int;
+            }
+
             if (parameterType == typeof(float) || parameterType == typeof(double))
+            {
                 return ArgumentKind.Float;
+            }
+
             if (parameterType == typeof(string))
+            {
                 return ArgumentKind.String;
+            }
+
             return null;
         }
 
@@ -981,7 +1062,10 @@ namespace Neo.Editor.Condition
         private void DrawCurrentValue(Component comp, string propertyName)
         {
             if (comp == null || string.IsNullOrEmpty(propertyName))
+            {
                 return;
+            }
+
             object value = GetCurrentValueFromComponent(comp, propertyName, false, null, null, null, null);
             if (value != null)
             {
@@ -997,7 +1081,10 @@ namespace Neo.Editor.Condition
             SerializedProperty argFloatProp, SerializedProperty argStringProp)
         {
             if (comp == null || propNameProp == null || string.IsNullOrEmpty(propNameProp.stringValue))
+            {
                 return;
+            }
+
             bool isMethod = isMethodProp != null && isMethodProp.boolValue;
             object value = GetCurrentValueFromComponent(comp, propNameProp.stringValue, isMethod,
                 argKindProp, argIntProp, argFloatProp, argStringProp);
@@ -1030,9 +1117,15 @@ namespace Neo.Editor.Condition
                 foreach (MethodInfo method in type.GetMethods(flags))
                 {
                     if (method.Name != propertyName || method.GetParameters().Length != 1)
+                    {
                         continue;
+                    }
+
                     if (GetArgumentKind(method.GetParameters()[0].ParameterType) != kind)
+                    {
                         continue;
+                    }
+
                     try
                     {
                         return method.Invoke(comp, new[] { arg });
@@ -1042,6 +1135,7 @@ namespace Neo.Editor.Condition
                         return null;
                     }
                 }
+
                 return null;
             }
 
@@ -1049,7 +1143,10 @@ namespace Neo.Editor.Condition
             {
                 PropertyInfo prop = type.GetProperty(propertyName, flags);
                 if (prop != null && prop.CanRead)
+                {
                     return prop.GetValue(comp);
+                }
+
                 FieldInfo field = type.GetField(propertyName, flags);
                 return field?.GetValue(comp);
             }

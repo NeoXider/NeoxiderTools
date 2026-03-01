@@ -8,7 +8,8 @@ namespace Neo.Tools
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
-    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics", "Prefabs/Tools/First Person Controller.prefab")]
+    [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
+        "Prefabs/Tools/First Person Controller.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
     public class PlayerController3DPhysics : MonoBehaviour
     {
@@ -52,19 +53,28 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Header("Cursor")]
-        [SerializeField] private bool _lockCursorOnStart = true;
-        [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
-        [SerializeField] private bool _pauseLookWhenCursorVisible = true;
-        [Tooltip("Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
-        [SerializeField] private bool _lookEnabled = true;
-        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")]
-        [SerializeField] private bool _disableLookOnPause = true;
-        [Tooltip("When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
-        [SerializeField] private bool _toggleCursorOnEscape = true;
+        [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onJumped = new();
+        [Tooltip(
+            "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
+        [SerializeField]
+        private bool _pauseLookWhenCursorVisible = true;
+
+        [Tooltip(
+            "Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
+        [SerializeField]
+        private bool _lookEnabled = true;
+
+        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")] [SerializeField]
+        private bool _disableLookOnPause = true;
+
+        [Tooltip(
+            "When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
+        [SerializeField]
+        private bool _toggleCursorOnEscape = true;
+
+        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
+
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();
@@ -75,10 +85,10 @@ namespace Neo.Tools
 
         private Vector2 _moveInput;
         private bool _movementEnabled = true;
-        private bool _wasMoving;
         private bool _newInputUnavailableWarningShown;
         private float _pitch;
         private bool _wasGrounded;
+        private bool _wasMoving;
         private float _yaw;
 
         /// <summary>
@@ -91,6 +101,14 @@ namespace Neo.Tools
         /// </summary>
         public bool IsRunning { get; private set; }
 
+        /// <summary>
+        ///     Gets whether look (camera rotation) is enabled. Change via SetLookEnabled(bool) or automatically by pause when
+        ///     Disable Look On Pause is on.
+        /// </summary>
+        public bool LookEnabled => _lookEnabled;
+
+        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
+
         private void Awake()
         {
             if (_rigidbody == null)
@@ -99,36 +117,22 @@ namespace Neo.Tools
             }
 
             if (_cameraPivot == null && Camera.main != null)
+            {
                 _cameraPivot = Camera.main.transform;
+            }
+
             if (_groundCheck == null)
-                Debug.LogWarning("[PlayerController3DPhysics] Ground Check transform is not set. Ground detection will use transform position.", this);
+            {
+                Debug.LogWarning(
+                    "[PlayerController3DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
+                    this);
+            }
 
             _rigidbody.interpolation = RigidbodyInterpolation.Interpolate;
             _rigidbody.freezeRotation = true;
             _pitch = _cameraPivot != null ? NormalizePitch(_cameraPivot.localEulerAngles.x) : 0f;
             _yaw = transform.eulerAngles.y;
         }
-
-        private void OnEnable()
-        {
-            if (_disableLookOnPause && EM.I != null)
-            {
-                EM.I.OnPause.AddListener(OnPauseLook);
-                EM.I.OnResume.AddListener(OnResumeLook);
-            }
-        }
-
-        private void OnDisable()
-        {
-            if (_disableLookOnPause && EM.I != null)
-            {
-                EM.I.OnPause.RemoveListener(OnPauseLook);
-                EM.I.OnResume.RemoveListener(OnResumeLook);
-            }
-        }
-
-        private void OnPauseLook() => SetLookEnabled(false);
-        private void OnResumeLook() => SetLookEnabled(true);
 
         private void Start()
         {
@@ -161,9 +165,13 @@ namespace Neo.Tools
             {
                 _wasMoving = movingNow;
                 if (movingNow)
+                {
                     _onMoveStart?.Invoke();
+                }
                 else
+                {
                     _onMoveStop?.Invoke();
+                }
             }
         }
 
@@ -177,12 +185,40 @@ namespace Neo.Tools
             ApplyExtraGravity();
         }
 
+        private void OnEnable()
+        {
+            if (_disableLookOnPause && EM.I != null)
+            {
+                EM.I.OnPause.AddListener(OnPauseLook);
+                EM.I.OnResume.AddListener(OnResumeLook);
+            }
+        }
+
+        private void OnDisable()
+        {
+            if (_disableLookOnPause && EM.I != null)
+            {
+                EM.I.OnPause.RemoveListener(OnPauseLook);
+                EM.I.OnResume.RemoveListener(OnResumeLook);
+            }
+        }
+
         private void OnDrawGizmosSelected()
         {
             Vector3 probe = (_groundCheck != null ? _groundCheck.position : transform.position) +
                             Vector3.down * _groundProbeOffset;
             Gizmos.color = IsGrounded ? Color.green : Color.red;
             Gizmos.DrawWireSphere(probe, _groundCheckRadius);
+        }
+
+        private void OnPauseLook()
+        {
+            SetLookEnabled(false);
+        }
+
+        private void OnResumeLook()
+        {
+            SetLookEnabled(true);
         }
 
         /// <summary>
@@ -199,11 +235,9 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Gets whether look (camera rotation) is enabled. Change via SetLookEnabled(bool) or automatically by pause when Disable Look On Pause is on.</summary>
-        public bool LookEnabled => _lookEnabled;
-
         /// <summary>
-        ///     Enables or disables look processing. When enabling and Pause Look When Cursor Visible is on, also locks the cursor. Callable from UnityEvent (dynamic bool).
+        ///     Enables or disables look processing. When enabling and Pause Look When Cursor Visible is on, also locks the cursor.
+        ///     Callable from UnityEvent (dynamic bool).
         /// </summary>
         /// <param name="enabled">True to process look input; otherwise false.</param>
         public void SetLookEnabled(bool enabled)
@@ -213,6 +247,7 @@ namespace Neo.Tools
             {
                 SetCursorLocked(true);
             }
+
             if (!enabled)
             {
                 _lookInput = Vector2.zero;
@@ -367,8 +402,6 @@ namespace Neo.Tools
             Vector3 extraGravity = Physics.gravity * (_extraGravityMultiplier - 1f);
             _rigidbody.AddForce(extraGravity, ForceMode.Acceleration);
         }
-
-        private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
 
         private void HandleLookInput()
         {

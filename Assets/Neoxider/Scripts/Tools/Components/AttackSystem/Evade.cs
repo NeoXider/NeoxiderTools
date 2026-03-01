@@ -38,7 +38,8 @@ namespace Neo.Tools
         [Tooltip("Использовать unscaled time для cooldown (не зависит от Time.timeScale, удобно при паузе).")]
         public bool useUnscaledTimeForCooldown;
 
-        [Tooltip("Интервал обновления прогресса перезарядки в секундах (влияет на частоту ReloadProgress/RemainingCooldownTime).")]
+        [Tooltip(
+            "Интервал обновления прогресса перезарядки в секундах (влияет на частоту ReloadProgress/RemainingCooldownTime).")]
         [Min(0.015f)]
         public float cooldownUpdateInterval = 0.05f;
 
@@ -46,8 +47,7 @@ namespace Neo.Tools
 
         #region Events
 
-        [Header("Evade Events")]
-        [Tooltip("Вызывается в момент начала уклонения.")]
+        [Header("Evade Events")] [Tooltip("Вызывается в момент начала уклонения.")]
         public UnityEvent OnEvadeStarted;
 
         [Tooltip("Вызывается по окончании действия уклонения.")]
@@ -104,7 +104,7 @@ namespace Neo.Tools
 
         private void Awake()
         {
-            _cooldownTimer = new Timer(cooldownDuration, cooldownUpdateInterval, looping: false, useUnscaledTimeForCooldown);
+            _cooldownTimer = new Timer(cooldownDuration, cooldownUpdateInterval, false, useUnscaledTimeForCooldown);
             _cooldownTimer.OnTimerStart.AddListener(OnCooldownTimerStart);
             _cooldownTimer.OnTimerEnd.AddListener(OnCooldownTimerEnd);
             _cooldownTimer.OnTimerUpdate.AddListener(OnCooldownTimerUpdate);
@@ -151,7 +151,11 @@ namespace Neo.Tools
 
         private void SyncReactiveFromTimer()
         {
-            if (_cooldownTimer == null) return;
+            if (_cooldownTimer == null)
+            {
+                return;
+            }
+
             if (_cooldownTimer.IsRunning)
             {
                 RemainingCooldownTime.Value = _cooldownTimer.RemainingTime;
@@ -187,13 +191,17 @@ namespace Neo.Tools
         public bool TryStartEvade()
         {
             if (!CanEvade)
+            {
                 return false;
+            }
 
             IsEvading = true;
             OnEvadeStarted?.Invoke();
 
             if (cooldownStartsWithEvade)
+            {
                 _cooldownTimer?.Start();
+            }
 
             Invoke(nameof(CompleteEvade), evadeDuration);
             return true;
@@ -226,7 +234,9 @@ namespace Neo.Tools
         {
             cooldownDuration = Mathf.Max(0.01f, seconds);
             if (_cooldownTimer != null)
+            {
                 _cooldownTimer.Duration = cooldownDuration;
+            }
         }
 
         /// <summary>

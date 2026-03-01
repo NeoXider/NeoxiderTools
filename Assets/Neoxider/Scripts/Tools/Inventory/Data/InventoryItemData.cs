@@ -1,5 +1,5 @@
-using UnityEngine;
 using Neo.Extensions;
+using UnityEngine;
 
 namespace Neo.Tools
 {
@@ -16,8 +16,7 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Display name used in UI.")]
         private string _displayName;
 
-        [SerializeField] [Tooltip("Item description.")]
-        [TextArea(1, 5)]
+        [SerializeField] [Tooltip("Item description.")] [TextArea(1, 5)]
         private string _description;
 
         [SerializeField] [Tooltip("Icon used in UI.")]

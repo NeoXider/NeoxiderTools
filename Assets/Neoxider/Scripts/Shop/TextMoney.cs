@@ -7,8 +7,10 @@ namespace Neo.Shop
     public class TextMoney : SetText
     {
         [SerializeField] private MoneyDisplayMode _displayMode = MoneyDisplayMode.Money;
+
         [SerializeField]
-        [Tooltip("Источник значения. Если не задан — используется Money.I (глобальный синглтон). Задайте для отображения энергии или другого отдельного счётчика.")]
+        [Tooltip(
+            "Источник значения. Если не задан — используется Money.I (глобальный синглтон). Задайте для отображения энергии или другого отдельного счётчика.")]
         private Money _moneySource;
 
         public float amount;
@@ -17,11 +19,6 @@ namespace Neo.Shop
         public TextMoney()
         {
             @decimal = 0;
-        }
-
-        private Money GetMoney()
-        {
-            return _moneySource != null ? _moneySource : Money.I;
         }
 
         private void Start()
@@ -38,32 +35,8 @@ namespace Neo.Shop
         private void OnEnable()
         {
             if (_money != null)
-                Init();
-        }
-
-        private void Init()
-        {
-            _money = GetMoney();
-            if (_money == null)
-                return;
-
-            switch (_displayMode)
             {
-                case MoneyDisplayMode.LevelMoney:
-                    _money.LevelMoney.OnChanged.RemoveListener(SetAmount);
-                    SetAmount(_money.levelMoney);
-                    _money.LevelMoney.OnChanged.AddListener(SetAmount);
-                    break;
-                case MoneyDisplayMode.AllMoney:
-                    _money.AllMoney.OnChanged.RemoveListener(SetAmount);
-                    SetAmount(_money.allMoney);
-                    _money.AllMoney.OnChanged.AddListener(SetAmount);
-                    break;
-                default:
-                    _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
-                    SetAmount(_money.money);
-                    _money.CurrentMoney.OnChanged.AddListener(SetAmount);
-                    break;
+                Init();
             }
         }
 
@@ -84,6 +57,39 @@ namespace Neo.Shop
                     break;
                 default:
                     _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
+                    break;
+            }
+        }
+
+        private Money GetMoney()
+        {
+            return _moneySource != null ? _moneySource : Money.I;
+        }
+
+        private void Init()
+        {
+            _money = GetMoney();
+            if (_money == null)
+            {
+                return;
+            }
+
+            switch (_displayMode)
+            {
+                case MoneyDisplayMode.LevelMoney:
+                    _money.LevelMoney.OnChanged.RemoveListener(SetAmount);
+                    SetAmount(_money.levelMoney);
+                    _money.LevelMoney.OnChanged.AddListener(SetAmount);
+                    break;
+                case MoneyDisplayMode.AllMoney:
+                    _money.AllMoney.OnChanged.RemoveListener(SetAmount);
+                    SetAmount(_money.allMoney);
+                    _money.AllMoney.OnChanged.AddListener(SetAmount);
+                    break;
+                default:
+                    _money.CurrentMoney.OnChanged.RemoveListener(SetAmount);
+                    SetAmount(_money.money);
+                    _money.CurrentMoney.OnChanged.AddListener(SetAmount);
                     break;
             }
         }

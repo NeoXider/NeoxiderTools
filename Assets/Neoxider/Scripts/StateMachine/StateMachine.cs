@@ -1,9 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Neo.StateMachine.NoCode;
 using UnityEngine;
 using UnityEngine.Events;
-using Neo.StateMachine.NoCode;
 
 namespace Neo.StateMachine
 {
@@ -200,7 +200,10 @@ namespace Neo.StateMachine
                 {
                     Type fromType = transition.FromStateType;
                     if (!transitionCache.ContainsKey(fromType))
+                    {
                         transitionCache[fromType] = new List<StateTransition>();
+                    }
+
                     transitionCache[fromType].Add(transition);
                 }
             }
@@ -208,7 +211,10 @@ namespace Neo.StateMachine
             {
                 Type stateDataType = typeof(StateData);
                 if (!transitionCache.ContainsKey(stateDataType))
+                {
                     transitionCache[stateDataType] = new List<StateTransition>();
+                }
+
                 transitionCache[stateDataType].Add(transition);
             }
             else
@@ -235,7 +241,9 @@ namespace Neo.StateMachine
                 {
                     transitions.Remove(transition);
                     if (transitions.Count == 0)
+                    {
                         transitionCache.Remove(fromType);
+                    }
                 }
             }
             else if (transition.FromStateData != null && enableTransitionCaching)
@@ -245,7 +253,9 @@ namespace Neo.StateMachine
                 {
                     transitions.Remove(transition);
                     if (transitions.Count == 0)
+                    {
                         transitionCache.Remove(stateDataType);
+                    }
                 }
             }
             else

@@ -14,7 +14,8 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Chance configuration")]
         private ChanceManager manager = new();
 
-        [Tooltip("Invoked when GenerateId() is called on this asset (e.g. from code). For scene events use ChanceSystemBehaviour.")]
+        [Tooltip(
+            "Invoked when GenerateId() is called on this asset (e.g. from code). For scene events use ChanceSystemBehaviour.")]
         public UnityEvent<int> OnIdGenerated;
 
         public ChanceManager Manager => manager;

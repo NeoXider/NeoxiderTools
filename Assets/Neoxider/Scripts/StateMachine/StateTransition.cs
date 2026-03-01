@@ -46,9 +46,9 @@ namespace Neo.StateMachine
 
         [SerializeField] private string transitionName = "Unnamed Transition";
 
-        private Type fromStateType;
-
         [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
+
+        private Type fromStateType;
 
         private Type toStateType;
 
@@ -203,18 +203,28 @@ namespace Neo.StateMachine
         public bool EvaluatePredicates(IState currentState)
         {
             if (!isEnabled)
+            {
                 return false;
+            }
 
             if (predicates == null || predicates.Count == 0)
+            {
                 return true;
+            }
 
             foreach (StatePredicate p in predicates)
             {
                 if (p == null)
+                {
                     return false;
+                }
+
                 if (!p.Evaluate(currentState))
+                {
                     return false;
+                }
             }
+
             return true;
         }
 

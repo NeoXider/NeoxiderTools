@@ -1,5 +1,5 @@
-using TMPro;
 using Neo.Extensions;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,7 +13,9 @@ namespace Neo.Tools
         [Header("Data")] [SerializeField] [Tooltip("Default item id used in manual InventoryView mode.")]
         private int _itemId = -1;
 
-        [Header("Optional UI")] [SerializeField] private Image _iconImage;
+        [Header("Optional UI")] [SerializeField]
+        private Image _iconImage;
+
         [SerializeField] private TMP_Text _nameText;
         [SerializeField] private TMP_Text _countText;
         [SerializeField] private GameObject _root;

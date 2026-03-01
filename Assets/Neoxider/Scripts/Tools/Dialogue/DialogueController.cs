@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -24,13 +25,15 @@ namespace Neo.Tools
         [Header("Auto Start")] [Tooltip("Automatically start first dialogue on Start")]
         public bool autoStart;
 
-        [Header("Auto Advance")]
-        [Tooltip("Advance to next sentence after typewriter finishes")]
+        [Header("Auto Advance")] [Tooltip("Advance to next sentence after typewriter finishes")]
         public bool autoNextSentence;
+
         [Tooltip("Advance to next monolog when current ends")]
         public bool autoNextMonolog;
+
         [Tooltip("Advance to next dialogue when current ends")]
         public bool autoNextDialogue;
+
         [Tooltip("Allow restarting current dialogue via RestartDialogue()")]
         public bool allowRestart;
 
@@ -333,9 +336,9 @@ namespace Neo.Tools
                 return;
             }
 
-            System.Reflection.MethodInfo showForMethod = windowType.GetMethod(
+            MethodInfo showForMethod = windowType.GetMethod(
                 "ShowFor",
-                System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                BindingFlags.Public | BindingFlags.Static);
 
             if (showForMethod == null)
             {
@@ -420,7 +423,8 @@ namespace Neo.Tools
             Monolog currentMonolog = GetCurrentMonolog();
             if (currentMonolog == null)
             {
-                Debug.LogWarning($"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.", this);
+                Debug.LogWarning($"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
+                    this);
                 return;
             }
 

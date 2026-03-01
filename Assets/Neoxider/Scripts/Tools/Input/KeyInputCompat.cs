@@ -55,33 +55,49 @@ namespace Neo.Tools
         private static bool ReadNewInputKeyState(KeyCode keyCode, string statePropertyName)
         {
             if (KeyboardType == null)
+            {
                 return false;
+            }
 
             string keyProperty = GetInputSystemKeyPropertyName(keyCode);
             if (string.IsNullOrEmpty(keyProperty))
+            {
                 return false;
+            }
 
-            PropertyInfo currentProperty = KeyboardType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
+            PropertyInfo currentProperty =
+                KeyboardType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
             object keyboard = currentProperty?.GetValue(null);
             if (keyboard == null)
+            {
                 return false;
+            }
 
-            PropertyInfo keyControlProperty = KeyboardType.GetProperty(keyProperty, BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo keyControlProperty =
+                KeyboardType.GetProperty(keyProperty, BindingFlags.Public | BindingFlags.Instance);
             object keyControl = keyControlProperty?.GetValue(keyboard);
             if (keyControl == null)
+            {
                 return false;
+            }
 
-            PropertyInfo stateProperty = keyControl.GetType().GetProperty(statePropertyName, BindingFlags.Public | BindingFlags.Instance);
-            return stateProperty != null && stateProperty.PropertyType == typeof(bool) && (bool)stateProperty.GetValue(keyControl);
+            PropertyInfo stateProperty = keyControl.GetType()
+                .GetProperty(statePropertyName, BindingFlags.Public | BindingFlags.Instance);
+            return stateProperty != null && stateProperty.PropertyType == typeof(bool) &&
+                   (bool)stateProperty.GetValue(keyControl);
         }
 
         private static string GetInputSystemKeyPropertyName(KeyCode keyCode)
         {
             if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
+            {
                 return char.ToLowerInvariant((char)('a' + (keyCode - KeyCode.A))) + "Key";
+            }
 
             if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
+            {
                 return "digit" + (keyCode - KeyCode.Alpha0) + "Key";
+            }
 
             switch (keyCode)
             {

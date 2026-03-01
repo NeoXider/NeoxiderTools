@@ -40,9 +40,6 @@ namespace Neo.Tools
 
         private Rigidbody _rb3D;
 
-        /// <summary>Sets rotation speed in degrees per second (or per frame when Use Delta Time is false).</summary>
-        public void SetDegreesPerSecond(float value) => degreesPerSecond = value;
-
         private void Awake()
         {
             _rb3D = GetComponent<Rigidbody>();
@@ -79,6 +76,12 @@ namespace Neo.Tools
 
                 RotateRigidbody2D();
             }
+        }
+
+        /// <summary>Sets rotation speed in degrees per second (or per frame when Use Delta Time is false).</summary>
+        public void SetDegreesPerSecond(float value)
+        {
+            degreesPerSecond = value;
         }
 
         private Vector3 ResolveAxisWorld()

@@ -16,13 +16,13 @@ namespace Neo.StateMachine.NoCode.Editor
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
-        protected override void ProcessAttributeAssignments()
-        {
-        }
-
         private void OnEnable()
         {
             data = target as StateMachineData;
+        }
+
+        protected override void ProcessAttributeAssignments()
+        {
         }
 
         protected override void DrawCustomNeoxiderInspectorGUI()
@@ -86,7 +86,8 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
 
             SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
-            if (initialStateProp.objectReferenceValue == null && !string.IsNullOrEmpty(initialStateNameProp.stringValue))
+            if (initialStateProp.objectReferenceValue == null &&
+                !string.IsNullOrEmpty(initialStateNameProp.stringValue))
             {
                 EditorGUILayout.HelpBox(
                     $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
@@ -124,24 +125,29 @@ namespace Neo.StateMachine.NoCode.Editor
                 {
                     removeIndex = i;
                 }
+
                 EditorGUILayout.EndHorizontal();
 
                 if (nameProp != null)
                 {
                     EditorGUILayout.PropertyField(nameProp, new GUIContent("Name"));
                 }
+
                 if (fromProp != null)
                 {
                     EditorGUILayout.PropertyField(fromProp, new GUIContent("From State"));
                 }
+
                 if (toProp != null)
                 {
                     EditorGUILayout.PropertyField(toProp, new GUIContent("To State"));
                 }
+
                 if (priorityProp != null)
                 {
                     EditorGUILayout.PropertyField(priorityProp, new GUIContent("Priority"));
                 }
+
                 if (enabledProp != null)
                 {
                     EditorGUILayout.PropertyField(enabledProp, new GUIContent("Is Enabled"));
@@ -155,6 +161,7 @@ namespace Neo.StateMachine.NoCode.Editor
                     {
                         TransitionEditorWindow.ShowWindow(data.Transitions[i], data);
                     }
+
                     GUIUtility.ExitGUI();
                 }
 
@@ -167,6 +174,7 @@ namespace Neo.StateMachine.NoCode.Editor
                 {
                     moveDownIndex = i;
                 }
+
                 EditorGUILayout.EndHorizontal();
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space(4);
@@ -200,22 +208,27 @@ namespace Neo.StateMachine.NoCode.Editor
                 {
                     fromProp.objectReferenceValue = null;
                 }
+
                 if (toProp != null)
                 {
                     toProp.objectReferenceValue = null;
                 }
+
                 if (enabledProp != null)
                 {
                     enabledProp.boolValue = true;
                 }
+
                 if (priorityProp != null)
                 {
                     priorityProp.intValue = 0;
                 }
+
                 if (nameProp != null)
                 {
                     nameProp.stringValue = "New Transition";
                 }
+
                 if (predicatesProp != null)
                 {
                     predicatesProp.ClearArray();

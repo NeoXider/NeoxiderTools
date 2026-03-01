@@ -42,11 +42,14 @@ namespace Neo.Tools
 
         [Header("Input")]
         [Tooltip("Legacy = Input Manager axes only; New = Input System bridge; Auto = try New, fallback Legacy.")]
-        [SerializeField] private InputBackend inputBackend = InputBackend.AutoPreferNew;
-        [Tooltip("Input Manager axis name for horizontal (e.g. Horizontal).")]
-        [SerializeField] private string horizontalAxis = "Horizontal";
-        [Tooltip("Input Manager axis name for vertical (e.g. Vertical).")]
-        [SerializeField] private string verticalAxis = "Vertical";
+        [SerializeField]
+        private InputBackend inputBackend = InputBackend.AutoPreferNew;
+
+        [Tooltip("Input Manager axis name for horizontal (e.g. Horizontal).")] [SerializeField]
+        private string horizontalAxis = "Horizontal";
+
+        [Tooltip("Input Manager axis name for vertical (e.g. Vertical).")] [SerializeField]
+        private string verticalAxis = "Vertical";
 
         public UnityEvent OnMoveStart;
 
@@ -98,14 +101,23 @@ namespace Neo.Tools
         private bool ShouldUseNewInput()
         {
             if (inputBackend == InputBackend.LegacyInputManager)
-                return false;
-            if (OptionalInputSystemBridge.IsAvailable)
-                return true;
-            if ((inputBackend == InputBackend.NewInputSystem || inputBackend == InputBackend.AutoPreferNew) && !_newInputUnavailableWarningShown)
             {
-                Debug.LogWarning("[KeyboardMover] New Input System is not available. Falling back to Legacy Input Manager.", this);
+                return false;
+            }
+
+            if (OptionalInputSystemBridge.IsAvailable)
+            {
+                return true;
+            }
+
+            if ((inputBackend == InputBackend.NewInputSystem || inputBackend == InputBackend.AutoPreferNew) &&
+                !_newInputUnavailableWarningShown)
+            {
+                Debug.LogWarning(
+                    "[KeyboardMover] New Input System is not available. Falling back to Legacy Input Manager.", this);
                 _newInputUnavailableWarningShown = true;
             }
+
             return false;
         }
 
@@ -141,9 +153,13 @@ namespace Neo.Tools
         {
             Vector2 dir;
             if (ShouldUseNewInput())
+            {
                 dir = OptionalInputSystemBridge.ReadMove();
+            }
             else
+            {
                 dir = new Vector2(Input.GetAxisRaw(horizontalAxis), Input.GetAxisRaw(verticalAxis));
+            }
 
             if (axisMode == AxisMode.AxisNormalized && dir.sqrMagnitude > 0.001f)
             {

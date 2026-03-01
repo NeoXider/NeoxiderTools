@@ -291,7 +291,7 @@ namespace Neo.GridSystem.Match3
                 return false;
             }
 
-            List<FieldCell> neighbors = _generator.GetNeighbors(cellA, null);
+            List<FieldCell> neighbors = _generator.GetNeighbors(cellA);
             return neighbors.Contains(cellB);
         }
 
@@ -405,7 +405,7 @@ namespace Neo.GridSystem.Match3
                     continue;
                 }
 
-                foreach (FieldCell neighbor in _generator.GetNeighbors(cell, null))
+                foreach (FieldCell neighbor in _generator.GetNeighbors(cell))
                 {
                     if (!CanUseCell(neighbor))
                     {

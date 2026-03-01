@@ -51,8 +51,8 @@ namespace Neo.GridSystem.TicTacToe
                 foreach (Vector3Int dir in directions)
                 {
                     int count = 1
-                        + CountInDirection(generator, cell.Position, dir, state)
-                        + CountInDirection(generator, cell.Position, -dir, state);
+                                + CountInDirection(generator, cell.Position, dir, state)
+                                + CountInDirection(generator, cell.Position, -dir, state);
                     if (count >= lineLength)
                     {
                         return state;

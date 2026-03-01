@@ -145,8 +145,9 @@ namespace Neo.Tools
         /* ───────── INTERNAL ────────────────────────────────────────────── */
 
         public float DistanceValue => Distance.CurrentValue;
+
         /// <summary>Количество точек (для NeoCondition и рефлексии).</summary>
-        public int PointCountValue => (int)PointCount.CurrentValue;
+        public int PointCountValue => PointCount.CurrentValue;
 
         public int CountPoints => rawPoints.Count;
 

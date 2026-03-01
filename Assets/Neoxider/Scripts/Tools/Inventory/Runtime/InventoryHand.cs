@@ -26,20 +26,20 @@ namespace Neo.Tools
         [Tooltip("Инвентарь. Если null и Auto Find включён — InventoryComponent.FindDefault().")]
         private InventoryComponent _inventory;
 
-        [SerializeField]
-        [Tooltip("Точка, в которой показывается модель выбранного предмета (например рука).")]
+        [SerializeField] [Tooltip("Точка, в которой показывается модель выбранного предмета (например рука).")]
         private Transform _handAnchor;
 
         [SerializeField]
-        [Tooltip("Опционально: Selector для переключения. Count синхронизируется с числом слотов, Next/Previous меняют выбранный слот.")]
+        [Tooltip(
+            "Опционально: Selector для переключения. Count синхронизируется с числом слотов, Next/Previous меняют выбранный слот.")]
         private Selector _selector;
 
-        [SerializeField]
-        [Tooltip("Разрешить автоматический поиск инвентаря, если не назначен.")]
+        [SerializeField] [Tooltip("Разрешить автоматический поиск инвентаря, если не назначен.")]
         private bool _autoFindInventory = true;
 
         [SerializeField]
-        [Tooltip("Опционально: InventoryDropper для DropEquipped(). Если задан, выбросить предмет в руке можно через него (префаб, физика, подбор).")]
+        [Tooltip(
+            "Опционально: InventoryDropper для DropEquipped(). Если задан, выбросить предмет в руке можно через него (префаб, физика, подбор).")]
         private InventoryDropper _dropper;
 
         [Header("Visual")]
@@ -48,7 +48,8 @@ namespace Neo.Tools
         private GameObject _fallbackHandPrefab;
 
         [SerializeField]
-        [Tooltip("Режим масштаба: Fixed — множитель (Hand Scale Fixed), Relative — дельта 1 + Hand Scale Offset. При использовании HandView на предметах удобнее Relative (дельта поверх масштаба вьюшки).")]
+        [Tooltip(
+            "Режим масштаба: Fixed — множитель (Hand Scale Fixed), Relative — дельта 1 + Hand Scale Offset. При использовании HandView на предметах удобнее Relative (дельта поверх масштаба вьюшки).")]
         private HandScaleMode _scaleInHandMode = HandScaleMode.Relative;
 
         [SerializeField]
@@ -56,58 +57,78 @@ namespace Neo.Tools
         private float _handScaleFixed = 1f;
 
         [SerializeField]
-        [Tooltip("Смещение масштаба в руке: итог = 1 + offset (например −0.5 → 0.5). Используется при Scale In Hand Mode = Relative.")]
+        [Tooltip(
+            "Смещение масштаба в руке: итог = 1 + offset (например −0.5 → 0.5). Используется при Scale In Hand Mode = Relative.")]
         private float _handScaleOffset;
 
         [SerializeField]
-        [Tooltip("При true у предмета в руке отключаются все коллайдеры (Collider/Collider2D на объекте и детях), чтобы не толкать и не участвовать в столкновениях. По умолчанию включено.")]
+        [Tooltip(
+            "При true у предмета в руке отключаются все коллайдеры (Collider/Collider2D на объекте и детях), чтобы не толкать и не участвовать в столкновениях. По умолчанию включено.")]
         private bool _disableCollidersInHand = true;
 
         [Header("Selector Sync")]
         [SerializeField]
-        [Tooltip("При изменении инвентаря синхронизировать Selector.Count и текущий индекс (зажать в допустимых границах).")]
+        [Tooltip(
+            "При изменении инвентаря синхронизировать Selector.Count и текущий индекс (зажать в допустимых границах).")]
         private bool _syncSelectorOnInventoryChanged = true;
 
         [SerializeField]
-        [Tooltip("При пустом инвентаре — пустой слот (Count=1, ничего не в руке). При наличии предметов — разрешить индекс -1 в Selector (ничего не в руке); включите у Selector Allow Empty Effective Index.")]
+        [Tooltip(
+            "При пустом инвентаре — пустой слот (Count=1, ничего не в руке). При наличии предметов — разрешить индекс -1 в Selector (ничего не в руке); включите у Selector Allow Empty Effective Index.")]
         private bool _allowEmptySlot = true;
 
         [Header("Drop (when Dropper assigned)")]
         [SerializeField]
-        [Tooltip("По нажатию клавиши дропа (например G) сбрасывать предмет из руки через Dropper. У назначенного Dropper ввод по клавише временно отключается, чтобы дроп обрабатывала только рука.")]
+        [Tooltip(
+            "По нажатию клавиши дропа (например G) сбрасывать предмет из руки через Dropper. У назначенного Dropper ввод по клавише временно отключается, чтобы дроп обрабатывала только рука.")]
         private bool _allowDropInput = true;
 
-        [SerializeField]
-        [Tooltip("Клавиша выброса предмета из руки.")]
+        [SerializeField] [Tooltip("Клавиша выброса предмета из руки.")]
         private KeyCode _dropKey = KeyCode.G;
 
-        [Header("Use")]
-        [SerializeField]
-        [Tooltip("По нажатию клавиши применения вызывать UseEquippedItem().")]
+        [Header("Use")] [SerializeField] [Tooltip("По нажатию клавиши применения вызывать UseEquippedItem().")]
         private bool _allowUseInput = true;
 
-        [SerializeField]
-        [Tooltip("Клавиша применения предмета в руке.")]
+        [SerializeField] [Tooltip("Клавиша применения предмета в руке.")]
         private KeyCode _useKey = KeyCode.E;
 
-        [Header("Events")]
-        public UnityEvent<int> OnEquippedChanged = new();
+        [Header("Events")] public UnityEvent<int> OnEquippedChanged = new();
 
-        [Tooltip("Вызывается при UseEquippedItem(). Передаётся itemId. Данные предмета — inventory.GetItemData(itemId) или EquippedItemData. Подпишите для эффекта; при расходе — TryConsume(itemId, 1).")]
+        [Tooltip(
+            "Вызывается при UseEquippedItem(). Передаётся itemId. Данные предмета — inventory.GetItemData(itemId) или EquippedItemData. Подпишите для эффекта; при расходе — TryConsume(itemId, 1).")]
         public UnityEvent<int> OnUseItemRequested = new();
 
-        private int _slotIndex;
-        private GameObject _spawnedInstance;
         private bool _isSyncingSelector;
         private bool _savedDropperAllowInput = true;
 
-        public InventoryComponent Inventory => _inventory;
-        public int SlotIndex => _slotIndex;
+        private GameObject _spawnedInstance;
 
-        /// <summary>ItemId предмета в руке (−1 если пусто). Для NeoCondition: Source = Component → InventoryHand, Property = EquippedItemId.</summary>
-        public int EquippedItemId => ResolveInventory()?.GetItemIdAtSlotIndex(_slotIndex) ?? -1;
+        public InventoryComponent Inventory => _inventory;
+        public int SlotIndex { get; private set; }
+
+        /// <summary>
+        ///     ItemId предмета в руке (−1 если пусто). Для NeoCondition: Source = Component → InventoryHand, Property =
+        ///     EquippedItemId.
+        /// </summary>
+        public int EquippedItemId => ResolveInventory()?.GetItemIdAtSlotIndex(SlotIndex) ?? -1;
 
         public InventoryItemData EquippedItemData => ResolveInventory()?.GetItemData(EquippedItemId);
+
+        private void Update()
+        {
+            if (_allowUseInput && KeyInputCompat.GetKeyDown(_useKey))
+            {
+                UseEquippedItem();
+                return;
+            }
+
+            if (_dropper == null || !_allowDropInput || !KeyInputCompat.GetKeyDown(_dropKey))
+            {
+                return;
+            }
+
+            DropEquipped();
+        }
 
         private void OnEnable()
         {
@@ -150,22 +171,6 @@ namespace Neo.Tools
             }
         }
 
-        private void Update()
-        {
-            if (_allowUseInput && KeyInputCompat.GetKeyDown(_useKey))
-            {
-                UseEquippedItem();
-                return;
-            }
-
-            if (_dropper == null || !_allowDropInput || !KeyInputCompat.GetKeyDown(_dropKey))
-            {
-                return;
-            }
-
-            DropEquipped(1);
-        }
-
         private void OnInventoryChanged()
         {
             if (!_syncSelectorOnInventoryChanged)
@@ -178,7 +183,11 @@ namespace Neo.Tools
 
         private void OnSelectorSelectionChanged(int index)
         {
-            if (_isSyncingSelector) return;
+            if (_isSyncingSelector)
+            {
+                return;
+            }
+
             SetSlotIndex(index);
         }
 
@@ -199,7 +208,7 @@ namespace Neo.Tools
                 return;
             }
 
-            _slotIndex = (_slotIndex + 1) % count;
+            SlotIndex = (SlotIndex + 1) % count;
             ApplySlotAndSync();
         }
 
@@ -220,12 +229,13 @@ namespace Neo.Tools
                 return;
             }
 
-            _slotIndex = _slotIndex <= 0 ? count - 1 : _slotIndex - 1;
+            SlotIndex = SlotIndex <= 0 ? count - 1 : SlotIndex - 1;
             ApplySlotAndSync();
         }
 
         /// <summary>
-        ///     «Применить» предмет в руке: вызывает OnUseItemRequested(itemId), затем у экземпляра в руке — PickableItem.Activate() (если есть). Вызывайте из кода/кнопки или по клавише Use (E по умолчанию).
+        ///     «Применить» предмет в руке: вызывает OnUseItemRequested(itemId), затем у экземпляра в руке —
+        ///     PickableItem.Activate() (если есть). Вызывайте из кода/кнопки или по клавише Use (E по умолчанию).
         /// </summary>
         public void UseEquippedItem()
         {
@@ -251,7 +261,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Выбросить предмет в руке через InventoryDropper (если назначен). Возвращает количество выброшенных, 0 если нет предмета, нет Dropper или дроп запрещён.
+        ///     Выбросить предмет в руке через InventoryDropper (если назначен). Возвращает количество выброшенных, 0 если нет
+        ///     предмета, нет Dropper или дроп запрещён.
         /// </summary>
         public int DropEquipped(int amount = 1)
         {
@@ -283,21 +294,21 @@ namespace Neo.Tools
             int count = inv.GetNonEmptySlotCount();
             if (count <= 0)
             {
-                _slotIndex = 0;
+                SlotIndex = 0;
                 SyncSelectorAndRefreshHand();
                 return;
             }
 
             if (index == -1 && _allowEmptySlot)
             {
-                _slotIndex = -1;
+                SlotIndex = -1;
                 inv.SelectedItemId = -1;
                 SyncSelectorAndRefreshHand();
                 OnEquippedChanged?.Invoke(-1);
                 return;
             }
 
-            _slotIndex = Mathf.Clamp(index, 0, count - 1);
+            SlotIndex = Mathf.Clamp(index, 0, count - 1);
             ApplySlotAndSync();
         }
 
@@ -317,19 +328,19 @@ namespace Neo.Tools
             int count = inv.GetNonEmptySlotCount();
             if (count <= 0)
             {
-                _slotIndex = 0;
+                SlotIndex = 0;
                 inv.SelectedItemId = -1;
                 DestroySpawned();
                 SyncSelectorAndRefreshHand();
                 return;
             }
 
-            if (_slotIndex >= count)
+            if (SlotIndex >= count)
             {
-                _slotIndex = count - 1;
+                SlotIndex = count - 1;
             }
 
-            int itemId = inv.GetItemIdAtSlotIndex(_slotIndex);
+            int itemId = inv.GetItemIdAtSlotIndex(SlotIndex);
             inv.SelectedItemId = itemId;
             SyncSelectorAndRefreshHand();
         }
@@ -350,7 +361,7 @@ namespace Neo.Tools
                 return;
             }
 
-            if (_slotIndex < 0)
+            if (SlotIndex < 0)
             {
                 inv.SelectedItemId = -1;
                 SyncSelectorAndRefreshHand();
@@ -358,7 +369,7 @@ namespace Neo.Tools
                 return;
             }
 
-            int itemId = inv.GetItemIdAtSlotIndex(_slotIndex);
+            int itemId = inv.GetItemIdAtSlotIndex(SlotIndex);
             inv.SelectedItemId = itemId;
             SyncSelectorAndRefreshHand();
             OnEquippedChanged?.Invoke(itemId);
@@ -366,7 +377,11 @@ namespace Neo.Tools
 
         private void SyncSelectorAndRefreshHand()
         {
-            if (_isSyncingSelector) return;
+            if (_isSyncingSelector)
+            {
+                return;
+            }
+
             _isSyncingSelector = true;
             try
             {
@@ -375,10 +390,10 @@ namespace Neo.Tools
 
                 if (_selector != null)
                 {
-                    _selector.Count = count > 0 ? count : (_allowEmptySlot ? 1 : 0);
+                    _selector.Count = count > 0 ? count : _allowEmptySlot ? 1 : 0;
                     if (count > 0)
                     {
-                        _selector.Set(_slotIndex);
+                        _selector.Set(SlotIndex);
                     }
                     else if (_allowEmptySlot && _selector.Count == 1)
                     {
@@ -405,14 +420,16 @@ namespace Neo.Tools
                 return;
             }
 
-            int itemId = inv.GetItemIdAtSlotIndex(_slotIndex);
+            int itemId = inv.GetItemIdAtSlotIndex(SlotIndex);
             if (itemId < 0)
             {
                 return;
             }
 
             InventoryItemData data = inv.GetItemData(itemId);
-            GameObject prefab = data != null && data.WorldDropPrefab != null ? data.WorldDropPrefab : _fallbackHandPrefab;
+            GameObject prefab = data != null && data.WorldDropPrefab != null
+                ? data.WorldDropPrefab
+                : _fallbackHandPrefab;
             if (prefab == null)
             {
                 return;
@@ -433,7 +450,7 @@ namespace Neo.Tools
                 _spawnedInstance.transform.localRotation = Quaternion.identity;
             }
 
-            float handScale = _scaleInHandMode == HandScaleMode.Relative ? (1f + _handScaleOffset) : _handScaleFixed;
+            float handScale = _scaleInHandMode == HandScaleMode.Relative ? 1f + _handScaleOffset : _handScaleFixed;
             _spawnedInstance.transform.localScale = Vector3.one * Mathf.Max(0.01f, baseScale * handScale);
 
             SetPhysicsOnInstance(_spawnedInstance, false);
@@ -445,12 +462,17 @@ namespace Neo.Tools
 
         private static void SetPhysicsOnInstance(GameObject instance, bool enabled)
         {
-            if (instance == null) return;
+            if (instance == null)
+            {
+                return;
+            }
+
             Rigidbody[] rbs = instance.GetComponentsInChildren<Rigidbody>(true);
             for (int i = 0; i < rbs.Length; i++)
             {
                 rbs[i].isKinematic = !enabled;
             }
+
             Rigidbody2D[] rb2ds = instance.GetComponentsInChildren<Rigidbody2D>(true);
             for (int i = 0; i < rb2ds.Length; i++)
             {
@@ -460,12 +482,17 @@ namespace Neo.Tools
 
         private static void SetCollidersOnInstance(GameObject instance, bool enabled)
         {
-            if (instance == null) return;
+            if (instance == null)
+            {
+                return;
+            }
+
             Collider[] cols = instance.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < cols.Length; i++)
             {
                 cols[i].enabled = enabled;
             }
+
             Collider2D[] cols2D = instance.GetComponentsInChildren<Collider2D>(true);
             for (int i = 0; i < cols2D.Length; i++)
             {

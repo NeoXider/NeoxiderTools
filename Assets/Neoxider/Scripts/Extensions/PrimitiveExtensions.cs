@@ -56,7 +56,7 @@ namespace Neo.Extensions
         public static string FormatTime(this float timeSeconds, TimeFormat format = TimeFormat.Seconds,
             string separator = ":")
         {
-            return FormatTime(timeSeconds, format, separator, false);
+            return timeSeconds.FormatTime(format, separator, false);
         }
 
         /// <summary>

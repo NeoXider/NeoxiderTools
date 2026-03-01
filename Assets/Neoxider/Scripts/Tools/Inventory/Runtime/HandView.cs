@@ -12,16 +12,15 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(HandView))]
     public sealed class HandView : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Смещение позиции предмета относительно точки руки (локальные координаты).")]
+        [SerializeField] [Tooltip("Смещение позиции предмета относительно точки руки (локальные координаты).")]
         private Vector3 _positionOffset;
 
-        [SerializeField]
-        [Tooltip("Смещение поворота в градусах (Euler) относительно руки.")]
+        [SerializeField] [Tooltip("Смещение поворота в градусах (Euler) относительно руки.")]
         private Vector3 _rotationOffset;
 
         [SerializeField]
-        [Tooltip("Базовый масштаб этого предмета в руке (1 = без изменения). Поверх применяется общий масштаб руки (дельта или фиксированный).")]
+        [Tooltip(
+            "Базовый масштаб этого предмета в руке (1 = без изменения). Поверх применяется общий масштаб руки (дельта или фиксированный).")]
         [Min(0.01f)]
         private float _scaleInHand = 1f;
 

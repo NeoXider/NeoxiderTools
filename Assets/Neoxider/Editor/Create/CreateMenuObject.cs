@@ -383,7 +383,29 @@ namespace Neo
             { "Camera", "d_Camera Icon" }
         };
 
+        private static readonly (string Category, string Label, string Path)[] PresetEntries =
+        {
+            ("System", "System Root (--System--)", "Prefabs/-System--.prefab"),
+            ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
+            ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
+            ("Player", "Player (First Person Controller)", "Prefabs/Tools/First Person Controller.prefab"),
+            ("Player", "First Person Controller", "Prefabs/Tools/First Person Controller.prefab"),
+            ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
+            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab"),
+            ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab")
+        };
+
+        private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
+
         private readonly Dictionary<string, bool> _expanded = new(StringComparer.OrdinalIgnoreCase);
+
+        private readonly Dictionary<string, bool> _presetsExpanded = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "System", true },
+            { "Combat", true },
+            { "Player", true },
+            { "Interaction", true }
+        };
 
         private CreateMenuObject.CreateMenuEntry[] _entries = Array.Empty<CreateMenuObject.CreateMenuEntry>();
         private GUIStyle _entryButtonStyle;
@@ -409,32 +431,11 @@ namespace Neo
             EditorGUILayout.EndScrollView();
         }
 
-        private static readonly (string Category, string Label, string Path)[] PresetEntries =
-        {
-            ("System", "System Root (--System--)", "Prefabs/-System--.prefab"),
-            ("Combat", "Simple Weapon", "Prefabs/Simple Weapon.prefab"),
-            ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
-            ("Player", "Player (First Person Controller)", "Prefabs/Tools/First Person Controller.prefab"),
-            ("Player", "First Person Controller", "Prefabs/Tools/First Person Controller.prefab"),
-            ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
-            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab"),
-            ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab")
-        };
-
-        private static readonly Color PresetsCategoryColor = new(0.2f, 0.5f, 0.35f, 0.9f);
-
-        private readonly Dictionary<string, bool> _presetsExpanded = new(StringComparer.OrdinalIgnoreCase)
-        {
-            { "System", true },
-            { "Combat", true },
-            { "Player", true },
-            { "Interaction", true }
-        };
-
         private void DrawPresetsSection()
         {
             const float indent = 14f;
-            GUIContent prefabIcon = EditorGUIUtility.IconContent("d_Prefab Icon") ?? EditorGUIUtility.IconContent("Prefab Icon");
+            GUIContent prefabIcon = EditorGUIUtility.IconContent("d_Prefab Icon") ??
+                                    EditorGUIUtility.IconContent("Prefab Icon");
             Texture2D prefabTex = prefabIcon?.image as Texture2D;
 
             EditorGUILayout.Space(4f);

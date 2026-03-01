@@ -1,9 +1,7 @@
-using Neo;
 using Neo.Reactive;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
-using UnityEngine.Events;
 
 namespace Neo.Audio
 {
@@ -30,21 +28,24 @@ namespace Neo.Audio
 
         [Tooltip("Reactive mute state; subscribe via MuteEfx.OnChanged")]
         public ReactivePropertyBool MuteEfx = new();
+
         [Tooltip("Reactive mute state; subscribe via MuteMusic.OnChanged")]
         public ReactivePropertyBool MuteMusic = new();
+
         [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
         public ReactivePropertyBool MuteMaster = new();
-
-        /// <summary>Текущее состояние mute (для NeoCondition и рефлексии).</summary>
-        public bool MuteEfxValue => MuteEfx.CurrentValue;
-        public bool MuteMusicValue => MuteMusic.CurrentValue;
-        public bool MuteMasterValue => MuteMaster.CurrentValue;
 
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
         private AM _am;
         private bool _masterMuted;
         private float _savedMasterVolume = 1f;
+
+        /// <summary>Текущее состояние mute (для NeoCondition и рефлексии).</summary>
+        public bool MuteEfxValue => MuteEfx.CurrentValue;
+
+        public bool MuteMusicValue => MuteMusic.CurrentValue;
+        public bool MuteMasterValue => MuteMaster.CurrentValue;
 
         public AudioSource efx { get; private set; }
         public AudioSource music { get; private set; }
@@ -288,7 +289,8 @@ namespace Neo.Audio
                     ToggleEfx();
                     break;
                 default:
-                    Debug.LogWarning($"[AMSettings] ToggleAudio: неизвестная группа {group}. Используйте 0=Master, 1=Music, 2=Sfx.");
+                    Debug.LogWarning(
+                        $"[AMSettings] ToggleAudio: неизвестная группа {group}. Используйте 0=Master, 1=Music, 2=Sfx.");
                     break;
             }
         }

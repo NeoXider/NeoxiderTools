@@ -1,6 +1,6 @@
+using Neo.Tools;
 using UnityEditor;
 using UnityEngine;
-using Neo.Tools;
 
 namespace Neo.Editor
 {
@@ -40,6 +40,7 @@ namespace Neo.Editor
             {
                 CreateIconFromPrefab();
             }
+
             GUI.enabled = true;
 
             if (_worldDropPrefabProp.objectReferenceValue == null)

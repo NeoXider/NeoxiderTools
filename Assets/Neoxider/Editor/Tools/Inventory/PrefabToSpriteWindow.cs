@@ -1,4 +1,3 @@
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -6,17 +5,10 @@ namespace Neo.Editor
 {
     public class PrefabToSpriteWindow : EditorWindow
     {
+        private string _lastSavedPath;
         private GameObject _prefab;
         private Texture2D _previewTexture;
         private Vector2 _scroll;
-        private string _lastSavedPath;
-
-        [MenuItem("Tools/Neoxider/Create Sprite from Prefab...", false, 400)]
-        public static void OpenWindow()
-        {
-            PrefabToSpriteWindow w = GetWindow<PrefabToSpriteWindow>("Prefab to Sprite");
-            w.minSize = new Vector2(320, 200);
-        }
 
         private void OnGUI()
         {
@@ -60,6 +52,7 @@ namespace Neo.Editor
             {
                 CreateAndSaveSprite(_prefab);
             }
+
             GUI.enabled = true;
 
             if (!string.IsNullOrEmpty(_lastSavedPath))
@@ -67,6 +60,13 @@ namespace Neo.Editor
                 EditorGUILayout.Space(4);
                 EditorGUILayout.HelpBox($"Saved: {_lastSavedPath}", MessageType.None);
             }
+        }
+
+        [MenuItem("Tools/Neoxider/Create Sprite from Prefab...", false, 400)]
+        public static void OpenWindow()
+        {
+            PrefabToSpriteWindow w = GetWindow<PrefabToSpriteWindow>("Prefab to Sprite");
+            w.minSize = new Vector2(320, 200);
         }
 
         private void CreateAndSaveSprite(GameObject prefab)
@@ -85,7 +85,8 @@ namespace Neo.Editor
 
             if (preview == null)
             {
-                EditorUtility.DisplayDialog("Prefab to Sprite", "Could not get preview for this prefab. Try selecting it in Project and wait a moment.", "OK");
+                EditorUtility.DisplayDialog("Prefab to Sprite",
+                    "Could not get preview for this prefab. Try selecting it in Project and wait a moment.", "OK");
                 return;
             }
 

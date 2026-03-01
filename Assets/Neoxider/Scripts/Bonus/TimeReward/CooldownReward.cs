@@ -35,11 +35,7 @@ namespace Neo.Bonus
         [SerializeField] private TimeFormat _displayTimeFormat = TimeFormat.HoursMinutesSeconds;
         [SerializeField] private string _displaySeparator = ":";
 
-        [Header("Reward Events")]
-        public ReactivePropertyFloat RemainingTime = new();
-
-        /// <summary>Оставшееся время в секундах (для NeoCondition и рефлексии).</summary>
-        public float RemainingTimeValue => RemainingTime.CurrentValue;
+        [Header("Reward Events")] public ReactivePropertyFloat RemainingTime = new();
 
         [SerializeField] private UnityEvent _onRewardClaimed = new();
         [SerializeField] private UnityEvent<int> _onRewardsClaimed = new();
@@ -47,6 +43,9 @@ namespace Neo.Bonus
         private bool _canTakeReward;
 
         private bool _waitingForManualStart;
+
+        /// <summary>Оставшееся время в секундах (для NeoCondition и рефлексии).</summary>
+        public float RemainingTimeValue => RemainingTime.CurrentValue;
 
         /// <summary>Invoked when reward claim succeeds (once per claim when multiple are given).</summary>
         public UnityEvent OnRewardClaimed => _onRewardClaimed;

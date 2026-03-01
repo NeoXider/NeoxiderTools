@@ -27,16 +27,6 @@ namespace Neo.StateMachine
     [AddComponentMenu("Neoxider/Tools/State Machine Behaviour")]
     public class StateMachineBehaviourBase : MonoBehaviour
     {
-        [Serializable]
-        public class StateChangedEvent : UnityEvent<string, string>
-        {
-        }
-
-        [Serializable]
-        public class TransitionEvaluatedEvent : UnityEvent<string, bool>
-        {
-        }
-
         [Header("Settings")] [SerializeField] [Tooltip("Enable state transition logging")]
         private bool enableDebugLog;
 
@@ -51,11 +41,11 @@ namespace Neo.StateMachine
 
         [Header("Context for conditions")]
         [SerializeField]
-        [Tooltip("GameObjects for transition conditions. In StateMachineData set Condition Context Slot: Owner = this object, Override1 = element 0, Override2 = element 1, etc. SO cannot reference scene objects — assign here in scene.")]
+        [Tooltip(
+            "GameObjects for transition conditions. In StateMachineData set Condition Context Slot: Owner = this object, Override1 = element 0, Override2 = element 1, etc. SO cannot reference scene objects — assign here in scene.")]
         private GameObject[] contextOverrides = new GameObject[0];
 
-        [Header("Events")] [SerializeField]
-        private UnityEvent onInitialized = new();
+        [Header("Events")] [SerializeField] private UnityEvent onInitialized = new();
 
         [SerializeField] private UnityEvent onStateEntered = new();
 
@@ -288,10 +278,7 @@ namespace Neo.StateMachine
                 onStateEntered?.Invoke();
             });
 
-            StateMachine.OnStateExited.AddListener(_ =>
-            {
-                onStateExited?.Invoke();
-            });
+            StateMachine.OnStateExited.AddListener(_ => { onStateExited?.Invoke(); });
 
             StateMachine.OnStateChanged.AddListener((from, to) =>
             {
@@ -317,7 +304,8 @@ namespace Neo.StateMachine
 
         private void EvaluateTransitionsInternal()
         {
-            StateMachineEvaluationContext.Push(gameObject, contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            StateMachineEvaluationContext.Push(gameObject,
+                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
             try
             {
                 StateMachine.EvaluateTransitions();
@@ -355,10 +343,24 @@ namespace Neo.StateMachine
                 return transition.TransitionName;
             }
 
-            string from = transition.FromStateData != null ? transition.FromStateData.StateName : transition.FromStateType?.Name;
-            string to = transition.ToStateData != null ? transition.ToStateData.StateName : transition.ToStateType?.Name;
+            string from = transition.FromStateData != null
+                ? transition.FromStateData.StateName
+                : transition.FromStateType?.Name;
+            string to = transition.ToStateData != null
+                ? transition.ToStateData.StateName
+                : transition.ToStateType?.Name;
 
             return $"{from ?? "Any"} -> {to ?? "None"}";
+        }
+
+        [Serializable]
+        public class StateChangedEvent : UnityEvent<string, string>
+        {
+        }
+
+        [Serializable]
+        public class TransitionEvaluatedEvent : UnityEvent<string, bool>
+        {
         }
     }
 }

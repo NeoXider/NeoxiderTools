@@ -47,7 +47,8 @@ namespace Neo.StateMachine
 
         [Header("Context for conditions")]
         [SerializeField]
-        [Tooltip("GameObjects for transition conditions. In conditions use Context Slot: Owner / Override1..5. Assign here in scene.")]
+        [Tooltip(
+            "GameObjects for transition conditions. In conditions use Context Slot: Owner / Override1..5. Assign here in scene.")]
         private GameObject[] contextOverrides = new GameObject[0];
 
         private Type initialStateType;
@@ -246,7 +247,8 @@ namespace Neo.StateMachine
 
         private void EvaluateTransitionsInternal()
         {
-            StateMachineEvaluationContext.Push(gameObject, contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
+            StateMachineEvaluationContext.Push(gameObject,
+                contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
             try
             {
                 StateMachine.EvaluateTransitions();

@@ -44,8 +44,8 @@ namespace Neo.Tools
         [SerializeField] private string _jumpButton = "Jump";
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onJumped = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
+
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();
@@ -55,9 +55,9 @@ namespace Neo.Tools
 
         private float _moveInputX;
         private bool _movementEnabled = true;
-        private bool _wasMoving;
         private bool _newInputUnavailableWarningShown;
         private bool _wasGrounded;
+        private bool _wasMoving;
 
         /// <summary>
         ///     Gets whether the character is currently grounded.
@@ -72,11 +72,21 @@ namespace Neo.Tools
         private void Awake()
         {
             if (_rigidbody == null)
+            {
                 _rigidbody = GetComponent<Rigidbody2D>();
+            }
+
             if (_followCamera == null)
+            {
                 _followCamera = Camera.main;
+            }
+
             if (_groundCheck == null)
-                Debug.LogWarning("[PlayerController2DPhysics] Ground Check transform is not set. Ground detection will use transform position.", this);
+            {
+                Debug.LogWarning(
+                    "[PlayerController2DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
+                    this);
+            }
         }
 
         private void Update()
@@ -90,9 +100,13 @@ namespace Neo.Tools
             {
                 _wasMoving = movingNow;
                 if (movingNow)
+                {
                     _onMoveStart?.Invoke();
+                }
                 else
+                {
                     _onMoveStop?.Invoke();
+                }
             }
         }
 

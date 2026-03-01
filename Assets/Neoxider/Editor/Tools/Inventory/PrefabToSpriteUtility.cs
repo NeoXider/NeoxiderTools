@@ -26,7 +26,7 @@ namespace Neo.Editor
             Graphics.Blit(source, rt);
             RenderTexture.active = rt;
 
-            Texture2D copy = new Texture2D(source.width, source.height, TextureFormat.RGBA32, false);
+            Texture2D copy = new(source.width, source.height, TextureFormat.RGBA32, false);
             copy.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
             copy.Apply();
 

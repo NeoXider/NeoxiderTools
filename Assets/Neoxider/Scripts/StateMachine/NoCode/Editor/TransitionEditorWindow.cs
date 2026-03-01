@@ -1,6 +1,5 @@
 using System;
 using System.Linq;
-using Neo.StateMachine;
 using UnityEditor;
 using UnityEngine;
 
@@ -86,7 +85,7 @@ namespace Neo.StateMachine.NoCode.Editor
                             int transIndex = data.Transitions.IndexOf(transition);
                             if (transIndex >= 0)
                             {
-                                SerializedObject so = new SerializedObject(data);
+                                SerializedObject so = new(data);
                                 SerializedProperty transitionsProp = so.FindProperty("transitions");
                                 if (transitionsProp != null && transIndex < transitionsProp.arraySize)
                                 {
@@ -95,13 +94,22 @@ namespace Neo.StateMachine.NoCode.Editor
                                     if (predicatesProp != null && i < predicatesProp.arraySize)
                                     {
                                         SerializedProperty predProp = predicatesProp.GetArrayElementAtIndex(i);
-                                        SerializedProperty contextSlotProp = predProp.FindPropertyRelative("contextSlot");
+                                        SerializedProperty contextSlotProp =
+                                            predProp.FindPropertyRelative("contextSlot");
                                         SerializedProperty entryProp = predProp.FindPropertyRelative("conditionEntry");
                                         so.Update();
                                         if (contextSlotProp != null)
-                                            EditorGUILayout.PropertyField(contextSlotProp, new GUIContent("Context Slot", "Owner = object with StateMachine; Override1..5 = from Context Overrides on component (set in scene)."));
+                                        {
+                                            EditorGUILayout.PropertyField(contextSlotProp,
+                                                new GUIContent("Context Slot",
+                                                    "Owner = object with StateMachine; Override1..5 = from Context Overrides on component (set in scene)."));
+                                        }
+
                                         if (entryProp != null)
+                                        {
                                             EditorGUILayout.PropertyField(entryProp, true);
+                                        }
+
                                         so.ApplyModifiedProperties();
                                     }
                                 }

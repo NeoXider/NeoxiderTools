@@ -14,8 +14,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ChanceSystemBehaviour))]
     public class ChanceSystemBehaviour : MonoBehaviour
     {
-        [Header("Settings")]
-        [SerializeField] [Tooltip("Inline chance configuration")]
+        [Header("Settings")] [SerializeField] [Tooltip("Inline chance configuration")]
         private ChanceManager manager = new();
 
         [SerializeField] [Tooltip("Optional ChanceData asset to copy configuration from at Awake")]
@@ -26,16 +25,18 @@ namespace Neo.Tools
         public UnityEvent<int> OnIdGenerated;
 
         [Tooltip("Invoked with (index, normalizedWeight 0..1). Use when you need probability in UI or logic.")]
-        [SerializeField] private UnityEvent<int, float> onIndexAndWeightSelected = new();
+        [SerializeField]
+        private UnityEvent<int, float> onIndexAndWeightSelected = new();
 
-        [Tooltip("Invoked once after each roll. Use for UI refresh, SFX, etc.")]
-        [SerializeField] private UnityEvent onRollComplete = new();
+        [Tooltip("Invoked once after each roll. Use for UI refresh, SFX, etc.")] [SerializeField]
+        private UnityEvent onRollComplete = new();
 
-        [Tooltip("One event per entry: when index N is selected, event at position N is invoked. Size can differ from entries count.")]
-        [SerializeField] private List<UnityEvent> eventsByIndex = new();
+        [Tooltip(
+            "One event per entry: when index N is selected, event at position N is invoked. Size can differ from entries count.")]
+        [SerializeField]
+        private List<UnityEvent> eventsByIndex = new();
 
-        [Header("Debug")]
-        [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
+        [Header("Debug")] [SerializeField] [Tooltip("Log generated id and probability in the console (Editor only)")]
         private bool logDebugOnce;
 
         /// <summary>Invoked with the selected entry index. Same as OnIdGenerated.</summary>
@@ -106,7 +107,10 @@ namespace Neo.Tools
             GenerateId();
         }
 
-        /// <summary>Rolls once, invokes all events (OnIndexSelected, OnIndexAndWeightSelected, EventsByIndex[index], OnRollComplete), returns selected index.</summary>
+        /// <summary>
+        ///     Rolls once, invokes all events (OnIndexSelected, OnIndexAndWeightSelected, EventsByIndex[index],
+        ///     OnRollComplete), returns selected index.
+        /// </summary>
         public int GenerateId()
         {
             return EvaluateAndNotify(manager.GetChanceId());

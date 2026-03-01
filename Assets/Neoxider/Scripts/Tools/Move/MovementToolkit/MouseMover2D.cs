@@ -44,16 +44,18 @@ namespace Neo.Tools
         private float pxToWorld = .01f;
 
         [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
-        private int mouseButton = 0;
+        private int mouseButton;
 
-        [Tooltip("If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
-        [SerializeField] private bool deltaOnlyWhenButtonHeld = true;
+        [Tooltip(
+            "If true, Delta modes only move while this mouse button is held. If false, movement follows mouse constantly.")]
+        [SerializeField]
+        private bool deltaOnlyWhenButtonHeld = true;
 
-        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")]
-        [SerializeField] private bool invertDeltaX;
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")] [SerializeField]
+        private bool invertDeltaX;
 
-        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")]
-        [SerializeField] private bool invertDeltaY;
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")] [SerializeField]
+        private bool invertDeltaY;
 
         [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
         private float arrivalThreshold = 0.02f;
@@ -63,6 +65,8 @@ namespace Neo.Tools
 
         public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
+
+        private bool _cameraWarningShown;
 
         // internals
         private Camera cam;
@@ -74,17 +78,21 @@ namespace Neo.Tools
         private Vector2 targetPoint; // ClickToPoint mode
         private bool wasMoving;
 
-        private bool _cameraWarningShown;
-
         private void Awake()
         {
             if (cam == null)
+            {
                 cam = Camera.main;
+            }
+
             if (cam == null && !_cameraWarningShown)
             {
                 _cameraWarningShown = true;
-                Debug.LogWarning("[MouseMover2D] No camera assigned and Camera.main is null. ScreenToWorld will return screen coordinates.", this);
+                Debug.LogWarning(
+                    "[MouseMover2D] No camera assigned and Camera.main is null. ScreenToWorld will return screen coordinates.",
+                    this);
             }
+
             rb = GetComponent<Rigidbody2D>();
             lastMouse = Input.mousePosition;
         }
@@ -210,8 +218,16 @@ namespace Neo.Tools
             }
 
             Vector2 deltaPx = cur - lastMouse;
-            if (invertDeltaX) deltaPx.x = -deltaPx.x;
-            if (invertDeltaY) deltaPx.y = -deltaPx.y;
+            if (invertDeltaX)
+            {
+                deltaPx.x = -deltaPx.x;
+            }
+
+            if (invertDeltaY)
+            {
+                deltaPx.y = -deltaPx.y;
+            }
+
             lastMouse = cur;
 
             Vector2 vel = deltaPx * pxToWorld / Time.deltaTime; // px→м, /dt => m/s

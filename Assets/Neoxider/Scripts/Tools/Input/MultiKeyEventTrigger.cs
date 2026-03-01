@@ -9,8 +9,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MultiKeyEventTrigger))]
     public class MultiKeyEventTrigger : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("При включении в консоль пишется лог о нажатой клавише.")]
+        [SerializeField] [Tooltip("При включении в консоль пишется лог о нажатой клавише.")]
         private bool _debug;
 
         [Header("Key Bindings")] public KeyEventPair[] keyEventPairs =
@@ -34,7 +33,10 @@ namespace Neo.Tools
                 if (KeyInputCompat.GetKeyDown(pair.key))
                 {
                     if (_debug)
+                    {
                         Debug.Log($"[MultiKeyEventTrigger] Key pressed: {pair.key}");
+                    }
+
                     pair.onKeyPressed?.Invoke();
                 }
             }

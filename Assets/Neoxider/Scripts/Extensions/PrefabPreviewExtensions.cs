@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,10 +17,10 @@ namespace Neo.Extensions
             }
 
 #if UNITY_EDITOR
-            Texture2D preview = UnityEditor.AssetPreview.GetAssetPreview(prefab);
+            Texture2D preview = AssetPreview.GetAssetPreview(prefab);
             if (preview == null)
             {
-                preview = UnityEditor.AssetPreview.GetMiniThumbnail(prefab);
+                preview = AssetPreview.GetMiniThumbnail(prefab);
             }
 
             return preview;
