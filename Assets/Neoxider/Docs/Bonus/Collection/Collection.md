@@ -1,4 +1,11 @@
-﻿### Класс Collection
+### Класс Collection
+
+**Что это:** синглтон управления коллекционными предметами: загрузка/сохранение, выдача призов. Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/Collection.cs`.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/Collection.cs`
 

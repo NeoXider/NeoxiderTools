@@ -1,6 +1,13 @@
 
 # [GetComponent]
 
+**Что это:** Атрибут `[GetComponent]` — это удобная замена стандартному вызову `GetComponent<T>()` в методах `Awake` или `Start`. Он автоматически находит и назначает в поле ссылку на другой компонент, который ...
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 **Пространство имен:** `(global)`
 **Путь:** `Scripts/PropertyAttribute/InjectAttribute/GetComponentAttribute.cs`
 

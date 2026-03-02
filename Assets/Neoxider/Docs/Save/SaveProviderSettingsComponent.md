@@ -1,9 +1,10 @@
 # SaveProviderSettingsComponent
 
-MonoBehaviour для настройки провайдера сохранения через Inspector. Позволяет инициализировать SaveProvider настройками из ScriptableObject без размещения в Resources.
+**Что это:** MonoBehaviour для инициализации SaveProvider из ScriptableObject (Settings). Вызывается в Awake; после этого SaveProvider использует заданный провайдер. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/Settings/SaveProviderSettingsComponent.cs`.
 
-- **Пространство имён:** `Neo.Save`
-- **Путь:** `Assets/Neoxider/Scripts/Save/Settings/SaveProviderSettingsComponent.cs`
+**Как использовать:** добавить на объект в сцене (например, гейм-менеджер), в поле **Settings** назначить ScriptableObject с настройками провайдера. Если не указан — используется провайдер по умолчанию (PlayerPrefs).
+
+---
 
 ## Настройка
 

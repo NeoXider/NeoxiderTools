@@ -1,10 +1,10 @@
 # Money
 
-Компонент валюты: общая сумма, уровеньовая валюта, сохранение через SaveProvider (при изменении вызывается SaveProvider.Save()). Реализует IMoneySpend, IMoneyAdd. Может использоваться как синглтон (`Money.I`) или несколько экземпляров (монеты и энергия с разными **Money Save**).
+**Что это:** компонент валюты (пространство имён `Neo.Shop`, файл `Assets/Neoxider/Scripts/Shop/Money.cs`). Singleton `Money.I` или несколько экземпляров. Реализует IMoneySpend, IMoneyAdd. Хранит текущий баланс, уровень и всего; сохраняет через SaveProvider по ключу **Money Save**.
 
-**Несколько экземпляров (монеты + энергия):** на «главный» (например монеты) включите **Set Instance On Awake**; на остальные (энергия) выключите. Тогда `Money.I` будет указывать на главный; для энергии используйте в **TextMoney** поле **Money Source** — укажите компонент Money с энергией.
+**Как использовать:** добавить компонент (GameObject → Neoxider → Shop → Money). Один экземпляр — включить **Set Instance On Awake** для `Money.I`. Несколько (монеты + энергия): у главного включить Set Instance; у остальных выключить и в [TextMoney](TextMoney.md) указать **Money Source**. Методы `Add(amount)`, `Spend(amount)`; свойства `money`, `levelMoney`, `allMoney`.
 
-**Добавить:** GameObject → Neoxider → Shop → Money.
+---
 
 ## Поля
 

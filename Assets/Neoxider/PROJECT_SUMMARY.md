@@ -1,8 +1,14 @@
 # NeoxiderTools — краткий PROJECT_SUMMARY
 
+**Что это:** сводка по структуре пакета, каталог скриптов по модулям, правила работы. Для навигации по документации компонентов и быстрому старту используйте **[Docs/README.md](Docs/README.md)**.
+
+**Навигация:** [Документация (Docs)](Docs/README.md) · [Корневой README](README.md) · [Changelog](CHANGELOG.md) · [Правило документации](DOCUMENTATION.md)
+
+---
+
 ## Архитектура и структура
 
-, н- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **6.0.0**)
+- **UPM пакет**: `Assets/Neoxider/package.json` (текущая версия: **6.0.0**)
 
 - **Unity**: 2022.1+
 - **Основной namespace**: `Neo` (далее `Neo.Tools.*`, `Neo.UI.*`, `Neo.Save.*`, `Neo.Cards.*` и т.д.)

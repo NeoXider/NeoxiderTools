@@ -1,4 +1,11 @@
-﻿### Класс ItemCollectionInfo
+### Класс ItemCollectionInfo
+
+**Что это:** компонент отображения информации о коллекционном предмете (название, описание, изображение). Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/ItemCollectionInfo.cs`.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollectionInfo.cs`
 

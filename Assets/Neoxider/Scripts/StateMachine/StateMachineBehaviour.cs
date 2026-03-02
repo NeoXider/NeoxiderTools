@@ -12,7 +12,7 @@ namespace Neo.StateMachine
     /// <typeparam name="TState">Тип состояний, должен реализовывать IState.</typeparam>
     /// <remarks>
     ///     Этот компонент можно добавить на GameObject для автоматического управления состояниями.
-    ///     Поддерживает как код-состояния, так и NoCode конфигурацию через StateMachineData.
+    ///     Поддерживает код-состояния и конфигурацию через StateMachineData (ScriptableObject).
     /// </remarks>
     /// <example>
     ///     <code>
@@ -42,7 +42,7 @@ namespace Neo.StateMachine
         [SerializeField] [Tooltip("Evaluate transitions every frame")]
         private bool autoEvaluateTransitions = true;
 
-        [Header("References")] [SerializeField] [Tooltip("NoCode State Machine config (optional)")]
+        [Header("References")] [SerializeField] [Tooltip("State Machine config — ScriptableObject (optional).")]
         private StateMachineData stateMachineData;
 
         [Header("Context for conditions")]
@@ -150,7 +150,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по имени (для NoCode).
+        ///     Сменить состояние по имени (при использовании StateMachineData).
         /// </summary>
         /// <param name="stateName">Имя состояния.</param>
         public void ChangeState(string stateName)

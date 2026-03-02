@@ -7,7 +7,7 @@ using UnityEngine.Events;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент колоды для работы без кода
+    ///     Компонент колоды: инициализация, тасовка, выдача карт. Настройка в инспекторе, события через UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/DeckComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(DeckComponent))]

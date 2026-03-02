@@ -1,4 +1,11 @@
-﻿### Класс ItemCollection
+### Класс ItemCollection
+
+**Что это:** компонент одного визуального элемента UI коллекции: спрайт, состояние собран/не собран. Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/ItemCollection.cs`.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollection.cs`
 

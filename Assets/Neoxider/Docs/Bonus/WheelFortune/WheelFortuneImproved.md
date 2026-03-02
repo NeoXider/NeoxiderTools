@@ -1,5 +1,12 @@
 # WheelFortuneImproved
 
+**Что это:** Улучшенный компонент рулетки: состояния Idle/Spinning/Decelerating/Aligning, null-безопасность, события, настраиваемые шансы (inline-веса, ChanceData, ChanceSystemBehaviour) и гарантированный резул...
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 Улучшенный компонент рулетки: состояния Idle/Spinning/Decelerating/Aligning, null-безопасность, события, настраиваемые шансы (inline-веса, ChanceData, ChanceSystemBehaviour) и гарантированный результат через `SpinToResult(id)`.
 
 **Рекомендуется для новых сцен.** Старый [WheelFortune](./WheelFortune.md) помечен устаревшим и сохранён для обратной совместимости.

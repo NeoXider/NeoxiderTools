@@ -1,19 +1,22 @@
+using Neo;
 using UnityEngine;
 
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Мост для NoCode: кнопка/UnityEvent → QuestManager.AcceptQuest. Подключите OnClick к AcceptQuest().
+    ///     Вызывает QuestManager.AcceptQuest(quest). Поле: Quest (QuestConfig). Метод AcceptQuest() — без параметров, для вызова из UnityEvent (кнопка и т.д.).
     /// </summary>
-    [NeoDoc("Quest/NoCode.md")]
+    [NeoDoc("Quest/Scenarios.md")]
     [CreateFromMenu("Neoxider/Quest/Quest Accept Trigger")]
     [AddComponentMenu("Neoxider/Quest/" + nameof(QuestAcceptTrigger))]
     public class QuestAcceptTrigger : MonoBehaviour
     {
-        [Tooltip("Квест, который будет принят при вызове AcceptQuest().")] [SerializeField]
+        [Tooltip("Квест, который будет принят при вызове AcceptQuest().")]
+        [SerializeField]
         private QuestConfig _quest;
 
-        /// <summary>Вызвать из UnityEvent (например кнопки) — принимает квест в QuestManager.</summary>
+        /// <summary>Вызывает QuestManager.Instance.AcceptQuest(_quest).</summary>
+        [Button("Accept Quest")]
         public void AcceptQuest()
         {
             if (_quest == null)

@@ -1,4 +1,11 @@
-﻿### Класс Box
+### Класс Box
+
+**Что это:** компонент «коробки»/контейнера с прогрессом и выдачей приза из Collection. Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/Box.cs`.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/Box.cs`
 

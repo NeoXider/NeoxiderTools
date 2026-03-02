@@ -1,5 +1,12 @@
 # EM (Event Manager)
 
+**Что это:** Синглтон для событий по состояниям игры. UnityEvent на каждое состояние: Menu, Preparing, GameStart, Restart, StopGame, Win, Lose, End.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 Синглтон для событий по состояниям игры. UnityEvent на каждое состояние: Menu, Preparing, GameStart, Restart, StopGame, Win, Lose, End.
 
 **Добавить:** GameObject → Neoxider → Tools → EM (или через Singleton).

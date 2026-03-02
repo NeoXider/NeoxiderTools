@@ -1,5 +1,12 @@
 # Компонент UIReady
 
+**Что это:** Компонент также содержит логику для асинхронной загрузки сцен с отображением прогресса.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 **[Obsolete]** Для нового кода используйте [**SceneFlowController**](../Level/SceneFlowController.md) (модуль Level, Neoxider/Level/SceneFlowController). UIReady остаётся рабочим, но помечен как устаревший. Миграция: замените компонент на SceneFlowController; поля ALS (gameObjectLoad, textProgress, loadEndText) настройте в секции Progress UI; методы LoadScene/Restart/Quit/Pause/ProceedScene совпадают по смыслу.
 
 ---

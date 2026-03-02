@@ -1,11 +1,12 @@
 # AnimationUtils
 
-**Namespace:** `Neo.Animations`  
-**Путь к файлу:** `Assets/Neoxider/Scripts/Animations/AnimationUtils.cs`
+**Что это:** статический класс расчёта анимированных значений по времени. Ядро системы анимаций (пространство имён `Neo.Animations`, файл `Scripts/Animations/AnimationUtils.cs`). Методы GetAnimatedFloat, GetAnimatedColor, GetAnimatedVector3, GetTargetValue, ApplyToLight, ApplyToMesh.
+
+**Как использовать:** вызывать статические методы из своего кода (например `AnimationUtils.GetAnimatedFloat(AnimationType.PerlinNoise, 0f, 1f, Time.time, 2f)`); компоненты-аниматоры используют их внутри себя — экземпляры не создаются.
+
+---
 
 ## Описание
-
-Статический класс, предоставляющий универсальные методы для расчета анимированных значений по времени. Является ядром системы анимаций и используется всеми аниматорами для получения анимированных значений.
 
 ## Ключевые особенности
 

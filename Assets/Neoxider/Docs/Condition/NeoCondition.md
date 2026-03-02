@@ -1,6 +1,10 @@
 # NeoCondition
 
-No-Code система условий для NeoxiderTools. Проверяет значения полей/свойств любых компонентов и GameObject'ов через Inspector, без написания кода.
+**Что это:** компонент проверки условий по значениям полей и свойств компонентов или GameObject (пространство имён `Neo.Condition`, файл `Scripts/Condition/NeoCondition.cs`). Источники: Component (поле/свойство) или GameObject (activeSelf, tag, layer и т.д.). Сравнение с константой или с другим объектом; режимы проверки: вручную, каждый кадр, по интервалу. События OnTrue/OnFalse/OnResult.
+
+**Как использовать:** см. раздел «Быстрый старт» ниже.
+
+---
 
 - **Переиспользование условий** в State Machine, триггерах и своих системах: [Condition_Reuse.md](./Condition_Reuse.md)
 - Roadmap развития Editor/архитектуры: [NeoCondition_Editor_Roadmap.md](./NeoCondition_Editor_Roadmap.md)

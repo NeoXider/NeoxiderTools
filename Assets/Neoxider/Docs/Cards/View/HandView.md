@@ -1,9 +1,10 @@
 # HandView
 
-Визуальное представление руки игрока. Реализует `IHandView`, управляет раскладкой и анимацией карт (Fan, Line, Grid и др.).
+**Что это:** визуальное представление руки игрока. Реализует IHandView, управляет раскладкой и анимацией карт (Fan, Line, Grid и др.). Пространство имён `Neo.Cards`, файл `Scripts/Cards/View/HandView.cs`.
 
-- **Пространство имён:** `Neo.Cards`
-- **Путь:** `Assets/Neoxider/Scripts/Cards/View/HandView.cs`
+**Как использовать:** добавить на объект руки вместе с HandComponent; задать Layout Type и параметры раскладки в инспекторе.
+
+---
 
 ## Основное
 
@@ -11,4 +12,4 @@
 - **Grid Settings** — колонки и отступ между рядами для сетки.
 - **Arrange Duration / Arrange Ease** — длительность и кривая анимации раскладки.
 
-См. также [HandComponent](../HandComponent.md) (no-code обёртка).
+См. также [HandComponent](../HandComponent.md).

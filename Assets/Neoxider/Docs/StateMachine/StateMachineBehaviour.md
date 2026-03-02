@@ -1,5 +1,11 @@
 # StateMachineBehaviour<TState>
 
+**Что это:** MonoBehaviour-версия автомата состояний на GameObject (пространство имён `Neo.StateMachine`, файл `Scripts/StateMachine/StateMachineBehaviour.cs`). Вызывает Update/FixedUpdate/LateUpdate для текущего состояния; переходы через StateMachineData и NeoCondition.
+
+**Как использовать:** добавить компонент (Component → Neoxider → Tools → StateMachineBehaviour); задать initialStateTypeName или stateMachineData; при необходимости включить autoEvaluateTransitions. Свойства CurrentStateName, PreviousStateName и др. доступны для NeoCondition.
+
+---
+
 ## Описание
 
 MonoBehaviour версия State Machine для использования на GameObject. Автоматически вызывает Update, FixedUpdate и LateUpdate для текущего состояния.
@@ -21,7 +27,7 @@ MonoBehaviour версия State Machine для использования на 
 - `initialStateTypeName` - тип начального состояния (для кода)
 - `enableDebugLog` - включить логирование переходов
 - `showStateInInspector` - показывать текущее состояние в инспекторе
-- `stateMachineData` - NoCode конфигурация (опционально)
+- `stateMachineData` - конфигурация через ScriptableObject (опционально)
 - `autoEvaluateTransitions` - автоматически оценивать переходы каждый кадр
 
 ## Runtime свойства (для условий/отладки)
@@ -32,7 +38,7 @@ MonoBehaviour версия State Machine для использования на 
 - `StateChangeCount` (`int`)
 - `HasCurrentState` (`bool`)
 
-Эти свойства можно читать через `ConditionEntry` (компонент `StateMachineBehaviourBase`) в переходах no-code.
+Эти свойства можно читать через `ConditionEntry` в переходах (StateMachineData).
 
 ## События (Inspector)
 
@@ -59,7 +65,7 @@ ChangeState<IdleState>();
 ```
 
 ### ChangeState(string stateName)
-Сменить состояние по имени (для NoCode).
+Сменить состояние по имени (при использовании StateMachineData).
 
 ```csharp
 ChangeState("Idle");
@@ -72,9 +78,9 @@ ChangeState("Idle");
 LoadFromStateMachineData();
 ```
 
-## No-Code использование
+## Настройка через StateMachineData
 
-Полная настройка без кода: конфигурация в State Machine Data и условия переходов через Neoxider Condition. Пошаговая инструкция: [NoCode_StateMachine_Usage.md](NoCode_StateMachine_Usage.md).
+Конфигурация в State Machine Data, условия переходов через Neoxider Condition. Пошаговая инструкция: [NoCode_StateMachine_Usage.md](NoCode_StateMachine_Usage.md).
 
 ## Примеры
 

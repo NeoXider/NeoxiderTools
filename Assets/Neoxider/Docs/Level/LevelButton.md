@@ -1,11 +1,12 @@
 # LevelButton
 
-Кнопка уровня для выбора и разблокировки уровней. Работает в связке с [LevelManager](./LevelManager.md).
+**Что это:** компонент кнопки выбора уровня. Отображает номер уровня, доступность (Activ), переключает визуал (Closes/Opens), работает с [LevelManager](./LevelManager.md). Пространство имён: `Neo.Level`. Файл: `Scripts/Level/LevelButton.cs`.
 
-- **Пространство имён:** `Neo.Level`
-- **Путь:** `Assets/Neoxider/Scripts/Level/LevelButton.cs`
+**Как использовать:** добавить на кнопку уровня, назначить **Level**, **Activ**, **Level Manager**; при необходимости — объекты в Closes/Opens и события OnChangeVisual/OnDisableVisual/OnEnableVisual/OnCurrentVisual.
 
-## Основное
+---
+
+## Поля и события
 
 - **Level** — номер уровня.
 - **Activ** — доступен ли уровень для прохождения.

@@ -1,4 +1,12 @@
 ### Класс ItemCollectionData
+
+**Что это:** Common = 0,    // Обычный
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/Collection/ItemCollectionData.cs`
 

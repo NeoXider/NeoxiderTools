@@ -1,6 +1,8 @@
-# Chance System Behaviour
+# ChanceSystemBehaviour
 
-`ChanceSystemBehaviour` — компонент сцены, оборачивающий `ChanceManager`. Позволяет настраивать шансы в инспекторе, подписываться на результаты без кода (UnityEvent) и при необходимости брать конфигурацию из `ChanceData`.
+**Что это:** компонент-обёртка над ChanceManager: шансы в инспекторе (веса, подписи), события по результату броска, опционально загрузка из ChanceData. Файл в `Scripts/Tools/Random/`.
+
+**Как использовать:** добавить на объект, задать список шансов или Chance Data; подписаться на On Id Generated / Events By Index; из кода или кнопки вызывать GenerateId() / GenerateVoid().
 
 ---
 
@@ -8,11 +10,7 @@
 
 - **Инлайн-редактор** списка шансов: веса, подписи, флаг Locked, авто-нормализация.
 - **Загрузка из ChanceData** при запуске сцены (опционально).
-- **Несколько событий для No-Code:**
-  - **On Id Generated (int)** — выбранный индекс.
-  - **On Index And Weight Selected (int, float)** — индекс и нормализованная вероятность (0..1).
-  - **On Roll Complete** — вызывается один раз после каждого броска (обновление UI, звук и т.д.).
-  - **Events By Index** — список событий по одному на исход: при выпадении индекса N вызывается событие на позиции N (без кода: «при 0 — одно действие, при 1 — другое»).
+- **События:** On Id Generated (int), On Index And Weight Selected (int, float), On Roll Complete; Events By Index — по одному UnityEvent на исход (индекс N → событие N).
 - **Из кода:** `LastSelectedIndex`, `LastSelectedEntry`, `EvaluateAndNotify()`, `GetNormalizedWeight(int)`, `GetOrAddEventForIndex(int)`.
 - **Log Debug Once** — в редакторе при включении флажка следующая валидация логирует выбранную запись и вероятность.
 
@@ -139,7 +137,7 @@ if (manager.TryEvaluate(out int index, out var entry))
 
 ---
 
-## Сценарии без кода (кратко)
+## Сценарии (кратко)
 
 1. **Один общий обработчик по индексу** — подписать **On Id Generated**, в обработчике по int выполнить логику.
 2. **Разные действия на каждый исход** — заполнить **Events By Index**, вызывать **GenerateVoid** (например с кнопки).

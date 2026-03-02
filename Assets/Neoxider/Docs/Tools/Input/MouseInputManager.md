@@ -1,5 +1,12 @@
 # MouseInputManager
 
+**Что это:** Синглтон ввода мыши без аллокаций: Press, Hold, Release, Click с данными (MouseEventData). Raycast 2D/3D, опциональная блокировка UI.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 Синглтон ввода мыши без аллокаций: Press, Hold, Release, Click с данными (MouseEventData). Raycast 2D/3D, опциональная блокировка UI.
 
 **Добавить:** в сцену один раз (синглтон).

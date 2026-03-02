@@ -1,6 +1,8 @@
 # DeckConfig
 
-ScriptableObject для конфигурации колоды карт со спрайтами.
+**Что это:** ScriptableObject конфигурации колоды: спрайты рубашки и мастей (36/52/54 карты), тип игры. Создание: ПКМ в Project → Create → Neoxider → Cards → Deck Config. Файл в `Scripts/Cards/`.
+
+**Как использовать:** создать ассет Deck Config, заполнить спрайты; ссылку передать в CardComponent (Config) и DeckComponent (Config). См. «Настройки в инспекторе» ниже.
 
 ---
 

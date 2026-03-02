@@ -1,5 +1,12 @@
 # Компонент PlayerController2DAnimatorDriver
 
+**Что это:** Подходит для платформера и 2D top-down: можно использовать как базовые state-параметры (idle/walk/run/jump), так и BlendTree.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 ## 1. Введение
 
 `PlayerController2DAnimatorDriver` — отдельный анимационный драйвер для `PlayerController2DPhysics`.

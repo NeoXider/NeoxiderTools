@@ -1,83 +1,78 @@
 # QuestManager
 
-Единая точка входа для квестов: реестр состояний, принятие квестов, зачёт целей, проверка условий старта через ConditionEntry. Удобен и для NoCode (UnityEvent), и для кода (перегрузки с QuestConfig).
+**Что это:** компонент `QuestManager` (MonoBehaviour). В сцене должен быть один экземпляр. Хранит список состояний квестов (QuestState), принимает и завершает квесты, засчитывает цели, проверяет Start Conditions и вызывает события. Файл: `Assets/Neoxider/Scripts/Quest/QuestManager.cs`, пространство имён: `Neo.Quest`.
 
-- **Пространство имён:** `Neo.Quest`
-- **Путь:** `Assets/Neoxider/Scripts/Quest/QuestManager.cs`
-
----
-
-## Роль
-
-- Хранит список **QuestState** (принятые и завершённые квесты).
-- При **AcceptQuest** проверяет StartConditions по **Condition Context** (GameObject).
-- При **CompleteObjective** обновляет прогресс/завершает цель и при выполнении всех целей помечает квест Completed и вызывает OnQuestCompleted.
-- Предоставляет **NotifyKill** / **NotifyCollect** для целей типа KillCount / CollectCount.
+**Как с ним работать:**
+1. Добавить на GameObject в сцену: **Add Component → Neoxider → Quest → QuestManager**.
+2. В **Known Quests** перетащить все QuestConfig, по Id которых будет вызываться AcceptQuest(questId).
+3. В **Condition Context** указать GameObject для проверки Start Conditions (обычно игрок). Если пусто — используется gameObject менеджера.
+4. Принимать квест: из кода `QuestManager.Instance.AcceptQuest(quest)` или через Quest Accept Trigger и UnityEvent (On Click).
+5. Засчитывать цели: `CompleteObjective(questId, index)` или Quest Objective Notifier по NeoCondition.On True; для KillCount/CollectCount — вызывать NotifyKill(enemyId) / NotifyCollect(itemId) из своей логики.
 
 ---
 
 ## Доступ
 
-- **QuestManager.Instance** — синглтон (первый экземпляр в сцене).
-- В сцене должен быть один GameObject с компонентом QuestManager. В **Known Quests** перетащите все QuestConfig, которые будут приниматься по Id.
+- **QuestManager.Instance** — синглтон. Может быть null до Awake менеджера или после Destroy. Проверяйте на null при отписке от событий и в сценах без менеджера.
 
 ---
 
-## Condition Context
+## Поля в инспекторе
 
-- Поле **Condition Context** (GameObject) — объект, передаваемый в `ConditionEntry.Evaluate(context)` при проверке условий старта квеста.
-- Обычно указывают **игрока** или объект «менеджер мира». На него можно добавить компонент [QuestContext](QuestContext.md) как маркер.
-- Если не назначен, при проверке используется gameObject самого QuestManager.
-
----
-
-## API (краткая таблица)
-
-| Метод | Описание |
-|-------|----------|
-| **AcceptQuest(string questId)** | Принять квест по Id (для UnityEvent). Возвращает true при успехе. |
-| **AcceptQuest(QuestConfig quest)** | Принять квест по конфигу (типобезопасно). |
-| **TryAcceptQuest(string questId, out string failReason)** | Принять с причиной отказа. |
-| **CompleteObjective(string questId, int objectiveIndex)** | Зачесть цель (для Notifier/кода). |
-| **CompleteObjective(QuestConfig quest, int index)** | То же по конфигу. |
-| **NotifyKill(string enemyId)** | Уведомить об убийстве (для KillCount). |
-| **NotifyCollect(string itemId)** | Уведомить о сборе предмета (для CollectCount). |
-| **GetState(string questId)** | Получить состояние квеста или null. |
-| **GetState(QuestConfig quest)** | То же по конфигу. |
-| **IsActive(QuestConfig quest)** | Квест в статусе Active. |
-| **IsCompleted(QuestConfig quest)** | Квест в статусе Completed. |
-| **GetObjectiveProgress(QuestConfig quest, int index)** | Текущий прогресс по цели. |
+| Поле | Назначение |
+|------|------------|
+| **Condition Context** | GameObject, передаваемый в ConditionEntry.Evaluate(context) при проверке Start Conditions. |
+| **Known Quests** | Список QuestConfig. По нему разрешается questId → конфиг при AcceptQuest(string), GetState(string) и т.д. |
+| **Editor Quest Id** / **Editor Objective Index** | Для кнопок в блоке Editor: тестовый приём квеста и зачёт цели по введённому Id и индексу. |
 
 ---
 
-## События
+## Методы
 
-### UnityEvent (NoCode)
+| Метод | Возврат | Описание |
+|-------|---------|----------|
+| AcceptQuest(string questId) | bool | Принять по Id. Ищет конфиг в Known Quests, проверяет Start Conditions, создаёт QuestState, вызывает события. |
+| AcceptQuest(QuestConfig quest) | bool | То же по ссылке на конфиг. |
+| TryAcceptQuest(string questId, out string failReason) | bool | Принять по Id; при неудаче в failReason: "Quest not found.", "Already accepted or completed.", "Start conditions not met." |
+| CompleteObjective(string questId, int objectiveIndex) | void | Зачесть цель. Для счётчиков — +1; при достижении RequiredCount цель закрывается. При всех целях выполненных — квест Completed, OnQuestCompleted. |
+| CompleteObjective(QuestConfig quest, int objectiveIndex) | void | То же по конфигу. |
+| FailQuest(string questId) / FailQuest(QuestConfig quest) | void | Перевести квест в Failed, вызвать OnQuestFailed. |
+| NotifyKill(string enemyId) | void | +1 к прогрессу по целям KillCount с таким TargetId. |
+| NotifyCollect(string itemId) | void | +1 к прогрессу по целям CollectCount с таким TargetId. |
+| GetState(string questId) / GetState(QuestConfig quest) | QuestState или null | Состояние квеста. |
+| IsActive(QuestConfig quest) | bool | Есть состояние со статусом Active. |
+| IsCompleted(QuestConfig quest) | bool | Есть состояние со статусом Completed. |
+| GetObjectiveProgress(QuestConfig quest, int index) | int | Текущий прогресс по цели. |
 
-- **OnQuestAccepted** (string questId) — квест принят.
-- **OnObjectiveProgress** (string questId, int objectiveIndex, int currentCount) — обновлён прогресс по цели.
-- **OnQuestCompleted** (string questId) — все цели выполнены, квест завершён.
-
-### C# (код)
-
-- **QuestAccepted** (QuestConfig)
-- **ObjectiveProgress** (QuestConfig, int objectiveIndex, int currentCount)
-- **QuestCompleted** (QuestConfig)
-
-Пример подписки из кода:
-
-```csharp
-QuestManager.Instance.QuestCompleted += (config) =>
-{
-    Debug.Log($"Quest completed: {config.Title}");
-};
-```
+**Списки:** AllQuests (все состояния), ActiveQuests (только Active).
 
 ---
 
-## Проверка StartConditions
+## События (UnityEvent)
 
-- Выполняется при вызове **AcceptQuest** (по id или по конфигу).
-- Для каждой записи в QuestConfig.StartConditions вызывается `entry.Evaluate(context)`; context = Condition Context или gameObject менеджера.
-- Если хотя бы одно условие false — квест не принимается, метод возвращает false.
-- Если список пуст — квест доступен без проверки.
+| Событие | Параметры | Когда |
+|---------|-----------|--------|
+| On Quest Accepted | string questId | Квест принят. |
+| On Objective Progress | string, int, int (questId, index, currentCount) | Изменился прогресс по цели. |
+| On Objective Completed | string, int (questId, index) | Одна цель перешла в «выполнена». |
+| On Quest Completed | string questId | Все цели выполнены. |
+| On Quest Failed | string questId | Вызван FailQuest. |
+| On Any Quest Accepted | — | Любой квест принят. |
+| On Any Quest Completed | — | Любой квест завершён. |
+
+---
+
+## C#-события
+
+- QuestAccepted (QuestConfig)
+- ObjectiveProgress (QuestConfig, int objectiveIndex, int currentCount)
+- QuestCompleted (QuestConfig)
+
+Подписка в OnEnable, отписка в OnDisable; при отписке проверять Instance != null.
+
+---
+
+## Кнопки в инспекторе (блок Editor)
+
+- **Accept Quest (Editor Id)** — принять квест по полю Editor Quest Id.
+- **Complete Objective (Editor)** — зачесть цель по Editor Quest Id и Editor Objective Index.

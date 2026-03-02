@@ -1,8 +1,8 @@
 # TextScore
 
-Компонент для отображения очков из **ScoreManager** без кода. Наследует [SetText](../Text/SetText.md): подписывается на синглтон `ScoreManager.I` и обновляет текст при изменении счёта или рекорда.
+**Что это:** компонент отображения очков из **ScoreManager**. Наследует [SetText](../Text/SetText.md): подписывается на `ScoreManager.I`, обновляет текст при изменении счёта или рекорда. Режимы: Current, Best.
 
-**Добавить:** Add Component → Neoxider → Tools → Components → TextScore.
+**Как использовать:** Add Component → Neoxider → Tools → Components → TextScore; выбрать режим Current или Best. В сцене должен быть ScoreManager.
 
 ## Режимы
 

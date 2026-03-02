@@ -1,6 +1,8 @@
 # Интерфейсы карт (MVP, произвольные карточки)
 
-Краткое описание контрактов для визуала карт и что переиспользовать в разных карточных играх.
+**Что это:** контракты для визуала карт: ICardView (данные, переворот, перемещение, клики), IHandView, IDeckView; опционально ICardDisplayMode, ICardViewAnimations. Используются CardView, CardViewUniversal, HandView, DeckView и кастомными вью.
+
+**Как использовать:** реализовать интерфейсы в своих компонентах или использовать готовые вью; см. таблицы по каждому интерфейсу ниже.
 
 ---
 
@@ -63,7 +65,7 @@
 
 | Сценарий | Рекомендация |
 |----------|--------------|
-| Классические карты (дурак, пьяница), no-code | CardComponent + HandComponent/DeckComponent/BoardComponent (без ICardView). |
+| Классические карты (дурак, пьяница), настройка в инспекторе | CardComponent + HandComponent/DeckComponent/BoardComponent (без ICardView). |
 | Классические карты с кодом (MVP) | ICardView (CardView или CardViewUniversal) + HandView + CardPresenter. |
 | Произвольные карты, свои анимации и режимы | CardViewUniversal (ICardView + ICardDisplayMode + ICardViewAnimations). |
 | Своя модель карты (CCG, roguelike) | Свой интерфейс вью + свои данные; анимации и раскладки — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../Scripts/Cards/Utils/CardLayoutCalculator.cs). |

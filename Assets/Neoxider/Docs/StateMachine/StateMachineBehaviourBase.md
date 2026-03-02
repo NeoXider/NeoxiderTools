@@ -1,9 +1,10 @@
 # StateMachineBehaviourBase
 
-## Описание
+**Что это:** компонент автомата состояний. Работает с `StateMachineData` (ScriptableObject), события в инспекторе, runtime-управление и свойства текущего состояния. Пространство имён `Neo.StateMachine`, файл `Scripts/StateMachine/StateMachineBehaviourBase.cs`.
 
-`StateMachineBehaviourBase` — основной no-code компонент автомата состояний для Unity (`MonoBehaviour`).
-Работает с `StateMachineData`, поддерживает события, runtime-управление и свойства текущего состояния.
+**Как использовать:** добавить на GameObject, назначить State Machine Data; в Context for conditions указать объекты сцены для условий переходов. Методы: ChangeState, LoadFromStateMachineData, EvaluateTransitionsNow, GoToInitialState. См. [NoCode_StateMachine_Usage](NoCode_StateMachine_Usage.md).
+
+---
 
 ## Пространство имен
 
@@ -35,7 +36,6 @@
 - `EvaluateTransitionsNow()`
 - `GoToInitialState()`
 
-## Примечание для no-code
+## Настройка переходов
 
-Для настройки переходов откройте `StateMachineData` и используйте кнопку `Edit Conditions` у каждого перехода.
-Для предикатов на основе Neoxider Conditions используйте тип `Condition Entry`.
+Откройте `StateMachineData`, у каждого перехода — кнопка `Edit Conditions`. Для предикатов на основе Neoxider Conditions используйте тип `Condition Entry`.

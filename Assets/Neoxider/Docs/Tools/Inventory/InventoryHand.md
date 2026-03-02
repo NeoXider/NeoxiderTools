@@ -1,6 +1,10 @@
 # InventoryHand
 
-Компонент **«рука»** (equipped slot): один выбранный предмет из инвентаря отображается в заданной точке сцены (например рука персонажа). Переключение влево/вправо по слотам с ненулевым количеством. Удобная интеграция с **Selector** для No-Code переключения (кнопки, колёсико мыши).
+**Что это:** компонент «рука» (equipped slot): один выбранный предмет из инвентаря отображается в точке Hand Anchor (например рука персонажа). Переключение слота SelectNext/SelectPrevious, синхронизация с InventoryComponent.SelectedItemId; опционально Selector, InventoryDropper. Файл: `Scripts/Tools/Inventory/Runtime/InventoryHand.cs`.
+
+**Как использовать:** добавить на объект (например персонажа), назначить **Inventory** и **Hand Anchor**; при необходимости **Selector** для переключения кнопками/колёсиком, **Dropper** для дропа. См. «Поля» и «Методы» ниже.
+
+---
 
 ## Назначение
 
@@ -49,7 +53,7 @@
 
 ## События
 
-Оба события передают один параметр **int itemId** (удобно для NoCode-подписок в инспекторе). Данные предмета по itemId: `inventory.GetItemData(itemId)` или `InventoryHand.EquippedItemData`.
+Оба события передают **int itemId**. Данные предмета по itemId: `inventory.GetItemData(itemId)` или `InventoryHand.EquippedItemData`.
 
 | Событие | Аргументы | Когда |
 |---------|-----------|--------|

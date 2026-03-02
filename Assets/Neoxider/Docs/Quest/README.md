@@ -1,55 +1,57 @@
 # Quest — модуль квестов
 
-Система квестов с поддержкой **NoCode** (инспектор, UnityEvent, NeoCondition) и **кода** (типобезопасный API по ссылке на QuestConfig). Условия старта и цели «по условию» задаются через [NeoCondition](../Condition/NeoCondition.md) (ConditionEntry). State Machine не используется.
+**Что это:** папка документации по модулю квестов. Описывает скрипты в `Scripts/Quest/` и как с ними работать.
+
+**Как с этим работать:**
+- Нужно создать квест → открой [QuestConfig](QuestConfig.md).
+- Нужно принять/зачесть квест в сцене → открой [QuestManager](QuestManager.md) и при необходимости [QuestBridge](QuestBridge.md).
+- Нужно прочитать прогресс или сохранить → [QuestState](QuestState.md), [Saving](Saving.md).
+- Настраиваешь в инспекторе (кнопки, UnityEvent) → [Сценарии в инспекторе](Scenarios.md).
+- Пишешь код (AcceptQuest, события, NotifyKill) → [Code](Code.md).
+
+**Навигация:** [← К Docs](../README.md) · оглавление — таблица ниже
 
 ---
 
-## Возможности
+## Оглавление документов
 
-- **Один конфиг на квест** — ScriptableObject (QuestConfig): цели, условия старта, описание.
-- **Типы целей** — CustomCondition (триггер/NeoCondition), KillCount, CollectCount, ReachPoint, Talk.
-- **Условия старта** — список ConditionEntry, проверка по контексту (игрок/мир) в QuestManager.
-- **NoCode** — принять квест по кнопке (QuestAcceptTrigger), зачесть цель по условию (QuestObjectiveNotifier + NeoCondition.OnTrue).
-- **Код** — перегрузки AcceptQuest(QuestConfig), GetState(QuestConfig), события с QuestConfig.
-
----
-
-## Быстрый старт
-
-1. **Создайте конфиг квеста:** ПКМ в Project → **Create → Neoxider → Quest → Quest Config**. Заполните Id, Title, Description, добавьте цели (Objectives) и при необходимости условия старта (Start Conditions).
-2. **Добавьте QuestManager в сцену:** GameObject → Add Component → **Neoxider → Quest → QuestManager**. В список **Known Quests** перетащите ваш QuestConfig. В **Condition Context** укажите объект для проверки условий (например, игрока); можно добавить на игрока компонент [QuestContext](QuestContext.md) как маркер.
-3. **Принять квест (NoCode):** на кнопку или панель добавьте **Quest Accept Trigger**, укажите QuestConfig, в OnClick вызовите **AcceptQuest()**.
-4. **Зачесть цель по условию (NoCode):** на объект добавьте **NeoCondition** (нужные условия) и **Quest Objective Notifier** (QuestConfig + индекс цели). В NeoCondition → OnTrue добавьте вызов **NotifyComplete()** у Notifier.
+| Документ | О чём |
+|----------|--------|
+| [QuestConfig](QuestConfig.md) | Ассет Quest Config (ScriptableObject): поля, типы целей, условия старта. |
+| [QuestManager](QuestManager.md) | Компонент QuestManager в сцене: методы, события, Condition Context, Known Quests. |
+| [QuestState](QuestState.md) | Класс состояния квеста: откуда брать, что читать, сериализация. |
+| [QuestBridge](QuestBridge.md) | Компоненты Quest Accept Trigger и Quest Objective Notifier. |
+| [Scenarios](Scenarios.md) | Пошаговые сценарии в инспекторе: кнопка принятия, цель по условию, UI по событиям. |
+| [Code](Code.md) | Вызовы из C#: AcceptQuest, CompleteObjective, события, NotifyKill/NotifyCollect. |
+| [Saving](Saving.md) | Сохранение и загрузка списка QuestState. |
 
 ---
 
-## Структура модуля
+## Поток данных
 
-| Папка/файл | Описание |
-|------------|----------|
-| `QuestConfig.cs` | ScriptableObject: описание квеста, цели, условия старта. |
-| `QuestObjectiveData.cs` | Данные одной цели (тип, targetId, requiredCount, ConditionEntry). |
-| `QuestStatus.cs` | enum: NotStarted, Active, Completed, Failed. |
-| `QuestState.cs` | Runtime-состояние квеста (прогресс по целям). |
-| `QuestManager.cs` | Реестр квестов, AcceptQuest, CompleteObjective, события. |
-| `QuestContext.cs` | Маркер объекта-контекста для условий (опционально). |
-| `Bridge/QuestObjectiveNotifier.cs` | NoCode: NeoCondition.OnTrue → CompleteObjective. |
-| `Bridge/QuestAcceptTrigger.cs` | NoCode: кнопка → AcceptQuest. |
+```
+QuestConfig (SO)  →  Known Quests в QuestManager  →  AcceptQuest(id) проверяет Start Conditions по Condition Context
+                                                         ↓
+                                              Создаётся QuestState, события OnQuestAccepted
+                                                         ↓
+CompleteObjective(id, index) / NotifyKill / NotifyCollect  →  обновление прогресса, при всех целях — OnQuestCompleted
+```
 
----
-
-## Документация
-
-- [QuestConfig](QuestConfig.md) — поля конфига, типы целей, условия старта.
-- [QuestManager](QuestManager.md) — API, события, контекст.
-- [QuestState](QuestState.md) — состояние квеста, прогресс целей.
-- [NoCode](NoCode.md) — сценарии без кода: кнопка, условие, UI при завершении.
-- [Code](Code.md) — использование из C#: перегрузки, события, примеры.
-- [Saving](Saving.md) — опциональная интеграция с системой сохранений.
+Конфиг задаёт «что сделать»; менеджер хранит состояния и вызывает события. Состояние получать только через `QuestManager.GetState(...)`.
 
 ---
 
-## Зависимости
+## Структура кода
 
-- **Neo.Condition** — ConditionEntry, IConditionEvaluator (проверка условий старта и целей по условию).
-- Сохранение прогресса квестов — опционально, см. [Saving](Saving.md).
+| Файл | Назначение |
+|------|------------|
+| `Scripts/Quest/QuestConfig.cs` | ScriptableObject квеста. |
+| `Scripts/Quest/QuestObjectiveData.cs` | Одна цель: Type, TargetId, RequiredCount, Condition. |
+| `Scripts/Quest/QuestStatus.cs` | enum: NotStarted, Active, Completed, Failed. |
+| `Scripts/Quest/QuestState.cs` | Состояние одного квеста (прогресс, флаги). |
+| `Scripts/Quest/QuestManager.cs` | Компонент в сцене: реестр состояний, Accept/Complete/Fail, события. |
+| `Scripts/Quest/QuestContext.cs` | Маркер объекта для Condition Context (опционально). |
+| `Scripts/Quest/Bridge/QuestAcceptTrigger.cs` | Вызов AcceptQuest из UnityEvent (например On Click). |
+| `Scripts/Quest/Bridge/QuestObjectiveNotifier.cs` | Вызов CompleteObjective из UnityEvent (например NeoCondition.On True). |
+
+Зависимость: **Neo.Condition** (ConditionEntry) для Start Conditions и опционально для целей по условию.

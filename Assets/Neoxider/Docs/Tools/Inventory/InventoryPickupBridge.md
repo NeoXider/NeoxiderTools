@@ -1,10 +1,9 @@
 # InventoryPickupBridge
 
-Мост между внешним вызовом (кнопка, коллайдер, другой скрипт) и подбором предмета: перенаправляет `Collect` и методы `CollectFromCollider*` / `CollectFromGameObject` в привязанный [PickableItem](./PickableItem.md).
+**Что это:** компонент-мост: вызов Collect/CollectFromCollider/CollectFromGameObject перенаправляется в привязанный [PickableItem](./PickableItem.md). Позволяет вызывать подбор из кнопки, зоны или другого скрипта без привязки к конкретному коллайдеру. Пространство имён: `Neo.Tools`. Файл: `Scripts/Tools/Inventory/Runtime/InventoryPickupBridge.cs`.
 
-- **Пространство имён:** `Neo.Tools`
-- **Путь:** `Assets/Neoxider/Scripts/Tools/Inventory/Runtime/InventoryPickupBridge.cs`
+**Как использовать:** добавить на объект с кнопкой или триггером, при необходимости назначить **Pickable Item** (если пусто — берётся на этом же объекте), из UnityEvent или кода вызывать Collect() или CollectFromCollider(Collider)/CollectFromGameObject(GameObject).
 
-Если `Pickable Item` не задан, используется компонент на том же объекте. Удобно для вызова подбора из UI или из зоны без привязки к конкретному коллайдеру.
+---
 
 См. также [PickableItem](./PickableItem.md), [InventoryComponent](./InventoryComponent.md).

@@ -1,8 +1,8 @@
 # UnityLifecycleEvents
 
-Компонент пробрасывает события жизненного цикла Unity в UnityEvent. Удобно для появления/исчезновения объекта (OnEnable, OnDisable) и других моментов без кода — всё настраивается в Inspector.
+**Что это:** компонент пробрасывает события жизненного цикла (Awake, OnEnable, Start, OnDisable, OnDestroy, Update и др.) в UnityEvent. Настройка в Inspector. Файл: `Tools/InteractableObject/UnityLifecycleEvents.cs`.
 
-**Добавить:** Add Component → Neoxider → Tools → Components → UnityLifecycleEvents.
+**Как использовать:** Add Component → Neoxider → Tools → Components → UnityLifecycleEvents; подписаться на нужные события (On Awake, On Start, On Update и т.д.) в инспекторе.
 
 ## События жизненного цикла
 

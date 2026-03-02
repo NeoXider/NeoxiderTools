@@ -1,8 +1,8 @@
-# Компонент Physics Events 3D
+# PhysicsEvents3D
 
-## 1. Введение
+**Что это:** 3D-версия PhysicsEvents2D: перехватывает OnTriggerEnter, OnCollisionEnter и др., пробрасывает в UnityEvent. Фильтры: LayerMask, requiredTag. Пространство имён `Neo.Tools`, файл `Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`.
 
-`PhysicsEvents3D` — это 3D-версия компонента `PhysicsEvents2D`. Он предоставляет простой "no-code" способ для реакции на события 3D-физики (столкновения и триггеры) прямо из инспектора Unity. Это позволяет быстро настраивать взаимодействия между 3D-объектами без необходимости создавать для этого отдельные скрипты.
+**Как использовать:** добавить на объект с Collider (триггер или Rigidbody); подписаться на onTriggerEnter/onCollisionEnter и др. в инспекторе.
 
 ---
 

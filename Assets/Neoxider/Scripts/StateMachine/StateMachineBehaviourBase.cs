@@ -36,7 +36,7 @@ namespace Neo.StateMachine
         [SerializeField] [Tooltip("Evaluate transitions every frame")]
         private bool autoEvaluateTransitions = true;
 
-        [Header("References")] [SerializeField] [Tooltip("NoCode State Machine config (optional)")]
+        [Header("References")] [SerializeField] [Tooltip("State Machine config — ScriptableObject (optional).")]
         private StateMachineData stateMachineData;
 
         [Header("Context for conditions")]
@@ -158,7 +158,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по имени (для NoCode).
+        ///     Сменить состояние по имени (при использовании StateMachineData).
         /// </summary>
         /// <param name="stateName">Имя состояния.</param>
         public void ChangeState(string stateName)

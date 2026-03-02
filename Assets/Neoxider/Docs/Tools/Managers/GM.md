@@ -1,5 +1,12 @@
 # GM (Game Manager)
 
+**Что это:** Синглтон-менеджер состояний игры. Хранит текущее и предыдущее состояние (Menu, Preparing, Game, Win, Lose и т.д.), управляет паузой (Time.timeScale) и FPS.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 Синглтон-менеджер состояний игры. Хранит текущее и предыдущее состояние (Menu, Preparing, Game, Win, Lose и т.д.), управляет паузой (Time.timeScale) и FPS.
 
 **Добавить:** GameObject → Neoxider → Tools → GM (или через Singleton).

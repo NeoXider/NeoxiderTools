@@ -34,9 +34,7 @@ namespace Neo.Condition
     }
 
     /// <summary>
-    ///     No-Code система условий.
-    ///     Проверяет значения полей/свойств любых компонентов через Inspector, без кода.
-    ///     Поддерживает AND/OR логику, инверсию, автоматическую и ручную проверку.
+    ///     Проверяет поля/свойства компонентов через Inspector (Conditions). AND/OR, инверсия. Режимы: Manual, EveryFrame, Interval. События OnTrue / OnFalse.
     /// </summary>
     /// <remarks>
     ///     Использование:

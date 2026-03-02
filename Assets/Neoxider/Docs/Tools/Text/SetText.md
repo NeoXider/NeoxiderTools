@@ -1,16 +1,12 @@
-# Компонент SetText
+# SetText
 
-## 1. Введение
+**Что это:** компонент для вывода чисел в `TMP_Text` с форматированием (Plain, Grouped, IdleShort, Scientific) и анимацией через DOTween. Подходит для денег, очков, урона, процентов. Пространство имён: `Neo.Tools`. Файл: `Scripts/Tools/Text/SetText.cs`.
 
-`SetText` — компонент для `TextMeshPro`, который форматирует числа и плавно анимирует переходы значений через DOTween. Подходит для денег, очков, урона, процентов и idle-чисел с очень большими значениями.
+**Как использовать:** добавить на объект с `TMP_Text`, назначить поле `text`, настроить формат (numberNotation, decimal, prefix/suffix), вызывать `Set(int)` / `Set(float)` / `Set(string)` из кода или UnityEvent.
 
 ---
 
-## 2. Класс и назначение
-
-### SetText
-- **Пространство имен**: `Neo.Tools`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Tools/Text/SetText.cs`
+## Класс и назначение
 
 Компонент объединяет:
 - визуальный вывод в `TMP_Text`;

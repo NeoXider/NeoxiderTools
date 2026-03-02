@@ -1,54 +1,92 @@
-# Квесты из кода (C#)
+# Использование квестов из C#
 
-Типобезопасный API по ссылке на QuestConfig, проверка результата принятия, подписка на события и интеграция с боем/инвентарём.
+**Что это:** справочник по вызовам API модуля Quest из кода: QuestManager.Instance, AcceptQuest, CompleteObjective, GetState, события, NotifyKill/NotifyCollect. Не описывает настройку в инспекторе — см. [Scenarios](Scenarios.md), [QuestManager](QuestManager.md).
+
+**Как использовать:** получить менеджер через `QuestManager.Instance`, вызывать методы принятия/завершения целей, подписаться на события; проверять null при отписке и в сценах без менеджера.
+
+--- Описывает QuestManager.Instance, приём и завершение квестов, запрос состояния, события и интеграцию с боем/инвентарём. Не описывает настройку в инспекторе — см. [Scenarios](Scenarios.md) и [QuestManager](QuestManager.md).
+
+**Как с этим работать:**
+1. Получить менеджер: `QuestManager.Instance` (проверять на null в OnDisable и в сценах без менеджера).
+2. Принимать квест: `AcceptQuest(QuestConfig)` или `AcceptQuest(string questId)`; при необходимости `TryAcceptQuest(id, out string reason)`.
+3. Засчитывать цель: `CompleteObjective(quest, index)` или из геймплея `NotifyKill(enemyId)` / `NotifyCollect(itemId)`.
+4. Читать состояние: `GetState(quest)`, `GetObjectiveProgress(quest, index)`, `IsActive(quest)`, `IsCompleted(quest)`.
+5. Подписаться на события: QuestAccepted, ObjectiveProgress, QuestCompleted в OnEnable; отписаться в OnDisable.
 
 ---
 
-## Типобезопасность
-
-Используйте перегрузки с **QuestConfig**, чтобы не опечататься в строковом Id:
+## Доступ к менеджеру
 
 ```csharp
-public QuestConfig myQuestConfig; // назначьте в инспекторе или загрузите из Resources
-
-void Start()
-{
-    if (QuestManager.Instance.AcceptQuest(myQuestConfig))
-    {
-        Debug.Log("Quest accepted: " + myQuestConfig.Title);
-    }
-
-    QuestState state = QuestManager.Instance.GetState(myQuestConfig);
-    int progress = QuestManager.Instance.GetObjectiveProgress(myQuestConfig, 0);
-    bool done = QuestManager.Instance.IsCompleted(myQuestConfig);
-}
+if (QuestManager.Instance == null) return;
+var manager = QuestManager.Instance;
 ```
 
 ---
 
-## Проверка результата принятия
-
-**TryAcceptQuest** возвращает причину отказа:
+## Принятие квеста
 
 ```csharp
-if (!QuestManager.Instance.TryAcceptQuest("MainQuest_01", out string reason))
-{
-    ShowMessage(reason); // "Quest not found.", "Already accepted or completed.", "Start conditions not met."
-}
+public QuestConfig mainQuest;
+
+if (QuestManager.Instance.AcceptQuest(mainQuest))
+    Debug.Log("Accepted: " + mainQuest.Title);
+
+// по Id
+bool ok = QuestManager.Instance.AcceptQuest("MainQuest_01");
+
+// с причиной отказа
+if (!QuestManager.Instance.TryAcceptQuest("SideQuest_Goblin", out string reason))
+    ShowMessage(reason);
 ```
 
 ---
 
-## Подписка на события из C#
+## Состояние и прогресс
 
-Используйте C#-события с **QuestConfig**:
+```csharp
+QuestState state = QuestManager.Instance.GetState(quest);
+if (state == null) return;
+
+bool isActive = QuestManager.Instance.IsActive(quest);
+bool isDone = QuestManager.Instance.IsCompleted(quest);
+int progress = QuestManager.Instance.GetObjectiveProgress(quest, 0);
+bool goalDone = state.IsObjectiveCompleted(0);
+```
+
+---
+
+## Зачёт цели и провал
+
+```csharp
+QuestManager.Instance.CompleteObjective(myQuestConfig, objectiveIndex: 1);
+QuestManager.Instance.FailQuest(myQuestConfig);
+```
+
+---
+
+## NotifyKill / NotifyCollect
+
+Вызывать из своей логики (смерть врага, подбор предмета). Строка должна совпадать с TargetId в QuestObjectiveData.
+
+```csharp
+QuestManager.Instance?.NotifyKill("Goblin");
+QuestManager.Instance?.NotifyCollect("Key_Red");
+```
+
+---
+
+## C#-события
 
 ```csharp
 void OnEnable()
 {
-    QuestManager.Instance.QuestAccepted += OnQuestAccepted;
-    QuestManager.Instance.ObjectiveProgress += OnObjectiveProgress;
-    QuestManager.Instance.QuestCompleted += OnQuestCompleted;
+    if (QuestManager.Instance != null)
+    {
+        QuestManager.Instance.QuestAccepted += OnQuestAccepted;
+        QuestManager.Instance.ObjectiveProgress += OnObjectiveProgress;
+        QuestManager.Instance.QuestCompleted += OnQuestCompleted;
+    }
 }
 
 void OnDisable()
@@ -61,43 +99,22 @@ void OnDisable()
     }
 }
 
-void OnQuestAccepted(QuestConfig config)
-{
-    Debug.Log($"Accepted: {config.Title}");
-}
-
-void OnObjectiveProgress(QuestConfig config, int objectiveIndex, int currentCount)
-{
-    // Обновить UI прогресса по цели
-}
-
 void OnQuestCompleted(QuestConfig config)
 {
     GiveRewards(config);
-    UnlockNextQuests(config.NextQuestIds);
+    foreach (string nextId in config.NextQuestIds) UnlockQuestInUI(nextId);
 }
 ```
 
----
-
-## Запрос прогресса
-
-- **GetObjectiveProgress(QuestConfig quest, int index)** — текущее значение счётчика или 1 для уже выполненной цели.
-- **IsActive(QuestConfig quest)** / **IsCompleted(QuestConfig quest)** — статус квеста.
-- **GetState(quest)** — полное состояние (Status, все цели).
+Сигнатуры: QuestAccepted (QuestConfig), ObjectiveProgress (QuestConfig, int, int), QuestCompleted (QuestConfig).
 
 ---
 
-## Интеграция с боем и инвентарём
-
-Для целей типа **KillCount** и **CollectCount** вызывайте из своей логики:
+## Обход квестов
 
 ```csharp
-// При убийстве врага
-QuestManager.Instance.NotifyKill("Goblin");
-
-// При подборе предмета
-QuestManager.Instance.NotifyCollect("Key_Red");
+foreach (QuestState state in QuestManager.Instance.ActiveQuests) { ... }
+foreach (QuestState state in QuestManager.Instance.AllQuests) { ... }
 ```
 
-Id должен совпадать с **TargetId** в QuestObjectiveData. Менеджер сам найдёт активные квесты с подходящей целью и обновит прогресс (и завершит цель при достижении RequiredCount).
+Полный список методов и событий — [QuestManager](QuestManager.md).

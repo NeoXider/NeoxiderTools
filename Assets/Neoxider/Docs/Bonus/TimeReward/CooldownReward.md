@@ -1,5 +1,12 @@
 # CooldownReward
 
+**Что это:** Компонент наград по кулдауну на базе [TimerObject](../Tools/Time/TimerObject.md): один скрипт объединяет таймер (режим RealTime), сохранение по UTC и логику наград (накопление, лимит за раз, событи...
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 - **Пространство имён:** `Neo.Bonus`
 - **Путь к файлу:** `Assets/Neoxider/Scripts/Bonus/TimeReward/CooldownReward.cs`
 

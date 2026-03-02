@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент руки для работы без кода
+    ///     Компонент руки: раскладка карт (Fan, Row и т.д.), добавление/удаление. Настройка в инспекторе, события через UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/HandComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(HandComponent))]

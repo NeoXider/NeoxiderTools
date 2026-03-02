@@ -1,9 +1,8 @@
 # CardViewUniversal
 
-Универсальная вью карты: реализует **ICardView**, **ICardDisplayMode**, **ICardViewAnimations**. Режимы отображения (переворот / всегда открыта / всегда закрыта), готовые анимации через [CardViewAnimationTemplates](#переиспользование-шаблонов).
+**Что это:** универсальная вью карты: реализует ICardView, ICardDisplayMode, ICardViewAnimations. Режимы отображения (переворот / всегда открыта / всегда закрыта), готовые анимации через CardViewAnimationTemplates. Пространство имён `Neo.Cards`, файл `Scripts/Cards/View/CardViewUniversal.cs`.
 
-- **Пространство имён:** `Neo.Cards`
-- **Путь:** `Assets/Neoxider/Scripts/Cards/View/CardViewUniversal.cs`
+**Как использовать:** добавить на префаб карты вместо или вместе с CardView; задать Display Mode и при необходимости шаблоны анимаций; вызывать SetData, Flip, MoveToAsync из кода или через карточную систему. См. секции ниже.
 
 ---
 

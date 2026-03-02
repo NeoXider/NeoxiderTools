@@ -1,5 +1,12 @@
 # Компонент PlayerController3DAnimatorDriver
 
+**Что это:** Скрипт не двигает персонажа: он только обновляет параметры `Animator` (idle/walk/run/jump и BlendTree), чтобы логика движения и анимации были разделены.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 ## 1. Введение
 
 `PlayerController3DAnimatorDriver` — отдельный анимационный драйвер для `PlayerController3DPhysics`.

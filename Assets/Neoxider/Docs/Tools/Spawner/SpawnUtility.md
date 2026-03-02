@@ -1,9 +1,14 @@
 # SpawnUtility
 
-Единая точка входа для спавна и деспавна объектов. **Всегда использует пул:** при наличии [PoolManager](./PoolManager.md) на сцене — его пулы; если PoolManager нет — для каждого префаба автоматически создаётся свой пул. Объекты всегда живут в пуле.
+**Что это:** статический класс `SpawnUtility` — единая точка входа для спавна и деспавна объектов. Всегда работает через пул: если на сцене есть [PoolManager](./PoolManager.md), используются его пулы; иначе для каждого префаба создаётся свой пул. Пространство имён: `Neo.Tools`. Файл: `Assets/Neoxider/Scripts/Tools/Spawner/SpawnUtility.cs`.
 
-- **Пространство имён:** `Neo.Tools`
-- **Путь:** `Assets/Neoxider/Scripts/Tools/Spawner/SpawnUtility.cs`
+**Как с ним работать:**
+1. Спавн: `GameObject go = SpawnUtility.Spawn(prefab, position, rotation, parent);` или расширение `prefab.SpawnFromPool(position, rotation, parent)`.
+2. Деспавн: `SpawnUtility.Despawn(go);` или `go.ReturnToPool();`.
+3. Не вызывать Destroy для объектов, созданных через Spawn — возвращать в пул через Despawn.
+4. PoolManager можно добавить на сцену позже — SpawnUtility подхватит его при следующем Spawn.
+
+---
 
 ## Поведение
 

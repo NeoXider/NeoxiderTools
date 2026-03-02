@@ -1,13 +1,15 @@
 # Cards — модуль карточных игр
 
-Полноценный модуль для работы с игральными картами в MVP архитектуре. Поддерживает игры: покер, дурак, пьяница и другие.
+**Что это:** модуль для игральных карт: MVP (Model, View, Presenter), компоненты колоды/руки/доски, покер, дурак, пьяница. Скрипты в `Scripts/Cards/`.
+
+**Навигация:** [← К Docs](../README.md) · оглавление — раздел «Документация компонентов» ниже
 
 ---
 
 ## Возможности
 
 - **Гибкая архитектура MVP** — Model, View, Presenter
-- **No-code компоненты** — настройка через инспектор и UnityEvent
+- **Компоненты** — настройка в инспекторе и UnityEvent
 - **Типы колод** — 36, 52, 54 карты
 - **Сравнение карт** — по рангу, с учётом козыря
 - **Покерные комбинации** — от пары до роял-флеша
@@ -88,7 +90,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 
 - [CardData](./CardData.md) — структура данных карты
 - [DeckConfig](./DeckConfig.md) — конфигурация колоды
-- [CardComponent](./CardComponent.md) — компонент карты (no-code)
+- [CardComponent](./CardComponent.md) — компонент карты
 - [DeckComponent](./DeckComponent.md) — компонент колоды
 - [HandComponent](./HandComponent.md) — компонент руки
 - [BoardComponent](./BoardComponent.md) — компонент доски
@@ -108,7 +110,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 ### DrunkardGame — быстрый старт
 
 ```csharp
-// Игра настраивается через инспектор без кода!
+// Игра настраивается через инспектор и UnityEvent.
 // Просто подключите UnityEvent к UI элементам:
 
 // OnPlayerCardCountChanged (int) → TMP_Text.SetText

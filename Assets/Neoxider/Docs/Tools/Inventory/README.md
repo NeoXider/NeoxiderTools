@@ -1,6 +1,8 @@
 # Inventory
 
-`Inventory` — модуль инвентаря и подбираемых предметов, который одинаково удобно использовать через код и No-Code (Inspector + UnityEvent).
+**Что это:** модуль инвентаря и подбираемых предметов: InventoryComponent, PickableItem, InventoryHand, InventoryDropper, UI-компоненты. Настройка в инспекторе и через код. Скрипты в `Scripts/Tools/Inventory/`.
+
+**Навигация:** [← К Tools](../README.md) · оглавление — таблица ниже
 
 ## Что входит
 

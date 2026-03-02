@@ -1,8 +1,10 @@
 # LevelManager
 
-Синглтон уровней и карт (Map). Хранит текущий уровень и карту, сохраняет прогресс, даёт доступ к LevelButton и переходам на следующий уровень/карту.
+**Что это:** синглтон уровней и карт (Map). Хранит текущий уровень и карту, сохраняет прогресс, даёт доступ к LevelButton и переходам на следующий уровень/карту.
 
-**Добавить:** GameObject → Neoxider → Level → LevelManager.
+**Как использовать:** добавить на сцену (GameObject → Neoxider → Level → LevelManager). Задать **Save Key**, **Maps**, **Level Buttons**; при необходимости включить **On Awake Next Level** / **On Awake Next Map**. Файл: `Scripts/Level/LevelManager.cs`.
+
+---
 
 ## Основное
 

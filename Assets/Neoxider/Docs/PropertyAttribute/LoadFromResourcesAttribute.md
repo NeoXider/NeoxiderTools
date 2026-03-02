@@ -1,6 +1,13 @@
 
 # [LoadFromResources]
 
+**Что это:** Атрибут `[LoadFromResources]` автоматизирует процесс загрузки **одного** ассета указанного типа (префаба, `ScriptableObject`, материала и т.д.) из папки `Resources` и назначает его в поле.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 **Пространство имен:** `(global)`
 **Путь:** `Scripts/PropertyAttribute/InjectAttribute/LoadFromResourcesAttribute.cs`
 

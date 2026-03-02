@@ -1,4 +1,10 @@
-# Универсальный счётчик (Counter)
+# Counter
+
+**Что это:** компонент счётчика: хранит число (Int или Float), методы Add/Subtract/Multiply/Divide/Set, событие Send и OnValueChanged. Опционально сохранение через SaveProvider. Пространство имён `Neo.Tools`, файл `Scripts/Tools/Components/Counter.cs`.
+
+**Как использовать:** добавить на GameObject, выбрать режим Int/Float; подписать OnValueChanged на SetText или свой метод; привязать Add/Subtract к кнопке или вызывать из кода. См. «Быстрый старт» ниже.
+
+---
 
 ## 1. Введение
 
@@ -6,12 +12,12 @@
 
 ---
 
-## Быстрый старт (No-Code)
+## Быстрый старт
 
 1. Добавьте компонент Counter на GameObject.
-2. Выберите режим **Int** или **Float**, при необходимости задайте начальное значение в **Value**.
-3. Подпишите **Value.OnChanged** (или OnValueChangedInt / OnValueChangedFloat по типу) на компонент вывода текста (например [SetText](../Text/SetText.md)) или свой метод — значение будет обновляться при любом изменении.
-4. Вызов **Add** / **Subtract** привяжите к кнопке (On Click) или другому UnityEvent — счётчик изменится без кода.
+2. Режим **Int** или **Float**, при необходимости начальное значение в **Value**.
+3. Подпишите OnValueChangedInt/OnValueChangedFloat или Value.OnChanged на [SetText](../Text/SetText.md) или свой метод.
+4. Add/Subtract привязать к кнопке (On Click) или другому UnityEvent.
 
 **Из кода:** `counter.Add(10);` затем `counter.Send();` — отправит текущее значение подписчикам.
 

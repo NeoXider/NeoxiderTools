@@ -1,5 +1,12 @@
 # Форк MarkdownRenderer (NeoXider)
 
+**Что это:** Инструкции по доработке форка [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer): исправление ошибок, переименование пакета и план улучшений перед интеграцией в NeoxiderTools.
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 Инструкции по доработке форка [NeoXider/MarkdownRenderer](https://github.com/NeoXider/MarkdownRenderer): исправление ошибок, переименование пакета и план улучшений перед интеграцией в NeoxiderTools.
 
 **Поддерживаемая версия Unity:** 2022.3 и выше.

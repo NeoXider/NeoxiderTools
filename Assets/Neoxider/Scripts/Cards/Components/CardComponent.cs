@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент карты для работы без кода
+    ///     Компонент карты: отображение, анимации, клики. Настройка в инспекторе, события через UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/CardComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(CardComponent))]

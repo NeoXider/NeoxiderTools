@@ -1,13 +1,14 @@
 # Neoxider Docs — документация и навигация
 
-Добро пожаловать в документацию **NeoxiderTools** (v7.3.2). Ссылки на модули и инструкции по запуску.
+**Что это:** корневой индекс документации **NeoxiderTools**. Ссылки на модули, подмодули Tools, демо-сцены и быстрый старт.
 
-- **[Полезные компоненты (Add Component / GameObject)](./UsefulComponents.md)** — что удобно добавлять через меню **Neoxider/** (UI, Tools, Shop, Audio, Bonus и т.д.).
-- **[Новые скрипты и улучшения для функциональности](./NEXT_IMPROVEMENTS.md)** — идеи для следующих релизов (ValueDisplay, интеграции Shop+Inventory, ToggleByIndex и др.).
+**Навигация:** [← К проекту (PROJECT_SUMMARY)](../PROJECT_SUMMARY.md) · [Полезные компоненты](./UsefulComponents.md) · [NEXT_IMPROVEMENTS](./NEXT_IMPROVEMENTS.md)
+
+**Как пользоваться:** выберите модуль в таблице ниже.
 
 ---
 
-## Индекс модулей
+## Оглавление модулей
 
 | Модуль | Описание | Документация |
 |--------|----------|-------------|
@@ -15,7 +16,7 @@
 | **Audio** | AudioManager, микшер, play-on-click | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Коллекции, слот-машины, колёса удачи, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
 | **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [`Cards/README.md`](./Cards/README.md) |
-| **Condition** | No-Code условия: поля, свойства, методы с аргументом (int/float/string), AND/OR, события. Переиспользование в State Machine и своих системах. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [Condition_Reuse.md](./Condition/Condition_Reuse.md) |
+| **Condition** | NeoCondition: поля, свойства, методы с аргументом, AND/OR, OnTrue/OnFalse. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [Condition_Reuse.md](./Condition/Condition_Reuse.md) |
 | **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
@@ -25,8 +26,8 @@
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Save** | Система сохранений: PlayerPrefs, JSON, `[SaveField]` | [`Save/README.md`](./Save/README.md) |
 | **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | State Machine + NoCode визуальный редактор состояний | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
-| **Tools** | Спавнеры, таймеры, физика, ввод, менеджеры, Counter | [`Tools` (подпапки)](./Tools) |
+| **StateMachine** | State Machine + конфигурация через ScriptableObject (StateMachineData) | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
+| **Tools** | Спавнеры, таймеры, физика, ввод, менеджеры, Counter | [`Tools/README.md`](./Tools/README.md) |
 | **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
 | **UI Extension** | Готовые UI-префабы: Canvas, Layout, ScrollRect | [`UI Extension/README.md`](./UI%20Extension/README.md) |
 
@@ -39,17 +40,17 @@
 | Tools/Move | Follow, KeyboardMover, MouseMover, UniversalRotator | [`Tools/Move/README.md`](./Tools/Move/README.md) |
 | Tools/Spawner | Spawner, SimpleSpawner, ObjectPool | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
 | Tools/Time | Timer, TimerObject, TimeFormatting (расширения времени) | [`Tools/Time/README.md`](./Tools/Time/README.md) |
-| Tools/Input | SwipeController, MultiKeyEventTrigger, MouseEffect | [`Tools/Input`](./Tools/Input) |
+| Tools/Input | SwipeController, MultiKeyEventTrigger, MouseEffect | [`Tools/Input/README.md`](./Tools/Input/README.md) |
 | Tools/Managers | GM, EM, Bootstrap, Singleton | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
-| Tools/View | Selector, BillboardUniversal, StarView | [`Tools/View`](./Tools/View) |
+| Tools/View | Selector, BillboardUniversal, StarView | [`Tools/View/README.md`](./Tools/View/README.md) |
 | Tools/Dialogue | DialogueController, DialogueData, DialogueUI | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
-| Tools/Random | ChanceManager, ChanceData | [`Tools/Random`](./Tools/Random) |
-| Tools/InteractableObject | InteractiveObject, PhysicsEvents, ToggleObject | [`Tools/InteractableObject`](./Tools/InteractableObject) |
-| Tools/FakeLeaderboard | Leaderboard, LeaderboardItem | [`Tools/FakeLeaderboard`](./Tools/FakeLeaderboard) |
-| Tools/Debug | FPS, ErrorLogger | [`Tools/Debug`](./Tools/Debug) |
-| Tools/Draw | Drawer (рисование линий) | [`Tools/Draw`](./Tools/Draw) |
-| Tools/Text | SetText, TimeToText | [`Tools/Text`](./Tools/Text) |
-| Tools/Inventory | InventoryComponent, PickableItem, InventoryHand, InventoryDropper, InventoryItemData | [`Tools/Inventory`](./Tools/Inventory) |
+| Tools/Random | ChanceManager, ChanceData | [`Tools/Random/README.md`](./Tools/Random/README.md) |
+| Tools/InteractableObject | InteractiveObject, PhysicsEvents, ToggleObject | [`Tools/InteractableObject/README.md`](./Tools/InteractableObject/README.md) |
+| Tools/FakeLeaderboard | Leaderboard, LeaderboardItem | [`Tools/FakeLeaderboard/README.md`](./Tools/FakeLeaderboard/README.md) |
+| Tools/Debug | FPS, ErrorLogger | [`Tools/Debug/README.md`](./Tools/Debug/README.md) |
+| Tools/Draw | Drawer (рисование линий) | [`Tools/Draw/README.md`](./Tools/Draw/README.md) |
+| Tools/Text | SetText, TimeToText | [`Tools/Text/README.md`](./Tools/Text/README.md) |
+| Tools/Inventory | InventoryComponent, PickableItem, InventoryHand, InventoryDropper, InventoryItemData | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |
 
 ### Опциональные модули
 
@@ -68,8 +69,6 @@
 | **Mouse Effector** | `Demo/Scenes/Tools/MouseEffectorExample.unity` | Эффекты мыши |
 | **GridSystem Match3** | `Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity` | Сетка, формы, origin-якорь, pathfinding, Match3 |
 | **GridSystem TicTacToe** | `Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | Сетка, кликабельное поле, состояния клеток, TicTacToe |
-
-Каждый markdown содержит быстрый старт и примеры использования.
 
 ---
 
@@ -105,7 +104,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ## Подсказки по интеграции
 
 - Системный префаб `--System--.prefab` должен находиться ровно один раз в активной сцене.
-- Большинство компонентов настраиваются в инспекторе и могут работать без кода; расширение через события и публичные API.
+- Большинство компонентов настраиваются в инспекторе и через UnityEvent; расширение через события и публичные API.
 - Для тяжёлых игровых объектов используйте пул (`Tools/Spawner`, `ObjectPool`) — это ускоряет инстансинг и уменьшает GC.
 - В UI‑модулях широко используются анимации и состояния — проверяйте примеры в `UI/README.md`.
 

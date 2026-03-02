@@ -1,8 +1,7 @@
 # PlayerData (пример)
 
-Пример сохраняемого компонента для модуля Save. Реализует `ISaveableComponent`, помечает поля атрибутом `[SaveField]`; при загрузке применяет данные (например, позицию) к объекту.
+**Что это:** пример сохраняемого компонента: реализует `ISaveableComponent`, помечает поля `[SaveField]`, в OnDataLoaded применяет загруженные данные к объекту. Пространство имён: `Neo.Save.Examples`. Файл: `Scripts/Save/Example/PlayerData.cs`.
 
-- **Пространство имён:** `Neo.Save.Examples`
-- **Путь:** `Assets/Neoxider/Scripts/Save/Example/PlayerData.cs`
+**Как использовать:** ориентир для своих классов: наследование от SaveableBehaviour, поля с [SaveField], логика в OnDataLoaded. См. [Save README](./README.md), [SaveableBehaviour](./SaveableBehaviour.md).
 
-Используется как образец для своих сохраняемых классов. См. [Save README](./README.md) и [SaveableBehaviour](./SaveableBehaviour.md).
+---

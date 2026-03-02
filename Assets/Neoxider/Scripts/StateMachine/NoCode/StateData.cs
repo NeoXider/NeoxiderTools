@@ -6,7 +6,7 @@ using UnityEngine.Serialization;
 namespace Neo.StateMachine.NoCode
 {
     /// <summary>
-    ///     ScriptableObject для создания NoCode состояний.
+    ///     ScriptableObject состояния: имя, действия, переходы (для использования в StateMachineData).
     ///     Позволяет создавать состояния визуально в инспекторе без написания кода.
     /// </summary>
     /// <remarks>

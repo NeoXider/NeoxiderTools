@@ -11,7 +11,7 @@ namespace Neo.StateMachine
     ///     Поддерживает условия переходов через предикаты и приоритеты.
     /// </summary>
     /// <remarks>
-    ///     Переходы могут быть определены как по типам состояний (для кода), так и по именам (для NoCode).
+    ///     Переходы по типам состояний (код) или по именам (StateMachineData).
     ///     Поддерживается комбинирование условий через список предикатов.
     /// </remarks>
     /// <example>
@@ -71,7 +71,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Исходное состояние (ScriptableObject для NoCode).
+        ///     Исходное состояние (StateData SO при конфигурации через StateMachineData).
         /// </summary>
         public StateData FromStateData
         {
@@ -80,7 +80,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Целевое состояние (ScriptableObject для NoCode).
+        ///     Целевое состояние (StateData SO при конфигурации через StateMachineData).
         /// </summary>
         public StateData ToStateData
         {

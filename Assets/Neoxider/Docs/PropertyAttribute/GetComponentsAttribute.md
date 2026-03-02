@@ -1,6 +1,13 @@
 
 # [GetComponents]
 
+**Что это:** Атрибут `[GetComponents]` является множественной версией `[GetComponent]`. Он автоматически находит **все** компоненты указанного типа на том же `GameObject` или в его дочерних объектах и помещает ...
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 **Пространство имен:** `(global)`
 **Путь:** `Scripts/PropertyAttribute/InjectAttribute/GetComponentsAttribute.cs`
 

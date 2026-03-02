@@ -5,18 +5,19 @@
 **Версия 6.0.7** · Unity 2022.1+ · Namespace `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
+- [Документация (оглавление модулей)](./Docs/README.md) — навигация по всем .md
+- [PROJECT_SUMMARY](./PROJECT_SUMMARY.md) — структура пакета, каталог скриптов
+- [Правило документации](./DOCUMENTATION.md) — структура и стиль .md
 - [Changelog](./CHANGELOG.md)
-- [Документация](./Docs/README.md)
-- [PROJECT_SUMMARY](./PROJECT_SUMMARY.md)
 
 ---
 
-## No-Code условия — логика без кода
+## Условия (NeoCondition)
 
-**NeoCondition** — собирайте условия прямо в Inspector:
+**NeoCondition** — условия в Inspector: поля/свойства компонентов, методы с аргументом (например `GetCount(int)`), AND/OR, события OnTrue/OnFalse.
 
 - **Поля и свойства** — HP, очки, счёт, состояние объекта, любые int/float/bool/string компонента или GameObject
-- **Методы с аргументом** — вызов методов вида `GetCount(int)`: выберите метод в Property, укажите Argument (itemId и т.п.), сравните с порогом или с другой переменной. Удобно для проверки «количество предмета в инвентаре ≥ N» без кода
+- **Методы с аргументом** — выберите метод в Property, укажите Argument (itemId и т.п.), сравните с порогом или с другой переменной
 - **AND/OR** — несколько условий в одном компоненте, инверсия (NOT)
 - **События** — `OnTrue`, `OnFalse`, `OnResult` подключаются к любым UnityEvent
 - **Поиск по имени и префабы** — Find By Name, Prefab Preview для настройки до спавна
@@ -67,7 +68,7 @@ in window» (открывает .md в стандартном инспектор
 
 1. Импортируйте пакет (UPM Git URL или копирование папки `Assets/Neoxider`)
 2. Добавьте в сцену системный префаб `Prefabs/--System--.prefab` (менеджеры, UI)
-3. Добавляйте компоненты через **Add Component → Neoxider** — большинство настраивается без кода через Inspector и UnityEvent
+3. Добавляйте компоненты через **Add Component → Neoxider** — настройка в Inspector и UnityEvent
 
 ---
 
@@ -79,7 +80,7 @@ in window» (открывает .md в стандартном инспектор
 | **Audio**             | AudioManager, микшер, play-on-click                              | [Docs](./Docs/Audio/README.md)              |
 | **Bonus**             | Коллекции, слот-машины, колесо удачи, награды по времени         | [Docs](./Docs/Bonus/README.md)              |
 | **Cards**             | Карточные игры (MVP): колода, рука, покер, "Пьяница"             | [Docs](./Docs/Cards/README.md)              |
-| **Condition**         | No-Code условия: поля, свойства, методы с аргументом (int/float/string), AND/OR, события | [Docs](./Docs/Condition/NeoCondition.md)    |
+| **Condition**         | NeoCondition: поля, свойства, методы с аргументом, AND/OR, OnTrue/OnFalse | [Docs](./Docs/Condition/NeoCondition.md)    |
 | **Extensions**        | 300+ extension-методов для C# и Unity API                        | [Docs](./Docs/Extensions/README.md)         |
 | **GridSystem**        | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md)                |
 | **Level**             | Менеджер уровней, карта, кнопки                                  | [Docs](./Docs/Level/LevelManager.md)        |
@@ -87,7 +88,7 @@ in window» (открывает .md в стандартном инспектор
 | **Parallax**          | Параллакс-слои с предпросмотром                                  | [Docs](./Docs/ParallaxLayer.md)             |
 | **Save**              | Система сохранений: PlayerPrefs, JSON, атрибут `[SaveField]`     | [Docs](./Docs/Save/README.md)               |
 | **Shop**              | Магазин, валюта, покупки                                         | [Docs](./Docs/Shop/README.md)               |
-| **StateMachine**      | State Machine + NoCode визуальный редактор                       | [Docs](./Docs/StateMachine/StateMachine.md) |
+| **StateMachine**      | State Machine + конфигурация через StateMachineData (ScriptableObject) | [Docs](./Docs/StateMachine/StateMachine.md) |
 | **Tools**             | Спавнеры, таймеры, физика, ввод, Counter, **Inventory** (подбор, дроп, NeoCondition) | [Docs](./Docs/Tools)                        |
 | **UI**                | UI-анимации, кнопки, страницы, toggle                            | [Docs](./Docs/UI/README.md)                 |
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты  | [Docs](./Docs/PropertyAttribute/README.md)  |
@@ -110,14 +111,14 @@ in window» (открывает .md в стандартном инспектор
 
 ## Примеры использования
 
-### NeoCondition (No-Code условия)
+### NeoCondition
 
 1. Добавьте **NeoCondition** (Add Component → Neo → Condition → NeoCondition)
-2. Кнопка **+** → выберите **Source Object**, **Component** и **Property** (или метод с аргументом, например `GetCount (int) → Int [method]` и укажите **Argument**)
-3. Задайте оператор (≥, ==, …) и порог или сравнение с **Other Object**
-4. Подключите **On True** / **On False** — логика без кода готова
+2. Кнопка **+** → выберите **Source Object**, **Component** и **Property** (или метод с аргументом, укажите **Argument**)
+3. Оператор (≥, ==, …) и порог или сравнение с **Other Object**
+4. Подключите **On True** / **On False** к UnityEvent
 
-### Counter (без кода)
+### Counter
 
 1. Добавьте компонент `Counter` на GameObject
 2. Настройте режим (Int/Float), начальное значение

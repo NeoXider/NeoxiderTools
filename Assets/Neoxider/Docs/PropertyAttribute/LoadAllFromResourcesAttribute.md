@@ -1,6 +1,13 @@
 
 # [LoadAllFromResources]
 
+**Что это:** Атрибут `[LoadAllFromResources]` автоматизирует процесс загрузки **всех** ассетов указанного типа (префабов, `ScriptableObject`, материалов и т.д.) из папки `Resources` и назначает их в поле типа м...
+
+**Как использовать:** см. разделы ниже.
+
+---
+
+
 **Пространство имен:** `(global)`
 **Путь:** `Scripts/PropertyAttribute/InjectAttribute/LoadAllFromResourcesAttribute.cs`
 

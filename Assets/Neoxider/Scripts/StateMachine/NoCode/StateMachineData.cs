@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Neo.StateMachine.NoCode
 {
     /// <summary>
-    ///     ScriptableObject для конфигурации State Machine без кода.
+    ///     ScriptableObject конфигурации State Machine: состояния и переходы по именам.
     ///     Позволяет создавать полную конфигурацию State Machine визуально в инспекторе.
     /// </summary>
     /// <remarks>

@@ -1,11 +1,12 @@
 # AnimationType
 
-**Namespace:** `Neo.Animations`  
-**Путь к файлу:** `Assets/Neoxider/Scripts/Animations/AnimationType.cs`
+**Что это:** перечисление типов анимации (RandomFlicker, Pulsing, SmoothTransition, PerlinNoise и др.). Задаёт математику расчёта значений по времени. Пространство имён `Neo.Animations`, файл `Scripts/Animations/AnimationType.cs`.
+
+**Как использовать:** выбирать в аниматорах (FloatAnimator, ColorAnimator, Vector3Animator) в поле **animationType**; при вызове `AnimationUtils.GetAnimatedFloat/GetAnimatedColor/GetAnimatedVector3` передавать как первый аргумент.
+
+---
 
 ## Описание
-
-Перечисление типов анимации для различных компонентов системы анимаций. Определяет математические функции, используемые для расчета анимированных значений по времени.
 
 ## Значения перечисления
 

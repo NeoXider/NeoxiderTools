@@ -1,6 +1,12 @@
 # SceneFlowController
 
-## Назначение
+**Что это:** компонент загрузки сцен и базовых действий приложения (файл в `Scripts/Level/`): загрузка по индексу или имени, синхронно или асинхронно, с прогрессом (текст, Slider, Image), Quit/Restart/Pause. Режимы: Sync, Async, AsyncManual, Additive.
+
+**Как использовать:** добавить на объект (Add Component → Neoxider → Level → SceneFlowController). Задать **Load Mode**, **Scene Build Index** или **Scene Name**; опционально привязать UI прогресса и **Load On Start**. Вызывать LoadScene(), ProceedScene() (для AsyncManual), Quit(), Restart(), Pause().
+
+---
+
+## Назначение и детали
 
 Универсальный компонент для загрузки сцен и базовых действий приложения: загрузка по индексу или имени, синхронно или асинхронно, с отображением прогресса (текст, Slider, Image), событием «готов к переходу» и действиями Quit, Restart, Pause. Режим загрузки и активации задаётся полями в Inspector; методы загрузки параметров режима не принимают.
 

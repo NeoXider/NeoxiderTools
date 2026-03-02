@@ -1,6 +1,15 @@
 # Модуль Save
 
-Модуль **Save** предоставляет мощные и гибкие системы для сохранения данных в Unity.
+**Что это:** модуль сохранения данных в Unity. Три варианта: (1) провайдеры — статический API как PlayerPrefs с переключением бэкенда; (2) компоненты — сохранение полей MonoBehaviour через `SaveableBehaviour` и `[SaveField]`; (3) глобальные данные — `GlobalSave` для валюты и прогресса без привязки к объектам сцены.
+
+**Как с ним работать:**
+- Нужен простой ключ–значение: использовать [SaveProvider](./SaveProvider.md) или [SaveProviderSettingsComponent](./SaveProviderSettingsComponent.md) на сцене.
+- Нужно сохранять состояние объектов сцены: наследовать компонент от [SaveableBehaviour](./SaveableBehaviour.md), пометить поля [SaveField](./SaveField.md), на сцене добавить [SaveManager](./SaveManager.md).
+- Нужно хранить глобальные данные (валюта, флаги): использовать [GlobalSave](./GlobalSave.md) и [GlobalData](./GlobalData.md).
+
+**Навигация:** [← К Docs](../README.md) · оглавление — раздел «Документация по скриптам» ниже
+
+---
 
 ## Системы сохранения
 

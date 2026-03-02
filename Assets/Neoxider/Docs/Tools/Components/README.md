@@ -1,13 +1,15 @@
 # Компоненты (Components)
 
-Этот раздел содержит различные готовые компоненты, которые можно использовать для реализации игровой логики.
+**Что это:** готовые компоненты игровой логики: Counter, ScoreManager, TextScore, Loot, TypewriterEffect, UnityLifecycleEvents, AnimatorParameterDriver, AttackSystem. Скрипты в `Scripts/Tools/Components/`.
+
+**Навигация:** [← К Tools](../README.md) · оглавление — списки ниже
 
 ## Файлы
 
 - [AnimatorParameterDriver](./AnimatorParameterDriver.md) — вызов параметров Animator (триггер, bool, float, int) из кода и UnityEvent.
 - [UnityLifecycleEvents](./UnityLifecycleEvents.md) — проброс событий жизненного цикла Unity (Awake, OnEnable, OnDisable, Start, Destroy, Update/FixedUpdate/LateUpdate с deltaTime) в UnityEvent
 - [Counter](./Counter.md) — универсальный счётчик (Int/Float), Add/Subtract/Set, Send по Payload или произвольное число, OnValueChanged/OnSend
-- [TextScore](./TextScore.md) — отображение очков (ScoreManager): текущий счёт или рекорд, без кода
+- [TextScore](./TextScore.md) — отображение очков (ScoreManager): текущий счёт или рекорд
 - [Loot](./Loot.md) — система лута и дропа
 - [ScoreManager](./ScoreManager.md) — менеджер очков с системой звезд и сохранением рекордов
 - [TypewriterEffect](./TypewriterEffect.md) — эффект печатной машинки с паузами на знаках препинания
