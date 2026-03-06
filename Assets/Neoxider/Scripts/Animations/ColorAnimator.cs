@@ -4,8 +4,7 @@ using UnityEngine.Events;
 namespace Neo.Animations
 {
     /// <summary>
-    ///     Универсальный аниматор для цветов.
-    ///     Предоставляет простой способ анимации цвета с различными типами анимации.
+    ///     Universal animator for colors. Provides an easy way to animate color with various animation types.
     /// </summary>
     [NeoDoc("Animations/ColorAnimator.md")]
     [CreateFromMenu("Neoxider/Animations/ColorAnimator")]
@@ -53,51 +52,37 @@ namespace Neo.Animations
         private Color lastColor;
         private Vector2 randomOffset;
 
-        /// <summary>
-        ///     Текущий анимированный цвет (только для чтения)
-        /// </summary>
+        /// <summary>Current animated color (read-only).</summary>
         public Color CurrentColor { get; private set; }
 
-        /// <summary>
-        ///     Проигрывается ли анимация
-        /// </summary>
+        /// <summary>Whether the animation is currently playing.</summary>
         public bool IsPlaying { get; private set; }
 
-        /// <summary>
-        ///     Находится ли анимация на паузе
-        /// </summary>
+        /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
 
-        /// <summary>
-        ///     Начальный цвет (для изменения извне)
-        /// </summary>
+        /// <summary>Start color (writable from outside).</summary>
         public Color StartColor
         {
             get => startColor;
             set => startColor = value;
         }
 
-        /// <summary>
-        ///     Конечный цвет (для изменения извне)
-        /// </summary>
+        /// <summary>End color (writable from outside).</summary>
         public Color EndColor
         {
             get => endColor;
             set => endColor = value;
         }
 
-        /// <summary>
-        ///     Скорость анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation speed (writable from outside).</summary>
         public float AnimationSpeed
         {
             get => animationSpeed;
             set => animationSpeed = value;
         }
 
-        /// <summary>
-        ///     Тип анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation type (writable from outside).</summary>
         public AnimationType AnimationType
         {
             get => animationType;
@@ -145,9 +130,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Запустить анимацию
-        /// </summary>
+        /// <summary>Starts the animation.</summary>
         public void Play()
         {
             IsPlaying = true;
@@ -155,9 +138,7 @@ namespace Neo.Animations
             OnAnimationStarted?.Invoke();
         }
 
-        /// <summary>
-        ///     Остановить анимацию
-        /// </summary>
+        /// <summary>Stops the animation.</summary>
         public void Stop()
         {
             IsPlaying = false;
@@ -165,9 +146,7 @@ namespace Neo.Animations
             OnAnimationStopped?.Invoke();
         }
 
-        /// <summary>
-        ///     Поставить анимацию на паузу
-        /// </summary>
+        /// <summary>Pauses the animation.</summary>
         public void Pause()
         {
             if (IsPlaying)
@@ -177,9 +156,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Снять с паузы
-        /// </summary>
+        /// <summary>Resumes the animation from pause.</summary>
         public void Resume()
         {
             if (IsPaused)
@@ -189,25 +166,19 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Сбросить время анимации
-        /// </summary>
+        /// <summary>Resets animation time to zero.</summary>
         public void ResetTime()
         {
             animationTime = 0f;
         }
 
-        /// <summary>
-        ///     Установить случайное начальное время
-        /// </summary>
+        /// <summary>Sets a random initial animation time.</summary>
         public void RandomizeTime()
         {
             animationTime = Random.Range(0f, 1000f);
         }
 
-        /// <summary>
-        ///     Вычисляет расстояние между двумя цветами
-        /// </summary>
+        /// <summary>Computes distance between two colors.</summary>
         private float ColorDistance(Color a, Color b)
         {
             return Mathf.Sqrt(

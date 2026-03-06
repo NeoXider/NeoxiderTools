@@ -105,3 +105,9 @@ rotator.RotateToDirection(transform.right, instant: true);
 - Используйте `FixedUpdate` только если поворот участвует в физике; иначе достаточно `Update`/`LateUpdate`.
 - Старайтесь не ставить избыточные raycast-режимы для мыши без необходимости.
 
+---
+
+## См. также
+
+- [`Move`](./README.md)
+

@@ -5,10 +5,7 @@ namespace Neo
 {
     namespace Audio
     {
-        /// <summary>
-        ///     Компонент для воспроизведения звукового эффекта из AM.
-        ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
-        /// </summary>
+        /// <summary>Component to play sound effects from AM. Supports playing a specific clip by ID or a random clip from a list.</summary>
         [NeoDoc("Audio/PlayAudio.md")]
         [CreateFromMenu("Neoxider/Audio/PlayAudio")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudio))]
@@ -33,10 +30,7 @@ namespace Neo
                 }
             }
 
-            /// <summary>
-            ///     Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
-            ///     Иначе использует режим по ID (legacy).
-            /// </summary>
+            /// <summary>Plays the sound. If clips are set and useRandomClip is true, picks a random clip; otherwise uses legacy ID mode.</summary>
             public void AudioPlay()
             {
                 if (_clips != null && _clips.Length > 0)

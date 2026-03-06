@@ -4,7 +4,7 @@
   "version": "7.4.0",
   "unity": "2022.1",
   "unityRelease": "0f1",
-  "description": "Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.",
+  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
   "author": {
     "name": "Neoxider"
   },
@@ -16,15 +16,18 @@
     "type": "git",
     "url": "https://github.com/NeoXider/NeoxiderTools.git"
   },
+  "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
+  "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
+  "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
   "samples": [
     {
       "displayName": "Demo Scenes",
-      "description": "Демо-сцены и примеры использования: Condition, Tools, Audio и другие модули",
+      "description": "Sample scenes and integration examples for Condition, Tools, GridSystem, Shop, and other modules.",
       "path": "Samples~/Demo"
     },
     {
       "displayName": "NeoxiderPages",
-      "description": "Модуль страниц и экранов (PageManager, UIPage, UIKit). Система навигации между экранами игры.",
+      "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
       "path": "Samples~/NeoxiderPages"
     }
   ],

@@ -5,6 +5,11 @@ using UnityEditor;
 
 namespace Neo.Tools
 {
+    /// <summary>
+    ///     Flexible rotation controller for 2D and 3D use-cases.
+    ///     Can aim at a Transform, a world point / direction, or mouse position (via plane or physics raycast),
+    ///     with optional axis limits and selectable update loop.
+    /// </summary>
     [NeoDoc("Tools/Move/UniversalRotator.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/UniversalRotator")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(UniversalRotator))]
@@ -44,11 +49,11 @@ namespace Neo.Tools
             LateUpdate
         }
 
-        // ========== РЕЖИМЫ ==========
+        // ========== MODES ==========
         [Header("Mode")]
         [Tooltip("Rotation mode: 3D (along forward) or 2D (XY plane, Z rotation).")]
 #if ODIN_INSPECTOR
-        [LabelText("Режим вращения")]
+        [LabelText("Rotation Mode")]
 #endif
         [SerializeField]
         private RotationMode rotationMode = RotationMode.Mode3D;
@@ -58,10 +63,10 @@ namespace Neo.Tools
 
         [Tooltip("Use unscaled time.")] public bool useUnscaledTime;
 
-        // ========== СКОРОСТЬ И ОФСЕТ ==========
+        // ========== SPEED & OFFSET ==========
         [Header("Speed")]
 #if ODIN_INSPECTOR
-        [LabelText("Скорость (°/сек)")]
+        [LabelText("Speed (°/sec)")]
 #endif
         [Tooltip("Rotation speed (deg/sec).")]
         [Min(0f)]
@@ -70,45 +75,45 @@ namespace Neo.Tools
         [Tooltip("Rotation offset. In 3D — full Euler. In 2D only Z is used.")]
 #if ODIN_INSPECTOR
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
-        [LabelText("Офсет (Euler)")]
+        [LabelText("Offset (Euler)")]
 #endif
         public Vector3 rotationOffsetEuler = Vector3.zero;
 
-        // ========== ОГРАНИЧЕНИЯ ==========
+        // ========== LIMITS ==========
         [Header("Limits")]
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Ограничения")]
-        [InfoBox("Если диапазон [0..360] — ограничения отключены.", InfoMessageType.None)]
-        [LabelText("Ось ограничения (локальная)")]
+        [FoldoutGroup("Limits")]
+        [InfoBox("If the range is [0..360], limits are disabled.", InfoMessageType.None)]
+        [LabelText("Limited Axis (Local)")]
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
 #endif
         public Axis limitedAxis3D = Axis.Y;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Ограничения")] [LabelText("Диапазон (°)")] [MinMaxSlider(-360f, 360f, true)]
+        [FoldoutGroup("Limits")] [LabelText("Range (°)")] [MinMaxSlider(-360f, 360f, true)]
 #endif
         public Vector2 limitRange = new(0f, 360f);
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Ограничения")]
-        [LabelText("Относительно стартовой позы")]
+        [FoldoutGroup("Limits")]
+        [LabelText("Relative to Initial Pose")]
 #endif
         [Tooltip("If enabled — range is from local eulers at start; otherwise from 0.")]
         public bool limitsRelativeToInitial = true;
 
-        // ========== НАВЕДЕНИЕ ==========
+        // ========== TARGETING ==========
         [Header("Targeting")]
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение")]
+        [FoldoutGroup("Targeting")]
         [ToggleLeft]
-        [LabelText("Использовать мировые координаты мыши")]
+        [LabelText("Use Mouse World Position")]
         [OnValueChanged(nameof(OnUseMouseToggled))]
 #endif
         public bool useMouseWorld;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение")] [ShowIf("@!useMouseWorld")] [LabelText("Цель (Transform)")]
+        [FoldoutGroup("Targeting")] [ShowIf("@!useMouseWorld")] [LabelText("Target (Transform)")]
 #endif
         public Transform target;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение")]
+        [FoldoutGroup("Targeting")]
         [ShowIf("@useMouseWorld")]
         [InlineButton(nameof(UseMainCamera), "Main")]
 #endif
@@ -116,27 +121,27 @@ namespace Neo.Tools
         [Tooltip("Camera for mouse mode. If empty — Camera.main is used.")]
         public Camera targetCamera;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение/MOUSE 3D")]
+        [FoldoutGroup("Targeting/MOUSE 3D")]
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
-        [LabelText("Режим 3D мыши")]
+        [LabelText("Mouse 3D Mode")]
 #endif
         public Mouse3DMode mouse3DMode = Mouse3DMode.PlaneThroughObject;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение/MOUSE 3D")]
+        [FoldoutGroup("Targeting/MOUSE 3D")]
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
-        [LabelText("Нормаль плоскости")]
+        [LabelText("Plane Normal")]
 #endif
 
         [Tooltip("For PlaneThroughObject. Y = horizontal plane.")]
         public Axis planeAxis = Axis.Y;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение/MOUSE 3D")]
+        [FoldoutGroup("Targeting/MOUSE 3D")]
         [ShowIf("@useMouseWorld && rotationMode == RotationMode.Mode3D")]
-        [LabelText("Слои Raycast (3D)")]
+        [LabelText("Raycast Layers (3D)")]
 #endif
         public LayerMask mouseRaycastMask = Physics.DefaultRaycastLayers;
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение/3D")]
+        [FoldoutGroup("Targeting/3D")]
         [ShowIf("@rotationMode == RotationMode.Mode3D")]
         [LabelText("World Up")]
 #endif
@@ -146,20 +151,20 @@ namespace Neo.Tools
 
         private Transform cachedParent;
 #if ODIN_INSPECTOR
-        [ShowInInspector] [ReadOnly] [FoldoutGroup("Отладка")] [LabelText("Текущий источник наведения")]
+        [ShowInInspector] [ReadOnly] [FoldoutGroup("Debug")] [LabelText("Current Aim Source")]
 #endif
-        // ========== ВНУТРЕННЕЕ СОСТОЯНИЕ ==========
+        // ========== INTERNAL STATE ==========
         private AimSource currentAim = AimSource.None;
 
         private Vector3 initialLocalEuler;
 
         private Vector3 manualWorldPoint;
 
-        // В 2D показываем отдельный слайдер для Z, который мапится на rotationOffsetEuler.z
+        // In 2D we expose a separate Z slider mapped to rotationOffsetEuler.z
 #if ODIN_INSPECTOR
         [ShowInInspector]
         [ShowIf("@rotationMode == RotationMode.Mode2D")]
-        [LabelText("Офсет Z (2D)")]
+        [LabelText("Offset Z (2D)")]
         [PropertyRange(-180, 180)]
 #endif
 
@@ -182,10 +187,10 @@ namespace Neo.Tools
                 : AimSource.None;
         }
 
-        // ========= ЖИЗНЕННЫЙ ЦИКЛ =========
+        // ========= LIFECYCLE =========
         private void Reset()
         {
-            TryAssignMainCameraIfNull(); // сразу заполним в инспекторе
+            TryAssignMainCameraIfNull(); // populate a sensible default in Inspector
         }
 
         private void Update()
@@ -226,14 +231,14 @@ namespace Neo.Tools
         private void OnValidate()
         {
             TryAssignMainCameraIfNull();
-            // Нормализуем диапазон (исправляем NaN/Inf)
+            // Normalize range (guard against NaN/Inf)
             limitRange.x = Mathf.Clamp(limitRange.x, -360f, 360f);
             limitRange.y = Mathf.Clamp(limitRange.y, -360f, 360f);
         }
 
-        // ========== КНОПКИ ==========
+        // ========== EDITOR BUTTONS ==========
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение")]
+        [FoldoutGroup("Targeting")]
         [DisableInEditorMode]
 #endif
         [Button]
@@ -242,7 +247,7 @@ namespace Neo.Tools
             ClearTarget();
         }
 #if ODIN_INSPECTOR
-        [FoldoutGroup("Наведение")]
+        [FoldoutGroup("Targeting")]
         [ShowIf("@target != null && !useMouseWorld")]
 #endif
         [Button("Look at Target Instantly")]
@@ -255,9 +260,9 @@ namespace Neo.Tools
             }
         }
 
-        // ========= ПУБЛИЧНЫЕ API =========
+        // ========= PUBLIC API =========
 
-        /// <summary>Установить цель (Transform). Отключает режим мыши.</summary>
+        /// <summary>Sets a target Transform. Disables mouse mode.</summary>
         public void SetTarget(Transform newTarget)
         {
             target = newTarget;
@@ -265,14 +270,14 @@ namespace Neo.Tools
             currentAim = target ? AimSource.Transform : AimSource.None;
         }
 
-        /// <summary>Убрать цель. Если включен режим мыши — будет использована мышь.</summary>
+        /// <summary>Clears the current target. If mouse mode is enabled, mouse becomes the aim source.</summary>
         public void ClearTarget()
         {
             target = null;
             currentAim = useMouseWorld ? AimSource.Mouse : AimSource.None;
         }
 
-        /// <summary>Поворот к мировой точке. Если instant=true — сразу установить, иначе — плавно доворачивать.</summary>
+        /// <summary>Aims at a world point. If <paramref name="instant"/> is true, applies rotation immediately; otherwise rotates smoothly.</summary>
         public void RotateTo(Vector3 worldPoint, bool instant = false)
         {
             manualWorldPoint = worldPoint;
@@ -285,7 +290,7 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Поворот к направлению (world direction).</summary>
+        /// <summary>Aims at a world direction (vector), converted internally to a point.</summary>
         public void RotateToDirection(Vector3 worldDirection, bool instant = false)
         {
             if (worldDirection.sqrMagnitude < 1e-8f)
@@ -296,7 +301,7 @@ namespace Neo.Tools
             RotateTo(transform.position + worldDirection, instant);
         }
 
-        /// <summary>Повернуть на deltaDegrees вокруг рабочей оси (в 2D — всегда Z, в 3D — limitedAxis3D).</summary>
+        /// <summary>Rotates by <paramref name="deltaDegrees"/> around the working axis (Z in 2D, <c>limitedAxis3D</c> in 3D).</summary>
         public void RotateBy(float deltaDegrees)
         {
             Axis axisUsed = GetActiveAxis();
@@ -304,7 +309,7 @@ namespace Neo.Tools
             RotateBy(delta);
         }
 
-        /// <summary>Повернуть на eulerDelta (локальные Эйлеры). Ограничения учитываются.</summary>
+        /// <summary>Rotates by local Euler delta. Limits are applied.</summary>
         public void RotateBy(Vector3 eulerDelta)
         {
             Vector3 local = transform.localEulerAngles;
@@ -323,7 +328,7 @@ namespace Neo.Tools
             transform.localRotation = Quaternion.Euler(local);
         }
 
-        // ========= ОСНОВНАЯ ЛОГИКА =========
+        // ========= MAIN LOGIC =========
         private void Tick(float dt)
         {
             Vector3? maybePoint = GetAimPointWorld();
@@ -432,7 +437,7 @@ namespace Neo.Tools
             transform.rotation = desiredWorld;
         }
 
-        // ========= МЫШЬ =========
+        // ========= MOUSE =========
         private Vector3? GetMouseWorldPoint2D()
         {
             Camera cam = GetCamera();
@@ -466,7 +471,7 @@ namespace Neo.Tools
                 }
             }
 
-            // фоллбэк ниже
+            // fallback below
             Vector3 normal = AxisToWorldVector(planeAxis);
             Plane plane = new(normal, transform.position);
 
@@ -478,7 +483,7 @@ namespace Neo.Tools
             return null;
         }
 
-        // ========= ВСПОМОГАТЕЛЬНОЕ =========
+        // ========= HELPERS =========
         private Axis GetActiveAxis()
         {
             return rotationMode == RotationMode.Mode2D ? Axis.Z : limitedAxis3D;

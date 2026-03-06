@@ -53,28 +53,21 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
+        [Header("Cursor")]
+        [SerializeField] private bool _lockCursorOnStart = true;
+        [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
+        [SerializeField] private bool _pauseLookWhenCursorVisible = true;
+        [Tooltip("Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
+        [SerializeField] private bool _lookEnabled = true;
+        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")]
+        [SerializeField] private bool _disableLookOnPause = true;
+        [Tooltip("When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
+        [SerializeField] private bool _toggleCursorOnEscape = true;
+        [Tooltip("Optional external cursor controller (for menu/pause pages or a shared UI root). If assigned and active, this controller becomes the authoritative cursor source instead of a same-object CursorLockController.")]
+        [SerializeField] private CursorLockController _externalCursorLockController;
 
-        [Tooltip(
-            "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
-        [SerializeField]
-        private bool _pauseLookWhenCursorVisible = true;
-
-        [Tooltip(
-            "Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
-        [SerializeField]
-        private bool _lookEnabled = true;
-
-        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")] [SerializeField]
-        private bool _disableLookOnPause = true;
-
-        [Tooltip(
-            "When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
-        [SerializeField]
-        private bool _toggleCursorOnEscape = true;
-
-        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
-
+        [Header("Events")]
+        [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();
@@ -132,11 +125,15 @@ namespace Neo.Tools
             _rigidbody.freezeRotation = true;
             _pitch = _cameraPivot != null ? NormalizePitch(_cameraPivot.localEulerAngles.x) : 0f;
             _yaw = transform.eulerAngles.y;
+            if (_externalCursorLockController == null)
+            {
+                _externalCursorLockController = GetComponent<CursorLockController>();
+            }
         }
 
         private void Start()
         {
-            if (_lockCursorOnStart)
+            if (_lockCursorOnStart && !HasExternalCursorControl())
             {
                 SetCursorLocked(true);
             }
@@ -144,7 +141,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (_toggleCursorOnEscape && Input.GetKeyDown(KeyCode.Escape))
+            if (_toggleCursorOnEscape && !HasExternalCursorControl() && Input.GetKeyDown(KeyCode.Escape))
             {
                 if (Cursor.visible)
                 {
@@ -243,7 +240,7 @@ namespace Neo.Tools
         public void SetLookEnabled(bool enabled)
         {
             _lookEnabled = enabled;
-            if (enabled && _pauseLookWhenCursorVisible)
+            if (enabled && _pauseLookWhenCursorVisible && !HasExternalCursorControl())
             {
                 SetCursorLocked(true);
             }
@@ -262,6 +259,13 @@ namespace Neo.Tools
         {
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
+        }
+
+        private bool HasExternalCursorControl()
+        {
+            return _externalCursorLockController != null &&
+                   _externalCursorLockController.enabled &&
+                   _externalCursorLockController.ControllerEnabled;
         }
 
         /// <summary>

@@ -33,6 +33,10 @@
 - Есть смещение угла движения (`_movementYawOffset`) для тонкой настройки направлений WASD.
 - Может блокировать курсор на старте.
 - **Pause Look When Cursor Visible** (по умолчанию включено): при видимом курсоре (`Cursor.visible == true`) не обрабатывает ввод мыши и не вращает камеру. Удобно для паузы/меню без связи с `CursorLockController`.
+- Если на том же объекте активен `CursorLockController`, встроенные `_lockCursorOnStart` и `_toggleCursorOnEscape` автоматически не используются, чтобы не было двойного управления курсором.
+- Можно назначить **External Cursor Lock Controller**: тогда контроллер игрока будет уважать `CursorLockController`, который находится не на игроке, а, например, на странице меню/паузы или на общем UI-root.
+- Внешний `CursorLockController` может работать как в automatic-, так и в manual-сценариях. Рекомендуемый дефолтный режим для него — **AutomaticAndManual**.
+- В `CursorLockController` можно опционально включить отдельный `Cursor Access Key` (например `Z`) для быстрого показа курсора в hold- или toggle-режиме, если игроку нужен временный доступ к UI без открытия отдельного меню. По умолчанию этот режим выключен.
 
 ---
 
@@ -70,6 +74,8 @@
 - `_lookYawMode` — как применять горизонтальный поворот.
 - `_minPitch`, `_maxPitch` — лимиты вертикального взгляда.
 - `_lockCursorOnStart` — блокировка курсора при запуске.
+- `_toggleCursorOnEscape` — локальный toggle по Escape. Используйте его, только если **нет** `CursorLockController` на том же объекте.
+- `_externalCursorLockController` — внешний `CursorLockController`. Нужен, если курсором управляет не сам игрок, а отдельный UI-объект.
 
 События **OnMoveStart** / **OnMoveStop** вызываются при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
 
@@ -86,7 +92,29 @@
 
 ---
 
-## 6. Быстрый тест
+## 6. Сценарий: меню или пауза как отдельная UI-страница
+
+Если меню/пауза живут отдельным объектом страницы, удобная схема такая:
+
+1. На игроке:
+   - `Pause Look When Cursor Visible = true`
+   - `_toggleCursorOnEscape = false`, если курсором будет управлять UI-страница
+   - при использовании внешней страницы назначьте её `CursorLockController` в поле **External Cursor Lock Controller**
+2. На объекте страницы:
+   - `CursorLockController`
+   - `Apply On Enable = true`, `Lock On Enable = false`
+   - `Apply On Disable = true`, `Lock On Disable = true`
+3. В события открытия/закрытия страницы добавьте:
+   - открыть страницу → `PlayerController3DPhysics.SetLookEnabled(false)`
+   - закрыть страницу → `PlayerController3DPhysics.SetLookEnabled(true)`
+
+Так страница берёт мышь под UI, а игрок возвращает обзор при закрытии страницы. Если внешний `CursorLockController` назначен в поле игрока, локальный Escape-toggle у игрока не будет конфликтовать с этим UI-источником управления.
+
+Если у вас несколько UI-страниц или временных механик, которые хотят забирать курсор, используйте отдельные `CursorLockController` и отпускайте временное владение через `ReleaseControl()`. Подробная схема описана в [`CursorLockController.md`](./CursorLockController.md).
+
+---
+
+## 7. Быстрый тест
 
 1. Добавьте плоскость (`Plane`) как землю.
 2. Поместите игрока выше земли (`Y > 1`).

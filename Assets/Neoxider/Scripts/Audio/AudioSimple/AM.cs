@@ -13,10 +13,7 @@ namespace Neo
             [Range(0f, 1f)] public float volume = 1;
         }
 
-        /// <summary>
-        ///     Центральный аудио менеджер для воспроизведения звуковых эффектов и музыки.
-        ///     Поддерживает как конкретную музыку из списка, так и случайное воспроизведение.
-        /// </summary>
+        /// <summary>Central audio manager for sound effects and music. Supports both specific tracks and random playback.</summary>
         [NeoDoc("Audio/AM.md")]
         [CreateFromMenu("Neoxider/Audio/AM")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AM))]
@@ -37,14 +34,10 @@ namespace Neo
             public float startVolumeEfx { get; set; } = 1f;
             public float startVolumeMusic { get; set; } = 1f;
 
-            /// <summary>
-            ///     AudioSource для воспроизведения звуковых эффектов.
-            /// </summary>
+            /// <summary>AudioSource for sound effects.</summary>
             public AudioSource Efx => _efx;
 
-            /// <summary>
-            ///     AudioSource для воспроизведения музыки.
-            /// </summary>
+            /// <summary>AudioSource for music.</summary>
             public AudioSource Music => _music;
 
             private void OnValidate()
@@ -60,19 +53,13 @@ namespace Neo
                 }
             }
 
-            /// <summary>
-            ///     Событие вызывается при начале воспроизведения музыки.
-            /// </summary>
+            /// <summary>Raised when music starts playing.</summary>
             public event Action<AudioClip> OnMusicStarted;
 
-            /// <summary>
-            ///     Событие вызывается при остановке музыки.
-            /// </summary>
+            /// <summary>Raised when music stops.</summary>
             public event Action OnMusicStopped;
 
-            /// <summary>
-            ///     Событие вызывается при смене трека в режиме случайной музыки.
-            /// </summary>
+            /// <summary>Raised when random music track changes.</summary>
             public event Action<AudioClip> OnRandomMusicTrackChanged;
 
             protected override void Init()

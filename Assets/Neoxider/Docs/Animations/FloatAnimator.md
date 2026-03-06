@@ -165,3 +165,11 @@ public class AnimationController : MonoBehaviour
 - Минимальные вычисления каждый кадр
 - События вызываются только при изменении значений
 - Автоматическая валидация параметров
+
+## См. также
+
+- [Vector3Animator](Vector3Animator.md) — анимация Vector3
+- [ColorAnimator](ColorAnimator.md) — анимация цвета
+- [AnimationType](AnimationType.md) — типы анимации
+- [Tools/View/LightAnimator](../Tools/View/LightAnimator.md) — анимация света
+- [README](README.md) — обзор модуля Animations

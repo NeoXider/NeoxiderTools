@@ -6,35 +6,27 @@ using UnityEngine.Events;
 
 namespace Neo.Tools
 {
-    /// <summary>
-    ///     Режим значения счётчика: целое (Int) или дробное (Float).
-    /// </summary>
+    /// <summary>Counter value mode: integer (Int) or float (Float).</summary>
     public enum CounterValueMode
     {
         Int = 0,
         Float = 1
     }
 
-    /// <summary>
-    ///     Источник значения, передаваемого в OnSend при вызове Send() без аргумента.
-    /// </summary>
+    /// <summary>Source of value passed to OnSend when Send() is called with no argument.</summary>
     public enum CounterSendPayload
     {
-        /// <summary>В OnSend передаётся текущее значение счётчика.</summary>
+        /// <summary>OnSend receives current counter value.</summary>
         Counter = 0,
 
-        /// <summary>В OnSend передаётся текущий счёт ScoreManager.</summary>
+        /// <summary>OnSend receives current ScoreManager score.</summary>
         Score = 1,
 
-        /// <summary>В OnSend передаётся текущее значение Money.</summary>
+        /// <summary>OnSend receives current Money value.</summary>
         Money = 2
     }
 
-    /// <summary>
-    ///     Универсальный счётчик: хранит число (int или float), Add/Subtract/Multiply/Divide/Set, Send с событием.
-    ///     События по типу: OnValueChangedInt / OnValueChangedFloat, OnSendInt / OnSendFloat (в зависимости от режима).
-    ///     Опционально сохраняет значение через SaveProvider по ключу (по умолчанию выключено).
-    /// </summary>
+    /// <summary>Universal counter: holds a number (int or float), Add/Subtract/Multiply/Divide/Set, Send with events. Events by type: OnValueChangedInt/Float, OnSendInt/OnSendFloat. Optionally saves via SaveProvider (off by default).</summary>
     [NeoDoc("Tools/Components/Counter.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
@@ -56,8 +48,7 @@ namespace Neo.Tools
         private string _saveKey = "Counter";
 
         [SerializeField]
-        [Tooltip(
-            "При загрузке значения в Start вызывать OnValueChanged* (чтобы UI и подписчики применили загруженное значение). По умолчанию вкл.")]
+        [Tooltip("When loading value in Start, invoke OnValueChanged* so UI and subscribers apply loaded value. On by default.")]
         private bool _invokeEventsOnLoad = true;
 
         [Space]
@@ -74,16 +65,13 @@ namespace Neo.Tools
         [Tooltip("Invoked on Send() in Float mode. Passes value (Payload or argument).")]
         public UnityEvent<float> OnSendFloat = new();
 
-        [Tooltip(
-            "Вызывается при Send(). Передаётся значение (float). Для типизированных подписок используйте OnSendInt / OnSendFloat.")]
+        [Tooltip("Invoked on Send(); passes value as float. For typed subscriptions use OnSendInt / OnSendFloat.")]
         public UnityEvent<float> OnSend = new();
 
-        /// <summary>Текущее значение счётчика (целое в режиме Int).</summary>
-        public int ValueInt => _valueMode == CounterValueMode.Int
-            ? Mathf.RoundToInt(Value.CurrentValue)
-            : (int)Value.CurrentValue;
+        /// <summary>Current counter value as int (rounded in Float mode).</summary>
+        public int ValueInt => _valueMode == CounterValueMode.Int ? Mathf.RoundToInt(Value.CurrentValue) : (int)Value.CurrentValue;
 
-        /// <summary>Текущее значение счётчика как float.</summary>
+        /// <summary>Current counter value as float.</summary>
         public float ValueFloat => Value.CurrentValue;
 
         private void Start()
@@ -98,7 +86,8 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Увеличивает счётчик на <paramref name="amount" />.</summary>
+        /// <summary>Adds amount to the counter.</summary>
+        /// <param name="amount">Value to add.</param>
         [Button]
         public void Add(int amount)
         {
@@ -111,7 +100,7 @@ namespace Neo.Tools
             ApplyDelta(amount);
         }
 
-        /// <summary>Уменьшает счётчик на <paramref name="amount" />.</summary>
+        /// <summary>Subtracts amount from the counter.</summary>
         [Button]
         public void Subtract(int amount)
         {
@@ -124,7 +113,7 @@ namespace Neo.Tools
             ApplyDelta(-amount);
         }
 
-        /// <summary>Умножает счётчик на <paramref name="factor" />.</summary>
+        /// <summary>Multiplies the counter by factor.</summary>
         [Button]
         public void Multiply(int factor)
         {
@@ -137,7 +126,7 @@ namespace Neo.Tools
             ApplyFactor(factor);
         }
 
-        /// <summary>Делит счётчик на <paramref name="divisor" />. При делении на 0 значение не меняется.</summary>
+        /// <summary>Divides the counter by divisor. No change if divisor is 0.</summary>
         [Button]
         public void Divide(int divisor)
         {
@@ -160,7 +149,7 @@ namespace Neo.Tools
             ApplyFactor(1f / divisor);
         }
 
-        /// <summary>Устанавливает значение счётчика.</summary>
+        /// <summary>Sets the counter value.</summary>
         [Button]
         public void Set(int value)
         {
@@ -173,7 +162,7 @@ namespace Neo.Tools
             SetValue(_valueMode == CounterValueMode.Int ? Mathf.RoundToInt(value) : value);
         }
 
-        /// <summary>Отправляет событие OnSend с значением по Send Payload. Счётчик не меняется.</summary>
+        /// <summary>Invokes OnSend with value from Send Payload. Counter value is not changed.</summary>
         [Button]
         public void Send()
         {
@@ -181,7 +170,7 @@ namespace Neo.Tools
             InvokeSend(payload);
         }
 
-        /// <summary>Отправляет событие OnSend с указанным числом. Счётчик не изменяется.</summary>
+        /// <summary>Invokes OnSend with the given value. Counter value is not changed.</summary>
         [Button]
         public void Send(float valueToSend)
         {

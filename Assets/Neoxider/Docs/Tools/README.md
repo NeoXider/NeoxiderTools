@@ -1,141 +1,36 @@
-# Инструменты (Tools)
+# Tools
 
-**Что это:** раздел документации по утилитам и компонентам: спавнеры, таймеры, физика, ввод, Counter, Inventory, Move, View, Text, Random, Dialogue и др. Скрипты в `Scripts/Tools/` и подпапках.
+Раздел `Tools` содержит готовые gameplay-утилиты и reusable-компоненты, которые чаще всего добавляются прямо на объекты сцены.
 
-**Навигация:** [← К Docs](../README.md) · подмодули — таблица ниже
+## С чего начать
 
-**Оглавление:**
+- Нужен инвентарь, подбор предметов, дроп и hand-view: [`Inventory/README.md`](./Inventory/README.md)
+- Нужен спавн или object pooling: [`Spawner/README.md`](./Spawner/README.md)
+- Нужен movement/input workflow: [`Move/README.md`](./Move/README.md) и [`Input/README.md`](./Input/README.md)
+- Нужен диалоговый UI flow: [`Dialogue/README.md`](./Dialogue/README.md)
+- Нужны utility-компоненты (`Counter`, `Health`, `AnimatorParameterDriver`): [`Components/README.md`](./Components/README.md)
 
-### Файлы в корне Tools
+## Индекс подмодулей
 
-- [CameraAspectRatioScaler](./CameraAspectRatioScaler.md)
-- [UpdateChilds](./UpdateChilds.md)
+| Подмодуль | Что внутри | Документация |
+|-----------|------------|--------------|
+| **Components** | `Counter`, `Loot`, `ScoreManager`, `TypewriterEffect` | [`Components/README.md`](./Components/README.md) |
+| **Dialogue** | `DialogueController`, `DialogueData`, `DialogueUI` | [`Dialogue/README.md`](./Dialogue/README.md) |
+| **Input** | `MouseEffect`, `MouseInputManager`, `MultiKeyEventTrigger` | [`Input/README.md`](./Input/README.md) |
+| **Inventory** | `InventoryComponent`, `InventoryDropper`, `PickableItem` | [`Inventory/README.md`](./Inventory/README.md) |
+| **InteractableObject** | `InteractiveObject`, `PhysicsEvents2D`, `PhysicsEvents3D` | [`InteractableObject/README.md`](./InteractableObject/README.md) |
+| **Managers** | `Bootstrap`, `EM`, `GM`, `Singleton` | [`Managers/README.md`](./Managers/README.md) |
+| **Move** | Контроллеры движения, камеры и курсора | [`Move/README.md`](./Move/README.md) |
+| **Physics** | `ExplosiveForce`, `ImpulseZone`, `MagneticField` | [`Physics/README.md`](./Physics/README.md) |
+| **Random** | `ChanceManager`, `ChanceSystemBehaviour`, chance data | [`Random/README.md`](./Random/README.md) |
+| **Spawner** | `PoolManager`, `NeoObjectPool`, `Spawner` | [`Spawner/README.md`](./Spawner/README.md) |
+| **Text** | `SetText`, `TimeToText` | [`Text/README.md`](./Text/README.md) |
+| **Time** | `Timer`, `TimerObject` | [`Time/README.md`](./Time/README.md) |
+| **View** | `Selector`, `StarView`, billboard/view helpers | [`View/README.md`](./View/README.md) |
 
-### Модули
+## Отдельные файлы верхнего уровня
 
-- **Components**
-  - [Loot](./Components/Loot.md)
-  - [ScoreManager](./Components/ScoreManager.md)
-  - [TypewriterEffect](./Components/TypewriterEffect.md)
-  - [README](./Components/README.md)
-  - **AttackSystem**
-    - [AdvancedAttackCollider](./Components/AttackSystem/AdvancedAttackCollider.md)
-    - [AttackExecution](./Components/AttackSystem/AttackExecution.md)
-    - [Evade](./Components/AttackSystem/Evade.md)
-    - [Health](./Components/AttackSystem/Health.md)
-    - [README](./Components/AttackSystem/README.md)
-  - **Interface**
-    - [InterfaceAttack](./Components/Interface/InterfaceAttack.md)
-    - [README](./Components/Interface/README.md)
-- **Debug**
-  - [ErrorLogger](./Debug/ErrorLogger.md)
-  - [FPS](./Debug/FPS.md)
-  - [README](./Debug/README.md)
-- **Draw**
-  - [Drawer](./Draw/Drawer.md)
-  - [README](./Draw/README.md)
-- **Dialogue**
-  - [DialogueController](./Dialogue/DialogueController.md)
-  - [DialogueData](./Dialogue/DialogueData.md)
-  - [DialogueUI](./Dialogue/DialogueUI.md)
-  - [README](./Dialogue/README.md)
-- **FakeLeaderboard**
-  - [Leaderboard](./FakeLeaderboard/Leaderboard.md)
-  - [LeaderboardItem](./FakeLeaderboard/LeaderboardItem.md)
-  - [LeaderboardMove](./FakeLeaderboard/LeaderboardMove.md)
-  - [README](./FakeLeaderboard/README.md)
-- **Input**
-  - [MouseEffect](./Input/MouseEffect.md)
-  - [MouseInputManager](./Input/MouseInputManager.md)
-  - [MultiKeyEventTrigger](./Input/MultiKeyEventTrigger.md)
-  - [SwipeController](./Input/SwipeController.md)
-  - [README](./Input/README.md)
-- **Inventory**
-  - [README](./Inventory/README.md)
-  - [InventoryComponent](./Inventory/InventoryComponent.md)
-  - [InventoryView](./Inventory/InventoryView.md)
-  - [InventoryItemView](./Inventory/InventoryItemView.md)
-  - [InventoryItemCountText](./Inventory/InventoryItemCountText.md)
-  - [InventoryTotalCountText](./Inventory/InventoryTotalCountText.md)
-  - [InventoryPickupBridge](./Inventory/InventoryPickupBridge.md)
-  - [PickableItem](./Inventory/PickableItem.md)
-  - [InventoryDropper](./Inventory/InventoryDropper.md)
-  - [HandView](./Inventory/HandView.md)
-- **InteractableObject**
-  - [InteractiveObject](./InteractableObject/InteractiveObject.md)
-  - [PhysicsEvents2D](./InteractableObject/PhysicsEvents2D.md)
-  - [PhysicsEvents3D](./InteractableObject/PhysicsEvents3D.md)
-  - [ToggleObject](./InteractableObject/ToggleObject.md)
-  - [README](./InteractableObject/README.md)
-- **Managers**
-  - [Bootstrap](./Managers/Bootstrap.md)
-  - [EM](./Managers/EM.md)
-  - [GM](./Managers/GM.md)
-  - [Singleton](./Managers/Singleton.md)
-  - [SingletonById](./Managers/SingletonById.md)
-  - [README](./Managers/README.md)
-- **Move**
-  - [AdvancedForceApplier](./Move/AdvancedForceApplier.md)
-  - [CameraConstraint](./Move/CameraConstraint.md)
-  - [CameraRotationController](./Move/CameraRotationController.md)
-  - [CursorLockController](./Move/CursorLockController.md)
-  - [DistanceChecker](./Move/DistanceChecker.md)
-  - [Follow](./Move/Follow.md)
-  - [PlayerController2DPhysics](./Move/PlayerController2DPhysics.md)
-  - [PlayerController3DPhysics](./Move/PlayerController3DPhysics.md)
-  - [ScreenPositioner](./Move/ScreenPositioner.md)
-  - [UniversalRotator](./Move/UniversalRotator.md)
-  - [README](./Move/README.md)
-  - **MovementToolkit**
-    - [IMover](./Move/MovementToolkit/IMover.md)
-    - [KeyboardMover](./Move/MovementToolkit/KeyboardMover.md)
-    - [MouseMover2D](./Move/MovementToolkit/MouseMover2D.md)
-    - [MouseMover3D](./Move/MovementToolkit/MouseMover3D.md)
-    - [README](./Move/MovementToolkit/README.md)
-- **Other**
-  - [AiNavigation](./Other/AiNavigation.md)
-  - [BillboardUniversal](./Other/BillboardUniversal.md)
-  - [CameraShake](./Other/CameraShake.md)
-  - [RevertAmount](./Other/RevertAmount.md)
-  - [SpineController](./Other/SpineController.md)
-  - [README](./Other/README.md)
-- **Physics**
-  - [ExplosiveForce](./Physics/ExplosiveForce.md)
-  - [ImpulseZone](./Physics/ImpulseZone.md)
-  - [MagneticField](./Physics/MagneticField.md)
-  - [README](./Physics/README.md)
-- **Random**
-  - [ChanceManager](./Random/ChanceManager.md)
-  - [ChanceSystemBehaviour](./Random/ChanceSystemBehaviour.md)
-  - [README](./Random/README.md)
-  - **Data**
-    - [ChanceData](./Random/Data/ChanceData.md)
-    - [README](./Random/Data/README.md)
-- **Spawner**
-  - [SpawnUtility](./Spawner/SpawnUtility.md)
-  - [ObjectPool](./Spawner/ObjectPool.md)
-  - [SimpleSpawner](./Spawner/SimpleSpawner.md)
-  - [Spawner](./Spawner/Spawner.md)
-  - [Despawner](./Spawner/Despawner.md)
-  - [PoolableBehaviour](./Spawner/PoolableBehaviour.md)
-  - [PooledObjectInfo](./Spawner/PooledObjectInfo.md)
-  - [PoolManager](./Spawner/PoolManager.md)
-  - [IPoolable](./Spawner/IPoolable.md)
-  - [README](./Spawner/README.md)
-- **Text**
-  - [SetText](./Text/SetText.md)
-  - [TimeToText](./Text/TimeToText.md)
-  - [README](./Text/README.md)
-- **Time**
-  - [Timer](./Time/Timer.md)
-  - [TimerObject](./Time/TimerObject.md)
-  - [README](./Time/README.md)
-- **View**
-  - [ImageFillAmountAnimator](./View/ImageFillAmountAnimator.md)
-  - [LightAnimator](./View/LightAnimator.md)
-  - [MeshEmission](./View/MeshEmission.md)
-  - [Selector](./View/Selector.md)
-  - [StarView](./View/StarView.md)
-  - [ZPositionAdjuster](./View/ZPositionAdjuster.md)
-  - [BillboardUniversal](./View/BillboardUniversal.md)
-  - [README](./View/README.md)
+| Файл | Назначение |
+|------|------------|
+| [`CameraAspectRatioScaler.md`](./CameraAspectRatioScaler.md) | Масштабирование под aspect ratio |
+| [`UpdateChilds.md`](./UpdateChilds.md) | Утилита обновления дочерних объектов |

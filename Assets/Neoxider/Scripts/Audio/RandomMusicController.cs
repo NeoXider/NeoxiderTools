@@ -6,10 +6,7 @@ using UnityEngine;
 
 namespace Neo.Audio
 {
-    /// <summary>
-    ///     Контроллер для воспроизведения случайной музыки из списка треков без повторов подряд.
-    ///     Не является MonoBehaviour, управляется через AM.
-    /// </summary>
+    /// <summary>Controller for random music playback from a track list without consecutive repeats. Not a MonoBehaviour; used by AM.</summary>
     public class RandomMusicController
     {
         private AudioSource _audioSource;
@@ -60,9 +57,7 @@ namespace Neo.Audio
             _tracks = tracks ?? Array.Empty<AudioClip>();
         }
 
-        /// <summary>
-        ///     Начинает воспроизведение случайной музыки из списка треков.
-        /// </summary>
+        /// <summary>Starts random music playback from the track list.</summary>
         public void Start()
         {
             if (_audioSource == null)

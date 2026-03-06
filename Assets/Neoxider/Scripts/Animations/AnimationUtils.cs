@@ -2,26 +2,21 @@ using UnityEngine;
 
 namespace Neo.Animations
 {
-    /// <summary>
-    ///     Статические вспомогательные методы для анимации различных компонентов.
-    ///     Предоставляет универсальные функции расчета анимированных значений по времени.
-    /// </summary>
+    /// <summary>Static helper methods for animating various components. Provides universal functions to compute animated values over time.</summary>
     public static class AnimationUtils
     {
         // -------------------------------------------------
         // 1) Перлин‑шум
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Получает значение шума Перлина для анимации.
-        /// </summary>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации</param>
-        /// <param name="randomOffset">Случайное смещение для уникальности</param>
-        /// <param name="noiseOffset">Дополнительное смещение шума</param>
-        /// <param name="noiseScale">Масштаб шума</param>
-        /// <param name="use2DNoise">Использовать 2D шум вместо 1D</param>
-        /// <returns>Значение шума от 0 до 1</returns>
+        /// <summary>Gets a Perlin noise value for animation.</summary>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="randomOffset">Random offset for uniqueness.</param>
+        /// <param name="noiseOffset">Additional noise offset.</param>
+        /// <param name="noiseScale">Noise scale.</param>
+        /// <param name="use2DNoise">Use 2D noise instead of 1D.</param>
+        /// <returns>Noise value between 0 and 1.</returns>
         public static float GetPerlinNoiseValue(
             float animationTime,
             float speed,
@@ -45,20 +40,18 @@ namespace Neo.Animations
         // 2) Целевое значение по типу анимации
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Получает целевое значение анимации на основе типа и времени.
-        /// </summary>
-        /// <param name="type">Тип анимации</param>
-        /// <param name="min">Минимальное значение</param>
-        /// <param name="max">Максимальное значение</param>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации (если 0, возвращает min)</param>
-        /// <param name="use2DNoise">Использовать 2D шум для PerlinNoise</param>
-        /// <param name="randomOffset">Случайное смещение</param>
-        /// <param name="noiseOffset">Смещение шума</param>
-        /// <param name="noiseScale">Масштаб шума</param>
-        /// <param name="customCurve">Пользовательская кривая для CustomCurve типа</param>
-        /// <returns>Анимированное значение между min и max</returns>
+        /// <summary>Gets the target animation value based on type and time.</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="min">Minimum value.</param>
+        /// <param name="max">Maximum value.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed (if 0, returns min).</param>
+        /// <param name="use2DNoise">Use 2D noise for PerlinNoise.</param>
+        /// <param name="randomOffset">Random offset.</param>
+        /// <param name="noiseOffset">Noise offset.</param>
+        /// <param name="noiseScale">Noise scale.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated value between min and max.</returns>
         public static float GetTargetValue(
             AnimationType type,
             float min,
@@ -132,13 +125,11 @@ namespace Neo.Animations
         // 3) Фактор смешивания цвета
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Получает фактор смешивания цвета для плавного перехода между цветами.
-        /// </summary>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации</param>
-        /// <param name="blendSpeed">Скорость смешивания цветов</param>
-        /// <returns>Фактор смешивания от 0 до 1</returns>
+        /// <summary>Gets color blend factor for smooth transition between colors.</summary>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="blendSpeed">Color blend speed.</param>
+        /// <returns>Blend factor from 0 to 1.</returns>
         public static float GetColorBlendFactor(
             float animationTime,
             float speed,
@@ -151,15 +142,13 @@ namespace Neo.Animations
         // 4) Применение результата к Light (ILightAccessor)
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Применяет анимированные значения к источнику света.
-        /// </summary>
-        /// <param name="accessor">Интерфейс доступа к свету</param>
-        /// <param name="targetIntensity">Целевая интенсивность</param>
-        /// <param name="originalColor">Исходный цвет</param>
-        /// <param name="changeColor">Изменять ли цвет</param>
-        /// <param name="targetColor">Целевой цвет</param>
-        /// <param name="colorBlendFactor">Фактор смешивания цвета</param>
+        /// <summary>Applies animated values to a light source.</summary>
+        /// <param name="accessor">Light accessor interface.</param>
+        /// <param name="targetIntensity">Target intensity.</param>
+        /// <param name="originalColor">Original color.</param>
+        /// <param name="changeColor">Whether to change color.</param>
+        /// <param name="targetColor">Target color.</param>
+        /// <param name="colorBlendFactor">Color blend factor.</param>
         public static void ApplyToLight(
             ILightAccessor accessor,
             float targetIntensity,
@@ -179,15 +168,13 @@ namespace Neo.Animations
         // 5) Применение результата к MeshRenderer
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Применяет анимированные значения к материалу меша для эмиссии.
-        /// </summary>
-        /// <param name="mat">Материал меша</param>
-        /// <param name="targetIntensity">Целевая интенсивность</param>
-        /// <param name="originalEmission">Исходный цвет эмиссии</param>
-        /// <param name="changeColor">Изменять ли цвет</param>
-        /// <param name="targetColor">Целевой цвет</param>
-        /// <param name="colorBlendFactor">Фактор смешивания цвета</param>
+        /// <summary>Applies animated values to mesh material for emission.</summary>
+        /// <param name="mat">Mesh material.</param>
+        /// <param name="targetIntensity">Target intensity.</param>
+        /// <param name="originalEmission">Original emission color.</param>
+        /// <param name="changeColor">Whether to change color.</param>
+        /// <param name="targetColor">Target color.</param>
+        /// <param name="colorBlendFactor">Color blend factor.</param>
         public static void ApplyToMesh(
             Material mat,
             float targetIntensity,
@@ -212,16 +199,14 @@ namespace Neo.Animations
         // 6) Универсальные методы для любых значений
         // -------------------------------------------------
 
-        /// <summary>
-        ///     Получает анимированное float значение.
-        /// </summary>
-        /// <param name="type">Тип анимации</param>
-        /// <param name="min">Минимальное значение</param>
-        /// <param name="max">Максимальное значение</param>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации</param>
-        /// <param name="customCurve">Пользовательская кривая для CustomCurve</param>
-        /// <returns>Анимированное значение</returns>
+        /// <summary>Gets an animated float value.</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="min">Minimum value.</param>
+        /// <param name="max">Maximum value.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated value.</returns>
         public static float GetAnimatedFloat(
             AnimationType type,
             float min,
@@ -234,16 +219,14 @@ namespace Neo.Animations
                 false, Vector2.zero, Vector2.zero, 1f, customCurve);
         }
 
-        /// <summary>
-        ///     Получает анимированный цвет путем интерполяции между двумя цветами.
-        /// </summary>
-        /// <param name="type">Тип анимации</param>
-        /// <param name="colorA">Первый цвет</param>
-        /// <param name="colorB">Второй цвет</param>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации</param>
-        /// <param name="customCurve">Пользовательская кривая для CustomCurve</param>
-        /// <returns>Анимированный цвет</returns>
+        /// <summary>Gets an animated color by interpolating between two colors.</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="colorA">First color.</param>
+        /// <param name="colorB">Second color.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated color.</returns>
         public static Color GetAnimatedColor(
             AnimationType type,
             Color colorA,
@@ -256,16 +239,14 @@ namespace Neo.Animations
             return Color.Lerp(colorA, colorB, factor);
         }
 
-        /// <summary>
-        ///     Получает анимированный Vector3 путем интерполяции между двумя векторами.
-        /// </summary>
-        /// <param name="type">Тип анимации</param>
-        /// <param name="vectorA">Первый вектор</param>
-        /// <param name="vectorB">Второй вектор</param>
-        /// <param name="animationTime">Текущее время анимации</param>
-        /// <param name="speed">Скорость анимации</param>
-        /// <param name="customCurve">Пользовательская кривая для CustomCurve</param>
-        /// <returns>Анимированный вектор</returns>
+        /// <summary>Gets an animated Vector3 by interpolating between two vectors.</summary>
+        /// <param name="type">Animation type.</param>
+        /// <param name="vectorA">First vector.</param>
+        /// <param name="vectorB">Second vector.</param>
+        /// <param name="animationTime">Current animation time.</param>
+        /// <param name="speed">Animation speed.</param>
+        /// <param name="customCurve">Custom curve for CustomCurve type.</param>
+        /// <returns>Animated vector.</returns>
         public static Vector3 GetAnimatedVector3(
             AnimationType type,
             Vector3 vectorA,
@@ -279,18 +260,16 @@ namespace Neo.Animations
         }
     }
 
-    /// <summary>
-    ///     Интерфейс для работы с различными типами источников света (Light, Light2D).
-    /// </summary>
+    /// <summary>Interface for different light source types (Light, Light2D).</summary>
     public interface ILightAccessor
     {
-        /// <summary>Интенсивность света</summary>
+        /// <summary>Light intensity.</summary>
         float Intensity { get; set; }
 
-        /// <summary>Цвет света</summary>
+        /// <summary>Light color.</summary>
         Color Color { get; set; }
 
-        /// <summary>Название реализации (для отладки)</summary>
+        /// <summary>Implementation name (for debugging).</summary>
         string ImplName { get; }
     }
 }

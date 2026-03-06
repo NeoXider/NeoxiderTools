@@ -235,3 +235,11 @@ timerObject.OnTimerCompleted.AddListener(() => {
 | Общее реальное время с первого запуска | `true` | `true` | **RealTime** |
 | Прогресс уровня (секунды в игре) | `true` | `false` | **Seconds** |
 
+---
+
+## См. также
+
+- [Timer](Timer.md) — класс таймера без MonoBehaviour
+- [Bonus/TimeReward/CooldownReward](../../Bonus/TimeReward/CooldownReward.md) — награда по кулдауну (наследует TimerObject)
+- [Save/README](../../Save/README.md) — сохранение состояния
+- [README](README.md) — обзор Tools/Time

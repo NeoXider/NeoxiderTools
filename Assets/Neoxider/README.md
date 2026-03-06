@@ -1,169 +1,106 @@
 # NeoxiderTools
 
-**Коллекция 150+ готовых инструментов для Unity** — быстрая разработка игр без лишней сложности.
+`NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-**Версия 6.0.7** · Unity 2022.1+ · Namespace `Neo`
+**Version 7.5.0** · Unity 2022.1+ · Namespace `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
-- [Документация (оглавление модулей)](./Docs/README.md) — навигация по всем .md
-- [PROJECT_SUMMARY](./PROJECT_SUMMARY.md) — структура пакета, каталог скриптов
-- [Правило документации](./DOCUMENTATION.md) — структура и стиль .md
+- [Documentation Index](./Docs/README.md)
+- [English Docs Entry](./DocsEn/README.md)
 - [Changelog](./CHANGELOG.md)
+- [Project Summary](./PROJECT_SUMMARY.md)
 
----
+## What You Get
 
-## Условия (NeoCondition)
+- No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
+- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, state machine, NPC navigation, audio, and UI.
+- Editor helpers, package samples, prefabs, and module-focused documentation.
 
-**NeoCondition** — условия в Inspector: поля/свойства компонентов, методы с аргументом (например `GetCount(int)`), AND/OR, события OnTrue/OnFalse.
-
-- **Поля и свойства** — HP, очки, счёт, состояние объекта, любые int/float/bool/string компонента или GameObject
-- **Методы с аргументом** — выберите метод в Property, укажите Argument (itemId и т.п.), сравните с порогом или с другой переменной
-- **AND/OR** — несколько условий в одном компоненте, инверсия (NOT)
-- **События** — `OnTrue`, `OnFalse`, `OnResult` подключаются к любым UnityEvent
-- **Поиск по имени и префабы** — Find By Name, Prefab Preview для настройки до спавна
-
-> Примеры: «Health.Hp ≤ 0 → Game Over»; «InventoryComponent.GetCount(itemId) ≥ 3 → открыть дверь» — всё в Inspector.
-
-Подробнее: [NeoCondition](./Docs/Condition/NeoCondition.md)
-
----
-
-## Установка
+## Installation
 
 ### Unity Package Manager (Git URL)
 
-```
+```text
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-Window -> Package Manager -> **+** -> Add package from git URL.
+Open `Window > Package Manager > + > Add package from git URL` and paste the URL above.
 
-### Ручная установка
+### Manual Install
 
-Скопируйте папку `Assets/Neoxider` в ваш Unity-проект.
+Copy `Assets/Neoxider` into your Unity project.
 
-### Зависимости
+## Dependencies
 
-| Пакет                           | Как подключить                                                                                        |
-|---------------------------------|-------------------------------------------------------------------------------------------------------|
-| TextMeshPro                     | Устанавливается автоматически через UPM                                                               |
-| AI Navigation                   | Устанавливается автоматически через UPM                                                               |
-| DOTween (опционально)           | Asset Store или [GitHub](https://github.com/Demigiant/dotween)                                        |
-| Odin Inspector (опционально)    | Asset Store — расширенный инспектор, все компоненты работают и без него                               |
-| Markdown Renderer (опционально) | Для отображения документации в инспекторе (блок «Documentation» и кнопка «Open in window»). См. ниже. |
+### Installed automatically through UPM
 
-**Установка Markdown Renderer (опционально):** Window → Package Manager → **+** → Add package from git URL → вставить:
+- `com.unity.textmeshpro`
+- `com.unity.ai.navigation`
 
-```
+### Used by specific modules
+
+- `UniTask` for async-heavy modules such as cards, dialogue, and typed text workflows.
+- `DOTween` for modules with tween-based animation helpers.
+- `Spine Unity Runtime` only if you use Spine-specific integrations.
+- `Odin Inspector` is optional. Components work without it.
+
+### Optional docs viewer
+
+For enhanced markdown rendering inside the Inspector you can install `MarkdownRenderer`:
+
+```text
 https://github.com/NeoXider/MarkdownRenderer.git
 ```
 
-Без этого пакета **ничего не ломается**: блок «Documentation» в инспекторе по-прежнему показывает превью и кнопку «Open
-in window» (открывает .md в стандартном инспекторе или выделяет ассет в Project). Пакет подключается только через
-рефлексию при нажатии «Open in window».
+Without it, the package still works. Inspector documentation fallbacks remain available.
 
----
+## Quick Start
 
-## Быстрый старт
+1. Import the package by UPM or by copying `Assets/Neoxider`.
+2. Add `Assets/Neoxider/Prefabs/--System--.prefab` if your scene uses the built-in managers/UI bootstrap.
+3. Add components through `Add Component > Neoxider`.
+4. Open the module guide in [Docs/README.md](./Docs/README.md) and start from the module you need.
 
-1. Импортируйте пакет (UPM Git URL или копирование папки `Assets/Neoxider`)
-2. Добавьте в сцену системный префаб `Prefabs/--System--.prefab` (менеджеры, UI)
-3. Добавляйте компоненты через **Add Component → Neoxider** — настройка в Inspector и UnityEvent
+## Featured Modules
 
----
+| Module | What it covers | Docs |
+|--------|-----------------|------|
+| **Condition** | No-code rules, method calls with arguments, AND/OR logic, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
+| **Tools** | Inventory, spawner, movement, dialogue, time, input, utility components | [Tools](./Docs/Tools/README.md) |
+| **Save** | Scene saves, provider-based saves, global data | [Save](./Docs/Save/README.md) |
+| **UI** | UI behaviors, animations, pages, toggles | [UI](./Docs/UI/README.md) |
+| **Cards** | Decks, hands, presenter/view workflow, async animation | [Cards](./Docs/Cards/README.md) |
+| **GridSystem** | Shape/origin/pathfinding grid workflows, Match3, TicTacToe | [GridSystem](./Docs/GridSystem.md) |
+| **Editor** | Inspector extensions, builders, maintenance tools | [Editor](./Docs/Editor/README.md) |
 
-## Модули
+## Samples
 
-| Модуль                | Описание                                                         | Документация                                |
-|-----------------------|------------------------------------------------------------------|---------------------------------------------|
-| **Animations**        | Анимация значений, цветов, Vector3                               | [Docs](./Docs/Animations/README.md)         |
-| **Audio**             | AudioManager, микшер, play-on-click                              | [Docs](./Docs/Audio/README.md)              |
-| **Bonus**             | Коллекции, слот-машины, колесо удачи, награды по времени         | [Docs](./Docs/Bonus/README.md)              |
-| **Cards**             | Карточные игры (MVP): колода, рука, покер, "Пьяница"             | [Docs](./Docs/Cards/README.md)              |
-| **Condition**         | NeoCondition: поля, свойства, методы с аргументом, AND/OR, OnTrue/OnFalse | [Docs](./Docs/Condition/NeoCondition.md)    |
-| **Extensions**        | 300+ extension-методов для C# и Unity API                        | [Docs](./Docs/Extensions/README.md)         |
-| **GridSystem**        | Универсальные сетки: shape/origin/pathfinding, Match3, TicTacToe | [Docs](./Docs/GridSystem.md)                |
-| **Level**             | Менеджер уровней, карта, кнопки                                  | [Docs](./Docs/Level/LevelManager.md)        |
-| **NPC**               | Модульная навигация NPC (патруль, преследование, агро)           | [Docs](./Docs/NPC/README.md)                |
-| **Parallax**          | Параллакс-слои с предпросмотром                                  | [Docs](./Docs/ParallaxLayer.md)             |
-| **Save**              | Система сохранений: PlayerPrefs, JSON, атрибут `[SaveField]`     | [Docs](./Docs/Save/README.md)               |
-| **Shop**              | Магазин, валюта, покупки                                         | [Docs](./Docs/Shop/README.md)               |
-| **StateMachine**      | State Machine + конфигурация через StateMachineData (ScriptableObject) | [Docs](./Docs/StateMachine/StateMachine.md) |
-| **Tools**             | Спавнеры, таймеры, физика, ввод, Counter, **Inventory** (подбор, дроп, NeoCondition) | [Docs](./Docs/Tools)                        |
-| **UI**                | UI-анимации, кнопки, страницы, toggle                            | [Docs](./Docs/UI/README.md)                 |
-| **PropertyAttribute** | `[Button]`, `[GUIColor]`, `[RequireInterface]`, inject-атрибуты  | [Docs](./Docs/PropertyAttribute/README.md)  |
-| **Editor**            | Кастом-инспектор, авто-билд, Scene Saver                         | [Docs](./Docs/Editor/README.md)             |
+Import samples via `Package Manager > Neoxider Tools > Samples`.
 
-### Опциональные модули (UPM Samples)
+| Sample | Path | Purpose |
+|--------|------|---------|
+| **Demo Scenes** | `Assets/Neoxider/Samples~/Demo/` | Integration scenes for core modules and gameplay features |
+| **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Optional page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) |
 
-Устанавливаются через **Package Manager -> Neoxider Tools -> Samples -> Import**:
+## Documentation Notes
 
-| Модуль            | Описание                                              |
-|-------------------|-------------------------------------------------------|
-| **Demo Scenes**   | Демо-сцены и примеры использования                    |
-| **NeoxiderPages** | PageManager — система страниц/экранов (UIPage, UIKit) |
+- The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
+- English onboarding starts in [DocsEn/README.md](./DocsEn/README.md).
+- Internal backlog and maintainer-only notes are intentionally not part of the main user docs index.
 
-> **Для разработчиков пакета:** сэмплы лежат в папке `Samples` (Demo, NeoxiderPages). Хук в `scripts/git-hooks/` не даёт
-> закоммитить папку `Samples~` — в репозитории должна быть только `Samples` для совместимости UPM на Windows (см.
-`scripts/git-hooks/README.md`).
+## Project Layout
 
----
-
-## Примеры использования
-
-### NeoCondition
-
-1. Добавьте **NeoCondition** (Add Component → Neo → Condition → NeoCondition)
-2. Кнопка **+** → выберите **Source Object**, **Component** и **Property** (или метод с аргументом, укажите **Argument**)
-3. Оператор (≥, ==, …) и порог или сравнение с **Other Object**
-4. Подключите **On True** / **On False** к UnityEvent
-
-### Counter
-
-1. Добавьте компонент `Counter` на GameObject
-2. Настройте режим (Int/Float), начальное значение
-3. Подключите события `OnValueChangedInt` / `OnSendInt` к вашим объектам в инспекторе
-4. Вызывайте методы `Add`, `Subtract`, `Set` через UnityEvent других компонентов
-
-### Timer
-
-1. Добавьте `TimerObject` на GameObject
-2. Укажите длительность, looping, режим
-3. Подпишитесь на `OnTimerComplete`, `OnTimerUpdate` в инспекторе
-
-### Inventory + NeoCondition (количество предмета)
-
-1. На объекте — **InventoryComponent**, на другом (или том же) — **NeoCondition**
-2. Условие: Source = Component → InventoryComponent → Property = **GetCount (int) → Int [method]** → Argument = itemId (например 5) → Compare ≥ 3
-3. On True → открыть дверь, выдать квест и т.д. Без кода.
-
-### Save
-
-```csharp
-SaveProvider.SetInt("score", 100);
-SaveProvider.Save();
-int score = SaveProvider.GetInt("score", 0);
-```
-
----
-
-## Структура проекта
-
-```
+```text
 Assets/Neoxider/
-  Scripts/       # Runtime-код (238 скриптов, 33 asmdef)
-  Editor/        # Editor-инструменты
-  Docs/          # Документация по модулям
-  Demo/          # Примеры
-  Prefabs/       # Готовые префабы
-  Resources/     # Настройки
-  Shaders/       # Шейдеры (UI Blur и др.)
-  Sprites/       # UI иконки
+  Scripts/       # Runtime modules and asmdef-separated code
+  Editor/        # Editor tooling
+  Docs/          # User-facing documentation (RU)
+  DocsEn/        # English onboarding and mirrored docs
+  Samples~/      # UPM samples
+  Prefabs/       # Ready-to-use prefabs
+  Resources/     # Settings and assets
 ```
 
----
+## Support
 
-## Поддержка
-
-Нашли проблему или есть предложения? Создайте [issue](https://github.com/NeoXider/NeoxiderTools/issues) или PR в
-основном репозитории.
+If you find a bug or want to suggest an improvement, open an [issue](https://github.com/NeoXider/NeoxiderTools/issues) or PR in the main repository.

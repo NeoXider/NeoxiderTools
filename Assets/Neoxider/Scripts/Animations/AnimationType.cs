@@ -1,35 +1,33 @@
 namespace Neo.Animations
 {
-    /// <summary>
-    ///     Типы анимации для различных компонентов (свет, эмиссия, цвета, значения).
-    /// </summary>
+    /// <summary>Animation types for various components (light, emission, colors, values).</summary>
     public enum AnimationType
     {
-        /// <summary>Случайное мерцание между минимальным и максимальным значениями</summary>
+        /// <summary>Random flicker between min and max values.</summary>
         RandomFlicker,
 
-        /// <summary>Плавное пульсирование по синусоиде</summary>
+        /// <summary>Smooth sine-based pulsing.</summary>
         Pulsing,
 
-        /// <summary>Плавный переход туда-обратно между значениями</summary>
+        /// <summary>Smooth back-and-forth transition between values.</summary>
         SmoothTransition,
 
-        /// <summary>Анимация на основе шума Перлина для естественного эффекта</summary>
+        /// <summary>Perlin noise-based animation for natural effect.</summary>
         PerlinNoise,
 
-        /// <summary>Синусоидальная волна</summary>
+        /// <summary>Sine wave.</summary>
         SinWave,
 
-        /// <summary>Экспоненциальное затухание</summary>
+        /// <summary>Exponential decay.</summary>
         Exponential,
 
-        /// <summary>Отскок с затуханием</summary>
+        /// <summary>Bounce with decay.</summary>
         BounceEase,
 
-        /// <summary>Эластичный эффект</summary>
+        /// <summary>Elastic effect.</summary>
         ElasticEase,
 
-        /// <summary>Анимация по пользовательской кривой</summary>
+        /// <summary>Animation driven by a custom curve.</summary>
         CustomCurve
     }
 }

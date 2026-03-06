@@ -159,10 +159,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Применяет силу к телу.
+        ///     Applies force to the resolved body.
         /// </summary>
-        /// <param name="force">Величина силы (если 0, используется defaultForce)</param>
-        /// <param name="direction">Направление силы (если null, используется GetDirection())</param>
+        /// <param name="force">Force magnitude. If 0, uses the configured default/randomized force.</param>
+        /// <param name="direction">Optional direction override. If null, uses the computed direction from current settings.</param>
         public void ApplyForce(float force = 0f, Vector3? direction = null)
         {
             float chosenForce = force > 0f ? force :
@@ -235,7 +235,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Получает направление для применения силы.
+        ///     Computes the force direction based on current direction mode.
         /// </summary>
         private Vector3 ComputeDirection()
         {

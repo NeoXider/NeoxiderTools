@@ -64,7 +64,7 @@ namespace Neo.Tools
         private float _lastDistance;
         private float _lastUpdateTime;
 
-        /// <summary>Текущая дистанция до цели (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current distance to the target (for NeoCondition / reflection-based access).</summary>
         public float DistanceValue => Distance.CurrentValue;
 
         private void Awake()

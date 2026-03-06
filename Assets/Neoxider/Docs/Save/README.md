@@ -1,39 +1,34 @@
-# Модуль Save
+# Save
 
-**Что это:** модуль сохранения данных в Unity. Три варианта: (1) провайдеры — статический API как PlayerPrefs с переключением бэкенда; (2) компоненты — сохранение полей MonoBehaviour через `SaveableBehaviour` и `[SaveField]`; (3) глобальные данные — `GlobalSave` для валюты и прогресса без привязки к объектам сцены.
+Модуль `Save` объединяет три уровня сохранения данных: provider API, компонентные сохранения на сцене и глобальное хранилище.
 
-**Как с ним работать:**
-- Нужен простой ключ–значение: использовать [SaveProvider](./SaveProvider.md) или [SaveProviderSettingsComponent](./SaveProviderSettingsComponent.md) на сцене.
-- Нужно сохранять состояние объектов сцены: наследовать компонент от [SaveableBehaviour](./SaveableBehaviour.md), пометить поля [SaveField](./SaveField.md), на сцене добавить [SaveManager](./SaveManager.md).
-- Нужно хранить глобальные данные (валюта, флаги): использовать [GlobalSave](./GlobalSave.md) и [GlobalData](./GlobalData.md).
+## Когда использовать
 
-**Навигация:** [← К Docs](../README.md) · оглавление — раздел «Документация по скриптам» ниже
+- Нужен API в стиле `PlayerPrefs`, но со сменяемым backend - используйте `SaveProvider`.
+- Нужно сохранять состояние компонентов сцены - используйте `SaveableBehaviour`, `SaveField`, `SaveManager`.
+- Нужны общие данные проекта вне сцены - используйте `GlobalSave`.
 
----
+## Быстрый старт
 
-## Системы сохранения
+### Provider API
 
-1.  **Система провайдеров (SaveProvider)**: Универсальная система сохранения с поддержкой различных провайдеров (PlayerPrefs, файлы). Предоставляет статический API, аналогичный PlayerPrefs, с возможностью переключения между провайдерами.
-2.  **Система на основе компонентов (SaveManager)**: Позволяет сохранять состояние отдельных `MonoBehaviour` на сцене. Вы просто наследуете свой компонент от `SaveableBehaviour` и помечаете поля атрибутом `[SaveField]`.
-3.  **Глобальное хранилище (GlobalSave)**: Позволяет хранить общие данные (валюта, прогресс и т.д.), не привязанные к объектам на сцене, через статический класс `GlobalSave`.
+```csharp
+SaveProvider.SetInt("score", 100);
+SaveProvider.Save();
+int score = SaveProvider.GetInt("score", 0);
+```
 
-Все системы интегрированы и используют единую систему провайдеров для гибкости и расширяемости.
+### Сохранение компонента
 
-## Документация по скриптам
+1. Наследуйте компонент от `SaveableBehaviour`.
+2. Пометьте нужные поля атрибутом `[SaveField]`.
+3. Убедитесь, что в сцене есть `SaveManager`.
 
-### Система провайдеров (новая)
-- [**SaveProvider**](./SaveProvider.md): Статический класс с API как PlayerPrefs для работы с провайдерами сохранения.
-- [**ISaveProvider**](./ISaveProvider.md): Интерфейс для всех провайдеров сохранения.
-- [**SaveProviderSettings**](./SaveProviderSettings.md): ScriptableObject для настройки провайдеров.
-- [**SaveProviderSettingsComponent**](./SaveProviderSettingsComponent.md): MonoBehaviour для инициализации провайдера из настроек в Inspector.
+## Документация
 
-### Система сохранения компонентов
-- [**ISaveableComponent**](./ISaveableComponent.md): Интерфейс, который должны реализовывать все сохраняемые компоненты.
-- [**SaveableBehaviour**](./SaveableBehaviour.md): Базовый класс для быстрой реализации сохраняемых компонентов.
-- [**SaveField (Атрибут)**](./SaveField.md): Атрибут для пометки полей, которые нужно сохранить.
-- [**SaveManager**](./SaveManager.md): Ядро системы, управляющее процессом сохранения и загрузки.
-- [**PlayerData**](./PlayerData.md): Пример сохраняемого компонента (ISaveableComponent + SaveField).
-
-### Глобальное хранилище
-- [**GlobalData**](./GlobalData.md): Класс-контейнер для ваших глобальных данных.
-- [**GlobalSave**](./GlobalSave.md): Статический класс для доступа и управления глобальными данными.
+- [`ISaveableComponent.md`](./ISaveableComponent.md)
+- [`SaveableBehaviour.md`](./SaveableBehaviour.md)
+- [`SaveField.md`](./SaveField.md)
+- [`SaveManager.md`](./SaveManager.md)
+- [`GlobalData.md`](./GlobalData.md)
+- [`GlobalSave.md`](./GlobalSave.md)

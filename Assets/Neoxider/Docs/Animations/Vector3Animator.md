@@ -227,3 +227,11 @@ public class MultiVectorAnimator : MonoBehaviour
 - События вызываются только при изменении вектора
 - Эффективное сравнение векторов с учетом погрешности
 - Автоматическая валидация параметров
+
+## См. также
+
+- [FloatAnimator](FloatAnimator.md) — анимация float
+- [ColorAnimator](ColorAnimator.md) — анимация цвета
+- [AnimationType](AnimationType.md) — типы анимации
+- [Tools/View/LightAnimator](../Tools/View/LightAnimator.md) — анимация света
+- [README](README.md) — обзор модуля Animations

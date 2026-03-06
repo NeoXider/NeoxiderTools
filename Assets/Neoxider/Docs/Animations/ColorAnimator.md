@@ -218,3 +218,11 @@ public class DynamicColorController : MonoBehaviour
 - События вызываются только при изменении цвета
 - Эффективное сравнение цветов с учетом погрешности
 - Автоматическая валидация параметров
+
+## См. также
+
+- [Vector3Animator](Vector3Animator.md) — анимация Vector3
+- [FloatAnimator](FloatAnimator.md) — анимация float
+- [AnimationType](AnimationType.md) — типы анимации
+- [Tools/View/LightAnimator](../Tools/View/LightAnimator.md) — анимация света
+- [README](README.md) — обзор модуля Animations

@@ -4,8 +4,7 @@ using UnityEngine.Events;
 namespace Neo.Animations
 {
     /// <summary>
-    ///     Универсальный аниматор для Vector3 значений.
-    ///     Предоставляет простой способ анимации позиции, масштаба, поворота и других Vector3 параметров.
+    ///     Universal animator for Vector3 values. Provides an easy way to animate position, scale, rotation and other Vector3 parameters.
     /// </summary>
     [NeoDoc("Animations/Vector3Animator.md")]
     [CreateFromMenu("Neoxider/Animations/Vector3Animator")]
@@ -53,51 +52,37 @@ namespace Neo.Animations
         private Vector3 lastVector;
         private Vector2 randomOffset;
 
-        /// <summary>
-        ///     Текущий анимированный вектор (только для чтения)
-        /// </summary>
+        /// <summary>Current animated vector (read-only).</summary>
         public Vector3 CurrentVector { get; private set; }
 
-        /// <summary>
-        ///     Проигрывается ли анимация
-        /// </summary>
+        /// <summary>Whether the animation is currently playing.</summary>
         public bool IsPlaying { get; private set; }
 
-        /// <summary>
-        ///     Находится ли анимация на паузе
-        /// </summary>
+        /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
 
-        /// <summary>
-        ///     Начальный вектор (для изменения извне)
-        /// </summary>
+        /// <summary>Start vector (writable from outside).</summary>
         public Vector3 StartVector
         {
             get => startVector;
             set => startVector = value;
         }
 
-        /// <summary>
-        ///     Конечный вектор (для изменения извне)
-        /// </summary>
+        /// <summary>End vector (writable from outside).</summary>
         public Vector3 EndVector
         {
             get => endVector;
             set => endVector = value;
         }
 
-        /// <summary>
-        ///     Скорость анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation speed (writable from outside).</summary>
         public float AnimationSpeed
         {
             get => animationSpeed;
             set => animationSpeed = value;
         }
 
-        /// <summary>
-        ///     Тип анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation type (writable from outside).</summary>
         public AnimationType AnimationType
         {
             get => animationType;
@@ -145,9 +130,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Запустить анимацию
-        /// </summary>
+        /// <summary>Starts the animation.</summary>
         public void Play()
         {
             IsPlaying = true;
@@ -155,9 +138,7 @@ namespace Neo.Animations
             OnAnimationStarted?.Invoke();
         }
 
-        /// <summary>
-        ///     Остановить анимацию
-        /// </summary>
+        /// <summary>Stops the animation.</summary>
         public void Stop()
         {
             IsPlaying = false;
@@ -165,9 +146,7 @@ namespace Neo.Animations
             OnAnimationStopped?.Invoke();
         }
 
-        /// <summary>
-        ///     Поставить анимацию на паузу
-        /// </summary>
+        /// <summary>Pauses the animation.</summary>
         public void Pause()
         {
             if (IsPlaying)
@@ -177,9 +156,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Снять с паузы
-        /// </summary>
+        /// <summary>Resumes the animation from pause.</summary>
         public void Resume()
         {
             if (IsPaused)
@@ -189,17 +166,13 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Сбросить время анимации
-        /// </summary>
+        /// <summary>Resets animation time to zero.</summary>
         public void ResetTime()
         {
             animationTime = 0f;
         }
 
-        /// <summary>
-        ///     Установить случайное начальное время
-        /// </summary>
+        /// <summary>Sets a random initial animation time.</summary>
         public void RandomizeTime()
         {
             animationTime = Random.Range(0f, 1000f);

@@ -5,8 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Animations
 {
     /// <summary>
-    ///     Универсальный аниматор для float значений.
-    ///     Предоставляет простой способ анимации любого числового значения с различными типами анимации.
+    ///     Universal animator for float values. Provides an easy way to animate any numeric value with various animation types.
     /// </summary>
     [NeoDoc("Animations/FloatAnimator.md")]
     [CreateFromMenu("Neoxider/Animations/FloatAnimator")]
@@ -54,54 +53,40 @@ namespace Neo.Animations
         private float lastValue;
         private Vector2 randomOffset;
 
-        /// <summary>
-        ///     Текущее анимированное значение (только для чтения)
-        /// </summary>
+        /// <summary>Current animated value (read-only).</summary>
         public float CurrentValue => Value.CurrentValue;
 
-        /// <summary>Текущее значение (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current value (for NeoCondition and reflection).</summary>
         public float ValueFloat => Value.CurrentValue;
 
-        /// <summary>
-        ///     Проигрывается ли анимация
-        /// </summary>
+        /// <summary>Whether the animation is currently playing.</summary>
         public bool IsPlaying { get; private set; }
 
-        /// <summary>
-        ///     Находится ли анимация на паузе
-        /// </summary>
+        /// <summary>Whether the animation is paused.</summary>
         public bool IsPaused { get; private set; }
 
-        /// <summary>
-        ///     Минимальное значение (для изменения извне)
-        /// </summary>
+        /// <summary>Minimum value (writable from outside).</summary>
         public float MinValue
         {
             get => minValue;
             set => minValue = value;
         }
 
-        /// <summary>
-        ///     Максимальное значение (для изменения извне)
-        /// </summary>
+        /// <summary>Maximum value (writable from outside).</summary>
         public float MaxValue
         {
             get => maxValue;
             set => maxValue = value;
         }
 
-        /// <summary>
-        ///     Скорость анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation speed (writable from outside).</summary>
         public float AnimationSpeed
         {
             get => animationSpeed;
             set => animationSpeed = value;
         }
 
-        /// <summary>
-        ///     Тип анимации (для изменения извне)
-        /// </summary>
+        /// <summary>Animation type (writable from outside).</summary>
         public AnimationType AnimationType
         {
             get => animationType;
@@ -152,9 +137,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Запустить анимацию
-        /// </summary>
+        /// <summary>Starts the animation.</summary>
         public void Play()
         {
             IsPlaying = true;
@@ -162,9 +145,7 @@ namespace Neo.Animations
             OnAnimationStarted?.Invoke();
         }
 
-        /// <summary>
-        ///     Остановить анимацию
-        /// </summary>
+        /// <summary>Stops the animation.</summary>
         public void Stop()
         {
             IsPlaying = false;
@@ -172,9 +153,7 @@ namespace Neo.Animations
             OnAnimationStopped?.Invoke();
         }
 
-        /// <summary>
-        ///     Поставить анимацию на паузу
-        /// </summary>
+        /// <summary>Pauses the animation.</summary>
         public void Pause()
         {
             if (IsPlaying)
@@ -184,9 +163,7 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Снять с паузы
-        /// </summary>
+        /// <summary>Resumes the animation from pause.</summary>
         public void Resume()
         {
             if (IsPaused)
@@ -196,17 +173,13 @@ namespace Neo.Animations
             }
         }
 
-        /// <summary>
-        ///     Сбросить время анимации
-        /// </summary>
+        /// <summary>Resets animation time to zero.</summary>
         public void ResetTime()
         {
             animationTime = 0f;
         }
 
-        /// <summary>
-        ///     Установить случайное начальное время
-        /// </summary>
+        /// <summary>Sets a random initial animation time.</summary>
         public void RandomizeTime()
         {
             animationTime = Random.Range(0f, 1000f);

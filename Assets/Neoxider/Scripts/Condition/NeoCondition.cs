@@ -6,43 +6,36 @@ using UnityEngine.Events;
 
 namespace Neo.Condition
 {
-    /// <summary>
-    ///     Логика объединения условий.
-    /// </summary>
+    /// <summary>How to combine multiple conditions.</summary>
     public enum LogicMode
     {
-        /// <summary>Все условия должны быть true.</summary>
+        /// <summary>All conditions must be true.</summary>
         AND,
 
-        /// <summary>Хотя бы одно условие должно быть true.</summary>
+        /// <summary>At least one condition must be true.</summary>
         OR
     }
 
-    /// <summary>
-    ///     Режим проверки условий.
-    /// </summary>
+    /// <summary>When to evaluate conditions.</summary>
     public enum CheckMode
     {
-        /// <summary>Только по вызову Check().</summary>
+        /// <summary>Only when Check() is called.</summary>
         Manual,
 
-        /// <summary>Каждый кадр.</summary>
+        /// <summary>Every frame.</summary>
         EveryFrame,
 
-        /// <summary>С заданным интервалом.</summary>
+        /// <summary>At a fixed interval.</summary>
         Interval
     }
 
     /// <summary>
-    ///     Проверяет поля/свойства компонентов через Inspector (Conditions). AND/OR, инверсия. Режимы: Manual, EveryFrame, Interval. События OnTrue / OnFalse.
+    ///     No-Code condition system. Evaluates field/property values of any component via Inspector without code.
+    ///     Supports AND/OR logic, inversion, and manual or automatic checking.
     /// </summary>
     /// <remarks>
-    ///     Использование:
-    ///     1. Добавить NeoCondition на GameObject
-    ///     2. Добавить условия (Conditions) — выбрать объект, компонент, поле, оператор, порог
-    ///     3. Настроить события OnTrue / OnFalse
-    ///     4. Выбрать режим проверки (Manual / EveryFrame / Interval)
-    ///     Для ручного режима — вызвать Check() из UnityEvent другого компонента.
+    ///     Usage: 1) Add NeoCondition to a GameObject. 2) Add conditions (Conditions list): pick object, component, field, operator, threshold.
+    ///     3) Configure OnTrue / OnFalse events. 4) Set check mode (Manual / EveryFrame / Interval). For Manual, call Check() from another component's UnityEvent.
     /// </remarks>
     [NeoDoc("Condition/NeoCondition.md")]
     [CreateFromMenu("Neoxider/Condition/NeoCondition")]
@@ -84,17 +77,17 @@ namespace Neo.Condition
 
         private bool? _lastResult;
 
-        /// <summary>Текущий результат последней проверки.</summary>
+        /// <summary>Result of the last check.</summary>
         public bool LastResult => _lastResult ?? false;
 
-        /// <summary>Логика объединения.</summary>
+        /// <summary>Logic for combining conditions (AND/OR).</summary>
         public LogicMode Logic
         {
             get => _logicMode;
             set => _logicMode = value;
         }
 
-        /// <summary>Режим проверки.</summary>
+        /// <summary>When to evaluate (Manual / EveryFrame / Interval).</summary>
         public CheckMode Mode
         {
             get => _checkMode;
@@ -105,19 +98,19 @@ namespace Neo.Condition
             }
         }
 
-        /// <summary>Список условий (readonly доступ).</summary>
+        /// <summary>List of conditions (read-only).</summary>
         public IReadOnlyList<ConditionEntry> Conditions => _conditions;
 
-        /// <summary>Событие: условия выполнены.</summary>
+        /// <summary>Invoked when conditions are met (result = true).</summary>
         public UnityEvent OnTrue => _onTrue;
 
-        /// <summary>Событие: условия не выполнены.</summary>
+        /// <summary>Invoked when conditions are not met (result = false).</summary>
         public UnityEvent OnFalse => _onFalse;
 
-        /// <summary>Событие: результат проверки.</summary>
+        /// <summary>Invoked on each check with the result.</summary>
         public UnityEvent<bool> OnResult => _onResult;
 
-        /// <summary>Событие: инвертированный результат проверки (!result).</summary>
+        /// <summary>Invoked on each check with inverted result (!result).</summary>
         public UnityEvent<bool> OnInvertedResult => _onInvertedResult;
 
         private void Start()
@@ -153,10 +146,7 @@ namespace Neo.Condition
             StopInterval();
         }
 
-        /// <summary>
-        ///     Проверить все условия и вызвать события.
-        ///     Можно вызывать из UnityEvent других компонентов.
-        /// </summary>
+        /// <summary>Evaluates all conditions and invokes events. Can be called from another component's UnityEvent.</summary>
         [Button("Check")]
         public void Check()
         {
@@ -182,10 +172,8 @@ namespace Neo.Condition
             }
         }
 
-        /// <summary>
-        ///     Оценить условия без вызова событий.
-        /// </summary>
-        /// <returns>true если условия выполнены согласно LogicMode.</returns>
+        /// <summary>Evaluates conditions without invoking events.</summary>
+        /// <returns>True if conditions are met according to LogicMode.</returns>
         public bool Evaluate()
         {
             if (_conditions == null || _conditions.Count == 0)
@@ -228,10 +216,7 @@ namespace Neo.Condition
             return false;
         }
 
-        /// <summary>
-        ///     Безопасная обёртка для оценки одного условия.
-        ///     Ловит исключения (уничтоженные объекты и т.п.) и логирует однократно.
-        /// </summary>
+        /// <summary>Safe wrapper to evaluate one condition; catches exceptions (e.g. destroyed objects) and logs once.</summary>
         private bool EvaluateEntrySafe(ConditionEntry entry, int index)
         {
             try
@@ -264,9 +249,7 @@ namespace Neo.Condition
             }
         }
 
-        /// <summary>
-        ///     Сбросить последний результат (следующий Check вызовет событие в любом случае).
-        /// </summary>
+        /// <summary>Resets last result so the next Check() will invoke events regardless of change.</summary>
         [Button("Reset")]
         public void ResetState()
         {
@@ -274,9 +257,7 @@ namespace Neo.Condition
             _loggedEntryErrors.Clear();
         }
 
-        /// <summary>
-        ///     Сбросить кеш reflection во всех условиях (включая кеш поиска по имени).
-        /// </summary>
+        /// <summary>Clears reflection cache in all conditions (including name lookup cache).</summary>
         public void InvalidateAllCaches()
         {
             foreach (ConditionEntry entry in _conditions)
@@ -287,17 +268,13 @@ namespace Neo.Condition
             _loggedEntryErrors.Clear();
         }
 
-        /// <summary>
-        ///     Добавить условие в рантайме.
-        /// </summary>
+        /// <summary>Adds a condition at runtime.</summary>
         public void AddCondition(ConditionEntry entry)
         {
             _conditions.Add(entry);
         }
 
-        /// <summary>
-        ///     Удалить условие.
-        /// </summary>
+        /// <summary>Removes a condition.</summary>
         public void RemoveCondition(ConditionEntry entry)
         {
             _conditions.Remove(entry);

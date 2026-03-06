@@ -1,19 +1,19 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Базовый контракт для любых систем перемещения.
+    ///     Base contract for movement components.
     /// </summary>
     public interface IMover
     {
-        /// <summary>Движется ли объект прямо сейчас.</summary>
+        /// <summary>Whether the object is currently moving.</summary>
         bool IsMoving { get; }
 
-        /// <summary>Прямое задание мирового смещения (м/кадр).</summary>
+        /// <summary>Applies a world-space position delta (units per frame).</summary>
         void MoveDelta(Vector2 delta);
 
-        /// <summary>Движение к точке назначения.</summary>
+        /// <summary>Moves towards a world-space target point.</summary>
         void MoveToPoint(Vector2 worldTarget);
     }
 }

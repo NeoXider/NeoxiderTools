@@ -3,11 +3,13 @@ using UnityEngine.UI;
 
 namespace Neo.Audio
 {
-    [NeoDoc("Audio/AudioControl.md")]
+    /// <summary>UI component that binds a Toggle or Slider to AMSettings (Master/Music/Efx volume or mute).</summary>
+    [NeoDoc("Audio/View/AudioControl.md")]
     [CreateFromMenu("Neoxider/Audio/AudioControl")]
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AudioControl))]
     public class AudioControl : MonoBehaviour
     {
+        /// <summary>Which channel to control: Master, Music, or Efx.</summary>
         public enum ControlType
         {
             Master,
@@ -15,6 +17,7 @@ namespace Neo.Audio
             Efx
         }
 
+        /// <summary>UI element type. Auto detects Toggle or Slider on this GameObject.</summary>
         public enum UIType
         {
             Auto,

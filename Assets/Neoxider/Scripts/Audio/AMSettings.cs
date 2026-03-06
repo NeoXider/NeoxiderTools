@@ -35,17 +35,17 @@ namespace Neo.Audio
         [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
         public ReactivePropertyBool MuteMaster = new();
 
+        /// <summary>Current mute state (for NeoCondition and reflection).</summary>
+        public bool MuteEfxValue => MuteEfx.CurrentValue;
+        /// <summary>Current mute state for music (for NeoCondition and reflection).</summary>
+        public bool MuteMusicValue => MuteMusic.CurrentValue;
+        /// <summary>Current mute state for master (for NeoCondition and reflection).</summary>
+        public bool MuteMasterValue => MuteMaster.CurrentValue;
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
         private AM _am;
         private bool _masterMuted;
         private float _savedMasterVolume = 1f;
-
-        /// <summary>Текущее состояние mute (для NeoCondition и рефлексии).</summary>
-        public bool MuteEfxValue => MuteEfx.CurrentValue;
-
-        public bool MuteMusicValue => MuteMusic.CurrentValue;
-        public bool MuteMasterValue => MuteMaster.CurrentValue;
 
         public AudioSource efx { get; private set; }
         public AudioSource music { get; private set; }

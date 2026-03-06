@@ -6,10 +6,7 @@ namespace Neo
 {
     namespace Audio
     {
-        /// <summary>
-        ///     Компонент для воспроизведения звука при нажатии на кнопку.
-        ///     Поддерживает воспроизведение конкретного клипа по ID или случайного клипа из списка.
-        /// </summary>
+        /// <summary>Plays sound on button click. Supports specific clip by ID or random clip from list.</summary>
         [NeoDoc("Audio/PlayAudioBtn.md")]
         [CreateFromMenu("Neoxider/Audio/PlayAudioBtn")]
         [AddComponentMenu("Neoxider/" + "Audio/" + nameof(PlayAudioBtn))]
@@ -42,10 +39,7 @@ namespace Neo
                 }
             }
 
-            /// <summary>
-            ///     Воспроизводит звук. Если заданы клипы и useRandomClip=true - выбирает случайный из списка.
-            ///     Иначе использует режим по ID (legacy).
-            /// </summary>
+            /// <summary>Plays the sound. If clips are set and useRandomClip is true, picks random; otherwise uses legacy ID mode.</summary>
             public void AudioPlay()
             {
                 if (_clips != null && _clips.Length > 0)

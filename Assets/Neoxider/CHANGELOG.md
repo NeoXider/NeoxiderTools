@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [7.4.0] - 2026-03-06
+
+### Package / Documentation
+
+- **Version bump** — package version raised from `7.3.2` to `7.4.0`; public entry points (`package.json`, `README.md`, `Docs/README.md`, `PROJECT_SUMMARY.md`) are now aligned.
+- **Package metadata** — added `documentationUrl`, `changelogUrl`, and `licensesUrl` to `package.json`; sample descriptions were rewritten for package-consumer clarity.
+- **Documentation entry points** — rewritten root README, docs index, tools index, save overview, and NeoxiderPages overview to remove stale paths, broken links, and outdated package structure references.
+- **English onboarding** — refreshed `DocsEn/README.md` and added initial English module entry pages for key user flows.
+
+### Tools / Runtime
+
+- **Pooling** — pooled objects are no longer implicitly kept under `PoolManager` while active; pool storage is separated from spawned scene instances to make scene transitions safer.
+- **InventoryDropper** — drop flow is now validated before removal and restores inventory items if spawning fails after removal.
+- **DialogueController** — `autoNextMonolog` and `autoNextDialogue` now actually control automatic progression instead of forcing an immediate next step when disabled.
+- **GM / Singleton** — `GM.Init()` now respects the base singleton initialization contract.
+- **InteractiveObject / Input** — reduced hidden runtime scene mutations and tightened `onInteractUp` semantics so release events only fire after a matching press on the same object.
+- **Inventory auto-find** — `InventoryComponent.FindDefault()` no longer silently picks an arbitrary inventory when multiple candidates exist.
+- **InventoryDatabase** — duplicate `itemId` entries are now reported deterministically and no longer overwrite each other silently in the runtime cache.
+- **CursorLockController** — added `ControlMode` with default `AutomaticAndManual`, ownership handoff via `ReleaseControl()`, support for multiple active controllers, and an optional `Cursor Access Key` with `HoldToShowCursor` / `ToggleShowCursor` modes (for example, temporary cursor on `Z` during gameplay). The access-key shortcut is disabled by default.
+
 ## [7.3.2] - 2026-02-23
 
 ### Tools / Components

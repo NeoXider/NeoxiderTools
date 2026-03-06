@@ -8,20 +8,19 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(SettingMixer))]
     public class SettingMixer : MonoBehaviour
     {
+        [Header("Settings")]
+        [Tooltip("Exposed parameter name in AudioMixer (e.g. MasterVolume, MusicVolume, EfxVolume).")]
+        public string parameterName = "MasterVolume";
+
+        [Header("References")]
+        [Tooltip("AudioMixer to control.")]
+        public AudioMixer audioMixer;
         public const float MaxDb = 20f;
         public const float MinDb = -80f;
 
         private const float MuteThreshold = 0.0001f;
 
-        [Header("Settings")]
-        [Tooltip("Имя параметра экспозиции в AudioMixer (например MasterVolume, MusicVolume, EfxVolume).")]
-        public string parameterName = "MasterVolume";
-
-        [Header("References")] public AudioMixer audioMixer;
-
-        /// <summary>
-        ///     Громкость в дБ (−80…20). Для UnityEvent и слайдера в дБ.
-        /// </summary>
+        /// <summary>Sets volume in dB (−80…20). For UnityEvent and dB slider.</summary>
         public void SetVolumeDb(float volumeDb)
         {
             if (audioMixer == null || string.IsNullOrEmpty(parameterName))
@@ -32,9 +31,9 @@ namespace Neo.Audio
             audioMixer.SetFloat(parameterName, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
-        /// <summary>
-        ///     Громкость в дБ (−80…20) для указанного параметра. Если name пустой — используется parameterName.
-        /// </summary>
+        /// <summary>Sets volume in dB (−80…20) for the given parameter. If name is empty, parameterName is used.</summary>
+        /// <param name="name">Mixer parameter name, or empty to use parameterName.</param>
+        /// <param name="volumeDb">Volume in dB.</param>
         public void SetVolumeDb(string name, float volumeDb)
         {
             if (audioMixer == null)
@@ -47,9 +46,8 @@ namespace Neo.Audio
             audioMixer.SetFloat(param, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
-        /// <summary>
-        ///     Нормализованная громкость 0–1. Для слайдера и UnityEvent. Ноль гарантированно ставит mute (−80 дБ).
-        /// </summary>
+        /// <summary>Normalized volume 0–1. For slider and UnityEvent. Zero sets mute (−80 dB).</summary>
+        /// <param name="normalizedVolume">Volume from 0 to 1.</param>
         public void SetVolume(float normalizedVolume)
         {
             if (audioMixer == null || string.IsNullOrEmpty(parameterName))
@@ -62,17 +60,14 @@ namespace Neo.Audio
             audioMixer.SetFloat(parameterName, Mathf.Clamp(db, MinDb, MaxDb));
         }
 
-        /// <summary>
-        ///     Вкл/выкл по флагу: true — полная громкость (1), false — mute (0).
-        /// </summary>
+        /// <summary>Enables or disables volume: true = full volume (1), false = mute (0).</summary>
         public void SetVolumeEnabled(bool enabled)
         {
             SetVolume(enabled ? 1f : 0f);
         }
 
-        /// <summary>
-        ///     Возвращает нормализованную громкость (0–1) текущего параметра микшера.
-        /// </summary>
+        /// <summary>Returns normalized volume (0–1) of the current mixer parameter.</summary>
+        /// <returns>Volume from 0 to 1.</returns>
         public float GetVolume()
         {
             if (audioMixer == null || string.IsNullOrEmpty(parameterName) ||

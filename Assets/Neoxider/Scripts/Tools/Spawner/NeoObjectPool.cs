@@ -12,10 +12,13 @@ namespace Neo.Tools
         private readonly Dictionary<GameObject, IPoolable[]> _cachedComponents = new();
         private readonly IObjectPool<GameObject> _pool;
         private readonly GameObject _prefab;
+        private readonly Transform _storageRoot;
 
-        public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100)
+        public NeoObjectPool(GameObject prefab, int initialSize, bool expandPool, int maxSize = 100,
+            Transform storageRoot = null)
         {
             _prefab = prefab;
+            _storageRoot = storageRoot;
             int effectiveMax = expandPool ? maxSize > 0 ? maxSize : 100 : initialSize;
 
             _pool = new ObjectPool<GameObject>(
@@ -60,6 +63,10 @@ namespace Neo.Tools
         private GameObject CreatePooledObject()
         {
             GameObject instance = Object.Instantiate(_prefab);
+            if (_storageRoot != null)
+            {
+                instance.transform.SetParent(_storageRoot, false);
+            }
 
             if (!instance.TryGetComponent(out PooledObjectInfo info))
             {
@@ -98,6 +105,11 @@ namespace Neo.Tools
                 poolable.OnPoolRelease();
             }
 
+            if (_storageRoot != null)
+            {
+                instance.transform.SetParent(_storageRoot, false);
+            }
+
             instance.SetActive(false);
         }
 
@@ -111,6 +123,11 @@ namespace Neo.Tools
         public GameObject GetObject(Vector3 position, Quaternion rotation)
         {
             GameObject instance = _pool.Get();
+            if (_storageRoot != null && instance.transform.parent == _storageRoot)
+            {
+                instance.transform.SetParent(null, false);
+            }
+
             instance.transform.position = position;
             instance.transform.rotation = rotation;
             return instance;

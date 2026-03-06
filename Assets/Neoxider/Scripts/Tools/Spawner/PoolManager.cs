@@ -71,7 +71,8 @@ namespace Neo.Tools
                 if (config.prefab != null && !_pools.ContainsKey(config.prefab))
                 {
                     int max = config.expandPool ? config.maxSize > 0 ? config.maxSize : 100 : config.initialSize;
-                    NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool, max);
+                    NeoObjectPool pool = new(config.prefab, config.initialSize, config.expandPool, max,
+                        GetOrCreatePoolStorageRoot(config.prefab));
                     _pools[config.prefab] = pool;
                 }
             }
@@ -82,11 +83,26 @@ namespace Neo.Tools
             if (!_pools.TryGetValue(prefab, out NeoObjectPool pool))
             {
                 int max = _defaultExpandPool ? _defaultMaxSize > 0 ? _defaultMaxSize : 100 : _defaultInitialSize;
-                pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool, max);
+                pool = new NeoObjectPool(prefab, _defaultInitialSize, _defaultExpandPool, max,
+                    GetOrCreatePoolStorageRoot(prefab));
                 _pools[prefab] = pool;
             }
 
             return pool;
+        }
+
+        private Transform GetOrCreatePoolStorageRoot(GameObject prefab)
+        {
+            string rootName = prefab != null ? $"{prefab.name}_Pool" : "Pool";
+            Transform existing = transform.Find(rootName);
+            if (existing != null)
+            {
+                return existing;
+            }
+
+            GameObject root = new(rootName);
+            root.transform.SetParent(transform, false);
+            return root.transform;
         }
 
         public static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
@@ -99,7 +115,7 @@ namespace Neo.Tools
 
             NeoObjectPool pool = I.GetOrCreatePool(prefab);
             GameObject instance = pool.GetObject(position, rotation);
-            instance.transform.SetParent(parent == null ? I.transform : parent);
+            instance.transform.SetParent(parent, true);
             return instance;
         }
 

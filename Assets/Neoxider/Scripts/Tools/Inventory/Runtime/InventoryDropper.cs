@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -84,8 +85,8 @@ namespace Neo.Tools
         public InventoryComponent Inventory => _inventory;
 
         /// <summary>
-        ///     Ввод по клавише дропа. InventoryHand при подключённом Dropper выставляет false, чтобы дроп по G обрабатывала
-        ///     только рука.
+        ///     Drop hotkey input. When an InventoryHand is linked to a Dropper, it can set this to false so that only the
+        ///     hand handles the hotkey.
         /// </summary>
         public bool AllowDropInput
         {
@@ -188,6 +189,13 @@ namespace Neo.Tools
             }
 
             InventoryItemData data = inv.GetItemData(itemId);
+            GameObject prefab = ResolveDropPrefab(data);
+            if (prefab == null)
+            {
+                OnDropFailed?.Invoke(itemId, amount);
+                return 0;
+            }
+
             int removed = inv.RemoveItemByIdAmount(itemId, amount);
             if (removed <= 0)
             {
@@ -195,7 +203,23 @@ namespace Neo.Tools
                 return 0;
             }
 
-            SpawnDroppedItem(inv, data, itemId, removed);
+            GameObject dropped = null;
+            try
+            {
+                dropped = SpawnDroppedItem(prefab, inv, data, itemId, removed);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[InventoryDropper] Failed to spawn dropped item {itemId}: {ex.Message}", this);
+            }
+
+            if (dropped == null)
+            {
+                inv.AddItemByIdAmount(itemId, removed);
+                OnDropFailed?.Invoke(itemId, amount);
+                return 0;
+            }
+
             return removed;
         }
 
@@ -305,19 +329,20 @@ namespace Neo.Tools
             _dropItemIdOnKey = itemId;
         }
 
-        private void SpawnDroppedItem(InventoryComponent inventory, InventoryItemData itemData, int itemId, int amount)
+        private GameObject ResolveDropPrefab(InventoryItemData itemData)
         {
-            GameObject prefab = itemData != null && itemData.WorldDropPrefab != null
-                ? itemData.WorldDropPrefab
-                : _fallbackDropPrefab;
-            if (prefab == null)
-            {
-                OnDropFailed?.Invoke(itemId, amount);
-                return;
-            }
+            return itemData != null && itemData.WorldDropPrefab != null ? itemData.WorldDropPrefab : _fallbackDropPrefab;
+        }
 
+        private GameObject SpawnDroppedItem(GameObject prefab, InventoryComponent inventory, InventoryItemData itemData,
+            int itemId, int amount)
+        {
             Vector3 spawnPosition = GetSpawnPosition();
             GameObject dropped = Instantiate(prefab, spawnPosition, Quaternion.identity);
+            if (dropped == null)
+            {
+                return null;
+            }
 
             EnsureColliders(dropped);
             ApplyPhysicsImpulse(dropped);
@@ -328,6 +353,7 @@ namespace Neo.Tools
             }
 
             OnItemDropped?.Invoke(itemId, amount, dropped);
+            return dropped;
         }
 
         private InventoryComponent ResolveInventory()
@@ -355,7 +381,7 @@ namespace Neo.Tools
                 return basePosition;
             }
 
-            Vector2 offset = Random.insideUnitCircle * _randomRadius;
+            Vector2 offset = UnityEngine.Random.insideUnitCircle * _randomRadius;
             return basePosition + new Vector3(offset.x, 0f, offset.y);
         }
 

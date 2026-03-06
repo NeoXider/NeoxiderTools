@@ -1,38 +1,36 @@
 # NeoxiderPages (`Neo.Pages`)
 
-**Что это:** Assets/NeoxiderPages/
+`NeoxiderPages` — это опциональный sample-модуль навигации по страницам/экранам поверх Unity UI.
 
-**Оглавление:** см. список ссылок ниже.
+## Где находится модуль
 
----
+После импорта sample через `Package Manager > Neoxider Tools > Samples` модуль находится в:
 
+```text
+Assets/Neoxider/Samples~/NeoxiderPages/
+```
 
-## Где документация
+Ключевые артефакты:
 
-- Основная документация: `Assets/NeoxiderPages/Docs/README.md` (этот файл)
-- Демо-ассеты/примеры: `Assets/NeoxiderPages/Prefabs/Page/Example/*` и сцена `Assets/NeoxiderPages/Scenes/UI.unity`
+- документация: `Assets/Neoxider/Docs/NeoxiderPages/README.md`
+- demo-сцена: `Assets/Neoxider/Samples~/NeoxiderPages/Demo/Scenes/UI.unity`
+- runtime/editor код: внутри `Assets/Neoxider/Samples~/NeoxiderPages/Runtime` и `Editor`
 
 ## Что это
 
-`Neo.Pages` — опциональный модуль для NeoxiderTools, который добавляет систему «страниц» (экранов) поверх Unity UI.
+Базовая идея модуля:
 
-Базовая идея:
+- **`UIPage`** — помечает GameObject как страницу и хранит идентификатор страницы.
+- **`PM`** — переключает страницы, отслеживает текущую и предыдущую.
+- **`UIKit`** — статический API для вызова `ShowPage(...)` без прямой ссылки на `PM`.
 
-- **`UIPage`** — компонент, который помечает GameObject как страницу и знает свой идентификатор.
-- **`PM` (PageManager)** — включает/выключает страницы и хранит **текущую** и **предыдущую**.
-- **`UIKit`** — статическая «шина» событий `ShowPage(...)`, чтобы дергать переключение страниц из любого места без прямой ссылки на `PM`.
-
-## Структура
+## Структура sample-модуля
 
 ```text
-Assets/NeoxiderPages/
-  Runtime/     # runtime код (Neo.Pages)
-  Editor/      # editor tools (Neo.Pages.Editor)
-  Prefabs/     # демо/готовые префабы
-  Scenes/      # демо-сцена
-  Fonts/       # шрифты для демо
-  Materials/   # материалы для демо
-  Docs/        # документация модуля
+Assets/Neoxider/Samples~/NeoxiderPages/
+  Runtime/     # runtime код Neo.Pages
+  Editor/      # editor-инструменты Neo.Pages.Editor
+  Demo/        # сцена и demo-ассеты
 ```
 
 ## Содержание
@@ -201,48 +199,48 @@ public class OpenPagesExamples
 
 ## Скрипты (справочник)
 
-Ниже перечислены **все** `.cs` файлы внутри `Assets/NeoxiderPages` и их назначение.
+Ниже перечислены основные `.cs` файлы внутри sample-модуля и их назначение.
 
 ### Runtime
 
-- `Assets/NeoxiderPages/Runtime/Scripts/UIKit.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/UIKit.cs`
   - `UIKit.OnShowPage` / `UIKit.ShowPage(PageId)` — запрос показа страницы по ассету
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Page/PageId.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/PageId.cs`
   - `PageId` (ScriptableObject) — ассет-идентификатор страницы
   - `PageId.Id` генерируется из имени ассета (рекомендуемый формат: `PageMenu`, `PageShop`, …)
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Page/PM.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/PM.cs`
   - менеджер страниц (singleton `PM.I`)
   - основное API: `ChangePage`, `SetPage`, `ActivePage`, `SwitchToPreviousPage`, `CloseCurrentPage`
   - переключение только по `PageId`
   - событие: `OnPageChanged(UIPage)`
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Page/UIPage.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/UIPage.cs`
   - компонент “страницы” (GameObject) с `pageId: PageId`
   - флаги: `popup`, `ignoreOnExclusiveChange`
   - поведение: `StartActive()` / `EndActive()` + (опционально) DOTween-анимация
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Page/BtnChangePage.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/BtnChangePage.cs`
   - UI-кнопка переключения страниц через `PM.I`
   - `Action`: `OpenPage` / `Back` / `CloseCurrent`
   - для `OpenPage` использует `targetPageId: PageId`
   - может выполнить `GameState.State` перед переключением
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Page/FakeLoad.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/FakeLoad.cs`
   - корутина “фейковой загрузки” с прогрессом
   - события: `OnStart`, `OnFinisLoad`, `OnChangePercent(int)`, `OnChange(float)`
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Core/PageSubscriber.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Core/PageSubscriber.cs`
   - пример подписки на события Neoxider (`G.OnStart`) и переключения страницы через `PM`
 
-- `Assets/NeoxiderPages/Runtime/Scripts/Core/ToggleAudio.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Core/ToggleAudio.cs`
   - мостик UI → аудио-настройки (`Audio.IsActiveMusic/IsActiveSound`)
   - работает через `VisualToggle` (из `Neo.UI`)
 
 ### Runtime API (фасады)
 
-- `Assets/NeoxiderPages/Runtime/API/UIKitAPI.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/API/UIKitAPI.cs`
   - набор статических фасадов для удобного доступа из UI:
     - `Wallet`, `Score`, `Level` — значения и события изменения
     - `Audio` — включение/выключение музыки/звука + `PlayUI()`
@@ -251,22 +249,22 @@ public class OpenPagesExamples
 
 ### Editor Tools
 
-- `Assets/NeoxiderPages/Editor/Tools/AutoSpriteAssignerEditor.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Tools/AutoSpriteAssignerEditor.cs`
   - EditorWindow: массово назначает `Sprite` в `UnityEngine.UI.Image` по имени GameObject ↔ имени Sprite
   - меню: `Tools/UIKit/Auto Sprite Assigner`
 
-- `Assets/NeoxiderPages/Editor/Tools/AutoTMPFontAssignerEditor.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Tools/AutoTMPFontAssignerEditor.cs`
   - EditorWindow: массово назначает `TMP_FontAsset` для всех `TMP_Text` в сценах
   - меню: `Tools/UIKit/Auto TMP Font Assigner`
 
-- `Assets/NeoxiderPages/Editor/Tools/PageIdGenerator.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Tools/PageIdGenerator.cs`
   - генератор `PageId` ассетов (в т.ч. дефолтный набор)
   - меню: `Tools/Neoxider/Pages/Generate Default PageIds`
 
 ### Editor Inspectors
 
-- `Assets/NeoxiderPages/Editor/Inspectors/UIPageEditor.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Inspectors/UIPageEditor.cs`
   - удобный инспектор `UIPage` с переключателем **Dropdown/Asset** + генерацией `PageId`
 
-- `Assets/NeoxiderPages/Editor/Inspectors/BtnChangePageEditor.cs`
+- `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Inspectors/BtnChangePageEditor.cs`
   - удобный инспектор `BtnChangePage` с переключателем **Dropdown/Asset** + генерацией `PageId`

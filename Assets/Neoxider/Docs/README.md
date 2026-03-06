@@ -1,20 +1,83 @@
-# Neoxider Docs — документация и навигация
+# Neoxider Docs
 
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.5.0`.
+
+Используйте этот файл как главную точку входа в пользовательскую документацию.
+
+- [Полезные компоненты](./UsefulComponents.md) - быстрый вход по сценарию `Add Component / GameObject`
+- [Корневой README пакета](../README.md) - установка, обзор, samples
+- [English onboarding](../DocsEn/README.md) - минимальный вход для англоязычных пользователей
+
+## Оглавление модулей
+
+| Модуль | Описание | Документация |
+|--------|----------|--------------|
+| **Animations** | Анимация значений, цветов, `Vector3`, света | [`Animations/README.md`](./Animations/README.md) |
+| **Audio** | AudioManager, микшер, play-on-click, music helpers | [`Audio/README.md`](./Audio/README.md) |
+| **Bonus** | Коллекции, слот-машины, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
+| **Cards** | Карточные игры, колода, рука, presenter/view | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-code условия и UnityEvent | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
+| **Editor** | Инспекторы, авто-билд, сервисные окна | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/LevelManager.md`](./Level/LevelManager.md) |
+| **NPC** | Модульная навигация NPC | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Параллакс-слои | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
+| **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
+| **StateMachine** | State machine и no-code редактор | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
+| **Tools** | Инвентарь, движение, спавн, диалоги, время, ввод | [`Tools/README.md`](./Tools/README.md) |
+| **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
+| **UI Extension** | UI-префабы и layout-ассеты | [`UI Extension/README.md`](./UI%20Extension/README.md) |
+
+## Подмодули `Tools`
+
+| Подмодуль | Что внутри | Документация |
+|-----------|------------|--------------|
+| `Tools/Components` | `Counter`, `Health`, `ScoreManager`, `TypewriterEffect` | [`Tools/Components/README.md`](./Tools/Components/README.md) |
+| `Tools/Dialogue` | `DialogueController`, `DialogueData`, `DialogueUI` | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
+| `Tools/Input` | `MouseInputManager`, `MultiKeyEventTrigger`, `SwipeController` | [`Tools/Input/README.md`](./Tools/Input/README.md) |
+| `Tools/Inventory` | `InventoryComponent`, `InventoryDropper`, `PickableItem` | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |
+| `Tools/Managers` | `GM`, `EM`, `Bootstrap`, `Singleton` | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
+| `Tools/Move` | Контроллеры движения и курсора | [`Tools/Move/README.md`](./Tools/Move/README.md) |
+| `Tools/Physics` | Magnetic, impulse, explosive helpers | [`Tools/Physics/README.md`](./Tools/Physics/README.md) |
+| `Tools/Spawner` | Object pooling и спавнеры | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
+| `Tools/Time` | `Timer`, `TimerObject` | [`Tools/Time/README.md`](./Tools/Time/README.md) |
+| `Tools/View` | Selector и view-утилиты | [`Tools/View/README.md`](./Tools/View/README.md) |
+# Neoxider Docs
+
+<<<<<<< Updated upstream
 **Что это:** корневой индекс документации **NeoxiderTools**. Ссылки на модули, подмодули Tools, демо-сцены и быстрый старт.
 
 **Навигация:** [← К проекту (PROJECT_SUMMARY)](../PROJECT_SUMMARY.md) · [Полезные компоненты](./UsefulComponents.md) · [NEXT_IMPROVEMENTS](./NEXT_IMPROVEMENTS.md)
 
 **Как пользоваться:** выберите модуль в таблице ниже.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.4.0`.
+=======
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.4.0`.
 
----
+Используйте этот файл как главную точку входа в пользовательскую документацию. Внутренние backlog-заметки и рабочие TODO намеренно не включены в этот индекс.
+
+- [Полезные компоненты](./UsefulComponents.md) — быстрый вход по сценарию `Add Component / GameObject`.
+- [Корневой README пакета](../README.md) — установка, package overview, samples.
+- [English onboarding](../DocsEn/README.md) — минимальный вход для англоязычных пользователей.
+>>>>>>> Stashed changes
+
+Используйте этот файл как главную точку входа в пользовательскую документацию. Внутренние backlog-заметки и рабочие TODO намеренно не включены в этот индекс.
+
+- [Полезные компоненты](./UsefulComponents.md) — быстрый вход по сценарию `Add Component / GameObject`.
+- [Корневой README пакета](../README.md) — установка, package overview, samples.
+- [English onboarding](../DocsEn/README.md) — минимальный вход для англоязычных пользователей.
 
 ## Оглавление модулей
 
 | Модуль | Описание | Документация |
 |--------|----------|-------------|
-| **Animations** | Анимация значений, цветов, Vector3, света | [`Animations/README.md`](./Animations/README.md) |
-| **Audio** | AudioManager, микшер, play-on-click | [`Audio/README.md`](./Audio/README.md) |
+| **Animations** | Анимация значений, цветов, `Vector3`, света | [`Animations/README.md`](./Animations/README.md) |
+| **Audio** | AudioManager, микшер, play-on-click, music helpers | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Коллекции, слот-машины, колёса удачи, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
+<<<<<<< Updated upstream
 | **Cards** | Карточные игры (MVP): колода, рука, покер, "Пьяница" | [`Cards/README.md`](./Cards/README.md) |
 | **Condition** | NeoCondition: поля, свойства, методы с аргументом, AND/OR, OnTrue/OnFalse. [Demo](../Demo/Scenes/Condition/) | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [Condition_Reuse.md](./Condition/Condition_Reuse.md) |
 | **Editor** | Кастом-инспектор, авто-билд, Scene Saver, утилиты | [`Editor/README.md`](./Editor/README.md) |
@@ -28,11 +91,38 @@
 | **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
 | **StateMachine** | State Machine + конфигурация через ScriptableObject (StateMachineData) | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
 | **Tools** | Спавнеры, таймеры, физика, ввод, менеджеры, Counter | [`Tools/README.md`](./Tools/README.md) |
+| **Cards** | Карточные игры, колода, рука, presenter/view, анимации | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-code условия, методы с аргументом, AND/OR, UnityEvent | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [`Condition/Condition_Reuse.md`](./Condition/Condition_Reuse.md) |
+| **Editor** | Инспекторы, авто-билд, сервисные окна, утилиты | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/LevelManager.md`](./Level/LevelManager.md), [`Level/SceneFlowController.md`](./Level/SceneFlowController.md) |
+| **NPC** | Модульная навигация NPC | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Параллакс-слои | [`ParallaxLayer.md`](./ParallaxLayer.md) |
+| **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
+=======
+| **Cards** | Карточные игры, колода, рука, presenter/view, анимации | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-code условия, методы с аргументом, AND/OR, UnityEvent | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md), [`Condition/Condition_Reuse.md`](./Condition/Condition_Reuse.md) |
+| **Editor** | Инспекторы, авто-билд, сервисные окна, утилиты | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/LevelManager.md`](./Level/LevelManager.md), [`Level/SceneFlowController.md`](./Level/SceneFlowController.md) |
+| **NPC** | Модульная навигация NPC | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Параллакс-слои | [`ParallaxLayer.md`](./ParallaxLayer.md) |
+| **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
+>>>>>>> Stashed changes
+| **StateMachine** | State machine и no-code редактор | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
+| **Tools** | Инвентарь, движение, спавн, диалоги, время, ввод, утилиты | [`Tools/README.md`](./Tools/README.md) |
 | **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
-| **UI Extension** | Готовые UI-префабы: Canvas, Layout, ScrollRect | [`UI Extension/README.md`](./UI%20Extension/README.md) |
+| **UI Extension** | Готовые UI-префабы и layout-ассеты | [`UI Extension/README.md`](./UI%20Extension/README.md) |
 
-### Подмодули Tools
+## Подмодули `Tools`
 
+<<<<<<< Updated upstream
 | Подмодуль | Описание | Документация |
 |-----------|----------|-------------|
 | Tools/Components | Counter, Health, Evade, ScoreManager, TypewriterEffect | [`Tools/Components/README.md`](./Tools/Components/README.md) |
@@ -51,68 +141,65 @@
 | Tools/Draw | Drawer (рисование линий) | [`Tools/Draw/README.md`](./Tools/Draw/README.md) |
 | Tools/Text | SetText, TimeToText | [`Tools/Text/README.md`](./Tools/Text/README.md) |
 | Tools/Inventory | InventoryComponent, PickableItem, InventoryHand, InventoryDropper, InventoryItemData | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |
+=======
+>>>>>>> Stashed changes
+| Подмодуль | Что внутри | Документация |
+|-----------|------------|-------------|
+| `Tools/Components` | `Counter`, `Health`, `ScoreManager`, `TypewriterEffect`, utility components | [`Tools/Components/README.md`](./Tools/Components/README.md) |
+| `Tools/Dialogue` | `DialogueController`, `DialogueData`, `DialogueUI` | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
+| `Tools/Input` | `MouseInputManager`, `MultiKeyEventTrigger`, `SwipeController` | [`Tools/Input/README.md`](./Tools/Input/README.md) |
+| `Tools/InteractableObject` | `InteractiveObject`, `PhysicsEvents`, `ToggleObject` | [`Tools/InteractableObject/README.md`](./Tools/InteractableObject/README.md) |
+| `Tools/Inventory` | `InventoryComponent`, `InventoryDropper`, `PickableItem`, hand/view UI | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |
+| `Tools/Managers` | `GM`, `EM`, `Bootstrap`, `Singleton` | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
+| `Tools/Move` | Follow, keyboard/mouse movement, controllers | [`Tools/Move/README.md`](./Tools/Move/README.md) |
+| `Tools/Physics` | Magnetic, impulse, explosive helpers | [`Tools/Physics/README.md`](./Tools/Physics/README.md) |
+| `Tools/Random` | Chance system | [`Tools/Random/README.md`](./Tools/Random/README.md) |
+| `Tools/Spawner` | Pooling and spawners | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
+| `Tools/Text` | `SetText`, `TimeToText` | [`Tools/Text/README.md`](./Tools/Text/README.md) |
+| `Tools/Time` | `Timer`, `TimerObject` | [`Tools/Time/README.md`](./Tools/Time/README.md) |
+| `Tools/View` | `Selector`, `StarView`, billboard helpers | [`Tools/View/README.md`](./Tools/View/README.md) |
 
-### Опциональные модули
+## Samples и опциональные модули
 
-| Модуль | Путь | Документация |
-|--------|------|-------------|
-| **NeoxiderPages** | `Assets/NeoxiderPages/` | `Assets/NeoxiderPages/Docs/README.md` |
+Импорт через `Package Manager > Neoxider Tools > Samples`.
 
-### Демо-сцены
+| Что | Путь | Назначение |
+|-----|------|------------|
+| **Demo Scenes** | `Assets/Neoxider/Samples~/Demo/` | Сцены интеграции для основных модулей |
+| **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Опциональный sample-модуль страниц/экранов |
 
-| Демо | Сцена | Описание |
-|------|-------|----------|
-| **Chance System** | `Demo/Scenes/Tools/ChanceSystemExample.unity` | Система шансов |
-| **Attributes** | `Demo/Scenes/Tools/AttributeExample.unity` | Демонстрация PropertyAttribute |
-| **Dialogue** | `Demo/Scenes/Tools/Dialogue.unity` | Система диалогов |
-| **Draw** | `Demo/Scenes/Tools/DrawExample.unity` | Рисование линий |
-| **Mouse Effector** | `Demo/Scenes/Tools/MouseEffectorExample.unity` | Эффекты мыши |
-| **GridSystem Match3** | `Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity` | Сетка, формы, origin-якорь, pathfinding, Match3 |
-| **GridSystem TicTacToe** | `Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | Сетка, кликабельное поле, состояния клеток, TicTacToe |
+### Выбранные demo-сцены
 
----
+| Демо | Путь | Что показывает |
+|------|------|----------------|
+| **NeoCondition Demo** | `Assets/Neoxider/Samples~/Demo/Scenes/Condition/NeoConditionDemo.unity` | No-code условия и события |
+| **Chance System** | `Assets/Neoxider/Samples~/Demo/Scenes/Tools/ChanceSystemExample.unity` | Система шансов |
+| **Dialogue** | `Assets/Neoxider/Samples~/Demo/Scenes/Tools/Dialogue.unity` | Диалоговая система |
+| **Draw** | `Assets/Neoxider/Samples~/Demo/Scenes/Tools/DrawExample.unity` | Рисование линий |
+| **Mouse Effector** | `Assets/Neoxider/Samples~/Demo/Scenes/Tools/MouseEffectorExample.unity` | Мышиные эффекты |
+| **GridSystem Match3** | `Assets/Neoxider/Samples~/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity` | GridSystem + Match3 |
+| **GridSystem TicTacToe** | `Assets/Neoxider/Samples~/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity` | GridSystem + TicTacToe |
 
 ## Быстрый старт
 
-1. Подготовьте зависимости
-   - Unity 2022+
-   - DOTween (для ряда анимационных и игровых модулей)
-   - UniTask (асинхронное программирование)
-   - Spine Unity Runtime (по желанию) — для модулей Spine
-2. Импортируйте папку `Assets/Neoxider` в проект
-3. Добавьте системный префаб `Assets/Neoxider/Prefabs/--System--.prefab` в сцену — он подключает менеджеры событий и UI
-4. Подключите нужные подсистемы
-   - Компоненты: `Assets/Neoxider/**/Scripts`
-   - Примеры/префабы: `Assets/Neoxider/**/Demo`, `Assets/Neoxider/**/Prefabs`
-5. Изучите документацию модуля
-   - Откройте соответствующий README в таблице выше и следуйте разделу «Быстрый старт» внутри модуля
-
-### Установка через Unity Package Manager (Git URL)
-
-Если вы хотите подключить только содержимое `Assets/Neoxider` как пакет:
-
-```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
-```
-
-Зависимости, устанавливаемые через UPM:
-- UniTask: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask`
-- DOTween: через Asset Store (`DG.Tweening`)
-
----
+1. Установите пакет через UPM Git URL или скопируйте `Assets/Neoxider`.
+2. Для типовых сцен добавьте `Assets/Neoxider/Prefabs/--System--.prefab`.
+3. Откройте документацию нужного модуля из таблицы выше.
+4. При использовании async/tween-модулей заранее подключите внешние зависимости:
+   - `UniTask`
+   - `DOTween`
+   - `Spine Unity Runtime` только для Spine-интеграций
 
 ## Подсказки по интеграции
 
-- Системный префаб `--System--.prefab` должен находиться ровно один раз в активной сцене.
-- Большинство компонентов настраиваются в инспекторе и через UnityEvent; расширение через события и публичные API.
-- Для тяжёлых игровых объектов используйте пул (`Tools/Spawner`, `ObjectPool`) — это ускоряет инстансинг и уменьшает GC.
-- В UI‑модулях широко используются анимации и состояния — проверяйте примеры в `UI/README.md`.
-
----
+- Большинство компонентов настраивается через Inspector и `UnityEvent`.
+- Если в сцене несколько однотипных систем, привязывайте ссылки явно, а не рассчитывайте на авто-поиск.
+- Для тяжёлых spawn/despawn сценариев используйте `Tools/Spawner`.
+- Для навигации по практическим сценариям начните с [UsefulComponents.md](./UsefulComponents.md).
 
 ## Поддержка
 
-Если нашли проблему или есть предложения по улучшению — создайте issue/PR в основном репозитории. Мы стремимся держать документацию актуальной и предоставлять понятные примеры к каждому модулю.
+Если нашли проблему или хотите предложить улучшение, создайте issue или PR в основном репозитории.
 
 
 

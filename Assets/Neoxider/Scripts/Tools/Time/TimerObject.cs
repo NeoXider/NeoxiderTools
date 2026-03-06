@@ -114,7 +114,7 @@ namespace Neo.Tools
         [Tooltip("Reactive current time; subscribe via Time.OnChanged")]
         public ReactivePropertyFloat Time = new();
 
-        /// <summary>Текущее значение таймера в секундах (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current timer value in seconds (for NeoCondition and reflection).</summary>
         public float TimeValue => Time.CurrentValue;
 
         [Tooltip("Called with progress (0-1) on each update")]
