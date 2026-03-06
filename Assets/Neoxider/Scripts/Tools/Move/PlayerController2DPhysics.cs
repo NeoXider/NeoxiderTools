@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -56,6 +57,7 @@ namespace Neo.Tools
         private float _moveInputX;
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
+        private bool _legacyInputUnavailableWarningShown;
         private bool _wasGrounded;
         private bool _wasMoving;
 
@@ -194,6 +196,11 @@ namespace Neo.Tools
                 return true;
             }
 
+            if (!IsLegacyInputAvailable())
+            {
+                return true;
+            }
+
             if ((_inputBackend == InputBackend.NewInputSystem || _inputBackend == InputBackend.AutoPreferNew) &&
                 !_newInputUnavailableWarningShown)
             {
@@ -205,6 +212,19 @@ namespace Neo.Tools
             return false;
         }
 
+        private static bool IsLegacyInputAvailable()
+        {
+            try
+            {
+                Vector3 _ = Input.mousePosition;
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
         private float ReadMoveXInput()
         {
             if (ShouldUseNewInput())
@@ -212,7 +232,15 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadMove().x;
             }
 
-            return Input.GetAxisRaw(_horizontalAxis);
+            try
+            {
+                return Input.GetAxisRaw(_horizontalAxis);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.IsAvailable ? OptionalInputSystemBridge.ReadMove().x : 0f;
+            }
         }
 
         private bool ReadJumpPressed()
@@ -222,7 +250,15 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadJumpPressed();
             }
 
-            return Input.GetButtonDown(_jumpButton);
+            try
+            {
+                return Input.GetButtonDown(_jumpButton);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadJumpPressed();
+            }
         }
 
         private bool ReadRunHeld()
@@ -232,7 +268,28 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadRunHeld();
             }
 
-            return Input.GetKey(_runKey);
+            try
+            {
+                return Input.GetKey(_runKey);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadRunHeld() || OptionalInputSystemBridge.ReadKeyHeld(_runKey);
+            }
+        }
+
+        private void WarnLegacyInputUnavailable()
+        {
+            if (_legacyInputUnavailableWarningShown)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[PlayerController2DPhysics] Legacy Input Manager is unavailable in current Player Settings. Falling back to New Input System where possible.",
+                this);
+            _legacyInputUnavailableWarningShown = true;
         }
 
         private void UpdateGroundState()

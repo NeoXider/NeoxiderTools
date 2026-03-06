@@ -324,7 +324,7 @@
 | **TextMeshPro** | Автоматически через UPM |
 | **AI Navigation** | Автоматически через UPM |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
-| **DOTween** (обязательно) | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
+| **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
 | **Odin Inspector** (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
 

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -90,6 +91,7 @@ namespace Neo.Tools
         private Vector2 _moveInput;
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
+        private bool _legacyInputUnavailableWarningShown;
         private float _pitch;
         private bool _wasGrounded;
         private bool _wasMoving;
@@ -152,7 +154,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (_toggleCursorOnEscape && !HasExternalCursorControl() && Input.GetKeyDown(KeyCode.Escape))
+            if (_toggleCursorOnEscape && !HasExternalCursorControl() && ReadEscapePressed())
             {
                 if (Cursor.visible)
                 {
@@ -500,6 +502,11 @@ namespace Neo.Tools
                 return true;
             }
 
+            if (!IsLegacyInputAvailable())
+            {
+                return true;
+            }
+
             if ((_inputBackend == InputBackend.NewInputSystem || _inputBackend == InputBackend.AutoPreferNew) &&
                 !_newInputUnavailableWarningShown)
             {
@@ -511,6 +518,37 @@ namespace Neo.Tools
             return false;
         }
 
+        private static bool IsLegacyInputAvailable()
+        {
+            try
+            {
+                Vector3 _ = Input.mousePosition;
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        private bool ReadEscapePressed()
+        {
+            if (ShouldUseNewInput())
+            {
+                return OptionalInputSystemBridge.ReadKeyDown(KeyCode.Escape);
+            }
+
+            try
+            {
+                return Input.GetKeyDown(KeyCode.Escape);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadKeyDown(KeyCode.Escape);
+            }
+        }
+
         private Vector2 ReadMoveInput()
         {
             if (ShouldUseNewInput())
@@ -518,7 +556,15 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadMove();
             }
 
-            return new Vector2(Input.GetAxisRaw(_horizontalAxis), Input.GetAxisRaw(_verticalAxis));
+            try
+            {
+                return new Vector2(Input.GetAxisRaw(_horizontalAxis), Input.GetAxisRaw(_verticalAxis));
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.IsAvailable ? OptionalInputSystemBridge.ReadMove() : Vector2.zero;
+            }
         }
 
         private Vector2 ReadLookInput()
@@ -528,7 +574,17 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadLookDelta(_newLookDeltaScale);
             }
 
-            return new Vector2(Input.GetAxis(_mouseXAxis), Input.GetAxis(_mouseYAxis));
+            try
+            {
+                return new Vector2(Input.GetAxis(_mouseXAxis), Input.GetAxis(_mouseYAxis));
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.IsAvailable
+                    ? OptionalInputSystemBridge.ReadLookDelta(_newLookDeltaScale)
+                    : Vector2.zero;
+            }
         }
 
         private bool ReadJumpPressed()
@@ -538,7 +594,15 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadJumpPressed();
             }
 
-            return Input.GetButtonDown(_jumpButton);
+            try
+            {
+                return Input.GetButtonDown(_jumpButton);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadJumpPressed();
+            }
         }
 
         private bool ReadRunHeld()
@@ -548,7 +612,28 @@ namespace Neo.Tools
                 return OptionalInputSystemBridge.ReadRunHeld();
             }
 
-            return Input.GetKey(_runKey);
+            try
+            {
+                return Input.GetKey(_runKey);
+            }
+            catch (InvalidOperationException)
+            {
+                WarnLegacyInputUnavailable();
+                return OptionalInputSystemBridge.ReadRunHeld() || OptionalInputSystemBridge.ReadKeyHeld(_runKey);
+            }
+        }
+
+        private void WarnLegacyInputUnavailable()
+        {
+            if (_legacyInputUnavailableWarningShown)
+            {
+                return;
+            }
+
+            Debug.LogWarning(
+                "[PlayerController3DPhysics] Legacy Input Manager is unavailable in current Player Settings. Falling back to New Input System where possible.",
+                this);
+            _legacyInputUnavailableWarningShown = true;
         }
 
         private static float NormalizePitch(float angle)

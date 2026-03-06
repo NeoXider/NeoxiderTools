@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,13 +34,19 @@ namespace Neo.Tools
         private static bool eventSystemChecked;
 
         private static readonly Type KeyboardType =
-            Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
+            ResolveType("UnityEngine.InputSystem.Keyboard");
 
         private static readonly Type MouseType =
-            Type.GetType("UnityEngine.InputSystem.Mouse, Unity.InputSystem");
+            ResolveType("UnityEngine.InputSystem.Mouse");
+
+        private static readonly Type InputSystemUiInputModuleType =
+            ResolveType("UnityEngine.InputSystem.UI.InputSystemUIInputModule");
 
         [Header("Event System")] [SerializeField]
         private bool _autoCheckEventSystem = true;
+
+        [Tooltip("Create EventSystem automatically if it is missing in scene.")] [SerializeField]
+        private bool _autoCreateEventSystemIfMissing = true;
 
         public bool interactable = true;
 
@@ -993,25 +1000,132 @@ namespace Neo.Tools
                 return;
             }
 
-            bool eventSystemExists = EventSystem.current != null || FindObjectOfType<EventSystem>() != null;
             EventSystem eventSystem = EventSystem.current ?? FindObjectOfType<EventSystem>();
-            bool hasInputModule = eventSystem != null && eventSystem.currentInputModule != null;
-
-            if (!eventSystemExists)
+            if (eventSystem == null)
             {
-                Debug.LogWarning("InteractiveObject: EventSystem not found in scene");
-            }
-            else if (!hasInputModule)
-            {
-                Debug.LogWarning(
-                    "InteractiveObject: EventSystem found but no InputModule. Adding StandaloneInputModule.", this);
-                if (eventSystem != null)
+                if (_autoCreateEventSystemIfMissing)
                 {
-                    eventSystem.gameObject.AddComponent<StandaloneInputModule>();
+                    eventSystem = CreateEventSystem();
+                }
+                else
+                {
+                    Debug.LogWarning("InteractiveObject: EventSystem not found in scene", this);
                 }
             }
 
+            if (eventSystem != null)
+            {
+                EnsureInputModule(eventSystem.gameObject);
+            }
+
             eventSystemChecked = true;
+        }
+
+        private EventSystem CreateEventSystem()
+        {
+            GameObject eventSystemObject = new("EventSystem", typeof(EventSystem));
+            EventSystem eventSystem = eventSystemObject.GetComponent<EventSystem>();
+            EnsureInputModule(eventSystemObject);
+            Debug.LogWarning(
+                "InteractiveObject: EventSystem not found in scene. Created EventSystem automatically.",
+                eventSystemObject);
+            return eventSystem;
+        }
+
+        private void EnsureInputModule(GameObject eventSystemObject)
+        {
+            if (eventSystemObject == null)
+            {
+                return;
+            }
+
+            bool legacyInputAvailable = IsLegacyInputAvailable();
+            if (!legacyInputAvailable)
+            {
+                RemoveStandaloneInputModule(eventSystemObject);
+
+                if (InputSystemUiInputModuleType != null)
+                {
+                    if (eventSystemObject.GetComponent(InputSystemUiInputModuleType) == null)
+                    {
+                        eventSystemObject.AddComponent(InputSystemUiInputModuleType);
+                    }
+
+                    return;
+                }
+
+                Debug.LogWarning(
+                    "InteractiveObject: Input System is active, but InputSystemUIInputModule type is unavailable. StandaloneInputModule was removed to avoid InvalidOperationException.",
+                    eventSystemObject);
+                return;
+            }
+
+            if (eventSystemObject.GetComponent<BaseInputModule>() != null)
+            {
+                return;
+            }
+
+            eventSystemObject.AddComponent<StandaloneInputModule>();
+        }
+
+        private static bool IsLegacyInputAvailable()
+        {
+            try
+            {
+                Vector3 _ = Input.mousePosition;
+                return true;
+            }
+            catch (InvalidOperationException)
+            {
+                return false;
+            }
+        }
+
+        private static void RemoveStandaloneInputModule(GameObject eventSystemObject)
+        {
+            StandaloneInputModule[] modules = eventSystemObject.GetComponents<StandaloneInputModule>();
+            foreach (StandaloneInputModule module in modules)
+            {
+                if (module == null)
+                {
+                    continue;
+                }
+
+                if (Application.isPlaying)
+                {
+                    Destroy(module);
+                }
+                else
+                {
+                    DestroyImmediate(module);
+                }
+            }
+        }
+
+        private static Type ResolveType(string fullTypeName)
+        {
+            TryLoadAssembly("Unity.InputSystem");
+            TryLoadAssembly("Unity.InputSystem.ForUI");
+
+            Type directType = Type.GetType(fullTypeName, false);
+            if (directType != null)
+            {
+                return directType;
+            }
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            return assemblies.Select(assembly => assembly.GetType(fullTypeName, false)).FirstOrDefault(type => type != null);
+        }
+
+        private static void TryLoadAssembly(string assemblyName)
+        {
+            try
+            {
+                Assembly.Load(assemblyName);
+            }
+            catch
+            {
+            }
         }
 
         private void TryEnsureNeededRaycasterOnce()

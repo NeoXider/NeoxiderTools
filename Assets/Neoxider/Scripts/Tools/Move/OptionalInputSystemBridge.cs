@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
@@ -6,9 +7,9 @@ namespace Neo.Tools
 {
     internal static class OptionalInputSystemBridge
     {
-        private static readonly Type KeyboardType = Type.GetType("UnityEngine.InputSystem.Keyboard, Unity.InputSystem");
-        private static readonly Type MouseType = Type.GetType("UnityEngine.InputSystem.Mouse, Unity.InputSystem");
-        private static readonly Type GamepadType = Type.GetType("UnityEngine.InputSystem.Gamepad, Unity.InputSystem");
+        private static readonly Type KeyboardType = ResolveType("UnityEngine.InputSystem.Keyboard");
+        private static readonly Type MouseType = ResolveType("UnityEngine.InputSystem.Mouse");
+        private static readonly Type GamepadType = ResolveType("UnityEngine.InputSystem.Gamepad");
 
         public static bool IsAvailable => KeyboardType != null || MouseType != null || GamepadType != null;
 
@@ -94,6 +95,21 @@ namespace Neo.Tools
             return keyboardRun || gamepadRun;
         }
 
+        public static bool ReadKeyDown(KeyCode keyCode)
+        {
+            return ReadKeyState(keyCode, "wasPressedThisFrame");
+        }
+
+        public static bool ReadKeyUp(KeyCode keyCode)
+        {
+            return ReadKeyState(keyCode, "wasReleasedThisFrame");
+        }
+
+        public static bool ReadKeyHeld(KeyCode keyCode)
+        {
+            return ReadKeyState(keyCode, "isPressed");
+        }
+
         private static object GetCurrentDevice(Type deviceType)
         {
             if (deviceType == null)
@@ -105,6 +121,32 @@ namespace Neo.Tools
             return currentProperty?.GetValue(null);
         }
 
+        private static Type ResolveType(string fullTypeName)
+        {
+            TryLoadAssembly("Unity.InputSystem");
+            TryLoadAssembly("Unity.InputSystem.ForUI");
+
+            Type directType = Type.GetType(fullTypeName, false);
+            if (directType != null)
+            {
+                return directType;
+            }
+
+            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            return assemblies.Select(assembly => assembly.GetType(fullTypeName, false)).FirstOrDefault(type => type != null);
+        }
+
+        private static void TryLoadAssembly(string assemblyName)
+        {
+            try
+            {
+                Assembly.Load(assemblyName);
+            }
+            catch
+            {
+            }
+        }
+
         private static bool GetKeyPressed(object keyboard, string keyPropertyName)
         {
             return GetControlBool(keyboard, keyPropertyName, "isPressed");
@@ -113,6 +155,74 @@ namespace Neo.Tools
         private static bool GetKeyWasPressedThisFrame(object keyboard, string keyPropertyName)
         {
             return GetControlBool(keyboard, keyPropertyName, "wasPressedThisFrame");
+        }
+
+        private static bool ReadKeyState(KeyCode keyCode, string statePropertyName)
+        {
+            object keyboard = GetCurrentDevice(KeyboardType);
+            if (keyboard == null)
+            {
+                return false;
+            }
+
+            string keyPropertyName = GetInputSystemKeyPropertyName(keyCode);
+            if (string.IsNullOrEmpty(keyPropertyName))
+            {
+                return false;
+            }
+
+            return GetControlBool(keyboard, keyPropertyName, statePropertyName);
+        }
+
+        private static string GetInputSystemKeyPropertyName(KeyCode keyCode)
+        {
+            if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
+            {
+                return char.ToLowerInvariant((char)('a' + (keyCode - KeyCode.A))) + "Key";
+            }
+
+            if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
+            {
+                int digit = keyCode - KeyCode.Alpha0;
+                return "digit" + digit + "Key";
+            }
+
+            switch (keyCode)
+            {
+                case KeyCode.Space:
+                    return "spaceKey";
+                case KeyCode.Return:
+                case KeyCode.KeypadEnter:
+                    return "enterKey";
+                case KeyCode.Escape:
+                    return "escapeKey";
+                case KeyCode.Tab:
+                    return "tabKey";
+                case KeyCode.Backspace:
+                    return "backspaceKey";
+                case KeyCode.LeftShift:
+                    return "leftShiftKey";
+                case KeyCode.RightShift:
+                    return "rightShiftKey";
+                case KeyCode.LeftControl:
+                    return "leftCtrlKey";
+                case KeyCode.RightControl:
+                    return "rightCtrlKey";
+                case KeyCode.LeftAlt:
+                    return "leftAltKey";
+                case KeyCode.RightAlt:
+                    return "rightAltKey";
+                case KeyCode.UpArrow:
+                    return "upArrowKey";
+                case KeyCode.DownArrow:
+                    return "downArrowKey";
+                case KeyCode.LeftArrow:
+                    return "leftArrowKey";
+                case KeyCode.RightArrow:
+                    return "rightArrowKey";
+                default:
+                    return null;
+            }
         }
 
         private static bool GetControlBool(object device, string controlPropertyName, string statePropertyName)
