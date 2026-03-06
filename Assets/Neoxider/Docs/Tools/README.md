@@ -27,6 +27,10 @@
 | **Text** | `SetText`, `TimeToText` | [`Text/README.md`](./Text/README.md) |
 | **Time** | `Timer`, `TimerObject` | [`Time/README.md`](./Time/README.md) |
 | **View** | `Selector`, `StarView`, billboard/view helpers | [`View/README.md`](./View/README.md) |
+| **Debug** | `FPS`, `ErrorLogger`, debug utility компоненты | [`Debug/README.md`](./Debug/README.md) |
+| **Draw** | `Drawer` и визуальные drawing/debug helpers | [`Draw/README.md`](./Draw/README.md) |
+| **FakeLeaderboard** | `Leaderboard`, `LeaderboardItem`, `LeaderboardMove` | [`FakeLeaderboard/README.md`](./FakeLeaderboard/README.md) |
+| **Other** | `CameraShake`, `SpineController`, `RevertAmount` и misc helpers | [`Other/README.md`](./Other/README.md) |
 
 ## Отдельные файлы верхнего уровня
 

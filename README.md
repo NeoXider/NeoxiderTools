@@ -8,7 +8,9 @@
 
 **Neoxider** is an ecosystem of ready-to-use Unity tools, built by developers for developers. Easy to configure through Inspector, no deep code diving required, yet fully transparent and extensible. Perfect for prototyping and production projects.
 
-📖 **[Полная документация →](Assets/Neoxider/Docs/README.md)** | 📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** | 📝 **[Changelog →](Assets/Neoxider/CHANGELOG.md)**
+📖 **[Полная документация (RU) →](Assets/Neoxider/Docs/README.md)** · 📖 **[English docs →](Assets/Neoxider/DocsEn/README.md)** · 📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** · 📝 **[Changelog →](Assets/Neoxider/CHANGELOG.md)**
+
+**Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — канонический индекс всех модулей. **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — entry point; каждый модуль имеет EN-страницу, при отсутствии полного перевода даны ссылки на русские разделы. Tools-подмодули и samples (NeoxiderPages, UI Extension) включены в оба индекса.
 
 ---
 
@@ -20,7 +22,7 @@
 - [Demo Games](#demo-games)
 - [Быстрый старт](#быстрый-старт)
 - [Таблица модулей](#таблица-модулей)
-  - [Condition](#condition--no-code-условия) · [Tools](#tools--инструменты) · [UI](#ui--интерфейс) · [Bonus](#bonus--бонусные-системы) · [Shop](#shop--магазин) · [Save](#save--сохранения) · [Cards](#cards--карточные-игры) · [StateMachine](#statemachine--машина-состояний) · [Animations](#animations--анимации) · [Audio](#audio--звук) · [Extensions](#extensions--расширения-c) · [Editor](#editor--инструменты-редактора) · [Level](#level--уровни) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute)
+  - [Condition](#condition--no-code-условия) · [Tools](#tools--инструменты) · [UI](#ui--интерфейс) · [Bonus](#bonus--бонусные-системы) · [Shop](#shop--магазин) · [Save](#save--сохранения) · [Quest](#quest--квесты) · [Cards](#cards--карточные-игры) · [StateMachine](#statemachine--машина-состояний) · [Animations](#animations--анимации) · [Audio](#audio--звук) · [Extensions](#extensions--расширения-c) · [Editor](#editor--инструменты-редактора) · [Level](#level--уровни) · [NPC](#npc) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute) · [Reactive](#reactive)
 - [Топовые модули](#топовые-модули)
 - [Установка через UPM](#установка-через-upm) — [Зависимости](#зависимости), [Основной пакет](#основной-пакет), [Ручная установка](#ручная-установка)
 - [Установка Demo Scenes и NeoxiderPages](#установка-demo-scenes-и-neoxiderpages)
@@ -93,6 +95,7 @@
 | [**Bonus**](#bonus--бонусные-системы) | Слоты, колесо фортуны, коллекции, награды по времени |
 | [**Shop**](#shop--магазин) | Магазин, валюта, покупки |
 | [**Save**](#save--сохранения) | PlayerPrefs, JSON-файлы, атрибут `[SaveField]` |
+| [**Quest**](#quest--квесты) | Конфиги квестов, менеджер, цели, runtime-состояние |
 | [**Cards**](#cards--карточные-игры) | MVP-архитектура, покер, "Пьяница" |
 | [**StateMachine**](#statemachine--машина-состояний) | Код + No-Code, визуальный редактор |
 | [**Animations**](#animations--анимации) | Float, Color, Vector3 анимации |
@@ -100,9 +103,11 @@
 | [**Extensions**](#extensions--расширения-c) | 300+ extension-методов |
 | [**Editor**](#editor--инструменты-редактора) | Окна настроек, поиск missing scripts, авто-билд |
 | [**Level**](#level--уровни) | Менеджер уровней, карта |
+| [**NPC**](#npc) | Навигация NPC, патруль, chase и animator driver |
 | [**Parallax**](#parallax) | Параллакс-слои |
 | [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
 | [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
+| [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
 
 ---
 
@@ -180,6 +185,16 @@
 
 📖 [Документация →](Assets/Neoxider/Docs/Save/README.md)
 
+### Quest — Квесты
+
+- **QuestConfig** — ScriptableObject квеста: ID, title, description, objectives, start conditions
+- **QuestManager** — принятие квестов, учёт прогресса, события и Condition Context
+- **QuestState** — runtime-состояние квеста и прогресс по целям
+- **QuestAcceptTrigger / QuestObjectiveNotifier** — bridge-компоненты для UnityEvent
+- **NotifyKill / NotifyCollect** — инкремент целей-счётчиков без ручного обхода состояний
+
+📖 [Документация →](Assets/Neoxider/Docs/Quest/README.md)
+
 ### Cards — Карточные игры
 
 - **MVP архитектура**: Model, View, Presenter
@@ -244,6 +259,14 @@
 - **LevelButton** — кнопка уровня
 - **Map** — карта уровней
 
+### NPC
+
+- **NpcNavigation** — перемещение NPC с логикой патруля и преследования
+- **NpcAnimatorDriver** — синхронизация состояния движения с Animator
+- Используется вместе с movement/nav workflow и анимационными связками
+
+📖 [Документация →](Assets/Neoxider/Docs/NPC/README.md)
+
 ### Parallax
 
 - **ParallaxLayer** — параллакс с предпросмотром, зазорами, рандомизацией
@@ -265,6 +288,15 @@
 - Inject-атрибуты: `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]`
 
 📖 [Документация →](Assets/Neoxider/Docs/PropertyAttribute/README.md)
+
+### Reactive
+
+- **ReactivePropertyFloat** — сериализуемое реактивное значение `float`
+- **ReactivePropertyInt** — сериализуемое реактивное значение `int`
+- **ReactivePropertyBool** — сериализуемое реактивное значение `bool`
+- **SetValueWithoutNotify / ForceNotify** — управление оповещениями при загрузке и ручной синхронизации
+
+📖 [Документация →](Assets/Neoxider/Docs/Reactive/README.md)
 
 ---
 

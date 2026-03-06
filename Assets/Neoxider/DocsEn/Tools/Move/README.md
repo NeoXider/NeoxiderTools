@@ -1,10 +1,14 @@
 # Tools / Move
 
-Movement and positioning utilities: follow, character controllers, camera helpers, cursor control, and aiming/rotation utilities.
+Movement and positioning: follow, character controllers, camera helpers, cursor control, MovementToolkit (IMover, KeyboardMover, MouseMover2D/3D, etc.). Scripts in `Scripts/Tools/Move/`. Full docs are in Russian.
 
-See also the Russian docs folder: [Docs/Tools/Move](../../Docs/Tools/Move/). Documentation is based on scripts.
+## English pages (this folder)
 
-## Pages
 - [CursorLockController](./CursorLockController.md)
 - [DistanceChecker](./DistanceChecker.md)
 - [UniversalRotator](./UniversalRotator.md)
+- [MovementToolkit](./MovementToolkit/README.md), [IMover](./MovementToolkit/IMover.md)
+
+## Russian docs (full index)
+
+- [Move README](../../../Docs/Tools/Move/README.md) — Overview and all components (Follow, CameraConstraint, PlayerController2D/3D, AdvancedForceApplier, ScreenPositioner, MovementToolkit subfolder)

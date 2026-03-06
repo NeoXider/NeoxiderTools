@@ -1,16 +1,24 @@
 # UI module
 
-The UI module includes reusable page, button, animation, toggle, and presentation helpers for typical game interfaces.
+Reusable UI helpers: pages, buttons, animations, toggles, and presentation. Scripts in `Scripts/UI/`. Full per-component docs are in Russian.
 
 ## Typical use cases
 
-- button press feedback and simple UI animation
-- page/state transitions
-- toggle-style UI state visualization
-- text and value presentation helpers
+- Button press feedback and simple UI animation (ButtonScale, ButtonShake)
+- Page/state transitions (UI, ButtonChangePage)
+- Toggle-style state visualization (VisualToggle, VariantView)
+- Text and value presentation (see Tools/Text)
 
-## Start with
+## Russian docs (per-component)
 
-- Russian docs: [`../Docs/UI/README.md`](../Docs/UI/README.md)
-- Optional page-navigation sample: [`../NeoxiderPages/README.md`](../NeoxiderPages/README.md)
-- Text helpers: [`../Tools/Text/README.md`](../Tools/Text/README.md)
+| Page | Description |
+|------|-------------|
+| [UI README](../../Docs/UI/README.md) | Overview |
+| [UI](../../Docs/UI/UI.md), [AnchorMove](../../Docs/UI/AnchorMove.md), [ButtonScale](../../Docs/UI/ButtonScale.md), [ButtonShake](../../Docs/UI/ButtonShake.md) | Core UI |
+| [VisualToggle](../../Docs/UI/VisualToggle.md), [VariantView](../../Docs/UI/VariantView.md), [AnimationFly](../../Docs/UI/AnimationFly.md) | Toggles and animation |
+| [PausePage](../../Docs/UI/PausePage.md), [FakeLoad](../../Docs/UI/FakeLoad.md), [UIReady](../../Docs/UI/UIReady.md) | Flow helpers |
+
+## See also
+
+- [NeoxiderPages](../NeoxiderPages/README.md) — Page-navigation sample
+- [Tools/Text](../Tools/Text/README.md) — Text helpers

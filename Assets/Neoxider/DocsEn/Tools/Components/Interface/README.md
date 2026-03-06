@@ -1,3 +1,8 @@
 # Tools / Components / Interface
 
-InterfaceAttack and related. See [Docs/Tools/Components/Interface](../../Docs/Tools/Components/Interface/). Documentation is based on scripts.
+InterfaceAttack and related (IDamageable, IHealable, etc.). Full docs are in Russian.
+
+## Russian docs
+
+- [Interface README](../../../../Docs/Tools/Components/Interface/README.md) — Overview
+- [InterfaceAttack](../../../../Docs/Tools/Components/Interface/InterfaceAttack.md) — Attack interface and types

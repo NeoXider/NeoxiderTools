@@ -2,7 +2,7 @@
 
 Movement toolkit components implementing shared interfaces (e.g. `IMover`).
 
-See also the Russian docs folder: [Docs/Tools/Move/MovementToolkit](../../Docs/Tools/Move/MovementToolkit/). Documentation is based on scripts.
+Full component list (KeyboardMover, MouseMover2D/3D, ConstantMover, ConstantRotator, etc.) is in Russian: [MovementToolkit README](../../../../Docs/Tools/Move/MovementToolkit/README.md).
 
 ## Pages
 - [IMover](./IMover.md)

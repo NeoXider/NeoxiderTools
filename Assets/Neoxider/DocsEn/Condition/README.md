@@ -25,6 +25,7 @@
 
 ## See also
 
-- [Condition_Reuse](Condition_Reuse.md) — Reusing conditions in State Machine and custom systems.
+- [Condition_Reuse (Russian)](../../Docs/Condition/Condition_Reuse.md) — Reusing conditions in State Machine and custom systems.
+- [NeoCondition (Russian)](../../Docs/Condition/NeoCondition.md) — Full RU documentation.
 - [StateMachine](../StateMachine/README.md)
 - [Tools/Components](../Tools/Components/README.md)

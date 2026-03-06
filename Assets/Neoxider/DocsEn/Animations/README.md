@@ -26,8 +26,7 @@ The animation system provides universal tools for smooth animation of various Un
 
 ### Related
 
-- **[LightAnimator](../Tools/View/LightAnimator.md)** — Animate light sources (Light, Light2D)
-- **[MeshEmission](../Tools/View/MeshEmission.md)** — Sync material emission with a light source
+- **[Tools/View](../Tools/View/README.md)** — LightAnimator, MeshEmission and other view animators (see Russian docs for per-component pages)
 
 ## Animation types
 
@@ -50,5 +49,6 @@ The animation system provides universal tools for smooth animation of various Un
 
 ## See also
 
-- [Tools/View](../Tools/README.md) — Light and view animators
+- [Tools/View](../Tools/View/README.md) — Light and view animators
 - [Extensions](../Extensions/README.md) — Additional animation utilities
+- Russian docs: [Animations](../../Docs/Animations/README.md)

@@ -4,15 +4,17 @@ The **Audio** module provides tools for sound management in Unity: a central aud
 
 The system is built around singleton **AM** (Audio Manager) for playback and singleton **AMSettings** for global volume and mute via **AudioMixer**.
 
-## Scripts
+## Main pieces
 
-- **[AMSettings](AMSettings.md)** — Singleton for global sound settings (volume, mute, mixer).
-- **[AM](AM.md)** — Main singleton for sound effects and music.
-- **[PlayAudio](PlayAudio.md)** — Component to play a sound from AM (by ID or clip list).
-- **[PlayAudioBtn](PlayAudioBtn.md)** — Plays sound on UI Button click.
-- **[SettingMixer](SettingMixer.md)** — Set/get a single AudioMixer parameter (normalized 0–1 or dB).
-- **[AudioControl](View/AudioControl.md)** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx).
+- **AMSettings** — Singleton for global sound settings (volume, mute, mixer).
+- **AM** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs).
+- **PlayAudio** — Component to play a sound from AM (by ID or clip list).
+- **PlayAudioBtn** — Plays sound on UI Button click.
+- **SettingMixer** — Set/get a single AudioMixer parameter (normalized 0–1 or dB).
+- **AudioControl** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx); Scripts/Audio/View/AudioControl.cs.
 - **RandomMusicController** — Used internally by AM for random track playback.
+
+For per-script pages (fields, API, examples), see the Russian documentation: [Docs/Audio](../../Docs/Audio/README.md).
 
 ## See also
 

@@ -67,10 +67,13 @@ Without it, the package still works. Inspector documentation fallbacks remain av
 |--------|-----------------|------|
 | **Condition** | No-code rules, method calls with arguments, AND/OR logic, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
 | **Tools** | Inventory, spawner, movement, dialogue, time, input, utility components | [Tools](./Docs/Tools/README.md) |
+| **Quest** | Quest configs, runtime quest state, triggers, objective progress | [Quest](./Docs/Quest/README.md) |
+| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Docs/Reactive/README.md) |
 | **Save** | Scene saves, provider-based saves, global data | [Save](./Docs/Save/README.md) |
 | **UI** | UI behaviors, animations, pages, toggles | [UI](./Docs/UI/README.md) |
 | **Cards** | Decks, hands, presenter/view workflow, async animation | [Cards](./Docs/Cards/README.md) |
 | **GridSystem** | Shape/origin/pathfinding grid workflows, Match3, TicTacToe | [GridSystem](./Docs/GridSystem.md) |
+| **NPC** | NPC navigation, patrol/chase flow, animator integration | [NPC](./Docs/NPC/README.md) |
 | **Editor** | Inspector extensions, builders, maintenance tools | [Editor](./Docs/Editor/README.md) |
 
 ## Samples

@@ -18,8 +18,16 @@ The inventory module covers item storage, pickup, drop, hand/equip visuals, and 
 4. Add `InventoryDropper` if items should return to the world.
 5. Bind counts and views with `InventoryView`, `InventoryItemCountText`, or `InventoryTotalCountText`.
 
-## More docs
+## Russian docs (per-component)
 
-- Russian docs: [`../../Docs/Tools/Inventory/README.md`](../../Docs/Tools/Inventory/README.md)
-- Save integration: [`../../Save/README.md`](../../Save/README.md)
-- Shop integration: [`../../Shop/README.md`](../../Shop/README.md)
+| Page | Description |
+|------|-------------|
+| [Inventory README](../../../Docs/Tools/Inventory/README.md) | Overview |
+| [InventoryComponent](../../../Docs/Tools/Inventory/InventoryComponent.md), [PickableItem](../../../Docs/Tools/Inventory/PickableItem.md), [InventoryDropper](../../../Docs/Tools/Inventory/InventoryDropper.md) | Core runtime |
+| [InventoryView](../../../Docs/Tools/Inventory/InventoryView.md), [InventoryHand](../../../Docs/Tools/Inventory/InventoryHand.md), [HandView](../../../Docs/Tools/Inventory/HandView.md) | UI and hand view |
+| [InventoryItemCountText](../../../Docs/Tools/Inventory/InventoryItemCountText.md), [InventoryTotalCountText](../../../Docs/Tools/Inventory/InventoryTotalCountText.md) | Count display |
+
+## See also
+
+- [Save](../../Save/README.md)
+- [Shop](../../Shop/README.md)
