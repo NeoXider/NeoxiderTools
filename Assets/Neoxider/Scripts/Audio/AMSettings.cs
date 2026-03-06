@@ -37,10 +37,13 @@ namespace Neo.Audio
 
         /// <summary>Current mute state (for NeoCondition and reflection).</summary>
         public bool MuteEfxValue => MuteEfx.CurrentValue;
+
         /// <summary>Current mute state for music (for NeoCondition and reflection).</summary>
         public bool MuteMusicValue => MuteMusic.CurrentValue;
+
         /// <summary>Current mute state for master (for NeoCondition and reflection).</summary>
         public bool MuteMasterValue => MuteMaster.CurrentValue;
+
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
         private AM _am;

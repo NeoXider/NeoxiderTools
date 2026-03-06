@@ -8,8 +8,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/" + nameof(AnimatorParameterDriver))]
     public sealed class AnimatorParameterDriver : MonoBehaviour
     {
-        [SerializeField]
-        [Tooltip("Target Animator. If not set, GetComponent on this object.")]
+        [SerializeField] [Tooltip("Target Animator. If not set, GetComponent on this object.")]
         private Animator animator;
 
         [Header("Parameter names (for methods without name argument)")]
@@ -17,16 +16,13 @@ namespace Neo.Tools
         [Tooltip("Trigger parameter name for SetTrigger() when called with no argument.")]
         private string triggerParameterName;
 
-        [SerializeField]
-        [Tooltip("Bool parameter name for SetBool(bool).")]
+        [SerializeField] [Tooltip("Bool parameter name for SetBool(bool).")]
         private string boolParameterName;
 
-        [SerializeField]
-        [Tooltip("Float parameter name for SetFloat(float).")]
+        [SerializeField] [Tooltip("Float parameter name for SetFloat(float).")]
         private string floatParameterName;
 
-        [SerializeField]
-        [Tooltip("Int parameter name for SetInt(int).")]
+        [SerializeField] [Tooltip("Int parameter name for SetInt(int).")]
         private string intParameterName;
 
         private Animator Anim => animator != null ? animator : animator = GetComponent<Animator>();

@@ -71,7 +71,8 @@ namespace Neo.Tools
                 return false;
             }
 
-            PropertyInfo positionProperty = MouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo positionProperty =
+                MouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
             object positionControl = positionProperty?.GetValue(mouse);
             if (positionControl == null)
             {
@@ -115,7 +116,8 @@ namespace Neo.Tools
                 return false;
             }
 
-            PropertyInfo buttonProperty = MouseType.GetProperty(buttonName, BindingFlags.Public | BindingFlags.Instance);
+            PropertyInfo buttonProperty =
+                MouseType.GetProperty(buttonName, BindingFlags.Public | BindingFlags.Instance);
             object buttonControl = buttonProperty?.GetValue(mouse);
             if (buttonControl == null)
             {

@@ -12,9 +12,9 @@ namespace Neo.Audio
         [Tooltip("Exposed parameter name in AudioMixer (e.g. MasterVolume, MusicVolume, EfxVolume).")]
         public string parameterName = "MasterVolume";
 
-        [Header("References")]
-        [Tooltip("AudioMixer to control.")]
+        [Header("References")] [Tooltip("AudioMixer to control.")]
         public AudioMixer audioMixer;
+
         public const float MaxDb = 20f;
         public const float MinDb = -80f;
 

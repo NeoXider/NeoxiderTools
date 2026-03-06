@@ -28,9 +28,7 @@ namespace Neo.Quest
         [SerializeField]
         private List<QuestConfig> _knownQuests = new();
 
-        [Header("Events")]
-        [Tooltip("Вызывается при принятии квеста (передаётся questId).")]
-        [SerializeField]
+        [Header("Events")] [Tooltip("Вызывается при принятии квеста (передаётся questId).")] [SerializeField]
         private UnityEvent<string> _onQuestAccepted = new();
 
         [Tooltip("Вызывается при изменении прогресса по цели (questId, objectiveIndex, currentCount).")]
@@ -41,20 +39,16 @@ namespace Neo.Quest
         [SerializeField]
         private UnityEvent<string, int> _onObjectiveCompleted = new();
 
-        [Tooltip("Вызывается при завершении квеста (все цели выполнены). Передаётся questId.")]
-        [SerializeField]
+        [Tooltip("Вызывается при завершении квеста (все цели выполнены). Передаётся questId.")] [SerializeField]
         private UnityEvent<string> _onQuestCompleted = new();
 
-        [Tooltip("Вызывается при провале квеста (questId).")]
-        [SerializeField]
+        [Tooltip("Вызывается при провале квеста (questId).")] [SerializeField]
         private UnityEvent<string> _onQuestFailed = new();
 
-        [Tooltip("Вызывается при любом принятии квеста (без аргументов — для простой привязки).")]
-        [SerializeField]
+        [Tooltip("Вызывается при любом принятии квеста (без аргументов — для простой привязки).")] [SerializeField]
         private UnityEvent _onAnyQuestAccepted = new();
 
-        [Tooltip("Вызывается при любом завершении квеста (без аргументов).")]
-        [SerializeField]
+        [Tooltip("Вызывается при любом завершении квеста (без аргументов).")] [SerializeField]
         private UnityEvent _onAnyQuestCompleted = new();
 
         [Header("Editor (кнопки в инспекторе)")]
@@ -62,8 +56,7 @@ namespace Neo.Quest
         [SerializeField]
         private string _editorQuestId = "";
 
-        [Tooltip("Индекс цели для CompleteObjective из кнопки (только для редактора).")]
-        [SerializeField]
+        [Tooltip("Индекс цели для CompleteObjective из кнопки (только для редактора).")] [SerializeField]
         private int _editorObjectiveIndex;
 
         private readonly List<QuestState> _states = new();

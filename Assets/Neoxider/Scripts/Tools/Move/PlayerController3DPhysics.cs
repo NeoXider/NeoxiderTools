@@ -53,21 +53,32 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Header("Cursor")]
-        [SerializeField] private bool _lockCursorOnStart = true;
-        [Tooltip("When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
-        [SerializeField] private bool _pauseLookWhenCursorVisible = true;
-        [Tooltip("Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
-        [SerializeField] private bool _lookEnabled = true;
-        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")]
-        [SerializeField] private bool _disableLookOnPause = true;
-        [Tooltip("When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
-        [SerializeField] private bool _toggleCursorOnEscape = true;
-        [Tooltip("Optional external cursor controller (for menu/pause pages or a shared UI root). If assigned and active, this controller becomes the authoritative cursor source instead of a same-object CursorLockController.")]
-        [SerializeField] private CursorLockController _externalCursorLockController;
+        [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onJumped = new();
+        [Tooltip(
+            "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
+        [SerializeField]
+        private bool _pauseLookWhenCursorVisible = true;
+
+        [Tooltip(
+            "Whether look (camera rotation) is enabled. Can be changed by SetLookEnabled() or automatically when game is paused (if Disable Look On Pause is on).")]
+        [SerializeField]
+        private bool _lookEnabled = true;
+
+        [Tooltip("When enabled, look is set to false on EM.OnPause and true on EM.OnResume.")] [SerializeField]
+        private bool _disableLookOnPause = true;
+
+        [Tooltip(
+            "When enabled, Escape toggles cursor lock and look: ESC with locked cursor = unlock and disable look; ESC with visible cursor = lock and enable look. Disable if you use CursorLockController for ESC to avoid double toggle.")]
+        [SerializeField]
+        private bool _toggleCursorOnEscape = true;
+
+        [Tooltip(
+            "Optional external cursor controller (for menu/pause pages or a shared UI root). If assigned and active, this controller becomes the authoritative cursor source instead of a same-object CursorLockController.")]
+        [SerializeField]
+        private CursorLockController _externalCursorLockController;
+
+        [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
         [SerializeField] private UnityEvent _onMoveStart = new();
         [SerializeField] private UnityEvent _onMoveStop = new();

@@ -48,7 +48,8 @@ namespace Neo.Tools
         private string _saveKey = "Counter";
 
         [SerializeField]
-        [Tooltip("When loading value in Start, invoke OnValueChanged* so UI and subscribers apply loaded value. On by default.")]
+        [Tooltip(
+            "When loading value in Start, invoke OnValueChanged* so UI and subscribers apply loaded value. On by default.")]
         private bool _invokeEventsOnLoad = true;
 
         [Space]
@@ -69,7 +70,9 @@ namespace Neo.Tools
         public UnityEvent<float> OnSend = new();
 
         /// <summary>Current counter value as int (rounded in Float mode).</summary>
-        public int ValueInt => _valueMode == CounterValueMode.Int ? Mathf.RoundToInt(Value.CurrentValue) : (int)Value.CurrentValue;
+        public int ValueInt => _valueMode == CounterValueMode.Int
+            ? Mathf.RoundToInt(Value.CurrentValue)
+            : (int)Value.CurrentValue;
 
         /// <summary>Current counter value as float.</summary>
         public float ValueFloat => Value.CurrentValue;

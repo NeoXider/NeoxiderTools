@@ -38,21 +38,24 @@ namespace Neo.Tools
 
         [Header("Mode")]
         [Tooltip("LockAndHide = lock + hide; OnlyHide = visibility only; OnlyLock = lock only.")]
-        [SerializeField] private CursorStateMode _mode = CursorStateMode.LockAndHide;
-        [Tooltip("Automatic = Start/OnEnable/OnDisable/hotkey. Manual = direct method calls. By default both are allowed.")]
+        [SerializeField]
+        private CursorStateMode _mode = CursorStateMode.LockAndHide;
+
+        [Tooltip(
+            "Automatic = Start/OnEnable/OnDisable/hotkey. Manual = direct method calls. By default both are allowed.")]
         [SerializeField]
         private ControlMode _controlMode = ControlMode.AutomaticAndManual;
 
         [Header("Controller")]
-        [Tooltip("Master switch. When disabled, this component does not react to toggle input or lifecycle state changes.")]
+        [Tooltip(
+            "Master switch. When disabled, this component does not react to toggle input or lifecycle state changes.")]
         [SerializeField]
         private bool _controllerEnabled = true;
 
         [Header("Start State")] [SerializeField]
         private bool _lockOnStart = true;
 
-        [SerializeField]
-        [Tooltip("Apply start state only when Controller Enabled is true.")]
+        [SerializeField] [Tooltip("Apply start state only when Controller Enabled is true.")]
         private bool _applyStartOnlyWhenControllerEnabled = true;
 
         [Header("Lifecycle (optional)")]
@@ -68,14 +71,12 @@ namespace Neo.Tools
 
         [SerializeField] private bool _lockOnEnable = true;
 
-        [Tooltip("Change Controller Enabled when this GameObject becomes disabled.")]
-        [SerializeField]
+        [Tooltip("Change Controller Enabled when this GameObject becomes disabled.")] [SerializeField]
         private bool _setControllerEnabledOnDisable;
 
         [SerializeField] private bool _controllerEnabledOnDisable;
 
-        [Tooltip("Apply cursor state when this component is disabled (e.g. when opening menu/pause).")]
-        [SerializeField]
+        [Tooltip("Apply cursor state when this component is disabled (e.g. when opening menu/pause).")] [SerializeField]
         private bool _applyOnDisable;
 
         [SerializeField] private bool _lockOnDisable;
@@ -85,7 +86,8 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _toggleKey = KeyCode.Escape;
 
         [Header("Cursor Access Key")]
-        [Tooltip("Optional shortcut for temporary cursor access. Disabled by default until Allow Cursor Access Key is enabled.")]
+        [Tooltip(
+            "Optional shortcut for temporary cursor access. Disabled by default until Allow Cursor Access Key is enabled.")]
         [SerializeField]
         private bool _allowCursorAccessKey;
 
@@ -105,6 +107,7 @@ namespace Neo.Tools
         ///     Gets whether cursor is currently locked.
         /// </summary>
         public bool IsLocked => Cursor.lockState == CursorLockMode.Locked;
+
         public bool ControllerEnabled => _controllerEnabled;
         public bool HasCursorOwnership => _hasCursorOwnership;
         public ControlMode Mode => _controlMode;

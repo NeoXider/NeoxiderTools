@@ -11,8 +11,7 @@ namespace Neo.Quest
     [AddComponentMenu("Neoxider/Quest/" + nameof(QuestAcceptTrigger))]
     public class QuestAcceptTrigger : MonoBehaviour
     {
-        [Tooltip("Квест, который будет принят при вызове AcceptQuest().")]
-        [SerializeField]
+        [Tooltip("Квест, который будет принят при вызове AcceptQuest().")] [SerializeField]
         private QuestConfig _quest;
 
         /// <summary>Вызывает QuestManager.Instance.AcceptQuest(_quest).</summary>

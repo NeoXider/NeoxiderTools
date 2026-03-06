@@ -11,12 +11,10 @@ namespace Neo.Quest
     [AddComponentMenu("Neoxider/Quest/" + nameof(QuestObjectiveNotifier))]
     public class QuestObjectiveNotifier : MonoBehaviour
     {
-        [Tooltip("Квест, в котором засчитывается цель.")]
-        [SerializeField]
+        [Tooltip("Квест, в котором засчитывается цель.")] [SerializeField]
         private QuestConfig _quest;
 
-        [Tooltip("Индекс цели (0, 1, 2, …) в списке целей квеста.")]
-        [SerializeField]
+        [Tooltip("Индекс цели (0, 1, 2, …) в списке целей квеста.")] [SerializeField]
         private int _objectiveIndex;
 
         /// <summary>Вызывает QuestManager.Instance.CompleteObjective(_quest.Id, _objectiveIndex).</summary>

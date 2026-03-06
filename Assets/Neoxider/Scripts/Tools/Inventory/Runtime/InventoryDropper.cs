@@ -331,7 +331,9 @@ namespace Neo.Tools
 
         private GameObject ResolveDropPrefab(InventoryItemData itemData)
         {
-            return itemData != null && itemData.WorldDropPrefab != null ? itemData.WorldDropPrefab : _fallbackDropPrefab;
+            return itemData != null && itemData.WorldDropPrefab != null
+                ? itemData.WorldDropPrefab
+                : _fallbackDropPrefab;
         }
 
         private GameObject SpawnDroppedItem(GameObject prefab, InventoryComponent inventory, InventoryItemData itemData,
