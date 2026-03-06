@@ -1,6 +1,7 @@
 # NeoxiderPages (`Neo.Pages`)
 
-`NeoxiderPages` — это опциональный sample-модуль навигации по страницам/экранам поверх Unity UI.
+`NeoxiderPages` — это sample-модуль навигации по страницам/экранам поверх Unity UI.
+Для корректной работы требуется **DOTween Pro** (и DOTween).
 
 ## Где находится модуль
 

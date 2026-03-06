@@ -1,6 +1,7 @@
 # NeoxiderPages module
 
-`NeoxiderPages` is an optional sample module for screen/page navigation on top of Unity UI.
+`NeoxiderPages` is a sample module for screen/page navigation on top of Unity UI.
+It requires **DOTween Pro** (and DOTween) to work correctly.
 
 ## Location
 

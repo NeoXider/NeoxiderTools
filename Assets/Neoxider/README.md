@@ -37,10 +37,11 @@ Copy `Assets/Neoxider` into your Unity project.
 - `com.unity.textmeshpro`
 - `com.unity.ai.navigation`
 
-### Used by specific modules
+### Required dependencies
 
 - `UniTask` for async-heavy modules such as cards, dialogue, and typed text workflows.
-- `DOTween` for modules with tween-based animation helpers.
+- `DOTween` is required for the package runtime modules.
+- `DOTween Pro` is required for the `NeoxiderPages` sample module.
 - `Spine Unity Runtime` only if you use Spine-specific integrations.
 - `Odin Inspector` is optional. Components work without it.
 
@@ -83,7 +84,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 | Sample | Path | Purpose |
 |--------|------|---------|
 | **Demo Scenes** | `Assets/Neoxider/Samples~/Demo/` | Integration scenes for core modules and gameplay features |
-| **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Optional page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) |
+| **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) — requires `DOTween Pro` |
 
 ## Documentation Notes
 

@@ -324,7 +324,8 @@
 | **TextMeshPro** | Автоматически через UPM |
 | **AI Navigation** | Автоматически через UPM |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
-| **DOTween** (опционально) | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
+| **DOTween** (обязательно) | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
+| **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
 | **Odin Inspector** (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
 
 ### Основной пакет
@@ -361,7 +362,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
 2. В правой панели внизу — секция **Samples**
 3. Нажать **Import** рядом с нужным модулем:
    - **Demo Scenes** — демо-сцены и примеры использования
-   - **NeoxiderPages** — модуль страниц и экранов (PageManager, UIPage, UIKit)
+   - **NeoxiderPages** — модуль страниц и экранов (PageManager, UIPage, UIKit), требуется **DOTween Pro**
 
 Файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
 
