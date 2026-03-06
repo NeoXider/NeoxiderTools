@@ -6,8 +6,8 @@
 1. Добавить на GameObject в сцену: **Add Component → Neoxider → Quest → QuestManager**.
 2. В **Known Quests** перетащить все QuestConfig, по Id которых будет вызываться AcceptQuest(questId).
 3. В **Condition Context** указать GameObject для проверки Start Conditions (обычно игрок). Если пусто — используется gameObject менеджера.
-4. Принимать квест: из кода `QuestManager.Instance.AcceptQuest(quest)` или через Quest Accept Trigger и UnityEvent (On Click).
-5. Засчитывать цели: `CompleteObjective(questId, index)` или Quest Objective Notifier по NeoCondition.On True; для KillCount/CollectCount — вызывать NotifyKill(enemyId) / NotifyCollect(itemId) из своей логики.
+4. Принимать квест: из кода `QuestManager.Instance.AcceptQuest(quest)` или через `QuestNoCodeAction` + UnityEvent (On Click).
+5. Засчитывать цели: `CompleteObjective(questId, index)` или `QuestNoCodeAction(CompleteObjective)` по NeoCondition.On True; для KillCount/CollectCount — вызывать NotifyKill(enemyId) / NotifyCollect(itemId) из своей логики.
 
 ---
 
@@ -37,6 +37,9 @@
 | CompleteObjective(string questId, int objectiveIndex) | void | Зачесть цель. Для счётчиков — +1; при достижении RequiredCount цель закрывается. При всех целях выполненных — квест Completed, OnQuestCompleted. |
 | CompleteObjective(QuestConfig quest, int objectiveIndex) | void | То же по конфигу. |
 | FailQuest(string questId) / FailQuest(QuestConfig quest) | void | Перевести квест в Failed, вызвать OnQuestFailed. |
+| ResetQuest(string questId) / ResetQuest(QuestConfig quest) | bool | Удалить состояние квеста из реестра (сброс). Можно заново пройти квест. |
+| RestartQuest(string questId) / RestartQuest(QuestConfig quest) | bool | Перезапустить квест: сбросить состояние и снова принять квест. Удобно для повторного прохождения. |
+| ResetAllQuests() | void | Полный сброс всех квестов (Active/Completed/Failed). |
 | NotifyKill(string enemyId) | void | +1 к прогрессу по целям KillCount с таким TargetId. |
 | NotifyCollect(string itemId) | void | +1 к прогрессу по целям CollectCount с таким TargetId. |
 | GetState(string questId) / GetState(QuestConfig quest) | QuestState или null | Состояние квеста. |
@@ -76,3 +79,11 @@
 
 - **Accept Quest (Editor Id)** — принять квест по полю Editor Quest Id.
 - **Complete Objective (Editor)** — зачесть цель по Editor Quest Id и Editor Objective Index.
+
+---
+
+## Рестарт и повторное прохождение
+
+- Для переигрывания проваленного/завершённого квеста используйте `RestartQuest(...)`.
+- Для ручного сброса только одного квеста используйте `ResetQuest(...)`, затем `AcceptQuest(...)`.
+- Для «новой игры» используйте `ResetAllQuests()`.

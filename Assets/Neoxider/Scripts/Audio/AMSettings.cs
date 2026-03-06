@@ -140,6 +140,12 @@ namespace Neo.Audio
         }
 
         [Button]
+        public void SetMusicMixerVolume(float percent)
+        {
+            SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(percent));
+        }
+
+        [Button]
         public void SetEfxVolume(float percent)
         {
             if (efx == null)
@@ -153,10 +159,51 @@ namespace Neo.Audio
         }
 
         [Button]
+        public void SetEfxMixerVolume(float percent)
+        {
+            SetMixerVolume(audioMixer, EfxVolume, Mathf.Clamp01(percent));
+        }
+
+        [Button]
         public void SetMasterVolume(float percent)
         {
             float volume = Mathf.Clamp01(percent);
             SetMixerVolume(audioMixer, MasterVolume, volume);
+        }
+
+        public float GetMasterVolumeNormalized()
+        {
+            return GetMixerVolumeNormalized(MasterVolume, 1f);
+        }
+
+        public float GetMusicVolumeNormalized()
+        {
+            if (audioMixer != null)
+            {
+                return GetMixerVolumeNormalized(MusicVolume, Mathf.Clamp01(startMusicVolume));
+            }
+
+            if (music != null)
+            {
+                return Mathf.Clamp01(music.volume);
+            }
+
+            return Mathf.Clamp01(startMusicVolume);
+        }
+
+        public float GetEfxVolumeNormalized()
+        {
+            if (audioMixer != null)
+            {
+                return GetMixerVolumeNormalized(EfxVolume, Mathf.Clamp01(startEfxVolume));
+            }
+
+            if (efx != null)
+            {
+                return Mathf.Clamp01(efx.volume);
+            }
+
+            return Mathf.Clamp01(startEfxVolume);
         }
 
         /// <summary>
@@ -208,6 +255,26 @@ namespace Neo.Audio
 
             float db = normalizedVolume > 0 ? Mathf.Log10(normalizedVolume) * 20 : -80;
             mixer.SetFloat(parameterName, db);
+        }
+
+        private float GetMixerVolumeNormalized(string parameterName, float fallback)
+        {
+            if (audioMixer == null || string.IsNullOrEmpty(parameterName))
+            {
+                return Mathf.Clamp01(fallback);
+            }
+
+            if (!audioMixer.GetFloat(parameterName, out float db))
+            {
+                return Mathf.Clamp01(fallback);
+            }
+
+            if (db <= -80f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Clamp01(Mathf.Pow(10f, db / 20f));
         }
 
         [Button]

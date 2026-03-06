@@ -30,12 +30,6 @@ namespace Neo
             CreateFromPrefab("Prefabs/Tools/First Person Controller.prefab");
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Player/First Person Controller", false, -49)]
-        private static void CreateFirstPersonController()
-        {
-            CreateFromPrefab("Prefabs/Tools/First Person Controller.prefab");
-        }
-
         [MenuItem("GameObject/Neoxider/Presets/Interaction/Interactive Sphere", false, -30)]
         private static void CreateInteractiveSphere()
         {

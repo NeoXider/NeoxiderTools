@@ -153,6 +153,10 @@ MonoBehaviour:
   text: {fileID: 7715164171524308783}
   separator: .
   decimal: 0
+  numberNotation: 1
+  roundingMode: 0
+  trimTrailingZeros: 1
+  decimalSeparator: .
   startAdd: 'Level: '
   endAdd: 
   indexOffset: 0
@@ -163,6 +167,7 @@ MonoBehaviour:
   _displayMode: 0
   _best: 0
   _displayOffset: 1
+  _levelSource: {fileID: 0}
 --- !u!1 &3431657223148557881
 GameObject:
   m_ObjectHideFlags: 0

@@ -163,7 +163,7 @@ GameObject:
   - component: {fileID: 4920555023303288386}
   - component: {fileID: 6019055201618970965}
   m_Layer: 5
-  m_Name: Shop Page
+  m_Name: _Page base
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -210,7 +210,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 93ce2dbab25aaa543a701943bab1f50f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  pageId: {fileID: 11400000, guid: d431d7743fe73244d9f930ff9f9b9736, type: 2}
+  pageId: {fileID: 0}
   popup: 0
   ignoreOnExclusiveChange: 0
   _animation: {fileID: 6019055201618970965}
@@ -723,10 +723,10 @@ RectTransform:
   m_Children: []
   m_Father: {fileID: 8546086808161005031}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 1, y: 1}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
+  m_SizeDelta: {x: 800, y: 800}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9069176908719682421
 CanvasRenderer:
@@ -743,7 +743,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8371922066029778322}
-  m_Enabled: 0
+  m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 

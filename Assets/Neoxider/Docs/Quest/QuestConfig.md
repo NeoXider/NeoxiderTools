@@ -23,11 +23,12 @@
 |------|-----------|
 | **Title** | Название для UI. |
 | **Description** | Описание задания (TextArea). |
+| **Icon** | Опциональная картинка квеста для UI-журнала/карточки. |
 
 ### Objectives
 | Поле | Описание |
 |------|-----------|
-| **Objectives** | Список целей. Порядок = индекс цели (0, 1, 2, …). Этот индекс передаётся в CompleteObjective(questId, objectiveIndex) и в Quest Objective Notifier (Objective Index). |
+| **Objectives** | Список целей. Порядок = индекс цели (0, 1, 2, …). Этот индекс передаётся в CompleteObjective(questId, objectiveIndex) и в `QuestNoCodeAction(CompleteObjective)` (Objective Index). |
 
 ### Start Conditions
 | Поле | Описание |
@@ -50,9 +51,10 @@
 | **Type** | Всегда. KillCount, CollectCount, CustomCondition, ReachPoint, Talk. |
 | **Target Id** | Для KillCount/CollectCount — строка, совпадающая с аргументом NotifyKill(enemyId) / NotifyCollect(itemId). |
 | **Required Count** | Для KillCount/CollectCount — сколько раз нужно (например 3 гоблина). |
-| **Condition** | Опционально для CustomCondition: проверка по контексту в менеджере. Если пусто — цель засчитывается только вызовом CompleteObjective или Notifier. |
+| **Display Text** | Опционально. Готовый человекочитаемый текст цели для UI. Если пусто, UI может собрать текст из Type/TargetId. |
+| **Condition** | Опционально для CustomCondition: проверка по контексту в менеджере. Если пусто — цель засчитывается только вызовом CompleteObjective или `QuestNoCodeAction(CompleteObjective)`. |
 
-Типы: **KillCount** — прогресс от NotifyKill; **CollectCount** — от NotifyCollect; **CustomCondition** / **ReachPoint** / **Talk** — один вызов CompleteObjective или Notifier.
+Типы: **KillCount** — прогресс от NotifyKill; **CollectCount** — от NotifyCollect; **CustomCondition** / **ReachPoint** / **Talk** — один вызов CompleteObjective или `QuestNoCodeAction(CompleteObjective)`.
 
 ---
 
@@ -65,5 +67,5 @@
 ## Примеры
 
 - **«Убить 3 гоблинов»:** один Objective, Type = KillCount, Target Id = `Goblin`, Required Count = 3.
-- **«Убить гоблинов и принести ключ»:** цель 0 — KillCount, Goblin, 3; цель 1 — CustomCondition без Condition, зачёт через Quest Objective Notifier при подборе ключа (Objective Index = 1).
+- **«Убить гоблинов и принести ключ»:** цель 0 — KillCount, Goblin, 3; цель 1 — CustomCondition без Condition, зачёт через `QuestNoCodeAction(CompleteObjective)` при подборе ключа (Objective Index = 1).
 - **Квест с условием доступа:** в Start Conditions одна запись, например компонент игрока, свойство Level (int), ≥ 5.

@@ -3,10 +3,10 @@ using UnityEngine;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Маркер объекта, который используется как контекст для проверки условий старта квестов (ConditionEntry.Evaluate).
-    ///     Добавьте на игрока или менеджер мира и назначьте этот GameObject в QuestManager → Condition Context.
+    ///     Marker component for the object used as context when evaluating quest start conditions (ConditionEntry.Evaluate).
+    ///     Add it to a player/world object and assign that GameObject to QuestManager -> Condition Context.
     /// </summary>
-    [NeoDoc("Quest/README.md")]
+    [NeoDoc("Quest/QuestContext.md")]
     [CreateFromMenu("Neoxider/Quest/Quest Context")]
     [AddComponentMenu("Neoxider/Quest/" + nameof(QuestContext))]
     public class QuestContext : MonoBehaviour

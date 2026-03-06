@@ -9,7 +9,7 @@ namespace Neo.Quest
     /// </summary>
     public enum QuestObjectiveType
     {
-        /// <summary>Выполняется по внешнему триггеру (QuestObjectiveNotifier) или по ConditionEntry в менеджере.</summary>
+        /// <summary>Выполняется по внешнему триггеру (например QuestNoCodeAction) или по ConditionEntry в менеджере.</summary>
         CustomCondition,
 
         /// <summary>Счётчик: убить N врагов с заданным ID (NotifyKill).</summary>
@@ -18,10 +18,10 @@ namespace Neo.Quest
         /// <summary>Счётчик: собрать N предметов с заданным ID (NotifyCollect).</summary>
         CollectCount,
 
-        /// <summary>Дойти до точки (триггер/Notifier).</summary>
+        /// <summary>Дойти до точки (триггер/UI-событие).</summary>
         ReachPoint,
 
-        /// <summary>Поговорить с NPC (триггер/Notifier).</summary>
+        /// <summary>Поговорить с NPC (триггер/UI-событие).</summary>
         Talk
     }
 
@@ -31,17 +31,22 @@ namespace Neo.Quest
     [Serializable]
     public class QuestObjectiveData
     {
-        [Tooltip("Тип цели: как проверяется выполнение.")] [SerializeField]
+        [Tooltip("Objective type: how completion is evaluated.")] [SerializeField]
         private QuestObjectiveType _type = QuestObjectiveType.CustomCondition;
 
-        [Tooltip("ID цели (враг, предмет, точка) для типов KillCount/CollectCount/ReachPoint.")] [SerializeField]
+        [Tooltip("Objective target ID (enemy, item, point) for KillCount/CollectCount/ReachPoint types.")]
+        [SerializeField]
         private string _targetId = "";
 
-        [Tooltip("Требуемое количество для счётчиков (KillCount, CollectCount).")] [SerializeField]
+        [Tooltip("Required count for counter objectives (KillCount, CollectCount).")] [SerializeField]
         private int _requiredCount = 1;
 
+        [Tooltip("Custom objective text for UI. If empty, text can be generated from Type/TargetId.")]
+        [SerializeField]
+        private string _displayText = "";
+
         [Tooltip(
-            "Условие выполнения цели (для CustomCondition). Проверяется в QuestManager по контексту. Если пусто — только внешний триггер (QuestObjectiveNotifier).")]
+            "Completion condition for CustomCondition objectives. Evaluated by QuestManager against context. If empty, complete via external trigger (e.g., QuestNoCodeAction).")]
         [SerializeField]
         private ConditionEntry _condition;
 
@@ -66,7 +71,14 @@ namespace Neo.Quest
             set => _requiredCount = value;
         }
 
-        /// <summary>Условие для CustomCondition (может быть null — тогда только Notifier).</summary>
+        /// <summary>Пользовательский текст цели для UI.</summary>
+        public string DisplayText
+        {
+            get => _displayText;
+            set => _displayText = value ?? "";
+        }
+
+        /// <summary>Условие для CustomCondition (может быть null — тогда только внешний триггер).</summary>
         public ConditionEntry Condition
         {
             get => _condition;

@@ -10,8 +10,8 @@ The system is built around singleton **AM** (Audio Manager) for playback and sin
 - **AM** — Main singleton for sound effects and music (Scripts/Audio/AudioSimple/AM.cs).
 - **PlayAudio** — Component to play a sound from AM (by ID or clip list).
 - **PlayAudioBtn** — Plays sound on UI Button click.
-- **SettingMixer** — Set/get a single AudioMixer parameter (normalized 0–1 or dB).
-- **AudioControl** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx); Scripts/Audio/View/AudioControl.cs.
+- **SettingMixer** — Set/get AudioMixer parameters (normalized 0–1 or dB) with enum presets (`Master/Music/Efx`) and `Custom` mode.
+- **AudioControl** — Binds a Toggle or Slider to AMSettings (Master/Music/Efx), supports `Set(bool)` and normalized `Set(float)` in `0..1`, and has a `Custom` mode with UnityEvents; Scripts/Audio/View/AudioControl.cs.
 - **RandomMusicController** — Used internally by AM for random track playback.
 
 For per-script pages (fields, API, examples), see the Russian documentation: [Docs/Audio](../../Docs/Audio/README.md).

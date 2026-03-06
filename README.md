@@ -190,7 +190,7 @@
 - **QuestConfig** — ScriptableObject квеста: ID, title, description, objectives, start conditions
 - **QuestManager** — принятие квестов, учёт прогресса, события и Condition Context
 - **QuestState** — runtime-состояние квеста и прогресс по целям
-- **QuestAcceptTrigger / QuestObjectiveNotifier** — bridge-компоненты для UnityEvent
+- **QuestNoCodeAction** — универсальный no-code bridge для UnityEvent
 - **NotifyKill / NotifyCollect** — инкремент целей-счётчиков без ручного обхода состояний
 
 📖 [Документация →](Assets/Neoxider/Docs/Quest/README.md)

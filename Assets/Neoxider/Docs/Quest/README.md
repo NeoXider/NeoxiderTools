@@ -18,9 +18,11 @@
 | Документ | О чём |
 |----------|--------|
 | [QuestConfig](QuestConfig.md) | Ассет Quest Config (ScriptableObject): поля, типы целей, условия старта. |
+| [QuestFlowConfig](QuestFlowConfig.md) | Конфиг потоков квестов: последовательные цепочки и standalone-квесты. |
 | [QuestManager](QuestManager.md) | Компонент QuestManager в сцене: методы, события, Condition Context, Known Quests. |
+| [QuestContext](QuestContext.md) | Marker-компонент объекта, который используется как Condition Context. |
 | [QuestState](QuestState.md) | Класс состояния квеста: откуда брать, что читать, сериализация. |
-| [QuestBridge](QuestBridge.md) | Компоненты Quest Accept Trigger и Quest Objective Notifier. |
+| [QuestBridge](QuestBridge.md) | Универсальный no-code компонент QuestNoCodeAction для UnityEvent. |
 | [Scenarios](Scenarios.md) | Пошаговые сценарии в инспекторе: кнопка принятия, цель по условию, UI по событиям. |
 | [Code](Code.md) | Вызовы из C#: AcceptQuest, CompleteObjective, события, NotifyKill/NotifyCollect. |
 | [Saving](Saving.md) | Сохранение и загрузка списка QuestState. |
@@ -38,6 +40,7 @@ CompleteObjective(id, index) / NotifyKill / NotifyCollect  →  обновлен
 ```
 
 Конфиг задаёт «что сделать»; менеджер хранит состояния и вызывает события. Состояние получать только через `QuestManager.GetState(...)`.
+`QuestConfig` поддерживает UI-поля (`Title`, `Description`, `Icon`), а `QuestObjectiveData` — `DisplayText` для читаемого списка задач.
 
 ---
 
@@ -46,12 +49,11 @@ CompleteObjective(id, index) / NotifyKill / NotifyCollect  →  обновлен
 | Файл | Назначение |
 |------|------------|
 | `Scripts/Quest/QuestConfig.cs` | ScriptableObject квеста. |
-| `Scripts/Quest/QuestObjectiveData.cs` | Одна цель: Type, TargetId, RequiredCount, Condition. |
+| `Scripts/Quest/QuestObjectiveData.cs` | Одна цель: Type, TargetId, RequiredCount, DisplayText, Condition. |
 | `Scripts/Quest/QuestStatus.cs` | enum: NotStarted, Active, Completed, Failed. |
 | `Scripts/Quest/QuestState.cs` | Состояние одного квеста (прогресс, флаги). |
 | `Scripts/Quest/QuestManager.cs` | Компонент в сцене: реестр состояний, Accept/Complete/Fail, события. |
 | `Scripts/Quest/QuestContext.cs` | Маркер объекта для Condition Context (опционально). |
-| `Scripts/Quest/Bridge/QuestAcceptTrigger.cs` | Вызов AcceptQuest из UnityEvent (например On Click). |
-| `Scripts/Quest/Bridge/QuestObjectiveNotifier.cs` | Вызов CompleteObjective из UnityEvent (например NeoCondition.On True). |
+| `Scripts/Quest/Bridge/QuestNoCodeAction.cs` | Универсальный no-code action: Accept/Complete/Fail/Restart/Reset/ResetAll. |
 
 Зависимость: **Neo.Condition** (ConditionEntry) для Start Conditions и опционально для целей по условию.

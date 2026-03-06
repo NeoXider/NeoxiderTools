@@ -1,21 +1,33 @@
-# Quest Accept Trigger и Quest Objective Notifier
+# Quest NoCode Action
 
-**Что это:** два моста для вызова квестового API из UnityEvent: QuestAcceptTrigger — AcceptQuest по конфигу; QuestObjectiveNotifier — CompleteObjective по конфигу и индексу цели. Файлы: `Scripts/Quest/Bridge/QuestAcceptTrigger.cs`, `QuestObjectiveNotifier.cs`.
+**Что это:** универсальный мост для вызова квестового API из UnityEvent без кода.
+Основной компонент: `QuestNoCodeAction` (`Scripts/Quest/Bridge/QuestNoCodeAction.cs`).
 
 **Как использовать:** см. блоки ниже (параметры, метод, подключение) и [Scenarios](Scenarios.md).
 
 ---
 
-**Quest Accept Trigger** (`Bridge/QuestAcceptTrigger.cs`)
-- Назначение: вызов `QuestManager.AcceptQuest(quest)` из UnityEvent.
-- Параметры: **Quest** (QuestConfig). Конфиг должен быть в Known Quests у QuestManager.
-- Метод: `AcceptQuest()` — без аргументов. Кнопка в инспекторе: [Accept Quest].
-- Подключение: Button On Click (или любой UnityEvent) → этот объект → `QuestAcceptTrigger.AcceptQuest()`.
+**Quest NoCode Action** (`Bridge/QuestNoCodeAction.cs`)
+- Назначение: универсальный no-code компонент для большинства runtime-действий с квестами.
+- Параметры:
+  - **Action Type**: `Accept`, `CompleteObjective`, `Fail`, `Restart`, `Reset`, `ResetAll`.
+  - **Quest**: нужен для всех действий, кроме `ResetAll`.
+  - **Objective Index**: используется в `CompleteObjective`.
+  - **Flow Config**: опционально; если задан и действие = `Accept`, применяется проверка `QuestFlowConfig.CanAcceptQuest(...)`.
+- Метод: `Execute()` — без аргументов (под UnityEvent).
+- События:
+  - **On Success** (`UnityEvent`)
+  - **On Failed** (`UnityEvent<string>`)
+  - **On Result Message** (`UnityEvent<string>`)
 
-**Quest Objective Notifier** (`Bridge/QuestObjectiveNotifier.cs`)
-- Назначение: вызов `QuestManager.CompleteObjective(questId, objectiveIndex)` из UnityEvent.
-- Параметры: **Quest** (QuestConfig), **Objective Index** (int, 0-based — порядок в Objectives конфига).
-- Метод: `NotifyComplete()` — без аргументов. Кнопка в инспекторе: [Notify Complete].
-- Подключение: NeoCondition On True / OnTriggerEnter / кнопка и т.д. → этот объект → `QuestObjectiveNotifier.NotifyComplete()`.
+### No-code покрытие (что можно без кода)
+
+- Принять квест — `QuestNoCodeAction(Accept)`.
+- Засчитать цель — `QuestNoCodeAction(CompleteObjective)`.
+- Провалить квест — `QuestNoCodeAction(Fail)`.
+- Перезапустить квест — `QuestNoCodeAction(Restart)`.
+- Сбросить один квест — `QuestNoCodeAction(Reset)`.
+- Сбросить все квесты — `QuestNoCodeAction(ResetAll)`.
+- Ограничить принятие по последовательности — через `QuestFlowConfig` + `QuestNoCodeAction(Accept)` с Flow Config.
 
 Пошаговые сценарии настройки в инспекторе — [Scenarios](Scenarios.md).

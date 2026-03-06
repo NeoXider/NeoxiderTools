@@ -1,13 +1,13 @@
 # Quest module
 
-The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and UnityEvent-friendly bridge components.
+The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and a UnityEvent-friendly no-code bridge component.
 
 ## Main pieces
 
 - `QuestConfig` stores quest id, title, description, objectives, start conditions, and next quest ids.
 - `QuestManager` accepts quests, tracks runtime state, completes objectives, and raises UnityEvents or C# events.
 - `QuestState` stores per-quest runtime progress and status.
-- `QuestAcceptTrigger` and `QuestObjectiveNotifier` let you trigger quest actions from Inspector events.
+- `QuestNoCodeAction` lets you trigger quest actions from Inspector events (`Accept`, `CompleteObjective`, `Fail`, `Restart`, `Reset`, `ResetAll`).
 - `QuestContext` marks the object used as condition evaluation context for quest start conditions.
 
 ## Objective types
@@ -23,8 +23,8 @@ The `Quest` module provides a compact quest runtime built around `QuestConfig`, 
 1. Create one or more `QuestConfig` assets.
 2. Add `QuestManager` to the scene and register configs in `Known Quests`.
 3. Assign `Condition Context` if start conditions should be evaluated against a player or world object.
-4. Accept quests via `AcceptQuest(...)`, `QuestAcceptTrigger`, or UI events.
-5. Progress objectives through `CompleteObjective(...)`, `NotifyKill(...)`, `NotifyCollect(...)`, or `QuestObjectiveNotifier`.
+4. Accept quests via `AcceptQuest(...)`, `QuestNoCodeAction(Accept)`, or UI events.
+5. Progress objectives through `CompleteObjective(...)`, `NotifyKill(...)`, `NotifyCollect(...)`, or `QuestNoCodeAction(CompleteObjective)`.
 
 ## Key API
 

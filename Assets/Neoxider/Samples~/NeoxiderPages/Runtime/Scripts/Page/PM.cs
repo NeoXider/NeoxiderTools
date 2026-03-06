@@ -46,6 +46,7 @@ namespace Neo.Pages
         private const string WinPageIdName = "PageWin";
         private const string LosePageIdName = "PageLose";
         private const string EndPageIdName = "PageEnd";
+        private const string MenuPageIdName = "PageMenu";
 
         [Header("GM Integration")] [SerializeField]
         private bool integrateWithGM = true;
@@ -86,6 +87,7 @@ namespace Neo.Pages
         private void Start()
         {
             ActivateAll(false);
+            EnsureDefaultStartupPage();
             if (startupPage != null)
             {
                 SetPage(startupPage);
@@ -112,7 +114,7 @@ namespace Neo.Pages
         {
             name = nameof(PM);
 
-            if (!refreshPagesInEditor || gameObject.scene != null)
+            if (!refreshPagesInEditor || !gameObject.scene.IsValid())
             {
                 return;
             }
@@ -120,6 +122,7 @@ namespace Neo.Pages
             if (!Application.isPlaying)
             {
                 SetAllPages();
+                EnsureDefaultStartupPage();
             }
 
             ActivateAll(false);
@@ -143,6 +146,7 @@ namespace Neo.Pages
             SetAllPages();
             allPages = allPages.Where(p => p != null).ToArray();
             SetDictPage();
+            EnsureDefaultStartupPage();
         }
 
         private void Subscribe()
@@ -253,10 +257,7 @@ namespace Neo.Pages
 
         private PageId TryFindPageIdByName(string pageIdName)
         {
-            if (allPages == null || allPages.Length == 0)
-            {
-                SetAllPages();
-            }
+            SetAllPages();
 
             if (allPages == null || allPages.Length == 0)
             {
@@ -477,8 +478,18 @@ namespace Neo.Pages
 
         public void ActivateAll(bool acteve)
         {
+            if (allPages == null || allPages.Length == 0)
+            {
+                return;
+            }
+
             foreach (UIPage page in allPages)
             {
+                if (page == null)
+                {
+                    continue;
+                }
+
                 if (page.PageId != null && ignoredPageIds != null && ignoredPageIds.Contains(page.PageId))
                 {
                     continue;
@@ -555,6 +566,13 @@ namespace Neo.Pages
                 return p;
             }
 
+            SetAllPages();
+            SetDictPage();
+            if (pageIdDict.TryGetValue(pageId, out p))
+            {
+                return p;
+            }
+
             Debug.LogWarning($"[PM] Страница PageId {pageId.name} не найдена в словаре.");
             return null;
         }
@@ -563,14 +581,14 @@ namespace Neo.Pages
         /// <summary>
         ///     Проверяет список страниц на дубликаты и выводит предупреждения.
         /// </summary>
-        private void CheckForDuplicates()
+        private void CheckForDuplicates(UIPage[] pages)
         {
-            if (allPages.Length == 0)
+            if (pages == null || pages.Length == 0)
             {
                 return;
             }
 
-            IEnumerable<UIPage> duplicates = allPages
+            IEnumerable<UIPage> duplicates = pages
                 .Where(x => x != null)
                 .GroupBy(x => x)
                 .Where(g => g.Count() > 1)
@@ -585,18 +603,31 @@ namespace Neo.Pages
         private void SetAllPages()
         {
             UIPage[] foundPages = FindAllScenePages();
-
-            if (foundPages.Length > 0)
+            CheckForDuplicates(foundPages);
+            allPages = foundPages ?? Array.Empty<UIPage>();
+            if (allPages.Length == 0)
             {
-                CheckForDuplicates();
-
-                allPages = foundPages;
+                pageIdDict?.Clear();
             }
         }
 
         private static bool IsOther(PageId pageId)
         {
             return pageId != null && pageId.name == "PageOther";
+        }
+
+        private void EnsureDefaultStartupPage()
+        {
+            if (startupPage != null)
+            {
+                return;
+            }
+
+            PageId menuPageId = TryFindPageIdByName(MenuPageIdName);
+            if (menuPageId != null)
+            {
+                startupPage = menuPageId;
+            }
         }
     }
 }

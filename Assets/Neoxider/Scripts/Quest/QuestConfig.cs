@@ -12,28 +12,32 @@ namespace Neo.Quest
     public class QuestConfig : ScriptableObject
     {
         [Header("Identity")]
-        [Tooltip("Уникальный идентификатор квеста. Используется в AcceptQuest/GetState.")]
+        [Tooltip("Unique quest identifier. Used in AcceptQuest/GetState.")]
         [SerializeField]
         private string _id = "";
 
-        [Header("Display")] [Tooltip("Название для UI.")] [SerializeField]
+        [Header("Display")] [Tooltip("Quest title for UI.")] [SerializeField]
         private string _title = "";
 
-        [Tooltip("Описание для UI.")] [TextArea(2, 6)] [SerializeField]
+        [Tooltip("Quest description for UI.")] [TextArea(2, 6)] [SerializeField]
         private string _description = "";
 
+        [Tooltip("Optional quest icon for UI.")]
+        [SerializeField]
+        private Sprite _icon;
+
         [Header("Objectives")]
-        [Tooltip("Список целей квеста. Порядок определяет индекс цели (0, 1, …).")]
+        [Tooltip("Quest objectives list. Order defines objective index (0, 1, ...).")]
         [SerializeField]
         private List<QuestObjectiveData> _objectives = new();
 
         [Header("Start Conditions")]
         [Tooltip(
-            "Условия доступности квеста. Проверяются через ConditionContext в QuestManager при AcceptQuest. Все должны быть true (AND).")]
+            "Quest availability conditions. Evaluated via QuestManager.ConditionContext during AcceptQuest. All must be true (AND).")]
         [SerializeField]
         private List<ConditionEntry> _startConditions = new();
 
-        [Header("Optional")] [Tooltip("ID квестов, которые станут доступны после завершения этого.")] [SerializeField]
+        [Header("Optional")] [Tooltip("Quest IDs that become available after this quest is completed.")] [SerializeField]
         private List<string> _nextQuestIds = new();
 
         /// <summary>Уникальный идентификатор квеста.</summary>
@@ -44,6 +48,9 @@ namespace Neo.Quest
 
         /// <summary>Описание для UI.</summary>
         public string Description => _description;
+
+        /// <summary>Иконка квеста для UI (опционально).</summary>
+        public Sprite Icon => _icon;
 
         /// <summary>Цели квеста (readonly).</summary>
         public IReadOnlyList<QuestObjectiveData> Objectives => _objectives;
