@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
@@ -11,6 +12,11 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgProjectile))]
     public sealed class RpgProjectile : MonoBehaviour
     {
+        [Header("Events")]
+        [SerializeField] private UnityEvent _onInitialized = new();
+        [SerializeField] private RpgGameObjectEvent _onHit = new();
+        [SerializeField] private UnityEvent _onExpired = new();
+
         private readonly HashSet<GameObject> _hitTargets = new();
         private RpgAttackController _owner;
         private RpgAttackDefinition _definition;
@@ -35,12 +41,14 @@ namespace Neo.Rpg
             _lifetime = definition.ProjectileLifetime;
             _remainingHits = definition.ProjectileMaxHits;
             _lastPosition = transform.position;
+            _onInitialized?.Invoke();
         }
 
         private void Update()
         {
             if (_definition == null || _owner == null)
             {
+                _onExpired?.Invoke();
                 Destroy(gameObject);
                 return;
             }
@@ -48,6 +56,7 @@ namespace Neo.Rpg
             _elapsed += Time.deltaTime;
             if (_elapsed >= _lifetime)
             {
+                _onExpired?.Invoke();
                 Destroy(gameObject);
                 return;
             }
@@ -104,9 +113,11 @@ namespace Neo.Rpg
 
             if (_owner.ApplyHitToGameObject(target, _definition))
             {
+                _onHit?.Invoke(target);
                 _remainingHits--;
                 if (_remainingHits <= 0)
                 {
+                    _onExpired?.Invoke();
                     Destroy(gameObject);
                 }
             }

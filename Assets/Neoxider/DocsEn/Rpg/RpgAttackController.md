@@ -14,9 +14,21 @@
 | `Area` | OverlapSphere / OverlapCircle at the impact point |
 | `Projectile` | Spawns `RpgProjectile` with the same definition |
 
+## API
+
+- `UsePrimaryAttack()`
+- `UsePrimaryPreset()`
+- `TryUseAttack(...)`
+- `TryUsePreset(...)`
+- `GetRemainingCooldown(...)`
+
 ## Built-in input
 
 - Enabled by default.
 - Primary attack uses left mouse button by default.
 - Binding can use either `MouseButton` or `KeyCode`.
 - Disable `Enable Built-in Input` for NPC and AI actors.
+
+## AI / skills / spells
+
+Use `RpgAttackPreset` together with `RpgTargetSelector` when the controller should resolve targets automatically instead of relying only on forward casts.

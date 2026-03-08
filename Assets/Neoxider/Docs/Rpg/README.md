@@ -1,13 +1,15 @@
 # RPG
 
-**Что это:** полноценный RPG runtime-модуль для persistent player profile, локальных combatant-актеров, melee/ranged/aoe атак, evade, баффов, статус-эффектов, built-in input и no-code интеграции. Скрипты находятся в `Scripts/Rpg/`.
+**Что это:** полноценный RPG runtime-модуль для persistent player profile, локальных combatant-актеров, melee/ranged/aoe атак, target selectors, attack presets для AI/skills/spells, evade, баффов, статус-эффектов, built-in input и no-code интеграции. Скрипты находятся в `Scripts/Rpg/`.
 
 **Оглавление:**
 - [RpgStatsManager](./RpgStatsManager.md) — persistent профиль игрока, save/load, баффы, статусы.
 - [RpgCombatant](./RpgCombatant.md) — scene-local актёр для врагов, NPC и объектов.
 - [RpgAttackController](./RpgAttackController.md) — единая точка запуска melee/ranged/aoe атак.
 - [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject-описание атаки.
+- [RpgAttackPreset](./RpgAttackPreset.md) — preset для AI/skills/spells с таргетингом.
 - [RpgProjectile](./RpgProjectile.md) — projectile runtime для дальних атак.
+- [RpgTargetSelector](./RpgTargetSelector.md) — selector цели для AI и ability logic.
 - [RpgEvadeController](./RpgEvadeController.md) — evade/invulnerability/cooldown.
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — no-code bridge для UnityEvent.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — адаптер условий для `NeoCondition`.
@@ -33,7 +35,9 @@
 - `RpgCombatant` — локальная версия combat receiver без persistence.
 - `RpgAttackController` — одна система для direct, area и projectile атак.
 - `RpgAttackDefinition` — SO с power/range/radius/cooldown/effects/delivery mode.
+- `RpgAttackPreset` — preset, который связывает атаку и target query.
 - `RpgProjectile` — runtime projectile с hit detection и max hits.
+- `RpgTargetSelector` — reusable selector ближайшей/случайной/приоритетной цели.
 - `RpgEvadeController` — evade с cooldown и invulnerability lock.
 - `BuffDefinition` — временные баффы с длительностью и модификаторами статов.
 - `StatusEffectDefinition` — статус-эффекты (яд, замедление, stun/action lock, DoT).
@@ -52,7 +56,8 @@
 ## Рекомендуемая схема
 
 - Игрок: `RpgStatsManager` + `RpgAttackController` + `RpgEvadeController`.
-- Враги/NPC: `RpgCombatant` + `RpgAttackController`.
+- Враги/NPC: `RpgCombatant` + `RpgAttackController` + `RpgTargetSelector`.
+- Skills/spells/AI routines: `RpgAttackPreset` для выбора attack + targeting policy.
 - Legacy `IDamageable` совместимость: `RpgStatsDamageableBridge`.
 - Primary attack: по умолчанию ЛКМ, binding настраивается в `RpgAttackController`.
 - Evade: binding настраивается в `RpgEvadeController`, built-in input можно выключить.

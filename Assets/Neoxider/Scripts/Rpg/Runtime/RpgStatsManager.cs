@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo;
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
@@ -414,6 +415,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Loads the profile from the active save provider.
         /// </summary>
+        [Button]
         public void LoadProfile()
         {
             EnsureInitialized();
@@ -423,6 +425,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Saves the profile through the active save provider.
         /// </summary>
+        [Button]
         public void SaveProfile()
         {
             SaveProfile(true);
@@ -449,6 +452,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Resets the profile to defaults.
         /// </summary>
+        [Button]
         public void ResetProfile()
         {
             EnsureInitialized();

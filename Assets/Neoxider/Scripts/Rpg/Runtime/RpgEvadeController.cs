@@ -1,3 +1,4 @@
+using Neo;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -86,6 +87,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Starts evade if the controller is ready.
         /// </summary>
+        [Button]
         public bool TryStartEvade()
         {
             if (!CanEvade)
@@ -121,6 +123,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Clears the active cooldown immediately.
         /// </summary>
+        [Button]
         public void ResetCooldown()
         {
             _cooldownReadyAt = 0f;

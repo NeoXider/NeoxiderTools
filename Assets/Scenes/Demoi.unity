@@ -807,6 +807,7 @@ GameObject:
   - component: {fileID: 921856733}
   - component: {fileID: 921856737}
   - component: {fileID: 921856736}
+  - component: {fileID: 921856738}
   - component: {fileID: 921856735}
   - component: {fileID: 921856734}
   m_Layer: 0
@@ -980,6 +981,45 @@ CapsuleCollider:
   m_Height: 1.8
   m_Direction: 1
   m_Center: {x: 0, y: 0.9, z: 0}
+--- !u!114 &921856738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 921856732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ae5150b3ed94d42b8771c3e39993fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _attacks: []
+  _presets: []
+  _origin: {fileID: 0}
+  _projectileSpawnPoint: {fileID: 0}
+  _combatantSource: {fileID: 0}
+  _profileSource: {fileID: 0}
+  _targetSelector: {fileID: 0}
+  _enableBuiltInInput: 1
+  _primaryAttackBinding:
+    _triggerType: 0
+    _mouseButton: 0
+    _keyCode: 0
+  _onAttackStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAttackResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onPresetUsed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTargetResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAttackFailed:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &955906395
 GameObject:
   m_ObjectHideFlags: 0

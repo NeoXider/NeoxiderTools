@@ -20,6 +20,8 @@
 | `RemoveStatus` | Снимает статус |
 | `UseAttackById` | Запускает атаку через `RpgAttackController` по `_attackId` |
 | `UsePrimaryAttack` | Запускает первую атаку из `RpgAttackController` |
+| `UsePresetById` | Запускает preset через `RpgAttackController` по `_presetId` |
+| `UsePrimaryPreset` | Запускает первый preset из `RpgAttackController` |
 | `StartEvade` | Запускает `RpgEvadeController` |
 | `ResetProfile` | Сбрасывает профиль |
 | `SaveProfile` | Сохраняет профиль |

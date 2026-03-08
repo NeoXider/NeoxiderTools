@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -162,6 +163,7 @@ namespace Neo.Rpg
         /// <summary>
         /// Restores HP to the maximum value.
         /// </summary>
+        [Button]
         public void Restore()
         {
             _currentHp = _maxHp;
@@ -303,6 +305,7 @@ namespace Neo.Rpg
         }
 
         /// <inheritdoc />
+        [Button]
         public void AddInvulnerabilityLock()
         {
             _invulnerabilityLocks++;
@@ -310,6 +313,7 @@ namespace Neo.Rpg
         }
 
         /// <inheritdoc />
+        [Button]
         public void RemoveInvulnerabilityLock()
         {
             _invulnerabilityLocks = Mathf.Max(0, _invulnerabilityLocks - 1);

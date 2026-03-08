@@ -1,3 +1,4 @@
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -23,6 +24,8 @@ namespace Neo.Rpg
             RemoveStatus,
             UseAttackById,
             UsePrimaryAttack,
+            UsePresetById,
+            UsePrimaryPreset,
             StartEvade,
             ResetProfile,
             SaveProfile,
@@ -36,6 +39,7 @@ namespace Neo.Rpg
         [SerializeField] private string _buffId = string.Empty;
         [SerializeField] private string _statusId = string.Empty;
         [SerializeField] private string _attackId = string.Empty;
+        [SerializeField] private string _presetId = string.Empty;
         [SerializeField] private RpgAttackController _attackController;
         [SerializeField] private RpgEvadeController _evadeController;
 
@@ -46,9 +50,11 @@ namespace Neo.Rpg
         /// <summary>
         /// Executes the configured action.
         /// </summary>
+        [Button]
         public void Execute()
         {
-            if (!TryGetManager(out RpgStatsManager manager))
+            RpgStatsManager manager = null;
+            if (RequiresManager(_actionType) && !TryGetManager(out manager))
             {
                 return;
             }
@@ -124,6 +130,29 @@ namespace Neo.Rpg
                     }
 
                     break;
+                case ActionType.UsePresetById:
+                    string presetError = null;
+                    if (_attackController != null && _attackController.TryUsePreset(_presetId, out presetError))
+                    {
+                        EmitSuccess($"Used preset: {_presetId}");
+                    }
+                    else
+                    {
+                        EmitFailed(string.IsNullOrWhiteSpace(presetError) ? "Preset attack failed." : presetError);
+                    }
+
+                    break;
+                case ActionType.UsePrimaryPreset:
+                    if (_attackController != null && _attackController.UsePrimaryPreset())
+                    {
+                        EmitSuccess("Used primary preset.");
+                    }
+                    else
+                    {
+                        EmitFailed("Primary preset failed.");
+                    }
+
+                    break;
                 case ActionType.StartEvade:
                     if (_evadeController != null && _evadeController.TryStartEvade())
                     {
@@ -160,6 +189,15 @@ namespace Neo.Rpg
 
             EmitFailed("RpgStatsManager not found.");
             return false;
+        }
+
+        private static bool RequiresManager(ActionType actionType)
+        {
+            return actionType != ActionType.UseAttackById
+                && actionType != ActionType.UsePrimaryAttack
+                && actionType != ActionType.UsePresetById
+                && actionType != ActionType.UsePrimaryPreset
+                && actionType != ActionType.StartEvade;
         }
 
         private void EmitSuccess(string message)

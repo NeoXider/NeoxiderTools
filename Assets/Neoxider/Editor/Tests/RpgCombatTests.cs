@@ -94,6 +94,100 @@ namespace Neo.Rpg.Tests
             }
         }
 
+        [Test]
+        public void TargetSelector_SelectTarget_PicksNearestCombatant()
+        {
+            GameObject source = new("Source");
+            GameObject nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            try
+            {
+                nearTarget.name = "NearTarget";
+                farTarget.name = "FarTarget";
+                source.transform.position = Vector3.zero;
+                nearTarget.transform.position = new Vector3(0f, 0f, 2f);
+                farTarget.transform.position = new Vector3(0f, 0f, 5f);
+                nearTarget.AddComponent<RpgCombatant>();
+                farTarget.AddComponent<RpgCombatant>();
+
+                RpgTargetSelector selector = source.AddComponent<RpgTargetSelector>();
+                GameObject selected = selector.SelectTarget();
+
+                Assert.That(selected, Is.EqualTo(nearTarget));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                UnityEngine.Object.DestroyImmediate(nearTarget);
+                UnityEngine.Object.DestroyImmediate(farTarget);
+            }
+        }
+
+        [Test]
+        public void AttackController_UsePreset_SelectsTargetAndDamagesNearestCombatant()
+        {
+            GameObject source = new("Source");
+            GameObject nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            GameObject farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            try
+            {
+                source.transform.position = Vector3.zero;
+                source.transform.forward = Vector3.forward;
+                nearTarget.name = "NearTarget";
+                farTarget.name = "FarTarget";
+                nearTarget.transform.position = new Vector3(0f, 0f, 2f);
+                farTarget.transform.position = new Vector3(0f, 0f, 5f);
+                RpgCombatant nearCombatant = nearTarget.AddComponent<RpgCombatant>();
+                RpgCombatant farCombatant = farTarget.AddComponent<RpgCombatant>();
+                Physics.SyncTransforms();
+
+                RpgAttackDefinition attack = ScriptableObject.CreateInstance<RpgAttackDefinition>();
+                SetPrivateField(attack, "_id", "preset_attack");
+                SetPrivateField(attack, "_deliveryType", RpgAttackDeliveryType.Area);
+                SetPrivateField(attack, "_hitMode", RpgHitMode.Damage);
+                SetPrivateField(attack, "_power", 20f);
+                SetPrivateField(attack, "_range", 5f);
+                SetPrivateField(attack, "_radius", 1f);
+                SetPrivateField(attack, "_castDelay", 0f);
+                SetPrivateField(attack, "_cooldown", 0f);
+                SetPrivateField(attack, "_use3D", true);
+                SetPrivateField(attack, "_use2D", false);
+                SetPrivateField(attack, "_maxTargets", 1);
+                SetPrivateField(attack, "_targetLayers", (LayerMask)~0);
+
+                RpgTargetQuery query = new();
+                SetPrivateField(query, "_range", 10f);
+                SetPrivateField(query, "_use3D", true);
+                SetPrivateField(query, "_use2D", false);
+                SetPrivateField(query, "_selectionMode", RpgTargetSelectionMode.Nearest);
+
+                RpgAttackPreset preset = ScriptableObject.CreateInstance<RpgAttackPreset>();
+                SetPrivateField(preset, "_id", "ai_slash");
+                SetPrivateField(preset, "_attackDefinition", attack);
+                SetPrivateField(preset, "_requireTarget", true);
+                SetPrivateField(preset, "_useSelectorComponentWhenAvailable", false);
+                SetPrivateField(preset, "_aimAtTarget", true);
+                SetPrivateField(preset, "_targetQuery", query);
+
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+                SetPrivateField(controller, "_presets", new[] { preset });
+
+                bool success = controller.UsePrimaryPreset();
+
+                Assert.That(success, Is.True);
+                Assert.That(nearCombatant.CurrentHp, Is.EqualTo(80f));
+                Assert.That(farCombatant.CurrentHp, Is.EqualTo(100f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                UnityEngine.Object.DestroyImmediate(nearTarget);
+                UnityEngine.Object.DestroyImmediate(farTarget);
+            }
+        }
+
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);

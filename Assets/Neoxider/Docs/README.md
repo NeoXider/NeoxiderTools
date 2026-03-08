@@ -26,7 +26,7 @@
 | **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Конфиги квестов, менеджер, триггеры и состояние прогресса | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, уровни, unlock tree, perk tree и persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | Persistent profile с `Auto Save`, combatant-актеры, melee/ranged/aoe атаки, built-in input, evade, баффы и статусы | [`Rpg/README.md`](./Rpg/README.md) |
+| **RPG** | Persistent profile с `Auto Save`, combatant-актеры, melee/ranged/aoe атаки, target selectors, presets для AI/skills/spells, built-in input, evade, баффы и статусы | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
 | **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |

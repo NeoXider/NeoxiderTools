@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Neo;
 using UnityEngine;
 
 namespace Neo.Rpg
@@ -15,10 +16,12 @@ namespace Neo.Rpg
     {
         [Header("Setup")]
         [SerializeField] private RpgAttackDefinition[] _attacks = Array.Empty<RpgAttackDefinition>();
+        [SerializeField] private RpgAttackPreset[] _presets = Array.Empty<RpgAttackPreset>();
         [SerializeField] private Transform _origin;
         [SerializeField] private Transform _projectileSpawnPoint;
         [SerializeField] private RpgCombatant _combatantSource;
         [SerializeField] private RpgStatsManager _profileSource;
+        [SerializeField] private RpgTargetSelector _targetSelector;
 
         [Header("Built-in Input")]
         [SerializeField] private bool _enableBuiltInInput = true;
@@ -27,6 +30,8 @@ namespace Neo.Rpg
         [Header("Events")]
         [SerializeField] private RpgAttackEvent _onAttackStarted = new();
         [SerializeField] private RpgAttackEvent _onAttackResolved = new();
+        [SerializeField] private RpgAttackEvent _onPresetUsed = new();
+        [SerializeField] private RpgGameObjectEvent _onTargetResolved = new();
         [SerializeField] private RpgStringEvent _onAttackFailed = new();
 
         private readonly Dictionary<string, float> _cooldowns = new(StringComparer.Ordinal);
@@ -57,9 +62,19 @@ namespace Neo.Rpg
         /// <summary>
         /// Uses the first configured attack.
         /// </summary>
+        [Button]
         public bool UsePrimaryAttack()
         {
             return TryUseAttack(0, out _);
+        }
+
+        /// <summary>
+        /// Uses the first configured preset.
+        /// </summary>
+        [Button]
+        public bool UsePrimaryPreset()
+        {
+            return TryUsePreset(0, out _);
         }
 
         /// <summary>
@@ -90,19 +105,64 @@ namespace Neo.Rpg
                 return false;
             }
 
-            _cooldowns[definition.Id] = Time.time + definition.Cooldown;
-            _onAttackStarted?.Invoke(definition.Id);
+            return BeginAttack(definition, null, attackId, true);
+        }
 
-            if (definition.CastDelay > 0f)
+        /// <summary>
+        /// Tries to use a preset by index.
+        /// </summary>
+        public bool TryUsePreset(int presetIndex, out string failReason)
+        {
+            failReason = null;
+            if (presetIndex < 0 || presetIndex >= _presets.Length || _presets[presetIndex] == null)
             {
-                _castCoroutine = StartCoroutine(CastAttackAfterDelay(definition));
-            }
-            else
-            {
-                ExecuteAttack(definition);
+                failReason = $"Preset index out of range: {presetIndex}";
+                EmitFailure(failReason);
+                return false;
             }
 
-            return true;
+            return TryUsePreset(_presets[presetIndex].Id, out failReason);
+        }
+
+        /// <summary>
+        /// Tries to use a preset by id.
+        /// </summary>
+        public bool TryUsePreset(string presetId, out string failReason)
+        {
+            RpgAttackPreset preset = ResolvePreset(presetId);
+            if (preset == null)
+            {
+                failReason = $"Attack preset not found: {presetId}";
+                EmitFailure(failReason);
+                return false;
+            }
+
+            RpgAttackDefinition definition = preset.AttackDefinition;
+            if (!CanUseAttack(definition, out failReason))
+            {
+                EmitFailure(failReason);
+                return false;
+            }
+
+            GameObject target = null;
+            if (!TryResolveTargetForPreset(preset, out target, out failReason))
+            {
+                EmitFailure(failReason);
+                return false;
+            }
+
+            if (target != null)
+            {
+                _onTargetResolved?.Invoke(target);
+            }
+
+            bool started = BeginAttack(definition, target, preset.Id, preset.AimAtTarget);
+            if (started)
+            {
+                _onPresetUsed?.Invoke(preset.Id);
+            }
+
+            return started;
         }
 
         /// <summary>
@@ -126,35 +186,35 @@ namespace Neo.Rpg
             return Mathf.Max(0f, readyAt - Time.time);
         }
 
-        private IEnumerator CastAttackAfterDelay(RpgAttackDefinition definition)
+        private IEnumerator CastAttackAfterDelay(RpgAttackDefinition definition, GameObject forcedTarget, string eventId, bool aimAtTarget)
         {
             yield return new WaitForSeconds(definition.CastDelay);
-            ExecuteAttack(definition);
+            ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
             _castCoroutine = null;
         }
 
-        private void ExecuteAttack(RpgAttackDefinition definition)
+        private void ExecuteAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget, string eventId)
         {
             switch (definition.DeliveryType)
             {
                 case RpgAttackDeliveryType.Direct:
-                    ExecuteDirectAttack(definition);
+                    ExecuteDirectAttack(definition, forcedTarget, aimAtTarget);
                     break;
                 case RpgAttackDeliveryType.Area:
-                    ExecuteAreaAttack(definition);
+                    ExecuteAreaAttack(definition, forcedTarget, aimAtTarget);
                     break;
                 case RpgAttackDeliveryType.Projectile:
-                    SpawnProjectile(definition);
+                    SpawnProjectile(definition, forcedTarget, aimAtTarget);
                     break;
             }
 
-            _onAttackResolved?.Invoke(definition.Id);
+            _onAttackResolved?.Invoke(eventId);
         }
 
-        private void ExecuteDirectAttack(RpgAttackDefinition definition)
+        private void ExecuteDirectAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget)
         {
             Vector3 origin = GetOriginPosition();
-            Vector3 direction = GetForwardDirection();
+            Vector3 direction = GetAttackDirection(origin, forcedTarget, aimAtTarget);
             int hits = 0;
 
             if (definition.Use3D)
@@ -184,9 +244,11 @@ namespace Neo.Rpg
             }
         }
 
-        private void ExecuteAreaAttack(RpgAttackDefinition definition)
+        private void ExecuteAreaAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget)
         {
-            Vector3 center = GetOriginPosition() + GetForwardDirection() * definition.Range;
+            Vector3 center = forcedTarget != null && aimAtTarget
+                ? forcedTarget.transform.position
+                : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) * definition.Range;
             int hits = 0;
 
             if (definition.Use3D)
@@ -207,7 +269,7 @@ namespace Neo.Rpg
             }
         }
 
-        private void SpawnProjectile(RpgAttackDefinition definition)
+        private void SpawnProjectile(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget)
         {
             if (definition.ProjectilePrefab == null)
             {
@@ -216,8 +278,9 @@ namespace Neo.Rpg
             }
 
             Transform spawn = _projectileSpawnPoint != null ? _projectileSpawnPoint : (_origin != null ? _origin : transform);
-            RpgProjectile projectile = Instantiate(definition.ProjectilePrefab, spawn.position, Quaternion.LookRotation(GetForwardDirection()));
-            projectile.Initialize(this, definition, ResolveSourceReceiver(), GetForwardDirection());
+            Vector3 direction = GetAttackDirection(spawn.position, forcedTarget, aimAtTarget);
+            RpgProjectile projectile = Instantiate(definition.ProjectilePrefab, spawn.position, Quaternion.LookRotation(direction));
+            projectile.Initialize(this, definition, ResolveSourceReceiver(), direction);
         }
 
         internal bool ApplyHitToGameObject(GameObject target, RpgAttackDefinition definition)
@@ -343,6 +406,24 @@ namespace Neo.Rpg
             return null;
         }
 
+        private RpgAttackPreset ResolvePreset(string presetId)
+        {
+            if (string.IsNullOrWhiteSpace(presetId))
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _presets.Length; i++)
+            {
+                if (_presets[i] != null && string.Equals(_presets[i].Id, presetId, StringComparison.Ordinal))
+                {
+                    return _presets[i];
+                }
+            }
+
+            return null;
+        }
+
         private IRpgCombatReceiver ResolveSourceReceiver()
         {
             if (_combatantSource != null)
@@ -367,6 +448,20 @@ namespace Neo.Rpg
         {
             Transform source = _origin != null ? _origin : transform;
             return source.forward.sqrMagnitude > 0f ? source.forward.normalized : Vector3.forward;
+        }
+
+        private Vector3 GetAttackDirection(Vector3 origin, GameObject forcedTarget, bool aimAtTarget)
+        {
+            if (aimAtTarget && forcedTarget != null)
+            {
+                Vector3 directionToTarget = forcedTarget.transform.position - origin;
+                if (directionToTarget.sqrMagnitude > 0.0001f)
+                {
+                    return directionToTarget.normalized;
+                }
+            }
+
+            return GetForwardDirection();
         }
 
         private static bool TryResolveReceiver(GameObject target, out IRpgCombatReceiver receiver)
@@ -449,6 +544,53 @@ namespace Neo.Rpg
         private void EmitFailure(string message)
         {
             _onAttackFailed?.Invoke(string.IsNullOrWhiteSpace(message) ? "Attack failed." : message);
+        }
+
+        private bool BeginAttack(RpgAttackDefinition definition, GameObject forcedTarget, string eventId, bool aimAtTarget)
+        {
+            _cooldowns[definition.Id] = Time.time + definition.Cooldown;
+            _onAttackStarted?.Invoke(eventId);
+
+            if (definition.CastDelay > 0f)
+            {
+                _castCoroutine = StartCoroutine(CastAttackAfterDelay(definition, forcedTarget, eventId, aimAtTarget));
+            }
+            else
+            {
+                ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
+            }
+
+            return true;
+        }
+
+        private bool TryResolveTargetForPreset(RpgAttackPreset preset, out GameObject target, out string failReason)
+        {
+            target = null;
+            failReason = null;
+
+            if (preset.UseSelectorComponentWhenAvailable && _targetSelector != null && _targetSelector.TrySelectTarget(out target))
+            {
+                return true;
+            }
+
+            target = RpgTargetingUtility.SelectTarget(_origin != null ? _origin : transform, preset.TargetQuery, ResolveReceiverFromGameObject);
+            if (target != null)
+            {
+                return true;
+            }
+
+            if (preset.RequireTarget)
+            {
+                failReason = $"Preset '{preset.Id}' requires a target, but none was found.";
+                return false;
+            }
+
+            return true;
+        }
+
+        private static IRpgCombatReceiver ResolveReceiverFromGameObject(GameObject target)
+        {
+            return TryResolveReceiver(target, out IRpgCombatReceiver receiver) ? receiver : null;
         }
     }
 }

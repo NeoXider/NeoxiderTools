@@ -1,13 +1,15 @@
 # RPG
 
-**What it is:** a full RPG runtime module for persistent player profiles, local combat actors, melee/ranged/aoe attacks, evade, buffs, statuses, built-in input, and no-code integration. Scripts live in `Scripts/Rpg/`.
+**What it is:** a full RPG runtime module for persistent player profiles, local combat actors, melee/ranged/aoe attacks, target selectors, attack presets for AI/skills/spells, evade, buffs, statuses, built-in input, and no-code integration. Scripts live in `Scripts/Rpg/`.
 
 **Contents:**
 - [RpgStatsManager](./RpgStatsManager.md) — persistent player profile and save/load coordinator.
 - [RpgCombatant](./RpgCombatant.md) — local combat actor for enemies and NPCs.
 - [RpgAttackController](./RpgAttackController.md) — unified melee/ranged/aoe attack entry point.
 - [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject attack payload.
+- [RpgAttackPreset](./RpgAttackPreset.md) — AI/skills/spells preset with targeting rules.
 - [RpgProjectile](./RpgProjectile.md) — projectile runtime for ranged attacks.
+- [RpgTargetSelector](./RpgTargetSelector.md) — reusable target selector for AI/ability logic.
 - [RpgEvadeController](./RpgEvadeController.md) — evade and invulnerability.
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — UnityEvent bridge for no-code flows.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG checks for `NeoCondition`.

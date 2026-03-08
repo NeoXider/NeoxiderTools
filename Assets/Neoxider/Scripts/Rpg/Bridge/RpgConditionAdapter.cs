@@ -1,5 +1,8 @@
+using Neo;
 using Neo.Condition;
+using Neo.Reactive;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
@@ -37,6 +40,11 @@ namespace Neo.Rpg
         [SerializeField] private string _attackId = string.Empty;
         [SerializeField] private bool _invert;
 
+        [Header("Events")]
+        [SerializeField] private UnityEventBool _onEvaluated = new();
+        [SerializeField] private UnityEvent _onTrue = new();
+        [SerializeField] private UnityEvent _onFalse = new();
+
         /// <summary>
         /// Gets the last evaluated result.
         /// </summary>
@@ -70,12 +78,23 @@ namespace Neo.Rpg
             };
 
             LastResult = _invert ? !result : result;
+            _onEvaluated?.Invoke(LastResult);
+            if (LastResult)
+            {
+                _onTrue?.Invoke();
+            }
+            else
+            {
+                _onFalse?.Invoke();
+            }
+
             return LastResult;
         }
 
         /// <summary>
         /// Evaluates the configured RPG condition using this component as the context.
         /// </summary>
+        [Button]
         public bool EvaluateCurrent()
         {
             return Evaluate(gameObject);

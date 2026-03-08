@@ -45,6 +45,20 @@ namespace Neo.Rpg
     }
 
     /// <summary>
+    /// How a target is selected from available candidates.
+    /// </summary>
+    public enum RpgTargetSelectionMode
+    {
+        Nearest,
+        Farthest,
+        LowestCurrentHp,
+        HighestCurrentHp,
+        LowestHpPercent,
+        HighestLevel,
+        Random
+    }
+
+    /// <summary>
     /// Common combat receiver contract used by RPG attacks, projectiles, and abilities.
     /// </summary>
     public interface IRpgCombatReceiver
@@ -70,6 +84,14 @@ namespace Neo.Rpg
     /// </summary>
     [Serializable]
     public sealed class RpgAttackEvent : UnityEvent<string>
+    {
+    }
+
+    /// <summary>
+    /// Reusable event carrying a GameObject payload.
+    /// </summary>
+    [Serializable]
+    public sealed class RpgGameObjectEvent : UnityEvent<GameObject>
     {
     }
 
@@ -148,6 +170,62 @@ namespace Neo.Rpg
                     return false;
             }
         }
+    }
+
+    /// <summary>
+    /// Query used to locate a target for AI, skills, and spell presets.
+    /// </summary>
+    [Serializable]
+    public sealed class RpgTargetQuery
+    {
+        [SerializeField] [Min(0.1f)] private float _range = 10f;
+        [SerializeField] private LayerMask _targetLayers = -1;
+        [SerializeField] private bool _use2D = true;
+        [SerializeField] private bool _use3D = true;
+        [SerializeField] private bool _ignoreSelf = true;
+        [SerializeField] private bool _includeDeadTargets;
+        [SerializeField] private bool _requireCanPerformActions;
+        [SerializeField] private RpgTargetSelectionMode _selectionMode = RpgTargetSelectionMode.Nearest;
+
+        /// <summary>
+        /// Gets the target search range.
+        /// </summary>
+        public float Range => Mathf.Max(0.1f, _range);
+
+        /// <summary>
+        /// Gets the target layer filter.
+        /// </summary>
+        public LayerMask TargetLayers => _targetLayers;
+
+        /// <summary>
+        /// Gets whether 2D physics queries are enabled.
+        /// </summary>
+        public bool Use2D => _use2D;
+
+        /// <summary>
+        /// Gets whether 3D physics queries are enabled.
+        /// </summary>
+        public bool Use3D => _use3D;
+
+        /// <summary>
+        /// Gets whether the source actor is ignored.
+        /// </summary>
+        public bool IgnoreSelf => _ignoreSelf;
+
+        /// <summary>
+        /// Gets whether dead targets are allowed.
+        /// </summary>
+        public bool IncludeDeadTargets => _includeDeadTargets;
+
+        /// <summary>
+        /// Gets whether the target must be able to perform actions.
+        /// </summary>
+        public bool RequireCanPerformActions => _requireCanPerformActions;
+
+        /// <summary>
+        /// Gets the sorting strategy used to select the final target.
+        /// </summary>
+        public RpgTargetSelectionMode SelectionMode => _selectionMode;
     }
 
     internal static class RpgCombatMath
@@ -244,6 +322,128 @@ namespace Neo.Rpg
             }
 
             return total;
+        }
+    }
+
+    internal static class RpgTargetingUtility
+    {
+        internal static GameObject SelectTarget(Transform sourceTransform, RpgTargetQuery query, Func<GameObject, IRpgCombatReceiver> resolveReceiver)
+        {
+            if (sourceTransform == null || query == null || resolveReceiver == null)
+            {
+                return null;
+            }
+
+            List<GameObject> candidates = new();
+            Vector3 position = sourceTransform.position;
+            float range = query.Range;
+
+            if (query.Use3D)
+            {
+                Collider[] colliders = Physics.OverlapSphere(position, range, query.TargetLayers);
+                for (int i = 0; i < colliders.Length; i++)
+                {
+                    if (colliders[i] != null)
+                    {
+                        AddCandidate(candidates, colliders[i].gameObject, sourceTransform, query, resolveReceiver);
+                    }
+                }
+            }
+
+            if (query.Use2D)
+            {
+                Collider2D[] colliders2D = Physics2D.OverlapCircleAll(position, range, query.TargetLayers);
+                for (int i = 0; i < colliders2D.Length; i++)
+                {
+                    if (colliders2D[i] != null)
+                    {
+                        AddCandidate(candidates, colliders2D[i].gameObject, sourceTransform, query, resolveReceiver);
+                    }
+                }
+            }
+
+            if (candidates.Count == 0)
+            {
+                return null;
+            }
+
+            if (query.SelectionMode == RpgTargetSelectionMode.Random)
+            {
+                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            }
+
+            GameObject best = candidates[0];
+            float bestScore = Score(candidates[0], sourceTransform.position, query.SelectionMode, resolveReceiver);
+            for (int i = 1; i < candidates.Count; i++)
+            {
+                float score = Score(candidates[i], sourceTransform.position, query.SelectionMode, resolveReceiver);
+                if (score > bestScore)
+                {
+                    bestScore = score;
+                    best = candidates[i];
+                }
+            }
+
+            return best;
+        }
+
+        private static void AddCandidate(List<GameObject> candidates,
+            GameObject candidate,
+            Transform sourceTransform,
+            RpgTargetQuery query,
+            Func<GameObject, IRpgCombatReceiver> resolveReceiver)
+        {
+            if (candidate == null || candidates.Contains(candidate))
+            {
+                return;
+            }
+
+            if (query.IgnoreSelf && candidate == sourceTransform.gameObject)
+            {
+                return;
+            }
+
+            IRpgCombatReceiver receiver = resolveReceiver(candidate);
+            if (receiver == null)
+            {
+                return;
+            }
+
+            if (!query.IncludeDeadTargets && receiver.IsDead)
+            {
+                return;
+            }
+
+            if (query.RequireCanPerformActions && !receiver.CanPerformActions)
+            {
+                return;
+            }
+
+            candidates.Add(candidate);
+        }
+
+        private static float Score(GameObject candidate,
+            Vector3 sourcePosition,
+            RpgTargetSelectionMode selectionMode,
+            Func<GameObject, IRpgCombatReceiver> resolveReceiver)
+        {
+            IRpgCombatReceiver receiver = resolveReceiver(candidate);
+            if (receiver == null)
+            {
+                return float.MinValue;
+            }
+
+            float distance = Vector3.Distance(sourcePosition, candidate.transform.position);
+            return selectionMode switch
+            {
+                RpgTargetSelectionMode.Nearest => -distance,
+                RpgTargetSelectionMode.Farthest => distance,
+                RpgTargetSelectionMode.LowestCurrentHp => -receiver.CurrentHp,
+                RpgTargetSelectionMode.HighestCurrentHp => receiver.CurrentHp,
+                RpgTargetSelectionMode.LowestHpPercent => -(receiver.MaxHp > 0f ? receiver.CurrentHp / receiver.MaxHp : 0f),
+                RpgTargetSelectionMode.HighestLevel => receiver.Level,
+                _ => -distance
+            };
         }
     }
 }
