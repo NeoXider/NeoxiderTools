@@ -25,27 +25,27 @@ Use it as the main navigation page for package modules, utility submodules, and 
 
 | Module | What it covers | English docs |
 |--------|----------------|--------------|
-| **Animations** | Float, color, and `Vector3` animation helpers | [`Animations/README.md`](./Animations/README.md) |
-| **Audio** | Audio manager, mixer helpers, click playback, music helpers | [`Audio/README.md`](./Audio/README.md) |
-| **Bonus** | Collections, slot systems, wheel rewards, time rewards | [`Bonus/README.md`](./Bonus/README.md) |
-| **Cards** | Card game runtime, deck/hand/view flow, poker helpers | [`Cards/README.md`](./Cards/README.md) |
-| **Condition** | Inspector-driven conditions and UnityEvent outputs | [`Condition/README.md`](./Condition/README.md) |
-| **Editor** | Editor windows, maintenance tools, creators, build helpers | [`Editor/README.md`](./Editor/README.md) |
-| **Extensions** | C# and Unity extension methods | [`Extensions/README.md`](./Extensions/README.md) |
-| **GridSystem** | Grid generation, origin, pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Level flow, buttons, scene progression helpers | [`Level/README.md`](./Level/README.md) |
-| **NPC** | NPC navigation, animation helpers, and modular RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
-| **Parallax** | Parallax layers and related components | [`Parallax/README.md`](./Parallax/README.md) |
-| **PropertyAttribute** | Inspector attributes, validation, inject helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
-| **Quest** | Quest configs, manager, triggers, quest state flow | [`Quest/README.md`](./Quest/README.md) |
+| **Animations** | Float, Color, and `Vector3` animation helpers | [`Animations/README.md`](./Animations/README.md) |
+| **Audio** | `AudioManager`, mixer helpers, random music, and audio utilities | [`Audio/README.md`](./Audio/README.md) |
+| **Bonus** | Slots, wheel rewards, collections, and timed rewards | [`Bonus/README.md`](./Bonus/README.md) |
+| **Cards** | MVP architecture, poker, "Drunkard", and card runtime flow | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-code conditions, field checks, AND/OR logic, and event outputs | [`Condition/README.md`](./Condition/README.md) |
+| **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | 300+ extension methods for C# and Unity APIs | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Grid generation, origin anchor, pathfinding, Match3, and TicTacToe | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Level manager, scene progression, and level map flow | [`Level/README.md`](./Level/README.md) |
+| **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Parallax layers and related visual components | [`Parallax/README.md`](./Parallax/README.md) |
+| **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject attributes, and inspector helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Quest** | Quest configs, manager, objectives, and runtime quest state | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | Persistent profile with `Auto Save`, combat actors, melee/ranged/aoe attacks, target selectors, presets for AI/skills/spells, built-in input, evade, buffs, and statuses | [`Rpg/README.md`](./Rpg/README.md) |
-| **Reactive** | Serializable reactive properties for `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
-| **Save** | Provider API, scene saves, global save data | [`Save/README.md`](./Save/README.md) |
-| **Shop** | Shop controller, money flow, purchase UI helpers | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | Runtime state machine and no-code editor flow | [`StateMachine/README.md`](./StateMachine/README.md) |
-| **Tools** | Inventory, movement, spawner, dialogue, input, time, view, misc utilities | [`Tools/README.md`](./Tools/README.md) |
-| **UI** | Buttons, pages, visual toggles, presentation helpers | [`UI/README.md`](./UI/README.md) |
+| **RPG** | HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
+| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [`Reactive/README.md`](./Reactive/README.md) |
+| **Save** | `PlayerPrefs`, JSON files, provider API, scene/global saves, and save attributes | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Shop flow, currency, and purchases | [`Shop/README.md`](./Shop/README.md) |
+| **StateMachine** | Code + no-code runtime state machine with visual editor workflow | [`StateMachine/README.md`](./StateMachine/README.md) |
+| **Tools** | 150+ components for movement, physics, spawners, timers, input, and utilities | [`Tools/README.md`](./Tools/README.md) |
+| **UI** | UI panels, button animations, toggles, and presentation helpers | [`UI/README.md`](./UI/README.md) |
 
 ## `Tools` submodules
 

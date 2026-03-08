@@ -67,18 +67,18 @@ Without it, the package still works. Inspector documentation fallbacks remain av
 
 | Module | What it covers | Docs |
 |--------|-----------------|------|
-| **RPG** | Persistent profile with optional auto-save, combat actors, melee/ranged/aoe attacks, target selectors, presets, built-in configurable input, evade, buffs/statuses, no-code bridges | [RPG](./Docs/Rpg/README.md) |
-| **Progression** | XP, levels, unlock tree, perk tree, meta progression | [Progression](./Docs/Progression/README.md) |
-| **Condition** | No-code rules, method calls with arguments, AND/OR logic, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
-| **Tools** | Inventory, spawner, movement, dialogue, time, input, utility components | [Tools](./Docs/Tools/README.md) |
-| **Quest** | Quest configs, runtime quest state, triggers, objective progress | [Quest](./Docs/Quest/README.md) |
+| **RPG** | HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, no-code bridges | [RPG](./Docs/Rpg/README.md) |
+| **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [Progression](./Docs/Progression/README.md) |
+| **Condition** | No-code conditions, field checks, AND/OR logic, and UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
+| **Tools** | 150+ components for movement, physics, spawners, timers, input, and utility runtime | [Tools](./Docs/Tools/README.md) |
+| **Quest** | Quest configs, goals, manager, and runtime quest state | [Quest](./Docs/Quest/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Docs/Reactive/README.md) |
-| **Save** | Scene saves, provider-based saves, global data | [Save](./Docs/Save/README.md) |
-| **UI** | UI behaviors, animations, pages, toggles | [UI](./Docs/UI/README.md) |
-| **Cards** | Decks, hands, presenter/view workflow, async animation | [Cards](./Docs/Cards/README.md) |
-| **GridSystem** | Shape/origin/pathfinding grid workflows, Match3, TicTacToe | [GridSystem](./Docs/GridSystem.md) |
-| **NPC** | NPC navigation, patrol/chase flow, animator integration | [NPC](./Docs/NPC/README.md) |
-| **Editor** | Inspector extensions, builders, maintenance tools | [Editor](./Docs/Editor/README.md) |
+| **Save** | `PlayerPrefs`, JSON files, provider-based save flow, scene/global data, save attributes | [Save](./Docs/Save/README.md) |
+| **UI** | UI panels, button animations, toggles, and presentation helpers | [UI](./Docs/UI/README.md) |
+| **Cards** | MVP architecture, poker, "Drunkard", and deck/hand runtime flow | [Cards](./Docs/Cards/README.md) |
+| **GridSystem** | Grid generation, origin anchor, pathfinding, Match3, and TicTacToe | [GridSystem](./Docs/GridSystem.md) |
+| **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
+| **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [Editor](./Docs/Editor/README.md) |
 
 ## Samples
 

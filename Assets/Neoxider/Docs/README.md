@@ -12,27 +12,27 @@
 
 | Модуль | Описание | Документация |
 |--------|----------|--------------|
-| **Animations** | Анимация значений, цветов, `Vector3`, света | [`Animations/README.md`](./Animations/README.md) |
-| **Audio** | AudioManager, микшер, play-on-click, music helpers | [`Audio/README.md`](./Audio/README.md) |
-| **Bonus** | Коллекции, слот-машины, награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
-| **Cards** | Карточные игры, колода, рука, presenter/view | [`Cards/README.md`](./Cards/README.md) |
-| **Condition** | No-code условия и UnityEvent | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
-| **Editor** | Инспекторы, авто-билд, сервисные окна | [`Editor/README.md`](./Editor/README.md) |
-| **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
-| **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/README.md`](./Level/README.md) |
-| **NPC** | Модульная навигация NPC и RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
-| **Parallax** | Параллакс-слои | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
-| **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
-| **Quest** | Конфиги квестов, менеджер, триггеры и состояние прогресса | [`Quest/README.md`](./Quest/README.md) |
+| **Animations** | Float, Color, `Vector3` и другие runtime-анимации значений | [`Animations/README.md`](./Animations/README.md) |
+| **Audio** | `AudioManager`, микшер, random music и audio helper-компоненты | [`Audio/README.md`](./Audio/README.md) |
+| **Bonus** | Слоты, колесо фортуны, коллекции и награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
+| **Cards** | MVP-архитектура, покер, «Пьяница» и карточный runtime-flow | [`Cards/README.md`](./Cards/README.md) |
+| **Condition** | No-Code условия: проверка полей, AND/OR логика, события | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
+| **Editor** | Окна настроек, поиск missing scripts, авто-билд и сервисные утилиты | [`Editor/README.md`](./Editor/README.md) |
+| **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
+| **GridSystem** | Генерация сеток, origin-якорь, pathfinding, Match3 и TicTacToe | [`GridSystem.md`](./GridSystem.md) |
+| **Level** | Менеджер уровней, загрузка сцен и карта прогресса | [`Level/README.md`](./Level/README.md) |
+| **NPC** | Навигация NPC, патруль, chase, animator driver и RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
+| **Parallax** | Параллакс-слои и связанные визуальные компоненты | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
+| **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject-атрибуты и inspector helper-утилиты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
+| **Quest** | Конфиги квестов, менеджер, цели и runtime-состояние | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, уровни, unlock tree, perk tree и persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | Persistent profile с `Auto Save`, combatant-актеры, melee/ranged/aoe атаки, target selectors, presets для AI/skills/spells, built-in input, evade, баффы и статусы | [`Rpg/README.md`](./Rpg/README.md) |
+| **RPG** | HP, уровни, баффы, статусы, melee/ranged/aoe, evade, target selectors, attack presets и no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
-| **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
-| **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | State machine и no-code редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
-| **Tools** | Инвентарь, движение, спавн, диалоги, время, ввод | [`Tools/README.md`](./Tools/README.md) |
-| **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
+| **Save** | `PlayerPrefs`, JSON-файлы, provider API, scene/global saves и атрибуты сохранения | [`Save/README.md`](./Save/README.md) |
+| **Shop** | Магазин, валюта и покупки | [`Shop/README.md`](./Shop/README.md) |
+| **StateMachine** | Код + No-Code, runtime state machine и визуальный редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
+| **Tools** | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод и utility runtime | [`Tools/README.md`](./Tools/README.md) |
+| **UI** | UI-панели, анимации кнопок, переключатели и presentation helpers | [`UI/README.md`](./UI/README.md) |
 
 ## Подмодули `Tools`
 
