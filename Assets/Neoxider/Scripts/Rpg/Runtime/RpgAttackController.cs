@@ -130,9 +130,30 @@ namespace Neo.Rpg
         public bool TryUsePreset(string presetId, out string failReason)
         {
             RpgAttackPreset preset = ResolvePreset(presetId);
+            return TryUseResolvedPreset(preset, null, out failReason);
+        }
+
+        /// <summary>
+        /// Tries to use a preset asset directly.
+        /// </summary>
+        public bool TryUsePreset(RpgAttackPreset preset, out string failReason)
+        {
+            return TryUseResolvedPreset(preset, null, out failReason);
+        }
+
+        /// <summary>
+        /// Tries to use a preset asset against a specific target.
+        /// </summary>
+        public bool TryUsePreset(RpgAttackPreset preset, GameObject forcedTarget, out string failReason)
+        {
+            return TryUseResolvedPreset(preset, forcedTarget, out failReason);
+        }
+
+        private bool TryUseResolvedPreset(RpgAttackPreset preset, GameObject forcedTarget, out string failReason)
+        {
             if (preset == null)
             {
-                failReason = $"Attack preset not found: {presetId}";
+                failReason = "Attack preset not found.";
                 EmitFailure(failReason);
                 return false;
             }
@@ -144,8 +165,8 @@ namespace Neo.Rpg
                 return false;
             }
 
-            GameObject target = null;
-            if (!TryResolveTargetForPreset(preset, out target, out failReason))
+            GameObject target = forcedTarget;
+            if (!TryResolveTargetForPreset(preset, ref target, out failReason))
             {
                 EmitFailure(failReason);
                 return false;
@@ -171,6 +192,20 @@ namespace Neo.Rpg
         public bool CanUseAttack(string attackId, out string failReason)
         {
             return CanUseAttack(ResolveAttack(attackId), out failReason);
+        }
+
+        /// <summary>
+        /// Returns whether a preset's underlying attack is currently available.
+        /// </summary>
+        public bool CanUsePreset(RpgAttackPreset preset, out string failReason)
+        {
+            if (preset == null)
+            {
+                failReason = "Attack preset not found.";
+                return false;
+            }
+
+            return CanUseAttack(preset.AttackDefinition, out failReason);
         }
 
         /// <summary>
@@ -357,7 +392,7 @@ namespace Neo.Rpg
             }
         }
 
-        private bool CanUseAttack(RpgAttackDefinition definition, out string failReason)
+        public bool CanUseAttack(RpgAttackDefinition definition, out string failReason)
         {
             failReason = null;
             if (definition == null)
@@ -563,10 +598,14 @@ namespace Neo.Rpg
             return true;
         }
 
-        private bool TryResolveTargetForPreset(RpgAttackPreset preset, out GameObject target, out string failReason)
+        private bool TryResolveTargetForPreset(RpgAttackPreset preset, ref GameObject target, out string failReason)
         {
-            target = null;
             failReason = null;
+
+            if (target != null)
+            {
+                return true;
+            }
 
             if (preset.UseSelectorComponentWhenAvailable && _targetSelector != null && _targetSelector.TrySelectTarget(out target))
             {

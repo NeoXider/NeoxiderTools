@@ -1,3 +1,4 @@
+using Neo;
 using Neo.NPC.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
@@ -304,12 +305,14 @@ namespace Neo.NPC
             return followCore.TryForceUpdatePath(ConstrainPosition);
         }
 
+        [Button]
         public void Stop()
         {
             followCore.Stop();
             agent.isStopped = true;
         }
 
+        [Button]
         public void Resume()
         {
             agent.isStopped = false;

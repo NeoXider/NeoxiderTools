@@ -22,7 +22,10 @@
 - `TryUseAttack(int attackIndex, out string failReason)` — запуск по индексу.
 - `TryUsePreset(string presetId, out string failReason)` — запуск preset по id.
 - `TryUsePreset(int presetIndex, out string failReason)` — запуск preset по индексу.
+- `TryUsePreset(RpgAttackPreset preset, out string failReason)` — запуск конкретного preset asset.
+- `TryUsePreset(RpgAttackPreset preset, GameObject forcedTarget, out string failReason)` — запуск preset по уже выбранной цели, удобно для AI/NPC brain.
 - `CanUseAttack(string attackId, out string failReason)` — проверка cooldown/lock.
+- `CanUsePreset(RpgAttackPreset preset, out string failReason)` — проверка готовности preset без ручного поиска attack id.
 - `GetRemainingCooldown(string attackId)` — остаток кулдауна.
 
 ## Built-in input

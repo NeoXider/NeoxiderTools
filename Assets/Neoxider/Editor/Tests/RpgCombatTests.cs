@@ -188,6 +188,55 @@ namespace Neo.Rpg.Tests
             }
         }
 
+        [Test]
+        public void AttackController_TryUsePreset_WithForcedTarget_DamagesSpecifiedCombatant()
+        {
+            GameObject source = new("Source");
+            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+
+            try
+            {
+                source.transform.position = Vector3.zero;
+                source.transform.forward = Vector3.forward;
+                target.transform.position = new Vector3(0f, 0f, 2f);
+                Physics.SyncTransforms();
+
+                RpgCombatant targetCombatant = target.AddComponent<RpgCombatant>();
+                RpgAttackDefinition attack = ScriptableObject.CreateInstance<RpgAttackDefinition>();
+                SetPrivateField(attack, "_id", "forced_target_attack");
+                SetPrivateField(attack, "_deliveryType", RpgAttackDeliveryType.Area);
+                SetPrivateField(attack, "_hitMode", RpgHitMode.Damage);
+                SetPrivateField(attack, "_power", 15f);
+                SetPrivateField(attack, "_range", 5f);
+                SetPrivateField(attack, "_radius", 1f);
+                SetPrivateField(attack, "_castDelay", 0f);
+                SetPrivateField(attack, "_cooldown", 0f);
+                SetPrivateField(attack, "_use3D", true);
+                SetPrivateField(attack, "_use2D", false);
+                SetPrivateField(attack, "_maxTargets", 1);
+                SetPrivateField(attack, "_targetLayers", (LayerMask)~0);
+
+                RpgAttackPreset preset = ScriptableObject.CreateInstance<RpgAttackPreset>();
+                SetPrivateField(preset, "_id", "forced_target_preset");
+                SetPrivateField(preset, "_attackDefinition", attack);
+                SetPrivateField(preset, "_requireTarget", true);
+                SetPrivateField(preset, "_useSelectorComponentWhenAvailable", false);
+                SetPrivateField(preset, "_aimAtTarget", true);
+
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+
+                bool success = controller.TryUsePreset(preset, target, out string failReason);
+
+                Assert.That(success, Is.True, failReason);
+                Assert.That(targetCombatant.CurrentHp, Is.EqualTo(85f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);

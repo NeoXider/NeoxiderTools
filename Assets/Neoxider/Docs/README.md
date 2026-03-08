@@ -1,6 +1,6 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.6.0`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.7.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
@@ -21,7 +21,7 @@
 | **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
 | **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/README.md`](./Level/README.md) |
-| **NPC** | Модульная навигация NPC | [`NPC/README.md`](./NPC/README.md) |
+| **NPC** | Модульная навигация NPC и RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
 | **Parallax** | Параллакс-слои | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
 | **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Конфиги квестов, менеджер, триггеры и состояние прогресса | [`Quest/README.md`](./Quest/README.md) |

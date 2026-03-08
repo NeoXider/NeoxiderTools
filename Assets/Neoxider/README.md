@@ -2,7 +2,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-**Version 7.6.0** · Unity 2022.1+ · Namespace `Neo`
+**Version 7.7.0** · Unity 2022.1+ · Namespace `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -14,7 +14,7 @@
 
 - **RPG module** — persistent player profile (`RpgStatsManager`) with optional auto-save, local combat actors (`RpgCombatant`), melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors and attack presets for AI/skills/spells, evade (`RpgEvadeController`), built-in configurable input (LMB attack by default), buffs/status effects, and no-code bridges.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
-- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, NPC navigation, audio, and UI.
+- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
 - Editor helpers, package samples, prefabs, and module-focused documentation.
 
 ## Installation

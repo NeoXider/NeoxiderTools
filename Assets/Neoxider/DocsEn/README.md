@@ -34,7 +34,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 | **Extensions** | C# and Unity extension methods | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Grid generation, origin, pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
 | **Level** | Level flow, buttons, scene progression helpers | [`Level/README.md`](./Level/README.md) |
-| **NPC** | NPC navigation and animation helpers | [`NPC/README.md`](./NPC/README.md) |
+| **NPC** | NPC navigation, animation helpers, and modular RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
 | **Parallax** | Parallax layers and related components | [`Parallax/README.md`](./Parallax/README.md) |
 | **PropertyAttribute** | Inspector attributes, validation, inject helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Quest configs, manager, triggers, quest state flow | [`Quest/README.md`](./Quest/README.md) |

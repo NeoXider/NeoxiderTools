@@ -11,7 +11,8 @@
         "GUID:cb0dd5245cfe89442853ca98ef464391",
         "GUID:44fe7de05876acb45ba5933f07512651",
         "GUID:27619889b8ba8c24980f49ee34dbb44a",
-        "GUID:0acc523941302664db1f4e527237feb3"
+        "GUID:0acc523941302664db1f4e527237feb3",
+        "Neo.NPC"
     ],
     "includePlatforms": [
         "Editor"
