@@ -1,263 +1,63 @@
-# State Machine System
+# StateMachine
 
-**Что это:** система состояний: код-реализация (IState, переходы) и конфигурация через ScriptableObject (StateMachineData). Кэширование, предикаты, визуальный редактор. Скрипты в `Scripts/StateMachine/`.
+**Что это:** модуль автомата состояний с двумя режимами работы: code-first через `StateMachine<TState>` и inspector/no-code через `StateMachineData` + `StateMachineBehaviourBase`. Скрипты находятся в `Scripts/StateMachine/`.
 
-**Навигация:** [← К Docs](../README.md) · оглавление — разделы ниже
-
----
-
-## 1. Введение
-
-State Machine System — это полнофункциональная система управления состояниями для Unity, которая поддерживает как код-реализацию, так и NoCode конфигурацию через ScriptableObject. Система включает в себя кэширование состояний и переходов для оптимизации производительности, систему предикатов для сложных условий переходов, и визуальный редактор для удобной настройки.
+**Навигация:** [← К Docs](../README.md) · обзор ниже
 
 ---
 
-## 2. Основные компоненты
+## Когда что использовать
 
-### 2.1. IState
-**Пространство имен**: `Neo.StateMachine`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/IState.cs`
+- Нужен чистый кодовый автомат с типизированными состояниями: `StateMachine<TState>` и `StateMachineBehaviour<TState>`.
+- Нужна настройка через инспектор и `ScriptableObject`: `StateMachineBehaviourBase` и `StateMachineData`.
+- Нужны условия переходов без жёстких ссылок на объекты сцены: `ConditionEntryPredicate` и контекстные слоты в `StateMachineEvaluationContext`.
 
-Интерфейс для всех состояний в системе. Определяет жизненный цикл состояния:
-- `OnEnter()` - вызывается при входе в состояние
-- `OnUpdate()` - вызывается каждый кадр
-- `OnExit()` - вызывается при выходе из состояния
-- `OnFixedUpdate()` - для физики (опционально)
-- `OnLateUpdate()` - для поздних обновлений (опционально)
+## Основные части
 
-**Пример использования:**
-```csharp
-public class IdleState : IState
-{
-    public void OnEnter()
-    {
-        Debug.Log("Entered Idle State");
-    }
-    
-    public void OnUpdate()
-    {
-        // Логика обновления
-    }
-    
-    public void OnExit()
-    {
-        Debug.Log("Exited Idle State");
-    }
-    
-    public void OnFixedUpdate() { }
-    public void OnLateUpdate() { }
-}
-```
+| Часть | Назначение |
+|------|------------|
+| `IState` | Базовый жизненный цикл состояния: `OnEnter`, `OnUpdate`, `OnExit`, опционально `OnFixedUpdate`, `OnLateUpdate`. |
+| `StateMachine<TState>` | Ядро автомата: смена состояния, регистрация переходов, кэширование, события. |
+| `StateTransition` | Описание перехода между состояниями с приоритетом и списком предикатов. |
+| `StatePredicate` | Базовый тип условий перехода; есть bool/int/float/string/composite и др. |
+| `StateMachineBehaviour<TState>` | Generic `MonoBehaviour`-обёртка над кодовым автоматом. |
+| `StateMachineBehaviourBase` | Inspector-friendly runtime-компонент для `StateMachineData`. |
+| `StateData` | Описание одного no-code состояния через `ScriptableObject`. |
+| `StateMachineData` | Конфигурация состояний, переходов и начального состояния. |
 
-### 2.2. StateMachine<TState>
-**Пространство имен**: `Neo.StateMachine`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/StateMachine.cs`
+## Типовой поток
 
-Основной класс State Machine с поддержкой кэширования состояний и переходов.
+### Code-first
+1. Реализовать `IState`.
+2. Создать `StateMachine<TState>` или наследник `StateMachineBehaviour<TState>`.
+3. Зарегистрировать `StateTransition`.
+4. Вызывать `EvaluateTransitions()` вручную или включить автоматическую оценку в behaviour-обёртке.
 
-**Ключевые особенности:**
-- Кэширование экземпляров состояний (по умолчанию включено)
-- Кэширование переходов для быстрого поиска
-- Автоматическая оценка переходов
-- События для отслеживания изменений состояний
+### No-code
+1. Создать `StateData` и `StateMachineData`.
+2. Добавить на сцену `StateMachineBehaviourBase`.
+3. Назначить `StateMachineData`.
+4. Заполнить `Context for conditions`, если условиям нужны объекты сцены.
+5. Использовать inspector events и runtime-кнопки компонента.
 
-**Пример использования:**
-```csharp
-var stateMachine = new StateMachine<IState>();
+## Что важно в текущей версии
 
-// Регистрация перехода
-var transition = new StateTransition
-{
-    FromStateType = typeof(IdleState),
-    ToStateType = typeof(RunningState)
-};
-stateMachine.RegisterTransition(transition);
+- `StateMachineBehaviour<TState>` и `StateMachineBehaviourBase` не равнозначны по API.
+- Generic-версия удобна для кода, но не даёт inspector-события и runtime-поля из `Base`.
+- `StateMachineData` не хранит прямые ссылки на scene object; для этого используются context slots.
+- Кэширование состояний и переходов встроено в ядро и включено по умолчанию.
 
-// Смена состояния
-stateMachine.ChangeState<IdleState>();
+## Куда идти дальше
 
-// Обновление
-stateMachine.Update();
-stateMachine.EvaluateTransitions(); // Автоматическая оценка переходов
-```
+- [StateMachine](./StateMachine.md) — API кодового ядра.
+- [StateMachineBehaviour](./StateMachineBehaviour.md) — generic `MonoBehaviour`-обёртка.
+- [StateMachineBehaviourBase](./StateMachineBehaviourBase.md) — inspector/no-code компонент.
+- [NoCode_StateMachine_Usage](./NoCode_StateMachine_Usage.md) — настройка `StateMachineData` и условий.
 
-### 2.3. StateMachineBehaviour<TState>
-**Пространство имен**: `Neo.StateMachine`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/StateMachineBehaviour.cs`
+## См. также
 
-MonoBehaviour версия State Machine для использования на GameObject.
-
-**Ключевые поля:**
-- `initialStateTypeName` - тип начального состояния
-- `enableDebugLog` - включить логирование
-- `showStateInInspector` - показывать текущее состояние в инспекторе
-- `stateMachineData` - NoCode конфигурация (опционально)
-- `autoEvaluateTransitions` - автоматически оценивать переходы каждый кадр
-
-**Пример использования:**
-```csharp
-public class PlayerStateMachine : StateMachineBehaviour<IState>
-{
-    private void Start()
-    {
-        ChangeState<IdleState>();
-    }
-}
-```
-
----
-
-## 3. Система переходов
-
-### 3.1. StateTransition
-**Пространство имен**: `Neo.StateMachine`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/StateTransition.cs`
-
-Класс для определения переходов между состояниями.
-
-**Ключевые свойства:**
-- `FromStateType` / `FromStateName` - исходное состояние
-- `ToStateType` / `ToStateName` - целевое состояние
-- `Predicates` - список предикатов для условий
-- `Priority` - приоритет перехода
-- `IsEnabled` - включен ли переход
-
-**Пример использования:**
-```csharp
-var transition = new StateTransition
-{
-    FromStateType = typeof(IdleState),
-    ToStateType = typeof(RunningState),
-    Priority = 1
-};
-
-transition.AddPredicate(new FloatComparisonPredicate
-{
-    Value = player.Health,
-    Comparison = ComparisonType.GreaterThan,
-    Threshold = 50f
-});
-
-stateMachine.RegisterTransition(transition);
-```
-
-### 3.2. StatePredicate
-**Пространство имен**: `Neo.StateMachine`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/StatePredicate.cs`
-
-Базовый класс для предикатов условий переходов.
-
-**Доступные предикаты:**
-- `BoolPredicate` - проверка bool значения
-- `FloatComparisonPredicate` - сравнение float значений
-- `IntComparisonPredicate` - сравнение int значений
-- `StringComparisonPredicate` - сравнение строк
-- `EventPredicate` - условие по UnityEvent
-- `CustomPredicate` - кастомный предикат через делегат
-- `StateDurationPredicate` - проверка времени в состоянии
-- `AndPredicate` - комбинация предикатов через AND
-- `OrPredicate` - комбинация предикатов через OR
-- `NotPredicate` - инверсия предиката
-
-**Пример использования:**
-```csharp
-// Комбинирование предикатов
-var andPredicate = new AndPredicate();
-andPredicate.AddPredicate(new FloatComparisonPredicate
-{
-    Value = player.Health,
-    Comparison = ComparisonType.GreaterThan,
-    Threshold = 50f
-});
-andPredicate.AddPredicate(new BoolPredicate { Value = player.IsAlive });
-
-transition.AddPredicate(andPredicate);
-```
-
----
-
-## 4. NoCode конфигурация
-
-### 4.1. StateData
-**Пространство имен**: `Neo.StateMachine.NoCode`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/NoCode/StateData.cs`
-
-ScriptableObject для создания состояний без кода.
-
-**Создание:**
-1. В меню Unity: `Create > Neoxider > State Machine > State Data`
-2. Настроить имя состояния
-3. Добавить действия при входе, обновлении и выходе
-
-**Доступные действия:**
-- `LogStateAction` - логирование
-- `SetGameObjectActiveAction` - включение/выключение GameObject
-- `InvokeUnityEventAction` - вызов UnityEvent
-- `ChangeSceneAction` - смена сцены
-
-### 4.2. StateMachineData
-**Пространство имен**: `Neo.StateMachine.NoCode`  
-**Путь к файлу**: `Assets/Neoxider/Scripts/StateMachine/NoCode/StateMachineData.cs`
-
-ScriptableObject для полной конфигурации State Machine.
-
-**Создание:**
-1. В меню Unity: `Create > Neoxider > State Machine > State Machine Data`
-2. Добавить состояния (StateData)
-3. Установить начальное состояние
-4. Добавить переходы (From State, To State), у каждого перехода нажать **Edit Conditions** и добавить условия (например, **Neoxider Condition**)
-5. Присвоить ассет в `StateMachineBehaviour.stateMachineData`
-
-Условия переходов (предикаты) оцениваются каждый кадр при включённом **Auto Evaluate Transitions**. **SO не хранит ссылки на объекты сцены** — в условиях задаётся только **Context Slot** (Owner / Override1..5); сами объекты для слотов задаются на компоненте в сцене в **Context for conditions**. Подробно: [NoCode_StateMachine_Usage.md](NoCode_StateMachine_Usage.md).
-
-**Использование:**
-```csharp
-// StateMachineBehaviour автоматически загрузит конфигурацию в Start()
-// Или вызвать вручную:
-stateMachineBehaviour.LoadFromStateMachineData();
-```
-
----
-
-## 5. Кэширование
-
-### 5.1. Кэширование состояний
-По умолчанию включено. Экземпляры состояний создаются один раз и переиспользуются.
-
-**Отключение:**
-```csharp
-var stateMachine = new StateMachine<IState>(enableStateCaching: false);
-```
-
-**Очистка кэша:**
-```csharp
-stateMachine.ClearStateCache();
-```
-
-### 5.2. Кэширование переходов
-По умолчанию включено. Переходы кэшируются по типу исходного состояния для быстрого поиска.
-
-**Отключение:**
-```csharp
-var stateMachine = new StateMachine<IState>(enableTransitionCaching: false);
-```
-
-**Очистка кэша:**
-```csharp
-stateMachine.ClearTransitionCache();
-```
-
----
-
-## 6. События
-
-StateMachine предоставляет следующие события:
-
-- `OnStateChanged` - вызывается при смене состояния (параметры: from, to)
-- `OnStateEntered` - вызывается при входе в состояние
-- `OnStateExited` - вызывается при выходе из состояния
-- `OnTransitionEvaluated` - вызывается при оценке перехода
-
+- [Condition](../Condition/README.md)
+- [Tools](../Tools/README.md)
 **Пример использования:**
 ```csharp
 stateMachine.OnStateChanged.AddListener((from, to) =>

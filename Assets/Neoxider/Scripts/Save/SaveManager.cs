@@ -22,6 +22,9 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
+        /// <summary>
+        /// Gets whether the manager has completed its initial load pass.
+        /// </summary>
         public static bool IsLoad { get; private set; }
 
         protected virtual void OnDestroy()
@@ -91,6 +94,10 @@ namespace Neo.Save
 
         #region Registration
 
+        /// <summary>
+        /// Registers a saveable component and caches all fields marked with <see cref="SaveField"/>.
+        /// </summary>
+        /// <param name="monoObj">Component to register.</param>
         public static void Register(MonoBehaviour monoObj)
         {
             if (monoObj == null)
@@ -98,9 +105,22 @@ namespace Neo.Save
                 return;
             }
 
-            string key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-            if (_saveableComponents.ContainsKey(key))
+            CleanupDestroyedRegistrations();
+
+            string key = SaveIdentityUtility.GetComponentKey(monoObj);
+            if (string.IsNullOrEmpty(key))
             {
+                return;
+            }
+
+            if (_saveableComponents.TryGetValue(key, out (MonoBehaviour instance, List<FieldInfo> fields) existingData))
+            {
+                if (existingData.instance == monoObj)
+                {
+                    return;
+                }
+
+                Debug.LogWarning($"[SaveManager] Duplicate save identity detected: {key}", monoObj);
                 return;
             }
 
@@ -115,6 +135,10 @@ namespace Neo.Save
             }
         }
 
+        /// <summary>
+        /// Removes a component from the save registry.
+        /// </summary>
+        /// <param name="monoObj">Component to unregister.</param>
         public static void Unregister(MonoBehaviour monoObj)
         {
             if (monoObj == null)
@@ -122,19 +146,24 @@ namespace Neo.Save
                 return;
             }
 
-            string key = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
-            _saveableComponents.Remove(key);
+            string key = SaveIdentityUtility.GetComponentKey(monoObj);
+            if (!string.IsNullOrEmpty(key))
+            {
+                _saveableComponents.Remove(key);
+            }
         }
 
         private static List<MonoBehaviour> RegisterAllSaveables()
         {
+            CleanupDestroyedRegistrations();
             List<MonoBehaviour> newlyRegisteredComponents = new();
-            MonoBehaviour[] allObjects = FindObjectsOfType<MonoBehaviour>(true);
+            MonoBehaviour[] allObjects =
+                FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             foreach (MonoBehaviour obj in allObjects)
             {
                 if (obj is ISaveableComponent)
                 {
-                    string key = $"{obj.GetType().Name}_{obj.GetInstanceID()}";
+                    string key = SaveIdentityUtility.GetComponentKey(obj);
                     if (!_saveableComponents.ContainsKey(key))
                     {
                         Register(obj);
@@ -158,8 +187,12 @@ namespace Neo.Save
 
         #region Save/Load All
 
+        /// <summary>
+        /// Saves all currently registered components.
+        /// </summary>
         public static void Save()
         {
+            CleanupDestroyedRegistrations();
             SaveDataContainer container = new();
 
             foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> kvp in _saveableComponents)
@@ -199,8 +232,13 @@ namespace Neo.Save
             SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
         }
 
+        /// <summary>
+        /// Loads data for the provided components, or for all registered components when no list is supplied.
+        /// </summary>
+        /// <param name="componentsToLoad">Optional subset of components to load.</param>
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
         {
+            CleanupDestroyedRegistrations();
             string jsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             if (string.IsNullOrEmpty(jsonData) || jsonData == DefaultJson)
             {
@@ -228,7 +266,7 @@ namespace Neo.Save
                         continue;
                     }
 
-                    string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+                    string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
                     if (loadedDataMap.TryGetValue(componentKey, out SavedComponent savedComponent)
                         && _saveableComponents.TryGetValue(componentKey,
                             out (MonoBehaviour instance, List<FieldInfo> fields) registeredData))
@@ -390,6 +428,11 @@ namespace Neo.Save
 
         #region Single Object Save/Load
 
+        /// <summary>
+        /// Saves a single component into the shared save container.
+        /// </summary>
+        /// <param name="monoObj">Component to save.</param>
+        /// <param name="isSave">Reserved compatibility flag.</param>
         public static void Save(MonoBehaviour monoObj, bool isSave = false)
         {
             if (monoObj == null || !(monoObj is ISaveableComponent))
@@ -400,7 +443,7 @@ namespace Neo.Save
 
             Register(monoObj);
 
-            string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
             if (!_saveableComponents.TryGetValue(componentKey,
                     out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
@@ -454,6 +497,10 @@ namespace Neo.Save
             Debug.Log($"[SaveManager] Manually saved {componentKey}");
         }
 
+        /// <summary>
+        /// Loads data for a single registered component.
+        /// </summary>
+        /// <param name="monoObj">Component to load.</param>
         public static void Load(MonoBehaviour monoObj)
         {
             if (monoObj == null || !(monoObj is ISaveableComponent))
@@ -464,7 +511,7 @@ namespace Neo.Save
 
             Register(monoObj);
 
-            string componentKey = $"{monoObj.GetType().Name}_{monoObj.GetInstanceID()}";
+            string componentKey = SaveIdentityUtility.GetComponentKey(monoObj);
             if (!_saveableComponents.TryGetValue(componentKey,
                     out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
@@ -519,6 +566,24 @@ namespace Neo.Save
             catch (Exception e)
             {
                 Debug.LogError($"Error loading save data for {componentKey}: " + e.Message);
+            }
+        }
+
+        private static void CleanupDestroyedRegistrations()
+        {
+            if (_saveableComponents.Count == 0)
+            {
+                return;
+            }
+
+            List<string> invalidKeys = _saveableComponents
+                .Where(pair => pair.Value.instance == null)
+                .Select(pair => pair.Key)
+                .ToList();
+
+            for (int i = 0; i < invalidKeys.Count; i++)
+            {
+                _saveableComponents.Remove(invalidKeys[i]);
             }
         }
 

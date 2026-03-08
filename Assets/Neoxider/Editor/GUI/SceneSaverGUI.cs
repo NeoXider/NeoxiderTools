@@ -49,16 +49,44 @@ namespace Neo.Editor.Windows
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
+            UpdateCurrentScenePath();
+            Scene activeScene = EditorSceneManager.GetActiveScene();
+            bool hasSavedScene = !string.IsNullOrEmpty(activeScene.path);
+
+            NeoxiderEditorGUI.DrawSummaryCard("Scene Saver",
+                "Автоматическое создание backup-копии текущей сцены в `Assets/Scenes/AutoSaves`.",
+                new NeoxiderEditorGUI.Badge(IsScriptEnabled ? "Enabled" : "Disabled",
+                    IsScriptEnabled ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.46f, 0.46f, 0.50f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Interval {IntervalMinutes:0.##} min", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge(activeScene.isDirty ? "Scene Dirty" : "Scene Clean",
+                    activeScene.isDirty ? new Color(0.78f, 0.46f, 0.18f, 1f) : new Color(0.24f, 0.60f, 0.60f, 1f)));
+
+            if (!hasSavedScene)
+            {
+                EditorGUILayout.HelpBox("Текущая сцена ещё не сохранена как asset. Автосейв появится после первого обычного Save Scene.", MessageType.Info);
+            }
+
+            NeoxiderEditorGUI.BeginSection("Auto Save", "Базовые параметры автоматического сохранения.");
             IsScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", IsScriptEnabled);
             IntervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", IntervalMinutes);
             SaveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", SaveEvenIfNotDirty);
-            EditorGUILayout.LabelField("Current Scene", _currentScenePath);
-            EditorGUILayout.LabelField("Last Save Status", _lastSaveStatus);
+            NeoxiderEditorGUI.EndSection();
 
-            if (GUILayout.Button("Save Now"))
+            EditorGUILayout.Space(4f);
+
+            NeoxiderEditorGUI.BeginSection("Current Scene", "Текущее состояние открытой сцены и результат последнего сохранения.");
+            EditorGUILayout.LabelField("Current Scene", _currentScenePath);
+            EditorGUILayout.LabelField("Last Save Status", string.IsNullOrEmpty(_lastSaveStatus) ? "No saves yet." : _lastSaveStatus);
+            NeoxiderEditorGUI.EndSection();
+
+            EditorGUILayout.Space(4f);
+
+            EditorGUI.BeginDisabledGroup(!hasSavedScene && !activeScene.isDirty);
+            if (GUILayout.Button("Save Now", GUILayout.Height(24f)))
             {
                 SaveSceneClone();
             }
+            EditorGUI.EndDisabledGroup();
         }
 
         /// <summary>

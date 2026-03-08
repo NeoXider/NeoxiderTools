@@ -7,7 +7,11 @@
 ---
 
 
-**[Obsolete]** Для нового кода используйте [**SceneFlowController**](../Level/SceneFlowController.md) (модуль Level, Neoxider/Level/SceneFlowController). UIReady остаётся рабочим, но помечен как устаревший. Миграция: замените компонент на SceneFlowController; поля ALS (gameObjectLoad, textProgress, loadEndText) настройте в секции Progress UI; методы LoadScene/Restart/Quit/Pause/ProceedScene совпадают по смыслу.
+**Статус:** `deprecated`.
+
+**Замена:** [SceneFlowController](../Level/SceneFlowController.md).
+
+Для нового кода используйте [**SceneFlowController**](../Level/SceneFlowController.md) (модуль Level, `Neoxider/Level/SceneFlowController`). `UIReady` остаётся рабочим, но помечен как устаревший и скрыт из меню добавления компонентов. Миграция: замените компонент на `SceneFlowController`; поля `ALS` (`gameObjectLoad`, `textProgress`, `loadEndText`) настройте в секции `Progress UI`; методы `LoadScene` / `Restart` / `Quit` / `Pause` / `ProceedScene` совпадают по смыслу.
 
 ---
 

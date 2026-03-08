@@ -19,7 +19,7 @@
 
 ### CustomEditorBase
 - **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/PropertyAttribute/CustomEditorBase.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/CustomEditorBase.cs`
 
 **Описание**
 Абстрактный класс-редактор, который добавляет в инспектор отрисовку кнопок для методов, помеченных атрибутом `[Button]`.

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
@@ -29,33 +30,23 @@ namespace Neo.StateMachine.NoCode.Editor
         {
             serializedObject.Update();
 
-            EditorGUILayout.Space();
-            EditorGUILayout.LabelField("State Machine Configuration", EditorStyles.boldLabel);
-            EditorGUILayout.Space();
-
-            // Валидация (silent режим - не логируем в консоль при каждой отрисовке)
             bool isValid = data.Validate(true);
-            if (!isValid)
-            {
-                EditorGUILayout.HelpBox(
-                    "State Machine configuration has errors. Add states to configure the state machine.",
-                    MessageType.Warning);
-            }
+            DrawSummary(isValid);
 
             DrawStatesSection();
 
-            EditorGUILayout.Space();
+            EditorGUILayout.Space(6f);
 
             DrawInitialStateSection();
 
-            EditorGUILayout.Space();
+            EditorGUILayout.Space(6f);
 
             DrawTransitionsSection();
 
-            EditorGUILayout.Space();
+            EditorGUILayout.Space(6f);
 
-            // Кнопка валидации
-            if (GUILayout.Button("Validate Configuration"))
+            NeoxiderEditorGUI.BeginSection("Validation", "Ручная проверка конфигурации с выводом результата.");
+            if (GUILayout.Button("Validate Configuration", GUILayout.Height(24f)))
             {
                 bool validationResult = data.Validate();
                 if (validationResult)
@@ -68,24 +59,69 @@ namespace Neo.StateMachine.NoCode.Editor
                         "State Machine configuration has errors. Check the console.", "OK");
                 }
             }
+            NeoxiderEditorGUI.EndSection();
 
             serializedObject.ApplyModifiedProperties();
         }
 
+        private void DrawSummary(bool isValid)
+        {
+            SerializedProperty statesProp = serializedObject.FindProperty("states");
+            SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
+            SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
+            SerializedProperty legacyInitialStateNameProp = serializedObject.FindProperty("initialStateName");
+
+            string title = data != null ? data.name : "State Machine";
+            string subtitle = isValid
+                ? "Конфигурация выглядит валидной. Ниже можно редактировать состояния, стартовую точку и переходы."
+                : "В конфигурации есть проблемные места. Инспектор показывает их до запуска runtime.";
+
+            List<NeoxiderEditorGUI.Badge> badges = new()
+            {
+                new($"States {statesProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new($"Transitions {transitionsProp.arraySize}", new Color(0.42f, 0.34f, 0.82f, 1f)),
+                new(initialStateProp.objectReferenceValue != null ? "Initial Set" : "Initial Missing",
+                    initialStateProp.objectReferenceValue != null
+                        ? new Color(0.18f, 0.62f, 0.32f, 1f)
+                        : new Color(0.78f, 0.46f, 0.18f, 1f))
+            };
+
+            if (!string.IsNullOrEmpty(legacyInitialStateNameProp.stringValue) && initialStateProp.objectReferenceValue == null)
+            {
+                badges.Add(new NeoxiderEditorGUI.Badge("Legacy Initial Name", new Color(0.65f, 0.56f, 0.18f, 1f)));
+            }
+
+            NeoxiderEditorGUI.DrawSummaryCard(title, subtitle, badges.ToArray());
+
+            if (!isValid)
+            {
+                EditorGUILayout.HelpBox("State Machine configuration has errors or missing links. Проверь states, initial state и переходы.", MessageType.Warning);
+            }
+
+            if (statesProp.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("States array пустой. Без состояний state machine не сможет стартовать.", MessageType.Info);
+            }
+
+            EditorGUILayout.Space(4f);
+        }
+
         private void DrawStatesSection()
         {
-            EditorGUILayout.LabelField("States", EditorStyles.boldLabel);
             SerializedProperty statesProp = serializedObject.FindProperty("states");
+            NeoxiderEditorGUI.BeginSection("States", "Набор всех доступных состояний для текущей машины.");
             EditorGUILayout.PropertyField(statesProp, true);
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void DrawInitialStateSection()
         {
-            EditorGUILayout.LabelField("Initial State", EditorStyles.boldLabel);
             SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
+            SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
+
+            NeoxiderEditorGUI.BeginSection("Initial State", "Предпочтительно использовать ссылку на StateData, а legacy name оставить только для обратной совместимости.");
             EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
 
-            SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
             if (initialStateProp.objectReferenceValue == null &&
                 !string.IsNullOrEmpty(initialStateNameProp.stringValue))
             {
@@ -93,15 +129,18 @@ namespace Neo.StateMachine.NoCode.Editor
                     $"Using legacy initial state name: {initialStateNameProp.stringValue}. Please assign a StateData object instead.",
                     MessageType.Warning);
             }
+
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void DrawTransitionsSection()
         {
-            EditorGUILayout.LabelField("Transitions", EditorStyles.boldLabel);
             SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
+            NeoxiderEditorGUI.BeginSection("Transitions", "Переходы между состояниями. Здесь важны читаемые имена и валидные ссылки на state assets.");
             if (transitionsProp == null)
             {
                 EditorGUILayout.HelpBox("Transitions property is missing.", MessageType.Error);
+                NeoxiderEditorGUI.EndSection();
                 return;
             }
 
@@ -117,10 +156,17 @@ namespace Neo.StateMachine.NoCode.Editor
                 SerializedProperty priorityProp = transitionProp.FindPropertyRelative("priority");
                 SerializedProperty enabledProp = transitionProp.FindPropertyRelative("isEnabled");
                 SerializedProperty nameProp = transitionProp.FindPropertyRelative("transitionName");
+                SerializedProperty predicatesProp = transitionProp.FindPropertyRelative("predicates");
 
                 EditorGUILayout.BeginVertical(EditorStyles.helpBox);
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField($"Transition {i + 1}", EditorStyles.boldLabel);
+                string transitionTitle = nameProp != null && !string.IsNullOrWhiteSpace(nameProp.stringValue)
+                    ? nameProp.stringValue
+                    : $"Transition {i + 1}";
+                EditorGUILayout.LabelField(transitionTitle, EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                EditorGUILayout.LabelField($"Predicates: {predicatesProp?.arraySize ?? 0}", EditorStyles.miniBoldLabel,
+                    GUILayout.Width(90f));
                 if (GUILayout.Button("X", GUILayout.Width(24)))
                 {
                     removeIndex = i;
@@ -234,6 +280,8 @@ namespace Neo.StateMachine.NoCode.Editor
                     predicatesProp.ClearArray();
                 }
             }
+
+            NeoxiderEditorGUI.EndSection();
         }
     }
 

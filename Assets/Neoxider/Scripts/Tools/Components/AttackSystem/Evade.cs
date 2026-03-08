@@ -1,3 +1,5 @@
+using System;
+using Neo;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -13,9 +15,11 @@ namespace Neo.Tools
     ///     Подходит для даша, ролла, блока и любых способностей с «временем действия + перезарядка».
     ///     Cooldown можно запускать сразу с началом уклонения или после его завершения.
     /// </remarks>
+    [LegacyComponent("Neo.Rpg.RpgEvadeController")]
+    [Obsolete("Use Neo.Rpg.RpgEvadeController for new RPG evade/invulnerability flow.")]
     [NeoDoc("Tools/Components/AttackSystem/Evade.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Evade")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Evade))]
+    [AddComponentMenu("")]
     public class Evade : MonoBehaviour
     {
         #region Settings

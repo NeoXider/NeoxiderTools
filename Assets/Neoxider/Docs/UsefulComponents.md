@@ -44,7 +44,7 @@
 | **Physics** | ExplosiveForce, ImpulseZone, MagneticField, PhysicsEvents2D, PhysicsEvents3D |
 | **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
 | **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
-| **Components** | Health, Evade, AttackExecution, AdvancedAttackCollider, Counter, Loot, TextScore, TypewriterEffectComponent |
+| **Components** | RpgStatsDamageableBridge, Counter, Loot, TextScore, TypewriterEffectComponent; *Health, Evade, AttackExecution, AdvancedAttackCollider — legacy, см. [RPG](./Rpg/README.md)* |
 | **Dialogue** | DialogueController, DialogueUI. Редактор: кнопка в инспекторе или **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |
 | **Inventory** | InventoryComponent, InventoryHand, InventoryDropper, PickableItem, HandView. Рука: Hand Anchor + Selector; HandView на префабе — офсеты и масштаб в руке; применение E, дроп G через Dropper; масштаб руки — HandScaleMode (по умолчанию Relative). |
 | **Input** | SwipeController, MultiKeyEventTrigger, MouseEffect |

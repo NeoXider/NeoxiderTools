@@ -11,6 +11,7 @@
 
 ## Файлы
 
+- [KeyInputCompat](./KeyInputCompat.md)
 - [MouseEffect](./MouseEffect.md)
 - [MouseInputManager](./MouseInputManager.md)
 - [MultiKeyEventTrigger](./MultiKeyEventTrigger.md)

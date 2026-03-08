@@ -19,7 +19,7 @@
 
 ### ComponentDrawer
 - **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/PropertyAttribute/ComponentDrawer.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/ComponentDrawer.cs`
 
 **Описание**
 Статический класс, реализующий логику для атрибутов автоматического поиска компонентов (таких как `[GetComponent]`, `[FindInScene]` и их версий для поиска всех компонентов).

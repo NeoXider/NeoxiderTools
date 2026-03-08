@@ -19,7 +19,7 @@
 
 ### ResourceDrawer
 - **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/PropertyAttribute/ResourceDrawer.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/ResourceDrawer.cs`
 
 **Описание**
 Статический класс, реализующий логику для атрибутов автоматической загрузки ассетов из папок `Resources` (например, `[LoadFromResources]`, `[LoadAllFromResources]`).

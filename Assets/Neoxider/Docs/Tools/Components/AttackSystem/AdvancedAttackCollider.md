@@ -1,5 +1,7 @@
 # AdvancedAttackCollider
 
+> **Legacy.** Используйте [RpgStatsManager](../../Rpg/RpgStatsManager.md).TakeDamage() или [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md) (IDamageable) для RPG-боя. AdvancedAttackCollider остаётся для legacy-сцен.
+
 **Что это:** Универсальный компонент для обработки попаданий оружия ближнего/дальнего боя в 2D/3D через триггеры и коллизии с фильтрацией по слоям.
 
 **Как использовать:** см. разделы ниже.

@@ -1,0 +1,24 @@
+{
+  "name": "Neo.Progression",
+  "rootNamespace": "Neo.Progression",
+  "references": [
+    "Neo.Extensions",
+    "Neo.Tools.Managers",
+    "Neo.Save",
+    "Neo.Reactive",
+    "Neo.Condition",
+    "Neo.Quest",
+    "Neo.Shop",
+    "Neo.Bonus",
+    "Neo.PropertyAttribute"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

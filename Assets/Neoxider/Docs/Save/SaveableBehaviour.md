@@ -1,32 +1,66 @@
 # SaveableBehaviour
 
-**Что это:** абстрактный класс (пространство имён `Neo.Save`, файл `Assets/Neoxider/Scripts/Save/SaveableBehaviour.cs`). Базовый класс для компонентов, данные которых сохраняет [SaveManager](SaveManager.md). Реализует `ISaveableComponent`, при `OnEnable` сам регистрируется в SaveManager.
+**Что это:** `SaveableBehaviour` — базовый `MonoBehaviour` для компонентов, которые должны участвовать в системе сохранений. Файл: `Scripts/Save/SaveableBehaviour.cs`, пространство имён: `Neo.Save`.
 
-**Как с ним работать:**
-1. Наследовать свой компонент от `SaveableBehaviour` вместо `MonoBehaviour`.
-2. Поля, которые нужно сохранять, пометить атрибутом `[SaveField("ключ")]` (ключ — уникальное имя в рамках компонента).
-3. При необходимости переопределить `OnDataLoaded()` — он вызывается после загрузки данных (обновить UI, состояние).
-4. На сцене должен быть [SaveManager](SaveManager.md).
+**Как использовать:**
+1. Наследуйте свой компонент от `SaveableBehaviour`.
+2. Пометьте сохраняемые поля атрибутом `[SaveField("key")]`.
+3. При необходимости переопределите `OnDataLoaded()`.
+4. Если нужен собственный стабильный ключ, дополнительно реализуйте `ISaveIdentityProvider`.
 
 ---
 
-## Ключевые особенности
-- **Авто-регистрация**: В методе `OnEnable` компонент автоматически регистрирует себя в `SaveManager`.
-- **Готовая реализация**: Предоставляет пустую виртуальную реализацию метода `OnDataLoaded()`, которую можно переопределить (`override`) в дочернем классе, если требуется выполнить действия после загрузки данных.
+## Что делает базовый класс
 
-## Пример использования
+- Автоматически вызывает `SaveManager.Register(this)` в `OnEnable()`.
+- Автоматически вызывает `SaveManager.Unregister(this)` в `OnDisable()`.
+- Уже реализует `ISaveableComponent`, поэтому вам остаётся только переопределить `OnDataLoaded()` при необходимости.
+
+Это самый простой способ подключить компонент к `SaveManager` без ручной регистрации.
+
+## Когда использовать
+
+Используйте `SaveableBehaviour`, если:
+- компонент живёт на объекте сцены;
+- у компонента есть сериализуемые поля, которые должны сохраняться;
+- вам нужен минимальный boilerplate.
+
+Если регистрация должна управляться вручную или компонент не должен зависеть от базового класса, можно реализовать `ISaveableComponent` самостоятельно.
+
+## Поведение при disable/destroy
+
+Текущая версия класса не только регистрирует компонент при включении, но и корректно удаляет его из save-реестра при выключении. Это важно для:
+- временно отключаемых объектов;
+- объектов, которые уничтожаются в runtime;
+- избежания устаревших ссылок в статическом реестре `SaveManager`.
+
+## Типичный сценарий
+
 ```csharp
-// Просто наследуемся от SaveableBehaviour вместо MonoBehaviour
+using Neo.Save;
+using UnityEngine;
+
 public class PlayerScore : SaveableBehaviour
 {
-    [SaveField("score")]
-    private int _score;
+    [SaveField("score")] [SerializeField] private int _score;
+    [SaveField("best-score")] [SerializeField] private int _bestScore;
 
-    // Переопределяем метод, если нужно что-то сделать после загрузки
     public override void OnDataLoaded()
     {
-        Debug.Log($"Score loaded: {_score}");
-        // UpdateScoreUI();
+        Debug.Log($"Loaded score: {_score}, best: {_bestScore}");
     }
 }
 ```
+
+## Что не делает класс
+
+- Не сохраняет поля автоматически без `[SaveField]`.
+- Не создаёт `SaveManager` сам по себе.
+- Не даёт custom identity автоматически. Для этого нужен `ISaveIdentityProvider`.
+
+## См. также
+
+- [`SaveManager`](./SaveManager.md)
+- [`SaveField`](./SaveField.md)
+- [`ISaveableComponent`](./ISaveableComponent.md)
+- [`ISaveIdentityProvider`](./ISaveIdentityProvider.md)

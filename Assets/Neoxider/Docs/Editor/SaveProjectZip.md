@@ -19,7 +19,7 @@
 
 ### SaveProjectZip
 - **Пространство имен**: `(глобальное)`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/SaveProjectZip.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/SaveProjectZip.cs`
 - **Доступ в меню**: `Tools/Neoxider/Save Project Zip`
 
 **Описание**

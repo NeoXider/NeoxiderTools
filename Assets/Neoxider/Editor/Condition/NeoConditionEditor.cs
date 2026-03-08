@@ -59,6 +59,14 @@ namespace Neo.Editor.Condition
 
         private static readonly string[] ThresholdSourceNames = { "Constant (number/text)", "Other Object (variable)" };
 
+        private static readonly Color SourceAccent = new(0.28f, 0.62f, 0.98f, 1f);
+        private static readonly Color SceneSearchAccent = new(0.26f, 0.82f, 0.52f, 1f);
+        private static readonly Color ReadAccent = new(0.26f, 0.84f, 0.86f, 1f);
+        private static readonly Color CompareAccent = new(0.70f, 0.42f, 0.98f, 1f);
+        private static readonly Color ThresholdAccent = new(1f, 0.64f, 0.22f, 1f);
+        private static readonly Color OtherSourceAccent = new(0.96f, 0.46f, 0.70f, 1f);
+        private static readonly Color ValueAccent = new(0.34f, 0.90f, 0.50f, 1f);
+
         /// <summary>
         ///     Включаем кастомный UI внутри фирменного Neoxider-стиля.
         /// </summary>
@@ -79,6 +87,8 @@ namespace Neo.Editor.Condition
         protected override void DrawCustomNeoxiderInspectorGUI()
         {
             serializedObject.Update();
+
+            DrawConditionOverview();
 
             // --- Logic Mode ---
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), new GUIContent("Logic Mode"));
@@ -116,6 +126,69 @@ namespace Neo.Editor.Condition
             DrawCollapsibleUnityEvents();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawConditionOverview()
+        {
+            SerializedProperty conditionsProp = serializedObject.FindProperty("_conditions");
+            SerializedProperty logicModeProp = serializedObject.FindProperty("_logicMode");
+            SerializedProperty checkModeProp = serializedObject.FindProperty("_checkMode");
+            SerializedProperty onlyOnChangeProp = serializedObject.FindProperty("_onlyOnChange");
+
+            int sceneSearchCount = 0;
+            int gameObjectModeCount = 0;
+
+            for (int i = 0; i < conditionsProp.arraySize; i++)
+            {
+                SerializedProperty entryProp = conditionsProp.GetArrayElementAtIndex(i);
+                if (entryProp.FindPropertyRelative("_useSceneSearch").boolValue)
+                {
+                    sceneSearchCount++;
+                }
+
+                if (entryProp.FindPropertyRelative("_sourceMode").enumValueIndex == (int)SourceMode.GameObject)
+                {
+                    gameObjectModeCount++;
+                }
+            }
+
+            List<NeoxiderEditorGUI.Badge> badges = new()
+            {
+                new($"Conditions {conditionsProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new(logicModeProp.enumDisplayNames[logicModeProp.enumValueIndex], new Color(0.36f, 0.60f, 0.86f, 1f)),
+                new(checkModeProp.enumDisplayNames[checkModeProp.enumValueIndex], new Color(0.42f, 0.34f, 0.82f, 1f))
+            };
+
+            if (onlyOnChangeProp.boolValue)
+            {
+                badges.Add(new NeoxiderEditorGUI.Badge("Only On Change", new Color(0.18f, 0.62f, 0.32f, 1f)));
+            }
+
+            if (sceneSearchCount > 0)
+            {
+                badges.Add(new NeoxiderEditorGUI.Badge($"Scene Search {sceneSearchCount}", new Color(0.20f, 0.68f, 0.44f, 1f)));
+            }
+
+            if (gameObjectModeCount > 0)
+            {
+                badges.Add(new NeoxiderEditorGUI.Badge($"GameObject Mode {gameObjectModeCount}", new Color(0.78f, 0.58f, 0.18f, 1f)));
+            }
+
+            NeoxiderEditorGUI.DrawSummaryCard("NeoCondition", null, true, badges.ToArray());
+
+            if (conditionsProp.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("Нет ни одного условия. Добавь хотя бы один entry, иначе компонент ничего не проверяет.", MessageType.Warning);
+            }
+
+            if (sceneSearchCount > 0 && checkModeProp.enumValueIndex == (int)CheckMode.EveryFrame)
+            {
+                EditorGUILayout.HelpBox(
+                    "Scene Search вместе с EveryFrame может быть избыточным. Если не нужен мгновенный отклик каждый кадр, лучше использовать Interval или Manual.",
+                    MessageType.Info);
+            }
+
+            EditorGUILayout.Space(4f);
         }
 
         // ============================
@@ -296,7 +369,9 @@ namespace Neo.Editor.Condition
 
             EditorGUILayout.Space(2);
 
-            // --- Source Mode ---
+            GameObject targetObj = null;
+            BeginAccentSection("Source Setup", isSceneSearch ? SceneSearchAccent : SourceAccent);
+
             EditorGUI.BeginChangeCheck();
             int newModeIdx = EditorGUILayout.Popup("Source", sourceModeProp.enumValueIndex, SourceModeNames);
             if (EditorGUI.EndChangeCheck())
@@ -311,7 +386,6 @@ namespace Neo.Editor.Condition
                 }
             }
 
-            // --- Scene Search toggle ---
             EditorGUI.BeginChangeCheck();
             useSceneSearchProp.boolValue = EditorGUILayout.Toggle(
                 new GUIContent("Find By Name",
@@ -328,22 +402,16 @@ namespace Neo.Editor.Condition
                 }
             }
 
-            // --- Source Object or Search Name ---
-            GameObject targetObj = null;
-
             if (isSceneSearch)
             {
-                // Поле для ввода имени
                 EditorGUILayout.PropertyField(searchNameProp,
                     new GUIContent("Object Name", "Имя GameObject для поиска через GameObject.Find()"));
 
-                // Wait For Object — тихое ожидание спавна без Warning
                 waitForObjectProp.boolValue = EditorGUILayout.Toggle(
                     new GUIContent("Wait For Object",
                         "Ожидать появления объекта в сцене (без Warning). Полезно для префабов, которые будут заспавнены позже."),
                     waitForObjectProp.boolValue);
 
-                // В Play Mode показываем найденный объект
                 if (Application.isPlaying && condition != null)
                 {
                     IReadOnlyList<ConditionEntry> entries = condition.Conditions;
@@ -352,7 +420,7 @@ namespace Neo.Editor.Condition
                         ConditionEntry runtimeEntry = entries[index];
                         GameObject found = runtimeEntry?.FoundByNameObject;
                         EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.ObjectField("Found Object", found, typeof(GameObject), true);
+                        DrawReadOnlyObjectField("Found Object", found);
                         EditorGUI.EndDisabledGroup();
 
                         if (found != null)
@@ -362,7 +430,6 @@ namespace Neo.Editor.Condition
                     }
                 }
 
-                // В Edit Mode пробуем найти объект для отображения компонентов/свойств
                 if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                 {
                     GameObject found = GameObject.Find(searchNameProp.stringValue);
@@ -370,12 +437,11 @@ namespace Neo.Editor.Condition
                     {
                         targetObj = found;
                         EditorGUI.BeginDisabledGroup(true);
-                        EditorGUILayout.ObjectField("Preview", found, typeof(GameObject), true);
+                        DrawReadOnlyObjectField("Preview", found);
                         EditorGUI.EndDisabledGroup();
                     }
                     else
                     {
-                        // Объект не на сцене — пробуем использовать Prefab Preview
                         EditorGUILayout.PropertyField(prefabPreviewProp,
                             new GUIContent("Prefab Preview",
                                 "Перетащите префаб из Project, чтобы настроить компоненты/свойства до спавна объекта."));
@@ -410,12 +476,11 @@ namespace Neo.Editor.Condition
 
                 if (targetObj == null && condition != null && !Application.isPlaying)
                 {
-                    targetObj = null; // Не показываем компоненты если объект не найден
+                    targetObj = null;
                 }
             }
             else
             {
-                // Прямая ссылка на объект
                 EditorGUI.BeginChangeCheck();
                 EditorGUILayout.PropertyField(sourceObjProp, new GUIContent("Source Object"));
                 if (EditorGUI.EndChangeCheck())
@@ -436,8 +501,14 @@ namespace Neo.Editor.Condition
                 }
             }
 
+            EndAccentSection();
+
             if (targetObj != null)
             {
+                BeginAccentSection(
+                    isGameObjectMode ? "Read Value From GameObject" : "Read Value From Component",
+                    ReadAccent);
+
                 if (isGameObjectMode)
                 {
                     DrawGameObjectPropertyDropdown(propNameProp, valueTypeProp);
@@ -489,6 +560,8 @@ namespace Neo.Editor.Condition
                         }
                     }
                 }
+
+                EndAccentSection();
             }
             else if (!isSceneSearch)
             {
@@ -519,6 +592,8 @@ namespace Neo.Editor.Condition
             SerializedProperty otherCompIdxProp,
             SerializedProperty otherPropNameProp)
         {
+            BeginAccentSection("Compare", CompareAccent);
+
             EditorGUILayout.PropertyField(thresholdSourceProp, new GUIContent("Compare With",
                 "Constant: сравнить с числом или текстом. Other Object: сравнить с полем/свойством другого объекта. Если Other Source Object пуст — используется тот же объект, что и слева."));
 
@@ -540,99 +615,107 @@ namespace Neo.Editor.Condition
                 }
 
                 EditorGUILayout.Space(4);
-                EditorGUILayout.LabelField("Other Object (right side)", EditorStyles.boldLabel);
+                BeginAccentSection("Right Side Source", OtherSourceAccent);
 
-                int otherModeIdx =
-                    EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
-                if (otherModeIdx != otherSourceModeProp.enumValueIndex)
-                {
-                    otherSourceModeProp.enumValueIndex = otherModeIdx;
-                    otherCompTypeProp.stringValue = "";
-                    otherPropNameProp.stringValue = "";
-                    if (otherIsMethodProp != null)
+                    int otherModeIdx =
+                        EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
+                    if (otherModeIdx != otherSourceModeProp.enumValueIndex)
                     {
-                        otherIsMethodProp.boolValue = false;
-                    }
-                }
-
-                otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
-                    new GUIContent("Other: Find By Name"), otherUseSceneSearchProp.boolValue);
-
-                GameObject otherTargetObj = null;
-                if (otherUseSceneSearchProp.boolValue)
-                {
-                    EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
-                    otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(new GUIContent("Other: Wait For Object"),
-                        otherWaitForObjectProp.boolValue);
-                    if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
-                    {
-                        otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
-                    }
-                }
-                else
-                {
-                    EditorGUILayout.PropertyField(otherSourceObjProp,
-                        new GUIContent("Other Source Object",
-                            "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
-                    otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
-                }
-
-                if (otherTargetObj == null)
-                {
-                    otherTargetObj = leftTargetObj;
-                }
-
-                if (otherTargetObj == null && condition != null)
-                {
-                    otherTargetObj = condition.gameObject;
-                }
-
-                if (otherTargetObj != null)
-                {
-                    bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
-                    if (otherIsGO)
-                    {
-                        DrawGameObjectPropertyDropdown(otherPropNameProp);
-                        if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                        otherSourceModeProp.enumValueIndex = otherModeIdx;
+                        otherCompTypeProp.stringValue = "";
+                        otherPropNameProp.stringValue = "";
+                        if (otherIsMethodProp != null)
                         {
-                            DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
+                            otherIsMethodProp.boolValue = false;
+                        }
+                    }
+
+                    otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
+                        new GUIContent("Other: Find By Name"), otherUseSceneSearchProp.boolValue);
+
+                    GameObject otherTargetObj = null;
+                    if (otherUseSceneSearchProp.boolValue)
+                    {
+                        EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
+                        otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(
+                            new GUIContent("Other: Wait For Object"),
+                            otherWaitForObjectProp.boolValue);
+                        if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
+                        {
+                            otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
                         }
                     }
                     else
                     {
-                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
-                            otherIsMethodProp);
-                        string otherCompType = otherCompTypeProp.stringValue;
-                        if (!string.IsNullOrEmpty(otherCompType))
+                        EditorGUILayout.PropertyField(otherSourceObjProp,
+                            new GUIContent("Other Source Object",
+                                "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
+                        otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
+                    }
+
+                    if (otherTargetObj == null)
+                    {
+                        otherTargetObj = leftTargetObj;
+                    }
+
+                    if (otherTargetObj == null && condition != null)
+                    {
+                        otherTargetObj = condition.gameObject;
+                    }
+
+                    if (otherTargetObj != null)
+                    {
+                        NeoxiderEditorGUI.DrawKeyValueRow("Resolved Object", otherTargetObj.name,
+                            new Color(0.76f, 0.82f, 1f, 1f));
+
+                        bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
+                        if (otherIsGO)
                         {
-                            Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
-                            if (otherComp != null)
+                            DrawGameObjectPropertyDropdown(otherPropNameProp);
+                            if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
                             {
-                                DrawPropertyDropdown(otherComp, otherPropNameProp, null,
-                                    otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
-                                    otherArgStringProp);
-                                if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                                DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
+                            }
+                        }
+                        else
+                        {
+                            DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
+                                otherIsMethodProp);
+                            string otherCompType = otherCompTypeProp.stringValue;
+                            if (!string.IsNullOrEmpty(otherCompType))
+                            {
+                                Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
+                                if (otherComp != null)
                                 {
-                                    DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
+                                    DrawPropertyDropdown(otherComp, otherPropNameProp, null,
                                         otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
                                         otherArgStringProp);
+                                    if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                                    {
+                                        DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
+                                            otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
+                                            otherArgStringProp);
+                                    }
                                 }
                             }
                         }
                     }
-                }
-                else
-                {
-                    EditorGUILayout.HelpBox(
-                        "Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.",
-                        MessageType.Info);
-                }
+                    else
+                    {
+                        EditorGUILayout.HelpBox(
+                            "Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.",
+                            MessageType.Info);
+                    }
+
+                EndAccentSection();
             }
             else
             {
                 DrawCompareAndThreshold(compareOpProp, valueTypeProp,
                     thresholdIntProp, thresholdFloatProp, thresholdBoolProp, thresholdStringProp);
             }
+
+            EndAccentSection();
         }
 
         private static void DrawCompareAndThreshold(
@@ -1046,11 +1129,7 @@ namespace Neo.Editor.Condition
             if (value != null)
             {
                 EditorGUI.BeginDisabledGroup(true);
-                GUIStyle valueStyle = new(EditorStyles.textField)
-                {
-                    fontStyle = FontStyle.Bold
-                };
-                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
+                DrawReadOnlyValueField("Current Value", value.ToString(), ValueAccent);
                 EditorGUI.EndDisabledGroup();
             }
         }
@@ -1070,8 +1149,7 @@ namespace Neo.Editor.Condition
             if (value != null)
             {
                 EditorGUI.BeginDisabledGroup(true);
-                GUIStyle valueStyle = new(EditorStyles.textField) { fontStyle = FontStyle.Bold };
-                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
+                DrawReadOnlyValueField("Current Value", value.ToString(), ValueAccent);
                 EditorGUI.EndDisabledGroup();
             }
         }
@@ -1091,10 +1169,70 @@ namespace Neo.Editor.Condition
             if (value != null)
             {
                 EditorGUI.BeginDisabledGroup(true);
-                GUIStyle valueStyle = new(EditorStyles.textField) { fontStyle = FontStyle.Bold };
-                EditorGUILayout.TextField("Current Value", value.ToString(), valueStyle);
+                DrawReadOnlyValueField("Current Value", value.ToString(), ValueAccent);
                 EditorGUI.EndDisabledGroup();
             }
+        }
+
+        private static void BeginAccentSection(string title, Color accent, string subtitle = null)
+        {
+            Rect rect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, new Color(accent.r, accent.g, accent.b, 0.06f));
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height), new Color(accent.r, accent.g, accent.b, 0.92f));
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(accent.r, accent.g, accent.b, 0.30f));
+            }
+
+            GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
+            {
+                fontSize = 11,
+                normal = { textColor = Color.Lerp(accent, Color.white, 0.20f) }
+            };
+            EditorGUILayout.LabelField(title, titleStyle);
+
+            if (!string.IsNullOrWhiteSpace(subtitle))
+            {
+                GUIStyle subtitleStyle = new(EditorStyles.miniLabel)
+                {
+                    wordWrap = true,
+                    normal = { textColor = new Color(0.80f, 0.84f, 0.92f, 0.92f) }
+                };
+                EditorGUILayout.LabelField(subtitle, subtitleStyle);
+            }
+
+            EditorGUILayout.Space(2f);
+        }
+
+        private static void EndAccentSection()
+        {
+            EditorGUILayout.EndVertical();
+        }
+
+        private static void DrawReadOnlyObjectField(string label, UnityEngine.Object value)
+        {
+            Rect rect = EditorGUILayout.GetControlRect();
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, new Color(ValueAccent.r, ValueAccent.g, ValueAccent.b, 0.08f));
+            }
+
+            EditorGUI.ObjectField(rect, label, value, typeof(GameObject), true);
+        }
+
+        private static void DrawReadOnlyValueField(string label, string value, Color accent)
+        {
+            Rect rect = EditorGUILayout.GetControlRect();
+            if (Event.current.type == EventType.Repaint)
+            {
+                EditorGUI.DrawRect(rect, new Color(accent.r, accent.g, accent.b, 0.08f));
+            }
+
+            GUIStyle valueStyle = new(EditorStyles.textField)
+            {
+                fontStyle = FontStyle.Bold
+            };
+            EditorGUI.TextField(rect, label, value, valueStyle);
         }
 
         private static object GetCurrentValueFromComponent(Component comp, string propertyName, bool isMethod,

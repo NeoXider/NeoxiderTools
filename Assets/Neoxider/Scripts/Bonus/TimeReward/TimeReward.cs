@@ -14,11 +14,12 @@ namespace Neo
         ///     Provides time-based reward logic with persistent cooldown and timer control API.
         /// </summary>
         /// <remarks>Consider using CooldownReward for new implementations (inherits TimerObject).</remarks>
+        [LegacyComponent("Neo.Bonus.CooldownReward")]
         [Obsolete(
             "Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
         [NeoDoc("Bonus/TimeReward/TimeReward.md")]
         [CreateFromMenu("Neoxider/Bonus/TimeReward", "Prefabs/Bonus/TimeReward.prefab")]
-        [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(TimeReward))]
+        [AddComponentMenu("")]
         public class TimeReward : MonoBehaviour
         {
             private const string LastRewardTimeKeyPrefix = "LastRewardTime";

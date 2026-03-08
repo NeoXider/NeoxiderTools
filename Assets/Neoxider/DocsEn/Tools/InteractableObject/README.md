@@ -6,10 +6,10 @@ Click/hover interactions and 2D/3D physics events. Scripts in `Scripts/Tools/Int
 
 | Page | Description |
 |------|-------------|
-| [InteractableObject README](../../../Docs/Tools/InteractableObject/README.md) | Overview |
-| [InteractiveObject](../../../Docs/Tools/InteractableObject/InteractiveObject.md) | Click/hover, keyboard |
-| [PhysicsEvents2D](../../../Docs/Tools/InteractableObject/PhysicsEvents2D.md), [PhysicsEvents3D](../../../Docs/Tools/InteractableObject/PhysicsEvents3D.md) | Collision/trigger events |
-| [ToggleObject](../../../Docs/Tools/InteractableObject/ToggleObject.md) | Toggle state |
+| [InteractiveObject](./InteractiveObject.md) | Interaction component with hover, click, keyboard, and distance checks |
+| [PhysicsEvents2D](./PhysicsEvents2D.md), [PhysicsEvents3D](./PhysicsEvents3D.md) | 2D/3D collision and trigger events |
+| [ToggleObject](./ToggleObject.md) | Boolean toggle state and events |
+| [Russian README](../../../Docs/Tools/InteractableObject/README.md) | Full Russian per-component docs |
 
 ## See also
 

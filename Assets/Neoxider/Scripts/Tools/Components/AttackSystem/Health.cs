@@ -1,3 +1,5 @@
+using System;
+using Neo;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,9 +10,11 @@ namespace Neo.Tools
     ///     Component that handles health system with damage, healing and auto-healing capabilities.
     ///     Implements IDamageable, IHealable, IRestorable for use with AttackExecution and other combat components.
     /// </summary>
+    [LegacyComponent("Neo.Rpg.RpgStatsManager or Neo.Rpg.RpgCombatant")]
+    [Obsolete("Use Neo.Rpg.RpgStatsManager for persistent player stats or Neo.Rpg.RpgCombatant for scene-local actors.")]
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Health")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Health))]
+    [AddComponentMenu("")]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {
         [Header("Health Settings")] [Tooltip("Maximum health points")]

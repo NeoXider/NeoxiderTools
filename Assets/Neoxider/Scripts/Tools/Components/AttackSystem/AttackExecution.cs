@@ -1,12 +1,16 @@
+using System;
 using System.Collections;
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
+    [LegacyComponent("Neo.Rpg.RpgAttackController")]
+    [Obsolete("Use Neo.Rpg.RpgAttackController with RpgAttackDefinition for melee, ranged, and area attacks.")]
     [NeoDoc("Tools/Components/AttackSystem/AttackExecution.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AttackExecution")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AttackExecution))]
+    [AddComponentMenu("")]
     public class AttackExecution : MonoBehaviour
     {
         public enum AttackState

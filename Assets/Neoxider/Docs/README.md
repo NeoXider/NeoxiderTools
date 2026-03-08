@@ -1,12 +1,12 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.5.0`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.6.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
 - [Полезные компоненты](./UsefulComponents.md) - быстрый вход по сценарию `Add Component / GameObject`
 - [Корневой README пакета](../README.md) - установка, обзор, samples
-- [English onboarding](../DocsEn/README.md) - минимальный вход для англоязычных пользователей
+- [English onboarding](../DocsEn/README.md) - англоязычный вход по модулям и ключевым страницам
 
 ## Оглавление модулей
 
@@ -20,15 +20,17 @@
 | **Editor** | Инспекторы, авто-билд, сервисные окна | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | Расширения C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
 | **GridSystem** | Shape/origin/pathfinding, Match3, TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/LevelManager.md`](./Level/LevelManager.md) |
+| **Level** | Загрузка сцен, прогресс, карта уровней | [`Level/README.md`](./Level/README.md) |
 | **NPC** | Модульная навигация NPC | [`NPC/README.md`](./NPC/README.md) |
 | **Parallax** | Параллакс-слои | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
 | **PropertyAttribute** | Атрибуты инспектора и inject-хелперы | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Конфиги квестов, менеджер, триггеры и состояние прогресса | [`Quest/README.md`](./Quest/README.md) |
+| **Progression** | XP, уровни, unlock tree, perk tree и persistent progression | [`Progression/README.md`](./Progression/README.md) |
+| **RPG** | HP, уровень, баффы, статус-эффекты и persistent profile | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | Компонентные сохранения, provider API, global data | [`Save/README.md`](./Save/README.md) |
 | **Shop** | Магазин, валюта, покупки | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | State machine и no-code редактор | [`StateMachine/StateMachine.md`](./StateMachine/StateMachine.md) |
+| **StateMachine** | State machine и no-code редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
 | **Tools** | Инвентарь, движение, спавн, диалоги, время, ввод | [`Tools/README.md`](./Tools/README.md) |
 | **UI** | UI-анимации, кнопки, страницы, toggle | [`UI/README.md`](./UI/README.md) |
 
@@ -36,7 +38,7 @@
 
 | Подмодуль | Что внутри | Документация |
 |-----------|------------|--------------|
-| `Tools/Components` | `Counter`, `Health`, `ScoreManager`, `TypewriterEffect` | [`Tools/Components/README.md`](./Tools/Components/README.md) |
+| `Tools/Components` | `Counter`, `ScoreManager`, `TypewriterEffect`, `RpgStatsDamageableBridge`; *Health/Evade/Attack — legacy, см. [RPG](./Rpg/README.md)* | [`Tools/Components/README.md`](./Tools/Components/README.md) |
 | `Tools/Dialogue` | `DialogueController`, `DialogueData`, `DialogueUI` | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
 | `Tools/Input` | `MouseInputManager`, `MultiKeyEventTrigger`, `SwipeController` | [`Tools/Input/README.md`](./Tools/Input/README.md) |
 | `Tools/Inventory` | `InventoryComponent`, `InventoryDropper`, `PickableItem` | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |

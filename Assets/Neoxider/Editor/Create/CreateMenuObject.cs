@@ -162,6 +162,7 @@ namespace Neo
         #region Dynamic Menu
 
         private const string CreateFromMenuAttributeName = "CreateFromMenuAttribute";
+        private const string LegacyComponentAttributeName = "LegacyComponentAttribute";
 
         internal readonly struct CreateMenuEntry
         {
@@ -221,6 +222,40 @@ namespace Neo
                 return false;
             }
 
+            static bool IsLegacyTypeHiddenFromCreateMenu(Type t)
+            {
+                if (t == null)
+                {
+                    return false;
+                }
+
+                foreach (object a in t.GetCustomAttributes(false))
+                {
+                    if (a == null || a.GetType().Name != LegacyComponentAttributeName)
+                    {
+                        continue;
+                    }
+
+                    try
+                    {
+                        PropertyInfo hideProperty = a.GetType().GetProperty("HideFromCreateMenu");
+                        if (hideProperty == null)
+                        {
+                            return true;
+                        }
+
+                        object value = hideProperty.GetValue(a);
+                        return value is not bool hide || hide;
+                    }
+                    catch
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
             static string GetMenuPath(Type t)
             {
                 foreach (object a in t.GetCustomAttributes(false))
@@ -244,6 +279,7 @@ namespace Neo
 
             Type[] types = TypeCache.GetTypesDerivedFrom<MonoBehaviour>()
                 .Where(HasCreateFromMenuAttribute)
+                .Where(t => !IsLegacyTypeHiddenFromCreateMenu(t))
                 .OrderBy(GetMenuPath)
                 .ToArray();
 
@@ -263,7 +299,8 @@ namespace Neo
                         }
                     })
                     .Where(t => t != null && t.IsClass && !t.IsAbstract && typeof(MonoBehaviour).IsAssignableFrom(t) &&
-                                HasCreateFromMenuAttribute(t))
+                                HasCreateFromMenuAttribute(t) &&
+                                !IsLegacyTypeHiddenFromCreateMenu(t))
                     .OrderBy(GetMenuPath)
                     .ToArray();
             }

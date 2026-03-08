@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### RPG / Progression / Legacy / Documentation
+
+- **RPG module** — added `Neo.Rpg` module with `RpgStatsManager`, persistent `RpgProfileData`, `BuffDefinition`, `StatusEffectDefinition`, HP/level/buffs/status effects, regen, no-code bridges (`RpgNoCodeAction`, `RpgConditionAdapter`), and profile save/load through `SaveProvider`.
+- **RPG API** — `TakeDamage`, `Heal`, `SetMaxHp`, `SetLevel`, `TryApplyBuff`, `TryApplyStatus`, `RemoveBuff`, `RemoveStatus`, `HasBuff`, `HasStatus`, reactive state (`HpState`, `HpPercentState`, `LevelState`), and events for damage, heal, death, buff/status apply/expire.
+- **RPG docs** — added RU/EN module docs for `RpgStatsManager`, `RpgNoCodeAction`, `RpgConditionAdapter`.
+- **RPG tests** — added edit mode tests for damage, heal, death, and save/load flow.
+- **Legacy AttackSystem** — `Health`, `AttackExecution`, `Evade`, `AdvancedAttackCollider` marked as `[Obsolete]` and `[LegacyComponent]` with replacement `Neo.Rpg.RpgStatsManager`; added `RpgStatsDamageableBridge` for IDamageable/IHealable compatibility with AdvancedAttackCollider.
+- **Docs** — main README, Docs/README, AttackSystem README updated to feature RPG module and deprecate legacy combat components.
+- **Progression V2** — added a new `Neo.Progression` module with `ProgressionManager`, persistent `ProgressionProfileData`, `LevelCurveDefinition`, `UnlockTreeDefinition`, `PerkTreeDefinition`, reward dispatch, no-code bridges, and custom inspectors for validation.
+- **Meta progression API** — new runtime flow supports `XP`, levels, `perk points`, unlock nodes, perk purchases, and profile save/load through `SaveProvider`, with both reactive state and UnityEvent entry points.
+- **Legacy policy** — added `LegacyComponentAttribute` and updated the Neoxider create window so legacy components are excluded from the custom create menu.
+- **Deprecated components** — `TimeReward`, `WheelFortune`, `UIReady`, and `AiNavigation` are now consistently marked as legacy, hidden from `Add Component`, and documented with explicit replacements.
+- **Progression docs** — added RU/EN module docs for `ProgressionManager`, `ProgressionNoCodeAction`, `ProgressionConditionAdapter`, and scenario guides with recommended settings for arcade, RPG, strategy, narrative, and roguelite projects.
+- **Quality** — added edit mode tests for progression save/load flow and legacy create-menu filtering.
+
+### Save / Tools / Quality
+
+- **SaveManager** — component save keys now use stable scene-based identity via `SaveIdentityUtility` instead of `GetInstanceID()`, and stale registrations are cleaned before save/load passes.
+- **SaveableBehaviour** — automatic unregister on `OnDisable()` is restored, so disabled or destroyed saveable components no longer remain in the static registry.
+- **SaveProvider** — provider event forwarding now uses stable handlers, so replacing the active provider no longer leaves stale event subscriptions behind.
+- **LevelManager** — map switching validates indices, protects against empty map arrays, emits the selected map id in `OnChangeMap`, and avoids modulo-by-zero in `GetLoopLevel`.
+- **Input compatibility** — reflection-based Input System access is centralized in `OptionalInputSystemAdapter`, with cached metadata reused by both `KeyInputCompat`, `MouseInputCompat`, and movement controllers.
+- **Bootstrap / Singleton** — bootstrap keeps pending runtime registrations ordered by `InitPriority`, and `Singleton<T>` now exposes `HasInstance` / `TryGetInstance(out T)` for safer optional dependencies.
+- **Quality pipeline** — added a root `.editorconfig`, explicit `com.unity.test-framework` dependency, and new edit mode tests covering save identity, provider event forwarding, level map payloads, and bootstrap ordering.
+
 ## [7.4.0] - 2026-03-06
 
 ### Package / Documentation

@@ -1,8 +1,12 @@
 # StateMachineBehaviour<TState>
 
-**Что это:** MonoBehaviour-версия автомата состояний на GameObject (пространство имён `Neo.StateMachine`, файл `Scripts/StateMachine/StateMachineBehaviour.cs`). Вызывает Update/FixedUpdate/LateUpdate для текущего состояния; переходы через StateMachineData и NeoCondition.
+**Что это:** `StateMachineBehaviour<TState>` — generic `MonoBehaviour`-обёртка над `StateMachine<TState>` для кодовых state machine сценариев. Она управляет жизненным циклом состояний, может загружать `StateMachineData`, но не является тем же самым API, что `StateMachineBehaviourBase`. Файл: `Scripts/StateMachine/StateMachineBehaviour.cs`, пространство имён: `Neo.StateMachine`.
 
-**Как использовать:** добавить компонент (Component → Neoxider → Tools → StateMachineBehaviour); задать initialStateTypeName или stateMachineData; при необходимости включить autoEvaluateTransitions. Свойства CurrentStateName, PreviousStateName и др. доступны для NeoCondition.
+**Как использовать:**
+1. Наследуйте свой компонент от `StateMachineBehaviour<IState>` или другого совместимого типа состояний.
+2. Для code-first сценария задайте `initialStateTypeName` или вызывайте `ChangeState<T>()`.
+3. Для no-code/state-data сценария задайте `stateMachineData`.
+4. Если нужен inspector-driven runtime API с событиями и runtime-свойствами, используйте [StateMachineBehaviourBase](./StateMachineBehaviourBase.md).
 
 ---
 
@@ -30,30 +34,30 @@ MonoBehaviour версия State Machine для использования на 
 - `stateMachineData` - конфигурация через ScriptableObject (опционально)
 - `autoEvaluateTransitions` - автоматически оценивать переходы каждый кадр
 
-## Runtime свойства (для условий/отладки)
+## Что реально есть в generic-версии
 
-- `CurrentStateName` (`string`)
-- `PreviousStateName` (`string`)
-- `CurrentStateElapsedTime` (`float`)
-- `StateChangeCount` (`int`)
-- `HasCurrentState` (`bool`)
+- `StateMachine` — доступ к экземпляру `StateMachine<TState>`.
+- `CurrentState` — текущее состояние типа `TState`.
+- `PreviousState` — предыдущее состояние типа `TState`.
+- `ChangeState<T>()` — смена состояния по типу.
+- `ChangeState(string stateName)` — смена состояния по имени из `StateMachineData`.
+- `RegisterTransition(StateTransition transition)` — регистрация перехода.
+- `LoadFromStateMachineData()` — загрузка конфигурации из `StateMachineData`.
 
-Эти свойства можно читать через `ConditionEntry` в переходах (StateMachineData).
+## Чего здесь нет
 
-## События (Inspector)
+В этой странице раньше были перечислены runtime-свойства и inspector events, которые на самом деле относятся к `StateMachineBehaviourBase`.
 
-- `On Initialized`
-- `On State Entered`
-- `On State Exited`
-- `On State Changed` (`from`, `to`)
-- `On Transition Evaluated` (`transitionName`, `result`)
+В `StateMachineBehaviour<TState>` нет:
+- `CurrentStateName`
+- `PreviousStateName`
+- `CurrentStateElapsedTime`
+- `StateChangeCount`
+- `HasCurrentState`
+- inspector-событий `On Initialized`, `On State Entered`, `On State Exited`, `On State Changed`, `On Transition Evaluated`
+- runtime-кнопок `Reload Data`, `Evaluate Now`, `Go To Initial State`, `Change State`
 
-## Runtime Controls (Inspector)
-
-- `Reload Data`
-- `Evaluate Now`
-- `Go To Initial State`
-- `Change State` (ручной выбор состояния из `StateMachineData`)
+Для этого используйте [StateMachineBehaviourBase](./StateMachineBehaviourBase.md).
 
 ## Основные методы
 
@@ -85,5 +89,11 @@ LoadFromStateMachineData();
 ## Примеры
 
 См. основной README.md
+
+## См. также
+
+- [StateMachineBehaviourBase](./StateMachineBehaviourBase.md)
+- [StateMachine](./StateMachine.md)
+- [README](./README.md)
 
 

@@ -10,7 +10,7 @@
 
 📖 **[Полная документация (RU) →](Assets/Neoxider/Docs/README.md)** · 📖 **[English docs →](Assets/Neoxider/DocsEn/README.md)** · 📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** · 📝 **[Changelog →](Assets/Neoxider/CHANGELOG.md)**
 
-**Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — канонический индекс всех модулей. **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — entry point; каждый модуль имеет EN-страницу, при отсутствии полного перевода даны ссылки на русские разделы. Tools-подмодули и samples (NeoxiderPages, UI Extension) включены в оба индекса.
+**Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — канонический индекс всех модулей. **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — английский entry point для верхнеуровневых модулей и ключевых страниц; если глубокая страница ещё не переведена, индекс ведёт в соответствующий русский раздел. Tools-подмодули и samples (NeoxiderPages, UI Extension) включены в оба индекса.
 
 ---
 
@@ -83,6 +83,12 @@
 4. **Перетаскивайте компоненты** из Inspector — большинство работает без кода через UnityEvent
 5. **Изучите документацию** — откройте README в `Docs/` для нужного модуля
 
+## Тесты
+
+- Базовые `EditMode` тесты находятся в `Assets/Neoxider/Editor/Tests/`.
+- Они покрывают критичные сценарии для `Save`, `Level`, `Bootstrap` и legacy/editor-поведения.
+- Для запуска в Unity используйте `Test Runner` или пакет `com.unity.test-framework`.
+
 ---
 
 ## Таблица модулей
@@ -96,6 +102,7 @@
 | [**Shop**](#shop--магазин) | Магазин, валюта, покупки |
 | [**Save**](#save--сохранения) | PlayerPrefs, JSON-файлы, атрибут `[SaveField]` |
 | [**Quest**](#quest--квесты) | Конфиги квестов, менеджер, цели, runtime-состояние |
+| [**Progression**](Assets/Neoxider/Docs/Progression/README.md) | XP, уровни, unlock tree, perk tree и persistent progression |
 | [**Cards**](#cards--карточные-игры) | MVP-архитектура, покер, "Пьяница" |
 | [**StateMachine**](#statemachine--машина-состояний) | Код + No-Code, визуальный редактор |
 | [**Animations**](#animations--анимации) | Float, Color, Vector3 анимации |

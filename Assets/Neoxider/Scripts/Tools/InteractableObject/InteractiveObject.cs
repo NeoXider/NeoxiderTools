@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -28,19 +25,6 @@ namespace Neo.Tools
             Right = 1,
             Middle = 2
         }
-
-        private static bool physicsRaycasterEnsured3D;
-        private static bool physicsRaycasterEnsured2D;
-        private static bool eventSystemChecked;
-
-        private static readonly Type KeyboardType =
-            ResolveType("UnityEngine.InputSystem.Keyboard");
-
-        private static readonly Type MouseType =
-            ResolveType("UnityEngine.InputSystem.Mouse");
-
-        private static readonly Type InputSystemUiInputModuleType =
-            ResolveType("UnityEngine.InputSystem.UI.InputSystemUIInputModule");
 
         [Header("Event System")] [SerializeField]
         private bool _autoCheckEventSystem = true;
@@ -127,23 +111,40 @@ namespace Neo.Tools
 
         [Header("Debug")] [SerializeField] private bool drawInteractionRayForOneSecond;
         [SerializeField] private float interactionRayDrawDuration = 1f;
-        private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[8];
-        private readonly RaycastHit[] lookHits3D = new RaycastHit[8];
+        private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[16];
+        private readonly RaycastHit[] lookHits3D = new RaycastHit[16];
+        private readonly bool[] mouseButtonsHeldPrev = new bool[3];
+        private readonly bool[] mouseButtonsPressedOnObject = new bool[3];
 
+        private Camera cachedCamera;
+        private Collider cachedCollider3D;
+        private Collider2D cachedCollider2D;
         private float clickTime;
+        private Vector3 currentMouseHitPoint;
+        private bool hasCurrentMouseHit;
         private bool keyHeldPrev;
         private Color lastDebugRayColor = Color.cyan;
+        private PointerEventData.InputButton lastProcessedClickButton;
+        private int lastProcessedClickFrame = -1;
         private Vector3 lastDebugRayEnd;
         private Vector3 lastDebugRayStart;
         private float lastDebugRayUntilTime;
-        private bool mouseHeldPrev;
         private bool wasHoveredByRaycast;
         private bool wasInRange;
 
         private void Awake()
         {
-            CheckEventSystemOnce();
-            TryEnsureNeededRaycasterOnce();
+            InteractiveObjectSceneSetup.EnsureEventSystem(this, _autoCheckEventSystem, _autoCreateEventSystemIfMissing);
+
+            bool hasCollider3D = TryGetComponent<Collider>(out _);
+            bool hasCollider2D = TryGetComponent<Collider2D>(out _);
+            if (!InteractiveObjectSceneSetup.TryEnsureRaycasters(this, hasCollider3D, hasCollider2D))
+            {
+                enabled = false;
+                return;
+            }
+
+            RefreshCachedReferences();
 
             if (distanceCheckPoint == null && Camera.main != null)
             {
@@ -164,6 +165,12 @@ namespace Neo.Tools
                 return;
             }
 
+            if (useMouseInteraction)
+            {
+                UpdateMouseHoverRaycast();
+                UpdateMouseInput();
+            }
+
             bool inRange = IsInRange();
 
             if (inRange && !wasInRange)
@@ -177,15 +184,9 @@ namespace Neo.Tools
 
             wasInRange = inRange;
 
-            if (!inRange && interactionDistance > 0f)
+            if (!inRange && interactionDistance > 0f && !useKeyboardInteraction)
             {
                 return;
-            }
-
-            if (useMouseInteraction)
-            {
-                UpdateMouseHoverRaycast();
-                UpdateMouseInput();
             }
 
             if (useKeyboardInteraction)
@@ -219,32 +220,15 @@ namespace Neo.Tools
                 return;
             }
 
-            if (interactionDistance > 0f && !IsInRange())
+            Vector3 interactionPoint = hasCurrentMouseHit
+                ? currentMouseHitPoint
+                : GetInteractionTargetPosition();
+            if (!CanMouseInteractAtPoint(interactionPoint))
             {
                 return;
             }
 
-            if (eventData.button == PointerEventData.InputButton.Left)
-            {
-                if (doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold)
-                {
-                    onDoubleClick.Invoke();
-                }
-                else
-                {
-                    onClick.Invoke();
-                }
-
-                clickTime = Time.time;
-            }
-            else if (eventData.button == PointerEventData.InputButton.Right)
-            {
-                onRightClick.Invoke();
-            }
-            else if (eventData.button == PointerEventData.InputButton.Middle)
-            {
-                onMiddleClick.Invoke();
-            }
+            ProcessClick(eventData.button);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -274,47 +258,60 @@ namespace Neo.Tools
 
         private void UpdateMouseInput()
         {
-            int mouseIndex = (int)downUpMouseButton;
-            if (!TryGetMouseButton(mouseIndex, out bool mouseHeld))
-            {
-                mouseHeldPrev = false;
-                return;
-            }
+            bool canUseCurrentMouseTarget = hasCurrentMouseHit && CanMouseInteractAtPoint(currentMouseHitPoint);
 
-            if (mouseHeld && !mouseHeldPrev)
+            for (int buttonIndex = 0; buttonIndex < mouseButtonsHeldPrev.Length; buttonIndex++)
             {
-                if (IsHovered)
+                if (!MouseInputCompat.TryGetButton(buttonIndex, out bool mouseHeld))
                 {
-                    bool inRange = IsInRange();
-                    if (inRange || interactionDistance <= 0f)
+                    mouseButtonsHeldPrev[buttonIndex] = false;
+                    mouseButtonsPressedOnObject[buttonIndex] = false;
+                    continue;
+                }
+
+                bool wasHeld = mouseButtonsHeldPrev[buttonIndex];
+                bool startedOnObject = IsHovered && canUseCurrentMouseTarget;
+
+                if (mouseHeld && !wasHeld)
+                {
+                    mouseButtonsPressedOnObject[buttonIndex] = startedOnObject;
+                    if (buttonIndex == (int)downUpMouseButton && startedOnObject)
                     {
                         onInteractDown?.Invoke();
                     }
                 }
-            }
-            else if (!mouseHeld && mouseHeldPrev)
-            {
-                bool inRange = IsInRange();
-                if (inRange || interactionDistance <= 0f)
+                else if (!mouseHeld && wasHeld)
                 {
-                    onInteractUp?.Invoke();
-                }
-            }
+                    if (buttonIndex == (int)downUpMouseButton && canUseCurrentMouseTarget)
+                    {
+                        onInteractUp?.Invoke();
+                    }
 
-            mouseHeldPrev = mouseHeld;
+                    if (mouseButtonsPressedOnObject[buttonIndex] && IsHovered && canUseCurrentMouseTarget)
+                    {
+                        ProcessClick((PointerEventData.InputButton)buttonIndex);
+                    }
+
+                    mouseButtonsPressedOnObject[buttonIndex] = false;
+                }
+
+                mouseButtonsHeldPrev[buttonIndex] = mouseHeld;
+            }
         }
 
         private void UpdateMouseHoverRaycast()
         {
-            Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
+            RefreshCachedReferences();
+            Camera cam = cachedCamera;
             if (cam == null)
             {
+                hasCurrentMouseHit = false;
                 return;
             }
 
-            Collider collider = GetComponent<Collider>();
-            if (collider == null || !collider.enabled)
+            if (!HasEnabledInteractionCollider())
             {
+                hasCurrentMouseHit = false;
                 if (wasHoveredByRaycast)
                 {
                     wasHoveredByRaycast = false;
@@ -327,21 +324,21 @@ namespace Neo.Tools
                 return;
             }
 
-            bool inRange = interactionDistance > 0f ? IsInRange() : true;
-
-            if (!TryGetMousePosition(out Vector3 mousePos))
+            if (!TryGetCurrentMouseTargetHit(cam, out Vector3 hitPoint))
             {
+                hasCurrentMouseHit = false;
+                if (wasHoveredByRaycast && IsHovered)
+                {
+                    wasHoveredByRaycast = false;
+                    OnHoverExitRaycast();
+                }
                 return;
             }
 
-            Ray ray = cam.ScreenPointToRay(mousePos);
-            RaycastHit hit;
-            QueryTriggerInteraction triggerInteraction = includeTriggerCollidersInMouseRaycast
-                ? QueryTriggerInteraction.Collide
-                : QueryTriggerInteraction.Ignore;
-            bool raycastHit = Physics.Raycast(ray, out hit, float.MaxValue, ~0, triggerInteraction) &&
-                              hit.collider == collider;
-            bool isHoveredNow = raycastHit && inRange;
+            currentMouseHitPoint = hitPoint;
+            hasCurrentMouseHit = true;
+
+            bool isHoveredNow = CanMouseInteractAtPoint(hitPoint);
 
             if (isHoveredNow && !wasHoveredByRaycast)
             {
@@ -351,7 +348,7 @@ namespace Neo.Tools
                     OnHoverEnterRaycast();
                 }
             }
-            else if ((!isHoveredNow || !inRange) && wasHoveredByRaycast)
+            else if (!isHoveredNow && wasHoveredByRaycast)
             {
                 wasHoveredByRaycast = false;
                 if (IsHovered)
@@ -359,7 +356,7 @@ namespace Neo.Tools
                     OnHoverExitRaycast();
                 }
             }
-            else if (IsHovered && !inRange && interactionDistance > 0f)
+            else if (IsHovered && !isHoveredNow)
             {
                 OnHoverExitRaycast();
             }
@@ -420,6 +417,11 @@ namespace Neo.Tools
 
         private bool IsInRange()
         {
+            return IsInRange(GetInteractionTargetPosition());
+        }
+
+        private bool IsInRange(Vector3 targetPos)
+        {
             if (interactionDistance <= 0f && !checkObstacles)
             {
                 return true;
@@ -431,7 +433,6 @@ namespace Neo.Tools
             }
 
             Vector3 checkPointPos = distanceCheckPoint.position;
-            Vector3 targetPos = GetInteractionTargetPosition();
             float distanceSqr = (targetPos - checkPointPos).sqrMagnitude;
 
             if (interactionDistance > 0f && distanceSqr > interactionDistance * interactionDistance)
@@ -681,17 +682,151 @@ namespace Neo.Tools
 
         private Vector3 GetInteractionTargetPosition()
         {
-            if (TryGetComponent(out Collider col3D))
+            RefreshCachedReferences();
+            if (cachedCollider3D != null)
             {
-                return col3D.bounds.center;
+                return cachedCollider3D.bounds.center;
             }
 
-            if (TryGetComponent(out Collider2D col2D))
+            if (cachedCollider2D != null)
             {
-                return col2D.bounds.center;
+                return cachedCollider2D.bounds.center;
             }
 
             return transform.position;
+        }
+
+        private bool CanMouseInteractAtPoint(Vector3 interactionPoint)
+        {
+            return interactionDistance <= 0f && !checkObstacles || IsInRange(interactionPoint);
+        }
+
+        private void ProcessClick(PointerEventData.InputButton button)
+        {
+            if (lastProcessedClickFrame == Time.frameCount && lastProcessedClickButton == button)
+            {
+                return;
+            }
+
+            lastProcessedClickFrame = Time.frameCount;
+            lastProcessedClickButton = button;
+
+            if (button == PointerEventData.InputButton.Left)
+            {
+                if (doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold)
+                {
+                    onDoubleClick.Invoke();
+                }
+                else
+                {
+                    onClick.Invoke();
+                }
+
+                clickTime = Time.time;
+                return;
+            }
+
+            if (button == PointerEventData.InputButton.Right)
+            {
+                onRightClick.Invoke();
+                return;
+            }
+
+            if (button == PointerEventData.InputButton.Middle)
+            {
+                onMiddleClick.Invoke();
+            }
+        }
+
+        private bool HasEnabledInteractionCollider()
+        {
+            return cachedCollider3D != null && cachedCollider3D.enabled ||
+                   cachedCollider2D != null && cachedCollider2D.enabled;
+        }
+
+        private void RefreshCachedReferences()
+        {
+            if (cachedCamera == null)
+            {
+                cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+            }
+
+            if (cachedCollider3D == null)
+            {
+                TryGetComponent(out cachedCollider3D);
+            }
+
+            if (cachedCollider2D == null)
+            {
+                TryGetComponent(out cachedCollider2D);
+            }
+        }
+
+        private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
+        {
+            hitPoint = Vector3.zero;
+
+            if (cam == null || !MouseInputCompat.TryGetPosition(out Vector3 mousePos))
+            {
+                return false;
+            }
+
+            Ray ray = cam.ScreenPointToRay(mousePos);
+
+            if (cachedCollider3D != null && cachedCollider3D.enabled)
+            {
+                QueryTriggerInteraction triggerInteraction = includeTriggerCollidersInMouseRaycast
+                    ? QueryTriggerInteraction.Collide
+                    : QueryTriggerInteraction.Ignore;
+                int hitCount = Physics.RaycastNonAlloc(ray, lookHits3D, float.MaxValue, ~0, triggerInteraction);
+                float nearestTargetDistance = float.MaxValue;
+                bool hasTargetHit = false;
+
+                for (int i = 0; i < hitCount; i++)
+                {
+                    Collider hitCollider = lookHits3D[i].collider;
+                    if (hitCollider == null || !IsTargetHierarchyCollider(hitCollider))
+                    {
+                        continue;
+                    }
+
+                    if (lookHits3D[i].distance < nearestTargetDistance)
+                    {
+                        nearestTargetDistance = lookHits3D[i].distance;
+                        hitPoint = lookHits3D[i].point;
+                        hasTargetHit = true;
+                    }
+                }
+
+                return hasTargetHit;
+            }
+
+            if (cachedCollider2D != null && cachedCollider2D.enabled)
+            {
+                int hitCount2D = Physics2D.GetRayIntersectionNonAlloc(ray, lookHits2D, float.MaxValue, ~0);
+                float nearestTargetDistance2D = float.MaxValue;
+                bool hasTargetHit2D = false;
+
+                for (int i = 0; i < hitCount2D; i++)
+                {
+                    Collider2D hitCollider = lookHits2D[i].collider;
+                    if (hitCollider == null || !IsTargetHierarchyCollider(hitCollider))
+                    {
+                        continue;
+                    }
+
+                    if (lookHits2D[i].distance < nearestTargetDistance2D)
+                    {
+                        nearestTargetDistance2D = lookHits2D[i].distance;
+                        hitPoint = lookHits2D[i].point;
+                        hasTargetHit2D = true;
+                    }
+                }
+
+                return hasTargetHit2D;
+            }
+
+            return false;
         }
 
         private bool ShouldIgnoreHitCollider(Component hitCollider)
@@ -752,422 +887,12 @@ namespace Neo.Tools
 
         private bool IsKeyboardActionDown()
         {
-            try
-            {
-                if (Input.GetKeyDown(keyboardKey))
-                {
-                    return true;
-                }
-            }
-            catch (InvalidOperationException)
-            {
-            }
-
-            return ReadNewInputKeyState(keyboardKey, "wasPressedThisFrame");
+            return KeyInputCompat.GetKeyDown(keyboardKey);
         }
 
         private bool IsKeyboardActionUp()
         {
-            try
-            {
-                if (Input.GetKeyUp(keyboardKey))
-                {
-                    return true;
-                }
-            }
-            catch (InvalidOperationException)
-            {
-            }
-
-            return ReadNewInputKeyState(keyboardKey, "wasReleasedThisFrame");
-        }
-
-        private static bool ReadNewInputKeyState(KeyCode keyCode, string statePropertyName)
-        {
-            if (KeyboardType == null)
-            {
-                return false;
-            }
-
-            string keyProperty = GetInputSystemKeyPropertyName(keyCode);
-            if (string.IsNullOrEmpty(keyProperty))
-            {
-                return false;
-            }
-
-            PropertyInfo currentProperty =
-                KeyboardType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-            object keyboard = currentProperty?.GetValue(null);
-            if (keyboard == null)
-            {
-                return false;
-            }
-
-            PropertyInfo keyControlProperty =
-                KeyboardType.GetProperty(keyProperty, BindingFlags.Public | BindingFlags.Instance);
-            object keyControl = keyControlProperty?.GetValue(keyboard);
-            if (keyControl == null)
-            {
-                return false;
-            }
-
-            PropertyInfo stateProperty = keyControl.GetType()
-                .GetProperty(statePropertyName, BindingFlags.Public | BindingFlags.Instance);
-            return stateProperty != null && stateProperty.PropertyType == typeof(bool) &&
-                   (bool)stateProperty.GetValue(keyControl);
-        }
-
-        private static string GetInputSystemKeyPropertyName(KeyCode keyCode)
-        {
-            if (keyCode >= KeyCode.A && keyCode <= KeyCode.Z)
-            {
-                return char.ToLowerInvariant((char)('a' + (keyCode - KeyCode.A))) + "Key";
-            }
-
-            if (keyCode >= KeyCode.Alpha0 && keyCode <= KeyCode.Alpha9)
-            {
-                int digit = keyCode - KeyCode.Alpha0;
-                return "digit" + digit + "Key";
-            }
-
-            switch (keyCode)
-            {
-                case KeyCode.Space:
-                    return "spaceKey";
-                case KeyCode.Return:
-                case KeyCode.KeypadEnter:
-                    return "enterKey";
-                case KeyCode.Escape:
-                    return "escapeKey";
-                case KeyCode.Tab:
-                    return "tabKey";
-                case KeyCode.Backspace:
-                    return "backspaceKey";
-                case KeyCode.LeftShift:
-                    return "leftShiftKey";
-                case KeyCode.RightShift:
-                    return "rightShiftKey";
-                case KeyCode.LeftControl:
-                    return "leftCtrlKey";
-                case KeyCode.RightControl:
-                    return "rightCtrlKey";
-                case KeyCode.LeftAlt:
-                    return "leftAltKey";
-                case KeyCode.RightAlt:
-                    return "rightAltKey";
-                case KeyCode.UpArrow:
-                    return "upArrowKey";
-                case KeyCode.DownArrow:
-                    return "downArrowKey";
-                case KeyCode.LeftArrow:
-                    return "leftArrowKey";
-                case KeyCode.RightArrow:
-                    return "rightArrowKey";
-                default:
-                    return null;
-            }
-        }
-
-        private static bool TryGetMousePosition(out Vector3 position)
-        {
-            try
-            {
-                position = Input.mousePosition;
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                if (TryGetMousePositionFromNewInputSystem(out position))
-                {
-                    return true;
-                }
-
-                position = Vector3.zero;
-                return false;
-            }
-        }
-
-        private static bool TryGetMousePositionFromNewInputSystem(out Vector3 position)
-        {
-            position = Vector3.zero;
-            if (MouseType == null)
-            {
-                return false;
-            }
-
-            PropertyInfo currentProperty =
-                MouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-            object mouse = currentProperty?.GetValue(null);
-            if (mouse == null)
-            {
-                return false;
-            }
-
-            PropertyInfo positionProperty =
-                MouseType.GetProperty("position", BindingFlags.Public | BindingFlags.Instance);
-            object positionControl = positionProperty?.GetValue(mouse);
-            if (positionControl == null)
-            {
-                return false;
-            }
-
-            MethodInfo readValueMethod = positionControl.GetType().GetMethod("ReadValue", Type.EmptyTypes);
-            if (readValueMethod == null)
-            {
-                return false;
-            }
-
-            object value = readValueMethod.Invoke(positionControl, null);
-            if (value is Vector2 v2)
-            {
-                position = new Vector3(v2.x, v2.y, 0f);
-                return true;
-            }
-
-            return false;
-        }
-
-        private static bool TryGetMouseButton(int buttonIndex, out bool isPressed)
-        {
-            try
-            {
-                isPressed = Input.GetMouseButton(buttonIndex);
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                if (TryGetMouseButtonFromNewInputSystem(buttonIndex, out isPressed))
-                {
-                    return true;
-                }
-
-                isPressed = false;
-                return false;
-            }
-        }
-
-        private static bool TryGetMouseButtonFromNewInputSystem(int buttonIndex, out bool isPressed)
-        {
-            isPressed = false;
-            if (MouseType == null)
-            {
-                return false;
-            }
-
-            PropertyInfo currentProperty =
-                MouseType.GetProperty("current", BindingFlags.Public | BindingFlags.Static);
-            object mouse = currentProperty?.GetValue(null);
-            if (mouse == null)
-            {
-                return false;
-            }
-
-            string buttonName = buttonIndex switch
-            {
-                0 => "leftButton",
-                1 => "rightButton",
-                2 => "middleButton",
-                _ => null
-            };
-            if (buttonName == null)
-            {
-                return false;
-            }
-
-            PropertyInfo buttonProperty =
-                MouseType.GetProperty(buttonName, BindingFlags.Public | BindingFlags.Instance);
-            object buttonControl = buttonProperty?.GetValue(mouse);
-            if (buttonControl == null)
-            {
-                return false;
-            }
-
-            PropertyInfo isPressedProperty = buttonControl.GetType()
-                .GetProperty("isPressed", BindingFlags.Public | BindingFlags.Instance);
-            if (isPressedProperty?.PropertyType != typeof(bool))
-            {
-                return false;
-            }
-
-            isPressed = (bool)isPressedProperty.GetValue(buttonControl);
-            return true;
-        }
-
-        private void CheckEventSystemOnce()
-        {
-            if (!_autoCheckEventSystem || eventSystemChecked)
-            {
-                return;
-            }
-
-            EventSystem eventSystem = EventSystem.current ?? FindObjectOfType<EventSystem>();
-            if (eventSystem == null)
-            {
-                if (_autoCreateEventSystemIfMissing)
-                {
-                    eventSystem = CreateEventSystem();
-                }
-                else
-                {
-                    Debug.LogWarning("InteractiveObject: EventSystem not found in scene", this);
-                }
-            }
-
-            if (eventSystem != null)
-            {
-                EnsureInputModule(eventSystem.gameObject);
-            }
-
-            eventSystemChecked = true;
-        }
-
-        private EventSystem CreateEventSystem()
-        {
-            GameObject eventSystemObject = new("EventSystem", typeof(EventSystem));
-            EventSystem eventSystem = eventSystemObject.GetComponent<EventSystem>();
-            EnsureInputModule(eventSystemObject);
-            Debug.LogWarning(
-                "InteractiveObject: EventSystem not found in scene. Created EventSystem automatically.",
-                eventSystemObject);
-            return eventSystem;
-        }
-
-        private void EnsureInputModule(GameObject eventSystemObject)
-        {
-            if (eventSystemObject == null)
-            {
-                return;
-            }
-
-            bool legacyInputAvailable = IsLegacyInputAvailable();
-            if (!legacyInputAvailable)
-            {
-                RemoveStandaloneInputModule(eventSystemObject);
-
-                if (InputSystemUiInputModuleType != null)
-                {
-                    if (eventSystemObject.GetComponent(InputSystemUiInputModuleType) == null)
-                    {
-                        eventSystemObject.AddComponent(InputSystemUiInputModuleType);
-                    }
-
-                    return;
-                }
-
-                Debug.LogWarning(
-                    "InteractiveObject: Input System is active, but InputSystemUIInputModule type is unavailable. StandaloneInputModule was removed to avoid InvalidOperationException.",
-                    eventSystemObject);
-                return;
-            }
-
-            if (eventSystemObject.GetComponent<BaseInputModule>() != null)
-            {
-                return;
-            }
-
-            eventSystemObject.AddComponent<StandaloneInputModule>();
-        }
-
-        private static bool IsLegacyInputAvailable()
-        {
-            try
-            {
-                Vector3 _ = Input.mousePosition;
-                return true;
-            }
-            catch (InvalidOperationException)
-            {
-                return false;
-            }
-        }
-
-        private static void RemoveStandaloneInputModule(GameObject eventSystemObject)
-        {
-            StandaloneInputModule[] modules = eventSystemObject.GetComponents<StandaloneInputModule>();
-            foreach (StandaloneInputModule module in modules)
-            {
-                if (module == null)
-                {
-                    continue;
-                }
-
-                if (Application.isPlaying)
-                {
-                    Destroy(module);
-                }
-                else
-                {
-                    DestroyImmediate(module);
-                }
-            }
-        }
-
-        private static Type ResolveType(string fullTypeName)
-        {
-            TryLoadAssembly("Unity.InputSystem");
-            TryLoadAssembly("Unity.InputSystem.ForUI");
-
-            Type directType = Type.GetType(fullTypeName, false);
-            if (directType != null)
-            {
-                return directType;
-            }
-
-            Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            return assemblies.Select(assembly => assembly.GetType(fullTypeName, false)).FirstOrDefault(type => type != null);
-        }
-
-        private static void TryLoadAssembly(string assemblyName)
-        {
-            try
-            {
-                Assembly.Load(assemblyName);
-            }
-            catch
-            {
-            }
-        }
-
-        private void TryEnsureNeededRaycasterOnce()
-        {
-            Camera cam = Camera.main ?? FindFirstObjectByType<Camera>();
-            bool hasCollider3DCheck = TryGetComponent<Collider>(out _);
-            bool hasCollider2DCheck = TryGetComponent<Collider2D>(out _);
-
-            if (cam == null)
-            {
-                Debug.LogError(
-                    $"[InteractiveObject] No camera found on {gameObject.name}. Component will be disabled.", this);
-                enabled = false;
-                return;
-            }
-
-            bool isUI = GetComponentInParent<Canvas>() != null && TryGetComponent<RectTransform>(out _);
-
-            if (isUI)
-            {
-                return;
-            }
-
-            if (hasCollider2DCheck && !physicsRaycasterEnsured2D)
-            {
-                if (cam.GetComponent<Physics2DRaycaster>() == null)
-                {
-                    cam.gameObject.AddComponent<Physics2DRaycaster>();
-                }
-
-                physicsRaycasterEnsured2D = true;
-            }
-
-            if (hasCollider3DCheck && !physicsRaycasterEnsured3D)
-            {
-                if (cam.GetComponent<PhysicsRaycaster>() == null)
-                {
-                    cam.gameObject.AddComponent<PhysicsRaycaster>();
-                }
-
-                physicsRaycasterEnsured3D = true;
-            }
+            return KeyInputCompat.GetKeyUp(keyboardKey);
         }
 
         #region === Public API ===

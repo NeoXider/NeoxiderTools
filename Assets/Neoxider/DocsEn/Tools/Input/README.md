@@ -7,6 +7,7 @@ Swipe, multi-key, mouse input and effects. Scripts in `Scripts/Tools/Input/`. Fu
 | Page | Description |
 |------|-------------|
 | [Input README](../../../Docs/Tools/Input/README.md) | Overview |
+| [KeyInputCompat](../../../Docs/Tools/Input/KeyInputCompat.md) | Legacy/new input keyboard compatibility |
 | [SwipeController](../../../Docs/Tools/Input/SwipeController.md) | Swipe gestures |
 | [MultiKeyEventTrigger](../../../Docs/Tools/Input/MultiKeyEventTrigger.md) | Multi-key shortcuts |
 | [MouseInputManager](../../../Docs/Tools/Input/MouseInputManager.md) | Mouse input singleton |

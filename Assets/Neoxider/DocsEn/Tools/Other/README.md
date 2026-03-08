@@ -8,4 +8,4 @@ Misc utilities: camera shake, AI navigation bridge, Spine controller, revert amo
 |------|-------------|
 | [Other README](../../../Docs/Tools/Other/README.md) | Overview |
 | [CameraShake](../../../Docs/Tools/Other/CameraShake.md), [RevertAmount](../../../Docs/Tools/Other/RevertAmount.md) | Common |
-| [AiNavigation](../../../Docs/Tools/Other/AiNavigation.md), [SpineController](../../../Docs/Tools/Other/SpineController.md), [BillboardUniversal](../../../Docs/Tools/Other/BillboardUniversal.md) | Integrations |
+| [AiNavigation](../../../Docs/Tools/Other/AiNavigation.md), [SpineController](../../../Docs/Tools/Other/SpineController.md), [BillboardUniversal](../../../Docs/Tools/Other/BillboardUniversal.md) | Integrations (`AiNavigation` is deprecated; use `NpcNavigation`) |

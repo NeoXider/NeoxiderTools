@@ -42,6 +42,8 @@ namespace Neo.Tools
         private bool _autoFindComponents;
 
         private readonly List<IInit> _initializables = new();
+        private readonly HashSet<IInit> _initializedInitializables = new();
+        private bool _bootstrapCompleted;
 
         protected override bool DontDestroyOnLoadEnabled => true;
 
@@ -56,50 +58,86 @@ namespace Neo.Tools
         {
             base.Init();
 
-            // First initialize manual components
+            CollectInitializables();
+            InitializePendingRegistrations();
+            _bootstrapCompleted = true;
+        }
+
+        /// <summary>
+        /// Registers a component for bootstrap initialization.
+        /// </summary>
+        /// <param name="initializable">Component implementing <see cref="IInit"/>.</param>
+        /// <remarks>
+        /// If bootstrap has already completed its first pass, the component is initialized
+        /// through the same priority-based pipeline as startup registrations.
+        /// </remarks>
+        public void Register(IInit initializable)
+        {
+            if (initializable == null || _initializables.Contains(initializable))
+            {
+                return;
+            }
+
+            _initializables.Add(initializable);
+            if (_bootstrapCompleted)
+            {
+                InitializePendingRegistrations();
+            }
+        }
+
+        /// <summary>
+        /// Removes a component from bootstrap tracking.
+        /// </summary>
+        /// <param name="initializable">Component implementing <see cref="IInit"/>.</param>
+        public void Unregister(IInit initializable)
+        {
+            if (initializable == null)
+            {
+                return;
+            }
+
+            _initializables.Remove(initializable);
+            _initializedInitializables.Remove(initializable);
+        }
+
+        private void CollectInitializables()
+        {
             foreach (MonoBehaviour component in _manualInitializables)
             {
-                if (component is IInit initializable)
+                if (component is IInit initializable && !_initializables.Contains(initializable))
                 {
                     _initializables.Add(initializable);
                 }
             }
 
-            // Then find other components if auto-find is enabled
-            if (_autoFindComponents)
+            if (!_autoFindComponents)
             {
-                MonoBehaviour[] components =
-                    FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-                foreach (MonoBehaviour component in components)
-                {
-                    if (component is IInit initializable && !_initializables.Contains(initializable))
-                    {
-                        _initializables.Add(initializable);
-                    }
-                }
+                return;
             }
 
-            // Sort by priority and initialize
-            List<IInit> sortedInitializables = _initializables.OrderByDescending(x => x.InitPriority).ToList();
-            foreach (IInit initializable in sortedInitializables)
+            MonoBehaviour[] components =
+                FindObjectsByType<MonoBehaviour>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            foreach (MonoBehaviour component in components)
             {
-                initializable.Init();
+                if (component is IInit initializable && !_initializables.Contains(initializable))
+                {
+                    _initializables.Add(initializable);
+                }
             }
         }
 
-        /// <summary>
-        ///     Registers a component for initialization
-        /// </summary>
-        /// <param name="initializable">Component implementing IInit interface</param>
-        /// <remarks>
-        ///     If the component is not already registered, adds it to the initialization list and initializes it immediately
-        /// </remarks>
-        public void Register(IInit initializable)
+        private void InitializePendingRegistrations()
         {
-            if (!_initializables.Contains(initializable))
+            List<IInit> sortedInitializables = _initializables
+                .Where(initializable => initializable != null && !_initializedInitializables.Contains(initializable))
+                .OrderByDescending(initializable => initializable.InitPriority)
+                .ToList();
+
+            for (int i = 0; i < sortedInitializables.Count; i++)
             {
-                _initializables.Add(initializable);
+                IInit initializable = sortedInitializables[i];
                 initializable.Init();
+                _initializedInitializables.Add(initializable);
             }
         }
     }

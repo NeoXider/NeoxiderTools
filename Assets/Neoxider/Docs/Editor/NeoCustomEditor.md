@@ -22,7 +22,7 @@
 
 ### NeoCustomEditor
 - **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/PropertyAttribute/NeoCustomEditor.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/PropertyAttribute/NeoCustomEditor.cs`
 
 **Описание**
 Кастомный редактор для всех `MonoBehaviour`, который активирует всю магию атрибутов, таких как `[Button]`, `[GetComponent]` и `[LoadFromResources]`.

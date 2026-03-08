@@ -1,6 +1,10 @@
 # Tools
 
-Раздел `Tools` содержит готовые gameplay-утилиты и reusable-компоненты, которые чаще всего добавляются прямо на объекты сцены.
+**Что это:** `Tools` — самый большой раздел пакета с reusable gameplay-компонентами: движение, инвентарь, ввод, спавнеры, время, визуальные utility, менеджеры и вспомогательные runtime-системы. Скрипты лежат в `Scripts/Tools/`.
+
+**Оглавление:** используйте индекс подмодулей ниже или быстрый старт по сценариям.
+
+---
 
 ## С чего начать
 
@@ -8,7 +12,7 @@
 - Нужен спавн или object pooling: [`Spawner/README.md`](./Spawner/README.md)
 - Нужен movement/input workflow: [`Move/README.md`](./Move/README.md) и [`Input/README.md`](./Input/README.md)
 - Нужен диалоговый UI flow: [`Dialogue/README.md`](./Dialogue/README.md)
-- Нужны utility-компоненты (`Counter`, `Health`, `AnimatorParameterDriver`): [`Components/README.md`](./Components/README.md)
+- Нужны utility-компоненты (`Counter`, `AnimatorParameterDriver`, `RpgStatsDamageableBridge`); для HP — [RPG](../Rpg/README.md): [`Components/README.md`](./Components/README.md)
 
 ## Индекс подмодулей
 

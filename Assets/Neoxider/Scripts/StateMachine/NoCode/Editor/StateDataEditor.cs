@@ -30,19 +30,47 @@ namespace Neo.StateMachine.NoCode.Editor
             serializedObject.Update();
 
             SerializedProperty stateNameProp = serializedObject.FindProperty("stateName");
-            EditorGUILayout.PropertyField(stateNameProp, new GUIContent("State Name"));
+            SerializedProperty onEnterProp = serializedObject.FindProperty("onEnterActions");
+            SerializedProperty onUpdateProp = serializedObject.FindProperty("onUpdateActions");
+            SerializedProperty onExitProp = serializedObject.FindProperty("onExitActions");
 
-            EditorGUILayout.Space(8);
-            DrawActionList("On Enter Actions", serializedObject.FindProperty("onEnterActions"));
+            DrawSummary(stateNameProp, onEnterProp, onUpdateProp, onExitProp);
+
+            NeoxiderEditorGUI.BeginSection("Identity", "Имя состояния и базовая конфигурация asset.");
+            EditorGUILayout.PropertyField(stateNameProp, new GUIContent("State Name"));
+            NeoxiderEditorGUI.EndSection();
+
             EditorGUILayout.Space(6);
-            DrawActionList("On Update Actions", serializedObject.FindProperty("onUpdateActions"));
+            DrawActionList("On Enter Actions", onEnterProp, "Выполняются один раз при входе в состояние.");
             EditorGUILayout.Space(6);
-            DrawActionList("On Exit Actions", serializedObject.FindProperty("onExitActions"));
+            DrawActionList("On Update Actions", onUpdateProp, "Выполняются каждый кадр, пока состояние активно.");
+            EditorGUILayout.Space(6);
+            DrawActionList("On Exit Actions", onExitProp, "Выполняются при выходе из состояния.");
 
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawActionList(string label, SerializedProperty listProperty)
+        private void DrawSummary(SerializedProperty stateNameProp, SerializedProperty onEnterProp,
+            SerializedProperty onUpdateProp, SerializedProperty onExitProp)
+        {
+            string title = string.IsNullOrWhiteSpace(stateNameProp.stringValue) ? target.name : stateNameProp.stringValue;
+
+            NeoxiderEditorGUI.DrawSummaryCard(title,
+                "State asset с группами действий для enter, update и exit. Типы действий уже закешированы и не пересчитываются при каждой отрисовке.",
+                new NeoxiderEditorGUI.Badge($"Enter {onEnterProp.arraySize}", new Color(0.18f, 0.62f, 0.32f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Update {onUpdateProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Exit {onExitProp.arraySize}", new Color(0.78f, 0.46f, 0.18f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Action Types {actionTypes?.Length ?? 0}", new Color(0.42f, 0.34f, 0.82f, 1f)));
+
+            if (string.IsNullOrWhiteSpace(stateNameProp.stringValue))
+            {
+                EditorGUILayout.HelpBox("У состояния пустое имя. Лучше задать осмысленное название, чтобы переходы и debug были читаемыми.", MessageType.Warning);
+            }
+
+            EditorGUILayout.Space(4f);
+        }
+
+        private void DrawActionList(string label, SerializedProperty listProperty, string subtitle)
         {
             if (listProperty == null)
             {
@@ -50,7 +78,23 @@ namespace Neo.StateMachine.NoCode.Editor
                 return;
             }
 
-            EditorGUILayout.LabelField(label, EditorStyles.boldLabel);
+            NeoxiderEditorGUI.BeginSection(label, subtitle);
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.LabelField($"Count: {listProperty.arraySize}", EditorStyles.miniBoldLabel);
+                GUILayout.FlexibleSpace();
+
+                if (GUILayout.Button($"Add {label}", GUILayout.Height(22), GUILayout.Width(140)))
+                {
+                    ShowAddActionMenu(listProperty);
+                }
+            }
+
+            if (listProperty.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox("Список пуст. Можно оставить так, если этот этап жизненного цикла не нужен.", MessageType.Info);
+            }
 
             int removeIndex = -1;
             for (int i = 0; i < listProperty.arraySize; i++)
@@ -74,10 +118,7 @@ namespace Neo.StateMachine.NoCode.Editor
                 listProperty.DeleteArrayElementAtIndex(removeIndex);
             }
 
-            if (GUILayout.Button($"Add {label}", GUILayout.Height(22)))
-            {
-                ShowAddActionMenu(listProperty);
-            }
+            NeoxiderEditorGUI.EndSection();
         }
 
         private void ShowAddActionMenu(SerializedProperty listProperty)

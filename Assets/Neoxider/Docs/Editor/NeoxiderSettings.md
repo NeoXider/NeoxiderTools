@@ -19,7 +19,7 @@
 
 ### NeoxiderSettings
 - **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/Main/NeoxiderSettings.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/Main/NeoxiderSettings.cs`
 
 **Описание**
 Статический класс для управления настройками ассета Neoxider.

@@ -19,7 +19,7 @@
 
 ### CreateSceneHierarchy
 - **Пространство имен**: `Neo`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/Main/CreateSceneHierarchy.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/Main/CreateSceneHierarchy.cs`
 - **Доступ в меню**: 
   - `GameObject/Neoxider/Btn/Create Scene Hierarchy`
   - `GameObject/Neoxider/Btn/Sort Hierarchy Objects`

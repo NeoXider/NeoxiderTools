@@ -11,11 +11,12 @@ namespace Neo.Tools
     ///     AI navigation component with pathfinding, movement, patrol, and animation support.
     ///     Deprecated: use Neo.NPC.NpcNavigation + modules.
     /// </summary>
+    [LegacyComponent("Neo.NPC.NpcNavigation")]
     [Obsolete("Deprecated: use Neo.NPC.NpcNavigation + modules.")]
     [NeoDoc("Tools/Other/AiNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
     [CreateFromMenu("Neoxider/Tools/Other/AiNavigation")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AiNavigation))]
+    [AddComponentMenu("")]
     public class AiNavigation : MonoBehaviour
     {
         public enum MovementMode

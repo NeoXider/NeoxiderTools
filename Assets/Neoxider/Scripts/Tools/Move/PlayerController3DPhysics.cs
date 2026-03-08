@@ -197,19 +197,19 @@ namespace Neo.Tools
 
         private void OnEnable()
         {
-            if (_disableLookOnPause && EM.I != null)
+            if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
             {
-                EM.I.OnPause.AddListener(OnPauseLook);
-                EM.I.OnResume.AddListener(OnResumeLook);
+                eventManager.OnPause.AddListener(OnPauseLook);
+                eventManager.OnResume.AddListener(OnResumeLook);
             }
         }
 
         private void OnDisable()
         {
-            if (_disableLookOnPause && EM.I != null)
+            if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
             {
-                EM.I.OnPause.RemoveListener(OnPauseLook);
-                EM.I.OnResume.RemoveListener(OnResumeLook);
+                eventManager.OnPause.RemoveListener(OnPauseLook);
+                eventManager.OnResume.RemoveListener(OnResumeLook);
             }
         }
 

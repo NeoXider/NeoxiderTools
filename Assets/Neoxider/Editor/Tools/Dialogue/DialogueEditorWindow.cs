@@ -18,6 +18,8 @@ namespace Neo.Tools.Editor
         private static readonly Color SelectedBg = new(0.22f, 0.48f, 0.68f, 0.45f);
         private static readonly Color PanelBg = new(0.22f, 0.22f, 0.26f, 0.4f);
         private static readonly Color HeaderBg = new(0.18f, 0.18f, 0.22f, 0.95f);
+        private static readonly Color PanelBorder = new(0.34f, 0.38f, 0.46f, 0.55f);
+        private static readonly Color CardBg = new(0.16f, 0.17f, 0.21f, 0.92f);
         private ObjectField _controllerField;
         private SerializedProperty _dialoguesProp;
 
@@ -70,24 +72,28 @@ namespace Neo.Tools.Editor
         {
             rootVisualElement.style.flexGrow = 1;
             rootVisualElement.style.minHeight = 300;
+            rootVisualElement.style.backgroundColor = new Color(0.11f, 0.12f, 0.15f, 1f);
 
             VisualElement toolbar = new();
             toolbar.style.flexDirection = FlexDirection.Row;
-            toolbar.style.height = 28;
+            toolbar.style.height = 36;
             toolbar.style.backgroundColor = HeaderBg;
-            toolbar.style.paddingLeft = 8;
-            toolbar.style.paddingRight = 8;
-            toolbar.style.paddingTop = 4;
+            toolbar.style.borderBottomWidth = 1;
+            toolbar.style.borderBottomColor = new Color(1f, 1f, 1f, 0.08f);
+            toolbar.style.paddingLeft = 10;
+            toolbar.style.paddingRight = 10;
+            toolbar.style.paddingTop = 6;
             toolbar.style.alignItems = Align.Center;
 
-            Label controllerLabel = new("Controller");
-            controllerLabel.style.width = 58;
+            Label controllerLabel = new("Dialogue Editor");
+            controllerLabel.style.width = 96;
             controllerLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+            controllerLabel.style.color = Color.white;
             toolbar.Add(controllerLabel);
 
             _controllerField = new ObjectField
                 { objectType = typeof(DialogueController), value = _target, allowSceneObjects = true };
-            _controllerField.style.width = 180;
+            _controllerField.style.width = 220;
             _controllerField.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue is DialogueController c)
@@ -105,7 +111,7 @@ namespace Neo.Tools.Editor
                     EditorGUIUtility.PingObject(_target);
                 }
             }) { text = "Select In Scene" };
-            _selectBtn.style.width = 92;
+            _selectBtn.style.width = 108;
             _selectBtn.style.backgroundColor = AccentSecondary;
             _selectBtn.SetEnabled(_target != null);
             toolbar.Add(_selectBtn);
@@ -132,6 +138,8 @@ namespace Neo.Tools.Editor
             leftPanel.style.paddingRight = 10;
             leftPanel.style.paddingTop = 10;
             leftPanel.style.paddingBottom = 10;
+            leftPanel.style.borderRightWidth = 1;
+            leftPanel.style.borderRightColor = PanelBorder;
 
             ScrollView leftScroll = new(ScrollViewMode.Vertical);
             leftScroll.style.flexGrow = 1;
@@ -154,6 +162,8 @@ namespace Neo.Tools.Editor
             rightPanel.style.paddingTop = 10;
             rightPanel.style.paddingBottom = 10;
             rightPanel.style.minWidth = RightPanelMinWidth;
+            rightPanel.style.borderLeftWidth = 1;
+            rightPanel.style.borderLeftColor = PanelBorder;
 
             _rightScrollView = new ScrollView(ScrollViewMode.Vertical);
             _rightScrollView.style.flexGrow = 1;
@@ -176,6 +186,8 @@ namespace Neo.Tools.Editor
             breadcrumbs.style.color = AccentPrimary;
             breadcrumbs.style.unityTextAlign = TextAnchor.MiddleCenter;
             breadcrumbs.style.unityFontStyleAndWeight = FontStyle.Bold;
+            breadcrumbs.style.borderLeftWidth = 3;
+            breadcrumbs.style.borderLeftColor = AccentPrimary;
             _rightScrollView.Add(breadcrumbs);
 
             _rightDetailsContainer = new VisualElement();
@@ -248,7 +260,7 @@ namespace Neo.Tools.Editor
             string d = _selectedDialogue >= 0 ? $"D{_selectedDialogue + 1}" : "−";
             string m = _selectedMonolog >= 0 ? $"M{_selectedMonolog + 1}" : "−";
             string s = _selectedSentence >= 0 ? $"S{_selectedSentence + 1}" : "−";
-            bc.text = $"  {d}  →  {m}  →  {s}";
+            bc.text = $" Selection  {d}  →  {m}  →  {s}";
         }
 
         private void RefreshLeftPanel()
@@ -275,10 +287,12 @@ namespace Neo.Tools.Editor
             structureHeader.style.unityFontStyleAndWeight = FontStyle.Bold;
             structureHeader.style.paddingLeft = 8;
             structureHeader.style.paddingTop = 2;
+            structureHeader.style.borderLeftWidth = 4;
+            structureHeader.style.borderLeftColor = Color.white;
             _leftContent.Add(structureHeader);
             _leftContent.Add(new VisualElement { style = { height = 6 } });
 
-            AddSectionHeader(_leftContent, "Dialogues", AccentPrimary,
+            AddSectionHeader(_leftContent, $"Dialogues ({_dialoguesProp.arraySize})", AccentPrimary,
                 AddDialogue,
                 _selectedDialogue >= 0 ? RemoveDialogue : null,
                 _selectedDialogue > 0 ? MoveDialogueUp : null,
@@ -309,7 +323,7 @@ namespace Neo.Tools.Editor
                 SerializedProperty monologues = GetMonologues();
                 if (monologues != null)
                 {
-                    AddSectionHeader(_leftContent, "Monologues", AccentSecondary,
+                    AddSectionHeader(_leftContent, $"Monologues ({monologues.arraySize})", AccentSecondary,
                         AddMonolog,
                         _selectedMonolog >= 0 ? RemoveMonolog : null,
                         _selectedMonolog > 0 ? MoveMonologUp : null,
@@ -345,7 +359,7 @@ namespace Neo.Tools.Editor
                 SerializedProperty sentences = GetSentences();
                 if (sentences != null)
                 {
-                    AddSectionHeader(_leftContent, "Sentences", AccentTertiary,
+                    AddSectionHeader(_leftContent, $"Sentences ({sentences.arraySize})", AccentTertiary,
                         AddSentence,
                         _selectedSentence >= 0 ? RemoveSentence : null,
                         _selectedSentence > 0 ? MoveSentenceUp : null,
@@ -456,9 +470,12 @@ namespace Neo.Tools.Editor
                     previewLabel.style.color = Color.white;
                     previewLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
                     previewLabel.style.marginBottom = 4;
+                    previewLabel.style.fontSize = 12;
                     previewLabel.style.backgroundColor =
                         new StyleColor(new Color(AccentTertiary.r, AccentTertiary.g, AccentTertiary.b, 0.25f));
                     previewLabel.style.paddingLeft = 8;
+                    previewLabel.style.borderLeftWidth = 4;
+                    previewLabel.style.borderLeftColor = AccentTertiary;
                     _rightDetailsContainer.Add(previewLabel);
                     VisualElement previewRow = new();
                     previewRow.style.flexDirection = FlexDirection.Row;
@@ -487,6 +504,9 @@ namespace Neo.Tools.Editor
                     textLabel.style.color = new Color(0.9f, 0.9f, 0.92f);
                     textLabel.style.whiteSpace = WhiteSpace.Normal;
                     textLabel.style.flexGrow = 1;
+                    textLabel.style.fontSize = 13;
+                    textLabel.style.unityFontStyleAndWeight = FontStyle.Bold;
+                    textLabel.style.marginTop = 2;
                     previewRow.Add(textLabel);
                     previewBox.Add(previewRow);
                     _rightDetailsContainer.Add(previewBox);
@@ -499,14 +519,18 @@ namespace Neo.Tools.Editor
         {
             VisualElement row = new();
             row.style.flexDirection = FlexDirection.Row;
-            row.style.height = 28;
+            row.style.height = 30;
+            row.style.marginBottom = 2;
             Label titleEl = new(title);
             titleEl.style.flexGrow = 1;
             titleEl.style.backgroundColor = new StyleColor(new Color(accent.r, accent.g, accent.b, 0.35f));
             titleEl.style.color = Color.white;
             titleEl.style.unityFontStyleAndWeight = FontStyle.Bold;
+            titleEl.style.fontSize = 12;
             titleEl.style.paddingLeft = 8;
             titleEl.style.paddingTop = 4;
+            titleEl.style.borderLeftWidth = 4;
+            titleEl.style.borderLeftColor = accent;
             row.Add(titleEl);
             Button addBtn = new(onAdd ?? (() => { })) { text = "+" };
             addBtn.style.width = 26;
@@ -537,16 +561,31 @@ namespace Neo.Tools.Editor
         private static void AddItemButton(VisualElement parent, bool selected, string label, Action onClick)
         {
             Button btn = new(onClick) { text = label };
-            btn.style.height = ItemHeight;
+            btn.style.height = ItemHeight + 4;
             btn.style.unityTextAlign = TextAnchor.MiddleLeft;
             btn.style.paddingLeft = 12;
+            btn.style.paddingRight = 10;
+            btn.style.marginBottom = 3;
+            btn.style.borderLeftWidth = 4;
+            btn.style.borderTopWidth = 1;
+            btn.style.borderBottomWidth = 1;
+            btn.style.borderRightWidth = 1;
+            btn.style.borderTopColor = new Color(1f, 1f, 1f, 0.04f);
+            btn.style.borderBottomColor = new Color(1f, 1f, 1f, 0.06f);
+            btn.style.borderRightColor = new Color(1f, 1f, 1f, 0.04f);
             if (selected)
             {
                 btn.style.backgroundColor = SelectedBg;
+                btn.style.borderLeftColor = AccentPrimary;
+                btn.style.color = Color.white;
+                btn.style.unityFontStyleAndWeight = FontStyle.Bold;
             }
             else
             {
-                btn.style.backgroundColor = Color.clear;
+                btn.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.72f);
+                btn.style.borderLeftColor = new Color(1f, 1f, 1f, 0.07f);
+                btn.style.color = new Color(0.86f, 0.88f, 0.92f, 1f);
+                btn.style.unityFontStyleAndWeight = FontStyle.Normal;
             }
 
             parent.Add(btn);
@@ -555,10 +594,13 @@ namespace Neo.Tools.Editor
         private static void AddEmptyHint(VisualElement parent, string text)
         {
             Label hint = new(text);
-            hint.style.height = 32;
-            hint.style.backgroundColor = new Color(0.3f, 0.3f, 0.35f, 0.4f);
+            hint.style.height = 36;
+            hint.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.80f);
             hint.style.unityTextAlign = TextAnchor.MiddleCenter;
             hint.style.color = new Color(0.7f, 0.7f, 0.75f);
+            hint.style.fontSize = 12;
+            hint.style.borderLeftWidth = 4;
+            hint.style.borderLeftColor = new Color(0.50f, 0.52f, 0.58f, 1f);
             parent.Add(hint);
         }
 
@@ -570,16 +612,21 @@ namespace Neo.Tools.Editor
             header.style.backgroundColor = new StyleColor(new Color(accent.r, accent.g, accent.b, 0.4f));
             header.style.color = Color.white;
             header.style.unityFontStyleAndWeight = FontStyle.Bold;
+            header.style.fontSize = 12;
             header.style.paddingLeft = 8;
             header.style.paddingTop = 2;
+            header.style.borderLeftWidth = 4;
+            header.style.borderLeftColor = accent;
             parent.Add(header);
             VisualElement box = new();
-            box.style.backgroundColor = new Color(0.24f, 0.24f, 0.28f, 0.6f);
+            box.style.backgroundColor = new Color(CardBg.r, CardBg.g, CardBg.b, 0.88f);
             box.style.paddingLeft = 6;
             box.style.paddingRight = 6;
             box.style.paddingTop = 8;
             box.style.paddingBottom = 8;
             box.style.marginBottom = 8;
+            box.style.borderBottomWidth = 1;
+            box.style.borderBottomColor = new Color(1f, 1f, 1f, 0.06f);
             addFields?.Invoke(box);
             parent.Add(box);
         }

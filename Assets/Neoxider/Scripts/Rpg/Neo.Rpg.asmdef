@@ -1,0 +1,21 @@
+{
+  "name": "Neo.Rpg",
+  "rootNamespace": "Neo.Rpg",
+  "references": [
+    "Neo.Extensions",
+    "Neo.Tools.Managers",
+    "Neo.Save",
+    "Neo.Reactive",
+    "Neo.Condition",
+    "Neo.PropertyAttribute"
+  ],
+  "includePlatforms": [],
+  "excludePlatforms": [],
+  "allowUnsafeCode": false,
+  "overrideReferences": false,
+  "precompiledReferences": [],
+  "autoReferenced": true,
+  "defineConstraints": [],
+  "versionDefines": [],
+  "noEngineReferences": false
+}

@@ -2,7 +2,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-**Version 7.5.0** · Unity 2022.1+ · Namespace `Neo`
+**Version 7.6.0** · Unity 2022.1+ · Namespace `Neo`
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -12,8 +12,9 @@
 
 ## What You Get
 
+- **RPG module** — HP, level, buffs, status effects, damage/heal, persistence via `SaveProvider`, no-code actions and condition adapters.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
-- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, state machine, NPC navigation, audio, and UI.
+- Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, NPC navigation, audio, and UI.
 - Editor helpers, package samples, prefabs, and module-focused documentation.
 
 ## Installation
@@ -66,6 +67,8 @@ Without it, the package still works. Inspector documentation fallbacks remain av
 
 | Module | What it covers | Docs |
 |--------|-----------------|------|
+| **RPG** | HP, level, buffs, status effects, damage/heal, persistence, no-code bridges | [RPG](./Docs/Rpg/README.md) |
+| **Progression** | XP, levels, unlock tree, perk tree, meta progression | [Progression](./Docs/Progression/README.md) |
 | **Condition** | No-code rules, method calls with arguments, AND/OR logic, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
 | **Tools** | Inventory, spawner, movement, dialogue, time, input, utility components | [Tools](./Docs/Tools/README.md) |
 | **Quest** | Quest configs, runtime quest state, triggers, objective progress | [Quest](./Docs/Quest/README.md) |
@@ -90,7 +93,13 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 
 - The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
 - English onboarding starts in [DocsEn/README.md](./DocsEn/README.md).
+- English coverage includes module entry pages plus selected deeper pages for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, and `Progression`.
 - Internal backlog and maintainer-only notes are intentionally not part of the main user docs index.
+
+## Tests
+
+- Baseline `EditMode` tests live in `Assets/Neoxider/Editor/Tests/`.
+- The package currently includes coverage for core save flows, level helpers, bootstrap order, and selected editor/legacy behavior.
 
 ## Project Layout
 
@@ -98,6 +107,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 Assets/Neoxider/
   Scripts/       # Runtime modules and asmdef-separated code
   Editor/        # Editor tooling
+    Tests/       # EditMode tests for package runtime/editor-critical flows
   Docs/          # User-facing documentation (RU)
   DocsEn/        # English onboarding and mirrored docs
   Samples~/      # UPM samples

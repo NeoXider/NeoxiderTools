@@ -16,6 +16,7 @@ namespace Neo.Save
 
         protected virtual void OnDisable()
         {
+            SaveManager.Unregister(this);
         }
 
         public virtual void OnDataLoaded()

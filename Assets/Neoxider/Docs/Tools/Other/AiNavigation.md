@@ -11,7 +11,11 @@
 
 `AiNavigation` — компонент для управления навигацией AI с поддержкой патрулирования, следования за целью и комбинированного режима. Построен на Unity NavMeshAgent с автоматическим управлением анимацией.
 
-> Важно: `AiNavigation` помечен как устаревший. Для новых проектов используйте модульную систему [`NPCNavigation`](../../NPC/Navigation/NPCNavigation.md) (`NpcNavigation` + модули).
+**Статус:** `deprecated`.
+
+**Замена:** [`NpcNavigation`](../../NPC/Navigation/NPCNavigation.md).
+
+> Важно: `AiNavigation` помечен как устаревший и скрыт из меню добавления компонентов. Для новых проектов используйте модульную систему [`NpcNavigation`](../../NPC/Navigation/NPCNavigation.md) (`NpcNavigation` + модули).
 
 **Требования**: `NavMeshAgent` на том же объекте. `Animator` опционален.
 

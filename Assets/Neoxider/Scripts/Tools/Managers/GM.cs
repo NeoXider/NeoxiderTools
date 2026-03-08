@@ -65,6 +65,7 @@ namespace Neo.Tools
 
         protected override void Init()
         {
+            base.Init();
             print("GameManager Init");
 
             if (startOnAwake)

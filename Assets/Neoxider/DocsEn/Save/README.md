@@ -19,5 +19,10 @@ int score = SaveProvider.GetInt("score", 0);
 ## More docs
 
 - Russian docs: [`../../Docs/Save/README.md`](../../Docs/Save/README.md)
+- [`SaveProvider`](./SaveProvider.md)
+- [`SaveManager`](./SaveManager.md)
+- [`SaveableBehaviour`](./SaveableBehaviour.md)
+- [`ISaveIdentityProvider`](./ISaveIdentityProvider.md)
+- [`SaveIdentityUtility`](./SaveIdentityUtility.md)
 - Time module: [`../Tools/Time/README.md`](../Tools/Time/README.md)
 - Shop module: [`../Shop/README.md`](../Shop/README.md)

@@ -2,6 +2,15 @@
 
 Shop controller, items, currency, and purchase UI. Scripts in `Scripts/Shop/`. Full docs are in Russian.
 
+## Entry pages
+
+| Page | Description |
+|------|-------------|
+| [Shop](./Shop.md) | Main shop controller, save behavior, and purchase flow |
+| [ButtonPrice](./ButtonPrice.md) | Shop button view states and price presentation |
+| [Money](./Money.md) | Currency component, reactive values, and save behavior |
+| [Russian Shop docs](../../Docs/Shop/README.md) | Full Russian per-component documentation |
+
 ## Russian docs (per-component)
 
 | Page | Description |

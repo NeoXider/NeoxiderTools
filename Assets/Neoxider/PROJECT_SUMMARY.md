@@ -5,11 +5,13 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `7.4.0`
+- **Текущая версия**: `7.6.0`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
 - **Главный индекс документации**: [`Docs/README.md`](./Docs/README.md)
+- **Англоязычный вход**: [`DocsEn/README.md`](./DocsEn/README.md)
+- **Базовые EditMode тесты**: `Assets/Neoxider/Editor/Tests/`
 
 ## Структура
 
@@ -17,6 +19,7 @@
 Assets/Neoxider/
   Scripts/      # Runtime modules grouped by domain
   Editor/       # Editor tools and inspectors
+    Tests/      # EditMode tests for runtime/editor-critical flows
   Docs/         # Russian user-facing docs
   DocsEn/       # English onboarding and mirrored docs
   Samples~/     # UPM samples
@@ -26,7 +29,7 @@ Assets/Neoxider/
 
 ## Ключевые продуктовые слои
 
-- **Core gameplay modules**: `Cards`, `GridSystem`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`.
+- **Core gameplay modules**: `Cards`, `GridSystem`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`.
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move`, `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
 - **No-code / Inspector workflows**: `Condition`, `PropertyAttribute`, UnityEvent-driven components.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
@@ -58,6 +61,12 @@ Assets/Neoxider/
 
 - `Samples~/Demo` содержит демонстрационные сцены для модулей пакета.
 - `Samples~/NeoxiderPages` содержит опциональный sample-модуль навигации по страницам.
+
+## Тесты и качество
+
+- В пакете подключён `com.unity.test-framework`.
+- Базовые `EditMode` тесты лежат в `Editor/Tests/`.
+- На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap` и часть legacy/editor-регрессий.
 
 ## Канонические документы
 

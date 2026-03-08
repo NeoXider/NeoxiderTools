@@ -16,3 +16,8 @@
 - [GM (GameManager)](./GM.md)
 - [Singleton](./Singleton.md)
 - [SingletonById](./SingletonById.md) — один экземпляр типа на каждый уникальный Id; опция DontDestroyOnLoad; при совпадении Id предыдущий экземпляр уничтожается.
+
+## Английские страницы
+
+- [DocsEn/Tools/Managers/Bootstrap.md](../../../DocsEn/Tools/Managers/Bootstrap.md)
+- [DocsEn/Tools/Managers/Singleton.md](../../../DocsEn/Tools/Managers/Singleton.md)

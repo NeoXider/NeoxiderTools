@@ -4,8 +4,7 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Статический класс для работы с системой сохранения данных.
-    ///     Предоставляет API, аналогичный PlayerPrefs, с поддержкой различных провайдеров сохранения.
+    /// Provides a PlayerPrefs-like static API on top of the active save provider.
     /// </summary>
     public static class SaveProvider
     {
@@ -17,7 +16,7 @@ namespace Neo.Save
         private static readonly object _lockObject = new();
 
         /// <summary>
-        ///     Получает текущий провайдер сохранения.
+        /// Gets the currently active save provider.
         /// </summary>
         public static ISaveProvider CurrentProvider
         {
@@ -29,22 +28,61 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Событие, вызываемое после сохранения данных.
+        /// Raised after the active provider completes a save operation.
         /// </summary>
         public static event Action OnDataSaved;
 
         /// <summary>
-        ///     Событие, вызываемое после загрузки данных.
+        /// Raised after the active provider completes a load operation.
         /// </summary>
         public static event Action OnDataLoaded;
 
         /// <summary>
-        ///     Событие, вызываемое при изменении значения ключа.
+        /// Raised when a key changes in the active provider.
         /// </summary>
         public static event Action<string> OnKeyChanged;
 
+        private static void HandleProviderDataSaved()
+        {
+            OnDataSaved?.Invoke();
+        }
+
+        private static void HandleProviderDataLoaded()
+        {
+            OnDataLoaded?.Invoke();
+        }
+
+        private static void HandleProviderKeyChanged(string key)
+        {
+            OnKeyChanged?.Invoke(key);
+        }
+
+        private static void AttachProviderEvents(ISaveProvider provider)
+        {
+            if (provider == null)
+            {
+                return;
+            }
+
+            provider.OnDataSaved += HandleProviderDataSaved;
+            provider.OnDataLoaded += HandleProviderDataLoaded;
+            provider.OnKeyChanged += HandleProviderKeyChanged;
+        }
+
+        private static void DetachProviderEvents(ISaveProvider provider)
+        {
+            if (provider == null)
+            {
+                return;
+            }
+
+            provider.OnDataSaved -= HandleProviderDataSaved;
+            provider.OnDataLoaded -= HandleProviderDataLoaded;
+            provider.OnKeyChanged -= HandleProviderKeyChanged;
+        }
+
         /// <summary>
-        ///     Инициализирует систему сохранения при первом вызове.
+        /// Initializes the save system on first use.
         /// </summary>
         private static void Initialize()
         {
@@ -77,17 +115,14 @@ namespace Neo.Save
                     Debug.Log("[SaveProvider] Initialized with default PlayerPrefs provider");
                 }
 
-                // Подписываемся на события провайдера
-                _provider.OnDataSaved += () => OnDataSaved?.Invoke();
-                _provider.OnDataLoaded += () => OnDataLoaded?.Invoke();
-                _provider.OnKeyChanged += key => OnKeyChanged?.Invoke(key);
+                AttachProviderEvents(_provider);
             }
         }
 
         /// <summary>
-        ///     Устанавливает провайдер сохранения вручную.
+        /// Replaces the active save provider.
         /// </summary>
-        /// <param name="provider">Провайдер для установки</param>
+        /// <param name="provider">Provider instance to activate.</param>
         public static void SetProvider(ISaveProvider provider)
         {
             if (provider == null)
@@ -98,28 +133,19 @@ namespace Neo.Save
 
             lock (_lockObject)
             {
-                // Отписываемся от событий старого провайдера
-                if (_provider != null)
-                {
-                    _provider.OnDataSaved -= () => OnDataSaved?.Invoke();
-                    _provider.OnDataLoaded -= () => OnDataLoaded?.Invoke();
-                    _provider.OnKeyChanged -= key => OnKeyChanged?.Invoke(key);
-                }
+                DetachProviderEvents(_provider);
 
                 _provider = provider;
                 _isInitialized = true;
 
-                // Подписываемся на события нового провайдера
-                _provider.OnDataSaved += () => OnDataSaved?.Invoke();
-                _provider.OnDataLoaded += () => OnDataLoaded?.Invoke();
-                _provider.OnKeyChanged += key => OnKeyChanged?.Invoke(key);
+                AttachProviderEvents(_provider);
 
                 Debug.Log($"[SaveProvider] Provider set to {_provider.ProviderType}");
             }
         }
 
         /// <summary>
-        ///     Получает целочисленное значение по ключу.
+        /// Gets an integer value by key.
         /// </summary>
         public static int GetInt(string key, int defaultValue = 0)
         {
@@ -128,7 +154,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает целочисленное значение по ключу.
+        /// Sets an integer value by key.
         /// </summary>
         public static void SetInt(string key, int value)
         {
@@ -137,7 +163,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает значение с плавающей точкой по ключу.
+        /// Gets a floating-point value by key.
         /// </summary>
         public static float GetFloat(string key, float defaultValue = 0f)
         {
@@ -146,7 +172,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает значение с плавающей точкой по ключу.
+        /// Sets a floating-point value by key.
         /// </summary>
         public static void SetFloat(string key, float value)
         {
@@ -155,7 +181,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает строковое значение по ключу.
+        /// Gets a string value by key.
         /// </summary>
         public static string GetString(string key, string defaultValue = "")
         {
@@ -164,7 +190,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает строковое значение по ключу.
+        /// Sets a string value by key.
         /// </summary>
         public static void SetString(string key, string value)
         {
@@ -173,7 +199,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает булево значение по ключу.
+        /// Gets a Boolean value by key.
         /// </summary>
         public static bool GetBool(string key, bool defaultValue = false)
         {
@@ -182,7 +208,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает булево значение по ключу.
+        /// Sets a Boolean value by key.
         /// </summary>
         public static void SetBool(string key, bool value)
         {
@@ -191,7 +217,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Проверяет, существует ли ключ в хранилище.
+        /// Returns whether the specified key exists in the active provider.
         /// </summary>
         public static bool HasKey(string key)
         {
@@ -200,7 +226,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет ключ и его значение из хранилища.
+        /// Deletes a key from the active provider.
         /// </summary>
         public static void DeleteKey(string key)
         {
@@ -209,7 +235,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет все ключи из хранилища.
+        /// Deletes all keys from the active provider.
         /// </summary>
         public static void DeleteAll()
         {
@@ -218,7 +244,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно сохраняет данные в хранилище.
+        /// Forces the active provider to persist its data.
         /// </summary>
         public static void Save()
         {
@@ -227,7 +253,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно загружает данные из хранилища.
+        /// Forces the active provider to refresh its data.
         /// </summary>
         public static void Load()
         {

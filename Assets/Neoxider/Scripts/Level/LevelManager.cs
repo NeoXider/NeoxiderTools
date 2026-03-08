@@ -33,13 +33,18 @@ namespace Neo
             public UnityEvent<int> OnChangeMap;
             [Space] public UnityEvent<int> OnChangeMaxLevel;
 
-            public int MaxLevel => Map.level;
+            public int MaxLevel => TryGetCurrentMap(out Map map) ? map.level : 0;
             public int MapId => _mapId;
             public int CurrentLevel => _currentLevel;
-            public Map Map => _maps[_mapId];
+            public Map Map => TryGetCurrentMap(out Map map) ? map : null;
 
             private void OnValidate()
             {
+                if (_maps == null || _maps.Length == 0)
+                {
+                    _maps = new[] { new Map() };
+                }
+
                 if (_parentLevel != null)
                 {
                     HashSet<LevelButton> btns = new();
@@ -66,6 +71,12 @@ namespace Neo
             protected override void Init()
             {
                 base.Init();
+
+                if (!HasMapsConfigured())
+                {
+                    Debug.LogWarning("[LevelManager] No maps configured.", this);
+                    return;
+                }
 
                 for (int i = 0; i < _maps.Length; i++)
                 {
@@ -94,6 +105,11 @@ namespace Neo
             [Button]
             public void SetLastMap()
             {
+                if (!HasMapsConfigured())
+                {
+                    return;
+                }
+
                 int mapId = GetLastIdMap();
                 if (mapId == -1)
                 {
@@ -106,6 +122,11 @@ namespace Neo
 
             public int GetLastIdMap()
             {
+                if (!HasMapsConfigured())
+                {
+                    return -1;
+                }
+
                 for (int i = 0; i < _maps.Length; i++)
                 {
                     if (!_maps[i].GetCopmplete())
@@ -119,14 +140,19 @@ namespace Neo
 
             public int GetLastLevelId()
             {
-                return Map.level;
+                return TryGetCurrentMap(out Map map) ? map.level : 0;
             }
 
             [Button]
             public void SetMapId(int id)
             {
-                _mapId = id;
-                OnChangeMap?.Invoke(_currentLevel);
+                if (!TrySetMapId(id))
+                {
+                    return;
+                }
+
+                OnChangeMap?.Invoke(_mapId);
+                OnChangeMaxLevel?.Invoke(MaxLevel);
                 UpdateVisual();
             }
 
@@ -139,13 +165,18 @@ namespace Neo
             [Button]
             public void SetLastLevel()
             {
-                if (Map.isLoopLevel && Map.countLevels >= Map.level)
+                if (!TryGetCurrentMap(out Map map))
+                {
+                    return;
+                }
+
+                if (map.isLoopLevel && map.countLevels >= map.level)
                 {
                     NextLevel();
                 }
                 else
                 {
-                    SetLevel(Map.level);
+                    SetLevel(map.level);
                 }
             }
 
@@ -158,9 +189,14 @@ namespace Neo
             [Button]
             public void SaveLevel()
             {
-                if (Map.level == _currentLevel)
+                if (!TryGetCurrentMap(out Map map))
                 {
-                    Map.SaveLevel();
+                    return;
+                }
+
+                if (map.level == _currentLevel)
+                {
+                    map.SaveLevel();
                     OnChangeMaxLevel?.Invoke(MaxLevel);
 
                     if (_onAwakeNextMap)
@@ -177,15 +213,26 @@ namespace Neo
 
             private void UpdateVisual()
             {
-                Map curLevel = Map;
+                if (!TryGetCurrentMap(out Map curLevel))
+                {
+                    return;
+                }
 
                 foreach (LevelButton item in _lvlBtns)
                 {
-                    item.transform.gameObject.SetActive(false);
+                    if (item != null)
+                    {
+                        item.transform.gameObject.SetActive(false);
+                    }
                 }
 
                 for (int i = 0; i < _lvlBtns.Length && i < curLevel.countLevels; i++)
                 {
+                    if (_lvlBtns[i] == null)
+                    {
+                        continue;
+                    }
+
                     _lvlBtns[i].transform.gameObject.SetActive(true);
 
                     int idVisual = i < curLevel.level ? 1 : i == curLevel.level ? 2 : 0;
@@ -196,19 +243,69 @@ namespace Neo
             [Button]
             internal void SetLevel(int idLevel)
             {
-                _currentLevel = Map.isLoopLevel
-                    ? GetLoopLevel(idLevel, Map.countLevels)
+                if (!TryGetCurrentMap(out Map map))
+                {
+                    return;
+                }
+
+                _currentLevel = map.isLoopLevel
+                    ? GetLoopLevel(idLevel, map.countLevels)
                     : Mathf.Min(idLevel,
-                        Map.isInfinity || Map.countLevels == 0
-                            ? Map.level + 1
-                            : Map.countLevels - 1);
+                        map.isInfinity || map.countLevels == 0
+                            ? map.level + 1
+                            : map.countLevels - 1);
 
                 OnChangeLevel?.Invoke(_currentLevel);
             }
 
             public static int GetLoopLevel(int idLevel, int count)
             {
+                if (count <= 0)
+                {
+                    return 0;
+                }
+
                 return (idLevel + count) % count;
+            }
+
+            private bool HasMapsConfigured()
+            {
+                return _maps != null && _maps.Length > 0;
+            }
+
+            private bool TryGetCurrentMap(out Map map)
+            {
+                map = null;
+                if (!HasMapsConfigured())
+                {
+                    return false;
+                }
+
+                if (_mapId < 0 || _mapId >= _maps.Length)
+                {
+                    return false;
+                }
+
+                map = _maps[_mapId];
+                return map != null;
+            }
+
+            private bool TrySetMapId(int id)
+            {
+                if (!HasMapsConfigured())
+                {
+                    Debug.LogWarning("[LevelManager] Cannot set map. No maps configured.", this);
+                    return false;
+                }
+
+                if (id < 0 || id >= _maps.Length)
+                {
+                    Debug.LogWarning($"[LevelManager] Map index {id} is out of range.", this);
+                    return false;
+                }
+
+                _mapId = id;
+                return true;
             }
         }
     }

@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -10,9 +12,11 @@ namespace Neo.Tools
         Heal
     }
 
+    [LegacyComponent("Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile + Neo.Tools.RpgStatsDamageableBridge")]
+    [Obsolete("Use Neo.Rpg.RpgAttackController and RpgProjectile for new RPG combat. Use RpgStatsDamageableBridge only for legacy IDamageable compatibility.")]
     [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AdvancedAttackCollider")]
-    [AddComponentMenu("Neoxider/" + "Tools/" + nameof(AdvancedAttackCollider))]
+    [AddComponentMenu("")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
         [Header("Attack")] [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию

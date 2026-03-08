@@ -14,6 +14,13 @@ Use it as the main navigation page for package modules, utility submodules, and 
 - [UI](./UI/README.md)
 - [GridSystem](./GridSystem.md)
 
+## Coverage Notes
+
+- Every top-level module has an English entry page in this tree.
+- Selected deeper English pages are available for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, `Progression`, and `Animations`.
+- When a detailed page is still RU-only, this index keeps a direct link to the Russian documentation.
+- Full coverage audit: [COVERAGE_AUDIT.md](./COVERAGE_AUDIT.md)
+
 ## Module Index
 
 | Module | What it covers | English docs |
@@ -31,6 +38,8 @@ Use it as the main navigation page for package modules, utility submodules, and 
 | **Parallax** | Parallax layers and related components | [`Parallax/README.md`](./Parallax/README.md) |
 | **PropertyAttribute** | Inspector attributes, validation, inject helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Quest configs, manager, triggers, quest state flow | [`Quest/README.md`](./Quest/README.md) |
+| **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [`Progression/README.md`](./Progression/README.md) |
+| **RPG** | HP, level, buffs, status effects, and persistent profile | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | Provider API, scene saves, global save data | [`Save/README.md`](./Save/README.md) |
 | **Shop** | Shop controller, money flow, purchase UI helpers | [`Shop/README.md`](./Shop/README.md) |

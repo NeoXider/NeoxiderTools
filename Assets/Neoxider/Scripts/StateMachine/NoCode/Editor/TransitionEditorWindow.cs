@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using Neo.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -27,19 +28,19 @@ namespace Neo.StateMachine.NoCode.Editor
 
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 
-            // Основная информация о переходе
-            EditorGUILayout.LabelField("Transition Information", EditorStyles.boldLabel);
-            EditorGUILayout.Space(5);
+            DrawSummary();
 
+            NeoxiderEditorGUI.BeginSection("Transition Information",
+                "Базовые свойства перехода и его место в приоритетной очереди.");
             transition.TransitionName = EditorGUILayout.TextField("Name", transition.TransitionName);
             transition.IsEnabled = EditorGUILayout.Toggle("Enabled", transition.IsEnabled);
             transition.Priority = EditorGUILayout.IntField("Priority", transition.Priority);
+            NeoxiderEditorGUI.DrawCaption("Совет: короткие читаемые имена переходов сильно упрощают отладку и чтение graph-like конфигурации.");
+            NeoxiderEditorGUI.EndSection();
 
-            EditorGUILayout.Space(10);
+            EditorGUILayout.Space(6f);
 
-            // Информация о состояниях
-            EditorGUILayout.LabelField("States", EditorStyles.boldLabel);
-            EditorGUILayout.Space(5);
+            NeoxiderEditorGUI.BeginSection("States", "Связанные состояния меняются в основном из инспектора StateMachineData.");
 
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.ObjectField("From State", transition.FromStateData, typeof(StateData), false);
@@ -48,19 +49,22 @@ namespace Neo.StateMachine.NoCode.Editor
 
             if (transition.FromStateData != null)
             {
-                EditorGUILayout.LabelField("From State Name", transition.FromStateData.StateName);
+                NeoxiderEditorGUI.DrawKeyValueRow("From State Name", transition.FromStateData.StateName,
+                    new Color(0.38f, 0.72f, 1f, 1f));
             }
 
             if (transition.ToStateData != null)
             {
-                EditorGUILayout.LabelField("To State Name", transition.ToStateData.StateName);
+                NeoxiderEditorGUI.DrawKeyValueRow("To State Name", transition.ToStateData.StateName,
+                    new Color(0.42f, 0.86f, 0.58f, 1f));
             }
 
-            EditorGUILayout.Space(10);
+            NeoxiderEditorGUI.EndSection();
 
-            // Предикаты (условия)
-            EditorGUILayout.LabelField("Conditions (Predicates)", EditorStyles.boldLabel);
-            EditorGUILayout.Space(5);
+            EditorGUILayout.Space(6f);
+
+            NeoxiderEditorGUI.BeginSection("Conditions (Predicates)",
+                "Условия определяют, может ли переход выполниться. Чем чище этот список, тем проще читать поведение state machine.");
 
             if (transition.Predicates == null || transition.Predicates.Count == 0)
             {
@@ -71,14 +75,19 @@ namespace Neo.StateMachine.NoCode.Editor
                 for (int i = 0; i < transition.Predicates.Count; i++)
                 {
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    EditorGUILayout.LabelField($"Condition {i + 1}", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField($"{i + 1}. {GetPredicateTitle(transition.Predicates[i])}", EditorStyles.boldLabel);
 
                     StatePredicate predicate = transition.Predicates[i];
                     if (predicate != null)
                     {
-                        EditorGUILayout.LabelField("Type", predicate.GetType().Name);
-                        EditorGUILayout.LabelField("Name", predicate.PredicateName);
+                        NeoxiderEditorGUI.DrawKeyValueRow("Type", predicate.GetType().Name,
+                            new Color(0.70f, 0.62f, 1f, 1f));
+                        NeoxiderEditorGUI.DrawKeyValueRow("Name", predicate.PredicateName);
                         predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
+                        NeoxiderEditorGUI.DrawCaption(
+                            predicate.IsInverted
+                                ? "Этот предикат инвертирован: результат будет трактоваться наоборот."
+                                : "Предикат участвует в вычислении перехода как обычное условие.");
 
                         if (predicate is ConditionEntryPredicate && data != null)
                         {
@@ -132,13 +141,12 @@ namespace Neo.StateMachine.NoCode.Editor
                 }
             }
 
-            EditorGUILayout.Space(10);
-
-            // Кнопка добавления предиката
             if (GUILayout.Button("Add Condition", GUILayout.Height(30)))
             {
                 ShowAddPredicateMenu();
             }
+
+            NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.EndScrollView();
 
@@ -153,12 +161,47 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.Space(10);
             EditorGUILayout.BeginHorizontal();
 
+            GUILayout.FlexibleSpace();
             if (GUILayout.Button("Close", GUILayout.Height(30)))
             {
                 Close();
             }
 
             EditorGUILayout.EndHorizontal();
+        }
+
+        private void DrawSummary()
+        {
+            string title = string.IsNullOrWhiteSpace(transition.TransitionName)
+                ? "Unnamed Transition"
+                : transition.TransitionName;
+            string from = transition.FromStateData != null ? transition.FromStateData.StateName : "None";
+            string to = transition.ToStateData != null ? transition.ToStateData.StateName : "None";
+
+            NeoxiderEditorGUI.DrawSummaryCard(title,
+                $"Route: <b>{from}</b> → <b>{to}</b>",
+                new NeoxiderEditorGUI.Badge(transition.IsEnabled ? "Enabled" : "Disabled",
+                    transition.IsEnabled ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.46f, 0.46f, 0.50f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Priority {transition.Priority}", new Color(0.42f, 0.34f, 0.82f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Predicates {transition.Predicates?.Count ?? 0}",
+                    new Color(0.20f, 0.50f, 0.78f, 1f)));
+
+            EditorGUILayout.Space(4f);
+        }
+
+        private static string GetPredicateTitle(StatePredicate predicate)
+        {
+            if (predicate == null)
+            {
+                return "Null Predicate";
+            }
+
+            if (!string.IsNullOrWhiteSpace(predicate.PredicateName))
+            {
+                return predicate.PredicateName;
+            }
+
+            return predicate.GetType().Name;
         }
 
         /// <summary>

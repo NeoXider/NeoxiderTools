@@ -9,11 +9,12 @@ using UnityEditor;
 
 namespace Neo.Bonus
 {
+    [LegacyComponent("Neo.Bonus.WheelFortuneImproved")]
     [Obsolete(
         "Use Neo.Bonus.WheelFortuneImproved for new setups. This type remains supported for backward compatibility.")]
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
     [CreateFromMenu("Neoxider/Bonus/WheelFortune", "Prefabs/Bonus/WheelFortune.prefab")]
-    [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(WheelFortune))]
+    [AddComponentMenu("")]
     public class WheelFortune : MonoBehaviour
     {
         public enum SpinState

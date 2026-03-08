@@ -19,7 +19,7 @@
 
 ### SingletonCreator
 - **Пространство имен**: `Neo.Editor`
-- **Путь к файлу**: `Assets/Neoxider/Scripts/Editor/Create/SingletonCreator.cs`
+- **Путь к файлу**: `Assets/Neoxider/Editor/Create/SingletonCreator.cs`
 - **Доступ в меню**: `Assets/Create/Neoxider/Singleton`
 
 **Описание**

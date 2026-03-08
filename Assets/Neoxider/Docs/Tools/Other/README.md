@@ -11,7 +11,7 @@
 
 ## Файлы
 
-- [AiNavigation](./AiNavigation.md)
+- [AiNavigation](./AiNavigation.md) — устарел, используйте `NpcNavigation`
 - [NPC Navigation](../../NPC/Navigation/NPCNavigation.md)
 - [CameraShake](./CameraShake.md)
 - [RevertAmount](./RevertAmount.md)
