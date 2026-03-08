@@ -18,6 +18,9 @@
 | `ApplyStatus` | Применяет статус по `_statusId` |
 | `RemoveBuff` | Снимает бафф |
 | `RemoveStatus` | Снимает статус |
+| `UseAttackById` | Запускает атаку через `RpgAttackController` по `_attackId` |
+| `UsePrimaryAttack` | Запускает первую атаку из `RpgAttackController` |
+| `StartEvade` | Запускает `RpgEvadeController` |
 | `ResetProfile` | Сбрасывает профиль |
 | `SaveProfile` | Сохраняет профиль |
 | `LoadProfile` | Загружает профиль |
@@ -32,5 +35,5 @@
 
 1. Добавьте `RpgNoCodeAction` на объект.
 2. Выберите `Action Type`.
-3. Заполните `Amount`, `Level`, `Buff Id` или `Status Id` в зависимости от типа.
+3. Заполните `Amount`, `Level`, `Buff Id`, `Status Id` или `Attack Id` в зависимости от типа.
 4. Привяжите `Execute()` к `Button.onClick` или другому UnityEvent.

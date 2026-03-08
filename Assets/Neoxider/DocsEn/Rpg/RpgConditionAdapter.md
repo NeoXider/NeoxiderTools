@@ -16,6 +16,10 @@
 | `IsDead` | Character is dead |
 | `HasBuff` | Has active buff by `_buffId` |
 | `HasStatus` | Has active status by `_statusId` |
+| `CanPerformActions` | Target can act right now |
+| `IsInvulnerable` | Target is currently invulnerable |
+| `CanEvade` | `RpgEvadeController` is ready |
+| `AttackReady` | `RpgAttackController` can use `_attackId` |
 
 ## Invert option
 
@@ -25,5 +29,5 @@ When `_invert` is enabled, the evaluation result is inverted.
 
 1. Add `RpgConditionAdapter` to an object.
 2. Select `Evaluation Mode`.
-3. Fill `Threshold`, `Level Threshold`, `Buff Id`, or `Status Id`.
+3. Fill `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, or `Attack Id`.
 4. Use in `NeoCondition` as an `IConditionEvaluator` source, or call `EvaluateCurrent()` from code.

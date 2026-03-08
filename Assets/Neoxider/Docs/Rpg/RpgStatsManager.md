@@ -1,13 +1,15 @@
 # RpgStatsManager
 
-**Что это:** `MonoBehaviour`-менеджер RPG-статистики из `Scripts/Rpg/Runtime/RpgStatsManager.cs`. Отвечает за HP, уровень, баффы, статус-эффекты и сохранение профиля через `SaveProvider`.
+**Что это:** persistent `MonoBehaviour`-менеджер профиля игрока. Отвечает за HP, уровень, баффы, статус-эффекты, invulnerability locks и сохранение через `SaveProvider`.
 
 **Как использовать:**
 1. Добавьте `RpgStatsManager` на объект сцены.
 2. Назначьте `BuffDefinition` и `StatusEffectDefinition` в массивы.
 3. При необходимости задайте свой `Save Key`.
-4. Вызывайте `TakeDamage`, `Heal`, `TryApplyBuff`, `TryApplyStatus`, `ResetProfile`, `LoadProfile`, `SaveProfile`.
-5. Для UI используйте `HpState`, `HpPercentState`, `LevelState` или UnityEvent.
+4. Если нужно автосохранение при runtime-изменениях, включите `Auto Save`. По умолчанию он выключен.
+5. Если игрок должен атаковать или уклоняться, комбинируйте его с `RpgAttackController` и `RpgEvadeController`.
+6. Вызывайте `TakeDamage`, `Heal`, `TryApplyBuff`, `TryApplyStatus`, `ResetProfile`, `LoadProfile`, `SaveProfile`.
+7. Для UI используйте `HpState`, `HpPercentState`, `LevelState` или UnityEvent.
 
 **Навигация:** [← К RPG](./README.md)
 
@@ -20,6 +22,7 @@
 | `_buffDefinitions` | `BuffDefinition[]` | Определения баффов |
 | `_statusDefinitions` | `StatusEffectDefinition[]` | Определения статус-эффектов |
 | `_saveKey` | `string` | Ключ сохранения профиля |
+| `_autoSave` | `bool` | Автозапись json-профиля после изменений; по умолчанию выключено |
 | `_hpRegenPerSecond` | `float` | Регенерация HP в секунду |
 | `_regenInterval` | `float` | Интервал проверки регена и тиков статусов |
 
@@ -39,6 +42,9 @@
 | `Heal(float amount)` | Восстанавливает HP, возвращает фактическое лечение |
 | `SetMaxHp(float maxHp, bool clampCurrent)` | Устанавливает максимальное HP |
 | `SetLevel(int level)` | Устанавливает уровень |
+| `GetOutgoingDamageMultiplier()` | Возвращает итоговый множитель исходящего урона |
+| `GetMovementSpeedMultiplier()` | Возвращает текущий speed multiplier |
+| `AddInvulnerabilityLock()` / `RemoveInvulnerabilityLock()` | Управляет временной неуязвимостью |
 | `TryApplyBuff(string buffId, out string failReason)` | Применяет бафф |
 | `TryApplyStatus(string statusId, out string failReason)` | Применяет статус-эффект |
 | `RemoveBuff(string buffId)` | Снимает бафф |

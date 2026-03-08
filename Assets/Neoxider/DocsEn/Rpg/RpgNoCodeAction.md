@@ -18,6 +18,9 @@
 | `ApplyStatus` | Applies status by `_statusId` |
 | `RemoveBuff` | Removes buff |
 | `RemoveStatus` | Removes status |
+| `UseAttackById` | Uses an attack through `RpgAttackController` and `_attackId` |
+| `UsePrimaryAttack` | Uses the first configured attack |
+| `StartEvade` | Starts `RpgEvadeController` |
 | `ResetProfile` | Resets profile |
 | `SaveProfile` | Saves profile |
 | `LoadProfile` | Loads profile |
@@ -32,5 +35,5 @@
 
 1. Add `RpgNoCodeAction` to an object.
 2. Select `Action Type`.
-3. Fill `Amount`, `Level`, `Buff Id`, or `Status Id` depending on type.
+3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, or `Attack Id` depending on type.
 4. Bind `Execute()` to `Button.onClick` or another UnityEvent.

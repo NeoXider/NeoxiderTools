@@ -16,6 +16,10 @@
 | `IsDead` | Персонаж мёртв |
 | `HasBuff` | Есть активный бафф по `_buffId` |
 | `HasStatus` | Есть активный статус по `_statusId` |
+| `CanPerformActions` | Цель сейчас может действовать |
+| `IsInvulnerable` | Цель сейчас неуязвима |
+| `CanEvade` | `RpgEvadeController` готов к запуску |
+| `AttackReady` | `RpgAttackController` может запустить атаку по `_attackId` |
 
 ## Опция Invert
 
@@ -25,5 +29,5 @@
 
 1. Добавьте `RpgConditionAdapter` на объект.
 2. Выберите `Evaluation Mode`.
-3. Заполните `Threshold`, `Level Threshold`, `Buff Id` или `Status Id`.
+3. Заполните `Threshold`, `Level Threshold`, `Buff Id`, `Status Id` или `Attack Id`.
 4. Используйте в `NeoCondition` как источник типа `IConditionEvaluator` или вызывайте `EvaluateCurrent()` из кода.

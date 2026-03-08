@@ -18,10 +18,10 @@
 | HandLayoutType (enum) | CardLayoutType | Obsolete | В Cards/Config/HandLayoutType.cs; использовать enum CardLayoutType. |
 | HandComponent.LegacyLayoutType (свойство) | HandComponent.LayoutType (CardLayoutType) | Obsolete | Устаревшее только свойство LegacyLayoutType; сам HandComponent актуален. |
 | UIReady | SceneFlowController | Obsolete | Загрузка сцен, прогресс, Quit/Restart/Pause; см. Level/SceneFlowController.md. |
-| Health | Neo.Rpg.RpgStatsManager | Obsolete | HP, баффы, статусы, persistence; для per-entity (враги) — Health или RpgStatsDamageableBridge. |
-| AttackExecution | RpgStatsManager + RpgNoCodeAction | Obsolete | RPG-модуль для статов; логика атаки — кастомная или RpgStatsManager.TakeDamage(). |
-| Evade | RpgStatsManager + кастомная логика | Obsolete | RPG-модуль для статов; механика уклонения — Evade или своя реализация. |
-| AdvancedAttackCollider | RpgStatsManager + RpgStatsDamageableBridge | Obsolete | IDamageable-совместимость через RpgStatsDamageableBridge. |
+| Health | Neo.Rpg.RpgStatsManager / Neo.Rpg.RpgCombatant | Obsolete | Persistent player profile через `RpgStatsManager`, локальные актёры через `RpgCombatant`. |
+| AttackExecution | Neo.Rpg.RpgAttackController + RpgAttackDefinition | Obsolete | Универсальная melee/ranged/aoe система атак. |
+| Evade | Neo.Rpg.RpgEvadeController | Obsolete | Уклонение, cooldown и invulnerability locks. |
+| AdvancedAttackCollider | Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile | Obsolete | Для legacy `IDamageable` мостом служит `RpgStatsDamageableBridge`. |
 
 ## Планируемое удаление
 

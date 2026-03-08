@@ -32,6 +32,7 @@ namespace Neo.Rpg
 
         [Header("Persistence")] [SerializeField] private string _saveKey = DefaultSaveKey;
         [SerializeField] private bool _loadOnAwake = true;
+        [SerializeField] private bool _autoSave;
 
         [Header("Regen")] [SerializeField] private float _hpRegenPerSecond;
         [SerializeField] private float _regenInterval = 1f;
@@ -67,6 +68,15 @@ namespace Neo.Rpg
         {
             get => _saveKey;
             set => _saveKey = string.IsNullOrWhiteSpace(value) ? DefaultSaveKey : value.Trim();
+        }
+
+        /// <summary>
+        /// Gets or sets whether profile changes are written automatically after runtime mutations.
+        /// </summary>
+        public bool AutoSave
+        {
+            get => _autoSave;
+            set => _autoSave = value;
         }
 
         /// <summary>
@@ -415,11 +425,24 @@ namespace Neo.Rpg
         /// </summary>
         public void SaveProfile()
         {
+            SaveProfile(true);
+        }
+
+        /// <summary>
+        /// Saves the profile and optionally flushes the active save provider.
+        /// </summary>
+        public void SaveProfile(bool flushToProvider)
+        {
             EnsureInitialized();
             _profile.Version = ProfileVersion;
             _profile.Sanitize();
             string json = JsonUtility.ToJson(_profile, true);
             SaveProvider.SetString(_saveKey, json);
+            if (flushToProvider)
+            {
+                SaveProvider.Save();
+            }
+
             _onProfileSaved?.Invoke();
         }
 
@@ -485,6 +508,7 @@ namespace Neo.Rpg
 
         private void LoadProfileInternal(bool invokeEvents)
         {
+            SaveProvider.Load();
             string json = SaveProvider.GetString(_saveKey, string.Empty);
             RpgProfileData loadedProfile = null;
             if (!string.IsNullOrWhiteSpace(json))
@@ -615,7 +639,11 @@ namespace Neo.Rpg
 
         private void PersistAndNotify()
         {
-            SaveProfile();
+            if (_autoSave)
+            {
+                SaveProfile(false);
+            }
+
             RefreshRuntimeState(true);
         }
 

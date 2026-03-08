@@ -12,7 +12,7 @@
 
 ## What You Get
 
-- **RPG module** — HP, level, buffs, status effects, damage/heal, persistence via `SaveProvider`, no-code actions and condition adapters.
+- **RPG module** — persistent player profile (`RpgStatsManager`) with optional auto-save, local combat actors (`RpgCombatant`), melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), evade (`RpgEvadeController`), built-in configurable input (LMB attack by default), buffs/status effects, and no-code bridges.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
 - Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, NPC navigation, audio, and UI.
 - Editor helpers, package samples, prefabs, and module-focused documentation.
@@ -67,7 +67,7 @@ Without it, the package still works. Inspector documentation fallbacks remain av
 
 | Module | What it covers | Docs |
 |--------|-----------------|------|
-| **RPG** | HP, level, buffs, status effects, damage/heal, persistence, no-code bridges | [RPG](./Docs/Rpg/README.md) |
+| **RPG** | Persistent profile with optional auto-save, combat actors, melee/ranged/aoe attacks, built-in configurable input, evade, buffs/statuses, no-code bridges | [RPG](./Docs/Rpg/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, meta progression | [Progression](./Docs/Progression/README.md) |
 | **Condition** | No-code rules, method calls with arguments, AND/OR logic, UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
 | **Tools** | Inventory, spawner, movement, dialogue, time, input, utility components | [Tools](./Docs/Tools/README.md) |
@@ -99,7 +99,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 ## Tests
 
 - Baseline `EditMode` tests live in `Assets/Neoxider/Editor/Tests/`.
-- The package currently includes coverage for core save flows, level helpers, bootstrap order, and selected editor/legacy behavior.
+- The package currently includes coverage for save flows, level helpers, bootstrap order, legacy visibility rules, and RPG combat/runtime behavior.
 
 ## Project Layout
 

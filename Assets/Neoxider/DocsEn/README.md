@@ -39,7 +39,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 | **PropertyAttribute** | Inspector attributes, validation, inject helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Quest configs, manager, triggers, quest state flow | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | HP, level, buffs, status effects, and persistent profile | [`Rpg/README.md`](./Rpg/README.md) |
+| **RPG** | Persistent profile with `Auto Save`, combat actors, melee/ranged/aoe attacks, built-in input, evade, buffs, and statuses | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | Provider API, scene saves, global save data | [`Save/README.md`](./Save/README.md) |
 | **Shop** | Shop controller, money flow, purchase UI helpers | [`Shop/README.md`](./Shop/README.md) |

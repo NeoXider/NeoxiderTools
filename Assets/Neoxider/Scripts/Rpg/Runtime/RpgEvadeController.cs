@@ -16,6 +16,10 @@ namespace Neo.Rpg
         [SerializeField] private RpgCombatant _combatant;
         [SerializeField] private RpgStatsManager _profileManager;
 
+        [Header("Built-in Input")]
+        [SerializeField] private bool _enableBuiltInInput = true;
+        [SerializeField] private RpgButtonBinding _evadeBinding = RpgButtonBinding.CreateEvadeDefault();
+
         [Header("Timings")]
         [SerializeField] [Min(0.01f)] private float _evadeDuration = 0.35f;
         [SerializeField] [Min(0.01f)] private float _cooldown = 1.5f;
@@ -45,8 +49,22 @@ namespace Neo.Rpg
         /// </summary>
         public bool CanEvade => !IsEvading && GetRemainingCooldown() <= 0f && ResolveReceiver()?.CanPerformActions != false;
 
+        /// <summary>
+        /// Gets or sets whether the built-in input listener is enabled.
+        /// </summary>
+        public bool EnableBuiltInInput
+        {
+            get => _enableBuiltInInput;
+            set => _enableBuiltInInput = value;
+        }
+
         private void Update()
         {
+            if (_enableBuiltInInput && _evadeBinding != null && _evadeBinding.IsPressedThisFrame())
+            {
+                TryStartEvade();
+            }
+
             RemainingCooldownState.SetValueWithoutNotify(GetRemainingCooldown());
             IsEvadingState.SetValueWithoutNotify(IsEvading);
             RemainingCooldownState.ForceNotify();

@@ -7,10 +7,11 @@ All notable changes to this project will be documented in this file.
 ### RPG / Progression / Legacy / Documentation
 
 - **RPG module** — added `Neo.Rpg` module with `RpgStatsManager`, persistent `RpgProfileData`, `BuffDefinition`, `StatusEffectDefinition`, HP/level/buffs/status effects, regen, no-code bridges (`RpgNoCodeAction`, `RpgConditionAdapter`), and profile save/load through `SaveProvider`.
+- **RPG combat layer** — added `RpgCombatant`, `RpgAttackDefinition`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController` so the RPG module now covers melee, ranged, area, and evade flows with one runtime architecture.
 - **RPG API** — `TakeDamage`, `Heal`, `SetMaxHp`, `SetLevel`, `TryApplyBuff`, `TryApplyStatus`, `RemoveBuff`, `RemoveStatus`, `HasBuff`, `HasStatus`, reactive state (`HpState`, `HpPercentState`, `LevelState`), and events for damage, heal, death, buff/status apply/expire.
-- **RPG docs** — added RU/EN module docs for `RpgStatsManager`, `RpgNoCodeAction`, `RpgConditionAdapter`.
-- **RPG tests** — added edit mode tests for damage, heal, death, and save/load flow.
-- **Legacy AttackSystem** — `Health`, `AttackExecution`, `Evade`, `AdvancedAttackCollider` marked as `[Obsolete]` and `[LegacyComponent]` with replacement `Neo.Rpg.RpgStatsManager`; added `RpgStatsDamageableBridge` for IDamageable/IHealable compatibility with AdvancedAttackCollider.
+- **RPG docs** — expanded RU/EN docs for the full combat architecture: profile, combatants, attack definitions, attack controller, projectile, evade, no-code actions, and condition adapters.
+- **RPG tests** — added edit mode tests for combatant invulnerability, direct attacks, evade invulnerability, plus previous damage/heal/save-load coverage.
+- **Legacy AttackSystem** — `Health`, `AttackExecution`, `Evade`, `AdvancedAttackCollider` marked as `[Obsolete]` and `[LegacyComponent]` with explicit replacements in the new RPG combat layer; `RpgStatsDamageableBridge` now bridges legacy `IDamageable/IHealable` calls into either `RpgStatsManager` or `RpgCombatant`.
 - **Docs** — main README, Docs/README, AttackSystem README updated to feature RPG module and deprecate legacy combat components.
 - **Progression V2** — added a new `Neo.Progression` module with `ProgressionManager`, persistent `ProgressionProfileData`, `LevelCurveDefinition`, `UnlockTreeDefinition`, `PerkTreeDefinition`, reward dispatch, no-code bridges, and custom inspectors for validation.
 - **Meta progression API** — new runtime flow supports `XP`, levels, `perk points`, unlock nodes, perk purchases, and profile save/load through `SaveProvider`, with both reactive state and UnityEvent entry points.

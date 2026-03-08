@@ -1,13 +1,15 @@
 # Tools / Components / AttackSystem
 
-**Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) (`RpgStatsManager`, buffs, status effects, persistence). Scripts in `Scripts/Tools/Components/AttackSystem/`. Full docs are in Russian.
+**Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgStatsManager`, `RpgCombatant`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
 
 ## Recommended replacement
 
 | Legacy | Replacement |
 |--------|-------------|
-| Health | [RpgStatsManager](../../../Rpg/README.md) |
-| AttackExecution, Evade, AdvancedAttackCollider | RpgStatsManager + [RpgNoCodeAction](../../../Rpg/RpgNoCodeAction.md) + custom attack/evade logic |
+| Health | [RpgStatsManager](../../../Rpg/README.md) or `RpgCombatant` |
+| AttackExecution | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../../Rpg/RpgAttackDefinition.md) |
+| Evade | [RpgEvadeController](../../../Rpg/RpgEvadeController.md) |
+| AdvancedAttackCollider | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md) |
 | IDamageable compatibility | [RpgStatsDamageableBridge](../../../../Docs/Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) |
 
 ## Russian docs (per-component)

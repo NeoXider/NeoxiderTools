@@ -20,6 +20,10 @@ namespace Neo.Rpg
         [SerializeField] private RpgCombatant _combatantSource;
         [SerializeField] private RpgStatsManager _profileSource;
 
+        [Header("Built-in Input")]
+        [SerializeField] private bool _enableBuiltInInput = true;
+        [SerializeField] private RpgButtonBinding _primaryAttackBinding = RpgButtonBinding.CreatePrimaryAttackDefault();
+
         [Header("Events")]
         [SerializeField] private RpgAttackEvent _onAttackStarted = new();
         [SerializeField] private RpgAttackEvent _onAttackResolved = new();
@@ -32,6 +36,23 @@ namespace Neo.Rpg
         /// Gets whether the controller is currently casting.
         /// </summary>
         public bool IsCasting => _castCoroutine != null;
+
+        /// <summary>
+        /// Gets or sets whether the built-in input listener is enabled.
+        /// </summary>
+        public bool EnableBuiltInInput
+        {
+            get => _enableBuiltInInput;
+            set => _enableBuiltInInput = value;
+        }
+
+        private void Update()
+        {
+            if (_enableBuiltInInput && _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame())
+            {
+                UsePrimaryAttack();
+            }
+        }
 
         /// <summary>
         /// Uses the first configured attack.

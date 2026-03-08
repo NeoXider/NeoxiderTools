@@ -1,13 +1,15 @@
 # RpgStatsManager
 
-**What it is:** a `MonoBehaviour` from `Scripts/Rpg/Runtime/RpgStatsManager.cs` that owns HP, level, buffs, status effects, and profile storage through `SaveProvider`.
+**What it is:** a persistent `MonoBehaviour` player-profile manager for HP, level, buffs, statuses, invulnerability locks, and `SaveProvider` storage.
 
 **How to use:**
 1. Add `RpgStatsManager` to a scene object.
 2. Assign `BuffDefinition` and `StatusEffectDefinition` arrays.
 3. Set `Save Key` if the project needs a separate profile namespace.
-4. Call `TakeDamage`, `Heal`, `TryApplyBuff`, `TryApplyStatus`, `ResetProfile`, `LoadProfile`, or `SaveProfile`.
-5. Bind UI to the reactive state fields or the exposed UnityEvents.
+4. Enable `Auto Save` when runtime mutations should be written automatically. It is off by default.
+5. Combine it with `RpgAttackController` and `RpgEvadeController` when the player can attack or dodge.
+6. Call `TakeDamage`, `Heal`, `TryApplyBuff`, `TryApplyStatus`, `ResetProfile`, `LoadProfile`, or `SaveProfile`.
+7. Bind UI to the reactive state fields or the exposed UnityEvents.
 
 **Navigation:** [← RPG](./README.md)
 

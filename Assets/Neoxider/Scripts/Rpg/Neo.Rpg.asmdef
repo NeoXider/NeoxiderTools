@@ -4,6 +4,7 @@
   "references": [
     "Neo.Extensions",
     "Neo.Tools.Managers",
+    "Neo.Tools.Input",
     "Neo.Save",
     "Neo.Reactive",
     "Neo.Condition",

@@ -12,13 +12,13 @@
 - Нужен спавн или object pooling: [`Spawner/README.md`](./Spawner/README.md)
 - Нужен movement/input workflow: [`Move/README.md`](./Move/README.md) и [`Input/README.md`](./Input/README.md)
 - Нужен диалоговый UI flow: [`Dialogue/README.md`](./Dialogue/README.md)
-- Нужны utility-компоненты (`Counter`, `AnimatorParameterDriver`, `RpgStatsDamageableBridge`); для HP — [RPG](../Rpg/README.md): [`Components/README.md`](./Components/README.md)
+- Нужны utility-компоненты (`Counter`, `AnimatorParameterDriver`, `RpgStatsDamageableBridge`); для нового боя/HP/уклонения — [RPG](../Rpg/README.md): [`Components/README.md`](./Components/README.md)
 
 ## Индекс подмодулей
 
 | Подмодуль | Что внутри | Документация |
 |-----------|------------|--------------|
-| **Components** | `Counter`, `Loot`, `ScoreManager`, `TypewriterEffect` | [`Components/README.md`](./Components/README.md) |
+| **Components** | `Counter`, `Loot`, `ScoreManager`, `TypewriterEffect`, `RpgStatsDamageableBridge` | [`Components/README.md`](./Components/README.md) |
 | **Dialogue** | `DialogueController`, `DialogueData`, `DialogueUI` | [`Dialogue/README.md`](./Dialogue/README.md) |
 | **Input** | `MouseEffect`, `MouseInputManager`, `MultiKeyEventTrigger` | [`Input/README.md`](./Input/README.md) |
 | **Inventory** | `InventoryComponent`, `InventoryDropper`, `PickableItem` | [`Inventory/README.md`](./Inventory/README.md) |

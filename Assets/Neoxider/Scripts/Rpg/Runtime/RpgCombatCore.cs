@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -22,6 +23,25 @@ namespace Neo.Rpg
         Direct,
         Area,
         Projectile
+    }
+
+    /// <summary>
+    /// Input source used by built-in RPG runtime controls.
+    /// </summary>
+    public enum RpgInputTriggerType
+    {
+        MouseButton,
+        KeyCode
+    }
+
+    /// <summary>
+    /// Mouse button ids used by built-in RPG runtime controls.
+    /// </summary>
+    public enum RpgMouseButton
+    {
+        Left = 0,
+        Right = 1,
+        Middle = 2
     }
 
     /// <summary>
@@ -77,6 +97,57 @@ namespace Neo.Rpg
         /// Gets buffs applied to the source actor.
         /// </summary>
         public IReadOnlyList<string> SelfBuffIds => _selfBuffIds;
+    }
+
+    /// <summary>
+    /// Inspector-friendly button binding used by the built-in RPG input flow.
+    /// </summary>
+    [Serializable]
+    public sealed class RpgButtonBinding
+    {
+        [SerializeField] private RpgInputTriggerType _triggerType = RpgInputTriggerType.MouseButton;
+        [SerializeField] private RpgMouseButton _mouseButton = RpgMouseButton.Left;
+        [SerializeField] private KeyCode _keyCode = KeyCode.None;
+
+        /// <summary>
+        /// Creates a default primary-attack binding.
+        /// </summary>
+        public static RpgButtonBinding CreatePrimaryAttackDefault()
+        {
+            return new RpgButtonBinding
+            {
+                _triggerType = RpgInputTriggerType.MouseButton,
+                _mouseButton = RpgMouseButton.Left
+            };
+        }
+
+        /// <summary>
+        /// Creates a default evade binding.
+        /// </summary>
+        public static RpgButtonBinding CreateEvadeDefault()
+        {
+            return new RpgButtonBinding
+            {
+                _triggerType = RpgInputTriggerType.KeyCode,
+                _keyCode = KeyCode.LeftShift
+            };
+        }
+
+        /// <summary>
+        /// Returns true when the binding was pressed this frame.
+        /// </summary>
+        public bool IsPressedThisFrame()
+        {
+            switch (_triggerType)
+            {
+                case RpgInputTriggerType.MouseButton:
+                    return MouseInputCompat.TryGetButtonDown((int)_mouseButton, out bool mousePressed) && mousePressed;
+                case RpgInputTriggerType.KeyCode:
+                    return _keyCode != KeyCode.None && KeyInputCompat.GetKeyDown(_keyCode);
+                default:
+                    return false;
+            }
+        }
     }
 
     internal static class RpgCombatMath

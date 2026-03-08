@@ -121,6 +121,78 @@ namespace Neo.Rpg.Tests
             }
         }
 
+        [Test]
+        public void AutoSave_DisabledByDefault_DoesNotPersistAfterDamage()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject go = new("RpgStatsManager");
+            RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.SaveKey = "RpgTests.AutoSave.Disabled";
+
+            try
+            {
+                manager.ResetProfile();
+                provider.DeleteKey(manager.SaveKey);
+                manager.TakeDamage(10f);
+
+                Assert.That(provider.HasKey(manager.SaveKey), Is.False);
+            }
+            finally
+            {
+                RpgStatsManager.DestroyInstance();
+            }
+        }
+
+        [Test]
+        public void AutoSave_WhenEnabled_PersistsAfterDamage()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject go = new("RpgStatsManager");
+            RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.SaveKey = "RpgTests.AutoSave.Enabled";
+            manager.AutoSave = true;
+
+            try
+            {
+                manager.ResetProfile();
+                provider.DeleteKey(manager.SaveKey);
+                manager.TakeDamage(10f);
+
+                Assert.That(provider.HasKey(manager.SaveKey), Is.True);
+                Assert.That(provider.GetString(manager.SaveKey), Does.Contain("\"_currentHp\": 90.0"));
+            }
+            finally
+            {
+                RpgStatsManager.DestroyInstance();
+            }
+        }
+
+        [Test]
+        public void SaveProfile_FlushesProvider()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject go = new("RpgStatsManager");
+            RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.SaveKey = "RpgTests.Flush";
+
+            try
+            {
+                manager.ResetProfile();
+
+                Assert.That(provider.SaveCallCount, Is.GreaterThanOrEqualTo(1));
+            }
+            finally
+            {
+                RpgStatsManager.DestroyInstance();
+            }
+        }
+
         private sealed class DictionarySaveProvider : ISaveProvider
         {
             private readonly Dictionary<string, object> _values = new(StringComparer.Ordinal);
@@ -129,6 +201,8 @@ namespace Neo.Rpg.Tests
             public event Action OnDataSaved;
             public event Action OnDataLoaded;
             public event Action<string> OnKeyChanged;
+            public int SaveCallCount { get; private set; }
+            public int LoadCallCount { get; private set; }
 
             public int GetInt(string key, int defaultValue = 0)
             {
@@ -184,9 +258,17 @@ namespace Neo.Rpg.Tests
 
             public void DeleteAll() => _values.Clear();
 
-            public void Save() => OnDataSaved?.Invoke();
+            public void Save()
+            {
+                SaveCallCount++;
+                OnDataSaved?.Invoke();
+            }
 
-            public void Load() => OnDataLoaded?.Invoke();
+            public void Load()
+            {
+                LoadCallCount++;
+                OnDataLoaded?.Invoke();
+            }
         }
     }
 }
