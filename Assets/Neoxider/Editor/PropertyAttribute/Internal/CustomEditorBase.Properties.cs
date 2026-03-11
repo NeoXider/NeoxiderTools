@@ -353,7 +353,7 @@ namespace Neo.Editor
                 return;
             }
 
-            if (ShouldUseCollectionPropertyFoldout(property))
+            if (!CustomEditorSettings.UseDefaultListAndArrayDrawing && ShouldUseCollectionPropertyFoldout(property))
             {
                 DrawCollectionPropertyFoldout(property);
                 return;

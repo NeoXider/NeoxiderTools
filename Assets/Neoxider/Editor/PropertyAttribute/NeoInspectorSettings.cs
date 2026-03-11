@@ -37,6 +37,12 @@ namespace Neo.Editor
 
         [SerializeField] private int minFieldsForHeaderCategory = 3;
 
+        [Header("Lists & Arrays")]
+        [Tooltip("Use Unity default list/array drawing. Disable to use Neoxider custom foldouts (can break list logic in some cases).")]
+        [SerializeField] private bool useDefaultListAndArrayDrawing = true;
+
+        public bool UseDefaultListAndArrayDrawing => useDefaultListAndArrayDrawing;
+
         public bool EnableRainbowSignature => enableRainbowSignature;
         public bool EnableRainbowSignatureAnimation => enableRainbowSignatureAnimation;
         public bool EnableRainbowOutline => enableRainbowOutline;
@@ -97,6 +103,12 @@ namespace Neo.Editor
         public void SetMinFieldsForHeaderCategory(int value)
         {
             minFieldsForHeaderCategory = Mathf.Max(0, value);
+            Save(true);
+        }
+
+        public void SetUseDefaultListAndArrayDrawing(bool value)
+        {
+            useDefaultListAndArrayDrawing = value;
             Save(true);
         }
 

@@ -94,6 +94,12 @@ namespace Neo.Editor
                 CustomEditorSettings.MinFieldsForHeaderCategory,
                 0, 10);
 
+            GUILayout.Space(5);
+            EditorGUILayout.LabelField("Списки и массивы", EditorStyles.miniLabel);
+            bool useDefaultListAndArrayDrawing = EditorGUILayout.Toggle(
+                "Стандартная отрисовка списков/массивов (Unity)",
+                CustomEditorSettings.UseDefaultListAndArrayDrawing);
+
             if (EditorGUI.EndChangeCheck())
             {
                 CustomEditorSettings.SetEnableRainbowSignature(enableSignature);
@@ -104,6 +110,7 @@ namespace Neo.Editor
                 CustomEditorSettings.SetRainbowSpeed(speed);
                 CustomEditorSettings.SetScriptNameColor(scriptNameColor);
                 CustomEditorSettings.SetMinFieldsForHeaderCategory(minFieldsForHeaderCategory);
+                CustomEditorSettings.SetUseDefaultListAndArrayDrawing(useDefaultListAndArrayDrawing);
 
                 RepaintAllInspectors();
             }
@@ -146,6 +153,7 @@ namespace Neo.Editor
             CustomEditorSettings.SetRainbowSpeed(0.1f);
             CustomEditorSettings.SetScriptNameColor(new Color(0.35f, 1f, 0.35f, 1f));
             CustomEditorSettings.SetMinFieldsForHeaderCategory(3);
+            CustomEditorSettings.SetUseDefaultListAndArrayDrawing(true);
 
             RepaintAllInspectors();
         }

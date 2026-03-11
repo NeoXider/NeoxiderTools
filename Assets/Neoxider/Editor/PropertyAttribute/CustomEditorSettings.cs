@@ -69,6 +69,9 @@ namespace Neo.Editor
         public static Color ScriptNameColor => Settings.ScriptNameColor;
         public static int MinFieldsForHeaderCategory => Settings.MinFieldsForHeaderCategory;
 
+        /// <summary>When true, lists and arrays use Unity default drawing instead of custom foldouts (avoids list logic issues).</summary>
+        public static bool UseDefaultListAndArrayDrawing => Settings.UseDefaultListAndArrayDrawing;
+
         // Setters
         public static void SetEnableRainbowSignature(bool value)
         {
@@ -108,6 +111,11 @@ namespace Neo.Editor
         public static void SetMinFieldsForHeaderCategory(int value)
         {
             Settings.SetMinFieldsForHeaderCategory(value);
+        }
+
+        public static void SetUseDefaultListAndArrayDrawing(bool value)
+        {
+            Settings.SetUseDefaultListAndArrayDrawing(value);
         }
     }
 }
