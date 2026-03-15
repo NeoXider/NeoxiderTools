@@ -77,6 +77,19 @@
 - `_toggleCursorOnEscape` — локальный toggle по Escape. Используйте его, только если **нет** `CursorLockController` на том же объекте.
 - `_externalCursorLockController` — внешний `CursorLockController`. Нужен, если курсором управляет не сам игрок, а отдельный UI-объект.
 
+---
+
+## 5. Публичный API (управление движением и камерой)
+
+- `LookEnabled` — только для чтения, показывает, включён ли поворот камеры.
+- `SetMovementEnabled(bool)` — включает/выключает обработку движения. При выключении обнуляет ввод и спринт. Удобно вызывать из UI/паузы, чтобы игрок не двигался во время меню.
+- `SetLookEnabled(bool)` — включает/выключает обработку обзора. При включении и активном `Pause Look When Cursor Visible` может автоматически заблокировать курсор. Вызывается, например, при открытии/закрытии меню, если вы не используете `CursorLockController`.
+
+Рекомендуемый паттерн:
+
+1. При открытии меню/паузы вызовите `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или используйте `PausePage`, который уже умеет работать с `CursorLockController` и `Time.timeScale`).
+2. При закрытии меню — `SetMovementEnabled(true)` и `SetLookEnabled(true)` (если игра не в состоянии паузы).
+
 События **OnMoveStart** / **OnMoveStop** вызываются при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
 
 ---
