@@ -7,19 +7,6 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Defines the supported reward kinds that can be dispatched by the progression system.
-    /// </summary>
-    public enum ProgressionRewardType
-    {
-        None,
-        Xp,
-        PerkPoints,
-        Money,
-        UnlockCollectionItem,
-        AcceptQuest
-    }
-
-    /// <summary>
     /// Describes a single reward that can be granted by levels, unlock nodes, or perks.
     /// </summary>
     [Serializable]

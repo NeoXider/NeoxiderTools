@@ -28,6 +28,19 @@ namespace Neo.Rpg
         [SerializeField] [Min(0.05f)] private float _projectileLifetime = 5f;
         [SerializeField] [Min(1)] private int _projectileMaxHits = 1;
         [SerializeField] private GameObject _impactEffectPrefab;
+        [Tooltip("Resource id to spend (e.g. Mana, HP). Empty or 0 cost = free.")]
+        [SerializeField] private string _costResourceId = "Mana";
+        [SerializeField] [Min(0f)] private float _costAmount;
+
+        /// <summary>
+        /// Gets the resource id to spend for this attack (e.g. Mana, HP).
+        /// </summary>
+        public string CostResourceId => string.IsNullOrWhiteSpace(_costResourceId) ? "Mana" : _costResourceId;
+
+        /// <summary>
+        /// Gets the amount of resource required (0 = free).
+        /// </summary>
+        public float CostAmount => _costAmount;
 
         /// <summary>
         /// Gets the unique attack identifier.

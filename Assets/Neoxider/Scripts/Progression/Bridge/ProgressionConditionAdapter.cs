@@ -11,17 +11,8 @@ namespace Neo.Progression
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionConditionAdapter))]
     public sealed class ProgressionConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
-        public enum EvaluationMode
-        {
-            HasUnlockedNode,
-            HasPurchasedPerk,
-            LevelAtLeast,
-            XpAtLeast,
-            PerkPointsAtLeast
-        }
-
         [SerializeField] private ProgressionManager _manager;
-        [SerializeField] private EvaluationMode _mode = EvaluationMode.LevelAtLeast;
+        [SerializeField] private ProgressionConditionEvaluationMode _mode = ProgressionConditionEvaluationMode.LevelAtLeast;
         [SerializeField] private string _nodeId = string.Empty;
         [SerializeField] private string _perkId = string.Empty;
         [SerializeField] [Min(0)] private int _threshold = 1;
@@ -46,11 +37,11 @@ namespace Neo.Progression
 
             bool result = _mode switch
             {
-                EvaluationMode.HasUnlockedNode => manager.HasUnlockedNode(_nodeId),
-                EvaluationMode.HasPurchasedPerk => manager.HasPurchasedPerk(_perkId),
-                EvaluationMode.LevelAtLeast => manager.CurrentLevel >= _threshold,
-                EvaluationMode.XpAtLeast => manager.TotalXp >= _threshold,
-                EvaluationMode.PerkPointsAtLeast => manager.AvailablePerkPoints >= _threshold,
+                ProgressionConditionEvaluationMode.HasUnlockedNode => manager.HasUnlockedNode(_nodeId),
+                ProgressionConditionEvaluationMode.HasPurchasedPerk => manager.HasPurchasedPerk(_perkId),
+                ProgressionConditionEvaluationMode.LevelAtLeast => manager.CurrentLevel >= _threshold,
+                ProgressionConditionEvaluationMode.XpAtLeast => manager.TotalXp >= _threshold,
+                ProgressionConditionEvaluationMode.PerkPointsAtLeast => manager.AvailablePerkPoints >= _threshold,
                 _ => false
             };
 

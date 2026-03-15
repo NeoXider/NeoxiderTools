@@ -2,6 +2,7 @@
   "name": "Neo.Rpg",
   "rootNamespace": "Neo.Rpg",
   "references": [
+    "Neo.Core",
     "Neo.Extensions",
     "Neo.Tools.Managers",
     "Neo.Tools.Input",

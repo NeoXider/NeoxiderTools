@@ -2,6 +2,7 @@
   "name": "Neo.Progression",
   "rootNamespace": "Neo.Progression",
   "references": [
+    "Neo.Core",
     "Neo.Extensions",
     "Neo.Tools.Managers",
     "Neo.Save",

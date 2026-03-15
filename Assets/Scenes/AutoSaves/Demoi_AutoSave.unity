@@ -427,6 +427,86 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!1 &167187388
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 167187389}
+  - component: {fileID: 167187390}
+  m_Layer: 0
+  m_Name: Level
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &167187389
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167187388}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.93564963, y: 5.4002275, z: 14.685039}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &167187390
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 167187388}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b4109c92cbf2e84bbb214c2e0234a25, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _levelCurve: {fileID: 0}
+  _useXp: 1
+  _startXp: 0
+  _startLevel: 1
+  _hasMaxLevel: 0
+  _maxLevel: 0
+  _saveKey: Neo.Core.Level.Profile
+  _loadOnAwake: 1
+  _autoSave: 1
+  LevelState:
+    _value: 1
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  XpState:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  XpToNextLevelState:
+    _value: 200
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  _onLevelUp:
+    m_PersistentCalls:
+      m_Calls: []
+  _onXpGained:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileLoaded:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileSaved:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &180683425
 GameObject:
   m_ObjectHideFlags: 0
@@ -810,6 +890,7 @@ GameObject:
   - component: {fileID: 921856738}
   - component: {fileID: 921856735}
   - component: {fileID: 921856734}
+  - component: {fileID: 921856739}
   m_Layer: 0
   m_Name: First Person Controller
   m_TagString: Untagged
@@ -994,10 +1075,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _attacks: []
+  _presets: []
   _origin: {fileID: 0}
   _projectileSpawnPoint: {fileID: 0}
   _combatantSource: {fileID: 0}
   _profileSource: {fileID: 0}
+  _targetSelector: {fileID: 0}
   _enableBuiltInInput: 1
   _primaryAttackBinding:
     _triggerType: 0
@@ -1009,7 +1092,114 @@ MonoBehaviour:
   _onAttackResolved:
     m_PersistentCalls:
       m_Calls: []
+  _onPresetUsed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTargetResolved:
+    m_PersistentCalls:
+      m_Calls: []
   _onAttackFailed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &921856739
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 921856732}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9591dc9d456d26f4282dbe4cd198c654, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _pools:
+  - id: HP
+    current: 100
+    max: 100
+    regenPerSecond: 0
+    regenInterval: 1
+    maxDecreaseAmount: -1
+    maxIncreaseAmount: -1
+    restoreOnAwake: 1
+    ignoreCanHeal: 0
+    healAmount: 0
+    healDelay: 1
+    CurrentState:
+      _value: 100
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    PercentState:
+      _value: 1
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    MaxState:
+      _value: 100
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    OnChanged:
+      m_PersistentCalls:
+        m_Calls: []
+    OnDamage:
+      m_PersistentCalls:
+        m_Calls: []
+    OnHeal:
+      m_PersistentCalls:
+        m_Calls: []
+    OnDeath:
+      m_PersistentCalls:
+        m_Calls: []
+    OnChangeMax:
+      m_PersistentCalls:
+        m_Calls: []
+  - id: Mana
+    current: 50
+    max: 50
+    regenPerSecond: 0
+    regenInterval: 1
+    maxDecreaseAmount: -1
+    maxIncreaseAmount: -1
+    restoreOnAwake: 1
+    ignoreCanHeal: 0
+    healAmount: 0
+    healDelay: 1
+    CurrentState:
+      _value: 100
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    PercentState:
+      _value: 1
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    MaxState:
+      _value: 100
+      _onChanged:
+        m_PersistentCalls:
+          m_Calls: []
+    OnChanged:
+      m_PersistentCalls:
+        m_Calls: []
+    OnDamage:
+      m_PersistentCalls:
+        m_Calls: []
+    OnHeal:
+      m_PersistentCalls:
+        m_Calls: []
+    OnDeath:
+      m_PersistentCalls:
+        m_Calls: []
+    OnChangeMax:
+      m_PersistentCalls:
+        m_Calls: []
+  _saveKey: 
+  _loadOnAwake: 0
+  _autoSave: 1
+  _onPoolsChanged:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &955906395
@@ -1140,7 +1330,42 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _logicMode: 0
-  _conditions: []
+  _conditions:
+  - _sourceMode: 0
+    _useSceneSearch: 0
+    _searchObjectName: 
+    _waitForObject: 0
+    _prefabPreview: {fileID: 0}
+    _sourceObject: {fileID: 921856732}
+    _componentIndex: 5
+    _componentTypeName: Neo.Core.Resources.HealthComponent
+    _propertyName: HpCurrentValue
+    _valueType: 1
+    _compareOp: 0
+    _invert: 0
+    _thresholdSource: 0
+    _thresholdInt: 0
+    _thresholdFloat: 0
+    _thresholdBool: 1
+    _thresholdString: 
+    _otherSourceMode: 0
+    _otherUseSceneSearch: 0
+    _otherSearchObjectName: 
+    _otherWaitForObject: 0
+    _otherSourceObject: {fileID: 0}
+    _otherComponentIndex: 0
+    _otherComponentTypeName: 
+    _otherPropertyName: 
+    _isMethodWithArgument: 0
+    _propertyArgumentKind: 0
+    _propertyArgumentInt: 0
+    _propertyArgumentFloat: 0
+    _propertyArgumentString: 
+    _otherIsMethodWithArgument: 0
+    _otherPropertyArgumentKind: 0
+    _otherPropertyArgumentInt: 0
+    _otherPropertyArgumentFloat: 0
+    _otherPropertyArgumentString: 
   _checkMode: 2
   _checkInterval: 0.2
   _checkOnStart: 1
@@ -1903,3 +2128,4 @@ SceneRoots:
   - {fileID: 404522313}
   - {fileID: 1039673992}
   - {fileID: 74398853}
+  - {fileID: 167187389}

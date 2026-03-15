@@ -58,7 +58,30 @@ namespace Neo.Tools
             GameObject[] items = _items;
             if (items != null && items.Length > 0)
             {
-                if (effectiveIndex < 0)
+                if (_notifySelectorItemsOnly)
+                {
+                    for (int i = 0; i < items.Length; i++)
+                    {
+                        GameObject item = items[i];
+                        if (item == null) continue;
+                        bool shouldBeActive = effectiveIndex >= 0 && (_fillMode ? i <= effectiveIndex : i == effectiveIndex);
+                        SelectorItem si = item.GetComponent<SelectorItem>();
+                        if (si != null)
+                        {
+                            si.Index = i;
+                            si.SetActive(shouldBeActive);
+                        }
+                        else if (item.activeSelf != shouldBeActive)
+                        {
+                            try
+                            {
+                                item.SetActive(shouldBeActive);
+                            }
+                            catch (Exception) { }
+                        }
+                    }
+                }
+                else if (effectiveIndex < 0)
                 {
                     for (int i = 0; i < items.Length; i++)
                     {
@@ -126,6 +149,7 @@ namespace Neo.Tools
             }
 
             OnSelectionChanged?.Invoke(_currentIndex);
+            OnSelectionChangedGameObject?.Invoke(GetSelectedItem());
         }
 
         #endregion
@@ -149,7 +173,7 @@ namespace Neo.Tools
         private bool _setChild;
 
         [Tooltip(
-            "When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update)")]
+            "When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update). True by default — selector reacts to OnTransformChildrenChanged.")]
         [SerializeField]
         private bool _autoUpdateFromChildren = true;
 
@@ -189,6 +213,11 @@ namespace Neo.Tools
         [Tooltip("Offset applied to the current index for selection")] [SerializeField]
         private int _indexOffset;
 
+        [Header("Notify SelectorItem Only")]
+        [Tooltip("When enabled, Selector does not call GameObject.SetActive; it finds SelectorItem on each element and calls SetActive on it. Off by default.")]
+        [SerializeField]
+        private bool _notifySelectorItemsOnly;
+
         [Header("Debug")] [Tooltip("Current selection index")] [SerializeField]
         private int _currentIndex;
 
@@ -197,6 +226,7 @@ namespace Neo.Tools
 
         private int _startIndex;
         private HashSet<int> _usedIndicesForUnique;
+        private HashSet<int> _excludedIndices;
 
         /// <summary>
         ///     Returns the number of selectable items (GameObjects or virtual count)
@@ -257,6 +287,11 @@ namespace Neo.Tools
         ///     Invoked when ResetUnique() is called (unique mode tracking is cleared).
         /// </summary>
         public UnityEvent OnUniqueReset;
+
+        /// <summary>
+        ///     Invoked when selection changes, passing the newly selected GameObject (or null if none).
+        /// </summary>
+        public UnityEvent<GameObject> OnSelectionChangedGameObject;
 
         #endregion
 
@@ -391,6 +426,46 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Gets the number of items currently active: 0 or 1 in single-selection mode; effectiveIndex + 1 in fill mode.
+        ///     Use for win/lose conditions (e.g. CountActive >= 4 → defeat).
+        /// </summary>
+        public int CountActive
+        {
+            get
+            {
+                int total = Count;
+                if (total == 0) return 0;
+                int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
+                int effectiveIndex = _currentIndex + _indexOffset;
+                if (effectiveIndex < minEff) return 0;
+                if (effectiveIndex >= total) return _fillMode ? total : 1;
+                return _fillMode ? effectiveIndex + 1 : 1;
+            }
+        }
+
+        /// <summary>
+        ///     When true, Selector notifies SelectorItem components instead of calling GameObject.SetActive.
+        /// </summary>
+        public bool NotifySelectorItemsOnly
+        {
+            get => _notifySelectorItemsOnly;
+            set => _notifySelectorItemsOnly = value;
+        }
+
+        /// <summary>
+        ///     Number of indices currently excluded from the random pool.
+        /// </summary>
+        public int ExcludedCount => _excludedIndices?.Count ?? 0;
+
+        /// <summary>
+        ///     Returns true if the given index is excluded from the random pool.
+        /// </summary>
+        public bool IsExcluded(int index)
+        {
+            return _excludedIndices != null && _excludedIndices.Contains(index);
+        }
+
         #endregion
 
         #region Unity Methods
@@ -404,7 +479,7 @@ namespace Neo.Tools
         {
             TryInitializeFromChildren();
 
-            if (Count > 0)
+            if (startOnAwake && Count > 0)
             {
                 UpdateSelection();
             }
@@ -429,8 +504,7 @@ namespace Neo.Tools
                 _setChild = false;
                 RefreshItemsFromChildren();
             }
-
-            if (_autoUpdateFromChildren && _count <= 0 && _items.Length == 0)
+            else if (_autoUpdateFromChildren && _count <= 0)
             {
                 RefreshItemsFromChildren();
             }
@@ -627,44 +701,61 @@ namespace Neo.Tools
                 return;
             }
 
+            bool IsExcludedIndex(int idx) => _excludedIndices != null && _excludedIndices.Contains(idx);
+
             int range = max - min + 1;
-            if (range <= 1)
+            List<int> availableNonExcluded = new(range);
+            for (int i = min; i <= max; i++)
             {
-                _currentIndex = min;
+                if (!IsExcludedIndex(i))
+                {
+                    availableNonExcluded.Add(i);
+                }
+            }
+
+            if (availableNonExcluded.Count == 0)
+            {
+                return;
+            }
+
+            if (range <= 1 || availableNonExcluded.Count == 1)
+            {
+                int only = availableNonExcluded[0];
+                _currentIndex = only;
                 if (_uniqueSelectionMode)
                 {
-                    MarkIndexUsedInUniqueMode(min);
+                    MarkIndexUsedInUniqueMode(only);
                 }
-
                 UpdateSelection();
                 return;
             }
 
             if (_uniqueSelectionMode)
             {
-                SetRandomUnique(min, max, range);
+                SetRandomUnique(min, max, range, IsExcludedIndex);
                 return;
             }
 
-            int newIndex = Random.Range(min, max + 1);
-            if (newIndex == _currentIndex)
+            int pick = Random.Range(0, availableNonExcluded.Count);
+            int newIndex = availableNonExcluded[pick];
+            if (newIndex == _currentIndex && availableNonExcluded.Count > 1)
             {
-                int offset = Random.Range(1, range);
-                newIndex = min + (newIndex - min + offset) % range;
+                int next = (pick + 1) % availableNonExcluded.Count;
+                newIndex = availableNonExcluded[next];
             }
 
             _currentIndex = newIndex;
             UpdateSelection();
         }
 
-        private void SetRandomUnique(int min, int max, int range)
+        private void SetRandomUnique(int min, int max, int range, Func<int, bool> isExcluded)
         {
             _usedIndicesForUnique ??= new HashSet<int>();
 
             List<int> available = new(range);
             for (int i = min; i <= max; i++)
             {
-                if (!_usedIndicesForUnique.Contains(i))
+                if (!_usedIndicesForUnique.Contains(i) && (isExcluded == null || !isExcluded(i)))
                 {
                     available.Add(i);
                 }
@@ -678,7 +769,10 @@ namespace Neo.Tools
                     _usedIndicesForUnique.Clear();
                     for (int i = min; i <= max; i++)
                     {
-                        available.Add(i);
+                        if (isExcluded == null || !isExcluded(i))
+                        {
+                            available.Add(i);
+                        }
                     }
                 }
                 else
@@ -829,6 +923,33 @@ namespace Neo.Tools
         {
             Reset();
             ResetUnique();
+        }
+
+        /// <summary>
+        ///     Excludes the given index from the random pool (e.g. when item is "resolved"). Excluded indices are not chosen by SetRandom until IncludeIndex or IncludeAllIndices is called.
+        /// </summary>
+        /// <param name="index">Index to exclude.</param>
+        public void ExcludeIndex(int index)
+        {
+            _excludedIndices ??= new HashSet<int>();
+            _excludedIndices.Add(index);
+        }
+
+        /// <summary>
+        ///     Includes the given index back into the random pool.
+        /// </summary>
+        /// <param name="index">Index to include.</param>
+        public void IncludeIndex(int index)
+        {
+            _excludedIndices?.Remove(index);
+        }
+
+        /// <summary>
+        ///     Clears all excluded indices so the full pool is available for SetRandom again.
+        /// </summary>
+        public void IncludeAllIndices()
+        {
+            _excludedIndices?.Clear();
         }
 
         /// <summary>
@@ -1030,6 +1151,14 @@ namespace Neo.Tools
             }
 
             _items = childs.ToArray();
+
+            for (int i = 0; i < _items.Length; i++)
+            {
+                if (_items[i] != null && _items[i].TryGetComponent(out SelectorItem si))
+                {
+                    si.Index = i;
+                }
+            }
 
             int total = Count;
             if (total > 0 && _currentIndex >= total)

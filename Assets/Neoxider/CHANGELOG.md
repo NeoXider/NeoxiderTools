@@ -4,6 +4,57 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.4] - 2026-03-15
+
+### Core / Level и Resources
+
+- **Level (Core)** — универсальный модуль уровня и XP: `LevelComponent` (MonoBehaviour, `ILevelProvider`), кривая уровня (Linear, Quadratic, Exponential, Custom), опциональный макс. уровень, сохранение. ReactiveProperty: LevelState, XpState, XpToNextLevelState; свойства LevelStateValue, XpStateValue, XpToNextLevelStateValue для NeoCondition.
+- **Resources (Core)** — универсальные пулы ресурсов: `HealthComponent` (HP, Mana и произвольные id), реген, лимиты за раз, события OnDamage/OnHeal/OnDeath/OnResourceChanged. Свойства HpCurrentValue, HpPercentValue, ManaCurrentValue, ManaPercentValue для NeoCondition.
+- **NoCode Level** — `LevelNoCodeAction` (AddXp, SetLevel), `LevelConditionAdapter` (LevelAtLeast, XpAtLeast, XpToNextLevelAtMost).
+
+### Progression
+
+- **Progression** — уровень и XP перенесены в `ILevelProvider` (LevelComponent). Из профиля убраны TotalXp, CurrentLevel. ProgressionManager подписывается на OnLevelUp у LevelComponent и выдаёт награды по таблице уровней.
+
+### RPG
+
+- **RPG** — опциональные `HealthComponent` и `LevelComponent` в RpgStatsManager и RpgCombatant; делегирование HP/Level/TakeDamage/Heal/TrySpendResource. В `IRpgCombatReceiver` добавлен TrySpendResource. В RpgAttackDefinition: CostResourceId, CostAmount (стоимость скилла любым ресурсом). RpgAttackController перед атакой списывает ресурс по определению.
+- **Reactive-свойства** — во всех компонентах с реактивными переменными добавлены свойства для NeoCondition (LevelStateValue, HpStateValue, HpPercentStateValue и т.д.).
+
+### Тесты и документация
+
+- **Тесты RPG** — добавлены RpgStatsManagerTests (TrySpendResource без провайдера, делегирование через HealthComponent), RpgCombatTests (Combatant TrySpendResource, атака с CostAmount при отсутствии/наличии провайдера), HealthComponentTests (Decrease, Increase, TrySpend, IsDepleted, свойства).
+- **Документация** — добавлены Docs/Core/README.md, Docs/Core/Level.md, Docs/Core/HealthComponent.md по правилам DOCUMENTATION_GUIDELINES; Core добавлен в оглавление Docs/README.md.
+
+После обновления до 7.7.4: открыть проект в Unity, дождаться компиляции, проверить консоль на ошибки и предупреждения; при необходимости прогнать EditMode-тесты (Window → General → Test Runner).
+
+## [7.7.3] - 2026-03-15
+
+### Tools / TimerObject
+
+- **Time scale** — добавлено поле `timeScale` (множитель скорости времени). При обновлении к `deltaTime` применяется `timeScale` (1 = реальное время, 2 = в 2 раза быстрее). Удобно для ускоренного игрового времени и «игровых суток».
+- **Режим времени суток (день 00:00–24:00)** — при `dayLengthSeconds > 0` (например 86400 для 24 ч) таймер интерпретируется как цикл дня: время зацикливается в диапазоне `[0, dayLengthSeconds)`, доступны свойства `DayTimeHours`, `DayTimeMinutes`, `DayTimeSeconds` и формат вывода `dayTimeFormat`. Сохранение при включённом дне записывает время по модулю дня.
+- **События дня и времени суток** — `OnNewDay` вызывается при переходе через полночь (при `dayLengthSeconds > 0` и `looping`); `OnDayTimeChanged (float hours, float minutes, float seconds)` — при каждом обновлении времени суток. Взаимоисключение с `infiniteDuration` в OnValidate.
+
+### Tools / View
+
+- **SelectorItem** — новый компонент для элементов, управляемых Selector. Хранит индекс, знает о родительском Selector, реагирует на `SetActive(bool)` в режиме NotifySelectorItemsOnly. Реактивное свойство `Active`, события `OnActivated`, `OnDeactivated`, `OnActivatedInverse`, `OnDeactivatedInverse`. Методы `ExcludeFromSelector()` и `IncludeInSelector()` для исключения/возврата индекса в пул Selector.
+- **Selector** — исключение индексов из случайного выбора: `ExcludeIndex(int)`, `IncludeIndex(int)`, `IncludeAllIndices()`, `IsExcluded(int)`, `ExcludedCount`. При `SetRandom()` и в unique-режиме учитываются только не исключённые индексы.
+- **Selector** — свойство `CountActive` (количество активных элементов: 0/1 в обычном режиме, effectiveIndex+1 в fill). Событие `OnSelectionChangedGameObject (GameObject)`. Режим **Notify Selector Items Only** (по умолчанию выключен): при включении Selector не вызывает `GameObject.SetActive`, а находит на каждом элементе `SelectorItem` и вызывает у него `SetActive(true)`/`SetActive(false)`. При обновлении списка детей проставляется `SelectorItem.Index`.
+
+### Docs / Examples
+
+- **TimerObject.md** — добавлены разделы: ускорение времени (timeScale), режим времени суток (dayLengthSeconds, DayTimeHours/Minutes/Seconds, dayTimeFormat), события OnNewDay и OnDayTimeChanged.
+- **Selector.md** — описание ExcludeIndex, IncludeIndex, IncludeAllIndices, CountActive, OnSelectionChangedGameObject, режима NotifySelectorItemsOnly, сценарий «Менеджер аномалий».
+- **SelectorItem.md** — новый документ с описанием компонента и связкой с Selector.
+- **Docs/Examples/AnomalyGame.md** — пошаговый пример сборки игры про аномалии без кода (два таймера: время до победы и спавн аномалий; Selector + SelectorItem; условие поражения по CountActive).
+
+## [7.7.2] - 2026-03-15
+
+### Tools / Selector (patch)
+
+- **Selector** — при выключенном `startOnAwake` компонент больше не применяет выбор при старте: в `Start()` вызов `UpdateSelection()` выполняется только если `startOnAwake && Count > 0`. При изменении дочерних объектов (`OnTransformChildrenChanged` / `RefreshItemsFromChildren`) выбор по-прежнему обновляется при включённом `_autoUpdateFromChildren` (по умолчанию `true`). Документация Selector.md обновлена.
+
 ### RPG / Progression / Legacy / Documentation
 
 - **RPG module** — added `Neo.Rpg` module with `RpgStatsManager`, persistent `RpgProfileData`, `BuffDefinition`, `StatusEffectDefinition`, HP/level/buffs/status effects, regen, no-code bridges (`RpgNoCodeAction`, `RpgConditionAdapter`), and profile save/load through `SaveProvider`.

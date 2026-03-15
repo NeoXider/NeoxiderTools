@@ -11,8 +11,6 @@ namespace Neo.Progression
     public sealed class ProgressionProfileData
     {
         [SerializeField] private int _version = 2;
-        [SerializeField] private int _totalXp;
-        [SerializeField] private int _currentLevel = 1;
         [SerializeField] private int _availablePerkPoints;
         [SerializeField] private List<string> _unlockedNodeIds = new();
         [SerializeField] private List<string> _purchasedPerkIds = new();
@@ -24,24 +22,6 @@ namespace Neo.Progression
         {
             get => _version;
             set => _version = value;
-        }
-
-        /// <summary>
-        /// Gets or sets the accumulated XP.
-        /// </summary>
-        public int TotalXp
-        {
-            get => _totalXp;
-            set => _totalXp = Mathf.Max(0, value);
-        }
-
-        /// <summary>
-        /// Gets or sets the resolved player level.
-        /// </summary>
-        public int CurrentLevel
-        {
-            get => _currentLevel;
-            set => _currentLevel = Mathf.Max(1, value);
         }
 
         /// <summary>
@@ -68,8 +48,6 @@ namespace Neo.Progression
         /// </summary>
         public void Sanitize()
         {
-            _totalXp = Mathf.Max(0, _totalXp);
-            _currentLevel = Mathf.Max(1, _currentLevel);
             _availablePerkPoints = Mathf.Max(0, _availablePerkPoints);
             RemoveInvalidEntries(_unlockedNodeIds);
             RemoveInvalidEntries(_purchasedPerkIds);
@@ -83,8 +61,6 @@ namespace Neo.Progression
             return new ProgressionProfileData
             {
                 Version = _version,
-                TotalXp = _totalXp,
-                CurrentLevel = _currentLevel,
                 AvailablePerkPoints = _availablePerkPoints,
                 _unlockedNodeIds = new List<string>(_unlockedNodeIds),
                 _purchasedPerkIds = new List<string>(_purchasedPerkIds)

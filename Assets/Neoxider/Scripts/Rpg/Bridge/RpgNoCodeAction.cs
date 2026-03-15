@@ -12,27 +12,7 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgNoCodeAction))]
     public sealed class RpgNoCodeAction : MonoBehaviour
     {
-        public enum ActionType
-        {
-            TakeDamage,
-            Heal,
-            SetMaxHp,
-            SetLevel,
-            ApplyBuff,
-            ApplyStatus,
-            RemoveBuff,
-            RemoveStatus,
-            UseAttackById,
-            UsePrimaryAttack,
-            UsePresetById,
-            UsePrimaryPreset,
-            StartEvade,
-            ResetProfile,
-            SaveProfile,
-            LoadProfile
-        }
-
-        [Header("Action")] [SerializeField] private ActionType _actionType = ActionType.Heal;
+        [Header("Action")] [SerializeField] private RpgNoCodeActionType _actionType = RpgNoCodeActionType.Heal;
         [SerializeField] private RpgStatsManager _manager;
         [SerializeField] [Min(0f)] private float _amount = 25f;
         [SerializeField] [Min(1)] private int _level = 1;
@@ -54,30 +34,30 @@ namespace Neo.Rpg
         public void Execute()
         {
             RpgStatsManager manager = null;
-            if (RequiresManager(_actionType) && !TryGetManager(out manager))
+            if (RequiresManager() && !TryGetManager(out manager))
             {
                 return;
             }
 
             switch (_actionType)
             {
-                case ActionType.TakeDamage:
+                case RpgNoCodeActionType.TakeDamage:
                     manager.TakeDamage(_amount);
                     EmitSuccess($"Took damage: {_amount}");
                     break;
-                case ActionType.Heal:
+                case RpgNoCodeActionType.Heal:
                     manager.Heal(_amount);
                     EmitSuccess($"Healed: {_amount}");
                     break;
-                case ActionType.SetMaxHp:
+                case RpgNoCodeActionType.SetMaxHp:
                     manager.SetMaxHp(_amount, true);
                     EmitSuccess($"Set max HP: {_amount}");
                     break;
-                case ActionType.SetLevel:
+                case RpgNoCodeActionType.SetLevel:
                     manager.SetLevel(_level);
                     EmitSuccess($"Set level: {_level}");
                     break;
-                case ActionType.ApplyBuff:
+                case RpgNoCodeActionType.ApplyBuff:
                     if (manager.TryApplyBuff(_buffId, out string buffError))
                     {
                         EmitSuccess($"Applied buff: {_buffId}");
@@ -88,7 +68,7 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.ApplyStatus:
+                case RpgNoCodeActionType.ApplyStatus:
                     if (manager.TryApplyStatus(_statusId, out string statusError))
                     {
                         EmitSuccess($"Applied status: {_statusId}");
@@ -99,15 +79,15 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.RemoveBuff:
+                case RpgNoCodeActionType.RemoveBuff:
                     manager.RemoveBuff(_buffId);
                     EmitSuccess($"Removed buff: {_buffId}");
                     break;
-                case ActionType.RemoveStatus:
+                case RpgNoCodeActionType.RemoveStatus:
                     manager.RemoveStatus(_statusId);
                     EmitSuccess($"Removed status: {_statusId}");
                     break;
-                case ActionType.UseAttackById:
+                case RpgNoCodeActionType.UseAttackById:
                     string attackError = null;
                     if (_attackController != null && _attackController.TryUseAttack(_attackId, out attackError))
                     {
@@ -119,7 +99,7 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.UsePrimaryAttack:
+                case RpgNoCodeActionType.UsePrimaryAttack:
                     if (_attackController != null && _attackController.UsePrimaryAttack())
                     {
                         EmitSuccess("Used primary attack.");
@@ -130,7 +110,7 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.UsePresetById:
+                case RpgNoCodeActionType.UsePresetById:
                     string presetError = null;
                     if (_attackController != null && _attackController.TryUsePreset(_presetId, out presetError))
                     {
@@ -142,7 +122,7 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.UsePrimaryPreset:
+                case RpgNoCodeActionType.UsePrimaryPreset:
                     if (_attackController != null && _attackController.UsePrimaryPreset())
                     {
                         EmitSuccess("Used primary preset.");
@@ -153,7 +133,7 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.StartEvade:
+                case RpgNoCodeActionType.StartEvade:
                     if (_evadeController != null && _evadeController.TryStartEvade())
                     {
                         EmitSuccess("Evade started.");
@@ -164,15 +144,15 @@ namespace Neo.Rpg
                     }
 
                     break;
-                case ActionType.ResetProfile:
+                case RpgNoCodeActionType.ResetProfile:
                     manager.ResetProfile();
                     EmitSuccess("RPG profile reset.");
                     break;
-                case ActionType.SaveProfile:
+                case RpgNoCodeActionType.SaveProfile:
                     manager.SaveProfile();
                     EmitSuccess("RPG profile saved.");
                     break;
-                case ActionType.LoadProfile:
+                case RpgNoCodeActionType.LoadProfile:
                     manager.LoadProfile();
                     EmitSuccess("RPG profile loaded.");
                     break;
@@ -191,13 +171,13 @@ namespace Neo.Rpg
             return false;
         }
 
-        private static bool RequiresManager(ActionType actionType)
+        private bool RequiresManager()
         {
-            return actionType != ActionType.UseAttackById
-                && actionType != ActionType.UsePrimaryAttack
-                && actionType != ActionType.UsePresetById
-                && actionType != ActionType.UsePrimaryPreset
-                && actionType != ActionType.StartEvade;
+            return _actionType != RpgNoCodeActionType.UseAttackById
+                && _actionType != RpgNoCodeActionType.UsePrimaryAttack
+                && _actionType != RpgNoCodeActionType.UsePresetById
+                && _actionType != RpgNoCodeActionType.UsePrimaryPreset
+                && _actionType != RpgNoCodeActionType.StartEvade;
         }
 
         private void EmitSuccess(string message)

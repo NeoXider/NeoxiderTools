@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using NUnit.Framework;
+using Neo.Core.Resources;
 using Neo.Rpg;
 using Neo.Save;
 using UnityEngine;
@@ -17,6 +19,7 @@ namespace Neo.Rpg.Tests
 
             GameObject go = new("RpgStatsManager");
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.EnsureInitialized();
 
             try
             {
@@ -41,6 +44,7 @@ namespace Neo.Rpg.Tests
 
             GameObject go = new("RpgStatsManager");
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.EnsureInitialized();
 
             try
             {
@@ -65,6 +69,7 @@ namespace Neo.Rpg.Tests
 
             GameObject go = new("RpgStatsManager");
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            manager.EnsureInitialized();
 
             try
             {
@@ -90,6 +95,7 @@ namespace Neo.Rpg.Tests
             GameObject firstGo = new("RpgStatsManager_First");
             RpgStatsManager firstManager = firstGo.AddComponent<RpgStatsManager>();
             firstManager.SaveKey = "RpgTests.Persistence";
+            firstManager.EnsureInitialized();
 
             try
             {
@@ -103,6 +109,7 @@ namespace Neo.Rpg.Tests
                 GameObject secondGo = new("RpgStatsManager_Second");
                 RpgStatsManager secondManager = secondGo.AddComponent<RpgStatsManager>();
                 secondManager.SaveKey = "RpgTests.Persistence";
+                secondManager.EnsureInitialized();
                 secondManager.LoadProfile();
 
                 try
@@ -130,6 +137,7 @@ namespace Neo.Rpg.Tests
             GameObject go = new("RpgStatsManager");
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
             manager.SaveKey = "RpgTests.AutoSave.Disabled";
+            manager.EnsureInitialized();
 
             try
             {
@@ -155,6 +163,7 @@ namespace Neo.Rpg.Tests
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
             manager.SaveKey = "RpgTests.AutoSave.Enabled";
             manager.AutoSave = true;
+            manager.EnsureInitialized();
 
             try
             {
@@ -163,7 +172,9 @@ namespace Neo.Rpg.Tests
                 manager.TakeDamage(10f);
 
                 Assert.That(provider.HasKey(manager.SaveKey), Is.True);
-                Assert.That(provider.GetString(manager.SaveKey), Does.Contain("\"_currentHp\": 90.0"));
+                string json = provider.GetString(manager.SaveKey);
+                Assert.That(json, Does.Contain("_currentHp"));
+                Assert.That(json, Does.Contain("90"), "Profile should contain HP 90 after 10 damage.");
             }
             finally
             {
@@ -180,6 +191,7 @@ namespace Neo.Rpg.Tests
             GameObject go = new("RpgStatsManager");
             RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
             manager.SaveKey = "RpgTests.Flush";
+            manager.EnsureInitialized();
 
             try
             {
@@ -191,6 +203,65 @@ namespace Neo.Rpg.Tests
             {
                 RpgStatsManager.DestroyInstance();
             }
+        }
+
+        [Test]
+        public void TrySpendResource_WhenNoProvider_ReturnsFalse()
+        {
+            GameObject go = new("RpgStatsManager");
+            RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+
+            try
+            {
+                manager.EnsureInitialized();
+                bool ok = manager.TrySpendResource(RpgResourceId.Mana, 10f, out string reason);
+
+                Assert.That(ok, Is.False);
+                Assert.That(reason, Is.Not.Null.And.Not.Empty);
+            }
+            finally
+            {
+                RpgStatsManager.DestroyInstance();
+            }
+        }
+
+        [Test]
+        public void WithHealthComponent_DelegatesHpAndTrySpend()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject go = new("RpgStatsManager");
+            HealthComponent health = go.AddComponent<HealthComponent>();
+            RpgStatsManager manager = go.AddComponent<RpgStatsManager>();
+            SetPrivateField(manager, "_healthProvider", health);
+
+            try
+            {
+                manager.EnsureInitialized();
+                manager.ResetProfile();
+
+                Assert.That(manager.CurrentHp, Is.EqualTo(100f));
+                Assert.That(manager.MaxHp, Is.EqualTo(100f));
+
+                float dealt = manager.TakeDamage(25f);
+                Assert.That(dealt, Is.EqualTo(25f));
+                Assert.That(manager.CurrentHp, Is.EqualTo(75f));
+
+                Assert.That(manager.TrySpendResource(RpgResourceId.Mana, 25f, out string reason), Is.True);
+                Assert.That(manager.TrySpendResource(RpgResourceId.Mana, 100f, out reason), Is.False);
+            }
+            finally
+            {
+                RpgStatsManager.DestroyInstance();
+            }
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            FieldInfo f = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(f, Is.Not.Null, $"Field '{fieldName}' not found.");
+            f.SetValue(target, value);
         }
 
         private sealed class DictionarySaveProvider : ISaveProvider

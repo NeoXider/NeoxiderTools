@@ -12,18 +12,7 @@ namespace Neo.Progression
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionNoCodeAction))]
     public sealed class ProgressionNoCodeAction : MonoBehaviour
     {
-        public enum ActionType
-        {
-            AddXp,
-            GrantPerkPoints,
-            UnlockNode,
-            BuyPerk,
-            ResetProgression,
-            SaveProfile,
-            LoadProfile
-        }
-
-        [Header("Action")] [SerializeField] private ActionType _actionType = ActionType.AddXp;
+        [Header("Action")] [SerializeField] private ProgressionNoCodeActionType _actionType = ProgressionNoCodeActionType.AddXp;
         [SerializeField] private ProgressionManager _manager;
         [SerializeField] [Min(0)] private int _xpAmount = 25;
         [SerializeField] [Min(0)] private int _perkPointsAmount = 1;
@@ -46,15 +35,15 @@ namespace Neo.Progression
 
             switch (_actionType)
             {
-                case ActionType.AddXp:
+                case ProgressionNoCodeActionType.AddXp:
                     manager.AddXp(_xpAmount);
                     EmitSuccess($"Added XP: {_xpAmount}");
                     break;
-                case ActionType.GrantPerkPoints:
+                case ProgressionNoCodeActionType.GrantPerkPoints:
                     manager.AddPerkPoints(_perkPointsAmount);
                     EmitSuccess($"Granted perk points: {_perkPointsAmount}");
                     break;
-                case ActionType.UnlockNode:
+                case ProgressionNoCodeActionType.UnlockNode:
                     if (manager.TryUnlockNode(_nodeId, out string unlockError))
                     {
                         EmitSuccess($"Unlocked node: {_nodeId}");
@@ -65,7 +54,7 @@ namespace Neo.Progression
                     }
 
                     break;
-                case ActionType.BuyPerk:
+                case ProgressionNoCodeActionType.BuyPerk:
                     if (manager.TryBuyPerk(_perkId, out string perkError))
                     {
                         EmitSuccess($"Purchased perk: {_perkId}");
@@ -76,15 +65,15 @@ namespace Neo.Progression
                     }
 
                     break;
-                case ActionType.ResetProgression:
+                case ProgressionNoCodeActionType.ResetProgression:
                     manager.ResetProgression();
                     EmitSuccess("Progression reset.");
                     break;
-                case ActionType.SaveProfile:
+                case ProgressionNoCodeActionType.SaveProfile:
                     manager.SaveProfile();
                     EmitSuccess("Progression profile saved.");
                     break;
-                case ActionType.LoadProfile:
+                case ProgressionNoCodeActionType.LoadProfile:
                     manager.LoadProfile();
                     EmitSuccess("Progression profile loaded.");
                     break;

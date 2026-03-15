@@ -1,6 +1,6 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.7.1`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.7.4`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
@@ -16,6 +16,7 @@
 | **Audio** | `AudioManager`, микшер, random music и audio helper-компоненты | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Слоты, колесо фортуны, коллекции и награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
 | **Cards** | MVP-архитектура, покер, «Пьяница» и карточный runtime-flow | [`Cards/README.md`](./Cards/README.md) |
+| **Core** | Уровень/XP (LevelComponent) и пулы ресурсов (HealthComponent) для Progression и RPG | [`Core/README.md`](./Core/README.md) |
 | **Condition** | No-Code условия: проверка полей, AND/OR логика, события | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
 | **Editor** | Окна настроек, поиск missing scripts, авто-билд и сервисные утилиты | [`Editor/README.md`](./Editor/README.md) |
 | **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |

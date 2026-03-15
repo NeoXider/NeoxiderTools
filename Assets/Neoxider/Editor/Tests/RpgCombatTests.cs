@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using NUnit.Framework;
+using Neo.Core.Resources;
 using Neo.Rpg;
 using UnityEngine;
 
@@ -21,6 +22,24 @@ namespace Neo.Rpg.Tests
 
                 Assert.That(dealt, Is.EqualTo(0f));
                 Assert.That(combatant.CurrentHp, Is.EqualTo(100f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void Combatant_TrySpendResource_WhenNoProvider_ReturnsFalse()
+        {
+            GameObject go = new("Combatant");
+            RpgCombatant combatant = go.AddComponent<RpgCombatant>();
+
+            try
+            {
+                bool ok = combatant.TrySpendResource(RpgResourceId.Mana, 10f, out string reason);
+                Assert.That(ok, Is.False);
+                Assert.That(reason, Is.Not.Null.And.Not.Empty);
             }
             finally
             {
@@ -57,6 +76,7 @@ namespace Neo.Rpg.Tests
                 SetPrivateField(attack, "_use2D", false);
                 SetPrivateField(attack, "_maxTargets", 1);
                 SetPrivateField(attack, "_targetLayers", (LayerMask)~0);
+                SetPrivateField(attack, "_costAmount", 0f);
 
                 SetPrivateField(controller, "_attacks", new[] { attack });
 
@@ -64,6 +84,99 @@ namespace Neo.Rpg.Tests
 
                 Assert.That(success, Is.True);
                 Assert.That(targetCombatant.CurrentHp, Is.EqualTo(75f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
+        [Test]
+        public void AttackController_WhenCostAmountPositive_AndNoResourceProvider_Fails()
+        {
+            GameObject source = new("Source");
+            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            target.name = "Target";
+
+            try
+            {
+                source.transform.position = Vector3.zero;
+                target.transform.position = new Vector3(0f, 0f, 2f);
+                source.transform.forward = Vector3.forward;
+                Physics.SyncTransforms();
+
+                RpgCombatant sourceCombatant = source.AddComponent<RpgCombatant>();
+                target.AddComponent<RpgCombatant>();
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+                RpgAttackDefinition attack = ScriptableObject.CreateInstance<RpgAttackDefinition>();
+                SetPrivateField(attack, "_id", "costly");
+                SetPrivateField(attack, "_deliveryType", RpgAttackDeliveryType.Direct);
+                SetPrivateField(attack, "_hitMode", RpgHitMode.Damage);
+                SetPrivateField(attack, "_power", 10f);
+                SetPrivateField(attack, "_range", 5f);
+                SetPrivateField(attack, "_radius", 0.25f);
+                SetPrivateField(attack, "_castDelay", 0f);
+                SetPrivateField(attack, "_cooldown", 0f);
+                SetPrivateField(attack, "_costResourceId", "Mana");
+                SetPrivateField(attack, "_costAmount", 30f);
+
+                SetPrivateField(controller, "_attacks", new[] { attack });
+                SetPrivateField(controller, "_combatantSource", sourceCombatant);
+
+                bool success = controller.TryUseAttack("costly", out string failReason);
+
+                Assert.That(success, Is.False);
+                Assert.That(failReason, Is.Not.Null.And.Not.Empty);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(source);
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
+        [Test]
+        public void AttackController_WhenCostAmountPositive_AndEnoughMana_SucceedsAndSpendsMana()
+        {
+            GameObject source = new("Source");
+            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            target.name = "Target";
+
+            try
+            {
+                source.transform.position = Vector3.zero;
+                target.transform.position = new Vector3(0f, 0f, 2f);
+                source.transform.forward = Vector3.forward;
+                Physics.SyncTransforms();
+
+                Neo.Core.Resources.HealthComponent health = source.AddComponent<Neo.Core.Resources.HealthComponent>();
+                RpgCombatant sourceCombatant = source.AddComponent<RpgCombatant>();
+                SetPrivateField(sourceCombatant, "_healthProvider", health);
+
+                RpgCombatant targetCombatant = target.AddComponent<RpgCombatant>();
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+                RpgAttackDefinition attack = ScriptableObject.CreateInstance<RpgAttackDefinition>();
+                SetPrivateField(attack, "_id", "mana_attack");
+                SetPrivateField(attack, "_deliveryType", RpgAttackDeliveryType.Direct);
+                SetPrivateField(attack, "_hitMode", RpgHitMode.Damage);
+                SetPrivateField(attack, "_power", 15f);
+                SetPrivateField(attack, "_range", 5f);
+                SetPrivateField(attack, "_radius", 0.25f);
+                SetPrivateField(attack, "_castDelay", 0f);
+                SetPrivateField(attack, "_cooldown", 0f);
+                SetPrivateField(attack, "_costResourceId", "Mana");
+                SetPrivateField(attack, "_costAmount", 20f);
+
+                SetPrivateField(controller, "_attacks", new[] { attack });
+                SetPrivateField(controller, "_combatantSource", sourceCombatant);
+
+                float manaBefore = health.GetCurrent(Neo.Core.Resources.RpgResourceId.Mana);
+                bool success = controller.TryUseAttack("mana_attack", out string failReason);
+
+                Assert.That(success, Is.True, failReason);
+                Assert.That(targetCombatant.CurrentHp, Is.EqualTo(85f));
+                Assert.That(health.GetCurrent(Neo.Core.Resources.RpgResourceId.Mana), Is.EqualTo(manaBefore - 20f));
             }
             finally
             {

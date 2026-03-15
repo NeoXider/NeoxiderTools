@@ -14,25 +14,11 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgConditionAdapter))]
     public sealed class RpgConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
-        public enum EvaluationMode
-        {
-            HpAtLeast,
-            HpPercentAtLeast,
-            LevelAtLeast,
-            IsDead,
-            HasBuff,
-            HasStatus,
-            CanPerformActions,
-            IsInvulnerable,
-            CanEvade,
-            AttackReady
-        }
-
         [SerializeField] private RpgStatsManager _manager;
         [SerializeField] private RpgCombatant _combatant;
         [SerializeField] private RpgEvadeController _evadeController;
         [SerializeField] private RpgAttackController _attackController;
-        [SerializeField] private EvaluationMode _mode = EvaluationMode.HpAtLeast;
+        [SerializeField] private RpgConditionEvaluationMode _mode = RpgConditionEvaluationMode.HpAtLeast;
         [SerializeField] [Min(0f)] private float _threshold = 50f;
         [SerializeField] [Min(1)] private int _levelThreshold = 1;
         [SerializeField] private string _buffId = string.Empty;
@@ -64,16 +50,16 @@ namespace Neo.Rpg
 
             bool result = _mode switch
             {
-                EvaluationMode.HpAtLeast => receiver.CurrentHp >= _threshold,
-                EvaluationMode.HpPercentAtLeast => receiver.MaxHp > 0f && (receiver.CurrentHp / receiver.MaxHp) >= (_threshold / 100f),
-                EvaluationMode.LevelAtLeast => receiver.Level >= _levelThreshold,
-                EvaluationMode.IsDead => receiver.IsDead,
-                EvaluationMode.HasBuff => HasBuff(receiver, _buffId),
-                EvaluationMode.HasStatus => HasStatus(receiver, _statusId),
-                EvaluationMode.CanPerformActions => receiver.CanPerformActions,
-                EvaluationMode.IsInvulnerable => receiver.IsInvulnerable,
-                EvaluationMode.CanEvade => _evadeController != null && _evadeController.CanEvade,
-                EvaluationMode.AttackReady => _attackController != null && _attackController.CanUseAttack(_attackId, out _),
+                RpgConditionEvaluationMode.HpAtLeast => receiver.CurrentHp >= _threshold,
+                RpgConditionEvaluationMode.HpPercentAtLeast => receiver.MaxHp > 0f && (receiver.CurrentHp / receiver.MaxHp) >= (_threshold / 100f),
+                RpgConditionEvaluationMode.LevelAtLeast => receiver.Level >= _levelThreshold,
+                RpgConditionEvaluationMode.IsDead => receiver.IsDead,
+                RpgConditionEvaluationMode.HasBuff => HasBuff(receiver, _buffId),
+                RpgConditionEvaluationMode.HasStatus => HasStatus(receiver, _statusId),
+                RpgConditionEvaluationMode.CanPerformActions => receiver.CanPerformActions,
+                RpgConditionEvaluationMode.IsInvulnerable => receiver.IsInvulnerable,
+                RpgConditionEvaluationMode.CanEvade => _evadeController != null && _evadeController.CanEvade,
+                RpgConditionEvaluationMode.AttackReady => _attackController != null && _attackController.CanUseAttack(_attackId, out _),
                 _ => false
             };
 
