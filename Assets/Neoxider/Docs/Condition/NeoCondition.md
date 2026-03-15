@@ -130,6 +130,10 @@ NeoCondition (MonoBehaviour)
 - В Play Mode — отображение найденного объекта (`Found Object`)
 - Summary: `"PlayerHP".Health.Hp == 0`
 
+## Пример: проверка по RandomRange
+
+Для условий по случайному числу (например, «включить от 0 до 5 аномалий») используйте компонент **RandomRange** ([Tools/Components/RandomRange.md](../Tools/Components/RandomRange.md)): после вызова `Generate()` значение доступно в полях **ValueInt** и **ValueFloat**. В NeoCondition выберите объект с RandomRange, компонент RandomRange, свойство **ValueInt** (или **ValueFloat**), оператор (например, GreaterOrEqual) и порог. Так можно, например, по условию «ValueInt >= 1» включать таймер спавна аномалий или другую логику уровня.
+
 ## Logic Mode
 
 - **AND** — все условия должны быть `true`

@@ -51,6 +51,14 @@
 - `_indexOffset` (`int`): Смещение, которое добавляется к `_currentIndex` при отображении или использовании. Полезно, если вы хотите, чтобы первый элемент отображался как "1" вместо "0".
 - `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, селектор **не** вызывает `GameObject.SetActive` на дочерних объектах, а ищет на каждом элементе компонент **SelectorItem** и вызывает у него `SetActive(true)` / `SetActive(false)`. Удобно для сценария «аномалии»: на события SelectorItem можно подписаться для визуала, звука или вызова `ExcludeFromSelector` при «исправлении».
 
+### Сохранение состояния (Save)
+
+- `_saveEnabled` (`bool`, по умолчанию `false`): Включает сохранение состояния селектора через `SaveProvider`. **По умолчанию сохранение выключено**, селектор работает как раньше.
+- `_saveKey` (`string`, по умолчанию `"Selector"`): Базовый ключ сохранения. Для разных селекторов важно задавать **уникальные** ключи. Внутри используются суффиксы `_Index` и `_Excluded`.
+- `_saveMode` (`SelectorSaveMode`, флаги, по умолчанию `Index | ExcludedIndices`): Что именно сохранять (флаги можно снять/добавить в инспекторе):
+  - `Index` — сохраняется текущий индекс (`Value`) по ключу `<SaveKey>_Index`.
+  - `ExcludedIndices` — сохраняется набор исключённых индексов (`ExcludeIndex`/`IncludeIndex`/`IncludeAllIndices`) по ключу `<SaveKey>_Excluded` (список через запятую).
+
 #### Публичные свойства (Public Properties)
 
 - `Item` (`GameObject`): Получает текущий выбранный `GameObject` с учетом `_indexOffset`. Возвращает `null`, если нет элементов или индекс вне границ.
@@ -147,6 +155,7 @@
 3. Настройте **TimerObject** с интервалом появления (например, `useRandomDuration` с timeMin/timeMax). В **OnTimerCompleted** вызовите **Selector.SetRandom()** — таймер сам вызывает команду выбора следующей аномалии.
 4. На каждом **SelectorItem** подпишитесь на **OnActivated** (показать аномалию) и при «исправлении» вызовите **ExcludeFromSelector()**, чтобы исключить этот индекс из пула до сброса.
 5. Условие поражения: **NeoCondition** по полю **Selector.CountActive** (например, `CountActive >= 4` → поражение). См. также [Examples/AnomalyGame.md](../../Examples/AnomalyGame.md).
+6. Для сценария «новый день» без отдельного скрипта используйте уже имеющиеся возможности Selector: в конце дня или при сбросе уровня вызывайте **Selector.IncludeAllIndices()** и при необходимости **Selector.ResetAll()**. Если аномалия уже была исправлена в течение дня, исключайте её через **SelectorItem.ExcludeFromSelector()** или **Selector.ExcludeIndex(int)**.
 
 ---
 

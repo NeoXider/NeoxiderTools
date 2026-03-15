@@ -1,0 +1,284 @@
+using System.Collections.Generic;
+using NUnit.Framework;
+using Neo.Save;
+using Neo.Tools;
+using UnityEngine;
+
+namespace Neo.Tools.Tests
+{
+    public class SelectorTests
+    {
+        [Test]
+        public void Set_LoopsIndex_WhenLoopEnabled_AndUpdatesActiveItem()
+        {
+            GameObject root = new("SelectorRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                selector.FillMode = false;
+                // По умолчанию _loop = true, поэтому Set(10) должен зациклиться в пределах [0,1]
+                selector.Set(10);
+
+                Assert.That(selector.Value, Is.EqualTo(0));
+                Assert.That(a.activeSelf, Is.True);
+                Assert.That(b.activeSelf, Is.False);
+                Assert.That(selector.CountActive, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void UniqueSelection_DoesNotRepeatUntilReset()
+        {
+            GameObject root = new("SelectorUniqueRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            GameObject c = new("C");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+            c.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_useRandomSelection", true);
+                SetPrivateBool(selector, "_uniqueSelectionMode", true);
+                SetPrivateBool(selector, "_resetUniqueWhenCycleComplete", false);
+
+                HashSet<int> seen = new();
+                for (int i = 0; i < 3; i++)
+                {
+                    selector.SetRandom();
+                    seen.Add(selector.Value);
+                }
+
+                Assert.That(seen.Count, Is.EqualTo(3), "Все индексы должны быть выбраны по одному разу");
+
+                int before = selector.Value;
+                selector.SetRandom(); // все использованы, без авто-сброса
+                Assert.That(selector.Value, Is.EqualTo(before), "Без авто-сброса индекс не должен меняться");
+
+                selector.ResetUnique();
+                selector.SetRandom();
+                Assert.That(seen.Contains(selector.Value), Is.True, "После ResetUnique() индексы снова доступны");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ExcludeIndex_RemovesIndexFromRandomPool()
+        {
+            GameObject root = new("SelectorExcludeRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_useRandomSelection", true);
+
+                selector.ExcludeIndex(0);
+
+                for (int i = 0; i < 10; i++)
+                {
+                    selector.SetRandom();
+                    Assert.That(selector.Value, Is.EqualTo(1), "Индекс 0 исключён, случайный выбор должен давать только 1");
+                }
+
+                selector.IncludeAllIndices();
+                bool seenZero = false;
+                bool seenOne = false;
+                for (int i = 0; i < 20; i++)
+                {
+                    selector.SetRandom();
+                    if (selector.Value == 0) seenZero = true;
+                    if (selector.Value == 1) seenOne = true;
+                }
+
+                Assert.That(seenZero && seenOne, Is.True, "После IncludeAllIndices() оба индекса снова доступны");
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void SaveAndLoad_PersistsIndexAndExcludedIndices()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            const string saveKey = "SelectorTests.Persistence";
+
+            GameObject firstRoot = new("SelectorSave_First");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(firstRoot.transform);
+            b.transform.SetParent(firstRoot.transform);
+
+            Selector first = firstRoot.AddComponent<Selector>();
+            first.startOnAwake = false;
+
+            try
+            {
+                SetPrivateBool(first, "_useRandomSelection", true);
+                SetPrivateBool(first, "_saveEnabled", true);
+                SetPrivateString(first, "_saveKey", saveKey);
+
+                first.Set(1);
+                first.ExcludeIndex(0);
+
+                // Принудительно сохранить состояние
+                InvokePrivate(first, "SaveState");
+
+                Object.DestroyImmediate(firstRoot);
+
+                GameObject secondRoot = new("SelectorSave_Second");
+                GameObject a2 = new("A2");
+                GameObject b2 = new("B2");
+                a2.transform.SetParent(secondRoot.transform);
+                b2.transform.SetParent(secondRoot.transform);
+
+                Selector second = secondRoot.AddComponent<Selector>();
+                second.startOnAwake = false;
+
+                try
+                {
+                    SetPrivateBool(second, "_useRandomSelection", true);
+                    SetPrivateBool(second, "_saveEnabled", true);
+                    SetPrivateString(second, "_saveKey", saveKey);
+
+                    InvokePrivate(second, "LoadState");
+                    second.Set(second.Value); // применить загруженный индекс
+
+                    Assert.That(second.Value, Is.EqualTo(1), "Индекс должен быть восстановлен из сохранения");
+                    Assert.That(second.IsExcluded(0), Is.True, "Исключённый индекс должен быть восстановлен");
+                }
+                finally
+                {
+                    Object.DestroyImmediate(secondRoot);
+                }
+            }
+            finally
+            {
+                // Очистка SaveProvider по ключам, если нужно, оставляем провайдер как есть
+            }
+        }
+
+        private static void SetPrivateBool(object target, string fieldName, bool value)
+        {
+            var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
+            field.SetValue(target, value);
+        }
+
+        private static void SetPrivateString(object target, string fieldName, string value)
+        {
+            var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
+            field.SetValue(target, value);
+        }
+
+        private static void InvokePrivate(object target, string methodName)
+        {
+            var method = target.GetType().GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, $"Method `{methodName}` was not found.");
+            method.Invoke(target, null);
+        }
+
+        private sealed class DictionarySaveProvider : ISaveProvider
+        {
+            private readonly Dictionary<string, int> _ints = new();
+            private readonly Dictionary<string, float> _floats = new();
+            private readonly Dictionary<string, string> _strings = new();
+            private readonly Dictionary<string, bool> _bools = new();
+
+            public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
+
+            public event System.Action OnDataSaved;
+            public event System.Action OnDataLoaded;
+            public event System.Action<string> OnKeyChanged;
+
+            public int GetInt(string key, int defaultValue = 0) => _ints.TryGetValue(key, out int v) ? v : defaultValue;
+            public void SetInt(string key, int value)
+            {
+                _ints[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public float GetFloat(string key, float defaultValue = 0f) => _floats.TryGetValue(key, out float v) ? v : defaultValue;
+            public void SetFloat(string key, float value)
+            {
+                _floats[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public string GetString(string key, string defaultValue = "") => _strings.TryGetValue(key, out string v) ? v : defaultValue;
+            public void SetString(string key, string value)
+            {
+                _strings[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public bool GetBool(string key, bool defaultValue = false) => _bools.TryGetValue(key, out bool v) ? v : defaultValue;
+            public void SetBool(string key, bool value)
+            {
+                _bools[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public bool HasKey(string key)
+            {
+                return _ints.ContainsKey(key) || _floats.ContainsKey(key) || _strings.ContainsKey(key) || _bools.ContainsKey(key);
+            }
+
+            public void DeleteKey(string key)
+            {
+                _ints.Remove(key);
+                _floats.Remove(key);
+                _strings.Remove(key);
+                _bools.Remove(key);
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public void DeleteAll()
+            {
+                _ints.Clear();
+                _floats.Clear();
+                _strings.Clear();
+                _bools.Clear();
+            }
+
+            public void Save()
+            {
+                OnDataSaved?.Invoke();
+            }
+
+            public void Load()
+            {
+                OnDataLoaded?.Invoke();
+            }
+        }
+    }
+}
+

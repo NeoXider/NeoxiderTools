@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.5] - 2026-03-15
+
+### Tools / RandomRange
+
+- **RandomRange** — новый компонент (`Scripts/Tools/Components/RandomRange.cs`): генерация случайного числа в [Min, Max]. Режимы Int (включительно) и Float. Реактивное свойство `Value`, свойства `ValueInt` / `ValueFloat` для NeoCondition. Метод `Generate()`, события `OnGeneratedInt` / `OnGeneratedFloat`. Методы `SetMin`/`SetMax` (int/float) для смены границ в рантайме. Используется для сценария «от 0 до N аномалий на уровень».
+
+### Docs / Examples
+
+- **RandomRange.md** — документация по компоненту и пример с NeoCondition.
+- **Selector.md** — в разделе 3.6 добавлен сценарий «новый день» без отдельного вспомогательного компонента: через `IncludeAllIndices()`, `ResetAll()` и исключение индексов.
+- **NeoCondition.md** — добавлен пример проверки по RandomRange (ValueInt / ValueFloat).
+- **AnomalyGame.md** — добавлен раздел 6 «Замок: 0–5 аномалий на уровень и новый день» через `Selector` и `RandomRange`, без отдельного вспомогательного компонента.
+
 ## [7.7.4] - 2026-03-15
 
 ### Core / Level и Resources

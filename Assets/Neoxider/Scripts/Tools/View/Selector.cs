@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -7,6 +8,19 @@ using Random = UnityEngine.Random;
 
 namespace Neo.Tools
 {
+    /// <summary>
+    ///     What part of Selector state to save via SaveProvider.
+    /// </summary>
+    [System.Flags]
+    public enum SelectorSaveMode
+    {
+        /// <summary>Save current index (Value).</summary>
+        Index = 1,
+
+        /// <summary>Save excluded indices (ExcludeIndex/IncludeIndex/IncludeAllIndices).</summary>
+        ExcludedIndices = 2
+    }
+
     /// <summary>
     ///     A component that manages selection between multiple GameObjects, with support for different selection modes.
     ///     Useful for UI elements, inventory systems, or any scenario requiring sequential selection.
@@ -150,6 +164,8 @@ namespace Neo.Tools
 
             OnSelectionChanged?.Invoke(_currentIndex);
             OnSelectionChangedGameObject?.Invoke(GetSelectedItem());
+
+            SaveState();
         }
 
         #endregion
@@ -217,6 +233,19 @@ namespace Neo.Tools
         [Tooltip("When enabled, Selector does not call GameObject.SetActive; it finds SelectorItem on each element and calls SetActive on it. Off by default.")]
         [SerializeField]
         private bool _notifySelectorItemsOnly;
+
+        [Header("Save")]
+        [Tooltip("Enable saving selector state via SaveProvider. Off by default.")]
+        [SerializeField]
+        private bool _saveEnabled;
+
+        [Tooltip("Base save key for Selector. Suffixes _Index and _Excluded are appended automatically.")]
+        [SerializeField]
+        private string _saveKey = "Selector";
+
+        [Tooltip("Which parts of state to save: current index, excluded indices, or both.")]
+        [SerializeField]
+        private SelectorSaveMode _saveMode = SelectorSaveMode.Index | SelectorSaveMode.ExcludedIndices;
 
         [Header("Debug")] [Tooltip("Current selection index")] [SerializeField]
         private int _currentIndex;
@@ -479,6 +508,11 @@ namespace Neo.Tools
         {
             TryInitializeFromChildren();
 
+            if (_saveEnabled && !string.IsNullOrEmpty(_saveKey))
+            {
+                LoadState();
+            }
+
             if (startOnAwake && Count > 0)
             {
                 UpdateSelection();
@@ -517,6 +551,84 @@ namespace Neo.Tools
             if (_changeDebug && _items != null && Application.isPlaying)
             {
                 UpdateSelection();
+            }
+        }
+
+        #endregion
+
+        #region Save Helpers
+
+        private void SaveState()
+        {
+            if (!_saveEnabled || string.IsNullOrEmpty(_saveKey))
+            {
+                return;
+            }
+
+            string keyBase = _saveKey;
+
+            if ((_saveMode & SelectorSaveMode.Index) != 0)
+            {
+                SaveProvider.SetInt(keyBase + "_Index", _currentIndex);
+            }
+
+            if ((_saveMode & SelectorSaveMode.ExcludedIndices) != 0)
+            {
+                string excludedKey = keyBase + "_Excluded";
+                if (_excludedIndices == null || _excludedIndices.Count == 0)
+                {
+                    if (SaveProvider.HasKey(excludedKey))
+                    {
+                        SaveProvider.DeleteKey(excludedKey);
+                    }
+                }
+                else
+                {
+                    string data = string.Join(",", _excludedIndices);
+                    SaveProvider.SetString(excludedKey, data);
+                }
+            }
+        }
+
+        private void LoadState()
+        {
+            if (!_saveEnabled || string.IsNullOrEmpty(_saveKey))
+            {
+                return;
+            }
+
+            string keyBase = _saveKey;
+
+            if ((_saveMode & SelectorSaveMode.Index) != 0)
+            {
+                string indexKey = keyBase + "_Index";
+                if (SaveProvider.HasKey(indexKey))
+                {
+                    _currentIndex = SaveProvider.GetInt(indexKey, _currentIndex);
+                }
+            }
+
+            if ((_saveMode & SelectorSaveMode.ExcludedIndices) != 0)
+            {
+                string excludedKey = keyBase + "_Excluded";
+                _excludedIndices ??= new HashSet<int>();
+                _excludedIndices.Clear();
+
+                if (SaveProvider.HasKey(excludedKey))
+                {
+                    string data = SaveProvider.GetString(excludedKey, string.Empty);
+                    if (!string.IsNullOrEmpty(data))
+                    {
+                        string[] parts = data.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                        for (int i = 0; i < parts.Length; i++)
+                        {
+                            if (int.TryParse(parts[i].Trim(), out int idx))
+                            {
+                                _excludedIndices.Add(idx);
+                            }
+                        }
+                    }
+                }
             }
         }
 
