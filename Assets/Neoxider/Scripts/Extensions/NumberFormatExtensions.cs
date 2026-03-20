@@ -445,7 +445,7 @@ namespace Neo.Extensions
         private static string FormatIdle(BigInteger value, NumberFormatOptions options)
         {
             bool isNegative = value < 0;
-            BigInteger absValue = BigInteger.Abs(value);
+            var absValue = BigInteger.Abs(value);
 
             if (absValue < 1000)
             {

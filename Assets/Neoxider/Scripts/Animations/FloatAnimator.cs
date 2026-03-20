@@ -5,7 +5,8 @@ using UnityEngine.Events;
 namespace Neo.Animations
 {
     /// <summary>
-    ///     Universal animator for float values. Provides an easy way to animate any numeric value with various animation types.
+    ///     Universal animator for float values. Provides an easy way to animate any numeric value with various animation
+    ///     types.
     /// </summary>
     [NeoDoc("Animations/FloatAnimator.md")]
     [CreateFromMenu("Neoxider/Animations/FloatAnimator")]

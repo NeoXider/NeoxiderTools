@@ -41,8 +41,7 @@ namespace Neo.Quest
         [Tooltip("Required count for counter objectives (KillCount, CollectCount).")] [SerializeField]
         private int _requiredCount = 1;
 
-        [Tooltip("Custom objective text for UI. If empty, text can be generated from Type/TargetId.")]
-        [SerializeField]
+        [Tooltip("Custom objective text for UI. If empty, text can be generated from Type/TargetId.")] [SerializeField]
         private string _displayText = "";
 
         [Tooltip(

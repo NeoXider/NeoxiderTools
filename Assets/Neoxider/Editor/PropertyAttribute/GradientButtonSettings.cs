@@ -7,11 +7,6 @@ namespace Neo.Editor
     /// </summary>
     public static class GradientButtonSettings
     {
-        /// <summary>
-        ///     При false используется фирменный, но сдержанный стиль кнопок.
-        /// </summary>
-        public static bool UseNaturalStyle => false;
-
         // === ЦВЕТОВЫЕ СХЕМЫ (для UseNaturalStyle = false) ===
 
         private static readonly Color Scheme1_Top = new(0.2f, 0.8f, 1f, 1f);
@@ -34,6 +29,11 @@ namespace Neo.Editor
         private static readonly Color Scheme6_Accent = new(0.48f, 0.63f, 0.98f, 1f);
 
         private static readonly int ActiveScheme = 6;
+
+        /// <summary>
+        ///     При false используется фирменный, но сдержанный стиль кнопок.
+        /// </summary>
+        public static bool UseNaturalStyle => false;
 
         public static Color TopColor => ActiveScheme switch
         {
@@ -68,7 +68,10 @@ namespace Neo.Editor
         public static int GradientSegments => 20;
         public static int CornerMaskSteps => 16;
 
-        public static Color HighlightColor => ActiveScheme == 6 ? new Color(AccentColor.r, AccentColor.g, AccentColor.b, 0.65f) : new Color(1f, 1f, 1f, 0.22f);
+        public static Color HighlightColor => ActiveScheme == 6
+            ? new Color(AccentColor.r, AccentColor.g, AccentColor.b, 0.65f)
+            : new Color(1f, 1f, 1f, 0.22f);
+
         public static float HighlightWidth => 1.25f;
 
         public static bool EnableNeonGlow => false;

@@ -46,7 +46,7 @@ namespace Neo.Editor.Windows
                 for (int i = 0; i < guids.Length; i++)
                 {
                     string path = AssetDatabase.GUIDToAssetPath(guids[i]);
-                    TextureImporter importer = AssetImporter.GetAtPath(path) as TextureImporter;
+                    var importer = AssetImporter.GetAtPath(path) as TextureImporter;
 
                     if (importer != null && importer.textureType == _textureType)
                     {

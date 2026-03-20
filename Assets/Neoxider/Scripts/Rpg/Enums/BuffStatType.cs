@@ -1,7 +1,7 @@
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Stat types that can be modified by buffs.
+    ///     Stat types that can be modified by buffs.
     /// </summary>
     public enum BuffStatType
     {

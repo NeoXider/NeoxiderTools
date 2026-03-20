@@ -1,4 +1,3 @@
-using Neo;
 using Neo.NPC.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
@@ -436,7 +435,7 @@ namespace Neo.NPC
                 return;
             }
 
-            Quaternion target = Quaternion.LookRotation(dir.normalized, Vector3.up);
+            var target = Quaternion.LookRotation(dir.normalized, Vector3.up);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, target, turnSpeed * deltaTime);
         }
 

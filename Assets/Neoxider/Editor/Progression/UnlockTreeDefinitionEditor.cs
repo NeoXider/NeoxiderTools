@@ -19,15 +19,15 @@ namespace Neo.Editor.Progression
         {
             serializedObject.Update();
 
-            UnlockTreeDefinition definition = (UnlockTreeDefinition)target;
+            var definition = (UnlockTreeDefinition)target;
             SerializedProperty nodesProperty = serializedObject.FindProperty("_nodes");
             IReadOnlyList<string> issues = definition.ValidateDefinition();
             int nodeCount = nodesProperty != null ? nodesProperty.arraySize : 0;
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
-                new($"Nodes {nodeCount}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new(issues.Count == 0 ? "Validated" : "Needs Review",
+                new NeoxiderEditorGUI.Badge($"Nodes {nodeCount}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge(issues.Count == 0 ? "Validated" : "Needs Review",
                     issues.Count == 0 ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.78f, 0.46f, 0.18f, 1f))
             };
 
@@ -39,7 +39,8 @@ namespace Neo.Editor.Progression
             ProgressionEditorHelpers.DrawValidationBlock(issues, "No unlock tree issues detected.");
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Nodes", "Each node can define required level, prerequisite nodes, and rewards.");
+            NeoxiderEditorGUI.BeginSection("Nodes",
+                "Each node can define required level, prerequisite nodes, and rewards.");
             EditorGUILayout.PropertyField(nodesProperty, true);
             NeoxiderEditorGUI.EndSection();
 

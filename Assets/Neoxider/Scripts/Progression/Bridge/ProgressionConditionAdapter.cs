@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Condition adapter that exposes progression checks to other no-code systems.
+    ///     Condition adapter that exposes progression checks to other no-code systems.
     /// </summary>
     [NeoDoc("Progression/ProgressionConditionAdapter.md")]
     [CreateFromMenu("Neoxider/Progression/Progression Condition Adapter")]
@@ -12,19 +12,22 @@ namespace Neo.Progression
     public sealed class ProgressionConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
         [SerializeField] private ProgressionManager _manager;
-        [SerializeField] private ProgressionConditionEvaluationMode _mode = ProgressionConditionEvaluationMode.LevelAtLeast;
+
+        [SerializeField]
+        private ProgressionConditionEvaluationMode _mode = ProgressionConditionEvaluationMode.LevelAtLeast;
+
         [SerializeField] private string _nodeId = string.Empty;
         [SerializeField] private string _perkId = string.Empty;
         [SerializeField] [Min(0)] private int _threshold = 1;
         [SerializeField] private bool _invert;
 
         /// <summary>
-        /// Gets the last evaluated result.
+        ///     Gets the last evaluated result.
         /// </summary>
         public bool LastResult { get; private set; }
 
         /// <summary>
-        /// Evaluates the configured progression condition.
+        ///     Evaluates the configured progression condition.
         /// </summary>
         public bool Evaluate(GameObject context)
         {
@@ -50,7 +53,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Evaluates the configured progression condition using this component as the context.
+        ///     Evaluates the configured progression condition using this component as the context.
         /// </summary>
         public bool EvaluateCurrent()
         {

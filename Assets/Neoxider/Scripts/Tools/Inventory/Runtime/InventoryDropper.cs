@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+using Random = UnityEngine.Random;
 
 namespace Neo.Tools
 {
@@ -383,7 +384,7 @@ namespace Neo.Tools
                 return basePosition;
             }
 
-            Vector2 offset = UnityEngine.Random.insideUnitCircle * _randomRadius;
+            Vector2 offset = Random.insideUnitCircle * _randomRadius;
             return basePosition + new Vector3(offset.x, 0f, offset.y);
         }
 

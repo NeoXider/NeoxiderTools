@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Defines a perk entry that can be purchased with perk points.
+    ///     Defines a perk entry that can be purchased with perk points.
     /// </summary>
     [Serializable]
     public sealed class PerkDefinition
@@ -24,63 +24,63 @@ namespace Neo.Progression
         [SerializeField] private List<ProgressionReward> _rewards = new();
 
         /// <summary>
-        /// Gets the stable perk identifier.
+        ///     Gets the stable perk identifier.
         /// </summary>
         public string Id => _id;
 
         /// <summary>
-        /// Gets the UI-facing perk name.
+        ///     Gets the UI-facing perk name.
         /// </summary>
         public string DisplayName => _displayName;
 
         /// <summary>
-        /// Gets the optional perk description.
+        ///     Gets the optional perk description.
         /// </summary>
         public string Description => _description;
 
         /// <summary>
-        /// Gets the optional perk icon.
+        ///     Gets the optional perk icon.
         /// </summary>
         public Sprite Icon => _icon;
 
         /// <summary>
-        /// Gets whether the perk is granted by default.
+        ///     Gets whether the perk is granted by default.
         /// </summary>
         public bool PurchasedByDefault => _purchasedByDefault;
 
         /// <summary>
-        /// Gets the perk point cost.
+        ///     Gets the perk point cost.
         /// </summary>
         public int Cost => _cost;
 
         /// <summary>
-        /// Gets the minimum required player level.
+        ///     Gets the minimum required player level.
         /// </summary>
         public int RequiredLevel => _requiredLevel;
 
         /// <summary>
-        /// Gets the prerequisite perk identifiers.
+        ///     Gets the prerequisite perk identifiers.
         /// </summary>
         public IReadOnlyList<string> PrerequisitePerkIds => _prerequisitePerkIds;
 
         /// <summary>
-        /// Gets the unlock node identifiers that must already be unlocked.
+        ///     Gets the unlock node identifiers that must already be unlocked.
         /// </summary>
         public IReadOnlyList<string> RequiredUnlockNodeIds => _requiredUnlockNodeIds;
 
         /// <summary>
-        /// Gets the extra condition evaluators that must pass before buying the perk.
+        ///     Gets the extra condition evaluators that must pass before buying the perk.
         /// </summary>
         public IReadOnlyList<ConditionEntry> Conditions => _conditions;
 
         /// <summary>
-        /// Gets the rewards granted once when the perk is purchased.
+        ///     Gets the rewards granted once when the perk is purchased.
         /// </summary>
         public IReadOnlyList<ProgressionReward> Rewards => _rewards;
     }
 
     /// <summary>
-    /// Stores perk definitions for the progression system.
+    ///     Stores perk definitions for the progression system.
     /// </summary>
     [CreateAssetMenu(fileName = "Perk Tree Definition", menuName = "Neoxider/Progression/Perk Tree Definition")]
     public sealed class PerkTreeDefinition : ScriptableObject
@@ -88,12 +88,17 @@ namespace Neo.Progression
         [SerializeField] private List<PerkDefinition> _perks = new();
 
         /// <summary>
-        /// Gets the configured perk entries.
+        ///     Gets the configured perk entries.
         /// </summary>
         public IReadOnlyList<PerkDefinition> Perks => _perks;
 
+        private void OnValidate()
+        {
+            _perks.Sort((left, right) => string.Compare(left?.Id, right?.Id, StringComparison.Ordinal));
+        }
+
         /// <summary>
-        /// Tries to get a perk by identifier.
+        ///     Tries to get a perk by identifier.
         /// </summary>
         public bool TryGetPerk(string perkId, out PerkDefinition perk)
         {
@@ -112,7 +117,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Validates identifiers, references, and graph cycles.
+        ///     Validates identifiers, references, and graph cycles.
         /// </summary>
         public IReadOnlyList<string> ValidateDefinition()
         {
@@ -201,11 +206,6 @@ namespace Neo.Progression
 
             visiting.Remove(perkId);
             visited.Add(perkId);
-        }
-
-        private void OnValidate()
-        {
-            _perks.Sort((left, right) => string.Compare(left?.Id, right?.Id, StringComparison.Ordinal));
         }
     }
 }

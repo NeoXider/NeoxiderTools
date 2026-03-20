@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -151,7 +150,7 @@ namespace Neo.Editor
 
             try
             {
-                PackageInfo packageInfo =
+                var packageInfo =
                     PackageInfo.FindForAssembly(typeof(CustomEditorBase).Assembly);
                 if (packageInfo != null)
                 {
@@ -348,7 +347,7 @@ namespace Neo.Editor
 
             try
             {
-                Type odinInspectorType =
+                var odinInspectorType =
                     Type.GetType("Sirenix.OdinInspector.Editor.OdinInspector, Sirenix.OdinInspector.Editor");
                 _odinInspectorAvailable = odinInspectorType != null;
             }

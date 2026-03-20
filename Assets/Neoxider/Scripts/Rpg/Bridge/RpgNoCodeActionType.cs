@@ -1,7 +1,7 @@
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Action type for RPG NoCode bridge.
+    ///     Action type for RPG NoCode bridge.
     /// </summary>
     public enum RpgNoCodeActionType
     {

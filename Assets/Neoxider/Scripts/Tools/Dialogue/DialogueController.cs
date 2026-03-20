@@ -327,7 +327,7 @@ namespace Neo.Tools
         [Button("Open Dialogue Editor", 180)]
         private void OpenDialogueEditor()
         {
-            Type windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
+            var windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
             if (windowType == null)
             {
                 Debug.LogError(

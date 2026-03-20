@@ -49,7 +49,8 @@
   - Если `false` (по умолчанию): Только один элемент в списке будет активен (тот, который соответствует `_currentIndex`).
   - Если `true`: Все элементы от начала списка до `_currentIndex` (включительно) будут активны. Идеально для индикаторов прогресса, звезд рейтинга или разблокировки навыков.
 - `_indexOffset` (`int`): Смещение, которое добавляется к `_currentIndex` при отображении или использовании. Полезно, если вы хотите, чтобы первый элемент отображался как "1" вместо "0".
-- `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, селектор **не** вызывает `GameObject.SetActive` на дочерних объектах, а ищет на каждом элементе компонент **SelectorItem** и вызывает у него `SetActive(true)` / `SetActive(false)`. Удобно для сценария «аномалии»: на события SelectorItem можно подписаться для визуала, звука или вызова `ExcludeFromSelector` при «исправлении».
+- `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, селектор вместо прямого `GameObject.SetActive` ищет на каждом элементе компонент **SelectorItem** и вызывает у него `SetActive(true)` / `SetActive(false)`. Удобно для сценария «аномалии»: на события SelectorItem можно подписаться для визуала, звука или вызова `ExcludeFromSelector` при «исправлении».
+- `_controlGameObjectActive` (`bool`, по умолчанию `true`): Управлять ли активным состоянием `GameObject` напрямую через `SetActive`. Если `false`, Selector **никогда** не вызывает `GameObject.SetActive` (ни при старте, ни при смене индекса) и работает только через события и/или `SelectorItem`. Если оба флага `_notifySelectorItemsOnly` и `_controlGameObjectActive` включены, Selector будет уведомлять `SelectorItem`, а для элементов без SelectorItem — продолжит вызывать `SetActive`.
 
 ### Сохранение состояния (Save)
 
@@ -74,6 +75,16 @@
 - `NotifySelectorItemsOnly` (`bool`): Режим «только уведомлять SelectorItem» (get/set).
 - `ExcludedCount` (`int`): Число индексов, исключённых из случайного пула.
 - `IsExcluded(int index)`: Возвращает `true`, если индекс исключён из пула для `SetRandom()`.
+- `ExcludedIndices` (`IReadOnlyList<int>`): Снимок исключённых индексов пула (виден в Inspector в списке).
+- `UsedIndicesForUnique` (`IReadOnlyList<int>`): Снимок индексов, уже использованных в unique-selection режиме (debug, виден в Inspector).
+- `IncludedIndices` (`IReadOnlyList<int>`): Снимок включённых индексов пула Random (все индексы из текущих границ, кроме исключённых), виден в Inspector.
+
+Примечание: в Editor можно заполнить список исключённых индексов (через `_excludedIndicesInspector`), и при старте Selector создаст внутренний пул для Random. В Play Mode списки автоматически синхронизируются с внутренними `HashSet`.
+
+### Управление списками из кода
+
+- Для изменения исключений используйте методы `ExcludeIndex(int)`, `IncludeIndex(int)` и `IncludeAllIndices()`. Они обновляют внутренний `HashSet` и синхронизируют инспекторные списки.
+- Если нужно задать исключения списком целиком, используйте `SetExcludedIndices(...)` (полезно для сценариев «прочитал настройки/данные» и одним вызовом обновил пул).
 
 #### Публичные методы (Public Methods)
 

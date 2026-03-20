@@ -34,7 +34,7 @@ namespace Neo.Editor
                 float offsetY = Mathf.Sin(radian) * outlineSize;
 
                 float hue = Mathf.Repeat(time + angle / 360f * 0.2f, 1f);
-                Color outlineColor = Color.HSVToRGB(hue,
+                var outlineColor = Color.HSVToRGB(hue,
                     CustomEditorSettings.RainbowSaturation,
                     CustomEditorSettings.RainbowBrightness * 0.8f);
                 outlineColor.a = CustomEditorSettings.RainbowOutlineAlpha;
@@ -136,7 +136,7 @@ namespace Neo.Editor
                         int colorIndex = Mathf.FloorToInt(t * (rainbowColors.Length - 1));
                         float localT = t * (rainbowColors.Length - 1) - colorIndex;
 
-                        Color color = Color.Lerp(
+                        var color = Color.Lerp(
                             rainbowColors[Mathf.Min(colorIndex, rainbowColors.Length - 1)],
                             rainbowColors[Mathf.Min(colorIndex + 1, rainbowColors.Length - 1)],
                             localT
@@ -167,7 +167,7 @@ namespace Neo.Editor
             {
                 float t = (float)i / segments;
                 float hue = Mathf.Repeat(time + t, 1f);
-                Color color = Color.HSVToRGB(hue,
+                var color = Color.HSVToRGB(hue,
                     CustomEditorSettings.RainbowSaturation,
                     CustomEditorSettings.RainbowBrightness);
 
@@ -228,10 +228,12 @@ namespace Neo.Editor
             {
                 if (width > 0f)
                 {
-                    return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Width(width), GUILayout.Height(height));
+                    return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Width(width),
+                        GUILayout.Height(height));
                 }
 
-                return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Height(height), GUILayout.ExpandWidth(true));
+                return GUILayout.Button(text, EditorStyles.miniButton, GUILayout.Height(height),
+                    GUILayout.ExpandWidth(true));
             }
 
             Rect buttonRect = width > 0f
@@ -253,7 +255,7 @@ namespace Neo.Editor
                 for (int i = 0; i < GradientButtonSettings.GradientSegments; i++)
                 {
                     float t = i / (float)GradientButtonSettings.GradientSegments;
-                    Color segmentColor = Color.Lerp(topColor, bottomColor, t);
+                    var segmentColor = Color.Lerp(topColor, bottomColor, t);
 
                     Rect segmentRect = new(
                         buttonRect.x,

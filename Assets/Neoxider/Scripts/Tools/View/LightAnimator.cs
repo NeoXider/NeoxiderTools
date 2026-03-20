@@ -320,7 +320,7 @@ namespace Neo.Tools.View
         private void InitializeLight()
         {
             // 1) Попробуем Light2D через reflection
-            Type light2DType = Type.GetType(
+            var light2DType = Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime",
                 false);
 

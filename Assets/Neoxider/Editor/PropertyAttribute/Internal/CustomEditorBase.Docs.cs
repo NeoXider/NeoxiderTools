@@ -41,7 +41,7 @@ namespace Neo.Editor
             using (new EditorGUILayout.VerticalScope())
             {
                 Color accentBase = new(0.35f, 0.6f, 1f, 1f);
-                Color accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
+                var accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
                 Color accent = expanded ? accentDark : accentBase;
                 int count = string.IsNullOrEmpty(docPath) ? 0 : 1;
 

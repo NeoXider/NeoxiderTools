@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Neo.Reactive;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -14,27 +13,29 @@ namespace Neo.Core.Resources
     [AddComponentMenu("Neoxider/Core/Health Component")]
     public sealed class HealthComponent : MonoBehaviour, IResourcePoolProvider
     {
-        [Header("Pools")]
-        [SerializeField] private List<ResourceEntryInspector> _pools = new()
+        [Header("Pools")] [SerializeField] private List<ResourceEntryInspector> _pools = new()
         {
             new ResourceEntryInspector { id = RpgResourceId.Hp, current = 100f, max = 100f, restoreOnAwake = true },
             new ResourceEntryInspector { id = RpgResourceId.Mana, current = 50f, max = 50f, restoreOnAwake = true }
         };
 
-        [Header("Persistence")]
-        [SerializeField] private string _saveKey;
+        [Header("Persistence")] [SerializeField]
+        private string _saveKey;
+
         [SerializeField] private bool _loadOnAwake;
         [SerializeField] private bool _autoSave = true;
 
         [Header("Global (only pool list changes)")]
         [Tooltip("Invoked when the list of pools is rebuilt (e.g. after init).")]
-        [SerializeField] private UnityEvent _onPoolsChanged = new();
+        [SerializeField]
+        private UnityEvent _onPoolsChanged = new();
+
+        private bool _initialized;
+
+        private ResourcePoolModel _model;
 
         /// <summary>Invoked when the list of pools is rebuilt (add/remove pools, init).</summary>
         public UnityEvent OnPoolsChanged => _onPoolsChanged;
-
-        private ResourcePoolModel _model;
-        private bool _initialized;
 
         /// <summary>Текущее HP (для NeoCondition); читает из пула HP.</summary>
         public float HpCurrentValue => GetPoolCurrentValue(RpgResourceId.Hp);
@@ -54,56 +55,9 @@ namespace Neo.Core.Resources
         /// <summary>Макс. мана (для NeoCondition); читает из пула Mana.</summary>
         public float ManaMaxValue => GetPoolMaxValue(RpgResourceId.Mana);
 
-        private float GetPoolCurrentValue(string resourceId)
-        {
-            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.CurrentValue : 0f;
-        }
-
-        private float GetPoolPercentValue(string resourceId)
-        {
-            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.PercentValue : 0f;
-        }
-
-        private float GetPoolMaxValue(string resourceId)
-        {
-            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.MaxValue : 0f;
-        }
-
-        /// <summary>
-        ///     Ensures the component is initialized (builds model from _pools). Call is safe if already initialized.
-        ///     Used by EditMode tests and when API is used before Awake.
-        /// </summary>
-        public void EnsureInitialized()
-        {
-            if (_initialized)
-            {
-                return;
-            }
-
-            BuildModel();
-            if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
-            {
-                Load();
-            }
-
-            SyncAllReactive();
-            _model.OnResourceChanged += HandleResourceChanged;
-            _model.OnResourceDepleted += HandleResourceDepleted;
-            _initialized = true;
-        }
-
         private void Awake()
         {
             EnsureInitialized();
-        }
-
-        private void OnDestroy()
-        {
-            if (_model != null)
-            {
-                _model.OnResourceChanged -= HandleResourceChanged;
-                _model.OnResourceDepleted -= HandleResourceDepleted;
-            }
         }
 
         private void Update()
@@ -118,6 +72,15 @@ namespace Neo.Core.Resources
             if (_autoSave && _initialized && !string.IsNullOrWhiteSpace(_saveKey))
             {
                 Save();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_model != null)
+            {
+                _model.OnResourceChanged -= HandleResourceChanged;
+                _model.OnResourceDepleted -= HandleResourceDepleted;
             }
         }
 
@@ -194,6 +157,44 @@ namespace Neo.Core.Resources
             }
 
             return actual;
+        }
+
+        private float GetPoolCurrentValue(string resourceId)
+        {
+            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.CurrentValue : 0f;
+        }
+
+        private float GetPoolPercentValue(string resourceId)
+        {
+            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.PercentValue : 0f;
+        }
+
+        private float GetPoolMaxValue(string resourceId)
+        {
+            return TryGetPoolEntry(resourceId, out ResourceEntryInspector e) ? e.MaxValue : 0f;
+        }
+
+        /// <summary>
+        ///     Ensures the component is initialized (builds model from _pools). Call is safe if already initialized.
+        ///     Used by EditMode tests and when API is used before Awake.
+        /// </summary>
+        public void EnsureInitialized()
+        {
+            if (_initialized)
+            {
+                return;
+            }
+
+            BuildModel();
+            if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
+            {
+                Load();
+            }
+
+            SyncAllReactive();
+            _model.OnResourceChanged += HandleResourceChanged;
+            _model.OnResourceDepleted += HandleResourceDepleted;
+            _initialized = true;
         }
 
         public void Restore(string resourceId)
@@ -387,7 +388,8 @@ namespace Neo.Core.Resources
 
         private void HandleResourceDepleted(string id)
         {
-            if (string.Equals(id, RpgResourceId.Hp, StringComparison.OrdinalIgnoreCase) && TryGetPoolEntry(id, out ResourceEntryInspector entry))
+            if (string.Equals(id, RpgResourceId.Hp, StringComparison.OrdinalIgnoreCase) &&
+                TryGetPoolEntry(id, out ResourceEntryInspector entry))
             {
                 entry.OnDeath?.Invoke();
             }

@@ -94,7 +94,7 @@ namespace Neo.Editor
 
             List<HeaderSection> sections = BuildHeaderSections(properties);
             Color baseGreen = CustomEditorSettings.ScriptNameColor;
-            Color darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
             int minFieldsForCategory = Mathf.Max(0, CustomEditorSettings.MinFieldsForHeaderCategory);
 
             for (int i = 0; i < sections.Count; i++)
@@ -236,7 +236,7 @@ namespace Neo.Editor
             }
 
             Color baseGreen = CustomEditorSettings.ScriptNameColor;
-            Color darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
+            var darkGreen = Color.Lerp(baseGreen, Color.black, 0.75f);
 
             DrawAutoSection("References", references, baseGreen, darkGreen);
             DrawAutoSection("Settings", settings, baseGreen, darkGreen);
@@ -424,7 +424,8 @@ namespace Neo.Editor
                 ? new Color(0.92f, 0.30f, 0.30f, 1f)
                 : new Color(0.40f, 0.66f, 0.98f, 1f);
 
-            property.isExpanded = DrawNestedFoldoutHeader(property.displayName, childCount, property.isExpanded, accent);
+            property.isExpanded =
+                DrawNestedFoldoutHeader(property.displayName, childCount, property.isExpanded, accent);
             if (!property.isExpanded)
             {
                 return;
@@ -523,7 +524,7 @@ namespace Neo.Editor
             rect = EditorGUI.IndentedRect(rect);
 
             bool isHover = rect.Contains(Event.current.mousePosition);
-            Color background = Color.Lerp(new Color(0.11f, 0.12f, 0.16f, 0.92f), accent,
+            var background = Color.Lerp(new Color(0.11f, 0.12f, 0.16f, 0.92f), accent,
                 expanded ? 0.16f : isHover ? 0.12f : 0.08f);
 
             EditorGUI.DrawRect(rect, background);
@@ -827,7 +828,8 @@ namespace Neo.Editor
                 : new Color(0.90f, 0.94f, 1f, 1f);
 
             EditorGUI.DrawRect(rect, background);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(accent.r, accent.g, accent.b, 0.48f));
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f),
+                new Color(accent.r, accent.g, accent.b, 0.48f));
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height), accent);
             EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), new Color(1f, 1f, 1f, 0.06f));
 
@@ -863,7 +865,7 @@ namespace Neo.Editor
                     return null;
                 }
 
-                HeaderAttribute header = attrs[0] as HeaderAttribute;
+                var header = attrs[0] as HeaderAttribute;
                 return header?.header;
             }
             catch
@@ -1087,7 +1089,7 @@ namespace Neo.Editor
             bool isHover = rect.Contains(Event.current.mousePosition);
             Color baseBackground = new(0.09f, 0.10f, 0.13f, 0.96f);
             float tintStrength = isHover ? 0.22f : expanded ? 0.16f : 0.10f;
-            Color background = Color.Lerp(baseBackground, accent, tintStrength);
+            var background = Color.Lerp(baseBackground, accent, tintStrength);
 
             EditorGUI.DrawRect(rect, background);
             EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(1f, 1f, 1f, 0.04f));

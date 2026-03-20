@@ -4,6 +4,7 @@ using System.Reflection;
 using Neo.Condition;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 using ValueType = Neo.Condition.ValueType;
 
 namespace Neo.Editor.Condition
@@ -154,9 +155,12 @@ namespace Neo.Editor.Condition
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
-                new($"Conditions {conditionsProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new(logicModeProp.enumDisplayNames[logicModeProp.enumValueIndex], new Color(0.36f, 0.60f, 0.86f, 1f)),
-                new(checkModeProp.enumDisplayNames[checkModeProp.enumValueIndex], new Color(0.42f, 0.34f, 0.82f, 1f))
+                new NeoxiderEditorGUI.Badge($"Conditions {conditionsProp.arraySize}",
+                    new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge(logicModeProp.enumDisplayNames[logicModeProp.enumValueIndex],
+                    new Color(0.36f, 0.60f, 0.86f, 1f)),
+                new NeoxiderEditorGUI.Badge(checkModeProp.enumDisplayNames[checkModeProp.enumValueIndex],
+                    new Color(0.42f, 0.34f, 0.82f, 1f))
             };
 
             if (onlyOnChangeProp.boolValue)
@@ -166,19 +170,23 @@ namespace Neo.Editor.Condition
 
             if (sceneSearchCount > 0)
             {
-                badges.Add(new NeoxiderEditorGUI.Badge($"Scene Search {sceneSearchCount}", new Color(0.20f, 0.68f, 0.44f, 1f)));
+                badges.Add(new NeoxiderEditorGUI.Badge($"Scene Search {sceneSearchCount}",
+                    new Color(0.20f, 0.68f, 0.44f, 1f)));
             }
 
             if (gameObjectModeCount > 0)
             {
-                badges.Add(new NeoxiderEditorGUI.Badge($"GameObject Mode {gameObjectModeCount}", new Color(0.78f, 0.58f, 0.18f, 1f)));
+                badges.Add(new NeoxiderEditorGUI.Badge($"GameObject Mode {gameObjectModeCount}",
+                    new Color(0.78f, 0.58f, 0.18f, 1f)));
             }
 
             NeoxiderEditorGUI.DrawSummaryCard("NeoCondition", null, true, badges.ToArray());
 
             if (conditionsProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Нет ни одного условия. Добавь хотя бы один entry, иначе компонент ничего не проверяет.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "Нет ни одного условия. Добавь хотя бы один entry, иначе компонент ничего не проверяет.",
+                    MessageType.Warning);
             }
 
             if (sceneSearchCount > 0 && checkModeProp.enumValueIndex == (int)CheckMode.EveryFrame)
@@ -273,7 +281,7 @@ namespace Neo.Editor.Condition
             SerializedProperty otherArgFloatProp = entryProp.FindPropertyRelative("_otherPropertyArgumentFloat");
             SerializedProperty otherArgStringProp = entryProp.FindPropertyRelative("_otherPropertyArgumentString");
 
-            NeoCondition condition = (NeoCondition)target;
+            var condition = (NeoCondition)target;
             SerializedProperty logicProp = serializedObject.FindProperty("_logicMode");
             bool isGameObjectMode = sourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
             bool isSceneSearch = useSceneSearchProp.boolValue;
@@ -432,7 +440,7 @@ namespace Neo.Editor.Condition
 
                 if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                 {
-                    GameObject found = GameObject.Find(searchNameProp.stringValue);
+                    var found = GameObject.Find(searchNameProp.stringValue);
                     if (found != null)
                     {
                         targetObj = found;
@@ -446,7 +454,7 @@ namespace Neo.Editor.Condition
                             new GUIContent("Prefab Preview",
                                 "Перетащите префаб из Project, чтобы настроить компоненты/свойства до спавна объекта."));
 
-                        GameObject prefab = prefabPreviewProp.objectReferenceValue as GameObject;
+                        var prefab = prefabPreviewProp.objectReferenceValue as GameObject;
                         if (prefab != null)
                         {
                             targetObj = prefab;
@@ -617,95 +625,95 @@ namespace Neo.Editor.Condition
                 EditorGUILayout.Space(4);
                 BeginAccentSection("Right Side Source", OtherSourceAccent);
 
-                    int otherModeIdx =
-                        EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
-                    if (otherModeIdx != otherSourceModeProp.enumValueIndex)
+                int otherModeIdx =
+                    EditorGUILayout.Popup("Other Source", otherSourceModeProp.enumValueIndex, SourceModeNames);
+                if (otherModeIdx != otherSourceModeProp.enumValueIndex)
+                {
+                    otherSourceModeProp.enumValueIndex = otherModeIdx;
+                    otherCompTypeProp.stringValue = "";
+                    otherPropNameProp.stringValue = "";
+                    if (otherIsMethodProp != null)
                     {
-                        otherSourceModeProp.enumValueIndex = otherModeIdx;
-                        otherCompTypeProp.stringValue = "";
-                        otherPropNameProp.stringValue = "";
-                        if (otherIsMethodProp != null)
-                        {
-                            otherIsMethodProp.boolValue = false;
-                        }
+                        otherIsMethodProp.boolValue = false;
                     }
+                }
 
-                    otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
-                        new GUIContent("Other: Find By Name"), otherUseSceneSearchProp.boolValue);
+                otherUseSceneSearchProp.boolValue = EditorGUILayout.Toggle(
+                    new GUIContent("Other: Find By Name"), otherUseSceneSearchProp.boolValue);
 
-                    GameObject otherTargetObj = null;
-                    if (otherUseSceneSearchProp.boolValue)
+                GameObject otherTargetObj = null;
+                if (otherUseSceneSearchProp.boolValue)
+                {
+                    EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
+                    otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(
+                        new GUIContent("Other: Wait For Object"),
+                        otherWaitForObjectProp.boolValue);
+                    if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
                     {
-                        EditorGUILayout.PropertyField(otherSearchNameProp, new GUIContent("Other Object Name"));
-                        otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(
-                            new GUIContent("Other: Wait For Object"),
-                            otherWaitForObjectProp.boolValue);
-                        if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
+                        otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
+                    }
+                }
+                else
+                {
+                    EditorGUILayout.PropertyField(otherSourceObjProp,
+                        new GUIContent("Other Source Object",
+                            "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
+                    otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
+                }
+
+                if (otherTargetObj == null)
+                {
+                    otherTargetObj = leftTargetObj;
+                }
+
+                if (otherTargetObj == null && condition != null)
+                {
+                    otherTargetObj = condition.gameObject;
+                }
+
+                if (otherTargetObj != null)
+                {
+                    NeoxiderEditorGUI.DrawKeyValueRow("Resolved Object", otherTargetObj.name,
+                        new Color(0.76f, 0.82f, 1f, 1f));
+
+                    bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
+                    if (otherIsGO)
+                    {
+                        DrawGameObjectPropertyDropdown(otherPropNameProp);
+                        if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
                         {
-                            otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
+                            DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
                         }
                     }
                     else
                     {
-                        EditorGUILayout.PropertyField(otherSourceObjProp,
-                            new GUIContent("Other Source Object",
-                                "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
-                        otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
-                    }
-
-                    if (otherTargetObj == null)
-                    {
-                        otherTargetObj = leftTargetObj;
-                    }
-
-                    if (otherTargetObj == null && condition != null)
-                    {
-                        otherTargetObj = condition.gameObject;
-                    }
-
-                    if (otherTargetObj != null)
-                    {
-                        NeoxiderEditorGUI.DrawKeyValueRow("Resolved Object", otherTargetObj.name,
-                            new Color(0.76f, 0.82f, 1f, 1f));
-
-                        bool otherIsGO = otherSourceModeProp.enumValueIndex == (int)SourceMode.GameObject;
-                        if (otherIsGO)
+                        DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
+                            otherIsMethodProp);
+                        string otherCompType = otherCompTypeProp.stringValue;
+                        if (!string.IsNullOrEmpty(otherCompType))
                         {
-                            DrawGameObjectPropertyDropdown(otherPropNameProp);
-                            if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
+                            Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
+                            if (otherComp != null)
                             {
-                                DrawCurrentValueGameObject(otherTargetObj, otherPropNameProp.stringValue);
-                            }
-                        }
-                        else
-                        {
-                            DrawComponentDropdown(otherTargetObj, otherCompTypeProp, otherCompIdxProp, otherPropNameProp,
-                                otherIsMethodProp);
-                            string otherCompType = otherCompTypeProp.stringValue;
-                            if (!string.IsNullOrEmpty(otherCompType))
-                            {
-                                Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
-                                if (otherComp != null)
+                                DrawPropertyDropdown(otherComp, otherPropNameProp, null,
+                                    otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
+                                    otherArgStringProp);
+                                if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
                                 {
-                                    DrawPropertyDropdown(otherComp, otherPropNameProp, null,
+                                    DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
                                         otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
                                         otherArgStringProp);
-                                    if (Application.isPlaying && !string.IsNullOrEmpty(otherPropNameProp.stringValue))
-                                    {
-                                        DrawCurrentValue(otherComp, otherPropNameProp, valueTypeProp,
-                                            otherIsMethodProp, otherArgKindProp, otherArgIntProp, otherArgFloatProp,
-                                            otherArgStringProp);
-                                    }
                                 }
                             }
                         }
                     }
-                    else
-                    {
-                        EditorGUILayout.HelpBox(
-                            "Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.",
-                            MessageType.Info);
-                    }
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(
+                        "Assign Other Source Object or use Find By Name. If empty — same object as left is used at runtime.",
+                        MessageType.Info);
+                }
 
                 EndAccentSection();
             }
@@ -726,7 +734,7 @@ namespace Neo.Editor.Condition
             SerializedProperty thresholdBoolProp,
             SerializedProperty thresholdStringProp)
         {
-            ValueType vt = (ValueType)valueTypeProp.enumValueIndex;
+            var vt = (ValueType)valueTypeProp.enumValueIndex;
 
             if (vt == ValueType.Bool)
             {
@@ -1180,8 +1188,10 @@ namespace Neo.Editor.Condition
             if (Event.current.type == EventType.Repaint)
             {
                 EditorGUI.DrawRect(rect, new Color(accent.r, accent.g, accent.b, 0.06f));
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height), new Color(accent.r, accent.g, accent.b, 0.92f));
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(accent.r, accent.g, accent.b, 0.30f));
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height),
+                    new Color(accent.r, accent.g, accent.b, 0.92f));
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f),
+                    new Color(accent.r, accent.g, accent.b, 0.30f));
             }
 
             GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
@@ -1209,7 +1219,7 @@ namespace Neo.Editor.Condition
             EditorGUILayout.EndVertical();
         }
 
-        private static void DrawReadOnlyObjectField(string label, UnityEngine.Object value)
+        private static void DrawReadOnlyObjectField(string label, Object value)
         {
             Rect rect = EditorGUILayout.GetControlRect();
             if (Event.current.type == EventType.Repaint)
@@ -1244,7 +1254,7 @@ namespace Neo.Editor.Condition
 
             if (isMethod && argKindProp != null && argIntProp != null)
             {
-                ArgumentKind kind = (ArgumentKind)argKindProp.enumValueIndex;
+                var kind = (ArgumentKind)argKindProp.enumValueIndex;
                 object arg = kind switch
                 {
                     ArgumentKind.Int => argIntProp.intValue,
@@ -1305,7 +1315,7 @@ namespace Neo.Editor.Condition
                 return;
             }
 
-            NeoCondition nc = (NeoCondition)target;
+            var nc = (NeoCondition)target;
 
             EditorGUILayout.Space(4);
 
@@ -1391,7 +1401,7 @@ namespace Neo.Editor.Condition
             }
             else
             {
-                ValueType vt = (ValueType)valueTypeProp.enumValueIndex;
+                var vt = (ValueType)valueTypeProp.enumValueIndex;
                 thresholdStr = FormatThreshold(vt, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
                     thresholdStringProp);
             }

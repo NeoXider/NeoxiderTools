@@ -23,22 +23,26 @@ namespace Neo.Tools
             object keyboard = GetCurrentDevice(KeyboardType);
             if (keyboard != null)
             {
-                if (GetControlBool(keyboard, "aKey", "isPressed") || GetControlBool(keyboard, "leftArrowKey", "isPressed"))
+                if (GetControlBool(keyboard, "aKey", "isPressed") ||
+                    GetControlBool(keyboard, "leftArrowKey", "isPressed"))
                 {
                     horizontal -= 1f;
                 }
 
-                if (GetControlBool(keyboard, "dKey", "isPressed") || GetControlBool(keyboard, "rightArrowKey", "isPressed"))
+                if (GetControlBool(keyboard, "dKey", "isPressed") ||
+                    GetControlBool(keyboard, "rightArrowKey", "isPressed"))
                 {
                     horizontal += 1f;
                 }
 
-                if (GetControlBool(keyboard, "wKey", "isPressed") || GetControlBool(keyboard, "upArrowKey", "isPressed"))
+                if (GetControlBool(keyboard, "wKey", "isPressed") ||
+                    GetControlBool(keyboard, "upArrowKey", "isPressed"))
                 {
                     vertical += 1f;
                 }
 
-                if (GetControlBool(keyboard, "sKey", "isPressed") || GetControlBool(keyboard, "downArrowKey", "isPressed"))
+                if (GetControlBool(keyboard, "sKey", "isPressed") ||
+                    GetControlBool(keyboard, "downArrowKey", "isPressed"))
                 {
                     vertical -= 1f;
                 }
@@ -219,7 +223,8 @@ namespace Neo.Tools
                 return null;
             }
 
-            PropertyInfo currentProperty = GetCachedProperty(deviceType, "current", BindingFlags.Public | BindingFlags.Static);
+            PropertyInfo currentProperty =
+                GetCachedProperty(deviceType, "current", BindingFlags.Public | BindingFlags.Static);
             return currentProperty?.GetValue(null);
         }
 
@@ -228,7 +233,7 @@ namespace Neo.Tools
             TryLoadAssembly("Unity.InputSystem");
             TryLoadAssembly("Unity.InputSystem.ForUI");
 
-            Type directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
+            var directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
             if (directType != null)
             {
                 return directType;

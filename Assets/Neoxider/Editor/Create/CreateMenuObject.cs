@@ -472,7 +472,7 @@ namespace Neo
             const float indent = 14f;
             GUIContent prefabIcon = EditorGUIUtility.IconContent("d_Prefab Icon") ??
                                     EditorGUIUtility.IconContent("Prefab Icon");
-            Texture2D prefabTex = prefabIcon?.image as Texture2D;
+            var prefabTex = prefabIcon?.image as Texture2D;
 
             EditorGUILayout.Space(4f);
             bool presetsExpanded = !_presetsExpanded.TryGetValue("Presets", out bool v) || v;
@@ -741,7 +741,7 @@ namespace Neo
 
             GUIContent scriptIconContent = EditorGUIUtility.IconContent("d_cs Script Icon") ??
                                            EditorGUIUtility.IconContent("cs Script Icon");
-            Texture2D scriptIcon = scriptIconContent?.image as Texture2D;
+            var scriptIcon = scriptIconContent?.image as Texture2D;
             foreach (CreateMenuObject.CreateMenuEntry entry in node.Entries.OrderBy(e => e.MenuPath))
             {
                 if (!EntryMatches(entry, search))

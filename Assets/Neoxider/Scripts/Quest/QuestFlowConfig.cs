@@ -11,36 +11,12 @@ namespace Neo.Quest
     [CreateAssetMenu(fileName = "QuestFlowConfig", menuName = "Neoxider/Quest/Quest Flow Config")]
     public class QuestFlowConfig : ScriptableObject
     {
-        [Serializable]
-        public class QuestChain
-        {
-            [Header("Chain Settings")]
-            [Tooltip("Unique chain identifier used for tooling/debugging.")]
-            [SerializeField] private string _chainId = "main";
-
-            [Tooltip("Display name used in UI and editor.")]
-            [SerializeField] private string _displayName = "Main Chain";
-
-            [Tooltip("If enabled, quests in this chain must be completed strictly in listed order.")]
-            [SerializeField] private bool _strictOrder = true;
-
-            [Tooltip("Ordered list of quests in this chain.")]
-            [SerializeField] private List<QuestConfig> _quests = new();
-
-            public string ChainId => _chainId;
-            public string DisplayName => _displayName;
-            public bool StrictOrder => _strictOrder;
-            public IReadOnlyList<QuestConfig> Quests => _quests;
-        }
-
         [Header("Sequential Chains")]
         [Tooltip("Quest chains. Each chain can enforce strict order if needed.")]
         [SerializeField]
         private List<QuestChain> _chains = new();
 
-        [Header("Standalone Quests")]
-        [Tooltip("Independent quests not tied to chain progression.")]
-        [SerializeField]
+        [Header("Standalone Quests")] [Tooltip("Independent quests not tied to chain progression.")] [SerializeField]
         private List<QuestConfig> _standaloneQuests = new();
 
         public IReadOnlyList<QuestChain> Chains => _chains;
@@ -157,6 +133,27 @@ namespace Neo.Quest
             }
 
             return ordered;
+        }
+
+        [Serializable]
+        public class QuestChain
+        {
+            [Header("Chain Settings")] [Tooltip("Unique chain identifier used for tooling/debugging.")] [SerializeField]
+            private string _chainId = "main";
+
+            [Tooltip("Display name used in UI and editor.")] [SerializeField]
+            private string _displayName = "Main Chain";
+
+            [Tooltip("If enabled, quests in this chain must be completed strictly in listed order.")] [SerializeField]
+            private bool _strictOrder = true;
+
+            [Tooltip("Ordered list of quests in this chain.")] [SerializeField]
+            private List<QuestConfig> _quests = new();
+
+            public string ChainId => _chainId;
+            public string DisplayName => _displayName;
+            public bool StrictOrder => _strictOrder;
+            public IReadOnlyList<QuestConfig> Quests => _quests;
         }
     }
 }

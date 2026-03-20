@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Query used to locate a target for AI, skills, and spell presets.
+    ///     Query used to locate a target for AI, skills, and spell presets.
     /// </summary>
     [Serializable]
     public sealed class RpgTargetQuery

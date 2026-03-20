@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// ScriptableObject definition for a temporary buff.
+    ///     ScriptableObject definition for a temporary buff.
     /// </summary>
     [CreateAssetMenu(fileName = "Buff Definition", menuName = "Neoxider/RPG/Buff Definition")]
     public sealed class BuffDefinition : ScriptableObject
@@ -26,7 +26,9 @@ namespace Neo.Rpg
         private void OnValidate()
         {
             if (string.IsNullOrWhiteSpace(_id) && !string.IsNullOrWhiteSpace(name))
+            {
                 _id = name;
+            }
         }
     }
 }

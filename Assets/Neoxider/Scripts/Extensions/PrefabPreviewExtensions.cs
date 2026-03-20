@@ -60,7 +60,7 @@ namespace Neo.Extensions
                 return cached;
             }
 
-            Sprite generated = Sprite.Create(preview, new Rect(0f, 0f, preview.width, preview.height),
+            var generated = Sprite.Create(preview, new Rect(0f, 0f, preview.width, preview.height),
                 new Vector2(0.5f, 0.5f));
             CachedPreviewSprites[preview] = generated;
             return generated;

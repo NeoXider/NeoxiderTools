@@ -236,7 +236,7 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=1";
                 string updateUrl = repoWebUrl;
 
-                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 

@@ -14,6 +14,7 @@ namespace Neo.Core.Resources
     {
         [Tooltip("Resource id (e.g. HP, Mana)")]
         public string id = "HP";
+
         [Min(0)] public float current = 100f;
         [Min(0)] public float max = 100f;
         [Min(0)] public float regenPerSecond;
@@ -25,23 +26,28 @@ namespace Neo.Core.Resources
         [Min(0)] public float healAmount;
         [Min(0)] public float healDelay = 1f;
 
-        [Header("Reactive (this pool)")]
-        [Tooltip("Current value; bind UI or subscribe via CurrentState.OnChanged.")]
+        [Header("Reactive (this pool)")] [Tooltip("Current value; bind UI or subscribe via CurrentState.OnChanged.")]
         public ReactivePropertyFloat CurrentState = new(100f);
+
         [Tooltip("Current/max 0–1; bind UI or subscribe via PercentState.OnChanged.")]
         public ReactivePropertyFloat PercentState = new(1f);
+
         [Tooltip("Max value; bind UI or subscribe via MaxState.OnChanged.")]
         public ReactivePropertyFloat MaxState = new(100f);
 
         [Header("Events (this pool)")]
         [Tooltip("Invoked when current or max changes (current, max). Depleted when current <= 0.")]
         public UnityEventFloatFloat OnChanged = new();
+
         [Tooltip("(HP) Invoked when resource is decreased (e.g. damage).")]
         public UnityEventFloat OnDamage = new();
+
         [Tooltip("(HP) Invoked when resource is increased (e.g. heal).")]
         public UnityEventFloat OnHeal = new();
+
         [Tooltip("(HP) Invoked when depleted (current <= 0).")]
         public UnityEvent OnDeath = new();
+
         [Tooltip("(HP) Invoked when max is changed.")]
         public UnityEventFloat OnChangeMax = new();
 

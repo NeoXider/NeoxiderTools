@@ -11,7 +11,7 @@ namespace Neo.Tools
     /// <summary>
     ///     What part of Selector state to save via SaveProvider.
     /// </summary>
-    [System.Flags]
+    [Flags]
     public enum SelectorSaveMode
     {
         /// <summary>Save current index (Value).</summary>
@@ -77,15 +77,20 @@ namespace Neo.Tools
                     for (int i = 0; i < items.Length; i++)
                     {
                         GameObject item = items[i];
-                        if (item == null) continue;
-                        bool shouldBeActive = effectiveIndex >= 0 && (_fillMode ? i <= effectiveIndex : i == effectiveIndex);
+                        if (item == null)
+                        {
+                            continue;
+                        }
+
+                        bool shouldBeActive = effectiveIndex >= 0 &&
+                                              (_fillMode ? i <= effectiveIndex : i == effectiveIndex);
                         SelectorItem si = item.GetComponent<SelectorItem>();
                         if (si != null)
                         {
                             si.Index = i;
                             si.SetActive(shouldBeActive);
                         }
-                        else if (item.activeSelf != shouldBeActive)
+                        else if (_controlGameObjectActive && item.activeSelf != shouldBeActive)
                         {
                             try
                             {
@@ -95,7 +100,7 @@ namespace Neo.Tools
                         }
                     }
                 }
-                else if (effectiveIndex < 0)
+                else if (effectiveIndex < 0 && _controlGameObjectActive)
                 {
                     for (int i = 0; i < items.Length; i++)
                     {
@@ -108,14 +113,13 @@ namespace Neo.Tools
                             }
                             catch (Exception)
                             {
-                                // Игнорируем ошибки при деактивации (объект может быть уничтожен)
                             }
                         }
                     }
                 }
                 else
                 {
-                    if (_fillMode)
+                    if (_controlGameObjectActive && _fillMode)
                     {
                         for (int i = 0; i < items.Length; i++)
                         {
@@ -131,13 +135,12 @@ namespace Neo.Tools
                                     }
                                     catch (Exception)
                                     {
-                                        // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
                                     }
                                 }
                             }
                         }
                     }
-                    else
+                    else if (_controlGameObjectActive)
                     {
                         for (int i = 0; i < items.Length; i++)
                         {
@@ -153,7 +156,6 @@ namespace Neo.Tools
                                     }
                                     catch (Exception)
                                     {
-                                        // Игнорируем ошибки при изменении состояния (объект может быть уничтожен)
                                     }
                                 }
                             }
@@ -166,6 +168,8 @@ namespace Neo.Tools
             OnSelectionChangedGameObject?.Invoke(GetSelectedItem());
 
             SaveState();
+
+            SyncIncludedIndicesInspector();
         }
 
         #endregion
@@ -230,21 +234,24 @@ namespace Neo.Tools
         private int _indexOffset;
 
         [Header("Notify SelectorItem Only")]
-        [Tooltip("When enabled, Selector does not call GameObject.SetActive; it finds SelectorItem on each element and calls SetActive on it. Off by default.")]
+        [Tooltip(
+            "When enabled, Selector does not call GameObject.SetActive; it finds SelectorItem on each element and calls SetActive on it. Off by default.")]
         [SerializeField]
         private bool _notifySelectorItemsOnly;
 
-        [Header("Save")]
-        [Tooltip("Enable saving selector state via SaveProvider. Off by default.")]
+        [Tooltip(
+            "When true (default), Selector controls GameObject active state via SetActive. When false, it never calls SetActive and works only via SelectorItem/events.")]
         [SerializeField]
+        private bool _controlGameObjectActive = true;
+
+        [Header("Save")] [Tooltip("Enable saving selector state via SaveProvider. Off by default.")] [SerializeField]
         private bool _saveEnabled;
 
         [Tooltip("Base save key for Selector. Suffixes _Index and _Excluded are appended automatically.")]
         [SerializeField]
         private string _saveKey = "Selector";
 
-        [Tooltip("Which parts of state to save: current index, excluded indices, or both.")]
-        [SerializeField]
+        [Tooltip("Which parts of state to save: current index, excluded indices, or both.")] [SerializeField]
         private SelectorSaveMode _saveMode = SelectorSaveMode.Index | SelectorSaveMode.ExcludedIndices;
 
         [Header("Debug")] [Tooltip("Current selection index")] [SerializeField]
@@ -256,6 +263,24 @@ namespace Neo.Tools
         private int _startIndex;
         private HashSet<int> _usedIndicesForUnique;
         private HashSet<int> _excludedIndices;
+
+        [Header("Inspector / Debug Lists (Runtime)")]
+        [Tooltip(
+            "Снимок исключённых индексов пула для Random (ExcludeIndex/IncludeIndex/IncludeAllIndices). " +
+            "В Editor можно предварительно заполнить этот список: тогда при старте Selector создаст HashSet по нему. " +
+            "В Play Mode обновляется автоматически.")]
+        [SerializeField]
+        private List<int> _excludedIndicesInspector = new();
+
+        [Tooltip("Снимок индексов, уже использованных в unique-selection режиме. Только для просмотра (debug).")]
+        [SerializeField]
+        private List<int> _usedIndicesForUniqueInspector = new();
+
+        [Tooltip(
+            "Снимок включённых индексов пула для Random (все индексы из текущих границ, кроме исключённых). " +
+            "Для удобства отображается в Inspector. Обновляется синхронно с excluded и индексовыми границами.")]
+        [SerializeField]
+        private List<int> _includedIndicesInspector = new();
 
         /// <summary>
         ///     Returns the number of selectable items (GameObjects or virtual count)
@@ -464,11 +489,23 @@ namespace Neo.Tools
             get
             {
                 int total = Count;
-                if (total == 0) return 0;
+                if (total == 0)
+                {
+                    return 0;
+                }
+
                 int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
                 int effectiveIndex = _currentIndex + _indexOffset;
-                if (effectiveIndex < minEff) return 0;
-                if (effectiveIndex >= total) return _fillMode ? total : 1;
+                if (effectiveIndex < minEff)
+                {
+                    return 0;
+                }
+
+                if (effectiveIndex >= total)
+                {
+                    return _fillMode ? total : 1;
+                }
+
                 return _fillMode ? effectiveIndex + 1 : 1;
             }
         }
@@ -495,6 +532,21 @@ namespace Neo.Tools
             return _excludedIndices != null && _excludedIndices.Contains(index);
         }
 
+        /// <summary>
+        ///     Снимок исключённых индексов пула для Random (для отображения в Inspector и чтения из других скриптов).
+        /// </summary>
+        public IReadOnlyList<int> ExcludedIndices => _excludedIndicesInspector;
+
+        /// <summary>
+        ///     Снимок индексов, уже использованных в unique-selection режиме (debug).
+        /// </summary>
+        public IReadOnlyList<int> UsedIndicesForUnique => _usedIndicesForUniqueInspector;
+
+        /// <summary>
+        ///     Снимок включённых индексов пула Random (все индексы из текущих границ, кроме исключённых).
+        /// </summary>
+        public IReadOnlyList<int> IncludedIndices => _includedIndicesInspector;
+
         #endregion
 
         #region Unity Methods
@@ -512,6 +564,14 @@ namespace Neo.Tools
             {
                 LoadState();
             }
+
+            if (!_saveEnabled || (_saveMode & SelectorSaveMode.ExcludedIndices) == 0)
+            {
+                ApplyExcludedIndicesFromInspector();
+            }
+
+            SyncExcludedIndicesInspector();
+            SyncUsedIndicesForUniqueInspector();
 
             if (startOnAwake && Count > 0)
             {
@@ -551,6 +611,12 @@ namespace Neo.Tools
             if (_changeDebug && _items != null && Application.isPlaying)
             {
                 UpdateSelection();
+            }
+
+            if (!Application.isPlaying)
+            {
+                ApplyExcludedIndicesFromInspector();
+                SyncExcludedIndicesInspector();
             }
         }
 
@@ -629,6 +695,93 @@ namespace Neo.Tools
                         }
                     }
                 }
+            }
+
+            SyncExcludedIndicesInspector();
+            SyncUsedIndicesForUniqueInspector();
+        }
+
+        private void SyncExcludedIndicesInspector()
+        {
+            _excludedIndicesInspector ??= new List<int>();
+            _excludedIndicesInspector.Clear();
+
+            if (_excludedIndices == null)
+            {
+                return;
+            }
+
+            foreach (int idx in _excludedIndices)
+            {
+                _excludedIndicesInspector.Add(idx);
+            }
+
+            _excludedIndicesInspector.Sort();
+
+            SyncIncludedIndicesInspector();
+        }
+
+        private void SyncUsedIndicesForUniqueInspector()
+        {
+            _usedIndicesForUniqueInspector ??= new List<int>();
+            _usedIndicesForUniqueInspector.Clear();
+
+            if (_usedIndicesForUnique == null)
+            {
+                return;
+            }
+
+            foreach (int idx in _usedIndicesForUnique)
+            {
+                _usedIndicesForUniqueInspector.Add(idx);
+            }
+
+            _usedIndicesForUniqueInspector.Sort();
+        }
+
+        private void SyncIncludedIndicesInspector()
+        {
+            _includedIndicesInspector ??= new List<int>();
+            _includedIndicesInspector.Clear();
+
+            int total = Count;
+            if (total <= 0)
+            {
+                return;
+            }
+
+            (int min, int max) = GetCurrentBounds();
+            if (min > max)
+            {
+                return;
+            }
+
+            for (int i = min; i <= max; i++)
+            {
+                if (_excludedIndices != null && _excludedIndices.Contains(i))
+                {
+                    continue;
+                }
+
+                _includedIndicesInspector.Add(i);
+            }
+
+            _includedIndicesInspector.Sort();
+        }
+
+        private void ApplyExcludedIndicesFromInspector()
+        {
+            if (_excludedIndicesInspector == null)
+            {
+                return;
+            }
+
+            _excludedIndices ??= new HashSet<int>();
+            _excludedIndices.Clear();
+
+            for (int i = 0; i < _excludedIndicesInspector.Count; i++)
+            {
+                _excludedIndices.Add(_excludedIndicesInspector[i]);
             }
         }
 
@@ -813,7 +966,10 @@ namespace Neo.Tools
                 return;
             }
 
-            bool IsExcludedIndex(int idx) => _excludedIndices != null && _excludedIndices.Contains(idx);
+            bool IsExcludedIndex(int idx)
+            {
+                return _excludedIndices != null && _excludedIndices.Contains(idx);
+            }
 
             int range = max - min + 1;
             List<int> availableNonExcluded = new(range);
@@ -838,6 +994,7 @@ namespace Neo.Tools
                 {
                     MarkIndexUsedInUniqueMode(only);
                 }
+
                 UpdateSelection();
                 return;
             }
@@ -879,6 +1036,7 @@ namespace Neo.Tools
                 if (_resetUniqueWhenCycleComplete)
                 {
                     _usedIndicesForUnique.Clear();
+                    SyncUsedIndicesForUniqueInspector();
                     for (int i = min; i <= max; i++)
                     {
                         if (isExcluded == null || !isExcluded(i))
@@ -895,6 +1053,7 @@ namespace Neo.Tools
 
             int chosen = available[Random.Range(0, available.Count)];
             _usedIndicesForUnique.Add(chosen);
+            SyncUsedIndicesForUniqueInspector();
             _currentIndex = chosen;
             UpdateSelection();
         }
@@ -908,6 +1067,7 @@ namespace Neo.Tools
 
             _usedIndicesForUnique ??= new HashSet<int>();
             _usedIndicesForUnique.Add(index);
+            SyncUsedIndicesForUniqueInspector();
         }
 
         /// <summary>
@@ -1023,6 +1183,7 @@ namespace Neo.Tools
             if (_usedIndicesForUnique != null && _usedIndicesForUnique.Count > 0)
             {
                 _usedIndicesForUnique.Clear();
+                SyncUsedIndicesForUniqueInspector();
                 OnUniqueReset?.Invoke();
             }
         }
@@ -1038,13 +1199,15 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Excludes the given index from the random pool (e.g. when item is "resolved"). Excluded indices are not chosen by SetRandom until IncludeIndex or IncludeAllIndices is called.
+        ///     Excludes the given index from the random pool (e.g. when item is "resolved"). Excluded indices are not chosen by
+        ///     SetRandom until IncludeIndex or IncludeAllIndices is called.
         /// </summary>
         /// <param name="index">Index to exclude.</param>
         public void ExcludeIndex(int index)
         {
             _excludedIndices ??= new HashSet<int>();
             _excludedIndices.Add(index);
+            SyncExcludedIndicesInspector();
         }
 
         /// <summary>
@@ -1054,6 +1217,7 @@ namespace Neo.Tools
         public void IncludeIndex(int index)
         {
             _excludedIndices?.Remove(index);
+            SyncExcludedIndicesInspector();
         }
 
         /// <summary>
@@ -1062,6 +1226,18 @@ namespace Neo.Tools
         public void IncludeAllIndices()
         {
             _excludedIndices?.Clear();
+            SyncExcludedIndicesInspector();
+        }
+
+        /// <summary>
+        ///     Позволяет задать список исключённых индексов одним вызовом (для удобства при управлении из других скриптов).
+        /// </summary>
+        /// <param name="indices">Индексы, которые нужно исключить из пула Random.</param>
+        public void SetExcludedIndices(IEnumerable<int> indices)
+        {
+            _excludedIndices = indices != null ? new HashSet<int>(indices) : new HashSet<int>();
+            SyncExcludedIndicesInspector();
+            SyncIncludedIndicesInspector();
         }
 
         /// <summary>

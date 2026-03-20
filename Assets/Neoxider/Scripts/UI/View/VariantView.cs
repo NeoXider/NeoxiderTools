@@ -403,7 +403,7 @@ namespace Neo.UI
                 return;
             }
 
-            T[] newArray = new T[newSize];
+            var newArray = new T[newSize];
             for (int i = 0; i < Math.Min(array.Length, newSize); i++)
             {
                 newArray[i] = array[i];

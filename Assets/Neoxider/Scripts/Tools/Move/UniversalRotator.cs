@@ -277,7 +277,10 @@ namespace Neo.Tools
             currentAim = useMouseWorld ? AimSource.Mouse : AimSource.None;
         }
 
-        /// <summary>Aims at a world point. If <paramref name="instant"/> is true, applies rotation immediately; otherwise rotates smoothly.</summary>
+        /// <summary>
+        ///     Aims at a world point. If <paramref name="instant" /> is true, applies rotation immediately; otherwise rotates
+        ///     smoothly.
+        /// </summary>
         public void RotateTo(Vector3 worldPoint, bool instant = false)
         {
             manualWorldPoint = worldPoint;
@@ -301,7 +304,7 @@ namespace Neo.Tools
             RotateTo(transform.position + worldDirection, instant);
         }
 
-        /// <summary>Rotates by <paramref name="deltaDegrees"/> around the working axis (Z in 2D, <c>limitedAxis3D</c> in 3D).</summary>
+        /// <summary>Rotates by <paramref name="deltaDegrees" /> around the working axis (Z in 2D, <c>limitedAxis3D</c> in 3D).</summary>
         public void RotateBy(float deltaDegrees)
         {
             Axis axisUsed = GetActiveAxis();
@@ -397,9 +400,9 @@ namespace Neo.Tools
                 return transform.rotation;
             }
 
-            Quaternion look = Quaternion.LookRotation(dir.normalized,
+            var look = Quaternion.LookRotation(dir.normalized,
                 worldUp.sqrMagnitude > 0.0001f ? worldUp.normalized : Vector3.up);
-            Quaternion offset = Quaternion.Euler(rotationOffsetEuler);
+            var offset = Quaternion.Euler(rotationOffsetEuler);
             Quaternion worldDesired = look * offset;
 
             desiredLocalBeforeLimits = ToLocal(worldDesired);

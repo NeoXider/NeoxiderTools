@@ -35,12 +35,14 @@ namespace Neo.StateMachine.NoCode.Editor
             transition.TransitionName = EditorGUILayout.TextField("Name", transition.TransitionName);
             transition.IsEnabled = EditorGUILayout.Toggle("Enabled", transition.IsEnabled);
             transition.Priority = EditorGUILayout.IntField("Priority", transition.Priority);
-            NeoxiderEditorGUI.DrawCaption("Совет: короткие читаемые имена переходов сильно упрощают отладку и чтение graph-like конфигурации.");
+            NeoxiderEditorGUI.DrawCaption(
+                "Совет: короткие читаемые имена переходов сильно упрощают отладку и чтение graph-like конфигурации.");
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(6f);
 
-            NeoxiderEditorGUI.BeginSection("States", "Связанные состояния меняются в основном из инспектора StateMachineData.");
+            NeoxiderEditorGUI.BeginSection("States",
+                "Связанные состояния меняются в основном из инспектора StateMachineData.");
 
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.ObjectField("From State", transition.FromStateData, typeof(StateData), false);
@@ -75,7 +77,8 @@ namespace Neo.StateMachine.NoCode.Editor
                 for (int i = 0; i < transition.Predicates.Count; i++)
                 {
                     EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                    EditorGUILayout.LabelField($"{i + 1}. {GetPredicateTitle(transition.Predicates[i])}", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField($"{i + 1}. {GetPredicateTitle(transition.Predicates[i])}",
+                        EditorStyles.boldLabel);
 
                     StatePredicate predicate = transition.Predicates[i];
                     if (predicate != null)

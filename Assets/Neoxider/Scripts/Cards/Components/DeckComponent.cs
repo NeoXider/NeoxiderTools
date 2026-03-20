@@ -559,8 +559,8 @@ namespace Neo.Cards
             int frames = _animationConfig != null ? _animationConfig.ShakeFrames : 20;
             float intensity = _animationConfig != null ? _animationConfig.ShakeIntensity : 0.12f;
 
-            List<CardComponent> cards = _visualStackBoard.Cards.ToList();
-            List<Vector3> basePositions =
+            var cards = _visualStackBoard.Cards.ToList();
+            var basePositions =
                 cards.Select(card => card != null ? card.transform.localPosition : Vector3.zero).ToList();
 
             for (int i = 0; i < frames; i++)

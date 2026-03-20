@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -148,7 +147,7 @@ namespace Neo.Editor.Windows
 
                 if (GUILayout.Button("Add Folder"))
                 {
-                    List<string> list = NeoxiderSettings.Current.folders.ToList();
+                    var list = NeoxiderSettings.Current.folders.ToList();
                     list.Add("New Folder");
                     NeoxiderSettings.Current.folders = list.ToArray();
                 }

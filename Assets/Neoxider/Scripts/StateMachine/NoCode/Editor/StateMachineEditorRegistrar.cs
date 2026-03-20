@@ -50,7 +50,7 @@ namespace Neo.StateMachine.NoCode.Editor
         {
             // Проверка регистрации CustomEditor для StateMachineData
             StateMachineData testData = ScriptableObject.CreateInstance<StateMachineData>();
-            UnityEditor.Editor stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
+            var stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
             if (stateMachineDataEditor == null || !(stateMachineDataEditor is StateMachineDataEditor))
             {
                 Debug.LogWarning(

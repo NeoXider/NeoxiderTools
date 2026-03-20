@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -22,7 +21,7 @@ namespace Neo.Editor
         private static void RegisterNeoEditors()
         {
             // Находим все типы MonoBehaviour из namespace Neo
-            List<Type> neoTypes = AppDomain.CurrentDomain.GetAssemblies()
+            var neoTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly =>
                 {
                     try

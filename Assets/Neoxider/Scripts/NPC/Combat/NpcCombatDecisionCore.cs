@@ -1,7 +1,7 @@
 namespace Neo.NPC.Combat
 {
     /// <summary>
-    /// Stateless decision helper for modular NPC combat brains.
+    ///     Stateless decision helper for modular NPC combat brains.
     /// </summary>
     public static class NpcCombatDecisionCore
     {

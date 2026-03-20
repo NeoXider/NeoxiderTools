@@ -1,11 +1,10 @@
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Universal Inspector-driven bridge for RPG actions.
+    ///     Universal Inspector-driven bridge for RPG actions.
     /// </summary>
     [NeoDoc("Rpg/RpgNoCodeAction.md")]
     [CreateFromMenu("Neoxider/RPG/Rpg NoCode Action")]
@@ -28,7 +27,7 @@ namespace Neo.Rpg
         [SerializeField] private RpgStringEvent _onResultMessage = new();
 
         /// <summary>
-        /// Executes the configured action.
+        ///     Executes the configured action.
         /// </summary>
         [Button]
         public void Execute()
@@ -50,7 +49,7 @@ namespace Neo.Rpg
                     EmitSuccess($"Healed: {_amount}");
                     break;
                 case RpgNoCodeActionType.SetMaxHp:
-                    manager.SetMaxHp(_amount, true);
+                    manager.SetMaxHp(_amount);
                     EmitSuccess($"Set max HP: {_amount}");
                     break;
                 case RpgNoCodeActionType.SetLevel:
@@ -95,7 +94,9 @@ namespace Neo.Rpg
                     }
                     else
                     {
-                        EmitFailed(string.IsNullOrWhiteSpace(attackError) ? "Attack controller not assigned." : attackError);
+                        EmitFailed(string.IsNullOrWhiteSpace(attackError)
+                            ? "Attack controller not assigned."
+                            : attackError);
                     }
 
                     break;
@@ -174,10 +175,10 @@ namespace Neo.Rpg
         private bool RequiresManager()
         {
             return _actionType != RpgNoCodeActionType.UseAttackById
-                && _actionType != RpgNoCodeActionType.UsePrimaryAttack
-                && _actionType != RpgNoCodeActionType.UsePresetById
-                && _actionType != RpgNoCodeActionType.UsePrimaryPreset
-                && _actionType != RpgNoCodeActionType.StartEvade;
+                   && _actionType != RpgNoCodeActionType.UsePrimaryAttack
+                   && _actionType != RpgNoCodeActionType.UsePresetById
+                   && _actionType != RpgNoCodeActionType.UsePrimaryPreset
+                   && _actionType != RpgNoCodeActionType.StartEvade;
         }
 
         private void EmitSuccess(string message)

@@ -19,7 +19,8 @@ namespace Neo.Tools
             }
             catch (InvalidOperationException)
             {
-                return OptionalInputSystemAdapter.TryReadKeyState(keyCode, "wasPressedThisFrame", out bool state) && state;
+                return OptionalInputSystemAdapter.TryReadKeyState(keyCode, "wasPressedThisFrame", out bool state) &&
+                       state;
             }
         }
 
@@ -32,7 +33,8 @@ namespace Neo.Tools
             }
             catch (InvalidOperationException)
             {
-                return OptionalInputSystemAdapter.TryReadKeyState(keyCode, "wasReleasedThisFrame", out bool state) && state;
+                return OptionalInputSystemAdapter.TryReadKeyState(keyCode, "wasReleasedThisFrame", out bool state) &&
+                       state;
             }
         }
 

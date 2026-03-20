@@ -7,12 +7,12 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Applies progression rewards to the target gameplay systems.
+    ///     Applies progression rewards to the target gameplay systems.
     /// </summary>
     public static class ProgressionRewardDispatcher
     {
         /// <summary>
-        /// Dispatches all supplied rewards.
+        ///     Dispatches all supplied rewards.
         /// </summary>
         public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager)
         {
@@ -28,7 +28,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Dispatches a single reward.
+        ///     Dispatches a single reward.
         /// </summary>
         public static void DispatchReward(ProgressionReward reward, ProgressionManager manager)
         {
@@ -56,7 +56,8 @@ namespace Neo.Progression
                     }
                     else
                     {
-                        Debug.LogWarning("[ProgressionRewardDispatcher] Money reward skipped because no Money target was found.");
+                        Debug.LogWarning(
+                            "[ProgressionRewardDispatcher] Money reward skipped because no Money target was found.");
                     }
 
                     return;

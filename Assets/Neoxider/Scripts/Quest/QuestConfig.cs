@@ -11,9 +11,7 @@ namespace Neo.Quest
     [CreateAssetMenu(fileName = "QuestConfig", menuName = "Neoxider/Quest/Quest Config")]
     public class QuestConfig : ScriptableObject
     {
-        [Header("Identity")]
-        [Tooltip("Unique quest identifier. Used in AcceptQuest/GetState.")]
-        [SerializeField]
+        [Header("Identity")] [Tooltip("Unique quest identifier. Used in AcceptQuest/GetState.")] [SerializeField]
         private string _id = "";
 
         [Header("Display")] [Tooltip("Quest title for UI.")] [SerializeField]
@@ -22,8 +20,7 @@ namespace Neo.Quest
         [Tooltip("Quest description for UI.")] [TextArea(2, 6)] [SerializeField]
         private string _description = "";
 
-        [Tooltip("Optional quest icon for UI.")]
-        [SerializeField]
+        [Tooltip("Optional quest icon for UI.")] [SerializeField]
         private Sprite _icon;
 
         [Header("Objectives")]
@@ -37,7 +34,9 @@ namespace Neo.Quest
         [SerializeField]
         private List<ConditionEntry> _startConditions = new();
 
-        [Header("Optional")] [Tooltip("Quest IDs that become available after this quest is completed.")] [SerializeField]
+        [Header("Optional")]
+        [Tooltip("Quest IDs that become available after this quest is completed.")]
+        [SerializeField]
         private List<string> _nextQuestIds = new();
 
         /// <summary>Уникальный идентификатор квеста.</summary>

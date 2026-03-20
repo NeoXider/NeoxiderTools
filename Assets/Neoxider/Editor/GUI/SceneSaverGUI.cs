@@ -63,7 +63,9 @@ namespace Neo.Editor.Windows
 
             if (!hasSavedScene)
             {
-                EditorGUILayout.HelpBox("Текущая сцена ещё не сохранена как asset. Автосейв появится после первого обычного Save Scene.", MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    "Текущая сцена ещё не сохранена как asset. Автосейв появится после первого обычного Save Scene.",
+                    MessageType.Info);
             }
 
             NeoxiderEditorGUI.BeginSection("Auto Save", "Базовые параметры автоматического сохранения.");
@@ -74,9 +76,11 @@ namespace Neo.Editor.Windows
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Current Scene", "Текущее состояние открытой сцены и результат последнего сохранения.");
+            NeoxiderEditorGUI.BeginSection("Current Scene",
+                "Текущее состояние открытой сцены и результат последнего сохранения.");
             EditorGUILayout.LabelField("Current Scene", _currentScenePath);
-            EditorGUILayout.LabelField("Last Save Status", string.IsNullOrEmpty(_lastSaveStatus) ? "No saves yet." : _lastSaveStatus);
+            EditorGUILayout.LabelField("Last Save Status",
+                string.IsNullOrEmpty(_lastSaveStatus) ? "No saves yet." : _lastSaveStatus);
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(4f);
@@ -86,6 +90,7 @@ namespace Neo.Editor.Windows
             {
                 SaveSceneClone();
             }
+
             EditorGUI.EndDisabledGroup();
         }
 

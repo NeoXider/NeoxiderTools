@@ -34,8 +34,10 @@ namespace Neo.Condition
     ///     Supports AND/OR logic, inversion, and manual or automatic checking.
     /// </summary>
     /// <remarks>
-    ///     Usage: 1) Add NeoCondition to a GameObject. 2) Add conditions (Conditions list): pick object, component, field, operator, threshold.
-    ///     3) Configure OnTrue / OnFalse events. 4) Set check mode (Manual / EveryFrame / Interval). For Manual, call Check() from another component's UnityEvent.
+    ///     Usage: 1) Add NeoCondition to a GameObject. 2) Add conditions (Conditions list): pick object, component, field,
+    ///     operator, threshold.
+    ///     3) Configure OnTrue / OnFalse events. 4) Set check mode (Manual / EveryFrame / Interval). For Manual, call Check()
+    ///     from another component's UnityEvent.
     /// </remarks>
     [NeoDoc("Condition/NeoCondition.md")]
     [CreateFromMenu("Neoxider/Condition/NeoCondition")]

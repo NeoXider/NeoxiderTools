@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Defines a progression unlock node.
+    ///     Defines a progression unlock node.
     /// </summary>
     [Serializable]
     public sealed class UnlockNodeDefinition
@@ -22,53 +22,53 @@ namespace Neo.Progression
         [SerializeField] private List<ProgressionReward> _rewards = new();
 
         /// <summary>
-        /// Gets the stable node identifier.
+        ///     Gets the stable node identifier.
         /// </summary>
         public string Id => _id;
 
         /// <summary>
-        /// Gets the UI-facing node title.
+        ///     Gets the UI-facing node title.
         /// </summary>
         public string DisplayName => _displayName;
 
         /// <summary>
-        /// Gets the optional node description.
+        ///     Gets the optional node description.
         /// </summary>
         public string Description => _description;
 
         /// <summary>
-        /// Gets the optional node icon.
+        ///     Gets the optional node icon.
         /// </summary>
         public Sprite Icon => _icon;
 
         /// <summary>
-        /// Gets whether the node should be available by default.
+        ///     Gets whether the node should be available by default.
         /// </summary>
         public bool UnlockedByDefault => _unlockedByDefault;
 
         /// <summary>
-        /// Gets the minimum level required to unlock the node.
+        ///     Gets the minimum level required to unlock the node.
         /// </summary>
         public int RequiredLevel => _requiredLevel;
 
         /// <summary>
-        /// Gets the prerequisite node identifiers.
+        ///     Gets the prerequisite node identifiers.
         /// </summary>
         public IReadOnlyList<string> PrerequisiteNodeIds => _prerequisiteNodeIds;
 
         /// <summary>
-        /// Gets the extra condition evaluators that must pass before unlocking.
+        ///     Gets the extra condition evaluators that must pass before unlocking.
         /// </summary>
         public IReadOnlyList<ConditionEntry> Conditions => _conditions;
 
         /// <summary>
-        /// Gets the rewards granted when the node is unlocked.
+        ///     Gets the rewards granted when the node is unlocked.
         /// </summary>
         public IReadOnlyList<ProgressionReward> Rewards => _rewards;
     }
 
     /// <summary>
-    /// Stores unlock node definitions for the progression system.
+    ///     Stores unlock node definitions for the progression system.
     /// </summary>
     [CreateAssetMenu(fileName = "Unlock Tree Definition", menuName = "Neoxider/Progression/Unlock Tree Definition")]
     public sealed class UnlockTreeDefinition : ScriptableObject
@@ -76,12 +76,17 @@ namespace Neo.Progression
         [SerializeField] private List<UnlockNodeDefinition> _nodes = new();
 
         /// <summary>
-        /// Gets the configured unlock nodes.
+        ///     Gets the configured unlock nodes.
         /// </summary>
         public IReadOnlyList<UnlockNodeDefinition> Nodes => _nodes;
 
+        private void OnValidate()
+        {
+            _nodes.Sort((left, right) => string.Compare(left?.Id, right?.Id, StringComparison.Ordinal));
+        }
+
         /// <summary>
-        /// Tries to get a node by identifier.
+        ///     Tries to get a node by identifier.
         /// </summary>
         public bool TryGetNode(string nodeId, out UnlockNodeDefinition node)
         {
@@ -100,7 +105,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Validates identifiers, references, and graph cycles.
+        ///     Validates identifiers, references, and graph cycles.
         /// </summary>
         public IReadOnlyList<string> ValidateDefinition()
         {
@@ -189,11 +194,6 @@ namespace Neo.Progression
 
             visiting.Remove(nodeId);
             visited.Add(nodeId);
-        }
-
-        private void OnValidate()
-        {
-            _nodes.Sort((left, right) => string.Compare(left?.Id, right?.Id, StringComparison.Ordinal));
         }
     }
 }

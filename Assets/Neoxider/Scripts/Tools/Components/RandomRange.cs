@@ -13,7 +13,8 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    ///     Generates random values in a configurable range. Exposes reactive value and events for NeoCondition and no-code binding.
+    ///     Generates random values in a configurable range. Exposes reactive value and events for NeoCondition and no-code
+    ///     binding.
     ///     Use for random anomaly count (e.g. 0–5), spawn intervals, or any min–max random value.
     /// </summary>
     [NeoDoc("Tools/Components/RandomRange.md")]
@@ -21,26 +22,19 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/" + nameof(RandomRange))]
     public class RandomRange : MonoBehaviour
     {
-        [Header("Mode")]
-        [Tooltip("Generate integer (inclusive min..max) or float (min..max).")]
-        [SerializeField]
+        [Header("Mode")] [Tooltip("Generate integer (inclusive min..max) or float (min..max).")] [SerializeField]
         private RandomRangeValueMode _valueMode = RandomRangeValueMode.Int;
 
-        [Header("Range")]
-        [Tooltip("Minimum value (inclusive for Int).")]
-        [SerializeField]
-        private float _min = 0f;
+        [Header("Range")] [Tooltip("Minimum value (inclusive for Int).")] [SerializeField]
+        private float _min;
 
-        [Tooltip("Maximum value (inclusive for Int).")]
-        [SerializeField]
+        [Tooltip("Maximum value (inclusive for Int).")] [SerializeField]
         private float _max = 10f;
 
-        [Header("Output")]
-        [Tooltip("Current value after last Generate(). Used by NeoCondition and bindings.")]
+        [Header("Output")] [Tooltip("Current value after last Generate(). Used by NeoCondition and bindings.")]
         public ReactivePropertyFloat Value = new();
 
-        [Header("Events")]
-        [Tooltip("Invoked after Generate() with new integer value (rounded in Float mode).")]
+        [Header("Events")] [Tooltip("Invoked after Generate() with new integer value (rounded in Float mode).")]
         public UnityEvent<int> OnGeneratedInt = new();
 
         [Tooltip("Invoked after Generate() with new float value.")]
@@ -90,6 +84,7 @@ namespace Neo.Tools
                     minI = maxI;
                     maxI = t;
                 }
+
                 newVal = Random.Range(minI, maxI + 1);
             }
             else

@@ -65,7 +65,7 @@ namespace Neo.Editor
             using (new EditorGUILayout.VerticalScope())
             {
                 Color accentBase = new(0.25f, 0.9f, 0.85f, 1f);
-                Color accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
+                var accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
                 Color accent = current ? accentDark : accentBase;
 
                 current = DrawNeoSectionHeader(current, "Events", totalListeners, accent, "d_EventSystem Icon",

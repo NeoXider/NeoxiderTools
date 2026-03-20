@@ -3,6 +3,7 @@ using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
+using Object = UnityEngine.Object;
 
 namespace Neo.Level.Tests
 {
@@ -30,7 +31,7 @@ namespace Neo.Level.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(gameObject);
+                Object.DestroyImmediate(gameObject);
             }
         }
 

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    /// Provides a PlayerPrefs-like static API on top of the active save provider.
+    ///     Provides a PlayerPrefs-like static API on top of the active save provider.
     /// </summary>
     public static class SaveProvider
     {
@@ -16,7 +16,7 @@ namespace Neo.Save
         private static readonly object _lockObject = new();
 
         /// <summary>
-        /// Gets the currently active save provider.
+        ///     Gets the currently active save provider.
         /// </summary>
         public static ISaveProvider CurrentProvider
         {
@@ -28,17 +28,17 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Raised after the active provider completes a save operation.
+        ///     Raised after the active provider completes a save operation.
         /// </summary>
         public static event Action OnDataSaved;
 
         /// <summary>
-        /// Raised after the active provider completes a load operation.
+        ///     Raised after the active provider completes a load operation.
         /// </summary>
         public static event Action OnDataLoaded;
 
         /// <summary>
-        /// Raised when a key changes in the active provider.
+        ///     Raised when a key changes in the active provider.
         /// </summary>
         public static event Action<string> OnKeyChanged;
 
@@ -82,7 +82,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Initializes the save system on first use.
+        ///     Initializes the save system on first use.
         /// </summary>
         private static void Initialize()
         {
@@ -120,7 +120,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Replaces the active save provider.
+        ///     Replaces the active save provider.
         /// </summary>
         /// <param name="provider">Provider instance to activate.</param>
         public static void SetProvider(ISaveProvider provider)
@@ -145,7 +145,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Gets an integer value by key.
+        ///     Gets an integer value by key.
         /// </summary>
         public static int GetInt(string key, int defaultValue = 0)
         {
@@ -154,7 +154,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Sets an integer value by key.
+        ///     Sets an integer value by key.
         /// </summary>
         public static void SetInt(string key, int value)
         {
@@ -163,7 +163,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Gets a floating-point value by key.
+        ///     Gets a floating-point value by key.
         /// </summary>
         public static float GetFloat(string key, float defaultValue = 0f)
         {
@@ -172,7 +172,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Sets a floating-point value by key.
+        ///     Sets a floating-point value by key.
         /// </summary>
         public static void SetFloat(string key, float value)
         {
@@ -181,7 +181,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Gets a string value by key.
+        ///     Gets a string value by key.
         /// </summary>
         public static string GetString(string key, string defaultValue = "")
         {
@@ -190,7 +190,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Sets a string value by key.
+        ///     Sets a string value by key.
         /// </summary>
         public static void SetString(string key, string value)
         {
@@ -199,7 +199,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Gets a Boolean value by key.
+        ///     Gets a Boolean value by key.
         /// </summary>
         public static bool GetBool(string key, bool defaultValue = false)
         {
@@ -208,7 +208,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Sets a Boolean value by key.
+        ///     Sets a Boolean value by key.
         /// </summary>
         public static void SetBool(string key, bool value)
         {
@@ -217,7 +217,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Returns whether the specified key exists in the active provider.
+        ///     Returns whether the specified key exists in the active provider.
         /// </summary>
         public static bool HasKey(string key)
         {
@@ -226,7 +226,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Deletes a key from the active provider.
+        ///     Deletes a key from the active provider.
         /// </summary>
         public static void DeleteKey(string key)
         {
@@ -235,7 +235,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Deletes all keys from the active provider.
+        ///     Deletes all keys from the active provider.
         /// </summary>
         public static void DeleteAll()
         {
@@ -244,7 +244,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Forces the active provider to persist its data.
+        ///     Forces the active provider to persist its data.
         /// </summary>
         public static void Save()
         {
@@ -253,7 +253,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Forces the active provider to refresh its data.
+        ///     Forces the active provider to refresh its data.
         /// </summary>
         public static void Load()
         {

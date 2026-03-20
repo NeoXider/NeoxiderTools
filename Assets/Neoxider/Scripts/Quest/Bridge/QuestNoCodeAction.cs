@@ -1,4 +1,3 @@
-using Neo;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -33,6 +32,17 @@ namespace Neo.Quest
         [Header("Events")] [SerializeField] private UnityEvent _onSuccess = new();
         [SerializeField] private UnityEvent<string> _onFailed = new();
         [SerializeField] private UnityEvent<string> _onResultMessage = new();
+
+        [Button("Reset")]
+        public void Reset()
+        {
+            if (!TryGetManager(out QuestManager manager))
+            {
+                return;
+            }
+
+            ExecuteResetInternal(manager);
+        }
 
         [Button("Execute Action")]
         public void Execute()
@@ -102,17 +112,6 @@ namespace Neo.Quest
             }
 
             ExecuteRestartInternal(manager);
-        }
-
-        [Button("Reset")]
-        public void Reset()
-        {
-            if (!TryGetManager(out QuestManager manager))
-            {
-                return;
-            }
-
-            ExecuteResetInternal(manager);
         }
 
         [Button("Reset All")]

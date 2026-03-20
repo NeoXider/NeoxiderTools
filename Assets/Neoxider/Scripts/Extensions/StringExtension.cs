@@ -246,7 +246,7 @@ namespace Neo.Extensions
             StringBuilder sb = new();
             for (int i = 0; i < input.Length; i++)
             {
-                Color color = Color.HSVToRGB((float)i / input.Length, 1, 1);
+                var color = Color.HSVToRGB((float)i / input.Length, 1, 1);
                 string hexColor = ColorUtility.ToHtmlStringRGB(color);
                 sb.Append("<color=#");
                 sb.Append(hexColor);
@@ -271,7 +271,7 @@ namespace Neo.Extensions
             StringBuilder sb = new();
             for (int i = 0; i < input.Length; i++)
             {
-                Color color = Color.Lerp(startColor, endColor, (float)i / (input.Length - 1));
+                var color = Color.Lerp(startColor, endColor, (float)i / (input.Length - 1));
                 string hexColor = ColorUtility.ToHtmlStringRGB(color);
                 sb.Append("<color=#");
                 sb.Append(hexColor);

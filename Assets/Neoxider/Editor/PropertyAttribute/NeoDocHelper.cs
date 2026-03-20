@@ -282,7 +282,7 @@ namespace Neo.Editor
                 object[] args = getWindowMethod.GetParameters().Length == 1
                     ? new object[] { viewerType }
                     : new object[] { viewerType, false, null, true };
-                EditorWindow window = (EditorWindow)getWindowMethod.Invoke(null, args);
+                var window = (EditorWindow)getWindowMethod.Invoke(null, args);
                 if (window?.rootVisualElement == null)
                 {
                     return;

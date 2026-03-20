@@ -30,7 +30,10 @@ namespace Neo
                 }
             }
 
-            /// <summary>Plays the sound. If clips are set and useRandomClip is true, picks a random clip; otherwise uses legacy ID mode.</summary>
+            /// <summary>
+            ///     Plays the sound. If clips are set and useRandomClip is true, picks a random clip; otherwise uses legacy ID
+            ///     mode.
+            /// </summary>
             public void AudioPlay()
             {
                 if (_clips != null && _clips.Length > 0)

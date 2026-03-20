@@ -42,7 +42,7 @@ namespace Neo.GridSystem.TicTacToe
                     continue;
                 }
 
-                TicTacToeCellState state = (TicTacToeCellState)cell.ContentId;
+                var state = (TicTacToeCellState)cell.ContentId;
                 if (state == TicTacToeCellState.Empty)
                 {
                     continue;

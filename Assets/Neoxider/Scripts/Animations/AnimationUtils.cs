@@ -2,7 +2,10 @@ using UnityEngine;
 
 namespace Neo.Animations
 {
-    /// <summary>Static helper methods for animating various components. Provides universal functions to compute animated values over time.</summary>
+    /// <summary>
+    ///     Static helper methods for animating various components. Provides universal functions to compute animated
+    ///     values over time.
+    /// </summary>
     public static class AnimationUtils
     {
         // -------------------------------------------------

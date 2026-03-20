@@ -71,11 +71,11 @@ namespace Neo.Save.Tests
 
         private sealed class CustomIdentitySaveable : MonoBehaviour, ISaveableComponent, ISaveIdentityProvider
         {
-            public string SaveIdentity => "custom-save-id";
-
             public void OnDataLoaded()
             {
             }
+
+            public string SaveIdentity => "custom-save-id";
         }
     }
 }

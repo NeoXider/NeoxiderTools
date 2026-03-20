@@ -14,9 +14,20 @@ namespace Neo.Save.Tests
             int loadedCount = 0;
             string changedKey = null;
 
-            void OnSaved() => savedCount++;
-            void OnLoaded() => loadedCount++;
-            void OnKeyChanged(string key) => changedKey = key;
+            void OnSaved()
+            {
+                savedCount++;
+            }
+
+            void OnLoaded()
+            {
+                loadedCount++;
+            }
+
+            void OnKeyChanged(string key)
+            {
+                changedKey = key;
+            }
 
             SaveProvider.OnDataSaved += OnSaved;
             SaveProvider.OnDataLoaded += OnLoaded;
@@ -56,27 +67,47 @@ namespace Neo.Save.Tests
             public event Action OnDataLoaded;
             public event Action<string> OnKeyChanged;
 
-            public int GetInt(string key, int defaultValue = 0) => defaultValue;
+            public int GetInt(string key, int defaultValue = 0)
+            {
+                return defaultValue;
+            }
+
             public void SetInt(string key, int value)
             {
             }
 
-            public float GetFloat(string key, float defaultValue = 0f) => defaultValue;
+            public float GetFloat(string key, float defaultValue = 0f)
+            {
+                return defaultValue;
+            }
+
             public void SetFloat(string key, float value)
             {
             }
 
-            public string GetString(string key, string defaultValue = "") => defaultValue;
+            public string GetString(string key, string defaultValue = "")
+            {
+                return defaultValue;
+            }
+
             public void SetString(string key, string value)
             {
             }
 
-            public bool GetBool(string key, bool defaultValue = false) => defaultValue;
+            public bool GetBool(string key, bool defaultValue = false)
+            {
+                return defaultValue;
+            }
+
             public void SetBool(string key, bool value)
             {
             }
 
-            public bool HasKey(string key) => false;
+            public bool HasKey(string key)
+            {
+                return false;
+            }
+
             public void DeleteKey(string key)
             {
             }

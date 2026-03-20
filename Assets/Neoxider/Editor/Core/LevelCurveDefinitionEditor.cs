@@ -12,18 +12,18 @@ namespace Neo.Editor.Core
         private const int PreviewCountDefault = 10;
         private const int PreviewCountMin = 1;
         private const int PreviewCountMax = 100;
-
-        private SerializedProperty _mode;
-        private SerializedProperty _formulaType;
-        private SerializedProperty _xpPerLevel;
+        private SerializedProperty _animationCurve;
         private SerializedProperty _constantOffset;
-        private SerializedProperty _quadraticBase;
+        private SerializedProperty _customEntries;
         private SerializedProperty _expBase;
         private SerializedProperty _expFactor;
+        private SerializedProperty _formulaType;
+
+        private SerializedProperty _mode;
         private SerializedProperty _powerBase;
         private SerializedProperty _powerExponent;
-        private SerializedProperty _animationCurve;
-        private SerializedProperty _customEntries;
+        private SerializedProperty _quadraticBase;
+        private SerializedProperty _xpPerLevel;
 
         private void OnEnable()
         {
@@ -61,25 +61,30 @@ namespace Neo.Editor.Core
                     {
                         EditorGUILayout.PropertyField(_xpPerLevel);
                     }
+
                     if (formulaTypeIndex == (int)LevelFormulaType.LinearWithOffset)
                     {
                         EditorGUILayout.PropertyField(_constantOffset);
                     }
+
                     if (formulaTypeIndex == (int)LevelFormulaType.Quadratic)
                     {
                         EditorGUILayout.PropertyField(_quadraticBase);
                     }
+
                     if (formulaTypeIndex == (int)LevelFormulaType.Exponential)
                     {
                         EditorGUILayout.PropertyField(_expBase);
                         EditorGUILayout.PropertyField(_expFactor);
                     }
+
                     if (formulaTypeIndex == (int)LevelFormulaType.Power ||
                         formulaTypeIndex == (int)LevelFormulaType.PolynomialSingle)
                     {
                         EditorGUILayout.PropertyField(_powerBase);
                         EditorGUILayout.PropertyField(_powerExponent);
                     }
+
                     break;
                 case LevelCurveMode.Curve:
                     EditorGUILayout.LabelField("Кривая (X = уровень, Y = кумулятивный XP)", EditorStyles.boldLabel);
@@ -119,16 +124,18 @@ namespace Neo.Editor.Core
 
             EditorGUILayout.EndHorizontal();
 
-            var headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+            Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, 60f, headerRect.height), "Уровень");
-            EditorGUI.LabelField(new Rect(headerRect.x + 70f, headerRect.y, headerRect.width - 70f, headerRect.height), "Кумулятивный XP");
+            EditorGUI.LabelField(new Rect(headerRect.x + 70f, headerRect.y, headerRect.width - 70f, headerRect.height),
+                "Кумулятивный XP");
 
             for (int level = 1; level <= previewCount; level++)
             {
-                var lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
+                Rect lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
                 int requiredXp = definition.GetRequiredXpForLevel(level);
                 EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, 60f, lineRect.height), level.ToString());
-                EditorGUI.LabelField(new Rect(lineRect.x + 70f, lineRect.y, lineRect.width - 70f, lineRect.height), requiredXp.ToString());
+                EditorGUI.LabelField(new Rect(lineRect.x + 70f, lineRect.y, lineRect.width - 70f, lineRect.height),
+                    requiredXp.ToString());
             }
         }
     }

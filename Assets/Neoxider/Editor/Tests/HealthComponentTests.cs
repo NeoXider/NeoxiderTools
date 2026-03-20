@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using Neo.Core.Resources;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace Neo.Core.Tests

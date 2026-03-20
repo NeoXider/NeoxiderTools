@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
-using NUnit.Framework;
+using System.Reflection;
 using Neo.Save;
-using Neo.Tools;
+using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Tools.Tests
 {
@@ -101,7 +103,8 @@ namespace Neo.Tools.Tests
                 for (int i = 0; i < 10; i++)
                 {
                     selector.SetRandom();
-                    Assert.That(selector.Value, Is.EqualTo(1), "Индекс 0 исключён, случайный выбор должен давать только 1");
+                    Assert.That(selector.Value, Is.EqualTo(1),
+                        "Индекс 0 исключён, случайный выбор должен давать только 1");
                 }
 
                 selector.IncludeAllIndices();
@@ -110,8 +113,15 @@ namespace Neo.Tools.Tests
                 for (int i = 0; i < 20; i++)
                 {
                     selector.SetRandom();
-                    if (selector.Value == 0) seenZero = true;
-                    if (selector.Value == 1) seenOne = true;
+                    if (selector.Value == 0)
+                    {
+                        seenZero = true;
+                    }
+
+                    if (selector.Value == 1)
+                    {
+                        seenOne = true;
+                    }
                 }
 
                 Assert.That(seenZero && seenOne, Is.True, "После IncludeAllIndices() оба индекса снова доступны");
@@ -139,108 +149,117 @@ namespace Neo.Tools.Tests
             Selector first = firstRoot.AddComponent<Selector>();
             first.startOnAwake = false;
 
+            SetPrivateBool(first, "_useRandomSelection", true);
+            SetPrivateBool(first, "_saveEnabled", true);
+            SetPrivateString(first, "_saveKey", saveKey);
+
+            first.Set(1);
+            first.ExcludeIndex(0);
+
+            // Принудительно сохранить состояние
+            InvokePrivate(first, "SaveState");
+
+            Object.DestroyImmediate(firstRoot);
+
+            GameObject secondRoot = new("SelectorSave_Second");
+            GameObject a2 = new("A2");
+            GameObject b2 = new("B2");
+            a2.transform.SetParent(secondRoot.transform);
+            b2.transform.SetParent(secondRoot.transform);
+
+            Selector second = secondRoot.AddComponent<Selector>();
+            second.startOnAwake = false;
+
             try
             {
-                SetPrivateBool(first, "_useRandomSelection", true);
-                SetPrivateBool(first, "_saveEnabled", true);
-                SetPrivateString(first, "_saveKey", saveKey);
+                SetPrivateBool(second, "_useRandomSelection", true);
+                SetPrivateBool(second, "_saveEnabled", true);
+                SetPrivateString(second, "_saveKey", saveKey);
 
-                first.Set(1);
-                first.ExcludeIndex(0);
+                InvokePrivate(second, "LoadState");
+                second.Set(second.Value); // применить загруженный индекс
 
-                // Принудительно сохранить состояние
-                InvokePrivate(first, "SaveState");
-
-                Object.DestroyImmediate(firstRoot);
-
-                GameObject secondRoot = new("SelectorSave_Second");
-                GameObject a2 = new("A2");
-                GameObject b2 = new("B2");
-                a2.transform.SetParent(secondRoot.transform);
-                b2.transform.SetParent(secondRoot.transform);
-
-                Selector second = secondRoot.AddComponent<Selector>();
-                second.startOnAwake = false;
-
-                try
-                {
-                    SetPrivateBool(second, "_useRandomSelection", true);
-                    SetPrivateBool(second, "_saveEnabled", true);
-                    SetPrivateString(second, "_saveKey", saveKey);
-
-                    InvokePrivate(second, "LoadState");
-                    second.Set(second.Value); // применить загруженный индекс
-
-                    Assert.That(second.Value, Is.EqualTo(1), "Индекс должен быть восстановлен из сохранения");
-                    Assert.That(second.IsExcluded(0), Is.True, "Исключённый индекс должен быть восстановлен");
-                }
-                finally
-                {
-                    Object.DestroyImmediate(secondRoot);
-                }
+                Assert.That(second.Value, Is.EqualTo(1), "Индекс должен быть восстановлен из сохранения");
+                Assert.That(second.IsExcluded(0), Is.True, "Исключённый индекс должен быть восстановлен");
             }
             finally
             {
-                // Очистка SaveProvider по ключам, если нужно, оставляем провайдер как есть
+                Object.DestroyImmediate(secondRoot);
             }
         }
 
         private static void SetPrivateBool(object target, string fieldName, bool value)
         {
-            var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
             field.SetValue(target, value);
         }
 
         private static void SetPrivateString(object target, string fieldName, string value)
         {
-            var field = target.GetType().GetField(fieldName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
             field.SetValue(target, value);
         }
 
         private static void InvokePrivate(object target, string methodName)
         {
-            var method = target.GetType().GetMethod(methodName, System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, $"Method `{methodName}` was not found.");
             method.Invoke(target, null);
         }
 
         private sealed class DictionarySaveProvider : ISaveProvider
         {
-            private readonly Dictionary<string, int> _ints = new();
-            private readonly Dictionary<string, float> _floats = new();
-            private readonly Dictionary<string, string> _strings = new();
             private readonly Dictionary<string, bool> _bools = new();
+            private readonly Dictionary<string, float> _floats = new();
+            private readonly Dictionary<string, int> _ints = new();
+            private readonly Dictionary<string, string> _strings = new();
 
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
 
-            public event System.Action OnDataSaved;
-            public event System.Action OnDataLoaded;
-            public event System.Action<string> OnKeyChanged;
+            public event Action OnDataSaved;
+            public event Action OnDataLoaded;
+            public event Action<string> OnKeyChanged;
 
-            public int GetInt(string key, int defaultValue = 0) => _ints.TryGetValue(key, out int v) ? v : defaultValue;
+            public int GetInt(string key, int defaultValue = 0)
+            {
+                return _ints.TryGetValue(key, out int v) ? v : defaultValue;
+            }
+
             public void SetInt(string key, int value)
             {
                 _ints[key] = value;
                 OnKeyChanged?.Invoke(key);
             }
 
-            public float GetFloat(string key, float defaultValue = 0f) => _floats.TryGetValue(key, out float v) ? v : defaultValue;
+            public float GetFloat(string key, float defaultValue = 0f)
+            {
+                return _floats.TryGetValue(key, out float v) ? v : defaultValue;
+            }
+
             public void SetFloat(string key, float value)
             {
                 _floats[key] = value;
                 OnKeyChanged?.Invoke(key);
             }
 
-            public string GetString(string key, string defaultValue = "") => _strings.TryGetValue(key, out string v) ? v : defaultValue;
+            public string GetString(string key, string defaultValue = "")
+            {
+                return _strings.TryGetValue(key, out string v) ? v : defaultValue;
+            }
+
             public void SetString(string key, string value)
             {
                 _strings[key] = value;
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool GetBool(string key, bool defaultValue = false) => _bools.TryGetValue(key, out bool v) ? v : defaultValue;
+            public bool GetBool(string key, bool defaultValue = false)
+            {
+                return _bools.TryGetValue(key, out bool v) ? v : defaultValue;
+            }
+
             public void SetBool(string key, bool value)
             {
                 _bools[key] = value;
@@ -249,7 +268,8 @@ namespace Neo.Tools.Tests
 
             public bool HasKey(string key)
             {
-                return _ints.ContainsKey(key) || _floats.ContainsKey(key) || _strings.ContainsKey(key) || _bools.ContainsKey(key);
+                return _ints.ContainsKey(key) || _floats.ContainsKey(key) || _strings.ContainsKey(key) ||
+                       _bools.ContainsKey(key);
             }
 
             public void DeleteKey(string key)
@@ -281,4 +301,3 @@ namespace Neo.Tools.Tests
         }
     }
 }
-

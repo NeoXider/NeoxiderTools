@@ -10,16 +10,15 @@ namespace Neo.Core.Level
     [AddComponentMenu("Neoxider/Core/Level NoCode Action")]
     public sealed class LevelNoCodeAction : MonoBehaviour
     {
-        [Header("Target")]
-        [SerializeField] private LevelComponent _levelProvider;
+        [Header("Target")] [SerializeField] private LevelComponent _levelProvider;
 
-        [Header("Action")]
-        [SerializeField] private LevelNoCodeActionType _actionType = LevelNoCodeActionType.AddXp;
+        [Header("Action")] [SerializeField] private LevelNoCodeActionType _actionType = LevelNoCodeActionType.AddXp;
+
         [SerializeField] [Min(0)] private int _xpAmount = 25;
         [SerializeField] [Min(1)] private int _level = 1;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onSuccess = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onSuccess = new();
+
         [SerializeField] private UnityEventInt _onLevelUp = new();
 
         /// <summary>

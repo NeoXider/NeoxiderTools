@@ -16,7 +16,7 @@ namespace Neo.Cards.Poker
         /// <returns>Результат оценки</returns>
         public static PokerHandResult Evaluate(IEnumerable<CardData> cards)
         {
-            List<CardData> cardList = cards.Where(c => !c.IsJoker).ToList();
+            var cardList = cards.Where(c => !c.IsJoker).ToList();
 
             if (cardList.Count < 5)
             {
@@ -56,7 +56,7 @@ namespace Neo.Cards.Poker
         /// </summary>
         private static PokerHandResult EvaluateFiveCards(List<CardData> cards)
         {
-            List<CardData> sortedCards = cards.OrderByDescending(c => c.Rank).ToList();
+            var sortedCards = cards.OrderByDescending(c => c.Rank).ToList();
             Dictionary<int, List<Rank>> groups = GetRankGroups(sortedCards);
             bool isFlush = IsFlush(sortedCards);
             bool isStraight = IsStraight(sortedCards, out Rank highCard);
@@ -82,7 +82,7 @@ namespace Neo.Cards.Poker
             if (groups.ContainsKey(4))
             {
                 Rank fourRank = groups[4][0];
-                List<Rank> kickers = sortedCards
+                var kickers = sortedCards
                     .Where(c => c.Rank != fourRank)
                     .Select(c => c.Rank)
                     .Take(1)
@@ -109,7 +109,7 @@ namespace Neo.Cards.Poker
 
             if (isFlush)
             {
-                List<Rank> ranks = sortedCards.Select(c => c.Rank).ToList();
+                var ranks = sortedCards.Select(c => c.Rank).ToList();
 
                 return new PokerHandResult(
                     PokerCombination.Flush,
@@ -130,7 +130,7 @@ namespace Neo.Cards.Poker
             if (groups.ContainsKey(3))
             {
                 Rank threeRank = groups[3][0];
-                List<Rank> kickers = sortedCards
+                var kickers = sortedCards
                     .Where(c => c.Rank != threeRank)
                     .Select(c => c.Rank)
                     .Take(2)
@@ -145,11 +145,11 @@ namespace Neo.Cards.Poker
 
             if (groups.ContainsKey(2))
             {
-                List<Rank> pairs = groups[2].OrderByDescending(r => r).ToList();
+                var pairs = groups[2].OrderByDescending(r => r).ToList();
 
                 if (pairs.Count >= 2)
                 {
-                    List<Rank> kickers = sortedCards
+                    var kickers = sortedCards
                         .Where(c => c.Rank != pairs[0] && c.Rank != pairs[1])
                         .Select(c => c.Rank)
                         .Take(1)
@@ -163,7 +163,7 @@ namespace Neo.Cards.Poker
                 }
 
                 Rank pairRank = pairs[0];
-                List<Rank> kickersList = sortedCards
+                var kickersList = sortedCards
                     .Where(c => c.Rank != pairRank)
                     .Select(c => c.Rank)
                     .Take(3)
@@ -176,7 +176,7 @@ namespace Neo.Cards.Poker
                     sortedCards);
             }
 
-            List<Rank> highCardKickers = sortedCards.Select(c => c.Rank).ToList();
+            var highCardKickers = sortedCards.Select(c => c.Rank).ToList();
 
             return new PokerHandResult(
                 PokerCombination.HighCard,
@@ -190,7 +190,7 @@ namespace Neo.Cards.Poker
         /// </summary>
         private static Dictionary<int, List<Rank>> GetRankGroups(List<CardData> cards)
         {
-            Dictionary<Rank, int> rankCounts = cards
+            var rankCounts = cards
                 .GroupBy(c => c.Rank)
                 .ToDictionary(g => g.Key, g => g.Count());
 
@@ -234,7 +234,7 @@ namespace Neo.Cards.Poker
         /// </summary>
         private static bool IsStraight(List<CardData> cards, out Rank highCard)
         {
-            List<int> ranks = cards.Select(c => (int)c.Rank).Distinct().OrderByDescending(r => r).ToList();
+            var ranks = cards.Select(c => (int)c.Rank).Distinct().OrderByDescending(r => r).ToList();
             highCard = (Rank)ranks[0];
 
             if (ranks.Count < 5)

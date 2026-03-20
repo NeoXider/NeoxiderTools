@@ -27,7 +27,7 @@ namespace Neo.Tools
             }
 
             Vector3 spawnPosition = transform.position + offset;
-            Quaternion spawnRotation = Quaternion.Euler(eulerAngle);
+            var spawnRotation = Quaternion.Euler(eulerAngle);
             Transform parent = useParent ? transform : null;
 
             if (useObjectPool)

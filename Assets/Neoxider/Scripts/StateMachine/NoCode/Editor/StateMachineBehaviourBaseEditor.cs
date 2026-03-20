@@ -72,9 +72,9 @@ namespace Neo.StateMachine.NoCode.Editor
 
         private void DrawControlButtons()
         {
-            StateMachineBehaviourBase behaviour = (StateMachineBehaviourBase)target;
+            var behaviour = (StateMachineBehaviourBase)target;
             SerializedProperty dataProp = serializedObject.FindProperty("stateMachineData");
-            StateMachineData data = dataProp?.objectReferenceValue as StateMachineData;
+            var data = dataProp?.objectReferenceValue as StateMachineData;
 
             EditorGUILayout.LabelField("Controls", EditorStyles.boldLabel);
 

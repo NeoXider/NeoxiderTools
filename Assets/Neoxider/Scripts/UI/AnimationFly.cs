@@ -164,7 +164,7 @@ namespace Neo
 
                 Vector3 startPos = start;
                 Vector3 endPos = end;
-                Vector3 midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
+                var midPoint = Vector3.Lerp(startPos, endPos, middlePoint);
                 midPoint += new Vector3(
                     Random.Range(-arcStrength, arcStrength),
                     Random.Range(arcStrength * multY, arcStrength),

@@ -94,7 +94,7 @@ namespace Neo.Cards.Poker
         /// <returns>Индексы победителей</returns>
         public static List<int> GetWinners(IList<IEnumerable<CardData>> playerCards)
         {
-            List<PokerHandResult> hands = playerCards
+            var hands = playerCards
                 .Select(cards => cards != null ? PokerHandEvaluator.Evaluate(cards) : null)
                 .ToList();
 
@@ -111,7 +111,7 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IList<IEnumerable<CardData>> playerHoleCards)
         {
-            List<CardData> community = communityCards.ToList();
+            var community = communityCards.ToList();
             List<PokerHandResult> hands = new();
 
             foreach (IEnumerable<CardData> holeCards in playerHoleCards)
@@ -122,7 +122,7 @@ namespace Neo.Cards.Poker
                     continue;
                 }
 
-                List<CardData> allCards = community.Concat(holeCards).ToList();
+                var allCards = community.Concat(holeCards).ToList();
                 hands.Add(PokerHandEvaluator.Evaluate(allCards));
             }
 
@@ -139,7 +139,7 @@ namespace Neo.Cards.Poker
             IEnumerable<CardData> communityCards,
             IEnumerable<CardData> holeCards)
         {
-            List<CardData> allCards = communityCards.Concat(holeCards).ToList();
+            var allCards = communityCards.Concat(holeCards).ToList();
             return PokerHandEvaluator.Evaluate(allCards);
         }
 
@@ -192,12 +192,12 @@ namespace Neo.Cards.Poker
             PokerCombination targetCombination,
             IEnumerable<CardData> remainingDeck)
         {
-            List<CardData> current = currentHand.ToList();
+            var current = currentHand.ToList();
             int outs = 0;
 
             foreach (CardData card in remainingDeck)
             {
-                List<CardData> testHand = current.Concat(new[] { card }).ToList();
+                var testHand = current.Concat(new[] { card }).ToList();
 
                 if (testHand.Count >= 5)
                 {

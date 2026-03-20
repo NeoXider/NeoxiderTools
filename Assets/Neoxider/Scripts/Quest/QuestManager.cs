@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Neo;
 using Neo.Condition;
 using Neo.Tools;
 using UnityEngine;
@@ -11,7 +10,8 @@ namespace Neo.Quest
     /// <summary>
     ///     Единая точка входа для квестов: реестр состояний, принятие/завершение целей, проверка условий старта через
     ///     NeoCondition.
-    ///     Синглтон: реестр квестов, AcceptQuest/CompleteObjective, проверка StartConditions. События для UnityEvent, перегрузки с QuestConfig для кода. Подробнее: Quest/QuestManager.md.
+    ///     Синглтон: реестр квестов, AcceptQuest/CompleteObjective, проверка StartConditions. События для UnityEvent,
+    ///     перегрузки с QuestConfig для кода. Подробнее: Quest/QuestManager.md.
     /// </summary>
     [NeoDoc("Quest/QuestManager.md")]
     [CreateFromMenu("Neoxider/Quest/QuestManager")]
@@ -32,12 +32,10 @@ namespace Neo.Quest
         [Header("Events")] [Tooltip("Invoked when a quest is accepted (passes questId).")] [SerializeField]
         private UnityEvent<string> _onQuestAccepted = new();
 
-        [Tooltip("Invoked when objective progress changes (questId, objectiveIndex, currentCount).")]
-        [SerializeField]
+        [Tooltip("Invoked when objective progress changes (questId, objectiveIndex, currentCount).")] [SerializeField]
         private UnityEvent<string, int, int> _onObjectiveProgress = new();
 
-        [Tooltip("Invoked when an objective becomes completed (questId, objectiveIndex).")]
-        [SerializeField]
+        [Tooltip("Invoked when an objective becomes completed (questId, objectiveIndex).")] [SerializeField]
         private UnityEvent<string, int> _onObjectiveCompleted = new();
 
         [Tooltip("Invoked when a quest is completed (all objectives done). Passes questId.")] [SerializeField]

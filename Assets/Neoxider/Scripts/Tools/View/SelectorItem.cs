@@ -7,7 +7,8 @@ namespace Neo.Tools
     /// <summary>
     ///     Component attached to each item managed by a Selector. Stores index, knows its Selector,
     ///     and reacts to activate/deactivate commands (e.g. when Selector runs in NotifySelectorItemsOnly mode).
-    ///     Use for anomaly-style flows: subscribe to OnActivated/OnDeactivated to drive visuals or call ExcludeFromSelector when "fixed".
+    ///     Use for anomaly-style flows: subscribe to OnActivated/OnDeactivated to drive visuals or call ExcludeFromSelector
+    ///     when "fixed".
     /// </summary>
     [NeoDoc("Tools/View/SelectorItem.md")]
     [CreateFromMenu("Neoxider/Tools/View/SelectorItem")]
@@ -19,24 +20,23 @@ namespace Neo.Tools
         [SerializeField]
         private int _index;
 
-        [Tooltip("Current active state (true = selected/active).")]
-        [SerializeField]
+        [Tooltip("Current active state (true = selected/active).")] [SerializeField]
         private bool _isActive;
 
         [Tooltip("Reactive state; subscribe via Active.OnChanged.")]
         public ReactivePropertyBool Active = new();
 
-        private Selector _cachedSelector;
-
-        [Header("Events")]
-        [Tooltip("Invoked when this item becomes active (selected).")]
+        [Header("Events")] [Tooltip("Invoked when this item becomes active (selected).")]
         public UnityEvent OnActivated;
 
         [Tooltip("Invoked when this item becomes inactive (deselected).")]
         public UnityEvent OnDeactivated;
 
-        [Tooltip("Invoked when state changes; passes the inverse of the new value (true when deactivated, false when activated). Subscribe via Active.OnChanged for the direct value.")]
+        [Tooltip(
+            "Invoked when state changes; passes the inverse of the new value (true when deactivated, false when activated). Subscribe via Active.OnChanged for the direct value.")]
         public UnityEvent<bool> OnValueChangeInverse;
+
+        private Selector _cachedSelector;
 
         /// <summary>
         ///     Index of this item in the parent Selector.

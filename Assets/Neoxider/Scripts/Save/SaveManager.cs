@@ -23,7 +23,7 @@ namespace Neo.Save
             = new();
 
         /// <summary>
-        /// Gets whether the manager has completed its initial load pass.
+        ///     Gets whether the manager has completed its initial load pass.
         /// </summary>
         public static bool IsLoad { get; private set; }
 
@@ -95,7 +95,7 @@ namespace Neo.Save
         #region Registration
 
         /// <summary>
-        /// Registers a saveable component and caches all fields marked with <see cref="SaveField"/>.
+        ///     Registers a saveable component and caches all fields marked with <see cref="SaveField" />.
         /// </summary>
         /// <param name="monoObj">Component to register.</param>
         public static void Register(MonoBehaviour monoObj)
@@ -124,7 +124,7 @@ namespace Neo.Save
                 return;
             }
 
-            List<FieldInfo> fieldsToSave = monoObj.GetType()
+            var fieldsToSave = monoObj.GetType()
                 .GetFields(BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance)
                 .Where(f => f.IsDefined(typeof(SaveField), true))
                 .ToList();
@@ -136,7 +136,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Removes a component from the save registry.
+        ///     Removes a component from the save registry.
         /// </summary>
         /// <param name="monoObj">Component to unregister.</param>
         public static void Unregister(MonoBehaviour monoObj)
@@ -188,7 +188,7 @@ namespace Neo.Save
         #region Save/Load All
 
         /// <summary>
-        /// Saves all currently registered components.
+        ///     Saves all currently registered components.
         /// </summary>
         public static void Save()
         {
@@ -233,7 +233,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Loads data for the provided components, or for all registered components when no list is supplied.
+        ///     Loads data for the provided components, or for all registered components when no list is supplied.
         /// </summary>
         /// <param name="componentsToLoad">Optional subset of components to load.</param>
         public static void Load(List<MonoBehaviour> componentsToLoad = null)
@@ -253,7 +253,7 @@ namespace Neo.Save
                     return;
                 }
 
-                Dictionary<string, SavedComponent> loadedDataMap =
+                var loadedDataMap =
                     container.AllSavedComponents.ToDictionary(c => c.ComponentKey);
 
                 List<MonoBehaviour> targetComponents =
@@ -282,7 +282,7 @@ namespace Neo.Save
 
                             if (field != null && saveAttr != null && saveAttr.AutoLoadOnAwake)
                             {
-                                Type fieldType = Type.GetType(savedField.TypeName);
+                                var fieldType = Type.GetType(savedField.TypeName);
                                 if (fieldType != null && savedField.Value != null)
                                 {
                                     try
@@ -359,7 +359,7 @@ namespace Neo.Save
                 object wrapper = Activator.CreateInstance(wrapperType);
 
                 // скопируем в wrapper.Items
-                IEnumerable list = (IEnumerable)value;
+                var list = (IEnumerable)value;
                 FieldInfo itemsField = wrapperType.GetField("Items");
                 object targetList = itemsField.GetValue(wrapper); // это List<T>
 
@@ -429,7 +429,7 @@ namespace Neo.Save
         #region Single Object Save/Load
 
         /// <summary>
-        /// Saves a single component into the shared save container.
+        ///     Saves a single component into the shared save container.
         /// </summary>
         /// <param name="monoObj">Component to save.</param>
         /// <param name="isSave">Reserved compatibility flag.</param>
@@ -498,7 +498,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Loads data for a single registered component.
+        ///     Loads data for a single registered component.
         /// </summary>
         /// <param name="monoObj">Component to load.</param>
         public static void Load(MonoBehaviour monoObj)
@@ -543,7 +543,7 @@ namespace Neo.Save
                             continue;
                         }
 
-                        Type fieldType = Type.GetType(savedField.TypeName);
+                        var fieldType = Type.GetType(savedField.TypeName);
                         if (fieldType != null && savedField.Value != null)
                         {
                             try
@@ -576,7 +576,7 @@ namespace Neo.Save
                 return;
             }
 
-            List<string> invalidKeys = _saveableComponents
+            var invalidKeys = _saveableComponents
                 .Where(pair => pair.Value.instance == null)
                 .Select(pair => pair.Key)
                 .ToList();

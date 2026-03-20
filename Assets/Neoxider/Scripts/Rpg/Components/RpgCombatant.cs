@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Neo;
 using Neo.Core.Level;
 using Neo.Core.Resources;
 using Neo.Reactive;
@@ -10,7 +9,7 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Scene-local RPG combat receiver for enemies, NPCs, destructibles, or non-persistent actors.
+    ///     Scene-local RPG combat receiver for enemies, NPCs, destructibles, or non-persistent actors.
     /// </summary>
     [NeoDoc("Rpg/RpgCombatant.md")]
     [CreateFromMenu("Neoxider/RPG/RpgCombatant")]
@@ -19,31 +18,35 @@ namespace Neo.Rpg
     {
         [Header("Resources & Level (optional)")]
         [Tooltip("When set, HP/Mana and level are taken from here instead of local fields.")]
-        [SerializeField] private HealthComponent _healthProvider;
+        [SerializeField]
+        private HealthComponent _healthProvider;
+
         [SerializeField] private LevelComponent _levelProvider;
 
-        [Header("Base Stats")]
-        [SerializeField] [Min(1f)] private float _maxHp = 100f;
+        [Header("Base Stats")] [SerializeField] [Min(1f)]
+        private float _maxHp = 100f;
+
         [SerializeField] [Min(0f)] private float _currentHp = 100f;
         [SerializeField] [Min(1)] private int _level = 1;
 
-        [Header("Definitions")]
-        [SerializeField] private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
+        [Header("Definitions")] [SerializeField]
+        private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
+
         [SerializeField] private StatusEffectDefinition[] _statusDefinitions = Array.Empty<StatusEffectDefinition>();
 
-        [Header("Runtime")]
-        [SerializeField] private bool _restoreOnAwake = true;
+        [Header("Runtime")] [SerializeField] private bool _restoreOnAwake = true;
+
         [SerializeField] private float _hpRegenPerSecond;
         [SerializeField] [Min(0.05f)] private float _regenInterval = 0.2f;
 
-        [Header("Reactive State")]
-        public ReactivePropertyFloat HpState = new(100f);
+        [Header("Reactive State")] public ReactivePropertyFloat HpState = new(100f);
+
         public ReactivePropertyFloat HpPercentState = new(1f);
         public ReactivePropertyInt LevelState = new(1);
         public ReactivePropertyBool InvulnerableState = new(false);
 
-        [Header("Events")]
-        [SerializeField] private UnityEventFloat _onDamaged = new();
+        [Header("Events")] [SerializeField] private UnityEventFloat _onDamaged = new();
+
         [SerializeField] private UnityEventFloat _onHealed = new();
         [SerializeField] private UnityEvent _onDeath = new();
         [SerializeField] private RpgStringEvent _onBuffApplied = new();
@@ -56,31 +59,13 @@ namespace Neo.Rpg
         private int _invulnerabilityLocks;
         private float _regenAccumulator;
 
-        /// <inheritdoc />
-        public float CurrentHp => _healthProvider != null ? _healthProvider.GetCurrent(RpgResourceId.Hp) : _currentHp;
-
-        /// <inheritdoc />
-        public float MaxHp => _healthProvider != null ? _healthProvider.GetMax(RpgResourceId.Hp) : _maxHp;
-
-        /// <inheritdoc />
-        public int Level => _levelProvider != null ? _levelProvider.Level : _level;
-
-        /// <inheritdoc />
-        public bool IsDead => _healthProvider != null ? _healthProvider.IsDepleted(RpgResourceId.Hp) : _currentHp <= 0f;
-
-        /// <inheritdoc />
-        public bool IsInvulnerable => _invulnerabilityLocks > 0;
-
-        /// <inheritdoc />
-        public bool CanPerformActions => !IsDead && !RpgCombatMath.HasBlockingStatus(_activeStatuses, ResolveStatusDefinition);
-
         /// <summary>
-        /// Gets the active buff ids.
+        ///     Gets the active buff ids.
         /// </summary>
         public IReadOnlyList<ActiveBuffEntry> ActiveBuffs => _activeBuffs;
 
         /// <summary>
-        /// Gets the active status ids.
+        ///     Gets the active status ids.
         /// </summary>
         public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
 
@@ -138,6 +123,25 @@ namespace Neo.Rpg
         }
 
         /// <inheritdoc />
+        public float CurrentHp => _healthProvider != null ? _healthProvider.GetCurrent(RpgResourceId.Hp) : _currentHp;
+
+        /// <inheritdoc />
+        public float MaxHp => _healthProvider != null ? _healthProvider.GetMax(RpgResourceId.Hp) : _maxHp;
+
+        /// <inheritdoc />
+        public int Level => _levelProvider != null ? _levelProvider.Level : _level;
+
+        /// <inheritdoc />
+        public bool IsDead => _healthProvider != null ? _healthProvider.IsDepleted(RpgResourceId.Hp) : _currentHp <= 0f;
+
+        /// <inheritdoc />
+        public bool IsInvulnerable => _invulnerabilityLocks > 0;
+
+        /// <inheritdoc />
+        public bool CanPerformActions =>
+            !IsDead && !RpgCombatMath.HasBlockingStatus(_activeStatuses, ResolveStatusDefinition);
+
+        /// <inheritdoc />
         public float TakeDamage(float amount)
         {
             if (amount <= 0f || IsDead || IsInvulnerable)
@@ -159,7 +163,8 @@ namespace Neo.Rpg
                 return actualDamage;
             }
 
-            float adjustedAmount = amount * RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
+            float adjustedAmount =
+                amount * RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
             float actualDamageLocal = Mathf.Min(adjustedAmount, _currentHp);
             _currentHp -= actualDamageLocal;
             RefreshRuntimeState(true);
@@ -215,60 +220,6 @@ namespace Neo.Rpg
             }
 
             return actualHealLocal;
-        }
-
-        /// <summary>
-        /// Restores HP to the maximum value.
-        /// </summary>
-        [Button]
-        public void Restore()
-        {
-            if (_healthProvider != null)
-            {
-                _healthProvider.Restore(RpgResourceId.Hp);
-                RefreshRuntimeState(true);
-                return;
-            }
-
-            _currentHp = _maxHp;
-            RefreshRuntimeState(true);
-        }
-
-        /// <summary>
-        /// Sets max HP and optionally clamps current HP.
-        /// </summary>
-        public void SetMaxHp(float maxHp, bool clampCurrent = true)
-        {
-            if (_healthProvider != null)
-            {
-                _healthProvider.SetMax(RpgResourceId.Hp, Mathf.Max(1f, maxHp));
-                RefreshRuntimeState(true);
-                return;
-            }
-
-            _maxHp = Mathf.Max(1f, maxHp);
-            if (clampCurrent)
-            {
-                _currentHp = Mathf.Min(_currentHp, _maxHp);
-            }
-
-            RefreshRuntimeState(true);
-        }
-
-        /// <summary>
-        /// Sets the combatant level.
-        /// </summary>
-        public void SetLevel(int level)
-        {
-            if (_levelProvider != null)
-            {
-                _levelProvider.SetLevel(Mathf.Max(1, level));
-                RefreshRuntimeState(true);
-                return;
-            }
-
-            _level = Mathf.Max(1, level);
-            RefreshRuntimeState(true);
         }
 
         /// <inheritdoc />
@@ -339,49 +290,6 @@ namespace Neo.Rpg
             return true;
         }
 
-        /// <summary>
-        /// Removes a buff by id.
-        /// </summary>
-        public void RemoveBuff(string buffId)
-        {
-            RemoveBuff(buffId, true);
-        }
-
-        /// <summary>
-        /// Removes a status effect by id.
-        /// </summary>
-        public void RemoveStatus(string statusId)
-        {
-            for (int i = _activeStatuses.Count - 1; i >= 0; i--)
-            {
-                if (!string.Equals(_activeStatuses[i].StatusId, statusId, StringComparison.Ordinal))
-                {
-                    continue;
-                }
-
-                _activeStatuses.RemoveAt(i);
-                RefreshRuntimeState(true);
-                _onStatusExpired?.Invoke(statusId);
-                return;
-            }
-        }
-
-        /// <summary>
-        /// Returns whether the combatant has a buff.
-        /// </summary>
-        public bool HasBuff(string buffId)
-        {
-            return FindBuffEntry(buffId) != null;
-        }
-
-        /// <summary>
-        /// Returns whether the combatant has a status effect.
-        /// </summary>
-        public bool HasStatus(string statusId)
-        {
-            return FindStatusEntry(statusId) != null;
-        }
-
         /// <inheritdoc />
         [Button]
         public void AddInvulnerabilityLock()
@@ -407,7 +315,105 @@ namespace Neo.Rpg
         /// <inheritdoc />
         public float GetMovementSpeedMultiplier()
         {
-            return RpgCombatMath.GetMovementSpeedMultiplier(_activeBuffs, _activeStatuses, ResolveBuffDefinition, ResolveStatusDefinition);
+            return RpgCombatMath.GetMovementSpeedMultiplier(_activeBuffs, _activeStatuses, ResolveBuffDefinition,
+                ResolveStatusDefinition);
+        }
+
+        /// <summary>
+        ///     Restores HP to the maximum value.
+        /// </summary>
+        [Button]
+        public void Restore()
+        {
+            if (_healthProvider != null)
+            {
+                _healthProvider.Restore(RpgResourceId.Hp);
+                RefreshRuntimeState(true);
+                return;
+            }
+
+            _currentHp = _maxHp;
+            RefreshRuntimeState(true);
+        }
+
+        /// <summary>
+        ///     Sets max HP and optionally clamps current HP.
+        /// </summary>
+        public void SetMaxHp(float maxHp, bool clampCurrent = true)
+        {
+            if (_healthProvider != null)
+            {
+                _healthProvider.SetMax(RpgResourceId.Hp, Mathf.Max(1f, maxHp));
+                RefreshRuntimeState(true);
+                return;
+            }
+
+            _maxHp = Mathf.Max(1f, maxHp);
+            if (clampCurrent)
+            {
+                _currentHp = Mathf.Min(_currentHp, _maxHp);
+            }
+
+            RefreshRuntimeState(true);
+        }
+
+        /// <summary>
+        ///     Sets the combatant level.
+        /// </summary>
+        public void SetLevel(int level)
+        {
+            if (_levelProvider != null)
+            {
+                _levelProvider.SetLevel(Mathf.Max(1, level));
+                RefreshRuntimeState(true);
+                return;
+            }
+
+            _level = Mathf.Max(1, level);
+            RefreshRuntimeState(true);
+        }
+
+        /// <summary>
+        ///     Removes a buff by id.
+        /// </summary>
+        public void RemoveBuff(string buffId)
+        {
+            RemoveBuff(buffId, true);
+        }
+
+        /// <summary>
+        ///     Removes a status effect by id.
+        /// </summary>
+        public void RemoveStatus(string statusId)
+        {
+            for (int i = _activeStatuses.Count - 1; i >= 0; i--)
+            {
+                if (!string.Equals(_activeStatuses[i].StatusId, statusId, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                _activeStatuses.RemoveAt(i);
+                RefreshRuntimeState(true);
+                _onStatusExpired?.Invoke(statusId);
+                return;
+            }
+        }
+
+        /// <summary>
+        ///     Returns whether the combatant has a buff.
+        /// </summary>
+        public bool HasBuff(string buffId)
+        {
+            return FindBuffEntry(buffId) != null;
+        }
+
+        /// <summary>
+        ///     Returns whether the combatant has a status effect.
+        /// </summary>
+        public bool HasStatus(string statusId)
+        {
+            return FindStatusEntry(statusId) != null;
         }
 
         private void RemoveBuff(string buffId, bool invokeEvent)

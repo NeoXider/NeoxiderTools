@@ -43,7 +43,7 @@ namespace Neo.Editor.Quest
             int strictChains = 0;
             int totalQuestRefs = 0;
             int duplicateRefs = 0;
-            HashSet<UnityEngine.Object> uniqueQuests = new();
+            HashSet<Object> uniqueQuests = new();
 
             for (int i = 0; i < chainsProp.arraySize; i++)
             {
@@ -57,7 +57,7 @@ namespace Neo.Editor.Quest
                 for (int j = 0; j < questsProp.arraySize; j++)
                 {
                     totalQuestRefs++;
-                    UnityEngine.Object quest = questsProp.GetArrayElementAtIndex(j).objectReferenceValue;
+                    Object quest = questsProp.GetArrayElementAtIndex(j).objectReferenceValue;
                     if (quest != null && !uniqueQuests.Add(quest))
                     {
                         duplicateRefs++;
@@ -68,7 +68,7 @@ namespace Neo.Editor.Quest
             for (int i = 0; i < standaloneProp.arraySize; i++)
             {
                 totalQuestRefs++;
-                UnityEngine.Object quest = standaloneProp.GetArrayElementAtIndex(i).objectReferenceValue;
+                Object quest = standaloneProp.GetArrayElementAtIndex(i).objectReferenceValue;
                 if (quest != null && !uniqueQuests.Add(quest))
                 {
                     duplicateRefs++;
@@ -77,15 +77,17 @@ namespace Neo.Editor.Quest
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
-                new($"Chains {chainsProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new($"Strict {strictChains}", new Color(0.42f, 0.34f, 0.82f, 1f)),
-                new($"Standalone {standaloneProp.arraySize}", new Color(0.24f, 0.60f, 0.60f, 1f)),
-                new($"Quest Refs {totalQuestRefs}", new Color(0.18f, 0.62f, 0.32f, 1f))
+                new NeoxiderEditorGUI.Badge($"Chains {chainsProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Strict {strictChains}", new Color(0.42f, 0.34f, 0.82f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Standalone {standaloneProp.arraySize}",
+                    new Color(0.24f, 0.60f, 0.60f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Quest Refs {totalQuestRefs}", new Color(0.18f, 0.62f, 0.32f, 1f))
             };
 
             if (duplicateRefs > 0)
             {
-                badges.Add(new NeoxiderEditorGUI.Badge($"Duplicates {duplicateRefs}", new Color(0.78f, 0.46f, 0.18f, 1f)));
+                badges.Add(new NeoxiderEditorGUI.Badge($"Duplicates {duplicateRefs}",
+                    new Color(0.78f, 0.46f, 0.18f, 1f)));
             }
 
             NeoxiderEditorGUI.DrawSummaryCard("Quest Flow Config",
@@ -98,17 +100,22 @@ namespace Neo.Editor.Quest
         {
             if (chainsProp.arraySize == 0 && standaloneProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Конфиг пустой. Добавь хотя бы одну цепочку или один standalone quest.", MessageType.Info);
+                EditorGUILayout.HelpBox("Конфиг пустой. Добавь хотя бы одну цепочку или один standalone quest.",
+                    MessageType.Info);
             }
 
             if (HasEmptyChains(chainsProp))
             {
-                EditorGUILayout.HelpBox("Есть цепочки без квестов. Их лучше либо заполнить, либо удалить для чистоты конфигурации.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "Есть цепочки без квестов. Их лучше либо заполнить, либо удалить для чистоты конфигурации.",
+                    MessageType.Warning);
             }
 
             if (HasDuplicateQuestReferences(chainsProp, standaloneProp))
             {
-                EditorGUILayout.HelpBox("Один и тот же QuestConfig встречается несколько раз. Это допустимо не всегда и может запутывать progression flow.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "Один и тот же QuestConfig встречается несколько раз. Это допустимо не всегда и может запутывать progression flow.",
+                    MessageType.Warning);
             }
         }
 
@@ -126,16 +133,17 @@ namespace Neo.Editor.Quest
             return false;
         }
 
-        private static bool HasDuplicateQuestReferences(SerializedProperty chainsProp, SerializedProperty standaloneProp)
+        private static bool HasDuplicateQuestReferences(SerializedProperty chainsProp,
+            SerializedProperty standaloneProp)
         {
-            HashSet<UnityEngine.Object> unique = new();
+            HashSet<Object> unique = new();
 
             for (int i = 0; i < chainsProp.arraySize; i++)
             {
                 SerializedProperty questsProp = chainsProp.GetArrayElementAtIndex(i).FindPropertyRelative("_quests");
                 for (int j = 0; j < questsProp.arraySize; j++)
                 {
-                    UnityEngine.Object quest = questsProp.GetArrayElementAtIndex(j).objectReferenceValue;
+                    Object quest = questsProp.GetArrayElementAtIndex(j).objectReferenceValue;
                     if (quest != null && !unique.Add(quest))
                     {
                         return true;
@@ -145,7 +153,7 @@ namespace Neo.Editor.Quest
 
             for (int i = 0; i < standaloneProp.arraySize; i++)
             {
-                UnityEngine.Object quest = standaloneProp.GetArrayElementAtIndex(i).objectReferenceValue;
+                Object quest = standaloneProp.GetArrayElementAtIndex(i).objectReferenceValue;
                 if (quest != null && !unique.Add(quest))
                 {
                     return true;

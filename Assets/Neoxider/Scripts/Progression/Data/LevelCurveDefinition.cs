@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Defines a level entry with the XP threshold, awarded perk points, and optional rewards.
+    ///     Defines a level entry with the XP threshold, awarded perk points, and optional rewards.
     /// </summary>
     [Serializable]
     public sealed class ProgressionLevelDefinition
@@ -16,28 +16,28 @@ namespace Neo.Progression
         [SerializeField] private List<ProgressionReward> _rewards = new();
 
         /// <summary>
-        /// Gets the numeric level represented by this entry.
+        ///     Gets the numeric level represented by this entry.
         /// </summary>
         public int Level => _level;
 
         /// <summary>
-        /// Gets the cumulative XP required to reach this level.
+        ///     Gets the cumulative XP required to reach this level.
         /// </summary>
         public int RequiredXp => _requiredXp;
 
         /// <summary>
-        /// Gets the number of perk points granted when this level is reached.
+        ///     Gets the number of perk points granted when this level is reached.
         /// </summary>
         public int GrantedPerkPoints => _grantedPerkPoints;
 
         /// <summary>
-        /// Gets the rewards that are dispatched once when this level is reached.
+        ///     Gets the rewards that are dispatched once when this level is reached.
         /// </summary>
         public IReadOnlyList<ProgressionReward> Rewards => _rewards;
     }
 
     /// <summary>
-    /// Stores the XP curve for the progression system.
+    ///     Stores the XP curve for the progression system.
     /// </summary>
     [CreateAssetMenu(fileName = "Level Curve Definition", menuName = "Neoxider/Progression/Level Curve Definition")]
     public sealed class LevelCurveDefinition : ScriptableObject
@@ -45,12 +45,36 @@ namespace Neo.Progression
         [SerializeField] private List<ProgressionLevelDefinition> _levels = new();
 
         /// <summary>
-        /// Gets the ordered level entries.
+        ///     Gets the ordered level entries.
         /// </summary>
         public IReadOnlyList<ProgressionLevelDefinition> Levels => _levels;
 
+        private void OnValidate()
+        {
+            _levels.Sort((left, right) =>
+            {
+                if (ReferenceEquals(left, right))
+                {
+                    return 0;
+                }
+
+                if (left == null)
+                {
+                    return 1;
+                }
+
+                if (right == null)
+                {
+                    return -1;
+                }
+
+                int levelCompare = left.Level.CompareTo(right.Level);
+                return levelCompare != 0 ? levelCompare : left.RequiredXp.CompareTo(right.RequiredXp);
+            });
+        }
+
         /// <summary>
-        /// Evaluates the highest reachable level for the supplied XP amount.
+        ///     Evaluates the highest reachable level for the supplied XP amount.
         /// </summary>
         public int EvaluateLevel(int totalXp)
         {
@@ -75,7 +99,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Tries to get the definition for the specified level.
+        ///     Tries to get the definition for the specified level.
         /// </summary>
         public bool TryGetDefinition(int level, out ProgressionLevelDefinition definition)
         {
@@ -94,7 +118,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Returns the remaining XP needed to reach the next defined level.
+        ///     Returns the remaining XP needed to reach the next defined level.
         /// </summary>
         public int GetXpToNextLevel(int totalXp)
         {
@@ -116,7 +140,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Validates the curve definition and returns human-readable issues.
+        ///     Validates the curve definition and returns human-readable issues.
         /// </summary>
         public IReadOnlyList<string> ValidateDefinition()
         {
@@ -159,30 +183,6 @@ namespace Neo.Progression
             }
 
             return issues;
-        }
-
-        private void OnValidate()
-        {
-            _levels.Sort((left, right) =>
-            {
-                if (ReferenceEquals(left, right))
-                {
-                    return 0;
-                }
-
-                if (left == null)
-                {
-                    return 1;
-                }
-
-                if (right == null)
-                {
-                    return -1;
-                }
-
-                int levelCompare = left.Level.CompareTo(right.Level);
-                return levelCompare != 0 ? levelCompare : left.RequiredXp.CompareTo(right.RequiredXp);
-            });
         }
     }
 }

@@ -35,7 +35,7 @@ namespace Neo.Editor
             using (new EditorGUILayout.VerticalScope())
             {
                 Color accentBase = new(0.75f, 0.35f, 1f, 1f);
-                Color accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
+                var accentDark = Color.Lerp(accentBase, Color.black, 0.45f);
                 Color accent = current ? accentDark : accentBase;
 
                 current = DrawNeoSectionHeader(current, "Actions", methods.Length, accent, "d_PlayButton",
@@ -82,7 +82,7 @@ namespace Neo.Editor
                 {
                     try
                     {
-                        ButtonAttribute neoAttr = attr as ButtonAttribute;
+                        var neoAttr = attr as ButtonAttribute;
                         if (neoAttr != null)
                         {
                             return new ButtonInfo(neoAttr.ButtonName, neoAttr.Width);
@@ -204,7 +204,8 @@ namespace Neo.Editor
                 string title = ObjectNames.NicifyVariableName(buttonText);
 
                 Rect cardRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                DrawActionCardChrome(cardRect, parameters.Length > 0 ? ActionCardAccent : new Color(0.46f, 0.46f, 0.52f, 1f));
+                DrawActionCardChrome(cardRect,
+                    parameters.Length > 0 ? ActionCardAccent : new Color(0.46f, 0.46f, 0.52f, 1f));
                 using (new EditorGUILayout.VerticalScope())
                 {
                     using (new EditorGUILayout.HorizontalScope())
@@ -263,7 +264,8 @@ namespace Neo.Editor
                         if (_buttonFoldouts[foldoutKey])
                         {
                             Rect paramsRect = EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-                            DrawActionCardChrome(paramsRect, new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.65f), 2f, 2f);
+                            DrawActionCardChrome(paramsRect,
+                                new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.65f), 2f, 2f);
                             using (new EditorGUILayout.VerticalScope())
                             {
                                 NeoxiderEditorGUI.DrawCaption(
@@ -317,14 +319,18 @@ namespace Neo.Editor
                 if (Event.current.type == EventType.Repaint)
                 {
                     EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.02f));
-                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.y, 2f, rowRect.height), new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.85f));
-                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f), new Color(1f, 1f, 1f, 0.04f));
+                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.y, 2f, rowRect.height),
+                        new Color(ActionCardAccent.r, ActionCardAccent.g, ActionCardAccent.b, 0.85f));
+                    EditorGUI.DrawRect(new Rect(rowRect.x, rowRect.yMax - 1f, rowRect.width, 1f),
+                        new Color(1f, 1f, 1f, 0.04f));
                 }
 
-                Rect contentRect = new(rowRect.x + 6f, rowRect.y + 2f, rowRect.width - 12f, EditorGUIUtility.singleLineHeight);
+                Rect contentRect = new(rowRect.x + 6f, rowRect.y + 2f, rowRect.width - 12f,
+                    EditorGUIUtility.singleLineHeight);
                 Rect labelRect = new(contentRect.x, contentRect.y, 126f, contentRect.height);
                 Rect typeRect = new(contentRect.xMax - 70f, contentRect.y, 70f, contentRect.height);
-                Rect fieldRect = new(labelRect.xMax + 8f, contentRect.y, typeRect.x - labelRect.xMax - 14f, contentRect.height);
+                Rect fieldRect = new(labelRect.xMax + 8f, contentRect.y, typeRect.x - labelRect.xMax - 14f,
+                    contentRect.height);
 
                 GUIStyle titleStyle = new(EditorStyles.miniBoldLabel)
                 {
@@ -372,15 +378,18 @@ namespace Neo.Editor
                 }
                 else if (type == typeof(Vector2))
                 {
-                    result = EditorGUI.Vector2Field(fieldRect, GUIContent.none, value is Vector2 vector2Value ? vector2Value : Vector2.zero);
+                    result = EditorGUI.Vector2Field(fieldRect, GUIContent.none,
+                        value is Vector2 vector2Value ? vector2Value : Vector2.zero);
                 }
                 else if (type == typeof(Vector3))
                 {
-                    result = EditorGUI.Vector3Field(fieldRect, GUIContent.none, value is Vector3 vector3Value ? vector3Value : Vector3.zero);
+                    result = EditorGUI.Vector3Field(fieldRect, GUIContent.none,
+                        value is Vector3 vector3Value ? vector3Value : Vector3.zero);
                 }
                 else if (type == typeof(Color))
                 {
-                    result = EditorGUI.ColorField(fieldRect, GUIContent.none, value is Color colorValue ? colorValue : Color.white);
+                    result = EditorGUI.ColorField(fieldRect, GUIContent.none,
+                        value is Color colorValue ? colorValue : Color.white);
                 }
                 else
                 {
@@ -397,7 +406,8 @@ namespace Neo.Editor
             }
         }
 
-        private static void DrawActionCardChrome(Rect rect, Color accent, float topStripeHeight = 3f, float leftStripeWidth = 3f)
+        private static void DrawActionCardChrome(Rect rect, Color accent, float topStripeHeight = 3f,
+            float leftStripeWidth = 3f)
         {
             if (Event.current.type != EventType.Repaint)
             {
@@ -405,25 +415,31 @@ namespace Neo.Editor
             }
 
             EditorGUI.DrawRect(rect, ActionCardBackground);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, topStripeHeight), new Color(accent.r, accent.g, accent.b, 0.9f));
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, leftStripeWidth, rect.height), new Color(accent.r, accent.g, accent.b, 0.95f));
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, topStripeHeight),
+                new Color(accent.r, accent.g, accent.b, 0.9f));
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, leftStripeWidth, rect.height),
+                new Color(accent.r, accent.g, accent.b, 0.95f));
             EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), ActionCardLine);
         }
 
-        private static bool DrawInlineActionButton(string text, Color accent, float height, bool expandWidth, float fixedWidth = 0f)
+        private static bool DrawInlineActionButton(string text, Color accent, float height, bool expandWidth,
+            float fixedWidth = 0f)
         {
             GUIContent content = new(text);
             Rect rect = fixedWidth > 0f
-                ? GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Width(fixedWidth), GUILayout.Height(height))
-                : GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Height(height), expandWidth ? GUILayout.ExpandWidth(true) : GUILayout.MinWidth(90f));
+                ? GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Width(fixedWidth),
+                    GUILayout.Height(height))
+                : GUILayoutUtility.GetRect(content, EditorStyles.miniButton, GUILayout.Height(height),
+                    expandWidth ? GUILayout.ExpandWidth(true) : GUILayout.MinWidth(90f));
 
             bool isHover = rect.Contains(Event.current.mousePosition);
             if (Event.current.type == EventType.Repaint)
             {
-                Color bg = new Color(accent.r, accent.g, accent.b, isHover ? 0.24f : 0.16f);
+                var bg = new Color(accent.r, accent.g, accent.b, isHover ? 0.24f : 0.16f);
                 EditorGUI.DrawRect(rect, bg);
                 EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1f), new Color(1f, 1f, 1f, 0.05f));
-                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height), new Color(accent.r, accent.g, accent.b, 0.92f));
+                EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height),
+                    new Color(accent.r, accent.g, accent.b, 0.92f));
                 EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1f, rect.width, 1f), new Color(1f, 1f, 1f, 0.06f));
 
                 GUIStyle style = new(EditorStyles.miniBoldLabel)

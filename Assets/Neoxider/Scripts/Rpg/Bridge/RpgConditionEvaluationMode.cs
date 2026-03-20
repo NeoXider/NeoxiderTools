@@ -1,7 +1,7 @@
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Evaluation mode for RPG condition checks.
+    ///     Evaluation mode for RPG condition checks.
     /// </summary>
     public enum RpgConditionEvaluationMode
     {

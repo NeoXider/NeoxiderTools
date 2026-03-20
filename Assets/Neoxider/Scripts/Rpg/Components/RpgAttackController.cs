@@ -1,21 +1,20 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using Neo;
 using UnityEngine;
 
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Universal attack caster that supports direct, area, and projectile attacks.
+    ///     Universal attack caster that supports direct, area, and projectile attacks.
     /// </summary>
     [NeoDoc("Rpg/RpgAttackController.md")]
     [CreateFromMenu("Neoxider/RPG/RpgAttackController")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgAttackController))]
     public sealed class RpgAttackController : MonoBehaviour
     {
-        [Header("Setup")]
-        [SerializeField] private RpgAttackDefinition[] _attacks = Array.Empty<RpgAttackDefinition>();
+        [Header("Setup")] [SerializeField] private RpgAttackDefinition[] _attacks = Array.Empty<RpgAttackDefinition>();
+
         [SerializeField] private RpgAttackPreset[] _presets = Array.Empty<RpgAttackPreset>();
         [SerializeField] private Transform _origin;
         [SerializeField] private Transform _projectileSpawnPoint;
@@ -23,12 +22,13 @@ namespace Neo.Rpg
         [SerializeField] private RpgStatsManager _profileSource;
         [SerializeField] private RpgTargetSelector _targetSelector;
 
-        [Header("Built-in Input")]
-        [SerializeField] private bool _enableBuiltInInput = true;
+        [Header("Built-in Input")] [SerializeField]
+        private bool _enableBuiltInInput = true;
+
         [SerializeField] private RpgButtonBinding _primaryAttackBinding = RpgButtonBinding.CreatePrimaryAttackDefault();
 
-        [Header("Events")]
-        [SerializeField] private RpgAttackEvent _onAttackStarted = new();
+        [Header("Events")] [SerializeField] private RpgAttackEvent _onAttackStarted = new();
+
         [SerializeField] private RpgAttackEvent _onAttackResolved = new();
         [SerializeField] private RpgAttackEvent _onPresetUsed = new();
         [SerializeField] private RpgGameObjectEvent _onTargetResolved = new();
@@ -38,12 +38,12 @@ namespace Neo.Rpg
         private Coroutine _castCoroutine;
 
         /// <summary>
-        /// Gets whether the controller is currently casting.
+        ///     Gets whether the controller is currently casting.
         /// </summary>
         public bool IsCasting => _castCoroutine != null;
 
         /// <summary>
-        /// Gets or sets whether the built-in input listener is enabled.
+        ///     Gets or sets whether the built-in input listener is enabled.
         /// </summary>
         public bool EnableBuiltInInput
         {
@@ -60,7 +60,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Uses the first configured attack.
+        ///     Uses the first configured attack.
         /// </summary>
         [Button]
         public bool UsePrimaryAttack()
@@ -69,7 +69,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Uses the first configured preset.
+        ///     Uses the first configured preset.
         /// </summary>
         [Button]
         public bool UsePrimaryPreset()
@@ -78,7 +78,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use an attack by index.
+        ///     Tries to use an attack by index.
         /// </summary>
         public bool TryUseAttack(int attackIndex, out string failReason)
         {
@@ -94,7 +94,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use an attack by identifier.
+        ///     Tries to use an attack by identifier.
         /// </summary>
         public bool TryUseAttack(string attackId, out string failReason)
         {
@@ -109,7 +109,8 @@ namespace Neo.Rpg
             if (definition.CostAmount > 0f)
             {
                 IRpgCombatReceiver source = ResolveSourceReceiver();
-                if (source == null || !source.TrySpendResource(definition.CostResourceId, definition.CostAmount, out failReason))
+                if (source == null ||
+                    !source.TrySpendResource(definition.CostResourceId, definition.CostAmount, out failReason))
                 {
                     EmitFailure(failReason ?? "Not enough resource.");
                     return false;
@@ -120,7 +121,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use a preset by index.
+        ///     Tries to use a preset by index.
         /// </summary>
         public bool TryUsePreset(int presetIndex, out string failReason)
         {
@@ -136,7 +137,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use a preset by id.
+        ///     Tries to use a preset by id.
         /// </summary>
         public bool TryUsePreset(string presetId, out string failReason)
         {
@@ -145,7 +146,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use a preset asset directly.
+        ///     Tries to use a preset asset directly.
         /// </summary>
         public bool TryUsePreset(RpgAttackPreset preset, out string failReason)
         {
@@ -153,7 +154,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Tries to use a preset asset against a specific target.
+        ///     Tries to use a preset asset against a specific target.
         /// </summary>
         public bool TryUsePreset(RpgAttackPreset preset, GameObject forcedTarget, out string failReason)
         {
@@ -179,7 +180,8 @@ namespace Neo.Rpg
             if (definition.CostAmount > 0f)
             {
                 IRpgCombatReceiver source = ResolveSourceReceiver();
-                if (source == null || !source.TrySpendResource(definition.CostResourceId, definition.CostAmount, out failReason))
+                if (source == null ||
+                    !source.TrySpendResource(definition.CostResourceId, definition.CostAmount, out failReason))
                 {
                     EmitFailure(failReason ?? "Not enough resource.");
                     return false;
@@ -208,7 +210,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Returns whether an attack is currently available.
+        ///     Returns whether an attack is currently available.
         /// </summary>
         public bool CanUseAttack(string attackId, out string failReason)
         {
@@ -216,7 +218,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Returns whether a preset's underlying attack is currently available.
+        ///     Returns whether a preset's underlying attack is currently available.
         /// </summary>
         public bool CanUsePreset(RpgAttackPreset preset, out string failReason)
         {
@@ -230,7 +232,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Returns remaining cooldown for an attack.
+        ///     Returns remaining cooldown for an attack.
         /// </summary>
         public float GetRemainingCooldown(string attackId)
         {
@@ -242,14 +244,16 @@ namespace Neo.Rpg
             return Mathf.Max(0f, readyAt - Time.time);
         }
 
-        private IEnumerator CastAttackAfterDelay(RpgAttackDefinition definition, GameObject forcedTarget, string eventId, bool aimAtTarget)
+        private IEnumerator CastAttackAfterDelay(RpgAttackDefinition definition, GameObject forcedTarget,
+            string eventId, bool aimAtTarget)
         {
             yield return new WaitForSeconds(definition.CastDelay);
             ExecuteAttack(definition, forcedTarget, aimAtTarget, eventId);
             _castCoroutine = null;
         }
 
-        private void ExecuteAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget, string eventId)
+        private void ExecuteAttack(RpgAttackDefinition definition, GameObject forcedTarget, bool aimAtTarget,
+            string eventId)
         {
             switch (definition.DeliveryType)
             {
@@ -277,10 +281,12 @@ namespace Neo.Rpg
             {
                 if (definition.Radius > 0f)
                 {
-                    RaycastHit[] hitBuffer = Physics.SphereCastAll(origin, definition.Radius, direction, definition.Range, definition.TargetLayers);
+                    RaycastHit[] hitBuffer = Physics.SphereCastAll(origin, definition.Radius, direction,
+                        definition.Range, definition.TargetLayers);
                     hits += ApplyHits3D(hitBuffer, definition, definition.MaxTargets);
                 }
-                else if (Physics.Raycast(origin, direction, out RaycastHit hit, definition.Range, definition.TargetLayers))
+                else if (Physics.Raycast(origin, direction, out RaycastHit hit, definition.Range,
+                             definition.TargetLayers))
                 {
                     hits += ApplyHitToGameObject(hit.collider.gameObject, definition) ? 1 : 0;
                 }
@@ -294,7 +300,8 @@ namespace Neo.Rpg
             if (definition.Use2D)
             {
                 RaycastHit2D[] hitBuffer = definition.Radius > 0f
-                    ? Physics2D.CircleCastAll(origin, definition.Radius, direction, definition.Range, definition.TargetLayers)
+                    ? Physics2D.CircleCastAll(origin, definition.Radius, direction, definition.Range,
+                        definition.TargetLayers)
                     : Physics2D.RaycastAll(origin, direction, definition.Range, definition.TargetLayers);
                 ApplyHits2D(hitBuffer, definition, definition.MaxTargets - hits);
             }
@@ -304,12 +311,14 @@ namespace Neo.Rpg
         {
             Vector3 center = forcedTarget != null && aimAtTarget
                 ? forcedTarget.transform.position
-                : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) * definition.Range;
+                : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) *
+                definition.Range;
             int hits = 0;
 
             if (definition.Use3D)
             {
-                Collider[] colliders = Physics.OverlapSphere(center, Mathf.Max(0.01f, definition.Radius), definition.TargetLayers);
+                Collider[] colliders = Physics.OverlapSphere(center, Mathf.Max(0.01f, definition.Radius),
+                    definition.TargetLayers);
                 hits += ApplyColliders3D(colliders, definition, definition.MaxTargets);
             }
 
@@ -320,7 +329,8 @@ namespace Neo.Rpg
 
             if (definition.Use2D)
             {
-                Collider2D[] colliders2D = Physics2D.OverlapCircleAll(center, Mathf.Max(0.01f, definition.Radius), definition.TargetLayers);
+                Collider2D[] colliders2D = Physics2D.OverlapCircleAll(center, Mathf.Max(0.01f, definition.Radius),
+                    definition.TargetLayers);
                 ApplyColliders2D(colliders2D, definition, definition.MaxTargets - hits);
             }
         }
@@ -333,9 +343,11 @@ namespace Neo.Rpg
                 return;
             }
 
-            Transform spawn = _projectileSpawnPoint != null ? _projectileSpawnPoint : (_origin != null ? _origin : transform);
+            Transform spawn = _projectileSpawnPoint != null ? _projectileSpawnPoint :
+                _origin != null ? _origin : transform;
             Vector3 direction = GetAttackDirection(spawn.position, forcedTarget, aimAtTarget);
-            RpgProjectile projectile = Instantiate(definition.ProjectilePrefab, spawn.position, Quaternion.LookRotation(direction));
+            RpgProjectile projectile = Instantiate(definition.ProjectilePrefab, spawn.position,
+                Quaternion.LookRotation(direction));
             projectile.Initialize(this, definition, ResolveSourceReceiver(), direction);
         }
 
@@ -602,7 +614,8 @@ namespace Neo.Rpg
             _onAttackFailed?.Invoke(string.IsNullOrWhiteSpace(message) ? "Attack failed." : message);
         }
 
-        private bool BeginAttack(RpgAttackDefinition definition, GameObject forcedTarget, string eventId, bool aimAtTarget)
+        private bool BeginAttack(RpgAttackDefinition definition, GameObject forcedTarget, string eventId,
+            bool aimAtTarget)
         {
             _cooldowns[definition.Id] = Time.time + definition.Cooldown;
             _onAttackStarted?.Invoke(eventId);
@@ -628,12 +641,14 @@ namespace Neo.Rpg
                 return true;
             }
 
-            if (preset.UseSelectorComponentWhenAvailable && _targetSelector != null && _targetSelector.TrySelectTarget(out target))
+            if (preset.UseSelectorComponentWhenAvailable && _targetSelector != null &&
+                _targetSelector.TrySelectTarget(out target))
             {
                 return true;
             }
 
-            target = RpgTargetingUtility.SelectTarget(_origin != null ? _origin : transform, preset.TargetQuery, ResolveReceiverFromGameObject);
+            target = RpgTargetingUtility.SelectTarget(_origin != null ? _origin : transform, preset.TargetQuery,
+                ResolveReceiverFromGameObject);
             if (target != null)
             {
                 return true;

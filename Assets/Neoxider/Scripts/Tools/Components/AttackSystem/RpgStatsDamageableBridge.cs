@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    /// Bridge that implements IDamageable and IHealable by forwarding to an RPG combat receiver.
-    /// Use on actors that should receive legacy IDamageable hits through the new RPG combat layer.
+    ///     Bridge that implements IDamageable and IHealable by forwarding to an RPG combat receiver.
+    ///     Use on actors that should receive legacy IDamageable hits through the new RPG combat layer.
     /// </summary>
     [NeoDoc("Tools/Components/AttackSystem/RpgStatsDamageableBridge.md")]
     [CreateFromMenu("Neoxider/RPG/RpgStats Damageable Bridge")]
@@ -18,7 +18,7 @@ namespace Neo.Tools
         [SerializeField] [Min(0f)] private float _healMultiplier = 1f;
 
         /// <summary>
-        /// Gets or sets the damage multiplier applied before forwarding to RpgStatsManager.
+        ///     Gets or sets the damage multiplier applied before forwarding to RpgStatsManager.
         /// </summary>
         public float DamageMultiplier
         {
@@ -27,7 +27,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Gets or sets the heal multiplier applied before forwarding to RpgStatsManager.
+        ///     Gets or sets the heal multiplier applied before forwarding to RpgStatsManager.
         /// </summary>
         public float HealMultiplier
         {

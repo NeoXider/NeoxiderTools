@@ -100,7 +100,7 @@ namespace Neo.Tools
         {
             if (target == null && findTargetByTag && !string.IsNullOrEmpty(targetTag))
             {
-                GameObject go = GameObject.FindWithTag(targetTag);
+                var go = GameObject.FindWithTag(targetTag);
                 if (go != null)
                 {
                     target = go.transform;
@@ -327,7 +327,7 @@ namespace Neo.Tools
                 angle = Mathf.Clamp(angle, rotationLimitZ.min, rotationLimitZ.max);
             }
 
-            Quaternion targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
+            var targetRotation = Quaternion.AngleAxis(angle, Vector3.forward);
             transform.rotation = SmoothRotation(transform.rotation, targetRotation);
         }
 

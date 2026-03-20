@@ -61,7 +61,7 @@ namespace Neo.Editor
             // 1) Preferred: PackageManager can resolve package for the assembly (when installed via UPM)
             try
             {
-                PackageInfo pkg =
+                var pkg =
                     PackageInfo.FindForAssembly(assembly);
 
                 if (pkg != null)

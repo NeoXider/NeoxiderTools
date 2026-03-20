@@ -53,7 +53,7 @@ namespace Neo.GridSystem
             get
             {
                 Vector3Int size = Config != null ? Config.Size : Vector3Int.zero;
-                FieldCell[,] arr = new FieldCell[size.x, size.y];
+                var arr = new FieldCell[size.x, size.y];
                 if (Cells == null)
                 {
                     return arr;

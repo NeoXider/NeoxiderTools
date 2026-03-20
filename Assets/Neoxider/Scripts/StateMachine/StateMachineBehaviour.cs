@@ -272,7 +272,7 @@ namespace Neo.StateMachine
                 if (method == null)
                 {
                     // Используем рефлексию для создания экземпляра
-                    TState state = Activator.CreateInstance(stateType) as TState;
+                    var state = Activator.CreateInstance(stateType) as TState;
                     if (state != null)
                     {
                         StateMachine.ChangeState(state);

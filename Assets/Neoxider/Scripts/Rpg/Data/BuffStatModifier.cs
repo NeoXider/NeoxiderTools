@@ -1,11 +1,12 @@
+using System;
 using UnityEngine;
 
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Defines a temporary buff with duration and stat modifiers.
+    ///     Defines a temporary buff with duration and stat modifiers.
     /// </summary>
-    [System.Serializable]
+    [Serializable]
     public sealed class BuffStatModifier
     {
         [SerializeField] private BuffStatType _statType = BuffStatType.DamagePercent;

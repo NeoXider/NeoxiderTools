@@ -344,7 +344,7 @@ namespace Neo.Tools
                 ? 0f
                 : Random.Range(Mathf.Min(_rotationZ.x, _rotationZ.y), Mathf.Max(_rotationZ.x, _rotationZ.y));
 
-            Quaternion offset = Quaternion.Euler(rx, ry, rz);
+            var offset = Quaternion.Euler(rx, ry, rz);
             return _useLocalRotation ? baseRot * offset : offset;
         }
 

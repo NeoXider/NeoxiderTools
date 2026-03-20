@@ -1,7 +1,7 @@
 namespace Neo.Progression
 {
     /// <summary>
-    /// Action type for progression NoCode bridge.
+    ///     Action type for progression NoCode bridge.
     /// </summary>
     public enum ProgressionNoCodeActionType
     {

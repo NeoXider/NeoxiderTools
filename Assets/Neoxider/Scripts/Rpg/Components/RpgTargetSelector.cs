@@ -1,4 +1,3 @@
-using Neo;
 using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
@@ -6,59 +5,55 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Reusable runtime target selector for AI, spells, and skill controllers.
+    ///     Reusable runtime target selector for AI, spells, and skill controllers.
     /// </summary>
     [NeoDoc("Rpg/RpgTargetSelector.md")]
     [CreateFromMenu("Neoxider/RPG/RpgTargetSelector")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgTargetSelector))]
     public sealed class RpgTargetSelector : MonoBehaviour
     {
-        [Header("Setup")]
-        [SerializeField] private Transform _origin;
+        [Header("Setup")] [SerializeField] private Transform _origin;
+
         [SerializeField] private RpgCombatant _combatantSource;
         [SerializeField] private RpgStatsManager _profileSource;
 
-        [Header("Targeting")]
-        [SerializeField] private RpgTargetQuery _query = new();
+        [Header("Targeting")] [SerializeField] private RpgTargetQuery _query = new();
 
-        [Header("Reactive State")]
-        public ReactivePropertyBool HasTargetState = new(false);
+        [Header("Reactive State")] public ReactivePropertyBool HasTargetState = new(false);
 
-        [Header("Events")]
-        [SerializeField] private RpgGameObjectEvent _onTargetSelected = new();
+        [Header("Events")] [SerializeField] private RpgGameObjectEvent _onTargetSelected = new();
+
         [SerializeField] private UnityEvent _onTargetCleared = new();
 
-        private GameObject _currentTarget;
-
         /// <summary>
-        /// Gets the current selected target.
+        ///     Gets the current selected target.
         /// </summary>
-        public GameObject CurrentTarget => _currentTarget;
+        public GameObject CurrentTarget { get; private set; }
 
         /// <summary>
-        /// Gets whether a target is currently selected.
+        ///     Gets whether a target is currently selected.
         /// </summary>
-        public bool HasTarget => _currentTarget != null;
+        public bool HasTarget => CurrentTarget != null;
 
         /// <summary>
-        /// Selects a target using the configured query.
+        ///     Selects a target using the configured query.
         /// </summary>
         [Button]
         public GameObject SelectTarget()
         {
             Transform source = _origin != null ? _origin : transform;
-            _currentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiverFromGameObject);
-            HasTargetState.Value = _currentTarget != null;
-            if (_currentTarget != null)
+            CurrentTarget = RpgTargetingUtility.SelectTarget(source, _query, ResolveReceiverFromGameObject);
+            HasTargetState.Value = CurrentTarget != null;
+            if (CurrentTarget != null)
             {
-                _onTargetSelected?.Invoke(_currentTarget);
+                _onTargetSelected?.Invoke(CurrentTarget);
             }
 
-            return _currentTarget;
+            return CurrentTarget;
         }
 
         /// <summary>
-        /// Tries to select a target and returns whether one was found.
+        ///     Tries to select a target and returns whether one was found.
         /// </summary>
         public bool TrySelectTarget(out GameObject target)
         {
@@ -67,12 +62,12 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Clears the current target reference.
+        ///     Clears the current target reference.
         /// </summary>
         [Button]
         public void ClearTarget()
         {
-            _currentTarget = null;
+            CurrentTarget = null;
             HasTargetState.Value = false;
             _onTargetCleared?.Invoke();
         }

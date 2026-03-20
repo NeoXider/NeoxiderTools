@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -10,14 +11,11 @@ namespace Neo.Audio
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AudioControl))]
     public class AudioControl : MonoBehaviour
     {
-        [System.Serializable]
-        public class BoolEvent : UnityEvent<bool>
+        /// <summary>Backend used for built-in channels (Master/Music/Efx).</summary>
+        public enum BackendType
         {
-        }
-
-        [System.Serializable]
-        public class FloatEvent : UnityEvent<float>
-        {
+            AudioSourceAndMixer,
+            MixerOnly
         }
 
         /// <summary>Which channel to control: Master, Music, or Efx.</summary>
@@ -37,13 +35,6 @@ namespace Neo.Audio
             Slider
         }
 
-        /// <summary>Backend used for built-in channels (Master/Music/Efx).</summary>
-        public enum BackendType
-        {
-            AudioSourceAndMixer,
-            MixerOnly
-        }
-
         [Header("Settings")] [Tooltip("Control type: Master, Music, Efx or Custom.")] [SerializeField]
         private ControlType controlType;
 
@@ -54,29 +45,24 @@ namespace Neo.Audio
         [SerializeField]
         private BackendType backendType = BackendType.MixerOnly;
 
-        [Tooltip("For Custom type: called by Set(bool) and Toggle UI.")]
-        [SerializeField]
+        [Tooltip("For Custom type: called by Set(bool) and Toggle UI.")] [SerializeField]
         private BoolEvent onSetActiveCustom = new();
 
-        [Tooltip("For Custom type: called by Set(float) and Slider UI. Value is normalized (0..1).")]
-        [SerializeField]
+        [Tooltip("For Custom type: called by Set(float) and Slider UI. Value is normalized (0..1).")] [SerializeField]
         private FloatEvent onSetPercentCustom = new();
 
-        [Tooltip("Cached active state for Custom type UI synchronization.")]
-        [SerializeField]
+        [Tooltip("Cached active state for Custom type UI synchronization.")] [SerializeField]
         private bool customActive = true;
 
         [Tooltip("Cached normalized percent (0..1) for Custom type UI synchronization.")]
-        [Range(0f, 1f)] [SerializeField]
+        [Range(0f, 1f)]
+        [SerializeField]
         private float customPercent = 1f;
 
-        [Tooltip("Force Slider range to normalized percent (0..1).")]
-        [SerializeField]
+        [Tooltip("Force Slider range to normalized percent (0..1).")] [SerializeField]
         private bool forceSliderNormalizedRange = true;
 
-        [SerializeField]
-        [Range(0f, 1f)]
-        private float unmutePercent = 1f;
+        [SerializeField] [Range(0f, 1f)] private float unmutePercent = 1f;
 
         private AMSettings settings;
         private Slider slider;
@@ -393,6 +379,16 @@ namespace Neo.Audio
                 default:
                     return 0f;
             }
+        }
+
+        [Serializable]
+        public class BoolEvent : UnityEvent<bool>
+        {
+        }
+
+        [Serializable]
+        public class FloatEvent : UnityEvent<float>
+        {
         }
     }
 }

@@ -42,8 +42,8 @@ namespace Neo.Extensions
                 return;
             }
 
-            List<Transform> elementList = elements.ToList();
-            List<Vector3> pointList = points.ToList();
+            var elementList = elements.ToList();
+            var pointList = points.ToList();
 
             int count = Mathf.Min(elementList.Count, pointList.Count);
 

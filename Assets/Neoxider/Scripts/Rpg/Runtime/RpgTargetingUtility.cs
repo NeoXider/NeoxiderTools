@@ -1,17 +1,21 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Neo.Rpg
 {
     internal static class RpgTargetingUtility
     {
-        internal static GameObject SelectTarget(Transform sourceTransform, RpgTargetQuery query, Func<GameObject, IRpgCombatReceiver> resolveReceiver)
+        internal static GameObject SelectTarget(Transform sourceTransform, RpgTargetQuery query,
+            Func<GameObject, IRpgCombatReceiver> resolveReceiver)
         {
             if (sourceTransform == null || query == null || resolveReceiver == null)
+            {
                 return null;
+            }
 
-            List<GameObject> candidates = new List<GameObject>();
+            var candidates = new List<GameObject>();
             Vector3 position = sourceTransform.position;
             float range = query.Range;
 
@@ -21,7 +25,9 @@ namespace Neo.Rpg
                 for (int i = 0; i < colliders.Length; i++)
                 {
                     if (colliders[i] != null)
+                    {
                         AddCandidate(candidates, colliders[i].gameObject, sourceTransform, query, resolveReceiver);
+                    }
                 }
             }
 
@@ -31,15 +37,21 @@ namespace Neo.Rpg
                 for (int i = 0; i < colliders2D.Length; i++)
                 {
                     if (colliders2D[i] != null)
+                    {
                         AddCandidate(candidates, colliders2D[i].gameObject, sourceTransform, query, resolveReceiver);
+                    }
                 }
             }
 
             if (candidates.Count == 0)
+            {
                 return null;
+            }
 
             if (query.SelectionMode == RpgTargetSelectionMode.Random)
-                return candidates[UnityEngine.Random.Range(0, candidates.Count)];
+            {
+                return candidates[Random.Range(0, candidates.Count)];
+            }
 
             GameObject best = candidates[0];
             float bestScore = Score(candidates[0], sourceTransform.position, query.SelectionMode, resolveReceiver);
@@ -52,6 +64,7 @@ namespace Neo.Rpg
                     best = candidates[i];
                 }
             }
+
             return best;
         }
 
@@ -62,16 +75,31 @@ namespace Neo.Rpg
             Func<GameObject, IRpgCombatReceiver> resolveReceiver)
         {
             if (candidate == null || candidates.Contains(candidate))
+            {
                 return;
+            }
+
             if (query.IgnoreSelf && candidate == sourceTransform.gameObject)
+            {
                 return;
+            }
+
             IRpgCombatReceiver receiver = resolveReceiver(candidate);
             if (receiver == null)
+            {
                 return;
+            }
+
             if (!query.IncludeDeadTargets && receiver.IsDead)
+            {
                 return;
+            }
+
             if (query.RequireCanPerformActions && !receiver.CanPerformActions)
+            {
                 return;
+            }
+
             candidates.Add(candidate);
         }
 
@@ -82,7 +110,10 @@ namespace Neo.Rpg
         {
             IRpgCombatReceiver receiver = resolveReceiver(candidate);
             if (receiver == null)
+            {
                 return float.MinValue;
+            }
+
             float distance = Vector3.Distance(sourcePosition, candidate.transform.position);
             return selectionMode switch
             {
@@ -90,7 +121,9 @@ namespace Neo.Rpg
                 RpgTargetSelectionMode.Farthest => distance,
                 RpgTargetSelectionMode.LowestCurrentHp => -receiver.CurrentHp,
                 RpgTargetSelectionMode.HighestCurrentHp => receiver.CurrentHp,
-                RpgTargetSelectionMode.LowestHpPercent => -(receiver.MaxHp > 0f ? receiver.CurrentHp / receiver.MaxHp : 0f),
+                RpgTargetSelectionMode.LowestHpPercent => -(receiver.MaxHp > 0f
+                    ? receiver.CurrentHp / receiver.MaxHp
+                    : 0f),
                 RpgTargetSelectionMode.HighestLevel => receiver.Level,
                 _ => -distance
             };

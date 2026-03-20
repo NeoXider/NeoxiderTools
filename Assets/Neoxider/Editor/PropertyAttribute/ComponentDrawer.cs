@@ -140,7 +140,7 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignAllComponentsFromScene(FieldInfo field, MonoBehaviour targetObject)
         {
-            FindAllInSceneAttribute attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
+            var attribute = field.GetCustomAttributes(typeof(FindAllInSceneAttribute), false)
                 .FirstOrDefault() as FindAllInSceneAttribute;
             if (attribute == null)
             {
@@ -168,7 +168,7 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignComponentFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
-            GetComponentAttribute attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
+            var attribute = field.GetCustomAttributes(typeof(GetComponentAttribute), false)
                 .FirstOrDefault() as GetComponentAttribute;
             if (attribute == null)
             {
@@ -191,7 +191,7 @@ namespace Neo.Editor
         /// </summary>
         private static void AssignComponentsFromGameObject(FieldInfo field, MonoBehaviour targetObject)
         {
-            GetComponentsAttribute attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
+            var attribute = field.GetCustomAttributes(typeof(GetComponentsAttribute), false)
                 .FirstOrDefault() as GetComponentsAttribute;
             if (attribute == null)
             {
@@ -236,7 +236,7 @@ namespace Neo.Editor
             }
             else if (typeof(IList).IsAssignableFrom(field.FieldType))
             {
-                List<object> list = value.Cast<object>().ToList();
+                var list = value.Cast<object>().ToList();
                 field.SetValue(targetObject, list);
             }
             else if (value.Length > 0)

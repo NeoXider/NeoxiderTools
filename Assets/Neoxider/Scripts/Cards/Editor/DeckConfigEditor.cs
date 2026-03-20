@@ -98,8 +98,8 @@ namespace Neo.Cards.Editor
             EditorGUILayout.PropertyField(_gameDeckType,
                 new GUIContent("Тип для игры", "Сколько карт использовать в игре"));
 
-            DeckType spriteType = (DeckType)_deckType.enumValueIndex;
-            DeckType gameType = (DeckType)_gameDeckType.enumValueIndex;
+            var spriteType = (DeckType)_deckType.enumValueIndex;
+            var gameType = (DeckType)_gameDeckType.enumValueIndex;
 
             int gameCardCount = GetGameCardCount(gameType);
             string gameInfo = gameType == DeckType.Standard54
@@ -148,7 +148,7 @@ namespace Neo.Cards.Editor
 
             if (_backSprite.objectReferenceValue != null)
             {
-                Sprite sprite = (Sprite)_backSprite.objectReferenceValue;
+                var sprite = (Sprite)_backSprite.objectReferenceValue;
                 Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize, GUILayout.Width(PreviewSize));
                 DrawSpritePreview(rect, sprite);
             }
@@ -245,7 +245,7 @@ namespace Neo.Cards.Editor
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            DeckConfig config = (DeckConfig)target;
+            var config = (DeckConfig)target;
             bool isValid = config.Validate(out List<string> errors, out List<string> warnings);
 
             if (isValid && warnings.Count == 0)
@@ -307,7 +307,7 @@ namespace Neo.Cards.Editor
 
                 if (element.objectReferenceValue != null)
                 {
-                    Sprite sprite = (Sprite)element.objectReferenceValue;
+                    var sprite = (Sprite)element.objectReferenceValue;
                     Rect rect = GUILayoutUtility.GetRect(PreviewSize, PreviewSize,
                         GUILayout.Width(PreviewSize), GUILayout.Height(PreviewSize));
                     DrawSpritePreview(rect, sprite);
@@ -354,7 +354,7 @@ namespace Neo.Cards.Editor
 
         private int GetExpectedCardCount()
         {
-            DeckType type = (DeckType)_deckType.enumValueIndex;
+            var type = (DeckType)_deckType.enumValueIndex;
             return type switch
             {
                 DeckType.Standard36 => 9,

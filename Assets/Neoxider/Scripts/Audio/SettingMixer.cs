@@ -17,23 +17,21 @@ namespace Neo.Audio
             Custom
         }
 
-        [Header("Settings")]
-        [Tooltip("Preset exposed parameter type or Custom.")]
+        public const float MaxDb = 20f;
+        public const float MinDb = -80f;
+
+        private const float MuteThreshold = 0.0001f;
+
+        [Header("Settings")] [Tooltip("Preset exposed parameter type or Custom.")]
         public MixerParameterType parameterType = MixerParameterType.Master;
 
-        [Tooltip("Used only when parameterType = Custom.")]
-        [FormerlySerializedAs("parameterName")]
+        [Tooltip("Used only when parameterType = Custom.")] [FormerlySerializedAs("parameterName")]
         public string customParameterName = "MasterVolume";
 
         [Header("References")] [Tooltip("AudioMixer to control.")]
         public AudioMixer audioMixer;
 
-        public const float MaxDb = 20f;
-        public const float MinDb = -80f;
-
-        private const float MuteThreshold = 0.0001f;
-        [SerializeField]
-        private bool migratedLegacyParameter;
+        [SerializeField] private bool migratedLegacyParameter;
 
         private string ParameterName => GetParameterName();
 

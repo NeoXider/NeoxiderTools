@@ -53,11 +53,11 @@ namespace Neo.Tools
         private float _coyoteTimer;
         private float _jumpBufferTimer;
         private bool _jumpPressedThisFrame;
+        private bool _legacyInputUnavailableWarningShown;
 
         private float _moveInputX;
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
-        private bool _legacyInputUnavailableWarningShown;
         private bool _wasGrounded;
         private bool _wasMoving;
 

@@ -1,4 +1,3 @@
-using Neo;
 using Neo.Condition;
 using Neo.Reactive;
 using UnityEngine;
@@ -7,7 +6,7 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Condition adapter that exposes RPG checks to other no-code systems.
+    ///     Condition adapter that exposes RPG checks to other no-code systems.
     /// </summary>
     [NeoDoc("Rpg/RpgConditionAdapter.md")]
     [CreateFromMenu("Neoxider/RPG/Rpg Condition Adapter")]
@@ -26,18 +25,18 @@ namespace Neo.Rpg
         [SerializeField] private string _attackId = string.Empty;
         [SerializeField] private bool _invert;
 
-        [Header("Events")]
-        [SerializeField] private UnityEventBool _onEvaluated = new();
+        [Header("Events")] [SerializeField] private UnityEventBool _onEvaluated = new();
+
         [SerializeField] private UnityEvent _onTrue = new();
         [SerializeField] private UnityEvent _onFalse = new();
 
         /// <summary>
-        /// Gets the last evaluated result.
+        ///     Gets the last evaluated result.
         /// </summary>
         public bool LastResult { get; private set; }
 
         /// <summary>
-        /// Evaluates the configured RPG condition.
+        ///     Evaluates the configured RPG condition.
         /// </summary>
         public bool Evaluate(GameObject context)
         {
@@ -51,7 +50,8 @@ namespace Neo.Rpg
             bool result = _mode switch
             {
                 RpgConditionEvaluationMode.HpAtLeast => receiver.CurrentHp >= _threshold,
-                RpgConditionEvaluationMode.HpPercentAtLeast => receiver.MaxHp > 0f && (receiver.CurrentHp / receiver.MaxHp) >= (_threshold / 100f),
+                RpgConditionEvaluationMode.HpPercentAtLeast => receiver.MaxHp > 0f &&
+                                                               receiver.CurrentHp / receiver.MaxHp >= _threshold / 100f,
                 RpgConditionEvaluationMode.LevelAtLeast => receiver.Level >= _levelThreshold,
                 RpgConditionEvaluationMode.IsDead => receiver.IsDead,
                 RpgConditionEvaluationMode.HasBuff => HasBuff(receiver, _buffId),
@@ -59,7 +59,8 @@ namespace Neo.Rpg
                 RpgConditionEvaluationMode.CanPerformActions => receiver.CanPerformActions,
                 RpgConditionEvaluationMode.IsInvulnerable => receiver.IsInvulnerable,
                 RpgConditionEvaluationMode.CanEvade => _evadeController != null && _evadeController.CanEvade,
-                RpgConditionEvaluationMode.AttackReady => _attackController != null && _attackController.CanUseAttack(_attackId, out _),
+                RpgConditionEvaluationMode.AttackReady => _attackController != null &&
+                                                          _attackController.CanUseAttack(_attackId, out _),
                 _ => false
             };
 
@@ -78,7 +79,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Evaluates the configured RPG condition using this component as the context.
+        ///     Evaluates the configured RPG condition using this component as the context.
         /// </summary>
         [Button]
         public bool EvaluateCurrent()

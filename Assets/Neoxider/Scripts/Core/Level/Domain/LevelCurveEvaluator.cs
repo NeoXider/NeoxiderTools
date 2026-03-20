@@ -66,7 +66,8 @@ namespace Neo.Core.Level
             IReadOnlyList<ILevelCurveEntry> customEntries = null,
             int maxLevel = 0)
         {
-            int currentLevel = EvaluateLevel(totalXp, curveType, xpPerLevel, quadraticBase, expBase, expFactor, customEntries, 0);
+            int currentLevel = EvaluateLevel(totalXp, curveType, xpPerLevel, quadraticBase, expBase, expFactor,
+                customEntries);
             if (maxLevel > 0 && currentLevel >= maxLevel)
             {
                 return 0;
@@ -240,7 +241,7 @@ namespace Neo.Core.Level
         {
             int currentLevel = EvaluateLevelByFormula(
                 totalXp, formulaType, xpPerLevel, constantOffset,
-                quadraticBase, expBase, expFactor, powerBase, powerExponent, 0);
+                quadraticBase, expBase, expFactor, powerBase, powerExponent);
 
             if (maxLevel > 0 && currentLevel >= maxLevel)
             {

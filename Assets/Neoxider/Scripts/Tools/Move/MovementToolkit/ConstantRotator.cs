@@ -149,7 +149,7 @@ namespace Neo.Tools
             }
 
             float deltaDeg = degreesPerSecond * Fdt();
-            Quaternion deltaRot = Quaternion.AngleAxis(deltaDeg, axis);
+            var deltaRot = Quaternion.AngleAxis(deltaDeg, axis);
             _rb3D.MoveRotation(deltaRot * _rb3D.rotation);
         }
 

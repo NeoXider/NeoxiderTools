@@ -1,43 +1,43 @@
 {
-  "name": "com.neoxider.tools",
-  "displayName": "Neoxider Tools",
-  "version": "7.7.5",
-  "unity": "2022.1",
-  "unityRelease": "0f1",
-  "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
-  "author": {
-    "name": "Neoxider"
-  },
-  "dependencies": {
-    "com.unity.textmeshpro": "3.0.6",
-    "com.unity.ai.navigation": "1.1.7"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/NeoXider/NeoxiderTools.git"
-  },
-  "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
-  "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
-  "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
-  "samples": [
-    {
-      "displayName": "Demo Scenes",
-      "description": "Sample scenes and integration examples for Condition, Tools, GridSystem, Shop, and other modules.",
-      "path": "Samples~/Demo"
+    "name": "com.neoxider.tools",
+    "displayName": "Neoxider Tools",
+    "version": "7.7.5",
+    "unity": "2022.1",
+    "unityRelease": "0f1",
+    "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
+    "author": {
+        "name": "Neoxider"
     },
-    {
-      "displayName": "NeoxiderPages",
-      "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
-      "path": "Samples~/NeoxiderPages"
-    }
-  ],
-  "keywords": [
-    "neoxider",
-    "tools",
-    "starter",
-    "extensions",
-    "no-code",
-    "state-machine"
-  ],
-  "license": "Custom"
+    "dependencies": {
+        "com.unity.textmeshpro": "3.0.6",
+        "com.unity.ai.navigation": "1.1.7"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/NeoXider/NeoxiderTools.git"
+    },
+    "documentationUrl": "https://github.com/NeoXider/NeoxiderTools/tree/main/Assets/Neoxider/Docs",
+    "changelogUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/CHANGELOG.md",
+    "licensesUrl": "https://github.com/NeoXider/NeoxiderTools/blob/main/Assets/Neoxider/LICENSE.md",
+    "samples": [
+        {
+            "displayName": "Demo Scenes",
+            "description": "Sample scenes and integration examples for Condition, Tools, GridSystem, Shop, and other modules.",
+            "path": "Samples~/Demo"
+        },
+        {
+            "displayName": "NeoxiderPages",
+            "description": "Optional page-navigation sample module with PM, UIPage, BtnChangePage, and UIKit helpers.",
+            "path": "Samples~/NeoxiderPages"
+        }
+    ],
+    "keywords": [
+        "neoxider",
+        "tools",
+        "starter",
+        "extensions",
+        "no-code",
+        "state-machine"
+    ],
+    "license": "Custom"
 }

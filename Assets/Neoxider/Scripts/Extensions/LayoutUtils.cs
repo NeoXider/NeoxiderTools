@@ -109,7 +109,7 @@ namespace Neo.Extensions
                 yield break;
             }
 
-            Quaternion rotation = Quaternion.FromToRotation(Vector3.forward, normal);
+            var rotation = Quaternion.FromToRotation(Vector3.forward, normal);
             float angleStep = 360f / count;
 
             for (int i = 0; i < count; i++)

@@ -4,7 +4,8 @@ using UnityEngine.Events;
 namespace Neo.Animations
 {
     /// <summary>
-    ///     Universal animator for Vector3 values. Provides an easy way to animate position, scale, rotation and other Vector3 parameters.
+    ///     Universal animator for Vector3 values. Provides an easy way to animate position, scale, rotation and other Vector3
+    ///     parameters.
     /// </summary>
     [NeoDoc("Animations/Vector3Animator.md")]
     [CreateFromMenu("Neoxider/Animations/Vector3Animator")]

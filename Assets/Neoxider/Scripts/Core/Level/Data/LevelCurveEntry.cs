@@ -12,9 +12,6 @@ namespace Neo.Core.Level
         [SerializeField] [Min(1)] private int _level = 1;
         [SerializeField] [Min(0)] private int _requiredXp;
 
-        public int Level => _level;
-        public int RequiredXp => _requiredXp;
-
         public LevelCurveEntry()
         {
         }
@@ -24,5 +21,8 @@ namespace Neo.Core.Level
             _level = level < 1 ? 1 : level;
             _requiredXp = requiredXp < 0 ? 0 : requiredXp;
         }
+
+        public int Level => _level;
+        public int RequiredXp => _requiredXp;
     }
 }

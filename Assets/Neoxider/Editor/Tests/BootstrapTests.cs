@@ -74,15 +74,15 @@ namespace Neo.Tools.Tests
 
             public int InitPriority { get; private set; }
 
+            public void Init()
+            {
+                _initOrder.Add(InitPriority);
+            }
+
             public void Setup(int priority, List<int> initOrder)
             {
                 InitPriority = priority;
                 _initOrder = initOrder;
-            }
-
-            public void Init()
-            {
-                _initOrder.Add(InitPriority);
             }
         }
     }

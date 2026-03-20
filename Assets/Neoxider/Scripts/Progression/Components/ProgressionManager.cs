@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Neo.Core.Level;
 using Neo.Condition;
+using Neo.Core.Level;
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
@@ -11,7 +11,7 @@ using UnityEngine.Events;
 namespace Neo.Progression
 {
     /// <summary>
-    /// Main entry point for the new meta-progression system.
+    ///     Main entry point for the new meta-progression system.
     /// </summary>
     [NeoDoc("Progression/ProgressionManager.md")]
     [CreateFromMenu("Neoxider/Progression/ProgressionManager")]
@@ -23,15 +23,20 @@ namespace Neo.Progression
 
         [Header("Level (from Core)")]
         [Tooltip("Level/XP source; when null, level and XP are not used.")]
-        [SerializeField] private LevelComponent _levelProvider;
+        [SerializeField]
+        private LevelComponent _levelProvider;
 
         [Header("Definitions")]
         [Tooltip("Reward table: level -> perk points and rewards. Used when level increases.")]
-        [SerializeField] private LevelCurveDefinition _levelCurve;
+        [SerializeField]
+        private LevelCurveDefinition _levelCurve;
+
         [SerializeField] private UnlockTreeDefinition _unlockTree;
         [SerializeField] private PerkTreeDefinition _perkTree;
 
-        [Header("Persistence")] [SerializeField] private string _saveKey = DefaultSaveKey;
+        [Header("Persistence")] [SerializeField]
+        private string _saveKey = DefaultSaveKey;
+
         [SerializeField] private bool _loadOnAwake = true;
 
         [Header("Context")] [SerializeField] private GameObject _conditionContext;
@@ -49,19 +54,19 @@ namespace Neo.Progression
         [SerializeField] private UnityEvent _onProfileLoaded = new();
         [SerializeField] private UnityEvent _onProfileSaved = new();
         [SerializeField] private UnityEvent _onProfileReset = new();
+        private readonly HashSet<string> _purchasedPerkIds = new(StringComparer.Ordinal);
 
         private readonly HashSet<string> _unlockedNodeIds = new(StringComparer.Ordinal);
-        private readonly HashSet<string> _purchasedPerkIds = new(StringComparer.Ordinal);
         private ProgressionProfileData _profile = new();
         private bool _progressionInitialized;
 
         /// <summary>
-        /// Gets a backwards-compatible singleton alias.
+        ///     Gets a backwards-compatible singleton alias.
         /// </summary>
         public static ProgressionManager Instance => I;
 
         /// <summary>
-        /// Gets or sets the level curve definition.
+        ///     Gets or sets the level curve definition.
         /// </summary>
         public LevelCurveDefinition LevelCurve
         {
@@ -70,7 +75,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Gets or sets the unlock tree definition.
+        ///     Gets or sets the unlock tree definition.
         /// </summary>
         public UnlockTreeDefinition UnlockTree
         {
@@ -79,7 +84,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Gets or sets the perk tree definition.
+        ///     Gets or sets the perk tree definition.
         /// </summary>
         public PerkTreeDefinition PerkTree
         {
@@ -88,7 +93,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Gets or sets the save key used for the persistent profile payload.
+        ///     Gets or sets the save key used for the persistent profile payload.
         /// </summary>
         public string SaveKey
         {
@@ -97,7 +102,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Gets or sets the default context used by condition checks.
+        ///     Gets or sets the default context used by condition checks.
         /// </summary>
         public GameObject ConditionContext
         {
@@ -106,52 +111,52 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Gets the total accumulated XP (from level provider when set).
+        ///     Gets the total accumulated XP (from level provider when set).
         /// </summary>
         public int TotalXp => _levelProvider != null ? _levelProvider.TotalXp : 0;
 
         /// <summary>
-        /// Gets the resolved current level (from level provider when set).
+        ///     Gets the resolved current level (from level provider when set).
         /// </summary>
         public int CurrentLevel => _levelProvider != null ? _levelProvider.Level : 1;
 
         /// <summary>
-        /// Gets the currently unspent perk points.
+        ///     Gets the currently unspent perk points.
         /// </summary>
         public int AvailablePerkPoints => _profile.AvailablePerkPoints;
 
         /// <summary>
-        /// Gets the unlocked node identifiers.
+        ///     Gets the unlocked node identifiers.
         /// </summary>
         public IReadOnlyCollection<string> UnlockedNodeIds => _unlockedNodeIds;
 
         /// <summary>
-        /// Gets the purchased perk identifiers.
+        ///     Gets the purchased perk identifiers.
         /// </summary>
         public IReadOnlyCollection<string> PurchasedPerkIds => _purchasedPerkIds;
 
         /// <summary>
-        /// Gets the UnityEvent raised when total XP changes.
+        ///     Gets the UnityEvent raised when total XP changes.
         /// </summary>
         public UnityEventInt OnXpChanged => _onXpChanged;
 
         /// <summary>
-        /// Gets the UnityEvent raised when the resolved level changes.
+        ///     Gets the UnityEvent raised when the resolved level changes.
         /// </summary>
         public UnityEventInt OnLevelChanged => _onLevelChanged;
 
         /// <summary>
-        /// Gets the UnityEvent raised when available perk points change.
+        ///     Gets the UnityEvent raised when available perk points change.
         /// </summary>
         public UnityEventInt OnPerkPointsChanged => _onPerkPointsChanged;
 
         /// <summary>
-        /// Gets the UnityEvent raised when an unlock node is granted.
+        ///     Gets the UnityEvent raised when an unlock node is granted.
         /// </summary>
         public ProgressionStringEvent OnNodeUnlocked => _onNodeUnlocked;
 
         /// <summary>
-        /// Gets the UnityEvent raised when a perk is purchased.
+        ///     Gets the UnityEvent raised when a perk is purchased.
         /// </summary>
         public ProgressionStringEvent OnPerkPurchased => _onPerkPurchased;
 
@@ -167,8 +172,15 @@ namespace Neo.Progression
         /// <summary>Текущее значение XP до следующего уровня (для NeoCondition и биндинга к реактивному состоянию).</summary>
         public int XpToNextLevelStateValue => XpToNextLevelState.CurrentValue;
 
+        protected override bool DontDestroyOnLoadEnabled => true;
+
+        private void OnValidate()
+        {
+            _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
+        }
+
         /// <summary>
-        /// Ensures the manager is initialized even when accessed outside the normal scene lifecycle.
+        ///     Ensures the manager is initialized even when accessed outside the normal scene lifecycle.
         /// </summary>
         public void EnsureInitialized()
         {
@@ -179,7 +191,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Assigns the main definitions in one call.
+        ///     Assigns the main definitions in one call.
         /// </summary>
         public void SetDefinitions(LevelCurveDefinition levelCurve,
             UnlockTreeDefinition unlockTree,
@@ -191,7 +203,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Returns a deep copy of the current profile.
+        ///     Returns a deep copy of the current profile.
         /// </summary>
         public ProgressionProfileData GetProfileSnapshot()
         {
@@ -200,7 +212,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Adds XP via level provider; level-up rewards are dispatched via OnLevelUp subscription.
+        ///     Adds XP via level provider; level-up rewards are dispatched via OnLevelUp subscription.
         /// </summary>
         public void AddXp(int amount)
         {
@@ -219,7 +231,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Adds unspent perk points.
+        ///     Adds unspent perk points.
         /// </summary>
         public void AddPerkPoints(int amount)
         {
@@ -234,7 +246,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Returns true when the supplied node has already been unlocked.
+        ///     Returns true when the supplied node has already been unlocked.
         /// </summary>
         public bool HasUnlockedNode(string nodeId)
         {
@@ -243,7 +255,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Returns true when the supplied perk has already been purchased.
+        ///     Returns true when the supplied perk has already been purchased.
         /// </summary>
         public bool HasPurchasedPerk(string perkId)
         {
@@ -252,7 +264,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Tries to resolve an unlock node definition.
+        ///     Tries to resolve an unlock node definition.
         /// </summary>
         public bool TryGetNodeDefinition(string nodeId, out UnlockNodeDefinition node)
         {
@@ -267,7 +279,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Tries to resolve a perk definition.
+        ///     Tries to resolve a perk definition.
         /// </summary>
         public bool TryGetPerkDefinition(string perkId, out PerkDefinition perk)
         {
@@ -282,7 +294,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Evaluates whether the supplied node can be unlocked.
+        ///     Evaluates whether the supplied node can be unlocked.
         /// </summary>
         public bool CanUnlockNode(string nodeId, out string failReason)
         {
@@ -328,7 +340,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Unlocks a node when all requirements are met.
+        ///     Unlocks a node when all requirements are met.
         /// </summary>
         public bool TryUnlockNode(string nodeId, out string failReason)
         {
@@ -351,7 +363,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Evaluates whether the supplied perk can be purchased.
+        ///     Evaluates whether the supplied perk can be purchased.
         /// </summary>
         public bool CanBuyPerk(string perkId, out string failReason)
         {
@@ -414,7 +426,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Buys a perk when all requirements are met.
+        ///     Buys a perk when all requirements are met.
         /// </summary>
         public bool TryBuyPerk(string perkId, out string failReason)
         {
@@ -445,7 +457,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Clears the current progression profile and reapplies defaults.
+        ///     Clears the current progression profile and reapplies defaults.
         /// </summary>
         public void ResetProgression()
         {
@@ -456,7 +468,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Loads the profile from the active save provider.
+        ///     Loads the profile from the active save provider.
         /// </summary>
         public void LoadProfile()
         {
@@ -465,7 +477,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        /// Saves the profile through the active save provider.
+        ///     Saves the profile through the active save provider.
         /// </summary>
         public void SaveProfile()
         {
@@ -476,8 +488,6 @@ namespace Neo.Progression
             SaveProvider.SetString(_saveKey, json);
             _onProfileSaved?.Invoke();
         }
-
-        protected override bool DontDestroyOnLoadEnabled => true;
 
         protected override void Init()
         {
@@ -504,11 +514,6 @@ namespace Neo.Progression
             }
         }
 
-        private void OnValidate()
-        {
-            _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
-        }
-
         private void LoadProfileInternal(bool invokeEvents)
         {
             string json = SaveProvider.GetString(_saveKey, string.Empty);
@@ -521,7 +526,8 @@ namespace Neo.Progression
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogWarning($"[ProgressionManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
+                    Debug.LogWarning(
+                        $"[ProgressionManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
                 }
             }
 

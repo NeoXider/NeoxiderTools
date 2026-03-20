@@ -6,7 +6,7 @@ namespace Neo.Tools
     public class Singleton<T> : MonoBehaviour where T : Singleton<T>
     {
         /// <summary>
-        /// When enabled, a new singleton GameObject is created automatically if no instance is found.
+        ///     When enabled, a new singleton GameObject is created automatically if no instance is found.
         /// </summary>
         public static bool CreateInstance = false;
 
@@ -17,7 +17,7 @@ namespace Neo.Tools
         private bool _isInitialized;
 
         /// <summary>
-        /// Gets the active singleton instance, creating or resolving it on first access when possible.
+        ///     Gets the active singleton instance, creating or resolving it on first access when possible.
         /// </summary>
         public static T I
         {
@@ -56,12 +56,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Gets whether a singleton instance has already been resolved.
+        ///     Gets whether a singleton instance has already been resolved.
         /// </summary>
         public static bool IsInitialized => _instance != null;
 
         /// <summary>
-        /// Gets whether a singleton instance is currently available without forcing resolution.
+        ///     Gets whether a singleton instance is currently available without forcing resolution.
         /// </summary>
         public static bool HasInstance => _instance != null;
 
@@ -105,10 +105,10 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Tries to get the current singleton instance without triggering a scene lookup.
+        ///     Tries to get the current singleton instance without triggering a scene lookup.
         /// </summary>
         /// <param name="instance">Resolved singleton instance when available.</param>
-        /// <returns><see langword="true"/> when an instance is already assigned; otherwise <see langword="false"/>.</returns>
+        /// <returns><see langword="true" /> when an instance is already assigned; otherwise <see langword="false" />.</returns>
         public static bool TryGetInstance(out T instance)
         {
             instance = _instance;
@@ -116,7 +116,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Destroys the current singleton instance and clears the cached reference.
+        ///     Destroys the current singleton instance and clears the cached reference.
         /// </summary>
         public static void DestroyInstance()
         {

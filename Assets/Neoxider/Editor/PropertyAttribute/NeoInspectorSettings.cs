@@ -38,8 +38,10 @@ namespace Neo.Editor
         [SerializeField] private int minFieldsForHeaderCategory = 3;
 
         [Header("Lists & Arrays")]
-        [Tooltip("Use Unity default list/array drawing. Disable to use Neoxider custom foldouts (can break list logic in some cases).")]
-        [SerializeField] private bool useDefaultListAndArrayDrawing = true;
+        [Tooltip(
+            "Use Unity default list/array drawing. Disable to use Neoxider custom foldouts (can break list logic in some cases).")]
+        [SerializeField]
+        private bool useDefaultListAndArrayDrawing = true;
 
         public bool UseDefaultListAndArrayDrawing => useDefaultListAndArrayDrawing;
 

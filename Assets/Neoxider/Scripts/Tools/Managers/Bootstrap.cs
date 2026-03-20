@@ -64,12 +64,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Registers a component for bootstrap initialization.
+        ///     Registers a component for bootstrap initialization.
         /// </summary>
-        /// <param name="initializable">Component implementing <see cref="IInit"/>.</param>
+        /// <param name="initializable">Component implementing <see cref="IInit" />.</param>
         /// <remarks>
-        /// If bootstrap has already completed its first pass, the component is initialized
-        /// through the same priority-based pipeline as startup registrations.
+        ///     If bootstrap has already completed its first pass, the component is initialized
+        ///     through the same priority-based pipeline as startup registrations.
         /// </remarks>
         public void Register(IInit initializable)
         {
@@ -86,9 +86,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        /// Removes a component from bootstrap tracking.
+        ///     Removes a component from bootstrap tracking.
         /// </summary>
-        /// <param name="initializable">Component implementing <see cref="IInit"/>.</param>
+        /// <param name="initializable">Component implementing <see cref="IInit" />.</param>
         public void Unregister(IInit initializable)
         {
             if (initializable == null)
@@ -128,7 +128,7 @@ namespace Neo.Tools
 
         private void InitializePendingRegistrations()
         {
-            List<IInit> sortedInitializables = _initializables
+            var sortedInitializables = _initializables
                 .Where(initializable => initializable != null && !_initializedInitializables.Contains(initializable))
                 .OrderByDescending(initializable => initializable.InitPriority)
                 .ToList();

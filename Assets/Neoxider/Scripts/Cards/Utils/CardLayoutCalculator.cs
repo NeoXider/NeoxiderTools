@@ -187,7 +187,7 @@ namespace Neo.Cards
 
             for (int i = 0; i < rotations.Count; i++)
             {
-                Quaternion delta = Quaternion.Euler(
+                var delta = Quaternion.Euler(
                     Random.Range(-jitter.x, jitter.x),
                     Random.Range(-jitter.y, jitter.y),
                     Random.Range(-jitter.z, jitter.z));

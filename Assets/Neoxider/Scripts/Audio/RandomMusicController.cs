@@ -6,7 +6,10 @@ using UnityEngine;
 
 namespace Neo.Audio
 {
-    /// <summary>Controller for random music playback from a track list without consecutive repeats. Not a MonoBehaviour; used by AM.</summary>
+    /// <summary>
+    ///     Controller for random music playback from a track list without consecutive repeats. Not a MonoBehaviour; used
+    ///     by AM.
+    /// </summary>
     public class RandomMusicController
     {
         private AudioSource _audioSource;

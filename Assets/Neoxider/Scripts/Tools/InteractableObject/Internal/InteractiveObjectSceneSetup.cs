@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Object = UnityEngine.Object;
 
 namespace Neo.Tools
 {
@@ -23,7 +24,7 @@ namespace Neo.Tools
                 return;
             }
 
-            EventSystem eventSystem = EventSystem.current ?? UnityEngine.Object.FindFirstObjectByType<EventSystem>();
+            EventSystem eventSystem = EventSystem.current ?? Object.FindFirstObjectByType<EventSystem>();
             if (eventSystem == null)
             {
                 if (autoCreateEventSystemIfMissing)
@@ -51,10 +52,12 @@ namespace Neo.Tools
                 return false;
             }
 
-            Camera cam = Camera.main ?? UnityEngine.Object.FindFirstObjectByType<Camera>();
+            Camera cam = Camera.main ?? Object.FindFirstObjectByType<Camera>();
             if (cam == null)
             {
-                Debug.LogError($"[InteractiveObject] No camera found on {owner.gameObject.name}. Component will be disabled.", owner);
+                Debug.LogError(
+                    $"[InteractiveObject] No camera found on {owner.gameObject.name}. Component will be disabled.",
+                    owner);
                 return false;
             }
 
@@ -159,11 +162,11 @@ namespace Neo.Tools
 
                 if (Application.isPlaying)
                 {
-                    UnityEngine.Object.Destroy(module);
+                    Object.Destroy(module);
                 }
                 else
                 {
-                    UnityEngine.Object.DestroyImmediate(module);
+                    Object.DestroyImmediate(module);
                 }
             }
         }
@@ -173,14 +176,15 @@ namespace Neo.Tools
             TryLoadAssembly("Unity.InputSystem");
             TryLoadAssembly("Unity.InputSystem.ForUI");
 
-            Type directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
+            var directType = Type.GetType($"{fullTypeName}, Unity.InputSystem", false);
             if (directType != null)
             {
                 return directType;
             }
 
             Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            return assemblies.Select(assembly => assembly.GetType(fullTypeName, false)).FirstOrDefault(type => type != null);
+            return assemblies.Select(assembly => assembly.GetType(fullTypeName, false))
+                .FirstOrDefault(type => type != null);
         }
 
         private static void TryLoadAssembly(string assemblyName)

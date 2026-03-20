@@ -22,7 +22,7 @@ namespace Neo.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            MonoBehaviour targetObject = target as MonoBehaviour;
+            var targetObject = target as MonoBehaviour;
             if (targetObject == null)
             {
                 return;

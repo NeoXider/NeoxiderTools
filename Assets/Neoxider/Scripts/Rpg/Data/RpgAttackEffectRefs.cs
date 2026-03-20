@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Runtime-targeted buff references for attacks.
+    ///     Runtime-targeted buff references for attacks.
     /// </summary>
     [Serializable]
     public sealed class RpgAttackEffectRefs

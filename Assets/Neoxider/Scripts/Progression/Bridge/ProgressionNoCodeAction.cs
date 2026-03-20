@@ -1,18 +1,19 @@
-using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Progression
 {
     /// <summary>
-    /// Universal Inspector-driven bridge for progression actions.
+    ///     Universal Inspector-driven bridge for progression actions.
     /// </summary>
     [NeoDoc("Progression/ProgressionNoCodeAction.md")]
     [CreateFromMenu("Neoxider/Progression/Progression NoCode Action")]
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionNoCodeAction))]
     public sealed class ProgressionNoCodeAction : MonoBehaviour
     {
-        [Header("Action")] [SerializeField] private ProgressionNoCodeActionType _actionType = ProgressionNoCodeActionType.AddXp;
+        [Header("Action")] [SerializeField]
+        private ProgressionNoCodeActionType _actionType = ProgressionNoCodeActionType.AddXp;
+
         [SerializeField] private ProgressionManager _manager;
         [SerializeField] [Min(0)] private int _xpAmount = 25;
         [SerializeField] [Min(0)] private int _perkPointsAmount = 1;
@@ -24,7 +25,7 @@ namespace Neo.Progression
         [SerializeField] private ProgressionStringEvent _onResultMessage = new();
 
         /// <summary>
-        /// Executes the configured action.
+        ///     Executes the configured action.
         /// </summary>
         public void Execute()
         {

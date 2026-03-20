@@ -1,7 +1,7 @@
 namespace Neo.Progression
 {
     /// <summary>
-    /// Evaluation mode for progression condition checks.
+    ///     Evaluation mode for progression condition checks.
     /// </summary>
     public enum ProgressionConditionEvaluationMode
     {

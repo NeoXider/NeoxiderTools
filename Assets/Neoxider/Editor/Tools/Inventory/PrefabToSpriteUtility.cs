@@ -21,7 +21,7 @@ namespace Neo.Editor
                 return source;
             }
 
-            RenderTexture rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
+            var rt = RenderTexture.GetTemporary(source.width, source.height, 0, RenderTextureFormat.ARGB32);
             RenderTexture previous = RenderTexture.active;
             Graphics.Blit(source, rt);
             RenderTexture.active = rt;
@@ -66,7 +66,7 @@ namespace Neo.Editor
             File.WriteAllBytes(projectPath, png);
             AssetDatabase.Refresh();
 
-            TextureImporter importer = AssetImporter.GetAtPath(projectPath) as TextureImporter;
+            var importer = AssetImporter.GetAtPath(projectPath) as TextureImporter;
             if (importer == null)
             {
                 return null;

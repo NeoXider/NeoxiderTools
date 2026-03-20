@@ -18,7 +18,7 @@ namespace Neo.Editor.Tests
                 BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public);
             Assert.That(buildEntriesMethod, Is.Not.Null);
 
-            IEnumerable entries = buildEntriesMethod.Invoke(null, null) as IEnumerable;
+            var entries = buildEntriesMethod.Invoke(null, null) as IEnumerable;
             Assert.That(entries, Is.Not.Null);
 
             string[] menuPaths = entries.Cast<object>()

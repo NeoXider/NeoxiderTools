@@ -8,9 +8,9 @@ namespace Neo.Core.Resources
     /// </summary>
     public sealed class ResourcePoolModel
     {
+        private readonly Dictionary<string, float> _healTimer = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, ResourcePoolEntry> _pools = new(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, float> _regenAccum = new(StringComparer.OrdinalIgnoreCase);
-        private readonly Dictionary<string, float> _healTimer = new(StringComparer.OrdinalIgnoreCase);
 
         public event Action<string, float, float> OnResourceChanged; // id, current, max
         public event Action<string> OnResourceDepleted;
@@ -163,7 +163,7 @@ namespace Neo.Core.Resources
         /// </summary>
         public void Tick(float deltaTime)
         {
-            foreach (var kv in _pools)
+            foreach (KeyValuePair<string, ResourcePoolEntry> kv in _pools)
             {
                 string id = kv.Key;
                 ResourcePoolEntry e = kv.Value;

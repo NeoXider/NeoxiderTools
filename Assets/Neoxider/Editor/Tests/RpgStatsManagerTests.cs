@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using NUnit.Framework;
 using Neo.Core.Resources;
-using Neo.Rpg;
 using Neo.Save;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace Neo.Rpg.Tests
@@ -97,34 +96,28 @@ namespace Neo.Rpg.Tests
             firstManager.SaveKey = "RpgTests.Persistence";
             firstManager.EnsureInitialized();
 
+            firstManager.ResetProfile();
+            firstManager.TakeDamage(30f);
+            firstManager.SetLevel(5);
+            firstManager.SaveProfile();
+
+            RpgStatsManager.DestroyInstance();
+
+            GameObject secondGo = new("RpgStatsManager_Second");
+            RpgStatsManager secondManager = secondGo.AddComponent<RpgStatsManager>();
+            secondManager.SaveKey = "RpgTests.Persistence";
+            secondManager.EnsureInitialized();
+            secondManager.LoadProfile();
+
             try
             {
-                firstManager.ResetProfile();
-                firstManager.TakeDamage(30f);
-                firstManager.SetLevel(5);
-                firstManager.SaveProfile();
-
-                RpgStatsManager.DestroyInstance();
-
-                GameObject secondGo = new("RpgStatsManager_Second");
-                RpgStatsManager secondManager = secondGo.AddComponent<RpgStatsManager>();
-                secondManager.SaveKey = "RpgTests.Persistence";
-                secondManager.EnsureInitialized();
-                secondManager.LoadProfile();
-
-                try
-                {
-                    Assert.That(secondManager.CurrentHp, Is.EqualTo(70f));
-                    Assert.That(secondManager.MaxHp, Is.EqualTo(100f));
-                    Assert.That(secondManager.Level, Is.EqualTo(5));
-                }
-                finally
-                {
-                    RpgStatsManager.DestroyInstance();
-                }
+                Assert.That(secondManager.CurrentHp, Is.EqualTo(70f));
+                Assert.That(secondManager.MaxHp, Is.EqualTo(100f));
+                Assert.That(secondManager.Level, Is.EqualTo(5));
             }
             finally
             {
+                RpgStatsManager.DestroyInstance();
             }
         }
 
@@ -267,13 +260,13 @@ namespace Neo.Rpg.Tests
         private sealed class DictionarySaveProvider : ISaveProvider
         {
             private readonly Dictionary<string, object> _values = new(StringComparer.Ordinal);
+            public int SaveCallCount { get; private set; }
+            public int LoadCallCount { get; private set; }
 
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
             public event Action OnDataSaved;
             public event Action OnDataLoaded;
             public event Action<string> OnKeyChanged;
-            public int SaveCallCount { get; private set; }
-            public int LoadCallCount { get; private set; }
 
             public int GetInt(string key, int defaultValue = 0)
             {
@@ -288,7 +281,9 @@ namespace Neo.Rpg.Tests
 
             public float GetFloat(string key, float defaultValue = 0f)
             {
-                return _values.TryGetValue(key, out object value) && value is float floatValue ? floatValue : defaultValue;
+                return _values.TryGetValue(key, out object value) && value is float floatValue
+                    ? floatValue
+                    : defaultValue;
             }
 
             public void SetFloat(string key, float value)
@@ -299,7 +294,9 @@ namespace Neo.Rpg.Tests
 
             public string GetString(string key, string defaultValue = "")
             {
-                return _values.TryGetValue(key, out object value) && value is string stringValue ? stringValue : defaultValue;
+                return _values.TryGetValue(key, out object value) && value is string stringValue
+                    ? stringValue
+                    : defaultValue;
             }
 
             public void SetString(string key, string value)
@@ -319,7 +316,10 @@ namespace Neo.Rpg.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool HasKey(string key) => _values.ContainsKey(key);
+            public bool HasKey(string key)
+            {
+                return _values.ContainsKey(key);
+            }
 
             public void DeleteKey(string key)
             {
@@ -327,7 +327,10 @@ namespace Neo.Rpg.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public void DeleteAll() => _values.Clear();
+            public void DeleteAll()
+            {
+                _values.Clear();
+            }
 
             public void Save()
             {

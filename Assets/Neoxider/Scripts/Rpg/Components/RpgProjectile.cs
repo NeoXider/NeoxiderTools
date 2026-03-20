@@ -5,44 +5,28 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Lightweight RPG projectile that applies an attack definition on impact.
+    ///     Lightweight RPG projectile that applies an attack definition on impact.
     /// </summary>
     [NeoDoc("Rpg/RpgProjectile.md")]
     [CreateFromMenu("Neoxider/RPG/RpgProjectile")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgProjectile))]
     public sealed class RpgProjectile : MonoBehaviour
     {
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onInitialized = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onInitialized = new();
+
         [SerializeField] private RpgGameObjectEvent _onHit = new();
         [SerializeField] private UnityEvent _onExpired = new();
 
         private readonly HashSet<GameObject> _hitTargets = new();
-        private RpgAttackController _owner;
         private RpgAttackDefinition _definition;
-        private IRpgCombatReceiver _sourceReceiver;
         private Vector3 _direction = Vector3.forward;
-        private float _speed;
-        private float _lifetime;
-        private int _remainingHits;
         private float _elapsed;
         private Vector3 _lastPosition;
-
-        /// <summary>
-        /// Initializes the projectile.
-        /// </summary>
-        public void Initialize(RpgAttackController owner, RpgAttackDefinition definition, IRpgCombatReceiver sourceReceiver, Vector3 direction)
-        {
-            _owner = owner;
-            _definition = definition;
-            _sourceReceiver = sourceReceiver;
-            _direction = direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
-            _speed = definition.ProjectileSpeed;
-            _lifetime = definition.ProjectileLifetime;
-            _remainingHits = definition.ProjectileMaxHits;
-            _lastPosition = transform.position;
-            _onInitialized?.Invoke();
-        }
+        private float _lifetime;
+        private RpgAttackController _owner;
+        private int _remainingHits;
+        private IRpgCombatReceiver _sourceReceiver;
+        private float _speed;
 
         private void Update()
         {
@@ -67,6 +51,23 @@ namespace Neo.Rpg
             _lastPosition = nextPosition;
         }
 
+        /// <summary>
+        ///     Initializes the projectile.
+        /// </summary>
+        public void Initialize(RpgAttackController owner, RpgAttackDefinition definition,
+            IRpgCombatReceiver sourceReceiver, Vector3 direction)
+        {
+            _owner = owner;
+            _definition = definition;
+            _sourceReceiver = sourceReceiver;
+            _direction = direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
+            _speed = definition.ProjectileSpeed;
+            _lifetime = definition.ProjectileLifetime;
+            _remainingHits = definition.ProjectileMaxHits;
+            _lastPosition = transform.position;
+            _onInitialized?.Invoke();
+        }
+
         private void HandleHitsBetween(Vector3 from, Vector3 to)
         {
             Vector3 delta = to - from;
@@ -79,7 +80,8 @@ namespace Neo.Rpg
             Vector3 direction = delta / distance;
             if (_definition.Use3D)
             {
-                RaycastHit[] hits = Physics.SphereCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction, distance, _definition.TargetLayers);
+                RaycastHit[] hits = Physics.SphereCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
+                    distance, _definition.TargetLayers);
                 for (int i = 0; i < hits.Length; i++)
                 {
                     TryHitTarget(hits[i].collider != null ? hits[i].collider.gameObject : null);
@@ -92,7 +94,8 @@ namespace Neo.Rpg
 
             if (_definition.Use2D)
             {
-                RaycastHit2D[] hits2D = Physics2D.CircleCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction, distance, _definition.TargetLayers);
+                RaycastHit2D[] hits2D = Physics2D.CircleCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
+                    distance, _definition.TargetLayers);
                 for (int i = 0; i < hits2D.Length; i++)
                 {
                     TryHitTarget(hits2D[i].collider != null ? hits2D[i].collider.gameObject : null);

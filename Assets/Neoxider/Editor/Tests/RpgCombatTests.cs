@@ -1,8 +1,6 @@
-using System;
 using System.Reflection;
-using NUnit.Framework;
 using Neo.Core.Resources;
-using Neo.Rpg;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace Neo.Rpg.Tests
@@ -25,7 +23,7 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(go);
+                Object.DestroyImmediate(go);
             }
         }
 
@@ -43,7 +41,7 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(go);
+                Object.DestroyImmediate(go);
             }
         }
 
@@ -51,7 +49,7 @@ namespace Neo.Rpg.Tests
         public void AttackController_DirectAttack_DamagesTargetCombatant()
         {
             GameObject source = new("Source");
-            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             target.name = "Target";
 
             try
@@ -87,8 +85,8 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(target);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(target);
             }
         }
 
@@ -96,7 +94,7 @@ namespace Neo.Rpg.Tests
         public void AttackController_WhenCostAmountPositive_AndNoResourceProvider_Fails()
         {
             GameObject source = new("Source");
-            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             target.name = "Target";
 
             try
@@ -131,8 +129,8 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(target);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(target);
             }
         }
 
@@ -140,7 +138,7 @@ namespace Neo.Rpg.Tests
         public void AttackController_WhenCostAmountPositive_AndEnoughMana_SucceedsAndSpendsMana()
         {
             GameObject source = new("Source");
-            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
             target.name = "Target";
 
             try
@@ -150,7 +148,7 @@ namespace Neo.Rpg.Tests
                 source.transform.forward = Vector3.forward;
                 Physics.SyncTransforms();
 
-                Neo.Core.Resources.HealthComponent health = source.AddComponent<Neo.Core.Resources.HealthComponent>();
+                HealthComponent health = source.AddComponent<HealthComponent>();
                 RpgCombatant sourceCombatant = source.AddComponent<RpgCombatant>();
                 SetPrivateField(sourceCombatant, "_healthProvider", health);
 
@@ -171,17 +169,17 @@ namespace Neo.Rpg.Tests
                 SetPrivateField(controller, "_attacks", new[] { attack });
                 SetPrivateField(controller, "_combatantSource", sourceCombatant);
 
-                float manaBefore = health.GetCurrent(Neo.Core.Resources.RpgResourceId.Mana);
+                float manaBefore = health.GetCurrent(RpgResourceId.Mana);
                 bool success = controller.TryUseAttack("mana_attack", out string failReason);
 
                 Assert.That(success, Is.True, failReason);
                 Assert.That(targetCombatant.CurrentHp, Is.EqualTo(85f));
-                Assert.That(health.GetCurrent(Neo.Core.Resources.RpgResourceId.Mana), Is.EqualTo(manaBefore - 20f));
+                Assert.That(health.GetCurrent(RpgResourceId.Mana), Is.EqualTo(manaBefore - 20f));
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(target);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(target);
             }
         }
 
@@ -203,7 +201,7 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(go);
+                Object.DestroyImmediate(go);
             }
         }
 
@@ -211,8 +209,8 @@ namespace Neo.Rpg.Tests
         public void TargetSelector_SelectTarget_PicksNearestCombatant()
         {
             GameObject source = new("Source");
-            GameObject nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            GameObject farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
             try
             {
@@ -231,9 +229,9 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(nearTarget);
-                UnityEngine.Object.DestroyImmediate(farTarget);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(nearTarget);
+                Object.DestroyImmediate(farTarget);
             }
         }
 
@@ -241,8 +239,8 @@ namespace Neo.Rpg.Tests
         public void AttackController_UsePreset_SelectsTargetAndDamagesNearestCombatant()
         {
             GameObject source = new("Source");
-            GameObject nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            GameObject farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var nearTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var farTarget = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
             try
             {
@@ -295,9 +293,9 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(nearTarget);
-                UnityEngine.Object.DestroyImmediate(farTarget);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(nearTarget);
+                Object.DestroyImmediate(farTarget);
             }
         }
 
@@ -305,7 +303,7 @@ namespace Neo.Rpg.Tests
         public void AttackController_TryUsePreset_WithForcedTarget_DamagesSpecifiedCombatant()
         {
             GameObject source = new("Source");
-            GameObject target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            var target = GameObject.CreatePrimitive(PrimitiveType.Sphere);
 
             try
             {
@@ -345,15 +343,16 @@ namespace Neo.Rpg.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(source);
-                UnityEngine.Object.DestroyImmediate(target);
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(target);
             }
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(fieldInfo, Is.Not.Null, $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
+            Assert.That(fieldInfo, Is.Not.Null,
+                $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
             fieldInfo.SetValue(target, value);
         }
     }

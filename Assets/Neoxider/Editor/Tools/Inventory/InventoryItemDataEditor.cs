@@ -7,19 +7,15 @@ namespace Neo.Editor
     [CustomEditor(typeof(InventoryItemData))]
     public class InventoryItemDataEditor : CustomEditorBase
     {
+        private SerializedProperty _categoryProp;
+        private SerializedProperty _descriptionProp;
+        private SerializedProperty _displayNameProp;
         private SerializedProperty _iconProp;
         private SerializedProperty _itemIdProp;
-        private SerializedProperty _displayNameProp;
-        private SerializedProperty _descriptionProp;
         private SerializedProperty _maxStackProp;
-        private SerializedProperty _categoryProp;
         private SerializedProperty _worldDropPrefabProp;
 
         protected override bool UseCustomNeoxiderInspectorGUI => true;
-
-        protected override void ProcessAttributeAssignments()
-        {
-        }
 
         private void OnEnable()
         {
@@ -30,6 +26,10 @@ namespace Neo.Editor
             _maxStackProp = serializedObject.FindProperty("_maxStack");
             _categoryProp = serializedObject.FindProperty("_category");
             _worldDropPrefabProp = serializedObject.FindProperty("_worldDropPrefab");
+        }
+
+        protected override void ProcessAttributeAssignments()
+        {
         }
 
         protected override void DrawCustomNeoxiderInspectorGUI()
@@ -45,7 +45,8 @@ namespace Neo.Editor
             DrawSummary();
             DrawValidation();
 
-            NeoxiderEditorGUI.BeginSection("Identity", "Ключевые данные предмета, которые используются в UI и runtime storage.");
+            NeoxiderEditorGUI.BeginSection("Identity",
+                "Ключевые данные предмета, которые используются в UI и runtime storage.");
             EditorGUILayout.PropertyField(_itemIdProp);
             EditorGUILayout.PropertyField(_displayNameProp);
             EditorGUILayout.PropertyField(_descriptionProp);
@@ -71,7 +72,9 @@ namespace Neo.Editor
 
         private void DrawSummary()
         {
-            string title = string.IsNullOrWhiteSpace(_displayNameProp.stringValue) ? target.name : _displayNameProp.stringValue;
+            string title = string.IsNullOrWhiteSpace(_displayNameProp.stringValue)
+                ? target.name
+                : _displayNameProp.stringValue;
             string subtitle = $"Item ID: <b>{_itemIdProp.intValue}</b>";
 
             NeoxiderEditorGUI.DrawSummaryCard(title, subtitle,
@@ -79,7 +82,8 @@ namespace Neo.Editor
                     _iconProp.objectReferenceValue != null
                         ? new Color(0.18f, 0.62f, 0.32f, 1f)
                         : new Color(0.40f, 0.40f, 0.44f, 1f)),
-                new NeoxiderEditorGUI.Badge(_worldDropPrefabProp.objectReferenceValue != null ? "Prefab Linked" : "No Prefab",
+                new NeoxiderEditorGUI.Badge(
+                    _worldDropPrefabProp.objectReferenceValue != null ? "Prefab Linked" : "No Prefab",
                     _worldDropPrefabProp.objectReferenceValue != null
                         ? new Color(0.20f, 0.50f, 0.78f, 1f)
                         : new Color(0.78f, 0.46f, 0.18f, 1f)),
@@ -94,7 +98,8 @@ namespace Neo.Editor
         {
             if (string.IsNullOrWhiteSpace(_displayNameProp.stringValue))
             {
-                EditorGUILayout.HelpBox("Display Name пустой. Предмету лучше дать читаемое имя для UI и debug.", MessageType.Warning);
+                EditorGUILayout.HelpBox("Display Name пустой. Предмету лучше дать читаемое имя для UI и debug.",
+                    MessageType.Warning);
             }
 
             if (_maxStackProp.intValue == 1)
@@ -104,7 +109,9 @@ namespace Neo.Editor
 
             if (_iconProp.objectReferenceValue == null && _worldDropPrefabProp.objectReferenceValue != null)
             {
-                EditorGUILayout.HelpBox("Иконка не задана, но есть World Drop Prefab. Её можно быстро сгенерировать кнопкой ниже.", MessageType.Info);
+                EditorGUILayout.HelpBox(
+                    "Иконка не задана, но есть World Drop Prefab. Её можно быстро сгенерировать кнопкой ниже.",
+                    MessageType.Info);
             }
         }
 
@@ -130,7 +137,7 @@ namespace Neo.Editor
 
         private void CreateIconFromPrefab()
         {
-            GameObject prefab = _worldDropPrefabProp.objectReferenceValue as GameObject;
+            var prefab = _worldDropPrefabProp.objectReferenceValue as GameObject;
             if (prefab == null)
             {
                 EditorUtility.DisplayDialog("Create Icon", "Assign a World Drop Prefab first.", "OK");

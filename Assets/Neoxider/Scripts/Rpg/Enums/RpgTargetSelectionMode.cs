@@ -1,7 +1,7 @@
 namespace Neo.Rpg
 {
     /// <summary>
-    /// How a target is selected from available candidates.
+    ///     How a target is selected from available candidates.
     /// </summary>
     public enum RpgTargetSelectionMode
     {

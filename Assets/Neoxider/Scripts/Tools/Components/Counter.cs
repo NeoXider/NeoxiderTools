@@ -26,7 +26,10 @@ namespace Neo.Tools
         Money = 2
     }
 
-    /// <summary>Universal counter: holds a number (int or float), Add/Subtract/Multiply/Divide/Set, Send with events. Events by type: OnValueChangedInt/Float, OnSendInt/OnSendFloat. Optionally saves via SaveProvider (off by default).</summary>
+    /// <summary>
+    ///     Universal counter: holds a number (int or float), Add/Subtract/Multiply/Divide/Set, Send with events. Events
+    ///     by type: OnValueChangedInt/Float, OnSendInt/OnSendFloat. Optionally saves via SaveProvider (off by default).
+    /// </summary>
     [NeoDoc("Tools/Components/Counter.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]

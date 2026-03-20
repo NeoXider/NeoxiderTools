@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Inspector-friendly button binding used by the built-in RPG input flow.
+    ///     Inspector-friendly button binding used by the built-in RPG input flow.
     /// </summary>
     [Serializable]
     public sealed class RpgButtonBinding

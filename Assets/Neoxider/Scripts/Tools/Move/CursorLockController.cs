@@ -21,17 +21,17 @@ namespace Neo.Tools
             ManualOnly
         }
 
+        public enum CursorAccessKeyMode
+        {
+            HoldToShowCursor,
+            ToggleShowCursor
+        }
+
         public enum CursorStateMode
         {
             LockAndHide,
             OnlyHide,
             OnlyLock
-        }
-
-        public enum CursorAccessKeyMode
-        {
-            HoldToShowCursor,
-            ToggleShowCursor
         }
 
         private static readonly List<CursorLockController> ActiveControllers = new();
@@ -97,11 +97,10 @@ namespace Neo.Tools
         [Header("Events")] [SerializeField] private UnityEvent _onCursorLocked = new();
 
         [SerializeField] private UnityEvent _onCursorUnlocked = new();
-        private bool _hasCursorOwnership;
-        private bool _requestedLocked;
         private bool _cursorAccessActive;
         private bool _cursorAccessHadOwnership;
         private bool _cursorAccessPreviousLocked;
+        private bool _requestedLocked;
 
         /// <summary>
         ///     Gets whether cursor is currently locked.
@@ -109,7 +108,8 @@ namespace Neo.Tools
         public bool IsLocked => Cursor.lockState == CursorLockMode.Locked;
 
         public bool ControllerEnabled => _controllerEnabled;
-        public bool HasCursorOwnership => _hasCursorOwnership;
+        public bool HasCursorOwnership { get; private set; }
+
         public ControlMode Mode => _controlMode;
 
         private bool SupportsAutomatic => _controlMode != ControlMode.ManualOnly;
@@ -226,7 +226,7 @@ namespace Neo.Tools
                 return;
             }
 
-            bool currentLocked = _hasCursorOwnership ? _requestedLocked : IsLocked;
+            bool currentLocked = HasCursorOwnership ? _requestedLocked : IsLocked;
             AcquireCursorControl(!currentLocked);
         }
 
@@ -251,14 +251,14 @@ namespace Neo.Tools
         /// </summary>
         public void ReleaseControl()
         {
-            if (!_hasCursorOwnership)
+            if (!HasCursorOwnership)
             {
                 return;
             }
 
             bool wasTopController = ReferenceEquals(GetTopController(), this);
             ActiveControllers.Remove(this);
-            _hasCursorOwnership = false;
+            HasCursorOwnership = false;
 
             if (wasTopController)
             {
@@ -298,7 +298,7 @@ namespace Neo.Tools
             _requestedLocked = locked;
             ActiveControllers.Remove(this);
             ActiveControllers.Add(this);
-            _hasCursorOwnership = true;
+            HasCursorOwnership = true;
             ApplyCursorState(locked);
         }
 
@@ -348,8 +348,8 @@ namespace Neo.Tools
             }
 
             _cursorAccessActive = true;
-            _cursorAccessHadOwnership = _hasCursorOwnership;
-            _cursorAccessPreviousLocked = _hasCursorOwnership ? _requestedLocked : IsLocked;
+            _cursorAccessHadOwnership = HasCursorOwnership;
+            _cursorAccessPreviousLocked = HasCursorOwnership ? _requestedLocked : IsLocked;
             AcquireCursorControl(false);
         }
 

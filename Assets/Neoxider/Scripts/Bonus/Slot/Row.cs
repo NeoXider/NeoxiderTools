@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -436,7 +435,7 @@ namespace Neo.Bonus
             float step = _step;
             float viewBottom = _viewBottom;
 
-            SlotElement[] buckets = new SlotElement[countSlotElement];
+            var buckets = new SlotElement[countSlotElement];
             float[] bucketErr = new float[countSlotElement];
             for (int k = 0; k < countSlotElement; k++)
             {
@@ -472,7 +471,7 @@ namespace Neo.Bonus
             // Фолбэк (не должен сработать при корректной раскладке)
             if (buckets.Any(b => b == null))
             {
-                List<SlotElement> byY = SlotElements.OrderByDescending(se => GetLocalY(se.transform)).ToList();
+                var byY = SlotElements.OrderByDescending(se => GetLocalY(se.transform)).ToList();
                 foreach (int k in Enumerable.Range(0, countSlotElement).Where(x => buckets[x] == null))
                 {
                     foreach (SlotElement se in byY)
@@ -487,7 +486,7 @@ namespace Neo.Bonus
             }
 
             // Вернуть в порядке Top→Down: k = count-1 .. 0
-            SlotElement[] result = new SlotElement[countSlotElement];
+            var result = new SlotElement[countSlotElement];
             for (int dst = 0, k = countSlotElement - 1; k >= 0; k--, dst++)
             {
                 result[dst] = buckets[k];

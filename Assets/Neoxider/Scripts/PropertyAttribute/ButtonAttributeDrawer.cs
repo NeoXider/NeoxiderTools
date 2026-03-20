@@ -24,7 +24,7 @@ namespace Neo
             }
 
             // Get the attribute
-            ButtonAttribute buttonAttribute = (ButtonAttribute)attribute;
+            var buttonAttribute = (ButtonAttribute)attribute;
 
             // Calculate button height
             float buttonHeight = EditorGUIUtility.singleLineHeight;

@@ -53,18 +53,23 @@ namespace Neo.StateMachine.NoCode.Editor
         private void DrawSummary(SerializedProperty stateNameProp, SerializedProperty onEnterProp,
             SerializedProperty onUpdateProp, SerializedProperty onExitProp)
         {
-            string title = string.IsNullOrWhiteSpace(stateNameProp.stringValue) ? target.name : stateNameProp.stringValue;
+            string title = string.IsNullOrWhiteSpace(stateNameProp.stringValue)
+                ? target.name
+                : stateNameProp.stringValue;
 
             NeoxiderEditorGUI.DrawSummaryCard(title,
                 "State asset с группами действий для enter, update и exit. Типы действий уже закешированы и не пересчитываются при каждой отрисовке.",
                 new NeoxiderEditorGUI.Badge($"Enter {onEnterProp.arraySize}", new Color(0.18f, 0.62f, 0.32f, 1f)),
                 new NeoxiderEditorGUI.Badge($"Update {onUpdateProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
                 new NeoxiderEditorGUI.Badge($"Exit {onExitProp.arraySize}", new Color(0.78f, 0.46f, 0.18f, 1f)),
-                new NeoxiderEditorGUI.Badge($"Action Types {actionTypes?.Length ?? 0}", new Color(0.42f, 0.34f, 0.82f, 1f)));
+                new NeoxiderEditorGUI.Badge($"Action Types {actionTypes?.Length ?? 0}",
+                    new Color(0.42f, 0.34f, 0.82f, 1f)));
 
             if (string.IsNullOrWhiteSpace(stateNameProp.stringValue))
             {
-                EditorGUILayout.HelpBox("У состояния пустое имя. Лучше задать осмысленное название, чтобы переходы и debug были читаемыми.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "У состояния пустое имя. Лучше задать осмысленное название, чтобы переходы и debug были читаемыми.",
+                    MessageType.Warning);
             }
 
             EditorGUILayout.Space(4f);
@@ -93,7 +98,8 @@ namespace Neo.StateMachine.NoCode.Editor
 
             if (listProperty.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Список пуст. Можно оставить так, если этот этап жизненного цикла не нужен.", MessageType.Info);
+                EditorGUILayout.HelpBox("Список пуст. Можно оставить так, если этот этап жизненного цикла не нужен.",
+                    MessageType.Info);
             }
 
             int removeIndex = -1;

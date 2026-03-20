@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using Neo;
 using Neo.Core.Level;
 using Neo.Core.Resources;
 using Neo.Reactive;
@@ -12,7 +10,7 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Main entry point for the persistent RPG stats system (player profile, buffs, status effects).
+    ///     Main entry point for the persistent RPG stats system (player profile, buffs, status effects).
     /// </summary>
     [NeoDoc("Rpg/RpgStatsManager.md")]
     [CreateFromMenu("Neoxider/RPG/RpgStatsManager")]
@@ -24,13 +22,19 @@ namespace Neo.Rpg
 
         [Header("Resources & Level (optional)")]
         [Tooltip("When set, HP/Mana and level are taken from here instead of profile.")]
-        [SerializeField] private HealthComponent _healthProvider;
+        [SerializeField]
+        private HealthComponent _healthProvider;
+
         [SerializeField] private LevelComponent _levelProvider;
 
-        [Header("Definitions")] [SerializeField] private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
+        [Header("Definitions")] [SerializeField]
+        private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
+
         [SerializeField] private StatusEffectDefinition[] _statusDefinitions = Array.Empty<StatusEffectDefinition>();
 
-        [Header("Persistence")] [SerializeField] private string _saveKey = DefaultSaveKey;
+        [Header("Persistence")] [SerializeField]
+        private string _saveKey = DefaultSaveKey;
+
         [SerializeField] private bool _loadOnAwake = true;
         [SerializeField] private bool _autoSave;
 
@@ -50,19 +54,19 @@ namespace Neo.Rpg
         [SerializeField] private RpgStringEvent _onStatusExpired = new();
         [SerializeField] private UnityEvent _onProfileLoaded = new();
         [SerializeField] private UnityEvent _onProfileSaved = new();
-
-        private RpgProfileData _profile = new();
-        private bool _rpgInitialized;
-        private float _regenAccumulator;
         private int _invulnerabilityLocks;
 
+        private RpgProfileData _profile = new();
+        private float _regenAccumulator;
+        private bool _rpgInitialized;
+
         /// <summary>
-        /// Gets a backwards-compatible singleton alias.
+        ///     Gets a backwards-compatible singleton alias.
         /// </summary>
         public static RpgStatsManager Instance => I;
 
         /// <summary>
-        /// Gets or sets the save key used for the persistent profile payload.
+        ///     Gets or sets the save key used for the persistent profile payload.
         /// </summary>
         public string SaveKey
         {
@@ -71,7 +75,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets or sets whether profile changes are written automatically after runtime mutations.
+        ///     Gets or sets whether profile changes are written automatically after runtime mutations.
         /// </summary>
         public bool AutoSave
         {
@@ -80,43 +84,17 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets the current HP (from health provider when set, otherwise profile).
-        /// </summary>
-        public float CurrentHp => _healthProvider != null ? _healthProvider.GetCurrent(RpgResourceId.Hp) : _profile.CurrentHp;
-
-        /// <summary>
-        /// Gets the maximum HP (from health provider when set, otherwise profile).
-        /// </summary>
-        public float MaxHp => _healthProvider != null ? _healthProvider.GetMax(RpgResourceId.Hp) : _profile.MaxHp;
-
-        /// <summary>
-        /// Gets the character level (from level provider when set, otherwise profile).
-        /// </summary>
-        public int Level => _levelProvider != null ? _levelProvider.Level : _profile.Level;
-
-        /// <summary>
-        /// Gets whether the character is dead (HP &lt;= 0).
-        /// </summary>
-        public bool IsDead => _healthProvider != null ? _healthProvider.IsDepleted(RpgResourceId.Hp) : _profile.CurrentHp <= 0f;
-
-        /// <inheritdoc />
-        public bool IsInvulnerable => _invulnerabilityLocks > 0;
-
-        /// <inheritdoc />
-        public bool CanPerformActions => !IsDead && !RpgCombatMath.HasBlockingStatus(_profile.ActiveStatusEffects, ResolveStatusDefinition);
-
-        /// <summary>
-        /// Gets the UnityEvent raised when damage is taken.
+        ///     Gets the UnityEvent raised when damage is taken.
         /// </summary>
         public UnityEventFloat OnDamaged => _onDamaged;
 
         /// <summary>
-        /// Gets the UnityEvent raised when healed.
+        ///     Gets the UnityEvent raised when healed.
         /// </summary>
         public UnityEventFloat OnHealed => _onHealed;
 
         /// <summary>
-        /// Gets the UnityEvent raised when HP reaches zero.
+        ///     Gets the UnityEvent raised when HP reaches zero.
         /// </summary>
         public UnityEvent OnDeath => _onDeath;
 
@@ -130,44 +108,86 @@ namespace Neo.Rpg
         public int LevelStateValue => LevelState.CurrentValue;
 
         /// <summary>
-        /// Gets the UnityEvent raised when a buff is applied.
+        ///     Gets the UnityEvent raised when a buff is applied.
         /// </summary>
         public RpgStringEvent OnBuffApplied => _onBuffApplied;
 
         /// <summary>
-        /// Gets the UnityEvent raised when a buff expires.
+        ///     Gets the UnityEvent raised when a buff expires.
         /// </summary>
         public RpgStringEvent OnBuffExpired => _onBuffExpired;
 
         /// <summary>
-        /// Gets the UnityEvent raised when a status effect is applied.
+        ///     Gets the UnityEvent raised when a status effect is applied.
         /// </summary>
         public RpgStringEvent OnStatusApplied => _onStatusApplied;
 
         /// <summary>
-        /// Gets the UnityEvent raised when a status effect expires.
+        ///     Gets the UnityEvent raised when a status effect expires.
         /// </summary>
         public RpgStringEvent OnStatusExpired => _onStatusExpired;
 
-        /// <summary>
-        /// Ensures the manager is initialized.
-        /// </summary>
-        public void EnsureInitialized()
+        protected override bool DontDestroyOnLoadEnabled => true;
+
+        private void Update()
         {
-            if (!_rpgInitialized)
+            if (!_rpgInitialized || IsDead)
             {
-                Init();
+                return;
+            }
+
+            _regenAccumulator += Time.deltaTime;
+            if (_regenAccumulator >= _regenInterval)
+            {
+                float totalRegen =
+                    RpgCombatMath.GetRegenPerSecond(_hpRegenPerSecond, _profile.ActiveBuffs, ResolveBuffDefinition) *
+                    _regenAccumulator;
+                if (totalRegen > 0f)
+                {
+                    Heal(totalRegen);
+                }
+
+                ProcessStatusTickDamage(_regenAccumulator);
+                ExpireBuffsAndStatuses();
+                _regenAccumulator = 0f;
             }
         }
 
-        /// <summary>
-        /// Returns a deep copy of the current profile.
-        /// </summary>
-        public RpgProfileData GetProfileSnapshot()
+        private void OnValidate()
         {
-            EnsureInitialized();
-            return _profile.Clone();
+            _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
         }
+
+        /// <summary>
+        ///     Gets the current HP (from health provider when set, otherwise profile).
+        /// </summary>
+        public float CurrentHp =>
+            _healthProvider != null ? _healthProvider.GetCurrent(RpgResourceId.Hp) : _profile.CurrentHp;
+
+        /// <summary>
+        ///     Gets the maximum HP (from health provider when set, otherwise profile).
+        /// </summary>
+        public float MaxHp => _healthProvider != null ? _healthProvider.GetMax(RpgResourceId.Hp) : _profile.MaxHp;
+
+        /// <summary>
+        ///     Gets the character level (from level provider when set, otherwise profile).
+        /// </summary>
+        public int Level => _levelProvider != null ? _levelProvider.Level : _profile.Level;
+
+        /// <summary>
+        ///     Gets whether the character is dead (HP &lt;= 0).
+        /// </summary>
+        public bool IsDead => _healthProvider != null
+            ? _healthProvider.IsDepleted(RpgResourceId.Hp)
+            : _profile.CurrentHp <= 0f;
+
+        /// <inheritdoc />
+        public bool IsInvulnerable => _invulnerabilityLocks > 0;
+
+        /// <inheritdoc />
+        public bool CanPerformActions => !IsDead &&
+                                         !RpgCombatMath.HasBlockingStatus(_profile.ActiveStatusEffects,
+                                             ResolveStatusDefinition);
 
         /// <inheritdoc />
         public float GetOutgoingDamageMultiplier()
@@ -180,7 +200,8 @@ namespace Neo.Rpg
         public float GetMovementSpeedMultiplier()
         {
             EnsureInitialized();
-            return RpgCombatMath.GetMovementSpeedMultiplier(_profile.ActiveBuffs, _profile.ActiveStatusEffects, ResolveBuffDefinition, ResolveStatusDefinition);
+            return RpgCombatMath.GetMovementSpeedMultiplier(_profile.ActiveBuffs, _profile.ActiveStatusEffects,
+                ResolveBuffDefinition, ResolveStatusDefinition);
         }
 
         /// <inheritdoc />
@@ -200,7 +221,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Applies damage to the character.
+        ///     Applies damage to the character.
         /// </summary>
         /// <param name="amount">Damage amount (positive value).</param>
         /// <returns>Actual damage dealt after modifiers.</returns>
@@ -214,7 +235,8 @@ namespace Neo.Rpg
 
             if (_healthProvider != null)
             {
-                float multiplier = RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition);
+                float multiplier =
+                    RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition);
                 float actualDamage = _healthProvider.Decrease(RpgResourceId.Hp, amount * multiplier);
                 PersistAndNotify();
                 _onDamaged?.Invoke(actualDamage);
@@ -226,7 +248,10 @@ namespace Neo.Rpg
                 return actualDamage;
             }
 
-            float actualDamageProfile = Mathf.Min(amount * RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition), _profile.CurrentHp);
+            float actualDamageProfile =
+                Mathf.Min(
+                    amount * RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition),
+                    _profile.CurrentHp);
             _profile.CurrentHp -= actualDamageProfile;
             PersistAndNotify();
             _onDamaged?.Invoke(actualDamageProfile);
@@ -252,7 +277,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Heals the character.
+        ///     Heals the character.
         /// </summary>
         /// <param name="amount">Heal amount (positive value).</param>
         /// <returns>Actual amount healed.</returns>
@@ -289,46 +314,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Sets the maximum HP and optionally clamps current HP.
-        /// </summary>
-        public void SetMaxHp(float maxHp, bool clampCurrent = true)
-        {
-            EnsureInitialized();
-            if (_healthProvider != null)
-            {
-                _healthProvider.SetMax(RpgResourceId.Hp, Mathf.Max(1f, maxHp));
-                PersistAndNotify();
-                return;
-            }
-
-            _profile.MaxHp = Mathf.Max(1f, maxHp);
-            if (clampCurrent)
-            {
-                _profile.CurrentHp = Mathf.Min(_profile.CurrentHp, _profile.MaxHp);
-            }
-
-            PersistAndNotify();
-        }
-
-        /// <summary>
-        /// Sets the character level.
-        /// </summary>
-        public void SetLevel(int level)
-        {
-            EnsureInitialized();
-            if (_levelProvider != null)
-            {
-                _levelProvider.SetLevel(Mathf.Max(1, level));
-                PersistAndNotify();
-                return;
-            }
-
-            _profile.Level = Mathf.Max(1, level);
-            PersistAndNotify();
-        }
-
-        /// <summary>
-        /// Applies a buff by definition or id.
+        ///     Applies a buff by definition or id.
         /// </summary>
         public bool TryApplyBuff(string buffId, out string failReason)
         {
@@ -375,7 +361,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Applies a status effect by definition or id.
+        ///     Applies a status effect by definition or id.
         /// </summary>
         public bool TryApplyStatus(string statusId, out string failReason)
         {
@@ -419,7 +405,66 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Removes a buff by id.
+        ///     Ensures the manager is initialized.
+        /// </summary>
+        public void EnsureInitialized()
+        {
+            if (!_rpgInitialized)
+            {
+                Init();
+            }
+        }
+
+        /// <summary>
+        ///     Returns a deep copy of the current profile.
+        /// </summary>
+        public RpgProfileData GetProfileSnapshot()
+        {
+            EnsureInitialized();
+            return _profile.Clone();
+        }
+
+        /// <summary>
+        ///     Sets the maximum HP and optionally clamps current HP.
+        /// </summary>
+        public void SetMaxHp(float maxHp, bool clampCurrent = true)
+        {
+            EnsureInitialized();
+            if (_healthProvider != null)
+            {
+                _healthProvider.SetMax(RpgResourceId.Hp, Mathf.Max(1f, maxHp));
+                PersistAndNotify();
+                return;
+            }
+
+            _profile.MaxHp = Mathf.Max(1f, maxHp);
+            if (clampCurrent)
+            {
+                _profile.CurrentHp = Mathf.Min(_profile.CurrentHp, _profile.MaxHp);
+            }
+
+            PersistAndNotify();
+        }
+
+        /// <summary>
+        ///     Sets the character level.
+        /// </summary>
+        public void SetLevel(int level)
+        {
+            EnsureInitialized();
+            if (_levelProvider != null)
+            {
+                _levelProvider.SetLevel(Mathf.Max(1, level));
+                PersistAndNotify();
+                return;
+            }
+
+            _profile.Level = Mathf.Max(1, level);
+            PersistAndNotify();
+        }
+
+        /// <summary>
+        ///     Removes a buff by id.
         /// </summary>
         public void RemoveBuff(string buffId)
         {
@@ -437,7 +482,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Removes a status effect by id.
+        ///     Removes a status effect by id.
         /// </summary>
         public void RemoveStatus(string statusId)
         {
@@ -455,7 +500,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Returns true when the character has the specified buff active.
+        ///     Returns true when the character has the specified buff active.
         /// </summary>
         public bool HasBuff(string buffId)
         {
@@ -464,7 +509,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Returns true when the character has the specified status effect active.
+        ///     Returns true when the character has the specified status effect active.
         /// </summary>
         public bool HasStatus(string statusId)
         {
@@ -473,7 +518,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Loads the profile from the active save provider.
+        ///     Loads the profile from the active save provider.
         /// </summary>
         [Button]
         public void LoadProfile()
@@ -483,7 +528,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Saves the profile through the active save provider.
+        ///     Saves the profile through the active save provider.
         /// </summary>
         [Button]
         public void SaveProfile()
@@ -492,7 +537,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Saves the profile and optionally flushes the active save provider.
+        ///     Saves the profile and optionally flushes the active save provider.
         /// </summary>
         public void SaveProfile(bool flushToProvider)
         {
@@ -510,7 +555,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Resets the profile to defaults.
+        ///     Resets the profile to defaults.
         /// </summary>
         [Button]
         public void ResetProfile()
@@ -520,8 +565,6 @@ namespace Neo.Rpg
             ApplyProfile(_profile, true);
             SaveProfile();
         }
-
-        protected override bool DontDestroyOnLoadEnabled => true;
 
         protected override void Init()
         {
@@ -543,33 +586,6 @@ namespace Neo.Rpg
             }
         }
 
-        private void Update()
-        {
-            if (!_rpgInitialized || IsDead)
-            {
-                return;
-            }
-
-            _regenAccumulator += Time.deltaTime;
-            if (_regenAccumulator >= _regenInterval)
-            {
-                float totalRegen = RpgCombatMath.GetRegenPerSecond(_hpRegenPerSecond, _profile.ActiveBuffs, ResolveBuffDefinition) * _regenAccumulator;
-                if (totalRegen > 0f)
-                {
-                    Heal(totalRegen);
-                }
-
-                ProcessStatusTickDamage(_regenAccumulator);
-                ExpireBuffsAndStatuses();
-                _regenAccumulator = 0f;
-            }
-        }
-
-        private void OnValidate()
-        {
-            _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
-        }
-
         private void LoadProfileInternal(bool invokeEvents)
         {
             SaveProvider.Load();
@@ -583,7 +599,8 @@ namespace Neo.Rpg
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogWarning($"[RpgStatsManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
+                    Debug.LogWarning(
+                        $"[RpgStatsManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
                 }
             }
 
@@ -649,10 +666,15 @@ namespace Neo.Rpg
 
         private BuffDefinition ResolveBuffDefinition(string buffId)
         {
-            if (string.IsNullOrWhiteSpace(buffId)) return null;
+            if (string.IsNullOrWhiteSpace(buffId))
+            {
+                return null;
+            }
+
             for (int i = 0; i < _buffDefinitions.Length; i++)
             {
-                if (_buffDefinitions[i] != null && string.Equals(_buffDefinitions[i].Id, buffId, StringComparison.Ordinal))
+                if (_buffDefinitions[i] != null &&
+                    string.Equals(_buffDefinitions[i].Id, buffId, StringComparison.Ordinal))
                 {
                     return _buffDefinitions[i];
                 }
@@ -663,10 +685,15 @@ namespace Neo.Rpg
 
         private StatusEffectDefinition ResolveStatusDefinition(string statusId)
         {
-            if (string.IsNullOrWhiteSpace(statusId)) return null;
+            if (string.IsNullOrWhiteSpace(statusId))
+            {
+                return null;
+            }
+
             for (int i = 0; i < _statusDefinitions.Length; i++)
             {
-                if (_statusDefinitions[i] != null && string.Equals(_statusDefinitions[i].Id, statusId, StringComparison.Ordinal))
+                if (_statusDefinitions[i] != null &&
+                    string.Equals(_statusDefinitions[i].Id, statusId, StringComparison.Ordinal))
                 {
                     return _statusDefinitions[i];
                 }
@@ -713,15 +740,29 @@ namespace Neo.Rpg
 
         private void RefreshRuntimeState(bool invokeEvents)
         {
-            if (HpState == null) HpState = new ReactivePropertyFloat(CurrentHp);
-            if (HpPercentState == null) HpPercentState = new ReactivePropertyFloat(MaxHp > 0f ? CurrentHp / MaxHp : 0f);
-            if (LevelState == null) LevelState = new ReactivePropertyInt(Level);
+            if (HpState == null)
+            {
+                HpState = new ReactivePropertyFloat(CurrentHp);
+            }
+
+            if (HpPercentState == null)
+            {
+                HpPercentState = new ReactivePropertyFloat(MaxHp > 0f ? CurrentHp / MaxHp : 0f);
+            }
+
+            if (LevelState == null)
+            {
+                LevelState = new ReactivePropertyInt(Level);
+            }
 
             HpState.SetValueWithoutNotify(CurrentHp);
             HpPercentState.SetValueWithoutNotify(MaxHp > 0f ? CurrentHp / MaxHp : 0f);
             LevelState.SetValueWithoutNotify(Level);
 
-            if (!invokeEvents) return;
+            if (!invokeEvents)
+            {
+                return;
+            }
 
             HpState.ForceNotify();
             HpPercentState.ForceNotify();

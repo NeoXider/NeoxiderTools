@@ -1,11 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
-using NUnit.Framework;
 using Neo.Core.Level;
-using Neo.Progression;
 using Neo.Save;
+using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Progression.Tests
 {
@@ -24,7 +24,8 @@ namespace Neo.Progression.Tests
                 CreateLevel(3, 250, 1));
 
             // Core curve for LevelComponent: Linear 100 XP/level so 120 XP => level 2
-            Neo.Core.Level.LevelCurveDefinition coreCurve = ScriptableObject.CreateInstance<Neo.Core.Level.LevelCurveDefinition>();
+            Core.Level.LevelCurveDefinition coreCurve =
+                ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
             coreCurve.SetLinear(100);
 
             GameObject managerObject = new("ProgressionManager");
@@ -43,19 +44,22 @@ namespace Neo.Progression.Tests
                 manager.AddXp(120);
 
                 Assert.That(manager.TotalXp, Is.EqualTo(120));
-                Assert.That(manager.CurrentLevel, Is.GreaterThanOrEqualTo(2), "Level from Core curve (Linear 100 XP/level)");
-                Assert.That(manager.AvailablePerkPoints, Is.GreaterThanOrEqualTo(2), "Perk points from Progression curve level-up");
+                Assert.That(manager.CurrentLevel, Is.GreaterThanOrEqualTo(2),
+                    "Level from Core curve (Linear 100 XP/level)");
+                Assert.That(manager.AvailablePerkPoints, Is.GreaterThanOrEqualTo(2),
+                    "Perk points from Progression curve level-up");
             }
             finally
             {
                 ProgressionManager.DestroyInstance();
                 if (levelCurve != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(levelCurve);
+                    Object.DestroyImmediate(levelCurve);
                 }
+
                 if (coreCurve != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(coreCurve);
+                    Object.DestroyImmediate(coreCurve);
                 }
             }
         }
@@ -116,7 +120,8 @@ namespace Neo.Progression.Tests
                     Assert.That(secondManager.CurrentLevel, Is.EqualTo(2));
                     Assert.That(secondManager.HasUnlockedNode("starter-node"), Is.True);
                     Assert.That(secondManager.HasPurchasedPerk("starter-perk"), Is.True);
-                    Assert.That(secondManager.AvailablePerkPoints, Is.InRange(0, 1), "After buying 1 perk: 0 or 1 remaining (profile save/load)");
+                    Assert.That(secondManager.AvailablePerkPoints, Is.InRange(0, 1),
+                        "After buying 1 perk: 0 or 1 remaining (profile save/load)");
                 }
                 finally
                 {
@@ -127,17 +132,17 @@ namespace Neo.Progression.Tests
             {
                 if (levelCurve != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(levelCurve);
+                    Object.DestroyImmediate(levelCurve);
                 }
 
                 if (unlockTree != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(unlockTree);
+                    Object.DestroyImmediate(unlockTree);
                 }
 
                 if (perkTree != null)
                 {
-                    UnityEngine.Object.DestroyImmediate(perkTree);
+                    Object.DestroyImmediate(perkTree);
                 }
             }
         }
@@ -186,7 +191,8 @@ namespace Neo.Progression.Tests
             return definition;
         }
 
-        private static PerkDefinition CreatePerk(string id, int cost, int requiredLevel, IReadOnlyList<string> requiredUnlockNodes)
+        private static PerkDefinition CreatePerk(string id, int cost, int requiredLevel,
+            IReadOnlyList<string> requiredUnlockNodes)
         {
             PerkDefinition definition = new();
             SetPrivateField(definition, "_id", id);
@@ -203,7 +209,8 @@ namespace Neo.Progression.Tests
         private static object CreateEmptyPrivateList(object target, string fieldName)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(fieldInfo, Is.Not.Null, $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
+            Assert.That(fieldInfo, Is.Not.Null,
+                $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
 
             Type fieldType = fieldInfo.FieldType;
             object list = Activator.CreateInstance(fieldType);
@@ -214,7 +221,8 @@ namespace Neo.Progression.Tests
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.That(fieldInfo, Is.Not.Null, $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
+            Assert.That(fieldInfo, Is.Not.Null,
+                $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
             fieldInfo.SetValue(target, value);
         }
 
@@ -240,7 +248,9 @@ namespace Neo.Progression.Tests
 
             public float GetFloat(string key, float defaultValue = 0f)
             {
-                return _values.TryGetValue(key, out object value) && value is float floatValue ? floatValue : defaultValue;
+                return _values.TryGetValue(key, out object value) && value is float floatValue
+                    ? floatValue
+                    : defaultValue;
             }
 
             public void SetFloat(string key, float value)
@@ -251,7 +261,9 @@ namespace Neo.Progression.Tests
 
             public string GetString(string key, string defaultValue = "")
             {
-                return _values.TryGetValue(key, out object value) && value is string stringValue ? stringValue : defaultValue;
+                return _values.TryGetValue(key, out object value) && value is string stringValue
+                    ? stringValue
+                    : defaultValue;
             }
 
             public void SetString(string key, string value)

@@ -19,15 +19,15 @@ namespace Neo.Editor.Progression
         {
             serializedObject.Update();
 
-            PerkTreeDefinition definition = (PerkTreeDefinition)target;
+            var definition = (PerkTreeDefinition)target;
             SerializedProperty perksProperty = serializedObject.FindProperty("_perks");
             IReadOnlyList<string> issues = definition.ValidateDefinition();
             int perkCount = perksProperty != null ? perksProperty.arraySize : 0;
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
-                new($"Perks {perkCount}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new(issues.Count == 0 ? "Validated" : "Needs Review",
+                new NeoxiderEditorGUI.Badge($"Perks {perkCount}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge(issues.Count == 0 ? "Validated" : "Needs Review",
                     issues.Count == 0 ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.78f, 0.46f, 0.18f, 1f))
             };
 

@@ -1,5 +1,5 @@
-using NUnit.Framework;
 using Neo.NPC.Combat;
+using NUnit.Framework;
 
 namespace Neo.NPC.Tests
 {

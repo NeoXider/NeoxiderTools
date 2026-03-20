@@ -20,7 +20,7 @@ namespace Neo
         /// <param name="label">The label to show on the property</param>
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            RequireInterface requireInterface = attribute as RequireInterface;
+            var requireInterface = attribute as RequireInterface;
             Type requireType = requireInterface.RequireType;
 
             // Validate property type and interface

@@ -60,7 +60,7 @@ namespace Neo.Editor
 
         private static void AssignResource(FieldInfo field, MonoBehaviour targetObject)
         {
-            LoadFromResourcesAttribute attribute = field.GetCustomAttributes(typeof(LoadFromResourcesAttribute), false)
+            var attribute = field.GetCustomAttributes(typeof(LoadFromResourcesAttribute), false)
                 .FirstOrDefault() as LoadFromResourcesAttribute;
             if (attribute == null)
             {
@@ -96,7 +96,7 @@ namespace Neo.Editor
 
         private static void AssignAllResources(FieldInfo field, MonoBehaviour targetObject)
         {
-            LoadAllFromResourcesAttribute attribute = field
+            var attribute = field
                 .GetCustomAttributes(typeof(LoadAllFromResourcesAttribute), false)
                 .FirstOrDefault() as LoadAllFromResourcesAttribute;
             if (attribute == null)
@@ -123,7 +123,7 @@ namespace Neo.Editor
 
             if (resources != null && resources.Length > 0)
             {
-                Array typedArray = Array.CreateInstance(elementType, resources.Length);
+                var typedArray = Array.CreateInstance(elementType, resources.Length);
                 Array.Copy(resources, typedArray, resources.Length);
 
                 SetFieldValueForCollection(field, targetObject, typedArray);
@@ -139,7 +139,7 @@ namespace Neo.Editor
             }
             else if (typeof(IList).IsAssignableFrom(field.FieldType))
             {
-                List<object> list = value.Cast<object>().ToList();
+                var list = value.Cast<object>().ToList();
                 field.SetValue(targetObject, list);
             }
             else if (value.Length > 0)

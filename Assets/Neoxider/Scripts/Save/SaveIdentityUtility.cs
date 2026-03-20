@@ -5,12 +5,12 @@ using UnityEngine.SceneManagement;
 namespace Neo.Save
 {
     /// <summary>
-    /// Builds stable save identities for scene components.
+    ///     Builds stable save identities for scene components.
     /// </summary>
     public static class SaveIdentityUtility
     {
         /// <summary>
-        /// Builds a full save key for the specified component, including the component type.
+        ///     Builds a full save key for the specified component, including the component type.
         /// </summary>
         /// <param name="monoBehaviour">Target component.</param>
         /// <returns>A stable component key, or an empty string when the component is null.</returns>
@@ -25,11 +25,11 @@ namespace Neo.Save
         }
 
         /// <summary>
-        /// Resolves the stable identity for the specified component.
+        ///     Resolves the stable identity for the specified component.
         /// </summary>
         /// <param name="monoBehaviour">Target component.</param>
         /// <returns>
-        /// A custom identity from <see cref="ISaveIdentityProvider"/> when available; otherwise a scene-based identity.
+        ///     A custom identity from <see cref="ISaveIdentityProvider" /> when available; otherwise a scene-based identity.
         /// </returns>
         public static string GetStableIdentity(MonoBehaviour monoBehaviour)
         {

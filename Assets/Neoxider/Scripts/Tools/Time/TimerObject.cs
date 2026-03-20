@@ -140,12 +140,14 @@ namespace Neo.Tools
         public UnityEvent<float> OnMilestoneReached;
 
         [Header("Day Time (00:00–24:00)")]
-        [Tooltip("When > 0, timer acts as day cycle: time wraps at this value (e.g. 86400 = 24h). DayTimeHours/Minutes/Seconds and OnNewDay/OnDayTimeChanged apply. Set to 0 to disable.")]
+        [Tooltip(
+            "When > 0, timer acts as day cycle: time wraps at this value (e.g. 86400 = 24h). DayTimeHours/Minutes/Seconds and OnNewDay/OnDayTimeChanged apply. Set to 0 to disable.")]
         [Min(0f)]
         [SerializeField]
         private float _dayLengthSeconds;
 
-        [Tooltip("Format for day time display when day length > 0. {0}=hours, {1}=minutes, {2}=seconds (e.g. \"{0:00}:{1:00}\" for HH:mm)")]
+        [Tooltip(
+            "Format for day time display when day length > 0. {0}=hours, {1}=minutes, {2}=seconds (e.g. \"{0:00}:{1:00}\" for HH:mm)")]
         [SerializeField]
         private string _dayTimeFormat = "{0:00}:{1:00}";
 
@@ -183,7 +185,8 @@ namespace Neo.Tools
         private Vector3 originalScale;
 
         /// <summary>
-        ///     Day cycle length in seconds (0 = disabled). When > 0, time wraps at this value and DayTime* / OnNewDay / OnDayTimeChanged apply.
+        ///     Day cycle length in seconds (0 = disabled). When > 0, time wraps at this value and DayTime* / OnNewDay /
+        ///     OnDayTimeChanged apply.
         /// </summary>
         public float dayLengthSeconds => _dayLengthSeconds;
 
@@ -195,23 +198,31 @@ namespace Neo.Tools
         /// <summary>
         ///     Current time of day hours (0–24) when dayLengthSeconds > 0; otherwise 0.
         /// </summary>
-        public float DayTimeHours => _dayLengthSeconds > 0 ? (GetDayTimeSeconds() / 3600f) : 0f;
+        public float DayTimeHours => _dayLengthSeconds > 0 ? GetDayTimeSeconds() / 3600f : 0f;
 
         /// <summary>
         ///     Current time of day minutes (0–59) when dayLengthSeconds > 0; otherwise 0.
         /// </summary>
-        public float DayTimeMinutes => _dayLengthSeconds > 0 ? ((GetDayTimeSeconds() % 3600f) / 60f) : 0f;
+        public float DayTimeMinutes => _dayLengthSeconds > 0 ? GetDayTimeSeconds() % 3600f / 60f : 0f;
 
         /// <summary>
         ///     Current time of day seconds (0–59) when dayLengthSeconds > 0; otherwise 0.
         /// </summary>
-        public float DayTimeSeconds => _dayLengthSeconds > 0 ? (GetDayTimeSeconds() % 60f) : 0f;
+        public float DayTimeSeconds => _dayLengthSeconds > 0 ? GetDayTimeSeconds() % 60f : 0f;
 
         private float GetDayTimeSeconds()
         {
-            if (_dayLengthSeconds <= 0f) return 0f;
+            if (_dayLengthSeconds <= 0f)
+            {
+                return 0f;
+            }
+
             float t = currentTime % _dayLengthSeconds;
-            if (t < 0f) t += _dayLengthSeconds;
+            if (t < 0f)
+            {
+                t += _dayLengthSeconds;
+            }
+
             return t;
         }
 
@@ -295,7 +306,10 @@ namespace Neo.Tools
             if (_dayLengthSeconds > 0f)
             {
                 currentTime = currentTime % _dayLengthSeconds;
-                if (currentTime < 0f) currentTime += _dayLengthSeconds;
+                if (currentTime < 0f)
+                {
+                    currentTime += _dayLengthSeconds;
+                }
             }
 
             if (saveProgress && !string.IsNullOrEmpty(GetSaveKey()))
@@ -370,6 +384,7 @@ namespace Neo.Tools
             {
                 timeToSave = GetDayTimeSeconds();
             }
+
             if (saveMode == TimerSaveMode.Seconds)
             {
                 SaveProvider.SetFloat(key + "_t", timeToSave);
@@ -441,7 +456,10 @@ namespace Neo.Tools
                 if (_dayLengthSeconds > 0f)
                 {
                     currentTime = currentTime % _dayLengthSeconds;
-                    if (currentTime < 0f) currentTime += _dayLengthSeconds;
+                    if (currentTime < 0f)
+                    {
+                        currentTime += _dayLengthSeconds;
+                    }
                 }
                 else if (!infiniteDuration)
                 {
@@ -612,6 +630,7 @@ namespace Neo.Tools
                 {
                     InvokeDayTimeChanged();
                 }
+
                 UpdateUI(timeValue: timeValueInfinite);
                 return;
             }
@@ -876,12 +895,16 @@ namespace Neo.Tools
             if (_dayLengthSeconds > 0f)
             {
                 currentTime = time % _dayLengthSeconds;
-                if (currentTime < 0f) currentTime += _dayLengthSeconds;
+                if (currentTime < 0f)
+                {
+                    currentTime += _dayLengthSeconds;
+                }
             }
             else
             {
                 currentTime = Mathf.Clamp(time, 0f, duration);
             }
+
             lastProgress = -1f; // Сбрасываем для принудительного обновления
             InvokeEvents();
         }

@@ -157,7 +157,7 @@ namespace Neo.Editor
 
                 string apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases/latest";
 
-                UnityWebRequest request = UnityWebRequest.Get(apiUrl);
+                var request = UnityWebRequest.Get(apiUrl);
                 request.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 request.SetRequestHeader("Accept", "application/vnd.github+json");
 
@@ -217,7 +217,7 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=30";
                 string updateUrl = repoWebUrl;
 
-                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 
@@ -427,7 +427,7 @@ namespace Neo.Editor
                 string tagsApiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=100";
                 string updateUrl = repoWebUrl;
 
-                UnityWebRequest tagsRequest = UnityWebRequest.Get(tagsApiUrl);
+                var tagsRequest = UnityWebRequest.Get(tagsApiUrl);
                 tagsRequest.SetRequestHeader("User-Agent", "NeoxiderTools-UnityEditor");
                 tagsRequest.SetRequestHeader("Accept", "application/vnd.github+json");
 

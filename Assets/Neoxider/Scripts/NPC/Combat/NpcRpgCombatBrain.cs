@@ -1,4 +1,3 @@
-using Neo;
 using Neo.Rpg;
 using UnityEngine;
 using UnityEngine.Events;
@@ -6,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.NPC.Combat
 {
     /// <summary>
-    /// Modular NPC combat brain that combines navigation, target selection, and RPG attack presets.
+    ///     Modular NPC combat brain that combines navigation, target selection, and RPG attack presets.
     /// </summary>
     [DisallowMultipleComponent]
     [NeoDoc("NPC/Combat/NpcRpgCombatBrain.md")]
@@ -14,8 +13,8 @@ namespace Neo.NPC.Combat
     [AddComponentMenu("Neoxider/NPC/Combat/" + nameof(NpcRpgCombatBrain))]
     public sealed class NpcRpgCombatBrain : MonoBehaviour
     {
-        [Header("Setup")]
-        [SerializeField] private bool _isActive = true;
+        [Header("Setup")] [SerializeField] private bool _isActive = true;
+
         [SerializeField] private NpcCombatPreset _preset;
         [SerializeField] private NpcNavigation _navigation;
         [SerializeField] private RpgTargetSelector _targetSelector;
@@ -24,14 +23,14 @@ namespace Neo.NPC.Combat
         [SerializeField] private RpgStatsManager _profileSource;
         [SerializeField] private Transform _lookOrigin;
 
-        [Header("Behaviour")]
-        [SerializeField] private bool _autoAcquireTarget = true;
+        [Header("Behaviour")] [SerializeField] private bool _autoAcquireTarget = true;
+
         [SerializeField] private bool _disableAttackControllerInput = true;
         [SerializeField] private bool _clearTargetOnDisable = true;
         [SerializeField] [Min(0.05f)] private float _decisionInterval = 0.15f;
 
-        [Header("Events")]
-        [SerializeField] private RpgGameObjectEvent _onTargetAcquired = new();
+        [Header("Events")] [SerializeField] private RpgGameObjectEvent _onTargetAcquired = new();
+
         [SerializeField] private RpgGameObjectEvent _onTargetLost = new();
         [SerializeField] private UnityEvent _onChaseStarted = new();
         [SerializeField] private UnityEvent _onHoldingPosition = new();
@@ -39,22 +38,22 @@ namespace Neo.NPC.Combat
         [SerializeField] private RpgStringEvent _onAttackFailed = new();
         [SerializeField] private RpgStringEvent _onDecisionChanged = new();
 
-        [Header("Debug")]
-        [SerializeField] private bool _debugMode;
+        [Header("Debug")] [SerializeField] private bool _debugMode;
+
         [SerializeField] [TextArea(2, 6)] private string _lastDecision;
+        private NpcNavigation.NavigationMode _capturedNavigationMode;
+        private bool _navigationModeCaptured;
 
         private float _nextDecisionTime;
-        private bool _navigationModeCaptured;
-        private NpcNavigation.NavigationMode _capturedNavigationMode;
         private NpcCombatDecisionCore.Decision? _previousDecision;
 
         /// <summary>
-        /// Gets the current combat target.
+        ///     Gets the current combat target.
         /// </summary>
         public GameObject CurrentTarget => _targetSelector != null ? _targetSelector.CurrentTarget : null;
 
         /// <summary>
-        /// Gets whether the brain currently has a target.
+        ///     Gets whether the brain currently has a target.
         /// </summary>
         public bool HasTarget => CurrentTarget != null;
 
@@ -102,7 +101,7 @@ namespace Neo.NPC.Combat
         }
 
         /// <summary>
-        /// Resolves missing references from the current GameObject.
+        ///     Resolves missing references from the current GameObject.
         /// </summary>
         [Button]
         public void AutoResolveReferences()
@@ -116,7 +115,7 @@ namespace Neo.NPC.Combat
         }
 
         /// <summary>
-        /// Forces an immediate brain evaluation.
+        ///     Forces an immediate brain evaluation.
         /// </summary>
         [Button]
         public void EvaluateNow()
@@ -125,7 +124,7 @@ namespace Neo.NPC.Combat
         }
 
         /// <summary>
-        /// Selects a target using the attached selector.
+        ///     Selects a target using the attached selector.
         /// </summary>
         [Button]
         public GameObject AcquireTarget()
@@ -142,7 +141,7 @@ namespace Neo.NPC.Combat
         }
 
         /// <summary>
-        /// Clears the combat target and restores navigation if needed.
+        ///     Clears the combat target and restores navigation if needed.
         /// </summary>
         [Button]
         public void ClearCombatTarget()
@@ -158,7 +157,7 @@ namespace Neo.NPC.Combat
         }
 
         /// <summary>
-        /// Tries to execute the configured attack preset against the current target.
+        ///     Tries to execute the configured attack preset against the current target.
         /// </summary>
         [Button]
         public bool ForceAttack()
@@ -357,7 +356,8 @@ namespace Neo.NPC.Combat
 
         private void RestoreNavigationModeIfNeeded()
         {
-            if (_navigation == null || !_navigationModeCaptured || _preset == null || !_preset.AutoRestoreNavigationMode)
+            if (_navigation == null || !_navigationModeCaptured || _preset == null ||
+                !_preset.AutoRestoreNavigationMode)
             {
                 return;
             }

@@ -45,7 +45,7 @@ namespace Neo
                     }
 
                     string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                    GameObject obj = GameObject.Find(decoratedName);
+                    var obj = GameObject.Find(decoratedName);
                     if (obj == null)
                     {
                         obj = new GameObject(decoratedName);
@@ -88,7 +88,7 @@ namespace Neo
             foreach (string objectName in hierarchyObjects)
             {
                 string decoratedName = $"{separatorSymbols}{objectName}{separatorSymbols}";
-                GameObject obj = GameObject.Find(decoratedName);
+                var obj = GameObject.Find(decoratedName);
                 if (obj != null)
                 {
                     objectsToSort.Add((obj, obj.transform.GetSiblingIndex()));
@@ -96,7 +96,7 @@ namespace Neo
             }
 
             // Сортируем по имени
-            List<(GameObject obj, int originalIndex)> sortedObjects = objectsToSort
+            var sortedObjects = objectsToSort
                 .OrderBy(x => x.obj.name)
                 .ToList();
 

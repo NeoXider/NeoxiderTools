@@ -14,9 +14,9 @@ namespace Neo.Editor.Tools.Physics
             SerializedObject so = new(target);
             so.Update();
 
-            MagneticField field = (MagneticField)target;
+            var field = (MagneticField)target;
             SerializedProperty modePropLocal = so.FindProperty("mode");
-            MagneticField.FieldMode mode = (MagneticField.FieldMode)modePropLocal.enumValueIndex;
+            var mode = (MagneticField.FieldMode)modePropLocal.enumValueIndex;
 
             switch (mode)
             {

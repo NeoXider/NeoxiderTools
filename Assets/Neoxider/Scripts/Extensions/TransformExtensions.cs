@@ -384,7 +384,7 @@ namespace Neo.Extensions
         /// <returns>An IEnumerator to be used in a coroutine.</returns>
         public static IEnumerator SmoothLookAtRoutine(this Transform transform, Vector3 target, float speed)
         {
-            Quaternion targetRotation = Quaternion.LookRotation(target - transform.position);
+            var targetRotation = Quaternion.LookRotation(target - transform.position);
             while (Quaternion.Angle(transform.rotation, targetRotation) > 0.01f)
             {
                 transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * speed);
@@ -432,7 +432,7 @@ namespace Neo.Extensions
                 return new Transform[0];
             }
 
-            Transform[] children = new Transform[transform.childCount];
+            var children = new Transform[transform.childCount];
             for (int i = 0; i < transform.childCount; i++)
             {
                 children[i] = transform.GetChild(i);

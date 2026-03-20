@@ -59,6 +59,7 @@ namespace Neo.StateMachine.NoCode.Editor
                         "State Machine configuration has errors. Check the console.", "OK");
                 }
             }
+
             NeoxiderEditorGUI.EndSection();
 
             serializedObject.ApplyModifiedProperties();
@@ -78,15 +79,18 @@ namespace Neo.StateMachine.NoCode.Editor
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
-                new($"States {statesProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new($"Transitions {transitionsProp.arraySize}", new Color(0.42f, 0.34f, 0.82f, 1f)),
-                new(initialStateProp.objectReferenceValue != null ? "Initial Set" : "Initial Missing",
+                new NeoxiderEditorGUI.Badge($"States {statesProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
+                new NeoxiderEditorGUI.Badge($"Transitions {transitionsProp.arraySize}",
+                    new Color(0.42f, 0.34f, 0.82f, 1f)),
+                new NeoxiderEditorGUI.Badge(
+                    initialStateProp.objectReferenceValue != null ? "Initial Set" : "Initial Missing",
                     initialStateProp.objectReferenceValue != null
                         ? new Color(0.18f, 0.62f, 0.32f, 1f)
                         : new Color(0.78f, 0.46f, 0.18f, 1f))
             };
 
-            if (!string.IsNullOrEmpty(legacyInitialStateNameProp.stringValue) && initialStateProp.objectReferenceValue == null)
+            if (!string.IsNullOrEmpty(legacyInitialStateNameProp.stringValue) &&
+                initialStateProp.objectReferenceValue == null)
             {
                 badges.Add(new NeoxiderEditorGUI.Badge("Legacy Initial Name", new Color(0.65f, 0.56f, 0.18f, 1f)));
             }
@@ -95,12 +99,15 @@ namespace Neo.StateMachine.NoCode.Editor
 
             if (!isValid)
             {
-                EditorGUILayout.HelpBox("State Machine configuration has errors or missing links. Проверь states, initial state и переходы.", MessageType.Warning);
+                EditorGUILayout.HelpBox(
+                    "State Machine configuration has errors or missing links. Проверь states, initial state и переходы.",
+                    MessageType.Warning);
             }
 
             if (statesProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("States array пустой. Без состояний state machine не сможет стартовать.", MessageType.Info);
+                EditorGUILayout.HelpBox("States array пустой. Без состояний state machine не сможет стартовать.",
+                    MessageType.Info);
             }
 
             EditorGUILayout.Space(4f);
@@ -119,7 +126,8 @@ namespace Neo.StateMachine.NoCode.Editor
             SerializedProperty initialStateProp = serializedObject.FindProperty("initialState");
             SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
 
-            NeoxiderEditorGUI.BeginSection("Initial State", "Предпочтительно использовать ссылку на StateData, а legacy name оставить только для обратной совместимости.");
+            NeoxiderEditorGUI.BeginSection("Initial State",
+                "Предпочтительно использовать ссылку на StateData, а legacy name оставить только для обратной совместимости.");
             EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
 
             if (initialStateProp.objectReferenceValue == null &&
@@ -136,7 +144,8 @@ namespace Neo.StateMachine.NoCode.Editor
         private void DrawTransitionsSection()
         {
             SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
-            NeoxiderEditorGUI.BeginSection("Transitions", "Переходы между состояниями. Здесь важны читаемые имена и валидные ссылки на state assets.");
+            NeoxiderEditorGUI.BeginSection("Transitions",
+                "Переходы между состояниями. Здесь важны читаемые имена и валидные ссылки на state assets.");
             if (transitionsProp == null)
             {
                 EditorGUILayout.HelpBox("Transitions property is missing.", MessageType.Error);

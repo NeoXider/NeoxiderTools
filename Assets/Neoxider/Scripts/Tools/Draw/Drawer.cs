@@ -479,7 +479,7 @@ namespace Neo.Tools
 
         public static void UpdateColliderPoints(EdgeCollider2D col, List<Vector3> src)
         {
-            Vector2[] pts2D = new Vector2[src.Count];
+            var pts2D = new Vector2[src.Count];
             for (int i = 0; i < src.Count; i++)
             {
                 pts2D[i] = src[i];
@@ -563,7 +563,7 @@ namespace Neo.Tools
 
         private Vector2[] GetCurrentLinePositions()
         {
-            Vector2[] pts2D = new Vector2[_currentLR.positionCount];
+            var pts2D = new Vector2[_currentLR.positionCount];
             for (int i = 0; i < _currentLR.positionCount; i++)
             {
                 pts2D[i] = _currentLR.GetPosition(i);

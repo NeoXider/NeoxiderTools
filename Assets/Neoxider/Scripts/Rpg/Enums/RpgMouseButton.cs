@@ -1,7 +1,7 @@
 namespace Neo.Rpg
 {
     /// <summary>
-    /// Mouse button ids used by built-in RPG runtime controls.
+    ///     Mouse button ids used by built-in RPG runtime controls.
     /// </summary>
     public enum RpgMouseButton
     {

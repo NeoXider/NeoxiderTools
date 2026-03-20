@@ -8,47 +8,43 @@ namespace Neo.Core.Level
     /// </summary>
     public sealed class LevelModel
     {
-        private int _totalXp;
-        private int _currentLevel = 1;
-        private int _maxLevel; // 0 = no cap
-        private bool _useXp = true;
         private ILevelCurveDefinition _curveDefinition;
         private LevelCurveType _curveType = LevelCurveType.Linear;
-        private int _xpPerLevel = 100;
-        private float _quadraticBase = 100f;
+        private List<ILevelCurveEntry> _customEntries;
         private float _expBase = 100f;
         private float _expFactor = 1.5f;
-        private List<ILevelCurveEntry> _customEntries;
+        private float _quadraticBase = 100f;
+        private int _xpPerLevel = 100;
 
         /// <summary>Current total XP.</summary>
-        public int TotalXp => _totalXp;
+        public int TotalXp { get; private set; }
 
         /// <summary>Resolved level (from curve or set directly).</summary>
-        public int CurrentLevel => _currentLevel;
+        public int CurrentLevel { get; private set; } = 1;
 
         /// <summary>Maximum level cap (0 = no cap).</summary>
-        public int MaxLevel => _maxLevel;
+        public int MaxLevel { get; private set; }
 
         /// <summary>Whether level is derived from XP (curve).</summary>
-        public bool UseXp => _useXp;
+        public bool UseXp { get; private set; } = true;
 
         /// <summary>Whether a max level is set.</summary>
-        public bool HasMaxLevel => _maxLevel > 0;
+        public bool HasMaxLevel => MaxLevel > 0;
 
         /// <summary>XP required to reach next level (0 if at max or no curve).</summary>
         public int XpToNextLevel { get; private set; }
 
         public event Action<int, int> OnLevelChanged; // previousLevel, newLevel
-        public event Action<int, int> OnXpGained;      // added, newTotal
+        public event Action<int, int> OnXpGained; // added, newTotal
 
         public void SetUseXp(bool useXp)
         {
-            _useXp = useXp;
+            UseXp = useXp;
         }
 
         public void SetMaxLevel(int maxLevel)
         {
-            _maxLevel = maxLevel < 0 ? 0 : maxLevel;
+            MaxLevel = maxLevel < 0 ? 0 : maxLevel;
             RecomputeLevelAndXpToNext();
         }
 
@@ -59,7 +55,8 @@ namespace Neo.Core.Level
             RecomputeLevelAndXpToNext();
         }
 
-        public void SetCurve(LevelCurveType curveType, int xpPerLevel = 100, float quadraticBase = 100f, float expBase = 100f, float expFactor = 1.5f, IReadOnlyList<LevelCurveEntry> customEntries = null)
+        public void SetCurve(LevelCurveType curveType, int xpPerLevel = 100, float quadraticBase = 100f,
+            float expBase = 100f, float expFactor = 1.5f, IReadOnlyList<LevelCurveEntry> customEntries = null)
         {
             _curveDefinition = null;
             _curveType = curveType;
@@ -73,17 +70,17 @@ namespace Neo.Core.Level
 
         public void SetState(int totalXp, int level)
         {
-            _totalXp = totalXp < 0 ? 0 : totalXp;
-            if (_useXp)
+            TotalXp = totalXp < 0 ? 0 : totalXp;
+            if (UseXp)
             {
                 RecomputeLevelAndXpToNext();
             }
             else
             {
-                _currentLevel = level < 1 ? 1 : level;
-                if (_maxLevel > 0 && _currentLevel > _maxLevel)
+                CurrentLevel = level < 1 ? 1 : level;
+                if (MaxLevel > 0 && CurrentLevel > MaxLevel)
                 {
-                    _currentLevel = _maxLevel;
+                    CurrentLevel = MaxLevel;
                 }
 
                 XpToNextLevel = 0;
@@ -97,27 +94,27 @@ namespace Neo.Core.Level
                 return;
             }
 
-            int previousLevel = _currentLevel;
-            _totalXp += amount;
+            int previousLevel = CurrentLevel;
+            TotalXp += amount;
             RecomputeLevelAndXpToNext();
-            OnXpGained?.Invoke(amount, _totalXp);
-            if (_currentLevel != previousLevel)
+            OnXpGained?.Invoke(amount, TotalXp);
+            if (CurrentLevel != previousLevel)
             {
-                OnLevelChanged?.Invoke(previousLevel, _currentLevel);
+                OnLevelChanged?.Invoke(previousLevel, CurrentLevel);
             }
         }
 
         public void SetLevel(int level)
         {
             level = level < 1 ? 1 : level;
-            if (_maxLevel > 0 && level > _maxLevel)
+            if (MaxLevel > 0 && level > MaxLevel)
             {
-                level = _maxLevel;
+                level = MaxLevel;
             }
 
-            int previous = _currentLevel;
-            _currentLevel = level;
-            if (_useXp)
+            int previous = CurrentLevel;
+            CurrentLevel = level;
+            if (UseXp)
             {
                 // Optionally sync totalXp to match level (e.g. set to required for this level)
                 RecomputeLevelAndXpToNext();
@@ -127,63 +124,63 @@ namespace Neo.Core.Level
                 XpToNextLevel = 0;
             }
 
-            if (_currentLevel != previous)
+            if (CurrentLevel != previous)
             {
-                OnLevelChanged?.Invoke(previous, _currentLevel);
+                OnLevelChanged?.Invoke(previous, CurrentLevel);
             }
         }
 
         public void SetLevelDirect(int level)
         {
             level = level < 1 ? 1 : level;
-            if (_maxLevel > 0 && level > _maxLevel)
+            if (MaxLevel > 0 && level > MaxLevel)
             {
-                level = _maxLevel;
+                level = MaxLevel;
             }
 
-            int previous = _currentLevel;
-            _currentLevel = level;
+            int previous = CurrentLevel;
+            CurrentLevel = level;
             XpToNextLevel = 0;
-            if (_currentLevel != previous)
+            if (CurrentLevel != previous)
             {
-                OnLevelChanged?.Invoke(previous, _currentLevel);
+                OnLevelChanged?.Invoke(previous, CurrentLevel);
             }
         }
 
         private void RecomputeLevelAndXpToNext()
         {
-            if (!_useXp)
+            if (!UseXp)
             {
                 return;
             }
 
             if (_curveDefinition != null)
             {
-                _currentLevel = _curveDefinition.EvaluateLevel(_totalXp, _maxLevel);
-                XpToNextLevel = _curveDefinition.GetXpToNextLevel(_totalXp, _maxLevel);
+                CurrentLevel = _curveDefinition.EvaluateLevel(TotalXp, MaxLevel);
+                XpToNextLevel = _curveDefinition.GetXpToNextLevel(TotalXp, MaxLevel);
                 return;
             }
 
             int newLevel = LevelCurveEvaluator.EvaluateLevel(
-                _totalXp,
+                TotalXp,
                 _curveType,
                 _xpPerLevel,
                 _quadraticBase,
                 _expBase,
                 _expFactor,
                 _customEntries,
-                _maxLevel);
+                MaxLevel);
 
-            _currentLevel = newLevel;
+            CurrentLevel = newLevel;
             XpToNextLevel = LevelCurveEvaluator.GetXpToNextLevel(
-                _totalXp,
+                TotalXp,
                 _curveType,
                 _xpPerLevel,
                 _quadraticBase,
                 _expBase,
                 _expFactor,
                 _customEntries,
-                _maxLevel);
+                MaxLevel);
         }
     }
 }

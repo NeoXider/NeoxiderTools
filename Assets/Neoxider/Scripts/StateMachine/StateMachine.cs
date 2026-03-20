@@ -391,7 +391,7 @@ namespace Neo.StateMachine
 
             try
             {
-                TState newState = Activator.CreateInstance(stateType) as TState;
+                var newState = Activator.CreateInstance(stateType) as TState;
                 if (newState != null)
                 {
                     if (enableStateCaching)
