@@ -117,18 +117,18 @@ namespace Neo.Tools
         private readonly bool[] mouseButtonsPressedOnObject = new bool[3];
 
         private Camera cachedCamera;
-        private Collider cachedCollider3D;
         private Collider2D cachedCollider2D;
+        private Collider cachedCollider3D;
         private float clickTime;
         private Vector3 currentMouseHitPoint;
         private bool hasCurrentMouseHit;
         private bool keyHeldPrev;
         private Color lastDebugRayColor = Color.cyan;
-        private PointerEventData.InputButton lastProcessedClickButton;
-        private int lastProcessedClickFrame = -1;
         private Vector3 lastDebugRayEnd;
         private Vector3 lastDebugRayStart;
         private float lastDebugRayUntilTime;
+        private PointerEventData.InputButton lastProcessedClickButton;
+        private int lastProcessedClickFrame = -1;
         private bool wasHoveredByRaycast;
         private bool wasInRange;
 
@@ -332,6 +332,7 @@ namespace Neo.Tools
                     wasHoveredByRaycast = false;
                     OnHoverExitRaycast();
                 }
+
                 return;
             }
 
@@ -698,7 +699,7 @@ namespace Neo.Tools
 
         private bool CanMouseInteractAtPoint(Vector3 interactionPoint)
         {
-            return interactionDistance <= 0f && !checkObstacles || IsInRange(interactionPoint);
+            return (interactionDistance <= 0f && !checkObstacles) || IsInRange(interactionPoint);
         }
 
         private void ProcessClick(PointerEventData.InputButton button)
@@ -740,8 +741,8 @@ namespace Neo.Tools
 
         private bool HasEnabledInteractionCollider()
         {
-            return cachedCollider3D != null && cachedCollider3D.enabled ||
-                   cachedCollider2D != null && cachedCollider2D.enabled;
+            return (cachedCollider3D != null && cachedCollider3D.enabled) ||
+                   (cachedCollider2D != null && cachedCollider2D.enabled);
         }
 
         private void RefreshCachedReferences()

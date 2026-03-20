@@ -1,21 +1,21 @@
 {
-  "name": "Neo.StateMachine.Editor",
-  "rootNamespace": "Neo.StateMachine",
-  "references": [
-    "Neo.Editor",
-    "Neo.Tools.Time",
-    "Neo.StateMachine",
-    "Neo.Condition"
-  ],
-  "includePlatforms": [
-    "Editor"
-  ],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Neo.StateMachine.Editor",
+    "rootNamespace": "Neo.StateMachine",
+    "references": [
+        "Neo.Editor",
+        "Neo.Tools.Time",
+        "Neo.StateMachine",
+        "Neo.Condition"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

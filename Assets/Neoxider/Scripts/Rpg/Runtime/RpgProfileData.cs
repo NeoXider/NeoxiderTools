@@ -6,12 +6,14 @@ namespace Neo.Rpg
 {
     internal static class RpgTimeUtility
     {
-        internal static double GetCurrentUnixTimestamp() =>
-            DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        internal static double GetCurrentUnixTimestamp()
+        {
+            return DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
     }
 
     /// <summary>
-    /// Serializable RPG profile payload stored by the stats manager.
+    ///     Serializable RPG profile payload stored by the stats manager.
     /// </summary>
     [Serializable]
     public sealed class ActiveBuffEntry
@@ -35,7 +37,7 @@ namespace Neo.Rpg
     }
 
     /// <summary>
-    /// Serializable active status effect entry.
+    ///     Serializable active status effect entry.
     /// </summary>
     [Serializable]
     public sealed class ActiveStatusEntry
@@ -66,7 +68,7 @@ namespace Neo.Rpg
     }
 
     /// <summary>
-    /// Serializable RPG profile payload stored by the stats manager.
+    ///     Serializable RPG profile payload stored by the stats manager.
     /// </summary>
     [Serializable]
     public sealed class RpgProfileData
@@ -79,7 +81,7 @@ namespace Neo.Rpg
         [SerializeField] private List<ActiveStatusEntry> _activeStatusEffects = new();
 
         /// <summary>
-        /// Gets or sets the serialized profile version.
+        ///     Gets or sets the serialized profile version.
         /// </summary>
         public int Version
         {
@@ -88,7 +90,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets or sets the current HP.
+        ///     Gets or sets the current HP.
         /// </summary>
         public float CurrentHp
         {
@@ -97,7 +99,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets or sets the maximum HP.
+        ///     Gets or sets the maximum HP.
         /// </summary>
         public float MaxHp
         {
@@ -106,7 +108,7 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets or sets the character level.
+        ///     Gets or sets the character level.
         /// </summary>
         public int Level
         {
@@ -115,17 +117,17 @@ namespace Neo.Rpg
         }
 
         /// <summary>
-        /// Gets the list of active buff entries.
+        ///     Gets the list of active buff entries.
         /// </summary>
         public List<ActiveBuffEntry> ActiveBuffs => _activeBuffs;
 
         /// <summary>
-        /// Gets the list of active status effect entries.
+        ///     Gets the list of active status effect entries.
         /// </summary>
         public List<ActiveStatusEntry> ActiveStatusEffects => _activeStatusEffects;
 
         /// <summary>
-        /// Cleans invalid values and removes expired entries.
+        ///     Cleans invalid values and removes expired entries.
         /// </summary>
         public void Sanitize()
         {
@@ -138,26 +140,38 @@ namespace Neo.Rpg
 
         private void RemoveInvalidBuffEntries()
         {
-            if (_activeBuffs == null) return;
+            if (_activeBuffs == null)
+            {
+                return;
+            }
+
             for (int i = _activeBuffs.Count - 1; i >= 0; i--)
             {
                 if (string.IsNullOrWhiteSpace(_activeBuffs[i].BuffId))
+                {
                     _activeBuffs.RemoveAt(i);
+                }
             }
         }
 
         private void RemoveInvalidStatusEntries()
         {
-            if (_activeStatusEffects == null) return;
+            if (_activeStatusEffects == null)
+            {
+                return;
+            }
+
             for (int i = _activeStatusEffects.Count - 1; i >= 0; i--)
             {
                 if (string.IsNullOrWhiteSpace(_activeStatusEffects[i].StatusId))
+                {
                     _activeStatusEffects.RemoveAt(i);
+                }
             }
         }
 
         /// <summary>
-        /// Creates a deep copy of the profile.
+        ///     Creates a deep copy of the profile.
         /// </summary>
         public RpgProfileData Clone()
         {
@@ -190,6 +204,5 @@ namespace Neo.Rpg
 
             return clone;
         }
-
     }
 }

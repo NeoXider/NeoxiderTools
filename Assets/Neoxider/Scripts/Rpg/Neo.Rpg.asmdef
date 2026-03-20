@@ -1,23 +1,23 @@
 {
-  "name": "Neo.Rpg",
-  "rootNamespace": "Neo.Rpg",
-  "references": [
-    "Neo.Core",
-    "Neo.Extensions",
-    "Neo.Tools.Managers",
-    "Neo.Tools.Input",
-    "Neo.Save",
-    "Neo.Reactive",
-    "Neo.Condition",
-    "Neo.PropertyAttribute"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Neo.Rpg",
+    "rootNamespace": "Neo.Rpg",
+    "references": [
+        "Neo.Core",
+        "Neo.Extensions",
+        "Neo.Tools.Managers",
+        "Neo.Tools.Input",
+        "Neo.Save",
+        "Neo.Reactive",
+        "Neo.Condition",
+        "Neo.PropertyAttribute"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

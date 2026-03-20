@@ -1,18 +1,18 @@
 {
-  "name": "Neo.Core",
-  "rootNamespace": "Neo.Core",
-  "references": [
-    "Neo.Condition",
-    "Neo.Reactive",
-    "Neo.Save"
-  ],
-  "includePlatforms": [],
-  "excludePlatforms": [],
-  "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
-  "autoReferenced": true,
-  "defineConstraints": [],
-  "versionDefines": [],
-  "noEngineReferences": false
+    "name": "Neo.Core",
+    "rootNamespace": "Neo.Core",
+    "references": [
+        "Neo.Condition",
+        "Neo.Reactive",
+        "Neo.Save"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }

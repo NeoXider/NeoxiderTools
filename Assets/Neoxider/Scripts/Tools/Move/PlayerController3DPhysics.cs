@@ -86,12 +86,12 @@ namespace Neo.Tools
         private readonly Collider[] _groundHits = new Collider[16];
         private float _coyoteTimer;
         private float _jumpBufferTimer;
+        private bool _legacyInputUnavailableWarningShown;
         private Vector2 _lookInput;
 
         private Vector2 _moveInput;
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
-        private bool _legacyInputUnavailableWarningShown;
         private float _pitch;
         private bool _wasGrounded;
         private bool _wasMoving;
@@ -381,7 +381,7 @@ namespace Neo.Tools
 
             Vector3 currentHorizontalVelocity = new(_rigidbody.velocity.x, 0f, _rigidbody.velocity.z);
             float acceleration = IsGrounded ? _groundAcceleration : _airAcceleration;
-            Vector3 nextHorizontalVelocity =
+            var nextHorizontalVelocity =
                 Vector3.MoveTowards(currentHorizontalVelocity, desiredVelocity, acceleration * deltaTime);
 
             _rigidbody.velocity =
@@ -441,7 +441,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Quaternion yawRotation = Quaternion.Euler(0f, _yaw, 0f);
+            var yawRotation = Quaternion.Euler(0f, _yaw, 0f);
             bool characterRotated = false;
             switch (_lookYawMode)
             {
