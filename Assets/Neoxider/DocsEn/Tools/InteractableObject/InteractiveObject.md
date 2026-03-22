@@ -32,6 +32,9 @@
 - `ignoreDistancePointHierarchyColliders`
 - `checkObstacles`
 - `obstacleLayers`
+- `includeTriggerCollidersInObstacleCheck`
+
+When `checkObstacles` is disabled, obstacle blocking is skipped consistently for both distance validation and keyboard direct-look ray checks.
 
 ### Input bindings
 

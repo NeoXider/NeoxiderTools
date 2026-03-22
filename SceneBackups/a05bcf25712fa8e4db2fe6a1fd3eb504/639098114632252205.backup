@@ -910,7 +910,7 @@ BoxCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -923,7 +923,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 729964216}
-  m_Enabled: 0
+  m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -974,12 +974,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 729964216}
   serializedVersion: 2
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.120000124, y: -0.23000002, z: -0.020000458}
-  m_LocalScale: {x: 3, y: 3, z: 3}
-  m_ConstrainProportionsScale: 1
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 2.51, y: 0.77, z: 14.38}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1556452674}
+  m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &921856732
 GameObject:
@@ -1568,7 +1568,6 @@ MonoBehaviour:
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  includeTriggerCollidersInObstacleCheck: 0
   ignoreDistancePointHierarchyColliders: 1
   downUpMouseButton: 0
   keyboardKey: 101
@@ -1615,7 +1614,7 @@ MonoBehaviour:
   onExitRange:
     m_PersistentCalls:
       m_Calls: []
-  drawInteractionRayForOneSecond: 1
+  drawInteractionRayForOneSecond: 0
   interactionRayDrawDuration: 1
 --- !u!135 &1556452671
 SphereCollider:
@@ -1700,8 +1699,7 @@ Transform:
   m_LocalPosition: {x: 3.73, y: 1, z: 14.38}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 729964220}
+  m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1896393966
@@ -2083,7 +2081,6 @@ MonoBehaviour:
   obstacleLayers:
     serializedVersion: 2
     m_Bits: 4294967295
-  includeTriggerCollidersInObstacleCheck: 0
   ignoreDistancePointHierarchyColliders: 1
   downUpMouseButton: 0
   keyboardKey: 101
@@ -2249,3 +2246,4 @@ SceneRoots:
   - {fileID: 1039673992}
   - {fileID: 74398853}
   - {fileID: 167187389}
+  - {fileID: 729964220}

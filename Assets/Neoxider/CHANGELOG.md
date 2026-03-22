@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.7] - 2026-03-22
+
+### Tools / InteractableObject
+
+- **Obstacle checks** — `InteractiveObject.checkObstacles` now disables obstacle blocking consistently for both distance validation and keyboard direct-look ray checks. When obstacle checks are disabled, interaction no longer remains blocked by `requireDirectLookRay`.
+- **Trigger control** — added `includeTriggerCollidersInObstacleCheck` so obstacle ray checks can optionally include or ignore trigger colliders in both 3D and 2D scenes.
+- **Docs** — updated `Docs/Tools/InteractableObject/InteractiveObject.md` with the new obstacle/trigger behavior.
+
 ## [7.7.6] - 2026-03-22
 
 ### Tools / Inventory

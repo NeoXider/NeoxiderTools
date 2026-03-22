@@ -79,6 +79,10 @@ namespace Neo.Tools
         [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")] [SerializeField]
         private LayerMask obstacleLayers = -1;
 
+        [Tooltip("Include trigger colliders in obstacle ray checks.")]
+        [SerializeField]
+        private bool includeTriggerCollidersInObstacleCheck;
+
         [Tooltip("Ignore colliders from distance check point hierarchy (e.g. player capsule/camera rig).")]
         [SerializeField]
         private bool ignoreDistancePointHierarchyColliders = true;
@@ -205,7 +209,7 @@ namespace Neo.Tools
             Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
             Gizmos.DrawWireSphere(transform.position, interactionDistance);
 
-            if (drawInteractionRayForOneSecond && Time.realtimeSinceStartup <= lastDebugRayUntilTime)
+            if (drawInteractionRayForOneSecond && lastDebugRayUntilTime > 0f)
             {
                 Gizmos.color = lastDebugRayColor;
                 Gizmos.DrawLine(lastDebugRayStart, lastDebugRayEnd);
@@ -462,11 +466,15 @@ namespace Neo.Tools
                 bool has3DCollider = TryGetComponent(out Collider selfCollider3D);
                 bool has2DCollider = TryGetComponent(out Collider2D selfCollider2D);
 
+                QueryTriggerInteraction obstacleTriggerMode = includeTriggerCollidersInObstacleCheck
+                    ? QueryTriggerInteraction.Collide
+                    : QueryTriggerInteraction.Ignore;
+
                 if (has3DCollider)
                 {
                     int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
                         checkDistance,
-                        obstacleLayers, QueryTriggerInteraction.Ignore);
+                        obstacleLayers, obstacleTriggerMode);
                     Collider nearestCollider = null;
                     float nearestDistance = float.MaxValue;
                     for (int i = 0; i < hitCount; i++)
@@ -493,8 +501,13 @@ namespace Neo.Tools
                 {
                     Vector2 origin2D = new(checkPointPos.x, checkPointPos.y);
                     Vector2 direction2D = new(directionNormalized.x, directionNormalized.y);
-                    int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, direction2D, lookHits2D, checkDistance,
-                        obstacleLayers);
+                    ContactFilter2D filter = new()
+                    {
+                        useLayerMask = true,
+                        layerMask = obstacleLayers,
+                        useTriggers = includeTriggerCollidersInObstacleCheck
+                    };
+                    int hitCount2D = Physics2D.Raycast(origin2D, direction2D, filter, lookHits2D, checkDistance);
                     Collider2D nearestCollider2D = null;
                     float nearestDistance2D = float.MaxValue;
                     for (int i = 0; i < hitCount2D; i++)
@@ -521,7 +534,7 @@ namespace Neo.Tools
                 {
                     int hitCount = Physics.RaycastNonAlloc(checkPointPos, directionNormalized, lookHits3D,
                         checkDistance,
-                        obstacleLayers, QueryTriggerInteraction.Ignore);
+                        obstacleLayers, obstacleTriggerMode);
                     Collider nearestCollider = null;
                     float nearestDistance = float.MaxValue;
                     for (int i = 0; i < hitCount; i++)
@@ -595,7 +608,7 @@ namespace Neo.Tools
                 return false;
             }
 
-            if (!requireDirectLookRay)
+            if (!requireDirectLookRay || !checkObstacles)
             {
                 CacheDebugRay(origin, target, Color.cyan);
                 return true;
@@ -882,7 +895,7 @@ namespace Neo.Tools
             lastDebugRayStart = start;
             lastDebugRayEnd = end;
             lastDebugRayColor = color;
-            lastDebugRayUntilTime = Time.realtimeSinceStartup + Mathf.Max(0.05f, interactionRayDrawDuration);
+            lastDebugRayUntilTime = float.PositiveInfinity;
         }
 
 
