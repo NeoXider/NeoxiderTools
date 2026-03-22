@@ -4,6 +4,23 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.6] - 2026-03-22
+
+### Tools / Inventory
+
+- **Universal inventory backend** — `InventoryComponent` now supports two runtime storage modes: `Aggregated` (legacy behavior) and `Slot Grid` (physical slots for hotbars, backpacks, and chests). Added pure C# backends `AggregatedInventory` and `SlotGridInventory`, common records/slot DTOs, and `InventoryTransferService` for slot-to-slot transfers between containers.
+- **Stateful item instances** — inventory can now store per-item payload for unique non-stackable items such as upgraded weapons, wallets with coins, durability-based items, or any custom object state. Added `InventoryItemInstance`, `IInventoryItemState`, `InventoryItemStateBehaviour`, and `InventoryItemStateUtility`; `PickableItem` captures payload on pickup, `InventoryDropper` restores it on spawned world objects, and container save/load keeps instance payload inside the main `InventorySaveData` blob.
+- **Hotbar / hand sync** — `InventoryHand` now supports physical slot indices for Minecraft-style hotbars, including empty slots, and restores instance payload on the in-hand spawned prefab.
+- **Slot UI** — added `InventorySlotGridView` and `InventorySlotView` for fixed-slot inventory grids and simple click-based transfer between slot inventories.
+
+### Tests
+
+- **Inventory EditMode tests** — added `InventorySystemTests` covering aggregated backend behavior, slot-grid non-stackable behavior, instance-state capture/restore, save/load migration into slot-grid, and slot transfer with instance payload.
+
+### Docs
+
+- **Inventory docs** — updated `InventoryComponent.md`, `InventoryHand.md`, and inventory `README.md` for storage modes, slot-grid workflow, stateful items, and hotbar behavior.
+
 ## [7.7.5] - 2026-03-15
 
 ### Tools / RandomRange

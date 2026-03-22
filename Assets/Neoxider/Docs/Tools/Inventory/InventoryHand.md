@@ -1,6 +1,6 @@
 # InventoryHand
 
-**Что это:** компонент «рука» (equipped slot): один выбранный предмет из инвентаря отображается в точке Hand Anchor (например рука персонажа). Переключение слота SelectNext/SelectPrevious, синхронизация с InventoryComponent.SelectedItemId; опционально Selector, InventoryDropper. Файл: `Scripts/Tools/Inventory/Runtime/InventoryHand.cs`.
+**Что это:** компонент «рука» (equipped slot): один выбранный предмет из инвентаря отображается в точке Hand Anchor (например рука персонажа). Поддерживает старый packed-режим и физические слоты хотбара (`Slot Grid`) как в Minecraft. Переключение слота SelectNext/SelectPrevious, синхронизация с InventoryComponent.SelectedItemId; опционально Selector, InventoryDropper. Файл: `Scripts/Tools/Inventory/Runtime/InventoryHand.cs`.
 
 **Как использовать:** добавить на объект (например персонажа), назначить **Inventory** и **Hand Anchor**; при необходимости **Selector** для переключения кнопками/колёсиком, **Dropper** для дропа. См. «Поля» и «Методы» ниже.
 
@@ -29,6 +29,7 @@
 | **Disable Colliders In Hand** | При включении (по умолчанию) у предмета в руке отключаются все Collider и Collider2D (на объекте и детях). Отключите, если коллайдеры нужны в руке. |
 | **Sync Selector On Inventory Changed** | При изменении инвентаря обновлять Selector.Count и зажимать текущий индекс. |
 | **Allow Empty Slot** | При пустом инвентаре — пустой слот (Count=1). При наличии предметов — разрешить индекс **-1** (ничего не в руке): SetSlotIndex(-1) или Selector.Previous() с 0; у Selector включите **Allow Empty Effective Index**. |
+| **Use Physical Slot Indices** | Если включено и инвентарь работает в `Slot Grid`, `SlotIndex` означает физический индекс хотбара, включая пустые ячейки. Рекомендуется для Minecraft-style хотбара. |
 | **Allow Drop Input** | По нажатию клавиши дропа (например G) сбрасывать предмет из руки через Dropper. Имеет смысл при назначенном Dropper. |
 | **Drop Key** | Клавиша выброса предмета из руки (по умолчанию G). |
 | **Allow Use Input** | По нажатию клавиши применения вызывать UseEquippedItem(). |
@@ -65,9 +66,9 @@
 | Метод | Описание |
 |-------|----------|
 | **UseEquippedItem()** | «Применить» предмет в руке: вызывает OnUseItemRequested(itemId), затем у экземпляра в руке — PickableItem.Activate() (если есть). Вызывайте из кода/кнопки или по клавише Use (E). |
-| **DropEquipped(int amount = 1)** | Выбросить предмет в руке через назначенный InventoryDropper. Возвращает количество выброшенных; 0, если Dropper не назначен или предмета нет. По клавише G (при Allow Drop Input) вызывается автоматически. |
-| **SelectNext()** | Следующий слот (по порядку снимка инвентаря), с зацикливанием. |
-| **SelectPrevious()** | Предыдущий слот, с зацикливанием. |
+| **DropEquipped(int amount = 1)** | Выбросить предмет в руке через назначенный InventoryDropper. В режиме physical slots дропается конкретная ячейка хотбара, вместе с instance payload предмета. |
+| **SelectNext()** | Следующий слот. В physical-slot режиме — следующий физический слот хотбара, включая пустые ячейки. |
+| **SelectPrevious()** | Предыдущий слот. |
 | **SetSlotIndex(int index)** | Установить слот по индексу. При Allow Empty Slot допустим **-1** (ничего не в руке); иначе 0 .. count−1. |
 | **RefreshSlotFromInventory()** | Пересчитать слот из инвентаря, синхронизировать Selector и отобразить предмет в руке. |
 
@@ -84,7 +85,7 @@
 3. Включите **Sync Selector On Inventory Changed**.
 4. Кнопки/ввод: вызывайте **Selector.Next()** и **Selector.Previous()** (или подпишитесь на них в инспекторе). Selector выдаёт индекс, InventoryHand переводит его в выбранный слот и обновляет Hand Anchor.
 
-Рекомендуется для Selector: **Loop** = true. Чтобы можно было выбрать «ничего не в руке» (индекс -1), включите у Selector **Allow Empty Effective Index** и в руке — **Allow Empty Slot**; тогда Previous с 0 даёт -1, в руке ничего не отображается, EquippedItemId = −1.
+Рекомендуется для Selector: **Loop** = true. Чтобы можно было выбрать «ничего не в руке» (индекс -1), включите у Selector **Allow Empty Effective Index** и в руке — **Allow Empty Slot**; тогда Previous с 0 даёт -1, в руке ничего не отображается, EquippedItemId = −1. Для хотбара в `Slot Grid` включите **Use Physical Slot Indices** — тогда `Selector.Count` будет равен `SlotCapacity`, а не числу занятых предметов.
 
 ## Пример настройки
 
@@ -96,6 +97,7 @@
 ## Связанные компоненты и сценарии
 
 - **InventoryDropper** — выброс предмета из руки: назначьте Dropper в Hand; по клавише (G) и из кода вызывайте **DropEquipped()**. Hand при включении отключает у Dropper ввод по клавише, чтобы дроп по G обрабатывала только рука. Без Hand — Dropper сам обрабатывает G и дропает SelectedItemId.
+- **Slot Grid / хотбар** — в режиме `Use Physical Slot Indices` рука читает физический слот (`GetSlot`) и восстанавливает stateful payload предмета на префабе в руке.
 - **HandView** — вьюшка руки на префабе предмета: офсеты позиции/поворота и базовый масштаб в руке; рука применяет их первой, затем общий масштаб (дельта или фиксированный).
 - **PickableItem** — подбор в тот же инвентарь; при применении в руке у экземпляра вызывается **Activate()** (если компонент есть), срабатывает **OnActivate**. При одном слоте (Max Unique = 1) — режим «одна вещь в руке».
 - **План сценариев** (один предмет в руке / много предметов + Selector): [InventoryHand_Plan.md](./InventoryHand_Plan.md).
@@ -104,5 +106,6 @@
 
 - **GetNonEmptySlotCount()** — число слотов с count > 0.
 - **GetItemIdAtSlotIndex(int slotIndex)** — itemId по индексу слота.
+- **GetSlot(int slotIndex)** — физический слот для хотбара / slot-grid режима.
 - **SelectedItemId** / **SelectedItemCount** — синхронизируются с текущим слотом руки (для дропа и условий).
 - **TryConsume(itemId, 1)** — в подписчике OnUseItemRequested для расходуемых предметов.

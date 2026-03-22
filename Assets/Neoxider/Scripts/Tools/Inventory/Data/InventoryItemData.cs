@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     ScriptableObject с описанием типа предмета для инвентаря.
+    ///     ScriptableObject describing one item type (id, UI, stack rules, optional instance state).
     /// </summary>
     [CreateAssetMenu(fileName = "Inventory Item Data", menuName = "Neoxider/Tools/Inventory/Inventory Item Data",
         order = 20)]
@@ -31,13 +31,32 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Optional category id for filtering/grouping.")]
         private int _category;
 
+        [SerializeField] [Tooltip("Treat this item as an instance-based item with unique per-item state payload.")]
+        private bool _supportsInstanceState;
+
+        /// <summary>Runtime item identifier.</summary>
         public int ItemId => _itemId;
+
+        /// <summary>UI display name.</summary>
         public string DisplayName => _displayName;
+
+        /// <summary>Longer description text.</summary>
         public string Description => _description;
+
+        /// <summary>UI icon sprite.</summary>
         public Sprite Icon => _icon;
+
+        /// <summary>Prefab spawned when dropping from inventory.</summary>
         public GameObject WorldDropPrefab => _worldDropPrefab;
+
+        /// <summary>Max stack (-1 = unlimited, 1 = non-stackable).</summary>
         public int MaxStack => _maxStack;
+
+        /// <summary>Optional grouping/filter id.</summary>
         public int Category => _category;
+
+        /// <summary>When true, items are stored as <see cref="InventoryItemInstance" /> with separate state payloads.</summary>
+        public bool SupportsInstanceState => _supportsInstanceState;
 
         private void OnValidate()
         {

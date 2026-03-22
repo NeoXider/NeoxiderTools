@@ -14,7 +14,8 @@
         "GUID:0acc523941302664db1f4e527237feb3",
         "Neo.Core",
         "Neo.NPC",
-        "GUID:cc847819497c5264f8512c5522338360"
+        "GUID:cc847819497c5264f8512c5522338360",
+        "Neo.Tools.Inventory"
     ],
     "includePlatforms": [
         "Editor"

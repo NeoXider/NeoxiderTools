@@ -189,7 +189,22 @@ namespace Neo.Tools
             }
 
             OnCollectStarted?.Invoke();
-            int added = inventory.AddItemByIdAmount(itemId, _amount);
+            InventoryItemData data = _itemData != null ? _itemData : inventory.GetItemData(itemId);
+            bool useInstanceState = (data != null && data.SupportsInstanceState) || InventoryItemStateUtility.HasState(gameObject);
+            int added = 0;
+            if (useInstanceState)
+            {
+                for (int i = 0; i < _amount; i++)
+                {
+                    InventoryItemInstance instance = InventoryItemStateUtility.CaptureInstance(gameObject, itemId);
+                    added += inventory.AddItemInstance(instance);
+                }
+            }
+            else
+            {
+                added = inventory.AddItemByIdAmount(itemId, _amount);
+            }
+
             if (added <= 0)
             {
                 OnCollectFailed?.Invoke();

@@ -18,12 +18,21 @@ The inventory module covers item storage, pickup, drop, hand/equip visuals, and 
 4. Add `InventoryDropper` if items should return to the world.
 5. Bind counts and views with `InventoryView`, `InventoryItemCountText`, or `InventoryTotalCountText`.
 
-## Russian docs (per-component)
+## English stubs (this folder)
 
 | Page | Description |
 |------|-------------|
-| [Inventory README](../../../Docs/Tools/Inventory/README.md) | Overview |
+| [InventoryComponent](./InventoryComponent.md) | Facade summary + pointer to mechanics sections |
+| [InventorySlotGridView](./InventorySlotGridView.md) | Slot UI + click transfer |
+| [InventoryItemState](./InventoryItemState.md) | Instance state capture/restore |
+
+## Russian docs (canonical detail)
+
+| Page | Description |
+|------|-------------|
+| [Inventory README](../../../Docs/Tools/Inventory/README.md) | Overview + mechanics index |
 | [InventoryComponent](../../../Docs/Tools/Inventory/InventoryComponent.md), [PickableItem](../../../Docs/Tools/Inventory/PickableItem.md), [InventoryDropper](../../../Docs/Tools/Inventory/InventoryDropper.md) | Core runtime |
+| [InventorySlotGridView](../../../Docs/Tools/Inventory/InventorySlotGridView.md), [InventoryItemState](../../../Docs/Tools/Inventory/InventoryItemState.md) | Slot UI + instance payload |
 | [InventoryView](../../../Docs/Tools/Inventory/InventoryView.md), [InventoryHand](../../../Docs/Tools/Inventory/InventoryHand.md), [HandView](../../../Docs/Tools/Inventory/HandView.md) | UI and hand view |
 | [InventoryItemCountText](../../../Docs/Tools/Inventory/InventoryItemCountText.md), [InventoryTotalCountText](../../../Docs/Tools/Inventory/InventoryTotalCountText.md) | Count display |
 

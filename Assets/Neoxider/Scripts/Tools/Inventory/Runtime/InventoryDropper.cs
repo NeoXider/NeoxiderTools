@@ -197,31 +197,13 @@ namespace Neo.Tools
                 return 0;
             }
 
-            int removed = inv.RemoveItemByIdAmount(itemId, amount);
-            if (removed <= 0)
+            if (!inv.TryTakeFirstRecordByItemId(itemId, amount, out InventoryItemRecord record) || record == null)
             {
                 OnDropFailed?.Invoke(itemId, amount);
                 return 0;
             }
 
-            GameObject dropped = null;
-            try
-            {
-                dropped = SpawnDroppedItem(prefab, inv, data, itemId, removed);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[InventoryDropper] Failed to spawn dropped item {itemId}: {ex.Message}", this);
-            }
-
-            if (dropped == null)
-            {
-                inv.AddItemByIdAmount(itemId, removed);
-                OnDropFailed?.Invoke(itemId, amount);
-                return 0;
-            }
-
-            return removed;
+            return DropRecord(inv, data, prefab, record, itemId, amount);
         }
 
         public int DropData(InventoryItemData itemData, int amount = 1)
@@ -245,6 +227,50 @@ namespace Neo.Tools
             return DropById(itemId);
         }
 
+        public int DropPackedIndex(int packedIndex, int amount = 1)
+        {
+            InventoryComponent inv = ResolveInventory();
+            if (inv == null || amount <= 0 || !inv.TryTakeRecordAtPackedIndex(packedIndex, amount, out InventoryItemRecord record))
+            {
+                OnDropFailed?.Invoke(-1, amount);
+                return 0;
+            }
+
+            int itemId = record.EffectiveItemId;
+            InventoryItemData data = inv.GetItemData(itemId);
+            GameObject prefab = ResolveDropPrefab(data);
+            if (prefab == null)
+            {
+                ReAddRecord(inv, record);
+                OnDropFailed?.Invoke(itemId, amount);
+                return 0;
+            }
+
+            return DropRecord(inv, data, prefab, record, itemId, amount);
+        }
+
+        public int DropSlot(int slotIndex, int amount = 0)
+        {
+            InventoryComponent inv = ResolveInventory();
+            if (inv == null || !inv.TryTakeSlot(slotIndex, amount, out InventoryItemRecord record))
+            {
+                OnDropFailed?.Invoke(-1, amount);
+                return 0;
+            }
+
+            int itemId = record.EffectiveItemId;
+            InventoryItemData data = inv.GetItemData(itemId);
+            GameObject prefab = ResolveDropPrefab(data);
+            if (prefab == null)
+            {
+                ReAddRecord(inv, record);
+                OnDropFailed?.Invoke(itemId, amount);
+                return 0;
+            }
+
+            return DropRecord(inv, data, prefab, record, itemId, amount > 0 ? amount : record.EffectiveCount);
+        }
+
         /// <summary>
         ///     Drops the first item (by snapshot order) from inventory. Returns amount actually dropped, or 0 if empty or CanDrop
         ///     is false.
@@ -258,14 +284,13 @@ namespace Neo.Tools
                 return 0;
             }
 
-            int itemId = inv.GetFirstItemId();
-            if (itemId < 0)
+            if (inv.GetNonEmptySlotCount() <= 0)
             {
                 OnDropFailed?.Invoke(-1, amount);
                 return 0;
             }
 
-            return DropById(itemId, amount);
+            return DropPackedIndex(0, amount);
         }
 
         /// <summary>
@@ -281,14 +306,14 @@ namespace Neo.Tools
                 return 0;
             }
 
-            int itemId = inv.GetLastItemId();
-            if (itemId < 0)
+            int count = inv.GetNonEmptySlotCount();
+            if (count <= 0)
             {
                 OnDropFailed?.Invoke(-1, amount);
                 return 0;
             }
 
-            return DropById(itemId, amount);
+            return DropPackedIndex(count - 1, amount);
         }
 
         public int DropConfiguredById()
@@ -337,8 +362,48 @@ namespace Neo.Tools
                 : _fallbackDropPrefab;
         }
 
+        private int DropRecord(InventoryComponent inventory, InventoryItemData itemData, GameObject prefab,
+            InventoryItemRecord record, int fallbackItemId, int failedAmount)
+        {
+            GameObject dropped = null;
+            try
+            {
+                dropped = SpawnDroppedItem(prefab, inventory, itemData, record);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[InventoryDropper] Failed to spawn dropped item {fallbackItemId}: {ex.Message}", this);
+            }
+
+            if (dropped == null)
+            {
+                ReAddRecord(inventory, record);
+                OnDropFailed?.Invoke(fallbackItemId, failedAmount);
+                return 0;
+            }
+
+            return record.EffectiveCount;
+        }
+
+        private static void ReAddRecord(InventoryComponent inventory, InventoryItemRecord record)
+        {
+            if (inventory == null || record == null)
+            {
+                return;
+            }
+
+            if (record.IsInstance && record.Instance != null)
+            {
+                inventory.AddItemInstance(record.Instance);
+            }
+            else
+            {
+                inventory.AddItemByIdAmount(record.ItemId, record.Count);
+            }
+        }
+
         private GameObject SpawnDroppedItem(GameObject prefab, InventoryComponent inventory, InventoryItemData itemData,
-            int itemId, int amount)
+            InventoryItemRecord record)
         {
             Vector3 spawnPosition = GetSpawnPosition();
             GameObject dropped = Instantiate(prefab, spawnPosition, Quaternion.identity);
@@ -352,10 +417,10 @@ namespace Neo.Tools
 
             if (_configurePickableItem)
             {
-                ConfigurePickable(dropped, inventory, itemData, itemId, amount);
+                ConfigurePickable(dropped, inventory, itemData, record);
             }
 
-            OnItemDropped?.Invoke(itemId, amount, dropped);
+            OnItemDropped?.Invoke(record.EffectiveItemId, record.EffectiveCount, dropped);
             return dropped;
         }
 
@@ -455,8 +520,7 @@ namespace Neo.Tools
         }
 
         private void ConfigurePickable(GameObject dropped, InventoryComponent inventory, InventoryItemData itemData,
-            int itemId,
-            int amount)
+            InventoryItemRecord record)
         {
             PickableItem pickable = dropped.GetComponent<PickableItem>();
             if (pickable == null)
@@ -464,8 +528,13 @@ namespace Neo.Tools
                 pickable = dropped.AddComponent<PickableItem>();
             }
 
-            pickable.Configure(itemData, itemId, amount,
+            pickable.Configure(itemData, record.EffectiveItemId, record.EffectiveCount,
                 _setTargetInventoryForPickable ? inventory : pickable.TargetInventory);
+
+            if (record.IsInstance && record.Instance != null)
+            {
+                InventoryItemStateUtility.RestoreInstance(dropped, record.Instance);
+            }
         }
     }
 }
