@@ -64,15 +64,18 @@ new TypewriterEffect(float charactersPerSecond, bool useUnscaledTime = false)
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
-| `CharactersPerSecond` | `float` | Скорость печати |
+| `CharactersPerSecond` | `float` | Скорость печати по видимым символам |
 | `UseUnscaledTime` | `bool` | Игнорировать Time.timeScale |
 | `UsePunctuationPauses` | `bool` | Использовать паузы на знаках препинания |
+| `TypingAudioSource` | `AudioSource` | Источник звука для печати |
+| `TypingAudioClip` | `AudioClip` | Клип звука печати; если не задан, вызывается `AudioSource.Play()` |
+| `PlayTypingSound` | `bool` | Включить звук печати |
+| `PlayTypingSoundEveryCharacters` | `int` | Проигрывать звук каждый N-й видимый символ |
 | `PunctuationPauses` | `List<PunctuationPause>` | Список пауз для знаков препинания |
 | `IsTyping` | `bool` | Идёт ли печать |
 | `Progress` | `float` | Прогресс (0-1) |
 | `CurrentText` | `string` | Текущий напечатанный текст |
 | `FullText` | `string` | Полный текст |
-| `DelayMs` | `int` | Базовая задержка между символами (мс) |
 
 ### Публичные методы
 
@@ -91,6 +94,19 @@ new TypewriterEffect(float charactersPerSecond, bool useUnscaledTime = false)
 | `RemovePunctuationPause(char)` | `void` | Удаляет паузу для символа |
 | `GetPunctuationPause(char)` | `float` | Получает паузу для символа в секундах (0 если нет) |
 | `RebuildPauseMap()` | `void` | Перестраивает внутренний словарь пауз |
+
+### Поведение rich text
+
+- Rich text-теги TMP (`<b>`, `</b>`, `<color=...>`, `<size=...>` и другие конструкции вида `<...>`) не печатаются по одному символу.
+- Такие теги добавляются в результирующую строку сразу целиком, без отдельной задержки.
+- `CharactersPerSecond` применяется к видимым символам, поэтому смена скорости влияет на реальную скорость печати текста, а не на количество служебных символов в разметке.
+
+### Звук печати
+
+- Для звука можно назначить `TypingAudioSource` и включить `PlayTypingSound`.
+- `PlayTypingSoundEveryCharacters = 1` — звук на каждый видимый символ.
+- `PlayTypingSoundEveryCharacters = 5` — звук на каждый пятый видимый символ.
+- Rich text-теги не считаются символами для звука: `<b>` и другие теги не триггерят проигрывание.
 
 ### События
 

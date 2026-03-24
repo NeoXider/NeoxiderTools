@@ -4,6 +4,27 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.13] - 2026-03-22
+
+### Tools / Dialogue
+
+- **TypewriterEffect** — добавлен опциональный звук печати через `AudioSource` / `AudioClip`, с настройкой проигрывания каждый N-й видимый символ (`1`, `5` и т.д.). Rich text-теги не участвуют в счётчике звука.
+
+### Audio
+
+- **PlayAudioBtn** — вместо жёсткого поведения по клику добавлен enum `TriggerMode`: `PointerClick`, `PointerEnter`, `PointerExit`, `PointerDown`, `PointerUp`, `Select`, `Deselect`, `Submit`, `Manual`.
+
+### Docs
+
+- **TypewriterEffect.md**, **DialogueController.md**, **PlayAudioBtn.md** — обновлены под звук печати и новые trigger mode для UI-звуков.
+
+## [7.7.12] - 2026-03-22
+
+### Tools / Dialogue
+
+- **TypewriterEffect** — скорость печати теперь считается по видимым символам и берётся динамически во время текущей печати; rich text-теги (`<b>`, `<color>`, и т.п.) добавляются сразу целиком, без показа служебных символов по одному.
+- **DialogueController docs** — уточнено, что настройки скорости находятся во вложенном `TypewriterEffect`, и описано поведение rich text при печати.
+
 ## [7.7.11] - 2026-03-22
 
 ### Tools / Move

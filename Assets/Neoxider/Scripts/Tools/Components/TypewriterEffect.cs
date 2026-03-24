@@ -56,12 +56,20 @@ namespace Neo.Tools
         [SerializeField] private bool _useUnscaledTime;
         [SerializeField] private bool _usePunctuationPauses = true;
         [SerializeField] private List<PunctuationPause> _punctuationPauses = new();
+        [Header("Typing Audio")] [SerializeField]
+        private AudioSource _typingAudioSource;
+
+        [SerializeField] private AudioClip _typingAudioClip;
+        [SerializeField] private bool _playTypingSound;
+        [SerializeField] [Min(1)] private int _playTypingSoundEveryCharacters = 3;
 
         [NonSerialized] private readonly StringBuilder _builder = new(256);
         [NonSerialized] private readonly Dictionary<char, float> _punctuationPauseMap = new();
         [NonSerialized] private CancellationTokenSource _cts;
         [NonSerialized] private int _currentIndex;
         [NonSerialized] private string _fullText = string.Empty;
+        [NonSerialized] private int _typedVisibleCharacters;
+        [NonSerialized] private int _visibleCharacterCount;
 
         public TypewriterEffect()
         {
@@ -93,10 +101,34 @@ namespace Neo.Tools
             set => _usePunctuationPauses = value;
         }
 
+        public AudioSource TypingAudioSource
+        {
+            get => _typingAudioSource;
+            set => _typingAudioSource = value;
+        }
+
+        public AudioClip TypingAudioClip
+        {
+            get => _typingAudioClip;
+            set => _typingAudioClip = value;
+        }
+
+        public bool PlayTypingSound
+        {
+            get => _playTypingSound;
+            set => _playTypingSound = value;
+        }
+
+        public int PlayTypingSoundEveryCharacters
+        {
+            get => _playTypingSoundEveryCharacters;
+            set => _playTypingSoundEveryCharacters = Mathf.Max(1, value);
+        }
+
         public List<PunctuationPause> PunctuationPauses => _punctuationPauses;
 
         public bool IsTyping => _cts != null && !_cts.IsCancellationRequested;
-        public float Progress => string.IsNullOrEmpty(_fullText) ? 0f : (float)_currentIndex / _fullText.Length;
+        public float Progress => _visibleCharacterCount <= 0 ? 0f : (float)_typedVisibleCharacters / _visibleCharacterCount;
         public string CurrentText => _builder.ToString();
         public string FullText => _fullText;
 
@@ -211,6 +243,8 @@ namespace Neo.Tools
             _fullText = text ?? string.Empty;
             _builder.Clear();
             _currentIndex = 0;
+            _typedVisibleCharacters = 0;
+            _visibleCharacterCount = CountVisibleCharacters(_fullText);
 
             if (string.IsNullOrEmpty(_fullText))
             {
@@ -228,22 +262,31 @@ namespace Neo.Tools
 
             try
             {
-                float baseDelay = 1f / _charactersPerSecond;
-
                 for (int i = 0; i < _fullText.Length; i++)
                 {
                     token.ThrowIfCancellationRequested();
 
+                    if (TryReadRichTextTag(_fullText, i, out string richTextTag, out int richTextTagLength))
+                    {
+                        _builder.Append(richTextTag);
+                        _currentIndex += richTextTagLength;
+                        i += richTextTagLength - 1;
+                        onTextChanged?.Invoke(_builder.ToString());
+                        continue;
+                    }
+
                     char c = _fullText[i];
                     _builder.Append(c);
                     _currentIndex = i + 1;
+                    _typedVisibleCharacters++;
 
                     onTextChanged?.Invoke(_builder.ToString());
                     OnCharacterTyped?.Invoke(c);
                     OnProgressChanged?.Invoke(Progress);
+                    TryPlayTypingSound();
 
                     // Вычисляем задержку
-                    float totalDelay = baseDelay;
+                    float totalDelay = 1f / Mathf.Max(0.1f, _charactersPerSecond);
                     if (_usePunctuationPauses && _punctuationPauseMap.TryGetValue(c, out float punctuationPause))
                     {
                         totalDelay += punctuationPause;
@@ -292,6 +335,7 @@ namespace Neo.Tools
         {
             Stop();
             _currentIndex = _fullText.Length;
+            _typedVisibleCharacters = _visibleCharacterCount;
             _builder.Clear();
             _builder.Append(_fullText);
             OnProgressChanged?.Invoke(1f);
@@ -308,6 +352,73 @@ namespace Neo.Tools
             _builder.Clear();
             _fullText = string.Empty;
             _currentIndex = 0;
+            _typedVisibleCharacters = 0;
+            _visibleCharacterCount = 0;
+        }
+
+        private static int CountVisibleCharacters(string text)
+        {
+            if (string.IsNullOrEmpty(text))
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < text.Length; i++)
+            {
+                if (TryReadRichTextTag(text, i, out _, out int tagLength))
+                {
+                    i += tagLength - 1;
+                    continue;
+                }
+
+                count++;
+            }
+
+            return count;
+        }
+
+        private void TryPlayTypingSound()
+        {
+            if (!_playTypingSound || _typingAudioSource == null)
+            {
+                return;
+            }
+
+            int playEvery = Mathf.Max(1, _playTypingSoundEveryCharacters);
+            if (_typedVisibleCharacters <= 0 || _typedVisibleCharacters % playEvery != 0)
+            {
+                return;
+            }
+
+            if (_typingAudioClip != null)
+            {
+                _typingAudioSource.PlayOneShot(_typingAudioClip);
+                return;
+            }
+
+            _typingAudioSource.Play();
+        }
+
+        private static bool TryReadRichTextTag(string text, int startIndex, out string tag, out int tagLength)
+        {
+            tag = string.Empty;
+            tagLength = 0;
+
+            if (string.IsNullOrEmpty(text) || startIndex < 0 || startIndex >= text.Length || text[startIndex] != '<')
+            {
+                return false;
+            }
+
+            int endIndex = text.IndexOf('>', startIndex);
+            if (endIndex < 0)
+            {
+                return false;
+            }
+
+            tagLength = endIndex - startIndex + 1;
+            tag = text.Substring(startIndex, tagLength);
+            return true;
         }
     }
 }
