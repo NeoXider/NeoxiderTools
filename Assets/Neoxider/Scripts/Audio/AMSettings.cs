@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Save;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Audio;
@@ -8,6 +9,7 @@ namespace Neo.Audio
     [NeoDoc("Audio/AMSettings.md")]
     [CreateFromMenu("Neoxider/Audio/AMSettings")]
     [AddComponentMenu("Neoxider/" + "Audio/" + nameof(AMSettings))]
+    [DefaultExecutionOrder(-100)]
     public class AMSettings : Singleton<AMSettings>
     {
         public const int AudioGroupMaster = 0;
@@ -35,11 +37,29 @@ namespace Neo.Audio
         [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
         public ReactivePropertyBool MuteMaster = new();
 
+        [Header("Persist (0..1)")] [Tooltip("Включено по умолчанию. Сохранение и загрузка громкости Master/Music/Efx (0..1) через Neo.Save.SaveProvider. Снимите флажок, чтобы не писать и не читать ключи.")]
+        [SerializeField]
+        private bool persistVolume = true;
+
+        [Tooltip("Ключ SaveProvider для Master (float 0..1). Можно заменить на свой префикс, чтобы не пересекаться с другими проектами.")]
+        [SerializeField]
+        private string saveKeyMaster = "Neo.Audio.AMSettings.MasterVolume";
+
+        [Tooltip("Ключ SaveProvider для Music (float 0..1).")]
+        [SerializeField]
+        private string saveKeyMusic = "Neo.Audio.AMSettings.MusicVolume";
+
+        [Tooltip("Ключ SaveProvider для Efx/SFX (float 0..1).")]
+        [SerializeField]
+        private string saveKeyEfx = "Neo.Audio.AMSettings.EfxVolume";
+
         public float startEfxVolume = 1f;
         public float startMusicVolume = 0.5f;
         private AM _am;
         private bool _masterMuted;
         private float _savedMasterVolume = 1f;
+        private float? _pendingMasterFromSave;
+        private bool _suppressVolumePersist;
 
         /// <summary>Current mute state (for NeoCondition and reflection).</summary>
         public bool MuteEfxValue => MuteEfx.CurrentValue;
@@ -55,6 +75,37 @@ namespace Neo.Audio
 
         public bool IsActiveEfx => efx != null && !efx.mute;
         public bool IsActiveMusic => music != null && !music.mute;
+
+        protected override void Init()
+        {
+            base.Init();
+            LoadPersistedVolumesFromSave();
+        }
+
+        private void LoadPersistedVolumesFromSave()
+        {
+            if (!persistVolume)
+            {
+                return;
+            }
+
+            if (SaveProvider.HasKey(saveKeyMusic))
+            {
+                startMusicVolume = Mathf.Clamp01(SaveProvider.GetFloat(saveKeyMusic, startMusicVolume));
+            }
+
+            if (SaveProvider.HasKey(saveKeyEfx))
+            {
+                startEfxVolume = Mathf.Clamp01(SaveProvider.GetFloat(saveKeyEfx, startEfxVolume));
+            }
+
+            if (SaveProvider.HasKey(saveKeyMaster))
+            {
+                float m = Mathf.Clamp01(SaveProvider.GetFloat(saveKeyMaster, _savedMasterVolume));
+                _pendingMasterFromSave = m;
+                _savedMasterVolume = m;
+            }
+        }
 
         private void Start()
         {
@@ -77,6 +128,31 @@ namespace Neo.Audio
 
             // Применяем стартовые громкости к AudioSource'ам
             _am.ApplyStartVolumes();
+
+            _suppressVolumePersist = true;
+            if (_pendingMasterFromSave.HasValue && audioMixer != null)
+            {
+                SetMasterVolume(_pendingMasterFromSave.Value);
+            }
+
+            _pendingMasterFromSave = null;
+            _suppressVolumePersist = false;
+        }
+
+        private void PersistVolumeState()
+        {
+            if (!persistVolume || _suppressVolumePersist)
+            {
+                return;
+            }
+
+            SaveProvider.SetFloat(saveKeyMusic, Mathf.Clamp01(GetMusicVolumeNormalized()));
+            SaveProvider.SetFloat(saveKeyEfx, Mathf.Clamp01(GetEfxVolumeNormalized()));
+            if (audioMixer != null)
+            {
+                float masterNorm = _masterMuted ? _savedMasterVolume : GetMasterVolumeNormalized();
+                SaveProvider.SetFloat(saveKeyMaster, Mathf.Clamp01(masterNorm));
+            }
         }
 
         private void OnValidate()
@@ -137,12 +213,14 @@ namespace Neo.Audio
             float volume = Mathf.Clamp01(percent);
             music.volume = volume;
             SetMixerVolume(audioMixer, MusicVolume, volume);
+            PersistVolumeState();
         }
 
         [Button]
         public void SetMusicMixerVolume(float percent)
         {
             SetMixerVolume(audioMixer, MusicVolume, Mathf.Clamp01(percent));
+            PersistVolumeState();
         }
 
         [Button]
@@ -156,12 +234,14 @@ namespace Neo.Audio
             float volume = Mathf.Clamp01(percent);
             efx.volume = volume;
             SetMixerVolume(audioMixer, EfxVolume, volume);
+            PersistVolumeState();
         }
 
         [Button]
         public void SetEfxMixerVolume(float percent)
         {
             SetMixerVolume(audioMixer, EfxVolume, Mathf.Clamp01(percent));
+            PersistVolumeState();
         }
 
         [Button]
@@ -169,6 +249,12 @@ namespace Neo.Audio
         {
             float volume = Mathf.Clamp01(percent);
             SetMixerVolume(audioMixer, MasterVolume, volume);
+            if (!_masterMuted)
+            {
+                _savedMasterVolume = volume;
+            }
+
+            PersistVolumeState();
         }
 
         public float GetMasterVolumeNormalized()
@@ -339,6 +425,8 @@ namespace Neo.Audio
                 _masterMuted = true;
                 MuteMaster.Value = true;
             }
+
+            PersistVolumeState();
         }
 
         /// <summary>
@@ -397,6 +485,8 @@ namespace Neo.Audio
                 efx.mute = !turnOn;
                 MuteEfx.Value = efx.mute;
             }
+
+            PersistVolumeState();
         }
     }
 }

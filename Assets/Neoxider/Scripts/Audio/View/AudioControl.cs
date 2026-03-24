@@ -68,6 +68,7 @@ namespace Neo.Audio
         private Slider slider;
 
         private Toggle toggle;
+        private bool _started;
 
         private void Awake()
         {
@@ -91,9 +92,32 @@ namespace Neo.Audio
             }
         }
 
+        private void OnEnable()
+        {
+            if (!_started)
+            {
+                return;
+            }
+
+            TryResolveSettings();
+            if (controlType == ControlType.Custom || settings == null)
+            {
+                return;
+            }
+
+            if (uiType == UIType.Toggle && toggle != null)
+            {
+                SyncToggleState();
+            }
+            else if (uiType == UIType.Slider && slider != null)
+            {
+                SyncSliderState();
+            }
+        }
+
         private void Start()
         {
-            settings = AMSettings.I;
+            TryResolveSettings();
             if (controlType != ControlType.Custom && settings == null)
             {
                 Debug.LogError("[AudioControl] AMSettings не найден на сцене!", this);
@@ -114,11 +138,7 @@ namespace Neo.Audio
             {
                 SyncToggleState();
                 toggle.onValueChanged.AddListener(OnToggleValueChanged);
-                if (settings != null)
-                {
-                    settings.MuteMusic.OnChanged.AddListener(OnMuteChanged);
-                    settings.MuteEfx.OnChanged.AddListener(OnMuteChanged);
-                }
+                SubscribeMuteEventsForToggle();
             }
             else if (uiType == UIType.Slider && slider != null)
             {
@@ -131,14 +151,72 @@ namespace Neo.Audio
                 SyncSliderState();
                 slider.onValueChanged.AddListener(OnSliderValueChanged);
             }
+
+            _started = true;
+        }
+
+        private void TryResolveSettings()
+        {
+            if (controlType == ControlType.Custom)
+            {
+                return;
+            }
+
+            if (settings != null)
+            {
+                return;
+            }
+
+            settings = AMSettings.TryGetInstance(out AMSettings s) ? s : AMSettings.I;
+        }
+
+        private void SubscribeMuteEventsForToggle()
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            switch (controlType)
+            {
+                case ControlType.Master:
+                    settings.MuteMaster.OnChanged.AddListener(OnMuteChanged);
+                    break;
+                case ControlType.Music:
+                    settings.MuteMusic.OnChanged.AddListener(OnMuteChanged);
+                    break;
+                case ControlType.Efx:
+                    settings.MuteEfx.OnChanged.AddListener(OnMuteChanged);
+                    break;
+            }
+        }
+
+        private void UnsubscribeMuteEventsForToggle()
+        {
+            if (settings == null)
+            {
+                return;
+            }
+
+            switch (controlType)
+            {
+                case ControlType.Master:
+                    settings.MuteMaster.OnChanged.RemoveListener(OnMuteChanged);
+                    break;
+                case ControlType.Music:
+                    settings.MuteMusic.OnChanged.RemoveListener(OnMuteChanged);
+                    break;
+                case ControlType.Efx:
+                    settings.MuteEfx.OnChanged.RemoveListener(OnMuteChanged);
+                    break;
+            }
         }
 
         private void OnDestroy()
         {
-            if (settings != null)
+            if (uiType == UIType.Toggle)
             {
-                settings.MuteMusic.OnChanged.RemoveListener(OnMuteChanged);
-                settings.MuteEfx.OnChanged.RemoveListener(OnMuteChanged);
+                UnsubscribeMuteEventsForToggle();
             }
 
             if (toggle != null)

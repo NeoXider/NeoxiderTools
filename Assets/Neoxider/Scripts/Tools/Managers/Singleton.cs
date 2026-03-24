@@ -69,6 +69,12 @@ namespace Neo.Tools
 
         protected virtual bool SetInstanceOnAwakeEnabled => _setInstanceOnAwake;
 
+        /// <summary>
+        ///     <see langword="true"/> when this component is the same object as the static <c>_instance</c>.
+        ///     Call after <see cref="Awake"/> base implementation: duplicates return <see langword="false"/> (another object holds <c>_instance</c>).
+        /// </summary>
+        protected bool IsCurrentSingletonInstance => ReferenceEquals(_instance, this as T);
+
         protected virtual void Awake()
         {
             if (SetInstanceOnAwakeEnabled)

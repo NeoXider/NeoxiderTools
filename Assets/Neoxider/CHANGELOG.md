@@ -4,6 +4,47 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.7.11] - 2026-03-22
+
+### Tools / Move
+
+- **PlayerController3DPhysics** — публичные `MovementEnabled`, `JumpEnabled`; `SetJumpEnabled(bool)`; в инспекторе сериализованы `_movementEnabled` и подсказка у `_canJump`. При `SetMovementEnabled(false)` сбрасывается буфер прыжка.
+- **PlayerController2DPhysics** — то же API; прыжок по вводу только при включённом движении (как в 3D). При выключении движения сбрасываются буфер и флаг нажатия прыжка.
+
+### Docs
+
+- **PlayerController3DPhysics.md**, **PlayerController2DPhysics.md** — API движения/прыжка, параметры инспектора, объединён раздел «Публичный API» у 3D.
+
+## [7.7.10] - 2026-03-22
+
+### Audio
+
+- **AMSettings** — загрузка сохранённой громкости из `SaveProvider` перенесена в переопределение **`Init()`** (контракт `Singleton<T>`), вместо `Awake`.
+
+### Docs
+
+- **AMSettings.md** — уточнено: чтение сейва в `Init()`, ссылка на `Singleton.md`.
+
+## [7.7.9] - 2026-03-22
+
+### Docs
+
+- **AMSettings.md** — подробно: сохранение громкости только через `SaveProvider`, **Persist Volume** по умолчанию включён и **можно отключить**, настраиваемые **Save Key** для Master/Music/Efx, таблица инспектора и моменты записи.
+- **AudioControl.md** — ссылка на AMSettings для настроек персистентности.
+- **AMSettings** (инспектор) — уточнены Tooltip у полей секции Persist и ключей сохранения.
+
+## [7.7.8] - 2026-03-22
+
+### Audio
+
+- **AMSettings** — по умолчанию сохранение громкости Master / Music / Efx (`0..1`) через `SaveProvider`: загрузка в `Awake`, применение сохранённого Master в `Start` после `ApplyStartVolumes`, запись при изменении громкости и после `ToggleMaster` / `ToggleAllAudio`. Добавлен `[DefaultExecutionOrder(-100)]` для стабильного порядка относительно UI.
+- **Neo.Audio** — ссылка на сборку `Neo.Save` для `SaveProvider`.
+- **AudioControl** — после первого `Start` повторная синхронизация слайдера/тогла в `OnEnable`; для Master-тогла подписка на `MuteMaster` (раньше учитывались только Music/Efx).
+
+### Docs
+
+- **AMSettings.md**, **AudioControl.md** — кратко описано сохранение громкости и поведение UI.
+
 ## [7.7.7] - 2026-03-22
 
 ### Tools / InteractableObject

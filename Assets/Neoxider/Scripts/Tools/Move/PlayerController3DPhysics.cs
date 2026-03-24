@@ -31,7 +31,10 @@ namespace Neo.Tools
         [SerializeField] private float _jumpImpulse = 6.5f;
         [SerializeField] private float _extraGravityMultiplier = 1.6f;
         [SerializeField] private bool _canRun = true;
-        [SerializeField] private bool _canJump = true;
+
+        [Tooltip("Разрешить прыжок. Можно менять в рантайме через SetJumpEnabled(bool).")]
+        [SerializeField]
+        private bool _canJump = true;
 
         [Header("Grounding")] [SerializeField] private LayerMask _groundMask = ~0;
         [SerializeField] private float _groundCheckRadius = 0.25f;
@@ -90,6 +93,8 @@ namespace Neo.Tools
         private Vector2 _lookInput;
 
         private Vector2 _moveInput;
+        [Tooltip("Обработка ходьбы/бега и буфера прыжка. Меняется через SetMovementEnabled(bool).")]
+        [SerializeField]
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
         private float _pitch;
@@ -106,6 +111,16 @@ namespace Neo.Tools
         ///     Gets whether sprint input is active.
         /// </summary>
         public bool IsRunning { get; private set; }
+
+        /// <summary>
+        ///     Gets whether horizontal movement and sprint input are processed. Change via <see cref="SetMovementEnabled" />.
+        /// </summary>
+        public bool MovementEnabled => _movementEnabled;
+
+        /// <summary>
+        ///     Gets whether jump input and jump execution are allowed. Change via <see cref="SetJumpEnabled" />.
+        /// </summary>
+        public bool JumpEnabled => _canJump;
 
         /// <summary>
         ///     Gets whether look (camera rotation) is enabled. Change via SetLookEnabled(bool) or automatically by pause when
@@ -242,6 +257,19 @@ namespace Neo.Tools
             {
                 _moveInput = Vector2.zero;
                 IsRunning = false;
+                _jumpBufferTimer = 0f;
+            }
+        }
+
+        /// <summary>
+        ///     Enables or disables jump (input buffering and applying impulse). Clears jump buffer when disabling.
+        /// </summary>
+        public void SetJumpEnabled(bool enabled)
+        {
+            _canJump = enabled;
+            if (!enabled)
+            {
+                _jumpBufferTimer = 0f;
             }
         }
 

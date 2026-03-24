@@ -46,6 +46,8 @@
   - `NewInputSystem`;
   - `LegacyInputManager`.
 - `_walkSpeed`, `_runSpeed` — скорости движения.
+- `_movementEnabled` — стартовая обработка движения и прыжка по вводу (инспектор; в рантайме — `SetMovementEnabled`).
+- `_canJump` — стартовое «можно прыгать» (инспектор; в рантайме — `SetJumpEnabled`). Пока `SetMovementEnabled(false)`, прыжок по вводу не принимается (как в 3D-контроллере).
 - `_acceleration`, `_deceleration` — разгон/торможение.
 - `_jumpImpulse` — сила прыжка.
 - `_coyoteTime`, `_jumpBufferTime` — отзывчивость прыжка.
@@ -56,12 +58,21 @@
 
 ## 5. Публичный API
 
-- `IsGrounded` — текущее состояние земли.
-- `IsRunning` — активен ли спринт.
-- `SetMovementEnabled(bool)` — включение/выключение движения.
-- `SetCameraFollowEnabled(bool)` — включение/выключение follow камеры.
+**Состояние (только чтение)**
+
+- `IsGrounded` — на земле ли персонаж.
+- `IsRunning` — активен ли спринт по вводу.
+- `MovementEnabled` — обрабатывается ли горизонтальный ввод и прыжок.
+- `JumpEnabled` — разрешён ли прыжок.
+
+**Методы**
+
+- `SetMovementEnabled(bool)` — включает/выключает движение и приём прыжка по вводу; при `false` обнуляет ввод, спринт и буфер прыжка.
+- `SetJumpEnabled(bool)` — включает/выключает прыжок; при выключении сбрасывает буфер.
+- `SetCameraFollowEnabled(bool)` — follow камеры.
 - `Teleport(Vector3, bool)` — телепорт с опциональным сбросом скорости.
-- События **OnMoveStart** / **OnMoveStop** — вызываются при начале и окончании движения (переход ввода в ноль и из нуля).
+
+События **OnMoveStart** / **OnMoveStop** — при начале и окончании движения.
 
 Если трансформ **Ground Check** не назначен, в Awake выводится однократное предупреждение; проверка земли выполняется от позиции объекта.
 

@@ -67,6 +67,8 @@
 - `_movementReference` — режим базиса движения.
 - `_movementYawOffset` — сдвиг направления движения (в градусах).
 - `_walkSpeed`, `_runSpeed` — базовые скорости.
+- `_movementEnabled` — стартовое состояние обработки движения и буфера прыжка (в инспекторе; в рантайме — `SetMovementEnabled`).
+- `_canJump` — стартовое «можно прыгать» (в инспекторе; в рантайме — `SetJumpEnabled`). Пока движение выключено (`SetMovementEnabled(false)`), прыжок по вводу не буферизуется.
 - `_groundAcceleration`, `_airAcceleration` — отзывчивость на земле/в воздухе.
 - `_jumpImpulse` — сила прыжка.
 - `_coyoteTime`, `_jumpBufferTime` — устойчивый прыжок в динамике.
@@ -79,29 +81,32 @@
 
 ---
 
-## 5. Публичный API (управление движением и камерой)
-
-- `LookEnabled` — только для чтения, показывает, включён ли поворот камеры.
-- `SetMovementEnabled(bool)` — включает/выключает обработку движения. При выключении обнуляет ввод и спринт. Удобно вызывать из UI/паузы, чтобы игрок не двигался во время меню.
-- `SetLookEnabled(bool)` — включает/выключает обработку обзора. При включении и активном `Pause Look When Cursor Visible` может автоматически заблокировать курсор. Вызывается, например, при открытии/закрытии меню, если вы не используете `CursorLockController`.
-
-Рекомендуемый паттерн:
-
-1. При открытии меню/паузы вызовите `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или используйте `PausePage`, который уже умеет работать с `CursorLockController` и `Time.timeScale`).
-2. При закрытии меню — `SetMovementEnabled(true)` и `SetLookEnabled(true)` (если игра не в состоянии паузы).
-
-События **OnMoveStart** / **OnMoveStop** вызываются при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
-
----
-
 ## 5. Публичный API
 
-- `IsGrounded` — текущее состояние земли.
-- `IsRunning` — активен ли спринт.
-- `SetMovementEnabled(bool)` — включение/выключение движения.
-- `SetLookEnabled(bool)` — включение/выключение обзора.
+**Состояние (только чтение)**
+
+- `IsGrounded` — на земле ли персонаж.
+- `IsRunning` — активен ли спринт по вводу.
+- `MovementEnabled` — обрабатывается ли движение и буфер прыжка.
+- `JumpEnabled` — разрешён ли прыжок (ввод и импульс).
+- `LookEnabled` — включён ли поворот камеры (см. также паузу и курсор).
+
+**Методы**
+
+- `SetMovementEnabled(bool)` — включает/выключает ходьбу, бег и накопление прыжка по вводу. При `false` обнуляет ввод, спринт и буфер прыжка. Удобно из UI/паузы.
+- `SetJumpEnabled(bool)` — включает/выключает прыжок; при выключении сбрасывает буфер прыжка.
+- `SetLookEnabled(bool)` — включает/выключает обзор; при включении и активном `Pause Look When Cursor Visible` может заблокировать курсор.
 - `SetCursorLocked(bool)` — lock/unlock курсора.
-- `Teleport(Vector3)` — телепорт с очисткой скорости.
+- `Teleport(Vector3)` — телепорт с очисткой линейной и угловой скорости `Rigidbody`.
+
+**Паттерн меню / паузы**
+
+1. Открытие: `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или `PausePage` + `CursorLockController` + `timeScale`).
+2. Закрытие: `SetMovementEnabled(true)` и `SetLookEnabled(true)` (если игра не на паузе).
+
+Отдельно можно отключить только прыжок (например, вода, кат-сцена): `SetJumpEnabled(false)` без отключения ходьбы.
+
+События **OnMoveStart** / **OnMoveStop** — при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
 
 ---
 

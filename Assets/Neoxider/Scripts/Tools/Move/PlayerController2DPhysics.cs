@@ -26,7 +26,8 @@ namespace Neo.Tools
         [SerializeField] private bool _canRun = true;
         [SerializeField] private bool _flipByVelocityX = true;
 
-        [Header("Jump")] [SerializeField] private bool _canJump = true;
+        [Header("Jump")] [Tooltip("Разрешить прыжок. Можно менять в рантайме через SetJumpEnabled(bool).")] [SerializeField]
+        private bool _canJump = true;
         [SerializeField] private float _jumpImpulse = 10f;
         [SerializeField] private float _coyoteTime = 0.1f;
         [SerializeField] private float _jumpBufferTime = 0.1f;
@@ -56,6 +57,8 @@ namespace Neo.Tools
         private bool _legacyInputUnavailableWarningShown;
 
         private float _moveInputX;
+
+        [Tooltip("Обработка ввода движения и прыжка. Меняется через SetMovementEnabled(bool).")] [SerializeField]
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;
         private bool _wasGrounded;
@@ -70,6 +73,16 @@ namespace Neo.Tools
         ///     Gets whether sprint input is active.
         /// </summary>
         public bool IsRunning { get; private set; }
+
+        /// <summary>
+        ///     Gets whether horizontal movement input is processed. Change via <see cref="SetMovementEnabled" />.
+        /// </summary>
+        public bool MovementEnabled => _movementEnabled;
+
+        /// <summary>
+        ///     Gets whether jump input and jump execution are allowed. Change via <see cref="SetJumpEnabled" />.
+        /// </summary>
+        public bool JumpEnabled => _canJump;
 
         private void Awake()
         {
@@ -142,6 +155,21 @@ namespace Neo.Tools
             {
                 _moveInputX = 0f;
                 IsRunning = false;
+                _jumpPressedThisFrame = false;
+                _jumpBufferTimer = 0f;
+            }
+        }
+
+        /// <summary>
+        ///     Enables or disables jump (input and applying impulse). Clears jump buffer when disabling.
+        /// </summary>
+        public void SetJumpEnabled(bool enabled)
+        {
+            _canJump = enabled;
+            if (!enabled)
+            {
+                _jumpPressedThisFrame = false;
+                _jumpBufferTimer = 0f;
             }
         }
 
@@ -174,7 +202,7 @@ namespace Neo.Tools
             {
                 _moveInputX = ReadMoveXInput();
                 IsRunning = _canRun && ReadRunHeld() && Mathf.Abs(_moveInputX) > 0.01f;
-                _jumpPressedThisFrame = _canJump && ReadJumpPressed();
+                _jumpPressedThisFrame = _movementEnabled && _canJump && ReadJumpPressed();
             }
             else
             {
