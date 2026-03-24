@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 
 namespace Neo.Tools
 {
@@ -14,6 +15,14 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(CursorLockController))]
     public class CursorLockController : MonoBehaviour
     {
+        public enum ConfigurationPreset
+        {
+            Custom,
+            Gameplay_Default,
+            UI_Page_ShowCursorWhileActive,
+            UI_MenuScene_Standalone
+        }
+
         public enum ControlMode
         {
             AutomaticAndManual,
@@ -34,7 +43,56 @@ namespace Neo.Tools
             OnlyLock
         }
 
+        /// <summary>
+        ///     When to snapshot <see cref="Cursor.lockState"/> / <see cref="Cursor.visible"/> for restore (similar to <see cref="PausePage"/> cursor logic).
+        /// </summary>
+        public enum LifecycleSnapshotMode
+        {
+            /// <summary>Lock On Enable/Disable flags only; no snapshot (legacy behaviour).</summary>
+            None,
+
+            /// <summary>
+            ///     Save cursor before applying OnEnable; on OnDisable (if controller stack is empty), see After Lifecycle Disable.
+            /// </summary>
+            SaveOnEnable,
+
+            /// <summary>
+            ///     At start of OnDisable (when apply is enabled), save cursor; on next OnEnable, see After Lifecycle Enable.
+            /// </summary>
+            SaveOnDisable
+        }
+
+        /// <summary>Behaviour after lifecycle OnDisable when <see cref="SaveOnEnable"/> was used and the controller stack is empty.</summary>
+        public enum AfterLifecycleDisableCursorBehavior
+        {
+            /// <summary>Apply configured disable state via <c>ApplyCursorState(_lockOnDisable)</c>.</summary>
+            ApplyConfigured,
+
+            /// <summary>Restore lock/visibility from before this OnEnable cycle.</summary>
+            RestorePrevious,
+
+            /// <summary>Always locked and hidden (same idea as <see cref="PausePage.AfterPauseCursorBehavior.ForceLockedHidden"/>).</summary>
+            ForceLockedHidden
+        }
+
+        /// <summary>Behaviour on OnEnable after <see cref="SaveOnDisable"/>.</summary>
+        public enum AfterLifecycleEnableCursorBehavior
+        {
+            /// <summary>Take ownership with <c>AcquireCursorControl(_lockOnEnable)</c>.</summary>
+            ApplyConfigured,
+
+            /// <summary>Restore snapshot taken on the last OnDisable.</summary>
+            RestorePrevious
+        }
+
         private static readonly List<CursorLockController> ActiveControllers = new();
+        private static bool _sceneHookRegistered;
+
+        [Header("Preset")]
+        [Tooltip(
+            "Quick setup. Non-Custom presets overwrite the fields below in OnValidate when changed. Pick Custom for full manual control.")]
+        [SerializeField]
+        private ConfigurationPreset _preset = ConfigurationPreset.Custom;
 
         [Header("Mode")]
         [Tooltip("LockAndHide = lock + hide; OnlyHide = visibility only; OnlyLock = lock only.")]
@@ -81,6 +139,23 @@ namespace Neo.Tools
 
         [SerializeField] private bool _lockOnDisable;
 
+        [Header("Lifecycle snapshot (optional)")]
+        [Tooltip(
+            "None: no snapshot. SaveOnEnable: save before OnEnable apply; on exit see After Lifecycle Disable. SaveOnDisable: save at start of OnDisable; on next OnEnable see After Lifecycle Enable (reverse of SaveOnEnable).")]
+        [SerializeField]
+        private LifecycleSnapshotMode _lifecycleSnapshotMode;
+
+        [Tooltip("Used with SaveOnEnable: what to do when the controller stack is empty after OnDisable.")]
+        [SerializeField]
+        private AfterLifecycleDisableCursorBehavior _afterLifecycleDisable =
+            AfterLifecycleDisableCursorBehavior.ApplyConfigured;
+
+        [Tooltip(
+            "Used with SaveOnDisable: RestorePrevious restores the OnDisable snapshot; otherwise behaves like a normal OnEnable apply.")]
+        [SerializeField]
+        private AfterLifecycleEnableCursorBehavior _afterLifecycleEnable =
+            AfterLifecycleEnableCursorBehavior.ApplyConfigured;
+
         [Header("Toggle")] [SerializeField] private bool _allowToggle = true;
 
         [SerializeField] private KeyCode _toggleKey = KeyCode.Escape;
@@ -102,6 +177,18 @@ namespace Neo.Tools
         private bool _cursorAccessPreviousLocked;
         private bool _requestedLocked;
 
+        private bool _hasLifecycleSnapshotFromEnable;
+        private CursorLockMode _lifecycleSnapshotEnterLockState;
+        private bool _lifecycleSnapshotEnterVisible;
+
+        private bool _hasLifecycleSnapshotFromDisable;
+        private CursorLockMode _lifecycleSnapshotExitLockState;
+        private bool _lifecycleSnapshotExitVisible;
+
+#if UNITY_EDITOR
+        private ConfigurationPreset _presetAppliedInEditor = ConfigurationPreset.Custom;
+#endif
+
         /// <summary>
         ///     Gets whether cursor is currently locked.
         /// </summary>
@@ -112,8 +199,62 @@ namespace Neo.Tools
 
         public ControlMode Mode => _controlMode;
 
+        public ConfigurationPreset Preset => _preset;
+
+        public LifecycleSnapshotMode SnapshotMode => _lifecycleSnapshotMode;
+
         private bool SupportsAutomatic => _controlMode != ControlMode.ManualOnly;
         private bool SupportsManual => _controlMode != ControlMode.AutomaticOnly;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticSceneHook()
+        {
+            SceneManager.sceneLoaded -= OnSceneLoadedSanitizeStack;
+            _sceneHookRegistered = false;
+            ActiveControllers.Clear();
+        }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+        private static void RegisterSceneLoadedHook()
+        {
+            if (_sceneHookRegistered)
+            {
+                return;
+            }
+
+            SceneManager.sceneLoaded -= OnSceneLoadedSanitizeStack;
+            SceneManager.sceneLoaded += OnSceneLoadedSanitizeStack;
+            _sceneHookRegistered = true;
+        }
+
+        private static void OnSceneLoadedSanitizeStack(Scene scene, LoadSceneMode mode)
+        {
+            SanitizeActiveControllersList();
+            CursorLockController top = GetTopController();
+            if (top != null)
+            {
+                top.ApplyCursorState(top._requestedLocked);
+            }
+        }
+
+        private static void SanitizeActiveControllersList()
+        {
+            for (int i = ActiveControllers.Count - 1; i >= 0; i--)
+            {
+                CursorLockController c = ActiveControllers[i];
+                if (c == null)
+                {
+                    ActiveControllers.RemoveAt(i);
+                }
+            }
+        }
+
+        private static CursorLockController GetTopController()
+        {
+            SanitizeActiveControllersList();
+            int count = ActiveControllers.Count;
+            return count > 0 ? ActiveControllers[count - 1] : null;
+        }
 
         private void Start()
         {
@@ -152,10 +293,31 @@ namespace Neo.Tools
                 _controllerEnabled = _controllerEnabledOnEnable;
             }
 
-            if (SupportsAutomatic && _controllerEnabled && _applyOnEnable)
+            if (!SupportsAutomatic || !_controllerEnabled || !_applyOnEnable)
             {
-                AcquireCursorControl(_lockOnEnable);
+                return;
             }
+
+            if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnDisable && _hasLifecycleSnapshotFromDisable)
+            {
+                if (_afterLifecycleEnable == AfterLifecycleEnableCursorBehavior.RestorePrevious)
+                {
+                    ApplyRawCursorState(_lifecycleSnapshotExitLockState, _lifecycleSnapshotExitVisible);
+                    _hasLifecycleSnapshotFromDisable = false;
+                    return;
+                }
+
+                _hasLifecycleSnapshotFromDisable = false;
+            }
+
+            if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnEnable)
+            {
+                _lifecycleSnapshotEnterLockState = Cursor.lockState;
+                _lifecycleSnapshotEnterVisible = Cursor.visible;
+                _hasLifecycleSnapshotFromEnable = true;
+            }
+
+            AcquireCursorControl(_lockOnEnable);
         }
 
         private void OnDisable()
@@ -163,11 +325,45 @@ namespace Neo.Tools
             bool applyDisableState = SupportsAutomatic && _controllerEnabled && _applyOnDisable;
             bool lockOnDisable = _lockOnDisable;
 
-            ReleaseControl();
+            bool hadEnterSnapshot = _lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnEnable &&
+                                    _hasLifecycleSnapshotFromEnable;
+
+            if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnDisable && applyDisableState)
+            {
+                _lifecycleSnapshotExitLockState = Cursor.lockState;
+                _lifecycleSnapshotExitVisible = Cursor.visible;
+                _hasLifecycleSnapshotFromDisable = true;
+            }
+
+            ReleaseControlInternal(reapplyBelowIfWasTop: true);
 
             if (applyDisableState && GetTopController() == null)
             {
-                ApplyCursorState(lockOnDisable);
+                if (hadEnterSnapshot)
+                {
+                    switch (_afterLifecycleDisable)
+                    {
+                        case AfterLifecycleDisableCursorBehavior.RestorePrevious:
+                            ApplyRawCursorState(_lifecycleSnapshotEnterLockState, _lifecycleSnapshotEnterVisible);
+                            break;
+                        case AfterLifecycleDisableCursorBehavior.ForceLockedHidden:
+                            Cursor.lockState = CursorLockMode.Locked;
+                            Cursor.visible = false;
+                            break;
+                        default:
+                            ApplyCursorState(lockOnDisable);
+                            break;
+                    }
+                }
+                else
+                {
+                    ApplyCursorState(lockOnDisable);
+                }
+            }
+
+            if (_lifecycleSnapshotMode == LifecycleSnapshotMode.SaveOnEnable)
+            {
+                _hasLifecycleSnapshotFromEnable = false;
             }
 
             if (_setControllerEnabledOnDisable)
@@ -175,6 +371,119 @@ namespace Neo.Tools
                 _controllerEnabled = _controllerEnabledOnDisable;
             }
         }
+
+        private static void ApplyRawCursorState(CursorLockMode lockState, bool visible)
+        {
+            Cursor.lockState = lockState;
+            Cursor.visible = visible;
+        }
+
+        private void OnDestroy()
+        {
+            _cursorAccessActive = false;
+            _hasLifecycleSnapshotFromEnable = false;
+            _hasLifecycleSnapshotFromDisable = false;
+            SanitizeActiveControllersList();
+            bool wasTop = HasCursorOwnership && ActiveControllers.Count > 0 &&
+                          ReferenceEquals(ActiveControllers[ActiveControllers.Count - 1], this);
+
+            ActiveControllers.Remove(this);
+            HasCursorOwnership = false;
+
+            SanitizeActiveControllersList();
+
+            if (wasTop)
+            {
+                CursorLockController top = GetTopController();
+                if (top != null)
+                {
+                    top.ApplyCursorState(top._requestedLocked);
+                }
+            }
+        }
+
+#if UNITY_EDITOR
+        private void OnValidate()
+        {
+            if (_preset != ConfigurationPreset.Custom && _preset != _presetAppliedInEditor)
+            {
+                ApplyPreset(_preset);
+                _presetAppliedInEditor = _preset;
+            }
+
+            if (_preset == ConfigurationPreset.Custom)
+            {
+                _presetAppliedInEditor = ConfigurationPreset.Custom;
+            }
+        }
+
+        private void ApplyPreset(ConfigurationPreset preset)
+        {
+            switch (preset)
+            {
+                case ConfigurationPreset.Gameplay_Default:
+                    _mode = CursorStateMode.LockAndHide;
+                    _controlMode = ControlMode.AutomaticAndManual;
+                    _controllerEnabled = true;
+                    _lockOnStart = true;
+                    _applyStartOnlyWhenControllerEnabled = true;
+                    _setControllerEnabledOnEnable = false;
+                    _applyOnEnable = false;
+                    _lockOnEnable = true;
+                    _setControllerEnabledOnDisable = false;
+                    _controllerEnabledOnDisable = false;
+                    _applyOnDisable = false;
+                    _lockOnDisable = true;
+                    _lifecycleSnapshotMode = LifecycleSnapshotMode.None;
+                    _afterLifecycleDisable = AfterLifecycleDisableCursorBehavior.ApplyConfigured;
+                    _afterLifecycleEnable = AfterLifecycleEnableCursorBehavior.ApplyConfigured;
+                    _allowToggle = true;
+                    _toggleKey = KeyCode.Escape;
+                    _allowCursorAccessKey = false;
+                    break;
+
+                case ConfigurationPreset.UI_Page_ShowCursorWhileActive:
+                    _mode = CursorStateMode.LockAndHide;
+                    _controlMode = ControlMode.AutomaticAndManual;
+                    _controllerEnabled = true;
+                    _lockOnStart = false;
+                    _applyStartOnlyWhenControllerEnabled = true;
+                    _setControllerEnabledOnEnable = false;
+                    _applyOnEnable = true;
+                    _lockOnEnable = false;
+                    _setControllerEnabledOnDisable = false;
+                    _controllerEnabledOnDisable = false;
+                    _applyOnDisable = true;
+                    _lockOnDisable = true;
+                    _lifecycleSnapshotMode = LifecycleSnapshotMode.SaveOnEnable;
+                    _afterLifecycleDisable = AfterLifecycleDisableCursorBehavior.RestorePrevious;
+                    _afterLifecycleEnable = AfterLifecycleEnableCursorBehavior.ApplyConfigured;
+                    _allowToggle = false;
+                    _allowCursorAccessKey = false;
+                    break;
+
+                case ConfigurationPreset.UI_MenuScene_Standalone:
+                    _mode = CursorStateMode.LockAndHide;
+                    _controlMode = ControlMode.AutomaticAndManual;
+                    _controllerEnabled = true;
+                    _lockOnStart = false;
+                    _applyStartOnlyWhenControllerEnabled = true;
+                    _setControllerEnabledOnEnable = false;
+                    _applyOnEnable = true;
+                    _lockOnEnable = false;
+                    _setControllerEnabledOnDisable = false;
+                    _controllerEnabledOnDisable = false;
+                    _applyOnDisable = false;
+                    _lockOnDisable = true;
+                    _lifecycleSnapshotMode = LifecycleSnapshotMode.None;
+                    _afterLifecycleDisable = AfterLifecycleDisableCursorBehavior.ApplyConfigured;
+                    _afterLifecycleEnable = AfterLifecycleEnableCursorBehavior.ApplyConfigured;
+                    _allowToggle = false;
+                    _allowCursorAccessKey = false;
+                    break;
+            }
+        }
+#endif
 
         /// <summary>
         ///     Applies cursor state according to Mode: lock and/or visibility.
@@ -251,17 +560,25 @@ namespace Neo.Tools
         /// </summary>
         public void ReleaseControl()
         {
+            ReleaseControlInternal(reapplyBelowIfWasTop: true);
+        }
+
+        private void ReleaseControlInternal(bool reapplyBelowIfWasTop)
+        {
             if (!HasCursorOwnership)
             {
                 return;
             }
 
-            bool wasTopController = ReferenceEquals(GetTopController(), this);
+            SanitizeActiveControllersList();
+            bool wasTop = ActiveControllers.Count > 0 &&
+                          ReferenceEquals(ActiveControllers[ActiveControllers.Count - 1], this);
             ActiveControllers.Remove(this);
             HasCursorOwnership = false;
 
-            if (wasTopController)
+            if (reapplyBelowIfWasTop && wasTop)
             {
+                SanitizeActiveControllersList();
                 CursorLockController top = GetTopController();
                 if (top != null)
                 {
@@ -279,7 +596,7 @@ namespace Neo.Tools
             if (!enabled)
             {
                 _cursorAccessActive = false;
-                ReleaseControl();
+                ReleaseControlInternal(reapplyBelowIfWasTop: true);
             }
         }
 
@@ -368,13 +685,8 @@ namespace Neo.Tools
             }
             else
             {
-                ReleaseControl();
+                ReleaseControlInternal(reapplyBelowIfWasTop: true);
             }
-        }
-
-        private static CursorLockController GetTopController()
-        {
-            return ActiveControllers.Count > 0 ? ActiveControllers[ActiveControllers.Count - 1] : null;
         }
     }
 }

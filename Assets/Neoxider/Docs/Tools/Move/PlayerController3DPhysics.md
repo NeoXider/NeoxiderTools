@@ -104,6 +104,8 @@
 1. Открытие: `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или `PausePage` + `CursorLockController` + `timeScale`).
 2. Закрытие: `SetMovementEnabled(true)` и `SetLookEnabled(true)` (если игра не на паузе).
 
+Если курсором управляет **PausePage** (**Control Cursor**), после снятия паузы по умолчанию восстанавливаются `Cursor.lockState` и `Cursor.visible` как до паузы; для классического FPS после меню паузы включите у **PausePage** **After Pause Cursor = ForceLockedHidden** (см. [`PausePage`](../../UI/PausePage.md)).
+
 Отдельно можно отключить только прыжок (например, вода, кат-сцена): `SetJumpEnabled(false)` без отключения ходьбы.
 
 События **OnMoveStart** / **OnMoveStop** — при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
@@ -119,9 +121,8 @@
    - `_toggleCursorOnEscape = false`, если курсором будет управлять UI-страница
    - при использовании внешней страницы назначьте её `CursorLockController` в поле **External Cursor Lock Controller**
 2. На объекте страницы:
-   - `CursorLockController`
-   - `Apply On Enable = true`, `Lock On Enable = false`
-   - `Apply On Disable = true`, `Lock On Disable = true`
+   - `CursorLockController` (удобно **Preset = UI_Page_ShowCursorWhileActive**)
+   - либо вручную: `Apply On Enable = true`, `Lock On Enable = false`, `Apply On Disable = true`, `Lock On Disable = true`
 3. В события открытия/закрытия страницы добавьте:
    - открыть страницу → `PlayerController3DPhysics.SetLookEnabled(false)`
    - закрыть страницу → `PlayerController3DPhysics.SetLookEnabled(true)`

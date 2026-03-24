@@ -12,6 +12,16 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PausePage))]
     public class PausePage : MonoBehaviour
     {
+        /// <summary>How to restore the cursor after the pause page is closed.</summary>
+        public enum AfterPauseCursorBehavior
+        {
+            /// <summary>Restore <see cref="Cursor.lockState"/> and <see cref="Cursor.visible"/> from before pause opened.</summary>
+            RestorePrevious,
+
+            /// <summary>Always hide and lock the cursor (typical FPS after closing pause).</summary>
+            ForceLockedHidden
+        }
+
         [Header("Time")]
         [Tooltip("When enabled, sets Time.timeScale on pause and restores it on resume.")]
         [SerializeField]
@@ -31,9 +41,9 @@ namespace Neo.Tools
         private bool _controlCursor;
 
         [Tooltip(
-            "When true, cursor is locked and hidden when leaving pause (recommended for FPS/camera look). When false, restores state from when pause was opened.")]
+            "Default: restore cursor as before pause. ForceLockedHidden: after pause always lock and hide (FPS).")]
         [SerializeField]
-        private bool _lockCursorOnResume = true;
+        private AfterPauseCursorBehavior _afterPauseCursor = AfterPauseCursorBehavior.RestorePrevious;
 
         private bool _savedCursorVisible;
         private CursorLockMode _savedLockState;
@@ -77,7 +87,7 @@ namespace Neo.Tools
 
             if (_controlCursor)
             {
-                if (_lockCursorOnResume)
+                if (_afterPauseCursor == AfterPauseCursorBehavior.ForceLockedHidden)
                 {
                     Cursor.lockState = CursorLockMode.Locked;
                     Cursor.visible = false;

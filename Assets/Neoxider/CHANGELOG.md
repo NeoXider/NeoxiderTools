@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Docs / Meta
+
+- **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
+- **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
+
+## [7.7.15] - 2026-03-25
+
+### Tools / Move
+
+- **CursorLockController** — **Lifecycle snapshot**: `LifecycleSnapshotMode` (**None** / **SaveOnEnable** / **SaveOnDisable**), **AfterLifecycleDisableCursorBehavior** (в т.ч. **RestorePrevious**, **ForceLockedHidden**), **AfterLifecycleEnableCursorBehavior**; публичное свойство **`SnapshotMode`**. Пресет **UI_Page_ShowCursorWhileActive** — **SaveOnEnable** + **RestorePrevious** на disable; **UI_MenuScene_Standalone** — snapshot **None**, `Apply On Disable` выключен.
+
+### Docs
+
+- **CursorLockController.md** (RU/EN) — описание снимка lifecycle.
+
+## [7.7.14] - 2026-03-25
+
+### Tools / Move
+
+- **CursorLockController** — inspector **Preset** (`Gameplay_Default`, `UI_Page_ShowCursorWhileActive`, `UI_MenuScene_Standalone`); static stack **sanitizes** destroyed controllers; **`OnDestroy`** releases stack position and reapplies the controller below; **`SceneManager.sceneLoaded`** re-sanitizes and reapplies top state; subsystem registration clears stack/hook on domain reload. Property **`Preset`** (read-only).
+
+### UI
+
+- **PausePage** — **`AfterPauseCursor`**: default **`RestorePrevious`** (restore `lockState` / `visible` from before pause); **`ForceLockedHidden`** keeps the old “always lock after pause” FPS behavior. **Breaking (default):** projects that relied on always locking after pause must set **ForceLockedHidden**.
+
+### Docs
+
+- **CursorLockController.md** (RU/EN), **PausePage.md**, **PlayerController3DPhysics.md** — presets, stack/scene load, UI-only scene, PausePage cursor modes.
+
 ## [7.7.13] - 2026-03-22
 
 ### Tools / Dialogue
