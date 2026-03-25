@@ -82,7 +82,7 @@ namespace Neo
         /// </summary>
         private void SortHierarchyObjects()
         {
-            // Собираем все объекты и их индексы
+            // Collect all objects and their sibling indices
             List<(GameObject obj, int originalIndex)> objectsToSort = new();
 
             foreach (string objectName in hierarchyObjects)
@@ -95,18 +95,18 @@ namespace Neo
                 }
             }
 
-            // Сортируем по имени
+            // Sort by name
             var sortedObjects = objectsToSort
                 .OrderBy(x => x.obj.name)
                 .ToList();
 
-            // Регистрируем операцию для Undo
+            // Register for Undo
             Undo.SetCurrentGroupName("Sort Hierarchy Objects");
             int undoGroup = Undo.GetCurrentGroup();
 
             try
             {
-                // Применяем новые индексы
+                // Apply new sibling indices
                 for (int i = 0; i < sortedObjects.Count; i++)
                 {
                     GameObject obj = sortedObjects[i].obj;

@@ -17,7 +17,7 @@ namespace Neo.Tools
         public UnityEvent ON;
         public UnityEvent OFF;
 
-        /// <summary>Текущее состояние вкл/выкл (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current on/off state (for NeoCondition and reflection).</summary>
         public bool ValueBool => Value.CurrentValue;
 
         private void OnValidate()

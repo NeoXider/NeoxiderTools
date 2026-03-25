@@ -1,17 +1,17 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Режим отображения карты: переворот по запросу или всегда открыта/закрыта.
+    ///     How a card is shown: flip on demand, or always face up / face down.
     /// </summary>
     public enum CardDisplayMode
     {
-        /// <summary>Переворот по запросу (Flip/FlipAsync).</summary>
+        /// <summary>Flip on demand (Flip/FlipAsync).</summary>
         WithFlip,
 
-        /// <summary>Всегда показывать лицом (рубашка не используется).</summary>
+        /// <summary>Always face up (back sprite unused).</summary>
         AlwaysFaceUp,
 
-        /// <summary>Всегда показывать рубашку.</summary>
+        /// <summary>Always face down (back sprite).</summary>
         AlwaysFaceDown
     }
 }

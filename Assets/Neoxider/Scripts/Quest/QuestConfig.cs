@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Конфигурация квеста: описание, цели, условия старта. Создаётся как ScriptableObject.
+    ///     Quest configuration: description, objectives, start conditions. Created as a ScriptableObject.
     /// </summary>
     [NeoDoc("Quest/QuestConfig.md")]
     [CreateAssetMenu(fileName = "QuestConfig", menuName = "Neoxider/Quest/Quest Config")]
@@ -39,25 +39,25 @@ namespace Neo.Quest
         [SerializeField]
         private List<string> _nextQuestIds = new();
 
-        /// <summary>Уникальный идентификатор квеста.</summary>
+        /// <summary>Unique quest identifier.</summary>
         public string Id => _id;
 
-        /// <summary>Название для UI.</summary>
+        /// <summary>Title for UI.</summary>
         public string Title => _title;
 
-        /// <summary>Описание для UI.</summary>
+        /// <summary>Description for UI.</summary>
         public string Description => _description;
 
-        /// <summary>Иконка квеста для UI (опционально).</summary>
+        /// <summary>Optional quest icon for UI.</summary>
         public Sprite Icon => _icon;
 
-        /// <summary>Цели квеста (readonly).</summary>
+        /// <summary>Quest objectives (read-only).</summary>
         public IReadOnlyList<QuestObjectiveData> Objectives => _objectives;
 
-        /// <summary>Условия старта (readonly).</summary>
+        /// <summary>Start conditions (read-only).</summary>
         public IReadOnlyList<ConditionEntry> StartConditions => _startConditions;
 
-        /// <summary>ID следующих квестов после завершения.</summary>
+        /// <summary>IDs of quests that unlock after this one completes.</summary>
         public IReadOnlyList<string> NextQuestIds => _nextQuestIds;
 
         private void OnValidate()

@@ -6,21 +6,21 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Автоматическая регистрация CustomEditor для всех Neo компонентов
-    ///     Решает проблему с видимостью при установке пакета через Package Manager
+    ///     Auto-registers CustomEditor types for Neo components.
+    ///     Mitigates visibility issues when the package is installed via Package Manager.
     /// </summary>
     [InitializeOnLoad]
     public static class NeoEditorAutoRegister
     {
         static NeoEditorAutoRegister()
         {
-            // Регистрируем обработчик при загрузке редактора
+            // Register handler when the editor loads
             EditorApplication.delayCall += RegisterNeoEditors;
         }
 
         private static void RegisterNeoEditors()
         {
-            // Находим все типы MonoBehaviour из namespace Neo
+            // Find all MonoBehaviour types in the Neo namespace
             var neoTypes = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly =>
                 {
@@ -41,7 +41,7 @@ namespace Neo.Editor
                     (type.Namespace == "Neo" || type.Namespace.StartsWith("Neo.")))
                 .ToList();
 
-            // Debug информация (раскомментируйте при необходимости)
+            // Debug output (uncomment if needed)
             // Debug.Log($"[NeoEditorAutoRegister] Found {neoTypes.Count} Neo MonoBehaviour types");
             // foreach (var type in neoTypes.Take(5))
             // {

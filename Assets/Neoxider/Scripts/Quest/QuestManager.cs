@@ -8,10 +8,10 @@ using UnityEngine.Events;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Единая точка входа для квестов: реестр состояний, принятие/завершение целей, проверка условий старта через
+    ///     Single entry point for quests: state registry, accept/complete objectives, start-condition checks via
     ///     NeoCondition.
-    ///     Синглтон: реестр квестов, AcceptQuest/CompleteObjective, проверка StartConditions. События для UnityEvent,
-    ///     перегрузки с QuestConfig для кода. Подробнее: Quest/QuestManager.md.
+    ///     Singleton: quest registry, AcceptQuest/CompleteObjective, StartConditions evaluation. UnityEvent hooks and
+    ///     QuestConfig overloads for code. See Quest/QuestManager.md.
     /// </summary>
     [NeoDoc("Quest/QuestManager.md")]
     [CreateFromMenu("Neoxider/Quest/QuestManager")]
@@ -60,7 +60,7 @@ namespace Neo.Quest
 
         private readonly List<QuestState> _states = new();
 
-        /// <summary>Контекст для проверки условий старта (ConditionEntry.Evaluate).</summary>
+        /// <summary>Context for start-condition checks (ConditionEntry.Evaluate).</summary>
         public GameObject ConditionContext
         {
             get => _conditionContext;
@@ -70,31 +70,31 @@ namespace Neo.Quest
         /// <summary>Singleton access alias for backwards compatibility.</summary>
         public static QuestManager Instance => I;
 
-        /// <summary>Событие: квест принят (questId).</summary>
+        /// <summary>Event: quest accepted (questId).</summary>
         public UnityEvent<string> OnQuestAccepted => _onQuestAccepted;
 
-        /// <summary>Событие: прогресс по цели (questId, objectiveIndex, currentCount).</summary>
+        /// <summary>Event: objective progress (questId, objectiveIndex, currentCount).</summary>
         public UnityEvent<string, int, int> OnObjectiveProgress => _onObjectiveProgress;
 
-        /// <summary>Событие: квест завершён (questId).</summary>
+        /// <summary>Event: quest completed (questId).</summary>
         public UnityEvent<string> OnQuestCompleted => _onQuestCompleted;
 
-        /// <summary>Событие: одна цель выполнена (questId, objectiveIndex).</summary>
+        /// <summary>Event: single objective completed (questId, objectiveIndex).</summary>
         public UnityEvent<string, int> OnObjectiveCompleted => _onObjectiveCompleted;
 
-        /// <summary>Событие: квест провален (questId).</summary>
+        /// <summary>Event: quest failed (questId).</summary>
         public UnityEvent<string> OnQuestFailed => _onQuestFailed;
 
-        /// <summary>Событие: любой квест принят (без аргументов).</summary>
+        /// <summary>Event: any quest accepted (no arguments).</summary>
         public UnityEvent OnAnyQuestAccepted => _onAnyQuestAccepted;
 
-        /// <summary>Событие: любой квест завершён (без аргументов).</summary>
+        /// <summary>Event: any quest completed (no arguments).</summary>
         public UnityEvent OnAnyQuestCompleted => _onAnyQuestCompleted;
 
-        /// <summary>Все состояния квестов.</summary>
+        /// <summary>All quest states.</summary>
         public IReadOnlyList<QuestState> AllQuests => _states;
 
-        /// <summary>Только активные квесты.</summary>
+        /// <summary>Active quests only.</summary>
         public IReadOnlyList<QuestState> ActiveQuests
         {
             get
@@ -112,24 +112,24 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>C#: квест принят.</summary>
+        /// <summary>C# event: quest accepted.</summary>
         public event Action<QuestConfig> QuestAccepted;
 
-        /// <summary>C#: прогресс по цели.</summary>
+        /// <summary>C# event: objective progress.</summary>
         public event Action<QuestConfig, int, int> ObjectiveProgress;
 
-        /// <summary>C#: квест завершён.</summary>
+        /// <summary>C# event: quest completed.</summary>
         public event Action<QuestConfig> QuestCompleted;
 
-        /// <summary>Принять квест по ID. Проверяет StartConditions по ConditionContext. Для вызова из UnityEvent.</summary>
-        /// <returns>true, если квест принят.</returns>
+        /// <summary>Accept quest by ID. Evaluates StartConditions using ConditionContext. For UnityEvent binding.</summary>
+        /// <returns>true if the quest was accepted.</returns>
         public bool AcceptQuest(string questId)
         {
             QuestConfig config = GetConfigById(questId);
             return config != null && AcceptQuest(config);
         }
 
-        /// <summary>Принять квест по конфигу (типобезопасно из кода).</summary>
+        /// <summary>Accept quest by config (type-safe from code).</summary>
         public bool AcceptQuest(QuestConfig quest)
         {
             if (quest == null)
@@ -163,7 +163,7 @@ namespace Neo.Quest
             return true;
         }
 
-        /// <summary>Попытка принять квест с причиной отказа.</summary>
+        /// <summary>Try to accept a quest and report a failure reason.</summary>
         public bool TryAcceptQuest(string questId, out string failReason)
         {
             failReason = null;
@@ -189,7 +189,7 @@ namespace Neo.Quest
             return AcceptQuest(config);
         }
 
-        /// <summary>Зачесть выполнение цели. Вызывать из QuestNoCodeAction(CompleteObjective) или из кода.</summary>
+        /// <summary>Credit objective completion. Call from QuestNoCodeAction(CompleteObjective) or from code.</summary>
         public void CompleteObjective(string questId, int objectiveIndex)
         {
             QuestConfig config = GetConfigById(questId);
@@ -199,7 +199,7 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Зачесть выполнение цели по конфигу.</summary>
+        /// <summary>Credit objective completion using a quest config.</summary>
         public void CompleteObjective(QuestConfig quest, int objectiveIndex)
         {
             if (quest == null)
@@ -253,7 +253,7 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Уведомить об убийстве врага (для целей KillCount).</summary>
+        /// <summary>Notify enemy kill (for KillCount objectives).</summary>
         public void NotifyKill(string enemyId)
         {
             foreach (QuestState state in _states)
@@ -281,7 +281,7 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Уведомить о сборе предмета (для целей CollectCount).</summary>
+        /// <summary>Notify item collected (for CollectCount objectives).</summary>
         public void NotifyCollect(string itemId)
         {
             foreach (QuestState state in _states)
@@ -309,7 +309,7 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Получить состояние квеста по ID.</summary>
+        /// <summary>Get quest state by ID.</summary>
         public QuestState GetState(string questId)
         {
             foreach (QuestState s in _states)
@@ -323,13 +323,13 @@ namespace Neo.Quest
             return null;
         }
 
-        /// <summary>Получить состояние квеста по конфигу.</summary>
+        /// <summary>Get quest state by config.</summary>
         public QuestState GetState(QuestConfig quest)
         {
             return quest == null ? null : GetState(quest.Id);
         }
 
-        /// <summary>Провалить квест по ID (статус → Failed). Вызывает OnQuestFailed.</summary>
+        /// <summary>Fail quest by ID (status → Failed). Invokes OnQuestFailed.</summary>
         public void FailQuest(string questId)
         {
             QuestState state = GetState(questId);
@@ -342,7 +342,7 @@ namespace Neo.Quest
             _onQuestFailed?.Invoke(questId);
         }
 
-        /// <summary>Провалить квест по конфигу.</summary>
+        /// <summary>Fail quest by config.</summary>
         public void FailQuest(QuestConfig quest)
         {
             if (quest != null)
@@ -352,7 +352,7 @@ namespace Neo.Quest
         }
 
         /// <summary>
-        ///     Сбросить состояние квеста (убирает запись из реестра состояний). Позволяет пройти квест заново.
+        ///     Clear quest state (removes the entry from the registry). Allows replaying the quest.
         /// </summary>
         public bool ResetQuest(string questId)
         {
@@ -366,14 +366,14 @@ namespace Neo.Quest
             return true;
         }
 
-        /// <summary>Сбросить состояние квеста по конфигу.</summary>
+        /// <summary>Clear quest state by config.</summary>
         public bool ResetQuest(QuestConfig quest)
         {
             return quest != null && ResetQuest(quest.Id);
         }
 
         /// <summary>
-        ///     Перезапустить квест: удалить старое состояние и снова попытаться принять квест.
+        ///     Restart quest: remove old state and try accepting again.
         /// </summary>
         public bool RestartQuest(string questId)
         {
@@ -387,7 +387,7 @@ namespace Neo.Quest
             return AcceptQuest(config);
         }
 
-        /// <summary>Перезапустить квест по конфигу.</summary>
+        /// <summary>Restart quest by config.</summary>
         public bool RestartQuest(QuestConfig quest)
         {
             if (quest == null || string.IsNullOrEmpty(quest.Id))
@@ -399,13 +399,13 @@ namespace Neo.Quest
             return AcceptQuest(quest);
         }
 
-        /// <summary>Сбросить все состояния квестов (активные, завершённые и проваленные).</summary>
+        /// <summary>Clear all quest states (active, completed, and failed).</summary>
         public void ResetAllQuests()
         {
             _states.Clear();
         }
 
-        /// <summary>Принять квест по полю Editor Quest Id (кнопка в инспекторе).</summary>
+        /// <summary>Accept quest using Editor Quest Id field (Inspector button).</summary>
         [Button("Accept Quest (Editor Id)")]
         public void AcceptQuestFromEditor()
         {
@@ -415,7 +415,7 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Зачесть цель по полям Editor Quest Id и Objective Index (кнопка в инспекторе).</summary>
+        /// <summary>Complete objective using Editor Quest Id and Objective Index (Inspector button).</summary>
         [Button("Complete Objective (Editor)")]
         public void CompleteObjectiveFromEditor()
         {
@@ -425,21 +425,21 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>Квест активен.</summary>
+        /// <summary>Whether the quest is active.</summary>
         public bool IsActive(QuestConfig quest)
         {
             QuestState s = GetState(quest);
             return s != null && s.Status == QuestStatus.Active;
         }
 
-        /// <summary>Квест завершён.</summary>
+        /// <summary>Whether the quest is completed.</summary>
         public bool IsCompleted(QuestConfig quest)
         {
             QuestState s = GetState(quest);
             return s != null && s.Status == QuestStatus.Completed;
         }
 
-        /// <summary>Прогресс по цели (для отображения).</summary>
+        /// <summary>Objective progress for display.</summary>
         public int GetObjectiveProgress(QuestConfig quest, int index)
         {
             QuestState s = GetState(quest);

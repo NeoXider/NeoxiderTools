@@ -96,7 +96,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Помечает кэш TotalWeight как устаревший.
+        ///     Marks TotalWeight cache as stale.
         /// </summary>
         public void InvalidateTotalWeight()
         {
@@ -408,7 +408,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Проверяет корректность весов и возвращает список проблем.
+        ///     Validates weights and returns a list of issues.
         /// </summary>
         public List<string> ValidateWeights()
         {
@@ -416,14 +416,14 @@ namespace Neo.Tools
 
             if (entries == null || entries.Count == 0)
             {
-                issues.Add("Список записей пуст");
+                issues.Add("Entry list is empty");
                 return issues;
             }
 
             float total = TotalWeight;
             if (total <= 0f)
             {
-                issues.Add("Общий вес равен 0 — ни один элемент не может быть выбран");
+                issues.Add("Total weight is 0 — no entry can be selected");
             }
 
             int zeroWeightCount = 0;
@@ -432,7 +432,7 @@ namespace Neo.Tools
                 Entry entry = entries[i];
                 if (entry.Weight < 0f)
                 {
-                    issues.Add($"[{i}] '{entry.Label}': отрицательный вес ({entry.Weight})");
+                    issues.Add($"[{i}] '{entry.Label}': negative weight ({entry.Weight})");
                 }
                 else if (entry.Weight == 0f && !entry.Locked)
                 {
@@ -442,7 +442,7 @@ namespace Neo.Tools
 
             if (zeroWeightCount > 0 && zeroWeightCount < entries.Count)
             {
-                issues.Add($"{zeroWeightCount} записей с нулевым весом никогда не будут выбраны");
+                issues.Add($"{zeroWeightCount} entries with zero weight will never be selected");
             }
 
             return issues;

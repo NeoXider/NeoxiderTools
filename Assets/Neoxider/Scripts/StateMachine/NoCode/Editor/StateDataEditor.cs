@@ -36,16 +36,16 @@ namespace Neo.StateMachine.NoCode.Editor
 
             DrawSummary(stateNameProp, onEnterProp, onUpdateProp, onExitProp);
 
-            NeoxiderEditorGUI.BeginSection("Identity", "Имя состояния и базовая конфигурация asset.");
+            NeoxiderEditorGUI.BeginSection("Identity", "State name and base asset configuration.");
             EditorGUILayout.PropertyField(stateNameProp, new GUIContent("State Name"));
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(6);
-            DrawActionList("On Enter Actions", onEnterProp, "Выполняются один раз при входе в состояние.");
+            DrawActionList("On Enter Actions", onEnterProp, "Run once when entering the state.");
             EditorGUILayout.Space(6);
-            DrawActionList("On Update Actions", onUpdateProp, "Выполняются каждый кадр, пока состояние активно.");
+            DrawActionList("On Update Actions", onUpdateProp, "Run every frame while the state is active.");
             EditorGUILayout.Space(6);
-            DrawActionList("On Exit Actions", onExitProp, "Выполняются при выходе из состояния.");
+            DrawActionList("On Exit Actions", onExitProp, "Run when leaving the state.");
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -58,7 +58,7 @@ namespace Neo.StateMachine.NoCode.Editor
                 : stateNameProp.stringValue;
 
             NeoxiderEditorGUI.DrawSummaryCard(title,
-                "State asset с группами действий для enter, update и exit. Типы действий уже закешированы и не пересчитываются при каждой отрисовке.",
+                "State asset with enter, update, and exit action groups. Action types are cached and not recomputed every repaint.",
                 new NeoxiderEditorGUI.Badge($"Enter {onEnterProp.arraySize}", new Color(0.18f, 0.62f, 0.32f, 1f)),
                 new NeoxiderEditorGUI.Badge($"Update {onUpdateProp.arraySize}", new Color(0.20f, 0.50f, 0.78f, 1f)),
                 new NeoxiderEditorGUI.Badge($"Exit {onExitProp.arraySize}", new Color(0.78f, 0.46f, 0.18f, 1f)),
@@ -68,7 +68,7 @@ namespace Neo.StateMachine.NoCode.Editor
             if (string.IsNullOrWhiteSpace(stateNameProp.stringValue))
             {
                 EditorGUILayout.HelpBox(
-                    "У состояния пустое имя. Лучше задать осмысленное название, чтобы переходы и debug были читаемыми.",
+                    "State name is empty. Set a meaningful name so transitions and debugging stay readable.",
                     MessageType.Warning);
             }
 
@@ -98,7 +98,7 @@ namespace Neo.StateMachine.NoCode.Editor
 
             if (listProperty.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Список пуст. Можно оставить так, если этот этап жизненного цикла не нужен.",
+                EditorGUILayout.HelpBox("List is empty. Leave it that way if this lifecycle stage is unused.",
                     MessageType.Info);
             }
 

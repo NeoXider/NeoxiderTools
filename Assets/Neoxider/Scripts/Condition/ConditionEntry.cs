@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Condition
 {
     /// <summary>
-    ///     Тип сравнения для условия.
+    ///     Comparison type for a condition.
     /// </summary>
     public enum CompareOp
     {
@@ -18,19 +18,19 @@ namespace Neo.Condition
     }
 
     /// <summary>
-    ///     С чем сравнивать: с константой (число/текст) или с переменной другого объекта.
+    ///     What to compare against: a constant (number/text) or another object's field/property.
     /// </summary>
     public enum ThresholdSource
     {
-        /// <summary>Сравнивать с заданным числом или текстом (порог).</summary>
+        /// <summary>Compare to a fixed number or string (threshold).</summary>
         Constant,
 
-        /// <summary>Сравнивать с полем/свойством другого объекта.</summary>
+        /// <summary>Compare to a field/property on another object.</summary>
         OtherObject
     }
 
     /// <summary>
-    ///     Тип значения, считанного из компонента.
+    ///     Type of the value read from a component.
     /// </summary>
     public enum ValueType
     {
@@ -41,19 +41,19 @@ namespace Neo.Condition
     }
 
     /// <summary>
-    ///     Источник данных для условия: компонент или сам GameObject.
+    ///     Data source for the condition: a component or the GameObject itself.
     /// </summary>
     public enum SourceMode
     {
-        /// <summary>Читать поле/свойство из компонента.</summary>
+        /// <summary>Read field/property from a component.</summary>
         Component,
 
-        /// <summary>Читать свойство самого GameObject (activeSelf, tag, layer и т.д.).</summary>
+        /// <summary>Read GameObject properties (activeSelf, tag, layer, etc.).</summary>
         GameObject
     }
 
     /// <summary>
-    ///     Тип аргумента для вызова метода с одним параметром (int/float/string).
+    ///     Argument type for a single-parameter method call (int/float/string).
     /// </summary>
     public enum ArgumentKind
     {
@@ -63,8 +63,8 @@ namespace Neo.Condition
     }
 
     /// <summary>
-    ///     Одна запись условия: ссылка на GameObject → Component/GameObject → поле/свойство, оператор сравнения и порог.
-    ///     В рантайме через reflection (с кешированием) читает значение и сравнивает.
+    ///     One condition entry: GameObject → Component/GameObject → field/property, compare op and threshold.
+    ///     At runtime reads the value via reflection (cached) and compares.
     /// </summary>
     [Serializable]
     public class ConditionEntry : IConditionEvaluator
@@ -83,7 +83,7 @@ namespace Neo.Condition
         private bool _waitForObject;
 
         [Tooltip(
-            "Префаб для предпросмотра компонентов/свойств в Editor, когда объект ещё не на сцене. Не используется в Runtime.")]
+            "Prefab for previewing components/properties in the Editor when the object is not in the scene. Not used at runtime.")]
         [SerializeField]
         private GameObject _prefabPreview;
 
@@ -144,7 +144,7 @@ namespace Neo.Condition
         [NonSerialized] private ConditionValueSource _rightSource;
 
         /// <summary>
-        ///     Источник данных: Component или GameObject.
+        ///     Data source: Component or GameObject.
         /// </summary>
         public SourceMode Source
         {
@@ -157,7 +157,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Искать целевой GameObject по имени в сцене.
+        ///     Find target GameObject by name in the scene.
         /// </summary>
         public bool UseSceneSearch
         {
@@ -170,7 +170,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Не выводить Warning если объект не найден (ожидать появления).
+        ///     Do not log a warning if the object is not found yet (wait for spawn).
         /// </summary>
         public bool WaitForObject
         {
@@ -179,7 +179,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Префаб для предпросмотра компонентов в Editor (не используется в Runtime).
+        ///     Prefab for component preview in the Editor (not used at runtime).
         /// </summary>
         public GameObject PrefabPreview
         {
@@ -188,7 +188,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Имя GameObject для поиска в сцене.
+        ///     GameObject name to find in the scene.
         /// </summary>
         public string SearchObjectName
         {
@@ -201,7 +201,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     GameObject-источник значения.
+        ///     GameObject that provides the value.
         /// </summary>
         public GameObject SourceObject
         {
@@ -214,12 +214,12 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Найденный через поиск по имени объект (runtime, read-only).
+        ///     Object found by name search (runtime, read-only).
         /// </summary>
         public GameObject FoundByNameObject => _leftSource?.FoundByNameObject;
 
         /// <summary>
-        ///     Индекс компонента на объекте.
+        ///     Component index on the object.
         /// </summary>
         public int ComponentIndex
         {
@@ -232,7 +232,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Полное имя типа компонента.
+        ///     Full component type name.
         /// </summary>
         public string ComponentTypeName
         {
@@ -245,7 +245,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Имя поля/свойства.
+        ///     Field or property name.
         /// </summary>
         public string PropertyName
         {
@@ -258,7 +258,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Тип значения.
+        ///     Value type.
         /// </summary>
         public ValueType CurrentValueType
         {
@@ -267,7 +267,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Оператор сравнения.
+        ///     Comparison operator.
         /// </summary>
         public CompareOp Compare
         {
@@ -276,7 +276,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Инвертировать результат.
+        ///     Invert the result.
         /// </summary>
         public bool Invert
         {
@@ -285,7 +285,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Сравнивать с константой или с переменной другого объекта.
+        ///     Compare to a constant or to another object's variable.
         /// </summary>
         public ThresholdSource ThresholdSource
         {
@@ -341,9 +341,9 @@ namespace Neo.Condition
         internal string OtherPropertyArgumentString => _otherPropertyArgumentString;
 
         /// <summary>
-        ///     Оценить условие. Возвращает true если условие выполнено.
+        ///     Evaluates the condition. Returns true if it passes.
         /// </summary>
-        /// <param name="fallbackObject">GameObject-владелец (используется если sourceObject пуст).</param>
+        /// <param name="fallbackObject">Owner GameObject (used when sourceObject is empty).</param>
         public bool Evaluate(GameObject fallbackObject)
         {
             bool result = EvaluateInternal(fallbackObject);
@@ -361,7 +361,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Сбросить кеш reflection и флаги предупреждений.
+        ///     Clears reflection cache and warning flags.
         /// </summary>
         public void InvalidateCache()
         {
@@ -369,7 +369,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Полный сброс кеша, включая кеш поиска по имени и кеш второго объекта.
+        ///     Full cache reset, including name-search cache and the second-object cache.
         /// </summary>
         public void InvalidateCacheFull()
         {
@@ -378,8 +378,8 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Если режим OtherObject и Other Source Object не задан — подставляет объект левой стороны (source).
-        ///     Вызывать из NeoCondition в Start, чтобы при None (в инспекторе) сравнение шло с тем же объектом.
+        ///     When mode is OtherObject and Other Source Object is unset, uses the left-hand (source) object.
+        ///     Call from NeoCondition in Start so that with None in the Inspector comparison uses the same object.
         /// </summary>
         public void BindOtherToSourceIfNull(GameObject fallbackObject)
         {
@@ -422,7 +422,7 @@ namespace Neo.Condition
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[NeoCondition] Ошибка чтения значения ({_propertyName}): {ex.Message}");
+                Debug.LogWarning($"[NeoCondition] Error reading value ({_propertyName}): {ex.Message}");
                 left.InvalidateCache();
                 return false;
             }
@@ -453,7 +453,7 @@ namespace Neo.Condition
                 catch (Exception ex)
                 {
                     Debug.LogWarning(
-                        $"[NeoCondition] Ошибка чтения второй переменной ({_otherPropertyName}): {ex.Message}");
+                        $"[NeoCondition] Error reading second variable ({_otherPropertyName}): {ex.Message}");
                     right.InvalidateCache();
                     return false;
                 }
@@ -500,7 +500,7 @@ namespace Neo.Condition
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[NeoCondition] Ошибка сравнения: {ex.Message}");
+                Debug.LogWarning($"[NeoCondition] Comparison error: {ex.Message}");
                 return false;
             }
         }
@@ -646,7 +646,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Строковое описание условия для отладки.
+        ///     String representation of the condition for debugging.
         /// </summary>
         public override string ToString()
         {

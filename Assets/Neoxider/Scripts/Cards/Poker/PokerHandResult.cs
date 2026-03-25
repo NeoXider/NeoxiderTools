@@ -5,17 +5,17 @@ using System.Text;
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    ///     Результат оценки покерной руки
+    ///     Result of evaluating a poker hand.
     /// </summary>
     public class PokerHandResult : IComparable<PokerHandResult>
     {
         /// <summary>
-        ///     Создаёт результат оценки руки
+        ///     Creates a hand evaluation result.
         /// </summary>
-        /// <param name="combination">Тип комбинации</param>
-        /// <param name="combinationRanks">Ранги в комбинации</param>
-        /// <param name="kickers">Кикеры</param>
-        /// <param name="bestHand">Лучшая рука из 5 карт</param>
+        /// <param name="combination">Combination type.</param>
+        /// <param name="combinationRanks">Ranks that form the combination.</param>
+        /// <param name="kickers">Kicker ranks.</param>
+        /// <param name="bestHand">Best five-card hand.</param>
         public PokerHandResult(
             PokerCombination combination,
             IReadOnlyList<Rank> combinationRanks,
@@ -29,30 +29,30 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Тип комбинации
+        ///     Combination type.
         /// </summary>
         public PokerCombination Combination { get; }
 
         /// <summary>
-        ///     Ранги карт в комбинации (для сравнения одинаковых комбинаций)
+        ///     Ranks in the combination (for breaking ties).
         /// </summary>
         public IReadOnlyList<Rank> CombinationRanks { get; }
 
         /// <summary>
-        ///     Кикеры - дополнительные карты для определения победителя при равных комбинациях
+        ///     Kicker ranks when combinations tie.
         /// </summary>
         public IReadOnlyList<Rank> Kickers { get; }
 
         /// <summary>
-        ///     Карты, составляющие лучшую руку
+        ///     Cards that form the best five-card hand.
         /// </summary>
         public IReadOnlyList<CardData> BestHand { get; }
 
         /// <summary>
-        ///     Сравнивает две руки
+        ///     Compares two evaluated hands.
         /// </summary>
-        /// <param name="other">Другая рука</param>
-        /// <returns>Положительное если эта рука сильнее, отрицательное если слабее, 0 если равны</returns>
+        /// <param name="other">Other hand.</param>
+        /// <returns>Positive if this hand is stronger, negative if weaker, zero if equal.</returns>
         public int CompareTo(PokerHandResult other)
         {
             if (other == null)
@@ -76,7 +76,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, сильнее ли эта рука
+        ///     Returns whether this hand is stronger than the other.
         /// </summary>
         public bool IsStrongerThan(PokerHandResult other)
         {
@@ -84,7 +84,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, равны ли руки по силе
+        ///     Returns whether both hands are equal in strength.
         /// </summary>
         public bool IsEqualTo(PokerHandResult other)
         {
@@ -95,7 +95,7 @@ namespace Neo.Cards.Poker
         public override string ToString()
         {
             StringBuilder sb = new();
-            sb.Append(Combination.ToRussianName());
+            sb.Append(Combination.ToEnglishName());
 
             if (CombinationRanks.Count > 0)
             {
@@ -115,7 +115,7 @@ namespace Neo.Cards.Poker
 
             if (Kickers.Count > 0)
             {
-                sb.Append(" кикеры: ");
+                sb.Append(" kickers: ");
                 for (int i = 0; i < Kickers.Count; i++)
                 {
                     if (i > 0)

@@ -37,19 +37,19 @@ namespace Neo.Audio
         [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
         public ReactivePropertyBool MuteMaster = new();
 
-        [Header("Persist (0..1)")] [Tooltip("Включено по умолчанию. Сохранение и загрузка громкости Master/Music/Efx (0..1) через Neo.Save.SaveProvider. Снимите флажок, чтобы не писать и не читать ключи.")]
+        [Header("Persist (0..1)")] [Tooltip("Enabled by default. Persists and loads Master/Music/Efx volume (0..1) via Neo.Save.SaveProvider. Clear to skip writing and reading save keys.")]
         [SerializeField]
         private bool persistVolume = true;
 
-        [Tooltip("Ключ SaveProvider для Master (float 0..1). Можно заменить на свой префикс, чтобы не пересекаться с другими проектами.")]
+        [Tooltip("SaveProvider key for Master (float 0..1). Change the prefix to avoid collisions with other projects.")]
         [SerializeField]
         private string saveKeyMaster = "Neo.Audio.AMSettings.MasterVolume";
 
-        [Tooltip("Ключ SaveProvider для Music (float 0..1).")]
+        [Tooltip("SaveProvider key for Music (float 0..1).")]
         [SerializeField]
         private string saveKeyMusic = "Neo.Audio.AMSettings.MusicVolume";
 
-        [Tooltip("Ключ SaveProvider для Efx/SFX (float 0..1).")]
+        [Tooltip("SaveProvider key for Efx/SFX (float 0..1).")]
         [SerializeField]
         private string saveKeyEfx = "Neo.Audio.AMSettings.EfxVolume";
 
@@ -113,7 +113,7 @@ namespace Neo.Audio
 
             if (_am == null)
             {
-                Debug.LogError("[AMSettings] Аудио-менеджер (AM) не назначен!");
+                Debug.LogError("[AMSettings] Audio manager (AM) is not assigned!");
                 return;
             }
 
@@ -126,7 +126,7 @@ namespace Neo.Audio
             SetEfx(true);
             SetMusic(true);
 
-            // Применяем стартовые громкости к AudioSource'ам
+            // Apply startup volumes to AudioSources
             _am.ApplyStartVolumes();
 
             _suppressVolumePersist = true;
@@ -293,16 +293,16 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Устанавливает громкость для любого параметра микшера по имени (нормализованное значение 0-1)
+        ///     Sets volume for any mixer exposed parameter by name (normalized 0–1).
         /// </summary>
-        /// <param name="parameterName">Имя параметра в микшере</param>
-        /// <param name="normalizedVolume">Нормализованное значение громкости (0-1)</param>
+        /// <param name="parameterName">Exposed parameter name on the mixer.</param>
+        /// <param name="normalizedVolume">Normalized volume (0–1).</param>
         [Button]
         public void SetMixerParameter(string parameterName, float normalizedVolume)
         {
             if (string.IsNullOrEmpty(parameterName))
             {
-                Debug.LogWarning("[AMSettings] Имя параметра микшера не указано!");
+                Debug.LogWarning("[AMSettings] Mixer parameter name is empty.");
                 return;
             }
 
@@ -310,22 +310,22 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Устанавливает значение для любого параметра микшера напрямую в дБ
+        ///     Sets any mixer exposed parameter directly in decibels.
         /// </summary>
-        /// <param name="parameterName">Имя параметра в микшере</param>
-        /// <param name="dbValue">Значение в децибелах (-80 до 20)</param>
+        /// <param name="parameterName">Exposed parameter name on the mixer.</param>
+        /// <param name="dbValue">Volume in decibels (−80 to 20).</param>
         [Button]
         public void SetMixerParameterDB(string parameterName, float dbValue)
         {
             if (audioMixer == null)
             {
-                Debug.LogWarning("[AMSettings] AudioMixer не установлен!");
+                Debug.LogWarning("[AMSettings] AudioMixer is not assigned.");
                 return;
             }
 
             if (string.IsNullOrEmpty(parameterName))
             {
-                Debug.LogWarning("[AMSettings] Имя параметра микшера не указано!");
+                Debug.LogWarning("[AMSettings] Mixer parameter name is empty.");
                 return;
             }
 
@@ -398,7 +398,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Включает или выключает общую громкость (Master) в микшере. Сохраняет текущую громкость при выключении.
+        ///     Mutes or unmutes Master on the mixer. Stores the current volume while muted.
         /// </summary>
         [Button("Toggle Master")]
         public void ToggleMaster()
@@ -430,7 +430,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Переключает вкл/выкл по группе: 0 = Master, 1 = Music, 2 = Sfx (звуки). Для NeoCondition и кода (один int).
+        ///     Toggles mute by group: 0 = Master, 1 = Music, 2 = Sfx. For NeoCondition and code (single int).
         /// </summary>
         [Button("Toggle Audio (0=Master, 1=Music, 2=Sfx)", 180)]
         public void ToggleAudio(int group)
@@ -448,13 +448,13 @@ namespace Neo.Audio
                     break;
                 default:
                     Debug.LogWarning(
-                        $"[AMSettings] ToggleAudio: неизвестная группа {group}. Используйте 0=Master, 1=Music, 2=Sfx.");
+                        $"[AMSettings] ToggleAudio: unknown group {group}. Use 0=Master, 1=Music, 2=Sfx.");
                     break;
             }
         }
 
         /// <summary>
-        ///     Переключает все каналы сразу: Master, Music и Sfx (вкл или выкл).
+        ///     Toggles all channels at once: Master, Music, and Sfx (on or off).
         /// </summary>
         [Button("Toggle All Audio")]
         public void ToggleAllAudio()

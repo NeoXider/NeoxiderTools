@@ -1,7 +1,7 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Модель стола (board) для общих карт.
+    ///     Board model for shared table cards.
     /// </summary>
     public class BoardModel : CardContainerModel
     {

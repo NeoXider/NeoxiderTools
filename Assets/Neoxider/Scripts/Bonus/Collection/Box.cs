@@ -46,7 +46,7 @@ namespace Neo.Bonus
         public float AddProgressAmount => _addProgress;
         public float MaxProgress => _maxProgress;
 
-        /// <summary>Текущий прогресс (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current progress (for NeoCondition and reflection).</summary>
         public float ProgressValue => Progress.CurrentValue;
 
         public float progress

@@ -4,45 +4,45 @@ using UnityEngine;
 namespace Neo.Core.Level
 {
     /// <summary>
-    ///     ScriptableObject: три режима — Формула, Кривая (график), Custom (ручная таблица).
-    ///     Формула: выбор типа (Linear, Quadratic, Exponential, Power и др.) и параметров.
-    ///     Кривая: AnimationCurve (ось X = уровень, Y = кумулятивный XP до уровня).
-    ///     Custom: список пар (уровень, требуемый XP).
+    ///     ScriptableObject: three modes — Formula, Curve (graph), Custom (manual table).
+    ///     Formula: pick type (Linear, Quadratic, Exponential, Power, etc.) and parameters.
+    ///     Curve: AnimationCurve (X axis = level, Y = cumulative XP to that level).
+    ///     Custom: list of (level, required XP) pairs.
     /// </summary>
     [CreateAssetMenu(fileName = "Level Curve Definition", menuName = "Neoxider/Core/Level Curve Definition")]
     public sealed class LevelCurveDefinition : ScriptableObject, ILevelCurveDefinition
     {
-        [Header("Режим")] [SerializeField] private LevelCurveMode _mode = LevelCurveMode.Formula;
+        [Header("Mode")] [SerializeField] private LevelCurveMode _mode = LevelCurveMode.Formula;
 
-        [Tooltip("Тип формулы (используется при режиме Formula)")] [SerializeField]
+        [Tooltip("Formula type (used when mode is Formula)")] [SerializeField]
         private LevelFormulaType _formulaType = LevelFormulaType.Linear;
 
-        [Header("Параметры формулы (Formula)")] [SerializeField] [Min(1)]
+        [Header("Formula parameters")] [SerializeField] [Min(1)]
         private int _xpPerLevel = 100;
 
-        [Tooltip("Сдвиг для LinearWithOffset")] [SerializeField] [Min(0)]
+        [Tooltip("Offset for LinearWithOffset")] [SerializeField] [Min(0)]
         private float _constantOffset;
 
         [SerializeField] [Min(0.01f)] private float _quadraticBase = 100f;
         [SerializeField] [Min(0.01f)] private float _expBase = 100f;
         [SerializeField] [Min(1.01f)] private float _expFactor = 1.5f;
 
-        [Tooltip("Base для Power/PolynomialSingle: RequiredXp(level) = base * level^exponent")]
+        [Tooltip("Base for Power/PolynomialSingle: RequiredXp(level) = base * level^exponent")]
         [SerializeField]
         [Min(0.01f)]
         private float _powerBase = 100f;
 
         [SerializeField] [Min(0.1f)] private float _powerExponent = 2f;
 
-        [Header("Кривая (Curve)")]
-        [Tooltip("Ось X = уровень (1, 2, 3...), Y = кумулятивный XP до этого уровня")]
+        [Header("Curve")]
+        [Tooltip("X axis = level (1, 2, 3...), Y = cumulative XP to that level")]
         [SerializeField]
         private AnimationCurve _animationCurve = new(
             new Keyframe(1f, 0f),
             new Keyframe(2f, 100f),
             new Keyframe(3f, 250f));
 
-        [Header("Ручная таблица (Custom)")] [SerializeField]
+        [Header("Custom table")] [SerializeField]
         private List<LevelCurveEntry> _customEntries = new();
 
         public LevelCurveMode Mode => _mode;
@@ -57,7 +57,7 @@ namespace Neo.Core.Level
         public AnimationCurve AnimationCurve => _animationCurve;
         public IReadOnlyList<LevelCurveEntry> CustomEntries => _customEntries;
 
-        /// <summary>Для обратной совместимости: тип кривой (при Mode=Formula совпадает с FormulaType).</summary>
+        /// <summary>Backward compatibility: curve type (when Mode=Formula matches FormulaType).</summary>
         public LevelCurveType CurveType => _mode == LevelCurveMode.Formula
             ? MapFormulaTypeToCurveType(_formulaType)
             : _mode == LevelCurveMode.Custom
@@ -114,7 +114,7 @@ namespace Neo.Core.Level
             }
         }
 
-        /// <summary>Задать линейную формулу с заданным XP за уровень (для тестов/рантайма).</summary>
+        /// <summary>Set linear formula with fixed XP per level (tests/runtime).</summary>
         public void SetLinear(int xpPerLevel)
         {
             _mode = LevelCurveMode.Formula;
@@ -191,7 +191,7 @@ namespace Neo.Core.Level
             };
         }
 
-        /// <summary>Кумулятивный XP для достижения уровня (для превью и отладки).</summary>
+        /// <summary>Cumulative XP to reach a level (preview/debug).</summary>
         public int GetRequiredXpForLevel(int level)
         {
             if (level < 1)
@@ -228,7 +228,7 @@ namespace Neo.Core.Level
             }
         }
 
-        /// <summary>Получить запись по уровню (имеет смысл только для Custom).</summary>
+        /// <summary>Get entry by level (meaningful only for Custom).</summary>
         public bool TryGetDefinition(int level, out LevelCurveEntry entry)
         {
             for (int i = 0; i < _customEntries.Count; i++)

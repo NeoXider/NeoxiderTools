@@ -5,8 +5,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Компонент взрывной силы, который применяет взрывную силу ко всем объектам в заданном радиусе.
-    ///     Поддерживает фильтрацию по слоям, опциональное добавление физики и различные режимы активации.
+    ///     Applies explosion force to objects within a radius.
+    ///     Supports layer filtering, optional Rigidbody setup, and multiple activation modes.
     /// </summary>
     [NeoDoc("Tools/Physics/ExplosiveForce.md")]
     [CreateFromMenu("Neoxider/Tools/Physics/ExplosiveForce")]
@@ -14,44 +14,44 @@ namespace Neo.Tools
     public class ExplosiveForce : MonoBehaviour
     {
         /// <summary>
-        ///     Режим активации взрыва.
+        ///     When the explosion runs.
         /// </summary>
         public enum ActivationMode
         {
-            /// <summary>Активация при старте (Start)</summary>
+            /// <summary>Run on Start</summary>
             OnStart,
 
-            /// <summary>Активация при пробуждении (Awake)</summary>
+            /// <summary>Run on Awake</summary>
             OnAwake,
 
-            /// <summary>Активация с задержкой</summary>
+            /// <summary>Run after delay</summary>
             Delayed,
 
-            /// <summary>Только по вызову метода</summary>
+            /// <summary>Manual call only</summary>
             Manual
         }
 
         /// <summary>
-        ///     Тип затухания силы по расстоянию.
+        ///     Force falloff over distance.
         /// </summary>
         public enum FalloffType
         {
-            /// <summary>Линейное затухание</summary>
+            /// <summary>Linear falloff</summary>
             Linear,
 
-            /// <summary>Квадратичное затухание</summary>
+            /// <summary>Quadratic falloff</summary>
             Quadratic
         }
 
         /// <summary>
-        ///     Режим применения силы.
+        ///     How force is applied.
         /// </summary>
         public enum ForceMode
         {
-            /// <summary>AddForce - постоянная сила</summary>
+            /// <summary>AddForce — directional impulse</summary>
             AddForce,
 
-            /// <summary>AddExplosionForce - взрывная сила с затуханием</summary>
+            /// <summary>AddExplosionForce — radial with falloff</summary>
             AddExplosionForce
         }
 
@@ -94,17 +94,17 @@ namespace Neo.Tools
         public UnityEvent<GameObject> OnObjectAffected = new();
 
         /// <summary>
-        ///     Получить текущую силу взрыва.
+        ///     Current explosion force.
         /// </summary>
         public float CurrentForce => force;
 
         /// <summary>
-        ///     Получить текущий радиус взрыва.
+        ///     Current explosion radius.
         /// </summary>
         public float CurrentRadius => radius;
 
         /// <summary>
-        ///     Проверка, произошел ли уже взрыв.
+        ///     Whether the explosion has already fired (non-manual modes).
         /// </summary>
         public bool HasExploded { get; private set; }
 
@@ -148,7 +148,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Вызвать взрыв вручную с базовой силой из компонента.
+        ///     Triggers explosion using the component's base force.
         /// </summary>
         public void Explode()
         {
@@ -156,9 +156,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Вызвать взрыв вручную с кастомной силой.
+        ///     Triggers explosion with a custom force.
         /// </summary>
-        /// <param name="customForce">Кастомная сила взрыва (если 0, используется базовая)</param>
+        /// <param name="customForce">Override force; if 0, uses base force.</param>
         public void Explode(float customForce)
         {
             if (HasExploded && activationMode != ActivationMode.Manual)
@@ -238,7 +238,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить силу взрыва.
+        ///     Sets explosion force.
         /// </summary>
         public void SetForce(float newForce)
         {
@@ -246,7 +246,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить радиус взрыва.
+        ///     Sets explosion radius.
         /// </summary>
         public void SetRadius(float newRadius)
         {
@@ -254,9 +254,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбросить состояние взрыва (позволяет взорваться снова).
-        ///     Полезно для режимов OnStart, OnAwake, Delayed - после автоматического взрыва можно взорваться снова.
-        ///     Для режима Manual этот метод не обязателен, так как можно взрываться многократно.
+        ///     Clears HasExploded so the explosion can run again.
+        ///     Useful after OnStart, OnAwake, or Delayed auto explosions.
+        ///     Manual mode can explode repeatedly without this.
         /// </summary>
         public void ResetExplosion()
         {

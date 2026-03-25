@@ -13,7 +13,7 @@ namespace Neo.Pages.Editor
     public sealed class PMEditor : CustomEditorBase
     {
         private const float ModeButtonHeight = 22f;
-        private const string SourceLabelAll = "Источник: все папки проекта";
+        private const string SourceLabelAll = "Source: all project folders";
         private SerializedProperty allPagesProp;
         private SerializedProperty autoSelectEditorPageProp;
 
@@ -113,7 +113,7 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages-инспекторы не используют авто-assign из NeoCustomEditor.
+            // Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
         private void DrawSingletonSection()
@@ -160,8 +160,8 @@ namespace Neo.Pages.Editor
         private void DrawStartupSelector()
         {
             startupSelectMode = DrawSegmentedMode(startupSelectMode,
-                new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
-                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+                new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
+                new GUIContent("Asset", "Manually pick a specific PageId asset"));
             EditorGUILayout.Space(2);
 
             if (startupSelectMode == 0)
@@ -178,8 +178,8 @@ namespace Neo.Pages.Editor
         private void DrawIgnoredSelectorMode()
         {
             ignoredSelectMode = DrawSegmentedMode(ignoredSelectMode,
-                new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
-                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+                new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
+                new GUIContent("Asset", "Manually pick a specific PageId asset"));
             EditorGUILayout.Space(2);
         }
 
@@ -201,9 +201,9 @@ namespace Neo.Pages.Editor
         private void DrawEditorActiveSelector()
         {
             editorSelectMode = DrawSegmentedMode(editorSelectMode,
-                new GUIContent("Buttons", "Быстрые кнопки по всем PageId ассетам в папке"),
-                new GUIContent("Dropdown", "Выбор из списка PageId ассетов в папке"),
-                new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+                new GUIContent("Buttons", "Quick buttons for all PageId assets in the folder"),
+                new GUIContent("Dropdown", "Pick from the list of PageId assets in the folder"),
+                new GUIContent("Asset", "Manually pick a specific PageId asset"));
             EditorGUILayout.Space(2);
 
             if (editorSelectMode == 0)
@@ -291,7 +291,7 @@ namespace Neo.Pages.Editor
             if (ids.Length == 0)
             {
                 EditorGUILayout.HelpBox(
-                    "В проекте нет PageId ассетов.\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                    "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
                     MessageType.Warning);
                 return;
             }
@@ -338,14 +338,14 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            // Превью в редакторе: деактивируем и активируем выбранную страницу (как делает OnValidate, но без ожидания).
+            // Editor preview: deactivate then activate the selected page (same as OnValidate, without waiting).
             pm.ActivateAll(false);
             pm.ActivatePages(id, true, GetIgnoredArray(pm));
         }
 
         private static PageId[] GetIgnoredArray(PM pm)
         {
-            // Берём текущие сериализованные значения с объекта (если null — пусто)
+            // Take current serialized values from the object (if null — empty)
             SerializedObject so = new(pm);
             SerializedProperty prop = so.FindProperty("ignoredPageIds");
             if (prop == null || !prop.isArray)
@@ -378,7 +378,7 @@ namespace Neo.Pages.Editor
                 }
 
                 EditorGUILayout.HelpBox(
-                    "В проекте нет PageId ассетов.\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                    "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
                     MessageType.Warning);
                 return;
             }

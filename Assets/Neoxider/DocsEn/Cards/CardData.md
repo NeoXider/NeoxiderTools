@@ -36,7 +36,7 @@ var blackJoker = CardData.CreateJoker(isRed: false);
 ## String helpers
 
 - `ToString()` returns a compact card string.
-- `ToRussianString()` returns a human-readable Russian representation.
+- `ToLongEnglishString()` returns a human-readable English representation (e.g. `"Queen of Hearts"`).
 
 ## See also
 

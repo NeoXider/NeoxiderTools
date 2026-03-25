@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Визуальное представление карты
+    ///     Default card view implementation.
     /// </summary>
     [NeoDoc("Cards/View/CardView.md")]
     public class CardView : MonoBehaviour, ICardView, IPointerClickHandler, IPointerEnterHandler, IPointerExitHandler
@@ -162,19 +162,19 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Инициализирует карту с конфигурацией
+        ///     Initializes sprites from deck config.
         /// </summary>
-        /// <param name="config">Конфигурация колоды со спрайтами</param>
+        /// <param name="config">Deck config.</param>
         public void Initialize(DeckConfig config)
         {
             _config = config;
         }
 
         /// <summary>
-        ///     Перемещает карту в локальную позицию
+        ///     Moves to a local position with tween.
         /// </summary>
-        /// <param name="localPosition">Локальная позиция</param>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="localPosition">Local position.</param>
+        /// <param name="duration">Duration.</param>
         public async UniTask MoveToLocalAsync(Vector3 localPosition, float duration = 0.2f)
         {
             if (duration <= 0)
@@ -190,10 +190,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Поворачивает карту
+        ///     Rotates to the target local rotation.
         /// </summary>
-        /// <param name="rotation">Целевой поворот</param>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="rotation">Target rotation.</param>
+        /// <param name="duration">Duration.</param>
         public async UniTask RotateToAsync(Quaternion rotation, float duration = 0.2f)
         {
             if (duration <= 0)

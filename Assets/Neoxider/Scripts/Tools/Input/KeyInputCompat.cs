@@ -4,13 +4,12 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Совместимость со старой (Input Manager) и новой (Input System) системой ввода.
-    ///     Сначала пробует legacy Input; при отключённом старом вводе (InvalidOperationException)
-    ///     использует новую систему через рефлексию, если пакет Unity.InputSystem присутствует.
+    ///     Compatibility between legacy (Input Manager) and new (Input System) input.
+    ///     Tries legacy Input first; on InvalidOperationException uses the new system via reflection if Unity.InputSystem is present.
     /// </summary>
     public static class KeyInputCompat
     {
-        /// <summary>Клавиша нажата в этом кадре (down).</summary>
+        /// <summary>Key pressed this frame (down).</summary>
         public static bool GetKeyDown(KeyCode keyCode)
         {
             try
@@ -24,7 +23,7 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Клавиша отпущена в этом кадре (up).</summary>
+        /// <summary>Key released this frame (up).</summary>
         public static bool GetKeyUp(KeyCode keyCode)
         {
             try
@@ -38,7 +37,7 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Клавиша удерживается.</summary>
+        /// <summary>Key held.</summary>
         public static bool GetKey(KeyCode keyCode)
         {
             try

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -46,13 +46,13 @@ namespace Neo.GridSystem
     public class FieldGeneratorConfig
     {
 #if ODIN_INSPECTOR
-        [BoxGroup("Размер поля")]
+        [BoxGroup("Field size")]
 #endif
         public Vector3Int Size = new(10, 10, 1);
 
         public GridType GridType = GridType.Rectangular;
 #if ODIN_INSPECTOR
-        [BoxGroup("Правила движения")]
+        [BoxGroup("Movement rules")]
 #endif
         public MovementRule MovementRule = MovementRule.FourDirections2D;
 

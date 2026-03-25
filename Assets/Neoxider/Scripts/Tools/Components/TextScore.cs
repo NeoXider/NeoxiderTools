@@ -11,7 +11,7 @@ namespace Neo.Tools
         [SerializeField] [HideInInspector] private bool _best;
 
         [SerializeField]
-        [Tooltip("Источник счёта. Если не задан — ScoreManager.I. Задайте при нескольких ScoreManager в сцене.")]
+        [Tooltip("Score source. If unset, uses ScoreManager.I. Set explicitly when multiple ScoreManagers exist.")]
         private ScoreManager _scoreSource;
 
         private ScoreManager _scoreManager;

@@ -52,13 +52,13 @@ namespace Neo.Core.Level
         public UnityEvent OnProfileLoaded => _onProfileLoaded;
         public UnityEvent OnProfileSaved => _onProfileSaved;
 
-        /// <summary>Текущее значение уровня (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current level value (for NeoCondition and reactive binding).</summary>
         public int LevelStateValue => LevelState.CurrentValue;
 
-        /// <summary>Текущее значение опыта (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current XP value (for NeoCondition and reactive binding).</summary>
         public int XpStateValue => XpState.CurrentValue;
 
-        /// <summary>Текущее значение XP до следующего уровня (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current XP to next level (for NeoCondition and reactive binding).</summary>
         public int XpToNextLevelStateValue => XpToNextLevelState.CurrentValue;
 
         private void Awake()

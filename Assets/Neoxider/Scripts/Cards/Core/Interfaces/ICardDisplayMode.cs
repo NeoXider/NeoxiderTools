@@ -1,12 +1,12 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Опциональный интерфейс: режим отображения карты (переворот / всегда открыта / всегда закрыта).
-    ///     Если не реализован, считается <see cref="CardDisplayMode.WithFlip" />.
+    ///     Optional: fixed display mode (flip / always up / always down).
+    ///     If not implemented, <see cref="CardDisplayMode.WithFlip" /> is assumed.
     /// </summary>
     public interface ICardDisplayMode
     {
-        /// <summary>Режим отображения карты.</summary>
+        /// <summary>Current display mode.</summary>
         CardDisplayMode Mode { get; }
     }
 }

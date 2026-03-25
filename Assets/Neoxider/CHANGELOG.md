@@ -9,6 +9,21 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.16] - 2026-03-25
+
+### Code style (EN)
+
+- Во всех `Assets/Neoxider/**/*.cs` (включая `Scripts/`, `Editor/`, `Samples~/`) убрана кириллица из `///` XML, `//` комментариев, `[Tooltip]` / `[Header]`, сообщений `Debug.*` и строк редакторских окон, где они были на русском — в соответствии с [Оформление_документации.md](Docs/Оформление_документации.md).
+
+### Cards (breaking)
+
+- **`CardData`**: `ToRussianString()` заменён на **`ToLongEnglishString()`** (например, `"Queen of Hearts"`).
+- **`Suit` / `Rank` / `PokerCombination`**: **`ToRussianName()`** заменён на **`ToEnglishName()`**.
+
+### Docs
+
+- **CardData.md** (RU/EN) — обновлены примеры строкового представления.
+
 ## [7.7.15] - 2026-03-25
 
 ### Tools / Move

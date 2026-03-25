@@ -3,12 +3,12 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Extension methods для работы с пулом объектов (PoolManager).
+    ///     Extension methods for object pooling (PoolManager).
     /// </summary>
     public static class PoolExtensions
     {
         /// <summary>
-        ///     Деспавнит объект: возвращает в пул или уничтожает (через <see cref="SpawnUtility.Despawn" />).
+        ///     Despawns the object: returns to pool or destroys (via <see cref="SpawnUtility.Despawn" />).
         /// </summary>
         public static void ReturnToPool(this GameObject go)
         {
@@ -16,7 +16,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб через единую точку входа: пул (если есть PoolManager) или Instantiate.
+        ///     Spawns prefab through the unified entry: pool if PoolManager exists, otherwise Instantiate.
         /// </summary>
         public static GameObject SpawnFromPool(this GameObject prefab, Vector3 position, Quaternion rotation,
             Transform parent = null)

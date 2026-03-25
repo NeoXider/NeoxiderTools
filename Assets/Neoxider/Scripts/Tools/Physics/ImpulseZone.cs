@@ -5,8 +5,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Зона импульса, которая применяет импульс к объектам при входе в триггер.
-    ///     Поддерживает различные направления импульса, фильтрацию и опциональное добавление физики.
+    ///     Impulse zone that applies impulse to objects on trigger enter.
+    ///     Supports multiple impulse directions, filtering, and optional physics setup.
     /// </summary>
     [NeoDoc("Tools/Physics/ImpulseZone.md")]
     [CreateFromMenu("Neoxider/Tools/Physics/ImpulseZone")]
@@ -15,20 +15,20 @@ namespace Neo.Tools
     public class ImpulseZone : MonoBehaviour
     {
         /// <summary>
-        ///     Направление импульса.
+        ///     Impulse direction.
         /// </summary>
         public enum ImpulseDirection
         {
-            /// <summary>От центра зоны</summary>
+            /// <summary>Away from zone center</summary>
             AwayFromCenter,
 
-            /// <summary>К центру зоны</summary>
+            /// <summary>Toward zone center</summary>
             TowardsCenter,
 
-            /// <summary>По направлению Transform.forward</summary>
+            /// <summary>Along Transform.forward</summary>
             TransformForward,
 
-            /// <summary>Кастомное направление</summary>
+            /// <summary>Custom direction</summary>
             Custom
         }
 
@@ -156,7 +156,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Применить импульс к объекту вручную.
+        ///     Applies impulse to an object manually.
         /// </summary>
         public void ApplyImpulseToObject(GameObject target)
         {
@@ -180,7 +180,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить силу импульса.
+        ///     Sets impulse force.
         /// </summary>
         public void SetImpulseForce(float newForce)
         {
@@ -188,7 +188,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Очистить список обработанных объектов (позволяет снова применять импульс).
+        ///     Clears processed objects (allows impulse to apply again).
         /// </summary>
         public void ClearProcessedObjects()
         {

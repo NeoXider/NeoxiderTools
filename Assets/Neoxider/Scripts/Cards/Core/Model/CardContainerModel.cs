@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Базовая модель контейнера карт.
+    ///     Base card container model.
     /// </summary>
     public class CardContainerModel : ICardContainer
     {

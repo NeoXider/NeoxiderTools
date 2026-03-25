@@ -20,7 +20,7 @@ namespace Neo.Reactive
     }
 
     /// <summary>
-    ///     Реактивная переменная (float): значение + UnityEvent. API в стиле R3.
+    ///     Reactive variable (float): value + UnityEvent. R3-style API.
     /// </summary>
     [Serializable]
     public class ReactivePropertyFloat
@@ -37,10 +37,10 @@ namespace Neo.Reactive
             _value = initialValue;
         }
 
-        /// <summary>Текущее значение (только чтение).</summary>
+        /// <summary>Current value (read-only).</summary>
         public float CurrentValue => _value;
 
-        /// <summary>Значение; при set вызывается OnChanged.</summary>
+        /// <summary>Value; setter invokes OnChanged.</summary>
         public float Value
         {
             get => _value;
@@ -51,40 +51,40 @@ namespace Neo.Reactive
             }
         }
 
-        /// <summary>Подписка на изменение (из кода и из Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
+        /// <summary>Change subscription (code and Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
         public UnityEventFloat OnChanged => _onChanged;
 
-        /// <summary>Подписаться на изменение (удобная обёртка над OnChanged.AddListener).</summary>
+        /// <summary>Subscribe to changes (wrapper for OnChanged.AddListener).</summary>
         public void AddListener(UnityAction<float> call)
         {
             _onChanged?.AddListener(call);
         }
 
-        /// <summary>Отписаться от изменения (удобная обёртка над OnChanged.RemoveListener).</summary>
+        /// <summary>Unsubscribe (wrapper for OnChanged.RemoveListener).</summary>
         public void RemoveListener(UnityAction<float> call)
         {
             _onChanged?.RemoveListener(call);
         }
 
-        /// <summary>Отписать всех подписчиков (удобная обёртка над OnChanged.RemoveAllListeners).</summary>
+        /// <summary>Remove all listeners (wrapper for OnChanged.RemoveAllListeners).</summary>
         public void RemoveAllListeners()
         {
             _onChanged?.RemoveAllListeners();
         }
 
-        /// <summary>Установить значение и уведомить подписчиков.</summary>
+        /// <summary>Set value and notify subscribers.</summary>
         public void OnNext(float value)
         {
             Value = value;
         }
 
-        /// <summary>Записать значение без вызова OnChanged (например при Load).</summary>
+        /// <summary>Set value without invoking OnChanged (e.g. on load).</summary>
         public void SetValueWithoutNotify(float value)
         {
             _value = value;
         }
 
-        /// <summary>Вызвать OnChanged с текущим значением.</summary>
+        /// <summary>Invoke OnChanged with the current value.</summary>
         public void ForceNotify()
         {
             _onChanged?.Invoke(_value);
@@ -92,7 +92,7 @@ namespace Neo.Reactive
     }
 
     /// <summary>
-    ///     Реактивная переменная (int): значение + UnityEvent. API в стиле R3.
+    ///     Reactive variable (int): value + UnityEvent. R3-style API.
     /// </summary>
     [Serializable]
     public class ReactivePropertyInt
@@ -109,10 +109,10 @@ namespace Neo.Reactive
             _value = initialValue;
         }
 
-        /// <summary>Текущее значение (только чтение).</summary>
+        /// <summary>Current value (read-only).</summary>
         public int CurrentValue => _value;
 
-        /// <summary>Значение; при set вызывается OnChanged.</summary>
+        /// <summary>Value; setter invokes OnChanged.</summary>
         public int Value
         {
             get => _value;
@@ -123,40 +123,40 @@ namespace Neo.Reactive
             }
         }
 
-        /// <summary>Подписка на изменение (из кода и из Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
+        /// <summary>Change subscription (code and Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
         public UnityEventInt OnChanged => _onChanged;
 
-        /// <summary>Подписаться на изменение (удобная обёртка над OnChanged.AddListener).</summary>
+        /// <summary>Subscribe to changes (wrapper for OnChanged.AddListener).</summary>
         public void AddListener(UnityAction<int> call)
         {
             _onChanged?.AddListener(call);
         }
 
-        /// <summary>Отписаться от изменения (удобная обёртка над OnChanged.RemoveListener).</summary>
+        /// <summary>Unsubscribe (wrapper for OnChanged.RemoveListener).</summary>
         public void RemoveListener(UnityAction<int> call)
         {
             _onChanged?.RemoveListener(call);
         }
 
-        /// <summary>Отписать всех подписчиков (удобная обёртка над OnChanged.RemoveAllListeners).</summary>
+        /// <summary>Remove all listeners (wrapper for OnChanged.RemoveAllListeners).</summary>
         public void RemoveAllListeners()
         {
             _onChanged?.RemoveAllListeners();
         }
 
-        /// <summary>Установить значение и уведомить подписчиков.</summary>
+        /// <summary>Set value and notify subscribers.</summary>
         public void OnNext(int value)
         {
             Value = value;
         }
 
-        /// <summary>Записать значение без вызова OnChanged (например при Load).</summary>
+        /// <summary>Set value without invoking OnChanged (e.g. on load).</summary>
         public void SetValueWithoutNotify(int value)
         {
             _value = value;
         }
 
-        /// <summary>Вызвать OnChanged с текущим значением.</summary>
+        /// <summary>Invoke OnChanged with the current value.</summary>
         public void ForceNotify()
         {
             _onChanged?.Invoke(_value);
@@ -164,7 +164,7 @@ namespace Neo.Reactive
     }
 
     /// <summary>
-    ///     Реактивная переменная (bool): значение + UnityEvent. API в стиле R3. По умолчанию false.
+    ///     Reactive variable (bool): value + UnityEvent. R3-style API. Defaults to false.
     /// </summary>
     [Serializable]
     public class ReactivePropertyBool
@@ -181,10 +181,10 @@ namespace Neo.Reactive
             _value = initialValue;
         }
 
-        /// <summary>Текущее значение (только чтение).</summary>
+        /// <summary>Current value (read-only).</summary>
         public bool CurrentValue => _value;
 
-        /// <summary>Значение; при set вызывается OnChanged.</summary>
+        /// <summary>Value; setter invokes OnChanged.</summary>
         public bool Value
         {
             get => _value;
@@ -195,40 +195,40 @@ namespace Neo.Reactive
             }
         }
 
-        /// <summary>Подписка на изменение (из кода и из Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
+        /// <summary>Change subscription (code and Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
         public UnityEventBool OnChanged => _onChanged;
 
-        /// <summary>Подписаться на изменение (удобная обёртка над OnChanged.AddListener).</summary>
+        /// <summary>Subscribe to changes (wrapper for OnChanged.AddListener).</summary>
         public void AddListener(UnityAction<bool> call)
         {
             _onChanged?.AddListener(call);
         }
 
-        /// <summary>Отписаться от изменения (удобная обёртка над OnChanged.RemoveListener).</summary>
+        /// <summary>Unsubscribe (wrapper for OnChanged.RemoveListener).</summary>
         public void RemoveListener(UnityAction<bool> call)
         {
             _onChanged?.RemoveListener(call);
         }
 
-        /// <summary>Отписать всех подписчиков (удобная обёртка над OnChanged.RemoveAllListeners).</summary>
+        /// <summary>Remove all listeners (wrapper for OnChanged.RemoveAllListeners).</summary>
         public void RemoveAllListeners()
         {
             _onChanged?.RemoveAllListeners();
         }
 
-        /// <summary>Установить значение и уведомить подписчиков.</summary>
+        /// <summary>Set value and notify subscribers.</summary>
         public void OnNext(bool value)
         {
             Value = value;
         }
 
-        /// <summary>Записать значение без вызова OnChanged (например при Load).</summary>
+        /// <summary>Set value without invoking OnChanged (e.g. on load).</summary>
         public void SetValueWithoutNotify(bool value)
         {
             _value = value;
         }
 
-        /// <summary>Вызвать OnChanged с текущим значением.</summary>
+        /// <summary>Invoke OnChanged with the current value.</summary>
         public void ForceNotify()
         {
             _onChanged?.Invoke(_value);

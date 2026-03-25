@@ -8,19 +8,19 @@ using UnityEngine.Events;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Основной класс State Machine с поддержкой кэширования состояний и переходов.
-    ///     Управляет жизненным циклом состояний и переходами между ними.
+    ///     Core State Machine class with optional caching of states and transitions.
+    ///     Manages the state lifecycle and transitions between states.
     /// </summary>
-    /// <typeparam name="TState">Тип состояний, должен реализовывать IState.</typeparam>
+    /// <typeparam name="TState">State type; must implement IState.</typeparam>
     /// <remarks>
-    ///     State Machine автоматически кэширует экземпляры состояний и переходы для оптимизации производительности.
-    ///     Кэширование включено по умолчанию, но может быть отключено через конструктор.
+    ///     The State Machine caches state instances and transitions by default for performance.
+    ///     Caching can be disabled via the constructor.
     /// </remarks>
     /// <example>
     ///     <code>
     /// var stateMachine = new StateMachine&lt;IState&gt;();
     /// 
-    /// // Регистрация переходов
+    /// // Register transitions
     /// var transition = new StateTransition
     /// {
     ///     FromStateType = typeof(IdleState),
@@ -28,12 +28,12 @@ namespace Neo.StateMachine
     /// };
     /// stateMachine.RegisterTransition(transition);
     /// 
-    /// // Смена состояния
+    /// // Change state
     /// stateMachine.ChangeState&lt;IdleState&gt;();
     /// 
-    /// // Обновление
+    /// // Tick
     /// stateMachine.Update();
-    /// stateMachine.EvaluateTransitions(); // Автоматическая оценка переходов
+    /// stateMachine.EvaluateTransitions(); // Automatic transition evaluation
     /// </code>
     /// </example>
     public class StateMachine<TState> where TState : class, IState
@@ -45,10 +45,10 @@ namespace Neo.StateMachine
         private readonly Dictionary<Type, List<StateTransition>> transitionCache = new();
 
         /// <summary>
-        ///     Создать новый экземпляр State Machine.
+        ///     Creates a new State Machine instance.
         /// </summary>
-        /// <param name="enableStateCaching">Включить кэширование состояний (по умолчанию true).</param>
-        /// <param name="enableTransitionCaching">Включить кэширование переходов (по умолчанию true).</param>
+        /// <param name="enableStateCaching">Enable state instance caching (default true).</param>
+        /// <param name="enableTransitionCaching">Enable transition caching (default true).</param>
         public StateMachine(bool enableStateCaching = true, bool enableTransitionCaching = true)
         {
             this.enableStateCaching = enableStateCaching;
@@ -56,40 +56,40 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Событие смены состояния. Вызывается при переходе из одного состояния в другое.
+        ///     Raised when the active state changes (after exit/enter).
         /// </summary>
         public UnityEvent<TState, TState> OnStateChanged { get; } = new();
 
         /// <summary>
-        ///     Событие входа в состояние. Вызывается при входе в новое состояние.
+        ///     Raised when entering a new state.
         /// </summary>
         public UnityEvent<TState> OnStateEntered { get; } = new();
 
         /// <summary>
-        ///     Событие выхода из состояния. Вызывается при выходе из состояния.
+        ///     Raised when leaving a state.
         /// </summary>
         public UnityEvent<TState> OnStateExited { get; } = new();
 
         /// <summary>
-        ///     Событие оценки перехода. Вызывается при оценке каждого перехода.
+        ///     Raised for each transition evaluation.
         /// </summary>
         public UnityEvent<StateTransition, bool> OnTransitionEvaluated { get; } = new();
 
         /// <summary>
-        ///     Текущее активное состояние.
+        ///     Currently active state.
         /// </summary>
         public TState CurrentState { get; private set; }
 
         /// <summary>
-        ///     Предыдущее состояние.
+        ///     Previous state before the last change.
         /// </summary>
         public TState PreviousState { get; private set; }
 
         /// <summary>
-        ///     Получить или создать экземпляр состояния с кэшированием.
+        ///     Gets or creates a state instance, using the cache when enabled.
         /// </summary>
-        /// <typeparam name="T">Тип состояния.</typeparam>
-        /// <returns>Экземпляр состояния.</returns>
+        /// <typeparam name="T">Concrete state type.</typeparam>
+        /// <returns>State instance.</returns>
         public T GetOrCreateState<T>() where T : class, TState, new()
         {
             Type stateType = typeof(T);
@@ -110,9 +110,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по типу.
+        ///     Changes state by type (creates instance via GetOrCreateState).
         /// </summary>
-        /// <typeparam name="T">Тип нового состояния.</typeparam>
+        /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, TState, new()
         {
             T newState = GetOrCreateState<T>();
@@ -120,9 +120,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по экземпляру.
+        ///     Changes state to the given instance.
         /// </summary>
-        /// <param name="newState">Новое состояние.</param>
+        /// <param name="newState">New active state.</param>
         public void ChangeState(TState newState)
         {
             if (newState == null)
@@ -149,10 +149,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Попытаться сменить состояние по типу с проверкой условий.
+        ///     Tries to change state by type if transition conditions allow.
         /// </summary>
-        /// <typeparam name="T">Тип нового состояния.</typeparam>
-        /// <returns>True, если состояние было изменено.</returns>
+        /// <typeparam name="T">Target state type.</typeparam>
+        /// <returns>True if the state was changed.</returns>
         public bool TryChangeState<T>() where T : class, TState, new()
         {
             if (CanTransitionTo<T>())
@@ -165,10 +165,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Проверить возможность перехода к указанному типу состояния.
+        ///     Returns whether a transition to the given state type is allowed from the current state.
         /// </summary>
-        /// <typeparam name="T">Тип состояния для проверки.</typeparam>
-        /// <returns>True, если переход возможен.</returns>
+        /// <typeparam name="T">State type to check.</typeparam>
+        /// <returns>True if transition is possible.</returns>
         public bool CanTransitionTo<T>() where T : class, TState
         {
             if (CurrentState == null)
@@ -183,9 +183,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Зарегистрировать переход в State Machine.
+        ///     Registers a transition with this State Machine.
         /// </summary>
-        /// <param name="transition">Переход для регистрации.</param>
+        /// <param name="transition">Transition to register.</param>
         public void RegisterTransition(StateTransition transition)
         {
             if (transition == null)
@@ -224,9 +224,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Удалить переход из State Machine.
+        ///     Unregisters a transition from this State Machine.
         /// </summary>
-        /// <param name="transition">Переход для удаления.</param>
+        /// <param name="transition">Transition to remove.</param>
         public void UnregisterTransition(StateTransition transition)
         {
             if (transition == null)
@@ -265,10 +265,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Получить доступные переходы из указанного типа состояния.
+        ///     Returns transitions available from the given state type.
         /// </summary>
-        /// <param name="fromStateType">Тип исходного состояния.</param>
-        /// <returns>Список доступных переходов.</returns>
+        /// <param name="fromStateType">Source state type.</param>
+        /// <returns>List of applicable transitions.</returns>
         public List<StateTransition> GetAvailableTransitions(Type fromStateType)
         {
             List<StateTransition> availableTransitions = new();
@@ -284,7 +284,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Оценить все доступные переходы и выполнить переход, если условия выполнены.
+        ///     Evaluates transitions and performs the first one whose conditions pass.
         /// </summary>
         public void EvaluateTransitions()
         {
@@ -313,13 +313,13 @@ namespace Neo.StateMachine
 
                 if (TryApplyTransitionTarget(transition))
                 {
-                    break; // Выполняем только первый подходящий переход
+                    break; // Only the first matching transition runs
                 }
             }
         }
 
         /// <summary>
-        ///     Обновить текущее состояние.
+        ///     Calls OnUpdate on the current state.
         /// </summary>
         public void Update()
         {
@@ -327,7 +327,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Обновить текущее состояние (физика).
+        ///     Calls OnFixedUpdate on the current state.
         /// </summary>
         public void FixedUpdate()
         {
@@ -335,7 +335,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Обновить текущее состояние (поздние обновления).
+        ///     Calls OnLateUpdate on the current state.
         /// </summary>
         public void LateUpdate()
         {
@@ -343,7 +343,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Очистить кэш состояний.
+        ///     Clears the state instance cache.
         /// </summary>
         public void ClearStateCache()
         {
@@ -351,7 +351,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Очистить кэш переходов.
+        ///     Clears registered transitions and the transition cache.
         /// </summary>
         public void ClearTransitionCache()
         {

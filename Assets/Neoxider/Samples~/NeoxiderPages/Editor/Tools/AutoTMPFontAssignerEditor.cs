@@ -29,8 +29,8 @@ namespace Neo.Pages.Editor
 
             GUILayout.Space(5);
             EditorGUILayout.HelpBox(
-                "Проходит по всем компонентам TMP_Text в открытых сценах и назначает указанный шрифт.\n" +
-                "Игнорирует тексты в ассетах (префабах, ScriptableObject и т.п.).",
+                "Iterates all TMP_Text components in open scenes and assigns the selected font.\n" +
+                "Skips text in assets (prefabs, ScriptableObjects, etc.).",
                 MessageType.Info);
         }
 
@@ -44,13 +44,13 @@ namespace Neo.Pages.Editor
         {
             assignedCount = 0;
 
-            // Находит все TMP_Text, даже в неактивных объектах
+            // Finds all TMP_Text, including on inactive objects
             TMP_Text[] allTexts = Resources.FindObjectsOfTypeAll<TMP_Text>();
 
             foreach (TMP_Text text in allTexts)
             {
                 GameObject go = text.gameObject;
-                // Пропускаем объекты, не находящиеся в загруженных сценах
+                // Skip objects not in loaded scenes
                 if (string.IsNullOrEmpty(go.scene.name))
                 {
                     continue;
@@ -66,7 +66,7 @@ namespace Neo.Pages.Editor
             }
 
             Debug.Log(
-                $"<color=green>[AutoTMPFontAssigner]</color> Шрифт назначен: <color=yellow>{assignedCount}</color> объектов TMP_Text.");
+                $"<color=green>[AutoTMPFontAssigner]</color> Font assigned to <color=yellow>{assignedCount}</color> TMP_Text object(s).");
         }
     }
 }

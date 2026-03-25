@@ -515,7 +515,7 @@ namespace Neo.Tools
                     : 0f;
             Time.Value = currentTime;
 
-            // Сброс milestones
+            // Reset milestones
             if (milestoneReached != null)
             {
                 for (int i = 0; i < milestoneReached.Length; i++)
@@ -595,7 +595,7 @@ namespace Neo.Tools
                     isActive = true;
                     timeSinceLastUpdate = 0f;
 
-                    // Сброс milestones при looping
+                    // Reset milestones when looping
                     if (milestoneReached != null)
                     {
                         for (int i = 0; i < milestoneReached.Length; i++)
@@ -647,7 +647,7 @@ namespace Neo.Tools
             OnProgressPercentChanged?.Invoke(Mathf.RoundToInt(progress * 100f));
             lastProgress = progress;
 
-            // Проверка milestones
+            // Milestone check
             if (enableMilestones && milestonePercentages != null && milestoneReached != null)
             {
                 for (int i = 0; i < milestonePercentages.Length; i++)
@@ -665,7 +665,7 @@ namespace Neo.Tools
                 InvokeDayTimeChanged();
             }
 
-            // Обновляем UI автоматически
+            // Auto-update UI
             UpdateUI(progress, timeValue);
         }
 
@@ -710,14 +710,14 @@ namespace Neo.Tools
                 timeValue = GetCurrentTime();
             }
 
-            // Обновление Image fillAmount
+            // Update Image fillAmount
             if (progressImage != null)
             {
                 float fillAmount = fillImageNormal ? progress : 1f - progress;
                 progressImage.fillAmount = fillAmount;
             }
 
-            // Обновление текста времени
+            // Update time text
 #if UNITY_TEXTMESHPRO
             if (timeText != null)
             {
@@ -774,7 +774,7 @@ namespace Neo.Tools
 
             OnTimerStarted?.Invoke();
 
-            // Визуальная анимация при старте
+            // Visual animation on start
             if (enableStartAnimation && Application.isPlaying)
             {
                 PlayStartAnimation();
@@ -795,7 +795,7 @@ namespace Neo.Tools
                         .SetEase(DG.Tweening.Ease.InQuad);
                 });
 #else
-            // Fallback без DOTween
+            // Fallback without DOTween
             StartCoroutine(StartAnimationCoroutine());
 #endif
         }
@@ -905,7 +905,7 @@ namespace Neo.Tools
                 currentTime = Mathf.Clamp(time, 0f, duration);
             }
 
-            lastProgress = -1f; // Сбрасываем для принудительного обновления
+            lastProgress = -1f; // Force UI refresh
             InvokeEvents();
         }
 

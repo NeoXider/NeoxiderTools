@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Конфиг потоков квестов: последовательные цепочки и отдельные (standalone) квесты.
+    ///     Quest flow configuration: sequential chains and standalone quests.
     /// </summary>
     [NeoDoc("Quest/QuestFlowConfig.md")]
     [CreateAssetMenu(fileName = "QuestFlowConfig", menuName = "Neoxider/Quest/Quest Flow Config")]

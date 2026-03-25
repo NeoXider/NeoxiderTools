@@ -10,7 +10,7 @@ namespace Neo.Shop
 
         [SerializeField]
         [Tooltip(
-            "Источник значения. Если не задан — используется Money.I (глобальный синглтон). Задайте для отображения энергии или другого отдельного счётчика.")]
+            "Value source. If not set, Money.I (global singleton) is used. Set for energy or another separate counter display.")]
         private Money _moneySource;
 
         public float amount;

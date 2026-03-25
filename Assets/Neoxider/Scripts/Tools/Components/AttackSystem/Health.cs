@@ -58,10 +58,10 @@ namespace Neo.Tools
 
         public int MaxHp => maxHp;
 
-        /// <summary>Текущее HP (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current HP (for NeoCondition and reflection).</summary>
         public int HpValue => Hp.CurrentValue;
 
-        /// <summary>Доля HP 0–1 (для NeoCondition и рефлексии).</summary>
+        /// <summary>HP fraction 0–1 (for NeoCondition and reflection).</summary>
         public float HpPercentValue => HpPercent.CurrentValue;
 
         public bool IsAlive => HpValue > 0;

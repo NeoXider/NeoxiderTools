@@ -9,7 +9,7 @@ namespace Neo.Animations
     public static class AnimationUtils
     {
         // -------------------------------------------------
-        // 1) Перлин‑шум
+        // 1) Perlin noise
         // -------------------------------------------------
 
         /// <summary>Gets a Perlin noise value for animation.</summary>
@@ -40,7 +40,7 @@ namespace Neo.Animations
         }
 
         // -------------------------------------------------
-        // 2) Целевое значение по типу анимации
+        // 2) Target value by animation type
         // -------------------------------------------------
 
         /// <summary>Gets the target animation value based on type and time.</summary>
@@ -67,7 +67,7 @@ namespace Neo.Animations
             float noiseScale,
             AnimationCurve customCurve = null)
         {
-            // Если скорость равна 0, возвращаем минимальное значение
+            // If speed is zero, return minimum value
             if (speed <= 0f)
             {
                 return min;
@@ -117,15 +117,15 @@ namespace Neo.Animations
                         return Mathf.Lerp(min, max, curveValue);
                     }
 
-                    return min; // fallback если кривая не задана
+                    return min; // fallback when curve is missing
 
                 default:
-                    return min; // безопасный fallback
+                    return min; // safe fallback
             }
         }
 
         // -------------------------------------------------
-        // 3) Фактор смешивания цвета
+        // 3) Color blend factor
         // -------------------------------------------------
 
         /// <summary>Gets color blend factor for smooth transition between colors.</summary>
@@ -142,7 +142,7 @@ namespace Neo.Animations
         }
 
         // -------------------------------------------------
-        // 4) Применение результата к Light (ILightAccessor)
+        // 4) Apply result to Light (ILightAccessor)
         // -------------------------------------------------
 
         /// <summary>Applies animated values to a light source.</summary>
@@ -168,7 +168,7 @@ namespace Neo.Animations
         }
 
         // -------------------------------------------------
-        // 5) Применение результата к MeshRenderer
+        // 5) Apply result to MeshRenderer
         // -------------------------------------------------
 
         /// <summary>Applies animated values to mesh material for emission.</summary>
@@ -192,14 +192,14 @@ namespace Neo.Animations
                 emission = Color.Lerp(originalEmission, targetColor, colorBlendFactor);
             }
 
-            // Множим на интенсивность
+            // Multiply by intensity
             Color final = emission * targetIntensity;
 
             mat.SetColor("_EmissionColor", final);
         }
 
         // -------------------------------------------------
-        // 6) Универсальные методы для любых значений
+        // 6) Generic helpers for arbitrary values
         // -------------------------------------------------
 
         /// <summary>Gets an animated float value.</summary>

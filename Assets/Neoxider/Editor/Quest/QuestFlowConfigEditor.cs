@@ -25,13 +25,13 @@ namespace Neo.Editor.Quest
             DrawSummary(chainsProp, standaloneProp);
             DrawValidation(chainsProp, standaloneProp);
 
-            NeoxiderEditorGUI.BeginSection("Chains", "Последовательные цепочки квестов с optional strict order.");
+            NeoxiderEditorGUI.BeginSection("Chains", "Sequential quest chains with optional strict order.");
             EditorGUILayout.PropertyField(chainsProp, true);
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Standalone Quests", "Независимые квесты, не привязанные к цепочкам.");
+            NeoxiderEditorGUI.BeginSection("Standalone Quests", "Quests not tied to any chain.");
             EditorGUILayout.PropertyField(standaloneProp, true);
             NeoxiderEditorGUI.EndSection();
 
@@ -91,7 +91,7 @@ namespace Neo.Editor.Quest
             }
 
             NeoxiderEditorGUI.DrawSummaryCard("Quest Flow Config",
-                "Конфиг управляет цепочками и отдельными квестами. Сверху видно общий объём структуры и потенциальные дубли.",
+                "Config drives chains and standalone quests. Summary above shows structure size and potential duplicates.",
                 badges.ToArray());
             EditorGUILayout.Space(4f);
         }
@@ -100,21 +100,21 @@ namespace Neo.Editor.Quest
         {
             if (chainsProp.arraySize == 0 && standaloneProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Конфиг пустой. Добавь хотя бы одну цепочку или один standalone quest.",
+                EditorGUILayout.HelpBox("Config is empty. Add at least one chain or one standalone quest.",
                     MessageType.Info);
             }
 
             if (HasEmptyChains(chainsProp))
             {
                 EditorGUILayout.HelpBox(
-                    "Есть цепочки без квестов. Их лучше либо заполнить, либо удалить для чистоты конфигурации.",
+                    "Some chains have no quests. Fill them or remove them to keep the config clean.",
                     MessageType.Warning);
             }
 
             if (HasDuplicateQuestReferences(chainsProp, standaloneProp))
             {
                 EditorGUILayout.HelpBox(
-                    "Один и тот же QuestConfig встречается несколько раз. Это допустимо не всегда и может запутывать progression flow.",
+                    "The same QuestConfig appears more than once. That is not always valid and can confuse progression flow.",
                     MessageType.Warning);
             }
         }

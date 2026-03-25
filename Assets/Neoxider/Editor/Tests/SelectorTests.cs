@@ -25,7 +25,7 @@ namespace Neo.Tools.Tests
             {
                 selector.startOnAwake = false;
                 selector.FillMode = false;
-                // По умолчанию _loop = true, поэтому Set(10) должен зациклиться в пределах [0,1]
+                // By default _loop = true, so Set(10) should wrap within [0,1]
                 selector.Set(10);
 
                 Assert.That(selector.Value, Is.EqualTo(0));
@@ -66,15 +66,15 @@ namespace Neo.Tools.Tests
                     seen.Add(selector.Value);
                 }
 
-                Assert.That(seen.Count, Is.EqualTo(3), "Все индексы должны быть выбраны по одному разу");
+                Assert.That(seen.Count, Is.EqualTo(3), "Every index must be picked exactly once");
 
                 int before = selector.Value;
-                selector.SetRandom(); // все использованы, без авто-сброса
-                Assert.That(selector.Value, Is.EqualTo(before), "Без авто-сброса индекс не должен меняться");
+                selector.SetRandom(); // all indices used, no auto-reset
+                Assert.That(selector.Value, Is.EqualTo(before), "Without auto-reset the index must not change");
 
                 selector.ResetUnique();
                 selector.SetRandom();
-                Assert.That(seen.Contains(selector.Value), Is.True, "После ResetUnique() индексы снова доступны");
+                Assert.That(seen.Contains(selector.Value), Is.True, "After ResetUnique() indices are available again");
             }
             finally
             {
@@ -104,7 +104,7 @@ namespace Neo.Tools.Tests
                 {
                     selector.SetRandom();
                     Assert.That(selector.Value, Is.EqualTo(1),
-                        "Индекс 0 исключён, случайный выбор должен давать только 1");
+                        "Index 0 is excluded; random selection must yield only 1");
                 }
 
                 selector.IncludeAllIndices();
@@ -124,7 +124,7 @@ namespace Neo.Tools.Tests
                     }
                 }
 
-                Assert.That(seenZero && seenOne, Is.True, "После IncludeAllIndices() оба индекса снова доступны");
+                Assert.That(seenZero && seenOne, Is.True, "After IncludeAllIndices() both indices are available again");
             }
             finally
             {
@@ -156,7 +156,7 @@ namespace Neo.Tools.Tests
             first.Set(1);
             first.ExcludeIndex(0);
 
-            // Принудительно сохранить состояние
+            // Force-save state
             InvokePrivate(first, "SaveState");
 
             Object.DestroyImmediate(firstRoot);
@@ -177,10 +177,10 @@ namespace Neo.Tools.Tests
                 SetPrivateString(second, "_saveKey", saveKey);
 
                 InvokePrivate(second, "LoadState");
-                second.Set(second.Value); // применить загруженный индекс
+                second.Set(second.Value); // apply loaded index
 
-                Assert.That(second.Value, Is.EqualTo(1), "Индекс должен быть восстановлен из сохранения");
-                Assert.That(second.IsExcluded(0), Is.True, "Исключённый индекс должен быть восстановлен");
+                Assert.That(second.Value, Is.EqualTo(1), "Index must be restored from save");
+                Assert.That(second.IsExcluded(0), Is.True, "Excluded index must be restored");
             }
             finally
             {

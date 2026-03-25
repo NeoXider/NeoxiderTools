@@ -10,13 +10,13 @@ using Random = UnityEngine.Random;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     Оркестратор спина:
-    ///     - Расставляет ряды и их параметры (spaceY, offsetY, speedControll)
-    ///     - Стартует спин рядов и ждёт полного останова
-    ///     - Считывает ИМЕННО видимые 3 символа из каждого ряда и собирает finalVisuals
-    ///     - Считает выигрыш/проигрыш и шлёт события
-    ///     - Даёт доступ к двумерной матрице видимых элементов (Elements) для эффектов
-    ///     Здесь НЕТ анимаций — весь движок вращения/торможения внутри Row.
+    ///     Spin orchestrator:
+    ///     - Arranges rows and their parameters (spaceY, offsetY, speedControll)
+    ///     - Starts row spins and waits until all rows stop
+    ///     - Reads exactly the 3 visible symbols per row into finalVisuals
+    ///     - Evaluates win/lose and raises events
+    ///     - Exposes a 2D matrix of visible elements (Elements) for effects
+    ///     No spin animation here — rotation/braking lives in Row.
     /// </summary>
     [NeoDoc("Bonus/Slot/SpinController.md")]
     [CreateFromMenu("Neoxider/Bonus/SpinController")]
@@ -24,14 +24,14 @@ namespace Neo.Bonus
     public class SpinController : MonoBehaviour
     {
         [SerializeField] public CheckSpin checkSpin = new();
-        [SerializeField] public BetsData betsData; // может быть null
-        [SerializeField] public SpritesData allSpritesData; // может быть null
+        [SerializeField] public BetsData betsData; // may be null
+        [SerializeField] public SpritesData allSpritesData; // may be null
 
         [Space] [Header("Settings")] [SerializeField] [RequireInterface(typeof(IMoneySpend))]
         private GameObject _moneyGameObject;
 
         [SerializeField] private bool _priceOnLine = true;
-        [SerializeField] private int _countVerticalElements = 3; // видимое окно = 3
+        [SerializeField] private int _countVerticalElements = 3; // visible window = 3
         [SerializeField] private Row[] _rows;
 
         [SerializeField] private bool _isSingleSpeed = true;
@@ -58,7 +58,7 @@ namespace Neo.Bonus
 
         public UnityEvent OnEndSpin;
 
-        /// <summary>Передает true, если был выигрыш.</summary>
+        /// <summary>Invoked with true when the spin is a win.</summary>
         public UnityEvent<bool> OnEnd;
 
         [Space] public UnityEvent<int> OnWin;
@@ -78,18 +78,18 @@ namespace Neo.Bonus
         [Tooltip("From which index to print coordinates in Debug: 0 (default) or 1, etc.")] [SerializeField]
         private int _gridIndexBase = 1;
 
-        public SlotVisualData[,] finalVisuals; // собираем ИЗ экрана после стопа
+        public SlotVisualData[,] finalVisuals; // filled from the screen after stop
         public IMoneySpend moneySpend;
 
         private int price;
 
         /// <summary>
-        ///     Двумерная матрица ССЫЛОК на реальные видимые элементы:
-        ///     Elements[x,y], где y=0 — низ, y=2 — верх. Заполняется после остановки.
+        ///     2D matrix of references to actual visible elements:
+        ///     Elements[x,y] with y=0 bottom, y=2 top. Filled after spin stops.
         /// </summary>
         public SlotElement[,] Elements { get; private set; }
 
-        /// <summary>Матрица ID (в той же ориентации, что Elements): y=0 — низ, y=2 — верх.</summary>
+        /// <summary>ID matrix (same orientation as Elements): y=0 bottom, y=2 top.</summary>
         public int[,] FinalElementIDs
         {
             get
@@ -125,7 +125,7 @@ namespace Neo.Bonus
             SetSpace();
             _betsId = 0;
 
-            // Инициализируем визуалы рядов (если есть набор)
+            // Initialize row visuals when a sprite set exists
             if (allSpritesData != null && allSpritesData.visuals != null && allSpritesData.visuals.Length > 0)
             {
                 SlotVisualData initial = allSpritesData.visuals[0];
@@ -161,12 +161,12 @@ namespace Neo.Bonus
             WaitForSeconds delay = new(_delaySpinRoll);
             _lineSlot?.LineActiv(false);
 
-            GenerateFinalPlanIds(); // оставляем для вероятностей/отладки
+            GenerateFinalPlanIds(); // kept for win/lose odds and debugging
 
             bool hasSprites = allSpritesData != null && allSpritesData.visuals != null &&
                               allSpritesData.visuals.Length > 0;
 
-            // Стартуем ряды (стаггер по желанию)
+            // Start rows (optional stagger)
             for (int x = 0; x < _rows.Length; x++)
             {
                 if (hasSprites)
@@ -177,19 +177,19 @@ namespace Neo.Bonus
                 yield return delay;
             }
 
-            // Ждём полного останова ВСЕХ рядов
+            // Wait until ALL rows have fully stopped
             yield return new WaitUntil(IsStop);
 
-            // Собираем реальный экран и кэш видимых элементов
+            // Build screen snapshot and visible-element cache
             BuildVisibleMatrices();
 
-            // Считаем результат и шлём события
+            // Evaluate outcome and raise events
             ProcessSpinResult();
         }
 
         /// <summary>
-        ///     Заполняет Elements[x,y] (ССЫЛКИ на видимые элементы) и finalVisuals[x,y] (данные) из экрана.
-        ///     y=0 низ, y=2 верх.
+        ///     Fills Elements[x,y] (references to visible elements) and finalVisuals[x,y] (data) from the screen.
+        ///     y=0 bottom, y=2 top.
         /// </summary>
         private void BuildVisibleMatrices()
         {
@@ -220,13 +220,13 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                // Row даёт Top→Down три «окна»
+                // Row returns three window slots Top→Down
                 SlotElement[] visibleTopDown = row.GetVisibleTopDown();
 
-                // Записываем Bottom→Top в матрицы (y=0 — низ)
+                // Write Bottom→Top into matrices (y=0 is bottom)
                 for (int y = 0; y < rows; y++)
                 {
-                    SlotElement se = visibleTopDown[rows - 1 - y]; // 2..0 ⇒ низ..верх
+                    SlotElement se = visibleTopDown[rows - 1 - y]; // 2..0 => bottom..top
                     Elements[x, y] = se;
 
                     SlotVisualData v = null;
@@ -241,8 +241,8 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        ///     Публичный геттер (получить актуальную матрицу элементов).
-        ///     Если спин в покое — обновляет из экрана; во время спина вернёт последний кэш.
+        ///     Public accessor for the element matrix.
+        ///     When idle, refreshes from the screen; during spin returns the last cache.
         /// </summary>
         public SlotElement[,] GetElementsMatrix(bool refreshIfIdle = true)
         {
@@ -255,7 +255,7 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        ///     Публичный геттер ID-матрицы (в той же ориентации, что Elements): y=0 низ.
+        ///     Public accessor for the ID matrix (same orientation as Elements): y=0 is bottom.
         /// </summary>
         public int[,] GetElementIDsMatrix(bool refreshIfIdle = true)
         {
@@ -268,7 +268,7 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        ///     Генерация «плана» id (не форсируем ряды) — для вероятностей win/lose.
+        ///     Generate an ID "plan" (does not force rows) for win/lose probability logic.
         /// </summary>
         private void GenerateFinalPlanIds()
         {
@@ -305,14 +305,14 @@ namespace Neo.Bonus
                 }
                 catch
                 {
-                    /* нет SO — игнор */
+                    /* no SO — ignore */
                 }
             }
         }
 
         private void ProcessSpinResult()
         {
-            // Корректный, настраиваемый Debug: координаты печатаем с базой _gridIndexBase (0 или 1 и т.п.)
+            // Configurable debug: print coordinates with _gridIndexBase (0, 1, etc.)
             if (_logFinalVisuals && finalVisuals != null)
             {
                 StringBuilder sb = new();
@@ -320,7 +320,7 @@ namespace Neo.Bonus
                 int cols = finalVisuals.GetLength(0);
                 int rows = finalVisuals.GetLength(1);
 
-                // печать сверху-вниз (визуально как на экране), НО координаты [x+base, y+base]
+                // Print top-down (like on screen), coordinates use [x+base, y+base]
                 for (int y = rows - 1; y >= 0; y--)
                 {
                     List<string> parts = new(cols);
@@ -348,7 +348,7 @@ namespace Neo.Bonus
 
             try
             {
-                int[,] finalIds = FinalElementIDs; // это ТО, ЧТО НА ЭКРАНЕ (Bottom-Up)
+                int[,] finalIds = FinalElementIDs; // what is on screen (bottom-up)
                 int[] lines = checkSpin.GetWinningLines(finalIds, _countLine);
 
                 if (lines.Length > 0)

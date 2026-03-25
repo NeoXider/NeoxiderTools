@@ -88,31 +88,31 @@ namespace Neo.Editor
                     switch (s.Status)
                     {
                         case NeoxiderUpdateChecker.UpdateStatus.Checking:
-                            label = "Проверка обновлений…";
+                            label = "Checking for updates…";
                             color = new Color(0.25f, 0.75f, 1f, 1f);
                             break;
 
                         case NeoxiderUpdateChecker.UpdateStatus.UpToDate:
-                            label = "Актуальная версия";
+                            label = "Up to date";
                             color = new Color(0.35f, 1f, 0.35f, 1f);
                             break;
 
                         case NeoxiderUpdateChecker.UpdateStatus.Ahead:
                             label = !string.IsNullOrEmpty(s.LatestVersion)
-                                ? $"Выше опубликованной (последняя: {s.LatestVersion})"
-                                : "Выше опубликованной";
+                                ? $"Ahead of published (latest: {s.LatestVersion})"
+                                : "Ahead of published";
                             color = new Color(1f, 0.75f, 0.25f, 1f);
                             break;
 
                         case NeoxiderUpdateChecker.UpdateStatus.UpdateAvailable:
                             label = !string.IsNullOrEmpty(s.LatestVersion)
-                                ? $"Есть обновление: {s.LatestVersion}"
-                                : "Есть обновление";
+                                ? $"Update available: {s.LatestVersion}"
+                                : "Update available";
                             color = new Color(1f, 0.25f, 0.25f, 1f);
                             break;
 
                         default:
-                            label = "Статус обновлений: Unknown (нажми ⟳)";
+                            label = "Update status: Unknown (click ⟳)";
                             color = new Color(1f, 1f, 1f, 0.7f);
                             break;
                     }
@@ -127,7 +127,7 @@ namespace Neo.Editor
 
                     if (s.Status == NeoxiderUpdateChecker.UpdateStatus.UpdateAvailable &&
                         !string.IsNullOrEmpty(s.UpdateUrl) &&
-                        GUILayout.Button("Открыть", GUILayout.Width(70), GUILayout.Height(20)))
+                        GUILayout.Button("Open", GUILayout.Width(70), GUILayout.Height(20)))
                     {
                         Application.OpenURL(s.UpdateUrl);
                     }

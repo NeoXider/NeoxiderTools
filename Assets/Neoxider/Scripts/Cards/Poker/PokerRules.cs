@@ -4,16 +4,16 @@ using System.Linq;
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    ///     Правила покера для определения победителя
+    ///     Poker rules helpers for comparing hands and winners.
     /// </summary>
     public static class PokerRules
     {
         /// <summary>
-        ///     Сравнивает две руки
+        ///     Compares two evaluated hands.
         /// </summary>
-        /// <param name="hand1">Первая рука</param>
-        /// <param name="hand2">Вторая рука</param>
-        /// <returns>Положительное если первая рука сильнее, отрицательное если вторая, 0 если равны</returns>
+        /// <param name="hand1">First hand.</param>
+        /// <param name="hand2">Second hand.</param>
+        /// <returns>Positive if first wins, negative if second, zero if tied.</returns>
         public static int CompareHands(PokerHandResult hand1, PokerHandResult hand2)
         {
             if (hand1 == null && hand2 == null)
@@ -35,11 +35,11 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Сравнивает две руки по картам
+        ///     Compares two hands from raw card lists (evaluates each).
         /// </summary>
-        /// <param name="cards1">Карты первого игрока</param>
-        /// <param name="cards2">Карты второго игрока</param>
-        /// <returns>Положительное если первая рука сильнее, отрицательное если вторая, 0 если равны</returns>
+        /// <param name="cards1">First player's cards.</param>
+        /// <param name="cards2">Second player's cards.</param>
+        /// <returns>Positive if first wins, negative if second, zero if tied.</returns>
         public static int CompareHands(IEnumerable<CardData> cards1, IEnumerable<CardData> cards2)
         {
             PokerHandResult result1 = PokerHandEvaluator.Evaluate(cards1);
@@ -49,10 +49,10 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Определяет победителей среди нескольких рук
+        ///     Winner indices among evaluated hands (split pots return multiple).
         /// </summary>
-        /// <param name="hands">Список результатов оценки рук</param>
-        /// <returns>Индексы победителей (может быть несколько при split pot)</returns>
+        /// <param name="hands">Evaluated hands.</param>
+        /// <returns>Winning player indices.</returns>
         public static List<int> GetWinners(IList<PokerHandResult> hands)
         {
             if (hands == null || hands.Count == 0)
@@ -88,10 +88,10 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Определяет победителей по картам игроков
+        ///     Winner indices from each player's cards (evaluated per player).
         /// </summary>
-        /// <param name="playerCards">Карты каждого игрока</param>
-        /// <returns>Индексы победителей</returns>
+        /// <param name="playerCards">Each player's cards.</param>
+        /// <returns>Winning indices.</returns>
         public static List<int> GetWinners(IList<IEnumerable<CardData>> playerCards)
         {
             var hands = playerCards
@@ -102,11 +102,11 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Определяет победителей в Texas Hold'em
+        ///     Texas Hold'em winners from board and hole cards.
         /// </summary>
-        /// <param name="communityCards">Общие карты на столе (3-5 карт)</param>
-        /// <param name="playerHoleCards">Карманные карты каждого игрока (по 2 карты)</param>
-        /// <returns>Индексы победителей</returns>
+        /// <param name="communityCards">Board cards (3–5).</param>
+        /// <param name="playerHoleCards">Each player's two hole cards.</param>
+        /// <returns>Winning player indices.</returns>
         public static List<int> GetWinnersTexasHoldem(
             IEnumerable<CardData> communityCards,
             IList<IEnumerable<CardData>> playerHoleCards)
@@ -130,11 +130,11 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Оценивает руку в Texas Hold'em
+        ///     Evaluates a Texas Hold'em hand (board + hole cards).
         /// </summary>
-        /// <param name="communityCards">Общие карты на столе</param>
-        /// <param name="holeCards">Карманные карты игрока</param>
-        /// <returns>Результат оценки</returns>
+        /// <param name="communityCards">Board.</param>
+        /// <param name="holeCards">Player hole cards.</param>
+        /// <returns>Evaluation result.</returns>
         public static PokerHandResult EvaluateTexasHoldem(
             IEnumerable<CardData> communityCards,
             IEnumerable<CardData> holeCards)
@@ -144,11 +144,11 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, выиграл ли игрок (или сыграл вничью)
+        ///     Whether the player index is among the winners (including chops).
         /// </summary>
-        /// <param name="playerIndex">Индекс игрока</param>
-        /// <param name="hands">Все руки</param>
-        /// <returns>true если игрок среди победителей</returns>
+        /// <param name="playerIndex">Player index.</param>
+        /// <param name="hands">All evaluated hands.</param>
+        /// <returns>True if that player ties or wins.</returns>
         public static bool IsWinner(int playerIndex, IList<PokerHandResult> hands)
         {
             List<int> winners = GetWinners(hands);
@@ -156,10 +156,10 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Возвращает лучшую руку среди всех
+        ///     Strongest hand in the sequence, or null if none.
         /// </summary>
-        /// <param name="hands">Список рук</param>
-        /// <returns>Лучшая рука или null</returns>
+        /// <param name="hands">Hand results.</param>
+        /// <returns>Best hand or null.</returns>
         public static PokerHandResult GetBestHand(IEnumerable<PokerHandResult> hands)
         {
             PokerHandResult best = null;
@@ -181,12 +181,12 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Рассчитывает вероятность улучшения руки (аутсы)
+        ///     Counts simple one-card outs: deck cards that improve to at least the target combination.
         /// </summary>
-        /// <param name="currentHand">Текущие карты</param>
-        /// <param name="targetCombination">Желаемая комбинация</param>
-        /// <param name="remainingDeck">Оставшиеся карты в колоде</param>
-        /// <returns>Количество аутсов</returns>
+        /// <param name="currentHand">Known cards so far.</param>
+        /// <param name="targetCombination">Minimum combination to count.</param>
+        /// <param name="remainingDeck">Unknown / remaining deck cards.</param>
+        /// <returns>Number of qualifying outs.</returns>
         public static int CountOuts(
             IEnumerable<CardData> currentHand,
             PokerCombination targetCombination,

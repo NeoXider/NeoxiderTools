@@ -3,117 +3,117 @@ using System;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Интерфейс для провайдеров сохранения данных.
-    ///     Предоставляет унифицированный API для работы с различными системами сохранения.
+    ///     Interface for save data providers.
+    ///     Exposes a unified API across different persistence backends.
     /// </summary>
     public interface ISaveProvider
     {
         /// <summary>
-        ///     Тип провайдера.
+        ///     Provider type.
         /// </summary>
         SaveProviderType ProviderType { get; }
 
         /// <summary>
-        ///     Событие, вызываемое после сохранения данных.
+        ///     Raised after data is saved.
         /// </summary>
         event Action OnDataSaved;
 
         /// <summary>
-        ///     Событие, вызываемое после загрузки данных.
+        ///     Raised after data is loaded.
         /// </summary>
         event Action OnDataLoaded;
 
         /// <summary>
-        ///     Событие, вызываемое при изменении значения ключа.
+        ///     Raised when a key's value changes.
         /// </summary>
-        /// <param name="key">Ключ, значение которого изменилось</param>
+        /// <param name="key">Key whose value changed</param>
         event Action<string> OnKeyChanged;
 
         /// <summary>
-        ///     Получает целочисленное значение по ключу.
+        ///     Gets an integer value by key.
         /// </summary>
-        /// <param name="key">Ключ для получения значения</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Значение по ключу или значение по умолчанию</returns>
+        /// <param name="key">Key to read</param>
+        /// <param name="defaultValue">Default if the key is missing</param>
+        /// <returns>Stored value or default</returns>
         int GetInt(string key, int defaultValue = 0);
 
         /// <summary>
-        ///     Устанавливает целочисленное значение по ключу.
+        ///     Sets an integer value by key.
         /// </summary>
-        /// <param name="key">Ключ для установки значения</param>
-        /// <param name="value">Значение для сохранения</param>
+        /// <param name="key">Key to write</param>
+        /// <param name="value">Value to store</param>
         void SetInt(string key, int value);
 
         /// <summary>
-        ///     Получает значение с плавающей точкой по ключу.
+        ///     Gets a floating-point value by key.
         /// </summary>
-        /// <param name="key">Ключ для получения значения</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Значение по ключу или значение по умолчанию</returns>
+        /// <param name="key">Key to read</param>
+        /// <param name="defaultValue">Default if the key is missing</param>
+        /// <returns>Stored value or default</returns>
         float GetFloat(string key, float defaultValue = 0f);
 
         /// <summary>
-        ///     Устанавливает значение с плавающей точкой по ключу.
+        ///     Sets a floating-point value by key.
         /// </summary>
-        /// <param name="key">Ключ для установки значения</param>
-        /// <param name="value">Значение для сохранения</param>
+        /// <param name="key">Key to write</param>
+        /// <param name="value">Value to store</param>
         void SetFloat(string key, float value);
 
         /// <summary>
-        ///     Получает строковое значение по ключу.
+        ///     Gets a string value by key.
         /// </summary>
-        /// <param name="key">Ключ для получения значения</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Значение по ключу или значение по умолчанию</returns>
+        /// <param name="key">Key to read</param>
+        /// <param name="defaultValue">Default if the key is missing</param>
+        /// <returns>Stored value or default</returns>
         string GetString(string key, string defaultValue = "");
 
         /// <summary>
-        ///     Устанавливает строковое значение по ключу.
+        ///     Sets a string value by key.
         /// </summary>
-        /// <param name="key">Ключ для установки значения</param>
-        /// <param name="value">Значение для сохранения</param>
+        /// <param name="key">Key to write</param>
+        /// <param name="value">Value to store</param>
         void SetString(string key, string value);
 
         /// <summary>
-        ///     Получает булево значение по ключу.
+        ///     Gets a Boolean value by key.
         /// </summary>
-        /// <param name="key">Ключ для получения значения</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Значение по ключу или значение по умолчанию</returns>
+        /// <param name="key">Key to read</param>
+        /// <param name="defaultValue">Default if the key is missing</param>
+        /// <returns>Stored value or default</returns>
         bool GetBool(string key, bool defaultValue = false);
 
         /// <summary>
-        ///     Устанавливает булево значение по ключу.
+        ///     Sets a Boolean value by key.
         /// </summary>
-        /// <param name="key">Ключ для установки значения</param>
-        /// <param name="value">Значение для сохранения</param>
+        /// <param name="key">Key to write</param>
+        /// <param name="value">Value to store</param>
         void SetBool(string key, bool value);
 
         /// <summary>
-        ///     Проверяет, существует ли ключ в хранилище.
+        ///     Returns whether the key exists in storage.
         /// </summary>
-        /// <param name="key">Ключ для проверки</param>
-        /// <returns>true, если ключ существует, иначе false</returns>
+        /// <param name="key">Key to check</param>
+        /// <returns>true if the key exists; otherwise false</returns>
         bool HasKey(string key);
 
         /// <summary>
-        ///     Удаляет ключ и его значение из хранилища.
+        ///     Removes the key and its value from storage.
         /// </summary>
-        /// <param name="key">Ключ для удаления</param>
+        /// <param name="key">Key to remove</param>
         void DeleteKey(string key);
 
         /// <summary>
-        ///     Удаляет все ключи из хранилища.
+        ///     Removes all keys from storage.
         /// </summary>
         void DeleteAll();
 
         /// <summary>
-        ///     Принудительно сохраняет данные в хранилище.
+        ///     Forces persistence to storage.
         /// </summary>
         void Save();
 
         /// <summary>
-        ///     Принудительно загружает данные из хранилища.
+        ///     Forces a reload from storage.
         /// </summary>
         void Load();
     }

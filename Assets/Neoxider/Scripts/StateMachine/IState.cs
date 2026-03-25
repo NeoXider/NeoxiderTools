@@ -1,12 +1,12 @@
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Интерфейс для состояний в State Machine системе.
-    ///     Определяет жизненный цикл состояния с методами входа, обновления и выхода.
+    ///     Contract for states used with StateMachine.
+    ///     Defines enter / tick / exit lifecycle hooks.
     /// </summary>
     /// <remarks>
-    ///     Все состояния должны реализовывать этот интерфейс для работы с StateMachine.
-    ///     Методы OnFixedUpdate и OnLateUpdate опциональны и могут быть пустыми.
+    ///     All concrete states must implement this interface.
+    ///     OnFixedUpdate and OnLateUpdate may be no-ops when unused.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -19,7 +19,7 @@ namespace Neo.StateMachine
     ///     
     ///     public void OnUpdate()
     ///     {
-    ///         // Логика обновления состояния
+    ///         // Per-frame state logic
     ///     }
     ///     
     ///     public void OnExit()
@@ -29,12 +29,12 @@ namespace Neo.StateMachine
     ///     
     ///     public void OnFixedUpdate()
     ///     {
-    ///         // Физика (опционально)
+    ///         // Physics (optional)
     ///     }
     ///     
     ///     public void OnLateUpdate()
     ///     {
-    ///         // Поздние обновления (опционально)
+    ///         // Late update (optional)
     ///     }
     /// }
     /// </code>
@@ -42,50 +42,43 @@ namespace Neo.StateMachine
     public interface IState
     {
         /// <summary>
-        ///     Вызывается при входе в состояние.
-        ///     Используется для инициализации состояния, активации анимаций, включения компонентов и т.д.
+        ///     Called once when becoming the active state.
+        ///     Use for setup, animations, enabling components, etc.
         /// </summary>
         /// <remarks>
-        ///     Этот метод вызывается один раз при переходе в состояние, перед первым вызовом OnUpdate.
+        ///     Runs before the first OnUpdate after a transition.
         /// </remarks>
         void OnEnter();
 
         /// <summary>
-        ///     Вызывается каждый кадр, пока состояние активно.
-        ///     Используется для основной логики состояния.
+        ///     Called every frame while this state is active.
         /// </summary>
         /// <remarks>
-        ///     Вызывается каждый кадр через StateMachine.Update().
-        ///     Не вызывается, если StateMachine не обновляется.
+        ///     Driven by StateMachine.Update(); not called if the machine is not updated.
         /// </remarks>
         void OnUpdate();
 
         /// <summary>
-        ///     Вызывается при выходе из состояния.
-        ///     Используется для очистки ресурсов, деактивации компонентов, остановки анимаций и т.д.
+        ///     Called once when leaving this state.
         /// </summary>
         /// <remarks>
-        ///     Этот метод вызывается один раз при переходе из состояния, после последнего вызова OnUpdate.
+        ///     Runs after the last OnUpdate of the outgoing state.
         /// </remarks>
         void OnExit();
 
         /// <summary>
-        ///     Вызывается каждый фиксированный кадр (FixedUpdate), пока состояние активно.
-        ///     Используется для физики и других операций, требующих фиксированного интервала времени.
+        ///     Called every FixedUpdate tick while active (physics timestep).
         /// </summary>
         /// <remarks>
-        ///     Опциональный метод. Может быть пустым, если физика не требуется.
-        ///     Вызывается через StateMachine.FixedUpdate().
+        ///     Optional; leave empty if unused. Driven by StateMachine.FixedUpdate().
         /// </remarks>
         void OnFixedUpdate();
 
         /// <summary>
-        ///     Вызывается каждый кадр после всех обновлений (LateUpdate), пока состояние активно.
-        ///     Используется для операций, которые должны выполняться после всех обновлений.
+        ///     Called every frame after all Updates while active.
         /// </summary>
         /// <remarks>
-        ///     Опциональный метод. Может быть пустым, если поздние обновления не требуются.
-        ///     Вызывается через StateMachine.LateUpdate().
+        ///     Optional; leave empty if unused. Driven by StateMachine.LateUpdate().
         /// </remarks>
         void OnLateUpdate();
     }

@@ -4,8 +4,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Пробрасывает события жизненного цикла Unity в UnityEvent. Появление/исчезновение (OnEnable, OnDisable),
-    ///     Awake, Start, Destroy, при необходимости — каждый кадр (Update, FixedUpdate, LateUpdate) с передачей времени.
+    ///     Forwards Unity lifecycle callbacks to UnityEvents: OnEnable, OnDisable, Awake, Start, Destroy,
+    ///     and optionally per-frame Update, FixedUpdate, LateUpdate with delta time arguments.
     /// </summary>
     [NeoDoc("Tools/Components/UnityLifecycleEvents.md")]
     [CreateFromMenu("Neoxider/Tools/Components/UnityLifecycleEvents")]
@@ -20,18 +20,18 @@ namespace Neo.Tools
         [SerializeField] private UnityEvent _onDestroy = new();
 
         [Header("Per frame (enable only when needed)")]
-        [Tooltip("Вызывать On Update каждый кадр; аргумент — deltaTime.")]
+        [Tooltip("Invoke On Update every frame; argument is deltaTime.")]
         [SerializeField]
         private bool _emitUpdate;
 
         [SerializeField] private UnityEvent<float> _onUpdate = new();
 
-        [Tooltip("Вызывать On Fixed Update каждый фиксированный кадр; аргумент — fixedDeltaTime.")] [SerializeField]
+        [Tooltip("Invoke On Fixed Update every physics tick; argument is fixedDeltaTime.")] [SerializeField]
         private bool _emitFixedUpdate;
 
         [SerializeField] private UnityEvent<float> _onFixedUpdate = new();
 
-        [Tooltip("Вызывать On Late Update каждый кадр после Update; аргумент — deltaTime.")] [SerializeField]
+        [Tooltip("Invoke On Late Update every frame after Update; argument is deltaTime.")] [SerializeField]
         private bool _emitLateUpdate;
 
         [SerializeField] private UnityEvent<float> _onLateUpdate = new();

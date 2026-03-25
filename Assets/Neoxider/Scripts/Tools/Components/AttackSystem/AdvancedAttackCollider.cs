@@ -19,7 +19,7 @@ namespace Neo.Tools
     [AddComponentMenu("")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
-        [Header("Attack")] [SerializeField] private int attackDamage = 10; // Урон от атаки по умолчанию
+        [Header("Attack")] [SerializeField] private int attackDamage = 10; // Default attack damage
 
         [Tooltip("Attack type: damage or healing")] [SerializeField]
         private AttackType attackType = AttackType.Damage;
@@ -27,15 +27,15 @@ namespace Neo.Tools
         [Tooltip("Limit repeated hits on the same object (off by default)")] [SerializeField]
         private bool preventRepeatHits;
 
-        public float triggerDuration = 0.2f; // Длительность активации триггера
+        public float triggerDuration = 0.2f; // How long the trigger stays active
 
         [Header("Auto")]
         [SerializeField]
         [Tooltip("When enabled, component toggles colliders during trigger activation.")]
-        private bool autoManageColliders; // По умолчанию не управляем коллайдерами автоматически
+        private bool autoManageColliders; // By default do not auto-manage colliders
 
-        [SerializeField] private new Collider2D collider2D; // 2D коллайдер
-        [SerializeField] private Collider collider3D; // 3D коллайдер
+        [SerializeField] private new Collider2D collider2D; // 2D collider
+        [SerializeField] private Collider collider3D; // 3D collider
 
         [Header("Modes")] [Tooltip("Handle 2D collisions/triggers")]
         public bool use2D = true;
@@ -48,11 +48,11 @@ namespace Neo.Tools
         [Tooltip("Handle collision events")] public bool useCollision = true;
 
         [Header("Filtering")]
-        public LayerMask hittableLayers = -1; // Слои, на которые реагирует атака. По умолчанию - все
+        public LayerMask hittableLayers = -1; // Layers the attack can hit; default all
 
-        [Header("Force")] public bool applyForceOnHit; // Применять силу при попадании
-        public float forceMagnitude = 20f; // Величина силы
-        public float forceDuration = 0.3f; // Длительность действия силы (зарезервировано)
+        [Header("Force")] public bool applyForceOnHit; // Apply impulse on hit
+        public float forceMagnitude = 20f; // Force strength
+        public float forceDuration = 0.3f; // Force duration (reserved)
 
         [Tooltip("Force mode for 3D Rigidbody")]
         public ForceMode forceMode3D = ForceMode.Impulse;
@@ -66,7 +66,7 @@ namespace Neo.Tools
         [Tooltip("Use AdvancedForceApplier as fallback")]
         public bool useAdvancedForceApplier = true;
 
-        [Header("Effects")] public GameObject attackEffectPrefab; // Префаб эффекта атаки
+        [Header("Effects")] public GameObject attackEffectPrefab; // Hit effect prefab
 
         [Header("Ignore")] [Tooltip("Objects that are not damaged and do not trigger hit")] [SerializeField]
         private GameObject[] ignoreObjects;
@@ -77,14 +77,14 @@ namespace Neo.Tools
         [Tooltip("If true, destroys target object on collision/hit")]
         public bool destroyTargetOnHit;
 
-        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true; // Показывать ли Gizmo в редакторе
+        [Header("Gizmos")] [SerializeField] private bool _showGizmo = true; // Draw gizmo in editor
 
-        [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f); // Цвет Gizmo
+        [SerializeField] private Color _gizmoColor = new(1f, 0f, 0f, 0.2f); // Gizmo color
 
-        public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // Событие при попадании в 2D (триггер)
+        public UnityEvent<Collider2D> OnAttackTriggerEnter2D; // 2D trigger hit
 
-        public UnityEvent<Collider> OnAttackTriggerEnter3D; // Событие при попадании в 3D (триггер)
-        public UnityEvent OnDeactivateTrigger; // Событие при деактивации триггера
+        public UnityEvent<Collider> OnAttackTriggerEnter3D; // 3D trigger hit
+        public UnityEvent OnDeactivateTrigger; // When attack trigger turns off
 
         [Tooltip("Single hit event: target GameObject")]
         public UnityEvent<GameObject> OnHit;
@@ -114,7 +114,7 @@ namespace Neo.Tools
 
             if (autoManageColliders)
             {
-                EnableCollider(false); // При авто-режиме коллайдеры отключены при запуске
+                EnableCollider(false); // Auto mode: colliders off at start
             }
         }
 
@@ -222,7 +222,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Проверка на null, повторное попадание или неверный слой
+            // Null, repeat hit, or wrong layer
             if (collider3D == null ||
                 (preventRepeatHits && hitColliders3D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
@@ -248,7 +248,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // Проверка на null, повторное попадание или неверный слой
+            // Null, repeat hit, or wrong layer
             if (collider2D == null ||
                 (preventRepeatHits && hitColliders2D.Contains(collision)) ||
                 !PassesLayer(collision.gameObject.layer))
@@ -273,9 +273,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Активирует триггер атаки на заданное время.
+        ///     Activates the attack trigger for the given duration.
         /// </summary>
-        /// <param name="damage">Переопределяет урон для этой конкретной атаки. Если -1, используется урон по умолчанию.</param>
+        /// <param name="damage">Override damage for this swing; -1 uses default.</param>
         public void ActivateTrigger(int damage)
         {
             _currentDamage = damage;
@@ -357,7 +357,7 @@ namespace Neo.Tools
 
         private void ApplyForceToTarget(GameObject target, Vector3 direction)
         {
-            // Если используется AdvancedForceApplier, то силы через Rigidbody НЕ применяем
+            // Skip Rigidbody forces when AdvancedForceApplier handles knockback
             if (useAdvancedForceApplier)
             {
                 if (target.TryGetComponent(out AdvancedForceApplier forceApplier))

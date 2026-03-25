@@ -32,7 +32,7 @@ namespace Neo.Tools
         [SerializeField] private float _extraGravityMultiplier = 1.6f;
         [SerializeField] private bool _canRun = true;
 
-        [Tooltip("Разрешить прыжок. Можно менять в рантайме через SetJumpEnabled(bool).")]
+        [Tooltip("Allow jump. Can be changed at runtime via SetJumpEnabled(bool).")]
         [SerializeField]
         private bool _canJump = true;
 
@@ -93,7 +93,7 @@ namespace Neo.Tools
         private Vector2 _lookInput;
 
         private Vector2 _moveInput;
-        [Tooltip("Обработка ходьбы/бега и буфера прыжка. Меняется через SetMovementEnabled(bool).")]
+        [Tooltip("Process walk/run and jump buffer input. Toggle via SetMovementEnabled(bool).")]
         [SerializeField]
         private bool _movementEnabled = true;
         private bool _newInputUnavailableWarningShown;

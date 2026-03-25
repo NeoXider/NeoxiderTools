@@ -12,9 +12,9 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Универсальная вью карты: ICardView + ICardDisplayMode + ICardViewAnimations.
-    ///     Режимы отображения (переворот / всегда открыта / всегда закрыта), готовые анимации через
-    ///     CardViewAnimationTemplates.
+    ///     Universal card view: <see cref="ICardView" />, <see cref="ICardDisplayMode" />,
+    ///     <see cref="ICardViewAnimations" />. Display modes (flip / always up / always down) and built-in tweens via
+    ///     <see cref="CardViewAnimationTemplates" />.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/CardViewUniversal")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(CardViewUniversal))]

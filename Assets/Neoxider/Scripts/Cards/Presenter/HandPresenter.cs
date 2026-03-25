@@ -6,17 +6,17 @@ using Cysharp.Threading.Tasks;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Презентер руки - связывает модель руки с визуальным представлением
+    ///     Bridges <see cref="HandModel" /> and <see cref="IHandView" />.
     /// </summary>
     public class HandPresenter
     {
         private readonly List<CardPresenter> _cardPresenters = new();
 
         /// <summary>
-        ///     Создаёт презентер руки
+        ///     Creates a hand presenter.
         /// </summary>
-        /// <param name="model">Модель руки</param>
-        /// <param name="view">Визуальное представление</param>
+        /// <param name="model">Hand model.</param>
+        /// <param name="view">Hand view.</param>
         public HandPresenter(HandModel model, IHandView view)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
@@ -24,50 +24,50 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Модель руки
+        ///     Hand model.
         /// </summary>
         public HandModel Model { get; }
 
         /// <summary>
-        ///     Визуальное представление
+        ///     Hand view.
         /// </summary>
         public IHandView View { get; }
 
         /// <summary>
-        ///     Количество карт в руке
+        ///     Card count.
         /// </summary>
         public int Count => Model.Count;
 
         /// <summary>
-        ///     Пуста ли рука
+        ///     Whether the hand is empty.
         /// </summary>
         public bool IsEmpty => Model.IsEmpty;
 
         /// <summary>
-        ///     Список презентеров карт
+        ///     Active card presenters.
         /// </summary>
         public IReadOnlyList<CardPresenter> CardPresenters => _cardPresenters;
 
         /// <summary>
-        ///     Событие добавления карты
+        ///     Raised when a card is added.
         /// </summary>
         public event Action<CardPresenter> OnCardAdded;
 
         /// <summary>
-        ///     Событие удаления карты
+        ///     Raised when a card is removed.
         /// </summary>
         public event Action<CardPresenter> OnCardRemoved;
 
         /// <summary>
-        ///     Событие клика по карте
+        ///     Raised when a card is clicked.
         /// </summary>
         public event Action<CardPresenter> OnCardClicked;
 
         /// <summary>
-        ///     Добавляет карту в руку
+        ///     Adds a card to the hand.
         /// </summary>
-        /// <param name="cardPresenter">Презентер карты</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="cardPresenter">Card presenter.</param>
+        /// <param name="animate">Animate layout.</param>
         public async UniTask AddCardAsync(CardPresenter cardPresenter, bool animate = true)
         {
             if (cardPresenter == null)
@@ -86,10 +86,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Удаляет карту из руки
+        ///     Removes a card from the hand.
         /// </summary>
-        /// <param name="cardPresenter">Презентер карты</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="cardPresenter">Card presenter.</param>
+        /// <param name="animate">Animate layout.</param>
         public async UniTask RemoveCardAsync(CardPresenter cardPresenter, bool animate = true)
         {
             if (cardPresenter == null)
@@ -113,11 +113,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Удаляет карту по индексу
+        ///     Removes the card at the index.
         /// </summary>
-        /// <param name="index">Индекс карты</param>
-        /// <param name="animate">Анимировать</param>
-        /// <returns>Удалённый презентер карты</returns>
+        /// <param name="index">Card index.</param>
+        /// <param name="animate">Animate layout.</param>
+        /// <returns>Removed presenter, or null.</returns>
         public async UniTask<CardPresenter> RemoveAtAsync(int index, bool animate = true)
         {
             if (index < 0 || index >= _cardPresenters.Count)
@@ -131,21 +131,21 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Находит презентер карты по данным
+        ///     Finds a presenter matching the card data.
         /// </summary>
-        /// <param name="cardData">Данные карты</param>
-        /// <returns>Презентер карты или null</returns>
+        /// <param name="cardData">Card data.</param>
+        /// <returns>Presenter or null.</returns>
         public CardPresenter FindCard(CardData cardData)
         {
             return _cardPresenters.FirstOrDefault(p => p.Data.Equals(cardData));
         }
 
         /// <summary>
-        ///     Находит карты, которыми можно побить указанную
+        ///     Presenters whose cards can beat the attack card.
         /// </summary>
-        /// <param name="attackCard">Атакующая карта</param>
-        /// <param name="trump">Козырная масть</param>
-        /// <returns>Список презентеров карт</returns>
+        /// <param name="attackCard">Attacking card.</param>
+        /// <param name="trump">Trump suit.</param>
+        /// <returns>Matching presenters.</returns>
         public List<CardPresenter> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
             return _cardPresenters
@@ -154,10 +154,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Находит карты с указанным рангом
+        ///     Presenters matching any of the ranks.
         /// </summary>
-        /// <param name="ranks">Ранги для поиска</param>
-        /// <returns>Список презентеров карт</returns>
+        /// <param name="ranks">Ranks to match.</param>
+        /// <returns>Matching presenters.</returns>
         public List<CardPresenter> GetCardsMatchingRanks(IEnumerable<Rank> ranks)
         {
             HashSet<Rank> rankSet = new(ranks);
@@ -167,10 +167,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по рангу
+        ///     Sorts by rank.
         /// </summary>
-        /// <param name="ascending">По возрастанию</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="ascending">Ascending if true.</param>
+        /// <param name="animate">Animate rearrange.</param>
         public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
             Model.SortByRank(ascending);
@@ -188,10 +188,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по масти
+        ///     Sorts by suit, then rank.
         /// </summary>
-        /// <param name="ascending">По возрастанию</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="ascending">Ascending if true.</param>
+        /// <param name="animate">Animate rearrange.</param>
         public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
             Model.SortBySuit(ascending);
@@ -217,7 +217,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Очищает руку
+        ///     Clears model, view, and presenters.
         /// </summary>
         public void Clear()
         {
@@ -232,7 +232,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Освобождает ресурсы
+        ///     Clears the hand (same as <see cref="Clear" />).
         /// </summary>
         public void Dispose()
         {

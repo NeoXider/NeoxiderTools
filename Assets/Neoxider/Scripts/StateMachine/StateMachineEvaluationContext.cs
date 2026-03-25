@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Контекст оценки переходов: объект-владелец и опциональные объекты из компонента в сцене.
-    ///     SO не хранит ссылки на сцену; сценовые объекты задаются на StateMachineBehaviour и передаются сюда по слотам.
+    ///     Transition evaluation context: owning GameObject and optional override objects from the scene component.
+    ///     ScriptableObjects do not store scene references; scene objects are set on StateMachineBehaviour and passed in by slot.
     /// </summary>
     internal static class StateMachineEvaluationContext
     {
@@ -17,8 +17,7 @@ namespace Neo.StateMachine
         [field: ThreadStatic] public static GameObject CurrentContextObject { get; private set; }
 
         /// <summary>
-        ///     Контекст по слоту: 0 = владелец (GameObject с StateMachine), 1+ = элемент из списка Context Overrides на
-        ///     компоненте.
+        ///     Context by slot: 0 = owner (GameObject with State Machine), 1+ = entry from Context Overrides on the component.
         /// </summary>
         public static GameObject GetContextBySlot(int slot)
         {

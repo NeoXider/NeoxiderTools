@@ -3,36 +3,36 @@ using System;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Неизменяемая структура данных игральной карты
+    ///     Immutable playing card data.
     /// </summary>
     [Serializable]
     public readonly struct CardData : IComparable<CardData>, IEquatable<CardData>
     {
         /// <summary>
-        ///     Масть карты
+        ///     Card suit.
         /// </summary>
         public Suit Suit { get; }
 
         /// <summary>
-        ///     Ранг (достоинство) карты
+        ///     Card rank.
         /// </summary>
         public Rank Rank { get; }
 
         /// <summary>
-        ///     Является ли карта джокером
+        ///     Whether this card is a joker.
         /// </summary>
         public bool IsJoker { get; }
 
         /// <summary>
-        ///     Тип джокера (true = красный, false = чёрный). Имеет смысл только если IsJoker = true
+        ///     Joker color (true = red, false = black). Meaningful only when <see cref="IsJoker" /> is true.
         /// </summary>
         public bool IsRedJoker { get; }
 
         /// <summary>
-        ///     Создаёт обычную карту с указанной мастью и рангом
+        ///     Creates a standard card with the given suit and rank.
         /// </summary>
-        /// <param name="suit">Масть карты</param>
-        /// <param name="rank">Ранг карты</param>
+        /// <param name="suit">Suit.</param>
+        /// <param name="rank">Rank.</param>
         public CardData(Suit suit, Rank rank)
         {
             Suit = suit;
@@ -42,9 +42,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Создаёт карту-джокер
+        ///     Creates a joker card.
         /// </summary>
-        /// <param name="isRed">true для красного джокера, false для чёрного</param>
+        /// <param name="isRed">True for red joker, false for black.</param>
         public static CardData CreateJoker(bool isRed)
         {
             return new CardData(isRed);
@@ -59,10 +59,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сравнивает карты по рангу (для игры "Пьяница")
+        ///     Compares cards by rank (for War-style games).
         /// </summary>
-        /// <param name="other">Карта для сравнения</param>
-        /// <returns>Положительное число если эта карта старше, отрицательное если младше, 0 если равны</returns>
+        /// <param name="other">Other card.</param>
+        /// <returns>Positive if this card is higher, negative if lower, zero if equal.</returns>
         public int CompareTo(CardData other)
         {
             if (IsJoker && other.IsJoker)
@@ -84,11 +84,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, бьёт ли эта карта другую с учётом козыря (для игры "Дурак")
+        ///     Returns whether this card beats the other with optional trump suit (Durak-style).
         /// </summary>
-        /// <param name="other">Карта, которую нужно побить</param>
-        /// <param name="trump">Козырная масть (null если без козыря)</param>
-        /// <returns>true если эта карта бьёт other</returns>
+        /// <param name="other">Card to beat.</param>
+        /// <param name="trump">Trump suit, or null if none.</param>
+        /// <returns>True if this card beats <paramref name="other" />.</returns>
         public bool Beats(CardData other, Suit? trump)
         {
             if (IsJoker || other.IsJoker)
@@ -121,21 +121,21 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, можно ли этой картой покрыть атакующую карту
+        ///     Returns whether this card can cover the attacking card.
         /// </summary>
-        /// <param name="attackCard">Атакующая карта</param>
-        /// <param name="trump">Козырная масть</param>
-        /// <returns>true если можно покрыть</returns>
+        /// <param name="attackCard">Attacking card.</param>
+        /// <param name="trump">Trump suit.</param>
+        /// <returns>True if this card can cover.</returns>
         public bool CanCover(CardData attackCard, Suit? trump)
         {
             return Beats(attackCard, trump);
         }
 
         /// <summary>
-        ///     Проверяет, имеет ли карта такой же ранг (для подкидывания в "Дураке")
+        ///     Returns whether ranks match (for discarding rules in Durak).
         /// </summary>
-        /// <param name="other">Карта для сравнения</param>
-        /// <returns>true если ранги совпадают</returns>
+        /// <param name="other">Other card.</param>
+        /// <returns>True if ranks are equal.</returns>
         public bool HasSameRank(CardData other)
         {
             if (IsJoker || other.IsJoker)
@@ -147,10 +147,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, имеет ли карта такую же масть
+        ///     Returns whether suits match.
         /// </summary>
-        /// <param name="other">Карта для сравнения</param>
-        /// <returns>true если масти совпадают</returns>
+        /// <param name="other">Other card.</param>
+        /// <returns>True if suits are equal.</returns>
         public bool HasSameSuit(CardData other)
         {
             if (IsJoker || other.IsJoker)
@@ -192,7 +192,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет равенство двух карт
+        ///     Equality check.
         /// </summary>
         public bool Equals(CardData other)
         {
@@ -227,7 +227,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает строковое представление карты
+        ///     Short string representation (e.g. A♠).
         /// </summary>
         public override string ToString()
         {
@@ -240,16 +240,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает полное название карты на русском языке
+        ///     Verbose English description (rank and suit names).
         /// </summary>
-        public string ToRussianString()
+        public string ToLongEnglishString()
         {
             if (IsJoker)
             {
-                return IsRedJoker ? "Красный Джокер" : "Чёрный Джокер";
+                return IsRedJoker ? "Red Joker" : "Black Joker";
             }
 
-            return $"{Rank.ToRussianName()} {Suit.ToRussianName()}";
+            return $"{Rank.ToEnglishName()} of {Suit.ToEnglishName()}";
         }
     }
 }

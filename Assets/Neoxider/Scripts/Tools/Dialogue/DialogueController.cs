@@ -8,7 +8,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Основной контроллер диалоговой системы (на UniTask).
+    ///     Main dialogue system controller (UniTask).
     /// </summary>
     [NeoDoc("Tools/Dialogue/DialogueController.md")]
     [CreateFromMenu("Neoxider/Tools/Dialogue/DialogueController")]
@@ -112,7 +112,7 @@ namespace Neo.Tools
 #endif
 
         /// <summary>
-        ///     Запускает диалог с указанными индексами.
+        ///     Starts dialogue at the given indices.
         /// </summary>
         [Button]
         public void StartDialogue(int dialogueIndex = 0, int monologIndex = 0, int sentenceIndex = 0)
@@ -135,7 +135,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Переходит к следующему предложению.
+        ///     Advances to the next sentence.
         /// </summary>
         [Button]
         public void NextSentence()
@@ -146,7 +146,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Переходит к следующему монологу.
+        ///     Advances to the next monolog.
         /// </summary>
         [Button]
         public void NextMonolog()
@@ -158,7 +158,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Переходит к следующему диалогу.
+        ///     Advances to the next dialogue.
         /// </summary>
         [Button]
         public void NextDialogue()
@@ -171,13 +171,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Пропускает печать или переходит к следующему.
-        ///     Если диалог не начат — начинает его.
+        ///     Skips typewriter or advances. If dialogue has not started, starts it.
         /// </summary>
         [Button]
         public void SkipOrNext()
         {
-            // Если диалог не начат — начинаем
+            // Start if not started yet
             if (!DialogueStarted)
             {
                 if (dialogues != null && dialogues.Length > 0)
@@ -188,19 +187,19 @@ namespace Neo.Tools
                 return;
             }
 
-            // Если печатаем — показываем полный текст
+            // If typing, show full text
             if (IsTyping)
             {
                 CompleteTypewriter();
                 return;
             }
 
-            // Переходим к следующему
+            // Advance
             Advance();
         }
 
         /// <summary>
-        ///     Переход к следующему предложению/монологу/диалогу.
+        ///     Advance to next sentence, monolog, or dialogue.
         /// </summary>
         public void Advance()
         {
@@ -214,7 +213,7 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
             {
-                // Конец диалога — переходим к следующему диалогу
+                // End of dialogue — go to next dialogue
                 GoToNextDialogue();
                 return;
             }
@@ -222,12 +221,12 @@ namespace Neo.Tools
             Monolog currentMonolog = currentDialogue.monologues[CurrentMonologId];
             if (currentMonolog?.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length - 1)
             {
-                // Конец монолога — переходим к следующему монологу
+                // End of monolog — go to next monolog
                 GoToNextMonolog();
                 return;
             }
 
-            // Следующее предложение
+            // Next sentence
             NextSentence();
         }
 
@@ -238,7 +237,7 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues != null && CurrentMonologId < currentDialogue.monologues.Length - 1)
             {
-                // Есть ещё монологи
+                // More monologs in this dialogue
                 if (autoNextMonolog)
                 {
                     ScheduleAutoDelay(autoNextMonologDelay, NextMonolog);
@@ -250,7 +249,7 @@ namespace Neo.Tools
             }
             else
             {
-                // Конец диалога
+                // End of dialogue
                 GoToNextDialogue();
             }
         }
@@ -261,7 +260,7 @@ namespace Neo.Tools
 
             if (CurrentDialogueId < dialogues.Length - 1)
             {
-                // Есть ещё диалоги
+                // More dialogues
                 if (autoNextDialogue)
                 {
                     ScheduleAutoDelay(autoNextDialogueDelay, NextDialogue);
@@ -273,14 +272,14 @@ namespace Neo.Tools
             }
             else
             {
-                // Все диалоги закончились
+                // All dialogues finished
                 OnAllDialoguesEnd?.Invoke();
                 DialogueStarted = false;
             }
         }
 
         /// <summary>
-        ///     Завершает печать и показывает полный текст.
+        ///     Completes typewriter and shows full text.
         /// </summary>
         public void CompleteTypewriter()
         {
@@ -301,7 +300,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Перезапускает текущий диалог.
+        ///     Restarts the current dialogue.
         /// </summary>
         [Button]
         public void RestartDialogue()
@@ -315,7 +314,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Перезапускает все диалоги сначала.
+        ///     Restarts all dialogues from the beginning.
         /// </summary>
         [Button]
         public void RestartAll()
@@ -351,7 +350,7 @@ namespace Neo.Tools
 #endif
 
         /// <summary>
-        ///     Возвращает текущий диалог по CurrentDialogueId или null.
+        ///     Current dialogue by CurrentDialogueId, or null.
         /// </summary>
         public Dialogue GetCurrentDialogue()
         {
@@ -364,7 +363,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Возвращает текущий монолог по CurrentMonologId или null.
+        ///     Current monolog by CurrentMonologId, or null.
         /// </summary>
         public Monolog GetCurrentMonolog()
         {
@@ -378,7 +377,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Возвращает текущее предложение по CurrentSentenceId или null.
+        ///     Current sentence by CurrentSentenceId, or null.
         /// </summary>
         public Sentence GetCurrentSentence()
         {
@@ -478,7 +477,7 @@ namespace Neo.Tools
             {
                 await _typewriter.PlayAsync(text, t => _dialogueUI?.SetDialogueText(t), _typewriterCts.Token);
 
-                // Печать завершена успешно
+                // Typewriter finished
                 if (autoNextSentence)
                 {
                     ScheduleAutoDelay(autoNextSentenceDelay, Advance);
@@ -486,7 +485,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Отмена — нормальное поведение
+                // Cancellation is expected
             }
         }
 
@@ -510,7 +509,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Отмена — нормальное поведение
+                // Cancellation is expected
             }
         }
 

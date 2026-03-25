@@ -5,9 +5,8 @@ using UnityEngine.AI;
 namespace Neo.NPC
 {
     /// <summary>
-    ///     Автоматически гонит аниматор NPC по скорости NavMeshAgent: параметры Speed (float) и IsMoving (bool).
-    ///     Добавьте на тот же объект, что NpcNavigation и NavMeshAgent; при наличии Animator анимации ходьбы/бега будут
-    ///     включаться по движению.
+    ///     Drives the NPC Animator from NavMeshAgent speed: Speed (float) and IsMoving (bool).
+    ///     Add to the same object as NpcNavigation and NavMeshAgent; with an Animator, walk/run clips follow movement.
     /// </summary>
     [NeoDoc("NPC/NpcAnimatorDriver.md")]
     [CreateFromMenu("Neoxider/NPC/NpcAnimatorDriver")]
@@ -15,16 +14,16 @@ namespace Neo.NPC
     [AddComponentMenu("Neoxider/NPC/" + nameof(NpcAnimatorDriver))]
     public sealed class NpcAnimatorDriver : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Animator для управления. Если не задан — берётся с этого объекта.")]
+        [SerializeField] [Tooltip("Animator to drive. If unset, taken from this GameObject.")]
         private Animator animator;
 
-        [SerializeField] [Tooltip("Имя параметра Animator: нормализованная скорость (0..1).")]
+        [SerializeField] [Tooltip("Animator parameter name: normalized speed (0..1).")]
         private string speedParameter = "Speed";
 
-        [SerializeField] [Tooltip("Имя параметра Animator: движется ли агент.")]
+        [SerializeField] [Tooltip("Animator parameter name: whether the agent is moving.")]
         private string isMovingParameter = "IsMoving";
 
-        [SerializeField] [Min(0f)] [Tooltip("Время сглаживания перехода скорости (сек).")]
+        [SerializeField] [Min(0f)] [Tooltip("Smoothing time for speed transitions (seconds).")]
         private float dampTime = 0.1f;
 
         private NavMeshAgent _agent;

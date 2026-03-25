@@ -3,7 +3,7 @@ using UnityEngine;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     Редкость коллекционного предмета.
+    ///     Rarity of a collection item.
     /// </summary>
     public enum ItemRarity
     {
@@ -14,8 +14,8 @@ namespace Neo.Bonus
     }
 
     /// <summary>
-    ///     ScriptableObject для хранения данных одного коллекционного предмета.
-    ///     Используется в системе коллекций для определения свойств предмета.
+    ///     ScriptableObject holding data for one collection item.
+    ///     Used by the collection system to define item properties.
     /// </summary>
     [CreateAssetMenu(fileName = "Item Collection Data", menuName = "Neoxider/Bonus/Collection/Item Collection Data",
         order = 10)]

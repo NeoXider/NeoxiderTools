@@ -99,13 +99,13 @@ namespace Neo.Tools
                 print("move to " + idPlayer + " pos");
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
 
-                // Сбрасываем масштаб предыдущей выделенной карточки, если она больше не является текущей.
+                // Reset scale of the previously highlighted card if it is no longer current.
                 if (lastAnimatedItem != null && lastAnimatedItem != targetItem)
                 {
                     lastAnimatedItem.transform.localScale = lastAnimatedItemBaseScale;
                 }
 
-                // Запоминаем базовый размер текущей карточки игрока перед анимацией.
+                // Remember base scale of the current player card before animating.
                 Vector3 baseScale = targetItem.transform.localScale;
                 lastAnimatedItem = targetItem;
                 lastAnimatedItemBaseScale = baseScale;
@@ -120,7 +120,7 @@ namespace Neo.Tools
                         {
                             Vector3 targetScale = baseScale + Vector3.one * scaleDelta;
 
-                            // Увеличиваем карточку и возвращаем к базовому размеру в стиле "yoyo".
+                            // Scale up then back to base (yoyo).
                             _scaleTween = targetItem.transform
                                 .DOScale(targetScale, durationAnimPlayer)
                                 .SetLoops(2, LoopType.Yoyo);
@@ -134,7 +134,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Отменяет все активные анимации.
+        ///     Cancels all active animations.
         /// </summary>
         public void KillActiveTweens()
         {

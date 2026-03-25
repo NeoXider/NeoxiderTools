@@ -30,7 +30,7 @@ namespace Neo.Tools
 
             textName.text = user.name;
 
-            // Если это игрок и у него нет счета, показываем текст "пропущено" (независимо от форматирования)
+            // Player with no score: show placeholder (bypasses score formatting)
             if (isPlayer && user.score == 0)
             {
                 textScore.text = leaderboard != null ? leaderboard.noScoreText : "--";

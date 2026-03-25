@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     База предметов инвентаря для валидации itemId и получения данных по id.
+    ///     Item database for validating itemIds and resolving item data.
     /// </summary>
     [CreateAssetMenu(fileName = "Inventory Database", menuName = "Neoxider/Tools/Inventory/Inventory Database",
         order = 21)]

@@ -1,12 +1,12 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Глобальный runtime-контекст настроек карточной системы.
+    ///     Global runtime settings for the card system.
     /// </summary>
     public static class CardSettingsRuntime
     {
         /// <summary>
-        ///     Глобальный конфиг анимаций для компонентов, у которых не задан локальный источник.
+        ///     Global animation config when a component has no local source.
         /// </summary>
         public static CardAnimationConfig GlobalAnimationConfig { get; set; }
     }

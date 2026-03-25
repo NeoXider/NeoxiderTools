@@ -1,20 +1,20 @@
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Статус квеста в рантайме.
+    ///     Quest status at runtime.
     /// </summary>
     public enum QuestStatus
     {
-        /// <summary>Квест не взят.</summary>
+        /// <summary>Quest not started.</summary>
         NotStarted,
 
-        /// <summary>Квест активен, цели выполняются.</summary>
+        /// <summary>Quest active; objectives in progress.</summary>
         Active,
 
-        /// <summary>Все цели выполнены, квест завершён.</summary>
+        /// <summary>All objectives done; quest completed.</summary>
         Completed,
 
-        /// <summary>Квест провален (опционально).</summary>
+        /// <summary>Quest failed (optional).</summary>
         Failed
     }
 }

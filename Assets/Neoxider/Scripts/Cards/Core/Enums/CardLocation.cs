@@ -1,7 +1,7 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Локация карты (владение контейнером).
+    ///     Logical location of a card in a container.
     /// </summary>
     public enum CardLocation
     {

@@ -1,17 +1,17 @@
 namespace Neo.Core.Level
 {
     /// <summary>
-    ///     Контракт для определения кривой уровня (формула, кривая, custom).
-    ///     Позволяет LevelModel не зависеть от UnityEngine и получать уровень/XP через интерфейс.
+    ///     Contract for level curve definition (formula, curve, custom).
+    ///     Lets LevelModel avoid UnityEngine and resolve level/XP through this interface.
     /// </summary>
     public interface ILevelCurveDefinition
     {
-        /// <summary>Вычисляет уровень по накопленному XP.</summary>
-        /// <param name="totalXp">Накопленный опыт</param>
-        /// <param name="maxLevel">Макс. уровень (0 = без ограничения)</param>
+        /// <summary>Computes level from total XP.</summary>
+        /// <param name="totalXp">Total experience</param>
+        /// <param name="maxLevel">Max level (0 = no cap)</param>
         int EvaluateLevel(int totalXp, int maxLevel = 0);
 
-        /// <summary>Возвращает XP до следующего уровня (0 если на макс. уровне).</summary>
+        /// <summary>XP to next level (0 if at max level).</summary>
         int GetXpToNextLevel(int totalXp, int maxLevel = 0);
     }
 }

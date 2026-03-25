@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Реализация провайдера сохранения через JSON файл.
-    ///     Все данные сохраняются в один файл в формате JSON.
+    ///     Save provider implementation backed by a JSON file.
+    ///     All data is stored in a single JSON file.
     /// </summary>
     public class FileSaveProvider : ISaveProvider
     {
@@ -17,10 +17,10 @@ namespace Neo.Save
         private bool _isDirty;
 
         /// <summary>
-        ///     Создает новый экземпляр FileSaveProvider.
+        ///     Creates a new FileSaveProvider instance.
         /// </summary>
         /// <param name="fileName">
-        ///     Имя файла для сохранения (например, "save.json"). Будет сохранен в
+        ///     File name for persistence (e.g. "save.json"). Written under
         ///     Application.persistentDataPath.
         /// </param>
         public FileSaveProvider(string fileName = "save.json")
@@ -31,27 +31,27 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Тип провайдера - File.
+        ///     Provider type — File.
         /// </summary>
         public SaveProviderType ProviderType => SaveProviderType.File;
 
         /// <summary>
-        ///     Событие, вызываемое после сохранения данных.
+        ///     Raised after data is saved.
         /// </summary>
         public event Action OnDataSaved;
 
         /// <summary>
-        ///     Событие, вызываемое после загрузки данных.
+        ///     Raised after data is loaded.
         /// </summary>
         public event Action OnDataLoaded;
 
         /// <summary>
-        ///     Событие, вызываемое при изменении значения ключа.
+        ///     Raised when a key's value changes.
         /// </summary>
         public event Action<string> OnKeyChanged;
 
         /// <summary>
-        ///     Получает целочисленное значение по ключу.
+        ///     Gets an integer value by key.
         /// </summary>
         public int GetInt(string key, int defaultValue = 0)
         {
@@ -67,7 +67,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает целочисленное значение по ключу.
+        ///     Sets an integer value by key.
         /// </summary>
         public void SetInt(string key, int value)
         {
@@ -77,7 +77,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает значение с плавающей точкой по ключу.
+        ///     Gets a floating-point value by key.
         /// </summary>
         public float GetFloat(string key, float defaultValue = 0f)
         {
@@ -93,7 +93,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает значение с плавающей точкой по ключу.
+        ///     Sets a floating-point value by key.
         /// </summary>
         public void SetFloat(string key, float value)
         {
@@ -103,7 +103,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает строковое значение по ключу.
+        ///     Gets a string value by key.
         /// </summary>
         public string GetString(string key, string defaultValue = "")
         {
@@ -116,7 +116,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает строковое значение по ключу.
+        ///     Sets a string value by key.
         /// </summary>
         public void SetString(string key, string value)
         {
@@ -126,7 +126,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает булево значение по ключу.
+        ///     Gets a Boolean value by key.
         /// </summary>
         public bool GetBool(string key, bool defaultValue = false)
         {
@@ -142,7 +142,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает булево значение по ключу.
+        ///     Sets a Boolean value by key.
         /// </summary>
         public void SetBool(string key, bool value)
         {
@@ -152,7 +152,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Проверяет, существует ли ключ в хранилище.
+        ///     Returns whether the key exists in storage.
         /// </summary>
         public bool HasKey(string key)
         {
@@ -160,7 +160,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет ключ и его значение из хранилища.
+        ///     Removes the key and its value from storage.
         /// </summary>
         public void DeleteKey(string key)
         {
@@ -171,7 +171,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет все ключи из хранилища.
+        ///     Removes all keys from storage.
         /// </summary>
         public void DeleteAll()
         {
@@ -180,7 +180,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно сохраняет данные в файл.
+        ///     Flushes data to disk.
         /// </summary>
         public void Save()
         {
@@ -211,7 +211,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно загружает данные из файла.
+        ///     Reloads data from disk.
         /// </summary>
         public void Load()
         {
@@ -250,8 +250,8 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Автоматически сохраняет данные при изменении, если включен автосохранение.
-        ///     Вызывается при уничтожении объекта.
+        ///     Persists dirty data when the provider is finalized (if autosave-on-change was not used elsewhere).
+        ///     Invoked when the object is destroyed by the GC.
         /// </summary>
         ~FileSaveProvider()
         {
@@ -262,7 +262,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Структура для хранения значения с типом.
+        ///     Typed value container for serialization.
         /// </summary>
         [Serializable]
         private class SaveValue
@@ -272,7 +272,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Пара ключ-значение для сериализации.
+        ///     Key-value pair for JSON serialization.
         /// </summary>
         [Serializable]
         private class KeyValuePair
@@ -282,7 +282,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Структура для сериализации всех данных в JSON.
+        ///     Root JSON structure for all stored entries.
         /// </summary>
         [Serializable]
         private class SaveData

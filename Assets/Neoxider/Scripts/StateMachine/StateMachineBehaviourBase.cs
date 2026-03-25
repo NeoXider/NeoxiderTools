@@ -6,18 +6,16 @@ using UnityEngine.Events;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Базовый MonoBehaviour класс State Machine для использования на GameObject.
-    ///     Не-generic версия для возможности добавления на GameObject в Unity.
+    ///     Non-generic State Machine behaviour for attaching to GameObjects in the Editor.
     /// </summary>
     /// <remarks>
-    ///     Этот компонент можно добавить на GameObject через меню Unity.
-    ///     Использует IState как базовый тип состояний.
-    ///     Для более специфичных типов состояний используйте StateMachineBehaviour&lt;TState&gt;.
+    ///     Add via the Unity Component menu.
+    ///     Uses <see cref="IState"/> as the state type; use <see cref="StateMachineBehaviour{TState}"/> for typed states.
     /// </remarks>
     /// <example>
     ///     <code>
-    /// // Добавить на GameObject через: Component > Neo > Tools > State Machine Behaviour
-    /// // Или использовать в коде:
+    /// // Add via Component &gt; Neo &gt; Tools &gt; State Machine Behaviour
+    /// // Or from code:
     /// var sm = gameObject.AddComponent&lt;StateMachineBehaviourBase&gt;();
     /// sm.ChangeState("Idle");
     /// </code>
@@ -65,7 +63,7 @@ namespace Neo.StateMachine
         private StateMachine<IState> stateMachine;
 
         /// <summary>
-        ///     Получить экземпляр State Machine.
+        ///     Underlying State Machine instance.
         /// </summary>
         public StateMachine<IState> StateMachine
         {
@@ -82,12 +80,12 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Текущее активное состояние.
+        ///     Currently active state.
         /// </summary>
         public IState CurrentState => StateMachine.CurrentState;
 
         /// <summary>
-        ///     Предыдущее состояние.
+        ///     State before the last transition.
         /// </summary>
         public IState PreviousState => StateMachine.PreviousState;
 
@@ -101,7 +99,7 @@ namespace Neo.StateMachine
 
         public bool HasCurrentState => CurrentState != null;
 
-        /// <summary>Объекты для слотов Override1..5 в условиях переходов (задаются в сцене).</summary>
+        /// <summary>GameObjects mapped to Override1..5 slots in transition conditions (set in the scene).</summary>
         public GameObject[] ContextOverrides => contextOverrides ?? new GameObject[0];
 
         private void Awake()
@@ -144,9 +142,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по типу.
+        ///     Changes state by concrete type.
         /// </summary>
-        /// <typeparam name="T">Тип нового состояния.</typeparam>
+        /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, IState, new()
         {
             StateMachine.ChangeState<T>();
@@ -158,9 +156,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по имени (при использовании StateMachineData).
+        ///     Changes state by name when using StateMachineData.
         /// </summary>
-        /// <param name="stateName">Имя состояния.</param>
+        /// <param name="stateName">State name on StateData.</param>
         public void ChangeState(string stateName)
         {
             if (stateMachineData == null)
@@ -188,16 +186,16 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Зарегистрировать переход.
+        ///     Registers a transition on the internal State Machine.
         /// </summary>
-        /// <param name="transition">Переход для регистрации.</param>
+        /// <param name="transition">Transition to add.</param>
         public void RegisterTransition(StateTransition transition)
         {
             StateMachine.RegisterTransition(transition);
         }
 
         /// <summary>
-        ///     Оценить переходы один раз вручную.
+        ///     Evaluates transitions once immediately.
         /// </summary>
         public void EvaluateTransitionsNow()
         {
@@ -205,7 +203,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Перезагрузить конфигурацию из StateMachineData.
+        ///     Reloads configuration from StateMachineData.
         /// </summary>
         public void ReloadFromStateMachineData()
         {
@@ -213,7 +211,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Попробовать перейти в начальное состояние из StateMachineData.
+        ///     Transitions to the initial state defined on StateMachineData.
         /// </summary>
         public void GoToInitialState()
         {
@@ -235,7 +233,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Загрузить конфигурацию из StateMachineData.
+        ///     Loads transitions and initial state from StateMachineData.
         /// </summary>
         public void LoadFromStateMachineData()
         {

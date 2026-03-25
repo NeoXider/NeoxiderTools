@@ -7,12 +7,12 @@ using UnityEngine;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Класс для определения переходов между состояниями в State Machine.
-    ///     Поддерживает условия переходов через предикаты и приоритеты.
+    ///     Describes a transition between states in the State Machine.
+    ///     Supports gated transitions via predicates and explicit priority ordering.
     /// </summary>
     /// <remarks>
-    ///     Переходы по типам состояний (код) или по именам (StateMachineData).
-    ///     Поддерживается комбинирование условий через список предикатов.
+    ///     Works with code states (CLR types) or NoCode StateMachineData (StateData assets).
+    ///     Multiple predicates are combined with AND semantics.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -53,7 +53,7 @@ namespace Neo.StateMachine
         private Type toStateType;
 
         /// <summary>
-        ///     Тип исходного состояния (для кода).
+        ///     Source state type (code-driven machine).
         /// </summary>
         public Type FromStateType
         {
@@ -62,7 +62,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Тип целевого состояния (для кода).
+        ///     Target state type (code-driven machine).
         /// </summary>
         public Type ToStateType
         {
@@ -71,7 +71,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Исходное состояние (StateData SO при конфигурации через StateMachineData).
+        ///     Source StateData asset (NoCode / StateMachineData).
         /// </summary>
         public StateData FromStateData
         {
@@ -80,7 +80,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Целевое состояние (StateData SO при конфигурации через StateMachineData).
+        ///     Target StateData asset (NoCode / StateMachineData).
         /// </summary>
         public StateData ToStateData
         {
@@ -89,22 +89,22 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Имя исходного состояния (получается из ScriptableObject).
+        ///     Source state name from the ScriptableObject, if any.
         /// </summary>
         public string FromStateName => fromStateData != null ? fromStateData.StateName : "";
 
         /// <summary>
-        ///     Имя целевого состояния (получается из ScriptableObject).
+        ///     Target state name from the ScriptableObject, if any.
         /// </summary>
         public string ToStateName => toStateData != null ? toStateData.StateName : "";
 
         /// <summary>
-        ///     Список предикатов для оценки условий перехода.
+        ///     Predicates that must all pass for the transition to fire.
         /// </summary>
         public List<StatePredicate> Predicates => predicates;
 
         /// <summary>
-        ///     Приоритет перехода. Переходы с большим приоритетом проверяются первыми.
+        ///     Higher priority transitions are evaluated first.
         /// </summary>
         public int Priority
         {
@@ -113,7 +113,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Включен ли переход. Отключенные переходы не оцениваются.
+        ///     When false, the transition is skipped during evaluation.
         /// </summary>
         public bool IsEnabled
         {
@@ -122,7 +122,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Имя перехода для отладки и отображения в инспекторе.
+        ///     Debug / Inspector label for this transition.
         /// </summary>
         public string TransitionName
         {
@@ -131,10 +131,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Проверить возможность перехода из текущего состояния.
+        ///     Whether this transition may fire from the given current state (type / asset match + predicates).
         /// </summary>
-        /// <param name="currentState">Текущее состояние State Machine.</param>
-        /// <returns>True, если переход возможен.</returns>
+        /// <param name="currentState">Active state.</param>
+        /// <returns>True if the transition is allowed.</returns>
         public bool CanTransition(IState currentState)
         {
             if (!isEnabled)
@@ -147,7 +147,7 @@ namespace Neo.StateMachine
                 return false;
             }
 
-            // Проверка типа состояния (для кода)
+            // Code path: match CLR type
             if (fromStateType != null)
             {
                 if (currentState.GetType() != fromStateType)
@@ -156,7 +156,7 @@ namespace Neo.StateMachine
                 }
             }
 
-            // Проверка состояния-источника для NoCode
+            // NoCode path: match StateData reference
             if (fromStateData != null)
             {
                 if (currentState is StateData currentStateData)
@@ -176,9 +176,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Оценить все предикаты перехода.
+        ///     Evaluates predicates without checking source state (enabled flag still applies).
         /// </summary>
-        /// <returns>True, если все предикаты выполнены.</returns>
+        /// <returns>True if every predicate passes.</returns>
         public bool Evaluate()
         {
             if (!isEnabled)
@@ -191,15 +191,15 @@ namespace Neo.StateMachine
                 return true;
             }
 
-            // Все предикаты должны быть выполнены (AND логика)
+            // All predicates must pass (AND)
             return predicates.All(p => p != null && p.Evaluate());
         }
 
         /// <summary>
-        ///     Оценить предикаты с контекстом текущего состояния.
+        ///     Evaluates predicates with the current state passed through to each predicate.
         /// </summary>
-        /// <param name="currentState">Текущее состояние.</param>
-        /// <returns>True, если все предикаты выполнены.</returns>
+        /// <param name="currentState">Active state.</param>
+        /// <returns>True if every predicate passes.</returns>
         public bool EvaluatePredicates(IState currentState)
         {
             if (!isEnabled)
@@ -229,9 +229,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Добавить предикат к переходу.
+        ///     Adds a predicate if not already present.
         /// </summary>
-        /// <param name="predicate">Предикат для добавления.</param>
+        /// <param name="predicate">Predicate instance.</param>
         public void AddPredicate(StatePredicate predicate)
         {
             if (predicate != null && !predicates.Contains(predicate))
@@ -241,19 +241,19 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Удалить предикат из перехода.
+        ///     Removes a predicate from the list.
         /// </summary>
-        /// <param name="predicate">Предикат для удаления.</param>
+        /// <param name="predicate">Predicate instance.</param>
         public void RemovePredicate(StatePredicate predicate)
         {
             predicates.Remove(predicate);
         }
 
         /// <summary>
-        ///     Проверить, соответствует ли переход указанному типу состояния.
+        ///     True if this transition originates from the given CLR state type.
         /// </summary>
-        /// <param name="stateType">Тип состояния для проверки.</param>
-        /// <returns>True, если переход соответствует типу.</returns>
+        /// <param name="stateType">State type to test.</param>
+        /// <returns>True when FromStateType matches.</returns>
         public bool MatchesFromState(Type stateType)
         {
             if (fromStateType != null)
@@ -265,10 +265,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Проверить, соответствует ли переход указанному имени состояния.
+        ///     True if this NoCode transition originates from the named state.
         /// </summary>
-        /// <param name="stateName">Имя состояния для проверки.</param>
-        /// <returns>True, если переход соответствует имени.</returns>
+        /// <param name="stateName">State name to test.</param>
+        /// <returns>True when FromStateData name matches.</returns>
         public bool MatchesFromState(string stateName)
         {
             if (fromStateData != null)

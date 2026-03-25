@@ -4,33 +4,33 @@ using Cysharp.Threading.Tasks;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Опциональный интерфейс: воспроизведение готовых анимаций карты (разовые и зацикленные).
+    ///     Optional: plays built-in card animations (one-shot and looped).
     /// </summary>
     public interface ICardViewAnimations
     {
         /// <summary>
-        ///     Воспроизводит разовую анимацию.
+        ///     Plays a one-shot animation.
         /// </summary>
-        /// <param name="type">Тип анимации</param>
-        /// <param name="duration">Длительность в секундах (null = из конфига/по умолчанию)</param>
-        /// <param name="cancellation">Отмена</param>
+        /// <param name="type">Animation kind.</param>
+        /// <param name="duration">Seconds; null uses config/default.</param>
+        /// <param name="cancellation">Cancellation token.</param>
         UniTask PlayOneShotAsync(CardViewAnimationType type, float? duration = null,
             CancellationToken cancellation = default);
 
         /// <summary>
-        ///     Запускает зацикленную анимацию.
+        ///     Starts a looped animation.
         /// </summary>
-        /// <param name="type">Тип анимации (PulseLooped, Idle и т.д.)</param>
-        /// <param name="duration">Длительность одного цикла (null = из конфига)</param>
+        /// <param name="type">Animation kind (e.g. PulseLooped, Idle).</param>
+        /// <param name="duration">Single loop duration; null uses config.</param>
         void PlayLooped(CardViewAnimationType type, float? duration = null);
 
         /// <summary>
-        ///     Останавливает зацикленную анимацию указанного типа.
+        ///     Stops a looped animation of the given type.
         /// </summary>
         void StopLooped(CardViewAnimationType type);
 
         /// <summary>
-        ///     Останавливает все зацикленные анимации.
+        ///     Stops all looped animations.
         /// </summary>
         void StopAllLooped();
     }

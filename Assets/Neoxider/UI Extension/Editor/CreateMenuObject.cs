@@ -24,7 +24,7 @@ namespace Neo
                         return _startPath;
                     }
 
-                    // Ищем путь к скрипту через поиск по имени
+                    // Resolve script path by asset search
                     string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
                     string scriptPath = null;
 
@@ -79,11 +79,11 @@ namespace Neo
                     }
                     else
                     {
-                        // Fallback - пробуем стандартные пути
+                        // Fallback — try standard roots
                         string assetsPath = "Assets/Neoxider/UI Extension/Prefabs/";
                         string packagesPath = "Packages/com.neoxider.tools/UI Extension/Prefabs/";
 
-                        // Проверяем, существует ли папка Packages
+                        // Check whether the Packages folder exists
                         if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
                         {
                             _startPath = packagesPath;
@@ -94,7 +94,7 @@ namespace Neo
                         }
                         else
                         {
-                            // Последняя попытка - ищем папку Prefabs
+                            // Last resort — locate Prefabs folder
                             string[] prefabGuids = AssetDatabase.FindAssets("Canvas LandScape t:Prefab");
                             if (prefabGuids.Length > 0)
                             {
@@ -103,7 +103,7 @@ namespace Neo
                             }
                             else
                             {
-                                _startPath = assetsPath; // Fallback на стандартный путь
+                                _startPath = assetsPath; // Fallback to default path
                             }
                         }
                     }

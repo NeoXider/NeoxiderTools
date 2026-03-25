@@ -269,7 +269,7 @@ namespace Neo.Editor
                             using (new EditorGUILayout.VerticalScope())
                             {
                                 NeoxiderEditorGUI.DrawCaption(
-                                    "Параметры сохраняют последнее введённое значение в пределах текущей сессии инспектора.");
+                                    "Parameters keep the last entered value for the current inspector session.");
 
                                 for (int i = 0; i < parameters.Length; i++)
                                 {

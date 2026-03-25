@@ -5,9 +5,9 @@ using UnityEngine;
 namespace Neo.Demo.Condition
 {
     /// <summary>
-    ///     UI контроллер для демо-сцены NeoCondition.
-    ///     Управляет панелями (GameOver, Win, Warning) и статусом.
-    ///     Обновление текста HP/Score — через встроенные поля Health.OnChange и ScoreManager.textScores.
+    ///     UI controller for the NeoCondition demo scene.
+    ///     Drives GameOver, Win, Warning panels and status text.
+    ///     HP/Score text updates use Health.OnChange and ScoreManager.textScores.
     /// </summary>
     [AddComponentMenu("Neoxider/Demo/Condition/ConditionDemoUI")]
     public class ConditionDemoUI : MonoBehaviour

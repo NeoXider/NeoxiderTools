@@ -5,8 +5,8 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Магнитное поле, которое притягивает или отталкивает объекты в радиусе.
-    ///     Поддерживает постоянное воздействие, фильтрацию по слоям и опциональное добавление физики.
+    ///     Magnetic field that attracts or repels objects within a radius.
+    ///     Supports continuous force, layer filtering, and optional Rigidbody setup.
     /// </summary>
     [NeoDoc("Tools/Physics/MagneticField.md")]
     [CreateFromMenu("Neoxider/Tools/Physics/MagneticField")]
@@ -14,38 +14,38 @@ namespace Neo.Tools
     public class MagneticField : MonoBehaviour
     {
         /// <summary>
-        ///     Тип затухания силы по расстоянию.
+        ///     How force falls off with distance.
         /// </summary>
         public enum FalloffType
         {
-            /// <summary>Линейное затухание</summary>
+            /// <summary>Linear falloff</summary>
             Linear,
 
-            /// <summary>Квадратичное затухание</summary>
+            /// <summary>Quadratic falloff</summary>
             Quadratic,
 
-            /// <summary>Без затухания</summary>
+            /// <summary>No falloff</summary>
             Constant
         }
 
         /// <summary>
-        ///     Режим работы магнитного поля.
+        ///     Magnetic field behavior mode.
         /// </summary>
         public enum FieldMode
         {
-            /// <summary>Притяжение объектов к себе</summary>
+            /// <summary>Attract objects toward this field</summary>
             Attract,
 
-            /// <summary>Отталкивание объектов</summary>
+            /// <summary>Repel objects</summary>
             Repel,
 
-            /// <summary>Притяжение к Transform цели</summary>
+            /// <summary>Attract toward a target Transform</summary>
             ToTarget,
 
-            /// <summary>Притяжение к точке в пространстве</summary>
+            /// <summary>Attract toward a point in space</summary>
             ToPoint,
 
-            /// <summary>Притяжение по направлению (вектор)</summary>
+            /// <summary>Pull along a direction vector</summary>
             Direction
         }
 
@@ -66,7 +66,7 @@ namespace Neo.Tools
 
         [Header("Toggle")]
         [Tooltip(
-            "Включить переключение направления (работает с любым режимом). Сначала в одну сторону, потом в обратную.")]
+            "Toggle force direction over time (works with any mode). Alternates forward and reverse phases.")]
         [SerializeField]
         private bool _toggle;
 
@@ -87,7 +87,7 @@ namespace Neo.Tools
 
         [Header("Attraction Direction")]
         [Tooltip(
-            "Направление вектора (используется при режиме Direction). Если включено Local Direction — задаётся в локальных координатах объекта.")]
+            "Direction vector (Direction mode). If Local Direction is on, it is in this object's local space.")]
         [SerializeField]
         private Vector3 direction = Vector3.forward;
 
@@ -124,22 +124,22 @@ namespace Neo.Tools
         private float toggleStartTime;
 
         /// <summary>
-        ///     Получить текущую силу поля.
+        ///     Current field strength.
         /// </summary>
         public float CurrentStrength => fieldStrength;
 
         /// <summary>
-        ///     Получить текущий радиус поля.
+        ///     Current field radius.
         /// </summary>
         public float CurrentRadius => radius;
 
         /// <summary>
-        ///     Получить количество объектов в поле.
+        ///     Number of objects currently inside the field.
         /// </summary>
         public int ObjectsInFieldCount => objectsInField.Count;
 
         /// <summary>
-        ///     Получить текущее активное состояние в режиме Toggle (true = притяжение, false = отталкивание).
+        ///     Current toggle phase (true = attract, false = repel) when Toggle is enabled.
         /// </summary>
         public bool CurrentToggleState { get; private set; }
 
@@ -179,7 +179,7 @@ namespace Neo.Tools
             Vector3 center = GetFieldCenter();
             bool isRepel = mode == FieldMode.Repel;
             bool isAttracting = !isRepel;
-            // Если toggle включён и сейчас обратная фаза — инвертируем визуал
+            // Toggle reverse phase inverts gizmo colors
             if (_toggle && !CurrentToggleState)
             {
                 isAttracting = !isAttracting;
@@ -216,7 +216,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Переключить режим поля (Attract/Repel).
+        ///     Toggles between Attract and Repel mode.
         /// </summary>
         public void ToggleMode()
         {
@@ -224,7 +224,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить режим поля.
+        ///     Sets field mode.
         /// </summary>
         public void SetMode(FieldMode newMode)
         {
@@ -232,7 +232,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить силу поля.
+        ///     Sets field strength.
         /// </summary>
         public void SetStrength(float newStrength)
         {
@@ -240,7 +240,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить радиус поля.
+        ///     Sets field radius.
         /// </summary>
         public void SetRadius(float newRadius)
         {
@@ -248,7 +248,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить время притяжения для режима Toggle.
+        ///     Sets attract-phase duration for Toggle mode.
         /// </summary>
         public void SetAttractDuration(float duration)
         {
@@ -256,7 +256,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить время отталкивания для режима Toggle.
+        ///     Sets repel-phase duration for Toggle mode.
         /// </summary>
         public void SetRepelDuration(float duration)
         {
@@ -264,7 +264,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбросить таймер режима Toggle (начать цикл заново).
+        ///     Resets Toggle timer (restart cycle).
         /// </summary>
         public void ResetToggleTimer()
         {
@@ -273,7 +273,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить цель притяжения (Transform).
+        ///     Sets attraction target Transform.
         /// </summary>
         public void SetTarget(Transform target)
         {
@@ -285,7 +285,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить точку притяжения.
+        ///     Sets attraction point in space.
         /// </summary>
         public void SetTargetPoint(Vector3 point)
         {
@@ -294,7 +294,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Установить направление притяжения (вектор).
+        ///     Sets pull direction vector.
         /// </summary>
         public void SetDirection(Vector3 newDirection, bool local = true)
         {
@@ -409,7 +409,7 @@ namespace Neo.Tools
 
         private Vector3 CalculateForceDirection(Vector3 objectPosition)
         {
-            // Определяем базовое направление по режиму
+            // Base direction from mode
             Vector3 baseDir;
             if (mode == FieldMode.Direction)
             {
@@ -428,14 +428,14 @@ namespace Neo.Tools
                 baseDir = toAttractionPoint.normalized;
             }
 
-            // В режиме Repel инвертируем
+            // Repel inverts direction
             bool isRepel = mode == FieldMode.Repel;
             if (isRepel)
             {
                 baseDir = -baseDir;
             }
 
-            // Если toggle включён и сейчас обратная фаза — инвертируем
+            // Toggle reverse phase inverts force
             if (_toggle && !CurrentToggleState)
             {
                 baseDir = -baseDir;

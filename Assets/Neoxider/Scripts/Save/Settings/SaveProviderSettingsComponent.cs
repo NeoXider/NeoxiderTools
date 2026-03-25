@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    ///     MonoBehaviour компонент для настройки провайдера сохранения через Inspector.
-    ///     Позволяет инициализировать SaveProvider с настройками из ScriptableObject без необходимости размещения в Resources.
+    ///     MonoBehaviour component for configuring the save provider from the Inspector.
+    ///     Initializes SaveProvider with settings from a ScriptableObject without requiring an asset in Resources.
     /// </summary>
     [NeoDoc("Save/SaveProviderSettingsComponent.md")]
     [CreateFromMenu("Neoxider/Save/SaveProviderSettingsComponent")]
@@ -13,7 +13,7 @@ namespace Neo.Save
     {
         [Header("Settings")]
         [Tooltip(
-            "Настройки провайдера сохранения. Если не указаны, будет использован провайдер по умолчанию (PlayerPrefs).")]
+            "Save provider settings. If unset, the default provider (PlayerPrefs) is used.")]
         [SerializeField]
         private SaveProviderSettings _settings;
 

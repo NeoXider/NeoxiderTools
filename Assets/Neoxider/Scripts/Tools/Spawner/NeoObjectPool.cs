@@ -5,7 +5,7 @@ using UnityEngine.Pool;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Управляет пулом для одного конкретного префаба, вызывая методы интерфейса IPoolable.
+    ///     Pool for a single prefab; invokes IPoolable on instances.
     /// </summary>
     public class NeoObjectPool
     {
@@ -31,7 +31,7 @@ namespace Neo.Tools
                 effectiveMax
             );
 
-            // "Прогреваем" пул, чтобы избежать лагов при первом использовании
+            // Prewarm to avoid first-use hitch
             List<GameObject> prewarmList = new();
             for (int i = 0; i < initialSize; i++)
             {
@@ -47,7 +47,7 @@ namespace Neo.Tools
         public int CountInactive => _pool.CountInactive;
 
         /// <summary>
-        ///     Получает компоненты IPoolable с кэшированием для оптимизации производительности.
+        ///     Resolves IPoolable components with per-instance caching.
         /// </summary>
         private IPoolable[] GetPoolableComponents(GameObject instance)
         {
@@ -86,7 +86,7 @@ namespace Neo.Tools
 
         private void OnGetFromPool(GameObject instance)
         {
-            // Вызываем метод "при взятии" у всех компонентов
+            // OnPoolGet on all poolable components
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -98,7 +98,7 @@ namespace Neo.Tools
 
         private void OnReleaseToPool(GameObject instance)
         {
-            // Вызываем метод "при возврате" у всех компонентов
+            // OnPoolRelease on all poolable components
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
@@ -115,7 +115,7 @@ namespace Neo.Tools
 
         private void OnDestroyObject(GameObject instance)
         {
-            // Очищаем кэш при уничтожении объекта
+            // Drop cache when instance is destroyed
             _cachedComponents.Remove(instance);
             Object.Destroy(instance);
         }

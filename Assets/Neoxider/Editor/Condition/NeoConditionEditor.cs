@@ -37,16 +37,16 @@ namespace Neo.Editor.Condition
 
         private static readonly GameObjectPropertyDef[] GameObjectProperties =
         {
-            new() { Name = "activeSelf", Type = ValueType.Bool, DisplayName = "activeSelf  (bool) — объект включён" },
+            new() { Name = "activeSelf", Type = ValueType.Bool, DisplayName = "activeSelf  (bool) — object enabled" },
             new()
             {
                 Name = "activeInHierarchy", Type = ValueType.Bool,
-                DisplayName = "activeInHierarchy  (bool) — активен в иерархии"
+                DisplayName = "activeInHierarchy  (bool) — active in hierarchy"
             },
-            new() { Name = "isStatic", Type = ValueType.Bool, DisplayName = "isStatic  (bool) — статический" },
-            new() { Name = "tag", Type = ValueType.String, DisplayName = "tag  (string) — тег объекта" },
-            new() { Name = "name", Type = ValueType.String, DisplayName = "name  (string) — имя объекта" },
-            new() { Name = "layer", Type = ValueType.Int, DisplayName = "layer  (int) — слой объекта" }
+            new() { Name = "isStatic", Type = ValueType.Bool, DisplayName = "isStatic  (bool) — static" },
+            new() { Name = "tag", Type = ValueType.String, DisplayName = "tag  (string) — object tag" },
+            new() { Name = "name", Type = ValueType.String, DisplayName = "name  (string) — object name" },
+            new() { Name = "layer", Type = ValueType.Int, DisplayName = "layer  (int) — object layer" }
         };
 
         private static readonly string[] SourceModeNames = { "Component", "GameObject" };
@@ -69,7 +69,7 @@ namespace Neo.Editor.Condition
         private static readonly Color ValueAccent = new(0.34f, 0.90f, 0.50f, 1f);
 
         /// <summary>
-        ///     Включаем кастомный UI внутри фирменного Neoxider-стиля.
+        ///     Enables custom UI inside the Neoxider-branded inspector style.
         /// </summary>
         protected override bool UseCustomNeoxiderInspectorGUI => true;
 
@@ -83,7 +83,7 @@ namespace Neo.Editor.Condition
         }
 
         /// <summary>
-        ///     Рисуем собственный инспектор, но внутри Neo рамки (подпись, радужная линия, Actions).
+        ///     Draws a custom inspector inside the Neo frame (label, rainbow line, Actions).
         /// </summary>
         protected override void DrawCustomNeoxiderInspectorGUI()
         {
@@ -185,14 +185,14 @@ namespace Neo.Editor.Condition
             if (conditionsProp.arraySize == 0)
             {
                 EditorGUILayout.HelpBox(
-                    "Нет ни одного условия. Добавь хотя бы один entry, иначе компонент ничего не проверяет.",
+                    "There are no conditions. Add at least one entry or the component will not evaluate anything.",
                     MessageType.Warning);
             }
 
             if (sceneSearchCount > 0 && checkModeProp.enumValueIndex == (int)CheckMode.EveryFrame)
             {
                 EditorGUILayout.HelpBox(
-                    "Scene Search вместе с EveryFrame может быть избыточным. Если не нужен мгновенный отклик каждый кадр, лучше использовать Interval или Manual.",
+                    "Scene Search together with Every Frame can be heavy. If you do not need instant per-frame response, prefer Interval or Manual.",
                     MessageType.Info);
             }
 
@@ -397,7 +397,7 @@ namespace Neo.Editor.Condition
             EditorGUI.BeginChangeCheck();
             useSceneSearchProp.boolValue = EditorGUILayout.Toggle(
                 new GUIContent("Find By Name",
-                    "Искать GameObject по имени в сцене (GameObject.Find). Кешируется пока объект жив."),
+                    "Find a GameObject by name in the scene (GameObject.Find). Cached while the object exists."),
                 useSceneSearchProp.boolValue);
             if (EditorGUI.EndChangeCheck())
             {
@@ -413,11 +413,11 @@ namespace Neo.Editor.Condition
             if (isSceneSearch)
             {
                 EditorGUILayout.PropertyField(searchNameProp,
-                    new GUIContent("Object Name", "Имя GameObject для поиска через GameObject.Find()"));
+                    new GUIContent("Object Name", "GameObject name to resolve via GameObject.Find()."));
 
                 waitForObjectProp.boolValue = EditorGUILayout.Toggle(
                     new GUIContent("Wait For Object",
-                        "Ожидать появления объекта в сцене (без Warning). Полезно для префабов, которые будут заспавнены позже."),
+                        "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later."),
                     waitForObjectProp.boolValue);
 
                 if (Application.isPlaying && condition != null)
@@ -452,7 +452,7 @@ namespace Neo.Editor.Condition
                     {
                         EditorGUILayout.PropertyField(prefabPreviewProp,
                             new GUIContent("Prefab Preview",
-                                "Перетащите префаб из Project, чтобы настроить компоненты/свойства до спавна объекта."));
+                                "Drag a prefab from Project to configure components/properties before the instance exists."));
 
                         var prefab = prefabPreviewProp.objectReferenceValue as GameObject;
                         if (prefab != null)
@@ -460,8 +460,8 @@ namespace Neo.Editor.Condition
                             targetObj = prefab;
                             EditorGUILayout.HelpBox(
                                 waitForObjectProp.boolValue
-                                    ? $"Объект \"{searchNameProp.stringValue}\" ещё не на сцене — настройка по префабу. Ожидание спавна (без Warning)."
-                                    : $"Объект \"{searchNameProp.stringValue}\" ещё не на сцене — настройка по префабу.",
+                                    ? $"Object \"{searchNameProp.stringValue}\" is not in the scene yet — editing via prefab. Waiting for spawn (no warning)."
+                                    : $"Object \"{searchNameProp.stringValue}\" is not in the scene yet — editing via prefab.",
                                 MessageType.Info);
                         }
                         else
@@ -469,13 +469,13 @@ namespace Neo.Editor.Condition
                             if (waitForObjectProp.boolValue)
                             {
                                 EditorGUILayout.HelpBox(
-                                    $"GameObject \"{searchNameProp.stringValue}\" не найден — ожидание спавна (без Warning).\nПеретащите префаб в «Prefab Preview» для настройки свойств.",
+                                    $"GameObject \"{searchNameProp.stringValue}\" not found — waiting for spawn (no warning).\nDrag a prefab into Prefab Preview to edit properties.",
                                     MessageType.Info);
                             }
                             else
                             {
                                 EditorGUILayout.HelpBox(
-                                    $"GameObject \"{searchNameProp.stringValue}\" не найден в сцене.\nПеретащите префаб в «Prefab Preview» для настройки свойств.",
+                                    $"GameObject \"{searchNameProp.stringValue}\" not found in the scene.\nDrag a prefab into Prefab Preview to edit properties.",
                                     MessageType.Warning);
                             }
                         }
@@ -603,7 +603,7 @@ namespace Neo.Editor.Condition
             BeginAccentSection("Compare", CompareAccent);
 
             EditorGUILayout.PropertyField(thresholdSourceProp, new GUIContent("Compare With",
-                "Constant: сравнить с числом или текстом. Other Object: сравнить с полем/свойством другого объекта. Если Other Source Object пуст — используется тот же объект, что и слева."));
+                "Constant: compare to a number or text. Other Object: compare to another object's field/property. If Other Source Object is empty, the same object as on the left is used."));
 
             bool isOtherObject = thresholdSourceProp.enumValueIndex == (int)ThresholdSource.OtherObject;
 
@@ -657,7 +657,7 @@ namespace Neo.Editor.Condition
                 {
                     EditorGUILayout.PropertyField(otherSourceObjProp,
                         new GUIContent("Other Source Object",
-                            "Пусто = тот же объект, что и слева (сравнение двух полей одного объекта)."));
+                            "Empty = same object as on the left (compare two fields on one object)."));
                     otherTargetObj = (GameObject)otherSourceObjProp.objectReferenceValue;
                 }
 

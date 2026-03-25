@@ -5,34 +5,34 @@ using UnityEngine;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Предикат перехода, использующий универсальное условие Neoxider (объект → компонент → свойство → сравнение → порог).
-    ///     Позволяет выбирать условия так же, как в NeoCondition, и использовать их в переходах State Machine.
-    /// </summary>
-    /// <summary>
-    ///     Контекст для условия: задаётся слотом (0 = объект с StateMachine, 1+ = из списка Context Overrides на компоненте).
-    ///     Ссылки на объекты сцены не хранятся в SO — только номер слота.
+    ///     Context slot for NeoCondition-style evaluation: 0 = StateMachine owner, 1+ = Context Overrides on the behaviour.
+    ///     Scene object references are not stored on the ScriptableObject — only the slot index.
     /// </summary>
     public enum ConditionContextSlot
     {
-        /// <summary>Объект с компонентом StateMachine (владелец).</summary>
+        /// <summary>GameObject that owns the State Machine component.</summary>
         Owner = 0,
 
-        /// <summary>Первый элемент из Context Overrides на компоненте.</summary>
+        /// <summary>First entry in Context Overrides on the component.</summary>
         Override1 = 1,
 
-        /// <summary>Второй элемент из Context Overrides.</summary>
+        /// <summary>Second entry in Context Overrides.</summary>
         Override2 = 2,
 
-        /// <summary>Третий элемент из Context Overrides.</summary>
+        /// <summary>Third entry in Context Overrides.</summary>
         Override3 = 3,
 
-        /// <summary>Четвёртый элемент из Context Overrides.</summary>
+        /// <summary>Fourth entry in Context Overrides.</summary>
         Override4 = 4,
 
-        /// <summary>Пятый элемент из Context Overrides.</summary>
+        /// <summary>Fifth entry in Context Overrides.</summary>
         Override5 = 5
     }
 
+    /// <summary>
+    ///     Transition predicate that evaluates a NeoCondition <see cref="ConditionEntry"/> against a context GameObject
+    ///     chosen by <see cref="ConditionContextSlot"/> (same workflow as NeoCondition in the Inspector).
+    /// </summary>
     [Serializable]
     public class ConditionEntryPredicate : StatePredicate
     {

@@ -3,14 +3,14 @@ using UnityEditor;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    ///     Базовый класс для отрисовки GUI EditorWindow
+    ///     Base class for drawing an <see cref="EditorWindow" /> GUI.
     /// </summary>
     public abstract class EditorWindowGUI
     {
         /// <summary>
-        ///     Отрисовка GUI окна
+        ///     Draws the window GUI.
         /// </summary>
-        /// <param name="window">Окно для отрисовки</param>
+        /// <param name="window">Window to draw into.</param>
         public abstract void OnGUI(EditorWindow window);
     }
 }

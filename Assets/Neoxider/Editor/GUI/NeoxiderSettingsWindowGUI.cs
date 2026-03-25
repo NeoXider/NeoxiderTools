@@ -8,7 +8,7 @@ using GUI = UnityEngine.GUI;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    ///     GUI отрисовка для окна настроек Neoxider
+    ///     GUI drawing for the Neoxider settings window.
     /// </summary>
     public class NeoxiderSettingsWindowGUI : EditorWindowGUI
     {
@@ -19,7 +19,7 @@ namespace Neo.Editor.Windows
         private bool _showHierarchySettings = true;
 
         /// <summary>
-        ///     Инициализация GUI
+        ///     Initializes GUI state.
         /// </summary>
         public void Initialize()
         {
@@ -27,7 +27,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Отрисовка GUI
+        ///     Draws the window GUI.
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
@@ -57,7 +57,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Сохранение изменений при закрытии
+        ///     Persists changes when the window closes.
         /// </summary>
         public void OnDisable()
         {
@@ -68,7 +68,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Сброс настроек к значениям по умолчанию
+        ///     Resets settings to defaults.
         /// </summary>
         public void ResetToDefaults()
         {

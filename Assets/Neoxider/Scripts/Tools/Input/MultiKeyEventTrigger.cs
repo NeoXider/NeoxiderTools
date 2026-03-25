@@ -9,7 +9,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(MultiKeyEventTrigger))]
     public class MultiKeyEventTrigger : MonoBehaviour
     {
-        [SerializeField] [Tooltip("При включении в консоль пишется лог о нажатой клавише.")]
+        [SerializeField] [Tooltip("When enabled, logs each key press to the console.")]
         private bool _debug;
 
         [Header("Key Bindings")] public KeyEventPair[] keyEventPairs =

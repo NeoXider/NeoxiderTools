@@ -64,7 +64,7 @@ namespace Neo.Audio
         {
             if (audioMixer == null)
             {
-                Debug.LogWarning("[SettingMixer] AudioMixer не установлен.");
+                Debug.LogWarning("[SettingMixer] AudioMixer is not assigned.");
                 return;
             }
 

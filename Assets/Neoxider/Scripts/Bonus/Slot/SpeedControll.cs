@@ -5,9 +5,9 @@ using System;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     Параметры скорости барабана:
-    ///     - speed: стартовая скорость (юн/с), знак задаёт направление ( + вверх, - вниз ).
-    ///     - timeSpin: время фазовой прокрутки на постоянной скорости перед началом торможения (сек).
+    ///     Reel speed parameters:
+    ///     - speed: starting speed (units/s); sign is direction (+ up, - down).
+    ///     - timeSpin: duration of constant-speed phase before braking starts (seconds).
     /// </summary>
     [Serializable]
     public struct SpeedControll

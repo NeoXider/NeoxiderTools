@@ -48,7 +48,7 @@ namespace Neo.Core.Level
             RecomputeLevelAndXpToNext();
         }
 
-        /// <summary>Задать определение кривой (SO с режимом Formula/Curve/Custom). Имеет приоритет над SetCurve.</summary>
+        /// <summary>Set curve definition (SO with Formula/Curve/Custom mode). Takes precedence over SetCurve.</summary>
         public void SetCurveDefinition(ILevelCurveDefinition definition)
         {
             _curveDefinition = definition;

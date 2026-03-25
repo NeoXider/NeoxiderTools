@@ -7,7 +7,7 @@ using UnityEditor;
 namespace Neo.GridSystem
 {
     /// <summary>
-    ///     Компонент для визуализации сетки, путей и информации о ячейках через Gizmos и UnityEngine.Grid.
+    ///     Draws grid, paths, and cell info with Gizmos and UnityEngine.Grid.
     /// </summary>
     [ExecuteAlways]
     [NeoDoc("GridSystem/FieldDebugDrawer.md")]
@@ -18,8 +18,8 @@ namespace Neo.GridSystem
     {
         [Header("Colors")] public Color GridColor = new(1f, 1f, 0f, 0.3f);
         public Color PathColor = Color.cyan;
-        public Color BlockedCellColor = new(1f, 0f, 0f, 0.3f); // полупрозрачный красный
-        public Color WalkableCellColor = new(0f, 1f, 0f, 0.3f); // полупрозрачный зелёный
+        public Color BlockedCellColor = new(1f, 0f, 0f, 0.3f); // semi-transparent red
+        public Color WalkableCellColor = new(0f, 1f, 0f, 0.3f); // semi-transparent green
         public Color DisabledCellColor = new(0.4f, 0.4f, 0.4f, 0.25f);
         public Color OccupiedCellColor = new(1f, 0.6f, 0f, 0.35f);
         public Color CoordinatesColor = Color.white;
@@ -29,8 +29,8 @@ namespace Neo.GridSystem
 
         [Header("Debug")] public List<Vector3Int> DebugPath = new();
 
-        [Header("Text")] public Color TextColor = Color.white; // Новый параметр для цвета текста
-        public int TextFontSize = 14; // Новый параметр для размера текста
+        [Header("Text")] public Color TextColor = Color.white; // Label text color
+        public int TextFontSize = 14; // Label font size
 
         private FieldGenerator generator;
         private Grid unityGrid;
@@ -53,7 +53,7 @@ namespace Neo.GridSystem
             }
 
             Vector3Int size = generator.Config.Size;
-            // Рисуем сетку
+            // Draw grid
             Gizmos.color = GridColor;
             for (int x = 0; x <= size.x; x++)
             for (int y = 0; y <= size.y; y++)
@@ -66,7 +66,7 @@ namespace Neo.GridSystem
                 Gizmos.DrawLine(from, to);
             }
 
-            // Рисуем ячейки
+            // Draw cells
             for (int x = 0; x < size.x; x++)
             for (int y = 0; y < size.y; y++)
             for (int z = 0; z < size.z; z++)
@@ -105,7 +105,7 @@ namespace Neo.GridSystem
 #endif
             }
 
-            // Рисуем путь
+            // Draw path
             if (DrawPath && DebugPath.Count > 1)
             {
                 Gizmos.color = PathColor;

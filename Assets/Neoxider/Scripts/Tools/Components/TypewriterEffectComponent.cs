@@ -8,7 +8,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     MonoBehaviour-обёртка для TypewriterEffect (на UniTask).
+    ///     MonoBehaviour wrapper for TypewriterEffect (UniTask).
     /// </summary>
     [NeoDoc("Tools/Components/TypewriterEffect.md")]
     [CreateFromMenu("Neoxider/Tools/Components/TypewriterEffectComponent")]
@@ -102,19 +102,19 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Запускает эффект с текстом из AutoStartText или TargetText.
+        ///     Starts the effect using AutoStartText or TargetText.
         /// </summary>
         public void PlayAutoText()
         {
             if (_targetText == null)
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] TargetText не назначен на {gameObject.name}", this);
+                Debug.LogWarning($"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
                 return;
             }
 
             if (string.IsNullOrEmpty(_autoStartText))
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] AutoStartText пустой на {gameObject.name}", this);
+                Debug.LogWarning($"[TypewriterEffectComponent] AutoStartText is empty on {gameObject.name}", this);
                 return;
             }
 
@@ -124,14 +124,14 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Запускает эффект печати текста.
-        ///     Если text пустой - берёт текст из TargetText.
+        ///     Starts the typewriter effect.
+        ///     If text is empty, uses TargetText content.
         /// </summary>
         public void Play(string text = "")
         {
             if (_targetText == null)
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] TargetText не назначен на {gameObject.name}", this);
+                Debug.LogWarning($"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
                 return;
             }
 
@@ -140,7 +140,7 @@ namespace Neo.Tools
                 text = _targetText.text;
                 if (string.IsNullOrEmpty(text))
                 {
-                    Debug.LogWarning($"[TypewriterEffectComponent] Текст пустой на {gameObject.name}", this);
+                    Debug.LogWarning($"[TypewriterEffectComponent] Text is empty on {gameObject.name}", this);
                     return;
                 }
 
@@ -164,7 +164,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Останавливает эффект и показывает весь текст.
+        ///     Stops the effect and shows full text.
         /// </summary>
         public void Complete()
         {
@@ -177,7 +177,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Останавливает эффект, сохраняя текущий текст.
+        ///     Stops the effect, keeping current visible text.
         /// </summary>
         public void Stop()
         {
@@ -196,7 +196,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Очищает текст.
+        ///     Clears text.
         /// </summary>
         public void Clear()
         {
@@ -209,7 +209,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Если печатает — завершает мгновенно, иначе возвращает false.
+        ///     If typing, completes instantly; otherwise returns false.
         /// </summary>
         public bool TrySkip()
         {

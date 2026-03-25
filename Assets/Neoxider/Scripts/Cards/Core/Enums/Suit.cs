@@ -1,38 +1,38 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Масти игральных карт
+    ///     Playing card suits.
     /// </summary>
     public enum Suit
     {
         /// <summary>
-        ///     Червы (красные)
+        ///     Hearts (red).
         /// </summary>
         Hearts = 0,
 
         /// <summary>
-        ///     Бубны (красные)
+        ///     Diamonds (red).
         /// </summary>
         Diamonds = 1,
 
         /// <summary>
-        ///     Трефы (чёрные)
+        ///     Clubs (black).
         /// </summary>
         Clubs = 2,
 
         /// <summary>
-        ///     Пики (чёрные)
+        ///     Spades (black).
         /// </summary>
         Spades = 3
     }
 
     /// <summary>
-    ///     Расширения для работы с мастями
+    ///     Extension methods for suits.
     /// </summary>
     public static class SuitExtensions
     {
         /// <summary>
-        ///     Проверяет, является ли масть красной (Hearts или Diamonds)
+        ///     Returns whether the suit is red (hearts or diamonds).
         /// </summary>
         public static bool IsRed(this Suit suit)
         {
@@ -40,7 +40,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, является ли масть чёрной (Clubs или Spades)
+        ///     Returns whether the suit is black (clubs or spades).
         /// </summary>
         public static bool IsBlack(this Suit suit)
         {
@@ -48,7 +48,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает символ масти в Unicode
+        ///     Returns the Unicode symbol for the suit.
         /// </summary>
         public static char ToSymbol(this Suit suit)
         {
@@ -63,22 +63,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает название масти на русском языке
-        /// </summary>
-        public static string ToRussianName(this Suit suit)
-        {
-            return suit switch
-            {
-                Suit.Hearts => "Червы",
-                Suit.Diamonds => "Бубны",
-                Suit.Clubs => "Трефы",
-                Suit.Spades => "Пики",
-                _ => "Неизвестно"
-            };
-        }
-
-        /// <summary>
-        ///     Возвращает название масти на английском языке
+        ///     Returns the English name of the suit.
         /// </summary>
         public static string ToEnglishName(this Suit suit)
         {

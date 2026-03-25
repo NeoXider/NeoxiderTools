@@ -5,7 +5,7 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Данные одного диалога, содержащего несколько монологов.
+    ///     Data for one dialogue containing multiple monologs.
     /// </summary>
     [Serializable]
     public class Dialogue
@@ -16,7 +16,7 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    ///     Данные монолога одного персонажа.
+    ///     Data for one character monolog.
     /// </summary>
     [Serializable]
     public class Monolog
@@ -29,7 +29,7 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    ///     Данные одного предложения в диалоге.
+    ///     Data for a single sentence in the dialogue.
     /// </summary>
     [Serializable]
     public class Sentence

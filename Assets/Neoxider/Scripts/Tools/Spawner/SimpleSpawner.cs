@@ -9,20 +9,20 @@ namespace Neo.Tools
     {
         [Header("Prefabs")] public GameObject prefab;
 
-        public Vector3 offset = Vector3.zero; // Исправлена опечатка
+        public Vector3 offset = Vector3.zero;
         public Vector3 eulerAngle = Vector3.zero;
 
         [Header("Behavior")] public bool useParent = true;
 
         [Tooltip(
-            "При true используется пул, если на сцене есть PoolManager; иначе Instantiate. Пул можно добавить позже — спавн всегда работает.")]
+            "If true, uses pool when PoolManager is in the scene; otherwise Instantiate. Pool can be added later — spawn always works.")]
         public bool useObjectPool = true;
 
         public void Spawn()
         {
             if (prefab == null)
             {
-                Debug.LogError("Prefab не назначен в SimpleSpawner!", this);
+                Debug.LogError("Prefab is not assigned on SimpleSpawner!", this);
                 return;
             }
 

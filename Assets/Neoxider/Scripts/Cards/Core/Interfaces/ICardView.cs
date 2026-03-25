@@ -5,69 +5,69 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Интерфейс визуального представления карты
+    ///     View API for a single card.
     /// </summary>
     public interface ICardView
     {
         /// <summary>
-        ///     Данные карты
+        ///     Card data.
         /// </summary>
         CardData Data { get; }
 
         /// <summary>
-        ///     Показана ли карта лицом вверх
+        ///     Whether the card is face up.
         /// </summary>
         bool IsFaceUp { get; }
 
         /// <summary>
-        ///     Transform компонента
+        ///     Root transform.
         /// </summary>
         Transform Transform { get; }
 
         /// <summary>
-        ///     Событие клика по карте
+        ///     Raised when the card is clicked.
         /// </summary>
         event Action<ICardView> OnClicked;
 
         /// <summary>
-        ///     Событие наведения на карту
+        ///     Raised when the pointer enters the card.
         /// </summary>
         event Action<ICardView> OnHovered;
 
         /// <summary>
-        ///     Событие ухода курсора с карты
+        ///     Raised when the pointer exits the card.
         /// </summary>
         event Action<ICardView> OnUnhovered;
 
         /// <summary>
-        ///     Устанавливает данные карты и обновляет визуал
+        ///     Sets card data and refreshes visuals.
         /// </summary>
-        /// <param name="data">Данные карты</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
+        /// <param name="data">Card data.</param>
+        /// <param name="faceUp">Show face up.</param>
         void SetData(CardData data, bool faceUp = true);
 
         /// <summary>
-        ///     Переворачивает карту
+        ///     Flips the card instantly.
         /// </summary>
         void Flip();
 
         /// <summary>
-        ///     Переворачивает карту с анимацией
+        ///     Flips the card with animation.
         /// </summary>
-        /// <param name="duration">Длительность анимации в секундах</param>
+        /// <param name="duration">Duration in seconds.</param>
         UniTask FlipAsync(float duration = 0.3f);
 
         /// <summary>
-        ///     Перемещает карту в указанную позицию с анимацией
+        ///     Moves the card with animation.
         /// </summary>
-        /// <param name="position">Целевая позиция</param>
-        /// <param name="duration">Длительность анимации в секундах</param>
+        /// <param name="position">World position.</param>
+        /// <param name="duration">Duration in seconds.</param>
         UniTask MoveToAsync(Vector3 position, float duration = 0.2f);
 
         /// <summary>
-        ///     Устанавливает интерактивность карты
+        ///     Enables or disables interaction.
         /// </summary>
-        /// <param name="interactable">Можно ли взаимодействовать с картой</param>
+        /// <param name="interactable">Whether the card accepts input.</param>
         void SetInteractable(bool interactable);
     }
 }

@@ -2,7 +2,7 @@ using Neo.Editor.Windows;
 using UnityEditor;
 
 /// <summary>
-///     Окно редактора для поиска и удаления Missing Scripts во всех сценах и префабах
+///     Editor window to find and remove Missing Scripts across scenes and prefabs.
 /// </summary>
 public class FindAndRemoveMissingScriptsWindow : EditorWindow
 {
@@ -24,7 +24,7 @@ public class FindAndRemoveMissingScriptsWindow : EditorWindow
     }
 
     /// <summary>
-    ///     Показывает окно поиска Missing Scripts
+    ///     Opens the Missing Scripts finder window.
     /// </summary>
     [MenuItem("Tools/Neoxider/Find & Remove Missing Scripts")]
     public static void ShowWindow()

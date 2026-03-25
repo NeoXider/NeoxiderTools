@@ -3,34 +3,34 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Вьюшка руки: вешается на префаб подбираемого предмета (тот же, что WorldDropPrefab).
-    ///     InventoryHand при отображении предмета в руке ищет этот компонент на экземпляре и применяет
-    ///     смещение позиции, поворота и базовый масштаб; поверх применяется общий масштаб руки (дельта или фиксированный).
+    ///     Hand view: add to the pickable item prefab (same as WorldDropPrefab).
+    ///     InventoryHand finds this on the instance when showing an item in hand and applies
+    ///     position/rotation offset and base scale; hand-wide scale (delta or fixed) is applied on top.
     /// </summary>
     [NeoDoc("Tools/Inventory/HandView.md")]
     [CreateFromMenu("Neoxider/Tools/Inventory/HandView")]
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(HandView))]
     public sealed class HandView : MonoBehaviour
     {
-        [SerializeField] [Tooltip("Смещение позиции предмета относительно точки руки (локальные координаты).")]
+        [SerializeField] [Tooltip("Item position offset from the hand anchor (local space).")]
         private Vector3 _positionOffset;
 
-        [SerializeField] [Tooltip("Смещение поворота в градусах (Euler) относительно руки.")]
+        [SerializeField] [Tooltip("Rotation offset in degrees (Euler) relative to the hand.")]
         private Vector3 _rotationOffset;
 
         [SerializeField]
         [Tooltip(
-            "Базовый масштаб этого предмета в руке (1 = без изменения). Поверх применяется общий масштаб руки (дельта или фиксированный).")]
+            "Base scale for this item in hand (1 = unchanged). Hand-wide scale is applied on top (delta or fixed).")]
         [Min(0.01f)]
         private float _scaleInHand = 1f;
 
-        /// <summary>Смещение позиции в локальных координатах руки.</summary>
+        /// <summary>Position offset in hand local space.</summary>
         public Vector3 PositionOffset => _positionOffset;
 
-        /// <summary>Смещение поворота в градусах (Euler).</summary>
+        /// <summary>Rotation offset in degrees (Euler).</summary>
         public Vector3 RotationOffset => _rotationOffset;
 
-        /// <summary>Базовый масштаб предмета в руке.</summary>
+        /// <summary>Base item scale in hand.</summary>
         public float ScaleInHand => Mathf.Max(0.01f, _scaleInHand);
 
         private void Reset()

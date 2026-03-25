@@ -25,7 +25,7 @@ namespace Neo
                     return _startPath;
                 }
 
-                // Ищем путь к скрипту через поиск по имени
+                // Resolve script path by asset search
                 string[] guids = AssetDatabase.FindAssets("CreateMenuObject t:Script");
                 string scriptPath = null;
 
@@ -41,8 +41,8 @@ namespace Neo
 
                 if (!string.IsNullOrEmpty(scriptPath))
                 {
-                    // Определяем базовый путь на основе расположения скрипта
-                    // Убираем "Editor/Create" из пути
+                    // Base path from script location
+                    // Strip "Editor/Create" from the path
                     string basePath = Path.GetDirectoryName(scriptPath); // Editor/Create
                     basePath = Path.GetDirectoryName(basePath); // Editor
                     basePath = Path.GetDirectoryName(basePath); // Neoxider
@@ -50,11 +50,11 @@ namespace Neo
                 }
                 else
                 {
-                    // Fallback - пробуем стандартные пути
+                    // Fallback — try standard roots
                     string assetsPath = "Assets/Neoxider/";
                     string packagesPath = "Packages/com.neoxider.tools/";
 
-                    // Проверяем, существует ли папка Packages
+                    // Check whether the Packages folder exists
                     if (AssetDatabase.IsValidFolder("Packages/com.neoxider.tools"))
                     {
                         _startPath = packagesPath;
@@ -65,14 +65,14 @@ namespace Neo
                     }
                     else
                     {
-                        // Последняя попытка - ищем любой префаб Neoxider
+                        // Last resort — find any Neoxider prefab
                         string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", new[] { "Assets" });
                         foreach (string guid in prefabGuids)
                         {
                             string prefabPath = AssetDatabase.GUIDToAssetPath(guid);
                             if (prefabPath.Contains("Neoxider"))
                             {
-                                // Находим корень Neoxider
+                                // Locate Neoxider root
                                 int neoxiderIndex = prefabPath.IndexOf("Neoxider");
                                 _startPath = prefabPath.Substring(0, neoxiderIndex + "Neoxider".Length) + "/";
                                 break;
@@ -81,7 +81,7 @@ namespace Neo
 
                         if (string.IsNullOrEmpty(_startPath))
                         {
-                            _startPath = assetsPath; // Fallback на стандартный путь
+                            _startPath = assetsPath; // Fallback to default path
                         }
                     }
                 }
@@ -373,18 +373,18 @@ namespace Neo
         /// </summary>
         private static readonly Dictionary<string, Color> CategoryColors = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) }, // Внешний вид / интерфейс — фиолетовый
-            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) }, // Инструменты, механика — зелёный (операторы)
-            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) }, // Магазин, валюта — жёлтый/золотой
-            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) }, // Звук — розовый/маджента (как в примере)
-            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) }, // Награды, активность — оранжевый
-            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Уровни, игра — синий (движение/игра)
-            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Сохранения, данные — бирюзовый (сенсоры)
-            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) }, // Условия, логика — оранжевый (управление)
-            { "Animations", new Color(0.65f, 0.45f, 0.95f, 0.9f) }, // Анимация, вид — фиолетовый
-            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Сетка, структура — бирюзовый
-            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Параллакс, движение — синий
-            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) } // Персонажи, взаимодействие — бирюзовый
+            { "UI", new Color(0.6f, 0.4f, 1f, 0.9f) }, // UI / visuals — purple
+            { "Tools", new Color(0.35f, 0.75f, 0.35f, 0.9f) }, // Tools, mechanics — green
+            { "Shop", new Color(1f, 0.75f, 0f, 0.9f) }, // Shop, currency — yellow/gold
+            { "Audio", new Color(0.81f, 0.39f, 0.81f, 0.9f) }, // Audio — pink/magenta
+            { "Bonus", new Color(1f, 0.55f, 0.1f, 0.9f) }, // Rewards, activity — orange
+            { "Level", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Levels, gameplay — blue
+            { "Save", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Saves, data — teal
+            { "Condition", new Color(1f, 0.55f, 0.2f, 0.9f) }, // Conditions, logic — orange
+            { "Animations", new Color(0.65f, 0.45f, 0.95f, 0.9f) }, // Animation, presentation — purple
+            { "GridSystem", new Color(0.36f, 0.69f, 0.84f, 0.9f) }, // Grid, structure — teal
+            { "Parallax", new Color(0.3f, 0.59f, 1f, 0.9f) }, // Parallax, motion — blue
+            { "NPC", new Color(0.36f, 0.69f, 0.84f, 0.9f) } // Characters, interaction — teal
         };
 
         private static readonly Dictionary<string, string> CategoryIcons = new(StringComparer.OrdinalIgnoreCase)
@@ -461,7 +461,7 @@ namespace Neo
             int shown = DrawTree(_root, 0);
             if (shown == 0 && string.IsNullOrWhiteSpace(_search))
             {
-                EditorGUILayout.HelpBox("Ничего не найдено. Измени поиск или очисти поле.", MessageType.Info);
+                EditorGUILayout.HelpBox("Nothing found. Change the search or clear the field.", MessageType.Info);
             }
 
             EditorGUILayout.EndScrollView();
@@ -479,7 +479,7 @@ namespace Neo
             Rect presetsHeaderRect = GUILayoutUtility.GetRect(20, _folderStyle.fixedHeight);
             EditorGUI.DrawRect(presetsHeaderRect, PresetsCategoryColor);
             _presetsExpanded["Presets"] = EditorGUI.Foldout(presetsHeaderRect, presetsExpanded,
-                new GUIContent(" Presets (готовые префабы)"), true, _folderStyle);
+                new GUIContent(" Presets (ready-made prefabs)"), true, _folderStyle);
 
             if (!_presetsExpanded["Presets"])
             {
@@ -649,7 +649,7 @@ namespace Neo
             Rect r = EditorGUILayout.BeginVertical();
             EditorGUI.DrawRect(r, HeaderBg);
             GUILayout.Label("Create Neoxider Object", _headerStyle);
-            EditorGUILayout.LabelField($"GameObject → Neoxider → Create   ·   {_entries.Length} компонентов",
+            EditorGUILayout.LabelField($"GameObject → Neoxider → Create   ·   {_entries.Length} components",
                 EditorStyles.miniLabel);
             EditorGUILayout.EndVertical();
             GUILayout.Space(6f);
@@ -658,7 +658,7 @@ namespace Neo
         private void DrawSearchBar()
         {
             EditorGUILayout.BeginHorizontal(EditorStyles.toolbar);
-            GUILayout.Label("Поиск", GUILayout.Width(36));
+            GUILayout.Label("Search", GUILayout.Width(44));
             _search = EditorGUILayout.TextField(_search, EditorStyles.toolbarSearchField, GUILayout.ExpandWidth(true));
             if (!string.IsNullOrEmpty(_search))
             {
@@ -682,7 +682,7 @@ namespace Neo
                     RefreshEntries();
                 }
             }
-            else if (GUILayout.Button("Обновить", EditorStyles.toolbarButton, GUILayout.Width(60)))
+            else if (GUILayout.Button("Refresh", EditorStyles.toolbarButton, GUILayout.Width(60)))
             {
                 RefreshEntries();
             }

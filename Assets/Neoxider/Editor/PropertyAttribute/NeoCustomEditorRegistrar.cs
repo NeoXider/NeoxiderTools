@@ -15,7 +15,7 @@ namespace Neo.Editor
             // Register editor refresh on Unity load
             EditorApplication.delayCall += OnEditorReady;
 
-            // Также регистрируем при изменении скриптов
+            // Also register when scripts change
             EditorApplication.projectChanged += OnProjectChanged;
         }
 
@@ -27,7 +27,7 @@ namespace Neo.Editor
 
         private static void OnProjectChanged()
         {
-            // При изменении проекта обновляем инспекторы
+            // Refresh inspectors when the project changes
             InternalEditorUtility.RepaintAllViews();
         }
     }

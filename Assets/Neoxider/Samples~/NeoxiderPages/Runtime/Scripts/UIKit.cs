@@ -3,22 +3,22 @@ using UnityEngine.Events;
 namespace Neo.Pages
 {
     /// <summary>
-    ///     Статическая шина событий для показа UI-страниц.
+    ///     Static event bus for showing UI pages.
     /// </summary>
     public class UIKit
     {
         /// <summary>
-        ///     Событие запроса показа страницы по <see cref="PageId" />.
+        ///     Event requesting a page show by <see cref="PageId" />.
         /// </summary>
         public static UnityEvent<PageId> OnShowPage = new();
 
         /// <summary>
-        ///     Событие запроса показа страницы по имени <see cref="PageId" />.
+        ///     Event requesting a page show by <see cref="PageId" /> asset name.
         /// </summary>
         public static UnityEvent<string> OnShowPageByName = new();
 
         /// <summary>
-        ///     Запрашивает показ страницы (генерирует событие <see cref="OnShowPage" />).
+        ///     Requests showing a page (raises <see cref="OnShowPage" />).
         /// </summary>
         public static void ShowPage(PageId pageId)
         {
@@ -31,7 +31,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Запрашивает показ страницы по имени PageId (например, "PageEnd").
+        ///     Requests showing a page by PageId asset name (e.g. "PageEnd").
         /// </summary>
         public static void ShowPage(string pageIdName)
         {

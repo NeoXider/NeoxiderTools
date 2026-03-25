@@ -343,8 +343,8 @@ namespace Neo.NPC
 
         private void ApplyAgentSettings()
         {
-            // В Play Mode OnValidate может сработать до Awake (например при domain reload),
-            // поэтому защищаемся от null инициализации.
+            // In Play Mode OnValidate may run before Awake (e.g. domain reload);
+            // guard against uninitialized null.
             if (agentCore == null)
             {
                 if (agent == null)

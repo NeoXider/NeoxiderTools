@@ -4,17 +4,17 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Переиспользуемый расчет позиций/поворотов для Hand/Board/Deck.
+    ///     Shared layout math for hand, board, and deck stacks.
     /// </summary>
     public static class CardLayoutCalculator
     {
         /// <summary>
-        ///     Рассчитывает список локальных позиций для заданного типа раскладки.
+        ///     Computes local positions for a layout type and card count.
         /// </summary>
-        /// <param name="layoutType">Тип раскладки.</param>
-        /// <param name="cardCount">Количество карт.</param>
-        /// <param name="settings">Параметры раскладки.</param>
-        /// <returns>Список локальных позиций в порядке индексов карт.</returns>
+        /// <param name="layoutType">Layout kind.</param>
+        /// <param name="cardCount">Number of cards.</param>
+        /// <param name="settings">Layout parameters.</param>
+        /// <returns>Local positions in card index order.</returns>
         public static List<Vector3> CalculatePositions(CardLayoutType layoutType, int cardCount,
             CardLayoutSettings settings)
         {
@@ -50,12 +50,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Рассчитывает список локальных поворотов для заданного типа раскладки.
+        ///     Computes local rotations for a layout type and card count.
         /// </summary>
-        /// <param name="layoutType">Тип раскладки.</param>
-        /// <param name="cardCount">Количество карт.</param>
-        /// <param name="settings">Параметры раскладки.</param>
-        /// <returns>Список локальных поворотов в порядке индексов карт.</returns>
+        /// <param name="layoutType">Layout kind.</param>
+        /// <param name="cardCount">Number of cards.</param>
+        /// <param name="settings">Layout parameters.</param>
+        /// <returns>Local rotations in card index order.</returns>
         public static List<Quaternion> CalculateRotations(CardLayoutType layoutType, int cardCount,
             CardLayoutSettings settings)
         {

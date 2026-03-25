@@ -1,29 +1,30 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Типы готовых анимаций карты для CardViewAnimationTemplates и ICardViewAnimations.
+    ///     Built-in card animation kinds for <see cref="CardViewAnimationTemplates" /> and
+    ///     <see cref="ICardViewAnimations" />.
     /// </summary>
     public enum CardViewAnimationType
     {
-        /// <summary>Упругий масштаб (DOPunchScale).</summary>
+        /// <summary>Bouncy scale (DOPunchScale).</summary>
         Bounce,
 
-        /// <summary>Один цикл пульсации масштаба.</summary>
+        /// <summary>Single scale pulse cycle.</summary>
         Pulse,
 
-        /// <summary>Зацикленная пульсация масштаба.</summary>
+        /// <summary>Looped scale pulse.</summary>
         PulseLooped,
 
-        /// <summary>Тряска позиции (DOShakePosition).</summary>
+        /// <summary>Position shake (DOShakePosition).</summary>
         Shake,
 
-        /// <summary>Краткое подсвечивание (цвет/alpha).</summary>
+        /// <summary>Brief highlight (color/alpha).</summary>
         Highlight,
 
-        /// <summary>Влёт + появление (движение + scale/alpha).</summary>
+        /// <summary>Fly-in with appear (move + scale/alpha).</summary>
         FlyIn,
 
-        /// <summary>Лёгкое зацикленное покачивание.</summary>
+        /// <summary>Subtle idle sway loop.</summary>
         Idle
     }
 }

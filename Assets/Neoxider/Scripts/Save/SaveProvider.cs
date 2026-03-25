@@ -100,7 +100,7 @@ namespace Neo.Save
 
                 _isInitialized = true;
 
-                // Пытаемся загрузить настройки из Resources
+                // Try to load settings from Resources
                 _settings = Resources.Load<SaveProviderSettings>(SettingsResourcePath);
 
                 if (_settings != null)
@@ -110,7 +110,7 @@ namespace Neo.Save
                 }
                 else
                 {
-                    // Используем PlayerPrefs по умолчанию
+                    // Use PlayerPrefs by default
                     _provider = new PlayerPrefsSaveProvider();
                     Debug.Log("[SaveProvider] Initialized with default PlayerPrefs provider");
                 }

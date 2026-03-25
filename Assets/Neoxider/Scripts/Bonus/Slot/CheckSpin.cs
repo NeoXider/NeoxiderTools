@@ -13,7 +13,7 @@ namespace Neo.Bonus
         [SerializeField] private LinesData _linesData;
         [SerializeField] private SpriteMultiplayerData _spritesMultiplierData;
 
-        // Получение множителей для выигрышных линий
+        // Get multipliers for winning lines
         public float[] GetMultiplayers(int[,] elementIds, int countLine, int[] lines = null)
         {
             List<float> multiplayes = new();
@@ -31,7 +31,7 @@ namespace Neo.Bonus
             return multiplayes.ToArray();
         }
 
-        // Получение индексов всех выигрышных линий
+        // Get indices of all winning lines
         public int[] GetWinningLines(int[,] elementIds, int countLine, int sequenceLength = 3)
         {
             List<int> winningLines = new();
@@ -48,7 +48,7 @@ namespace Neo.Bonus
             return winningLines.ToArray();
         }
 
-        // Получение информации о последовательностях одинаковых ID в линии
+        // Get info about runs of matching IDs along the line
         private Dictionary<int, int> GetInfoInSequenceLine(int[,] elementIds, LinesData.InnerArray currentLine,
             int sequenceLength)
         {
@@ -80,7 +80,7 @@ namespace Neo.Bonus
             return idCounts.Where(kv => kv.Value >= sequenceLength).ToDictionary(kv => kv.Key, kv => kv.Value);
         }
 
-        // Генерация выигрышной комбинации
+        // Generate a winning combination
         public void SetWin(int[,] elementIds, int totalIdCount, int countLine)
         {
             if (GetWinningLines(elementIds, countLine).Length == 0)
@@ -90,7 +90,7 @@ namespace Neo.Bonus
             }
         }
 
-        // Установка выигрышной линии
+        // Set a winning line
         private void SetWinLine(int[,] elementIds, LinesData.InnerArray innerArray, int totalIdCount)
         {
             int randStart = Random.Range(0, elementIds.GetLength(0) - 2); // -2 to ensure we can place 3 items
@@ -102,7 +102,7 @@ namespace Neo.Bonus
             }
         }
 
-        // Превращение выигрышной комбинации в проигрышную
+        // Turn a winning combination into a losing one
         public void SetLose(int[,] elementIds, int[] lineWin, int totalIdCount, int countLine)
         {
             foreach (int lineIndex in lineWin)
@@ -117,7 +117,7 @@ namespace Neo.Bonus
             }
         }
 
-        // "Ломаем" выигрышную линию
+        // Break a winning line
         private void SetLoseLine(int[,] elementIds, LinesData.InnerArray currentLine, int totalIdCount)
         {
             for (int x = 1; x < currentLine.corY.Length; x++)
@@ -132,12 +132,12 @@ namespace Neo.Bonus
                     }
 
                     elementIds[x, currentLine.corY[x]] = newId;
-                    return; // Достаточно сломать в одном месте
+                    return; // Breaking one cell is enough
                 }
             }
         }
 
-        // Получение максимального множителя для линии
+        // Get maximum multiplier for the line
         private float GetMaxMultiplierForLine(int[,] elementIds, LinesData.InnerArray currentLine)
         {
             Dictionary<int, int> spriteCount = GetInfoInSequenceLine(elementIds, currentLine, 3);
@@ -155,7 +155,7 @@ namespace Neo.Bonus
             return maxMultiplier;
         }
 
-        // Получение множителя для конкретного ID и количества
+        // Get multiplier for a given ID and match count
         private float GetMultiplayer(int id, int count)
         {
             foreach (SpriteMultiplayerData.IdMult spriteMult in _spritesMultiplierData.spritesMultiplier.spriteMults)

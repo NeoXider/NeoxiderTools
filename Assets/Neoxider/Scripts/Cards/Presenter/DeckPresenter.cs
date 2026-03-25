@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Презентер колоды - связывает модель колоды с визуальным представлением
+    ///     Bridges <see cref="DeckModel" /> and <see cref="IDeckView" />.
     /// </summary>
     public class DeckPresenter
     {
@@ -16,12 +16,12 @@ namespace Neo.Cards
         private readonly DeckConfig _config;
 
         /// <summary>
-        ///     Создаёт презентер колоды
+        ///     Creates a deck presenter.
         /// </summary>
-        /// <param name="model">Модель колоды</param>
-        /// <param name="view">Визуальное представление</param>
-        /// <param name="config">Конфигурация колоды</param>
-        /// <param name="cardPrefab">Префаб карты</param>
+        /// <param name="model">Deck model.</param>
+        /// <param name="view">Deck view.</param>
+        /// <param name="config">Deck config.</param>
+        /// <param name="cardPrefab">Card view prefab.</param>
         public DeckPresenter(DeckModel model, IDeckView view, DeckConfig config, CardView cardPrefab)
         {
             Model = model ?? throw new ArgumentNullException(nameof(model));
@@ -34,44 +34,44 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Модель колоды
+        ///     Deck model.
         /// </summary>
         public DeckModel Model { get; }
 
         /// <summary>
-        ///     Визуальное представление
+        ///     Deck view.
         /// </summary>
         public IDeckView View { get; }
 
         /// <summary>
-        ///     Количество оставшихся карт
+        ///     Cards remaining in the model.
         /// </summary>
         public int RemainingCount => Model.RemainingCount;
 
         /// <summary>
-        ///     Пуста ли колода
+        ///     Whether the deck is empty.
         /// </summary>
         public bool IsEmpty => Model.IsEmpty;
 
         /// <summary>
-        ///     Козырная карта (нижняя карта колоды)
+        ///     Trump / bottom card of the deck.
         /// </summary>
         public CardData? TrumpCard => Model.PeekBottom();
 
         /// <summary>
-        ///     Событие когда колода опустела
+        ///     Raised when the deck runs out.
         /// </summary>
         public event Action OnDeckEmpty;
 
         /// <summary>
-        ///     Событие при взятии карты
+        ///     Raised after a successful draw.
         /// </summary>
         public event Action<CardPresenter> OnCardDrawn;
 
         /// <summary>
-        ///     Инициализирует колоду
+        ///     Initializes the deck from config.
         /// </summary>
-        /// <param name="shuffle">Перемешать</param>
+        /// <param name="shuffle">Shuffle after build.</param>
         public void Initialize(bool shuffle = true)
         {
             Model.Initialize(_config.GameDeckType, shuffle);
@@ -87,7 +87,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемешивает колоду
+        ///     Shuffles the model.
         /// </summary>
         public void Shuffle()
         {
@@ -95,10 +95,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту из колоды
+        ///     Draws one card and instantiates a view.
         /// </summary>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <returns>Презентер взятой карты или null</returns>
+        /// <param name="faceUp">Face up.</param>
+        /// <returns>Presenter or null.</returns>
         public CardPresenter DrawCard(bool faceUp = true)
         {
             CardData? cardData = Model.Draw();
@@ -120,12 +120,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту из колоды с анимацией
+        ///     Draws a card and animates it to a position.
         /// </summary>
-        /// <param name="targetPosition">Целевая позиция</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <param name="moveDuration">Длительность перемещения</param>
-        /// <returns>Презентер взятой карты</returns>
+        /// <param name="targetPosition">Target position.</param>
+        /// <param name="faceUp">Face up.</param>
+        /// <param name="moveDuration">Move duration.</param>
+        /// <returns>Presenter or null.</returns>
         public async UniTask<CardPresenter> DrawCardAsync(Vector3 targetPosition, bool faceUp = true,
             float moveDuration = 0.3f)
         {
@@ -140,11 +140,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт несколько карт из колоды
+        ///     Draws multiple cards.
         /// </summary>
-        /// <param name="count">Количество карт</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <returns>Список презентеров карт</returns>
+        /// <param name="count">How many.</param>
+        /// <param name="faceUp">Face up.</param>
+        /// <returns>Presenters (may be fewer if deck runs out).</returns>
         public List<CardPresenter> DrawCards(int count, bool faceUp = true)
         {
             List<CardPresenter> presenters = new();
@@ -162,10 +162,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает карту в колоду
+        ///     Returns a drawn card to the model and destroys its view.
         /// </summary>
-        /// <param name="presenter">Презентер карты</param>
-        /// <param name="toTop">В начало колоды (true) или в конец (false)</param>
+        /// <param name="presenter">Presenter to return.</param>
+        /// <param name="toTop">Top of deck if true, bottom if false.</param>
         public void ReturnCard(CardPresenter presenter, bool toTop = false)
         {
             if (presenter == null)
@@ -193,9 +193,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сбрасывает колоду
+        ///     Destroys active views and resets the model.
         /// </summary>
-        /// <param name="shuffle">Перемешать</param>
+        /// <param name="shuffle">Shuffle after reset.</param>
         public void Reset(bool shuffle = true)
         {
             foreach (CardPresenter presenter in _activeCards)
@@ -213,7 +213,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Освобождает ресурсы
+        ///     Unsubscribes and clears active card views.
         /// </summary>
         public void Dispose()
         {

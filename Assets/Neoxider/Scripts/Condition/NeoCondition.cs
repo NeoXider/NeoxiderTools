@@ -230,8 +230,8 @@ namespace Neo.Condition
                 if (!_loggedEntryErrors.Contains(index))
                 {
                     Debug.LogWarning(
-                        $"[NeoCondition] Условие #{index} на '{name}': объект или компонент был уничтожен. " +
-                        "Условие возвращает false.");
+                        $"[NeoCondition] Condition #{index} on '{name}': object or component was destroyed. " +
+                        "Condition evaluates to false.");
                     _loggedEntryErrors.Add(index);
                 }
 
@@ -242,8 +242,8 @@ namespace Neo.Condition
             {
                 if (!_loggedEntryErrors.Contains(index))
                 {
-                    Debug.LogWarning($"[NeoCondition] Условие #{index} на '{name}': ошибка — {ex.Message}. " +
-                                     "Условие возвращает false.");
+                    Debug.LogWarning($"[NeoCondition] Condition #{index} on '{name}': error — {ex.Message}. " +
+                                     "Condition evaluates to false.");
                     _loggedEntryErrors.Add(index);
                 }
 

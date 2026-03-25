@@ -6,7 +6,7 @@ namespace Neo.Editor
     public abstract partial class CustomEditorBase
     {
         /// <summary>
-        ///     Генерирует радужный цвет на основе времени
+        ///     Computes a rainbow color from editor time.
         /// </summary>
         private Color GetRainbowColor(float speed)
         {
@@ -16,7 +16,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Рисует текст с радужной обводкой
+        ///     Draws text with a rainbow outline.
         /// </summary>
         private void DrawTextWithRainbowOutline(string text, GUIStyle baseStyle, params GUILayoutOption[] options)
         {
@@ -49,7 +49,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Начинает рисование радужной обводки вокруг компонента
+        ///     Begins drawing the rainbow outline around the component block.
         /// </summary>
         private void DrawRainbowComponentOutlineBegin()
         {
@@ -57,7 +57,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Завершает рисование радужной обводки вокруг компонента
+        ///     Ends the rainbow component outline pass.
         /// </summary>
         private void DrawRainbowComponentOutlineEnd()
         {
@@ -79,7 +79,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Начинает отслеживание позиции для радужной линии
+        ///     Starts tracking layout for the vertical rainbow line.
         /// </summary>
         private void BeginRainbowLineTracking()
         {
@@ -97,7 +97,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Завершает отслеживание и рисует радужную линию
+        ///     Finishes tracking and draws the rainbow line.
         /// </summary>
         private void EndRainbowLineTracking()
         {
@@ -156,7 +156,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Рисует радужную рамку вокруг прямоугольника
+        ///     Draws a rainbow border around a rectangle.
         /// </summary>
         private void DrawRainbowBorder(Rect rect, float borderWidth, float time)
         {
@@ -183,7 +183,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Получает точку на периметре прямоугольника
+        ///     Samples a point on the rectangle perimeter (0–1 along the outline).
         /// </summary>
         private Vector2 GetPointOnRectPerimeter(Rect rect, float t)
         {
@@ -215,7 +215,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Рисует кнопку (естественный стиль Unity или градиентный)
+        ///     Draws a button using Unity natural style or the gradient style.
         /// </summary>
         private bool DrawGradientButton(string text, float width, float height = 0)
         {
@@ -337,7 +337,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Рисует эффект закруглённых углов
+        ///     Applies rounded-corner masking to the button rect.
         /// </summary>
         private void DrawRoundedCorners(Rect rect, float radius, Color topColor, Color bottomColor)
         {
@@ -352,7 +352,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Рисует маску угла для создания эффекта скругления
+        ///     Draws a corner mask pixel block for rounded corners.
         /// </summary>
         private void DrawCornerMask(Rect cornerRect, float radius, Color bgColor, bool isLeft, bool isTop)
         {

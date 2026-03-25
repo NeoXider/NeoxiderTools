@@ -146,7 +146,7 @@ namespace Neo.Tools
 
         public float DistanceValue => Distance.CurrentValue;
 
-        /// <summary>Количество точек (для NeoCondition и рефлексии).</summary>
+        /// <summary>Point count (for NeoCondition and reflection).</summary>
         public int PointCountValue => PointCount.CurrentValue;
 
         public int CountPoints => rawPoints.Count;
@@ -314,11 +314,11 @@ namespace Neo.Tools
                 lr.useWorldSpace = true;
             }
 
-            // --- Для каждой линии создаём свой материал ---
+            // --- Per-line material instance ---
             Material runtimeMat = null;
             if (lineMaterial != null)
             {
-                runtimeMat = new Material(lineMaterial); // клон
+                runtimeMat = new Material(lineMaterial); // clone
                 if (lineSprite != null)
                 {
                     runtimeMat.mainTexture = lineSprite.texture;
@@ -342,14 +342,14 @@ namespace Neo.Tools
                 runtimeMat.mainTexture = lineTexture;
                 lr.material = runtimeMat;
             }
-            // иначе — материал из шаблона или дефолтный
+            // otherwise: template material or default
 
             ApplyFallbackSettings(lr);
             return lr;
         }
 
         /// <summary>
-        ///     Получает или создаёт префаб для пулинга.
+        ///     Gets or creates the prefab used for pooling.
         /// </summary>
         private GameObject GetPoolPrefab()
         {
@@ -406,7 +406,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // 1. Сразу приводим Z к единому уровню
+            // 1. Snap Z to fixed plane
             worldPos.z = fixedZ;
             Vector3 pos = worldPos;
 
@@ -417,7 +417,7 @@ namespace Neo.Tools
                 return;
             }
 
-            // 2. Вычисляем конечную позицию с учётом fixedLength
+            // 2. Final position with fixedLength constraint
             Vector3 last = rawPoints[^1];
 
             if (fixedLength > 0)
@@ -450,22 +450,22 @@ namespace Neo.Tools
                 }
             }
 
-            // 3. Добавляем точку
+            // 3. Add point
             rawPoints.Add(pos);
             PointCount.Value = rawPoints.Count;
             Distance.Value = Distance.CurrentValue + Vector3.Distance(last, pos);
 
-            // 4. Сглаживаем, ограничиваем, перезаписываем
+            // 4. Smooth, cap count, update renderer
             List<Vector3> processed = LimitPoints(Smooth(rawPoints, smoothing, fixedZ), maxPoints);
             UpdateLinePositions(processed);
 
-            // 5. «Хвост»
+            // 5. Follow tail
             if (useFolow)
             {
                 _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
             }
 
-            // 6. Живой коллайдер
+            // 6. Live collider
             if (addCollider && !colliderAfterCreation && _liveCol)
             {
                 UpdateColliderPoints(_liveCol, processed);
@@ -633,7 +633,7 @@ namespace Neo.Tools
             }
 
             lines.Clear();
-            // Удаляем текущую рисуемую линию, если она ещё не добавлена в lines
+            // Remove in-progress line if not yet in lines list
             if (_currentLR != null)
             {
                 Destroy(_currentLR.gameObject);

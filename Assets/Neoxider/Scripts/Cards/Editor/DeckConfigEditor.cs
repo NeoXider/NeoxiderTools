@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Cards.Editor
 {
     /// <summary>
-    ///     Кастомный редактор для DeckConfig с превью спрайтов
+    ///     Custom inspector for <see cref="DeckConfig" /> with sprite previews.
     /// </summary>
     [CustomEditor(typeof(DeckConfig))]
     public class DeckConfigEditor : UnityEditor.Editor
@@ -57,10 +57,10 @@ namespace Neo.Cards.Editor
             DrawBackSprite();
             EditorGUILayout.Space(10);
 
-            DrawSuitSection("♥ Червы (Hearts)", _hearts, Color.red, ref _showHearts);
-            DrawSuitSection("♦ Бубны (Diamonds)", _diamonds, Color.red, ref _showDiamonds);
-            DrawSuitSection("♣ Трефы (Clubs)", _clubs, Color.black, ref _showClubs);
-            DrawSuitSection("♠ Пики (Spades)", _spades, Color.black, ref _showSpades);
+            DrawSuitSection("♥ Hearts", _hearts, Color.red, ref _showHearts);
+            DrawSuitSection("♦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
+            DrawSuitSection("♣ Clubs", _clubs, Color.black, ref _showClubs);
+            DrawSuitSection("♠ Spades", _spades, Color.black, ref _showSpades);
 
             EditorGUILayout.Space(10);
             DrawJokers();
@@ -86,25 +86,25 @@ namespace Neo.Cards.Editor
         private void DrawDeckSettings()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Настройки колоды", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Deck settings", EditorStyles.boldLabel);
 
             EditorGUILayout.PropertyField(_deckType,
-                new GUIContent("Тип для спрайтов", "Сколько карт загружено в конфиг"));
+                new GUIContent("Sprite deck type", "How many sprites are stored in this asset"));
 
             int expectedCount = GetExpectedCardCount();
-            EditorGUILayout.HelpBox($"Ожидается {expectedCount} карт на каждую масть", MessageType.Info);
+            EditorGUILayout.HelpBox($"Expected {expectedCount} sprites per suit", MessageType.Info);
 
             EditorGUILayout.Space(5);
             EditorGUILayout.PropertyField(_gameDeckType,
-                new GUIContent("Тип для игры", "Сколько карт использовать в игре"));
+                new GUIContent("Play deck type", "How many cards gameplay uses"));
 
             var spriteType = (DeckType)_deckType.enumValueIndex;
             var gameType = (DeckType)_gameDeckType.enumValueIndex;
 
             int gameCardCount = GetGameCardCount(gameType);
             string gameInfo = gameType == DeckType.Standard54
-                ? $"В игре: {gameCardCount} карт (52 + 2 джокера)"
-                : $"В игре: {gameCardCount} карт";
+                ? $"In play: {gameCardCount} cards (52 + 2 jokers)"
+                : $"In play: {gameCardCount} cards";
 
             if (IsGameTypeValid(spriteType, gameType))
             {
@@ -113,7 +113,7 @@ namespace Neo.Cards.Editor
             else
             {
                 EditorGUILayout.HelpBox(
-                    $"⚠ GameDeckType ({gameType}) требует карты, которых нет в DeckType ({spriteType})",
+                    $"⚠ GameDeckType ({gameType}) needs ranks that DeckType ({spriteType}) does not include",
                     MessageType.Error);
             }
 
@@ -141,7 +141,7 @@ namespace Neo.Cards.Editor
         private void DrawBackSprite()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Рубашка карты", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Card back", EditorStyles.boldLabel);
 
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PropertyField(_backSprite, GUIContent.none, GUILayout.Width(200));
@@ -188,7 +188,7 @@ namespace Neo.Cards.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             bool isRequired = (DeckType)_deckType.enumValueIndex == DeckType.Standard54;
-            string title = isRequired ? "🃏 Джокеры (обязательно для 54 карт)" : "🃏 Джокеры (опционально)";
+            string title = isRequired ? "🃏 Jokers (required for 54-card deck)" : "🃏 Jokers (optional)";
 
             _showJokers = EditorGUILayout.Foldout(_showJokers, title, true, EditorStyles.foldoutHeader);
 
@@ -196,14 +196,14 @@ namespace Neo.Cards.Editor
             {
                 if (!isRequired)
                 {
-                    EditorGUILayout.HelpBox("Джокеры опциональны для колод 36 и 52 карт", MessageType.Info);
+                    EditorGUILayout.HelpBox("Jokers are optional for 36- and 52-card decks.", MessageType.Info);
                 }
 
                 EditorGUILayout.Space(5);
 
-                // Красный джокер
+                // Red joker
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Красный джокер", GUILayout.Width(110));
+                EditorGUILayout.LabelField("Red joker", GUILayout.Width(110));
                 EditorGUILayout.PropertyField(_redJoker, GUIContent.none);
                 if (_redJoker.objectReferenceValue != null)
                 {
@@ -216,9 +216,9 @@ namespace Neo.Cards.Editor
 
                 EditorGUILayout.Space(3);
 
-                // Чёрный джокер
+                // Black joker
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField("Чёрный джокер", GUILayout.Width(110));
+                EditorGUILayout.LabelField("Black joker", GUILayout.Width(110));
                 EditorGUILayout.PropertyField(_blackJoker, GUIContent.none);
                 if (_blackJoker.objectReferenceValue != null)
                 {
@@ -235,7 +235,7 @@ namespace Neo.Cards.Editor
 
         private void DrawValidation()
         {
-            _showValidation = EditorGUILayout.Foldout(_showValidation, "Валидация конфигурации", true,
+            _showValidation = EditorGUILayout.Foldout(_showValidation, "Configuration validation", true,
                 EditorStyles.foldoutHeader);
 
             if (!_showValidation)
@@ -250,7 +250,7 @@ namespace Neo.Cards.Editor
 
             if (isValid && warnings.Count == 0)
             {
-                EditorGUILayout.HelpBox("✓ Конфигурация валидна", MessageType.Info);
+                EditorGUILayout.HelpBox("✓ Configuration is valid", MessageType.Info);
             }
             else
             {
@@ -265,7 +265,7 @@ namespace Neo.Cards.Editor
                 }
             }
 
-            if (GUILayout.Button("Проверить конфигурацию"))
+            if (GUILayout.Button("Validate configuration"))
             {
                 config.Validate(out _, out _);
             }
@@ -280,12 +280,12 @@ namespace Neo.Cards.Editor
             if (isValid)
             {
                 GUI.backgroundColor = new Color(0.5f, 1f, 0.5f);
-                EditorGUILayout.HelpBox($"✓ {actual}/{expected} спрайтов", MessageType.None);
+                EditorGUILayout.HelpBox($"✓ {actual}/{expected} sprites", MessageType.None);
             }
             else
             {
                 GUI.backgroundColor = new Color(1f, 0.5f, 0.5f);
-                EditorGUILayout.HelpBox($"✗ {actual}/{expected} спрайтов", MessageType.Warning);
+                EditorGUILayout.HelpBox($"✗ {actual}/{expected} sprites", MessageType.Warning);
             }
 
             GUI.backgroundColor = oldBgColor;

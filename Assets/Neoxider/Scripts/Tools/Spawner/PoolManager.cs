@@ -17,7 +17,7 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    ///     Центральный менеджер для управления всеми пулами объектов в игре.
+    ///     Central manager for all object pools in the game.
     /// </summary>
     [CreateFromMenu("Neoxider/Tools/Spawner/PoolManager")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(PoolManager))]
@@ -109,7 +109,7 @@ namespace Neo.Tools
         {
             if (I == null)
             {
-                Debug.LogError("PoolManager не найден на сцене!");
+                Debug.LogError("PoolManager not found in the scene!");
                 return null;
             }
 
@@ -132,7 +132,7 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning($"Объект {instance.name} не является объектом из пула. Он будет уничтожен (Destroy).",
+                Debug.LogWarning($"Object {instance.name} is not from a pool. It will be destroyed.",
                     instance);
                 Destroy(instance);
             }

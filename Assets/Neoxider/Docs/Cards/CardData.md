@@ -98,8 +98,8 @@ if (card1 != card2) { }
 ```csharp
 var card = new CardData(Suit.Hearts, Rank.Queen);
 
-card.ToString();         // "Q♥"
-card.ToRussianString();  // "Дама Червы"
+card.ToString();              // "Q♥"
+card.ToLongEnglishString();   // "Queen of Hearts"
 ```
 
 ---

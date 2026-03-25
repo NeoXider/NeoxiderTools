@@ -17,7 +17,7 @@ namespace Neo.GridSystem
     }
 
     /// <summary>
-    ///     Описывает одну ячейку поля. Универсален для 2D/3D, поддерживает пользовательские типы и данные.
+    ///     Describes one field cell. Works for 2D/3D and supports custom types and payload data.
     /// </summary>
     [Serializable]
     public class FieldCell

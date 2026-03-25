@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Настройка паузы для знака препинания.
+    ///     Pause settings for a punctuation character.
     /// </summary>
     [Serializable]
     public class PunctuationPause
@@ -30,13 +30,13 @@ namespace Neo.Tools
     }
 
     /// <summary>
-    ///     Эффект печатной машинки для посимвольного вывода текста (на UniTask).
+    ///     Typewriter effect for character-by-character text output (UniTask).
     /// </summary>
     [Serializable]
     public class TypewriterEffect
     {
         /// <summary>
-        ///     Предопределённый список пауз для знаков препинания по умолчанию.
+        ///     Default predefined list of punctuation pauses.
         /// </summary>
         public static readonly PunctuationPause[] DefaultPunctuationPauses =
         {
@@ -138,7 +138,7 @@ namespace Neo.Tools
         public event Action<float> OnProgressChanged;
 
         /// <summary>
-        ///     Устанавливает предопределённый список пауз для знаков препинания.
+        ///     Sets the predefined list of punctuation pauses.
         /// </summary>
         public void SetDefaultPunctuationPauses()
         {
@@ -152,7 +152,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Очищает все паузы для знаков препинания.
+        ///     Clears all punctuation pauses.
         /// </summary>
         public void ClearPunctuationPauses()
         {
@@ -161,7 +161,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Добавляет или обновляет паузу для символа (в секундах).
+        ///     Adds or updates the pause for a character (in seconds).
         /// </summary>
         public void SetPunctuationPause(char character, float pause)
         {
@@ -179,7 +179,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает паузы из словаря (заменяет текущие).
+        ///     Sets pauses from a dictionary (replaces current).
         /// </summary>
         public void SetPunctuationPauses(Dictionary<char, float> pauses)
         {
@@ -193,7 +193,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Добавляет паузы из словаря (объединяет с текущими).
+        ///     Adds pauses from a dictionary (merges with current).
         /// </summary>
         public void AddPunctuationPauses(Dictionary<char, float> pauses)
         {
@@ -204,7 +204,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Удаляет паузу для символа.
+        ///     Removes the pause for a character.
         /// </summary>
         public void RemovePunctuationPause(char character)
         {
@@ -213,7 +213,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Получает паузу для символа в секундах (0 если не найдено).
+        ///     Gets the pause for a character in seconds (0 if not found).
         /// </summary>
         public float GetPunctuationPause(char character)
         {
@@ -221,7 +221,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Перестраивает внутренний словарь пауз из списка.
+        ///     Rebuilds the internal pause map from the list.
         /// </summary>
         public void RebuildPauseMap()
         {
@@ -233,7 +233,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Запускает эффект печати текста.
+        ///     Starts the typewriter effect.
         /// </summary>
         public async UniTask PlayAsync(string text, Action<string> onTextChanged,
             CancellationToken externalToken = default)
@@ -285,7 +285,7 @@ namespace Neo.Tools
                     OnProgressChanged?.Invoke(Progress);
                     TryPlayTypingSound();
 
-                    // Вычисляем задержку
+                    // Compute delay
                     float totalDelay = 1f / Mathf.Max(0.1f, _charactersPerSecond);
                     if (_usePunctuationPauses && _punctuationPauseMap.TryGetValue(c, out float punctuationPause))
                     {
@@ -303,7 +303,7 @@ namespace Neo.Tools
             }
             catch (OperationCanceledException)
             {
-                // Отмена — нормальное поведение
+                // Cancellation is expected
             }
             finally
             {
@@ -316,7 +316,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Останавливает эффект.
+        ///     Stops the effect.
         /// </summary>
         public void Stop()
         {
@@ -329,7 +329,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Завершает эффект мгновенно, возвращая полный текст.
+        ///     Completes the effect instantly, showing the full text.
         /// </summary>
         public string Complete()
         {
@@ -344,7 +344,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбрасывает состояние.
+        ///     Resets state.
         /// </summary>
         public void Reset()
         {

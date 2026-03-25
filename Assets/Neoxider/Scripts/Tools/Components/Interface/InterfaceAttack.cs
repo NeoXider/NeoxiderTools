@@ -1,46 +1,46 @@
 /// <summary>
-///     Определяет, что объект может быть излечен.
+///     Marks an object as healable.
 /// </summary>
 public interface IHealable
 {
     /// <summary>
-    ///     Восстанавливает указанное количество здоровья.
+    ///     Restores the specified amount of health.
     /// </summary>
-    /// <param name="amount">Количество восстанавливаемого здоровья.</param>
+    /// <param name="amount">Amount of health to restore.</param>
     void Heal(int amount);
 }
 
 /// <summary>
-///     Определяет, что объект может получать урон.
+///     Marks an object as able to take damage.
 /// </summary>
 public interface IDamageable
 {
     /// <summary>
-    ///     Наносит указанное количество урона.
+    ///     Applies the specified amount of damage.
     /// </summary>
-    /// <param name="amount">Количество получаемого урона.</param>
+    /// <param name="amount">Damage amount.</param>
     void TakeDamage(int amount);
 }
 
 /// <summary>
-///     Определяет, что состояние объекта может быть полностью восстановлено.
+///     Marks an object whose state can be fully restored.
 /// </summary>
 public interface IRestorable
 {
     /// <summary>
-    ///     Полностью восстанавливает состояние объекта (например, здоровье до максимума).
+    ///     Fully restores the object's state (e.g. health to maximum).
     /// </summary>
     void Restore();
 }
 
 /// <summary>
-///     Определяет, что объект может выполнять атаку.
+///     Marks an object that can perform an attack.
 /// </summary>
 public interface IAttackable
 {
     /// <summary>
-    ///     Инициирует атаку с указанным уроном.
+    ///     Initiates an attack with the specified damage.
     /// </summary>
-    /// <param name="damage">Урон, который будет нанесен атакой.</param>
+    /// <param name="damage">Damage dealt by the attack.</param>
     void Attack(int damage);
 }

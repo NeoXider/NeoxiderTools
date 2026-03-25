@@ -6,8 +6,7 @@ using UnityEngine.Events;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Игра "Пьяница" (War Card Game).
-    ///     Классическая карточная игра где побеждает тот, кто соберёт все карты.
+    ///     War card game sample: higher rank wins the trick; ties trigger "war" rounds.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/DrunkardGame")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(DrunkardGame))]
@@ -23,7 +22,7 @@ namespace Neo.Cards
         [Header("Positions")] [SerializeField] private Transform _cardsParent;
 
         [Tooltip(
-            "BoardComponent для начальной раздачи. Если указан - карты сначала спавнятся в Board, затем раздаются поровну.")]
+            "Optional board for the initial deal: cards spawn on the board first, then split evenly between sides.")]
         [SerializeField]
         private BoardComponent _initialBoard;
 
@@ -129,64 +128,62 @@ namespace Neo.Cards
         {
             if (_deckComponent == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent не назначен!");
+                Debug.LogError("[DrunkardGame] DeckComponent is not assigned!");
                 return;
             }
 
             if (_deckComponent.Config == null)
             {
-                Debug.LogError("[DrunkardGame] В DeckComponent не назначен DeckConfig!");
+                Debug.LogError("[DrunkardGame] DeckComponent has no DeckConfig assigned!");
             }
 
             if (_deckComponent.CardPrefab == null)
             {
-                Debug.LogError("[DrunkardGame] В DeckComponent не назначен CardPrefab!");
+                Debug.LogError("[DrunkardGame] DeckComponent has no CardPrefab assigned!");
             }
 
             if (_cardsParent == null)
             {
-                Debug.LogWarning("[DrunkardGame] CardsParent не назначен - карты будут создаваться на DrunkardGame");
+                Debug.LogWarning("[DrunkardGame] CardsParent is not set — cards parent to DrunkardGame.");
             }
 
             if (_playerDeckPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] PlayerDeckPosition не назначен");
+                Debug.LogWarning("[DrunkardGame] PlayerDeckPosition is not assigned.");
             }
 
             if (_playerCardPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] PlayerCardPosition не назначен");
+                Debug.LogWarning("[DrunkardGame] PlayerCardPosition is not assigned.");
             }
 
             if (_opponentDeckPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] OpponentDeckPosition не назначен");
+                Debug.LogWarning("[DrunkardGame] OpponentDeckPosition is not assigned.");
             }
 
             if (_opponentCardPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] OpponentCardPosition не назначен");
+                Debug.LogWarning("[DrunkardGame] OpponentCardPosition is not assigned.");
             }
         }
 
         /// <summary>
-        ///     Выполняет ход (для вызова из UI кнопки).
-        ///     Не-асинхронная обёртка над PlayRound().
+        ///     UI-friendly wrapper that starts <see cref="PlayRound" /> without awaiting.
         /// </summary>
         [Button]
         public void Play()
         {
             if (_debug)
             {
-                Debug.Log("[DrunkardGame] Play() вызван");
+                Debug.Log("[DrunkardGame] Play() invoked.");
             }
 
             PlayRound().Forget();
         }
 
         /// <summary>
-        ///     Выполняет один раунд игры между игроком и противником.
-        ///     Сначала соперник показывает карту, затем игрок.
+        ///     Plays one round (order depends on <c>_playerGoesFirst</c>).
         /// </summary>
         public async UniTask PlayRound()
         {
@@ -281,8 +278,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Обрабатывает ситуацию "войны" при равенстве карт.
-        ///     Все карты остаются на столе до определения победителя.
+        ///     Resolves tied ranks by drawing extra face-down/up cards until someone wins.
         /// </summary>
         private async UniTask HandleWar(CardData card1, CardData card2)
         {
@@ -349,7 +345,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту у игрока (из руки или из очереди).
+        ///     Pops the next player card (hand mode or internal queue).
         /// </summary>
         private CardData DrawPlayerCard()
         {
@@ -362,7 +358,7 @@ namespace Neo.Cards
                     Destroy(cardComponent.gameObject);
                     if (_debug)
                     {
-                        Debug.Log($"[DrunkardGame] Взята карта из руки игрока: {data}");
+                        Debug.Log($"[DrunkardGame] Drew player hand card: {data}");
                     }
 
                     return data;
@@ -373,7 +369,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту у соперника (из руки или из очереди).
+        ///     Pops the next opponent card (hand mode or internal queue).
         /// </summary>
         private CardData DrawOpponentCard()
         {
@@ -386,7 +382,7 @@ namespace Neo.Cards
                     Destroy(cardComponent.gameObject);
                     if (_debug)
                     {
-                        Debug.Log($"[DrunkardGame] Взята карта из руки соперника: {data}");
+                        Debug.Log($"[DrunkardGame] Drew opponent hand card: {data}");
                     }
 
                     return data;
@@ -397,11 +393,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает все карты со стола (включая карты войны) победителю.
+        ///     Awards every card in the war pile (and visuals) to the winner.
         /// </summary>
         private async UniTask MoveAllWarCardsToWinnerAsync(bool playerWins, List<CardData> warPile)
         {
-            // Собираем скрытые карты войны, которые не имеют визуальных CardComponent (warPile > _warCards).
+            // Hidden war cards without matching CardComponent instances (war pile larger than _warCards).
             List<CardData> hiddenCards = null;
             if (UsePlayerHand || UseOpponentHand)
             {
@@ -528,11 +524,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает карты со стола победителю.
+        ///     Resolves a normal trick and enqueues captured data when not using hands.
         /// </summary>
-        /// <param name="playerWins">true если выиграл игрок, false если соперник</param>
-        /// <param name="playerCard">Данные карты игрока</param>
-        /// <param name="opponentCard">Данные карты соперника</param>
+        /// <param name="playerWins">True if the player won the trick.</param>
+        /// <param name="playerCard">Player card data.</param>
+        /// <param name="opponentCard">Opponent card data.</param>
         private async UniTask MoveCardsToWinnerAsync(bool playerWins, CardData playerCard, CardData opponentCard)
         {
             await MoveCardsToWinnerAsync(playerWins);
@@ -553,9 +549,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает карты со стола победителю.
+        ///     Returns visible trick cards to the winner's hands when hand mode is enabled.
         /// </summary>
-        /// <param name="playerWins">true если выиграл игрок, false если соперник</param>
+        /// <param name="playerWins">True if the player won.</param>
         private async UniTask MoveCardsToWinnerAsync(bool playerWins)
         {
             if (playerWins)
@@ -607,7 +603,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Показывает дополнительную карту игрока (для войны).
+        ///     Spawns/flips an extra player card during war.
         /// </summary>
         private async UniTask ShowAdditionalPlayerCard(CardData playerCard)
         {
@@ -633,7 +629,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Показывает дополнительную карту соперника (для войны).
+        ///     Spawns/flips an extra opponent card during war.
         /// </summary>
         private async UniTask ShowAdditionalOpponentCard(CardData opponentCard)
         {
@@ -659,7 +655,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Показывает карту соперника с анимацией.
+        ///     Animates the opponent's played card to the table.
         /// </summary>
         private async UniTask ShowOpponentCard(CardData opponentCard)
         {
@@ -672,7 +668,7 @@ namespace Neo.Cards
             {
                 if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
                 {
-                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig не настроены!");
+                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
                     return;
                 }
 
@@ -682,7 +678,7 @@ namespace Neo.Cards
                 if (_debug)
                 {
                     Debug.Log(
-                        $"[DrunkardGame] Создана карта соперника: {_opponentCardView.name} в {_cardsParent?.name}");
+                        $"[DrunkardGame] Spawned opponent card: {_opponentCardView.name} under {_cardsParent?.name}");
                 }
             }
 
@@ -703,7 +699,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Показывает карту игрока с анимацией.
+        ///     Animates the player's played card to the table.
         /// </summary>
         private async UniTask ShowPlayerCard(CardData playerCard)
         {
@@ -711,7 +707,7 @@ namespace Neo.Cards
             {
                 if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
                 {
-                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig не настроены!");
+                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
                     return;
                 }
 
@@ -720,7 +716,7 @@ namespace Neo.Cards
                 _playerCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
-                    Debug.Log($"[DrunkardGame] Создана карта игрока: {_playerCardView.name} в {_cardsParent?.name}");
+                    Debug.Log($"[DrunkardGame] Spawned player card: {_playerCardView.name} under {_cardsParent?.name}");
                 }
             }
 
@@ -741,7 +737,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Скрывает текущие отображаемые карты.
+        ///     Destroys the active trick card views.
         /// </summary>
         private async UniTask HideCards()
         {
@@ -761,7 +757,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Скрывает все карты войны.
+        ///     Destroys every card spawned during war resolution.
         /// </summary>
         private async UniTask HideWarCards()
         {
@@ -781,7 +777,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Уведомляет об изменении количества карт через события.
+        ///     Fires card-count UnityEvents (and optional debug logs).
         /// </summary>
         private void NotifyCardCountChanged()
         {
@@ -806,9 +802,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, завершена ли игра.
+        ///     Ends the match if either side is out of cards.
         /// </summary>
-        /// <returns>true если игра завершена</returns>
+        /// <returns>True if the match ended this check.</returns>
         private bool CheckGameEnd()
         {
             if (PlayerCardCount == 0)
@@ -829,7 +825,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Завершает игру и вызывает соответствующее событие.
+        ///     Invokes win events when someone has zero cards between rounds.
         /// </summary>
         private void EndGame()
         {
@@ -846,7 +842,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перезапускает игру: создаёт новую колоду и раздаёт карты.
+        ///     Rebuilds the deck and redeals (inspector button).
         /// </summary>
         [Button]
         public void RestartGame()
@@ -855,13 +851,13 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перезапускает игру: создаёт новую колоду и раздаёт карты.
+        ///     Async implementation for <see cref="RestartGame" />.
         /// </summary>
         private async UniTask RestartGameAsync()
         {
             if (_deckComponent == null || _deckComponent.Config == null || _deckComponent.CardPrefab == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent не готов (нужны Config и CardPrefab).");
+                Debug.LogError("[DrunkardGame] DeckComponent is not ready (needs Config and CardPrefab).");
                 return;
             }
 
@@ -959,7 +955,7 @@ namespace Neo.Cards
             if (_debug)
             {
                 Debug.Log(
-                    $"[DrunkardGame] Игра перезапущена. Карт у игрока: {playerCount}, у соперника: {opponentCount}");
+                    $"[DrunkardGame] Game restarted. Player cards: {playerCount}, opponent: {opponentCount}");
             }
 
             NotifyCardCountChanged();
@@ -996,7 +992,7 @@ namespace Neo.Cards
 
             if (_debug && _initialBoard != null)
             {
-                Debug.Log($"[DrunkardGame] Карты созданы в Board: {allCards.Count}");
+                Debug.Log($"[DrunkardGame] Cards spawned on board: {allCards.Count}");
             }
 
             return allCards;
@@ -1006,7 +1002,7 @@ namespace Neo.Cards
         {
             if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
             {
-                Debug.LogError("[DrunkardGame] Невозможно создать карту: не настроены prefab/config.");
+                Debug.LogError("[DrunkardGame] Cannot spawn card: prefab/config missing.");
                 return null;
             }
 
@@ -1020,90 +1016,87 @@ namespace Neo.Cards
         #region Properties
 
         /// <summary>
-        ///     Событие изменения количества карт игрока. Передаёт текущее количество карт.
+        ///     Player card count changed (carries new total).
         /// </summary>
         public UnityEvent<int> OnPlayerCardCountChanged => _onPlayerCardCountChanged;
 
         /// <summary>
-        ///     Событие изменения количества карт соперника. Передаёт текущее количество карт.
+        ///     Opponent card count changed (carries new total).
         /// </summary>
         public UnityEvent<int> OnOpponentCardCountChanged => _onOpponentCardCountChanged;
 
         /// <summary>
-        ///     Событие начала игры (первый раунд).
+        ///     First round started.
         /// </summary>
         public UnityEvent OnGameStarted => _onGameStarted;
 
         /// <summary>
-        ///     Событие перезапуска игры.
+        ///     Match restarted via <see cref="RestartGame" />.
         /// </summary>
         public UnityEvent OnGameRestarted => _onGameRestarted;
 
         /// <summary>
-        ///     Событие победы игрока.
+        ///     Player collected the entire deck.
         /// </summary>
         public UnityEvent OnPlayerWin => _onPlayerWin;
 
         /// <summary>
-        ///     Событие победы соперника.
+        ///     Opponent collected the entire deck.
         /// </summary>
         public UnityEvent OnOpponentWin => _onOpponentWin;
 
         /// <summary>
-        ///     Событие начала раунда.
+        ///     Round begins.
         /// </summary>
         public UnityEvent OnRoundStarted => _onRoundStarted;
 
         /// <summary>
-        ///     Событие окончания раунда.
+        ///     Round cleanup finished.
         /// </summary>
         public UnityEvent OnRoundEnded => _onRoundEnded;
 
         /// <summary>
-        ///     Событие победы игрока в раунде.
+        ///     Player won the trick (non-war).
         /// </summary>
         public UnityEvent OnPlayerWonRound => _onPlayerWonRound;
 
         /// <summary>
-        ///     Событие победы соперника в раунде.
+        ///     Opponent won the trick (non-war).
         /// </summary>
         public UnityEvent OnOpponentWonRound => _onOpponentWonRound;
 
         /// <summary>
-        ///     Событие начала "войны" (равенство карт).
+        ///     War sequence started (tie).
         /// </summary>
         public UnityEvent OnWarStarted => _onWarStarted;
 
         /// <summary>
-        ///     Событие окончания "войны".
+        ///     War sequence resolved.
         /// </summary>
         public UnityEvent OnWarEnded => _onWarEnded;
 
         /// <summary>
-        ///     Текущее количество карт у игрока.
-        /// </summary>
-        /// <summary>
-        ///     Текущее количество карт у игрока.
+        ///     Cards remaining for the player (hand or queue).
         /// </summary>
         public int PlayerCardCount => UsePlayerHand ? PlayerHand.Count : _playerCards.Count;
 
         /// <summary>
-        ///     Текущее количество карт у соперника.
+        ///     Cards remaining for the opponent (hand or queue).
         /// </summary>
         public int OpponentCardCount => UseOpponentHand ? OpponentHand.Count : _opponentCards.Count;
 
         /// <summary>
-        ///     Идёт ли сейчас раунд.
+        ///     True while a round is executing.
         /// </summary>
         public bool IsPlaying { get; private set; }
 
         /// <summary>
-        ///     Началась ли игра (был хотя бы один раунд).
+        ///     True after the first round begins.
         /// </summary>
         public bool GameStarted { get; private set; }
 
         /// <summary>
-        ///     HandComponent игрока (если указан в PlayerDeckPosition).
+        ///     Cached <see cref="HandComponent" /> on <c>PlayerDeckPosition</c>, if any.
         /// </summary>
         public HandComponent PlayerHand
         {
@@ -1115,7 +1108,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     HandComponent соперника (если указан в OpponentDeckPosition).
+        ///     Cached <see cref="HandComponent" /> on <c>OpponentDeckPosition</c>, if any.
         /// </summary>
         public HandComponent OpponentHand
         {
@@ -1127,12 +1120,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Используется ли рука игрока.
+        ///     True when a player <see cref="HandComponent" /> is assigned.
         /// </summary>
         public bool UsePlayerHand => PlayerHand != null;
 
         /// <summary>
-        ///     Используется ли рука соперника.
+        ///     True when an opponent <see cref="HandComponent" /> is assigned.
         /// </summary>
         public bool UseOpponentHand => OpponentHand != null;
 

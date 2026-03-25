@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Настройки раскладки карт для CardLayoutCalculator.
+    ///     Layout parameters for <see cref="CardLayoutCalculator" />.
     /// </summary>
     [Serializable]
     public struct CardLayoutSettings
@@ -21,7 +21,7 @@ namespace Neo.Cards
         public Vector3 RotationJitter;
 
         /// <summary>
-        ///     Набор значений по умолчанию для расчета layout.
+        ///     Default values for layout calculation.
         /// </summary>
         public static CardLayoutSettings Default => new()
         {

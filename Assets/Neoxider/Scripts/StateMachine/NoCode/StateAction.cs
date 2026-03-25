@@ -6,12 +6,12 @@ using UnityEngine.SceneManagement;
 namespace Neo.StateMachine.NoCode
 {
     /// <summary>
-    ///     Базовый класс действий в StateData.
-    ///     Действия выполняются при входе, обновлении или выходе из состояния.
+    ///     Base type for actions listed on StateData.
+    ///     Actions run on enter, per-frame update, or exit depending on the list they belong to.
     /// </summary>
     /// <remarks>
-    ///     Все действия должны наследоваться от этого класса и реализовывать метод Execute().
-    ///     Действия настраиваются в StateData и выполняются при входе/выходе из состояния.
+    ///     Derive from this class and override Execute().
+    ///     Configure instances on StateData assets in the Inspector.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -28,13 +28,13 @@ namespace Neo.StateMachine.NoCode
     public abstract class StateAction
     {
         /// <summary>
-        ///     Выполнить действие.
+        ///     Runs the action.
         /// </summary>
         public abstract void Execute();
     }
 
     /// <summary>
-    ///     Действие для логирования сообщения.
+    ///     Logs a message to the Unity console.
     /// </summary>
     [Serializable]
     public class LogStateAction : StateAction
@@ -44,7 +44,7 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] private LogType logType = LogType.Log;
 
         /// <summary>
-        ///     Сообщение для логирования.
+        ///     Message text.
         /// </summary>
         public string Message
         {
@@ -53,7 +53,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Тип логирования.
+        ///     Log level (Log / Warning / Error).
         /// </summary>
         public LogType LogType
         {
@@ -79,7 +79,7 @@ namespace Neo.StateMachine.NoCode
     }
 
     /// <summary>
-    ///     Действие для включения/выключения GameObject.
+    ///     Enables or disables a GameObject.
     /// </summary>
     [Serializable]
     public class SetGameObjectActiveAction : StateAction
@@ -89,7 +89,7 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] private bool setActive = true;
 
         /// <summary>
-        ///     Целевой GameObject.
+        ///     Target GameObject.
         /// </summary>
         public GameObject Target
         {
@@ -98,7 +98,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Установить активность (true = включить, false = выключить).
+        ///     Desired active state (true = active, false = inactive).
         /// </summary>
         public bool SetActive
         {
@@ -116,7 +116,7 @@ namespace Neo.StateMachine.NoCode
     }
 
     /// <summary>
-    ///     Действие для вызова UnityEvent.
+    ///     Invokes a UnityEvent.
     /// </summary>
     [Serializable]
     public class InvokeUnityEventAction : StateAction
@@ -124,7 +124,7 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] private UnityEvent unityEvent = new();
 
         /// <summary>
-        ///     UnityEvent для вызова.
+        ///     Event to invoke.
         /// </summary>
         public UnityEvent UnityEvent
         {
@@ -139,7 +139,7 @@ namespace Neo.StateMachine.NoCode
     }
 
     /// <summary>
-    ///     Действие для смены сцены.
+    ///     Loads a scene by name or build index.
     /// </summary>
     [Serializable]
     public class ChangeSceneAction : StateAction
@@ -151,7 +151,7 @@ namespace Neo.StateMachine.NoCode
         [SerializeField] private LoadSceneMode loadMode = LoadSceneMode.Single;
 
         /// <summary>
-        ///     Имя сцены для загрузки.
+        ///     Scene name in Build Settings.
         /// </summary>
         public string SceneName
         {
@@ -160,7 +160,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Индекс сцены в Build Settings.
+        ///     Scene build index (-1 to ignore).
         /// </summary>
         public int SceneBuildIndex
         {
@@ -169,7 +169,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Режим загрузки сцены.
+        ///     Single vs additive load mode.
         /// </summary>
         public LoadSceneMode LoadMode
         {

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Neo
 {
     /// <summary>
-    ///     Окно редактора для глобальных настроек Neoxider
+    ///     Editor window for global Neoxider settings.
     /// </summary>
     public class NeoxiderSettingsWindow : EditorWindow
     {
@@ -37,7 +37,7 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Показывает окно настроек
+        ///     Opens the settings window.
         /// </summary>
         [MenuItem(MenuPath)]
         public static void ShowWindow()

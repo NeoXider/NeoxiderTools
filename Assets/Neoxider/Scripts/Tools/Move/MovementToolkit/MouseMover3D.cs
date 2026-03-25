@@ -1,19 +1,19 @@
 /*  MouseMover3D.cs
  *  Legacy-Input universal **3-D** mouse mover
- *  (physics-friendly, без дрожаний)
+ *  (physics-friendly, no jitter)
  *
  *  Modes ───────────────────────────────────────────────────────────
- *  • DeltaNormalized / DeltaRaw  – движение по мышиной Δ
- *  • MoveToPointHold             – LMB зажат → едем к курсору
- *  • ClickToPoint                – клик → цель, едем пока не доедем
- *  • Direction                   – клик точку, мышь задаёт вектор
+ *  • DeltaNormalized / DeltaRaw  – move from mouse delta
+ *  • MoveToPointHold             – hold LMB → move toward cursor
+ *  • ClickToPoint                – click sets target, move until arrival
+ *  • Direction                   – click sets point, mouse sets direction vector
  *
- *  AxisPlane ограничивает плоскость (XZ = топ-даун, XY, YZ)
- *  либо единственную ось X / Y / Z.
+ *  AxisPlane locks motion to a plane (XZ = top-down, XY, YZ)
+ *  or a single axis X / Y / Z.
  *
- *  Движение выполняется ОДИН раз за phys-тик:
- *  _desiredVel вычисляется в Update (только Δ-режимы),
- *  в FixedUpdate → Rigidbody.MovePosition -> нет jitter.
+ *  Movement runs once per physics tick:
+ *  _desiredVel from Update (delta modes only),
+ *  FixedUpdate → Rigidbody.MovePosition → stable motion.
  */
 
 using UnityEngine;
@@ -85,7 +85,7 @@ namespace Neo.Tools
         private Camera cam;
         private Vector3 clickPoint; // Direction-mode
 
-        private Vector3 desiredVel; // m/s (только Delta-режимы)
+        private Vector3 desiredVel; // m/s (delta modes only)
         private bool hasTarget;
         private Vector3 lastMousePos; // px
         private Rigidbody rb;
@@ -114,7 +114,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            ReadInput(); // не двигаемся здесь
+            ReadInput(); // no physics move here
         }
 
         private void FixedUpdate()
@@ -373,14 +373,14 @@ namespace Neo.Tools
 
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
-            // 1) Physics raycast, если указан mask
+            // 1) Physics raycast when mask is set
             if (groundMask.value != 0 && Physics.Raycast(ray, out RaycastHit hit, 1000f, groundMask))
             {
                 world = hit.point;
                 return true;
             }
 
-            // 2) Пересекаем геометрическую плоскость
+            // 2) Intersect analytic plane
             Plane pl = plane switch
             {
                 AxisPlane.XZ => new Plane(Vector3.up, transform.position),

@@ -59,19 +59,19 @@ namespace Neo.Bonus
         public int LockedCount => ItemCount - UnlockedCount;
 
         /// <summary>
-        ///     True, если этот экземпляр зарегистрирован как Collection.I (глобальный синглтон). При false — работа по ссылке
-        ///     для нескольких коллекций.
+        ///     True when this instance is registered as Collection.I (global singleton). When false, use by reference for
+        ///     multiple collections.
         /// </summary>
         public bool IsSingleton => SetInstanceOnAwakeEnabled;
 
-        /// <summary>Доля завершения коллекции (0–1). При пустой коллекции — 0.</summary>
+        /// <summary>Collection completion ratio (0–1). Returns 0 when the collection is empty.</summary>
         public float GetCompletionPercentage()
         {
             int total = ItemCount;
             return total == 0 ? 0f : (float)UnlockedCount / total;
         }
 
-        /// <summary>Строка вида "1/5" для отображения в UI.</summary>
+        /// <summary>String like "1/5" for UI display.</summary>
         public string GetCompletionCountText()
         {
             return $"{UnlockedCount}/{ItemCount}";
@@ -176,7 +176,7 @@ namespace Neo.Bonus
             TryAddItem(id);
         }
 
-        /// <summary>Добавляет предмет по индексу. Возвращает true, если предмет был добавлен (раньше не был разблокирован).</summary>
+        /// <summary>Adds an item by index. Returns true if it was newly unlocked.</summary>
         public bool TryAddItem(int id)
         {
             if (_enabledItems == null || id < 0 || id >= _enabledItems.Length)
@@ -197,7 +197,7 @@ namespace Neo.Bonus
             return true;
         }
 
-        /// <summary>Добавляет предмет по данным (ищет индекс в ItemCollectionDatas).</summary>
+        /// <summary>Adds an item by data (looks up index in ItemCollectionDatas).</summary>
         public void AddItem(ItemCollectionData data)
         {
             if (data == null || _itemCollectionDatas == null)

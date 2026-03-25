@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Neo.StateMachine.NoCode.Editor
 {
     /// <summary>
-    ///     Кастомный редактор для StateMachineData.
-    ///     Предоставляет визуальное отображение состояний и переходов в инспекторе.
+    ///     Custom inspector for StateMachineData.
+    ///     Visual layout for states and transitions.
     /// </summary>
     [CustomEditor(typeof(StateMachineData))]
     [CanEditMultipleObjects]
@@ -45,7 +45,7 @@ namespace Neo.StateMachine.NoCode.Editor
 
             EditorGUILayout.Space(6f);
 
-            NeoxiderEditorGUI.BeginSection("Validation", "Ручная проверка конфигурации с выводом результата.");
+            NeoxiderEditorGUI.BeginSection("Validation", "Run a manual validation pass and show the result.");
             if (GUILayout.Button("Validate Configuration", GUILayout.Height(24f)))
             {
                 bool validationResult = data.Validate();
@@ -74,8 +74,8 @@ namespace Neo.StateMachine.NoCode.Editor
 
             string title = data != null ? data.name : "State Machine";
             string subtitle = isValid
-                ? "Конфигурация выглядит валидной. Ниже можно редактировать состояния, стартовую точку и переходы."
-                : "В конфигурации есть проблемные места. Инспектор показывает их до запуска runtime.";
+                ? "Configuration looks valid. Edit states, initial state, and transitions below."
+                : "There are issues in this configuration. The inspector surfaces them before play mode.";
 
             List<NeoxiderEditorGUI.Badge> badges = new()
             {
@@ -100,13 +100,13 @@ namespace Neo.StateMachine.NoCode.Editor
             if (!isValid)
             {
                 EditorGUILayout.HelpBox(
-                    "State Machine configuration has errors or missing links. Проверь states, initial state и переходы.",
+                    "State Machine configuration has errors or missing links. Check states, initial state, and transitions.",
                     MessageType.Warning);
             }
 
             if (statesProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("States array пустой. Без состояний state machine не сможет стартовать.",
+                EditorGUILayout.HelpBox("States array is empty. The state machine cannot start without states.",
                     MessageType.Info);
             }
 
@@ -116,7 +116,7 @@ namespace Neo.StateMachine.NoCode.Editor
         private void DrawStatesSection()
         {
             SerializedProperty statesProp = serializedObject.FindProperty("states");
-            NeoxiderEditorGUI.BeginSection("States", "Набор всех доступных состояний для текущей машины.");
+            NeoxiderEditorGUI.BeginSection("States", "All states available to this machine.");
             EditorGUILayout.PropertyField(statesProp, true);
             NeoxiderEditorGUI.EndSection();
         }
@@ -127,7 +127,7 @@ namespace Neo.StateMachine.NoCode.Editor
             SerializedProperty initialStateNameProp = serializedObject.FindProperty("initialStateName");
 
             NeoxiderEditorGUI.BeginSection("Initial State",
-                "Предпочтительно использовать ссылку на StateData, а legacy name оставить только для обратной совместимости.");
+                "Prefer assigning a StateData reference; keep the legacy name field only for backward compatibility.");
             EditorGUILayout.PropertyField(initialStateProp, new GUIContent("Initial State (StateData)"));
 
             if (initialStateProp.objectReferenceValue == null &&
@@ -145,7 +145,7 @@ namespace Neo.StateMachine.NoCode.Editor
         {
             SerializedProperty transitionsProp = serializedObject.FindProperty("transitions");
             NeoxiderEditorGUI.BeginSection("Transitions",
-                "Переходы между состояниями. Здесь важны читаемые имена и валидные ссылки на state assets.");
+                "Transitions between states. Use clear names and valid references to state assets.");
             if (transitionsProp == null)
             {
                 EditorGUILayout.HelpBox("Transitions property is missing.", MessageType.Error);
@@ -293,9 +293,4 @@ namespace Neo.StateMachine.NoCode.Editor
             NeoxiderEditorGUI.EndSection();
         }
     }
-
-    /// <summary>
-    ///     Кастомный редактор для StateMachineData.
-    ///     Регистрация происходит автоматически через атрибут [CustomEditor] и StateMachineEditorRegistrar.
-    /// </summary>
 }

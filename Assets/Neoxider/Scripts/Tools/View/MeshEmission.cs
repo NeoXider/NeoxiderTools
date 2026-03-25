@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Tools.View
 {
     /// <summary>
-    ///     Компонент для синхронизации эмиссии меша с источником света.
-    ///     Копирует интенсивность и цвет от Light компонента в реальном времени.
+    ///     Syncs mesh emission with a light source.
+    ///     Copies intensity and color from a Light in real time.
     /// </summary>
     [NeoDoc("Tools/View/MeshEmission.md")]
     [CreateFromMenu("Neoxider/Tools/View/MeshEmission")]
@@ -13,7 +13,7 @@ namespace Neo.Tools.View
     {
         private const string EmissionKW = "_EMISSION";
 
-        // Кэшированные ID для оптимизации (Built-in/URP/HDRP)
+        // Cached property IDs (Built-in/URP/HDRP)
         private static readonly int EmissionColorID = Shader.PropertyToID("_EmissionColor");
         private static readonly int EmissiveColorID = Shader.PropertyToID("_EmissiveColor");
 
@@ -46,12 +46,12 @@ namespace Neo.Tools.View
         private Color _originalEmissionColor;
 
         /// <summary>
-        ///     Текущая интенсивность эмиссии (только для чтения)
+        ///     Current emission intensity (read-only).
         /// </summary>
         public float CurrentIntensity { get; private set; }
 
         /// <summary>
-        ///     Текущий цвет эмиссии (только для чтения)
+        ///     Current emission color (read-only).
         /// </summary>
         public Color CurrentColor { get; private set; }
 
@@ -95,7 +95,7 @@ namespace Neo.Tools.View
             float targetIntensity = syncIntensity ? lightIntensity * intensityMultiplier : 1f;
             Color finalEmissionColor = syncColor ? lightColor : _originalEmissionColor;
 
-            // При высокой интенсивности увеличиваем для осветления
+            // Boost at high intensity for brighter emission
             float finalIntensity = targetIntensity;
             if (targetIntensity > whiteThreshold)
             {
@@ -150,7 +150,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Универсальная запись эмиссии с автоотключением при малых значениях
+        ///     Writes emission and fully disables it when values are very small.
         /// </summary>
         private void ApplyEmission(Color color, float intensity)
         {
@@ -159,7 +159,7 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // МАЛЕНЬКОЕ ЗНАЧЕНИЕ — ПОЛНОЕ ОТКЛЮЧЕНИЕ
+            // Below cutoff — full off
             if (intensity <= emissionCutoff)
             {
                 if (_material.HasProperty(EmissionColorID))
@@ -177,7 +177,7 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // НОРМАЛЬНАЯ РАБОТА — ВКЛЮЧАЕМ ЭМИССИЮ
+            // Normal path — enable emission
             _material.EnableKeyword(EmissionKW);
 
             if (_material.HasProperty(EmissionColorID))
@@ -194,7 +194,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Сбросить к исходным значениям эмиссии
+        ///     Resets emission to original values.
         /// </summary>
         public void ResetToOriginal()
         {
@@ -207,7 +207,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Найти и привязать источник света на том же объекте или дочерних
+        ///     Finds and assigns a Light on this object or in children.
         /// </summary>
         public void FindAndAttachLight()
         {

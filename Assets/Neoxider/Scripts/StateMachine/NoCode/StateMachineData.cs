@@ -6,19 +6,19 @@ using UnityEngine;
 namespace Neo.StateMachine.NoCode
 {
     /// <summary>
-    ///     ScriptableObject конфигурации State Machine: состояния и переходы по именам.
-    ///     Позволяет создавать полную конфигурацию State Machine визуально в инспекторе.
+    ///     ScriptableObject State Machine configuration: states and transitions by name.
+    ///     Lets you author a full State Machine visually in the Inspector.
     /// </summary>
     /// <remarks>
-    ///     StateMachineData содержит все состояния и переходы, которые можно настроить в инспекторе.
-    ///     Может быть загружен в StateMachineBehaviour для использования.
+    ///     StateMachineData holds all states and transitions editable in the Inspector.
+    ///     It can be loaded into StateMachineBehaviour at runtime.
     /// </remarks>
     /// <example>
     ///     <code>
-    /// // Создать StateMachineData через меню: Create > Neo > State Machine > State Machine Data
-    /// // Настроить состояния и переходы в инспекторе
-    /// // Присвоить в StateMachineBehaviour.stateMachineData
-    /// // StateMachineBehaviour автоматически загрузит конфигурацию в Start()
+    /// // Create StateMachineData via menu: Create > Neo > State Machine > State Machine Data
+    /// // Configure states and transitions in the Inspector
+    /// // Assign to StateMachineBehaviour.stateMachineData
+    /// // StateMachineBehaviour loads the configuration in Start()
     /// </code>
     /// </example>
     [CreateAssetMenu(fileName = "New State Machine", menuName = "Neoxider/State Machine/State Machine Data")]
@@ -40,7 +40,7 @@ namespace Neo.StateMachine.NoCode
         private List<StatePosition> statePositions = new();
 
         /// <summary>
-        ///     Все состояния State Machine.
+        ///     All states in this State Machine.
         /// </summary>
         public StateData[] States
         {
@@ -49,7 +49,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Начальное состояние (ScriptableObject).
+        ///     Initial state (ScriptableObject reference).
         /// </summary>
         public StateData InitialState
         {
@@ -58,7 +58,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Имя начального состояния (для обратной совместимости).
+        ///     Initial state name (legacy compatibility when only a string was used).
         /// </summary>
         public string InitialStateName
         {
@@ -74,13 +74,13 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Глобальные переходы между состояниями.
+        ///     Global transitions between states.
         /// </summary>
         public List<StateTransition> Transitions => transitions;
 
         private void OnValidate()
         {
-            // Автоматическая валидация в редакторе
+            // Automatic validation in the editor
             if (Application.isPlaying)
             {
                 Validate();
@@ -88,10 +88,10 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Получить позицию состояния (legacy метод, не используется).
+        ///     Gets a state's saved node position (legacy; unused).
         /// </summary>
-        /// <param name="stateName">Имя состояния.</param>
-        /// <returns>Позиция состояния или Vector2.zero, если не найдено.</returns>
+        /// <param name="stateName">State name.</param>
+        /// <returns>Stored position or Vector2.zero if missing.</returns>
         public Vector2 GetStatePosition(string stateName)
         {
             if (string.IsNullOrEmpty(stateName) || statePositions == null)
@@ -104,10 +104,10 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Установить позицию состояния (legacy метод, не используется).
+        ///     Sets a state's node position (legacy; unused).
         /// </summary>
-        /// <param name="stateName">Имя состояния.</param>
-        /// <param name="position">Позиция.</param>
+        /// <param name="stateName">State name.</param>
+        /// <param name="position">Position.</param>
         public void SetStatePosition(string stateName, Vector2 position)
         {
             if (string.IsNullOrEmpty(stateName))
@@ -132,7 +132,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Очистить все сохраненные позиции.
+        ///     Clears all stored node positions.
         /// </summary>
         public void ClearStatePositions()
         {
@@ -143,10 +143,10 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Загрузить конфигурацию в State Machine.
+        ///     Loads this configuration into a State Machine (registers transitions).
         /// </summary>
-        /// <typeparam name="TState">Тип состояний.</typeparam>
-        /// <param name="stateMachine">State Machine для загрузки конфигурации.</param>
+        /// <typeparam name="TState">State type.</typeparam>
+        /// <param name="stateMachine">Target State Machine.</param>
         public void LoadIntoStateMachine<TState>(StateMachine<TState> stateMachine) where TState : class, IState
         {
             if (stateMachine == null)
@@ -155,33 +155,33 @@ namespace Neo.StateMachine.NoCode
                 return;
             }
 
-            // Регистрация переходов
+            // Register transitions
             foreach (StateTransition transition in transitions)
             {
                 if (transition != null)
                 {
-                    // Для NoCode переходов нужно установить типы на основе имен состояний
+                    // NoCode transitions: resolve types from state names where needed
                     SetupNoCodeTransition(transition);
                     stateMachine.RegisterTransition(transition);
                 }
             }
 
-            // Регистрация переходов из состояний
+            // Per-state transitions (if added later)
             foreach (StateData state in states)
             {
                 if (state != null && state is StateData stateData)
                 {
-                    // Если у состояния есть свои переходы, они должны быть в transitions
-                    // Здесь можно добавить дополнительную логику для переходов из конкретных состояний
+                    // If a state owns its own transitions, they should live in transitions
+                    // Hook for future per-source-state registration
                 }
             }
         }
 
         /// <summary>
-        ///     Получить состояние по имени.
+        ///     Finds a state asset by name.
         /// </summary>
-        /// <param name="stateName">Имя состояния.</param>
-        /// <returns>StateData или null, если не найдено.</returns>
+        /// <param name="stateName">State name.</param>
+        /// <returns>StateData or null.</returns>
         public StateData GetStateByName(string stateName)
         {
             if (string.IsNullOrEmpty(stateName))
@@ -193,10 +193,10 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Проверить валидность конфигурации.
+        ///     Validates the asset configuration.
         /// </summary>
-        /// <param name="silent">Если true, не выводит предупреждения в консоль (только возвращает результат).</param>
-        /// <returns>True, если конфигурация валидна.</returns>
+        /// <param name="silent">If true, skips console warnings and only returns the result.</param>
+        /// <returns>True if the configuration is valid.</returns>
         public bool Validate(bool silent = false)
         {
             if (states == null || states.Length == 0)
@@ -238,7 +238,7 @@ namespace Neo.StateMachine.NoCode
                 return false;
             }
 
-            // Проверка переходов
+            // Transition checks
             foreach (StateTransition transition in transitions)
             {
                 if (transition == null)
@@ -292,10 +292,9 @@ namespace Neo.StateMachine.NoCode
 
         private void SetupNoCodeTransition(StateTransition transition)
         {
-            // Для NoCode переходов можно установить типы на основе StateData
-            // Но так как StateData - это ScriptableObject, а не класс состояния,
-            // мы используем имена состояний для идентификации
-            // StateMachineBehaviour будет обрабатывать переходы по именам
+            // NoCode: types could be derived from StateData assets, but StateData is a ScriptableObject,
+            // not a runtime state class — identification is by state name.
+            // StateMachineBehaviour resolves transitions by name.
         }
 
         [Serializable]

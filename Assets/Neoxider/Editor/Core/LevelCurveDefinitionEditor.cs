@@ -52,7 +52,7 @@ namespace Neo.Editor.Core
             switch (mode)
             {
                 case LevelCurveMode.Formula:
-                    EditorGUILayout.LabelField("Формула", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Formula", EditorStyles.boldLabel);
                     EditorGUILayout.PropertyField(_formulaType);
                     int formulaTypeIndex = _formulaType.enumValueIndex;
                     bool isLinearOrOffset = formulaTypeIndex == (int)LevelFormulaType.Linear ||
@@ -87,11 +87,11 @@ namespace Neo.Editor.Core
 
                     break;
                 case LevelCurveMode.Curve:
-                    EditorGUILayout.LabelField("Кривая (X = уровень, Y = кумулятивный XP)", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Curve (X = level, Y = cumulative XP)", EditorStyles.boldLabel);
                     EditorGUILayout.PropertyField(_animationCurve, true);
                     break;
                 case LevelCurveMode.Custom:
-                    EditorGUILayout.LabelField("Ручная таблица (уровень → требуемый XP)", EditorStyles.boldLabel);
+                    EditorGUILayout.LabelField("Manual table (level → required XP)", EditorStyles.boldLabel);
                     EditorGUILayout.PropertyField(_customEntries, true);
                     break;
             }
@@ -113,9 +113,9 @@ namespace Neo.Editor.Core
             previewCount = Mathf.Clamp(previewCount, PreviewCountMin, PreviewCountMax);
 
             EditorGUILayout.Space(8f);
-            EditorGUILayout.LabelField("Превью уровней", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Level preview", EditorStyles.boldLabel);
             EditorGUILayout.BeginHorizontal();
-            EditorGUILayout.PrefixLabel("Уровней в превью");
+            EditorGUILayout.PrefixLabel("Levels in preview");
             int newCount = EditorGUILayout.IntSlider(previewCount, PreviewCountMin, PreviewCountMax);
             if (newCount != previewCount)
             {
@@ -125,9 +125,9 @@ namespace Neo.Editor.Core
             EditorGUILayout.EndHorizontal();
 
             Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-            EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, 60f, headerRect.height), "Уровень");
+            EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, 60f, headerRect.height), "Level");
             EditorGUI.LabelField(new Rect(headerRect.x + 70f, headerRect.y, headerRect.width - 70f, headerRect.height),
-                "Кумулятивный XP");
+                "Cumulative XP");
 
             for (int level = 1; level <= previewCount; level++)
             {

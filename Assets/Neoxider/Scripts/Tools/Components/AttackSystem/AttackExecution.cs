@@ -14,28 +14,28 @@ namespace Neo.Tools
     {
         public enum AttackState
         {
-            Ready, // Готов к атаке
-            Attacking, // В процессе атаки (до удара)
-            Cooldown // Перезарядка после удара
+            Ready, // Ready to attack
+            Attacking, // Wind-up / before hit
+            Cooldown // Post-hit cooldown
         }
 
         [Header("Attack")] [SerializeField] private float _attackSpeed = 2;
 
         public float multiplayAttackSpeed = 1;
-        public float delayTimeAttack = 0.2f; // Задержка перед ударом
+        public float delayTimeAttack = 0.2f; // Delay before hit
         [SerializeField] private bool _isAutoAttack;
 
-        public UnityEvent OnStartAttack; // Вызывается в начале атаки (замах)
+        public UnityEvent OnStartAttack; // Wind-up start
 
-        public UnityEvent OnAttack; // Вызывается в момент удара
-        public UnityEvent OnEndAttack; // Вызывается, когда атака снова готова
+        public UnityEvent OnAttack; // Hit moment
+        public UnityEvent OnEndAttack; // Attack ready again
         private Coroutine _attackCoroutine;
 
-        private bool _canAttackGlobal = true; // Глобальный флаг, разрешающий атаковать
+        private bool _canAttackGlobal = true; // Master switch for attacking
 
-        // --- Публичные свойства ---
+        // --- Public properties ---
         public AttackState CurrentState { get; private set; } = AttackState.Ready;
-        public float AttackCooldown { get; private set; } // Рассчитанное время перезарядки
+        public float AttackCooldown { get; private set; } // Derived cooldown duration
 
         public float AttackSpeed
         {
@@ -55,7 +55,7 @@ namespace Neo.Tools
 
         public bool CanAttack => CurrentState == AttackState.Ready && _canAttackGlobal;
 
-        // --- Жизненный цикл Unity ---
+        // --- Unity lifecycle ---
         private void Start()
         {
             UpdateAttackCooldown();
@@ -71,7 +71,7 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
-            // Прерываем атаку, если объект отключается
+            // Stop attack when disabled
             if (_attackCoroutine != null)
             {
                 StopCoroutine(_attackCoroutine);
@@ -89,12 +89,12 @@ namespace Neo.Tools
             UpdateAttackCooldown();
         }
 
-        // --- Публичные методы ---
+        // --- Public API ---
 
         /// <summary>
-        ///     Пытается начать атаку, если это возможно.
+        ///     Tries to start an attack when allowed.
         /// </summary>
-        /// <returns>True, если атака началась успешно.</returns>
+        /// <returns>True if attack started.</returns>
         public bool Attack()
         {
             if (!CanAttack)
@@ -107,7 +107,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Разрешает или запрещает атаковать.
+        ///     Enables or disables attacking.
         /// </summary>
         public void SetCanAttack(bool canAttack)
         {
@@ -115,7 +115,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбрасывает состояние атаки, прерывая текущий цикл и делая ее снова доступной.
+        ///     Resets attack state, cancels the current cycle, and returns to ready.
         /// </summary>
         public void ResetAttack()
         {
@@ -128,24 +128,24 @@ namespace Neo.Tools
             OnEndAttack?.Invoke();
         }
 
-        // --- Приватные методы ---
+        // --- Private ---
 
         private IEnumerator AttackSequence()
         {
-            // 1. Начало атаки (замах)
+            // 1. Wind-up
             CurrentState = AttackState.Attacking;
             OnStartAttack?.Invoke();
 
-            // 2. Задержка перед ударом
+            // 2. Delay before hit
             if (delayTimeAttack > 0)
             {
                 yield return new WaitForSeconds(delayTimeAttack);
             }
 
-            // 3. Момент удара
+            // 3. Hit
             OnAttack?.Invoke();
 
-            // 4. Оставшееся время перезарядки
+            // 4. Remaining cooldown
             CurrentState = AttackState.Cooldown;
             float cooldownDuration = AttackCooldown - delayTimeAttack;
             if (cooldownDuration > 0)
@@ -153,7 +153,7 @@ namespace Neo.Tools
                 yield return new WaitForSeconds(cooldownDuration);
             }
 
-            // 5. Готовность к следующей атаке
+            // 5. Ready for next attack
             CurrentState = AttackState.Ready;
             OnEndAttack?.Invoke();
             _attackCoroutine = null;

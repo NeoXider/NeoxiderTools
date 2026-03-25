@@ -7,8 +7,8 @@ using UnityEngine;
 namespace Neo.StateMachine.NoCode.Editor
 {
     /// <summary>
-    ///     Окно редактора для редактирования переходов State Machine.
-    ///     Открывается из инспектора или программно.
+    ///     Editor window for editing a State Machine transition.
+    ///     Opened from the inspector or via code.
     /// </summary>
     public class TransitionEditorWindow : EditorWindow
     {
@@ -31,18 +31,18 @@ namespace Neo.StateMachine.NoCode.Editor
             DrawSummary();
 
             NeoxiderEditorGUI.BeginSection("Transition Information",
-                "Базовые свойства перехода и его место в приоритетной очереди.");
+                "Core transition properties and its place in the priority ordering.");
             transition.TransitionName = EditorGUILayout.TextField("Name", transition.TransitionName);
             transition.IsEnabled = EditorGUILayout.Toggle("Enabled", transition.IsEnabled);
             transition.Priority = EditorGUILayout.IntField("Priority", transition.Priority);
             NeoxiderEditorGUI.DrawCaption(
-                "Совет: короткие читаемые имена переходов сильно упрощают отладку и чтение graph-like конфигурации.");
+                "Tip: short, readable transition names make debugging and graph-style configs much easier.");
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(6f);
 
             NeoxiderEditorGUI.BeginSection("States",
-                "Связанные состояния меняются в основном из инспектора StateMachineData.");
+                "Linked states are usually edited from the StateMachineData inspector.");
 
             EditorGUI.BeginDisabledGroup(true);
             EditorGUILayout.ObjectField("From State", transition.FromStateData, typeof(StateData), false);
@@ -66,7 +66,7 @@ namespace Neo.StateMachine.NoCode.Editor
             EditorGUILayout.Space(6f);
 
             NeoxiderEditorGUI.BeginSection("Conditions (Predicates)",
-                "Условия определяют, может ли переход выполниться. Чем чище этот список, тем проще читать поведение state machine.");
+                "Conditions decide whether the transition may fire. A lean list is easier to read than a crowded one.");
 
             if (transition.Predicates == null || transition.Predicates.Count == 0)
             {
@@ -89,8 +89,8 @@ namespace Neo.StateMachine.NoCode.Editor
                         predicate.IsInverted = EditorGUILayout.Toggle("Inverted", predicate.IsInverted);
                         NeoxiderEditorGUI.DrawCaption(
                             predicate.IsInverted
-                                ? "Этот предикат инвертирован: результат будет трактоваться наоборот."
-                                : "Предикат участвует в вычислении перехода как обычное условие.");
+                                ? "This predicate is inverted: its result is flipped for the transition."
+                                : "This predicate contributes as a normal condition to the transition.");
 
                         if (predicate is ConditionEntryPredicate && data != null)
                         {
@@ -208,10 +208,10 @@ namespace Neo.StateMachine.NoCode.Editor
         }
 
         /// <summary>
-        ///     Показать окно редактора перехода.
+        ///     Opens the transition editor window.
         /// </summary>
-        /// <param name="transition">Переход для редактирования.</param>
-        /// <param name="data">StateMachineData, содержащий переход.</param>
+        /// <param name="transition">Transition to edit.</param>
+        /// <param name="data">Owning StateMachineData asset.</param>
         public static void ShowWindow(StateTransition transition, StateMachineData data)
         {
             TransitionEditorWindow window = GetWindow<TransitionEditorWindow>("Edit Transition");

@@ -1,27 +1,26 @@
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Интерфейс для объектов, которые могут быть управляемы системой пулинга.
-    ///     Реализуйте этот интерфейс на ваших компонентах, чтобы получать вызовы на разных этапах жизненного цикла объекта в
-    ///     пуле.
+    ///     Interface for objects managed by the pooling system.
+    ///     Implement on your components to receive callbacks at pool lifecycle stages.
     /// </summary>
     public interface IPoolable
     {
         /// <summary>
-        ///     Вызывается один раз, когда пул создает новый экземпляр объекта (через Instantiate).
-        ///     Идеально подходит для кэширования компонентов (GetComponent).
+        ///     Called once when the pool creates a new instance (via Instantiate).
+        ///     Use for caching components (GetComponent).
         /// </summary>
         void OnPoolCreate();
 
         /// <summary>
-        ///     Вызывается каждый раз, когда объект извлекается из пула.
-        ///     Используйте этот метод для сброса состояния объекта (восстановление здоровья, сброс таймеров и т.д.).
+        ///     Called each time the object is taken from the pool.
+        ///     Reset state here (health, timers, etc.).
         /// </summary>
         void OnPoolGet();
 
         /// <summary>
-        ///     Вызывается каждый раз, когда объект возвращается в пул.
-        ///     Используйте этот метод для отключения логики, остановки эффектов и т.д.
+        ///     Called each time the object is returned to the pool.
+        ///     Disable logic, stop effects, etc.
         /// </summary>
         void OnPoolRelease();
     }

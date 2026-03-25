@@ -7,7 +7,7 @@ using UnityEngine.UI;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Компонент для управления UI элементами диалога.
+    ///     Drives dialogue UI (name, portrait, body text).
     /// </summary>
     [NeoDoc("Tools/Dialogue/DialogueUI.md")]
     [CreateFromMenu("Neoxider/Tools/Dialogue/DialogueUI")]
@@ -30,7 +30,7 @@ namespace Neo.Tools
         private string _lastCharacterName = string.Empty;
 
         /// <summary>
-        ///     Есть ли ошибка шрифта.
+        ///     Whether a TMP font validation error was detected.
         /// </summary>
         public bool HasFontError { get; private set; }
 
@@ -40,7 +40,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбрасывает состояние UI.
+        ///     Resets UI state.
         /// </summary>
         public void Reset()
         {
@@ -49,7 +49,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Проверяет валидность шрифтов на TMP компонентах.
+        ///     Validates TMP fonts on referenced texts.
         /// </summary>
         public bool ValidateFonts()
         {
@@ -66,7 +66,7 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    // Проверяем fallback шрифты
+                    // Validate fallback fonts
                     ValidateFallbackFonts(dialogueText);
                 }
             }
@@ -110,7 +110,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Проверяет и очищает невалидные fallback шрифты.
+        ///     Validates and removes invalid TMP fallback fonts.
         /// </summary>
         private void ValidateFallbackFonts(TMP_Text tmpText)
         {
@@ -139,7 +139,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает имя персонажа.
+        ///     Sets character name text.
         /// </summary>
         public void SetCharacterName(string characterName)
         {
@@ -159,7 +159,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает спрайт персонажа. При null очищает изображение.
+        ///     Sets character portrait; null may clear/hide per settings.
         /// </summary>
         public void SetCharacterSprite(Sprite sprite)
         {
@@ -189,7 +189,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает текст диалога.
+        ///     Sets dialogue body text.
         /// </summary>
         public void SetDialogueText(string text)
         {
@@ -202,7 +202,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Очищает текст диалога.
+        ///     Clears dialogue body text.
         /// </summary>
         public void ClearDialogueText()
         {

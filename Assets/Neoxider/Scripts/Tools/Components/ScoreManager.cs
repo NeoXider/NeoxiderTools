@@ -44,7 +44,7 @@ namespace Neo.Tools
         private string _cachedBestScoreString;
         private int _cachedBestScoreValue = int.MinValue;
 
-        // Кэшированные строки для избежания аллокаций
+        // Cached strings to avoid allocations
         private string _cachedScoreString;
         private int _cachedScoreValue = int.MinValue;
 
@@ -87,7 +87,7 @@ namespace Neo.Tools
         public bool IsTarget => score >= _targetScore;
         public float ProgressValue => Progress.CurrentValue;
 
-        /// <summary>Количество звёзд (для NeoCondition и рефлексии).</summary>
+        /// <summary>Star count (for NeoCondition and reflection).</summary>
         public int CountStarsValue => CountStarsReactive.CurrentValue;
 
         public int CountStars
@@ -112,7 +112,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Добавляет очки к текущему счету и опционально обновляет лучший результат.
+        ///     Adds points to the current score and optionally updates best score.
         /// </summary>
         [Button]
         public void Add(int amount, bool updateBestScore = true)
@@ -127,7 +127,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает точное количество очков и опционально обновляет лучший результат.
+        ///     Sets the exact score and optionally updates best score.
         /// </summary>
         [Button]
         public void Set(int amount, bool updateBestScore = true)
@@ -141,8 +141,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет лучший результат: без аргумента — из текущего счёта; с аргументом — заданное значение (если больше
-        ///     текущего рекорда).
+        ///     Updates best score: no argument uses current score; with argument uses that value if higher than record.
         /// </summary>
         [Button]
         public void SetBestScore(int? candidate = null)
@@ -159,11 +158,11 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет текстовые поля лучшего результата с кэшированием строки.
+        ///     Updates best-score text fields with string caching.
         /// </summary>
         private void SetBestScoreText()
         {
-            // Кэшируем строку только при изменении значения
+            // Cache string only when value changes
             if (_cachedBestScoreValue != _bestScore)
             {
                 _cachedBestScoreValue = _bestScore;
@@ -194,11 +193,11 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет текстовые поля текущего счета с кэшированием строки.
+        ///     Updates current score text fields with string caching.
         /// </summary>
         private void SetScoreText()
         {
-            // Кэшируем строку только при изменении значения
+            // Cache string only when value changes
             if (_cachedScoreValue != score)
             {
                 _cachedScoreValue = score;
@@ -229,7 +228,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбрасывает текущий счет до нуля.
+        ///     Resets current score to zero.
         /// </summary>
         [Button]
         public void ResetScore()
@@ -251,12 +250,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Получение количества звезд по количеству очков.
+        ///     Computes star count from score thresholds.
         /// </summary>
-        /// <param name="starScores">Массив пороговых значений для получения звезд.</param>
-        /// <param name="useProgress">Использовать прогресс (0-1) или абсолютные значения очков.</param>
-        /// <param name="score">Счет для расчета (по умолчанию используется текущий).</param>
-        /// <returns>Количество полученных звезд.</returns>
+        /// <param name="starScores">Threshold values for earning stars.</param>
+        /// <param name="useProgress">Use progress (0–1) or absolute score values.</param>
+        /// <param name="score">Score to evaluate (defaults to current score).</param>
+        /// <returns>Number of stars earned.</returns>
         public int GetCountStars(float[] starScores, bool useProgress = true, int? score = null)
         {
             if (score == null)

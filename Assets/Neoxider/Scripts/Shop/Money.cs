@@ -30,7 +30,7 @@ namespace Neo.Shop
         public float money => CurrentMoney.CurrentValue;
         public float allMoney => AllMoney.CurrentValue;
 
-        /// <summary>Последнее изменение суммы (для NeoCondition и рефлексии).</summary>
+        /// <summary>Last amount change (for NeoCondition and reflection).</summary>
         public float LastChangeMoneyValue => LastChangeMoney.CurrentValue;
 
         private void Start()

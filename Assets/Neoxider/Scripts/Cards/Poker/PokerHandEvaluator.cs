@@ -5,22 +5,22 @@ using System.Linq;
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    ///     Оценщик покерных комбинаций
+    ///     Evaluates poker hands (best five from 5–7 cards).
     /// </summary>
     public static class PokerHandEvaluator
     {
         /// <summary>
-        ///     Оценивает руку из 5-7 карт и возвращает лучшую комбинацию
+        ///     Evaluates a 5–7 card hand and returns the best five-card combination.
         /// </summary>
-        /// <param name="cards">Карты для оценки (5-7 штук)</param>
-        /// <returns>Результат оценки</returns>
+        /// <param name="cards">Cards to evaluate (5–7, non-joker).</param>
+        /// <returns>Evaluation result.</returns>
         public static PokerHandResult Evaluate(IEnumerable<CardData> cards)
         {
             var cardList = cards.Where(c => !c.IsJoker).ToList();
 
             if (cardList.Count < 5)
             {
-                throw new ArgumentException("Требуется минимум 5 карт для оценки");
+                throw new ArgumentException("At least 5 non-joker cards are required for evaluation");
             }
 
             if (cardList.Count == 5)
@@ -32,7 +32,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Находит лучшую комбинацию из 5 карт среди 6-7 карт
+        ///     Finds the best five-card hand from six or seven cards.
         /// </summary>
         private static PokerHandResult FindBestHand(List<CardData> cards)
         {
@@ -52,7 +52,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Оценивает ровно 5 карт
+        ///     Evaluates exactly five cards.
         /// </summary>
         private static PokerHandResult EvaluateFiveCards(List<CardData> cards)
         {
@@ -186,7 +186,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Группирует карты по количеству повторений ранга
+        ///     Groups cards by rank multiplicity.
         /// </summary>
         private static Dictionary<int, List<Rank>> GetRankGroups(List<CardData> cards)
         {
@@ -216,7 +216,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, является ли рука флешем (все карты одной масти)
+        ///     Returns whether all cards share one suit (flush).
         /// </summary>
         private static bool IsFlush(List<CardData> cards)
         {
@@ -230,7 +230,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, является ли рука стритом (последовательность)
+        ///     Returns whether ranks form a straight.
         /// </summary>
         private static bool IsStraight(List<CardData> cards, out Rank highCard)
         {
@@ -262,7 +262,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Проверяет, являются ли ранги последовательными
+        ///     Returns whether integer ranks are consecutive descending.
         /// </summary>
         private static bool IsConsecutive(List<int> ranks)
         {
@@ -278,7 +278,7 @@ namespace Neo.Cards.Poker
         }
 
         /// <summary>
-        ///     Генерирует все комбинации заданного размера
+        ///     Yields all subsets of the given length.
         /// </summary>
         private static IEnumerable<IEnumerable<T>> GetCombinations<T>(IList<T> list, int length)
         {

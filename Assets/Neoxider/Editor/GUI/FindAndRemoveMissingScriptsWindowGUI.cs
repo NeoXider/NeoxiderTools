@@ -7,7 +7,7 @@ using UnityEngine.SceneManagement;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    ///     GUI отрисовка для окна поиска и удаления Missing Scripts
+    ///     GUI drawing for the find-and-remove Missing Scripts window.
     /// </summary>
     public class FindAndRemoveMissingScriptsWindowGUI : EditorWindowGUI
     {
@@ -23,7 +23,7 @@ namespace Neo.Editor.Windows
         private string _status = "";
 
         /// <summary>
-        ///     Отрисовка GUI
+        ///     Draws the window GUI.
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
@@ -90,7 +90,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Отписка от событий при закрытии
+        ///     Unsubscribes from events when the window is disabled.
         /// </summary>
         public void OnDisable()
         {
@@ -98,7 +98,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Поиск Missing Scripts только в текущей сцене
+        ///     Searches for Missing Scripts in the active scene only.
         /// </summary>
         private void SearchCurrentSceneOnly()
         {

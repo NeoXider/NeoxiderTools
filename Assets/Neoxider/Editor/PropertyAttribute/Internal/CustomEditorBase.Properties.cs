@@ -762,8 +762,7 @@ namespace Neo.Editor
                     headerTitle.StartsWith("⚠", StringComparison.Ordinal) ||
                     headerTitle.StartsWith("!", StringComparison.Ordinal) ||
                     headerTitle.Contains("warning", StringComparison.OrdinalIgnoreCase) ||
-                    headerTitle.Contains("предуп", StringComparison.OrdinalIgnoreCase) ||
-                    headerTitle.Contains("ошиб", StringComparison.OrdinalIgnoreCase);
+                    headerTitle.Contains("error", StringComparison.OrdinalIgnoreCase);
 
                 bool isWarningHeader = looksLikeWarning;
                 sections.Add(new HeaderSection(headerTitle, sectionProps, isWarningHeader));
@@ -804,7 +803,6 @@ namespace Neo.Editor
             }
 
             return text.Contains("debug", StringComparison.OrdinalIgnoreCase) ||
-                   text.Contains("отлад", StringComparison.OrdinalIgnoreCase) ||
                    text.Contains("gizmo", StringComparison.OrdinalIgnoreCase);
         }
 

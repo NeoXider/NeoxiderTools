@@ -8,12 +8,12 @@ using UnityEngine.UI;
 namespace Neo.UI
 {
     /// <summary>
-    ///     Универсальный компонент для переключения между двумя визуальными состояниями с поддержкой множественных элементов.
-    ///     Может работать автономно или автоматически интегрироваться с компонентом Toggle.
+    ///     Universal component for switching between two visual states with support for multiple elements.
+    ///     Can run standalone or integrate automatically with a Toggle.
     /// </summary>
     /// <remarks>
-    ///     Компонент поддерживает одновременное управление множеством Image (спрайты и цвета),
-    ///     TextMeshPro (цвета и текст) и GameObject'ов. Автоматически подписывается на события Toggle при наличии.
+    ///     Manages multiple Images (sprites and colors), TextMeshPro (colors and text), and GameObjects at once.
+    ///     Subscribes to Toggle events when a Toggle is present.
     /// </remarks>
     [NeoDoc("UI/VisualToggle.md")]
     [CreateFromMenu("Neoxider/UI/VisualToggle", "Prefabs/UI/VisualToggle.prefab")]
@@ -26,8 +26,8 @@ namespace Neo.UI
         private bool _isActive;
 
         /// <summary>
-        ///     Если включено, вызывает события текущего состояния при старте (Start).
-        ///     Полезно для инициализации связанных систем в соответствии с начальным состоянием.
+        ///     When enabled, invokes events for the current state on Start.
+        ///     Useful to initialize dependent systems from the initial state.
         /// </summary>
         [Tooltip("If enabled, invokes events for current state on Start")] [SerializeField]
         private bool _setOnAwake = true;
@@ -57,13 +57,13 @@ namespace Neo.UI
 
         private bool _isUpdatingFromToggle;
 
-        /// <summary>Текущее состояние (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current state (for NeoCondition and reflection).</summary>
         public bool ValueBool => Value.CurrentValue;
 
         /// <summary>
-        ///     Текущее состояние переключателя.
+        ///     Current toggle state.
         /// </summary>
-        /// <value>true если в конечном состоянии (end), false если в начальном (start)</value>
+        /// <value>true when in end state, false when in start state</value>
         public bool IsActive
         {
             get => _isActive;
@@ -148,7 +148,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Инвертирует текущее состояние переключателя.
+        ///     Toggles the current state.
         /// </summary>
         [Button]
         public void Toggle()
@@ -157,7 +157,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Устанавливает состояние в активное (end) и обновляет визуал.
+        ///     Sets active (end) state and updates visuals.
         /// </summary>
         public void SetActive()
         {
@@ -165,7 +165,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Устанавливает состояние в неактивное (start) и обновляет визуал.
+        ///     Sets inactive (start) state and updates visuals.
         /// </summary>
         public void SetInactive()
         {
@@ -173,10 +173,10 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Устанавливает указанное состояние переключателя.
+        ///     Sets the toggle to the given state.
         /// </summary>
-        /// <param name="isActive">true для активного состояния (end), false для неактивного (start)</param>
-        /// <param name="invokeToggleEvent">Если true и есть Toggle, вызовет его событие onValueChanged</param>
+        /// <param name="isActive">true for active (end), false for inactive (start)</param>
+        /// <param name="invokeToggleEvent">If true and a Toggle exists, fires its onValueChanged</param>
         [Button]
         public void SetActive(bool isActive, bool invokeToggleEvent = false)
         {
@@ -196,7 +196,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Обновляет все визуальные элементы в соответствии с текущим состоянием.
+        ///     Refreshes all visuals to match the current state.
         /// </summary>
         public void UpdateVisuals()
         {
@@ -342,7 +342,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Класс для настройки переключения спрайтов Image между состояниями.
+        ///     Settings for switching Image sprites between states.
         /// </summary>
         [Serializable]
         public class ImageVariant
@@ -361,7 +361,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Класс для настройки переключения цветов Image между состояниями.
+        ///     Settings for switching Image colors between states.
         /// </summary>
         [Serializable]
         public class ImageColor
@@ -376,7 +376,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Класс для настройки переключения цветов и/или текста TextMeshPro между состояниями.
+        ///     Settings for switching TextMeshPro colors and/or text between states.
         /// </summary>
         [Serializable]
         public class TmpColorTextVariant
@@ -400,7 +400,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Класс для настройки переключения активности групп GameObject'ов между состояниями.
+        ///     Settings for toggling GameObject groups active between states.
         /// </summary>
         [Serializable]
         public class GameObjectVariant

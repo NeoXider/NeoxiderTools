@@ -10,7 +10,7 @@ namespace Neo.Pages
     [NeoDoc("NeoxiderPages/FakeLoad.md")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(FakeLoad))]
     /// <summary>
-    /// Фейковая загрузка: имитирует прогресс в диапазоне времени и генерирует события.
+    /// Fake loading: simulates progress over a time range and raises events.
     /// </summary>
     public class FakeLoad : MonoBehaviour
     {
@@ -33,7 +33,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Запускает фейковую загрузку (если не заблокирована настройкой one-shot).
+        ///     Starts fake loading (unless blocked by one-shot setting).
         /// </summary>
         public void Load()
         {
@@ -64,7 +64,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Завершает загрузку и вызывает <see cref="OnFinisLoad" />.
+        ///     Completes loading and invokes <see cref="OnFinisLoad" />.
         /// </summary>
         public void EndLoad()
         {

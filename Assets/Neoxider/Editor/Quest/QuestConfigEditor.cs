@@ -30,7 +30,7 @@ namespace Neo.Editor.Quest
             DrawSummary(idProp, titleProp, iconProp, objectivesProp, startConditionsProp, nextQuestIdsProp);
             DrawValidation(idProp, titleProp, objectivesProp, nextQuestIdsProp);
 
-            NeoxiderEditorGUI.BeginSection("Identity", "Базовые идентификаторы и отображение квеста.");
+            NeoxiderEditorGUI.BeginSection("Identity", "Core identifiers and quest display.");
             EditorGUILayout.PropertyField(idProp);
             EditorGUILayout.PropertyField(titleProp);
             DrawGenerateIdButton(idProp, titleProp);
@@ -38,20 +38,20 @@ namespace Neo.Editor.Quest
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Display", "Текст и визуальное представление для UI.");
+            NeoxiderEditorGUI.BeginSection("Display", "Text and visuals for the UI.");
             EditorGUILayout.PropertyField(descriptionProp);
             EditorGUILayout.PropertyField(iconProp);
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Objectives", "Список целей. Порядок элементов определяет их индекс.");
+            NeoxiderEditorGUI.BeginSection("Objectives", "Objective list; element order defines their index.");
             EditorGUILayout.PropertyField(objectivesProp, true);
             NeoxiderEditorGUI.EndSection();
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Flow", "Условия старта и цепочка следующих квестов.");
+            NeoxiderEditorGUI.BeginSection("Flow", "Start conditions and the chain of next quests.");
             EditorGUILayout.PropertyField(startConditionsProp, true);
             EditorGUILayout.PropertyField(nextQuestIdsProp, true);
             NeoxiderEditorGUI.EndSection();
@@ -99,25 +99,25 @@ namespace Neo.Editor.Quest
             if (string.IsNullOrWhiteSpace(titleProp.stringValue))
             {
                 EditorGUILayout.HelpBox(
-                    "Заполни Title. Без него квест плохо читается в UI и ID не сможет автосгенерироваться.",
+                    "Fill in Title. Without it the quest is hard to read in the UI and the ID cannot be auto-generated.",
                     MessageType.Warning);
             }
 
             if (objectivesProp.arraySize == 0)
             {
-                EditorGUILayout.HelpBox("Квест пока не содержит ни одной цели.", MessageType.Info);
+                EditorGUILayout.HelpBox("This quest has no objectives yet.", MessageType.Info);
             }
 
             if (HasDuplicateValues(nextQuestIdsProp))
             {
                 EditorGUILayout.HelpBox(
-                    "В списке Next Quest Ids есть дубликаты. Лучше держать цепочку переходов уникальной.",
+                    "Next Quest Ids contains duplicates. Prefer a unique transition chain.",
                     MessageType.Warning);
             }
 
             if (string.IsNullOrWhiteSpace(idProp.stringValue) && !string.IsNullOrWhiteSpace(titleProp.stringValue))
             {
-                EditorGUILayout.HelpBox("ID будет заполнен из Title при валидации asset или по кнопке Generate ID.",
+                EditorGUILayout.HelpBox("ID will be filled from Title when the asset is validated or via Generate ID.",
                     MessageType.Info);
             }
         }

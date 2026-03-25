@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     ScriptableObject для хранения конфигурации линий выигрыша в слот-машине.
-    ///     Определяет координаты символов для каждой выигрышной линии.
+    ///     ScriptableObject holding win-line configuration for the slot machine.
+    ///     Defines symbol coordinates for each win line.
     /// </summary>
     [CreateAssetMenu(fileName = "Lines Data", menuName = "Neoxider/Bonus/Slot/Lines Data", order = 2)]
     public class LinesData : ScriptableObject
@@ -19,12 +19,12 @@ namespace Neo.Bonus
         };
 
         /// <summary>
-        ///     Массив линий выигрыша.
+        ///     Win lines array.
         /// </summary>
         public InnerArray[] lines => _lines;
 
         /// <summary>
-        ///     Внутренний класс для хранения координат одной линии.
+        ///     Inner type storing coordinates for one line.
         /// </summary>
         [Serializable]
         public class InnerArray

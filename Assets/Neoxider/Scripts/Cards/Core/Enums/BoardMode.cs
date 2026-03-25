@@ -1,7 +1,7 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Режим использования Board: обычный стол или "бита".
+    ///     Board usage mode: regular table or discard / beat pile.
     /// </summary>
     public enum BoardMode
     {

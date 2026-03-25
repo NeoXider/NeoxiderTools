@@ -12,13 +12,13 @@ namespace Neo.Editor
     [CanEditMultipleObjects]
     public class NeoCustomEditor : CustomEditorBase
     {
-        // Отладка: проверяем, создается ли экземпляр
+        // Debug: verify the editor instance is constructed
         static NeoCustomEditor()
         {
-            //Debug.Log("[NeoCustomEditor] Класс загружен и зарегистрирован как CustomEditor для MonoBehaviour");
+            //Debug.Log("[NeoCustomEditor] Class loaded and registered as CustomEditor for MonoBehaviour");
         }
 
-        // Отладка: проверяем, создается ли экземпляр редактора
+        // Debug: verify the editor instance is constructed
 
         protected override void ProcessAttributeAssignments()
         {

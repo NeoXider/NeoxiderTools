@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Neo.Demo.Condition
 {
     /// <summary>
-    ///     Отображает HP в TMP_Text, подписываясь на Health.Hp.OnChanged.
-    ///     Формат: "HP: {current} / {max}"
+    ///     Displays HP in TMP_Text by subscribing to Health.Hp.OnChanged.
+    ///     Format: "HP: {current} / {max}"
     /// </summary>
     [RequireComponent(typeof(TMP_Text))]
     [AddComponentMenu("Neoxider/Demo/Condition/HealthTextDisplay")]

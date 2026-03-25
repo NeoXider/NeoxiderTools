@@ -34,7 +34,7 @@ namespace Neo.Editor
 
         public static State Tick(string currentVersion, string packageRootPath)
         {
-            // Если уже в процессе — просто возвращаем текущее состояние
+            // If already in progress, return the current state
             if (_isChecking)
             {
                 State s = ReadState();
@@ -45,13 +45,13 @@ namespace Neo.Editor
             long nowTicks = DateTime.UtcNow.Ticks;
             long minIntervalTicks = TimeSpan.FromSeconds(MinCheckIntervalSeconds).Ticks;
 
-            // Если проверяли недавно — ничего не делаем
+            // If we checked recently, do nothing
             if (lastTicks > 0 && nowTicks - lastTicks < minIntervalTicks)
             {
                 return ReadState();
             }
 
-            // Запускаем новую проверку
+            // Start a new check
             TryStartCheck(currentVersion, packageRootPath);
             State state = ReadState();
             return _isChecking
@@ -60,7 +60,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Возвращает текущее состояние без запуска проверки (только чтение кеша).
+        ///     Returns the current state without starting a check (cache read only).
         /// </summary>
         public static State Peek()
         {
@@ -80,7 +80,7 @@ namespace Neo.Editor
                 return;
             }
 
-            // Кулдаун ручной проверки (не чаще раз в 10 секунд)
+            // Manual check cooldown (at most once per 10 seconds)
             string manualTicksStr = SessionState.GetString(SessionLastManualCheckTicks, string.Empty);
             if (long.TryParse(manualTicksStr, out long lastManualTicks))
             {
@@ -90,14 +90,14 @@ namespace Neo.Editor
                 {
                     int secondsLeft = (int)((cooldownTicks - (nowTicks - lastManualTicks)) / TimeSpan.TicksPerSecond) +
                                       1;
-                    Debug.Log($"[NeoUpdateChecker] Повторная проверка доступна через {secondsLeft} сек.");
+                    Debug.Log($"[NeoUpdateChecker] Next check available in {secondsLeft} s.");
                     return;
                 }
             }
 
             SessionState.SetString(SessionLastManualCheckTicks, DateTime.UtcNow.Ticks.ToString());
 
-            // Сбрасываем интервал и помечаем как Checking сразу
+            // Reset interval and mark as Checking immediately
             SessionState.SetString(SessionLastCheckTicks, "0");
             SessionState.SetInt(SessionStatus, (int)UpdateStatus.Checking);
 
@@ -139,7 +139,7 @@ namespace Neo.Editor
             {
                 string repoUrl = TryGetRepositoryUrlFromPackageJson(packageRootPath);
 
-                // Фоллбек: если packageRootPath пуст, ищем package.json рядом со скриптом
+                // Fallback: if packageRootPath is empty, look for package.json near the script
                 if (string.IsNullOrEmpty(repoUrl))
                 {
                     repoUrl = TryFindRepositoryUrlFallback();
@@ -150,7 +150,7 @@ namespace Neo.Editor
                     SessionState.SetString(SessionError, "repository URL not found in package.json");
                     SessionState.SetInt(SessionStatus, (int)UpdateStatus.Unknown);
                     SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                    Debug.LogWarning("[NeoUpdateChecker] Не удалось найти URL репозитория в package.json. " +
+                    Debug.LogWarning("[NeoUpdateChecker] Could not find repository URL in package.json. " +
                                      $"packageRootPath=\"{packageRootPath ?? "null"}\"");
                     return;
                 }
@@ -160,7 +160,7 @@ namespace Neo.Editor
                     SessionState.SetString(SessionError, $"Cannot parse GitHub URL: {repoUrl}");
                     SessionState.SetInt(SessionStatus, (int)UpdateStatus.Unknown);
                     SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                    Debug.LogWarning($"[NeoUpdateChecker] Не удалось разобрать GitHub URL: {repoUrl}");
+                    Debug.LogWarning($"[NeoUpdateChecker] Could not parse GitHub URL: {repoUrl}");
                     return;
                 }
 
@@ -173,7 +173,7 @@ namespace Neo.Editor
 
                 _isChecking = true;
                 SetLastCheckTicks(DateTime.UtcNow.Ticks);
-                Debug.Log($"[NeoUpdateChecker] Запрос обновления: {apiUrl}");
+                Debug.Log($"[NeoUpdateChecker] Update request: {apiUrl}");
 
                 UnityWebRequestAsyncOperation op = _request.SendWebRequest();
                 op.completed += _ =>
@@ -193,7 +193,7 @@ namespace Neo.Editor
             catch (Exception ex)
             {
                 _isChecking = false;
-                Debug.LogWarning($"[NeoUpdateChecker] Исключение при проверке обновлений: {ex.Message}");
+                Debug.LogWarning($"[NeoUpdateChecker] Exception while checking for updates: {ex.Message}");
             }
         }
 
@@ -209,15 +209,15 @@ namespace Neo.Editor
                 return;
             }
 
-            // 403 — GitHub API rate limit. Не пробуем фоллбек tags, тоже будет 403.
+            // 403 — GitHub API rate limit. Do not try tags fallback; it would also return 403.
             if (request.responseCode == 403)
             {
-                string error = "GitHub API rate limit (403). Повторите позже.";
+                string error = "GitHub API rate limit (403). Try again later.";
                 ApplyResult(currentVersion, null, repoWebUrl, error);
                 return;
             }
 
-            // Если releases/latest не работает (например 404 — нет релизов), пробуем tags
+            // If releases/latest fails (e.g. 404 — no releases), try tags
             if (request.result != UnityWebRequest.Result.Success)
             {
                 TryCheckTagsFallback(currentVersion, owner, repo, repoWebUrl);
@@ -273,7 +273,7 @@ namespace Neo.Editor
 
             if (!string.IsNullOrEmpty(error))
             {
-                Debug.LogWarning($"[NeoUpdateChecker] Ошибка проверки обновлений: {error}");
+                Debug.LogWarning($"[NeoUpdateChecker] Update check error: {error}");
             }
 
             if (string.IsNullOrEmpty(latestVersion))
@@ -293,7 +293,7 @@ namespace Neo.Editor
             SessionState.SetBool(SessionUpdateAvailable, status == UpdateStatus.UpdateAvailable);
 
             Debug.Log(
-                $"[NeoUpdateChecker] Проверка завершена: current={currentVersion}, latest={latestVersion}, status={status}");
+                $"[NeoUpdateChecker] Check finished: current={currentVersion}, latest={latestVersion}, status={status}");
         }
 
         private static UpdateStatus CompareToPublished(string current, string latest)
@@ -338,10 +338,10 @@ namespace Neo.Editor
                 v = v.Substring(0, dash);
             }
 
-            // Оставляем только цифры и точки
+            // Keep only digits and dots
             v = Regex.Replace(v, "[^0-9.]", string.Empty);
 
-            // Дополняем до формата x.y.z
+            // Pad to x.y.z form
             string[] parts = v.Split('.', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length == 0)
             {
@@ -379,7 +379,7 @@ namespace Neo.Editor
                 return null;
             }
 
-            // Первый элемент массива: { "name": "vX.Y.Z", ... }
+            // First array element: { "name": "vX.Y.Z", ... }
             Match m = Regex.Match(json, "\\\"name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"", RegexOptions.IgnoreCase);
             if (m.Success && m.Groups.Count > 1)
             {
@@ -401,13 +401,13 @@ namespace Neo.Editor
                 string relative = packageRootPath.Replace('\\', '/');
                 string packageJsonRelative = $"{relative}/package.json";
 
-                // packageRootPath может быть Assets/... или Packages/...
+                // packageRootPath may be Assets/... or Packages/...
                 string projectRoot = Directory.GetCurrentDirectory();
                 string packageJsonAbsolute = Path.GetFullPath(Path.Combine(projectRoot, packageJsonRelative));
 
                 if (!File.Exists(packageJsonAbsolute))
                 {
-                    // Фоллбек через AssetDatabase
+                    // Fallback via AssetDatabase
                     TextAsset asset = AssetDatabase.LoadAssetAtPath<TextAsset>(packageJsonRelative);
                     if (asset != null)
                     {
@@ -427,13 +427,13 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Фоллбек: ищем package.json через AssetDatabase по известному имени пакета.
+        ///     Fallback: find package.json via AssetDatabase using the known package name.
         /// </summary>
         private static string TryFindRepositoryUrlFallback()
         {
             try
             {
-                // Ищем все package.json в проекте
+                // Find all package.json files in the project
                 string[] guids = AssetDatabase.FindAssets("package t:TextAsset");
                 foreach (string guid in guids)
                 {
@@ -465,7 +465,7 @@ namespace Neo.Editor
             {
             }
 
-            // Совсем последний фоллбек: прямой путь
+            // Last-resort fallback: direct paths
             try
             {
                 string[] knownPaths =

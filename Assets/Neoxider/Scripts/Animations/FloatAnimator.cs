@@ -115,7 +115,7 @@ namespace Neo.Animations
 
             animationTime += Time.deltaTime;
 
-            // Получаем новое значение
+            // Sample new value
             float newValue = AnimationUtils.GetTargetValue(
                 animationType,
                 minValue, maxValue,

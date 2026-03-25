@@ -4,11 +4,11 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Синглтон по уникальному Id: в один момент времени только один экземпляр с данным Id.
-    ///     При появлении второго объекта с тем же Id предыдущий уничтожается (побеждает новый).
-    ///     Опционально объект можно не уничтожать при смене сцен (DontDestroyOnLoad).
+    ///     Singleton keyed by Id: only one live instance per Id at a time.
+    ///     When a second object with the same Id appears, the previous one is destroyed (new wins).
+    ///     Optionally survives scene loads via DontDestroyOnLoad.
     /// </summary>
-    /// <typeparam name="T">Тип компонента (наследник SingletonById&lt;T&gt;).</typeparam>
+    /// <typeparam name="T">Component type inheriting SingletonById&lt;T&gt;.</typeparam>
     [NeoDoc("Tools/Managers/SingletonById.md")]
     [DisallowMultipleComponent]
     public class SingletonById<T> : MonoBehaviour where T : SingletonById<T>
@@ -23,14 +23,14 @@ namespace Neo.Tools
         [Tooltip("Do not destroy this object when loading new scenes (persists across scenes).")] [SerializeField]
         private bool _dontDestroyOnLoad;
 
-        /// <summary>Уникальный идентификатор этого синглтона.</summary>
+        /// <summary>Unique Id for this singleton.</summary>
         public string Id => _id;
 
         protected virtual void Awake()
         {
             if (string.IsNullOrEmpty(_id))
             {
-                Debug.LogWarning($"[SingletonById] На {gameObject.name} не задан Id, экземпляр не регистрируется.",
+                Debug.LogWarning($"[SingletonById] Id is not set on {gameObject.name}; instance is not registered.",
                     this);
                 return;
             }
@@ -61,7 +61,7 @@ namespace Neo.Tools
             }
         }
 
-        /// <summary>Получить экземпляр по Id. Если нет — null.</summary>
+        /// <summary>Get instance by Id, or null.</summary>
         public static T Get(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -72,7 +72,7 @@ namespace Neo.Tools
             return ById.TryGetValue(id, out T instance) ? instance : null;
         }
 
-        /// <summary>Есть ли живой экземпляр с данным Id.</summary>
+        /// <summary>Whether a live instance exists for the Id.</summary>
         public static bool Has(string id)
         {
             return Get(id) != null;

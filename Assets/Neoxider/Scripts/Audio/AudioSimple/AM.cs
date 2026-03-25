@@ -84,16 +84,16 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит звуковой эффект по ID из массива звуков с указанной громкостью.
+            ///     Plays a sound effect by index in the <c>_sounds</c> array at the given volume.
             /// </summary>
-            /// <param name="id">ID звука в массиве _sounds.</param>
-            /// <param name="volume">Громкость воспроизведения (0-1).</param>
+            /// <param name="id">Sound index in <c>_sounds</c>.</param>
+            /// <param name="volume">Playback volume (0–1).</param>
             [Button]
             public void Play(int id, float volume)
             {
                 if (_efx == null)
                 {
-                    Debug.LogWarning("[AM] AudioSource для эффектов не инициализирован.");
+                    Debug.LogWarning("[AM] Effects AudioSource is not initialized.");
                     return;
                 }
 
@@ -105,7 +105,7 @@ namespace Neo
 
                 if (_sounds[id].clip == null)
                 {
-                    Debug.LogWarning($"[AM] Sound clip по ID {id} равен null.");
+                    Debug.LogWarning($"[AM] Sound clip at ID {id} is null.");
                     return;
                 }
 
@@ -113,9 +113,9 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит звуковой эффект по ID из массива звуков с громкостью по умолчанию из настроек.
+            ///     Plays a sound effect by index using each entry's default volume from the <c>_sounds</c> array.
             /// </summary>
-            /// <param name="id">ID звука в массиве _sounds.</param>
+            /// <param name="id">Sound index in <c>_sounds</c>.</param>
             [Button]
             public void Play(int id)
             {
@@ -131,21 +131,21 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит звуковой эффект напрямую по AudioClip с указанной громкостью.
+            ///     Plays a sound effect from an <see cref="AudioClip"/> at the given volume.
             /// </summary>
-            /// <param name="clip">AudioClip для воспроизведения.</param>
-            /// <param name="volume">Громкость воспроизведения (0-1).</param>
+            /// <param name="clip">Clip to play.</param>
+            /// <param name="volume">Playback volume (0–1).</param>
             public void Play(AudioClip clip, float volume)
             {
                 if (_efx == null)
                 {
-                    Debug.LogWarning("[AM] AudioSource для эффектов не инициализирован.");
+                    Debug.LogWarning("[AM] Effects AudioSource is not initialized.");
                     return;
                 }
 
                 if (clip == null)
                 {
-                    Debug.LogWarning("[AM] AudioClip равен null.");
+                    Debug.LogWarning("[AM] AudioClip is null.");
                     return;
                 }
 
@@ -153,17 +153,17 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит музыку по ID из массива музыки с указанной громкостью.
-            ///     Останавливает случайную музыку, если она была включена.
+            ///     Plays music by index in <c>_musicClips</c> at the given volume.
+            ///     Stops random music if it was active.
             /// </summary>
-            /// <param name="id">ID музыки в массиве _musicClips.</param>
-            /// <param name="volume">Громкость воспроизведения (0-1).</param>
+            /// <param name="id">Music index in <c>_musicClips</c>.</param>
+            /// <param name="volume">Playback volume (0–1).</param>
             [Button]
             public void PlayMusic(int id, float volume)
             {
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] AudioSource для музыки не инициализирован.");
+                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
@@ -175,7 +175,7 @@ namespace Neo
 
                 if (_musicClips[id] == null)
                 {
-                    Debug.LogWarning($"[AM] Music clip по ID {id} равен null.");
+                    Debug.LogWarning($"[AM] Music clip at ID {id} is null.");
                     return;
                 }
 
@@ -193,10 +193,10 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит музыку по ID из массива музыки с громкостью по умолчанию.
-            ///     Останавливает случайную музыку, если она была включена.
+            ///     Plays music by index in <c>_musicClips</c> at full volume (1).
+            ///     Stops random music if it was active.
             /// </summary>
-            /// <param name="id">ID музыки в массиве _musicClips.</param>
+            /// <param name="id">Music index in <c>_musicClips</c>.</param>
             [Button]
             public void PlayMusic(int id)
             {
@@ -204,22 +204,22 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Воспроизводит музыку напрямую по AudioClip с указанной громкостью.
-            ///     Останавливает случайную музыку, если она была включена.
+            ///     Plays music from an <see cref="AudioClip"/> at the given volume.
+            ///     Stops random music if it was active.
             /// </summary>
-            /// <param name="clip">AudioClip для воспроизведения.</param>
-            /// <param name="volume">Громкость воспроизведения (0-1).</param>
+            /// <param name="clip">Clip to play.</param>
+            /// <param name="volume">Playback volume (0–1).</param>
             public void PlayMusicByClip(AudioClip clip, float volume)
             {
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] AudioSource для музыки не инициализирован.");
+                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
                 if (clip == null)
                 {
-                    Debug.LogWarning("[AM] AudioClip равен null.");
+                    Debug.LogWarning("[AM] AudioClip is null.");
                     return;
                 }
 
@@ -237,9 +237,9 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Возвращает текущий воспроизводимый музыкальный клип.
+            ///     Returns the currently playing music clip.
             /// </summary>
-            /// <returns>Текущий AudioClip или null, если ничего не воспроизводится.</returns>
+            /// <returns>Current <see cref="AudioClip"/>, or null if nothing is playing.</returns>
             public AudioClip GetCurrentMusicClip()
             {
                 if (_useRandomMusic && _randomMusicController != null)
@@ -251,20 +251,20 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Включает режим случайной музыки из списка треков.
-            ///     Останавливает текущую конкретную музыку, если она играет.
+            ///     Enables random music playback from the track list.
+            ///     Stops any single-track music currently playing.
             /// </summary>
             public void EnableRandomMusic()
             {
                 if (_randomMusicTracks == null || _randomMusicTracks.Length == 0)
                 {
-                    Debug.LogWarning("[AM] Список треков для случайной музыки пуст.");
+                    Debug.LogWarning("[AM] Random music track list is empty.");
                     return;
                 }
 
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] AudioSource для музыки не инициализирован.");
+                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
@@ -286,7 +286,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Выключает режим случайной музыки.
+            ///     Disables random music mode.
             /// </summary>
             public void DisableRandomMusic()
             {
@@ -299,7 +299,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Возвращает true, если включен режим случайной музыки.
+            ///     Returns whether random music mode is enabled and playing.
             /// </summary>
             public bool IsRandomMusicEnabled()
             {
@@ -307,10 +307,10 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Устанавливает громкость для звуковых эффектов или музыки.
+            ///     Sets volume for sound effects or music.
             /// </summary>
-            /// <param name="volume">Громкость (0-1).</param>
-            /// <param name="efx">true для эффектов, false для музыки.</param>
+            /// <param name="volume">Volume (0–1).</param>
+            /// <param name="efx">True for effects, false for music.</param>
             public void SetVolume(float volume, bool efx)
             {
                 if (efx)
@@ -330,7 +330,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Применяет стартовые громкости к AudioSource'ам.
+            ///     Applies startup volumes to the AudioSources.
             /// </summary>
             public void ApplyStartVolumes()
             {

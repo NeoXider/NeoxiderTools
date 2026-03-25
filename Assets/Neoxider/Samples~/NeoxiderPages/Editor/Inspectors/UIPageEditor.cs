@@ -10,7 +10,7 @@ namespace Neo.Pages.Editor
     public sealed class UIPageEditor : CustomEditorBase
     {
         private const float ModeButtonHeight = 22f;
-        private const string SourceLabelAll = "Источник: все папки проекта";
+        private const string SourceLabelAll = "Source: all project folders";
         private SerializedProperty animationProp;
 
         private string generateName = "Menu";
@@ -56,7 +56,7 @@ namespace Neo.Pages.Editor
 
         protected override void ProcessAttributeAssignments()
         {
-            // Pages-инспекторы не используют авто-assign из NeoCustomEditor.
+            // Pages inspectors do not use auto-assign from NeoCustomEditor.
         }
 
         private void DrawPageIdSelector(SerializedProperty pageId)
@@ -65,8 +65,8 @@ namespace Neo.Pages.Editor
             {
                 EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
                 selectorMode = DrawSegmentedMode(selectorMode,
-                    new GUIContent("Dropdown", "Выбор из PageId ассетов по папке"),
-                    new GUIContent("Asset", "Ручной выбор конкретного PageId ассета"));
+                    new GUIContent("Dropdown", "Pick from PageId assets in the folder"),
+                    new GUIContent("Asset", "Manually pick a specific PageId asset"));
                 EditorGUILayout.Space(2);
 
                 if (selectorMode == 0)
@@ -75,7 +75,7 @@ namespace Neo.Pages.Editor
                     if (ids.Length == 0)
                     {
                         EditorGUILayout.HelpBox(
-                            "В проекте нет PageId ассетов.\nСоздай PageId вручную или сгенерируй через меню: Tools → Neo → Pages → Generate Default PageIds.",
+                            "There are no PageId assets in the project.\nCreate a PageId manually or generate one via menu: Tools → Neo → Pages → Generate Default PageIds.",
                             MessageType.Warning);
                         return;
                     }

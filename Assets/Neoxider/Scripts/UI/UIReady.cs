@@ -11,17 +11,17 @@ namespace Neo
         public enum SceneLoadMode
         {
             /// <summary>
-            ///     Загружает сцену синхронно.
+            ///     Loads the scene synchronously.
             /// </summary>
             Sync,
 
             /// <summary>
-            ///     Загружает сцену асинхронно и активирует сразу.
+            ///     Loads the scene asynchronously and activates immediately.
             /// </summary>
             Async,
 
             /// <summary>
-            ///     Загружает сцену асинхронно, но ждёт ручной активации.
+            ///     Loads the scene asynchronously but waits for manual activation.
             /// </summary>
             AsyncManual
         }
@@ -77,7 +77,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Загружает сцену согласно выбранному режиму.
+            ///     Loads the scene using the selected mode.
             /// </summary>
             public void LoadScene(int idScene)
             {
@@ -96,7 +96,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Загружает сцену синхронно.
+            ///     Loads the scene synchronously.
             /// </summary>
             public void LoadSceneSync(int idScene)
             {
@@ -104,7 +104,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Загружает сцену асинхронно с автоактивацией.
+            ///     Loads the scene asynchronously with auto-activation.
             /// </summary>
             public void LoadSceneAsync(int idScene)
             {
@@ -112,7 +112,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Загружает сцену асинхронно без автоактивации (требует вызова ProceedScene).
+            ///     Loads the scene asynchronously without auto-activation (call ProceedScene to activate).
             /// </summary>
             public void LoadSceneAsyncManual(int idScene)
             {
@@ -120,7 +120,7 @@ namespace Neo
             }
 
             /// <summary>
-            ///     Активирует сцену после асинхронной загрузки без автоактивации.
+            ///     Activates the scene after async load when auto-activation was disabled.
             /// </summary>
             public void ProceedScene()
             {
@@ -169,7 +169,7 @@ namespace Neo
                     ALS.animator.enabled = false;
                 }
 
-                Debug.Log("����� ��������� � ������������!");
+                Debug.Log("[UIReady] Scene loaded and activated.");
             }
 
             [Serializable]

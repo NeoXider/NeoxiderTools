@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Модель колоды карт (логика без визуализации)
+    ///     Deck model (logic only, no view).
     /// </summary>
     public class DeckModel : ICardContainer
     {
@@ -13,27 +13,27 @@ namespace Neo.Cards
         private readonly Random _random = new();
 
         /// <summary>
-        ///     Карты в колоде
+        ///     Cards still in the deck.
         /// </summary>
         public IReadOnlyList<CardData> Cards => _cards.Data;
 
         /// <summary>
-        ///     Карты в сбросе
+        ///     Discard pile.
         /// </summary>
         public IReadOnlyList<CardData> DiscardPile => _discardPile;
 
         /// <summary>
-        ///     Количество карт в колоде
+        ///     Cards remaining in the draw pile.
         /// </summary>
         public int RemainingCount => _cards.Count;
 
         /// <summary>
-        ///     Пуста ли колода
+        ///     Whether the draw pile is empty.
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
         /// <summary>
-        ///     Тип колоды
+        ///     Deck type used for generation.
         /// </summary>
         public DeckType DeckType { get; private set; }
 
@@ -48,20 +48,20 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Событие при изменении колоды
+        ///     Raised when the deck changes.
         /// </summary>
         public event Action OnDeckChanged;
 
         /// <summary>
-        ///     Событие когда колода опустела
+        ///     Raised when the draw pile becomes empty.
         /// </summary>
         public event Action OnDeckEmpty;
 
         /// <summary>
-        ///     Инициализирует колоду указанного типа
+        ///     Builds a deck of the given type.
         /// </summary>
-        /// <param name="deckType">Тип колоды</param>
-        /// <param name="shuffle">Перемешать после создания</param>
+        /// <param name="deckType">Deck type.</param>
+        /// <param name="shuffle">Shuffle after build.</param>
         public void Initialize(DeckType deckType, bool shuffle = true)
         {
             DeckType = deckType;
@@ -93,10 +93,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Инициализирует колоду из заданного списка карт
+        ///     Initializes from an explicit card list.
         /// </summary>
-        /// <param name="cards">Список карт</param>
-        /// <param name="shuffle">Перемешать после создания</param>
+        /// <param name="cards">Cards to load.</param>
+        /// <param name="shuffle">Shuffle after load.</param>
         public void Initialize(IEnumerable<CardData> cards, bool shuffle = true)
         {
             _cards.Clear();
@@ -115,7 +115,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемешивает колоду (алгоритм Фишера-Йетса)
+        ///     Shuffles the draw pile (Fisher–Yates).
         /// </summary>
         public void Shuffle()
         {
@@ -129,9 +129,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт верхнюю карту из колоды
+        ///     Draws the top card.
         /// </summary>
-        /// <returns>Карта или null если колода пуста</returns>
+        /// <returns>Card or null if empty.</returns>
         public CardData? Draw()
         {
             if (_cards.Count == 0)
@@ -154,10 +154,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт несколько карт из колоды
+        ///     Draws up to <paramref name="count" /> cards.
         /// </summary>
-        /// <param name="count">Количество карт</param>
-        /// <returns>Список взятых карт</returns>
+        /// <param name="count">How many.</param>
+        /// <returns>Drawn cards.</returns>
         public List<CardData> Draw(int count)
         {
             List<CardData> result = new(count);
@@ -175,9 +175,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает верхнюю карту без извлечения
+        ///     Peeks top card without removing.
         /// </summary>
-        /// <returns>Верхняя карта или null если колода пуста</returns>
+        /// <returns>Top card or null.</returns>
         public CardData? Peek()
         {
             if (_cards.Count == 0)
@@ -189,9 +189,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает нижнюю карту без извлечения (часто используется как козырь в "Дураке")
+        ///     Peeks bottom card without removing (often trump in Durak).
         /// </summary>
-        /// <returns>Нижняя карта или null если колода пуста</returns>
+        /// <returns>Bottom card or null.</returns>
         public CardData? PeekBottom()
         {
             if (_cards.Count == 0)
@@ -203,27 +203,27 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Добавляет карту в сброс
+        ///     Sends a card to the discard pile.
         /// </summary>
-        /// <param name="card">Карта для сброса</param>
+        /// <param name="card">Card.</param>
         public void Discard(CardData card)
         {
             _discardPile.Add(card);
         }
 
         /// <summary>
-        ///     Добавляет несколько карт в сброс
+        ///     Discards multiple cards.
         /// </summary>
-        /// <param name="cards">Карты для сброса</param>
+        /// <param name="cards">Cards.</param>
         public void Discard(IEnumerable<CardData> cards)
         {
             _discardPile.AddRange(cards);
         }
 
         /// <summary>
-        ///     Возвращает карту в колоду (вниз)
+        ///     Returns a card under the draw pile (bottom).
         /// </summary>
-        /// <param name="card">Карта</param>
+        /// <param name="card">Card.</param>
         public void ReturnToBottom(CardData card)
         {
             _cards.Mutable.Insert(0, card);
@@ -231,9 +231,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает карту в колоду (наверх)
+        ///     Returns a card on top of the draw pile.
         /// </summary>
-        /// <param name="card">Карта</param>
+        /// <param name="card">Card.</param>
         public void ReturnToTop(CardData card)
         {
             _cards.Add(card);
@@ -241,7 +241,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемешивает сброс и добавляет в колоду
+        ///     Shuffles discard back into the deck.
         /// </summary>
         public void ReshuffleDiscardPile()
         {
@@ -255,16 +255,16 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сбрасывает колоду в начальное состояние
+        ///     Resets to the current <see cref="DeckType" />.
         /// </summary>
-        /// <param name="shuffle">Перемешать после сброса</param>
+        /// <param name="shuffle">Shuffle after reset.</param>
         public void Reset(bool shuffle = true)
         {
             Initialize(DeckType, shuffle);
         }
 
         /// <summary>
-        ///     Очищает колоду и сброс
+        ///     Clears deck and discard.
         /// </summary>
         public void Clear()
         {

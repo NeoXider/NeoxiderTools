@@ -65,11 +65,11 @@ namespace Neo.GridSystem
         /// </summary>
         public static MovementRule EighteenDirections3D => new(new[]
         {
-            // 6 ортогональных
+            // 6 orthogonal
             new Vector3Int(1, 0, 0), new Vector3Int(-1, 0, 0),
             new Vector3Int(0, 1, 0), new Vector3Int(0, -1, 0),
             new Vector3Int(0, 0, 1), new Vector3Int(0, 0, -1),
-            // 12 рёберных
+            // 12 edge (face-diagonal) neighbors
             new Vector3Int(1, 1, 0), new Vector3Int(1, -1, 0), new Vector3Int(-1, 1, 0), new Vector3Int(-1, -1, 0),
             new Vector3Int(1, 0, 1), new Vector3Int(1, 0, -1), new Vector3Int(-1, 0, 1), new Vector3Int(-1, 0, -1),
             new Vector3Int(0, 1, 1), new Vector3Int(0, 1, -1), new Vector3Int(0, -1, 1), new Vector3Int(0, -1, -1)

@@ -5,16 +5,15 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Готовые шаблоны анимаций карты. Переиспользуются в CardViewUniversal и в любых своих вью.
-    ///     Все методы статические; принимают Transform (и при необходимости Graphic) и параметры.
+    ///     Static DOTween helpers for card motion. Used by <see cref="CardViewUniversal" /> and custom views.
     /// </summary>
     public static class CardViewAnimationTemplates
     {
-        /// <summary>Разовая анимация: упругий масштаб (DOPunchScale).</summary>
-        /// <param name="target">Transform карты</param>
-        /// <param name="duration">Длительность</param>
-        /// <param name="punch">Сила punch (0.1–0.2 типично)</param>
-        /// <param name="config">Опционально: параметры из конфига</param>
+        /// <summary>One-shot bouncy scale (DOPunchScale).</summary>
+        /// <param name="target">Card transform.</param>
+        /// <param name="duration">Seconds.</param>
+        /// <param name="punch">Punch strength (0.1–0.2 is typical).</param>
+        /// <param name="config">Optional animation config override.</param>
         public static Tween Bounce(Transform target, float duration = 0.25f, float punch = 0.15f,
             CardAnimationConfig config = null)
         {
@@ -28,7 +27,7 @@ namespace Neo.Cards
             return target.DOPunchScale(scale * punch, duration, 1).SetEase(Ease.OutQuad);
         }
 
-        /// <summary>Разовая анимация: один цикл пульсации масштаба.</summary>
+        /// <summary>Single scale pulse cycle.</summary>
         public static Tween Pulse(Transform target, float duration = 0.4f, float scaleDelta = 0.08f,
             CardAnimationConfig config = null)
         {
@@ -46,7 +45,7 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Зацикленная пульсация масштаба.</summary>
+        /// <summary>Looped scale pulse.</summary>
         public static Tween PulseLooped(Transform target, float cycleDuration = 0.8f, float scaleDelta = 0.05f,
             CardAnimationConfig config = null)
         {
@@ -65,7 +64,7 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Разовая анимация: тряска позиции.</summary>
+        /// <summary>One-shot position shake.</summary>
         public static Tween Shake(Transform target, float duration = 0.3f, float strength = 8f,
             CardAnimationConfig config = null)
         {
@@ -78,7 +77,7 @@ namespace Neo.Cards
             return target.DOShakePosition(duration, strength, 20);
         }
 
-        /// <summary>Разовая анимация: краткое подсвечивание через масштаб (вспышка).</summary>
+        /// <summary>Quick highlight via scale flash.</summary>
         public static Tween Highlight(Transform target, float duration = 0.2f, CardAnimationConfig config = null)
         {
             if (config != null)
@@ -94,7 +93,7 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Подсвечивание через alpha (для UI Graphic).</summary>
+        /// <summary>Alpha pulse for UI <see cref="Graphic" />.</summary>
         public static Tween HighlightGraphic(Graphic graphic, float duration = 0.2f, CardAnimationConfig config = null)
         {
             if (config != null)
@@ -126,11 +125,11 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Влёт из позиции с появлением (scale 0 → 1, движение к текущей позиции).</summary>
-        /// <param name="target">Transform карты</param>
-        /// <param name="fromPosition">Стартовая позиция (world)</param>
-        /// <param name="duration">Длительность</param>
-        /// <param name="config">Опционально</param>
+        /// <summary>Fly from world position while scaling 0 → base.</summary>
+        /// <param name="target">Card transform.</param>
+        /// <param name="fromPosition">Start world position.</param>
+        /// <param name="duration">Seconds.</param>
+        /// <param name="config">Optional config.</param>
         public static Tween FlyIn(Transform target, Vector3 fromPosition, float duration = 0.35f,
             CardAnimationConfig config = null)
         {
@@ -150,7 +149,7 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Зацикленное лёгкое покачивание масштаба.</summary>
+        /// <summary>Subtle breathing scale loop.</summary>
         public static Tween Idle(Transform target, float cycleDuration = 1.2f, float scaleDelta = 0.02f,
             CardAnimationConfig config = null)
         {
@@ -169,7 +168,7 @@ namespace Neo.Cards
             return s;
         }
 
-        /// <summary>Возвращает разовую анимацию по типу (без конфига, с длительностями по умолчанию).</summary>
+        /// <summary>One-shot tween by type (defaults when config omitted).</summary>
         public static Tween PlayOneShot(Transform target, CardViewAnimationType type, float? duration = null)
         {
             float d = duration ?? 0.3f;
@@ -184,7 +183,7 @@ namespace Neo.Cards
             };
         }
 
-        /// <summary>Возвращает зацикленную анимацию по типу.</summary>
+        /// <summary>Looped tween by type.</summary>
         public static Tween PlayLooped(Transform target, CardViewAnimationType type, float? cycleDuration = null,
             CardAnimationConfig config = null)
         {

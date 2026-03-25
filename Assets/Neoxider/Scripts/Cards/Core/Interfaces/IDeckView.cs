@@ -3,34 +3,34 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Интерфейс визуального представления колоды
+    ///     View API for a deck stack.
     /// </summary>
     public interface IDeckView
     {
         /// <summary>
-        ///     Точка спавна карт
+        ///     Spawn point for drawn cards.
         /// </summary>
         Transform SpawnPoint { get; }
 
         /// <summary>
-        ///     Количество видимых карт в стопке
+        ///     Number of visible cards in the stack visual.
         /// </summary>
         int VisibleCardCount { get; set; }
 
         /// <summary>
-        ///     Обновляет визуальное отображение колоды
+        ///     Refreshes the deck visual.
         /// </summary>
-        /// <param name="remainingCount">Количество оставшихся карт</param>
+        /// <param name="remainingCount">Cards remaining in the deck.</param>
         void UpdateVisual(int remainingCount);
 
         /// <summary>
-        ///     Показывает верхнюю карту колоды (козырь)
+        ///     Shows the top deck card (e.g. trump indicator).
         /// </summary>
-        /// <param name="card">Карта для отображения</param>
+        /// <param name="card">Card to display.</param>
         void ShowTopCard(CardData card);
 
         /// <summary>
-        ///     Скрывает верхнюю карту
+        ///     Hides the top deck card display.
         /// </summary>
         void HideTopCard();
     }

@@ -36,9 +36,8 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Каждый GameObjectVariant имеет один массив objects,
-        ///     длина которого = количеству состояний (_maxStates).
-        ///     На индекс i включается objects[i], все остальные выключены.
+        ///     Each GameObjectVariant has one objects array whose length equals the state count (_maxStates).
+        ///     At index i, objects[i] is enabled; all others are disabled.
         /// </summary>
         [Serializable]
         public class GameObjectVariant
@@ -74,12 +73,12 @@ namespace Neo.UI
         #region PROPERTIES
 
         /// <summary>
-        ///     Текущий индекс состояния.
+        ///     Current state index.
         /// </summary>
         public int currentStateIndex => _currentStateIndex;
 
         /// <summary>
-        ///     Общее максимальное число состояний (автоматически вычисляется в OnValidate).
+        ///     Total maximum number of states (computed in OnValidate).
         /// </summary>
         public int MaxStates => _maxStates;
 
@@ -88,7 +87,7 @@ namespace Neo.UI
         #region PUBLIC_METHODS
 
         /// <summary>
-        ///     Переход к следующему состоянию (currentStateIndex + 1).
+        ///     Advance to the next state (currentStateIndex + 1).
         /// </summary>
         public void NextState()
         {
@@ -96,7 +95,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Переход к предыдущему состоянию (currentStateIndex - 1).
+        ///     Go to the previous state (currentStateIndex - 1).
         /// </summary>
         public void PreviousState()
         {
@@ -104,7 +103,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Установить текущее состояние по индексу.
+        ///     Set current state by index.
         /// </summary>
         public void SetCurrentState(int index)
         {
@@ -116,7 +115,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Добавить (расширить) количество состояний до newStateCount (если оно больше current).
+        ///     Expand state count to newStateCount (only if greater than current).
         /// </summary>
         public void AddState(int newStateCount)
         {
@@ -130,7 +129,7 @@ namespace Neo.UI
                 return;
             }
 
-            // Расширяем массивы до newStateCount
+            // Resize arrays to newStateCount
             foreach (ImageVariant v in _imageVariants)
             {
                 Array.Resize(ref v.sprites, newStateCount);
@@ -167,7 +166,7 @@ namespace Neo.UI
                 }
             }
 
-            // Для каждого GameObjectVariant
+            // For each GameObjectVariant
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 Array.Resize(ref gv.objects, newStateCount);
@@ -182,7 +181,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Полностью очистить все варианты (сделать массивы длины 0), index=0.
+        ///     Clear all variants (arrays length 0), index = 0.
         /// </summary>
         public void ClearAllStates()
         {
@@ -229,7 +228,7 @@ namespace Neo.UI
         }
 
         /// <summary>
-        ///     Применяет визуальное состояние ко всем компонентам (Image, Color, TMP, GameObject).
+        ///     Applies visual state to all parts (Image, Color, TMP, GameObject).
         /// </summary>
         private void Visual()
         {
@@ -282,9 +281,8 @@ namespace Neo.UI
 
         private void VariantVisual()
         {
-            // Для каждого GameObjectVariant, 
-            // у нас массив objects длиной _maxStates.
-            // На _currentStateIndex включаем, остальные отключаем.
+            // For each GameObjectVariant, objects has length _maxStates.
+            // Enable index _currentStateIndex, disable the rest.
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 for (int i = 0; i < gv.objects.Length; i++)
@@ -299,22 +297,22 @@ namespace Neo.UI
 
         private void OnValidate()
         {
-            // Сначала вычисляем _maxStates заново
+            // Recompute _maxStates
             _maxStates = 0;
 
-            // 1) ImageVariant (спрайты)
+            // 1) ImageVariant (sprites)
             foreach (ImageVariant v in _imageVariants)
             {
                 _maxStates = Math.Max(_maxStates, v.sprites.Length);
             }
 
-            // 2) ImageColor (цвета)
+            // 2) ImageColor (colors)
             foreach (ImageColor c in _imageColors)
             {
                 _maxStates = Math.Max(_maxStates, c.colors.Length);
             }
 
-            // 3) TMP (цвет, текст)
+            // 3) TMP (color, text)
             foreach (TmpColorTextVariant t in _textColorVariants)
             {
                 _maxStates = Math.Max(_maxStates, t.colors.Length);
@@ -324,14 +322,13 @@ namespace Neo.UI
                 }
             }
 
-            // 4) GameObjectVariant[] – 
-            // у каждого gv один массив gv.objects
+            // 4) GameObjectVariant[] — each gv has one gv.objects array
             foreach (GameObjectVariant gv in _objectVariants)
             {
                 _maxStates = Math.Max(_maxStates, gv.objects.Length);
             }
 
-            // Ресайзим массивы до _maxStates
+            // Resize arrays to _maxStates
             foreach (ImageVariant v in _imageVariants)
             {
                 ResizeArray(ref v.sprites, _maxStates);
@@ -356,7 +353,7 @@ namespace Neo.UI
                 ResizeArray(ref gv.objects, _maxStates);
             }
 
-            // Если BuildPhase включён, сохраняем текущее значение в последний слот
+            // If build phase is on, save current values into the last slot
             if (_isBuildPhase && _maxStates > 0)
             {
                 int lastIndex = _maxStates - 1;

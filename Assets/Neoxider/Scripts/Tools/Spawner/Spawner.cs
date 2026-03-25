@@ -11,8 +11,8 @@ using Random = UnityEngine.Random;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Спавнер префабов с настраиваемыми задержками, диапазонами поворота по осям (Эйлер),
-    ///     опциональным родителем и режимом применения поворота в локальных или мировых координатах.
+    ///     Spawns prefabs with configurable delays, per-axis Euler rotation ranges,
+    ///     optional parent, and local or world rotation application.
     /// </summary>
     [NeoDoc("Tools/Spawner/Spawner.md")]
     [CreateFromMenu("Neoxider/Tools/Spawner/Spawner")]
@@ -23,7 +23,7 @@ namespace Neo.Tools
         private GameObject[] _prefabs;
 
         [Tooltip(
-            "При true спавн через пул (если есть PoolManager), иначе Instantiate. Пул создаётся при первом запросе для префаба.")]
+            "If true, spawn via pool when PoolManager exists; otherwise Instantiate. Pool is created on first request per prefab.")]
         [SerializeField]
         private bool _useObjectPool = true;
 
@@ -33,7 +33,7 @@ namespace Neo.Tools
         public float destroyDelay;
 
         /// <summary>
-        ///     UnityEvent, вызывается после успешного спавна игрового объекта.
+        ///     UnityEvent invoked after a GameObject is successfully spawned.
         /// </summary>
         public UnityEvent<GameObject> OnObjectSpawned;
 
@@ -47,14 +47,14 @@ namespace Neo.Tools
         public float maxSpawnDelay = 2f;
 
         [Header("Rotation Settings")]
-        /// <summary>Диапазон поворота вокруг оси X (pitch), градусов.</summary>
+        /// <summary>Rotation range around X (pitch), degrees.</summary>
         [SerializeField]
         private Vector2 _rotationX = Vector2.zero; // pitch
 
-        /// <summary>Диапазон поворота вокруг оси Y (yaw), градусов.</summary>
+        /// <summary>Rotation range around Y (yaw), degrees.</summary>
         [SerializeField] private Vector2 _rotationY = Vector2.zero; // yaw
 
-        /// <summary>Диапазон поворота вокруг оси Z (roll), градусов.</summary>
+        /// <summary>Rotation range around Z (roll), degrees.</summary>
         [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
 
         [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false — in world space.")]
@@ -65,7 +65,7 @@ namespace Neo.Tools
 
         [Space] [Header("Other Settings")] [SerializeField]
         /// <summary>
-        /// Точка спавна. Если не задана — используется transform самого спавнера.
+        /// Spawn point. If unset, uses this spawner's transform.
         /// </summary>
         private Transform _spawnTransform;
 
@@ -73,7 +73,7 @@ namespace Neo.Tools
 
         [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null — spawn without parent.")]
         /// <summary>
-        /// Родитель для заспавненных объектов. Если null — объект не получает родителя.
+        /// Parent for spawned objects. If null, spawned objects have no parent.
         /// </summary>
         private Transform _parentTransform;
 
@@ -85,7 +85,7 @@ namespace Neo.Tools
         private int _spawnedCount;
 
         /// <summary>
-        ///     Массив префабов для спавна. При установке выполняется валидация.
+        ///     Prefab array to spawn from. Validated on assignment.
         /// </summary>
         public GameObject[] prefabs
         {
@@ -109,7 +109,7 @@ namespace Neo.Tools
         {
             _spawnTransform ??= transform;
 
-            // Валидация диапазонов задержек
+            // Validate delay range
             if (minSpawnDelay < 0)
             {
                 minSpawnDelay = 0;
@@ -120,7 +120,7 @@ namespace Neo.Tools
                 maxSpawnDelay = minSpawnDelay;
             }
 
-            // Валидация массива префабов
+            // Validate prefab array
             if (_prefabs != null)
             {
                 for (int i = 0; i < _prefabs.Length; i++)
@@ -134,7 +134,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Запускает процесс спавна (корутина), если он ещё не запущен.
+        ///     Starts spawning (coroutine) if not already running.
         /// </summary>
         [Button]
         public void StartSpawn()
@@ -149,7 +149,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Останавливает процесс спавна. Текущие объекты остаются в сцене.
+        ///     Stops spawning. Existing instances stay in the scene.
         /// </summary>
         [Button]
         public void StopSpawn()
@@ -158,7 +158,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Главная корутина спавна, создает объекты с интервалами в пределах [minSpawnDelay, maxSpawnDelay].
+        ///     Main spawn coroutine; spawns at random intervals in [minSpawnDelay, maxSpawnDelay].
         /// </summary>
         public IEnumerator SpawnObjects()
         {
@@ -183,7 +183,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит случайный префаб из списка по текущим настройкам позиции/поворота/родителя.
+        ///     Spawns a random prefab using current position, rotation, and parent settings.
         /// </summary>
         [Button]
         public GameObject SpawnRandomObject()
@@ -208,11 +208,11 @@ namespace Neo.Tools
 
         // Note: The [Button] attribute on methods with parameters may require a library like Odin Inspector.
         /// <summary>
-        ///     Спавнит префаб по индексу <paramref name="prefabId" /> в заданной позиции.
-        ///     Поворот и родитель берутся из настроек спавнера.
+        ///     Spawns the prefab at <paramref name="prefabId" /> at the given position.
+        ///     Rotation and parent come from spawner settings.
         /// </summary>
-        /// <param name="prefabId">Индекс префаба в массиве <see cref="prefabs" />.</param>
-        /// <param name="position">Мировая позиция спавна.</param>
+        /// <param name="prefabId">Index in <see cref="prefabs" />.</param>
+        /// <param name="position">World spawn position.</param>
         [Button]
         public GameObject SpawnById(int prefabId, Vector3 position)
         {
@@ -241,13 +241,13 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Базовый метод спавна: всегда идёт через <see cref="SpawnUtility" /> — пул используется, если доступен
-        ///     (при <see cref="_useObjectPool" /> и наличии PoolManager), иначе Instantiate.
+        ///     Core spawn path: uses <see cref="SpawnUtility" /> when pooling is enabled
+        ///     (<see cref="_useObjectPool" /> and PoolManager), otherwise Instantiate.
         /// </summary>
-        /// <param name="prefab">Префаб для спавна.</param>
-        /// <param name="position">Мировая позиция.</param>
-        /// <param name="rotation">Мировой поворот.</param>
-        /// <param name="parent">Родитель. Если null — без родителя.</param>
+        /// <param name="prefab">Prefab to spawn.</param>
+        /// <param name="position">World position.</param>
+        /// <param name="rotation">World rotation.</param>
+        /// <param name="parent">Parent transform, or null for no parent.</param>
         public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
             if (prefab == null)
@@ -295,7 +295,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Возвращает позицию спавна: случайная точка в зоне, если задана, иначе точка спавна.
+        ///     Spawn position: random point in area collider if set, otherwise spawn transform position.
         /// </summary>
         public Vector3 GetSpawnPosition()
         {
@@ -313,8 +313,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Возвращает поворот спавна. Если диапазоны осей равны нулю, возвращает
-        ///     базовый поворот (локальный: поворот точки спавна; мировой: Quaternion.identity).
+        ///     Spawn rotation. If all axis ranges are zero, returns base rotation
+        ///     (local: spawn point rotation; world: Quaternion.identity).
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
@@ -351,8 +351,8 @@ namespace Neo.Tools
         [Button]
         public void Clear()
         {
-            StopAllCoroutines(); // Останавливаем все корутины (спавн и отложенное удаление)
-            isSpawning = false; // Устанавливаем флаг, чтобы основной цикл спавна точно остановился
+            StopAllCoroutines(); // Stop spawn and delayed destroy coroutines
+            isSpawning = false;
 
             foreach (GameObject obj in SpawnedObjects)
             {
@@ -377,7 +377,7 @@ namespace Neo.Tools
             return SpawnedObjects.Count(obj => obj != null && obj.activeInHierarchy);
         }
 
-        // --- Методы для получения случайной точки в коллайдерах (без изменений) ---
+        // --- Random point inside colliders ---
         private Vector3 GetRandomPointInCollider2D(Collider2D collider)
         {
             if (collider is BoxCollider2D boxCollider)

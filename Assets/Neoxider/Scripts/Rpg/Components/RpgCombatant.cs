@@ -69,16 +69,16 @@ namespace Neo.Rpg
         /// </summary>
         public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
 
-        /// <summary>Текущее HP (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current HP (for NeoCondition and reactive binding).</summary>
         public float HpStateValue => HpState.CurrentValue;
 
-        /// <summary>Доля HP 0–1 (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>HP fraction 0–1 (for NeoCondition and reactive binding).</summary>
         public float HpPercentStateValue => HpPercentState.CurrentValue;
 
-        /// <summary>Текущий уровень (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current level (for NeoCondition and reactive binding).</summary>
         public int LevelStateValue => LevelState.CurrentValue;
 
-        /// <summary>Флаг неуязвимости (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Invulnerability flag (for NeoCondition and reactive binding).</summary>
         public bool InvulnerableStateValue => InvulnerableState.CurrentValue;
 
         private void Awake()

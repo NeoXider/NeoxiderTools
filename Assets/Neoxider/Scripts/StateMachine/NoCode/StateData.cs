@@ -6,18 +6,18 @@ using UnityEngine.Serialization;
 namespace Neo.StateMachine.NoCode
 {
     /// <summary>
-    ///     ScriptableObject состояния: имя, действия, переходы (для использования в StateMachineData).
-    ///     Позволяет создавать состояния визуально в инспекторе без написания кода.
+    ///     ScriptableObject state: name, actions, and hooks for use inside StateMachineData.
+    ///     Author states in the Inspector without writing code.
     /// </summary>
     /// <remarks>
-    ///     StateData реализует IState и может использоваться напрямую в StateMachine.
-    ///     Поддерживает действия при входе, обновлении и выходе из состояния.
+    ///     StateData implements IState and can be used directly with StateMachine.
+    ///     Supports enter, update, and exit action lists.
     /// </remarks>
     /// <example>
     ///     <code>
-    /// // Создать StateData через меню: Create > Neo > State Machine > State Data
-    /// // Настроить действия в инспекторе
-    /// // Использовать в StateMachineData
+    /// // Create StateData via menu: Create > Neo > State Machine > State Data
+    /// // Configure actions in the Inspector
+    /// // Reference from StateMachineData
     /// </code>
     /// </example>
     [CreateAssetMenu(fileName = "New State", menuName = "Neoxider/State Machine/State Data")]
@@ -45,7 +45,7 @@ namespace Neo.StateMachine.NoCode
         private List<StateAction> onExitActions = new();
 
         /// <summary>
-        ///     Имя состояния.
+        ///     Display / lookup name of this state.
         /// </summary>
         public string StateName
         {
@@ -54,22 +54,22 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Действия при входе в состояние.
+        ///     Actions run once when entering the state.
         /// </summary>
         public List<StateAction> OnEnterActions => onEnterActions;
 
         /// <summary>
-        ///     Действия при обновлении состояния.
+        ///     Actions run every frame while the state is active.
         /// </summary>
         public List<StateAction> OnUpdateActions => onUpdateActions;
 
         /// <summary>
-        ///     Действия при выходе из состояния.
+        ///     Actions run when leaving the state.
         /// </summary>
         public List<StateAction> OnExitActions => onExitActions;
 
         /// <summary>
-        ///     Вызывается при входе в состояние.
+        ///     Called when entering the state.
         /// </summary>
         public void OnEnter()
         {
@@ -77,7 +77,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Вызывается каждый кадр в состоянии.
+        ///     Called every frame while in the state.
         /// </summary>
         public void OnUpdate()
         {
@@ -85,7 +85,7 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Вызывается при выходе из состояния.
+        ///     Called when exiting the state.
         /// </summary>
         public void OnExit()
         {
@@ -93,19 +93,19 @@ namespace Neo.StateMachine.NoCode
         }
 
         /// <summary>
-        ///     Вызывается каждый фиксированный кадр (опционально).
+        ///     Called every physics tick (optional; not used by default for NoCode).
         /// </summary>
         public void OnFixedUpdate()
         {
-            // NoCode состояния не поддерживают FixedUpdate по умолчанию
+            // NoCode states do not run FixedUpdate actions by default
         }
 
         /// <summary>
-        ///     Вызывается каждый кадр после всех обновлений (опционально).
+        ///     Called every frame after Update (optional; not used by default for NoCode).
         /// </summary>
         public void OnLateUpdate()
         {
-            // NoCode состояния не поддерживают LateUpdate по умолчанию
+            // NoCode states do not run LateUpdate actions by default
         }
 
         private void ExecuteActions(List<StateAction> actions)

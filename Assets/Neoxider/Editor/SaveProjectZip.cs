@@ -1,8 +1,8 @@
-﻿/*  ──────────────────────────────────────────────────────────────
+/*  ──────────────────────────────────────────────────────────────
     SaveProjectZip.cs
     Menu:  Tools ▸ Neoxider ▸ Save Project Zip
-    Сохраняет три папки проекта (Assets, ProjectSettings, Packages)
-    в ZIP-архив рядом с проектом.
+    Zips three project folders (Assets, ProjectSettings, Packages)
+    into a ZIP archive (user-chosen path).
    ────────────────────────────────────────────────────────────── */
 
 using System;
@@ -31,7 +31,7 @@ public static class SaveProjectZip
 
         string zipPath = EditorUtility.SaveFilePanel(
             "Save Project as ZIP",
-            projRoot, // стартовая папка
+            projRoot, // initial folder
             defaultFile,
             "zip");
 
@@ -71,7 +71,7 @@ public static class SaveProjectZip
         }
     }
 
-    // рекурсивно добавляем файлы/папки в архив
+    // Recursively add files/folders to the archive
     private static void AddDirectoryToZip(ZipArchive zip,
         string absPath,
         string relPath)

@@ -1,17 +1,17 @@
 namespace Neo.Core.Level
 {
     /// <summary>
-    ///     Режим кривой уровня в LevelCurveDefinition: формула, кривая (график) или ручная таблица.
+    ///     Level curve mode in LevelCurveDefinition: formula, curve (graph), or manual table.
     /// </summary>
     public enum LevelCurveMode
     {
-        /// <summary>Уровень по формуле (Linear, Quadratic, Exponential, Polynomial, Power и т.д.).</summary>
+        /// <summary>Level from formula (Linear, Quadratic, Exponential, Polynomial, Power, etc.).</summary>
         Formula = 0,
 
-        /// <summary>Уровень по графику AnimationCurve (ось X = уровень, Y = кумулятивный XP до уровня).</summary>
+        /// <summary>Level from AnimationCurve (X = level, Y = cumulative XP to that level).</summary>
         Curve = 1,
 
-        /// <summary>Ручная таблица: список пар (уровень, требуемый XP).</summary>
+        /// <summary>Manual table: list of (level, required XP) pairs.</summary>
         Custom = 2
     }
 }

@@ -3,11 +3,11 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Настройки визуального оформления кнопок Neo ButtonAttribute
+    ///     Visual styling for Neo ButtonAttribute buttons.
     /// </summary>
     public static class GradientButtonSettings
     {
-        // === ЦВЕТОВЫЕ СХЕМЫ (для UseNaturalStyle = false) ===
+        // === Color schemes (when UseNaturalStyle = false) ===
 
         private static readonly Color Scheme1_Top = new(0.2f, 0.8f, 1f, 1f);
         private static readonly Color Scheme1_Bottom = new(0.6f, 0.2f, 1f, 1f);
@@ -31,7 +31,7 @@ namespace Neo.Editor
         private static readonly int ActiveScheme = 6;
 
         /// <summary>
-        ///     При false используется фирменный, но сдержанный стиль кнопок.
+        ///     When false, uses the branded (but restrained) gradient button style.
         /// </summary>
         public static bool UseNaturalStyle => false;
 

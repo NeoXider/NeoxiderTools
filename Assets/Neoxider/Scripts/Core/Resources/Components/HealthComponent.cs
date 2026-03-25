@@ -37,22 +37,22 @@ namespace Neo.Core.Resources
         /// <summary>Invoked when the list of pools is rebuilt (add/remove pools, init).</summary>
         public UnityEvent OnPoolsChanged => _onPoolsChanged;
 
-        /// <summary>Текущее HP (для NeoCondition); читает из пула HP.</summary>
+        /// <summary>Current HP (for NeoCondition); reads from the HP pool.</summary>
         public float HpCurrentValue => GetPoolCurrentValue(RpgResourceId.Hp);
 
-        /// <summary>Доля HP 0–1 (для NeoCondition); читает из пула HP.</summary>
+        /// <summary>HP fraction 0–1 (for NeoCondition); reads from the HP pool.</summary>
         public float HpPercentValue => GetPoolPercentValue(RpgResourceId.Hp);
 
-        /// <summary>Макс. HP (для NeoCondition); читает из пула HP.</summary>
+        /// <summary>Max HP (for NeoCondition); reads from the HP pool.</summary>
         public float HpMaxValue => GetPoolMaxValue(RpgResourceId.Hp);
 
-        /// <summary>Текущая мана (для NeoCondition); читает из пула Mana.</summary>
+        /// <summary>Current mana (for NeoCondition); reads from the Mana pool.</summary>
         public float ManaCurrentValue => GetPoolCurrentValue(RpgResourceId.Mana);
 
-        /// <summary>Доля маны 0–1 (для NeoCondition); читает из пула Mana.</summary>
+        /// <summary>Mana fraction 0–1 (for NeoCondition); reads from the Mana pool.</summary>
         public float ManaPercentValue => GetPoolPercentValue(RpgResourceId.Mana);
 
-        /// <summary>Макс. мана (для NeoCondition); читает из пула Mana.</summary>
+        /// <summary>Max mana (for NeoCondition); reads from the Mana pool.</summary>
         public float ManaMaxValue => GetPoolMaxValue(RpgResourceId.Mana);
 
         private void Awake()

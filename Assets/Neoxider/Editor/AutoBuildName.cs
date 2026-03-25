@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -10,12 +10,12 @@ public class AutoBuildName : IPostprocessBuildWithReport
 
     public void OnPostprocessBuild(BuildReport report)
     {
-        string appName = Application.productName; // Имя приложения (из Player Settings)
-        string bundleVersionCode = PlayerSettings.Android.bundleVersionCode.ToString(); // Номер бандла
-        string bundleVersion = PlayerSettings.bundleVersion; // Версия (например, 1.1)
-        string extension = Path.GetExtension(report.summary.outputPath); // .apk или .aab
+        string appName = Application.productName; // App name (from Player Settings)
+        string bundleVersionCode = PlayerSettings.Android.bundleVersionCode.ToString(); // Bundle version code
+        string bundleVersion = PlayerSettings.bundleVersion; // Version (e.g. 1.1)
+        string extension = Path.GetExtension(report.summary.outputPath); // .apk or .aab
 
-        // 👉 Здесь меняешь формат под себя
+        // Customize the naming format here
         string newName = $"{appName} {bundleVersionCode} ({bundleVersion}){extension}";
 
         string dir = Path.GetDirectoryName(report.summary.outputPath);
@@ -24,7 +24,7 @@ public class AutoBuildName : IPostprocessBuildWithReport
         if (File.Exists(report.summary.outputPath))
         {
             File.Move(report.summary.outputPath, newPath);
-            Debug.Log($"[AutoBuildName] Файл переименован в: {newName}");
+            Debug.Log($"[AutoBuildName] Output renamed to: {newName}");
         }
     }
 }

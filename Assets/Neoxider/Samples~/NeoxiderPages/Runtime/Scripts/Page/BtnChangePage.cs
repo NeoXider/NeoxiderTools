@@ -17,8 +17,8 @@ namespace Neo.Pages
     [NeoDoc("NeoxiderPages/BtnChangePage.md")]
     [AddComponentMenu("Neoxider/Pages/" + nameof(BtnChangePage))]
     /// <summary>
-    /// UI-кнопка для смены страниц через <see cref="PM"/>.
-    /// Поддерживает анимацию нажатия и опциональное выполнение <see cref="GameState.State"/> перед переключением.
+    /// UI button to change pages via <see cref="PM"/>.
+    /// Supports press animation and optional <see cref="GameState.State"/> before switching.
     /// </summary>
     public class BtnChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
     {
@@ -110,7 +110,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Обработчик клика: выполняет состояние (если задано), переключает страницу и вызывает <see cref="OnClick" />.
+        ///     Click handler: runs state (if set), switches page, and invokes <see cref="OnClick" />.
         /// </summary>
         public void OnPointerClick(PointerEventData eventData)
         {
@@ -130,7 +130,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Обработчик нажатия: уменьшает scale (если включена анимация).
+        ///     Press handler: scales down when animation is enabled.
         /// </summary>
         public void OnPointerDown(PointerEventData eventData)
         {
@@ -145,7 +145,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Обработчик отпускания: возвращает scale к исходному (если включена анимация).
+        ///     Release handler: restores scale when animation is enabled.
         /// </summary>
         public void OnPointerUp(PointerEventData eventData)
         {
@@ -156,7 +156,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Выполняет действие (открыть страницу/назад/закрыть текущую).
+        ///     Runs the action (open page / back / close current).
         /// </summary>
         public void ChangePage()
         {

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     Визуальные данные для одного символа слот-машины.
+    ///     Visual data for one slot machine symbol.
     /// </summary>
     [Serializable]
     public class SlotVisualData
@@ -20,8 +20,8 @@ namespace Neo.Bonus
     }
 
     /// <summary>
-    ///     ScriptableObject для хранения визуальных данных всех символов слот-машины.
-    ///     Автоматически присваивает ID каждому символу на основе индекса.
+    ///     ScriptableObject holding visual data for all slot machine symbols.
+    ///     Assigns each symbol an ID from its array index automatically.
     /// </summary>
     [CreateAssetMenu(fileName = "Sprites Data", menuName = "Neoxider/Bonus/Slot/Sprites Data", order = 3)]
     public class SpritesData : ScriptableObject
@@ -30,7 +30,7 @@ namespace Neo.Bonus
         private SlotVisualData[] _visuals;
 
         /// <summary>
-        ///     Массив визуальных данных символов.
+        ///     Array of symbol visual data.
         /// </summary>
         public SlotVisualData[] visuals => _visuals;
 
@@ -41,7 +41,7 @@ namespace Neo.Bonus
                 return;
             }
 
-            // Автоматически присваиваем ID на основе индекса
+            // Assign IDs from array index automatically
             for (int i = 0; i < _visuals.Length; i++)
             {
                 if (_visuals[i] != null)

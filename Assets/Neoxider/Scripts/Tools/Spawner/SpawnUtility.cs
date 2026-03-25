@@ -5,9 +5,9 @@ using UnityEngine.SceneManagement;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Единая точка входа для спавна и деспавна объектов.
-    ///     Всегда использует пул: при наличии <see cref="PoolManager" /> на сцене — его пулы;
-    ///     если PoolManager нет — для каждого префаба создаётся свой пул автоматически. Объекты всегда в пуле.
+    ///     Unified entry for spawning and despawning objects.
+    ///     Always uses a pool: with <see cref="PoolManager" /> in the scene, its pools are used;
+    ///     otherwise a per-prefab pool is created automatically. Instances are always pooled.
     /// </summary>
     public static class SpawnUtility
     {
@@ -20,8 +20,8 @@ namespace Neo.Tools
         private static bool _helperCreated;
 
         /// <summary>
-        ///     Если true (по умолчанию), при смене сцены все fallback-пулы и их объекты уничтожаются.
-        ///     Если false — корень пулов помечается DontDestroyOnLoad и переживает смену сцены.
+        ///     If true (default), fallback pools and their objects are destroyed on scene load.
+        ///     If false, the pool root is DontDestroyOnLoad and survives scene changes.
         /// </summary>
         public static bool DestroyFallbackPoolsOnSceneLoad { get; set; } = true;
 
@@ -51,7 +51,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Возвращает true, если спавн идёт через пул (есть PoolManager или используются внутренние пулы).
+        ///     True when spawning uses pooling (PoolManager or internal fallback pools).
         /// </summary>
         public static bool IsPoolAvailable => true;
 
@@ -69,7 +69,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб в позиции (0,0,0), поворот identity, без родителя (или в корень пулов).
+        ///     Spawns prefab at (0,0,0), identity rotation, no parent (or under pool root).
         /// </summary>
         public static GameObject Spawn(GameObject prefab)
         {
@@ -77,7 +77,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб в заданной позиции, поворот identity.
+        ///     Spawns prefab at the given position, identity rotation.
         /// </summary>
         public static GameObject Spawn(GameObject prefab, Vector3 position)
         {
@@ -85,7 +85,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб в заданной позиции и повороте.
+        ///     Spawns prefab at the given position and rotation.
         /// </summary>
         public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation)
         {
@@ -93,13 +93,13 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб в заданной позиции и повороте с указанным родителем.
+        ///     Spawns prefab at position and rotation with an optional parent.
         /// </summary>
-        /// <param name="prefab">Префаб для спавна.</param>
-        /// <param name="position">Мировая позиция.</param>
-        /// <param name="rotation">Мировой поворот.</param>
-        /// <param name="parent">Родитель (null — объекты складываются в общий корень пулов).</param>
-        /// <returns>Экземпляр объекта или null, если prefab == null.</returns>
+        /// <param name="prefab">Prefab to spawn.</param>
+        /// <param name="position">World position.</param>
+        /// <param name="rotation">World rotation.</param>
+        /// <param name="parent">Parent transform (null = pooled under shared root).</param>
+        /// <returns>Spawned instance or null if prefab is null.</returns>
         public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
             if (prefab == null)
@@ -126,7 +126,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Спавнит префаб как дочерний объект parent в локальной позиции (0,0,0) и повороте identity.
+        ///     Spawns prefab as child of parent at local (0,0,0) and identity rotation.
         /// </summary>
         public static GameObject Spawn(GameObject prefab, Transform parent)
         {
@@ -146,7 +146,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Деспавнит объект: возвращает в пул (если объект из пула) или уничтожает.
+        ///     Despawns: returns to pool if pooled, otherwise destroys.
         /// </summary>
         public static void Despawn(GameObject instance)
         {
@@ -166,7 +166,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Очищает все fallback-пулы (созданные при отсутствии PoolManager). Уничтожает корневой объект пулов.
+        ///     Clears all fallback pools (created when PoolManager is missing). Destroys the pool root object.
         /// </summary>
         public static void ClearFallbackPools()
         {

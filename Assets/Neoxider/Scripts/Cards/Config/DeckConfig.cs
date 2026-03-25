@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Конфигурация колоды карт со спрайтами
+    ///     Deck configuration with sprites.
     /// </summary>
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neoxider/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
@@ -14,7 +14,7 @@ namespace Neo.Cards
         private DeckType _deckType = DeckType.Standard52;
 
         [Tooltip(
-            "Тип колоды для игры (сколько карт использовать). Позволяет иметь все спрайты, но играть меньшим количеством карт.")]
+            "Deck type used in play (how many cards to use). Lets you keep full sprites while playing a smaller deck.")]
         [SerializeField]
         private DeckType _gameDeckType = DeckType.Standard54;
 
@@ -38,55 +38,55 @@ namespace Neo.Cards
         [SerializeField] private Sprite _blackJoker;
 
         /// <summary>
-        ///     Тип колоды для спрайтов (определяет количество загруженных спрайтов)
+        ///     Sprite deck type (how many sprites are expected in the asset).
         /// </summary>
         public DeckType DeckType => _deckType;
 
         /// <summary>
-        ///     Тип колоды для игры (определяет сколько карт использовать в игре)
+        ///     Play deck type (how many cards are used in game logic).
         /// </summary>
         public DeckType GameDeckType => _gameDeckType;
 
         /// <summary>
-        ///     Спрайт рубашки карты
+        ///     Card back sprite.
         /// </summary>
         public Sprite BackSprite => _backSprite;
 
         /// <summary>
-        ///     Спрайт красного джокера
+        ///     Red joker sprite.
         /// </summary>
         public Sprite RedJoker => _redJoker;
 
         /// <summary>
-        ///     Спрайт чёрного джокера
+        ///     Black joker sprite.
         /// </summary>
         public Sprite BlackJoker => _blackJoker;
 
         /// <summary>
-        ///     Спрайты карт червей
+        ///     Heart suit sprites.
         /// </summary>
         public IReadOnlyList<Sprite> Hearts => _hearts;
 
         /// <summary>
-        ///     Спрайты карт бубен
+        ///     Diamond suit sprites.
         /// </summary>
         public IReadOnlyList<Sprite> Diamonds => _diamonds;
 
         /// <summary>
-        ///     Спрайты карт треф
+        ///     Club suit sprites.
         /// </summary>
         public IReadOnlyList<Sprite> Clubs => _clubs;
 
         /// <summary>
-        ///     Спрайты карт пик
+        ///     Spade suit sprites.
         /// </summary>
         public IReadOnlyList<Sprite> Spades => _spades;
 
         /// <summary>
-        ///     Возвращает спрайт для указанной карты
+        ///     Returns the sprite for a card.
         /// </summary>
-        /// <param name="card">Данные карты</param>
-        /// <returns>Спрайт карты или null если не найден</returns>
+        /// <param name="card">Card data.</param>
+        /// <returns>Sprite, or null if missing.</returns>
         public Sprite GetSprite(CardData card)
         {
             if (card.IsJoker)
@@ -110,7 +110,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает ожидаемое количество карт для одной масти
+        ///     Expected number of cards per suit for this sprite deck type.
         /// </summary>
         public int GetExpectedCardCountPerSuit()
         {
@@ -118,19 +118,19 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Генерирует список карт для игры (использует GameDeckType)
+        ///     Generates the play deck using <see cref="GameDeckType" />.
         /// </summary>
-        /// <returns>Список карт</returns>
+        /// <returns>List of cards.</returns>
         public List<CardData> GenerateDeck()
         {
             return GenerateDeck(_gameDeckType);
         }
 
         /// <summary>
-        ///     Генерирует список карт указанного типа колоды
+        ///     Generates a deck of the given type.
         /// </summary>
-        /// <param name="deckType">Тип колоды для генерации</param>
-        /// <returns>Список карт</returns>
+        /// <param name="deckType">Deck type to generate.</param>
+        /// <returns>List of cards.</returns>
         public List<CardData> GenerateDeck(DeckType deckType)
         {
             List<CardData> cards = new();
@@ -154,21 +154,21 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет валидность конфигурации
+        ///     Validates configuration.
         /// </summary>
-        /// <param name="errors">Список ошибок</param>
-        /// <returns>true если конфигурация валидна</returns>
+        /// <param name="errors">Error messages.</param>
+        /// <returns>True if valid.</returns>
         public bool Validate(out List<string> errors)
         {
             return Validate(out errors, out _);
         }
 
         /// <summary>
-        ///     Проверяет валидность конфигурации с разделением на ошибки и предупреждения
+        ///     Validates configuration, splitting errors and warnings.
         /// </summary>
-        /// <param name="errors">Список критических ошибок</param>
-        /// <param name="warnings">Список предупреждений</param>
-        /// <returns>true если нет критических ошибок</returns>
+        /// <param name="errors">Critical errors.</param>
+        /// <param name="warnings">Warnings.</param>
+        /// <returns>True if there are no critical errors.</returns>
         public bool Validate(out List<string> errors, out List<string> warnings)
         {
             errors = new List<string>();
@@ -177,7 +177,7 @@ namespace Neo.Cards
 
             if (_backSprite == null)
             {
-                errors.Add("Не указан спрайт рубашки карты");
+                errors.Add("Card back sprite is not assigned");
             }
 
             ValidateSuit(_hearts, Suit.Hearts, expectedCount, errors);
@@ -189,19 +189,19 @@ namespace Neo.Cards
             {
                 if (_redJoker == null)
                 {
-                    warnings.Add("Не указан спрайт красного джокера (для колоды 54)");
+                    warnings.Add("Red joker sprite is not assigned (for 54-card deck)");
                 }
 
                 if (_blackJoker == null)
                 {
-                    warnings.Add("Не указан спрайт чёрного джокера (для колоды 54)");
+                    warnings.Add("Black joker sprite is not assigned (for 54-card deck)");
                 }
             }
 
             if (_gameDeckType.GetMinRank() < _deckType.GetMinRank())
             {
                 errors.Add(
-                    $"GameDeckType ({_gameDeckType}) требует карты от {_gameDeckType.GetMinRank()}, но DeckType ({_deckType}) начинается с {_deckType.GetMinRank()}. Увеличьте DeckType или уменьшите GameDeckType.");
+                    $"GameDeckType ({_gameDeckType}) requires cards from {_gameDeckType.GetMinRank()}, but DeckType ({_deckType}) starts at {_deckType.GetMinRank()}. Increase DeckType or lower GameDeckType.");
             }
 
             return errors.Count == 0;
@@ -211,21 +211,21 @@ namespace Neo.Cards
         {
             if (sprites == null || sprites.Count == 0)
             {
-                errors.Add($"Не указаны спрайты для масти {suit.ToRussianName()}");
+                errors.Add($"No sprites assigned for suit {suit.ToEnglishName()}");
                 return;
             }
 
             if (sprites.Count != expectedCount)
             {
                 errors.Add(
-                    $"Масть {suit.ToRussianName()}: ожидается {expectedCount} спрайтов, указано {sprites.Count}");
+                    $"Suit {suit.ToEnglishName()}: expected {expectedCount} sprites, found {sprites.Count}");
             }
 
             for (int i = 0; i < sprites.Count; i++)
             {
                 if (sprites[i] == null)
                 {
-                    errors.Add($"Масть {suit.ToRussianName()}: спрайт #{i + 1} не указан");
+                    errors.Add($"Suit {suit.ToEnglishName()}: sprite #{i + 1} is not assigned");
                 }
             }
         }

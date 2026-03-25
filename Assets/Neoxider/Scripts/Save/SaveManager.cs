@@ -46,7 +46,7 @@ namespace Neo.Save
         {
             base.Init();
             RegisterAllSaveables();
-            Load(); // авто-загрузка
+            Load(); // auto-load
             Debug.Log("[SaveManager] Initialized and Loaded");
             IsLoad = true;
             SceneManager.sceneLoaded += OnSceneLoaded;
@@ -61,7 +61,7 @@ namespace Neo.Save
         {
             public string Key;
             public string TypeName;
-            public string Value; // строка с JSON / строкой / числом (как текст)
+            public string Value; // JSON / string / number as text
         }
 
         [Serializable]
@@ -77,7 +77,7 @@ namespace Neo.Save
             public List<SavedComponent> AllSavedComponents = new();
         }
 
-        // Обёртки для массивов/списков (JsonUtility требует поле, а не корневой массив)
+        // Wrappers for arrays/lists (JsonUtility needs a field, not a root array)
         [Serializable]
         private class ArrayWrapper<T>
         {
@@ -179,7 +179,7 @@ namespace Neo.Save
         private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
-            Load(newlyRegistered); // только для новых объектов
+            Load(newlyRegistered); // only for newly registered objects
             Debug.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.");
         }
 
@@ -294,7 +294,7 @@ namespace Neo.Save
                                     {
                                         Debug.LogWarning(
                                             $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
-                                        // оставляем текущее значение (дефолт сцены)
+                                        // keep current value (scene default)
                                     }
                                 }
                             }
@@ -329,7 +329,7 @@ namespace Neo.Save
                 return value.ToString();
             }
 
-            // примитивы и строка
+            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ToString(value, CultureInfo.InvariantCulture);
@@ -340,7 +340,7 @@ namespace Neo.Save
                 return (string)value;
             }
 
-            // массивы
+            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
@@ -358,10 +358,10 @@ namespace Neo.Save
                 Type wrapperType = typeof(ListWrapper<>).MakeGenericType(elemType);
                 object wrapper = Activator.CreateInstance(wrapperType);
 
-                // скопируем в wrapper.Items
+                // copy into wrapper.Items
                 var list = (IEnumerable)value;
                 FieldInfo itemsField = wrapperType.GetField("Items");
-                object targetList = itemsField.GetValue(wrapper); // это List<T>
+                object targetList = itemsField.GetValue(wrapper); // List<T>
 
                 MethodInfo addMethod = targetList.GetType().GetMethod("Add");
                 foreach (object it in list)
@@ -372,7 +372,7 @@ namespace Neo.Save
                 return JsonUtility.ToJson(wrapper);
             }
 
-            // всё остальное — как объект/структура
+            // everything else as object/struct
             return JsonUtility.ToJson(value);
         }
 
@@ -389,7 +389,7 @@ namespace Neo.Save
                 return Enum.Parse(type, s);
             }
 
-            // примитивы и строка
+            // primitives and string
             if (type.IsPrimitive)
             {
                 return Convert.ChangeType(s, type, CultureInfo.InvariantCulture);
@@ -400,14 +400,14 @@ namespace Neo.Save
                 return s;
             }
 
-            // массивы
+            // arrays
             if (type.IsArray)
             {
                 Type elemType = type.GetElementType();
                 Type wrapperType = typeof(ArrayWrapper<>).MakeGenericType(elemType);
                 object wrapperObj = JsonUtility.FromJson(s, wrapperType);
                 object items = wrapperType.GetField("Items").GetValue(wrapperObj);
-                return items; // это T[]
+                return items; // T[]
             }
 
             // List<T>
@@ -420,7 +420,7 @@ namespace Neo.Save
                 return items;
             }
 
-            // объекты/структуры
+            // objects/structs
             return JsonUtility.FromJson(s, type);
         }
 
@@ -453,7 +453,7 @@ namespace Neo.Save
 
             (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = reg;
 
-            // читаем контейнер (валидный дефолт!)
+            // read container (valid default)
             string currentJsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
             SaveDataContainer container;
             try

@@ -1,89 +1,68 @@
 namespace Neo.Cards.Poker
 {
     /// <summary>
-    ///     Покерные комбинации в порядке возрастания силы
+    ///     Poker hand categories in ascending strength.
     /// </summary>
     public enum PokerCombination
     {
         /// <summary>
-        ///     Старшая карта - нет комбинации
+        ///     High card — no made hand.
         /// </summary>
         HighCard = 0,
 
         /// <summary>
-        ///     Пара - две карты одного ранга
+        ///     Pair — two cards of the same rank.
         /// </summary>
         Pair = 1,
 
         /// <summary>
-        ///     Две пары - две разные пары
+        ///     Two pair — two different pairs.
         /// </summary>
         TwoPair = 2,
 
         /// <summary>
-        ///     Тройка (сет) - три карты одного ранга
+        ///     Three of a kind — three cards of the same rank.
         /// </summary>
         ThreeOfAKind = 3,
 
         /// <summary>
-        ///     Стрит - пять последовательных карт разных мастей
+        ///     Straight — five consecutive ranks, mixed suits.
         /// </summary>
         Straight = 4,
 
         /// <summary>
-        ///     Флеш - пять карт одной масти
+        ///     Flush — five cards of the same suit.
         /// </summary>
         Flush = 5,
 
         /// <summary>
-        ///     Фулл хаус - тройка + пара
+        ///     Full house — three of a kind plus a pair.
         /// </summary>
         FullHouse = 6,
 
         /// <summary>
-        ///     Каре - четыре карты одного ранга
+        ///     Four of a kind — four cards of the same rank.
         /// </summary>
         FourOfAKind = 7,
 
         /// <summary>
-        ///     Стрит-флеш - пять последовательных карт одной масти
+        ///     Straight flush — five consecutive cards of the same suit.
         /// </summary>
         StraightFlush = 8,
 
         /// <summary>
-        ///     Роял-флеш - стрит-флеш от десятки до туза
+        ///     Royal flush — straight flush from ten to ace.
         /// </summary>
         RoyalFlush = 9
     }
 
     /// <summary>
-    ///     Расширения для покерных комбинаций
+    ///     Extension methods for poker combinations.
     /// </summary>
     public static class PokerCombinationExtensions
     {
         /// <summary>
-        ///     Возвращает русское название комбинации
-        /// </summary>
-        public static string ToRussianName(this PokerCombination combination)
-        {
-            return combination switch
-            {
-                PokerCombination.HighCard => "Старшая карта",
-                PokerCombination.Pair => "Пара",
-                PokerCombination.TwoPair => "Две пары",
-                PokerCombination.ThreeOfAKind => "Тройка",
-                PokerCombination.Straight => "Стрит",
-                PokerCombination.Flush => "Флеш",
-                PokerCombination.FullHouse => "Фулл хаус",
-                PokerCombination.FourOfAKind => "Каре",
-                PokerCombination.StraightFlush => "Стрит-флеш",
-                PokerCombination.RoyalFlush => "Роял-флеш",
-                _ => "Неизвестно"
-            };
-        }
-
-        /// <summary>
-        ///     Возвращает английское название комбинации
+        ///     Returns the English name of the combination.
         /// </summary>
         public static string ToEnglishName(this PokerCombination combination)
         {

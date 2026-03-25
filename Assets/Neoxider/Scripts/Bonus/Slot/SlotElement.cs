@@ -35,9 +35,9 @@ namespace Neo.Bonus
 
         [Tooltip("Gizmo marker dot size")] public float gizmoIconSize = 0.15f;
 
-        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // ярче (почти жёлтый)
+        [Tooltip("Label text color")] public Color gizmoColor = new(1f, 1f, 0.2f, 1f); // brighter (near yellow)
 
-        [Tooltip("Label font size")] public int gizmoFontSize = 16; // больше по умолчанию
+        [Tooltip("Label font size")] public int gizmoFontSize = 16; // larger default
 
         [Tooltip("Draw black outline for readability")]
         public bool gizmoOutline = true;
@@ -60,13 +60,13 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        ///     Устанавливает визуальное представление элемента на основе данных.
+        ///     Sets the element visuals from slot data.
         /// </summary>
         public void SetVisuals(SlotVisualData data)
         {
             if (data == null)
             {
-                // Скрываем элемент, если нет данных
+                // Hide element when there is no data
                 if (image)
                 {
                     image.enabled = false;
@@ -85,10 +85,10 @@ namespace Neo.Bonus
                 return;
             }
 
-            // Устанавливаем ID
+            // Set ID
             id = data.id;
 
-            // Устанавливаем спрайт
+            // Set sprite
             if (image != null)
             {
                 image.enabled = true;
@@ -101,7 +101,7 @@ namespace Neo.Bonus
                 spriteRenderer.sprite = data.sprite;
             }
 
-            // Устанавливаем описание
+            // Set description
             if (textDescription != null)
             {
                 bool hasDescription = !string.IsNullOrEmpty(data.description);
@@ -121,15 +121,15 @@ namespace Neo.Bonus
                 return;
             }
 
-            // точка-метка на позиции
+            // Marker dot at position
             Gizmos.color = gizmoColor;
             Gizmos.DrawWireSphere(transform.position, gizmoIconSize);
 
-            // текст метки
+            // Label text
             (int col, int row) = gizmoAutoDetect ? AutoDetectColRow() : (gizmoManualCol, gizmoManualRow);
             string label = $"[{col},{row}] id:{id}";
 
-            // стиль
+            // Style
             GUIStyle style = new(EditorStyles.boldLabel)
             {
                 alignment = TextAnchor.MiddleCenter,
@@ -139,7 +139,7 @@ namespace Neo.Bonus
 
             Vector3 pos = transform.position + gizmoLabelOffset;
 
-            // обводка (четыре смещения по диагоналям)
+            // Outline (four diagonal offsets)
             if (gizmoOutline)
             {
                 GUIStyle outline = new(style);
@@ -152,7 +152,7 @@ namespace Neo.Bonus
                 Handles.Label(pos + new Vector3(-o.x, -o.y, 0f), label, outline);
             }
 
-            // основной текст
+            // Main text
             Handles.Label(pos, label, style);
         }
 
@@ -162,7 +162,7 @@ namespace Neo.Bonus
             int rowIndex = -1;
             int colIndex = -1;
 
-            // индекс строки внутри Row: снизу-вверх
+            // Row index within Row: bottom to top
             if (rowComp != null && rowComp.SlotElements != null && rowComp.SlotElements.Length > 0)
             {
                 SlotElement[] sortedByY = rowComp.SlotElements
@@ -173,13 +173,13 @@ namespace Neo.Bonus
                 {
                     if (sortedByY[i] == this)
                     {
-                        rowIndex = i; // 0 = низ, 1 = центр, 2 = верх
+                        rowIndex = i; // 0 = bottom, 1 = middle, 2 = top
                         break;
                     }
                 }
             }
 
-            // индекс колонки: слева-направо среди всех Row общего родителя
+            // Column index: left to right among all Row under the same parent
             if (rowComp != null && rowComp.transform.parent != null)
             {
                 Row[] allRows = rowComp.transform.parent.GetComponentsInChildren<Row>(true);

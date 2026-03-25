@@ -4,7 +4,7 @@ using System.Collections.Generic;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Чистый C# менеджер инвентаря: хранение количества предметов и операции Add/Remove/Has/GetCount.
+    ///     Pure C# inventory: item counts and Add/Remove/Has/GetCount.
     /// </summary>
     [Serializable]
     public sealed class InventoryManager
@@ -14,23 +14,23 @@ namespace Neo.Tools
         private readonly List<int> _order = new();
 
         /// <summary>
-        ///     Максимум разных itemId в инвентаре. 0 = без лимита.
+        ///     Max distinct itemIds. 0 = unlimited.
         /// </summary>
         public int MaxUniqueItems { get; set; }
 
         /// <summary>
-        ///     Максимум общего количества всех предметов. 0 = без лимита.
+        ///     Max total item count across all stacks. 0 = unlimited.
         /// </summary>
         public int MaxTotalItems { get; set; }
 
-        /// <summary>Суммарное количество всех предметов.</summary>
+        /// <summary>Total stacked count of all items.</summary>
         public int TotalCount { get; private set; }
 
-        /// <summary>Количество уникальных itemId в инвентаре.</summary>
+        /// <summary>Number of unique itemIds.</summary>
         public int UniqueCount => _counts.Count;
 
         /// <summary>
-        ///     Возвращает true, если предмет есть в количестве не меньше amount.
+        ///     True if at least <paramref name="amount" /> of itemId is present.
         /// </summary>
         public bool Has(int itemId, int amount = 1)
         {
@@ -42,14 +42,14 @@ namespace Neo.Tools
             return _counts.TryGetValue(itemId, out int current) && current >= amount;
         }
 
-        /// <summary>Возвращает текущее количество предмета.</summary>
+        /// <summary>Current count for itemId.</summary>
         public int GetCount(int itemId)
         {
             return _counts.TryGetValue(itemId, out int current) ? current : 0;
         }
 
         /// <summary>
-        ///     Добавляет предмет и возвращает реально добавленное количество (может быть меньше из-за лимитов).
+        ///     Adds items; returns amount actually added (may be less due to limits).
         /// </summary>
         public int Add(int itemId, int amount = 1)
         {
@@ -77,7 +77,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Удаляет предмет и возвращает реально удаленное количество.
+        ///     Removes items; returns amount actually removed.
         /// </summary>
         public int Remove(int itemId, int amount = 1)
         {
@@ -108,7 +108,7 @@ namespace Neo.Tools
             return removed;
         }
 
-        /// <summary>Полностью очищает инвентарь.</summary>
+        /// <summary>Clears the inventory.</summary>
         public void Clear()
         {
             _counts.Clear();
@@ -116,7 +116,7 @@ namespace Neo.Tools
             TotalCount = 0;
         }
 
-        /// <summary>Снимок инвентаря в виде списка записей (порядок = порядок добавления).</summary>
+        /// <summary>Snapshot as entry list (order = add order).</summary>
         public List<InventoryEntry> CreateSnapshot()
         {
             List<InventoryEntry> entries = new(_order.Count);
@@ -133,7 +133,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Заполняет инвентарь из списка сохраненных записей.
+        ///     Replaces inventory from saved entries.
         /// </summary>
         public void ReplaceFrom(IEnumerable<InventoryEntry> entries)
         {
@@ -158,7 +158,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает лимит стека для конкретного предмета. 0 или меньше = без лимита для itemId.
+        ///     Sets per-item stack cap. 0 or less removes limit for that itemId.
         /// </summary>
         public void SetItemMaxStack(int itemId, int maxStack)
         {
@@ -171,7 +171,7 @@ namespace Neo.Tools
             _maxStackByItemId[itemId] = maxStack;
         }
 
-        /// <summary>Удаляет все индивидуальные лимиты стеков.</summary>
+        /// <summary>Clears all per-item stack limits.</summary>
         public void ClearItemMaxStacks()
         {
             _maxStackByItemId.Clear();

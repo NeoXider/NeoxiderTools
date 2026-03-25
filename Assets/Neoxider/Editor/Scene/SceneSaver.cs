@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-///     Окно редактора для автоматического сохранения сцен
+///     Editor window for automatic scene backup saves.
 /// </summary>
 [InitializeOnLoad]
 public class SceneSaver : EditorWindow
@@ -36,7 +36,7 @@ public class SceneSaver : EditorWindow
     }
 
     /// <summary>
-    ///     Показывает окно Scene Saver
+    ///     Opens the Scene Saver window.
     /// </summary>
     [MenuItem("Tools/Neoxider/Scene Saver")]
     public static void ShowWindow()

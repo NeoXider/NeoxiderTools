@@ -4,7 +4,7 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Визуальное представление колоды карт
+    ///     Deck stack view (spawn point + optional top card).
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/DeckView")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(DeckView))]
@@ -29,7 +29,7 @@ namespace Neo.Cards
         private CardData _topCardData;
 
         /// <summary>
-        ///     Конфигурация колоды
+        ///     Deck configuration asset.
         /// </summary>
         public DeckConfig Config
         {

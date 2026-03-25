@@ -7,7 +7,7 @@ using UnityEngine.Events;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент колоды: инициализация, тасовка, выдача карт. Настройка в инспекторе, события через UnityEvent.
+    ///     Deck component: initialize, shuffle, draw cards. Inspector setup; events via UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/DeckComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(DeckComponent))]
@@ -42,99 +42,99 @@ namespace Neo.Cards
         [SerializeField] private CardComponent _trumpCardDisplay;
 
         /// <summary>
-        ///     Событие после инициализации колоды.
+        ///     Invoked after the deck is initialized.
         /// </summary>
         public UnityEvent OnInitialized;
 
         /// <summary>
-        ///     Событие после перемешивания модели колоды.
+        ///     Invoked after the deck model is shuffled.
         /// </summary>
         public UnityEvent OnShuffled;
 
         /// <summary>
-        ///     Событие, когда в модели больше не осталось карт.
+        ///     Invoked when the deck model has no cards left.
         /// </summary>
         public UnityEvent OnDeckEmpty;
 
         /// <summary>
-        ///     Событие взятия карты через DrawCard/DrawCardAsync.
+        ///     Invoked when a card is drawn via DrawCard/DrawCardAsync.
         /// </summary>
         public UnityEvent<CardComponent> OnCardDrawn;
 
         /// <summary>
-        ///     Событие изменения визуальной стопки (добавление, удаление, shuffle).
+        ///     Invoked when the visual stack changes (add/remove/shuffle).
         /// </summary>
         public UnityEvent OnVisualStackChanged;
 
         /// <summary>
-        ///     Событие успешной сборки визуальной стопки.
+        ///     Invoked after the visual stack is built successfully.
         /// </summary>
         public UnityEvent OnVisualStackBuilt;
 
         /// <summary>
-        ///     Событие начала визуального перемешивания.
+        ///     Invoked when visual shuffle starts.
         /// </summary>
         public UnityEvent<ShuffleVisualType> OnShuffleVisualStarted;
 
         /// <summary>
-        ///     Событие окончания визуального перемешивания.
+        ///     Invoked when visual shuffle completes.
         /// </summary>
         public UnityEvent OnShuffleVisualCompleted;
 
         /// <summary>
-        ///     Событие раздачи карты в руку.
+        ///     Invoked when a card is dealt to a hand.
         /// </summary>
         public UnityEvent<CardComponent, HandComponent> OnCardDealt;
 
         private readonly List<CardComponent> _activeCards = new();
 
         /// <summary>
-        ///     Модель колоды
+        ///     Deck model.
         /// </summary>
         public DeckModel Model { get; private set; }
 
         /// <summary>
-        ///     Количество оставшихся карт
+        ///     Remaining card count.
         /// </summary>
         public int RemainingCount => Model?.RemainingCount ?? 0;
 
         /// <summary>
-        ///     Пуста ли колода
+        ///     Whether the deck is empty.
         /// </summary>
         public bool IsEmpty => Model?.IsEmpty ?? true;
 
         /// <summary>
-        ///     Козырная карта
+        ///     Trump card (bottom of deck in this setup).
         /// </summary>
         public CardData? TrumpCard => Model?.PeekBottom();
 
         /// <summary>
-        ///     Козырная масть
+        ///     Trump suit.
         /// </summary>
         public Suit? TrumpSuit => TrumpCard?.Suit;
 
         /// <summary>
-        ///     Точка спавна карт
+        ///     Spawn point for drawn cards.
         /// </summary>
         public Transform SpawnPoint => _spawnPoint != null ? _spawnPoint : transform;
 
         /// <summary>
-        ///     Конфигурация колоды (спрайты, тип колоды и пр.).
+        ///     Deck configuration (sprites, deck type, etc.).
         /// </summary>
         public DeckConfig Config => _config;
 
         /// <summary>
-        ///     Префаб карты, используемый колодой при DrawCard.
+        ///     Card prefab used when drawing.
         /// </summary>
         public CardComponent CardPrefab => _cardPrefab;
 
         /// <summary>
-        ///     Конфиг анимаций, назначенный на эту колоду.
+        ///     Animation config assigned to this deck.
         /// </summary>
         public CardAnimationConfig AnimationConfig => _animationConfig;
 
         /// <summary>
-        ///     Сбрасывает колоду
+        ///     Resets the deck.
         /// </summary>
         [Button]
         public void Reset()
@@ -174,7 +174,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Инициализирует колоду
+        ///     Initializes the deck.
         /// </summary>
         [Button]
         public void Initialize()
@@ -202,7 +202,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемешивает колоду
+        ///     Shuffles the deck model.
         /// </summary>
         [Button]
         public void Shuffle()
@@ -212,7 +212,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Синхронная кнопка-обертка для сборки визуальной стопки.
+        ///     Synchronous inspector button wrapper for building the visual stack.
         /// </summary>
         [Button("Build Visual Stack")]
         public void BuildVisualStack()
@@ -221,8 +221,8 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Строит визуальную стопку карт на указанном BoardComponent.
-        ///     Карты берутся из текущей модели DeckModel без изменения порядка.
+        ///     Builds the visual card stack on the assigned BoardComponent.
+        ///     Cards come from the current DeckModel order without reordering.
         /// </summary>
         public async UniTask BuildVisualStackAsync()
         {
@@ -249,7 +249,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Синхронная кнопка-обертка для визуального перемешивания.
+        ///     Synchronous inspector button wrapper for visual shuffle.
         /// </summary>
         [Button("Shuffle Visual")]
         public void ShuffleVisual(ShuffleVisualType type = ShuffleVisualType.Shake)
@@ -258,11 +258,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемешивает модель колоды и синхронизирует визуальную стопку.
-        ///     При необходимости воспроизводит визуальный эффект перемешивания.
+        ///     Shuffles the deck model and syncs the visual stack.
+        ///     Optionally plays a visual shuffle effect.
         /// </summary>
-        /// <param name="type">Тип визуального shuffle-эффекта.</param>
-        /// <param name="duration">Опциональная длительность. Если null, берется из конфигурации.</param>
+        /// <param name="type">Visual shuffle effect type.</param>
+        /// <param name="duration">Optional duration; if null, uses config defaults.</param>
         public async UniTask ShuffleVisualAsync(ShuffleVisualType type, float? duration = null)
         {
             if (Model == null)
@@ -310,7 +310,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Синхронная кнопка-обертка для раздачи верхней карты в руку.
+        ///     Synchronous inspector button wrapper for dealing the top card to a hand.
         /// </summary>
         [Button("Deal To Hand")]
         public void DealToHand(HandComponent hand, bool faceUp = true)
@@ -319,12 +319,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Раздает верхнюю карту из визуальной стопки (или напрямую из модели) в указанную руку.
+        ///     Deals the top card from the visual stack (or directly from the model) into the hand.
         /// </summary>
-        /// <param name="hand">Целевая рука.</param>
-        /// <param name="faceUp">Показать карту лицом вверх.</param>
-        /// <param name="moveDuration">Опциональная длительность перелета карты.</param>
-        /// <returns>Разданная карта или null, если раздача невозможна.</returns>
+        /// <param name="hand">Target hand.</param>
+        /// <param name="faceUp">Show face up.</param>
+        /// <param name="moveDuration">Optional fly duration.</param>
+        /// <returns>Dealt card, or null if dealing failed.</returns>
         public async UniTask<CardComponent> DealToHandAsync(HandComponent hand, bool faceUp, float? moveDuration = null)
         {
             if (hand == null)
@@ -370,10 +370,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту из колоды
+        ///     Draws a card from the deck.
         /// </summary>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <returns>Компонент карты или null</returns>
+        /// <param name="faceUp">Show face up.</param>
+        /// <returns>Card component, or null.</returns>
         public CardComponent DrawCard(bool faceUp = true)
         {
             if (Model == null || _cardPrefab == null)
@@ -398,12 +398,12 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт карту из колоды с анимацией
+        ///     Draws a card from the deck with move animation.
         /// </summary>
-        /// <param name="targetPosition">Целевая позиция</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <param name="duration">Длительность перемещения</param>
-        /// <returns>Компонент карты</returns>
+        /// <param name="targetPosition">Target position.</param>
+        /// <param name="faceUp">Show face up.</param>
+        /// <param name="duration">Move duration.</param>
+        /// <returns>Card component.</returns>
         public async UniTask<CardComponent> DrawCardAsync(Vector3 targetPosition, bool faceUp = true,
             float duration = 0.3f)
         {
@@ -418,11 +418,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт несколько карт
+        ///     Draws multiple cards.
         /// </summary>
-        /// <param name="count">Количество карт</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
-        /// <returns>Список карт</returns>
+        /// <param name="count">Number of cards.</param>
+        /// <param name="faceUp">Show face up.</param>
+        /// <returns>List of cards.</returns>
         public List<CardComponent> DrawCards(int count, bool faceUp = true)
         {
             List<CardComponent> cards = new();
@@ -440,10 +440,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает карту в колоду
+        ///     Returns a card to the deck.
         /// </summary>
-        /// <param name="card">Карта для возврата</param>
-        /// <param name="toTop">В начало колоды</param>
+        /// <param name="card">Card to return.</param>
+        /// <param name="toTop">Place on top if true, bottom if false.</param>
         public void ReturnCard(CardComponent card, bool toTop = false)
         {
             if (card == null || Model == null)

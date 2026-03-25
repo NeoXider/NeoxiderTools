@@ -10,7 +10,7 @@ using UnityEngine.UI;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент карты: отображение, анимации, клики. Настройка в инспекторе, события через UnityEvent.
+    ///     Card MonoBehaviour: visuals, tweens, clicks. Inspector setup; events via UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/CardComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(CardComponent))]
@@ -64,12 +64,12 @@ namespace Neo.Cards
         private Vector3 _originalScale;
 
         /// <summary>
-        ///     Данные карты
+        ///     Current card data.
         /// </summary>
         public CardData Data { get; private set; }
 
         /// <summary>
-        ///     Показана ли карта лицом вверх
+        ///     Face-up flag (drives sprite selection).
         /// </summary>
         public bool IsFaceUp
         {
@@ -85,7 +85,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Интерактивна ли карта
+        ///     Whether hover/click responses are enabled.
         /// </summary>
         public bool IsInteractable
         {
@@ -94,7 +94,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Конфигурация колоды
+        ///     Deck config for sprites.
         /// </summary>
         public DeckConfig Config
         {
@@ -230,10 +230,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Устанавливает данные карты
+        ///     Assigns data and refreshes sprites.
         /// </summary>
-        /// <param name="data">Данные карты</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
+        /// <param name="data">Card data.</param>
+        /// <param name="faceUp">Face up.</param>
         public void SetData(CardData data, bool faceUp = true)
         {
             Data = data;
@@ -246,7 +246,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Переворачивает карту
+        ///     Toggles face instantly.
         /// </summary>
         [Button]
         public void Flip()
@@ -257,7 +257,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Переворачивает карту с анимацией
+        ///     Flips using <c>_flipDuration</c>.
         /// </summary>
         public async UniTask FlipAsync()
         {
@@ -265,9 +265,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Переворачивает карту с анимацией указанной длительности
+        ///     Flips with explicit duration.
         /// </summary>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="duration">Seconds.</param>
         public async UniTask FlipAsync(float duration)
         {
             if (duration <= 0)
@@ -306,19 +306,19 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает карту в позицию
+        ///     Moves in world space using default duration.
         /// </summary>
-        /// <param name="position">Целевая позиция</param>
+        /// <param name="position">World position.</param>
         public async UniTask MoveToAsync(Vector3 position)
         {
             await MoveToAsync(position, _moveDuration);
         }
 
         /// <summary>
-        ///     Перемещает карту в позицию с указанной длительностью
+        ///     DOMove with custom duration.
         /// </summary>
-        /// <param name="position">Целевая позиция</param>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="position">World position.</param>
+        /// <param name="duration">Seconds.</param>
         public async UniTask MoveToAsync(Vector3 position, float duration)
         {
             if (duration <= 0)
@@ -346,10 +346,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает карту в локальную позицию
+        ///     DOLocalMove helper.
         /// </summary>
-        /// <param name="localPosition">Локальная позиция</param>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="localPosition">Local position.</param>
+        /// <param name="duration">Seconds.</param>
         public async UniTask MoveToLocalAsync(Vector3 localPosition, float duration)
         {
             if (duration <= 0)
@@ -377,7 +377,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сбрасывает hover эффект с анимацией
+        ///     Animates hover state back to rest.
         /// </summary>
         public void ResetHover()
         {
@@ -408,7 +408,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Мгновенно сбрасывает hover без анимации
+        ///     Instantly clears hover offsets.
         /// </summary>
         private void ResetHoverImmediate()
         {
@@ -430,7 +430,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Завершает текущую анимацию мгновенно
+        ///     Completes the active move/flip tween immediately.
         /// </summary>
         private void CompleteCurrentAnimation()
         {
@@ -444,7 +444,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Обновляет оригинальную позицию (вызывается после завершения расстановки в HandComponent)
+        ///     Refreshes baseline transform after <see cref="HandComponent" /> finishes layout.
         /// </summary>
         public void UpdateOriginalTransform()
         {

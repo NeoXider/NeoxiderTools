@@ -1,17 +1,17 @@
 namespace Neo.Save
 {
     /// <summary>
-    ///     Тип провайдера для системы сохранения данных.
+    ///     Provider type for the save system.
     /// </summary>
     public enum SaveProviderType
     {
         /// <summary>
-        ///     Сохранение через PlayerPrefs Unity (по умолчанию).
+        ///     Persist via Unity PlayerPrefs (default).
         /// </summary>
         PlayerPrefs,
 
         /// <summary>
-        ///     Сохранение в JSON файл.
+        ///     Persist to a JSON file.
         /// </summary>
         File
     }

@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     ScriptableObject с начальным наполнением инвентаря.
+    ///     ScriptableObject describing initial inventory contents.
     /// </summary>
     [CreateAssetMenu(fileName = "Inventory Initial State",
         menuName = "Neoxider/Tools/Inventory/Inventory Initial State",

@@ -134,12 +134,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Обновляет счет игрока, при необходимости сохраняя только лучший результат.
+        ///     Updates the player score, optionally keeping only the best result.
         /// </summary>
-        /// <param name="score">Новый счет игрока.</param>
+        /// <param name="score">New player score.</param>
         /// <param name="overrideBestScore">
-        ///     Если false (по умолчанию), счет будет обновлен только если он лучше текущего
-        ///     в зависимости от <see cref="sortOrder" />. Если true — счет обновляется всегда.
+        ///     If false (default), score updates only when better than current per <see cref="sortOrder" />.
+        ///     If true, score always updates.
         /// </param>
         public void UpdatePlayerScore(int score, bool overrideBestScore = false)
         {
@@ -163,10 +163,10 @@ namespace Neo.Tools
 
         private void SyncPlayer()
         {
-            // Сначала ищем по id
+            // Match by id first
             int idx = users.FindIndex(u => u.id == player.id);
 
-            // Если не нашли по id, ищем по имени (на случай если id изменился после загрузки)
+            // Fallback: match by name if id changed after load
             if (idx < 0)
             {
                 idx = users.FindIndex(u => u.name == player.name);
@@ -190,7 +190,7 @@ namespace Neo.Tools
                 Sort();
             }
 
-            // Выключаем объекты на сцене, которые не находятся в списке
+            // Disable scene objects not in the list
             if (container != null)
             {
                 LeaderboardItem[] sceneItems = container.GetComponentsInChildren<LeaderboardItem>(true);
@@ -198,8 +198,8 @@ namespace Neo.Tools
                 {
                     if (!leaderboardItems.Contains(item))
                     {
-                        // Проверяем, является ли объект объектом на сцене (не префабом)
-                        // gameObject.scene.IsValid() возвращает true только для объектов на сцене
+                        // Only scene instances (not prefab assets)
+                        // gameObject.scene.IsValid() is true for objects in a loaded scene
                         if (item.gameObject.scene.IsValid())
                         {
                             item.gameObject.SetActive(false);
@@ -256,7 +256,7 @@ namespace Neo.Tools
             for (int i = 0; i < leaderboardItems.Count && i < sortUsers.Count; i++)
             {
                 sortUsers[i].num = i;
-                // Проверяем по id или по имени (на случай если id не совпадает после загрузки)
+                // Match player by id or name (id may differ after load)
                 bool isPlayerItem = sortUsers[i].id == player.id || sortUsers[i].name == player.name;
                 leaderboardItems[i].Set(sortUsers[i], isPlayerItem, this);
             }
@@ -289,7 +289,7 @@ namespace Neo.Tools
 
         public int GetIdPlayer()
         {
-            // Ищем игрока по id или по имени (на случай если id не совпадает после загрузки)
+            // Find player by id or name (id may differ after load)
             return sortUsers.FindIndex(x => x.id == player.id || x.name == player.name);
         }
 

@@ -74,7 +74,7 @@ namespace Neo
         {
             if (!_prefabDict.ContainsKey(type))
             {
-                Debug.LogError($"[AnimationBonus] Нет префаба для бонуса типа {type}");
+                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -95,7 +95,7 @@ namespace Neo
         {
             if (!_prefabDict.ContainsKey(type))
             {
-                Debug.LogError($"[AnimationBonus] Нет префаба для бонуса типа {type}");
+                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -116,7 +116,7 @@ namespace Neo
         {
             if (!_prefabDict.ContainsKey(type))
             {
-                Debug.LogError($"[AnimationBonus] Нет префаба для бонуса типа {type}");
+                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -195,7 +195,7 @@ namespace Neo
                 return data.prefab;
             }
 
-            Debug.LogWarning($"[AnimationBonus] Нет префаба для бонуса типа {type}");
+            Debug.LogWarning($"[AnimationBonus] No prefab for bonus type {type}");
             return null;
         }
 
@@ -206,7 +206,7 @@ namespace Neo
                 return data.endPos;
             }
 
-            Debug.LogWarning($"[AnimationBonus] Нет точки спавна для бонуса типа {type}");
+            Debug.LogWarning($"[AnimationBonus] No spawn point for bonus type {type}");
             return null;
         }
 
@@ -216,7 +216,7 @@ namespace Neo
             if (canvas == null)
             {
                 Debug.LogError(
-                    "[AnimationFly] Canvas не задан и не установлен parentCanvas! / Canvas is not set and parentCanvas is not assigned!");
+                    "[AnimationFly] Canvas is not set and parentCanvas is not assigned!");
                 return Vector3.zero;
             }
 
@@ -239,23 +239,19 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Преобразует мировую позицию в позицию на Canvas (Screen Space Overlay/Camera).
         ///     Converts a world position to a position on the Canvas (Screen Space Overlay/Camera).
         /// </summary>
-        /// <param name="worldPosition">Мировая позиция / World position</param>
-        /// <param name="canvas">
-        ///     Canvas, в котором находится UI элемент (если null — используется parentCanvas) / Canvas containing
-        ///     the UI element (if null, uses parentCanvas)
-        /// </param>
-        /// <param name="camera">Камера, используемая Canvas (null для Overlay) / Camera used by the Canvas (null for Overlay)</param>
-        /// <returns>Позиция в пространстве Canvas (ScreenPoint) / Position in Canvas space (ScreenPoint)</returns>
+        /// <param name="worldPosition">World position</param>
+        /// <param name="canvas">Canvas containing the UI element (if null, uses parentCanvas)</param>
+        /// <param name="camera">Camera used by the Canvas (null for Overlay)</param>
+        /// <returns>Position in Canvas space (screen point)</returns>
         public static Vector2 WorldToCanvasPosition(Vector3 worldPosition, Canvas canvas = null, Camera camera = null)
         {
             canvas = canvas ?? I.parentCanvas;
             if (canvas == null)
             {
                 Debug.LogError(
-                    "[AnimationFly] Canvas не задан и не установлен parentCanvas! / Canvas is not set and parentCanvas is not assigned!");
+                    "[AnimationFly] Canvas is not set and parentCanvas is not assigned!");
                 return Vector2.zero;
             }
 

@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Настройки для системы сохранения данных.
-    ///     ScriptableObject для конфигурации провайдера сохранения.
+    ///     Save system settings.
+    ///     ScriptableObject that configures the active save provider.
     /// </summary>
     [CreateAssetMenu(fileName = "SaveProviderSettings", menuName = "Neoxider/Save/Save Provider Settings", order = 1)]
     public class SaveProviderSettings : ScriptableObject
@@ -18,19 +18,19 @@ namespace Neo.Save
         private string _fileName = "save.json";
 
         /// <summary>
-        ///     Тип провайдера.
+        ///     Provider type.
         /// </summary>
         public SaveProviderType ProviderType => _providerType;
 
         /// <summary>
-        ///     Имя файла для сохранения (используется только для File провайдера).
+        ///     Save file name (used only for the File provider).
         /// </summary>
         public string FileName => _fileName;
 
         /// <summary>
-        ///     Создает и возвращает провайдер на основе настроек.
+        ///     Creates a provider instance from these settings.
         /// </summary>
-        /// <returns>Экземпляр ISaveProvider в соответствии с настройками</returns>
+        /// <returns>ISaveProvider matching the configured type</returns>
         public ISaveProvider CreateProvider()
         {
             switch (_providerType)

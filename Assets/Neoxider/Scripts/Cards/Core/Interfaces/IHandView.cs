@@ -4,42 +4,42 @@ using Cysharp.Threading.Tasks;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Интерфейс визуального представления руки (набора карт игрока)
+    ///     View API for a hand (player cards).
     /// </summary>
     public interface IHandView
     {
         /// <summary>
-        ///     Список визуальных представлений карт в руке
+        ///     Card views in the hand.
         /// </summary>
         IReadOnlyList<ICardView> CardViews { get; }
 
         /// <summary>
-        ///     Количество карт в руке
+        ///     Number of cards in the hand.
         /// </summary>
         int Count { get; }
 
         /// <summary>
-        ///     Добавляет карту в руку
+        ///     Adds a card to the hand.
         /// </summary>
-        /// <param name="cardView">Визуальное представление карты</param>
-        /// <param name="animate">Анимировать добавление</param>
+        /// <param name="cardView">Card view.</param>
+        /// <param name="animate">Animate the add.</param>
         UniTask AddCardAsync(ICardView cardView, bool animate = true);
 
         /// <summary>
-        ///     Удаляет карту из руки
+        ///     Removes a card from the hand.
         /// </summary>
-        /// <param name="cardView">Визуальное представление карты</param>
-        /// <param name="animate">Анимировать удаление</param>
+        /// <param name="cardView">Card view.</param>
+        /// <param name="animate">Animate the remove.</param>
         UniTask RemoveCardAsync(ICardView cardView, bool animate = true);
 
         /// <summary>
-        ///     Переставляет карты в руке
+        ///     Re-layouts cards in the hand.
         /// </summary>
-        /// <param name="animate">Анимировать перестановку</param>
+        /// <param name="animate">Animate rearrange.</param>
         UniTask ArrangeCardsAsync(bool animate = true);
 
         /// <summary>
-        ///     Очищает руку от всех карт
+        ///     Clears all cards from the hand.
         /// </summary>
         void Clear();
     }

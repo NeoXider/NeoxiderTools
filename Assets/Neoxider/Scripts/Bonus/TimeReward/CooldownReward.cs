@@ -45,7 +45,7 @@ namespace Neo.Bonus
 
         private bool _waitingForManualStart;
 
-        /// <summary>Оставшееся время в секундах (для NeoCondition и рефлексии).</summary>
+        /// <summary>Remaining time in seconds (for NeoCondition and reflection).</summary>
         public float RemainingTimeValue => RemainingTime.CurrentValue;
 
         /// <summary>Invoked when reward claim succeeds (once per claim when multiple are given).</summary>

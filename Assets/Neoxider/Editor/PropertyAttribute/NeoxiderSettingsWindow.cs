@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Окно настроек Neoxider для редактора Unity
+    ///     Neoxider visual settings window for the Unity editor.
     /// </summary>
     public class NeoxiderSettingsWindow : EditorWindow
     {
@@ -43,7 +43,7 @@ namespace Neo.Editor
             };
 
             EditorGUILayout.LabelField("🌈 Neoxider Editor Settings", headerStyle);
-            EditorGUILayout.LabelField("Настройки визуального оформления компонентов",
+            EditorGUILayout.LabelField("Component inspector visual styling",
                 EditorStyles.centeredGreyMiniLabel);
 
             EditorGUILayout.EndVertical();
@@ -56,48 +56,48 @@ namespace Neo.Editor
 
             EditorGUI.BeginChangeCheck();
 
-            EditorGUILayout.LabelField("Текст (Signature)", EditorStyles.miniLabel);
-            bool enableSignature = EditorGUILayout.Toggle("Включить Rainbow Signature",
+            EditorGUILayout.LabelField("Text (Signature)", EditorStyles.miniLabel);
+            bool enableSignature = EditorGUILayout.Toggle("Enable Rainbow Signature",
                 CustomEditorSettings.EnableRainbowSignature);
 
             EditorGUI.BeginDisabledGroup(!enableSignature);
-            bool enableSignatureAnim = EditorGUILayout.Toggle("  Анимация текста",
+            bool enableSignatureAnim = EditorGUILayout.Toggle("  Text animation",
                 CustomEditorSettings.EnableRainbowSignatureAnimation);
             EditorGUI.EndDisabledGroup();
 
             GUILayout.Space(5);
 
-            EditorGUILayout.LabelField("Линия (Rainbow Line)", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Line (Rainbow Line)", EditorStyles.miniLabel);
             bool enableOutline =
-                EditorGUILayout.Toggle("Включить Rainbow Outline", CustomEditorSettings.EnableRainbowOutline);
-            bool enableComponentOutline = EditorGUILayout.Toggle("Включить Rainbow Line (слева)",
+                EditorGUILayout.Toggle("Enable Rainbow Outline", CustomEditorSettings.EnableRainbowOutline);
+            bool enableComponentOutline = EditorGUILayout.Toggle("Enable Rainbow Line (left)",
                 CustomEditorSettings.EnableRainbowComponentOutline);
 
             EditorGUI.BeginDisabledGroup(!enableComponentOutline);
             bool enableLineAnim =
-                EditorGUILayout.Toggle("  Анимация линии", CustomEditorSettings.EnableRainbowLineAnimation);
+                EditorGUILayout.Toggle("  Line animation", CustomEditorSettings.EnableRainbowLineAnimation);
             EditorGUI.EndDisabledGroup();
 
             GUILayout.Space(5);
 
-            EditorGUILayout.LabelField("Скорость анимации", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Animation speed", EditorStyles.miniLabel);
             float speed = EditorGUILayout.Slider("Rainbow Speed", CustomEditorSettings.RainbowSpeed, 0f, 1f);
 
             GUILayout.Space(8);
 
             EditorGUILayout.LabelField("Header", EditorStyles.miniLabel);
-            Color scriptNameColor = EditorGUILayout.ColorField("Цвет названия скрипта",
+            Color scriptNameColor = EditorGUILayout.ColorField("Script name color",
                 CustomEditorSettings.ScriptNameColor);
 
             int minFieldsForHeaderCategory = EditorGUILayout.IntSlider(
-                "Минимум полей для категории Header",
+                "Minimum fields for Header category",
                 CustomEditorSettings.MinFieldsForHeaderCategory,
                 0, 10);
 
             GUILayout.Space(5);
-            EditorGUILayout.LabelField("Списки и массивы", EditorStyles.miniLabel);
+            EditorGUILayout.LabelField("Lists and arrays", EditorStyles.miniLabel);
             bool useDefaultListAndArrayDrawing = EditorGUILayout.Toggle(
-                "Стандартная отрисовка списков/массивов (Unity)",
+                "Default Unity list/array drawing",
                 CustomEditorSettings.UseDefaultListAndArrayDrawing);
 
             if (EditorGUI.EndChangeCheck())
@@ -122,11 +122,11 @@ namespace Neo.Editor
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
-            if (GUILayout.Button("Сбросить все настройки", GUILayout.Height(30)))
+            if (GUILayout.Button("Reset all settings", GUILayout.Height(30)))
             {
-                if (EditorUtility.DisplayDialog("Сброс настроек",
-                        "Вы уверены что хотите сбросить все настройки Neoxider к значениям по умолчанию?",
-                        "Да", "Отмена"))
+                if (EditorUtility.DisplayDialog("Reset settings",
+                        "Reset all Neoxider settings to their defaults?",
+                        "Yes", "Cancel"))
                 {
                     ResetToDefaults();
                 }
@@ -135,10 +135,10 @@ namespace Neo.Editor
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
-            EditorGUILayout.LabelField("Устранение проблем", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Troubleshooting", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Если компоненты Neo.Tools не отображаются с градиентной линией и кнопками при установке из Package Manager, " +
-                "используйте меню: Tools → Neoxider → Fix Editor Assembly References",
+                "If Neo.Tools components do not show the gradient line and action buttons when installed from Package Manager, " +
+                "use: Tools → Neoxider → Fix Editor Assembly References",
                 MessageType.Info);
             EditorGUILayout.EndVertical();
         }

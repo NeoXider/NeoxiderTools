@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Базовый MonoBehaviour с пустыми виртуальными методами IPoolable.
-    ///     Наследуйте от него объекты из пула и переопределяйте OnPoolGet/OnPoolRelease при необходимости.
+    ///     Base MonoBehaviour with default no-op IPoolable methods.
+    ///     Inherit for pooled objects and override OnPoolGet/OnPoolRelease as needed.
     /// </summary>
     [NeoDoc("Tools/Spawner/PoolableBehaviour.md")]
     public abstract class PoolableBehaviour : MonoBehaviour, IPoolable

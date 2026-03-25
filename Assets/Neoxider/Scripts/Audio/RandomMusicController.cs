@@ -19,40 +19,40 @@ namespace Neo.Audio
         private AudioClip[] _tracks;
 
         /// <summary>
-        ///     Возвращает текущий воспроизводимый трек.
+        ///     Gets the currently playing track clip.
         /// </summary>
         public AudioClip CurrentTrack => _audioSource != null ? _audioSource.clip : null;
 
         /// <summary>
-        ///     Возвращает true, если музыка воспроизводится.
+        ///     True while music is actively playing (not paused).
         /// </summary>
         public bool IsPlaying => _isPlaying && !IsPaused;
 
         /// <summary>
-        ///     Возвращает true, если воспроизведение приостановлено.
+        ///     True when playback is paused.
         /// </summary>
         public bool IsPaused { get; private set; }
 
         /// <summary>
-        ///     Событие вызывается при смене трека.
+        ///     Raised when the active track changes.
         /// </summary>
         public event Action<AudioClip> OnTrackChanged;
 
         /// <summary>
-        ///     Событие вызывается при остановке воспроизведения.
+        ///     Raised when playback stops.
         /// </summary>
         public event Action OnStopped;
 
         /// <summary>
-        ///     Инициализирует контроллер с указанным AudioSource и списком треков.
+        ///     Initializes the controller with an <see cref="AudioSource"/> and track list.
         /// </summary>
-        /// <param name="audioSource">AudioSource для воспроизведения музыки.</param>
-        /// <param name="tracks">Массив музыкальных треков для воспроизведения.</param>
+        /// <param name="audioSource">Source used for music playback.</param>
+        /// <param name="tracks">Tracks to choose from.</param>
         public void Initialize(AudioSource audioSource, AudioClip[] tracks)
         {
             if (audioSource == null)
             {
-                Debug.LogError("[RandomMusicController] AudioSource не может быть null.");
+                Debug.LogError("[RandomMusicController] AudioSource cannot be null.");
                 return;
             }
 
@@ -66,13 +66,13 @@ namespace Neo.Audio
             if (_audioSource == null)
             {
                 Debug.LogError(
-                    "[RandomMusicController] AudioSource не инициализирован. Вызовите Initialize() сначала.");
+                    "[RandomMusicController] AudioSource is not initialized. Call Initialize() first.");
                 return;
             }
 
             if (_tracks == null || _tracks.Length == 0)
             {
-                Debug.LogWarning("[RandomMusicController] Список треков пуст.");
+                Debug.LogWarning("[RandomMusicController] Track list is empty.");
                 return;
             }
 
@@ -85,7 +85,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Останавливает воспроизведение музыки.
+        ///     Stops music playback.
         /// </summary>
         public void Stop()
         {
@@ -108,7 +108,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Приостанавливает воспроизведение музыки.
+        ///     Pauses music playback.
         /// </summary>
         public void Pause()
         {
@@ -126,7 +126,7 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Возобновляет воспроизведение приостановленной музыки.
+        ///     Resumes paused music playback.
         /// </summary>
         public void Resume()
         {
@@ -149,7 +149,7 @@ namespace Neo.Audio
             {
                 if (_tracks.Length == 0)
                 {
-                    Debug.LogWarning("[RandomMusicController] Список треков пуст.");
+                    Debug.LogWarning("[RandomMusicController] Track list is empty.");
                     break;
                 }
 
@@ -164,7 +164,7 @@ namespace Neo.Audio
 
                 if (track == null)
                 {
-                    Debug.LogWarning($"[RandomMusicController] Трек по индексу {newTrackIndex} равен null.");
+                    Debug.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
                     break;
                 }
 

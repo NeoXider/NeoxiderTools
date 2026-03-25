@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Shop
 {
     /// <summary>
-    ///     ScriptableObject для хранения данных товара в магазине.
-    ///     Позволяет настраивать свойства товара через инспектор без изменения кода.
+    ///     ScriptableObject that holds shop item data.
+    ///     Lets you configure item properties in the Inspector without code changes.
     /// </summary>
     [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neoxider/Shop/Shop Item Data", order = 32)]
     public class ShopItemData : ScriptableObject
@@ -28,32 +28,32 @@ namespace Neo.Shop
         private Sprite _icon;
 
         /// <summary>
-        ///     Можно ли купить этот товар только один раз?
+        ///     Whether this item can be bought only once.
         /// </summary>
         public bool isSinglePurchase => _isSinglePurchase;
 
         /// <summary>
-        ///     Название товара.
+        ///     Item display name.
         /// </summary>
         public string nameItem => _nameItem;
 
         /// <summary>
-        ///     Цена товара.
+        ///     Item price.
         /// </summary>
         public int price => _price;
 
         /// <summary>
-        ///     Основное изображение товара.
+        ///     Main item sprite (e.g. for preview).
         /// </summary>
         public Sprite sprite => _sprite;
 
         /// <summary>
-        ///     Иконка товара.
+        ///     Item icon sprite.
         /// </summary>
         public Sprite icon => _icon;
 
         /// <summary>
-        ///     Описание товара.
+        ///     Item description text.
         /// </summary>
         public string description => _description;
     }

@@ -59,7 +59,7 @@ namespace Neo.Tools
 
         [Header("Activation (when used in hand)")]
         [Tooltip(
-            "Вызывается при активации предмета (рука вызывает Activate() при применении). Подпишите для эффекта использования в руке.")]
+            "Invoked when the item is activated (the hand calls Activate() on use). Subscribe for in-hand use effects.")]
         public UnityEvent OnActivate = new();
 
         [Header("Events")] public UnityEvent OnCollectStarted = new();
@@ -139,7 +139,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Вызвать активацию предмета (например при применении в руке). Вызывает OnActivate.
+        ///     Triggers item activation (e.g. when used in hand). Invokes OnActivate.
         /// </summary>
         public void Activate()
         {

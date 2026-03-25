@@ -11,8 +11,7 @@ using Random = UnityEngine.Random;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компонент руки: раскладка карт (Fan, Row и т.д.), добавление/удаление. Настройка в инспекторе, события через
-    ///     UnityEvent.
+    ///     Hand component: layouts (fan, line, etc.), add/remove. Inspector setup; events via UnityEvent.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/HandComponent")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(HandComponent))]
@@ -49,57 +48,57 @@ namespace Neo.Cards
         private readonly List<CardComponent> _cards = new();
 
         /// <summary>
-        ///     Событие изменения количества карт в руке. Передаёт текущее количество.
+        ///     Invoked when the card count changes; carries the new count.
         /// </summary>
         public UnityEvent<int> OnCardCountChanged => _onCardCountChanged;
 
         /// <summary>
-        ///     Событие добавления карты.
+        ///     Invoked when a card is added.
         /// </summary>
         public UnityEvent<CardComponent> OnCardAdded => _onCardAdded;
 
         /// <summary>
-        ///     Событие удаления карты.
+        ///     Invoked when a card is removed.
         /// </summary>
         public UnityEvent<CardComponent> OnCardRemoved => _onCardRemoved;
 
         /// <summary>
-        ///     Событие клика по карте.
+        ///     Invoked when a card is clicked.
         /// </summary>
         public UnityEvent<CardComponent> OnCardClicked => _onCardClicked;
 
         /// <summary>
-        ///     Событие изменения руки.
+        ///     Invoked on any hand mutation.
         /// </summary>
         public UnityEvent OnHandChanged => _onHandChanged;
 
         /// <summary>
-        ///     Модель руки
+        ///     Backing hand model.
         /// </summary>
         public HandModel Model { get; private set; }
 
         /// <summary>
-        ///     Карты в руке
+        ///     Cards currently parented to this hand.
         /// </summary>
         public IReadOnlyList<CardComponent> Cards => _cards;
 
         /// <summary>
-        ///     Количество карт
+        ///     Card count.
         /// </summary>
         public int Count => _cards.Count;
 
         /// <summary>
-        ///     Пуста ли рука
+        ///     Whether the hand has no cards.
         /// </summary>
         public bool IsEmpty => _cards.Count == 0;
 
         /// <summary>
-        ///     Заполнена ли рука
+        ///     Whether the hand reached <c>_maxCards</c>.
         /// </summary>
         public bool IsFull => _cards.Count >= _maxCards;
 
         /// <summary>
-        ///     Тип раскладки
+        ///     Active layout type.
         /// </summary>
         public CardLayoutType LayoutType
         {
@@ -112,8 +111,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Устаревшее свойство для обратной совместимости со старыми сценами.
-        ///     Используйте LayoutType (CardLayoutType).
+        ///     Legacy layout enum for old scenes. Prefer <see cref="LayoutType" />.
         /// </summary>
         [Obsolete("Use LayoutType with CardLayoutType.")]
         public HandLayoutType LegacyLayoutType
@@ -140,10 +138,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Добавляет карту в руку
+        ///     Adds a card and optionally animates layout.
         /// </summary>
-        /// <param name="card">Карта для добавления</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="card">Card to add.</param>
+        /// <param name="animate">Tween to slot.</param>
         public async UniTask AddCardAsync(CardComponent card, bool animate = true)
         {
             if (card == null || IsFull)
@@ -210,18 +208,18 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Добавляет карту синхронно
+        ///     Adds a card without waiting (fires async with animate=false).
         /// </summary>
-        /// <param name="card">Карта</param>
+        /// <param name="card">Card.</param>
         public void AddCard(CardComponent card)
         {
             AddCardAsync(card, false).Forget();
         }
 
         /// <summary>
-        ///     Берёт первую карту из руки (для игры "Пьяница").
+        ///     Draws the first card (War-style).
         /// </summary>
-        /// <returns>Первая карта или null если рука пуста</returns>
+        /// <returns>First card, or null.</returns>
         public CardComponent DrawFirst()
         {
             if (_cards.Count == 0)
@@ -235,9 +233,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Берёт случайную карту из руки.
+        ///     Draws a random card.
         /// </summary>
-        /// <returns>Случайная карта или null если рука пуста</returns>
+        /// <returns>Random card, or null.</returns>
         public CardComponent DrawRandom()
         {
             if (_cards.Count == 0)
@@ -252,10 +250,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Удаляет карту из руки
+        ///     Removes a card from the hand.
         /// </summary>
-        /// <param name="card">Карта для удаления</param>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="card">Card to remove.</param>
+        /// <param name="animate">Re-layout with tween.</param>
         public async UniTask RemoveCardAsync(CardComponent card, bool animate = true)
         {
             if (card == null || !_cards.Contains(card))
@@ -280,20 +278,20 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Удаляет карту синхронно
+        ///     Removes without awaiting (animate=false).
         /// </summary>
-        /// <param name="card">Карта</param>
+        /// <param name="card">Card.</param>
         public void RemoveCard(CardComponent card)
         {
             RemoveCardAsync(card, false).Forget();
         }
 
         /// <summary>
-        ///     Удаляет карту по индексу
+        ///     Removes the card at <paramref name="index" />.
         /// </summary>
-        /// <param name="index">Индекс карты</param>
-        /// <param name="animate">Анимировать</param>
-        /// <returns>Удалённая карта</returns>
+        /// <param name="index">Index.</param>
+        /// <param name="animate">Re-layout with tween.</param>
+        /// <returns>Removed card, or null.</returns>
         public async UniTask<CardComponent> RemoveAtAsync(int index, bool animate = true)
         {
             if (index < 0 || index >= _cards.Count)
@@ -307,9 +305,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по рангу
+        ///     Sorts by rank (inspector button).
         /// </summary>
-        /// <param name="ascending">По возрастанию</param>
+        /// <param name="ascending">Ascending if true.</param>
         [Button]
         public void SortByRank(bool ascending = true)
         {
@@ -317,7 +315,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по рангу с анимацией
+        ///     Sorts by rank and re-layouts.
         /// </summary>
         public async UniTask SortByRankAsync(bool ascending = true, bool animate = true)
         {
@@ -337,9 +335,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по масти
+        ///     Sorts by suit (inspector button).
         /// </summary>
-        /// <param name="ascending">По возрастанию</param>
+        /// <param name="ascending">Ascending if true.</param>
         [Button]
         public void SortBySuit(bool ascending = true)
         {
@@ -347,7 +345,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Сортирует карты по масти с анимацией
+        ///     Sorts by suit, then rank, with layout tween.
         /// </summary>
         public async UniTask SortBySuitAsync(bool ascending = true, bool animate = true)
         {
@@ -375,11 +373,11 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Находит карты, которыми можно побить указанную
+        ///     Cards that can beat <paramref name="attackCard" /> under Durak rules.
         /// </summary>
-        /// <param name="attackCard">Атакующая карта</param>
-        /// <param name="trump">Козырная масть</param>
-        /// <returns>Список карт</returns>
+        /// <param name="attackCard">Attacking card.</param>
+        /// <param name="trump">Trump suit.</param>
+        /// <returns>Matching components.</returns>
         public List<CardComponent> GetCardsThatCanBeat(CardData attackCard, Suit? trump)
         {
             List<CardComponent> result = new();
@@ -396,7 +394,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Очищает руку
+        ///     Destroys all cards and clears the model.
         /// </summary>
         [Button]
         public void Clear()
@@ -420,9 +418,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Расставляет карты
+        ///     Recomputes layout positions for every card.
         /// </summary>
-        /// <param name="animate">Анимировать</param>
+        /// <param name="animate">Tween to new slots.</param>
         public async UniTask ArrangeCardsAsync(bool animate = true)
         {
             if (_cards.Count == 0)

@@ -3,36 +3,36 @@ using System.Collections.Generic;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Компараторы для сортировки карт
+    ///     Comparers for sorting cards.
     /// </summary>
     public static class CardComparer
     {
         /// <summary>
-        ///     Сравнивает карты по рангу (по возрастанию)
+        ///     Compare by rank ascending.
         /// </summary>
         public static readonly IComparer<CardData> ByRankAscending = new RankAscendingComparer();
 
         /// <summary>
-        ///     Сравнивает карты по рангу (по убыванию)
+        ///     Compare by rank descending.
         /// </summary>
         public static readonly IComparer<CardData> ByRankDescending = new RankDescendingComparer();
 
         /// <summary>
-        ///     Сравнивает карты по масти, затем по рангу (по возрастанию)
+        ///     Compare by suit, then rank ascending.
         /// </summary>
         public static readonly IComparer<CardData> BySuitThenRankAscending = new SuitThenRankAscendingComparer();
 
         /// <summary>
-        ///     Сравнивает карты по масти, затем по рангу (по убыванию)
+        ///     Compare by suit, then rank descending.
         /// </summary>
         public static readonly IComparer<CardData> BySuitThenRankDescending = new SuitThenRankDescendingComparer();
 
         /// <summary>
-        ///     Создаёт компаратор с учётом козырной масти (козыри в конце)
+        ///     Creates a comparer that accounts for trump (trumps sort last).
         /// </summary>
-        /// <param name="trump">Козырная масть</param>
-        /// <param name="ascending">По возрастанию ранга</param>
-        /// <returns>Компаратор</returns>
+        /// <param name="trump">Trump suit.</param>
+        /// <param name="ascending">Rank ascending if true.</param>
+        /// <returns>Comparer instance.</returns>
         public static IComparer<CardData> WithTrump(Suit trump, bool ascending = true)
         {
             return new TrumpComparer(trump, ascending);

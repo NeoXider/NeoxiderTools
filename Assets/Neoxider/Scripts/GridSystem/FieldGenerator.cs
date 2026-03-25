@@ -172,7 +172,7 @@ namespace Neo.GridSystem
             Vector3Int size = Config != null ? Config.Size : Vector3Int.one;
             if (size.x <= 0 || size.y <= 0 || size.z <= 0)
             {
-                Debug.LogError("FieldGenerator: Некорректный размер поля! Size: " + size);
+                Debug.LogError("FieldGenerator: Invalid field size! Size: " + size);
                 Cells = null;
                 return;
             }

@@ -266,19 +266,19 @@ namespace Neo.Tools
 
         [Header("Inspector / Debug Lists (Runtime)")]
         [Tooltip(
-            "Снимок исключённых индексов пула для Random (ExcludeIndex/IncludeIndex/IncludeAllIndices). " +
-            "В Editor можно предварительно заполнить этот список: тогда при старте Selector создаст HashSet по нему. " +
-            "В Play Mode обновляется автоматически.")]
+            "Snapshot of excluded pool indices for Random (ExcludeIndex/IncludeIndex/IncludeAllIndices). " +
+            "In the Editor you can pre-fill this list: on play start Selector builds a HashSet from it. " +
+            "In Play Mode it updates automatically.")]
         [SerializeField]
         private List<int> _excludedIndicesInspector = new();
 
-        [Tooltip("Снимок индексов, уже использованных в unique-selection режиме. Только для просмотра (debug).")]
+        [Tooltip("Snapshot of indices already used in unique-selection mode. Read-only (debug).")]
         [SerializeField]
         private List<int> _usedIndicesForUniqueInspector = new();
 
         [Tooltip(
-            "Снимок включённых индексов пула для Random (все индексы из текущих границ, кроме исключённых). " +
-            "Для удобства отображается в Inspector. Обновляется синхронно с excluded и индексовыми границами.")]
+            "Snapshot of included pool indices for Random (all indices within current bounds except excluded). " +
+            "Shown in the Inspector for convenience. Stays in sync with excluded set and index bounds.")]
         [SerializeField]
         private List<int> _includedIndicesInspector = new();
 
@@ -533,17 +533,17 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Снимок исключённых индексов пула для Random (для отображения в Inspector и чтения из других скриптов).
+        ///     Snapshot of excluded pool indices for Random (Inspector display and use from other scripts).
         /// </summary>
         public IReadOnlyList<int> ExcludedIndices => _excludedIndicesInspector;
 
         /// <summary>
-        ///     Снимок индексов, уже использованных в unique-selection режиме (debug).
+        ///     Snapshot of indices already used in unique-selection mode (debug).
         /// </summary>
         public IReadOnlyList<int> UsedIndicesForUnique => _usedIndicesForUniqueInspector;
 
         /// <summary>
-        ///     Снимок включённых индексов пула Random (все индексы из текущих границ, кроме исключённых).
+        ///     Snapshot of included Random pool indices (all indices in current bounds except excluded).
         /// </summary>
         public IReadOnlyList<int> IncludedIndices => _includedIndicesInspector;
 
@@ -1230,9 +1230,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Позволяет задать список исключённых индексов одним вызовом (для удобства при управлении из других скриптов).
+        ///     Sets the excluded index list in one call (convenient when driven from other scripts).
         /// </summary>
-        /// <param name="indices">Индексы, которые нужно исключить из пула Random.</param>
+        /// <param name="indices">Indices to exclude from the Random pool.</param>
         public void SetExcludedIndices(IEnumerable<int> indices)
         {
             _excludedIndices = indices != null ? new HashSet<int>(indices) : new HashSet<int>();

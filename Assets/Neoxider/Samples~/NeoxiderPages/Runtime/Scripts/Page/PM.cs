@@ -16,19 +16,19 @@ using UnityEditor;
 namespace Neo.Pages
 {
     /// <summary>
-    ///     Интерфейс подписчика, который реагирует на смену страницы в <see cref="PM" />.
+    ///     Subscriber interface that reacts to page changes in <see cref="PM" />.
     /// </summary>
     public interface IScreenManagerSubscriber
     {
         /// <summary>
-        ///     Вызывается при смене активной страницы.
+        ///     Called when the active page changes.
         /// </summary>
-        /// <param name="newUiPage">Новая активная страница (может быть null).</param>
+        /// <param name="newUiPage">New active page (may be null).</param>
         void OnChangePage(UIPage newUiPage);
     }
 
     /// <summary>
-    ///     PageManager — компонент управления страницами UI (включение/выключение, переключение, возврат на предыдущую).
+    ///     PageManager — UI page controller (enable/disable, switch, return to previous).
     /// </summary>
     [MovedFrom("")]
     [CreateFromMenu("Neoxider/Pages/PM")]
@@ -213,7 +213,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Удобный вызов переключения страницы по известному имени (по соглашению: PageWin/PageLose/PageEnd).
+        ///     Convenience switch by known name (convention: PageWin/PageLose/PageEnd).
         /// </summary>
         public void ChangePage(KnownPage page)
         {
@@ -235,7 +235,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Удобный вызов переключения страницы по имени PageId (например, "PageEnd").
+        ///     Convenience switch by PageId asset name (e.g. "PageEnd").
         /// </summary>
         public void ChangePageByName(string pageIdName)
         {
@@ -282,7 +282,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Пересобирает словарь страниц для быстрого поиска по <see cref="PageId" />.
+        ///     Rebuilds the page dictionary for fast lookup by <see cref="PageId" />.
         /// </summary>
         public void SetDictPage()
         {
@@ -304,7 +304,7 @@ namespace Neo.Pages
                     else
                     {
                         Debug.LogWarning(
-                            $"[PM] Дублирующая страница PageId {page.PageId.name} — будет использоваться первая найденная.");
+                            $"[PM] Duplicate page for PageId {page.PageId.name} — the first match will be used.");
                     }
                 }
             }
@@ -312,7 +312,7 @@ namespace Neo.Pages
 
 
         /// <summary>
-        ///     Переключает страницу по ассету-идентификатору.
+        ///     Switches page by PageId asset.
         /// </summary>
         public void ChangePage(PageId pageId)
         {
@@ -346,7 +346,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Активирует страницу, не выключая остальные.
+        ///     Activates a page without deactivating others.
         /// </summary>
         public void ActivePage(PageId pageId)
         {
@@ -379,9 +379,9 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Меняет местами текущую и предыдущую страницы.
+        ///     Swaps current and previous pages.
         /// </summary>
-        /// <param name="keepPreviousActive">Если true — предыдущая страница не будет деактивирована.</param>
+        /// <param name="keepPreviousActive">If true, the previous page stays active.</param>
         public void SwitchToPreviousPage(bool keepPreviousActive = false)
         {
             Debug.Log($"[PM] Switching to Previous Page: {previousUiPage?.PageId?.name}");
@@ -397,7 +397,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Делает страницу активной и деактивирует остальные (с учетом ignore списка).
+        ///     Makes a page active and deactivates others (respecting the ignore list).
         /// </summary>
         public void SetPage(PageId pageId)
         {
@@ -420,16 +420,13 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Активирует целевую страницу и управляет состоянием остальных по фильтрам.
+        ///     Activates the target page by <see cref="PageId" /> and sets other pages according to filters.
         /// </summary>
-        /// <param name="targetPage">Целевая страница.</param>
-        /// <param name="active">Активировать целевую страницу.</param>
-        /// <param name="ignoreList">Список страниц, которые не трогаем.</param>
-        /// <param name="otherActive">Состояние остальных страниц (если их не игнорируем).</param>
-        /// <returns>Найденная целевая страница или null.</returns>
-        /// <summary>
-        ///     Активирует целевую страницу по <see cref="PageId" /> и управляет состоянием остальных по фильтрам.
-        /// </summary>
+        /// <param name="targetPageId">Target PageId.</param>
+        /// <param name="active">Whether to activate the target page.</param>
+        /// <param name="ignoreList">Pages whose active state is left unchanged.</param>
+        /// <param name="otherActive">Active state for other pages when not ignored.</param>
+        /// <returns>The found target page, or null.</returns>
         public UIPage ActivatePages(PageId targetPageId, bool active = true,
             PageId[] ignoreList = null, bool otherActive = false)
         {
@@ -500,10 +497,10 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Включает/выключает конкретную страницу через StartActive/EndActive.
+        ///     Enables/disables a specific page via StartActive/EndActive.
         /// </summary>
-        /// <param name="uiPage">Страница.</param>
-        /// <param name="isActive">Состояние.</param>
+        /// <param name="uiPage">Page.</param>
+        /// <param name="isActive">Desired active state.</param>
         private void SetPageActive(UIPage uiPage, bool isActive)
         {
             if (uiPage == null)
@@ -523,7 +520,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Закрывает текущую страницу (вызывает EndActive у currentUiPage).
+        ///     Closes the current page (calls EndActive on currentUiPage).
         /// </summary>
         public void CloseCurrentPage()
         {
@@ -534,9 +531,9 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Находит все <see cref="UIPage" /> в текущей активной сцене (включая неактивные объекты).
+        ///     Finds all <see cref="UIPage" /> in the current active scene (including inactive objects).
         /// </summary>
-        /// <returns>Массив найденных страниц.</returns>
+        /// <returns>Array of found pages.</returns>
         public UIPage[] FindAllScenePages()
         {
             return Resources.FindObjectsOfTypeAll<UIPage>()
@@ -546,9 +543,9 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Находит страницу по типу через внутренний словарь.
+        ///     Finds a page by PageId using the internal dictionary.
         /// </summary>
-        /// <returns>Страница или null.</returns>
+        /// <returns>Page or null.</returns>
         public UIPage FindPage(PageId pageId)
         {
             if (pageId == null)
@@ -573,13 +570,13 @@ namespace Neo.Pages
                 return p;
             }
 
-            Debug.LogWarning($"[PM] Страница PageId {pageId.name} не найдена в словаре.");
+            Debug.LogWarning($"[PM] Page for PageId {pageId.name} not found in dictionary.");
             return null;
         }
 
 
         /// <summary>
-        ///     Проверяет список страниц на дубликаты и выводит предупреждения.
+        ///     Checks the page list for duplicates and logs warnings.
         /// </summary>
         private void CheckForDuplicates(UIPage[] pages)
         {

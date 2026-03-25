@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    ///     GUI отрисовка для окна изменения максимального размера текстур
+    ///     GUI for the texture max size window.
     /// </summary>
     public class TextureMaxSizeChangerGUI : EditorWindowGUI
     {
@@ -13,7 +13,7 @@ namespace Neo.Editor.Windows
         private TextureImporterType _textureType = TextureImporterType.Default;
 
         /// <summary>
-        ///     Отрисовка GUI
+        ///     Draws the window GUI.
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {

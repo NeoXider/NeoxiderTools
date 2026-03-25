@@ -6,13 +6,12 @@ using UnityEngine;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     MonoBehaviour версия State Machine для использования на GameObject.
-    ///     Автоматически вызывает Update, FixedUpdate и LateUpdate для текущего состояния.
+    ///     MonoBehaviour-hosted State Machine: ticks Update / FixedUpdate / LateUpdate for the active state.
     /// </summary>
-    /// <typeparam name="TState">Тип состояний, должен реализовывать IState.</typeparam>
+    /// <typeparam name="TState">State type; must implement IState.</typeparam>
     /// <remarks>
-    ///     Этот компонент можно добавить на GameObject для автоматического управления состояниями.
-    ///     Поддерживает код-состояния и конфигурацию через StateMachineData (ScriptableObject).
+    ///     Add to a GameObject for automatic lifecycle wiring.
+    ///     Supports code-defined states and ScriptableObject configuration via StateMachineData.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -56,7 +55,7 @@ namespace Neo.StateMachine
         private StateMachine<TState> stateMachine;
 
         /// <summary>
-        ///     Получить экземпляр State Machine.
+        ///     Underlying State Machine instance.
         /// </summary>
         public StateMachine<TState> StateMachine
         {
@@ -73,12 +72,12 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Текущее активное состояние.
+        ///     Currently active state.
         /// </summary>
         public TState CurrentState => StateMachine.CurrentState;
 
         /// <summary>
-        ///     Предыдущее состояние.
+        ///     State before the last transition.
         /// </summary>
         public TState PreviousState => StateMachine.PreviousState;
 
@@ -130,15 +129,15 @@ namespace Neo.StateMachine
         {
             if (showStateInInspector && Application.isPlaying && StateMachine != null)
             {
-                // Информация о текущем состоянии будет отображаться в кастомном редакторе
+                // Current state is shown by the custom editor
             }
         }
 #endif
 
         /// <summary>
-        ///     Сменить состояние по типу.
+        ///     Changes state by concrete type.
         /// </summary>
-        /// <typeparam name="T">Тип нового состояния.</typeparam>
+        /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, TState, new()
         {
             StateMachine.ChangeState<T>();
@@ -150,9 +149,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Сменить состояние по имени (при использовании StateMachineData).
+        ///     Changes state by name when using StateMachineData (NoCode).
         /// </summary>
-        /// <param name="stateName">Имя состояния.</param>
+        /// <param name="stateName">State name on StateData.</param>
         public void ChangeState(string stateName)
         {
             if (stateMachineData == null)
@@ -165,7 +164,7 @@ namespace Neo.StateMachine
             StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
             if (stateData != null)
             {
-                // StateData реализует IState, но нужно проверить совместимость типов
+                // StateData implements IState; still require compatibility with TState
                 if (stateData is TState state)
                 {
                     StateMachine.ChangeState(state);
@@ -189,16 +188,16 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Зарегистрировать переход.
+        ///     Registers a transition on the internal State Machine.
         /// </summary>
-        /// <param name="transition">Переход для регистрации.</param>
+        /// <param name="transition">Transition to add.</param>
         public void RegisterTransition(StateTransition transition)
         {
             StateMachine.RegisterTransition(transition);
         }
 
         /// <summary>
-        ///     Загрузить конфигурацию из StateMachineData.
+        ///     Reloads transitions and initial state from StateMachineData.
         /// </summary>
         public void LoadFromStateMachineData()
         {
@@ -271,7 +270,7 @@ namespace Neo.StateMachine
                 MethodInfo method = typeof(StateMachine<TState>).GetMethod("ChangeState", new[] { typeof(Type) });
                 if (method == null)
                 {
-                    // Используем рефлексию для создания экземпляра
+                    // No ChangeState(Type) — create instance via reflection
                     var state = Activator.CreateInstance(stateType) as TState;
                     if (state != null)
                     {

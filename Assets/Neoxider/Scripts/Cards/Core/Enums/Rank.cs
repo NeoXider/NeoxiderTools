@@ -1,83 +1,83 @@
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Ранги (достоинства) игральных карт
+    ///     Playing card ranks (values).
     /// </summary>
     public enum Rank
     {
         /// <summary>
-        ///     Двойка
+        ///     Two.
         /// </summary>
         Two = 2,
 
         /// <summary>
-        ///     Тройка
+        ///     Three.
         /// </summary>
         Three = 3,
 
         /// <summary>
-        ///     Четвёрка
+        ///     Four.
         /// </summary>
         Four = 4,
 
         /// <summary>
-        ///     Пятёрка
+        ///     Five.
         /// </summary>
         Five = 5,
 
         /// <summary>
-        ///     Шестёрка
+        ///     Six.
         /// </summary>
         Six = 6,
 
         /// <summary>
-        ///     Семёрка
+        ///     Seven.
         /// </summary>
         Seven = 7,
 
         /// <summary>
-        ///     Восьмёрка
+        ///     Eight.
         /// </summary>
         Eight = 8,
 
         /// <summary>
-        ///     Девятка
+        ///     Nine.
         /// </summary>
         Nine = 9,
 
         /// <summary>
-        ///     Десятка
+        ///     Ten.
         /// </summary>
         Ten = 10,
 
         /// <summary>
-        ///     Валет
+        ///     Jack.
         /// </summary>
         Jack = 11,
 
         /// <summary>
-        ///     Дама
+        ///     Queen.
         /// </summary>
         Queen = 12,
 
         /// <summary>
-        ///     Король
+        ///     King.
         /// </summary>
         King = 13,
 
         /// <summary>
-        ///     Туз
+        ///     Ace.
         /// </summary>
         Ace = 14
     }
 
     /// <summary>
-    ///     Расширения для работы с рангами карт
+    ///     Extension methods for ranks.
     /// </summary>
     public static class RankExtensions
     {
         /// <summary>
-        ///     Проверяет, является ли карта картинкой (Jack, Queen, King)
+        ///     Returns whether the rank is a face card (jack, queen, king).
         /// </summary>
         public static bool IsFaceCard(this Rank rank)
         {
@@ -85,7 +85,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Проверяет, является ли карта тузом
+        ///     Returns whether the rank is ace.
         /// </summary>
         public static bool IsAce(this Rank rank)
         {
@@ -93,7 +93,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает короткое обозначение ранга (2, 3, ..., J, Q, K, A)
+        ///     Returns short rank notation (2, 3, ..., J, Q, K, A).
         /// </summary>
         public static string ToShortString(this Rank rank)
         {
@@ -117,31 +117,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает название ранга на русском языке
-        /// </summary>
-        public static string ToRussianName(this Rank rank)
-        {
-            return rank switch
-            {
-                Rank.Two => "Двойка",
-                Rank.Three => "Тройка",
-                Rank.Four => "Четвёрка",
-                Rank.Five => "Пятёрка",
-                Rank.Six => "Шестёрка",
-                Rank.Seven => "Семёрка",
-                Rank.Eight => "Восьмёрка",
-                Rank.Nine => "Девятка",
-                Rank.Ten => "Десятка",
-                Rank.Jack => "Валет",
-                Rank.Queen => "Дама",
-                Rank.King => "Король",
-                Rank.Ace => "Туз",
-                _ => "Неизвестно"
-            };
-        }
-
-        /// <summary>
-        ///     Возвращает название ранга на английском языке
+        ///     Returns the English name of the rank.
         /// </summary>
         public static string ToEnglishName(this Rank rank)
         {
@@ -165,10 +141,10 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Возвращает числовое значение ранга для подсчёта очков
+        ///     Returns numeric value for scoring.
         /// </summary>
-        /// <param name="rank">Ранг карты</param>
-        /// <param name="aceAsOne">Считать туз за 1 (true) или за 14 (false)</param>
+        /// <param name="rank">Card rank.</param>
+        /// <param name="aceAsOne">Count ace as 1 (true) or 14 (false).</param>
         public static int ToValue(this Rank rank, bool aceAsOne = false)
         {
             if (aceAsOne && rank == Rank.Ace)

@@ -3,43 +3,43 @@ using System;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Общий тип раскладки карт для Hand/Deck/Board.
+    ///     Layout type for hand, deck, or board stacks.
     /// </summary>
     public enum CardLayoutType
     {
         /// <summary>
-        ///     Веер - карты расположены дугой
+        ///     Fan — cards along an arc.
         /// </summary>
         Fan,
 
         /// <summary>
-        ///     Линия - карты расположены в ряд с перекрытием
+        ///     Line — row with overlap.
         /// </summary>
         Line,
 
         /// <summary>
-        ///     Стопка - карты сложены друг на друга
+        ///     Stack — piled on top of each other.
         /// </summary>
         Stack,
 
         /// <summary>
-        ///     Сетка - карты расположены в несколько рядов
+        ///     Grid — multiple rows.
         /// </summary>
         Grid,
 
         /// <summary>
-        ///     Слоты - карты размещаются в фиксированные позиции.
+        ///     Slots — fixed slot positions.
         /// </summary>
         Slots,
 
         /// <summary>
-        ///     Случайное расположение карт (для биты/хаоса на столе).
+        ///     Random scatter (beat pile / chaos on table).
         /// </summary>
         Scattered
     }
 
     /// <summary>
-    ///     Устаревшее имя типа раскладки. Оставлено для обратной совместимости.
+    ///     Legacy layout enum name. Kept for backward compatibility.
     /// </summary>
     [Obsolete("Use CardLayoutType instead.")]
     public enum HandLayoutType

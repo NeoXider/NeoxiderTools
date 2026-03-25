@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Runtime-состояние одного квеста: статус и прогресс по целям. Получать только через QuestManager.GetState.
+    ///     Runtime state for one quest: status and per-objective progress. Obtain only via QuestManager.GetState.
     /// </summary>
     [Serializable]
     public class QuestState
@@ -25,20 +25,20 @@ namespace Neo.Quest
             }
         }
 
-        /// <summary>ID квеста (из QuestConfig.Id).</summary>
+        /// <summary>Quest ID (from QuestConfig.Id).</summary>
         public string QuestId => _questId;
 
-        /// <summary>Текущий статус квеста.</summary>
+        /// <summary>Current quest status.</summary>
         public QuestStatus Status
         {
             get => _status;
             set => _status = value;
         }
 
-        /// <summary>Количество целей.</summary>
+        /// <summary>Number of objectives.</summary>
         public int ObjectiveCount => _objectiveProgress.Count;
 
-        /// <summary>Текущий прогресс по цели (для счётчиков — накопленное значение).</summary>
+        /// <summary>Current progress for an objective (for counters: accumulated value).</summary>
         public int GetObjectiveProgress(int index)
         {
             if (index < 0 || index >= _objectiveProgress.Count)
@@ -49,7 +49,7 @@ namespace Neo.Quest
             return _objectiveProgress[index];
         }
 
-        /// <summary>Установить прогресс по цели (вызывается из QuestManager).</summary>
+        /// <summary>Set objective progress (called from QuestManager).</summary>
         internal void SetObjectiveProgress(int index, int value)
         {
             if (index < 0 || index >= _objectiveProgress.Count)
@@ -60,7 +60,7 @@ namespace Neo.Quest
             _objectiveProgress[index] = Mathf.Max(0, value);
         }
 
-        /// <summary>Цель с заданным индексом выполнена.</summary>
+        /// <summary>Whether the objective at the given index is completed.</summary>
         public bool IsObjectiveCompleted(int index)
         {
             if (index < 0 || index >= _objectiveCompleted.Count)
@@ -71,7 +71,7 @@ namespace Neo.Quest
             return _objectiveCompleted[index];
         }
 
-        /// <summary>Пометить цель выполненной.</summary>
+        /// <summary>Mark an objective as completed.</summary>
         internal void MarkObjectiveCompleted(int index)
         {
             if (index < 0 || index >= _objectiveCompleted.Count)
@@ -82,7 +82,7 @@ namespace Neo.Quest
             _objectiveCompleted[index] = true;
         }
 
-        /// <summary>Увеличить прогресс по цели на 1 (для счётчиков).</summary>
+        /// <summary>Increase objective progress by amount (for counters).</summary>
         internal int AddObjectiveProgress(int index, int amount)
         {
             if (index < 0 || index >= _objectiveProgress.Count || amount <= 0)

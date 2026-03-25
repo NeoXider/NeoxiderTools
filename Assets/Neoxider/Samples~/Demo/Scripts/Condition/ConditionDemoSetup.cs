@@ -13,9 +13,9 @@ using UnityEditor.Events;
 namespace Neo.Demo.Condition
 {
     /// <summary>
-    ///     Настройка демо-сцены NeoCondition в Edit Mode.
-    ///     Использует существующие компоненты библиотеки: Health и ScoreManager.
-    ///     Иерархия после Setup:
+    ///     Sets up the NeoCondition demo scene in Edit Mode.
+    ///     Uses existing library components: Health and ScoreManager.
+    ///     Hierarchy after Setup:
     ///     Health              — Neo.Tools.Health
     ///     CheckDead         — NeoCondition (Hp &lt;= 0)
     ///     CheckLowHP        — NeoCondition (Hp &lt;= 30 AND IsAlive)
@@ -48,7 +48,7 @@ namespace Neo.Demo.Condition
         {
             if (IsSetUp)
             {
-                Debug.Log("[ConditionDemoSetup] Сцена уже настроена. Удалите созданные объекты для пересоздания.");
+                Debug.Log("[ConditionDemoSetup] Scene is already set up. Remove created objects to recreate.");
                 return;
             }
 
@@ -139,12 +139,12 @@ namespace Neo.Demo.Condition
 
             CreateText("NeoCondition Demo", canvasRT, new Vector2(0, 220), 32, Color.white);
 
-            // HP text — подключим к Health.OnChange через SetText или напрямую
+            // HP text — wire via Health.OnChange through SetText or directly
             GameObject hpTxtObj = CreateText($"HP: {_startHealth} / {_startHealth}", canvasRT, new Vector2(0, 160), 24,
                 new Color(0.3f, 0.9f, 0.3f));
             TMP_Text hpTmp = hpTxtObj.GetComponent<TMP_Text>();
 
-            // Score text — подключим к ScoreManager.textScores
+            // Score text — wire to ScoreManager.textScores
             GameObject scoreTxtObj = CreateText($"Score: 0 / {_winScore}", canvasRT, new Vector2(0, 120), 24,
                 new Color(0.9f, 0.9f, 0.3f));
             TMP_Text scoreTmp = scoreTxtObj.GetComponent<TMP_Text>();
@@ -191,16 +191,13 @@ namespace Neo.Demo.Condition
             SetField(_demoUI, "_statusText", statusTmp);
 
             // ========================================
-            // HP text обновляем дополнительным скриптом — 
-            // добавим простой компонент HealthTextUpdater на hpTxtObj
-            // Но проще: подпишемся через Health.OnChange на UpdateHpText в DemoUI
+            // HP text — update with a small helper script on hpTxtObj
+            // Alternative: subscribe via Health.OnChange to UpdateHpText on DemoUI
             // ========================================
 
-            // Добавим поле для hpText в DemoUI и метод UpdateHpText
-            // Нет — сделаем ещё проще: повесим на Health.OnChange лямбду... 
-            // но persistent listener не может быть лямбдой.
-            // Используем уже существующий подход — Health имеет OnChange<int>,
-            // а TMP_Text обновляет себя. Сделаем маленький helper компонент прямо на hpTxtObj.
+            // Could add hpText field and UpdateHpText on DemoUI
+            // Simpler: lambda on Health.OnChange — not allowed for persistent listeners.
+            // Use Health OnChange<int> + small helper on hpTxtObj.
             HealthTextDisplay hpUpdater = hpTxtObj.AddComponent<HealthTextDisplay>();
             SetField(hpUpdater, "_health", _health);
             EditorUtility.SetDirty(hpUpdater);
@@ -261,7 +258,7 @@ namespace Neo.Demo.Condition
             EditorUtility.SetDirty(this);
             Undo.CollapseUndoOperations(undoGroup);
 
-            Debug.Log("[ConditionDemoSetup] Демо-сцена настроена! Сохраните сцену (Ctrl+S).");
+            Debug.Log("[ConditionDemoSetup] Demo scene configured! Save the scene (Ctrl+S).");
         }
 #endif
 

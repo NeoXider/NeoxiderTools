@@ -11,8 +11,8 @@ namespace Neo.Pages
     [AddComponentMenu("Neoxider/Pages/" + nameof(UIPage))]
     [NeoDoc("NeoxiderPages/UIPage.md")]
     /// <summary>
-    /// Компонент страницы UI для работы с <see cref="PM"/>.
-    /// Поддерживает проигрывание анимации через DOTween Animation (если компонент присутствует).
+    /// UI page component for use with <see cref="PM"/>.
+    /// Plays animation via DOTween Animation when the component is present.
     /// </summary>
     public class UIPage : MonoBehaviour
     {
@@ -55,7 +55,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Включает страницу и (опционально) запускает анимацию появления.
+        ///     Enables the page and optionally plays the show animation.
         /// </summary>
         public virtual void StartActive()
         {
@@ -70,7 +70,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Выключает страницу и (опционально) проигрывает анимацию закрытия назад.
+        ///     Disables the page and optionally plays the close animation backward.
         /// </summary>
         public virtual void EndActive()
         {
@@ -86,9 +86,9 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Устанавливает активность GameObject страницы.
+        ///     Sets the page GameObject active state.
         /// </summary>
-        /// <param name="value">true — включить, false — выключить.</param>
+        /// <param name="value">true to enable, false to disable.</param>
         public void SetActive(bool value)
         {
             gameObject.SetActive(value);

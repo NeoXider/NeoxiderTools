@@ -4,7 +4,7 @@ using UnityEditor;
 namespace Neo
 {
     /// <summary>
-    ///     Окно редактора для изменения максимального размера текстур
+    ///     Editor window for changing texture max size.
     /// </summary>
     public class TextureMaxSizeChanger : EditorWindow
     {
@@ -21,7 +21,7 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Показывает окно изменения размера текстур
+        ///     Opens the texture max size window.
         /// </summary>
         [MenuItem("Tools/Neoxider/Change Texture Max Size")]
         public static void ShowWindow()

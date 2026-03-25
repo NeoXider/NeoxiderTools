@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Neo.Condition
 {
     /// <summary>
-    ///     Источник значения для условия: резолв GameObject (прямая ссылка / поиск по имени), компонент или GameObject,
-    ///     чтение поля/свойства/метода через reflection с кешированием.
+    ///     Value source for a condition: resolve GameObject (direct reference / name search), component or GameObject,
+    ///     read field/property/method via reflection with caching.
     /// </summary>
     internal sealed class ConditionValueSource
     {
@@ -106,7 +106,7 @@ namespace Neo.Condition
         }
 
         /// <summary>
-        ///     Возвращает целевой GameObject без построения кеша компонента (для BindOtherToSourceIfNull и т.п.).
+        ///     Returns the target GameObject without building the component cache (for BindOtherToSourceIfNull, etc.).
         /// </summary>
         public GameObject GetResolvedTarget(GameObject fallbackObject)
         {
@@ -140,7 +140,7 @@ namespace Neo.Condition
                     if (!wait && !_hasLoggedSearchNotFoundWarning)
                     {
                         Debug.LogWarning(
-                            $"[NeoCondition] GameObject.Find(\"{searchName}\") — объект не найден в сцене.");
+                            $"[NeoCondition] GameObject.Find(\"{searchName}\") — object not found in scene.");
                         _hasLoggedSearchNotFoundWarning = true;
                     }
 
@@ -171,7 +171,7 @@ namespace Neo.Condition
                 if (_cachedComponent == null)
                 {
                     string typeName = _isOther ? _entry.OtherComponentTypeName : _entry.ComponentTypeName;
-                    LogDestroyedWarning($"Компонент '{typeName}' был уничтожен");
+                    LogDestroyedWarning($"Component '{typeName}' was destroyed");
                     InvalidateCache();
                 }
                 else
@@ -195,7 +195,7 @@ namespace Neo.Condition
                 if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
                 {
                     LogDestroyedWarning(
-                        $"Source GameObject был уничтожен (ожидался объект для компонента '{componentTypeName}')");
+                        $"Source GameObject was destroyed (expected object for component '{componentTypeName}')");
                 }
 
                 return false;
@@ -213,7 +213,7 @@ namespace Neo.Condition
             }
             catch (MissingReferenceException)
             {
-                LogDestroyedWarning($"GameObject уничтожен при поиске компонента '{componentTypeName}'");
+                LogDestroyedWarning($"GameObject was destroyed while resolving component '{componentTypeName}'");
                 return false;
             }
 
@@ -235,7 +235,7 @@ namespace Neo.Condition
             {
                 if (!_hasLoggedMissingMemberWarning)
                 {
-                    Debug.LogWarning($"[NeoCondition] Компонент '{componentTypeName}' не найден на '{target.name}'.");
+                    Debug.LogWarning($"[NeoCondition] Component '{componentTypeName}' not found on '{target.name}'.");
                     _hasLoggedMissingMemberWarning = true;
                 }
 
@@ -279,7 +279,7 @@ namespace Neo.Condition
             if (!_hasLoggedMissingMemberWarning)
             {
                 Debug.LogWarning(
-                    $"[NeoCondition] Свойство/поле/метод '{propertyName}' не найдено в '{componentTypeName}' на '{target.name}'.");
+                    $"[NeoCondition] Property/field/method '{propertyName}' not found on '{componentTypeName}' on '{target.name}'.");
                 _hasLoggedMissingMemberWarning = true;
             }
 
@@ -292,7 +292,7 @@ namespace Neo.Condition
             {
                 if (_cachedGameObject == null)
                 {
-                    LogDestroyedWarning("Целевой GameObject был уничтожен (режим GameObject)");
+                    LogDestroyedWarning("Target GameObject was destroyed (GameObject mode)");
                     InvalidateCache();
                 }
                 else
@@ -314,7 +314,7 @@ namespace Neo.Condition
             {
                 if (!useSearch && IsSourceObjectDestroyed(_isOther ? _entry.OtherSourceObject : _entry.SourceObject))
                 {
-                    LogDestroyedWarning("Source GameObject был уничтожен (режим GameObject)");
+                    LogDestroyedWarning("Source GameObject was destroyed (GameObject mode)");
                 }
 
                 return false;
@@ -347,7 +347,7 @@ namespace Neo.Condition
 
             if (!_hasLoggedMissingMemberWarning)
             {
-                Debug.LogWarning($"[NeoCondition] Свойство '{propertyName}' не найдено на GameObject.");
+                Debug.LogWarning($"[NeoCondition] Property '{propertyName}' not found on GameObject.");
                 _hasLoggedMissingMemberWarning = true;
             }
 
@@ -370,7 +370,7 @@ namespace Neo.Condition
         {
             if (!_hasLoggedDestroyedWarning)
             {
-                Debug.LogWarning($"[NeoCondition] {message}. Условие будет возвращать false.");
+                Debug.LogWarning($"[NeoCondition] {message}. Condition will evaluate to false.");
                 _hasLoggedDestroyedWarning = true;
             }
         }

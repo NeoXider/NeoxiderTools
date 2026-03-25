@@ -8,7 +8,7 @@ using UnityEngine.Events;
 namespace Neo.Pages
 {
     /// <summary>
-    ///     Статический фасад к игровым событиям/состояниям (через <see cref="GM" /> и <see cref="EM" />).
+    ///     Static facade for game events/state (via <see cref="GM" /> and <see cref="EM" />).
     /// </summary>
     public class G
     {
@@ -43,7 +43,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Переходит в меню через <see cref="GM" />.
+        ///     Goes to the menu via <see cref="GM" />.
         /// </summary>
         public static void GoMenu()
         {
@@ -53,7 +53,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Запускает игру через <see cref="GM" />.
+        ///     Starts the game via <see cref="GM" />.
         /// </summary>
         public static void Start()
         {
@@ -63,7 +63,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Перезапускает игру через <see cref="GM" />.
+        ///     Restarts the game via <see cref="GM" />.
         /// </summary>
         public static void Restart()
         {
@@ -73,7 +73,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Вызывает победу через <see cref="GM" />.
+        ///     Triggers a win via <see cref="GM" />.
         /// </summary>
         public static void Win()
         {
@@ -83,7 +83,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Вызывает поражение через <see cref="GM" />.
+        ///     Triggers a loss via <see cref="GM" />.
         /// </summary>
         public static void Lose()
         {
@@ -93,7 +93,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Завершает игру через <see cref="GM" />.
+        ///     Ends the game via <see cref="GM" />.
         /// </summary>
         public static void End()
         {
@@ -104,12 +104,12 @@ namespace Neo.Pages
     }
 
     /// <summary>
-    ///     Утилита для выполнения действий, соответствующих игровому состоянию.
+    ///     Utility to perform actions that match a game state.
     /// </summary>
     public class GameState
     {
         /// <summary>
-        ///     Типы игровых состояний.
+        ///     Game state kinds.
         /// </summary>
         public enum State
         {
@@ -125,9 +125,9 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Выполняет действие, соответствующее выбранному состоянию.
+        ///     Performs the action for the selected state.
         /// </summary>
-        /// <param name="state">Состояние.</param>
+        /// <param name="state">State.</param>
         public static void Set(State state)
         {
             switch (state)
@@ -163,7 +163,7 @@ namespace Neo.Pages
     }
 
     /// <summary>
-    ///     Статический фасад к системе денег (<see cref="Money" />).
+    ///     Static facade for the money system (<see cref="Money" />).
     /// </summary>
     public class Wallet
     {
@@ -174,7 +174,7 @@ namespace Neo.Pages
     }
 
     /// <summary>
-    ///     Статический фасад к системе очков (<see cref="ScoreManager" />).
+    ///     Static facade for the score system (<see cref="ScoreManager" />).
     /// </summary>
     public class Score
     {
@@ -185,7 +185,7 @@ namespace Neo.Pages
     }
 
     /// <summary>
-    ///     Статический фасад к аудио-настройкам (через <see cref="AMSettings" /> и <see cref="AM" />).
+    ///     Static facade for audio settings (via <see cref="AMSettings" /> and <see cref="AM" />).
     /// </summary>
     public class Audio
     {
@@ -202,7 +202,7 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Проигрывает стандартный UI звук (клип с ID=0) через <see cref="AM" />.
+        ///     Plays the default UI sound (clip with ID=0) via <see cref="AM" />.
         /// </summary>
         public static void PlayUI()
         {
@@ -211,7 +211,7 @@ namespace Neo.Pages
     }
 
     /// <summary>
-    ///     Статический фасад к уровням (через <see cref="LevelManager" />).
+    ///     Static facade for levels (via <see cref="LevelManager" />).
     /// </summary>
     public class Level
     {

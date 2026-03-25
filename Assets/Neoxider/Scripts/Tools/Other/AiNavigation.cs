@@ -162,7 +162,7 @@ namespace Neo.Tools
         public MovementMode CurrentMode => movementMode;
 
         /// <summary>
-        ///     Проверка, используется ли зона патрулирования вместо точек.
+        ///     Whether a patrol zone is used instead of waypoints.
         /// </summary>
         public bool UsesPatrolZone => patrolZone != null;
 

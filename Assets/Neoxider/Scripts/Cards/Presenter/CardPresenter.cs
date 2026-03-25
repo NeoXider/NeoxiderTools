@@ -5,17 +5,17 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Презентер карты - связывает данные карты с её визуальным представлением
+    ///     Bridges <see cref="CardData" /> and <see cref="ICardView" />.
     /// </summary>
     public class CardPresenter
     {
         private readonly DeckConfig _config;
 
         /// <summary>
-        ///     Создаёт презентер карты
+        ///     Creates a card presenter.
         /// </summary>
-        /// <param name="view">Визуальное представление</param>
-        /// <param name="config">Конфигурация колоды</param>
+        /// <param name="view">Card view.</param>
+        /// <param name="config">Deck config.</param>
         public CardPresenter(ICardView view, DeckConfig config)
         {
             View = view ?? throw new ArgumentNullException(nameof(view));
@@ -25,35 +25,35 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Данные карты
+        ///     Card data.
         /// </summary>
         public CardData Data { get; private set; }
 
         /// <summary>
-        ///     Визуальное представление карты
+        ///     Card view.
         /// </summary>
         public ICardView View { get; }
 
         /// <summary>
-        ///     Показана ли карта лицом вверх
+        ///     Whether the card is face up.
         /// </summary>
         public bool IsFaceUp { get; private set; }
 
         /// <summary>
-        ///     Transform карты
+        ///     View transform.
         /// </summary>
         public Transform Transform => View.Transform;
 
         /// <summary>
-        ///     Событие клика по карте
+        ///     Raised when the card is clicked.
         /// </summary>
         public event Action<CardPresenter> OnClicked;
 
         /// <summary>
-        ///     Устанавливает данные карты
+        ///     Sets card data on the view.
         /// </summary>
-        /// <param name="data">Данные карты</param>
-        /// <param name="faceUp">Показать лицом вверх</param>
+        /// <param name="data">Card data.</param>
+        /// <param name="faceUp">Face up.</param>
         public void SetData(CardData data, bool faceUp = true)
         {
             Data = data;
@@ -62,7 +62,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Переворачивает карту
+        ///     Flips instantly.
         /// </summary>
         public void Flip()
         {
@@ -71,9 +71,9 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Переворачивает карту с анимацией
+        ///     Flips with animation.
         /// </summary>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="duration">Duration.</param>
         public async UniTask FlipAsync(float duration = 0.3f)
         {
             IsFaceUp = !IsFaceUp;
@@ -81,26 +81,26 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Перемещает карту в позицию
+        ///     Moves to a world position.
         /// </summary>
-        /// <param name="position">Целевая позиция</param>
-        /// <param name="duration">Длительность анимации</param>
+        /// <param name="position">Target position.</param>
+        /// <param name="duration">Move duration.</param>
         public async UniTask MoveToAsync(Vector3 position, float duration = 0.2f)
         {
             await View.MoveToAsync(position, duration);
         }
 
         /// <summary>
-        ///     Устанавливает интерактивность карты
+        ///     Sets whether the view accepts input.
         /// </summary>
-        /// <param name="interactable">Можно ли взаимодействовать</param>
+        /// <param name="interactable">Interactable.</param>
         public void SetInteractable(bool interactable)
         {
             View.SetInteractable(interactable);
         }
 
         /// <summary>
-        ///     Отписывается от событий
+        ///     Unsubscribes view events.
         /// </summary>
         public void Dispose()
         {

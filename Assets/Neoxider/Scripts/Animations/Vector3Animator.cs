@@ -114,7 +114,7 @@ namespace Neo.Animations
 
             animationTime += Time.deltaTime;
 
-            // Получаем новый вектор
+            // Sample new vector
             Vector3 newVector = AnimationUtils.GetAnimatedVector3(
                 animationType,
                 startVector, endVector,
@@ -123,7 +123,7 @@ namespace Neo.Animations
 
             CurrentVector = newVector;
 
-            // Вызываем событие если вектор изменился
+            // Fire event when vector changes
             if (Vector3.Distance(newVector, lastVector) > 0.001f)
             {
                 OnVectorChanged?.Invoke(newVector);

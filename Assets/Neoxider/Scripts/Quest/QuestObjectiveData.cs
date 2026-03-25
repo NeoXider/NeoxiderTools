@@ -5,28 +5,28 @@ using UnityEngine;
 namespace Neo.Quest
 {
     /// <summary>
-    ///     Тип цели квеста: как проверяется выполнение.
+    ///     Quest objective type: how completion is evaluated.
     /// </summary>
     public enum QuestObjectiveType
     {
-        /// <summary>Выполняется по внешнему триггеру (например QuestNoCodeAction) или по ConditionEntry в менеджере.</summary>
+        /// <summary>Fulfilled by external trigger (e.g. QuestNoCodeAction) or ConditionEntry in the manager.</summary>
         CustomCondition,
 
-        /// <summary>Счётчик: убить N врагов с заданным ID (NotifyKill).</summary>
+        /// <summary>Counter: kill N enemies with the given ID (NotifyKill).</summary>
         KillCount,
 
-        /// <summary>Счётчик: собрать N предметов с заданным ID (NotifyCollect).</summary>
+        /// <summary>Counter: collect N items with the given ID (NotifyCollect).</summary>
         CollectCount,
 
-        /// <summary>Дойти до точки (триггер/UI-событие).</summary>
+        /// <summary>Reach a point (trigger/UI event).</summary>
         ReachPoint,
 
-        /// <summary>Поговорить с NPC (триггер/UI-событие).</summary>
+        /// <summary>Talk to an NPC (trigger/UI event).</summary>
         Talk
     }
 
     /// <summary>
-    ///     Данные одной цели квеста: тип, параметры или условие (ConditionEntry).
+    ///     Data for a single quest objective: type, parameters, or condition (ConditionEntry).
     /// </summary>
     [Serializable]
     public class QuestObjectiveData
@@ -49,35 +49,35 @@ namespace Neo.Quest
         [SerializeField]
         private ConditionEntry _condition;
 
-        /// <summary>Тип цели.</summary>
+        /// <summary>Objective type.</summary>
         public QuestObjectiveType Type
         {
             get => _type;
             set => _type = value;
         }
 
-        /// <summary>ID цели (враг, предмет, точка).</summary>
+        /// <summary>Target ID (enemy, item, point).</summary>
         public string TargetId
         {
             get => _targetId;
             set => _targetId = value ?? "";
         }
 
-        /// <summary>Требуемое количество для счётчиков.</summary>
+        /// <summary>Required count for counter objectives.</summary>
         public int RequiredCount
         {
             get => _requiredCount;
             set => _requiredCount = value;
         }
 
-        /// <summary>Пользовательский текст цели для UI.</summary>
+        /// <summary>Custom objective text for UI.</summary>
         public string DisplayText
         {
             get => _displayText;
             set => _displayText = value ?? "";
         }
 
-        /// <summary>Условие для CustomCondition (может быть null — тогда только внешний триггер).</summary>
+        /// <summary>Condition for CustomCondition (may be null — then only external trigger applies).</summary>
         public ConditionEntry Condition
         {
             get => _condition;

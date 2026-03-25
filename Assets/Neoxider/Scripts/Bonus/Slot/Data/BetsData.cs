@@ -3,8 +3,8 @@ using UnityEngine;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     ScriptableObject для хранения доступных ставок в слот-машине.
-    ///     Позволяет настраивать список ставок через инспектор.
+    ///     ScriptableObject holding available bets for the slot machine.
+    ///     Configure the bet list in the inspector.
     /// </summary>
     [CreateAssetMenu(fileName = "Bets Data", menuName = "Neoxider/Bonus/Slot/Bets Data", order = 1)]
     public class BetsData : ScriptableObject
@@ -13,7 +13,7 @@ namespace Neo.Bonus
         private int[] _bets = { 10, 20, 50, 100, 200, 500, 1000 };
 
         /// <summary>
-        ///     Массив доступных ставок.
+        ///     Array of available bets.
         /// </summary>
         public int[] bets => _bets;
     }

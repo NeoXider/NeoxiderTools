@@ -160,16 +160,16 @@ namespace Neo.Progression
         /// </summary>
         public ProgressionStringEvent OnPerkPurchased => _onPerkPurchased;
 
-        /// <summary>Текущее значение XP (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current XP value (for NeoCondition and reactive state binding).</summary>
         public int XpStateValue => XpState.CurrentValue;
 
-        /// <summary>Текущее значение уровня (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current level value (for NeoCondition and reactive state binding).</summary>
         public int LevelStateValue => LevelState.CurrentValue;
 
-        /// <summary>Текущее количество очков перков (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>Current unspent perk points (for NeoCondition and reactive state binding).</summary>
         public int PerkPointsStateValue => PerkPointsState.CurrentValue;
 
-        /// <summary>Текущее значение XP до следующего уровня (для NeoCondition и биндинга к реактивному состоянию).</summary>
+        /// <summary>XP remaining to the next level (for NeoCondition and reactive state binding).</summary>
         public int XpToNextLevelStateValue => XpToNextLevelState.CurrentValue;
 
         protected override bool DontDestroyOnLoadEnabled => true;

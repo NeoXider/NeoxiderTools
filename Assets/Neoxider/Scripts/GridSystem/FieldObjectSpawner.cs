@@ -69,10 +69,10 @@ namespace Neo.GridSystem
         /// </summary>
         public UnityEvent<FieldCell> OnCellFreed = new();
 
-        // Для каждой ячейки — список объектов
+        // Per-cell object lists
         private readonly Dictionary<FieldCell, List<SpawnedObjectInfo>> cellObjects = new();
 
-        // Для быстрого поиска по объекту
+        // Fast lookup by GameObject
         private readonly Dictionary<GameObject, SpawnedObjectInfo> objectLookup = new();
 
         private FieldGenerator generator;

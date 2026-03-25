@@ -8,7 +8,7 @@ using UnityEngine;
 namespace Neo.Cards
 {
     /// <summary>
-    ///     Визуальное представление руки игрока
+    ///     Hand view: lays out <see cref="ICardView" /> children.
     /// </summary>
     [CreateFromMenu("Neoxider/Cards/HandView")]
     [AddComponentMenu("Neoxider/Cards/" + nameof(HandView))]
@@ -33,7 +33,7 @@ namespace Neo.Cards
         private readonly List<ICardView> _cardViews = new();
 
         /// <summary>
-        ///     Тип раскладки
+        ///     Layout algorithm.
         /// </summary>
         public CardLayoutType LayoutType
         {
@@ -46,7 +46,7 @@ namespace Neo.Cards
         }
 
         /// <summary>
-        ///     Расстояние между картами
+        ///     Spacing between cards (line/grid/fan).
         /// </summary>
         public float Spacing
         {

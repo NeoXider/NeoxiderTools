@@ -4,7 +4,7 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Совместимость со старой и новой системой мышиного ввода.
+    ///     Compatibility between legacy and new mouse input.
     /// </summary>
     public static class MouseInputCompat
     {

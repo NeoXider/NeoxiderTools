@@ -9,8 +9,8 @@ using Random = UnityEngine.Random;
 namespace Neo.Tools.View
 {
     /// <summary>
-    ///     Компонент для анимации источников света (Light и Light2D).
-    ///     Поддерживает различные типы анимации интенсивности и цвета.
+    ///     Animates light sources (Light and Light2D).
+    ///     Supports multiple intensity and color animation types.
     /// </summary>
     [NeoDoc("Tools/View/LightAnimator.md")]
     [CreateFromMenu("Neoxider/Tools/View/LightAnimator")]
@@ -77,31 +77,31 @@ namespace Neo.Tools.View
         private float originalIntensity;
         private Vector2 randomOffset;
 
-        /// <summary>Текущая интенсивность (для NeoCondition и рефлексии).</summary>
+        /// <summary>Current intensity (for NeoCondition and reflection).</summary>
         public float IntensityValue => Intensity.CurrentValue;
 
         /// <summary>
-        ///     Текущая интенсивность света (только для чтения)
+        ///     Current light intensity (read-only).
         /// </summary>
         public float CurrentIntensity => Intensity.CurrentValue;
 
         /// <summary>
-        ///     Текущий цвет света (только для чтения)
+        ///     Current light color (read-only).
         /// </summary>
         public Color CurrentColor { get; private set; }
 
         /// <summary>
-        ///     Проигрывается ли анимация
+        ///     Whether the animation is playing.
         /// </summary>
         public bool IsPlaying { get; private set; }
 
         /// <summary>
-        ///     Находится ли анимация на паузе
+        ///     Whether the animation is paused.
         /// </summary>
         public bool IsPaused { get; private set; }
 
         /// <summary>
-        ///     Минимальная интенсивность (для изменения извне)
+        ///     Minimum intensity (mutable from outside).
         /// </summary>
         public float MinIntensity
         {
@@ -110,7 +110,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Максимальная интенсивность (для изменения извне)
+        ///     Maximum intensity (mutable from outside).
         /// </summary>
         public float MaxIntensity
         {
@@ -119,7 +119,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Скорость анимации (для изменения извне)
+        ///     Animation speed (mutable from outside).
         /// </summary>
         public float AnimationSpeed
         {
@@ -128,7 +128,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Тип анимации (для изменения извне)
+        ///     Animation type (mutable from outside).
         /// </summary>
         public AnimationType AnimationType
         {
@@ -137,7 +137,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Целевой цвет (для изменения извне)
+        ///     Target color (mutable from outside).
         /// </summary>
         public Color TargetColor
         {
@@ -181,7 +181,7 @@ namespace Neo.Tools.View
 
             animationTime += Time.deltaTime;
 
-            // ---------- ВЫЧИСЛЕНИЕ ЦЕЛЬНОЙ ИНТЕНСИВНОСТИ ----------
+            // ---------- TARGET INTENSITY ----------
             float targetIntensity = AnimationUtils.GetTargetValue(
                 animationType,
                 minIntensity, maxIntensity,
@@ -189,11 +189,11 @@ namespace Neo.Tools.View
                 use2DNoise, randomOffset, noiseOffset, noiseScale,
                 customCurve);
 
-            // ---------- ФАКТОР СМЕШАНИЯ ЦВЕТА ----------
+            // ---------- COLOR BLEND FACTOR ----------
             float colorBlendFactor = AnimationUtils.GetColorBlendFactor(
                 animationTime, animationSpeed, colorBlendSpeed);
 
-            // ---------- ПРИЛОЖЕНИЕ РЕЗУЛЬТАТОВ ----------
+            // ---------- APPLY RESULT ----------
             AnimationUtils.ApplyToLight(_light,
                 targetIntensity,
                 originalColor,
@@ -244,7 +244,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Запустить анимацию
+        ///     Starts the animation.
         /// </summary>
         public void Play()
         {
@@ -254,7 +254,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Остановить анимацию
+        ///     Stops the animation.
         /// </summary>
         public void Stop()
         {
@@ -264,7 +264,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Поставить анимацию на паузу
+        ///     Pauses the animation.
         /// </summary>
         public void Pause()
         {
@@ -276,7 +276,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Снять с паузы
+        ///     Resumes from pause.
         /// </summary>
         public void Resume()
         {
@@ -288,7 +288,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Сбросить к исходным значениям света
+        ///     Resets light to original values.
         /// </summary>
         public void ResetToOriginal()
         {
@@ -302,7 +302,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Сбросить время анимации
+        ///     Resets animation time.
         /// </summary>
         public void ResetTime()
         {
@@ -310,7 +310,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Установить случайное начальное время
+        ///     Sets a random start time.
         /// </summary>
         public void RandomizeTime()
         {
@@ -319,7 +319,7 @@ namespace Neo.Tools.View
 
         private void InitializeLight()
         {
-            // 1) Попробуем Light2D через reflection
+            // 1) Try Light2D via reflection
             var light2DType = Type.GetType(
                 "UnityEngine.Rendering.Universal.Light2D, Unity.RenderPipelines.Universal.Runtime",
                 false);
@@ -341,7 +341,7 @@ namespace Neo.Tools.View
                 }
             }
 
-            // 2) Если Light2D не найден — обычный Light
+            // 2) If no Light2D, use standard Light
             if (_light == null)
             {
                 Light l = GetComponent<Light>();
@@ -369,7 +369,7 @@ namespace Neo.Tools.View
         }
 
         /// <summary>
-        ///     Вычисляет расстояние между двумя цветами
+        ///     Computes distance between two colors.
         /// </summary>
         private float ColorDistance(Color a, Color b)
         {
@@ -381,7 +381,7 @@ namespace Neo.Tools.View
             );
         }
 
-        // ---------- ILightAccessor реализация ----------
+        // ---------- ILightAccessor implementation ----------
         private sealed class UnityLightAccessor : ILightAccessor
         {
             private readonly Light _light;

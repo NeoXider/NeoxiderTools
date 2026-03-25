@@ -35,7 +35,7 @@ namespace Neo.Shop
         [SerializeField] private string _keySaveEquipped = "ShopEquipped";
 
         [Tooltip(
-            "Если true, при неудачной покупке (недостаточно денег) превью переключится на товар покупки. Если false — превью не изменяется.")]
+            "If true, when purchase fails (not enough money) the preview switches to the item being bought. If false, the preview does not change.")]
         [SerializeField]
         private bool _changePreviewOnPurchaseFailed;
 
@@ -80,7 +80,7 @@ namespace Neo.Shop
             LoadEquipped();
             Spawn();
             Subscriber(true);
-            // Инициализируем превью сохранённым индексом (если допустим)
+            // Initialize preview with saved index when valid
             ShowPreview(PreviewId);
         }
 
@@ -97,7 +97,7 @@ namespace Neo.Shop
 
             Visual();
 
-            // Активируем сохраненный элемент если включена опция
+            // Activate saved item when the option is enabled
             if (_activateSavedEquipped && _useSetItem)
             {
                 int equippedId = Mathf.Clamp(_savedEquippedId, 0, _prices.Length - 1);
@@ -113,7 +113,7 @@ namespace Neo.Shop
             if (load)
             {
                 Visual();
-                // Восстанавливаем состояние выбора после обновления визуала
+                // Restore selection state after visual update
                 if (_useSetItem)
                 {
                     Select(_id);

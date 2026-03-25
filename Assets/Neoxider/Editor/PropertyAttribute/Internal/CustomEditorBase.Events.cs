@@ -187,7 +187,7 @@ namespace Neo.Editor
                             if (brokenCount > 0 && !p.isExpanded)
                             {
                                 EditorGUILayout.LabelField(
-                                    $"Есть {brokenCount} сломанных listener(ов): проверь Target/Method.",
+                                    $"{brokenCount} broken listener(s): check Target/Method.",
                                     warningMini);
                             }
 
@@ -196,7 +196,7 @@ namespace Neo.Editor
 
                         if (shown == 0)
                         {
-                            EditorGUILayout.LabelField("Ничего не найдено по текущему фильтру.",
+                            EditorGUILayout.LabelField("Nothing matches the current filter.",
                                 EditorStyles.centeredGreyMiniLabel);
                         }
 

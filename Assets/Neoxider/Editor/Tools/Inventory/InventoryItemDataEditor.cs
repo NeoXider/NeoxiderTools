@@ -46,7 +46,7 @@ namespace Neo.Editor
             DrawValidation();
 
             NeoxiderEditorGUI.BeginSection("Identity",
-                "Ключевые данные предмета, которые используются в UI и runtime storage.");
+                "Core item data used by the UI and runtime storage.");
             EditorGUILayout.PropertyField(_itemIdProp);
             EditorGUILayout.PropertyField(_displayNameProp);
             EditorGUILayout.PropertyField(_descriptionProp);
@@ -54,7 +54,7 @@ namespace Neo.Editor
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Presentation", "Иконка и prefab для world drop / preview icon generation.");
+            NeoxiderEditorGUI.BeginSection("Presentation", "Icon and prefab for world drop / preview icon generation.");
             EditorGUILayout.PropertyField(_iconProp);
             EditorGUILayout.PropertyField(_worldDropPrefabProp);
             DrawIconTools();
@@ -62,7 +62,7 @@ namespace Neo.Editor
 
             EditorGUILayout.Space(4f);
 
-            NeoxiderEditorGUI.BeginSection("Stacking", "Параметры стакования и простая категоризация.");
+            NeoxiderEditorGUI.BeginSection("Stacking", "Stacking options and simple categorization.");
             EditorGUILayout.PropertyField(_maxStackProp);
             EditorGUILayout.PropertyField(_categoryProp);
             NeoxiderEditorGUI.EndSection();
@@ -98,19 +98,19 @@ namespace Neo.Editor
         {
             if (string.IsNullOrWhiteSpace(_displayNameProp.stringValue))
             {
-                EditorGUILayout.HelpBox("Display Name пустой. Предмету лучше дать читаемое имя для UI и debug.",
+                EditorGUILayout.HelpBox("Display Name is empty. Give the item a readable name for UI and debugging.",
                     MessageType.Warning);
             }
 
             if (_maxStackProp.intValue == 1)
             {
-                EditorGUILayout.HelpBox("Max Stack = 1. Предмет будет вести себя как non-stackable.", MessageType.Info);
+                EditorGUILayout.HelpBox("Max Stack = 1. The item behaves as non-stackable.", MessageType.Info);
             }
 
             if (_iconProp.objectReferenceValue == null && _worldDropPrefabProp.objectReferenceValue != null)
             {
                 EditorGUILayout.HelpBox(
-                    "Иконка не задана, но есть World Drop Prefab. Её можно быстро сгенерировать кнопкой ниже.",
+                    "No icon set, but a World Drop Prefab is assigned. You can generate one quickly with the button below.",
                     MessageType.Info);
             }
         }

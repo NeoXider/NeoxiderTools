@@ -6,36 +6,36 @@ using UnityEngine.Events;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Тип сравнения для предикатов.
+    ///     Comparison mode for numeric predicates.
     /// </summary>
     public enum ComparisonType
     {
-        /// <summary>Больше чем</summary>
+        /// <summary>Greater than</summary>
         GreaterThan,
 
-        /// <summary>Меньше чем</summary>
+        /// <summary>Less than</summary>
         LessThan,
 
-        /// <summary>Больше или равно</summary>
+        /// <summary>Greater than or equal</summary>
         GreaterThanOrEqual,
 
-        /// <summary>Меньше или равно</summary>
+        /// <summary>Less than or equal</summary>
         LessThanOrEqual,
 
-        /// <summary>Равно</summary>
+        /// <summary>Equal</summary>
         Equal,
 
-        /// <summary>Не равно</summary>
+        /// <summary>Not equal</summary>
         NotEqual
     }
 
     /// <summary>
-    ///     Базовый класс для предикатов условий переходов в State Machine.
-    ///     Предикаты используются для проверки условий перед переходом между состояниями.
+    ///     Base class for transition predicates in the State Machine.
+    ///     Predicates gate whether a transition may run.
     /// </summary>
     /// <remarks>
-    ///     Предикаты могут быть инвертированы через свойство IsInverted.
-    ///     Поддерживается сериализация для использования в инспекторе Unity.
+    ///     Flip results with <see cref="IsInverted"/>.
+    ///     Serializable for Inspector-driven NoCode setups.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -43,7 +43,7 @@ namespace Neo.StateMachine
     /// {
     ///     public override bool Evaluate(IState currentState)
     ///     {
-    ///         // Логика проверки условия
+    ///         // Predicate logic
     ///         return true;
     ///     }
     /// }
@@ -53,17 +53,17 @@ namespace Neo.StateMachine
     public abstract class StatePredicate
     {
         /// <summary>
-        ///     Имя предиката для отладки и отображения в инспекторе.
+        ///     Display name for debugging and custom editors.
         /// </summary>
         [SerializeField] protected string predicateName = "Unnamed Predicate";
 
         /// <summary>
-        ///     Инвертировать результат оценки предиката.
+        ///     When true, negates the predicate result after evaluation.
         /// </summary>
         [SerializeField] protected bool isInverted;
 
         /// <summary>
-        ///     Получить или установить имя предиката.
+        ///     Predicate display name.
         /// </summary>
         public string PredicateName
         {
@@ -72,7 +72,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Получить или установить инверсию результата.
+        ///     Whether to invert the evaluated result.
         /// </summary>
         public bool IsInverted
         {
@@ -81,10 +81,10 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Оценить предикат с контекстом текущего состояния.
+        ///     Evaluates the predicate with the active state as optional context.
         /// </summary>
-        /// <param name="currentState">Текущее состояние State Machine.</param>
-        /// <returns>Результат оценки предиката (с учетом инверсии).</returns>
+        /// <param name="currentState">Active state, if any.</param>
+        /// <returns>Result after applying <see cref="IsInverted"/>.</returns>
         public virtual bool Evaluate(IState currentState)
         {
             bool result = EvaluateInternal(currentState);
@@ -92,9 +92,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Оценить предикат без контекста состояния.
+        ///     Evaluates without an IState context (EvaluateInternal(null)).
         /// </summary>
-        /// <returns>Результат оценки предиката (с учетом инверсии).</returns>
+        /// <returns>Result after applying <see cref="IsInverted"/>.</returns>
         public virtual bool Evaluate()
         {
             bool result = EvaluateInternal(null);
@@ -102,15 +102,15 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Внутренняя логика оценки предиката. Должна быть реализована в наследниках.
+        ///     Core evaluation; implement in derived types.
         /// </summary>
-        /// <param name="currentState">Текущее состояние или null.</param>
-        /// <returns>Результат оценки без учета инверсии.</returns>
+        /// <param name="currentState">Active state or null.</param>
+        /// <returns>Raw result before <see cref="IsInverted"/> is applied.</returns>
         protected abstract bool EvaluateInternal(IState currentState);
     }
 
     /// <summary>
-    ///     Предикат для проверки bool значения.
+    ///     Predicate that returns a constant bool.
     /// </summary>
     [Serializable]
     public class BoolPredicate : StatePredicate
@@ -118,7 +118,7 @@ namespace Neo.StateMachine
         [SerializeField] private bool value;
 
         /// <summary>
-        ///     Значение для проверки.
+        ///     Value returned by EvaluateInternal.
         /// </summary>
         public bool Value
         {
@@ -133,7 +133,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для сравнения float значений.
+    ///     Compares a float to a threshold using <see cref="ComparisonType"/>.
     /// </summary>
     [Serializable]
     public class FloatComparisonPredicate : StatePredicate
@@ -145,7 +145,7 @@ namespace Neo.StateMachine
         [SerializeField] private float threshold;
 
         /// <summary>
-        ///     Значение для сравнения.
+        ///     Left-hand value for comparison.
         /// </summary>
         public float Value
         {
@@ -154,7 +154,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Тип сравнения.
+        ///     Comparison operator.
         /// </summary>
         public ComparisonType Comparison
         {
@@ -163,7 +163,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Пороговое значение для сравнения.
+        ///     Threshold to compare against.
         /// </summary>
         public float Threshold
         {
@@ -187,7 +187,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для сравнения int значений.
+    ///     Compares an int to a threshold using <see cref="ComparisonType"/>.
     /// </summary>
     [Serializable]
     public class IntComparisonPredicate : StatePredicate
@@ -199,7 +199,7 @@ namespace Neo.StateMachine
         [SerializeField] private int threshold;
 
         /// <summary>
-        ///     Значение для сравнения.
+        ///     Left-hand value for comparison.
         /// </summary>
         public int Value
         {
@@ -208,7 +208,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Тип сравнения.
+        ///     Comparison operator.
         /// </summary>
         public ComparisonType Comparison
         {
@@ -217,7 +217,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Пороговое значение для сравнения.
+        ///     Threshold to compare against.
         /// </summary>
         public int Threshold
         {
@@ -241,7 +241,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для сравнения строк.
+    ///     String equality predicate with optional case sensitivity.
     /// </summary>
     [Serializable]
     public class StringComparisonPredicate : StatePredicate
@@ -253,7 +253,7 @@ namespace Neo.StateMachine
         [SerializeField] private bool caseSensitive;
 
         /// <summary>
-        ///     Значение для сравнения.
+        ///     First string operand.
         /// </summary>
         public string Value
         {
@@ -262,7 +262,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Целевое значение для сравнения.
+        ///     Second string operand.
         /// </summary>
         public string Target
         {
@@ -271,7 +271,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Учитывать регистр при сравнении.
+        ///     When true, comparison is case-sensitive.
         /// </summary>
         public bool CaseSensitive
         {
@@ -291,7 +291,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат на основе UnityEvent.
+    ///     Predicate driven by UnityEvent; listeners call <see cref="SetResult"/>.
     /// </summary>
     [Serializable]
     public class EventPredicate : StatePredicate
@@ -301,14 +301,14 @@ namespace Neo.StateMachine
         private bool lastResult;
 
         /// <summary>
-        ///     Событие для оценки. Должно устанавливать результат через SetResult().
+        ///     Invoked during evaluation; use SetResult to provide the outcome.
         /// </summary>
         public UnityEvent OnEvaluate => onEvaluate;
 
         /// <summary>
-        ///     Установить результат оценки предиката.
+        ///     Stores the boolean returned by EvaluateInternal after the event runs.
         /// </summary>
-        /// <param name="result">Результат оценки.</param>
+        /// <param name="result">Predicate outcome.</param>
         public void SetResult(bool result)
         {
             lastResult = result;
@@ -322,7 +322,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат на основе делегата Func&lt;bool&gt;.
+    ///     Predicate backed by a runtime Func&lt;bool&gt; (not serialized).
     /// </summary>
     [Serializable]
     public class CustomPredicate : StatePredicate
@@ -330,9 +330,9 @@ namespace Neo.StateMachine
         private Func<bool> customEvaluator;
 
         /// <summary>
-        ///     Установить кастомный оценщик предиката.
+        ///     Assigns the delegate used by EvaluateInternal.
         /// </summary>
-        /// <param name="evaluator">Делегат для оценки предиката.</param>
+        /// <param name="evaluator">Func returning the raw predicate result.</param>
         public void SetEvaluator(Func<bool> evaluator)
         {
             customEvaluator = evaluator;
@@ -345,7 +345,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для проверки времени нахождения в состоянии.
+    ///     Compares elapsed time since state entry to a required duration.
     /// </summary>
     [Serializable]
     public class StateDurationPredicate : StatePredicate
@@ -357,7 +357,7 @@ namespace Neo.StateMachine
         private float stateEnterTime;
 
         /// <summary>
-        ///     Требуемая длительность в секундах.
+        ///     Duration threshold in seconds.
         /// </summary>
         public float RequiredDuration
         {
@@ -366,7 +366,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Тип сравнения.
+        ///     How elapsed time is compared to <see cref="RequiredDuration"/>.
         /// </summary>
         public ComparisonType Comparison
         {
@@ -375,9 +375,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Установить время входа в состояние.
+        ///     Sets the reference time (typically state enter Time.time).
         /// </summary>
-        /// <param name="enterTime">Время входа.</param>
+        /// <param name="enterTime">Time.time when the state was entered.</param>
         public void SetEnterTime(float enterTime)
         {
             stateEnterTime = enterTime;
@@ -400,7 +400,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для комбинирования других предикатов через AND логику.
+    ///     Combines child predicates with AND semantics.
     /// </summary>
     [Serializable]
     public class AndPredicate : StatePredicate
@@ -408,14 +408,14 @@ namespace Neo.StateMachine
         [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
-        ///     Список предикатов для комбинирования.
+        ///     Child predicates (all must pass).
         /// </summary>
         public List<StatePredicate> Predicates => predicates;
 
         /// <summary>
-        ///     Добавить предикат.
+        ///     Adds a child predicate if not already present.
         /// </summary>
-        /// <param name="predicate">Предикат для добавления.</param>
+        /// <param name="predicate">Child predicate.</param>
         public void AddPredicate(StatePredicate predicate)
         {
             if (predicate != null && !predicates.Contains(predicate))
@@ -425,9 +425,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Удалить предикат.
+        ///     Removes a child predicate.
         /// </summary>
-        /// <param name="predicate">Предикат для удаления.</param>
+        /// <param name="predicate">Child predicate.</param>
         public void RemovePredicate(StatePredicate predicate)
         {
             predicates.Remove(predicate);
@@ -458,7 +458,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для комбинирования других предикатов через OR логику.
+    ///     Combines child predicates with OR semantics.
     /// </summary>
     [Serializable]
     public class OrPredicate : StatePredicate
@@ -466,14 +466,14 @@ namespace Neo.StateMachine
         [SerializeReference] [SerializeField] private List<StatePredicate> predicates = new();
 
         /// <summary>
-        ///     Список предикатов для комбинирования.
+        ///     Child predicates (any may pass).
         /// </summary>
         public List<StatePredicate> Predicates => predicates;
 
         /// <summary>
-        ///     Добавить предикат.
+        ///     Adds a child predicate if not already present.
         /// </summary>
-        /// <param name="predicate">Предикат для добавления.</param>
+        /// <param name="predicate">Child predicate.</param>
         public void AddPredicate(StatePredicate predicate)
         {
             if (predicate != null && !predicates.Contains(predicate))
@@ -483,9 +483,9 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Удалить предикат.
+        ///     Removes a child predicate.
         /// </summary>
-        /// <param name="predicate">Предикат для удаления.</param>
+        /// <param name="predicate">Child predicate.</param>
         public void RemovePredicate(StatePredicate predicate)
         {
             predicates.Remove(predicate);
@@ -516,7 +516,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Предикат для инверсии другого предиката.
+    ///     Negates another predicate's result (distinct from <see cref="StatePredicate.IsInverted"/> on a single node).
     /// </summary>
     [Serializable]
     public class NotPredicate : StatePredicate
@@ -524,7 +524,7 @@ namespace Neo.StateMachine
         [SerializeReference] [SerializeField] private StatePredicate predicate;
 
         /// <summary>
-        ///     Предикат для инверсии.
+        ///     Predicate whose result is negated.
         /// </summary>
         public StatePredicate Predicate
         {

@@ -7,12 +7,12 @@ using UnityEngine.Serialization;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Универсальный компонент механики уклонения/рывка с перезарядкой.
-    ///     Управляет длительностью действия, cooldown, событиями и реактивными полями для UI.
+    ///     Generic dodge/dash mechanic with cooldown.
+    ///     Controls action duration, cooldown, events, and reactive fields for UI.
     /// </summary>
     /// <remarks>
-    ///     Подходит для даша, ролла, блока и любых способностей с «временем действия + перезарядка».
-    ///     Cooldown можно запускать сразу с началом уклонения или после его завершения.
+    ///     Suitable for dash, roll, block, and any ability with action time + cooldown.
+    ///     Cooldown can start with the evade or after it ends.
     /// </remarks>
     [LegacyComponent("Neo.Rpg.RpgEvadeController")]
     [Obsolete("Use Neo.Rpg.RpgEvadeController for new RPG evade/invulnerability flow.")]
@@ -24,25 +24,25 @@ namespace Neo.Tools
         #region Settings
 
         [Header("Evade")]
-        [Tooltip("Длительность действия уклонения в секундах (неуязвимость, анимация и т.д.).")]
+        [Tooltip("Evade action duration in seconds (invulnerability window, animation, etc.).")]
         [Min(0.01f)]
         public float evadeDuration = 1f;
 
         [Header("Cooldown")]
-        [Tooltip("Время перезарядки способности в секундах.")]
+        [Tooltip("Ability cooldown duration in seconds.")]
         [Min(0.01f)]
         [FormerlySerializedAs("reloadTime")]
         public float cooldownDuration = 2f;
 
-        [Tooltip("Если true, перезарядка стартует в момент начала уклонения; иначе — после его завершения.")]
+        [Tooltip("If true, cooldown starts when evade begins; otherwise after evade ends.")]
         [FormerlySerializedAs("reloadImmediately")]
         public bool cooldownStartsWithEvade = true;
 
-        [Tooltip("Использовать unscaled time для cooldown (не зависит от Time.timeScale, удобно при паузе).")]
+        [Tooltip("Use unscaled time for cooldown (ignores Time.timeScale; useful when paused).")]
         public bool useUnscaledTimeForCooldown;
 
         [Tooltip(
-            "Интервал обновления прогресса перезарядки в секундах (влияет на частоту ReloadProgress/RemainingCooldownTime).")]
+            "Cooldown progress update interval in seconds (affects ReloadProgress/RemainingCooldownTime update rate).")]
         [Min(0.015f)]
         public float cooldownUpdateInterval = 0.05f;
 
@@ -50,18 +50,18 @@ namespace Neo.Tools
 
         #region Events
 
-        [Header("Evade Events")] [Tooltip("Вызывается в момент начала уклонения.")]
+        [Header("Evade Events")] [Tooltip("Invoked when evade starts.")]
         public UnityEvent OnEvadeStarted;
 
-        [Tooltip("Вызывается по окончании действия уклонения.")]
+        [Tooltip("Invoked when evade action ends.")]
         public UnityEvent OnEvadeCompleted;
 
         [Header("Cooldown Events")]
-        [Tooltip("Вызывается при старте перезарядки.")]
+        [Tooltip("Invoked when cooldown starts.")]
         [FormerlySerializedAs("OnReloadStarted")]
         public UnityEvent OnCooldownStarted;
 
-        [Tooltip("Вызывается, когда перезарядка завершена и способность снова доступна.")]
+        [Tooltip("Invoked when cooldown ends and the ability is ready again.")]
         [FormerlySerializedAs("OnReloadCompleted")]
         public UnityEvent OnCooldownCompleted;
 
@@ -70,32 +70,32 @@ namespace Neo.Tools
         #region Reactive & Condition
 
         [Header("Reactive (UI / NeoCondition)")]
-        [Tooltip("Прогресс перезарядки 0–1; подписка через ReloadProgress.OnChanged.")]
+        [Tooltip("Cooldown progress 0–1; subscribe via ReloadProgress.OnChanged.")]
         public ReactivePropertyFloat ReloadProgress = new();
 
-        [Tooltip("Оставшееся время перезарядки в секундах; подписка через RemainingCooldownTime.OnChanged.")]
+        [Tooltip("Remaining cooldown in seconds; subscribe via RemainingCooldownTime.OnChanged.")]
         public ReactivePropertyFloat RemainingCooldownTime = new();
 
-        /// <summary>Прогресс перезарядки 0–1 (для NeoCondition и рефлексии).</summary>
+        /// <summary>Cooldown progress 0–1 (for NeoCondition and reflection).</summary>
         public float ReloadProgressValue => ReloadProgress.CurrentValue;
 
-        /// <summary>Оставшееся время перезарядки в секундах (для NeoCondition и рефлексии).</summary>
+        /// <summary>Remaining cooldown in seconds (for NeoCondition and reflection).</summary>
         public float RemainingCooldownTimeValue => RemainingCooldownTime.CurrentValue;
 
         #endregion
 
         #region State
 
-        /// <summary>Идёт ли в данный момент действие уклонения.</summary>
+        /// <summary>Whether an evade is currently active.</summary>
         public bool IsEvading { get; private set; }
 
-        /// <summary>Идёт ли перезарядка (способность недоступна).</summary>
+        /// <summary>Whether cooldown is running (ability unavailable).</summary>
         public bool IsOnCooldown => _cooldownTimer != null && _cooldownTimer.IsRunning;
 
-        /// <summary>Прогресс перезарядки 0–1 (удобный геттер).</summary>
+        /// <summary>Cooldown progress 0–1 (convenience getter).</summary>
         public float CooldownProgress => _cooldownTimer != null ? _cooldownTimer.Progress : 0f;
 
-        /// <summary>Можно ли сейчас выполнить уклонение.</summary>
+        /// <summary>Whether evade can be used now.</summary>
         public bool CanEvade => !IsOnCooldown && !IsEvading;
 
         #endregion
@@ -187,9 +187,9 @@ namespace Neo.Tools
         #region Public API
 
         /// <summary>
-        ///     Пытается начать уклонение. Выполняется только если способность не на перезарядке и не в процессе уклонения.
+        ///     Tries to start evade. Succeeds only if not on cooldown and not already evading.
         /// </summary>
-        /// <returns>true, если уклонение начато; иначе false.</returns>
+        /// <returns>True if evade started; otherwise false.</returns>
         [Button]
         public bool TryStartEvade()
         {
@@ -211,7 +211,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Начинает уклонение, если возможно. Удобная обёртка без возврата значения.
+        ///     Starts evade if possible. Convenience wrapper with no return value.
         /// </summary>
         public void StartEvade()
         {
@@ -219,7 +219,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Сбрасывает перезарядку — способность снова доступна. Не прерывает текущее уклонение.
+        ///     Clears cooldown so the ability is ready again. Does not cancel an active evade.
         /// </summary>
         [Button]
         public void ResetCooldown()
@@ -230,9 +230,9 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает длительность перезарядки в секундах. Не влияет на уже идущий cooldown до следующего старта.
+        ///     Sets cooldown duration in seconds. Does not affect a cooldown already in progress until the next start.
         /// </summary>
-        /// <param name="seconds">Новая длительность в секундах (минимум 0.01).</param>
+        /// <param name="seconds">New duration in seconds (minimum 0.01).</param>
         public void SetCooldownDuration(float seconds)
         {
             cooldownDuration = Mathf.Max(0.01f, seconds);
@@ -243,16 +243,16 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Устанавливает длительность действия уклонения в секундах.
+        ///     Sets evade action duration in seconds.
         /// </summary>
-        /// <param name="seconds">Новая длительность в секундах (минимум 0.01).</param>
+        /// <param name="seconds">New duration in seconds (minimum 0.01).</param>
         public void SetEvadeDuration(float seconds)
         {
             evadeDuration = Mathf.Max(0.01f, seconds);
         }
 
         /// <summary>
-        ///     Возвращает оставшееся время перезарядки в секундах (0, если перезарядка не идёт).
+        ///     Returns remaining cooldown in seconds (0 if not cooling down).
         /// </summary>
         public float GetRemainingCooldown()
         {

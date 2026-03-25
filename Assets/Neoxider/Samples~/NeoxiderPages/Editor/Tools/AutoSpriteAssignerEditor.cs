@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -41,7 +41,7 @@ namespace Neo.Pages.Editor
 
             GUILayout.Space(5);
             EditorGUILayout.HelpBox(
-                "Названия GameObject'ов и Sprite'ов сравниваются без учёта регистра. Обрабатываются все Image, даже в неактивных объектах.",
+                "GameObject and Sprite names are compared case-insensitively. All Images are processed, including on inactive objects.",
                 MessageType.Info);
         }
 
@@ -54,20 +54,20 @@ namespace Neo.Pages.Editor
 
         private static bool IsStretchedFullScreen(RectTransform rt)
         {
-            // anchors по краям и нулевые отступы → занимаем весь родительский rect
+            // Edge anchors and zero offsets → fill parent rect
             bool anchorsFull = rt.anchorMin == Vector2.zero && rt.anchorMax == Vector2.one;
             return anchorsFull;
         }
 
         private void DrawStringList(List<string> list, string addButtonLabel)
         {
-            // Кнопка добавления нового элемента
+            // Add new list entry button
             if (GUILayout.Button(addButtonLabel))
             {
                 list.Add(string.Empty);
             }
 
-            // Для каждого элемента — текстовое поле + кнопка удаления
+            // Each entry: text field + remove button
             for (int i = 0; i < list.Count; i++)
             {
                 EditorGUILayout.BeginHorizontal();
@@ -93,7 +93,7 @@ namespace Neo.Pages.Editor
             {
                 GameObject go = image.gameObject;
 
-                // Убедимся, что объект находится в сцене (не ассет)
+                // Only objects in a scene (not assets)
                 if (string.IsNullOrEmpty(go.scene.name))
                 {
                     continue;
@@ -132,7 +132,7 @@ namespace Neo.Pages.Editor
             }
 
             Debug.Log(
-                $"<color=green>[AutoSpriteAssigner]</color> Спрайты назначены. Всего замен: <color=yellow>{assignedCount}</color>");
+                $"<color=green>[AutoSpriteAssigner]</color> Sprites assigned. Total replacements: <color=yellow>{assignedCount}</color>");
         }
 
         private void LoadAllSprites()
@@ -157,7 +157,7 @@ namespace Neo.Pages.Editor
                 }
             }
 
-            Debug.Log($"[AutoSpriteAssigner] Загружено спрайтов: {spriteDictionary.Count}");
+            Debug.Log($"[AutoSpriteAssigner] Sprites loaded: {spriteDictionary.Count}");
         }
     }
 }

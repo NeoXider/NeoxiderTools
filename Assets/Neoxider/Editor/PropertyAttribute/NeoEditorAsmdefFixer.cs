@@ -6,8 +6,8 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Утилита для автоматического добавления ссылок на все Neo сборки в Neo.Editor.asmdef
-    ///     Решает проблему отображения компонентов при установке пакета через Package Manager
+    ///     Utility to add references to all Neo assemblies in Neo.Editor.asmdef.
+    ///     Fixes component display when the package is installed via Package Manager.
     /// </summary>
     public static class NeoEditorAsmdefFixer
     {
@@ -18,36 +18,36 @@ namespace Neo.Editor
 
             if (string.IsNullOrEmpty(editorAsmdefPath))
             {
-                Debug.LogError("[Neoxider] Не удалось найти Neo.Editor.asmdef");
+                Debug.LogError("[Neoxider] Could not find Neo.Editor.asmdef");
                 return;
             }
 
-            // Находим все Neo asmdef файлы
+            // Find all Neo asmdef files
             List<string> neoAsmdefGUIDs = FindAllNeoAsmdefGUIDs();
 
             if (neoAsmdefGUIDs.Count == 0)
             {
-                Debug.LogWarning("[Neoxider] Не найдены дополнительные Neo asmdef файлы");
+                Debug.LogWarning("[Neoxider] No additional Neo asmdef files found");
                 return;
             }
 
-            // Читаем текущий asmdef
+            // Read current asmdef
             string json = File.ReadAllText(editorAsmdefPath);
 
-            // Проверяем, какие GUID уже есть
+            // See which GUIDs are already referenced
             int addedCount = 0;
             foreach (string guid in neoAsmdefGUIDs)
             {
                 if (!json.Contains(guid))
                 {
-                    // Находим массив references и добавляем новый GUID
+                    // Locate references array and insert new GUID
                     int referencesStart = json.IndexOf("\"references\": [");
                     if (referencesStart != -1)
                     {
                         int arrayStart = json.IndexOf('[', referencesStart);
                         int insertPosition = arrayStart + 1;
 
-                        // Добавляем новую ссылку
+                        // Append new reference
                         string newReference = $"\n    \"GUID:{guid}\",";
                         json = json.Insert(insertPosition, newReference);
                         addedCount++;
@@ -60,24 +60,24 @@ namespace Neo.Editor
                 File.WriteAllText(editorAsmdefPath, json);
                 AssetDatabase.Refresh();
                 Debug.Log(
-                    $"[Neoxider] Добавлено {addedCount} ссылок в Neo.Editor.asmdef. Unity перекомпилирует скрипты.");
+                    $"[Neoxider] Added {addedCount} reference(s) to Neo.Editor.asmdef. Unity will recompile scripts.");
             }
             else
             {
-                Debug.Log("[Neoxider] Все необходимые ссылки уже присутствуют в Neo.Editor.asmdef");
+                Debug.Log("[Neoxider] All required references are already present in Neo.Editor.asmdef");
             }
         }
 
         private static string FindEditorAsmdefPath()
         {
-            // Ищем в Assets
+            // Search in Assets
             string[] assetsPaths = AssetDatabase.FindAssets("Neo.Editor t:asmdef");
             if (assetsPaths.Length > 0)
             {
                 return AssetDatabase.GUIDToAssetPath(assetsPaths[0]);
             }
 
-            // Ищем в Packages
+            // Search in Packages
             string[] files = Directory.GetFiles("Packages", "Neo.Editor.asmdef", SearchOption.AllDirectories);
             return files.Length > 0 ? files[0] : null;
         }
@@ -86,7 +86,7 @@ namespace Neo.Editor
         {
             List<string> guids = new();
 
-            // Ищем все asmdef файлы, которые начинаются с Neo.
+            // Find asmdef files whose name starts with Neo.
             string[] foundAssets = AssetDatabase.FindAssets("Neo t:asmdef");
 
             foreach (string guid in foundAssets)
@@ -94,7 +94,7 @@ namespace Neo.Editor
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 string fileName = Path.GetFileNameWithoutExtension(path);
 
-                // Исключаем сам Neo.Editor.asmdef
+                // Exclude Neo.Editor.asmdef itself
                 if (fileName != "Neo.Editor" && fileName.StartsWith("Neo"))
                 {
                     guids.Add(guid);

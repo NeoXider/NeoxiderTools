@@ -7,13 +7,13 @@ using Random = UnityEngine.Random;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     Барабан без твинов:
-    ///     - Единая фаза (_offset): нет «дыр» и телепортов
-    ///     - Вверх/вниз по знаку скорости
-    ///     - Повторные запуски без артефактов
-    ///     - Расчётная остановка ровно в щёлку (target на сетке)
-    ///     - Смена спрайтов только вне окна (ниже/выше маски)
-    ///     - Окно считается от offsetY (нижняя граница окна). windowStartY — зеркало для инспектора.
+    ///     Reel without tweens:
+    ///     - Single phase (_offset): no gaps or teleports
+    ///     - Up/down from speed sign
+    ///     - Repeat spins without artifacts
+    ///     - Stops on grid snaps (target on the grid)
+    ///     - Sprite swaps only outside the window (below/above the mask)
+    ///     - Window is anchored at offsetY (bottom of window). windowStartY mirrors for the inspector.
     /// </summary>
     [NeoDoc("Bonus/Slot/Row.md")]
     [CreateFromMenu("Neoxider/Bonus/Row", "Prefabs/Bonus/Slot/Row.prefab")]
@@ -26,17 +26,17 @@ namespace Neo.Bonus
 
         [Header("Elements (Usually x2)")] public SlotElement[] SlotElements;
 
-        [Header("Speed setup")] public SpeedControll speedControll; // стартовая скорость (юн/с), знак = направление
+        [Header("Speed setup")] public SpeedControll speedControll; // start speed (units/s), sign = direction
 
-        public float defaultStartSpeed = 20f; // если speedControll.speed == 0
+        public float defaultStartSpeed = 20f; // when speedControll.speed == 0
 
-        [Header("Layout")] public float spaceY = 1f; // шаг сетки (в юнитах)
+        [Header("Layout")] public float spaceY = 1f; // grid step (in units)
 
         [Tooltip("Bottom bound of window (local Y) for visible slots")]
-        public float offsetY = 1f; // <-- ГЛАВНЫЙ якорь окна
+        public float offsetY = 1f; // <-- primary window anchor
 
         [Tooltip("Mirror of offsetY (compatibility/inspector)")]
-        public float windowStartY = 1f; // зеркало offsetY (не используется напрямую в расчётах)
+        public float windowStartY = 1f; // mirror of offsetY (not used directly in math)
 
         [Header("Hidden Paddings")]
         [Tooltip("How far below window element appears when wrapping from top (recomm. ≥ 0.6 * spaceY)")]
@@ -52,34 +52,34 @@ namespace Neo.Bonus
         public float maxDecel;
 
         public UnityEvent OnStop = new();
-        private float _acc; // юн/с²
+        private float _acc; // units/s²
 
-        // Источник визуалов (опционально)
+        // Visual source (optional)
         private SpritesData _allSpritesData;
-        private float _bottomSpawn; // ниже окна
-        private int _decelSign; // направление до цели (+1 вверх, -1 вниз)
+        private float _bottomSpawn; // below window
+        private int _decelSign; // direction to target (+1 up, -1 down)
 
-        // Декелерация к цели
-        private float _decelTarget; // цель фазы (на сетке)
-        private int _dirLast = 1; // +1 вверх, -1 вниз
+        // Deceleration toward target
+        private float _decelTarget; // phase target (on grid)
+        private int _dirLast = 1; // +1 up, -1 down
 
-        // Кинематика
-        private float _offset; // фаза (растёт — вверх)
+        // Kinematics
+        private float _offset; // phase (increases = up)
 
-        // Кэш позиций для wrap
+        // Position cache for wrap
         private float[] _prevY;
         private float _runTEnd;
         private State _state = State.Idle;
 
-        // Геометрия
+        // Geometry
         private float _step; // |spaceY|
-        private float _topSpawn; // выше окна
+        private float _topSpawn; // above window
         private float _totalSpan; // SlotElements.Length * _step
-        private float _vel; // юн/с
+        private float _vel; // units/s
         private float _viewBottom; // = offsetY
         private float _viewTop; // = offsetY + (countSlotElement-1)*_step
 
-        // API для контроллера
+        // Controller API
         public bool is_spinning { get; private set; }
 
         // ---------------- Unity ----------------
@@ -115,14 +115,14 @@ namespace Neo.Bonus
 
                 case State.Decel:
                     Integrate(dt, _acc);
-                    // Осталось пройти до цели в направлении _decelSign
+                    // Distance left to target along _decelSign
                     float remaining = _decelSign * (_decelTarget - _offset);
                     bool passedTarget = remaining <= 0f;
                     bool reversedVel = Mathf.Sign(_vel) != _decelSign && Mathf.Abs(_vel) > EPS;
 
                     if (passedTarget || reversedVel || Mathf.Abs(_vel) <= 0.0005f)
                     {
-                        _offset = _decelTarget; // фиксируем ровно на сетке
+                        _offset = _decelTarget; // snap exactly to grid
                         _vel = 0f;
                         _acc = 0f;
                         UpdatePositionsAndHandleWraps();
@@ -135,16 +135,16 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
-            // теперь offsetY — источник истины; зеркало поддерживаем для инспектора
+            // offsetY is source of truth; keep mirror for inspector
             windowStartY = offsetY;
             ApplyLayout();
         }
 
-        // ---------------- Публичное API ----------------
+        // ---------------- Public API ----------------
 
         public void ApplyLayout()
         {
-            // offsetY -> windowStartY (зеркало)
+            // offsetY -> windowStartY (mirror)
             windowStartY = offsetY;
 
             SlotElements = GetComponentsInChildren<SlotElement>(true);
@@ -160,11 +160,11 @@ namespace Neo.Bonus
 
             _step = Mathf.Abs(spaceY);
 
-            // окно считается ОТ offsetY
+            // window is measured FROM offsetY
             _viewBottom = offsetY;
             _viewTop = offsetY + (countSlotElement - 1) * _step;
 
-            // паддинги: не меньше 0.6 шага
+            // padding: at least 0.6 step
             float minPad = Mathf.Max(0.6f * _step, 0.001f);
             if (hiddenPaddingBottom < minPad)
             {
@@ -181,7 +181,7 @@ namespace Neo.Bonus
 
             _totalSpan = Mathf.Max(_step, SlotElements.Length * _step);
 
-            // нормализация состояния
+            // normalize state
             _offset = PositiveMod(_offset, _totalSpan);
             _vel = 0f;
             _acc = 0f;
@@ -193,7 +193,7 @@ namespace Neo.Bonus
                 _prevY = new float[SlotElements.Length];
             }
 
-            // стартовая решётка от нижней зоны спауна
+            // initial grid from bottom spawn zone
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 float y = ResolveY(i, _offset);
@@ -202,7 +202,7 @@ namespace Neo.Bonus
             }
         }
 
-        /// <summary>Удобный метод, если хочешь менять якорь окна в рантайме кодом.</summary>
+        /// <summary>Convenience to change the window anchor at runtime from code.</summary>
         public void SetOffsetY(float y, bool reapply = true)
         {
             offsetY = y;
@@ -215,10 +215,10 @@ namespace Neo.Bonus
 
         public void Spin(SpritesData allSpritesData, SlotVisualData[] /*ignored*/ finalVisuals)
         {
-            StopAllCoroutines(); // на всякий случай
+            StopAllCoroutines(); // safety
             _allSpritesData = allSpritesData;
 
-            // (опционально) перемешаем визуалы
+            // (optional) shuffle visuals
             if (_allSpritesData?.visuals != null && _allSpritesData.visuals.Length > 0)
             {
                 for (int i = 0; i < SlotElements.Length; i++)
@@ -231,14 +231,14 @@ namespace Neo.Bonus
                 }
             }
 
-            // стартовая скорость
+            // start speed
             _vel = Mathf.Abs(speedControll.speed) > EPS
                 ? speedControll.speed
                 : defaultStartSpeed * (_dirLast == 0 ? 1 : _dirLast);
 
             _dirLast = _vel >= 0f ? 1 : -1;
 
-            // синхронизируем prev
+            // sync prev
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 _prevY[i] = ResolveY(i, _offset);
@@ -271,11 +271,11 @@ namespace Neo.Bonus
             }
         }
 
-        // ---------------- Кинематика и декелерация ----------------
+        // ---------------- Kinematics and deceleration ----------------
 
         private void Integrate(float dt, float a)
         {
-            // полу-неявная интеграция (устойчивее)
+            // semi-implicit integration (more stable)
             float vMid = _vel + 0.5f * a * dt;
             _offset += vMid * dt;
             _vel = vMid + 0.5f * a * dt;
@@ -292,22 +292,22 @@ namespace Neo.Bonus
         {
             _decelSign = Mathf.Abs(_vel) > EPS ? _vel >= 0f ? 1 : -1 : _dirLast >= 0 ? 1 : -1;
 
-            // расстояние до ближайшей «щёлки» ВПЕРЁД по направлению
+            // distance to nearest snap AHEAD along motion
             float phase = PositiveMod(_offset, _step);
             float dSnapForward = _decelSign > 0
-                ? phase <= EPS ? 0f : _step - phase // вверх: до следующей щёлки
+                ? phase <= EPS ? 0f : _step - phase // up: to next snap
                 : phase <= EPS
                     ? 0f
-                    : phase; // вниз: до предыдущей щёлки
+                    : phase; // down: to previous snap
 
-            // инерция: минимум extraStepsAtDecel целых шагов
+            // inertia: at least extraStepsAtDecel whole steps
             int minK = Mathf.Max(0, extraStepsAtDecel);
 
-            // лимит по акселерации
+            // acceleration limit
             float v0 = Mathf.Max(0.001f, Mathf.Abs(_vel));
             float aLimit = maxDecel > EPS ? Mathf.Abs(maxDecel) : float.PositiveInfinity;
 
-            // подбираем k так, чтобы |a| = v^2/(2s) <= aLimit
+            // pick k so |a| = v^2/(2s) <= aLimit
             int k = minK;
             float sGrid = dSnapForward + k * _step;
             float aMag = v0 * v0 / (2f * Mathf.Max(sGrid, 0.001f));
@@ -318,7 +318,7 @@ namespace Neo.Bonus
                 int kNeeded = Mathf.CeilToInt(Mathf.Max(0f, (sNeeded - dSnapForward) / _step));
                 k = Mathf.Max(minK, kNeeded);
                 sGrid = dSnapForward + k * _step;
-                aMag = (v0 * 0f + v0 * v0) / (2f * sGrid); // эквивалент (оставлено как подсказка)
+                aMag = (v0 * 0f + v0 * v0) / (2f * sGrid); // equivalent (kept as hint)
                 aMag = v0 * v0 / (2f * sGrid);
             }
 
@@ -330,7 +330,7 @@ namespace Neo.Bonus
             }
 
             _decelTarget = _offset + _decelSign * sGrid;
-            _decelTarget = SnapValueToGrid(_decelTarget, _step, _decelSign); // ровно на сетку
+            _decelTarget = SnapValueToGrid(_decelTarget, _step, _decelSign); // exactly on grid
             _acc = -_decelSign * aMag;
 
             _state = State.Decel;
@@ -363,7 +363,7 @@ namespace Neo.Bonus
             OnStop?.Invoke();
         }
 
-        // ---------------- Позиции + wrap ----------------
+        // ---------------- Positions + wrap ----------------
 
         private float ResolveY(int index, float offset)
         {
@@ -385,9 +385,9 @@ namespace Neo.Bonus
                 float yPrev = _prevY[i];
                 float yNew = ResolveY(i, _offset);
 
-                // wrap как существенный скачок между кадрами
-                bool wrappedFromTop = yNew + EPS < yPrev - 0.5f * _step; // вверх → низ
-                bool wrappedFromBottom = yNew - EPS > yPrev + 0.5f * _step; // низ → верх
+                // wrap as a large jump between frames
+                bool wrappedFromTop = yNew + EPS < yPrev - 0.5f * _step; // up -> bottom
+                bool wrappedFromBottom = yNew - EPS > yPrev + 0.5f * _step; // bottom -> up
 
                 if (_vel >= 0f && wrappedFromTop)
                 {
@@ -409,7 +409,7 @@ namespace Neo.Bonus
             }
         }
 
-        // ---------------- Видимые элементы (ровно 3) ----------------
+        // ---------------- Visible elements (exactly 3) ----------------
 
         private static float GetLocalY(Transform t)
         {
@@ -422,8 +422,8 @@ namespace Neo.Bonus
         }
 
         /// <summary>
-        ///     Ровно три видимых сверху-вниз из окна [offsetY .. offsetY+(count-1)*spaceY].
-        ///     Для каждой ступени k=0..count-1 выбираем ближайший элемент к идеальной позиции.
+        ///     Exactly three visible slots top-down in [offsetY .. offsetY+(count-1)*spaceY].
+        ///     For each step k=0..count-1, pick the element closest to the ideal position.
         /// </summary>
         public SlotElement[] GetVisibleTopDown()
         {
@@ -442,7 +442,7 @@ namespace Neo.Bonus
                 bucketErr[k] = float.PositiveInfinity;
             }
 
-            // Раскладываем по ближайшей ступени окна
+            // Assign to nearest window step
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 SlotElement se = SlotElements[i];
@@ -468,7 +468,7 @@ namespace Neo.Bonus
                 }
             }
 
-            // Фолбэк (не должен сработать при корректной раскладке)
+            // Fallback (should not run with correct layout)
             if (buckets.Any(b => b == null))
             {
                 var byY = SlotElements.OrderByDescending(se => GetLocalY(se.transform)).ToList();
@@ -485,7 +485,7 @@ namespace Neo.Bonus
                 }
             }
 
-            // Вернуть в порядке Top→Down: k = count-1 .. 0
+            // Return Top→Down order: k = count-1 .. 0
             var result = new SlotElement[countSlotElement];
             for (int dst = 0, k = countSlotElement - 1; k >= 0; k--, dst++)
             {
@@ -556,7 +556,7 @@ namespace Neo.Bonus
             }
         }
 
-        // Публичные утилиты
+        // Public utilities
 
         public void SetVisuals(SlotVisualData data)
         {
@@ -571,15 +571,15 @@ namespace Neo.Bonus
             }
         }
 
-        /// <summary>Для отладки/чтения снизу-вверх.</summary>
+        /// <summary>For debug / bottom-up reading.</summary>
         public SlotElement[] GetVisibleBottomUp()
         {
             SlotElement[] topDown = GetVisibleTopDown();
-            Array.Reverse(topDown); // теперь Bottom→Top
+            Array.Reverse(topDown); // now Bottom→Top
             return topDown;
         }
 
-        // Состояния
+        // States
         private enum State
         {
             Idle,

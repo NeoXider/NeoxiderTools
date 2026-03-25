@@ -4,34 +4,34 @@ using UnityEngine;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Реализация провайдера сохранения через PlayerPrefs Unity.
+    ///     Save provider implementation backed by Unity PlayerPrefs.
     /// </summary>
     public class PlayerPrefsSaveProvider : ISaveProvider
     {
         private const string BoolPrefix = "Bool_";
 
         /// <summary>
-        ///     Тип провайдера - PlayerPrefs.
+        ///     Provider type — PlayerPrefs.
         /// </summary>
         public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
 
         /// <summary>
-        ///     Событие, вызываемое после сохранения данных.
+        ///     Raised after data is saved.
         /// </summary>
         public event Action OnDataSaved;
 
         /// <summary>
-        ///     Событие, вызываемое после загрузки данных.
+        ///     Raised after data is loaded.
         /// </summary>
         public event Action OnDataLoaded;
 
         /// <summary>
-        ///     Событие, вызываемое при изменении значения ключа.
+        ///     Raised when a key's value changes.
         /// </summary>
         public event Action<string> OnKeyChanged;
 
         /// <summary>
-        ///     Получает целочисленное значение по ключу.
+        ///     Gets an integer value by key.
         /// </summary>
         public int GetInt(string key, int defaultValue = 0)
         {
@@ -39,7 +39,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает целочисленное значение по ключу.
+        ///     Sets an integer value by key.
         /// </summary>
         public void SetInt(string key, int value)
         {
@@ -48,7 +48,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает значение с плавающей точкой по ключу.
+        ///     Gets a floating-point value by key.
         /// </summary>
         public float GetFloat(string key, float defaultValue = 0f)
         {
@@ -56,7 +56,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает значение с плавающей точкой по ключу.
+        ///     Sets a floating-point value by key.
         /// </summary>
         public void SetFloat(string key, float value)
         {
@@ -65,7 +65,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает строковое значение по ключу.
+        ///     Gets a string value by key.
         /// </summary>
         public string GetString(string key, string defaultValue = "")
         {
@@ -73,7 +73,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает строковое значение по ключу.
+        ///     Sets a string value by key.
         /// </summary>
         public void SetString(string key, string value)
         {
@@ -82,8 +82,8 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Получает булево значение по ключу.
-        ///     Реализовано через int (0 = false, 1 = true).
+        ///     Gets a Boolean value by key.
+        ///     Stored as int (0 = false, 1 = true).
         /// </summary>
         public bool GetBool(string key, bool defaultValue = false)
         {
@@ -97,8 +97,8 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Устанавливает булево значение по ключу.
-        ///     Реализовано через int (0 = false, 1 = true).
+        ///     Sets a Boolean value by key.
+        ///     Stored as int (0 = false, 1 = true).
         /// </summary>
         public void SetBool(string key, bool value)
         {
@@ -108,7 +108,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Проверяет, существует ли ключ в хранилище.
+        ///     Returns whether the key exists in storage.
         /// </summary>
         public bool HasKey(string key)
         {
@@ -116,7 +116,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет ключ и его значение из хранилища.
+        ///     Removes the key and its value from storage.
         /// </summary>
         public void DeleteKey(string key)
         {
@@ -133,7 +133,7 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Удаляет все ключи из хранилища.
+        ///     Removes all keys from storage.
         /// </summary>
         public void DeleteAll()
         {
@@ -141,8 +141,8 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно сохраняет данные в хранилище.
-        ///     Вызывает PlayerPrefs.Save() и событие OnDataSaved.
+        ///     Flushes PlayerPrefs to disk.
+        ///     Calls PlayerPrefs.Save() and raises OnDataSaved.
         /// </summary>
         public void Save()
         {
@@ -151,9 +151,9 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Принудительно загружает данные из хранилища.
-        ///     Для PlayerPrefs это пустая операция, так как данные загружаются автоматически.
-        ///     Вызывает событие OnDataLoaded.
+        ///     Reloads from storage.
+        ///     For PlayerPrefs this is a no-op because values are read automatically;
+        ///     still raises OnDataLoaded.
         /// </summary>
         public void Load()
         {

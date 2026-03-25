@@ -5,12 +5,12 @@ using UnityEngine.Events;
 namespace Neo.StateMachine
 {
     /// <summary>
-    ///     Базовый класс для условий переходов в State Machine (legacy).
-    ///     Рекомендуется использовать StatePredicate для новых реализаций.
+    ///     Base class for transition conditions in the State Machine (legacy).
+    ///     Prefer <see cref="StatePredicate"/> for new work.
     /// </summary>
     /// <remarks>
-    ///     Этот класс оставлен для обратной совместимости.
-    ///     Для новых проектов рекомендуется использовать StatePredicate, который предоставляет больше возможностей.
+    ///     Kept for backward compatibility.
+    ///     New projects should use StatePredicate for richer composition.
     /// </remarks>
     /// <example>
     ///     <code>
@@ -18,7 +18,7 @@ namespace Neo.StateMachine
     /// {
     ///     public override bool Evaluate()
     ///     {
-    ///         // Логика проверки условия
+    ///         // Condition logic
     ///         return true;
     ///     }
     /// }
@@ -28,14 +28,14 @@ namespace Neo.StateMachine
     public abstract class StateCondition
     {
         /// <summary>
-        ///     Оценить условие.
+        ///     Evaluates the condition.
         /// </summary>
-        /// <returns>True, если условие выполнено.</returns>
+        /// <returns>True if the condition passes.</returns>
         public abstract bool Evaluate();
     }
 
     /// <summary>
-    ///     Условие для проверки bool значения.
+    ///     Condition that returns a stored bool value.
     /// </summary>
     [Serializable]
     public class BoolStateCondition : StateCondition
@@ -43,7 +43,7 @@ namespace Neo.StateMachine
         [SerializeField] private bool value;
 
         /// <summary>
-        ///     Значение для проверки.
+        ///     Value to return from Evaluate.
         /// </summary>
         public bool Value
         {
@@ -58,7 +58,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Условие для сравнения float значений.
+    ///     Condition that compares a float to a threshold.
     /// </summary>
     [Serializable]
     public class FloatStateCondition : StateCondition
@@ -70,7 +70,7 @@ namespace Neo.StateMachine
         [SerializeField] private float threshold;
 
         /// <summary>
-        ///     Значение для сравнения.
+        ///     Left-hand value for comparison.
         /// </summary>
         public float Value
         {
@@ -79,7 +79,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Тип сравнения.
+        ///     Comparison operator.
         /// </summary>
         public ComparisonType Comparison
         {
@@ -88,7 +88,7 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
-        ///     Пороговое значение для сравнения.
+        ///     Threshold to compare against.
         /// </summary>
         public float Threshold
         {
@@ -112,7 +112,7 @@ namespace Neo.StateMachine
     }
 
     /// <summary>
-    ///     Условие на основе UnityEvent.
+    ///     Condition driven by a UnityEvent; listeners call <see cref="SetResult"/> to set the outcome.
     /// </summary>
     [Serializable]
     public class EventStateCondition : StateCondition
@@ -122,14 +122,14 @@ namespace Neo.StateMachine
         private bool lastResult;
 
         /// <summary>
-        ///     Событие для оценки. Должно устанавливать результат через SetResult().
+        ///     Invoked during evaluation; use SetResult to provide the outcome.
         /// </summary>
         public UnityEvent OnEvaluate => onEvaluate;
 
         /// <summary>
-        ///     Установить результат оценки условия.
+        ///     Sets the result used when Evaluate returns.
         /// </summary>
-        /// <param name="result">Результат оценки.</param>
+        /// <param name="result">Outcome of the condition.</param>
         public void SetResult(bool result)
         {
             lastResult = result;

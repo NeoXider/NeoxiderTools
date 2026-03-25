@@ -4,17 +4,17 @@ using UnityEngine;
 namespace Neo.Editor
 {
     /// <summary>
-    ///     Поиск ассетов по проекту (Assets + Packages). Используется в инструментах редактора
-    ///     (иконки скриптов, NeoLogo и т.д.), чтобы не дублировать логику при разном расположении библиотеки.
+    ///     Finds assets across the project (Assets + Packages). Used by editor tools
+    ///     (script icons, NeoLogo, etc.) so logic is not duplicated when the library lives in different roots.
     /// </summary>
     public static class NeoxiderEditorAssets
     {
         /// <summary>
-        ///     Ищет первый ассет по имени и типу по всему проекту (Assets и Packages).
+        ///     Finds the first asset by name/type across the project (Assets and Packages).
         /// </summary>
-        /// <param name="nameOrFilter">Имя ассета или фильтр поиска (например "NeoLogo" или "NeoLogo t:Texture2D")</param>
-        /// <param name="typeFilter">Опциональный фильтр типа для FindAssets, например "Texture2D", "MonoScript"</param>
-        /// <returns>Путь к ассету или null</returns>
+        /// <param name="nameOrFilter">Asset name or search filter (e.g. "NeoLogo" or "NeoLogo t:Texture2D").</param>
+        /// <param name="typeFilter">Optional type filter for FindAssets, e.g. "Texture2D", "MonoScript".</param>
+        /// <returns>Asset path or null.</returns>
         public static string FindAssetPath(string nameOrFilter, string typeFilter = null)
         {
             string filter = string.IsNullOrEmpty(typeFilter) ? nameOrFilter : $"{nameOrFilter} t:{typeFilter}";
@@ -28,7 +28,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Загружает первый найденный ассет по имени/фильтру по всему проекту (Assets + Packages).
+        ///     Loads the first asset found by name/filter across the project (Assets + Packages).
         /// </summary>
         public static T FindAndLoad<T>(string nameOrFilter, string typeFilter = null) where T : Object
         {
@@ -42,7 +42,7 @@ namespace Neo.Editor
         }
 
         /// <summary>
-        ///     Ищет текстуру NeoLogo в проекте или пакетах (для иконок компонентов и т.п.).
+        ///     Finds the NeoLogo texture in the project or packages (for component icons, etc.).
         /// </summary>
         public static Texture2D FindNeoLogo()
         {

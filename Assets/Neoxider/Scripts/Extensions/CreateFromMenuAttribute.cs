@@ -3,8 +3,8 @@ using System;
 namespace Neo
 {
     /// <summary>
-    ///     Помечает MonoBehaviour как доступный для быстрого создания через GameObject → Neoxider.
-    ///     Редактор строит меню по рефлексии; при выборе создаётся объект с компонентом (и префабом при наличии).
+    ///     Marks a MonoBehaviour for quick creation via GameObject → Neoxider.
+    ///     The editor builds the menu by reflection; choosing an item creates a GameObject with the component (and prefab if set).
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, Inherited = false)]
     public sealed class CreateFromMenuAttribute : Attribute
@@ -15,12 +15,12 @@ namespace Neo
             PrefabPath = string.IsNullOrEmpty(prefabPath) ? null : prefabPath;
         }
 
-        /// <summary>Путь в подменю, например "Neoxider/UI/VisualToggle".</summary>
+        /// <summary>Submenu path, e.g. "Neoxider/UI/VisualToggle".</summary>
         public string MenuPath { get; }
 
         /// <summary>
-        ///     Относительный путь к префабу от корня пакета, например "Prefabs/UI/VisualToggle.prefab". Если пусто —
-        ///     создаётся только объект с компонентом.
+        ///     Prefab path relative to package root, e.g. "Prefabs/UI/VisualToggle.prefab". If empty,
+        ///     only a GameObject with the component is created.
         /// </summary>
         public string PrefabPath { get; }
     }

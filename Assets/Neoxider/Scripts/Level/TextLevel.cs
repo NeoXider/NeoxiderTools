@@ -14,7 +14,7 @@ namespace Neo.Level
         [SerializeField] private int _displayOffset = 1;
 
         [SerializeField]
-        [Tooltip("Источник уровня. Если не задан — LevelManager.I. Задайте при нескольких LevelManager в сцене.")]
+        [Tooltip("Level source. If not set, LevelManager.I. Set when multiple LevelManagers are in the scene.")]
         private LevelManager _levelSource;
 
         private UnityEvent<int> _event;

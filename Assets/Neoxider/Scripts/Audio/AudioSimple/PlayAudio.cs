@@ -54,7 +54,7 @@ namespace Neo
                     }
                     else
                     {
-                        Debug.LogWarning("[PlayAudio] Выбранный клип равен null.");
+                        Debug.LogWarning("[PlayAudio] Selected clip is null.");
                     }
                 }
                 else

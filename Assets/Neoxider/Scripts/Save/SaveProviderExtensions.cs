@@ -4,19 +4,19 @@ using System.Linq;
 namespace Neo.Save
 {
     /// <summary>
-    ///     Расширения для работы с провайдерами сохранения.
-    ///     Предоставляет дополнительные методы для работы с массивами и коллекциями.
+    ///     Extension methods for save providers.
+    ///     Adds helpers for arrays and simple collections.
     /// </summary>
     public static class SaveProviderExtensions
     {
         private const char SEPARATOR = ',';
 
         /// <summary>
-        ///     Сохраняет массив целых чисел по ключу.
+        ///     Saves an int array under the given key.
         /// </summary>
-        /// <param name="provider">Провайдер сохранения</param>
-        /// <param name="key">Ключ для сохранения</param>
-        /// <param name="array">Массив для сохранения</param>
+        /// <param name="provider">Save provider</param>
+        /// <param name="key">Storage key</param>
+        /// <param name="array">Values to store</param>
         public static void SetIntArray(this ISaveProvider provider, string key, int[] array)
         {
             if (array == null || array.Length == 0)
@@ -29,12 +29,12 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Загружает массив целых чисел по ключу.
+        ///     Loads an int array from the given key.
         /// </summary>
-        /// <param name="provider">Провайдер сохранения</param>
-        /// <param name="key">Ключ для загрузки</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Массив целых чисел</returns>
+        /// <param name="provider">Save provider</param>
+        /// <param name="key">Storage key</param>
+        /// <param name="defaultValue">Fallback if the key is missing or invalid</param>
+        /// <returns>Int array</returns>
         public static int[] GetIntArray(this ISaveProvider provider, string key, int[] defaultValue = null)
         {
             if (!provider.HasKey(key))
@@ -59,11 +59,11 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Сохраняет массив чисел с плавающей точкой по ключу.
+        ///     Saves a float array under the given key.
         /// </summary>
-        /// <param name="provider">Провайдер сохранения</param>
-        /// <param name="key">Ключ для сохранения</param>
-        /// <param name="array">Массив для сохранения</param>
+        /// <param name="provider">Save provider</param>
+        /// <param name="key">Storage key</param>
+        /// <param name="array">Values to store</param>
         public static void SetFloatArray(this ISaveProvider provider, string key, float[] array)
         {
             if (array == null || array.Length == 0)
@@ -76,12 +76,12 @@ namespace Neo.Save
         }
 
         /// <summary>
-        ///     Загружает массив чисел с плавающей точкой по ключу.
+        ///     Loads a float array from the given key.
         /// </summary>
-        /// <param name="provider">Провайдер сохранения</param>
-        /// <param name="key">Ключ для загрузки</param>
-        /// <param name="defaultValue">Значение по умолчанию, если ключ не существует</param>
-        /// <returns>Массив чисел с плавающей точкой</returns>
+        /// <param name="provider">Save provider</param>
+        /// <param name="key">Storage key</param>
+        /// <param name="defaultValue">Fallback if the key is missing or invalid</param>
+        /// <returns>Float array</returns>
         public static float[] GetFloatArray(this ISaveProvider provider, string key, float[] defaultValue = null)
         {
             if (!provider.HasKey(key))

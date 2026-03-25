@@ -3,17 +3,16 @@ using UnityEngine;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Вспомогательный компонент, который хранит ссылку на пул, которому принадлежит этот объект.
-    ///     Добавляется автоматически при создании объекта пулом. Для возврата в пул используйте Return() или
-    ///     PoolManager.Release.
+    ///     Helper component storing the pool that owns this instance.
+    ///     Added automatically when the pool creates the object. Use Return() or PoolManager.Release to return it.
     /// </summary>
     [NeoDoc("Tools/Spawner/PooledObjectInfo.md")]
-    [AddComponentMenu("")] // Скрываем из меню компонентов
+    [AddComponentMenu("")] // Hidden from Add Component menu
     public class PooledObjectInfo : MonoBehaviour
     {
         public NeoObjectPool OwnerPool { get; set; }
 
-        /// <summary>Возвращает объект в пул. Эквивалентно PoolManager.Release(gameObject).</summary>
+        /// <summary>Returns the object to the pool. Same as PoolManager.Release(gameObject).</summary>
         [Button("Return to pool")]
         public void Return()
         {

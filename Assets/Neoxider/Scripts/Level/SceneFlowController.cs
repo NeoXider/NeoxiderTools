@@ -11,8 +11,8 @@ namespace Neo
     namespace Level
     {
         /// <summary>
-        ///     Режим загрузки сцены: синхронно, асинхронно с автоактивацией, асинхронно с ручной активацией или добавление сцены
-        ///     (Additive).
+        ///     Scene load mode: synchronous, asynchronous with auto-activation, asynchronous with manual activation, or additive
+        ///     load (Additive).
         /// </summary>
         public enum SceneFlowLoadMode
         {
@@ -23,7 +23,7 @@ namespace Neo
         }
 
         /// <summary>
-        ///     Формат отображения прогресса в текстовом поле.
+        ///     How progress is shown in the text field.
         /// </summary>
         public enum ProgressTextFormat
         {
@@ -41,14 +41,14 @@ namespace Neo
             [SerializeField] private int _sceneBuildIndex;
             [SerializeField] private string _sceneName = "";
 
-            [Tooltip("При вызове LoadScene() без аргументов: true = по имени, false = по build index")] [SerializeField]
+            [Tooltip("When LoadScene() is called with no arguments: true = by name, false = by build index")] [SerializeField]
             private bool _useSceneName;
 
-            [Tooltip("Для Async: активировать сцену сразу по готовности. Для AsyncManual не используется.")]
+            [Tooltip("For Async: activate the scene as soon as it is ready. Not used for AsyncManual.")]
             [SerializeField]
             private bool _activateOnReady = true;
 
-            [Tooltip("При старте (Start) автоматически вызвать LoadScene() по полям компонента.")] [SerializeField]
+            [Tooltip("On Start, automatically call LoadScene() using the component fields.")] [SerializeField]
             private bool _loadOnStart;
 
             [Header("Progress UI")] [SerializeField]
@@ -71,21 +71,21 @@ namespace Neo
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
 
-            /// <summary>Режим загрузки (из настроек компонента).</summary>
+            /// <summary>Load mode (from component settings).</summary>
             public SceneFlowLoadMode LoadMode
             {
                 get => _loadMode;
                 set => _loadMode = value;
             }
 
-            /// <summary>Индекс сцены в Build Settings.</summary>
+            /// <summary>Scene build index in Build Settings.</summary>
             public int SceneBuildIndex
             {
                 get => _sceneBuildIndex;
                 set => _sceneBuildIndex = value;
             }
 
-            /// <summary>Имя сцены.</summary>
+            /// <summary>Scene name.</summary>
             public string SceneName
             {
                 get => _sceneName;
@@ -105,7 +105,7 @@ namespace Neo
                 }
             }
 
-            /// <summary>Загружает сцену по build index. Режим берётся из настроек компонента.</summary>
+            /// <summary>Loads the scene by build index. Mode is taken from component settings.</summary>
             public void LoadScene(int buildIndex)
             {
                 if (_loadMode == SceneFlowLoadMode.Additive)
@@ -118,7 +118,7 @@ namespace Neo
                 }
             }
 
-            /// <summary>Загружает сцену по имени. Режим из настроек.</summary>
+            /// <summary>Loads the scene by name. Mode from settings.</summary>
             public void LoadScene(string sceneName)
             {
                 if (string.IsNullOrEmpty(sceneName))
@@ -137,7 +137,7 @@ namespace Neo
                 }
             }
 
-            /// <summary>Загружает сцену по полям компонента: если задано имя — по имени, иначе по sceneBuildIndex.</summary>
+            /// <summary>Loads using component fields: if a name is set, by name; otherwise by sceneBuildIndex.</summary>
             public void LoadScene()
             {
                 if (_useSceneName && !string.IsNullOrEmpty(_sceneName))
@@ -150,26 +150,26 @@ namespace Neo
                 }
             }
 
-            /// <summary>Перезагружает текущую активную сцену.</summary>
+            /// <summary>Reloads the current active scene.</summary>
             public void Restart()
             {
                 int index = SceneManager.GetActiveScene().buildIndex;
                 LoadScene(index);
             }
 
-            /// <summary>Выход из приложения.</summary>
+            /// <summary>Exits the application.</summary>
             public void Quit()
             {
                 Application.Quit();
             }
 
-            /// <summary>Пауза: true → Time.timeScale = 0, false → 1.</summary>
+            /// <summary>Pause: true → Time.timeScale = 0, false → 1.</summary>
             public void Pause(bool active)
             {
                 Time.timeScale = active ? 0f : 1f;
             }
 
-            /// <summary>Активирует асинхронно загруженную сцену. Вызывать после OnReadyToProceed (например по кнопке).</summary>
+            /// <summary>Activates the asynchronously loaded scene. Call after OnReadyToProceed (e.g. from a button).</summary>
             public void ProceedScene()
             {
                 if (_currentOperation != null)

@@ -22,7 +22,7 @@ namespace Neo.Pages.Editor
         }
 
         /// <summary>
-        ///     Получить все PageId в проекте (folder = null) или в указанной папке.
+        ///     Get all PageId assets in the project (folder = null) or in the given folder.
         /// </summary>
         public static PageId[] GetIds(string folder = null)
         {
@@ -31,7 +31,7 @@ namespace Neo.Pages.Editor
         }
 
         /// <summary>
-        ///     Получить подписи для dropdown: &lt;None&gt; + DisplayName всех PageId.
+        ///     Get dropdown labels: &lt;None&gt; + DisplayName of all PageId assets.
         /// </summary>
         public static string[] GetLabels(string folder = null)
         {
@@ -51,7 +51,7 @@ namespace Neo.Pages.Editor
             _folder = cacheKey;
             _dirty = false;
 
-            // null/empty = ищем по всему проекту (все папки)
+            // null/empty = search entire project (all folders)
             string[] searchIn = string.IsNullOrEmpty(folder) ? new[] { "Assets" } : new[] { folder };
             string[] guids = AssetDatabase.FindAssets("t:PageId", searchIn);
             _ids = guids

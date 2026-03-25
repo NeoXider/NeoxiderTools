@@ -8,7 +8,7 @@ using UnityEngine.SceneManagement;
 namespace Neo.Editor.Windows
 {
     /// <summary>
-    ///     GUI отрисовка для окна Scene Saver
+    ///     GUI for the Scene Saver window.
     /// </summary>
     public class SceneSaverGUI : EditorWindowGUI
     {
@@ -16,22 +16,22 @@ namespace Neo.Editor.Windows
         private string _lastSaveStatus = "";
 
         /// <summary>
-        ///     Получение состояния включенности скрипта
+        ///     Whether the saver script is enabled.
         /// </summary>
         public bool IsScriptEnabled { get; private set; } = true;
 
         /// <summary>
-        ///     Получение интервала в минутах
+        ///     Auto-save interval in minutes.
         /// </summary>
         public float IntervalMinutes { get; private set; } = 3f;
 
         /// <summary>
-        ///     Получение флага сохранения даже если не изменено
+        ///     Whether to save even when the scene is not dirty.
         /// </summary>
         public bool SaveEvenIfNotDirty { get; private set; }
 
         /// <summary>
-        ///     Обновление пути текущей сцены
+        ///     Refreshes the active scene path.
         /// </summary>
         public void UpdateCurrentScenePath()
         {
@@ -45,7 +45,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Отрисовка GUI
+        ///     Draws the window GUI.
         /// </summary>
         public override void OnGUI(EditorWindow window)
         {
@@ -54,7 +54,7 @@ namespace Neo.Editor.Windows
             bool hasSavedScene = !string.IsNullOrEmpty(activeScene.path);
 
             NeoxiderEditorGUI.DrawSummaryCard("Scene Saver",
-                "Автоматическое создание backup-копии текущей сцены в `Assets/Scenes/AutoSaves`.",
+                "Automatically saves a backup copy of the active scene to `Assets/Scenes/AutoSaves`.",
                 new NeoxiderEditorGUI.Badge(IsScriptEnabled ? "Enabled" : "Disabled",
                     IsScriptEnabled ? new Color(0.18f, 0.62f, 0.32f, 1f) : new Color(0.46f, 0.46f, 0.50f, 1f)),
                 new NeoxiderEditorGUI.Badge($"Interval {IntervalMinutes:0.##} min", new Color(0.20f, 0.50f, 0.78f, 1f)),
@@ -64,11 +64,11 @@ namespace Neo.Editor.Windows
             if (!hasSavedScene)
             {
                 EditorGUILayout.HelpBox(
-                    "Текущая сцена ещё не сохранена как asset. Автосейв появится после первого обычного Save Scene.",
+                    "The active scene is not saved as an asset yet. Auto-save will work after the first normal Save Scene.",
                     MessageType.Info);
             }
 
-            NeoxiderEditorGUI.BeginSection("Auto Save", "Базовые параметры автоматического сохранения.");
+            NeoxiderEditorGUI.BeginSection("Auto Save", "Basic automatic save options.");
             IsScriptEnabled = EditorGUILayout.Toggle("Enable Scene Saver Script", IsScriptEnabled);
             IntervalMinutes = EditorGUILayout.FloatField("Interval (minutes)", IntervalMinutes);
             SaveEvenIfNotDirty = EditorGUILayout.Toggle("Save Even If Not Dirty", SaveEvenIfNotDirty);
@@ -77,7 +77,7 @@ namespace Neo.Editor.Windows
             EditorGUILayout.Space(4f);
 
             NeoxiderEditorGUI.BeginSection("Current Scene",
-                "Текущее состояние открытой сцены и результат последнего сохранения.");
+                "State of the open scene and the last save result.");
             EditorGUILayout.LabelField("Current Scene", _currentScenePath);
             EditorGUILayout.LabelField("Last Save Status",
                 string.IsNullOrEmpty(_lastSaveStatus) ? "No saves yet." : _lastSaveStatus);
@@ -95,7 +95,7 @@ namespace Neo.Editor.Windows
         }
 
         /// <summary>
-        ///     Сохранение копии сцены
+        ///     Saves a copy of the scene to the auto-save folder.
         /// </summary>
         public void SaveSceneClone()
         {

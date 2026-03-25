@@ -90,7 +90,7 @@ namespace Neo.Bonus
             ItemId = id;
         }
 
-        /// <summary>Добавляет текущий предмет в коллекцию (по ItemId). Удобно вызывать из UnityEvent (кнопка).</summary>
+        /// <summary>Adds the current item to the collection by ItemId. Handy from UnityEvent (e.g. button).</summary>
         public void Unlock()
         {
             if (ItemId < 0)

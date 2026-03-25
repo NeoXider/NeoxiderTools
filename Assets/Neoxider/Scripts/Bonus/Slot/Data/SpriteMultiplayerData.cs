@@ -5,8 +5,8 @@ using UnityEngine;
 namespace Neo.Bonus
 {
     /// <summary>
-    ///     ScriptableObject для хранения множителей выигрыша в зависимости от количества символов.
-    ///     Поддерживает автоматическую генерацию множителей на основе SpritesData.
+    ///     ScriptableObject holding win multipliers by symbol match count.
+    ///     Supports auto-generating multipliers from SpritesData.
     /// </summary>
     [CreateAssetMenu(fileName = "Sprite Multiplier Data", menuName = "Neoxider/Bonus/Slot/Sprite Multiplier Data",
         order = 4)]
@@ -34,7 +34,7 @@ namespace Neo.Bonus
         private SpritesData _spritesData;
 
         /// <summary>
-        ///     Конфигурация множителей.
+        ///     Multiplier configuration.
         /// </summary>
         public SpritesMultiplier spritesMultiplier => _spritesMultiplier;
 
@@ -70,7 +70,7 @@ namespace Neo.Bonus
                     countList.Add(new CountMultiplayer { count = i, mult = defaultMultiplayer });
                 }
 
-                // Используем ID из SpritesData
+                // Use ID from SpritesData
                 list.Add(new IdMult { id = _spritesData.visuals[s].id, countMult = countList.ToArray() });
             }
 
