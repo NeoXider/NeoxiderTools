@@ -239,7 +239,11 @@ namespace Neo
                     yield break;
                 }
 
-                _currentOperation.allowSceneActivation = autoActivate;
+                // Guard against overlapping load requests:
+                // another coroutine may overwrite/null _currentOperation while this one is still running.
+                var op = _currentOperation;
+
+                op.allowSceneActivation = autoActivate;
 
                 if (_progressPanel != null)
                 {
@@ -248,13 +252,13 @@ namespace Neo
 
                 _onLoadStarted?.Invoke();
 
-                while (!_currentOperation.isDone)
+                while (op != null && !op.isDone)
                 {
-                    float p = Mathf.Clamp01(_currentOperation.progress);
+                    float p = Mathf.Clamp01(op.progress);
                     _onProgress?.Invoke(p);
                     ApplyProgressToUI(p);
 
-                    if (!autoActivate && _currentOperation.progress >= 0.9f && !_readyToProceedInvoked)
+                    if (!autoActivate && op.progress >= 0.9f && !_readyToProceedInvoked)
                     {
                         _readyToProceedInvoked = true;
                         _onReadyToProceed?.Invoke();
@@ -262,6 +266,11 @@ namespace Neo
                     }
 
                     yield return null;
+                }
+                if (op == null)
+                {
+                    Debug.LogWarning("[SceneFlowController] Load operation became null. Possibly overlapping load requests.");
+                    yield break;
                 }
 
                 _currentOperation = null;

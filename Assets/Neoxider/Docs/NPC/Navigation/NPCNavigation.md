@@ -1,15 +1,14 @@
-# NPC Navigation
+# NpcNavigation
 
-**Что это:** Основная логика реализована в pure C# (без корутин), `MonoBehaviour` слой — настройки, UnityEvent и визуализация.
+**Что это:** Компонент Unity (`MonoBehaviour`) для навигации NPC поверх `NavMeshAgent`: Follow / Patrol / Combined, переключение поведения без дополнительных `MonoBehaviour` на объекте (стратегии в pure C#). Файл: `Assets/Neoxider/Scripts/NPC/NpcNavigation.cs`.
 
-**Как использовать:** см. разделы ниже.
+**Как использовать:**
+1. Добавьте на NPC `NavMeshAgent` и `NpcNavigation`.
+2. Выберите режим **Mode**: `FollowTarget`, `Patrol` или `Combined`.
+3. Настройте соответствующие поля (цель, патрульные точки/зону, агро-дистанции).
+4. Чтобы включать/выключать бота в рантайме, используйте **IsActive**: `true` — ходит, `false` — стоит.
 
 ---
-
-
-`NpcNavigation` — единый компонент навигации NPC. Он предоставляет режимы (Follow/Patrol/Combined) и переключает поведение через pure C# стратегии (интерфейс + реализации), без дополнительных `MonoBehaviour` на объекте.
-
-Основная логика реализована в pure C# (без корутин), `MonoBehaviour` слой — настройки, UnityEvent и визуализация.
 
 ## Быстрый старт
 
@@ -54,6 +53,12 @@
 - `SetRunning(bool)`
 - `SetSpeed(float)`
 - `Stop()`, `Resume()`
+
+## IsActive
+
+- **IsActive** (Inspector / свойство `IsActive`) — глобальный переключатель. Если `false`, компонент каждый кадр останавливает агент (`agent.isStopped = true`) и не тикает поведение.
+- `Stop()` — выключает `IsActive` и останавливает агент.
+- `Resume()` — включает `IsActive` и снимает `agent.isStopped`.
 
 Также `NpcNavigation` поднимает общие события:
 

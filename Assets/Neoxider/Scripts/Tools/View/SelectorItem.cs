@@ -80,6 +80,7 @@ namespace Neo.Tools
         ///     Sets the active state (called by Selector in NotifySelectorItemsOnly mode). Updates Active and invokes events.
         /// </summary>
         /// <param name="active">True to activate, false to deactivate.</param>
+        [Neo.Button]
         public void SetActive(bool active)
         {
             if (_isActive == active)
@@ -102,10 +103,23 @@ namespace Neo.Tools
             }
         }
 
+        [Neo.Button]
+        public void Activate()
+        {
+            SetActive(true);
+        }
+
+        [Neo.Button]
+        public void Deactivate()
+        {
+            SetActive(false);
+        }
+
         /// <summary>
         ///     Excludes this item's index from the parent Selector's pool (e.g. when "fixed" or resolved).
         ///     Does nothing if no Selector is found.
         /// </summary>
+        [Neo.Button]
         public void ExcludeFromSelector()
         {
             CacheSelector();
@@ -115,6 +129,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Includes this item's index back into the parent Selector's pool.
         /// </summary>
+        [Neo.Button]
         public void IncludeInSelector()
         {
             CacheSelector();

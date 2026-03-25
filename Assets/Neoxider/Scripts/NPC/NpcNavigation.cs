@@ -28,7 +28,9 @@ namespace Neo.NPC
             ManualVelocity
         }
 
-        [Header("NPC")] [SerializeField] private bool isActive = true;
+        [Header("NPC")]
+        [SerializeField]
+        private bool isActive = true;
 
         [SerializeField] private Animator animator;
 
@@ -104,6 +106,7 @@ namespace Neo.NPC
         private NpcPatrolCore patrolCore;
 
         private bool wasMoving;
+        private bool initialized;
 
         public bool IsActive
         {
@@ -140,6 +143,22 @@ namespace Neo.NPC
             combinedBehaviour = new CombinedBehaviour(this);
 
             SetModeInternal(mode, true);
+            initialized = true;
+        }
+
+        private void OnEnable()
+        {
+            if (!initialized)
+            {
+                return;
+            }
+
+            currentBehaviour?.Enter();
+
+            if (!isActive && agent != null)
+            {
+                agent.isStopped = true;
+            }
         }
 
         private void Update()
@@ -307,6 +326,7 @@ namespace Neo.NPC
         [Button]
         public void Stop()
         {
+            isActive = false;
             followCore.Stop();
             agent.isStopped = true;
         }
@@ -314,6 +334,7 @@ namespace Neo.NPC
         [Button]
         public void Resume()
         {
+            isActive = true;
             agent.isStopped = false;
         }
 
