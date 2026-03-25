@@ -9,12 +9,6 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(ImageFillAmountAnimator))]
     public class ImageFillAmountAnimator : MonoBehaviour
     {
-        public enum BoolToFillMapping
-        {
-            Direct,
-            Inverted
-        }
-
         [Header("References")] [SerializeField]
         private Image _image;
 
@@ -24,10 +18,9 @@ namespace Neo.Tools
 
         [SerializeField] private Ease _ease = Ease.OutQuad;
 
-        [Header("Bool input (optional)")]
-        [Tooltip("How bool (or 0/1) input is mapped to fillAmount.")]
+        [Tooltip("When enabled, inverts input value: value becomes (1 - value).")]
         [SerializeField]
-        private BoolToFillMapping _boolMapping = BoolToFillMapping.Direct;
+        private bool _invertValue;
 
         private Tween _anim;
 
@@ -39,6 +32,12 @@ namespace Neo.Tools
         /// <summary>Animates fillAmount to target value (0..1). Kills previous tween.</summary>
         public void SetValue(float value)
         {
+            value = Mathf.Clamp01(value);
+            if (_invertValue)
+            {
+                value = 1f - value;
+            }
+
             _anim?.Kill();
             _anim = DOTween.To(() => _image.fillAmount, x => _image.fillAmount = x, value, _duration).SetEase(_ease);
         }
@@ -46,8 +45,7 @@ namespace Neo.Tools
         /// <summary>Animates fillAmount to 1 (true) or 0 (false) using Bool Mapping.</summary>
         public void SetBool(bool value)
         {
-            float target = MapBoolToFill(value);
-            SetValue(target);
+            SetValue(value ? 1f : 0f);
         }
 
         /// <summary>
@@ -57,12 +55,6 @@ namespace Neo.Tools
         {
             bool value = value01 >= 0.5f;
             SetBool(value);
-        }
-
-        private float MapBoolToFill(bool value)
-        {
-            bool mapped = _boolMapping == BoolToFillMapping.Inverted ? !value : value;
-            return mapped ? 1f : 0f;
         }
     }
 }
