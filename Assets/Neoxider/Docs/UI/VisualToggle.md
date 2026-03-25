@@ -85,6 +85,12 @@ public void SetInactive()
 ```
 Устанавливает состояние в неактивное (start) и обновляет визуал.
 
+### Set(bool)
+```csharp
+public void Set(bool value)
+```
+Устанавливает состояние из булевого значения: `true` → активное (end), `false` → неактивное (start).
+
 ### SetActive(bool, bool)
 ```csharp
 public void SetActive(bool isActive, bool invokeToggleEvent = false)

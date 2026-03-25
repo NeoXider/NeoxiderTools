@@ -34,7 +34,13 @@ namespace Neo.Tools
 
         public bool interactable = true;
 
-        [Header("Interaction Settings")] [Tooltip("Enable mouse interaction (hover and click).")] [SerializeField]
+        [Header("Interaction Settings")]
+        [Tooltip("Enable hover detection (cursor over collider).")]
+        [SerializeField]
+        private bool useHoverDetection = true;
+
+        [Tooltip("Enable mouse click/down/up interaction (hover detection can be enabled separately).")]
+        [SerializeField]
         private bool useMouseInteraction = true;
 
         [Tooltip("Enable keyboard interaction.")] [SerializeField]
@@ -100,6 +106,9 @@ namespace Neo.Tools
         [Header("Hover Events")] [Space] public UnityEvent onHoverEnter;
 
         public UnityEvent onHoverExit;
+
+        [Tooltip("Invoked on hover state change. Passes true on enter, false on exit.")]
+        public UnityEvent<bool> onHoverChanged;
 
         [Header("Click Events")] [SerializeField]
         private float doubleClickThreshold = 0.3f;
@@ -169,9 +178,13 @@ namespace Neo.Tools
                 return;
             }
 
-            if (useMouseInteraction)
+            if (useHoverDetection)
             {
                 UpdateMouseHoverRaycast();
+            }
+
+            if (useMouseInteraction)
+            {
                 UpdateMouseInput();
             }
 
@@ -237,26 +250,27 @@ namespace Neo.Tools
 
         public void OnPointerEnter(PointerEventData eventData)
         {
-            if (interactable && useMouseInteraction)
+            if (interactable && useHoverDetection)
             {
                 bool inRange = interactionDistance > 0f ? IsInRange() : true;
-
                 if (interactionDistance > 0f && !inRange)
                 {
                     return;
                 }
 
                 IsHovered = true;
-                onHoverEnter.Invoke();
+                onHoverEnter?.Invoke();
+                onHoverChanged?.Invoke(true);
             }
         }
 
         public void OnPointerExit(PointerEventData eventData)
         {
-            if (interactable && useMouseInteraction)
+            if (interactable && useHoverDetection)
             {
                 IsHovered = false;
-                onHoverExit.Invoke();
+                onHoverExit?.Invoke();
+                onHoverChanged?.Invoke(false);
             }
         }
 
@@ -369,7 +383,7 @@ namespace Neo.Tools
 
         private void OnHoverEnterRaycast()
         {
-            if (!interactable || !useMouseInteraction)
+            if (!interactable || !useHoverDetection)
             {
                 return;
             }
@@ -382,17 +396,19 @@ namespace Neo.Tools
 
             IsHovered = true;
             onHoverEnter?.Invoke();
+            onHoverChanged?.Invoke(true);
         }
 
         private void OnHoverExitRaycast()
         {
-            if (!interactable || !useMouseInteraction)
+            if (!interactable || !useHoverDetection)
             {
                 return;
             }
 
             IsHovered = false;
             onHoverExit?.Invoke();
+            onHoverChanged?.Invoke(false);
         }
 
         private void UpdateKeyboardInput()
@@ -768,11 +784,19 @@ namespace Neo.Tools
             if (cachedCollider3D == null)
             {
                 TryGetComponent(out cachedCollider3D);
+                if (cachedCollider3D == null)
+                {
+                    cachedCollider3D = GetComponentInChildren<Collider>(includeInactive: true);
+                }
             }
 
             if (cachedCollider2D == null)
             {
                 TryGetComponent(out cachedCollider2D);
+                if (cachedCollider2D == null)
+                {
+                    cachedCollider2D = GetComponentInChildren<Collider2D>(includeInactive: true);
+                }
             }
         }
 
@@ -930,12 +954,21 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Enable or disable mouse interaction.
+        ///     Enable or disable mouse click/down/up interaction.
         /// </summary>
         public bool UseMouseInteraction
         {
             get => useMouseInteraction;
             set => useMouseInteraction = value;
+        }
+
+        /// <summary>
+        ///     Enable or disable hover detection (cursor over collider).
+        /// </summary>
+        public bool UseHoverDetection
+        {
+            get => useHoverDetection;
+            set => useHoverDetection = value;
         }
 
         /// <summary>

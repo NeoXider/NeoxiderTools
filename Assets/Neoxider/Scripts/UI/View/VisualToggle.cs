@@ -159,6 +159,7 @@ namespace Neo.UI
         /// <summary>
         ///     Sets active (end) state and updates visuals.
         /// </summary>
+        [Button]
         public void SetActive()
         {
             SetActive(true);
@@ -167,9 +168,20 @@ namespace Neo.UI
         /// <summary>
         ///     Sets inactive (start) state and updates visuals.
         /// </summary>
+        [Button]
         public void SetInactive()
         {
             SetActive(false);
+        }
+
+        /// <summary>
+        ///     Sets the state from a bool input.
+        /// </summary>
+        /// 
+        [Button]
+        public void Set(bool value)
+        {
+            SetActive(value);
         }
 
         /// <summary>
