@@ -14,7 +14,7 @@ namespace Neo.Tools
         "Use Neo.Rpg.RpgStatsManager for persistent player stats or Neo.Rpg.RpgCombatant for scene-local actors.")]
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Health")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Tools/Components/AttackSystem/Health (Legacy)")]
     public class Health : MonoBehaviour, IHealable, IDamageable, IRestorable
     {
         [Header("Health Settings")] [Tooltip("Maximum health points")]

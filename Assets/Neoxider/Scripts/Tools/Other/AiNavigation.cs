@@ -16,7 +16,7 @@ namespace Neo.Tools
     [NeoDoc("Tools/Other/AiNavigation.md")]
     [RequireComponent(typeof(NavMeshAgent))]
     [CreateFromMenu("Neoxider/Tools/Other/AiNavigation")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Tools/Other/AiNavigation (Legacy)")]
     public class AiNavigation : MonoBehaviour
     {
         public enum MovementMode

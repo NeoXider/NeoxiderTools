@@ -16,7 +16,7 @@ namespace Neo.Tools
         "Use Neo.Rpg.RpgAttackController and RpgProjectile for new RPG combat. Use RpgStatsDamageableBridge only for legacy IDamageable compatibility.")]
     [NeoDoc("Tools/Components/AttackSystem/AdvancedAttackCollider.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AdvancedAttackCollider")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Tools/Components/AdvancedAttackCollider (Legacy)")]
     public class AdvancedAttackCollider : MonoBehaviour
     {
         [Header("Attack")] [SerializeField] private int attackDamage = 10; // Default attack damage

@@ -30,7 +30,7 @@ namespace Neo
         [Obsolete("Use SceneFlowController for new code. UIReady remains functional but is deprecated.")]
         [NeoDoc("UI/UIReady.md")]
         [CreateFromMenu("Neoxider/UI/UIReady")]
-        [AddComponentMenu("")]
+        [AddComponentMenu("Neoxider/UI/UIReady (Legacy)")]
         public class UIReady : MonoBehaviour
         {
             [Header("Scene Loading")] public SceneLoadMode loadMode = SceneLoadMode.Sync;

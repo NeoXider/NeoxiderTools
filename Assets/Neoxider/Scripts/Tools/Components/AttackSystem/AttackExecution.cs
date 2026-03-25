@@ -9,7 +9,7 @@ namespace Neo.Tools
     [Obsolete("Use Neo.Rpg.RpgAttackController with RpgAttackDefinition for melee, ranged, and area attacks.")]
     [NeoDoc("Tools/Components/AttackSystem/AttackExecution.md")]
     [CreateFromMenu("Neoxider/Tools/Components/AttackExecution")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Tools/Components/AttackExecution (Legacy)")]
     public class AttackExecution : MonoBehaviour
     {
         public enum AttackState

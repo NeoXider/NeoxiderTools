@@ -19,7 +19,7 @@ namespace Neo
             "Use CooldownReward (inherits TimerObject) for new code. This component remains functional but is deprecated.")]
         [NeoDoc("Bonus/TimeReward/TimeReward.md")]
         [CreateFromMenu("Neoxider/Bonus/TimeReward", "Prefabs/Bonus/TimeReward.prefab")]
-        [AddComponentMenu("")]
+        [AddComponentMenu("Neoxider/Bonus/TimeReward (Legacy)")]
         public class TimeReward : MonoBehaviour
         {
             private const string LastRewardTimeKeyPrefix = "LastRewardTime";

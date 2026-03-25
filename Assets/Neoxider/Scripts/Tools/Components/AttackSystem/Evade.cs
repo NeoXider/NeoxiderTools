@@ -18,7 +18,7 @@ namespace Neo.Tools
     [Obsolete("Use Neo.Rpg.RpgEvadeController for new RPG evade/invulnerability flow.")]
     [NeoDoc("Tools/Components/AttackSystem/Evade.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Evade")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Tools/Components/Evade (Legacy)")]
     public class Evade : MonoBehaviour
     {
         #region Settings

@@ -14,7 +14,7 @@ namespace Neo.Bonus
         "Use Neo.Bonus.WheelFortuneImproved for new setups. This type remains supported for backward compatibility.")]
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
     [CreateFromMenu("Neoxider/Bonus/WheelFortune", "Prefabs/Bonus/WheelFortune.prefab")]
-    [AddComponentMenu("")]
+    [AddComponentMenu("Neoxider/Bonus/WheelFortune (Legacy)")]
     public class WheelFortune : MonoBehaviour
     {
         public enum SpinState
