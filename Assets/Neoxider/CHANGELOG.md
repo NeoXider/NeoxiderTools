@@ -9,6 +9,20 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.17] - 2026-03-25
+
+### Tools / InteractableObject
+
+- **InteractiveObject** — разделены переключатели: `useHoverDetection` (hover) и `useMouseInteraction` (click/down/up); добавлено событие `onHoverChanged(bool)`; hover учитывает `interactionDistance` (0 = без дистанции); click по мыши требует реального попадания курсора в collider; чужие trigger-коллайдеры не блокируют hover/click для обычного collider под ними; `ViewOrMouse` для клавиатуры больше не опирается на hover.
+
+### UI
+
+- **VisualToggle** — добавлен метод `Set(bool value)` для удобной привязки из UnityEvent / условий.
+
+### Tools / View
+
+- **ImageFillAmountAnimator** — опция **Invert Value** инвертирует значение и в `SetValue(float)` (\(value = 1 - value\)).
+
 ## [7.7.16] - 2026-03-25
 
 ### Code style (EN)
@@ -701,7 +715,7 @@ All notable changes to this project will be documented in this file.
 - **Tools docs (Move)** — обновлены `README` и документация по `CameraConstraint`, добавлены страницы для
   `PlayerController3DPhysics`, `PlayerController2DPhysics`, `CursorLockController`.
 - **InteractiveObject** — добавлен view-gate для клавиатурной интеракции:
-    - `requireViewForKeyboardInteraction`, `minLookDot`, `requireDirectLookRay`;
+    - `requireViewForKeyboardInteraction`, `requireDirectLookRay`;
     - клавиатурное взаимодействие можно ограничить только объектами в направлении взгляда;
     - добавлен режим `keyboardInteractionMode` (`ViewOrMouse` / `DistanceOnly`).
     - добавлен debug-луч проверки взаимодействия (`drawInteractionRayForOneSecond`, `interactionRayDrawDuration`) с

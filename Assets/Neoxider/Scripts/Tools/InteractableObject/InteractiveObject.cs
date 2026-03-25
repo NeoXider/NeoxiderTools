@@ -53,11 +53,6 @@ namespace Neo.Tools
         [Tooltip("Require looking at object when interacting with keyboard.")] [SerializeField]
         private bool requireViewForKeyboardInteraction = true;
 
-        [Tooltip("Minimum dot product for look check. Higher value means narrower interaction cone.")]
-        [Range(-1f, 1f)]
-        [SerializeField]
-        private float minLookDot = 0.55f;
-
         [Tooltip("Require direct line of sight from check point to object.")] [SerializeField]
         private bool requireDirectLookRay = true;
 
@@ -67,6 +62,15 @@ namespace Neo.Tools
         [Tooltip("Include trigger colliders in mouse hover raycast. Enable for objects with Trigger Collider.")]
         [SerializeField]
         private bool includeTriggerCollidersInMouseRaycast = true;
+
+        [Header("Target Colliders")]
+        [Tooltip("Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject only.")]
+        [SerializeField]
+        private Collider targetCollider3D;
+
+        [Tooltip("Optional explicit 2D collider used for hover, click, and view checks. If not set, uses Collider2D on this GameObject only.")]
+        [SerializeField]
+        private Collider2D targetCollider2D;
 
         [Header("Distance Control")] [Tooltip("Maximum interaction distance (0 = unlimited).")] [SerializeField]
         private float interactionDistance = 3f;
@@ -149,15 +153,15 @@ namespace Neo.Tools
         {
             InteractiveObjectSceneSetup.EnsureEventSystem(this, _autoCheckEventSystem, _autoCreateEventSystemIfMissing);
 
-            bool hasCollider3D = TryGetComponent<Collider>(out _);
-            bool hasCollider2D = TryGetComponent<Collider2D>(out _);
+            RefreshCachedReferences();
+
+            bool hasCollider3D = cachedCollider3D != null;
+            bool hasCollider2D = cachedCollider2D != null;
             if (!InteractiveObjectSceneSetup.TryEnsureRaycasters(this, hasCollider3D, hasCollider2D))
             {
                 enabled = false;
                 return;
             }
-
-            RefreshCachedReferences();
 
             if (distanceCheckPoint == null && Camera.main != null)
             {
@@ -237,10 +241,12 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector3 interactionPoint = hasCurrentMouseHit
-                ? currentMouseHitPoint
-                : GetInteractionTargetPosition();
-            if (!CanMouseInteractAtPoint(interactionPoint))
+            if (!hasCurrentMouseHit)
+            {
+                return;
+            }
+
+            if (!CanMouseInteractAtPoint(currentMouseHitPoint))
             {
                 return;
             }
@@ -479,8 +485,9 @@ namespace Neo.Tools
                     return true;
                 }
 
-                bool has3DCollider = TryGetComponent(out Collider selfCollider3D);
-                bool has2DCollider = TryGetComponent(out Collider2D selfCollider2D);
+                RefreshCachedReferences();
+                bool has3DCollider = cachedCollider3D != null && cachedCollider3D.enabled;
+                bool has2DCollider = cachedCollider2D != null && cachedCollider2D.enabled;
 
                 QueryTriggerInteraction obstacleTriggerMode = includeTriggerCollidersInObstacleCheck
                     ? QueryTriggerInteraction.Collide
@@ -585,12 +592,6 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (keyboardInteractionMode == KeyboardInteractionMode.ViewOrMouse &&
-                (IsHovered || wasHoveredByRaycast))
-            {
-                return true;
-            }
-
             if (!requireViewForKeyboardInteraction)
             {
                 return true;
@@ -616,22 +617,17 @@ namespace Neo.Tools
                 return true;
             }
 
-            Vector3 forward = lookSource.forward.normalized;
-            float dot = Vector3.Dot(forward, toTarget / distance);
-            if (dot < minLookDot)
-            {
-                CacheDebugRay(origin, target, Color.yellow);
-                return false;
-            }
-
             if (!requireDirectLookRay || !checkObstacles)
             {
                 CacheDebugRay(origin, target, Color.cyan);
                 return true;
             }
 
-            if (TryGetComponent(out Collider _))
+            RefreshCachedReferences();
+
+            if (cachedCollider3D != null && cachedCollider3D.enabled)
             {
+                Vector3 forward = lookSource.forward.normalized;
                 float maxRayDistance = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
                 QueryTriggerInteraction triggerMode = includeTriggerCollidersInLookRay
                     ? QueryTriggerInteraction.Collide
@@ -672,7 +668,7 @@ namespace Neo.Tools
                 return hasTargetHit;
             }
 
-            if (TryGetComponent(out Collider2D _))
+            if (cachedCollider2D != null && cachedCollider2D.enabled)
             {
                 Vector2 origin2D = new(origin.x, origin.y);
                 Vector2 dir2D = new Vector2(toTarget.x, toTarget.y).normalized;
@@ -781,23 +777,8 @@ namespace Neo.Tools
                 cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
             }
 
-            if (cachedCollider3D == null)
-            {
-                TryGetComponent(out cachedCollider3D);
-                if (cachedCollider3D == null)
-                {
-                    cachedCollider3D = GetComponentInChildren<Collider>(includeInactive: true);
-                }
-            }
-
-            if (cachedCollider2D == null)
-            {
-                TryGetComponent(out cachedCollider2D);
-                if (cachedCollider2D == null)
-                {
-                    cachedCollider2D = GetComponentInChildren<Collider2D>(includeInactive: true);
-                }
-            }
+            cachedCollider3D = targetCollider3D != null ? targetCollider3D : GetComponent<Collider>();
+            cachedCollider2D = targetCollider2D != null ? targetCollider2D : GetComponent<Collider2D>();
         }
 
         private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
@@ -818,50 +799,68 @@ namespace Neo.Tools
                     : QueryTriggerInteraction.Ignore;
                 int hitCount = Physics.RaycastNonAlloc(ray, lookHits3D, float.MaxValue, ~0, triggerInteraction);
                 float nearestTargetDistance = float.MaxValue;
+                float nearestBlockingDistance = float.MaxValue;
                 bool hasTargetHit = false;
 
                 for (int i = 0; i < hitCount; i++)
                 {
                     Collider hitCollider = lookHits3D[i].collider;
-                    if (hitCollider == null || !IsTargetHierarchyCollider(hitCollider))
+                    if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
                     {
                         continue;
                     }
 
-                    if (lookHits3D[i].distance < nearestTargetDistance)
+                    float hitDistance = lookHits3D[i].distance;
+                    if (IsTargetHierarchyCollider(hitCollider))
                     {
-                        nearestTargetDistance = lookHits3D[i].distance;
-                        hitPoint = lookHits3D[i].point;
-                        hasTargetHit = true;
+                        if (hitDistance < nearestTargetDistance)
+                        {
+                            nearestTargetDistance = hitDistance;
+                            hitPoint = lookHits3D[i].point;
+                            hasTargetHit = true;
+                        }
+                    }
+                    else if (!hitCollider.isTrigger && hitDistance < nearestBlockingDistance)
+                    {
+                        nearestBlockingDistance = hitDistance;
                     }
                 }
 
-                return hasTargetHit;
+                return hasTargetHit && nearestTargetDistance <= nearestBlockingDistance;
             }
 
             if (cachedCollider2D != null && cachedCollider2D.enabled)
             {
                 int hitCount2D = Physics2D.GetRayIntersectionNonAlloc(ray, lookHits2D, float.MaxValue, ~0);
                 float nearestTargetDistance2D = float.MaxValue;
+                float nearestBlockingDistance2D = float.MaxValue;
                 bool hasTargetHit2D = false;
 
                 for (int i = 0; i < hitCount2D; i++)
                 {
                     Collider2D hitCollider = lookHits2D[i].collider;
-                    if (hitCollider == null || !IsTargetHierarchyCollider(hitCollider))
+                    if (hitCollider == null || ShouldIgnoreHitCollider(hitCollider))
                     {
                         continue;
                     }
 
-                    if (lookHits2D[i].distance < nearestTargetDistance2D)
+                    float hitDistance = lookHits2D[i].distance;
+                    if (IsTargetHierarchyCollider(hitCollider))
                     {
-                        nearestTargetDistance2D = lookHits2D[i].distance;
-                        hitPoint = lookHits2D[i].point;
-                        hasTargetHit2D = true;
+                        if (hitDistance < nearestTargetDistance2D)
+                        {
+                            nearestTargetDistance2D = hitDistance;
+                            hitPoint = lookHits2D[i].point;
+                            hasTargetHit2D = true;
+                        }
+                    }
+                    else if (!hitCollider.isTrigger && hitDistance < nearestBlockingDistance2D)
+                    {
+                        nearestBlockingDistance2D = hitDistance;
                     }
                 }
 
-                return hasTargetHit2D;
+                return hasTargetHit2D && nearestTargetDistance2D <= nearestBlockingDistance2D;
             }
 
             return false;
@@ -881,7 +880,26 @@ namespace Neo.Tools
 
         private bool IsTargetHierarchyCollider(Component hitCollider)
         {
-            return hitCollider != null && hitCollider.transform.IsChildOf(transform);
+            if (hitCollider == null)
+            {
+                return false;
+            }
+
+            if (hitCollider is Collider hitCollider3D)
+            {
+                return targetCollider3D != null
+                    ? hitCollider3D == targetCollider3D
+                    : hitCollider3D.transform == transform;
+            }
+
+            if (hitCollider is Collider2D hitCollider2D)
+            {
+                return targetCollider2D != null
+                    ? hitCollider2D == targetCollider2D
+                    : hitCollider2D.transform == transform;
+            }
+
+            return false;
         }
 
         private Transform ResolveLookSource()

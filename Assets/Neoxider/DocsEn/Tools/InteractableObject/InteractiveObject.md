@@ -14,15 +14,17 @@
 
 ### Interaction mode
 
+- `useHoverDetection`
 - `interactable`
 - `useMouseInteraction`
 - `useKeyboardInteraction`
 - `keyboardInteractionMode`
 - `requireViewForKeyboardInteraction`
-- `minLookDot`
 - `requireDirectLookRay`
 - `includeTriggerCollidersInLookRay`
 - `includeTriggerCollidersInMouseRaycast`
+- `targetCollider3D`
+- `targetCollider2D`
 
 ### Distance and checkpoints
 
@@ -53,6 +55,7 @@ When `checkObstacles` is disabled, obstacle blocking is skipped consistently for
 
 - `onHoverEnter`
 - `onHoverExit`
+- `onHoverChanged(bool)`
 
 ### Click
 
@@ -77,11 +80,21 @@ When `checkObstacles` is disabled, obstacle blocking is skipped consistently for
 |-----|-------------|
 | `InteractionDistance` | Gets or sets the interaction distance (`0` means unlimited). |
 | `DistanceCheckPoint` | Gets or sets the transform used for distance checks. |
-| `UseMouseInteraction` | Enables or disables mouse interaction. |
+| `UseHoverDetection` | Enables or disables hover detection (cursor over collider). |
+| `UseMouseInteraction` | Enables or disables mouse click/down/up interaction. |
 | `UseKeyboardInteraction` | Enables or disables keyboard interaction. |
 | `IsInInteractionRange` | Whether the object is currently in valid range. |
 | `DistanceToCheckPoint` | Current measured distance to the check point. |
 | `IsHovered` | Whether the object is currently hovered. |
+
+## Input rules
+
+- Hover is driven by cursor hit on the target collider.
+- If `interactionDistance > 0`, hover also requires the object to be in range. If `interactionDistance == 0`, hover has no distance limit.
+- Mouse click / down / up require an actual current mouse hit on the target collider.
+- Non-trigger colliders in front of the object block hover/click; foreign trigger colliders do not.
+- In `ViewOrMouse`, keyboard interaction no longer relies on hover; it uses view direction and optional direct look ray.
+- By default the component uses only a collider on the same GameObject. If the target collider is elsewhere, assign `targetCollider3D` or `targetCollider2D` explicitly in the Inspector.
 
 ## Scene requirements
 

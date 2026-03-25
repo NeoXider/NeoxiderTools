@@ -36,13 +36,16 @@
 - `useMouseInteraction` (по умолчанию `true`): Включить взаимодействие мышью (click / down / up). Наведение может быть включено отдельно.
 - `useKeyboardInteraction` (по умолчанию `true`): Включить взаимодействие клавиатурой
 - `keyboardInteractionMode`:
-  - `ViewOrMouse` (по умолчанию): для клавиатуры требуется взгляд на объект, мышь работает как обычно через hover/click
+  - `ViewOrMouse` (по умолчанию): для клавиатуры требуется взгляд на объект / прямой луч
   - `DistanceOnly`: клавиатура работает только по дистанции, без проверки взгляда
 - `requireViewForKeyboardInteraction` (по умолчанию `true`): Клавиатурное взаимодействие доступно только если объект находится в направлении взгляда
-- `minLookDot`: Порог направления взгляда (`dot`), чем выше значение — тем уже конус взаимодействия
 - `requireDirectLookRay`: Требовать прямую видимость объекта по лучу от точки проверки
 - `includeTriggerCollidersInLookRay` (по умолчанию `true`): Учитывать trigger-коллайдеры в проверке взгляда (важно для интерактивных объектов с Trigger Collider)
 - `includeTriggerCollidersInMouseRaycast` (по умолчанию `true`): Учитывать trigger-коллайдеры в луче наведения мыши (hover). Включено — объекты с Trigger Collider реагируют на курсор; выключено — только обычные коллайдеры.
+- `targetCollider3D`: Необязательный явный 3D collider для hover/click/look-check. Если не задан, используется только `Collider` на этом же объекте.
+- `targetCollider2D`: Необязательный явный 2D collider для hover/click/look-check. Если не задан, используется только `Collider2D` на этом же объекте.
+  - Чужие `Trigger`-коллайдеры не блокируют hover/click для обычного collider целевого объекта под ними.
+  - Обычные (не trigger) коллайдеры перед объектом по-прежнему блокируют hover/click.
 
 ### Debug
 - `drawInteractionRayForOneSecond`: Отрисовывать debug-луч проверки взаимодействия
@@ -50,7 +53,6 @@
 - Цвета луча:
   - зелёный: цель успешно видна;
   - красный: луч блокируется/цель не попала в прямую видимость;
-  - жёлтый: не прошла проверка угла (`minLookDot`);
   - голубой: проверка без прямого луча (`requireDirectLookRay = false`).
 
 ### Distance Control (контроль дистанции)
@@ -98,6 +100,17 @@
 
 Проверка препятствий и клавиатурные условия по-прежнему относятся к click / keyboard interaction.
 
+### Как считается click мышью
+
+- Click / Down / Up по мыши требуют **реального текущего попадания курсора в collider** объекта.
+- Если луч мыши не попал в collider объекта, событие click не вызывается, даже если объект находится в радиусе `interactionDistance`.
+- Чужой обычный collider перед объектом блокирует click; чужой trigger — нет.
+
+### Как считается `E`
+
+- В режиме `DistanceOnly` клавиатура проверяет только дистанцию.
+- В режиме `ViewOrMouse` клавиатура больше **не опирается на hover**; используется направление взгляда и, если включено `requireDirectLookRay`, прямой луч до объекта.
+
 ### Click Events (клики)
 - `onClick`: Левый клик
 - `onDoubleClick`: Двойной левый клик
@@ -128,7 +141,9 @@
 ### Коллайдер
 Для не-UI объектов нужен коллайдер (`BoxCollider`, `SphereCollider`, `BoxCollider2D`).
 
-Важно: `InteractiveObject` может стоять **на родителе**, а коллайдер — на дочернем объекте (например, сложная модель). В этом случае hover/click тоже работают: компонент автоматически ищет коллайдер в дочерних объектах.
+По умолчанию `InteractiveObject` работает только с collider на **этом же объекте**.
+
+Если `InteractiveObject` висит на родителе, а collider находится на другом объекте, назначьте его явно в инспекторе через `targetCollider3D` или `targetCollider2D`.
 
 ---
 
@@ -168,7 +183,7 @@ onInteractDown → PickUpItem()  // клавиша E или клик
 interactionDistance = 3       // можно говорить с 3 метров
 useKeyboardInteraction = true
 requireViewForKeyboardInteraction = true
-minLookDot = 0.65
+requireDirectLookRay = true
 keyboardKey = E
 
 // События:
