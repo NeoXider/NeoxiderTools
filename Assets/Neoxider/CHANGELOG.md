@@ -9,6 +9,17 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.19] - 2026-03-28
+
+### Tools / InteractableObject
+
+- **PhysicsEvents3D** / **PhysicsEvents2D** — добавлены галочки **`filterByTag`** и **`filterByLayer`** (по умолчанию слой включён, тег выключен). При включённых обоих проверки применяются **вместе** (логическое И). Если обе выключены, фильтра нет.
+- **Миграция:** раньше непустой `requiredTag` сам включал проверку тега; теперь для этого нужно включить **`filterByTag`** в инспекторе.
+
+### Docs
+
+- **PhysicsEvents3D.md**, **PhysicsEvents2D.md** — описание новых полей фильтрации.
+
 ## [7.7.18] - 2026-03-25
 
 ### Tools / Components

@@ -16,7 +16,16 @@ namespace Neo.Tools
     {
         public bool interactable = true;
 
-        [Header("Filtering")] public LayerMask layers = ~0;
+        [Header("Filtering")]
+        [Tooltip("When enabled, other object must match requiredTag (if requiredTag is non-empty).")]
+        public bool filterByTag;
+
+        [Tooltip("When enabled, other object’s layer must be included in layers.")]
+        public bool filterByLayer = true;
+
+        public LayerMask layers = ~0;
+
+        [Tooltip("Tag to match when filterByTag is enabled and this string is non-empty.")]
         public string requiredTag = "";
 
         /* ───────── EVENTS ─────────────────────────────────────────── */
@@ -84,15 +93,12 @@ namespace Neo.Tools
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)
         {
-            bool hasTagFilter = !string.IsNullOrEmpty(requiredTag);
-            if (hasTagFilter && !go.CompareTag(requiredTag))
+            if (filterByTag && !string.IsNullOrEmpty(requiredTag) && !go.CompareTag(requiredTag))
             {
                 return false;
             }
 
-            int layerMask = layers.value;
-            bool hasLayerFilter = layerMask != ~0;
-            if (hasLayerFilter && ((1 << go.layer) & layerMask) == 0)
+            if (filterByLayer && ((1 << go.layer) & layers.value) == 0)
             {
                 return false;
             }

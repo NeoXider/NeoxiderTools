@@ -2,7 +2,7 @@
  *  PhysicsEvents3D ‒ one compact component that forwards *both*
  *  Trigger **and** Collision callbacks to UnityEvents.
  *  – Interactable switch (no need to disable GameObject)                 *
- *  – Layer-mask & optional Tag filter                                    *
+ *  – Optional layer / tag filters (each toggled separately)               *
  *  – Easy to extend: just add your own UnityEvent fields or extra logic  *
  ***************************************************************************/
 
@@ -21,8 +21,17 @@ namespace Neo.Tools
         [Tooltip("If OFF, callbacks are suppressed without disabling this GO")]
         public bool interactable = true;
 
-        [Header("Filtering")] public LayerMask layers = ~0; // “everything” by default
-        public string requiredTag = ""; // empty - ignore tag filter
+        [Header("Filtering")]
+        [Tooltip("When enabled, other object must match requiredTag (if requiredTag is non-empty).")]
+        public bool filterByTag;
+
+        [Tooltip("When enabled, other object’s layer must be included in layers.")]
+        public bool filterByLayer = true;
+
+        public LayerMask layers = ~0;
+
+        [Tooltip("Tag to match when filterByTag is enabled and this string is non-empty.")]
+        public string requiredTag = "";
 
         /* ───────── EVENTS ─────────────────────────────────────────── */
 
@@ -89,15 +98,12 @@ namespace Neo.Tools
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)
         {
-            bool hasTagFilter = !string.IsNullOrEmpty(requiredTag);
-            if (hasTagFilter && !go.CompareTag(requiredTag))
+            if (filterByTag && !string.IsNullOrEmpty(requiredTag) && !go.CompareTag(requiredTag))
             {
                 return false;
             }
 
-            int layerMask = layers.value;
-            bool hasLayerFilter = layerMask != ~0;
-            if (hasLayerFilter && ((1 << go.layer) & layerMask) == 0)
+            if (filterByLayer && ((1 << go.layer) & layers.value) == 0)
             {
                 return false;
             }
