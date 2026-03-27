@@ -89,12 +89,20 @@ namespace Neo.Tools
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool PassFilter(GameObject go)
         {
-            if (((1 << go.layer) & layers) == 0)
+            bool hasTagFilter = !string.IsNullOrEmpty(requiredTag);
+            if (hasTagFilter && !go.CompareTag(requiredTag))
             {
                 return false;
             }
 
-            return string.IsNullOrEmpty(requiredTag) || go.CompareTag(requiredTag);
+            int layerMask = layers.value;
+            bool hasLayerFilter = layerMask != ~0;
+            if (hasLayerFilter && ((1 << go.layer) & layerMask) == 0)
+            {
+                return false;
+            }
+
+            return true;
         }
 
         [Serializable]
