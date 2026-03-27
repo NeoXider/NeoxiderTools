@@ -39,6 +39,7 @@
 - **События по типу**: в режиме Int вызываются `OnValueChangedInt`/`OnSendInt`, в Float — `OnValueChangedFloat`/`OnSendFloat`. При любом изменении вызывается также `Value.OnChanged` (float). При Send — `OnSend` (float).
 - **Send без аргумента**: вызывает типизированное событие со значением по Payload (Counter / ScoreManager.Score / Money.money).
 - **Send с аргументом**: `Send(int)` или `Send(float)` — отправка заданного числа без изменения счётчика.
+- **Повторяемое событие по значению счётчика**: отдельный `OnRepeatByCounterValue`, который вызывается N раз (`N = текущее значение счётчика`, округление до int и clamp к `>= 0`) — по настройке либо при изменении значения, либо при `Send()`, либо в обоих случаях.
 - **Сохранение (опционально)**: галочка «сохранять» (по умолчанию выключена), строка-ключ для SaveProvider (как в Money). При изменении значения число сохраняется через `SaveProvider.SetFloat(key, value)` и `SaveProvider.Save()`; при Start загружается через `SaveProvider.GetFloat(key, defaultValue)`. Ключ должен быть уникальным для каждого счётчика.
 - **Вызов событий при загрузке**: опция **Invoke Events On Load** (по умолчанию **вкл.**). Если включена, после загрузки значения в Start вызываются те же события, что и при изменении (Value.OnChanged, OnValueChangedInt / OnValueChangedFloat), чтобы UI и подписчики сразу отобразили загруженное значение. Без этой опции загрузка произойдёт, но подписанный текст или логика не обновятся до первого изменения счётчика.
 - **Кнопки в инспекторе**: для всех публичных методов (Odin или `ButtonAttribute`).
@@ -64,6 +65,9 @@
 - `_valueMode` (`CounterValueMode`): Режим значения — Int или Float.
 - **Value** (`ReactivePropertyFloat`): Реактивное поле — текущее значение (по умолчанию 0) и событие **OnChanged** при изменении. Подписка на изменение значения (float) — через `Value.OnChanged`.
 - `_sendPayload` (`CounterSendPayload`): Источник значения для `Send()` без аргумента (Counter / Score / Money).
+- **Repeat Event**
+  - `_invokeRepeatEventOnValueChanged` (`bool`): При изменении значения вызывать `OnRepeatByCounterValue` N раз, где N = текущее значение счётчика.
+  - `_invokeRepeatEventOnSend` (`bool`): При `Send()` вызывать `OnRepeatByCounterValue` N раз, где N = текущее значение счётчика.
 - **Сохранение**
   - `_saveEnabled` (`bool`): Включить сохранение при изменении (по умолчанию выключено).
   - `_saveKey` (`string`): Ключ для SaveProvider (уникальный для каждого счётчика), по умолчанию `"Counter"`.
@@ -75,6 +79,7 @@
   - `OnSendFloat` (`UnityEvent<float>`): Вызывается при Send() в режиме Float.
 - **События общие**
   - `OnSend` (`UnityEvent<float>`): Вызывается при Send() (float).
+  - `OnRepeatByCounterValue` (`UnityEvent`): Вызывается N раз (N = текущее значение счётчика), если включены флаги Repeat Event.
 
 ---
 
@@ -111,6 +116,7 @@
   - `OnSendFloat` (`UnityEvent<float>`): при Send() в режиме Float.  
 - **Общие**  
   - `OnSend` (`UnityEvent<float>`): при вызове `Send()` (значение по Payload или переданное в `Send(value)`).
+  - `OnRepeatByCounterValue` (`UnityEvent`): отдельное событие, вызывается повторно N раз (`N = текущее значение счётчика`), если включены `_invokeRepeatEventOnValueChanged` и/или `_invokeRepeatEventOnSend`.
 
 ---
 

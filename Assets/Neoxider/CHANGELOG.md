@@ -9,6 +9,20 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.18] - 2026-03-25
+
+### Tools / Components
+
+- **Counter** — добавлено отдельное событие `OnRepeatByCounterValue`, которое вызывается N раз (`N = текущее значение счётчика`, округление и clamp к `>= 0`).
+- **Counter** — добавлены флаги `_invokeRepeatEventOnValueChanged` и `_invokeRepeatEventOnSend`:
+  - при изменении значения можно запускать `OnRepeatByCounterValue` N раз;
+  - при `Send()` можно запускать `OnRepeatByCounterValue` N раз;
+  - оба режима могут быть включены одновременно.
+
+### Docs
+
+- **Counter.md** — добавлено описание `OnRepeatByCounterValue` и настроек Repeat Event в инспекторе.
+
 ## [7.7.17] - 2026-03-25
 
 ### Tools / InteractableObject

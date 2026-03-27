@@ -44,6 +44,15 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Value to pass to OnSend when calling Send() with no argument.")]
         private CounterSendPayload _sendPayload = CounterSendPayload.Counter;
 
+        [Header("Repeat Event")]
+        [SerializeField]
+        [Tooltip("Invoke Repeat event N times when counter value changes (N = current counter value, clamped to >= 0).")]
+        private bool _invokeRepeatEventOnValueChanged;
+
+        [SerializeField]
+        [Tooltip("Invoke Repeat event N times when Send() is called (N = current counter value, clamped to >= 0).")]
+        private bool _invokeRepeatEventOnSend;
+
         [Header("Save")] [SerializeField] [Tooltip("Enable saving value on change (via SaveProvider). Off by default.")]
         private bool _saveEnabled;
 
@@ -71,6 +80,9 @@ namespace Neo.Tools
 
         [Tooltip("Invoked on Send(); passes value as float. For typed subscriptions use OnSendInt / OnSendFloat.")]
         public UnityEvent<float> OnSend = new();
+
+        [Tooltip("Invoked N times (N = current counter value) when enabled by Repeat Event settings.")]
+        public UnityEvent OnRepeatByCounterValue = new();
 
         /// <summary>Current counter value as int (rounded in Float mode).</summary>
         public int ValueInt => _valueMode == CounterValueMode.Int
@@ -215,6 +227,11 @@ namespace Neo.Tools
             {
                 OnSendFloat?.Invoke(payload);
             }
+
+            if (_invokeRepeatEventOnSend)
+            {
+                InvokeRepeatByCounterValue();
+            }
         }
 
         private void ApplyDelta(float delta)
@@ -261,6 +278,11 @@ namespace Neo.Tools
                 OnValueChangedFloat?.Invoke(Value.CurrentValue);
             }
 
+            if (_invokeRepeatEventOnValueChanged)
+            {
+                InvokeRepeatByCounterValue();
+            }
+
             SaveValue();
         }
 
@@ -289,6 +311,15 @@ namespace Neo.Tools
                     return Money.I != null ? Money.I.money : 0f;
                 default:
                     return Value.CurrentValue;
+            }
+        }
+
+        private void InvokeRepeatByCounterValue()
+        {
+            int repeatCount = Mathf.Max(0, Mathf.RoundToInt(Value.CurrentValue));
+            for (int i = 0; i < repeatCount; i++)
+            {
+                OnRepeatByCounterValue?.Invoke();
             }
         }
     }
