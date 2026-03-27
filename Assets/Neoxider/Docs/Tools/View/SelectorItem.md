@@ -4,7 +4,7 @@
 
 **Как использовать:**
 1. Добавьте **SelectorItem** на каждый дочерний объект Selector.
-2. На родителе включите **Notify Selector Items Only** — при смене выбора Selector вызовет на элементах `SelectorItem.SetActive(true)` / `SetActive(false)`.
+2. На родителе включите **Notify Selector Items Only**. Флаг **Control Game Object Active** у родительского **Selector** оставьте **включённым** (иначе вызовы к **SelectorItem** не пойдут). Это **не** означает, что Unity будет включать/выключать дочерние `GameObject`: при наличии **SelectorItem** селектор дергает только **`SelectorItem.SetActive`**, который сам по себе **не** вызывает `gameObject.SetActive`.
 3. Подпишитесь на **OnActivated** / **OnDeactivated** для визуала или логики; при «исправлении» вызовите **ExcludeFromSelector()**.
 
 ---
@@ -29,7 +29,7 @@
 
 | Сигнатура | Возврат | Описание |
 |-----------|---------|----------|
-| SetActive(bool active) | void | Устанавливает активное состояние. Вызывается из Selector в режиме NotifySelectorItemsOnly. Обновляет Active и вызывает события. |
+| SetActive(bool active) | void | Устанавливает активное состояние. Вызывается из Selector в режиме NotifySelectorItemsOnly, только если у Selector включено управление активностью. Обновляет Active и вызывает события. |
 | ExcludeFromSelector() | void | Исключает свой индекс из пула родительского Selector (Selector.ExcludeIndex(Index)). |
 | IncludeInSelector() | void | Возвращает свой индекс в пул (Selector.IncludeIndex(Index)). |
 | GetSelector() | Selector | Возвращает родительский Selector или null. |

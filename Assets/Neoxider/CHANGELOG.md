@@ -9,6 +9,50 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.23] - 2026-03-28
+
+### Tools / View
+
+- **Selector** — при **`startOnAwake == false`** синхронизация дочерних объектов в **`RefreshItemsFromChildren`** больше **не** вызывает **`UpdateSelection()`** автоматически (раньше в Play Mode срабатывало всегда). Явный вызов **`RefreshItems()`** по-прежнему применяет выбор. В **`OnValidate`** при **`_changeDebug`** вызов **`UpdateSelection`** только при **`startOnAwake`**.
+
+### Docs
+
+- **Selector.md** — поведение `startOnAwake` + авто-синхронизация детей.
+
+## [7.7.22] - 2026-03-28
+
+### Tools / View
+
+- **Selector** — при выключенном **`Control Game Object Active`** селектор больше не вызывает **`SelectorItem.SetActive`** (раньше обходило флаг в режиме **Notify Selector Items Only**). Индекс, random/unique и события работают как раньше.
+
+### Editor / Tests
+
+- **SelectorTests** — кейсы: random+unique без переключения `SelectorItem` при выключенном control; `Set()` без `GameObject.SetActive` при выключенном control.
+
+### Docs
+
+- **Selector.md**, **SelectorItem.md**, **Examples/AnomalyGame.md** — уточнено поведение **`_controlGameObjectActive`** и связка с **Notify Selector Items Only**.
+
+## [7.7.21] - 2026-03-28
+
+### Tools / Time
+
+- **TimerObject** — добавлена перегрузка **`SetDuration(float)`** (сохраняет долю прогресса); двухпараметровая **`SetDuration(float, bool)`** без значения по умолчанию у `bool`.
+
+### Docs
+
+- **TimerObject.md** (RU/EN) — описание перегрузок и пример `SetDuration(10f)`.
+
+## [7.7.20] - 2026-03-28
+
+### Tools / Time
+
+- **TimerObject** — в XML у `SetProgress` явно указано: длительность меняется через **`SetDuration`** / **`StartTimer`** (метод `SetDuration` уже был в коде).
+
+### Docs
+
+- **TimerObject.md** (RU/EN) — подробнее описан `SetDuration`, примеры вызова в блоке «Использование через код».
+
 ## [7.7.19] - 2026-03-28
 
 ### Tools / InteractableObject

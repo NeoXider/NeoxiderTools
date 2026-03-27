@@ -49,8 +49,8 @@
   - Если `false` (по умолчанию): Только один элемент в списке будет активен (тот, который соответствует `_currentIndex`).
   - Если `true`: Все элементы от начала списка до `_currentIndex` (включительно) будут активны. Идеально для индикаторов прогресса, звезд рейтинга или разблокировки навыков.
 - `_indexOffset` (`int`): Смещение, которое добавляется к `_currentIndex` при отображении или использовании. Полезно, если вы хотите, чтобы первый элемент отображался как "1" вместо "0".
-- `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, селектор вместо прямого `GameObject.SetActive` ищет на каждом элементе компонент **SelectorItem** и вызывает у него `SetActive(true)` / `SetActive(false)`. Удобно для сценария «аномалии»: на события SelectorItem можно подписаться для визуала, звука или вызова `ExcludeFromSelector` при «исправлении».
-- `_controlGameObjectActive` (`bool`, по умолчанию `true`): Управлять ли активным состоянием `GameObject` напрямую через `SetActive`. Если `false`, Selector **никогда** не вызывает `GameObject.SetActive` (ни при старте, ни при смене индекса) и работает только через события и/или `SelectorItem`. Если оба флага `_notifySelectorItemsOnly` и `_controlGameObjectActive` включены, Selector будет уведомлять `SelectorItem`, а для элементов без SelectorItem — продолжит вызывать `SetActive`.
+- `_notifySelectorItemsOnly` (`bool`, по умолчанию `false`): Если включено, на элементах **с** **SelectorItem** селектор вызывает **`SelectorItem.SetActive`**, а не `GameObject.SetActive` на этом `GameObject`. У **SelectorItem** это **логическое** активное состояние (поле, `ReactiveProperty`, события) — **не** то же самое, что активность объекта в иерархии Unity. Удобно для сценария «аномалии»: визуал вешается на **OnActivated** / **OnDeactivated** или на `Active.OnChanged`. Если какой‑то элемент в массиве **без** `SelectorItem`, при включённом управлении селектор по‑прежнему может вызвать для него `GameObject.SetActive`.
+- `_controlGameObjectActive` (`bool`, по умолчанию `true`): Разрешить **прокидывать** выбор в элементы. Если `false`, Selector **не вызывает** ни `GameObject.SetActive`, ни `SelectorItem.SetActive`; остаются только индекс, random/unique и события `OnSelectionChanged*`. Чтобы работал режим «только **SelectorItem**», этот флаг должен быть **`true`** — иначе вызовы к **SelectorItem** тоже отключаются (название в инспекторе вводит в заблуждение: это не «обязательно крутить активность GameObject»).
 
 ### Сохранение состояния (Save)
 
@@ -162,7 +162,7 @@
 ### 3.6. Сценарий «Менеджер аномалий»
 
 1. Создайте родительский объект и сделайте дочерними объекты-аномалии (каждый с компонентом **SelectorItem**).
-2. Добавьте **Selector** на родителя. Включите `_useRandomSelection`, при необходимости `_uniqueSelectionMode`. Включите `_notifySelectorItemsOnly`, чтобы Selector вызывал только `SelectorItem.SetActive`, не трогая `GameObject.SetActive`.
+2. Добавьте **Selector** на родителя. Включите `_useRandomSelection`, при необходимости `_uniqueSelectionMode`. Включите `_notifySelectorItemsOnly` и оставьте **`_controlGameObjectActive` включённым**: тогда на каждом дочернем объекте **с** **SelectorItem** будет вызываться только **`SelectorItem.SetActive`**, без `GameObject.SetActive` со стороны селектора.
 3. Настройте **TimerObject** с интервалом появления (например, `useRandomDuration` с timeMin/timeMax). В **OnTimerCompleted** вызовите **Selector.SetRandom()** — таймер сам вызывает команду выбора следующей аномалии.
 4. На каждом **SelectorItem** подпишитесь на **OnActivated** (показать аномалию) и при «исправлении» вызовите **ExcludeFromSelector()**, чтобы исключить этот индекс из пула до сброса.
 5. Условие поражения: **NeoCondition** по полю **Selector.CountActive** (например, `CountActive >= 4` → поражение). См. также [Examples/AnomalyGame.md](../../Examples/AnomalyGame.md).
@@ -184,7 +184,7 @@
 
 - `Start()` вызывает `UpdateSelection()` только если `startOnAwake == true` и `Count > 0`. При выключенном `startOnAwake` объекты не переключаются при старте.
 - `OnEnable()` вызывает `Set(_startIndex)` только если `startOnAwake == true` и `Count > 0`.
-- При изменении дочерних объектов (`RefreshItemsFromChildren`) выбор обновляется в режиме воспроизведения при `Count > 0` независимо от `startOnAwake`, чтобы список и отображение оставались синхронизированными.
+- При изменении дочерних объектов (`RefreshItemsFromChildren`) в **Play Mode** список `_items` синхронизируется всегда, а **`UpdateSelection()`** (активация / `SelectorItem`) вызывается **только если** `startOnAwake == true` **или** вы явно вызвали **`RefreshItems()`** в инспекторе (оно передаёт принудительное применение выбора). При **`startOnAwake == false`** авто-синхронизация детей **не** переключает элементы, пока вы не вызовете, например, **`Set` / `Next` / `SetRandom`**.
 - `Count` setter обновляет выбор только если есть доступные элементы.
 
 ### 4.3. Защита от изменения данных во время выполнения

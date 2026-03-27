@@ -188,6 +188,75 @@ namespace Neo.Tools.Tests
             }
         }
 
+        [Test]
+        public void SetRandomUnique_DoesNotToggleSelectorItems_WhenControlGameObjectActiveIsDisabled()
+        {
+            GameObject root = new("SelectorNotifyOnlyDisabledRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            GameObject c = new("C");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+            c.transform.SetParent(root.transform);
+
+            SelectorItem itemA = a.AddComponent<SelectorItem>();
+            SelectorItem itemB = b.AddComponent<SelectorItem>();
+            SelectorItem itemC = c.AddComponent<SelectorItem>();
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_useRandomSelection", true);
+                SetPrivateBool(selector, "_uniqueSelectionMode", true);
+                SetPrivateBool(selector, "_resetUniqueWhenCycleComplete", false);
+                SetPrivateBool(selector, "_notifySelectorItemsOnly", true);
+                SetPrivateBool(selector, "_controlGameObjectActive", false);
+
+                selector.SetRandom();
+
+                Assert.That(a.activeSelf, Is.True);
+                Assert.That(b.activeSelf, Is.True);
+                Assert.That(c.activeSelf, Is.True);
+                Assert.That(itemA.ActiveValue, Is.False);
+                Assert.That(itemB.ActiveValue, Is.False);
+                Assert.That(itemC.ActiveValue, Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void Set_DoesNotToggleGameObjects_WhenControlGameObjectActiveIsDisabled()
+        {
+            GameObject root = new("SelectorNoSetActiveRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_controlGameObjectActive", false);
+                SetPrivateBool(selector, "_notifySelectorItemsOnly", false);
+
+                selector.Set(1);
+
+                Assert.That(selector.Value, Is.EqualTo(1));
+                Assert.That(a.activeSelf, Is.True);
+                Assert.That(b.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
         private static void SetPrivateBool(object target, string fieldName, bool value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);

@@ -910,7 +910,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Sets the current progress (0-1)
+        ///     Sets the current progress (0–1). Does not change <see cref="duration" />; use <see cref="SetDuration" /> or
+        ///     <see cref="StartTimer" /> to change total length.
         /// </summary>
         /// <param name="progress">Progress value from 0 to 1</param>
         public void SetProgress(float progress)
@@ -941,11 +942,21 @@ namespace Neo.Tools
         }
 
         /// <summary>
+        ///     Sets the timer duration and preserves the current progress ratio (same as
+        ///     <see cref="SetDuration(float, bool)" /> with <c>keepProgress == true</c>).
+        /// </summary>
+        /// <param name="newDuration">New duration in seconds.</param>
+        public void SetDuration(float newDuration)
+        {
+            SetDuration(newDuration, true);
+        }
+
+        /// <summary>
         ///     Sets the timer duration. Optionally preserves progress ratio.
         /// </summary>
         /// <param name="newDuration">New duration in seconds.</param>
         /// <param name="keepProgress">If true, scales current time to preserve progress; otherwise clamps current time.</param>
-        public void SetDuration(float newDuration, bool keepProgress = true)
+        public void SetDuration(float newDuration, bool keepProgress)
         {
             if (newDuration < 0f)
             {

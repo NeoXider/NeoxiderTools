@@ -75,7 +75,8 @@
 
 **Публичные методы (Public Methods)**
 - `Play()`: Запускает таймер, выставляя стартовое значение по `initialProgress`.
-- `SetDuration(float newDuration, bool keepProgress = true)`: Устанавливает длительность. `keepProgress = true` сохраняет соотношение прогресса.
+- `SetDuration(float newDuration)`: Устанавливает **`duration`** и **сохраняет долю прогресса** (эквивалент `SetDuration(newDuration, true)`).
+- `SetDuration(float newDuration, bool keepProgress)`: То же с явным флагом: при `keepProgress == true` сохраняется текущая доля прогресса; при `false` — только меняется лимит, `currentTime` **clamp** в `[0, duration]`. Отрицательные значения приводятся к `0`. Для сброса и старта с новой длительностью см. также `StartTimer(newDuration, ...)`.
 - `Pause(bool paused = true)`: Ставит таймер на паузу (`true`) или снимает с паузы (`false`).
 - `TogglePause()`: Переключает состояние паузы.
 - `Stop()`: Останавливает таймер и сбрасывает его.
@@ -122,6 +123,12 @@ float progress = timerObject.Progress;
 
 // Установить время
 timerObject.SetTime(5.0f);
+
+// Сменить общую длительность (сохранить прогресс как долю 0–1)
+timerObject.SetDuration(10f);
+
+// Сменить длительность без масштабирования времени (только clamp)
+timerObject.SetDuration(10f, false);
 
 // Добавить время
 timerObject.AddTime(2.0f);

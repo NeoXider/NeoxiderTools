@@ -23,8 +23,10 @@ MonoBehaviour-based timer with Unity events, optional UI auto-update (Image fill
 ## API
 
 - **Play()**, **Stop()**, **Pause(bool)**, **TogglePause()**, **Reset()**
-- **StartTimer(float newDuration, float newUpdateInterval)**
-- **SetDuration(float, bool keepProgress)**, **SetTime(float)**
+- **StartTimer(float newDuration, float newUpdateInterval)** — optional new duration, then reset + play
+- **SetDuration(float newDuration)** — change **`duration`** and **preserve** the progress ratio (same as the two-argument form with `keepProgress: true`).
+- **SetDuration(float newDuration, bool keepProgress)** — same with an explicit flag: **true** preserves ratio; **false** only changes the cap and clamps `currentTime` to `[0, duration]`. Negative values clamp to **0**. **`SetProgress`** only moves along the current duration; use **SetDuration** or **StartTimer** to change total length.
+- **SetTime(float)**, **AddTime(float)**, **SetProgress(float)**
 - **GetProgress()**, **GetCurrentTime()**, **GetRemainingTime()**
 - **TimeValue** — current time in seconds (for NeoCondition/reflection)
 

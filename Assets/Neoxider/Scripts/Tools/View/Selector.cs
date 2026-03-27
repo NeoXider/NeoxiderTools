@@ -88,7 +88,10 @@ namespace Neo.Tools
                         if (si != null)
                         {
                             si.Index = i;
-                            si.SetActive(shouldBeActive);
+                            if (_controlGameObjectActive)
+                            {
+                                si.SetActive(shouldBeActive);
+                            }
                         }
                         else if (_controlGameObjectActive && item.activeSelf != shouldBeActive)
                         {
@@ -176,7 +179,8 @@ namespace Neo.Tools
 
         #region Serialized Fields
 
-        [Tooltip("Sets the initial index when appearing")]
+        [Tooltip(
+            "When enabled: OnEnable calls Set(start index), Start syncs children, and child auto-sync may call UpdateSelection after refresh. When disabled: items still sync from children, but UpdateSelection is not run automatically until you call Set/Next/SetRandom or RefreshItems().")]
         public bool startOnAwake = true;
 
         [Header("Count Mode")]
@@ -240,7 +244,7 @@ namespace Neo.Tools
         private bool _notifySelectorItemsOnly;
 
         [Tooltip(
-            "When true (default), Selector controls GameObject active state via SetActive. When false, it never calls SetActive and works only via SelectorItem/events.")]
+            "When true (default), Selector applies selection to items: GameObject.SetActive for entries without SelectorItem; SelectorItem.SetActive when Notify Selector Items Only is on (SelectorItem does not toggle GameObject active by itself). When false, no SetActive calls at all — only index/events.")]
         [SerializeField]
         private bool _controlGameObjectActive = true;
 
@@ -596,11 +600,11 @@ namespace Neo.Tools
             if (_setChild)
             {
                 _setChild = false;
-                RefreshItemsFromChildren();
+                RefreshItemsFromChildren(startOnAwake);
             }
             else if (_autoUpdateFromChildren && _count <= 0)
             {
-                RefreshItemsFromChildren();
+                RefreshItemsFromChildren(startOnAwake);
             }
 
             if (_useNextPreviousAsRandom)
@@ -608,7 +612,7 @@ namespace Neo.Tools
                 _useRandomSelection = true;
             }
 
-            if (_changeDebug && _items != null && Application.isPlaying)
+            if (_changeDebug && _items != null && Application.isPlaying && startOnAwake)
             {
                 UpdateSelection();
             }
@@ -789,7 +793,7 @@ namespace Neo.Tools
         {
             if (_autoUpdateFromChildren && _count <= 0)
             {
-                RefreshItemsFromChildren();
+                RefreshItemsFromChildren(startOnAwake);
             }
         }
 
@@ -1273,7 +1277,7 @@ namespace Neo.Tools
         [Button]
         public void RefreshItems()
         {
-            RefreshItemsFromChildren();
+            RefreshItemsFromChildren(true);
         }
 
         /// <summary>
@@ -1372,13 +1376,13 @@ namespace Neo.Tools
 
             if (forceSync)
             {
-                RefreshItemsFromChildren();
+                RefreshItemsFromChildren(startOnAwake);
                 return;
             }
 
             if (_items == null || _items.Length == 0 || !IsItemsSyncedWithChildren())
             {
-                RefreshItemsFromChildren();
+                RefreshItemsFromChildren(startOnAwake);
             }
         }
 
@@ -1421,7 +1425,12 @@ namespace Neo.Tools
         /// <summary>
         ///     Refreshes the items array from child GameObjects
         /// </summary>
-        private void RefreshItemsFromChildren()
+        /// <param name="applySelection">
+        ///     When true (e.g. <see cref="startOnAwake"/> or explicit <see cref="RefreshItems"/>), calls
+        ///     <see cref="UpdateSelection"/> after sync. When false, only rebuilds <see cref="_items"/> and indices — no active-state
+        ///     propagation until a public API calls <see cref="UpdateSelection"/> (e.g. <see cref="Set"/>).
+        /// </param>
+        private void RefreshItemsFromChildren(bool applySelection)
         {
             if (transform == null)
             {
@@ -1454,7 +1463,7 @@ namespace Neo.Tools
                 _currentIndex = total - 1;
             }
 
-            if (Application.isPlaying && total > 0)
+            if (Application.isPlaying && total > 0 && applySelection)
             {
                 UpdateSelection();
             }

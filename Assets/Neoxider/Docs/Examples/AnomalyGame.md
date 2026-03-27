@@ -57,7 +57,8 @@
 4. На родителя `AnomalyManager` добавьте **Selector**:
    - Включите **Auto Update From Children** (по умолчанию включено).
    - Включите **Use Random Selection**.
-   - Включите **Notify Selector Items Only**, чтобы Selector не вызывал `GameObject.SetActive`, а только **SelectorItem.SetActive** на детях.
+   - Включите **Notify Selector Items Only**: на дочернем объекте **с `SelectorItem`** селектор вызывает только **`SelectorItem.SetActive`** (сам компонент **не** дергает `GameObject.SetActive` на этом объекте — только реактивное поле и UnityEvent). Прямой **`GameObject.SetActive`** селектор использует **только** для элементов **без** `SelectorItem`, если они есть в списке.
+   - Флаг **Control Game Object Active** в инспекторе — это общий «разрешить прокидывать выбор в элементы». Для сценария «только через SelectorItem» оставьте его **включённым**, иначе селектор не вызовет ни `GameObject.SetActive`, ни `SelectorItem.SetActive` (останутся только индекс и `OnSelectionChanged*`).
 5. На каждом **SelectorItem**:
    - В **On Activated** привяжите показ аномалии (например, вызов **VisualToggle.SetActive(true)** на том же объекте).
    - При «исправлении» аномалии игроком вызовите **ExcludeFromSelector()** (например, кнопкой или другим событием), чтобы этот индекс больше не участвовал в случайном выборе до сброса.
