@@ -11,6 +11,41 @@ namespace Neo.Tools.Tests
     public class SelectorTests
     {
         [Test]
+        public void SetRandom_WithDeactivateOthersFalse_KeepsPreviouslyActiveItemsOn()
+        {
+            GameObject root = new("SelectorAdditiveRandomRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_useRandomSelection", true);
+
+                selector.Set(0);
+                Assert.That(a.activeSelf, Is.True);
+                Assert.That(b.activeSelf, Is.False);
+
+                selector.SetRandom(false);
+                Assert.That(selector.Value, Is.EqualTo(1), "With two items, SetRandom avoids repeating current index");
+                Assert.That(a.activeSelf, Is.True, "Previous selection should stay active when deactivateOthers is false");
+                Assert.That(b.activeSelf, Is.True);
+
+                selector.SetRandom(true);
+                Assert.That(a.activeSelf, Is.False);
+                Assert.That(b.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void Set_LoopsIndex_WhenLoopEnabled_AndUpdatesActiveItem()
         {
             GameObject root = new("SelectorRoot");

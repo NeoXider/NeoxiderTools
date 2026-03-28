@@ -33,9 +33,14 @@ namespace Neo.Tools
         #region Private Methods
 
         /// <summary>
-        ///     Updates the active state of items based on current selection
+        ///     Updates the active state of items based on current selection.
         /// </summary>
-        private void UpdateSelection()
+        /// <param name="deactivateNonSelected">
+        ///     If true (default), only the current selection is on (plus fill-mode rules). If false, only activates matching
+        ///     items and does not turn others off — used by <see cref="SetRandom(bool)"/> when additive random is requested.
+        ///     Fill mode and empty effective index always use exclusive deactivation.
+        /// </param>
+        private void UpdateSelection(bool deactivateNonSelected = true)
         {
             int total = Count;
             if (total == 0)
@@ -69,6 +74,8 @@ namespace Neo.Tools
                 effectiveIndex = total - 1;
             }
 
+            bool exclusiveApply = deactivateNonSelected || _fillMode || effectiveIndex < 0;
+
             GameObject[] items = _items;
             if (items != null && items.Length > 0)
             {
@@ -90,16 +97,34 @@ namespace Neo.Tools
                             si.Index = i;
                             if (_controlGameObjectActive)
                             {
-                                si.SetActive(shouldBeActive);
+                                if (exclusiveApply)
+                                {
+                                    si.SetActive(shouldBeActive);
+                                }
+                                else if (shouldBeActive)
+                                {
+                                    si.SetActive(true);
+                                }
                             }
                         }
-                        else if (_controlGameObjectActive && item.activeSelf != shouldBeActive)
+                        else if (_controlGameObjectActive)
                         {
-                            try
+                            if (exclusiveApply && item.activeSelf != shouldBeActive)
                             {
-                                item.SetActive(shouldBeActive);
+                                try
+                                {
+                                    item.SetActive(shouldBeActive);
+                                }
+                                catch (Exception) { }
                             }
-                            catch (Exception) { }
+                            else if (!exclusiveApply && shouldBeActive && !item.activeSelf)
+                            {
+                                try
+                                {
+                                    item.SetActive(true);
+                                }
+                                catch (Exception) { }
+                            }
                         }
                     }
                 }
@@ -151,11 +176,24 @@ namespace Neo.Tools
                             if (item != null)
                             {
                                 bool shouldBeActive = i == effectiveIndex;
-                                if (item.activeSelf != shouldBeActive)
+                                if (exclusiveApply)
+                                {
+                                    if (item.activeSelf != shouldBeActive)
+                                    {
+                                        try
+                                        {
+                                            item.SetActive(shouldBeActive);
+                                        }
+                                        catch (Exception)
+                                        {
+                                        }
+                                    }
+                                }
+                                else if (shouldBeActive && !item.activeSelf)
                                 {
                                     try
                                     {
-                                        item.SetActive(shouldBeActive);
+                                        item.SetActive(true);
                                     }
                                     catch (Exception)
                                     {
@@ -209,6 +247,11 @@ namespace Neo.Tools
         [FormerlySerializedAs("_randomChangeOnStep")]
         [SerializeField]
         private bool _useNextPreviousAsRandom;
+
+        [Tooltip(
+            "When true, parameterless SetRandom() only activates the picked item and leaves other items in their current active state. Set/Next/Previous still deactivate non-selected items. You can also call SetRandom(false) from code regardless of this flag.")]
+        [SerializeField]
+        private bool _keepOthersActiveOnRandom;
 
         [Header("Unique Selection (no repeats until reset)")]
         [Tooltip(
@@ -944,9 +987,22 @@ namespace Neo.Tools
         ///     Sets the selection to a random value within the current valid bounds.
         ///     In unique mode, picks only from indices not yet used in the current cycle; when all are used, invokes
         ///     OnUniqueCycleComplete and optionally starts a new cycle.
+        ///     Uses <see cref="_keepOthersActiveOnRandom"/>: when that flag is false (default), non-selected items are turned off.
         /// </summary>
         [Button]
         public void SetRandom()
+        {
+            SetRandom(!_keepOthersActiveOnRandom);
+        }
+
+        /// <summary>
+        ///     Sets the selection to a random index (same rules as parameterless <see cref="SetRandom()"/>).
+        /// </summary>
+        /// <param name="deactivateOthers">
+        ///     If true, only the picked item stays active (classic behaviour). If false, the picked item is activated and other
+        ///     items keep their current active state.
+        /// </param>
+        public void SetRandom(bool deactivateOthers)
         {
             TryInitializeFromChildren();
 
@@ -999,13 +1055,13 @@ namespace Neo.Tools
                     MarkIndexUsedInUniqueMode(only);
                 }
 
-                UpdateSelection();
+                UpdateSelection(deactivateOthers);
                 return;
             }
 
             if (_uniqueSelectionMode)
             {
-                SetRandomUnique(min, max, range, IsExcludedIndex);
+                SetRandomUnique(min, max, range, IsExcludedIndex, deactivateOthers);
                 return;
             }
 
@@ -1018,10 +1074,10 @@ namespace Neo.Tools
             }
 
             _currentIndex = newIndex;
-            UpdateSelection();
+            UpdateSelection(deactivateOthers);
         }
 
-        private void SetRandomUnique(int min, int max, int range, Func<int, bool> isExcluded)
+        private void SetRandomUnique(int min, int max, int range, Func<int, bool> isExcluded, bool deactivateOthers)
         {
             _usedIndicesForUnique ??= new HashSet<int>();
 
@@ -1059,7 +1115,7 @@ namespace Neo.Tools
             _usedIndicesForUnique.Add(chosen);
             SyncUsedIndicesForUniqueInspector();
             _currentIndex = chosen;
-            UpdateSelection();
+            UpdateSelection(deactivateOthers);
         }
 
         private void MarkIndexUsedInUniqueMode(int index)

@@ -9,6 +9,16 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.24] - 2026-03-28
+
+### Tools / View
+
+- **Selector** — опционально не гасить остальные элементы при случайном выборе: поле **`Keep Others Active On Random`** и перегрузка **`SetRandom(bool deactivateOthers)`** (по умолчанию поведение как раньше — только текущий активен). Режим **fill** и пустой effective index по-прежнему только «эксклюзивные».
+
+### Editor / Tests
+
+- **SelectorTests** — кейс additive `SetRandom(false)` и возврат к exclusive через `SetRandom(true)`.
+
 ## [7.7.23] - 2026-03-28
 
 ### Tools / View
