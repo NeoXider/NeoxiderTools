@@ -39,6 +39,7 @@ namespace Neo.Tools
         private float[] fpsBuffer;
 
         [Header("UI Settings")] [Tooltip("Text component to display FPS")]
+        [SerializeField]
         private TMP_Text text;
 
         /// <summary>
