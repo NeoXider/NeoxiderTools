@@ -9,6 +9,20 @@ All notable changes to this project will be documented in this file.
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
 
+## [7.7.25] - 2026-03-28
+
+### Tools / View
+
+- **Selector** — `CountActive` при работе с массивом `_items` (и `_count <= 0`) считает реально включённые объекты (`activeSelf` / `SelectorItem.ActiveValue` в notify-режиме); для виртуального `_count` сохранена прежняя логическая формула. Событие **`OnCountActiveChanged` (`UnityEvent<int>`)** при изменении этого числа; также вызывается после **`ToggleIndex`**.
+
+### Editor / Tests
+
+- **SelectorTests** — проверки `CountActive` при additive random, `OnCountActiveChanged`, fill mode, виртуальный `_count`, notify+`SelectorItem`, `ToggleIndex`.
+
+### Docs
+
+- **Selector.md** — актуализированы `CountActive`, `SetRandom(bool)`, `_keepOthersActiveOnRandom`, `OnCountActiveChanged`.
+
 ## [7.7.24] - 2026-03-28
 
 ### Tools / View

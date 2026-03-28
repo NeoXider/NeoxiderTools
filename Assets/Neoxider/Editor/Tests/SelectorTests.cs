@@ -34,10 +34,160 @@ namespace Neo.Tools.Tests
                 Assert.That(selector.Value, Is.EqualTo(1), "With two items, SetRandom avoids repeating current index");
                 Assert.That(a.activeSelf, Is.True, "Previous selection should stay active when deactivateOthers is false");
                 Assert.That(b.activeSelf, Is.True);
+                Assert.That(selector.CountActive, Is.EqualTo(2));
 
                 selector.SetRandom(true);
                 Assert.That(a.activeSelf, Is.False);
                 Assert.That(b.activeSelf, Is.True);
+                Assert.That(selector.CountActive, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void FillMode_CountActive_MatchesNumberOfActiveGameObjects()
+        {
+            GameObject root = new("SelectorFillCountRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            GameObject c = new("C");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+            c.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                selector.FillMode = true;
+                selector.Set(1);
+
+                Assert.That(a.activeSelf, Is.True);
+                Assert.That(b.activeSelf, Is.True);
+                Assert.That(c.activeSelf, Is.False);
+                Assert.That(selector.CountActive, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void VirtualCount_WithFillMode_CountActive_IsLogicalPrefixLength()
+        {
+            GameObject root = new("SelectorVirtualFillRoot");
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_autoUpdateFromChildren", false);
+                SetPrivateInt(selector, "_count", 5);
+                SetPrivateField(selector, "_items", Array.Empty<GameObject>());
+                selector.FillMode = true;
+                selector.Set(2);
+
+                Assert.That(selector.Count, Is.EqualTo(5));
+                Assert.That(selector.CountActive, Is.EqualTo(3));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void NotifySelectorItemsOnly_CountActive_CountsSelectorItems_ForAdditiveRandom()
+        {
+            GameObject root = new("SelectorNotifyCountRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+            a.AddComponent<SelectorItem>();
+            b.AddComponent<SelectorItem>();
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_notifySelectorItemsOnly", true);
+                SetPrivateBool(selector, "_useRandomSelection", true);
+
+                selector.Set(0);
+                Assert.That(selector.CountActive, Is.EqualTo(1));
+
+                selector.SetRandom(false);
+                Assert.That(selector.CountActive, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ToggleIndex_WhenEnablingSecondItem_UpdatesCountActiveAndEvent()
+        {
+            GameObject root = new("SelectorToggleCountRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                int last = int.MinValue;
+                selector.OnCountActiveChanged.AddListener(v => last = v);
+
+                selector.Set(0);
+                Assert.That(selector.CountActive, Is.EqualTo(1));
+                Assert.That(last, Is.EqualTo(1));
+
+                selector.ToggleIndex(1, true);
+                Assert.That(selector.CountActive, Is.EqualTo(2));
+                Assert.That(last, Is.EqualTo(2));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void OnCountActiveChanged_FiresWithUpdatedCount_OnSetAndAdditiveRandom()
+        {
+            GameObject root = new("SelectorCountEventRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                int last = int.MinValue;
+                selector.OnCountActiveChanged.AddListener(v => last = v);
+
+                selector.Set(0);
+                Assert.That(last, Is.EqualTo(1));
+
+                SetPrivateBool(selector, "_useRandomSelection", true);
+                selector.SetRandom(false);
+                Assert.That(last, Is.EqualTo(2));
+
+                selector.SetRandom(true);
+                Assert.That(last, Is.EqualTo(1));
             }
             finally
             {
@@ -293,6 +443,20 @@ namespace Neo.Tools.Tests
         }
 
         private static void SetPrivateBool(object target, string fieldName, bool value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
+            field.SetValue(target, value);
+        }
+
+        private static void SetPrivateInt(object target, string fieldName, int value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");
+            field.SetValue(target, value);
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, $"Field `{fieldName}` was not found.");

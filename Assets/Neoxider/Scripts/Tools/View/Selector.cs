@@ -46,6 +46,7 @@ namespace Neo.Tools
             if (total == 0)
             {
                 OnSelectionChanged?.Invoke(_currentIndex);
+                NotifyCountActiveChangedIfNeeded();
                 return;
             }
 
@@ -211,6 +212,106 @@ namespace Neo.Tools
             SaveState();
 
             SyncIncludedIndicesInspector();
+
+            NotifyCountActiveChangedIfNeeded();
+        }
+
+        /// <summary>
+        ///     Logical active count when there are no item GameObjects to inspect (virtual <see cref="Count"/> or empty items).
+        /// </summary>
+        private int ComputeLogicalCountActive()
+        {
+            int total = Count;
+            if (total == 0)
+            {
+                return 0;
+            }
+
+            int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
+            int effectiveIndex = _currentIndex + _indexOffset;
+            if (effectiveIndex < minEff)
+            {
+                return 0;
+            }
+
+            if (effectiveIndex >= total)
+            {
+                return _fillMode ? total : 1;
+            }
+
+            return _fillMode ? effectiveIndex + 1 : 1;
+        }
+
+        /// <summary>
+        ///     Counts items that are on: <see cref="SelectorItem.ActiveValue"/> when Notify Selector Items Only and a
+        ///     SelectorItem is present; otherwise <see cref="GameObject.activeSelf"/>.
+        /// </summary>
+        private int CountActiveItemsInArray()
+        {
+            GameObject[] items = _items;
+            if (items == null || items.Length == 0)
+            {
+                return 0;
+            }
+
+            int n = 0;
+            for (int i = 0; i < items.Length; i++)
+            {
+                GameObject item = items[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                if (_notifySelectorItemsOnly)
+                {
+                    SelectorItem si = item.GetComponent<SelectorItem>();
+                    if (si != null)
+                    {
+                        if (si.ActiveValue)
+                        {
+                            n++;
+                        }
+                    }
+                    else if (item.activeSelf)
+                    {
+                        n++;
+                    }
+                }
+                else if (item.activeSelf)
+                {
+                    n++;
+                }
+            }
+
+            return n;
+        }
+
+        private int ComputeCountActive()
+        {
+            if (_count > 0)
+            {
+                return ComputeLogicalCountActive();
+            }
+
+            if (HasItems)
+            {
+                return CountActiveItemsInArray();
+            }
+
+            return ComputeLogicalCountActive();
+        }
+
+        private void NotifyCountActiveChangedIfNeeded()
+        {
+            int c = ComputeCountActive();
+            if (c == _lastCountActiveNotified)
+            {
+                return;
+            }
+
+            _lastCountActiveNotified = c;
+            OnCountActiveChanged?.Invoke(c);
         }
 
         #endregion
@@ -308,6 +409,7 @@ namespace Neo.Tools
         private bool _changeDebug = true;
 
         private int _startIndex;
+        private int _lastCountActiveNotified = int.MinValue;
         private HashSet<int> _usedIndicesForUnique;
         private HashSet<int> _excludedIndices;
 
@@ -393,6 +495,13 @@ namespace Neo.Tools
         ///     Invoked when selection changes, passing the newly selected GameObject (or null if none).
         /// </summary>
         public UnityEvent<GameObject> OnSelectionChangedGameObject;
+
+        /// <summary>
+        ///     Invoked when the number of active items changes (see <see cref="CountActive"/>). With real item objects, this
+        ///     reflects actual <see cref="GameObject.activeSelf"/> / <see cref="SelectorItem.ActiveValue"/> counts; with virtual
+        ///     <see cref="Count"/> only, the previous logical formula is used.
+        /// </summary>
+        public UnityEvent<int> OnCountActiveChanged;
 
         #endregion
 
@@ -528,34 +637,12 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Gets the number of items currently active: 0 or 1 in single-selection mode; effectiveIndex + 1 in fill mode.
-        ///     Use for win/lose conditions (e.g. CountActive >= 4 → defeat).
+        ///     Gets how many items are currently on: with a populated <see cref="Items"/> array and <c>_count &lt;= 0</c>, counts
+        ///     <see cref="GameObject.activeSelf"/> (or <see cref="SelectorItem.ActiveValue"/> when Notify Selector Items Only and
+        ///     a SelectorItem is present). With virtual <see cref="Count"/> only (<c>_count &gt; 0</c>) or no items, returns the
+        ///     logical count (0/1 or fill prefix length). Subscribe to <see cref="OnCountActiveChanged"/> when the value changes.
         /// </summary>
-        public int CountActive
-        {
-            get
-            {
-                int total = Count;
-                if (total == 0)
-                {
-                    return 0;
-                }
-
-                int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
-                int effectiveIndex = _currentIndex + _indexOffset;
-                if (effectiveIndex < minEff)
-                {
-                    return 0;
-                }
-
-                if (effectiveIndex >= total)
-                {
-                    return _fillMode ? total : 1;
-                }
-
-                return _fillMode ? effectiveIndex + 1 : 1;
-            }
-        }
+        public int CountActive => ComputeCountActive();
 
         /// <summary>
         ///     When true, Selector notifies SelectorItem components instead of calling GameObject.SetActive.
@@ -1324,6 +1411,7 @@ namespace Neo.Tools
             if (_items[effectiveIndex] != null)
             {
                 _items[effectiveIndex].SetActive(state ?? !_items[effectiveIndex].activeSelf);
+                NotifyCountActiveChangedIfNeeded();
             }
         }
 
