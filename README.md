@@ -19,6 +19,7 @@
 - [No-Code условия — NeoCondition](#no-code-условия--neocondition)
 - [Чем примечателен Neoxider](#чем-примечателен-neoxider)
 - [Demo Scenes](#demo-scenes)
+- [Games built with NeoxiderTools](#games-built-with-neoxidertools) — игры на базе экосистемы
 - [Demo Games](#demo-games)
 - [Быстрый старт](#быстрый-старт)
 - [Таблица модулей](#таблица-модулей)
@@ -67,6 +68,15 @@
 
 ## Demo Scenes
 ![image](https://github.com/user-attachments/assets/90c98f0c-aae2-4837-81ed-b18a10b65ed5)
+
+## Games built with NeoxiderTools
+
+> **RU:** Реальные релизы и демо, где **NeoxiderTools** — основа геймплея (в т.ч. no-code в Inspector).  
+> **EN:** Shipping titles and jams that build on **NeoxiderTools** (including inspector-driven workflows).
+
+| Игра · Game | Жанры · Genres | Платформа | Ссылка · Link | Примечание · Notes |
+|-------------|----------------|-----------|---------------|-------------------|
+| [**Внуки понарошку: пенсия прилагается**](https://myindie.ru/games/game/fake-grandkids) | Arcade, Survival | Windows | [MyIndie — страница · store page](https://myindie.ru/games/game/fake-grandkids) | RU; **UralGameJam 2026**; логика через NeoCondition и экосистему NeoxiderTools · v7.8.0|
 
 ## Demo Games
 <img width="354" height="623" alt="2025-11-02_22-31-20" src="https://github.com/user-attachments/assets/56c255c1-5e96-410c-b212-ea865ea4521f" />

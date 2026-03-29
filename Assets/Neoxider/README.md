@@ -63,6 +63,20 @@ Without it, the package still works. Inspector documentation fallbacks remain av
 3. Add components through `Add Component > Neoxider`.
 4. Open the module guide in [Docs/README.md](./Docs/README.md) and start from the module you need.
 
+## Games built with NeoxiderTools
+
+Shipping and jam titles that use this package for gameplay (no-code + modules). **Add new games** in the showcase table: [GitHub — root README](https://github.com/NeoXider/NeoxiderTools#games-built-with-neoxidertools) · [local monorepo](../../README.md#games-built-with-neoxidertools).
+
+| Game | Genres | Platform | Link | Notes |
+|------|--------|----------|------|-------|
+| **Fake Grandkids** *(Внуки понарошку: пенсия прилагается)* | Arcade, Survival | Windows | [MyIndie](https://myindie.ru/games/game/fake-grandkids) | RU; **UralGameJam 2026**; NeoCondition / Neoxider workflow |
+
+**Template for a new row** (copy into the root README table):
+
+```markdown
+| [**Game Title**](https://page-url) | Genre A, Genre B | Windows | [Store / Page](https://page-url) | Language; jam; short note |
+```
+
 ## Featured Modules
 
 | Module | What it covers | Docs |
