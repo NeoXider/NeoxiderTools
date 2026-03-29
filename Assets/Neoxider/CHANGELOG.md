@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Tools / InteractableObject
+
+- **InteractiveObject** — при **`checkObstacles = false`** луч мыши для hover/click больше не отбрасывается, если ближе камеры есть чужой не-trigger коллайдер (раньше блокировало даже при выключенной проверке препятствий). Автопоиск коллайдера: **`Collider` / `Collider2D` на этом объекте или на дочерних**; попадания по лучу учитывают коллайдеры на детях того же корня.
+- **InteractiveObject** — hover по лучу камеры: дистанция для `onHoverEnter` считается до **точки попадания луча**, как и для `CanMouseInteractAtPoint`, а не только до центра коллайдера; флаг `wasHoveredByRaycast` выставляется только после успешного `IsHovered` (исправлено «смотрю и подхожу — hover не появляется» на границе дистанции).
+
 ### Docs / Meta
 
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.

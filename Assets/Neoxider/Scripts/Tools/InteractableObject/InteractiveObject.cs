@@ -82,7 +82,7 @@ namespace Neo.Tools
         private Transform viewCheckPoint;
 
         [Tooltip(
-            "Check for obstacles (walls) between object and check point. Uses raycast to detect blocking colliders.")]
+            "Check for obstacles (walls) between object and check point. When enabled, also requires the mouse ray to hit this object before any non-trigger collider (line-of-sight for hover/click). When disabled, distance checks skip obstacles and the mouse ray accepts a hit on this object even if solid geometry is closer.")]
         [SerializeField]
         private bool checkObstacles = true;
 
@@ -258,7 +258,10 @@ namespace Neo.Tools
         {
             if (interactable && useHoverDetection)
             {
-                bool inRange = interactionDistance > 0f ? IsInRange() : true;
+                Vector3 rangePoint = eventData.pointerCurrentRaycast.isValid
+                    ? eventData.pointerCurrentRaycast.worldPosition
+                    : GetInteractionTargetPosition();
+                bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
                 if (interactionDistance > 0f && !inRange)
                 {
                     return;
@@ -367,10 +370,14 @@ namespace Neo.Tools
 
             if (isHoveredNow && !wasHoveredByRaycast)
             {
-                wasHoveredByRaycast = true;
                 if (!IsHovered)
                 {
                     OnHoverEnterRaycast();
+                }
+
+                if (IsHovered)
+                {
+                    wasHoveredByRaycast = true;
                 }
             }
             else if (!isHoveredNow && wasHoveredByRaycast)
@@ -394,7 +401,9 @@ namespace Neo.Tools
                 return;
             }
 
-            bool inRange = interactionDistance > 0f ? IsInRange() : true;
+            // Match CanMouseInteractAtPoint: use the actual ray hit for distance/obstacle checks, not only collider center.
+            Vector3 rangePoint = hasCurrentMouseHit ? currentMouseHitPoint : GetInteractionTargetPosition();
+            bool inRange = interactionDistance > 0f ? IsInRange(rangePoint) : true;
             if (interactionDistance > 0f && !inRange)
             {
                 return;
@@ -777,8 +786,12 @@ namespace Neo.Tools
                 cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
             }
 
-            cachedCollider3D = targetCollider3D != null ? targetCollider3D : GetComponent<Collider>();
-            cachedCollider2D = targetCollider2D != null ? targetCollider2D : GetComponent<Collider2D>();
+            cachedCollider3D = targetCollider3D != null
+                ? targetCollider3D
+                : GetComponent<Collider>() ?? GetComponentInChildren<Collider>(true);
+            cachedCollider2D = targetCollider2D != null
+                ? targetCollider2D
+                : GetComponent<Collider2D>() ?? GetComponentInChildren<Collider2D>(true);
         }
 
         private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
@@ -826,6 +839,11 @@ namespace Neo.Tools
                     }
                 }
 
+                if (!checkObstacles)
+                {
+                    return hasTargetHit;
+                }
+
                 return hasTargetHit && nearestTargetDistance <= nearestBlockingDistance;
             }
 
@@ -860,6 +878,11 @@ namespace Neo.Tools
                     }
                 }
 
+                if (!checkObstacles)
+                {
+                    return hasTargetHit2D;
+                }
+
                 return hasTargetHit2D && nearestTargetDistance2D <= nearestBlockingDistance2D;
             }
 
@@ -887,16 +910,24 @@ namespace Neo.Tools
 
             if (hitCollider is Collider hitCollider3D)
             {
-                return targetCollider3D != null
-                    ? hitCollider3D == targetCollider3D
-                    : hitCollider3D.transform == transform;
+                if (targetCollider3D != null)
+                {
+                    return hitCollider3D == targetCollider3D;
+                }
+
+                Transform t = hitCollider3D.transform;
+                return t == transform || t.IsChildOf(transform);
             }
 
             if (hitCollider is Collider2D hitCollider2D)
             {
-                return targetCollider2D != null
-                    ? hitCollider2D == targetCollider2D
-                    : hitCollider2D.transform == transform;
+                if (targetCollider2D != null)
+                {
+                    return hitCollider2D == targetCollider2D;
+                }
+
+                Transform t2 = hitCollider2D.transform;
+                return t2 == transform || t2.IsChildOf(transform);
             }
 
             return false;

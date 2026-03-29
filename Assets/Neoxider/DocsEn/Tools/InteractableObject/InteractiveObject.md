@@ -23,8 +23,8 @@
 - `requireDirectLookRay`
 - `includeTriggerCollidersInLookRay`
 - `includeTriggerCollidersInMouseRaycast`
-- `targetCollider3D`
-- `targetCollider2D`
+- `targetCollider3D` (optional; if unset, uses `Collider` on this object or the first child collider)
+- `targetCollider2D` (optional; if unset, uses `Collider2D` on this object or the first child collider)
 
 ### Distance and checkpoints
 
@@ -36,7 +36,7 @@
 - `obstacleLayers`
 - `includeTriggerCollidersInObstacleCheck`
 
-When `checkObstacles` is disabled, obstacle blocking is skipped consistently for both distance validation and keyboard direct-look ray checks.
+When `checkObstacles` is disabled, obstacle blocking is skipped for distance validation, keyboard direct-look ray checks, **and** the mouse hover/click ray (a hit on this object counts even if a non-trigger collider is closer to the camera). When enabled, the mouse ray requires this object to be the nearest non-ignored hit before any foreign **non-trigger** collider along the ray.
 
 ### Input bindings
 
@@ -90,9 +90,9 @@ When `checkObstacles` is disabled, obstacle blocking is skipped consistently for
 ## Input rules
 
 - Hover is driven by cursor hit on the target collider.
-- If `interactionDistance > 0`, hover also requires the object to be in range. If `interactionDistance == 0`, hover has no distance limit.
+- If `interactionDistance > 0`, hover requires a ray hit and the **hit point** to be within range (same as click eligibility), not only the collider center—so “already aimed, then walk into range” works at the distance boundary. If `interactionDistance == 0`, hover has no distance limit.
 - Mouse click / down / up require an actual current mouse hit on the target collider.
-- Non-trigger colliders in front of the object block hover/click; foreign trigger colliders do not.
+- With `checkObstacles` enabled: non-trigger colliders in front of the object block hover/click; foreign trigger colliders do not. With `checkObstacles` disabled, only a ray hit on this object (and distance rules) matters.
 - In `ViewOrMouse`, keyboard interaction no longer relies on hover; it uses view direction and optional direct look ray.
 - By default the component uses only a collider on the same GameObject. If the target collider is elsewhere, assign `targetCollider3D` or `targetCollider2D` explicitly in the Inspector.
 
