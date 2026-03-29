@@ -34,6 +34,7 @@
 - Может блокировать курсор на старте.
 - **Pause Look When Cursor Visible** (по умолчанию включено): при видимом курсоре (`Cursor.visible == true`) не обрабатывает ввод мыши и не вращает камеру. Удобно для паузы/меню без связи с `CursorLockController`.
 - Если на том же объекте активен `CursorLockController`, встроенные `_lockCursorOnStart` и `_toggleCursorOnEscape` автоматически не используются, чтобы не было двойного управления курсором.
+- Опционально **Use Game Settings Mouse Sensitivity** (по умолчанию вкл.): чувствительность из **`GameSettings.MouseSensitivity`** с обновлением по событию **`GameSettings.OnSettingsChanged`** (модуль **Neo.Settings**, сервис **`GameSettingsComponent`** в сцене). Иначе используется только поле **Mouse Sensitivity** в инспекторе.
 - Можно назначить **External Cursor Lock Controller**: тогда контроллер игрока будет уважать `CursorLockController`, который находится не на игроке, а, например, на странице меню/паузы или на общем UI-root.
 - Внешний `CursorLockController` может работать как в automatic-, так и в manual-сценариях. Рекомендуемый дефолтный режим для него — **AutomaticAndManual**.
 - В `CursorLockController` можно опционально включить отдельный `Cursor Access Key` (например `Z`) для быстрого показа курсора в hold- или toggle-режиме, если игроку нужен временный доступ к UI без открытия отдельного меню. По умолчанию этот режим выключен.

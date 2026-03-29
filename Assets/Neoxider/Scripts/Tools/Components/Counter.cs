@@ -28,7 +28,8 @@ namespace Neo.Tools
 
     /// <summary>
     ///     Universal counter: holds a number (int or float), Add/Subtract/Multiply/Divide/Set, Send with events. Events
-    ///     by type: OnValueChangedInt/Float, OnSendInt/OnSendFloat. Optionally saves via SaveProvider (off by default).
+    ///     by type: OnValueChangedInt/Float, OnSendInt/OnSendFloat, OnLoadedInt/Float after save load. Optionally saves
+    ///     via SaveProvider (off by default). Optional Send On Start and Load On Start toggles.
     /// </summary>
     [NeoDoc("Tools/Components/Counter.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Counter")]
@@ -60,9 +61,17 @@ namespace Neo.Tools
         private string _saveKey = "Counter";
 
         [SerializeField]
+        [Tooltip("When Save is enabled, read saved value from SaveProvider on Start. Off = keep Inspector value until LoadFromSave().")]
+        private bool _loadOnStart = true;
+
+        [SerializeField]
         [Tooltip(
             "When loading value in Start, invoke OnValueChanged* so UI and subscribers apply loaded value. On by default.")]
         private bool _invokeEventsOnLoad = true;
+
+        [SerializeField]
+        [Tooltip("After Start setup, call Send() once (uses Send Payload; counter value unchanged). Off by default.")]
+        private bool _sendOnStart;
 
         [Space]
         [Header("Events by type (one fired depending on mode)")]
@@ -84,6 +93,13 @@ namespace Neo.Tools
         [Tooltip("Invoked N times (N = current counter value) when enabled by Repeat Event settings.")]
         public UnityEvent OnRepeatByCounterValue = new();
 
+        [Header("Events (after load from save)")]
+        [Tooltip("Invoked once after Load() from SaveProvider in Int mode. Use for UI/state that only reacts to persistence load.")]
+        public UnityEvent<int> OnLoadedInt = new();
+
+        [Tooltip("Invoked once after Load() from SaveProvider in Float mode.")]
+        public UnityEvent<float> OnLoadedFloat = new();
+
         /// <summary>Current counter value as int (rounded in Float mode).</summary>
         public int ValueInt => _valueMode == CounterValueMode.Int
             ? Mathf.RoundToInt(Value.CurrentValue)
@@ -94,13 +110,39 @@ namespace Neo.Tools
 
         private void Start()
         {
-            if (_saveEnabled && !string.IsNullOrEmpty(_saveKey))
+            if (_saveEnabled && !string.IsNullOrEmpty(_saveKey) && _loadOnStart)
             {
                 Load();
+                InvokeOnLoaded();
                 if (_invokeEventsOnLoad)
                 {
                     InvokeValueChanged();
                 }
+            }
+
+            if (_sendOnStart)
+            {
+                Send();
+            }
+        }
+
+        /// <summary>
+        ///     Loads value from SaveProvider now and notifies subscribers (OnLoaded*, and OnValueChanged* if Invoke Events On Load).
+        ///     Use when Load On Start is off or to refresh from disk after Start.
+        /// </summary>
+        [Button]
+        public void LoadFromSave()
+        {
+            if (!_saveEnabled || string.IsNullOrEmpty(_saveKey))
+            {
+                return;
+            }
+
+            Load();
+            InvokeOnLoaded();
+            if (_invokeEventsOnLoad)
+            {
+                InvokeValueChanged();
             }
         }
 
@@ -296,6 +338,18 @@ namespace Neo.Tools
             else
             {
                 OnValueChangedFloat?.Invoke(Value.CurrentValue);
+            }
+        }
+
+        private void InvokeOnLoaded()
+        {
+            if (_valueMode == CounterValueMode.Int)
+            {
+                OnLoadedInt?.Invoke(ValueInt);
+            }
+            else
+            {
+                OnLoadedFloat?.Invoke(Value.CurrentValue);
             }
         }
 

@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Tools / Debug
+
+- **FPS** — учёт через **`Time.unscaledDeltaTime`**, защита от нулевого/слишком малого delta time; среднее по накопленным сэмплам; пересборка буфера при смене **`sampleSize`**; интервал UI по **`unscaledTime`**. Опция **`unlockFramerateOnAwake`** (по умолчанию выкл.): снятие лимита FPS / vSync только при явном включении.
+
 ### Tools / InteractableObject
 
 - **InteractiveObject** — при **`checkObstacles = false`** луч мыши для hover/click больше не отбрасывается, если ближе камеры есть чужой не-trigger коллайдер (раньше блокировало даже при выключенной проверке препятствий). Автопоиск коллайдера: **`Collider` / `Collider2D` на этом объекте или на дочерних**; попадания по лучу учитывают коллайдеры на детях того же корня.
@@ -13,6 +17,24 @@ All notable changes to this project will be documented in this file.
 
 - **DOCUMENTATION_GUIDELINES.md** — удалено повторение одного и того же абзаца про [Оформление_документации.md](Docs/Оформление_документации.md); в §1 явно зафиксировано: в коде XML/`Tooltip`/`Header` — **английский**, русский текст — в `Docs/`.
 - **CursorLockController.md** — заголовок H1 и блоки **Что это** / **Как использовать** приведены к [DOCUMENTATION.md](DOCUMENTATION.md).
+
+## [7.8.0] - 2026-03-28
+
+### Settings (новый модуль Neo.Settings)
+
+- **`GameSettings`** — статический API: чувствительность мыши, пресеты графики (**`GraphicsPreset`**) и уровень **`QualitySettings`**, полноэкранный режим и пресеты разрешения (**Auto** + список), лимит FPS и VSync; персист только через **`SaveProvider`**; режимы **`SettingsPersistMode`** (Immediate / Deferred / SkipUntilFlush); **`ResetGroup`**; события **`OnSettingsChanged`**, **`OnAfterSettingsLoaded`**.
+- **`GameSettingsComponent`** — синглтон-сервис: префикс ключей, маппинг пресет→качество, списки разрешений и FPS, debounce отложенного сейва, дефолты для сброса.
+- **`SettingsView`** — привязка **Unity UI** к статике; опциональная локализация по **`ISettingsLocalization`**; сброс по группам; скрытие блока разрешения на части платформ.
+- **`PlayerController3DPhysics`** — опция **`Use Game Settings Mouse Sensitivity`** и подписка на изменения настроек.
+- Зависимость пакета: **`com.unity.render-pipelines.universal`** (ожидается URP); в корневой **`Packages/manifest.json`** проекта добавлен тот же пакет для разработки.
+
+### Документация
+
+- **`Docs/Settings/`**, **`DocsEn/Settings/`** — README и страницы по `GameSettings`, `GameSettingsComponent`, `SettingsView`, `GraphicsPreset`; индексы **`Docs/README.md`**, **`DocsEn/README.md`** обновлены; **`PlayerController3DPhysics.md`** — связь с **`GameSettings`**.
+
+### Тесты
+
+- **`GameSettingsTests`** (EditMode) — Immediate/Deferred сейв чувствительности мыши и загрузка состояния через тестовый **`ISaveProvider`**.
 
 ## [7.7.25] - 2026-03-28
 

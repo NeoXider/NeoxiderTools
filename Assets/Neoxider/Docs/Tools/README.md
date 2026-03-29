@@ -11,6 +11,7 @@
 - Нужен инвентарь, подбор предметов, дроп и hand-view: [`Inventory/README.md`](./Inventory/README.md)
 - Нужен спавн или object pooling: [`Spawner/README.md`](./Spawner/README.md)
 - Нужен movement/input workflow: [`Move/README.md`](./Move/README.md) и [`Input/README.md`](./Input/README.md)
+- Нужны пользовательские настройки (графика, экран, мышь, FPS): [`../Settings/README.md`](../Settings/README.md)
 - Нужен диалоговый UI flow: [`Dialogue/README.md`](./Dialogue/README.md)
 - Нужны utility-компоненты (`Counter`, `AnimatorParameterDriver`, `RpgStatsDamageableBridge`); для нового боя/HP/уклонения — [RPG](../Rpg/README.md): [`Components/README.md`](./Components/README.md)
 

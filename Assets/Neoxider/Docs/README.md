@@ -1,6 +1,6 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.7.25`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.8.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
@@ -30,6 +30,7 @@
 | **RPG** | HP, уровни, баффы, статусы, melee/ranged/aoe, evade, target selectors, attack presets и no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | `PlayerPrefs`, JSON-файлы, provider API, scene/global saves и атрибуты сохранения | [`Save/README.md`](./Save/README.md) |
+| **Settings** | `GameSettings`, сервис настроек, UI `SettingsView`, URP/Quality presets, интеграция с `SaveProvider` | [`Settings/README.md`](./Settings/README.md) |
 | **Shop** | Магазин, валюта и покупки | [`Shop/README.md`](./Shop/README.md) |
 | **StateMachine** | Код + No-Code, runtime state machine и визуальный редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
 | **Tools** | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод и utility runtime | [`Tools/README.md`](./Tools/README.md) |

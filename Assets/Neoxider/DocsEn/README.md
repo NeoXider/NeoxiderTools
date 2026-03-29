@@ -42,6 +42,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 | **RPG** | HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | `PlayerPrefs`, JSON files, provider API, scene/global saves, and save attributes | [`Save/README.md`](./Save/README.md) |
+| **Settings** | `GameSettings`, scene service, `SettingsView` UI | [`Settings/README.md`](./Settings/README.md) |
 | **Shop** | Shop flow, currency, and purchases | [`Shop/README.md`](./Shop/README.md) |
 | **StateMachine** | Code + no-code runtime state machine with visual editor workflow | [`StateMachine/README.md`](./StateMachine/README.md) |
 | **Tools** | 150+ components for movement, physics, spawners, timers, input, and utilities | [`Tools/README.md`](./Tools/README.md) |

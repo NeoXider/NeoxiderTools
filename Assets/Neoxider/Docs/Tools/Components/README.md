@@ -8,7 +8,7 @@
 
 - [AnimatorParameterDriver](./AnimatorParameterDriver.md) — вызов параметров Animator (триггер, bool, float, int) из кода и UnityEvent.
 - [UnityLifecycleEvents](./UnityLifecycleEvents.md) — проброс событий жизненного цикла Unity (Awake, OnEnable, OnDisable, Start, Destroy, Update/FixedUpdate/LateUpdate с deltaTime) в UnityEvent
-- [Counter](./Counter.md) — универсальный счётчик (Int/Float), Add/Subtract/Set, Send по Payload или произвольное число, OnValueChanged/OnSend
+- [Counter](./Counter.md) — счётчик (Int/Float), Save/Load On Start, **OnLoaded** после загрузки, **Send On Start**, **LoadFromSave()**, Send/OnValueChanged/OnSend
 - [RandomRange](./RandomRange.md) — генерация случайного числа в [Min, Max] (Int/Float), Value/ValueInt/ValueFloat для NeoCondition, Generate(), события OnGeneratedInt/OnGeneratedFloat
 - [TextScore](./TextScore.md) — отображение очков (ScoreManager): текущий счёт или рекорд
 - [Loot](./Loot.md) — система лута и дропа

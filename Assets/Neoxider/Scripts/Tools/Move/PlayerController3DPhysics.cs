@@ -1,4 +1,5 @@
 using System;
+using Neo.Settings;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -44,6 +45,11 @@ namespace Neo.Tools
 
         [Header("Look")] [SerializeField] private bool _canLook = true;
         [SerializeField] private LookYawMode _lookYawMode = LookYawMode.RotateCharacter;
+
+        [Tooltip("When enabled, look speed uses GameSettings.MouseSensitivity (and live updates).")]
+        [SerializeField]
+        private bool _useGameSettingsMouseSensitivity = true;
+
         [SerializeField] private float _mouseSensitivity = 2f;
         [SerializeField] private float _minPitch = -80f;
         [SerializeField] private float _maxPitch = 80f;
@@ -212,6 +218,11 @@ namespace Neo.Tools
 
         private void OnEnable()
         {
+            if (_useGameSettingsMouseSensitivity)
+            {
+                GameSettings.OnSettingsChanged += OnGameSettingsChanged;
+            }
+
             if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
             {
                 eventManager.OnPause.AddListener(OnPauseLook);
@@ -221,12 +232,29 @@ namespace Neo.Tools
 
         private void OnDisable()
         {
+            if (_useGameSettingsMouseSensitivity)
+            {
+                GameSettings.OnSettingsChanged -= OnGameSettingsChanged;
+            }
+
             if (_disableLookOnPause && EM.TryGetInstance(out EM eventManager))
             {
                 eventManager.OnPause.RemoveListener(OnPauseLook);
                 eventManager.OnResume.RemoveListener(OnResumeLook);
             }
         }
+
+        private void OnGameSettingsChanged()
+        {
+            // Ensures live updates when sensitivity changes from the settings UI.
+            if (_useGameSettingsMouseSensitivity)
+            {
+                _mouseSensitivity = GameSettings.MouseSensitivity;
+            }
+        }
+
+        private float EffectiveMouseSensitivity =>
+            _useGameSettingsMouseSensitivity ? GameSettings.MouseSensitivity : _mouseSensitivity;
 
         private void OnDrawGizmosSelected()
         {
@@ -455,8 +483,9 @@ namespace Neo.Tools
                 return;
             }
 
-            float yawDelta = _lookInput.x * _mouseSensitivity;
-            float pitchDelta = _lookInput.y * _mouseSensitivity;
+            float sens = EffectiveMouseSensitivity;
+            float yawDelta = _lookInput.x * sens;
+            float pitchDelta = _lookInput.y * sens;
             _yaw += yawDelta;
             _pitch -= pitchDelta;
             _pitch = Mathf.Clamp(_pitch, _minPitch, _maxPitch);

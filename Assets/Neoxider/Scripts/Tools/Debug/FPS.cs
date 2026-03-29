@@ -12,6 +12,9 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(FPS))]
     public class FPS : MonoBehaviour
     {
+        private const float MinDeltaTime = 1e-5f;
+        private const float MaxInstantFps = 100000f;
+
         [Header("Update Settings")] [Tooltip("How often to update the FPS display (in seconds)")] [SerializeField]
         private float updateInterval = 0.2f;
 
@@ -30,31 +33,32 @@ namespace Neo.Tools
         [Tooltip("Show 'FPS' suffix in display")] [SerializeField]
         private bool showSuffix = true;
 
+        [Header("Behaviour")]
+        [Tooltip(
+            "If true, on Awake sets Application.targetFrameRate = -1 and QualitySettings.vSyncCount = 0. Off by default so the counter does not override project quality settings.")]
+        [SerializeField]
+        private bool unlockFramerateOnAwake;
+
         private readonly Color criticalColor = Color.red;
         private readonly Color goodColor = Color.green;
         private readonly Color warningColor = Color.yellow;
         private float accumulatedFps;
         private int bufferIndex;
-
         private float[] fpsBuffer;
+        private float nextDisplayTime;
+        private int samplesAccumulated;
 
         [Header("UI Settings")] [Tooltip("Text component to display FPS")]
         [SerializeField]
         private TMP_Text text;
 
         /// <summary>
-        ///     Gets the current average FPS
+        ///     Rolling average FPS over filled samples (same value as shown when the buffer has updated at least once).
         /// </summary>
-        public float CurrentFps => accumulatedFps / sampleSize;
+        public float CurrentFps => GetAverageFps();
 
         private void Awake()
         {
-            // Initialize the FPS buffer
-            fpsBuffer = new float[sampleSize];
-            bufferIndex = 0;
-            accumulatedFps = 0f;
-
-            // Ensure we have a text component
             if (text == null)
             {
                 Debug.LogError($"[{nameof(FPS)}] No text component assigned!");
@@ -62,37 +66,64 @@ namespace Neo.Tools
                 return;
             }
 
-            // Set target framerate to maximum
-            Application.targetFrameRate = -1; // -1 means no limit
-            QualitySettings.vSyncCount = 0; // Disable VSync for accurate measurements
+            RebuildFpsBuffer();
+
+            if (unlockFramerateOnAwake)
+            {
+                Application.targetFrameRate = -1;
+                QualitySettings.vSyncCount = 0;
+            }
         }
 
-        private void Start()
+        private void OnEnable()
         {
-            InvokeRepeating(nameof(UpdateFpsDisplay), 0, updateInterval);
+            if (text == null)
+            {
+                return;
+            }
+
+            EnsureBufferMatchesSampleSize();
+            nextDisplayTime = Time.unscaledTime;
         }
 
         private void Update()
         {
-            // Update the FPS buffer
-            float currentFps = 1f / Time.deltaTime;
+            if (text == null)
+            {
+                return;
+            }
+
+            EnsureBufferMatchesSampleSize();
+
+            float dt = Time.unscaledDeltaTime;
+            if (dt < MinDeltaTime)
+            {
+                return;
+            }
+
+            float instantFps = Mathf.Clamp(1f / dt, 0f, MaxInstantFps);
+
             accumulatedFps -= fpsBuffer[bufferIndex];
-            fpsBuffer[bufferIndex] = currentFps;
-            accumulatedFps += currentFps;
+            fpsBuffer[bufferIndex] = instantFps;
+            accumulatedFps += instantFps;
             bufferIndex = (bufferIndex + 1) % sampleSize;
+
+            if (samplesAccumulated < sampleSize)
+            {
+                samplesAccumulated++;
+            }
+
+            if (Time.unscaledTime >= nextDisplayTime)
+            {
+                nextDisplayTime = Time.unscaledTime + Mathf.Max(0.05f, updateInterval);
+                UpdateFpsDisplay();
+            }
         }
 
         private void OnValidate()
         {
-            if (updateInterval < 0.1f)
-            {
-                updateInterval = 0.1f;
-            }
-
-            if (sampleSize < 1)
-            {
-                sampleSize = 1;
-            }
+            updateInterval = Mathf.Max(0.05f, updateInterval);
+            sampleSize = Mathf.Max(1, sampleSize);
 
             if (warningFpsThreshold >= goodFpsThreshold)
             {
@@ -100,11 +131,39 @@ namespace Neo.Tools
             }
         }
 
+        private void EnsureBufferMatchesSampleSize()
+        {
+            sampleSize = Mathf.Max(1, sampleSize);
+            if (fpsBuffer == null || fpsBuffer.Length != sampleSize)
+            {
+                RebuildFpsBuffer();
+            }
+        }
+
+        private void RebuildFpsBuffer()
+        {
+            sampleSize = Mathf.Max(1, sampleSize);
+            fpsBuffer = new float[sampleSize];
+            bufferIndex = 0;
+            accumulatedFps = 0f;
+            samplesAccumulated = 0;
+        }
+
+        private float GetAverageFps()
+        {
+            if (fpsBuffer == null || samplesAccumulated <= 0)
+            {
+                return 0f;
+            }
+
+            int divisor = Mathf.Min(samplesAccumulated, sampleSize);
+            return divisor > 0 ? accumulatedFps / divisor : 0f;
+        }
+
         private void UpdateFpsDisplay()
         {
-            float averageFps = accumulatedFps / sampleSize;
+            float averageFps = GetAverageFps();
 
-            // Format the FPS text
             string fpsText = showDecimals
                 ? averageFps.ToString("F1")
                 : Mathf.RoundToInt(averageFps).ToString();
@@ -114,7 +173,6 @@ namespace Neo.Tools
                 fpsText += " FPS";
             }
 
-            // Update text and color
             text.text = fpsText;
             text.color = GetFpsColor(averageFps);
         }
