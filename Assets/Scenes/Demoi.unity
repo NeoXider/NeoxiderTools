@@ -1800,6 +1800,7 @@ MonoBehaviour:
   _jumpBufferTime: 0.1
   _canLook: 1
   _lookYawMode: 0
+  _useGameSettingsMouseSensitivity: 1
   _mouseSensitivity: 2
   _minPitch: -80
   _maxPitch: 80
@@ -2871,6 +2872,107 @@ Transform:
   - {fileID: 729964220}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1574349740
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1574349741}
+  - component: {fileID: 1574349742}
+  - component: {fileID: 1574349743}
+  m_Layer: 0
+  m_Name: Settings
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1574349741
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574349740}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.3544705, y: 3.3995228, z: 18.219835}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1574349742
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574349740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9451a0ba4fad284aa72b9c7017cfeb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
+  _saveKeyPrefix: Neo.Settings.
+  _persistInput: 1
+  _persistGraphics: 1
+  _persistDisplay: 1
+  _persistPerformance: 1
+  _presetToQuality:
+  - Preset: 0
+    QualityLevelIndex: 0
+  - Preset: 1
+    QualityLevelIndex: 0
+  - Preset: 2
+    QualityLevelIndex: 1
+  - Preset: 3
+    QualityLevelIndex: 2
+  - Preset: 4
+    QualityLevelIndex: 3
+  _framerateCapPresets: ffffffff1e0000003c0000007800000090000000f0000000
+  _customResolutionPresets: []
+  _deferredSaveDelaySeconds: 0.35
+  _defaultMouseSensitivity: 2
+  _defaultGraphicsPreset: 4
+  _defaultCustomQualityLevel: 0
+  _defaultFullScreen: 1
+  _defaultFullScreenMode: 1
+  _defaultResolutionAuto: 1
+  _defaultResolutionIndex: 0
+  _defaultFramerateCap: -1
+  _defaultVSync: 1
+--- !u!114 &1574349743
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1574349740}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0d39ae855f4e100479994a7347adfc7d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _valueMode: 0
+  _min: 0
+  _max: 10
+  Value:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  OnGeneratedInt:
+    m_PersistentCalls:
+      m_Calls: []
+  OnGeneratedFloat:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1799762796
 GameObject:
   m_ObjectHideFlags: 0
@@ -4090,3 +4192,4 @@ SceneRoots:
   - {fileID: 1039673992}
   - {fileID: 74398853}
   - {fileID: 167187389}
+  - {fileID: 1574349741}

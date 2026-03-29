@@ -661,7 +661,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 355, y: -0}
+  m_AnchoredPosition: {x: 355, y: -65}
   m_SizeDelta: {x: 710, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &9164925993079446019
@@ -781,7 +781,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 355, y: -50}
+  m_AnchoredPosition: {x: 355, y: -245}
   m_SizeDelta: {x: 710, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6464353900645628695
@@ -1664,7 +1664,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8665949695634561077, guid: 80329a37840752245b10406cc057f5b0, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8577740395582237452}
+      addedObject: {fileID: 5617628728652269281}
   m_SourcePrefab: {fileID: 100100000, guid: 80329a37840752245b10406cc057f5b0, type: 3}
 --- !u!224 &5059577887640419991 stripped
 RectTransform:
@@ -1676,7 +1676,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8665949695634561077, guid: 80329a37840752245b10406cc057f5b0, type: 3}
   m_PrefabInstance: {fileID: 416415695196106091}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8577740395582237452
+--- !u!114 &5617628728652269281
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1685,11 +1685,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 9044570056548971870}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 221e97c53608b2944bd9bee8f77b26d8, type: 3}
+  m_Script: {fileID: 11500000, guid: 5d8c4d585b7a4e44a8f8c8d7c7b6e5b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiToggleView: {fileID: 7383889994272915463, guid: bc596826d5c7cba498ebb04710375e43, type: 3}
-  isMusic: 1
+  controlType: 1
+  uiType: 0
+  backendType: 1
+  onSetActiveCustom:
+    m_PersistentCalls:
+      m_Calls: []
+  onSetPercentCustom:
+    m_PersistentCalls:
+      m_Calls: []
+  customActive: 1
+  customPercent: 1
+  forceSliderNormalizedRange: 1
+  unmutePercent: 1
 --- !u!1001 &4605989809824290103
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1934,19 +1945,8 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 8665949695634561077, guid: 80329a37840752245b10406cc057f5b0, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 5971758727176636814}
+      addedObject: {fileID: 8731552675515694209}
   m_SourcePrefab: {fileID: 100100000, guid: 80329a37840752245b10406cc057f5b0, type: 3}
---- !u!114 &864313595086291688 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 6823363373280851663, guid: 80329a37840752245b10406cc057f5b0, type: 3}
-  m_PrefabInstance: {fileID: 6147374410320327719}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3246109212174707730}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 433356fd7c5bba6459cbdfefa1e05ad9, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!224 &1639170501182875611 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 4895514595964605436, guid: 80329a37840752245b10406cc057f5b0, type: 3}
@@ -1957,7 +1957,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 8665949695634561077, guid: 80329a37840752245b10406cc057f5b0, type: 3}
   m_PrefabInstance: {fileID: 6147374410320327719}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &5971758727176636814
+--- !u!114 &8731552675515694209
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1966,11 +1966,22 @@ MonoBehaviour:
   m_GameObject: {fileID: 3246109212174707730}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 221e97c53608b2944bd9bee8f77b26d8, type: 3}
+  m_Script: {fileID: 11500000, guid: 5d8c4d585b7a4e44a8f8c8d7c7b6e5b9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  uiToggleView: {fileID: 864313595086291688}
-  isMusic: 0
+  controlType: 2
+  uiType: 0
+  backendType: 1
+  onSetActiveCustom:
+    m_PersistentCalls:
+      m_Calls: []
+  onSetPercentCustom:
+    m_PersistentCalls:
+      m_Calls: []
+  customActive: 1
+  customPercent: 1
+  forceSliderNormalizedRange: 1
+  unmutePercent: 1
 --- !u!1001 &8937524862921784616
 PrefabInstance:
   m_ObjectHideFlags: 0
