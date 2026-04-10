@@ -190,6 +190,141 @@ namespace Neo.Editor.Tests
             Assert.AreEqual("$100.00 USD", result);
         }
 
+        [Test]
+        public void NumberFormat_Scientific()
+        {
+            var opts = new NumberFormatOptions(NumberNotation.Scientific, 2);
+            string result = 1234567.ToPrettyString(opts);
+            Assert.AreEqual("1.23e6", result);
+            
+            string resultSmall = 0.00123.ToPrettyString(opts);
+            Assert.AreEqual("1.23e-3", resultSmall);
+        }
+
+        [Test]
+        public void NumberFormat_RoundingModes()
+        {
+            // Floor
+            var optsFloor = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToNegativeInfinity);
+            Assert.AreEqual("3", 3.7.ToPrettyString(optsFloor));
+            Assert.AreEqual("-4", (-3.7).ToPrettyString(optsFloor));
+
+            // Ceiling
+            var optsCeil = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToPositiveInfinity);
+            Assert.AreEqual("4", 3.2.ToPrettyString(optsCeil));
+            Assert.AreEqual("-3", (-3.2).ToPrettyString(optsCeil));
+
+            // ToZero (Truncate)
+            var optsToZero = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.ToZero);
+            Assert.AreEqual("3", 3.7.ToPrettyString(optsToZero));
+            Assert.AreEqual("-3", (-3.7).ToPrettyString(optsToZero));
+
+            // AwayFromZero
+            var optsAway = new NumberFormatOptions(NumberNotation.Plain, 0, NumberRoundingMode.AwayFromZero);
+            Assert.AreEqual("4", 3.5.ToPrettyString(optsAway));
+            Assert.AreEqual("-4", (-3.5).ToPrettyString(optsAway));
+        }
+
+        [Test]
+        public void NumberFormat_TrimTrailingZeros()
+        {
+            var trimTrue = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: true);
+            var trimFalse = new NumberFormatOptions(NumberNotation.Plain, 4, trimTrailingZeros: false);
+
+            Assert.AreEqual("1.5", 1.5000.ToPrettyString(trimTrue));
+            Assert.AreEqual("1.5000", 1.5000.ToPrettyString(trimFalse));
+            
+            // Should completely remove decimal point
+            Assert.AreEqual("2", 2.0.ToPrettyString(trimTrue)); 
+        }
+
+        [Test]
+        public void NumberFormat_NegativeValues()
+        {
+            var opts = new NumberFormatOptions(NumberNotation.IdleShort, 1);
+            Assert.AreEqual("-1.5K", (-1500).ToPrettyString(opts));
+            
+            var optsGrouped = new NumberFormatOptions(NumberNotation.Grouped, 0);
+            Assert.AreEqual("-1,234,567", (-1234567).ToPrettyString(optsGrouped));
+        }
+
+        [Test]
+        public void NumberFormat_FloatAndDouble()
+        {
+            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
+            // Default trimTrailingZeros is true, so "4.56e-4" instead of "4.560e-4"
+            var optsSci = new NumberFormatOptions(NumberNotation.Scientific, 3);
+            var optsSciNoTrim = new NumberFormatOptions(NumberNotation.Scientific, 3, trimTrailingZeros: false);
+            var optsPlain = new NumberFormatOptions(NumberNotation.Plain, 5, trimTrailingZeros: false);
+
+            float tinyFloat = 0.000456f;
+            Assert.AreEqual("4.56e-4", tinyFloat.ToPrettyString(optsSci));
+            Assert.AreEqual("4.560e-4", tinyFloat.ToPrettyString(optsSciNoTrim));
+            Assert.AreEqual("0.00046", tinyFloat.ToPrettyString(optsPlain));
+
+            double largeDouble = 123456789.12345;
+            Assert.AreEqual("123.46M", largeDouble.ToPrettyString(optsIdle));
+        }
+
+        [Test]
+        public void NumberFormat_ExtremeDoubles_NaN_Infinity()
+        {
+            var opts = new NumberFormatOptions(NumberNotation.Grouped, 2);
+
+            double nan = double.NaN;
+            double posInf = double.PositiveInfinity;
+            double negInf = double.NegativeInfinity;
+
+            Assert.AreEqual("NaN", nan.ToPrettyString(opts));
+            Assert.AreEqual("Infinity", posInf.ToPrettyString(opts)); // System.Globalization.NumberFormatInfo Invariant defaults to "Infinity"
+            Assert.AreEqual("-Infinity", negInf.ToPrettyString(opts));
+            
+            // Decimals are clamped to 12 maximum in ClampDecimals!
+            // 1e-12 is 0.000000000001
+            double verySmall = 1e-12;
+            var optsDec = new NumberFormatOptions(NumberNotation.Plain, 12, trimTrailingZeros: false);
+            Assert.AreEqual("0.000000000001", verySmall.ToPrettyString(optsDec));
+        }
+
+        [Test]
+        public void NumberFormat_BigInteger_VeryLarge()
+        {
+            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 1);
+            
+            var oneThousand = new System.Numerics.BigInteger(1000);
+            var oneMillion = new System.Numerics.BigInteger(1_000_000);
+            var oneBillion = new System.Numerics.BigInteger(1_000_000_000);
+
+            Assert.AreEqual("1K", oneThousand.ToPrettyString(optsIdle));
+            Assert.AreEqual("1M", oneMillion.ToPrettyString(optsIdle));
+            Assert.AreEqual("1B", oneBillion.ToPrettyString(optsIdle));
+
+            // Test high tier alphabet suffixes
+            // BaseSuffixes.Length = 12 (Tiers 0 to 11). Tier 11 is "Dc" (10^33)
+            // Tier 12 is 10^36 -> 'a'. 
+            // Tier 13 is 10^39 -> 'b'.
+            var massive = System.Numerics.BigInteger.Pow(10, 36); 
+            Assert.AreEqual("1a", massive.ToPrettyString(optsIdle)); 
+            
+            var evenBigger = System.Numerics.BigInteger.Pow(10, 39); 
+            Assert.AreEqual("1b", evenBigger.ToPrettyString(optsIdle)); 
+        }
+
+        [Test]
+        public void NumberFormat_Long_EdgeCases()
+        {
+            long max = long.MaxValue; // 9,223,372,036,854,775,807
+            var optsGroup = new NumberFormatOptions(NumberNotation.Grouped, 0);
+            Assert.AreEqual("9,223,372,036,854,775,807", max.ToPrettyString(optsGroup));
+
+            var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 2);
+            // 9,223,372 = 9.22e18 => 10^18 is Quintillion ('Qi' suffix is Tier 6)
+            Assert.AreEqual("9.22Qi", max.ToPrettyString(optsIdle));
+
+            long min = long.MinValue; // -9,223,372,036,854,775,808
+            Assert.AreEqual("-9.22Qi", min.ToPrettyString(optsIdle));
+        }
+
         #endregion
 
         #region EnumerableExtensions
