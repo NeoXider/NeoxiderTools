@@ -28,8 +28,10 @@ namespace Neo.StateMachine
         [Header("Settings")] [SerializeField] [Tooltip("Enable state transition logging")]
         private bool enableDebugLog;
 
+#pragma warning disable 0414
         [SerializeField] [Tooltip("Show current state in inspector")]
         private bool showStateInInspector = true;
+#pragma warning restore 0414
 
         [SerializeField] [Tooltip("Evaluate transitions every frame")]
         private bool autoEvaluateTransitions = true;

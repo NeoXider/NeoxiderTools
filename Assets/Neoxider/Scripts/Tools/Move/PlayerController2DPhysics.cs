@@ -28,6 +28,7 @@ namespace Neo.Tools
 
         [Header("Jump")] [Tooltip("Allow jump. Can be changed at runtime via SetJumpEnabled(bool).")] [SerializeField]
         private bool _canJump = true;
+
         [SerializeField] private float _jumpImpulse = 10f;
         [SerializeField] private float _coyoteTime = 0.1f;
         [SerializeField] private float _jumpBufferTime = 0.1f;
@@ -60,6 +61,7 @@ namespace Neo.Tools
 
         [Tooltip("Process movement and jump input. Toggle via SetMovementEnabled(bool).")] [SerializeField]
         private bool _movementEnabled = true;
+
         private bool _newInputUnavailableWarningShown;
         private bool _wasGrounded;
         private bool _wasMoving;

@@ -12,6 +12,9 @@ namespace Neo.Tools
         /// <summary>Format version for migration in <see cref="InventoryComponent" />.</summary>
         public int Version = 1;
 
+        /// <summary>True if the initial state entries have already been merged into this save.</summary>
+        public bool InitialStateMerged;
+
         /// <summary>Stored <see cref="InventoryStorageMode" /> as int.</summary>
         public int StorageMode;
 
@@ -23,6 +26,9 @@ namespace Neo.Tools
 
         /// <summary>Instance-based items with per-item state payload.</summary>
         public List<InventoryItemInstance> Instances = new();
+
+        /// <summary>Snapshot of items when not using slot grid.</summary>
+        public List<InventoryItemRecord> Records = new();
 
         /// <summary>Per-slot state when using slot grid persistence.</summary>
         public List<InventorySlotState> Slots = new();

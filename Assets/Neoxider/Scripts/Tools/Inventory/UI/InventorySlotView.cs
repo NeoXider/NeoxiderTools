@@ -24,7 +24,8 @@ namespace Neo.Tools
         private int _slotIndex;
 
         /// <summary>Updates visuals for one physical slot index.</summary>
-        public void Bind(InventorySlotGridView owner, int slotIndex, InventoryItemData itemData, InventorySlotState slotState,
+        public void Bind(InventorySlotGridView owner, int slotIndex, InventoryItemData itemData,
+            InventorySlotState slotState,
             bool selected)
         {
             _owner = owner;

@@ -16,6 +16,7 @@ namespace Neo.Condition
         private Component _cachedComponent;
         private GameObject _cachedGameObject;
         private MemberInfo _cachedMember;
+        private object[] _cachedArgs;
         private bool _cacheValid;
         private bool _hasLoggedDestroyedWarning;
         private bool _hasLoggedMissingMemberWarning;
@@ -80,8 +81,7 @@ namespace Neo.Condition
 
             if (_cachedMember is MethodInfo method)
             {
-                object arg = GetArgumentValue();
-                return method.Invoke(_cachedComponent, new[] { arg });
+                return method.Invoke(_cachedComponent, _cachedArgs);
             }
 
             return null;
@@ -93,6 +93,7 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgs = null;
             _hasLoggedDestroyedWarning = false;
             _hasLoggedMissingMemberWarning = false;
         }
@@ -184,6 +185,7 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgs = null;
 
             GameObject target = ResolveTargetObject(fallbackObject);
             string componentTypeName = _isOther ? _entry.OtherComponentTypeName : _entry.ComponentTypeName;
@@ -249,17 +251,18 @@ namespace Neo.Condition
 
             if (isMethod)
             {
-                MethodInfo method = ConditionEntry.FindMethodWithOneArgument(type, propertyName, argKind, flags);
+                MethodInfo method = ReflectionCache.GetMethod(type, propertyName, argKind, flags);
                 if (method != null)
                 {
                     _cachedMember = method;
+                    _cachedArgs = new[] { GetArgumentValue() };
                     _cacheValid = true;
                     return true;
                 }
             }
             else
             {
-                PropertyInfo prop = type.GetProperty(propertyName, flags);
+                PropertyInfo prop = ReflectionCache.GetProperty(type, propertyName, flags);
                 if (prop != null && prop.CanRead)
                 {
                     _cachedMember = prop;
@@ -267,7 +270,7 @@ namespace Neo.Condition
                     return true;
                 }
 
-                FieldInfo field = type.GetField(propertyName, flags);
+                FieldInfo field = ReflectionCache.GetField(type, propertyName, flags);
                 if (field != null)
                 {
                     _cachedMember = field;
@@ -305,6 +308,7 @@ namespace Neo.Condition
             _cachedComponent = null;
             _cachedGameObject = null;
             _cachedMember = null;
+            _cachedArgs = null;
 
             GameObject target = ResolveTargetObject(fallbackObject);
             bool useSearch = _isOther ? _entry.OtherUseSceneSearch : _entry.UseSceneSearch;
@@ -329,7 +333,7 @@ namespace Neo.Condition
             Type type = typeof(GameObject);
             const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
 
-            PropertyInfo prop = type.GetProperty(propertyName, flags);
+            PropertyInfo prop = ReflectionCache.GetProperty(type, propertyName, flags);
             if (prop != null && prop.CanRead)
             {
                 _cachedMember = prop;
@@ -337,7 +341,7 @@ namespace Neo.Condition
                 return true;
             }
 
-            FieldInfo field = type.GetField(propertyName, flags);
+            FieldInfo field = ReflectionCache.GetField(type, propertyName, flags);
             if (field != null)
             {
                 _cachedMember = field;

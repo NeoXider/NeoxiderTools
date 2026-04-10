@@ -43,8 +43,11 @@ namespace Neo.Tools
             set
             {
                 _lastState = _state;
-                _state = value;
-                EM.I?.OnStateChange?.Invoke(_state);
+                if (EM.TryGetInstance(out EM em))
+                {
+                    em.OnStateChange?.Invoke(_state);
+                }
+
                 Debug.Log("[GM]".SetColor(Color.yellow)
                           + $": {State}".Gradient(Color.cyan, Color.blue));
             }
@@ -58,15 +61,10 @@ namespace Neo.Tools
 
         #region Initialization Methods
 
-        protected override void OnInstanceCreated()
-        {
-            base.OnInstanceCreated();
-        }
-
         protected override void Init()
         {
             base.Init();
-            print("GameManager Init");
+            Debug.Log("[GM] Initialized");
 
             if (startOnAwake)
             {

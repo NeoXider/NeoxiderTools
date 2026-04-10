@@ -63,3 +63,7 @@
 - Evade: binding настраивается в `RpgEvadeController`, built-in input можно выключить.
 - `Auto Save` у `RpgStatsManager` по умолчанию выключен и включается явно.
 - Новые проекты: не использовать `AttackExecution`, `AdvancedAttackCollider`, `Evade`, `Health` как основную боевую архитектуру.
+
+## Демонстрация
+
+Работа модуля RPG в связке с `RpgCombatant` и интерактивным интерфейсом представлена в сцене `Samples~/Demo/RPG_Demo.unity`.

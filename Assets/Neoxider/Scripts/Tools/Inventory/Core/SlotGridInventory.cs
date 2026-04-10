@@ -59,7 +59,7 @@ namespace Neo.Tools
         public void Resize(int slotCapacity)
         {
             int capacity = Math.Max(0, slotCapacity);
-            InventorySlotState[] next = new InventorySlotState[capacity];
+            var next = new InventorySlotState[capacity];
             for (int i = 0; i < capacity; i++)
             {
                 next[i] = InventorySlotState.Empty();
@@ -107,7 +107,8 @@ namespace Neo.Tools
                     continue;
                 }
 
-                int addable = InventoryStackRules.GetAddableAmount(slot.Count, amount - added, maxStack, TotalCount, _constraints.MaxTotalItems);
+                int addable = InventoryStackRules.GetAddableAmount(slot.Count, amount - added, maxStack, TotalCount,
+                    _constraints.MaxTotalItems);
                 if (addable <= 0)
                 {
                     continue;
@@ -125,7 +126,8 @@ namespace Neo.Tools
                     continue;
                 }
 
-                int addable = InventoryStackRules.GetAddableAmount(0, amount - added, maxStack, TotalCount, _constraints.MaxTotalItems);
+                int addable = InventoryStackRules.GetAddableAmount(0, amount - added, maxStack, TotalCount,
+                    _constraints.MaxTotalItems);
                 if (addable <= 0)
                 {
                     continue;

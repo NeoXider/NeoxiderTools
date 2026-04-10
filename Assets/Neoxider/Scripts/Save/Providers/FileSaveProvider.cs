@@ -12,7 +12,7 @@ namespace Neo.Save
     /// </summary>
     public class FileSaveProvider : ISaveProvider
     {
-        private readonly string _filePath;
+        private string _filePath;
         private Dictionary<string, SaveValue> _data;
         private bool _isDirty;
 
@@ -27,6 +27,21 @@ namespace Neo.Save
         {
             _filePath = Path.Combine(Application.persistentDataPath, fileName);
             _data = new Dictionary<string, SaveValue>();
+            Load();
+        }
+
+        /// <summary>
+        ///     Switches the active save slot by changing the underlying file.
+        /// </summary>
+        /// <param name="fileName">New file name for persistence.</param>
+        public void ChangeSlot(string fileName)
+        {
+            if (_isDirty)
+            {
+                Save();
+            }
+
+            _filePath = Path.Combine(Application.persistentDataPath, fileName);
             Load();
         }
 

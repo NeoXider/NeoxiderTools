@@ -11,7 +11,8 @@ namespace Neo.Tools
         ///     Merges into target, moves to empty target, or full-swaps incompatible stacks.
         /// </summary>
         /// <returns>Units moved or swapped.</returns>
-        public static int TryMoveOrSwap(ref InventorySlotState source, ref InventorySlotState target, int maxStack, int amount = 0)
+        public static int TryMoveOrSwap(ref InventorySlotState source, ref InventorySlotState target, int maxStack,
+            int amount = 0)
         {
             if (source == null || source.IsEmpty)
             {
@@ -114,7 +115,8 @@ namespace Neo.Tools
 
         /// <summary>Inserts or merges <paramref name="record" /> into <paramref name="target" />.</summary>
         /// <returns>Amount inserted.</returns>
-        public static int TryInsert(ref InventorySlotState target, InventoryItemRecord record, int maxStack, int amount = 0)
+        public static int TryInsert(ref InventorySlotState target, InventoryItemRecord record, int maxStack,
+            int amount = 0)
         {
             if (record == null)
             {

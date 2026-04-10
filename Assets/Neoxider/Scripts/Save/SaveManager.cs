@@ -22,13 +22,21 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _saveableComponents.Clear();
+            IsLoad = false;
+        }
+
         /// <summary>
         ///     Gets whether the manager has completed its initial load pass.
         /// </summary>
         public static bool IsLoad { get; private set; }
 
-        protected virtual void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             SceneManager.sceneLoaded -= OnSceneLoaded;
         }
 

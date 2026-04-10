@@ -24,8 +24,7 @@ namespace Neo.Pages
         [SerializeField]
         private bool popup;
 
-        [Tooltip("When enabled, PM will not deactivate this page on Exclusive switches.")]
-        [SerializeField]
+        [Tooltip("When enabled, PM will not deactivate this page on Exclusive switches.")] [SerializeField]
         private bool ignoreOnExclusiveChange;
 
         [Space] [Header("Anim")] [SerializeField]

@@ -69,6 +69,41 @@ namespace Neo.Rpg
         /// </summary>
         public IReadOnlyList<ActiveStatusEntry> ActiveStatuses => _activeStatuses;
 
+        /// <summary>
+        ///     Gets the UnityEvent raised when damage is taken.
+        /// </summary>
+        public UnityEventFloat OnDamaged => _onDamaged;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when healed.
+        /// </summary>
+        public UnityEventFloat OnHealed => _onHealed;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when HP reaches zero.
+        /// </summary>
+        public UnityEvent OnDeath => _onDeath;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when a buff is applied.
+        /// </summary>
+        public RpgStringEvent OnBuffApplied => _onBuffApplied;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when a buff expires.
+        /// </summary>
+        public RpgStringEvent OnBuffExpired => _onBuffExpired;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when a status effect is applied.
+        /// </summary>
+        public RpgStringEvent OnStatusApplied => _onStatusApplied;
+
+        /// <summary>
+        ///     Gets the UnityEvent raised when a status effect expires.
+        /// </summary>
+        public RpgStringEvent OnStatusExpired => _onStatusExpired;
+
         /// <summary>Current HP (for NeoCondition and reactive binding).</summary>
         public float HpStateValue => HpState.CurrentValue;
 
@@ -127,6 +162,36 @@ namespace Neo.Rpg
 
         /// <inheritdoc />
         public float MaxHp => _healthProvider != null ? _healthProvider.GetMax(RpgResourceId.Hp) : _maxHp;
+
+        /// <summary>
+        ///     Forcefully overrides the max HP. Only works if no external health provider is bound.
+        /// </summary>
+        public void SetMaxHp(float newMax)
+        {
+            if (_healthProvider != null)
+            {
+                return;
+            }
+
+            _maxHp = Mathf.Max(1f, newMax);
+            _currentHp = Mathf.Min(_currentHp, _maxHp);
+            RefreshRuntimeState(true);
+        }
+
+        /// <summary>
+        ///     Increases Max HP and heals by the same amount. Only works if no external health provider is bound.
+        /// </summary>
+        public void IncreaseMaxHp(float amount)
+        {
+            if (_healthProvider != null || amount <= 0f)
+            {
+                return;
+            }
+
+            _maxHp += amount;
+            _currentHp += amount;
+            RefreshRuntimeState(true);
+        }
 
         /// <inheritdoc />
         public int Level => _levelProvider != null ? _levelProvider.Level : _level;

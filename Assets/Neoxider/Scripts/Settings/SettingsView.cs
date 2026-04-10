@@ -24,51 +24,37 @@ namespace Neo.Settings
     [AddComponentMenu("Neoxider/Settings/" + nameof(SettingsView))]
     public sealed class SettingsView : MonoBehaviour
     {
-        [Header("Behaviour")]
-        [SerializeField]
+        [Header("Behaviour")] [SerializeField]
         private SettingsViewCommitMode _commitMode = SettingsViewCommitMode.DebouncedLive;
 
-        [Tooltip("Optional root objects hidden on platforms where custom resolution is not offered (see RefreshFromSettings).")]
+        [Tooltip(
+            "Optional root objects hidden on platforms where custom resolution is not offered (see RefreshFromSettings).")]
         [SerializeField]
         private GameObject _resolutionBlockRoot;
 
-        [Header("Input")]
-        [SerializeField]
-        private Slider _mouseSensitivitySlider;
+        [Header("Input")] [SerializeField] private Slider _mouseSensitivitySlider;
 
-        [Header("Graphics")]
-        [SerializeField]
-        private Dropdown _graphicsPresetDropdown;
+        [Header("Graphics")] [SerializeField] private Dropdown _graphicsPresetDropdown;
 
-        [SerializeField]
-        private Dropdown _qualityDropdown;
+        [SerializeField] private Dropdown _qualityDropdown;
 
-        [Header("Display")]
-        [SerializeField]
-        private Toggle _fullScreenToggle;
+        [Header("Display")] [SerializeField] private Toggle _fullScreenToggle;
 
-        [SerializeField]
-        private Dropdown _resolutionDropdown;
+        [SerializeField] private Dropdown _resolutionDropdown;
 
-        [Header("Performance")]
-        [SerializeField]
+        [Header("Performance")] [SerializeField]
         private Dropdown _framerateDropdown;
 
-        [SerializeField]
-        private Toggle _vSyncToggle;
+        [SerializeField] private Toggle _vSyncToggle;
 
-        [Header("Reset (optional)")]
-        [SerializeField]
+        [Header("Reset (optional)")] [SerializeField]
         private Button _resetGraphicsButton;
 
-        [SerializeField]
-        private Button _resetInputButton;
+        [SerializeField] private Button _resetInputButton;
 
-        [SerializeField]
-        private Button _resetDisplayButton;
+        [SerializeField] private Button _resetDisplayButton;
 
-        [SerializeField]
-        private Button _resetPerformanceButton;
+        [SerializeField] private Button _resetPerformanceButton;
 
         private bool _suspendHandlers;
 

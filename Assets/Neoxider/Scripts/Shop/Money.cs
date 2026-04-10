@@ -25,7 +25,7 @@ namespace Neo.Shop
 
         [SerializeField] private TMP_Text[] t_money;
 
-        [Space] [Header("Text")] private readonly int _roundToDecimal = 2;
+        private readonly int _roundToDecimal = 2;
         public float levelMoney => LevelMoney.CurrentValue;
         public float money => CurrentMoney.CurrentValue;
         public float allMoney => AllMoney.CurrentValue;
@@ -57,7 +57,7 @@ namespace Neo.Shop
             if (CanSpend(amount))
             {
                 CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
-                LastChangeMoney.Value = amount;
+                LastChangeMoney.Value = -amount;
                 ApplyMoneyToText();
                 Save();
                 return true;

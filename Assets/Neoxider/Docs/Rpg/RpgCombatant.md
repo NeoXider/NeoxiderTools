@@ -16,6 +16,7 @@
 
 - Хранит `CurrentHp`, `MaxHp`, `Level`.
 - Принимает `TakeDamage()` / `Heal()`.
+- Поддерживает `SetMaxHp(float)` и `IncreaseMaxHp(float)` для динамического изменения запаса здоровья (например, при левелапах).
 - Поддерживает `TryApplyBuff()` и `TryApplyStatus()`.
 - Учитывает `DefensePercent`, `DamagePercent`, `HpRegenPerSecond`, `MovementSpeedPercent`.
 - Поддерживает invulnerability locks для evade и других способностей.

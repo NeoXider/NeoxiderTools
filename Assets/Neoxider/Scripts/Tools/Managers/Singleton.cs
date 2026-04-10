@@ -16,6 +16,8 @@ namespace Neo.Tools
         [SerializeField] protected bool _setInstanceOnAwake = true;
         private bool _isInitialized;
 
+        private static bool _searchFailed;
+
         /// <summary>
         ///     Gets the active singleton instance, creating or resolving it on first access when possible.
         /// </summary>
@@ -23,7 +25,7 @@ namespace Neo.Tools
         {
             get
             {
-                if (_instance == null)
+                if (_instance == null && !_searchFailed)
                 {
                     T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                     for (int i = 0; i < all.Length; i++)
@@ -42,7 +44,11 @@ namespace Neo.Tools
                         _instance.OnInstanceCreated();
                     }
 
-                    if (_instance != null)
+                    if (_instance == null)
+                    {
+                        _searchFailed = true;
+                    }
+                    else
                     {
                         if (!_instance._isInitialized)
                         {
@@ -132,5 +138,22 @@ namespace Neo.Tools
                 _instance = null;
             }
         }
+
+        protected virtual void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null;
+            }
+        }
+
+#if UNITY_EDITOR
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _instance = null;
+            _searchFailed = false;
+        }
+#endif
     }
 }

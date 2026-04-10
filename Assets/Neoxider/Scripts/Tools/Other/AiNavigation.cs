@@ -327,11 +327,7 @@ namespace Neo.Tools
                     break;
 
                 case MovementMode.Combined:
-                    if (target == null)
-                    {
-                        Debug.LogWarning(
-                            $"AiNavigation ({gameObject.name}): Combined mode requires target to be set! Set target in inspector or via SetTarget().");
-                    }
+                    // Target check warning removed to prevent log spam in deprecated component.
 
                     if (aggroDistance <= 0f)
                     {

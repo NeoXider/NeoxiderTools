@@ -67,7 +67,8 @@ namespace Neo.Tools
             }
 
             int current = existing != null ? existing.Count : 0;
-            int addable = InventoryStackRules.GetAddableAmount(current, amount, _constraints.GetMaxStack(itemId), TotalCount,
+            int addable = InventoryStackRules.GetAddableAmount(current, amount, _constraints.GetMaxStack(itemId),
+                TotalCount,
                 _constraints.MaxTotalItems);
             if (addable <= 0)
             {

@@ -34,9 +34,7 @@ namespace Neo.Core.Level
 
         [SerializeField] [Min(0.1f)] private float _powerExponent = 2f;
 
-        [Header("Curve")]
-        [Tooltip("X axis = level (1, 2, 3...), Y = cumulative XP to that level")]
-        [SerializeField]
+        [Header("Curve")] [Tooltip("X axis = level (1, 2, 3...), Y = cumulative XP to that level")] [SerializeField]
         private AnimationCurve _animationCurve = new(
             new Keyframe(1f, 0f),
             new Keyframe(2f, 100f),

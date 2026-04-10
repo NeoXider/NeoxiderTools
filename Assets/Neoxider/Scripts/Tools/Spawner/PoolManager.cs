@@ -36,31 +36,11 @@ namespace Neo.Tools
 
         private readonly Dictionary<GameObject, NeoObjectPool> _pools = new();
 
+        protected override bool DontDestroyOnLoadEnabled => true;
+
         protected override void Awake()
         {
             base.Awake();
-            DontDestroyOnLoad(gameObject);
-            PrewarmPools();
-        }
-
-        private void OnEnable()
-        {
-            SceneManager.sceneLoaded += OnSceneLoaded;
-        }
-
-        private void OnDisable()
-        {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            foreach (NeoObjectPool pool in _pools.Values)
-            {
-                pool.Clear();
-            }
-
-            _pools.Clear();
             PrewarmPools();
         }
 

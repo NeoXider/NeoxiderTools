@@ -51,7 +51,9 @@ namespace Neo.Tools
                     continue;
                 }
 
-                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey) ? behaviours[i].GetType().FullName : state.InventoryStateKey;
+                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey)
+                    ? behaviours[i].GetType().FullName
+                    : state.InventoryStateKey;
                 instance.ComponentStates.Add(new InventoryItemComponentState(key, state.CaptureInventoryState()));
             }
 
@@ -63,7 +65,8 @@ namespace Neo.Tools
         /// </summary>
         public static void RestoreInstance(GameObject root, InventoryItemInstance instance)
         {
-            if (root == null || instance == null || instance.ComponentStates == null || instance.ComponentStates.Count <= 0)
+            if (root == null || instance == null || instance.ComponentStates == null ||
+                instance.ComponentStates.Count <= 0)
             {
                 return;
             }
@@ -88,7 +91,9 @@ namespace Neo.Tools
                     continue;
                 }
 
-                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey) ? behaviours[i].GetType().FullName : state.InventoryStateKey;
+                string key = string.IsNullOrWhiteSpace(state.InventoryStateKey)
+                    ? behaviours[i].GetType().FullName
+                    : state.InventoryStateKey;
                 if (byKey.TryGetValue(key, out InventoryItemComponentState componentState))
                 {
                     state.RestoreInventoryState(componentState.Json);

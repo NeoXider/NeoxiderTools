@@ -171,3 +171,7 @@ public class QuestUnlockExample : MonoBehaviour
 2. Выберите `Action Type = AddXp`.
 3. Укажите `XP Amount = 100`.
 4. Привяжите `Execute()` к `Button.onClick`, `Quest` или `UnityEvent`.
+
+## Демонстрация
+
+Работа модуля Progression с получением опыта и ростом уровней представлена в сцене `Samples~/Demo/Progression_Demo.unity`.

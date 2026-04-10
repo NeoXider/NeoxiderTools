@@ -56,6 +56,7 @@ namespace Neo.Tools
         [SerializeField] private bool _useUnscaledTime;
         [SerializeField] private bool _usePunctuationPauses = true;
         [SerializeField] private List<PunctuationPause> _punctuationPauses = new();
+
         [Header("Typing Audio")] [SerializeField]
         private AudioSource _typingAudioSource;
 
@@ -128,7 +129,10 @@ namespace Neo.Tools
         public List<PunctuationPause> PunctuationPauses => _punctuationPauses;
 
         public bool IsTyping => _cts != null && !_cts.IsCancellationRequested;
-        public float Progress => _visibleCharacterCount <= 0 ? 0f : (float)_typedVisibleCharacters / _visibleCharacterCount;
+
+        public float Progress =>
+            _visibleCharacterCount <= 0 ? 0f : (float)_typedVisibleCharacters / _visibleCharacterCount;
+
         public string CurrentText => _builder.ToString();
         public string FullText => _fullText;
 

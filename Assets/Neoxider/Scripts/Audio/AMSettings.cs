@@ -37,20 +37,21 @@ namespace Neo.Audio
         [Tooltip("Reactive mute state; subscribe via MuteMaster.OnChanged")]
         public ReactivePropertyBool MuteMaster = new();
 
-        [Header("Persist (0..1)")] [Tooltip("Enabled by default. Persists and loads Master/Music/Efx volume (0..1) via Neo.Save.SaveProvider. Clear to skip writing and reading save keys.")]
+        [Header("Persist (0..1)")]
+        [Tooltip(
+            "Enabled by default. Persists and loads Master/Music/Efx volume (0..1) via Neo.Save.SaveProvider. Clear to skip writing and reading save keys.")]
         [SerializeField]
         private bool persistVolume = true;
 
-        [Tooltip("SaveProvider key for Master (float 0..1). Change the prefix to avoid collisions with other projects.")]
+        [Tooltip(
+            "SaveProvider key for Master (float 0..1). Change the prefix to avoid collisions with other projects.")]
         [SerializeField]
         private string saveKeyMaster = "Neo.Audio.AMSettings.MasterVolume";
 
-        [Tooltip("SaveProvider key for Music (float 0..1).")]
-        [SerializeField]
+        [Tooltip("SaveProvider key for Music (float 0..1).")] [SerializeField]
         private string saveKeyMusic = "Neo.Audio.AMSettings.MusicVolume";
 
-        [Tooltip("SaveProvider key for Efx/SFX (float 0..1).")]
-        [SerializeField]
+        [Tooltip("SaveProvider key for Efx/SFX (float 0..1).")] [SerializeField]
         private string saveKeyEfx = "Neo.Audio.AMSettings.EfxVolume";
 
         public float startEfxVolume = 1f;

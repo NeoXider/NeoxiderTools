@@ -192,7 +192,16 @@ namespace Neo.StateMachine
             }
 
             // All predicates must pass (AND)
-            return predicates.All(p => p != null && p.Evaluate());
+            for (int i = 0; i < predicates.Count; i++)
+            {
+                StatePredicate p = predicates[i];
+                if (p == null || !p.Evaluate())
+                {
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

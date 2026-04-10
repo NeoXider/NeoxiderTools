@@ -56,9 +56,7 @@ namespace Neo.Tools
         [Tooltip("Invoked when evade action ends.")]
         public UnityEvent OnEvadeCompleted;
 
-        [Header("Cooldown Events")]
-        [Tooltip("Invoked when cooldown starts.")]
-        [FormerlySerializedAs("OnReloadStarted")]
+        [Header("Cooldown Events")] [Tooltip("Invoked when cooldown starts.")] [FormerlySerializedAs("OnReloadStarted")]
         public UnityEvent OnCooldownStarted;
 
         [Tooltip("Invoked when cooldown ends and the ability is ready again.")]

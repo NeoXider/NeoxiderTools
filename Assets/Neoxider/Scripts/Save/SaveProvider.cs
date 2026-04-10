@@ -15,6 +15,14 @@ namespace Neo.Save
         private static bool _isInitialized;
         private static readonly object _lockObject = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _provider = null;
+            _settings = null;
+            _isInitialized = false;
+        }
+
         /// <summary>
         ///     Gets the currently active save provider.
         /// </summary>
@@ -259,6 +267,26 @@ namespace Neo.Save
         {
             Initialize();
             _provider.Load();
+        }
+
+        /// <summary>
+        ///     Switches the active save slot if the provider supports it (like FileSaveProvider).
+        ///     This allows true multi-slot persistence.
+        /// </summary>
+        /// <param name="slotName">New slot name (e.g., "save2.json").</param>
+        public static void SetSlot(string slotName)
+        {
+            Initialize();
+            if (_provider is FileSaveProvider fsp)
+            {
+                fsp.ChangeSlot(slotName);
+                Debug.Log($"[SaveProvider] Switched to slot: {slotName}");
+            }
+            else
+            {
+                Debug.LogWarning(
+                    $"[SaveProvider] SetSlot is not supported for provider type: {_provider.ProviderType}");
+            }
         }
     }
 }

@@ -47,8 +47,7 @@ namespace Neo.Tools
 
         [Tooltip("Handle collision events")] public bool useCollision = true;
 
-        [Header("Filtering")]
-        public LayerMask hittableLayers = -1; // Layers the attack can hit; default all
+        [Header("Filtering")] public LayerMask hittableLayers = -1; // Layers the attack can hit; default all
 
         [Header("Force")] public bool applyForceOnHit; // Apply impulse on hit
         public float forceMagnitude = 20f; // Force strength

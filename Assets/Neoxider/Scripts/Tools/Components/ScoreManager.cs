@@ -288,6 +288,11 @@ namespace Neo.Tools
 
             if (useProgress)
             {
+                if (_targetScore <= 0)
+                {
+                    return false;
+                }
+
                 return Mathf.Clamp01((float)score / _targetScore) >= target;
             }
 

@@ -27,16 +27,13 @@ namespace Neo.Settings
         [SerializeField]
         private bool _persistInput = true;
 
-        [Tooltip("When enabled, graphics preset / quality level are persisted.")]
-        [SerializeField]
+        [Tooltip("When enabled, graphics preset / quality level are persisted.")] [SerializeField]
         private bool _persistGraphics = true;
 
-        [Tooltip("When enabled, fullscreen and resolution selection are persisted.")]
-        [SerializeField]
+        [Tooltip("When enabled, fullscreen and resolution selection are persisted.")] [SerializeField]
         private bool _persistDisplay = true;
 
-        [Tooltip("When enabled, framerate cap and VSync are persisted.")]
-        [SerializeField]
+        [Tooltip("When enabled, framerate cap and VSync are persisted.")] [SerializeField]
         private bool _persistPerformance = true;
 
         [Header("Graphics preset → QualitySettings index")]
@@ -57,7 +54,8 @@ namespace Neo.Settings
         private int[] _framerateCapPresets = { -1, 30, 60, 120, 144, 240 };
 
         [Header("Resolution")]
-        [Tooltip("If empty, presets are built from Screen.resolutions at startup. Otherwise these entries are used (unique WxH).")]
+        [Tooltip(
+            "If empty, presets are built from Screen.resolutions at startup. Otherwise these entries are used (unique WxH).")]
         [SerializeField]
         private ResolutionPresetEntry[] _customResolutionPresets = Array.Empty<ResolutionPresetEntry>();
 
@@ -67,33 +65,24 @@ namespace Neo.Settings
         [Min(0.05f)]
         private float _deferredSaveDelaySeconds = 0.35f;
 
-        [Header("Default values (Reset group)")]
-        [SerializeField]
+        [Header("Default values (Reset group)")] [SerializeField]
         private float _defaultMouseSensitivity = 2f;
 
-        [SerializeField]
-        private GraphicsPreset _defaultGraphicsPreset = GraphicsPreset.High;
+        [SerializeField] private GraphicsPreset _defaultGraphicsPreset = GraphicsPreset.High;
 
-        [SerializeField]
-        private int _defaultCustomQualityLevel;
+        [SerializeField] private int _defaultCustomQualityLevel;
 
-        [SerializeField]
-        private bool _defaultFullScreen = true;
+        [SerializeField] private bool _defaultFullScreen = true;
 
-        [SerializeField]
-        private FullScreenMode _defaultFullScreenMode = FullScreenMode.FullScreenWindow;
+        [SerializeField] private FullScreenMode _defaultFullScreenMode = FullScreenMode.FullScreenWindow;
 
-        [SerializeField]
-        private bool _defaultResolutionAuto = true;
+        [SerializeField] private bool _defaultResolutionAuto = true;
 
-        [SerializeField]
-        private int _defaultResolutionIndex;
+        [SerializeField] private int _defaultResolutionIndex;
 
-        [SerializeField]
-        private int _defaultFramerateCap = -1;
+        [SerializeField] private int _defaultFramerateCap = -1;
 
-        [SerializeField]
-        private bool _defaultVSync;
+        [SerializeField] private bool _defaultVSync;
 
         private readonly List<ResolutionPresetEntry> _runtimeResolutions = new();
         private Coroutine _deferredCoroutine;
@@ -128,8 +117,9 @@ namespace Neo.Settings
             GameSettings.LoadState();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             GameSettings.Detach(this);
         }
 

@@ -12,14 +12,11 @@ namespace Neo.Tools
         [Header("References")] [SerializeField]
         private Image _image;
 
-        [Header("Settings")]
-        [SerializeField]
-        private float _duration = 0.5f;
+        [Header("Settings")] [SerializeField] private float _duration = 0.5f;
 
         [SerializeField] private Ease _ease = Ease.OutQuad;
 
-        [Tooltip("When enabled, inverts input value: value becomes (1 - value).")]
-        [SerializeField]
+        [Tooltip("When enabled, inverts input value: value becomes (1 - value).")] [SerializeField]
         private bool _invertValue;
 
         private Tween _anim;

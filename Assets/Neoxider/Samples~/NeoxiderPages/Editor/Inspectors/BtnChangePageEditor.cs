@@ -123,7 +123,7 @@ namespace Neo.Pages.Editor
 
                     string[] labels = PageIdEditorCache.GetLabels(null);
 
-                    PageId current = pageId.objectReferenceValue as PageId;
+                    var current = pageId.objectReferenceValue as PageId;
                     int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
                     if (currentIdx < 0)
                     {

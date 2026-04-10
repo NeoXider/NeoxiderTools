@@ -10,7 +10,7 @@ namespace Neo.Tools.Tests
 {
     public class InventorySystemTests
     {
-        private readonly List<UnityEngine.Object> _createdObjects = new();
+        private readonly List<Object> _createdObjects = new();
 
         [TearDown]
         public void TearDown()
@@ -86,13 +86,15 @@ namespace Neo.Tools.Tests
             InventoryDatabase database = CreateDatabase(walletData);
             const string saveKey = "InventoryTests.InstancePayload";
 
-            InventoryComponent source = CreateInventoryComponent("Inventory_Source", InventoryStorageMode.Aggregated, database, 0, saveKey);
+            InventoryComponent source = CreateInventoryComponent("Inventory_Source", InventoryStorageMode.Aggregated,
+                database, 0, saveKey);
             InventoryItemInstance instance = new(10);
             instance.ComponentStates.Add(new InventoryItemComponentState(nameof(TestWalletState), "{\"coins\":55}"));
             source.AddItemInstance(instance);
             source.Save();
 
-            InventoryComponent loaded = CreateInventoryComponent("Inventory_Loaded", InventoryStorageMode.Aggregated, database, 0, saveKey);
+            InventoryComponent loaded = CreateInventoryComponent("Inventory_Loaded", InventoryStorageMode.Aggregated,
+                database, 0, saveKey);
             loaded.Load();
 
             List<InventoryItemInstance> instances = loaded.GetSnapshotInstances();
@@ -110,7 +112,8 @@ namespace Neo.Tools.Tests
             InventoryDatabase database = CreateDatabase(itemData);
             const string saveKey = "InventoryTests.MultiInstancePayload";
 
-            InventoryComponent source = CreateInventoryComponent("Inventory_MultiSave", InventoryStorageMode.Aggregated, database, 0, saveKey);
+            InventoryComponent source = CreateInventoryComponent("Inventory_MultiSave", InventoryStorageMode.Aggregated,
+                database, 0, saveKey);
 
             InventoryItemInstance a = new(11);
             a.ComponentStates.Add(new InventoryItemComponentState("A", "{\"n\":1}"));
@@ -124,7 +127,8 @@ namespace Neo.Tools.Tests
             Assert.That(source.AddItemInstance(c), Is.EqualTo(1));
             source.Save();
 
-            InventoryComponent loaded = CreateInventoryComponent("Inventory_MultiLoad", InventoryStorageMode.Aggregated, database, 0, saveKey);
+            InventoryComponent loaded = CreateInventoryComponent("Inventory_MultiLoad", InventoryStorageMode.Aggregated,
+                database, 0, saveKey);
             loaded.Load();
 
             List<InventoryItemInstance> instances = loaded.GetSnapshotInstances();
@@ -143,7 +147,8 @@ namespace Neo.Tools.Tests
             InventoryDatabase database = CreateDatabase(itemData);
             const string saveKey = "InventoryTests.MultiInstanceSlots";
 
-            InventoryComponent source = CreateInventoryComponent("Inventory_MultiSlotSave", InventoryStorageMode.SlotGrid, database, 4, saveKey);
+            InventoryComponent source = CreateInventoryComponent("Inventory_MultiSlotSave",
+                InventoryStorageMode.SlotGrid, database, 4, saveKey);
 
             InventoryItemInstance x = new(12);
             x.ComponentStates.Add(new InventoryItemComponentState("k", "{\"x\":10}"));
@@ -154,7 +159,8 @@ namespace Neo.Tools.Tests
             Assert.That(source.AddItemInstance(y), Is.EqualTo(1));
             source.Save();
 
-            InventoryComponent loaded = CreateInventoryComponent("Inventory_MultiSlotLoad", InventoryStorageMode.SlotGrid, database, 4, saveKey);
+            InventoryComponent loaded = CreateInventoryComponent("Inventory_MultiSlotLoad",
+                InventoryStorageMode.SlotGrid, database, 4, saveKey);
             loaded.Load();
 
             Assert.That(loaded.GetSlot(0).IsInstance, Is.True);
@@ -174,7 +180,8 @@ namespace Neo.Tools.Tests
             const string saveKey = "InventoryTests.LegacyGrid";
             provider.SetString(saveKey, "{\"Entries\":[{\"ItemId\":7,\"Count\":3}]}");
 
-            InventoryComponent inventory = CreateInventoryComponent("Inventory_LegacyGrid", InventoryStorageMode.SlotGrid,
+            InventoryComponent inventory = CreateInventoryComponent("Inventory_LegacyGrid",
+                InventoryStorageMode.SlotGrid,
                 database, 5, saveKey);
             inventory.Load();
 
@@ -191,9 +198,11 @@ namespace Neo.Tools.Tests
             InventoryItemData gunData = CreateItemData(20, 1, true);
             InventoryDatabase database = CreateDatabase(gunData);
 
-            InventoryComponent source = CreateInventoryComponent("Inventory_SourceSlots", InventoryStorageMode.SlotGrid, database,
+            InventoryComponent source = CreateInventoryComponent("Inventory_SourceSlots", InventoryStorageMode.SlotGrid,
+                database,
                 3, "InventoryTests.SourceSlots");
-            InventoryComponent target = CreateInventoryComponent("Inventory_TargetSlots", InventoryStorageMode.SlotGrid, database,
+            InventoryComponent target = CreateInventoryComponent("Inventory_TargetSlots", InventoryStorageMode.SlotGrid,
+                database,
                 3, "InventoryTests.TargetSlots");
 
             InventoryItemInstance gun = new(20);
@@ -208,7 +217,8 @@ namespace Neo.Tools.Tests
             Assert.That(target.GetSlot(1).Instance.ComponentStates[0].Json, Is.EqualTo("{\"coins\":12}"));
         }
 
-        private InventoryComponent CreateInventoryComponent(string name, InventoryStorageMode mode, InventoryDatabase database,
+        private InventoryComponent CreateInventoryComponent(string name, InventoryStorageMode mode,
+            InventoryDatabase database,
             int slotCount, string saveKey)
         {
             GameObject gameObject = CreateGameObject(name);
@@ -303,7 +313,9 @@ namespace Neo.Tools.Tests
 
             public int GetInt(string key, int defaultValue = 0)
             {
-                return _strings.TryGetValue(key, out string raw) && int.TryParse(raw, out int value) ? value : defaultValue;
+                return _strings.TryGetValue(key, out string raw) && int.TryParse(raw, out int value)
+                    ? value
+                    : defaultValue;
             }
 
             public void SetInt(string key, int value)
@@ -314,7 +326,9 @@ namespace Neo.Tools.Tests
 
             public float GetFloat(string key, float defaultValue = 0f)
             {
-                return _strings.TryGetValue(key, out string raw) && float.TryParse(raw, out float value) ? value : defaultValue;
+                return _strings.TryGetValue(key, out string raw) && float.TryParse(raw, out float value)
+                    ? value
+                    : defaultValue;
             }
 
             public void SetFloat(string key, float value)
@@ -336,7 +350,9 @@ namespace Neo.Tools.Tests
 
             public bool GetBool(string key, bool defaultValue = false)
             {
-                return _strings.TryGetValue(key, out string raw) && bool.TryParse(raw, out bool value) ? value : defaultValue;
+                return _strings.TryGetValue(key, out string raw) && bool.TryParse(raw, out bool value)
+                    ? value
+                    : defaultValue;
             }
 
             public void SetBool(string key, bool value)

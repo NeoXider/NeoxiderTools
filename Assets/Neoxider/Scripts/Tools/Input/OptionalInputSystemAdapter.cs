@@ -13,6 +13,13 @@ namespace Neo.Tools
         private static readonly Dictionary<string, PropertyInfo> PropertyCache = new();
         private static readonly Dictionary<Type, MethodInfo> ReadValueMethodCache = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            PropertyCache.Clear();
+            ReadValueMethodCache.Clear();
+        }
+
         public static bool IsAvailable => KeyboardType != null || MouseType != null || GamepadType != null;
 
         public static Vector2 ReadMove()

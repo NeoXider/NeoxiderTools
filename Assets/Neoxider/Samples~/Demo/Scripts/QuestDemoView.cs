@@ -42,20 +42,15 @@ namespace Neo.Demo.Quest
         [Header("Options")] [SerializeField] [Range(3, 30)]
         private int _maxLogLines = 12;
 
-        [SerializeField]
-        private bool _autoBindUiByName = true;
+        [SerializeField] private bool _autoBindUiByName = true;
 
-        [SerializeField]
-        private bool _createDefaultRuntimeQuestsIfEmpty = true;
+        [SerializeField] private bool _createDefaultRuntimeQuestsIfEmpty = true;
 
-        [SerializeField]
-        private bool _loadQuestsFromResourcesIfEmpty = true;
+        [SerializeField] private bool _loadQuestsFromResourcesIfEmpty = true;
 
-        [SerializeField]
-        private string _resourcesQuestFolder = "Quests";
+        [SerializeField] private string _resourcesQuestFolder = "Quests";
 
-        [SerializeField]
-        private string _resourcesQuestFlowPath = "Quests/QuestFlowConfig";
+        [SerializeField] private string _resourcesQuestFlowPath = "Quests/QuestFlowConfig";
 
         private readonly List<string> _logLines = new();
         private int _selectedQuestIndex;
@@ -580,7 +575,9 @@ namespace Neo.Demo.Quest
                 string progressText = objective.Type == QuestObjectiveType.KillCount ||
                                       objective.Type == QuestObjectiveType.CollectCount
                     ? $"{progress}/{requiredCount}"
-                    : completed ? "done" : "pending";
+                    : completed
+                        ? "done"
+                        : "pending";
 
                 string marker = completed ? "[x]" : "[ ]";
                 builder.AppendLine($"{marker} {i}. {title} ({progressText})");
@@ -776,19 +773,19 @@ namespace Neo.Demo.Quest
 
         private static Button FindButton(string name)
         {
-            GameObject go = GameObject.Find(name);
+            var go = GameObject.Find(name);
             return go != null ? go.GetComponent<Button>() : null;
         }
 
         private static TMP_Text FindText(string name)
         {
-            GameObject go = GameObject.Find(name);
+            var go = GameObject.Find(name);
             return go != null ? go.GetComponent<TMP_Text>() : null;
         }
 
         private static Image FindImage(string name)
         {
-            GameObject go = GameObject.Find(name);
+            var go = GameObject.Find(name);
             return go != null ? go.GetComponent<Image>() : null;
         }
 

@@ -335,7 +335,7 @@ namespace Neo.Tools
                 _hasLifecycleSnapshotFromDisable = true;
             }
 
-            ReleaseControlInternal(reapplyBelowIfWasTop: true);
+            ReleaseControlInternal(true);
 
             if (applyDisableState && GetTopController() == null)
             {
@@ -560,7 +560,7 @@ namespace Neo.Tools
         /// </summary>
         public void ReleaseControl()
         {
-            ReleaseControlInternal(reapplyBelowIfWasTop: true);
+            ReleaseControlInternal(true);
         }
 
         private void ReleaseControlInternal(bool reapplyBelowIfWasTop)
@@ -596,7 +596,7 @@ namespace Neo.Tools
             if (!enabled)
             {
                 _cursorAccessActive = false;
-                ReleaseControlInternal(reapplyBelowIfWasTop: true);
+                ReleaseControlInternal(true);
             }
         }
 
@@ -685,7 +685,7 @@ namespace Neo.Tools
             }
             else
             {
-                ReleaseControlInternal(reapplyBelowIfWasTop: true);
+                ReleaseControlInternal(true);
             }
         }
     }

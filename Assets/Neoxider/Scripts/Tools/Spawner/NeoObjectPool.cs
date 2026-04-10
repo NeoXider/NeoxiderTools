@@ -78,7 +78,10 @@ namespace Neo.Tools
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
-                poolable.OnPoolCreate();
+                if (poolable as Object != null)
+                {
+                    poolable.OnPoolCreate();
+                }
             }
 
             return instance;
@@ -90,7 +93,10 @@ namespace Neo.Tools
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
-                poolable.OnPoolGet();
+                if (poolable as Object != null)
+                {
+                    poolable.OnPoolGet();
+                }
             }
 
             instance.SetActive(true);
@@ -102,7 +108,10 @@ namespace Neo.Tools
             IPoolable[] poolableComponents = GetPoolableComponents(instance);
             foreach (IPoolable poolable in poolableComponents)
             {
-                poolable.OnPoolRelease();
+                if (poolable as Object != null)
+                {
+                    poolable.OnPoolRelease();
+                }
             }
 
             if (_storageRoot != null)
@@ -117,7 +126,14 @@ namespace Neo.Tools
         {
             // Drop cache when instance is destroyed
             _cachedComponents.Remove(instance);
-            Object.Destroy(instance);
+            if (Application.isPlaying)
+            {
+                Object.Destroy(instance);
+            }
+            else
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         public GameObject GetObject(Vector3 position, Quaternion rotation)

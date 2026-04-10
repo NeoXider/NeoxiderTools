@@ -1,8 +1,10 @@
+using System;
 using System.Collections.Generic;
 using Neo.Save;
 using Neo.Settings;
 using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Neo.Tools.Tests
 {
@@ -25,45 +27,79 @@ namespace Neo.Tools.Tests
                 GameSettings.Detach(svc);
                 Object.DestroyImmediate(svc.gameObject);
             }
+
+            // Reset GameSettings static state
+            typeof(GameSettings).GetMethod("ResetStaticStateForTesting",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.Invoke(null, null);
+        }
+
+        private GameSettingsComponent CreateComponent()
+        {
+            var go = new GameObject("SettingsService");
+            GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
+            Type type = typeof(GameSettingsComponent);
+            type.GetField("_saveKeyPrefix",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(svc, "Neo.Settings.");
+            type.GetField("_persistInput",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, true);
+            type.GetField("_defaultMouseSensitivity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, 2f);
+
+            type.GetMethod("Init", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(svc, null);
+            return svc;
         }
 
         [Test]
         public void MouseSensitivity_Immediate_Persists()
         {
-            var go = new GameObject("SettingsService");
-            go.AddComponent<GameSettingsComponent>();
+            GameSettingsComponent svc = CreateComponent();
 
             GameSettings.SetMouseSensitivity(4.25f, SettingsPersistMode.Immediate);
 
             string key = "Neo.Settings." + GameSettingsSaveKeys.MouseSensitivity;
             Assert.That(SaveProvider.GetFloat(key, 0f), Is.EqualTo(4.25f).Within(0.001f));
-            Object.DestroyImmediate(go);
+            Object.DestroyImmediate(svc.gameObject);
         }
 
         [Test]
         public void MouseSensitivity_Deferred_FlushtesSave()
         {
-            var go = new GameObject("SettingsService");
-            go.AddComponent<GameSettingsComponent>();
+            GameSettingsComponent svc = CreateComponent();
 
             GameSettings.SetMouseSensitivity(1.75f, SettingsPersistMode.Deferred);
+
             string key = "Neo.Settings." + GameSettingsSaveKeys.MouseSensitivity;
             Assert.That(SaveProvider.HasKey(key), Is.False);
 
             GameSettings.FlushPendingSettingsSave();
-            Assert.That(SaveProvider.GetFloat(key, 0f), Is.EqualTo(1.75f).Within(0.001f));
-            Object.DestroyImmediate(go);
+            float v = SaveProvider.GetFloat(key, -1f);
+            Assert.That(v, Is.EqualTo(1.75f).Within(0.001f));
+            Object.DestroyImmediate(svc.gameObject);
         }
 
         [Test]
         public void LoadState_Restores_MouseSensitivity()
         {
             var go = new GameObject("SettingsService");
-            go.AddComponent<GameSettingsComponent>();
+            GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
+            Type type = typeof(GameSettingsComponent);
+            type.GetField("_saveKeyPrefix",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .SetValue(svc, "Neo.Settings.");
+            type.GetField("_persistInput",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, true);
+            type.GetField("_defaultMouseSensitivity",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, 2f);
+
+            // Set the saved data BEFORE calling Init! Because Init calls LoadState!
             string key = "Neo.Settings." + GameSettingsSaveKeys.MouseSensitivity;
             SaveProvider.SetFloat(key, 5.5f);
 
-            GameSettings.LoadState();
+            type.GetMethod("Init", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(svc, null);
+
             Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(5.5f).Within(0.001f));
             Object.DestroyImmediate(go);
         }
@@ -81,8 +117,10 @@ namespace Neo.Tools.Tests
             public event System.Action OnDataLoaded;
             public event System.Action<string> OnKeyChanged;
 
-            public int GetInt(string key, int defaultValue = 0) =>
-                _ints.TryGetValue(key, out int v) ? v : defaultValue;
+            public int GetInt(string key, int defaultValue = 0)
+            {
+                return _ints.TryGetValue(key, out int v) ? v : defaultValue;
+            }
 
             public void SetInt(string key, int value)
             {
@@ -90,8 +128,10 @@ namespace Neo.Tools.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public float GetFloat(string key, float defaultValue = 0f) =>
-                _floats.TryGetValue(key, out float v) ? v : defaultValue;
+            public float GetFloat(string key, float defaultValue = 0f)
+            {
+                return _floats.TryGetValue(key, out float v) ? v : defaultValue;
+            }
 
             public void SetFloat(string key, float value)
             {
@@ -99,8 +139,10 @@ namespace Neo.Tools.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public string GetString(string key, string defaultValue = "") =>
-                _strings.TryGetValue(key, out string v) ? v : defaultValue;
+            public string GetString(string key, string defaultValue = "")
+            {
+                return _strings.TryGetValue(key, out string v) ? v : defaultValue;
+            }
 
             public void SetString(string key, string value)
             {
@@ -108,8 +150,10 @@ namespace Neo.Tools.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool GetBool(string key, bool defaultValue = false) =>
-                _bools.TryGetValue(key, out bool v) ? v : defaultValue;
+            public bool GetBool(string key, bool defaultValue = false)
+            {
+                return _bools.TryGetValue(key, out bool v) ? v : defaultValue;
+            }
 
             public void SetBool(string key, bool value)
             {
@@ -117,9 +161,11 @@ namespace Neo.Tools.Tests
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool HasKey(string key) =>
-                _ints.ContainsKey(key) || _floats.ContainsKey(key) || _strings.ContainsKey(key) ||
-                _bools.ContainsKey(key);
+            public bool HasKey(string key)
+            {
+                return _ints.ContainsKey(key) || _floats.ContainsKey(key) || _strings.ContainsKey(key) ||
+                       _bools.ContainsKey(key);
+            }
 
             public void DeleteKey(string key)
             {

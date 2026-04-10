@@ -12,9 +12,7 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/" + "Tools/Inventory/" + nameof(InventorySlotGridView))]
     public sealed class InventorySlotGridView : MonoBehaviour
     {
-        [Header("Source")]
-        [SerializeField]
-        [Tooltip("Inventory to display; must use Storage Mode = Slot Grid.")]
+        [Header("Source")] [SerializeField] [Tooltip("Inventory to display; must use Storage Mode = Slot Grid.")]
         private InventoryComponent _inventory;
 
         [SerializeField] [Tooltip("If Inventory is null, use InventoryComponent.FindDefault() on enable.")]
@@ -26,8 +24,7 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("Schedule Refresh() on the next frame after enable (layout-safe).")]
         private bool _refreshNextFrameOnEnable = true;
 
-        [Header("Slots")]
-        [SerializeField] [Tooltip("Prefab instantiated per slot when Manual Slots is empty.")]
+        [Header("Slots")] [SerializeField] [Tooltip("Prefab instantiated per slot when Manual Slots is empty.")]
         private InventorySlotView _slotPrefab;
 
         [SerializeField] [Tooltip("Parent for spawned slot views; defaults to this transform.")]
@@ -37,7 +34,8 @@ namespace Neo.Tools
         private List<InventorySlotView> _manualSlots = new();
 
         [Header("Transfer")]
-        [SerializeField] [Tooltip("First click selects a slot; second click on another grid runs InventoryTransferService.Transfer.")]
+        [SerializeField]
+        [Tooltip("First click selects a slot; second click on another grid runs InventoryTransferService.Transfer.")]
         private bool _enableClickTransfer = true;
 
         private static InventorySlotGridView _selectedGrid;

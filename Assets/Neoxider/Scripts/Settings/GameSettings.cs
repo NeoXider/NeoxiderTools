@@ -88,6 +88,13 @@ namespace Neo.Settings
             s_context = component;
         }
 
+        internal static void ResetStaticStateForTesting()
+        {
+            s_context = null;
+            s_mouseSensitivity = 2f;
+            s_graphicsPreset = GraphicsPreset.High;
+        }
+
         /// <summary>Releases context when the service is destroyed.</summary>
         public static void Detach(GameSettingsComponent component)
         {
@@ -145,7 +152,8 @@ namespace Neo.Settings
             s_resolutionIndex =
                 SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.ResolutionIndex), s_context.DefaultResolutionIndex);
 
-            s_framerateCap = SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.FramerateCap), s_context.DefaultFramerateCap);
+            s_framerateCap =
+                SaveProvider.GetInt(Key(p, GameSettingsSaveKeys.FramerateCap), s_context.DefaultFramerateCap);
             s_vSync = SaveProvider.GetBool(Key(p, GameSettingsSaveKeys.VSync), s_context.DefaultVSync);
 
             s_context.RebuildResolutionList();
@@ -389,7 +397,10 @@ namespace Neo.Settings
             return 0;
         }
 
-        private static string Key(string prefix, string suffix) => prefix + suffix;
+        private static string Key(string prefix, string suffix)
+        {
+            return prefix + suffix;
+        }
 
         private static void TryPersist(SettingsPersistMode mode)
         {

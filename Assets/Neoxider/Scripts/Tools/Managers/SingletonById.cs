@@ -15,6 +15,12 @@ namespace Neo.Tools
     {
         private static readonly Dictionary<string, T> ById = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            ById.Clear();
+        }
+
         [Header("Singleton by Id")]
         [Tooltip("Unique identifier. Only one instance per Id; when a new one appears, the previous is destroyed.")]
         [SerializeField]

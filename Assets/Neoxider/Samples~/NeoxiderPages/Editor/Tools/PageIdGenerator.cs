@@ -80,6 +80,7 @@ namespace Neo.Pages.Editor
                 {
                     AssetDatabase.CreateFolder(current, parts[i]);
                 }
+
                 current = next;
             }
         }

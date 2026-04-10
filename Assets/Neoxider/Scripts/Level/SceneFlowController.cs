@@ -41,7 +41,8 @@ namespace Neo
             [SerializeField] private int _sceneBuildIndex;
             [SerializeField] private string _sceneName = "";
 
-            [Tooltip("When LoadScene() is called with no arguments: true = by name, false = by build index")] [SerializeField]
+            [Tooltip("When LoadScene() is called with no arguments: true = by name, false = by build index")]
+            [SerializeField]
             private bool _useSceneName;
 
             [Tooltip("For Async: activate the scene as soon as it is ready. Not used for AsyncManual.")]
@@ -241,7 +242,7 @@ namespace Neo
 
                 // Guard against overlapping load requests:
                 // another coroutine may overwrite/null _currentOperation while this one is still running.
-                var op = _currentOperation;
+                AsyncOperation op = _currentOperation;
 
                 op.allowSceneActivation = autoActivate;
 
@@ -267,9 +268,11 @@ namespace Neo
 
                     yield return null;
                 }
+
                 if (op == null)
                 {
-                    Debug.LogWarning("[SceneFlowController] Load operation became null. Possibly overlapping load requests.");
+                    Debug.LogWarning(
+                        "[SceneFlowController] Load operation became null. Possibly overlapping load requests.");
                     yield break;
                 }
 

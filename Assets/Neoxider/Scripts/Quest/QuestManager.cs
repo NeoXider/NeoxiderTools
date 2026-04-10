@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Neo.Condition;
+using Neo.Save;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -58,7 +59,70 @@ namespace Neo.Quest
         [Tooltip("Objective index used by the editor CompleteObjective button.")] [SerializeField]
         private int _editorObjectiveIndex;
 
-        private readonly List<QuestState> _states = new();
+        [Header("Persistence")] [Tooltip("The SaveProvider key used for persisting quest states.")] [SerializeField]
+        private string _saveKey = "Settings_Quests";
+
+        [Tooltip("If true, quests are automatically saved when accepted, completed, or failed.")] [SerializeField]
+        private bool _autoSave = true;
+
+        [Tooltip("If true, quests are automatically loaded on initialization.")] [SerializeField]
+        private bool _autoLoad = true;
+
+        private List<QuestState> _states = new();
+
+        /// <summary>Wrapper class for JSON serialization of quest states.</summary>
+        [Serializable]
+        private class QuestSaveData
+        {
+            public List<QuestState> States = new();
+        }
+
+        protected override void Init()
+        {
+            base.Init();
+            if (_autoLoad)
+            {
+                Load();
+            }
+        }
+
+        /// <summary>Save quest states to SaveProvider.</summary>
+        public void Save()
+        {
+            if (string.IsNullOrEmpty(_saveKey))
+            {
+                return;
+            }
+
+            var data = new QuestSaveData { States = _states };
+            SaveProvider.SetString(_saveKey, JsonUtility.ToJson(data));
+        }
+
+        /// <summary>Load quest states from SaveProvider.</summary>
+        public void Load()
+        {
+            if (string.IsNullOrEmpty(_saveKey))
+            {
+                return;
+            }
+
+            string json = SaveProvider.GetString(_saveKey, "");
+            if (!string.IsNullOrEmpty(json))
+            {
+                try
+                {
+                    QuestSaveData data = JsonUtility.FromJson<QuestSaveData>(json);
+                    if (data?.States != null)
+                    {
+                        _states = data.States;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"[QuestManager] Failed to load save data: {e.Message}");
+                }
+            }
+        }
 
         /// <summary>Context for start-condition checks (ConditionEntry.Evaluate).</summary>
         public GameObject ConditionContext
@@ -160,6 +224,11 @@ namespace Neo.Quest
             _onQuestAccepted?.Invoke(id);
             _onAnyQuestAccepted?.Invoke();
             QuestAccepted?.Invoke(quest);
+            if (_autoSave)
+            {
+                Save();
+            }
+
             return true;
         }
 
@@ -251,6 +320,11 @@ namespace Neo.Quest
                 _onAnyQuestCompleted?.Invoke();
                 QuestCompleted?.Invoke(quest);
             }
+
+            if (_autoSave)
+            {
+                Save();
+            }
         }
 
         /// <summary>Notify enemy kill (for KillCount objectives).</summary>
@@ -340,6 +414,10 @@ namespace Neo.Quest
 
             state.Status = QuestStatus.Failed;
             _onQuestFailed?.Invoke(questId);
+            if (_autoSave)
+            {
+                Save();
+            }
         }
 
         /// <summary>Fail quest by config.</summary>
@@ -363,6 +441,11 @@ namespace Neo.Quest
             }
 
             _states.Remove(state);
+            if (_autoSave)
+            {
+                Save();
+            }
+
             return true;
         }
 
@@ -403,6 +486,10 @@ namespace Neo.Quest
         public void ResetAllQuests()
         {
             _states.Clear();
+            if (_autoSave)
+            {
+                Save();
+            }
         }
 
         /// <summary>Accept quest using Editor Quest Id field (Inspector button).</summary>

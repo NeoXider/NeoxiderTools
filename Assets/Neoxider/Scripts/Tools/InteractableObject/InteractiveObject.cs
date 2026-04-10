@@ -34,9 +34,7 @@ namespace Neo.Tools
 
         public bool interactable = true;
 
-        [Header("Interaction Settings")]
-        [Tooltip("Enable hover detection (cursor over collider).")]
-        [SerializeField]
+        [Header("Interaction Settings")] [Tooltip("Enable hover detection (cursor over collider).")] [SerializeField]
         private bool useHoverDetection = true;
 
         [Tooltip("Enable mouse click/down/up interaction (hover detection can be enabled separately).")]
@@ -64,11 +62,13 @@ namespace Neo.Tools
         private bool includeTriggerCollidersInMouseRaycast = true;
 
         [Header("Target Colliders")]
-        [Tooltip("Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject only.")]
+        [Tooltip(
+            "Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject only.")]
         [SerializeField]
         private Collider targetCollider3D;
 
-        [Tooltip("Optional explicit 2D collider used for hover, click, and view checks. If not set, uses Collider2D on this GameObject only.")]
+        [Tooltip(
+            "Optional explicit 2D collider used for hover, click, and view checks. If not set, uses Collider2D on this GameObject only.")]
         [SerializeField]
         private Collider2D targetCollider2D;
 
@@ -89,8 +89,7 @@ namespace Neo.Tools
         [Tooltip("Layers that block interaction (used when checkObstacles is enabled).")] [SerializeField]
         private LayerMask obstacleLayers = -1;
 
-        [Tooltip("Include trigger colliders in obstacle ray checks.")]
-        [SerializeField]
+        [Tooltip("Include trigger colliders in obstacle ray checks.")] [SerializeField]
         private bool includeTriggerCollidersInObstacleCheck;
 
         [Tooltip("Ignore colliders from distance check point hierarchy (e.g. player capsule/camera rig).")]

@@ -170,15 +170,13 @@ namespace Neo.Core.Level
                 return;
             }
 
-            EnsureModel();
+            EnsureModel(); // Events are hooked up here when the model is instantiated
             if (_loadOnAwake && !string.IsNullOrWhiteSpace(_saveKey))
             {
                 Load();
             }
 
             SyncReactiveFromModel();
-            _model.OnLevelChanged += HandleLevelChanged;
-            _model.OnXpGained += HandleXpGained;
             _initialized = true;
         }
 

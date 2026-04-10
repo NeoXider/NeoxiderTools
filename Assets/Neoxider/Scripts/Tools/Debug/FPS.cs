@@ -48,8 +48,7 @@ namespace Neo.Tools
         private float nextDisplayTime;
         private int samplesAccumulated;
 
-        [Header("UI Settings")] [Tooltip("Text component to display FPS")]
-        [SerializeField]
+        [Header("UI Settings")] [Tooltip("Text component to display FPS")] [SerializeField]
         private TMP_Text text;
 
         /// <summary>

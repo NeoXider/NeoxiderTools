@@ -38,29 +38,24 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("If Inventory is null, resolve via FindDefault() on enable.")]
         private bool _autoFindInventory = true;
 
-        [SerializeField]
-        [Tooltip("Optional dropper used by DropEquipped() to spawn world items with physics/pickup.")]
+        [SerializeField] [Tooltip("Optional dropper used by DropEquipped() to spawn world items with physics/pickup.")]
         private InventoryDropper _dropper;
 
-        [Header("Visual")]
-        [SerializeField]
-        [Tooltip("Prefab used when item data has no WorldDropPrefab.")]
+        [Header("Visual")] [SerializeField] [Tooltip("Prefab used when item data has no WorldDropPrefab.")]
         private GameObject _fallbackHandPrefab;
 
         [SerializeField]
-        [Tooltip("Fixed = multiply by Hand Scale Fixed; Relative = multiply by (1 + Hand Scale Offset) after HandView scale.")]
+        [Tooltip(
+            "Fixed = multiply by Hand Scale Fixed; Relative = multiply by (1 + Hand Scale Offset) after HandView scale.")]
         private HandScaleMode _scaleInHandMode = HandScaleMode.Relative;
 
-        [SerializeField]
-        [Tooltip("Hand scale multiplier when Scale In Hand Mode = Fixed.")]
+        [SerializeField] [Tooltip("Hand scale multiplier when Scale In Hand Mode = Fixed.")]
         private float _handScaleFixed = 1f;
 
-        [SerializeField]
-        [Tooltip("Hand scale delta when Scale In Hand Mode = Relative: effective = 1 + offset.")]
+        [SerializeField] [Tooltip("Hand scale delta when Scale In Hand Mode = Relative: effective = 1 + offset.")]
         private float _handScaleOffset;
 
-        [SerializeField]
-        [Tooltip("When true, disable all Collider/Collider2D on the equipped instance (default: on).")]
+        [SerializeField] [Tooltip("When true, disable all Collider/Collider2D on the equipped instance (default: on).")]
         private bool _disableCollidersInHand = true;
 
         [Header("Selector Sync")]
@@ -69,16 +64,19 @@ namespace Neo.Tools
         private bool _syncSelectorOnInventoryChanged = true;
 
         [SerializeField]
-        [Tooltip("Allow slot index -1 (empty hand) when items exist; enable Allow Empty Effective Index on Selector if used.")]
+        [Tooltip(
+            "Allow slot index -1 (empty hand) when items exist; enable Allow Empty Effective Index on Selector if used.")]
         private bool _allowEmptySlot = true;
 
         [SerializeField]
-        [Tooltip("When enabled and inventory is slot-based, Slot Index means a physical slot index including empty slots.")]
+        [Tooltip(
+            "When enabled and inventory is slot-based, Slot Index means a physical slot index including empty slots.")]
         private bool _usePhysicalSlotIndices = true;
 
         [Header("Drop (when Dropper assigned)")]
         [SerializeField]
-        [Tooltip("When Dropper is set, drop key removes the equipped item via Dropper (Dropper key input is disabled while linked).")]
+        [Tooltip(
+            "When Dropper is set, drop key removes the equipped item via Dropper (Dropper key input is disabled while linked).")]
         private bool _allowDropInput = true;
 
         [SerializeField] [Tooltip("Key to drop the equipped item.")]

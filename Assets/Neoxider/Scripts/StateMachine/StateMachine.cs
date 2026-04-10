@@ -43,6 +43,8 @@ namespace Neo.StateMachine
         private readonly List<StateTransition> globalTransitions = new();
         private readonly Dictionary<Type, TState> stateCache = new();
         private readonly Dictionary<Type, List<StateTransition>> transitionCache = new();
+        private readonly Dictionary<Type, List<StateTransition>> _sortedTransitionsCache = new();
+        private bool _sortedTransitionsDirty;
 
         /// <summary>
         ///     Creates a new State Machine instance.
@@ -177,9 +179,18 @@ namespace Neo.StateMachine
             }
 
             Type targetType = typeof(T);
-            List<StateTransition> transitions = GetAvailableTransitions(CurrentState.GetType());
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(CurrentState.GetType());
 
-            return transitions.Any(t => t.ToStateType == targetType && t.EvaluatePredicates(CurrentState));
+            for (int i = 0; i < transitions.Count; i++)
+            {
+                StateTransition t = transitions[i];
+                if (t.ToStateType == targetType && t.EvaluatePredicates(CurrentState))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>
@@ -193,6 +204,8 @@ namespace Neo.StateMachine
                 Debug.LogWarning("[StateMachine] Attempted to register null transition.");
                 return;
             }
+
+            _sortedTransitionsDirty = true;
 
             if (transition.FromStateType != null)
             {
@@ -234,6 +247,8 @@ namespace Neo.StateMachine
                 return;
             }
 
+            _sortedTransitionsDirty = true;
+
             if (transition.FromStateType != null && enableTransitionCaching)
             {
                 Type fromType = transition.FromStateType;
@@ -269,8 +284,19 @@ namespace Neo.StateMachine
         /// </summary>
         /// <param name="fromStateType">Source state type.</param>
         /// <returns>List of applicable transitions.</returns>
-        public List<StateTransition> GetAvailableTransitions(Type fromStateType)
+        public IReadOnlyList<StateTransition> GetAvailableTransitions(Type fromStateType)
         {
+            if (_sortedTransitionsDirty)
+            {
+                _sortedTransitionsCache.Clear();
+                _sortedTransitionsDirty = false;
+            }
+
+            if (_sortedTransitionsCache.TryGetValue(fromStateType, out List<StateTransition> cachedSorted))
+            {
+                return cachedSorted;
+            }
+
             List<StateTransition> availableTransitions = new();
 
             if (enableTransitionCaching && transitionCache.TryGetValue(fromStateType, out List<StateTransition> cached))
@@ -280,7 +306,11 @@ namespace Neo.StateMachine
 
             availableTransitions.AddRange(globalTransitions);
 
-            return availableTransitions.OrderByDescending(t => t.Priority).ToList();
+            // In-place sort prevents OrderByDescending+ToList allocations
+            availableTransitions.Sort((a, b) => b.Priority.CompareTo(a.Priority));
+
+            _sortedTransitionsCache[fromStateType] = availableTransitions;
+            return availableTransitions;
         }
 
         /// <summary>
@@ -294,10 +324,11 @@ namespace Neo.StateMachine
             }
 
             Type currentType = CurrentState.GetType();
-            List<StateTransition> transitions = GetAvailableTransitions(currentType);
+            IReadOnlyList<StateTransition> transitions = GetAvailableTransitions(currentType);
 
-            foreach (StateTransition transition in transitions)
+            for (int i = 0; i < transitions.Count; i++)
             {
+                StateTransition transition = transitions[i];
                 if (!transition.IsEnabled)
                 {
                     continue;
@@ -357,6 +388,8 @@ namespace Neo.StateMachine
         {
             transitionCache.Clear();
             globalTransitions.Clear();
+            _sortedTransitionsCache.Clear();
+            _sortedTransitionsDirty = true;
         }
 
         private bool TryApplyTransitionTarget(StateTransition transition)

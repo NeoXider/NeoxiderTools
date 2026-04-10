@@ -163,20 +163,13 @@ namespace Neo.Tools
         public IEnumerator SpawnObjects()
         {
             isSpawning = true;
-            float timer = 0f;
 
             while (isSpawning && (spawnLimit == 0 || _spawnedCount < spawnLimit))
             {
-                timer -= Time.deltaTime;
-
-                if (timer <= 0)
-                {
-                    SpawnRandomObject();
-                    _spawnedCount++;
-                    timer = Random.Range(minSpawnDelay, maxSpawnDelay);
-                }
-
-                yield return null;
+                SpawnRandomObject();
+                _spawnedCount++;
+                float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                yield return new WaitForSeconds(delay);
             }
 
             isSpawning = false;
@@ -264,6 +257,11 @@ namespace Neo.Tools
                 return null;
             }
 
+            if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
+            {
+                SpawnedObjects.RemoveAll(obj => obj == null);
+            }
+
             SpawnedObjects.Add(spawnedObject);
 
             if (destroyDelay > 0)
@@ -280,9 +278,10 @@ namespace Neo.Tools
         {
             yield return new WaitForSeconds(delay);
 
+            SpawnedObjects.Remove(objectToDestroy);
+
             if (objectToDestroy != null)
             {
-                SpawnedObjects.Remove(objectToDestroy);
                 if (_useObjectPool)
                 {
                     SpawnUtility.Despawn(objectToDestroy);
@@ -309,7 +308,7 @@ namespace Neo.Tools
                 return GetRandomPointInCollider2D(_spawnAreaCollider2D);
             }
 
-            return _spawnTransform.position;
+            return _spawnTransform != null ? _spawnTransform.position : transform.position;
         }
 
         /// <summary>
@@ -374,7 +373,8 @@ namespace Neo.Tools
 
         public int GetActiveObjectCount()
         {
-            return SpawnedObjects.Count(obj => obj != null && obj.activeInHierarchy);
+            SpawnedObjects.RemoveAll(obj => obj == null);
+            return SpawnedObjects.Count(obj => obj.activeInHierarchy);
         }
 
         // --- Random point inside colliders ---

@@ -33,8 +33,7 @@ namespace Neo.Tools
         [SerializeField] private float _extraGravityMultiplier = 1.6f;
         [SerializeField] private bool _canRun = true;
 
-        [Tooltip("Allow jump. Can be changed at runtime via SetJumpEnabled(bool).")]
-        [SerializeField]
+        [Tooltip("Allow jump. Can be changed at runtime via SetJumpEnabled(bool).")] [SerializeField]
         private bool _canJump = true;
 
         [Header("Grounding")] [SerializeField] private LayerMask _groundMask = ~0;
@@ -46,8 +45,7 @@ namespace Neo.Tools
         [Header("Look")] [SerializeField] private bool _canLook = true;
         [SerializeField] private LookYawMode _lookYawMode = LookYawMode.RotateCharacter;
 
-        [Tooltip("When enabled, look speed uses GameSettings.MouseSensitivity (and live updates).")]
-        [SerializeField]
+        [Tooltip("When enabled, look speed uses GameSettings.MouseSensitivity (and live updates).")] [SerializeField]
         private bool _useGameSettingsMouseSensitivity = true;
 
         [SerializeField] private float _mouseSensitivity = 2f;
@@ -99,9 +97,10 @@ namespace Neo.Tools
         private Vector2 _lookInput;
 
         private Vector2 _moveInput;
-        [Tooltip("Process walk/run and jump buffer input. Toggle via SetMovementEnabled(bool).")]
-        [SerializeField]
+
+        [Tooltip("Process walk/run and jump buffer input. Toggle via SetMovementEnabled(bool).")] [SerializeField]
         private bool _movementEnabled = true;
+
         private bool _newInputUnavailableWarningShown;
         private float _pitch;
         private bool _wasGrounded;

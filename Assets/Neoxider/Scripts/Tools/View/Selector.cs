@@ -421,8 +421,7 @@ namespace Neo.Tools
         [SerializeField]
         private List<int> _excludedIndicesInspector = new();
 
-        [Tooltip("Snapshot of indices already used in unique-selection mode. Read-only (debug).")]
-        [SerializeField]
+        [Tooltip("Snapshot of indices already used in unique-selection mode. Read-only (debug).")] [SerializeField]
         private List<int> _usedIndicesForUniqueInspector = new();
 
         [Tooltip(
@@ -473,35 +472,35 @@ namespace Neo.Tools
         /// <summary>
         ///     Invoked when the selection changes, providing the new index
         /// </summary>
-        public UnityEvent<int> OnSelectionChanged;
+        public UnityEvent<int> OnSelectionChanged = new();
 
         /// <summary>
         ///     Invoked when reaching the end of the items array (only if loop is disabled)
         /// </summary>
-        public UnityEvent OnFinished;
+        public UnityEvent OnFinished = new();
 
         /// <summary>
         ///     Invoked when unique mode is on and all indices have been selected once (cycle complete). If auto-reset is enabled,
         ///     the set is cleared right after.
         /// </summary>
-        public UnityEvent OnUniqueCycleComplete;
+        public UnityEvent OnUniqueCycleComplete = new();
 
         /// <summary>
         ///     Invoked when ResetUnique() is called (unique mode tracking is cleared).
         /// </summary>
-        public UnityEvent OnUniqueReset;
+        public UnityEvent OnUniqueReset = new();
 
         /// <summary>
         ///     Invoked when selection changes, passing the newly selected GameObject (or null if none).
         /// </summary>
-        public UnityEvent<GameObject> OnSelectionChangedGameObject;
+        public UnityEvent<GameObject> OnSelectionChangedGameObject = new();
 
         /// <summary>
         ///     Invoked when the number of active items changes (see <see cref="CountActive"/>). With real item objects, this
         ///     reflects actual <see cref="GameObject.activeSelf"/> / <see cref="SelectorItem.ActiveValue"/> counts; with virtual
         ///     <see cref="Count"/> only, the previous logical formula is used.
         /// </summary>
-        public UnityEvent<int> OnCountActiveChanged;
+        public UnityEvent<int> OnCountActiveChanged = new();
 
         #endregion
 

@@ -9,6 +9,14 @@ namespace Neo.Extensions
     {
         private static readonly Dictionary<Texture2D, Sprite> CachedPreviewSprites = new();
 
+#if UNITY_EDITOR
+        [InitializeOnLoadMethod]
+        private static void ResetStaticState()
+        {
+            CachedPreviewSprites.Clear();
+        }
+#endif
+
         public static Texture2D GetPreviewTexture(this GameObject prefab)
         {
             if (prefab == null)

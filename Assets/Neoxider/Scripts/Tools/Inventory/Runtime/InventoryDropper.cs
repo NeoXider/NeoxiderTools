@@ -230,7 +230,8 @@ namespace Neo.Tools
         public int DropPackedIndex(int packedIndex, int amount = 1)
         {
             InventoryComponent inv = ResolveInventory();
-            if (inv == null || amount <= 0 || !inv.TryTakeRecordAtPackedIndex(packedIndex, amount, out InventoryItemRecord record))
+            if (inv == null || amount <= 0 ||
+                !inv.TryTakeRecordAtPackedIndex(packedIndex, amount, out InventoryItemRecord record))
             {
                 OnDropFailed?.Invoke(-1, amount);
                 return 0;

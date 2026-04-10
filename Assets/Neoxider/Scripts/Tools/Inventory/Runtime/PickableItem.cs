@@ -190,7 +190,8 @@ namespace Neo.Tools
 
             OnCollectStarted?.Invoke();
             InventoryItemData data = _itemData != null ? _itemData : inventory.GetItemData(itemId);
-            bool useInstanceState = (data != null && data.SupportsInstanceState) || InventoryItemStateUtility.HasState(gameObject);
+            bool useInstanceState = (data != null && data.SupportsInstanceState) ||
+                                    InventoryItemStateUtility.HasState(gameObject);
             int added = 0;
             if (useInstanceState)
             {

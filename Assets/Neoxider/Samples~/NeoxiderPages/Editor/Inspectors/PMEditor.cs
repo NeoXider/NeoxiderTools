@@ -332,7 +332,7 @@ namespace Neo.Pages.Editor
                 return;
             }
 
-            PM pm = (PM)target;
+            var pm = (PM)target;
             if (pm == null || id == null)
             {
                 return;
@@ -353,7 +353,7 @@ namespace Neo.Pages.Editor
                 return new PageId[] { };
             }
 
-            PageId[] result = new PageId[prop.arraySize];
+            var result = new PageId[prop.arraySize];
             for (int i = 0; i < prop.arraySize; i++)
             {
                 result[i] = prop.GetArrayElementAtIndex(i).objectReferenceValue as PageId;
@@ -385,7 +385,7 @@ namespace Neo.Pages.Editor
 
             string[] labels = PageIdEditorCache.GetLabels(null);
 
-            PageId current = prop.objectReferenceValue as PageId;
+            var current = prop.objectReferenceValue as PageId;
             int currentIdx = current == null ? 0 : Array.FindIndex(ids, x => x == current) + 1;
             if (currentIdx < 0)
             {

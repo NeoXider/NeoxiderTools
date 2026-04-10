@@ -19,6 +19,14 @@ namespace Neo.Tools
         private static Transform _fallbackRoot;
         private static bool _helperCreated;
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            FallbackPools.Clear();
+            _fallbackRoot = null;
+            _helperCreated = false;
+        }
+
         /// <summary>
         ///     If true (default), fallback pools and their objects are destroyed on scene load.
         ///     If false, the pool root is DontDestroyOnLoad and survives scene changes.
@@ -110,17 +118,11 @@ namespace Neo.Tools
             if (PoolManager.I != null)
             {
                 GameObject fromManager = PoolManager.Get(prefab, position, rotation, parent);
-                if (fromManager != null)
-                {
-                    fromManager.SetActive(true);
-                }
-
                 return fromManager;
             }
 
             NeoObjectPool pool = GetOrCreateFallbackPool(prefab);
             GameObject pooled = pool.GetObject(position, rotation);
-            pooled.SetActive(true);
             pooled.transform.SetParent(parent != null ? parent : FallbackRoot, true);
             return pooled;
         }

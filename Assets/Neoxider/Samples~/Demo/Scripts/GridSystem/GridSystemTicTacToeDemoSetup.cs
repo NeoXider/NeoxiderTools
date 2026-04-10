@@ -171,8 +171,8 @@ namespace Neo.Demo.GridSystem
         private static void SetRef(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName,
-                System.Reflection.BindingFlags.NonPublic |
-                System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic |
+                BindingFlags.Instance);
             field?.SetValue(target, value);
             if (target is Object obj)
             {

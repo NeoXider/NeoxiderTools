@@ -12,6 +12,12 @@ namespace Neo.Extensions
     {
         private static readonly Dictionary<Type, Array> EnumValuesCache = new();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            EnumValuesCache.Clear();
+        }
+
         #region Private Helper Methods
 
         private static void ValidateCollection<T>(ICollection<T> collection)

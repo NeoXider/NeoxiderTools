@@ -192,7 +192,7 @@ namespace Neo.Demo.GridSystem
                 view.Tile.color = cell.IsWalkable ? _enabledColor : _blockedColor;
             }
 
-            TicTacToeCellState state = (TicTacToeCellState)cell.ContentId;
+            var state = (TicTacToeCellState)cell.ContentId;
             switch (state)
             {
                 case TicTacToeCellState.PlayerX:

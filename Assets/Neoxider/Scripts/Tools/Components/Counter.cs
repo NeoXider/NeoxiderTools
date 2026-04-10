@@ -47,7 +47,8 @@ namespace Neo.Tools
 
         [Header("Repeat Event")]
         [SerializeField]
-        [Tooltip("Invoke Repeat event N times when counter value changes (N = current counter value, clamped to >= 0).")]
+        [Tooltip(
+            "Invoke Repeat event N times when counter value changes (N = current counter value, clamped to >= 0).")]
         private bool _invokeRepeatEventOnValueChanged;
 
         [SerializeField]
@@ -61,7 +62,8 @@ namespace Neo.Tools
         private string _saveKey = "Counter";
 
         [SerializeField]
-        [Tooltip("When Save is enabled, read saved value from SaveProvider on Start. Off = keep Inspector value until LoadFromSave().")]
+        [Tooltip(
+            "When Save is enabled, read saved value from SaveProvider on Start. Off = keep Inspector value until LoadFromSave().")]
         private bool _loadOnStart = true;
 
         [SerializeField]
@@ -94,7 +96,8 @@ namespace Neo.Tools
         public UnityEvent OnRepeatByCounterValue = new();
 
         [Header("Events (after load from save)")]
-        [Tooltip("Invoked once after Load() from SaveProvider in Int mode. Use for UI/state that only reacts to persistence load.")]
+        [Tooltip(
+            "Invoked once after Load() from SaveProvider in Int mode. Use for UI/state that only reacts to persistence load.")]
         public UnityEvent<int> OnLoadedInt = new();
 
         [Tooltip("Invoked once after Load() from SaveProvider in Float mode.")]

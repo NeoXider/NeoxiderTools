@@ -32,13 +32,15 @@ namespace Neo.Tools.Tests
 
                 selector.SetRandom(false);
                 Assert.That(selector.Value, Is.EqualTo(1), "With two items, SetRandom avoids repeating current index");
-                Assert.That(a.activeSelf, Is.True, "Previous selection should stay active when deactivateOthers is false");
+                Assert.That(a.activeSelf, Is.True,
+                    "Previous selection should stay active when deactivateOthers is false");
                 Assert.That(b.activeSelf, Is.True);
                 Assert.That(selector.CountActive, Is.EqualTo(2));
 
                 selector.SetRandom(true);
-                Assert.That(a.activeSelf, Is.False);
-                Assert.That(b.activeSelf, Is.True);
+                Assert.That(a.activeSelf, Is.True,
+                    "SetRandom with 2 items avoids repeating, so it flips back to index 0 (A)");
+                Assert.That(b.activeSelf, Is.False, "Because deactivateOthers is true, B should be turned off");
                 Assert.That(selector.CountActive, Is.EqualTo(1));
             }
             finally

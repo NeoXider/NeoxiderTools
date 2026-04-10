@@ -4,6 +4,44 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.9.0] - 2026-04-10
+
+### RPG & Progression
+
+- **RpgCombatant** — добавлены публичные методы `SetMaxHp(float)` и `IncreaseMaxHp(float)` для возможности динамического расширения запаса здоровья (удобно при левелапах).
+- **LevelComponent** — исправлена архитектурная ошибка дублирования подписок на события модели при инициализации (баг: OnLevelUp и OnXpGained вызывались по два раза).
+- **Демо-сцены** — добавлены и настроены полноэкранные интерактивные примеры работы `RPG_Demo` и `Progression_Demo` на базе OnGUI (находятся в `Samples~/Demo/`).
+
+### Inventory (Инвентарь)
+
+- **InventoryComponent** — масштабный рефакторинг огромного монолитного класса с разбиением на `partial` файлы: `InventoryComponent.Grid.cs`, `Operations.cs`, `Persistence.cs` и `Queries.cs` для улучшения навигации и поддержки.
+
+### Core Modules & Tools
+
+- **NPC / NpcNavigation** — модуль поведения выделен в отдельный файл `NpcNavigation.Behaviours.cs` (разделение ответственности).
+- **ReflectionCache** — добавлен кэш рефлексии `ReflectionCache.cs`, интегрированный в `QuestManager` и `ConditionValueSource` для оптимизации постоянных проверок свойств.
+- **Тесты (Coverage)** — значительно расширена тестовая база, добавлены модульные `EditMode` тесты для 100% покрытия модулей: `NeoCondition`, `QuestManager`, `UnityExtensions`, `Animations`, `ReactiveProperty`, `InteractiveObject`.
+
+### Fixes & Stability
+
+- **NeoObjectPool** — устранена ошибка `Destroy may not be called from edit mode!` при выходе из режима игры или чистке спавнера в редакторе (теперь строго разделен `Destroy` и `DestroyImmediate` по флагу `Application.isPlaying`).
+- **AiNavigation (Deprecated)** — полностью заглушен бесполезный warning об отсутствии target в режиме Combined, который засорял лог разработчикам.
+- **StateMachine** — исправлены ошибки типизации и сигнатур, возникшие в ходе обновления сборок.
+
+## [7.8.1] - 2026-04-10
+
+### Architecture / Domain Reload
+
+- **SaveProvider**, **SingletonById**, **SpawnUtility** — поддержка возврата на сцену в редакторе при включенном Domain Reload. Добавлена очистка статических данных через `[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]`.
+
+### Memory / Performance
+
+- **PoolManager** — убрано деструктивное удаление всех пулов на событиях SceneLoaded, вызывавшее `MissingReferenceException` у неуничтожаемых (`DontDestroyOnLoad`) пулов при фоновой подгрузке сцен.
+- **Spawner** — исправлена утечка памяти в `Spawner._spawnedObjects`: мертвые ссылки (удаленные объекты) теперь корректно зачищаются из списков при `DelayedDestroy` и периодической проверке.
+
+### Refactoring
+
+- **NpcNavigation**, **InventoryComponent** — рефакторинг огромных монолитных классов с использованием `partial` классов. Логика разделена на специализированные файлы (Queries, Operations и др.) для улучшения читаемости.
 ### Tools / Debug
 
 - **FPS** — учёт через **`Time.unscaledDeltaTime`**, защита от нулевого/слишком малого delta time; среднее по накопленным сэмплам; пересборка буфера при смене **`sampleSize`**; интервал UI по **`unscaledTime`**. Опция **`unlockFramerateOnAwake`** (по умолчанию выкл.): снятие лимита FPS / vSync только при явном включении.
