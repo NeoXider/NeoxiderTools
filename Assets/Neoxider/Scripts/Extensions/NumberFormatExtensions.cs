@@ -244,11 +244,13 @@ namespace Neo.Extensions
         /// <param name="roundingMode">Rounding strategy.</param>
         /// <returns>Idle short formatted representation.</returns>
         public static string ToIdleString(this BigInteger value, int decimals = 1,
-            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven)
+            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven,
+            bool trimTrailingZeros = true)
         {
             NumberFormatOptions options = NumberFormatOptions.IdleShort;
             options.Decimals = NumberFormatOptions.ClampDecimals(decimals);
             options.RoundingMode = roundingMode;
+            options.TrimTrailingZeros = trimTrailingZeros;
             return FormatNumber(value, options);
         }
 
@@ -260,9 +262,10 @@ namespace Neo.Extensions
         /// <param name="roundingMode">Rounding strategy.</param>
         /// <returns>Idle short formatted representation.</returns>
         public static string ToIdleString(this long value, int decimals = 1,
-            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven)
+            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven,
+            bool trimTrailingZeros = true)
         {
-            return new BigInteger(value).ToIdleString(decimals, roundingMode);
+            return new BigInteger(value).ToIdleString(decimals, roundingMode, trimTrailingZeros);
         }
 
         /// <summary>
@@ -273,9 +276,10 @@ namespace Neo.Extensions
         /// <param name="roundingMode">Rounding strategy.</param>
         /// <returns>Idle short formatted representation.</returns>
         public static string ToIdleString(this int value, int decimals = 1,
-            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven)
+            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven,
+            bool trimTrailingZeros = true)
         {
-            return new BigInteger(value).ToIdleString(decimals, roundingMode);
+            return new BigInteger(value).ToIdleString(decimals, roundingMode, trimTrailingZeros);
         }
 
         /// <summary>
@@ -286,11 +290,13 @@ namespace Neo.Extensions
         /// <param name="roundingMode">Rounding strategy.</param>
         /// <returns>Idle short formatted representation.</returns>
         public static string ToIdleString(this double value, int decimals = 1,
-            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven)
+            NumberRoundingMode roundingMode = NumberRoundingMode.ToEven,
+            bool trimTrailingZeros = true)
         {
             NumberFormatOptions options = NumberFormatOptions.IdleShort;
             options.Decimals = NumberFormatOptions.ClampDecimals(decimals);
             options.RoundingMode = roundingMode;
+            options.TrimTrailingZeros = trimTrailingZeros;
             return value.ToPrettyString(options);
         }
 
@@ -521,10 +527,10 @@ namespace Neo.Extensions
         private static string FormatIdle(decimal value, NumberFormatOptions options)
         {
             decimal abs = Math.Abs(value);
-            if (abs < 1000m)
+            decimal roundedInit = Round(abs, options.Decimals, options.RoundingMode);
+            if (roundedInit < 1000m)
             {
-                decimal rounded = Round(value, options.Decimals, options.RoundingMode);
-                return FormatDecimalValue(rounded, options.Decimals, options);
+                return (value < 0m ? "-" : string.Empty) + FormatDecimalValue(roundedInit, options.Decimals, options);
             }
 
             bool isNegative = value < 0m;
@@ -585,11 +591,12 @@ namespace Neo.Extensions
 
         private static string FormatIdle(double value, NumberFormatOptions options)
         {
-            if (Math.Abs(value) < 1000d)
+            double abs = Math.Abs(value);
+            double roundedInit = Round(abs, options.Decimals, options.RoundingMode);
+            if (roundedInit < 1000d)
             {
-                double roundedSmall = Round(value, options.Decimals, options.RoundingMode);
-                return NormalizeDecimalPart(
-                    ApplySeparators(roundedSmall.ToString("F" + options.Decimals, Invariant), options),
+                return (value < 0d ? "-" : string.Empty) + NormalizeDecimalPart(
+                    ApplySeparators(roundedInit.ToString("F" + options.Decimals, Invariant), options),
                     options);
             }
 

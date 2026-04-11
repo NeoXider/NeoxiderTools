@@ -107,6 +107,12 @@ namespace Neo.Tools
         private bool _wasMoving;
         private float _yaw;
 
+        // External input overrides (for on-screen joystick / touch controls)
+        private Vector2? _externalMoveInput;
+        private Vector2? _externalLookInput;
+        private bool _externalJumpPressed;
+        private bool _externalRunHeld;
+
         /// <summary>
         ///     Gets whether the character is currently grounded.
         /// </summary>
@@ -245,7 +251,6 @@ namespace Neo.Tools
 
         private void OnGameSettingsChanged()
         {
-            // Ensures live updates when sensitivity changes from the settings UI.
             if (_useGameSettingsMouseSensitivity)
             {
                 _mouseSensitivity = GameSettings.MouseSensitivity;
@@ -350,13 +355,54 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Inject movement input from an external source (on-screen joystick, touch pad, etc.).
+        ///     When set, the built-in keyboard/gamepad movement reading is bypassed.
+        ///     Pass null to revert to built-in input.
+        /// </summary>
+        /// <param name="input">Movement vector (x = strafe, y = forward). Clamped to magnitude 1.</param>
+        public void SetMoveInput(Vector2? input)
+        {
+            _externalMoveInput = input.HasValue ? Vector2.ClampMagnitude(input.Value, 1f) : (Vector2?)null;
+        }
+
+        /// <summary>
+        ///     Inject look input from an external source (on-screen look pad, gyroscope, etc.).
+        ///     When set, the built-in mouse/stick look reading is bypassed.
+        ///     Pass null to revert to built-in input.
+        /// </summary>
+        /// <param name="input">Look delta (x = yaw, y = pitch).</param>
+        public void SetLookInput(Vector2? input)
+        {
+            _externalLookInput = input;
+        }
+
+        /// <summary>
+        ///     Inject a one-shot jump command from an external source (on-screen button).
+        ///     Resets automatically after being consumed.
+        /// </summary>
+        public void SetJumpInput()
+        {
+            _externalJumpPressed = true;
+        }
+
+        /// <summary>
+        ///     Inject run (sprint) state from an external source (on-screen toggle/button).
+        /// </summary>
+        /// <param name="held">True while running.</param>
+        public void SetRunInput(bool held)
+        {
+            _externalRunHeld = held;
+        }
+
         private void CaptureInput()
         {
             if (_movementEnabled)
             {
-                _moveInput = ReadMoveInput();
+                _moveInput = _externalMoveInput ?? ReadMoveInput();
                 _moveInput = Vector2.ClampMagnitude(_moveInput, 1f);
-                IsRunning = _canRun && ReadRunHeld() && _moveInput.sqrMagnitude > 0.001f;
+                bool runHeld = _externalMoveInput.HasValue ? _externalRunHeld : ReadRunHeld();
+                IsRunning = _canRun && runHeld && _moveInput.sqrMagnitude > 0.001f;
             }
             else
             {
@@ -366,14 +412,16 @@ namespace Neo.Tools
 
             if (IsLookActive)
             {
-                _lookInput = ReadLookInput();
+                _lookInput = _externalLookInput ?? ReadLookInput();
             }
             else
             {
                 _lookInput = Vector2.zero;
             }
 
-            if (_canJump && _movementEnabled && ReadJumpPressed())
+            bool jumpPressed = _externalJumpPressed || ReadJumpPressed();
+            _externalJumpPressed = false;
+            if (_canJump && _movementEnabled && jumpPressed)
             {
                 _jumpBufferTimer = _jumpBufferTime;
             }

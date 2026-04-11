@@ -100,6 +100,15 @@
 - `SetCursorLocked(bool)` — lock/unlock курсора.
 - `Teleport(Vector3)` — телепорт с очисткой линейной и угловой скорости `Rigidbody`.
 
+**Внешний ввод (мобильный джойстик)**
+
+- `SetMoveInput(Vector2?)` — передать вектор движения (x=strafe, y=forward) от экранного джойстика. `null` — вернуть к клавиатуре.
+- `SetLookInput(Vector2?)` — передать вектор обзора (x=yaw, y=pitch) от тачпада. `null` — вернуть к мыши.
+- `SetJumpInput()` — одноразовый прыжок от экранной кнопки. Автосброс после потребления.
+- `SetRunInput(bool)` — состояние спринта от UI-переключателя.
+
+> Когда внешний ввод задан (`!=null`), встроенное чтение клавиатуры/геймпада для этой оси отключается.
+
 **Паттерн меню / паузы**
 
 1. Открытие: `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или `PausePage` + `CursorLockController` + `timeScale`).

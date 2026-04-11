@@ -4,6 +4,36 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.10.0] - 2026-04-11
+
+### InteractiveObject — Мобильная поддержка
+
+- **InteractionRayProvider** — новый компонент для камеры. Управляет режимом рейкаста для всех `InteractiveObject` в сцене:
+  - `Mouse` — рейкаст от курсора/пальца (десктоп по умолчанию)
+  - `ScreenCenter` — рейкаст от центра экрана (мобильный прицел / crosshair)
+  - `Both` — центр экрана для hover, палец для click (универсальный режим)
+  - **Автосоздание**: если на `Camera.main` нет компонента, он добавляется автоматически с режимом `Both`
+- **drawDebugRay** — постоянный debug-луч каждый кадр с динамическими цветами:
+  - Серый — вне зоны, Голубой — в зоне, Жёлтый — hover, Зелёный — interact
+- `useScreenCenterRay` на `InteractiveObject` сохранён как per-object fallback
+
+### PlayerController3DPhysics — Внешний ввод
+
+- **SetMoveInput(Vector2?)** — передать вектор движения от экранного джойстика (при `null` — клавиатура)
+- **SetLookInput(Vector2?)** — передать вектор обзора от тачпада/гироскопа
+- **SetJumpInput()** — одноразовая команда прыжка от экранной кнопки
+- **SetRunInput(bool)** — состояние спринта от UI-переключателя
+
+### PlayerController2DPhysics — Внешний ввод
+
+- **SetMoveInput(float?)** / **SetMoveInput(Vector2?)** — горизонтальный ввод от джойстика
+- **SetJumpInput()** — прыжок от экранной кнопки
+- **SetRunInput(bool)** — спринт от UI-кнопки
+
+### Tests
+
+- **InteractiveObjectPlayTests** — 12+ PlayMode тестов: стенки, тригеры, слои, hover, distance events
+
 ## [7.9.0] - 2026-04-10
 
 ### RPG & Progression

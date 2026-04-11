@@ -61,6 +61,10 @@ namespace Neo.Tools
         [SerializeField]
         private bool includeTriggerCollidersInMouseRaycast = true;
 
+        [Tooltip("Per-object override: use screen center ray. Prefer adding InteractionRayProvider to the camera instead.")]
+        [SerializeField]
+        private bool useScreenCenterRay;
+
         [Header("Target Colliders")]
         [Tooltip(
             "Optional explicit 3D collider used for hover, click, and view checks. If not set, uses Collider on this GameObject only.")]
@@ -125,7 +129,15 @@ namespace Neo.Tools
 
         public UnityEvent onExitRange;
 
-        [Header("Debug")] [SerializeField] private bool drawInteractionRayForOneSecond;
+        [Header("Debug")]
+        [Tooltip("Draw a debug ray every frame (always visible while selected or in play mode). Color changes based on state: gray=no target, cyan=in range, yellow=hovered, green=interacting.")]
+        [SerializeField]
+        private bool drawDebugRay;
+
+        [Tooltip("Legacy: draw ray briefly on interaction only.")]
+        [SerializeField]
+        private bool drawInteractionRayForOneSecond;
+
         [SerializeField] private float interactionRayDrawDuration = 1f;
         private readonly RaycastHit2D[] lookHits2D = new RaycastHit2D[16];
         private readonly RaycastHit[] lookHits3D = new RaycastHit[16];
@@ -143,6 +155,7 @@ namespace Neo.Tools
         private Vector3 lastDebugRayEnd;
         private Vector3 lastDebugRayStart;
         private float lastDebugRayUntilTime;
+        private bool isInteractingThisFrame;
         private PointerEventData.InputButton lastProcessedClickButton;
         private int lastProcessedClickFrame = -1;
         private bool wasHoveredByRaycast;
@@ -176,6 +189,8 @@ namespace Neo.Tools
 
         private void Update()
         {
+            isInteractingThisFrame = false;
+
             if (!interactable)
             {
                 return;
@@ -206,6 +221,7 @@ namespace Neo.Tools
 
             if (!inRange && interactionDistance > 0f && !useKeyboardInteraction)
             {
+                UpdatePersistentDebugRay();
                 return;
             }
 
@@ -213,19 +229,20 @@ namespace Neo.Tools
             {
                 UpdateKeyboardInput();
             }
+
+            UpdatePersistentDebugRay();
         }
 
         private void OnDrawGizmosSelected()
         {
-            if (interactionDistance <= 0f)
+            if (interactionDistance > 0f)
             {
-                return;
+                Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
+                Gizmos.DrawWireSphere(transform.position, interactionDistance);
             }
 
-            Gizmos.color = new Color(0f, 1f, 1f, 0.3f);
-            Gizmos.DrawWireSphere(transform.position, interactionDistance);
-
-            if (drawInteractionRayForOneSecond && lastDebugRayUntilTime > 0f)
+            bool showLegacy = drawInteractionRayForOneSecond && lastDebugRayUntilTime > 0f;
+            if (drawDebugRay || showLegacy)
             {
                 Gizmos.color = lastDebugRayColor;
                 Gizmos.DrawLine(lastDebugRayStart, lastDebugRayEnd);
@@ -303,6 +320,7 @@ namespace Neo.Tools
                     mouseButtonsPressedOnObject[buttonIndex] = startedOnObject;
                     if (buttonIndex == (int)downUpMouseButton && startedOnObject)
                     {
+                        isInteractingThisFrame = true;
                         onInteractDown?.Invoke();
                     }
                 }
@@ -441,6 +459,7 @@ namespace Neo.Tools
 
             if (keyDown && canInteract)
             {
+                isInteractingThisFrame = true;
                 onInteractDown?.Invoke();
             }
 
@@ -797,12 +816,28 @@ namespace Neo.Tools
         {
             hitPoint = Vector3.zero;
 
-            if (cam == null || !MouseInputCompat.TryGetPosition(out Vector3 mousePos))
+            if (cam == null)
             {
                 return false;
             }
 
-            Ray ray = cam.ScreenPointToRay(mousePos);
+            Ray ray;
+            InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
+            bool useCenterRay = useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover);
+
+            if (useCenterRay)
+            {
+                ray = cam.ScreenPointToRay(new Vector3(cam.pixelWidth * 0.5f, cam.pixelHeight * 0.5f, 0f));
+            }
+            else
+            {
+                if (!MouseInputCompat.TryGetPosition(out Vector3 mousePos))
+                {
+                    return false;
+                }
+
+                ray = cam.ScreenPointToRay(mousePos);
+            }
 
             if (cachedCollider3D != null && cachedCollider3D.enabled)
             {
@@ -959,7 +994,7 @@ namespace Neo.Tools
 
         private void CacheDebugRay(Vector3 start, Vector3 end, Color color)
         {
-            if (!drawInteractionRayForOneSecond)
+            if (!drawInteractionRayForOneSecond && !drawDebugRay)
             {
                 return;
             }
@@ -968,6 +1003,53 @@ namespace Neo.Tools
             lastDebugRayEnd = end;
             lastDebugRayColor = color;
             lastDebugRayUntilTime = float.PositiveInfinity;
+        }
+
+        /// <summary>
+        ///     Draws a persistent debug ray every frame.
+        ///     Colors: gray = no target, cyan = target in range, yellow = hovered, green = interacting.
+        /// </summary>
+        private void UpdatePersistentDebugRay()
+        {
+            if (!drawDebugRay)
+            {
+                return;
+            }
+
+            Transform source = ResolveLookSource();
+            if (source == null)
+            {
+                return;
+            }
+
+            Vector3 origin = source.position;
+            Vector3 target = GetInteractionTargetPosition();
+            Vector3 end = target;
+
+            // Determine color based on state
+            Color rayColor;
+            if (isInteractingThisFrame)
+            {
+                rayColor = Color.green;  // actively pressing
+            }
+            else if (IsHovered)
+            {
+                rayColor = Color.yellow; // hovering
+            }
+            else if (wasInRange)
+            {
+                rayColor = Color.cyan;   // in range, not hovered
+            }
+            else
+            {
+                rayColor = Color.gray;   // out of range / no target
+            }
+
+            lastDebugRayStart = origin;
+            lastDebugRayEnd = end;
+            lastDebugRayColor = rayColor;
+
+            Debug.DrawLine(origin, end, rayColor);
         }
 
 
@@ -1053,6 +1135,22 @@ namespace Neo.Tools
         ///     Returns true if object is currently hovered.
         /// </summary>
         public bool IsHovered { get; private set; }
+
+        /// <summary>
+        ///     When true, hover and click raycasts fire from the center of the screen
+        ///     instead of the mouse/touch position. Ideal for mobile FPS/TPS games
+        ///     where a fixed crosshair is displayed at the screen center
+        ///     and the player swipes to rotate the camera.
+        ///     <para>
+        ///         Prefer adding <see cref="InteractionRayProvider" /> to the camera
+        ///         for global control instead of setting this per object.
+        ///     </para>
+        /// </summary>
+        public bool UseScreenCenterRay
+        {
+            get => useScreenCenterRay;
+            set => useScreenCenterRay = value;
+        }
 
         #endregion
     }

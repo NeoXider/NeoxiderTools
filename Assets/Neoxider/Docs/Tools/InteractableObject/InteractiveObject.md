@@ -47,13 +47,21 @@
   - Чужие `Trigger`-коллайдеры не блокируют hover/click для обычного collider целевого объекта под ними.
   - Обычные (не trigger) коллайдеры перед объектом по-прежнему блокируют hover/click.
 
+### Screen Center Ray (мобильный прицел)
+- **Рекомендуемый способ**: добавьте компонент `InteractionRayProvider` на камеру. Все `InteractiveObject` в сцене автоматически его подхватят.
+  - `Mouse` — рейкаст от курсора/пальца (десктоп по умолчанию)
+  - `ScreenCenter` — рейкаст от центра экрана (мобильный прицел)
+  - `Both` — центр экрана для hover, палец для click (работает везде)
+- `useScreenCenterRay` на самом `InteractiveObject` — per-object fallback. Если на камере есть `InteractionRayProvider`, он имеет приоритет.
+
 ### Debug
-- `drawInteractionRayForOneSecond`: Отрисовывать debug-луч проверки взаимодействия
-- `interactionRayDrawDuration`: Длительность отображения луча в секундах (по умолчанию 1 секунда)
-- Цвета луча:
-  - зелёный: цель успешно видна;
-  - красный: луч блокируется/цель не попала в прямую видимость;
-  - голубой: проверка без прямого луча (`requireDirectLookRay = false`).
+- `drawDebugRay` (по умолчанию `false`): **Постоянно** отрисовывать луч взаимодействия каждый кадр. Цвет меняется в зависимости от состояния:
+  - 🔘 **Серый** — объект вне зоны досягаемости
+  - 🔵 **Голубой (cyan)** — объект в зоне, но не под курсором / не наведён
+  - 🟡 **Жёлтый** — объект наведён (hover)
+  - 🟢 **Зелёный** — нажатие / взаимодействие (interact down)
+- `drawInteractionRayForOneSecond`: Кратковременный луч только при срабатывании взаимодействия (legacy)
+- `interactionRayDrawDuration`: Длительность legacy-луча в секундах (по умолчанию 1 секунда)
 
 ### Distance Control (контроль дистанции)
 - `interactionDistance` (по умолчанию `3`): Максимальная дистанция взаимодействия в метрах
@@ -253,6 +261,9 @@ onInteractDown → OpenChest()
 - `DistanceToCheckPoint { get; }`: Текущая дистанция до точки проверки
 - `IsHovered { get; }`: true если объект под курсором
 
+### Мобильный режим
+- `UseScreenCenterRay { get; set; }`: Per-object fallback — рейкаст от центра экрана. **Предпочитайте `InteractionRayProvider` на камере.**
+
 ---
 
 ### Примеры использования API
@@ -325,3 +336,55 @@ interactive.UseKeyboardInteraction = false;
 - Работает с 2D и 3D физикой
 - Настройка слоев через `obstacleLayers` позволяет контролировать, какие объекты блокируют взаимодействие
 - Отключите `checkObstacles` для UI элементов или когда взаимодействие через стены допустимо
+
+---
+
+## 10. Мобильная платформа (Android / iOS)
+
+### Базовая совместимость
+Unity автоматически маппит первое касание экрана как мышку (`Input.mousePosition` / `Input.GetMouseButton(0)`), поэтому базовое взаимодействие тапом работает из коробки.
+
+### Режим «прицел в центре» — InteractionRayProvider
+Добавьте компонент **`InteractionRayProvider`** на камеру:
+
+```csharp
+// Получить/создать провайдер на главной камере:
+var provider = InteractionRayProvider.FindOnMainCamera();
+provider.Mode = InteractionRayProvider.RayMode.ScreenCenter; // прицел
+provider.Mode = InteractionRayProvider.RayMode.Mouse;        // классика
+provider.Mode = InteractionRayProvider.RayMode.Both;          // центр для hover, палец для click
+```
+
+**Как это работает:**
+1. Рейкаст hover идёт из `cam.ScreenPointToRay(center)` — куда смотрит прицел
+2. Игрок свайпает для вращения камеры → прицел наводится на объект → hover срабатывает
+3. Тап → click срабатывает по объекту под прицелом
+4. Все проверки дистанции и препятствий работают так же, как на десктопе
+
+### Подключение джойстика к контроллерам
+
+Оба контроллера (`PlayerController3DPhysics`, `PlayerController2DPhysics`) поддерживают внешний ввод через API:
+
+```csharp
+// 3D контроллер:
+PlayerController3DPhysics controller3D;
+
+// Подключить on-screen joystick:
+controller3D.SetMoveInput(joystick.Direction);  // Vector2 (x=strafe, y=forward)
+controller3D.SetLookInput(lookPad.Delta);       // Vector2 (x=yaw, y=pitch)
+controller3D.SetJumpInput();                    // кнопка прыжка
+controller3D.SetRunInput(runToggle.isOn);        // кнопка бега
+
+// Отключить внешний ввод (вернуть к клавиатуре):
+controller3D.SetMoveInput(null);
+controller3D.SetLookInput(null);
+```
+
+```csharp
+// 2D контроллер:
+PlayerController2DPhysics controller2D;
+
+controller2D.SetMoveInput(joystick.Direction);  // Vector2 или float (-1..1)
+controller2D.SetJumpInput();                    // кнопка прыжка
+controller2D.SetRunInput(true);                 // кнопка бега
+```

@@ -66,6 +66,11 @@ namespace Neo.Tools
         private bool _wasGrounded;
         private bool _wasMoving;
 
+        // External input overrides (for on-screen joystick / touch controls)
+        private float? _externalMoveInputX;
+        private bool _externalJumpPressed;
+        private bool _externalRunHeld;
+
         /// <summary>
         ///     Gets whether the character is currently grounded.
         /// </summary>
@@ -198,13 +203,54 @@ namespace Neo.Tools
             }
         }
 
+        /// <summary>
+        ///     Inject horizontal movement from an external source (on-screen joystick).
+        ///     When set, built-in horizontal input reading is bypassed.
+        ///     Pass null to revert to built-in input.
+        /// </summary>
+        /// <param name="input">Horizontal input (-1..1), or Vector2 (only x is used).</param>
+        public void SetMoveInput(float? input)
+        {
+            _externalMoveInputX = input.HasValue ? Mathf.Clamp(input.Value, -1f, 1f) : (float?)null;
+        }
+
+        /// <summary>
+        ///     Inject horizontal movement from a Vector2 (only x component is used).
+        ///     Convenient when your joystick outputs Vector2.
+        /// </summary>
+        public void SetMoveInput(Vector2? input)
+        {
+            _externalMoveInputX = input.HasValue ? Mathf.Clamp(input.Value.x, -1f, 1f) : (float?)null;
+        }
+
+        /// <summary>
+        ///     Inject a one-shot jump command from an external source (on-screen button).
+        ///     Resets automatically after being consumed.
+        /// </summary>
+        public void SetJumpInput()
+        {
+            _externalJumpPressed = true;
+        }
+
+        /// <summary>
+        ///     Inject run (sprint) state from an external source (on-screen toggle/button).
+        /// </summary>
+        /// <param name="held">True while running.</param>
+        public void SetRunInput(bool held)
+        {
+            _externalRunHeld = held;
+        }
+
         private void CaptureInput()
         {
             if (_movementEnabled)
             {
-                _moveInputX = ReadMoveXInput();
-                IsRunning = _canRun && ReadRunHeld() && Mathf.Abs(_moveInputX) > 0.01f;
-                _jumpPressedThisFrame = _movementEnabled && _canJump && ReadJumpPressed();
+                _moveInputX = _externalMoveInputX ?? ReadMoveXInput();
+                bool runHeld = _externalMoveInputX.HasValue ? _externalRunHeld : ReadRunHeld();
+                IsRunning = _canRun && runHeld && Mathf.Abs(_moveInputX) > 0.01f;
+                bool jumpFromExternal = _externalJumpPressed;
+                _externalJumpPressed = false;
+                _jumpPressedThisFrame = _movementEnabled && _canJump && (jumpFromExternal || ReadJumpPressed());
             }
             else
             {
