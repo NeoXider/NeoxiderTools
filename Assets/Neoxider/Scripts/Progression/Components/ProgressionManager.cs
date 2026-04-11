@@ -16,7 +16,7 @@ namespace Neo.Progression
     [NeoDoc("Progression/ProgressionManager.md")]
     [CreateFromMenu("Neoxider/Progression/ProgressionManager")]
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionManager))]
-    public sealed class ProgressionManager : MonoBehaviour
+    public sealed class ProgressionManager : Singleton<ProgressionManager>
     {
         private const int ProfileVersion = 2;
         private const string DefaultSaveKey = "ProgressionV2.Profile";
@@ -38,6 +38,7 @@ namespace Neo.Progression
         private string _saveKey = DefaultSaveKey;
 
         [SerializeField] private bool _loadOnAwake = true;
+        [SerializeField] private bool _autoSave = true;
 
         [Header("Context")] [SerializeField] private GameObject _conditionContext;
 
@@ -63,15 +64,7 @@ namespace Neo.Progression
         /// <summary>
         ///     Gets a backwards-compatible singleton alias.
         /// </summary>
-        public static ProgressionManager Instance { get; private set; }
-
-        private void Awake()
-        {
-            if (Instance == null)
-            {
-                Instance = this;
-            }
-        }
+        public static ProgressionManager Instance => I;
 
         /// <summary>
         ///     Gets or sets the level curve definition.
@@ -107,6 +100,15 @@ namespace Neo.Progression
         {
             get => _saveKey;
             set => _saveKey = string.IsNullOrWhiteSpace(value) ? DefaultSaveKey : value.Trim();
+        }
+
+        /// <summary>
+        ///     Gets or sets whether the profile should be saved automatically on changes.
+        /// </summary>
+        public bool AutoSave
+        {
+            get => _autoSave;
+            set => _autoSave = value;
         }
 
         /// <summary>
@@ -474,8 +476,18 @@ namespace Neo.Progression
         public void ResetProgression()
         {
             EnsureInitialized();
+            
+            if (_levelProvider != null)
+            {
+                _levelProvider.Reset();
+                _levelProvider.Save();
+            }
+
             ApplyProfile(new ProgressionProfileData(), true);
-            SaveProfile();
+            if (_autoSave)
+            {
+                SaveProfile();
+            }
             _onProfileReset?.Invoke();
         }
 
@@ -491,7 +503,10 @@ namespace Neo.Progression
             }
 
             _profile.HasPremium = true;
-            SaveProfile();
+            if (_autoSave)
+            {
+                SaveProfile();
+            }
 
             if (_levelProvider != null && _levelCurve != null)
             {
@@ -529,8 +544,9 @@ namespace Neo.Progression
             _onProfileSaved?.Invoke();
         }
 
-        public void Init()
+        protected override void Init()
         {
+            base.Init();
             if (_progressionInitialized)
             {
                 return;
@@ -695,7 +711,10 @@ namespace Neo.Progression
         private void PersistAndNotify()
         {
             SyncProfileListsFromSets();
-            SaveProfile();
+            if (_autoSave)
+            {
+                SaveProfile();
+            }
             RefreshRuntimeState(true);
         }
 

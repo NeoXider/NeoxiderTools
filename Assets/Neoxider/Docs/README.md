@@ -64,3 +64,9 @@
 |--------|------------|--------------|
 | **NeoxiderPages** | Sample-модуль экранов, страниц и `UIKit` workflow | [`NeoxiderPages/README.md`](./NeoxiderPages/README.md) |
 | **UI Extension** | Готовые UI-prefab наборы и editor-меню | [`UI Extension/README.md`](./UI%20Extension/README.md) |
+
+## Гайды и туториалы
+
+| Название | Описание | Ссылка |
+|----------|----------|--------|
+| **Vampire Survivors 3D** | Пошаговое руководство по созданию клона Vampire Survivors в 3D | [`VampireSurvivor_Guide.md`](./VampireSurvivor_Guide.md) |

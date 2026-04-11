@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cecf91e6a1768444cafef352c083fcf6, type: 3}
+  m_Name: EnemyRangedAttack
+  m_EditorClassIdentifier: 
+  _id: EnemyEnergySphere
+  _displayName: Attack
+  _deliveryType: 2
+  _hitMode: 0
+  _damageType: 
+  _power: 10
+  _range: 20
+  _radius: 0.5
+  _castDelay: 0
+  _cooldown: 1.5
+  _use2D: 1
+  _use3D: 1
+  _targetLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _maxTargets: 1
+  _effects:
+    _targetBuffIds: []
+    _targetStatusIds: []
+    _selfBuffIds: []
+  _projectilePrefab: {fileID: 5101602008884623846, guid: ab0a5f035f74c3844b7aa55dc04368ed, type: 3}
+  _projectileSpeed: 8
+  _projectileLifetime: 5
+  _projectileMaxHits: 1
+  _impactEffectPrefab: {fileID: 0}
+  _costResourceId: Mana
+  _costAmount: 0

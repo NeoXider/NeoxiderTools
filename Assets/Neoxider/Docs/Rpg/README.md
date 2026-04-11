@@ -1,69 +1,106 @@
-# RPG
+# Модуль RPG
 
-**Что это:** полноценный RPG runtime-модуль для persistent player profile, локальных combatant-актеров, melee/ranged/aoe атак, target selectors, attack presets для AI/skills/spells, evade, баффов, статус-эффектов, built-in input и no-code интеграции. Скрипты находятся в `Scripts/Rpg/`.
+Полноценная боевая система для создания RPG в 3D и 2D. Включает управление статами, способностями, поиском целей, уклонениями и статус-эффектами.
 
-**Оглавление:**
-- [RpgStatsManager](./RpgStatsManager.md) — persistent профиль игрока, save/load, баффы, статусы.
-- [RpgCombatant](./RpgCombatant.md) — scene-local актёр для врагов, NPC и объектов.
-- [RpgAttackController](./RpgAttackController.md) — единая точка запуска melee/ranged/aoe атак.
-- [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject-описание атаки.
-- [RpgAttackPreset](./RpgAttackPreset.md) — preset для AI/skills/spells с таргетингом.
-- [RpgProjectile](./RpgProjectile.md) — projectile runtime для дальних атак.
-- [RpgTargetSelector](./RpgTargetSelector.md) — selector цели для AI и ability logic.
-- [RpgEvadeController](./RpgEvadeController.md) — evade/invulnerability/cooldown.
-- [RpgNoCodeAction](./RpgNoCodeAction.md) — no-code bridge для UnityEvent.
-- [RpgConditionAdapter](./RpgConditionAdapter.md) — адаптер условий для `NeoCondition`.
+## Содержание
+- [Назначение](#назначение)
+- [Оглавление файлов](#оглавление-файлов)
+- [Как использовать](#как-использовать)
+- [Ключевые концепции](#ключевые-концепции)
+- [Примеры использования](#примеры-использования)
+- [См. также](#см-также)
 
-**Навигация:** [← К Docs](../README.md)
+---
+
+## Назначение
+Модуль RPG предназначен для быстрой сборки боевых механик любой сложности (от простого кликера до комплексной Action-RPG). Он разделяет данные об атаках (`AttackDefinition`) от логики выполнения, позволяя переиспользовать способности между игроком и NPC.
+
+---
+
+## Оглавление файлов
+- [RpgStatsManager](./RpgStatsManager.md) — профиль персонажа, баффы, статы и сохранение.
+- [RpgCombatant](./RpgCombatant.md) — компонент для NPC и разрушаемых объектов.
+- [RpgAttackController](./RpgAttackController.md) — управление очередью и запуском атак.
+- [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject с параметрами атаки.
+- [RpgEvadeController](./RpgEvadeController.md) — система уклонений и i-frames.
+- [RpgNoCodeAction](./RpgNoCodeAction.md) — мост для UnityEvents.
 
 ---
 
 ## Как использовать
 
-1. Создайте asset'ы `BuffDefinition`, `StatusEffectDefinition` и `RpgAttackDefinition` через меню `Neoxider/RPG`.
-2. Для игрока используйте `RpgStatsManager`, если нужны persistence и глобальный профиль.
-3. При необходимости включите `Auto Save` у `RpgStatsManager`. По умолчанию он выключен.
-4. Для врагов/NPC/объектов используйте `RpgCombatant`.
-5. Для атак добавьте `RpgAttackController` и назначьте `RpgAttackDefinition[]`. По умолчанию primary attack работает на ЛКМ.
-6. Для дальних атак используйте `RpgProjectile`, для dodge/i-frames — `RpgEvadeController`.
-7. Built-in input у атаки и уклонения можно отключить, что полезно для NPC/AI.
-8. Для no-code сценариев используйте `RpgNoCodeAction` и `RpgConditionAdapter`.
+1. **Игрок**: Добавьте `RpgStatsManager`, `RpgAttackController` и `RpgEvadeController`.
+2. **Враги**: Добавьте `RpgCombatant` и настройте HP.
+3. **Атаки**: Создайте `RpgAttackDefinition` (Melee/Ranged/Aoe) и назначьте его в контроллер.
+4. **Урон**: Используйте Unity-теги для разделения фракций (враги атакуют игрока, игрок — врагов).
 
-## Что входит в модуль
+---
 
-- `RpgStatsManager` — persistent HP/level/buffs/statuses профиль игрока.
-- `RpgCombatant` — локальная версия combat receiver без persistence.
-- `RpgAttackController` — одна система для direct, area и projectile атак.
-- `RpgAttackDefinition` — SO с power/range/radius/cooldown/effects/delivery mode.
-- `RpgAttackPreset` — preset, который связывает атаку и target query.
-- `RpgProjectile` — runtime projectile с hit detection и max hits.
-- `RpgTargetSelector` — reusable selector ближайшей/случайной/приоритетной цели.
-- `RpgEvadeController` — evade с cooldown и invulnerability lock.
-- `BuffDefinition` — временные баффы с длительностью и модификаторами статов.
-- `StatusEffectDefinition` — статус-эффекты (яд, замедление, stun/action lock, DoT).
-- `RpgProfileData` — сериализуемый профиль для persistence.
+## Ключевые концепции
 
-## Persistence
+### Persistence (Сохранение)
+`RpgStatsManager` автоматически сохраняет уровень и состояние HP через `SaveProvider`. Это полезно для главного героя. Для обычных врагов используйте `RpgCombatant` (без сохранения).
 
-- Профиль хранится через `SaveProvider`, а не через сценовый `SaveManager`.
-- По умолчанию используется ключ `RpgV1.Profile`, но его можно поменять в `RpgStatsManager`.
+### Data-Driven Attacks
+Все параметры атак вынесены в файлы. Вы можете мгновенно изменить радиус взрыва или скорость полета снаряда во время игры без перекомпиляции.
 
-## Интеграция с Progression
+---
 
-- Уровень в `RpgStatsManager` хранится отдельно от `ProgressionManager`.
-- Для синхронизации можно вызывать `SetLevel(ProgressionManager.Instance.CurrentLevel)` при изменении прогрессии.
+## Примеры использования
 
-## Рекомендуемая схема
+### 1. Нанесение урона кнопкой (No-Code)
+1. На объект кнопки или триггера добавьте `RpgNoCodeAction`.
+2. Выберите действие `DealDamage`.
+3. Укажите цель (это должен быть объект с `RpgStatsManager` или `RpgCombatant`).
+4. Задайте силу `Power` (базовый урон).
+5. Смонтируйте вызов `Execute()` на событие клика или столкновения.
 
-- Игрок: `RpgStatsManager` + `RpgAttackController` + `RpgEvadeController`.
-- Враги/NPC: `RpgCombatant` + `RpgAttackController` + `RpgTargetSelector`.
-- Skills/spells/AI routines: `RpgAttackPreset` для выбора attack + targeting policy.
-- Legacy `IDamageable` совместимость: `RpgStatsDamageableBridge`.
-- Primary attack: по умолчанию ЛКМ, binding настраивается в `RpgAttackController`.
-- Evade: binding настраивается в `RpgEvadeController`, built-in input можно выключить.
-- `Auto Save` у `RpgStatsManager` по умолчанию выключен и включается явно.
-- Новые проекты: не использовать `AttackExecution`, `AdvancedAttackCollider`, `Evade`, `Health` как основную боевую архитектуру.
+### 2. Изменение статов (C#)
 
-## Демонстрация
+```csharp
+using Neo.Rpg;
+using UnityEngine;
 
-Работа модуля RPG в связке с `RpgCombatant` и интерактивным интерфейсом представлена в сцене `Samples~/Demo/RPG_Demo.unity`.
+public class PoisonTrap : MonoBehaviour
+{
+    // Ссылка на дебафф, настроенный в редакторе
+    [SerializeField] private BuffDefinition poisonBuff; 
+
+    private void OnTriggerEnter(Collider other)
+    {
+        // Пробуем получить менеджер статов у вошедшего объекта
+        if (other.TryGetComponent(out RpgStatsManager stats))
+        {
+            stats.AddBuff(poisonBuff);
+            Debug.Log($"{other.name} отравлен!");
+        }
+    }
+}
+```
+
+### 3. Запуск атаки из аниматора (C#)
+
+```csharp
+using Neo.Rpg;
+using UnityEngine;
+
+public class AttackAnimationListener : MonoBehaviour
+{
+    [SerializeField] private RpgAttackController attackController;
+
+    // Вызывается через AnimationEvent
+    public void OnSwordSwingHit()
+    {
+        // 0 - индекс Primary Attack в массиве контроллера.
+        // false - говорит системе, что это действие не от инпута, а от кода.
+        attackController.TryPerformAttack(0, false);
+    }
+}
+```
+
+---
+
+## См. также
+- [Progression Module](../Progression/README.md)
+- [NPC Navigation](../NPC/README.md)
+- [← Назад к Docs](../README.md)

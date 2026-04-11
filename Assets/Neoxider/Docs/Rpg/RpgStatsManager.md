@@ -1,83 +1,74 @@
 # RpgStatsManager
 
-**Что это:** persistent `MonoBehaviour`-менеджер профиля игрока. Отвечает за HP, уровень, баффы, статус-эффекты, invulnerability locks и сохранение через `SaveProvider`.
+Главный компонент управления состоянием персонажа. Поддерживает динамические статы, баффы, дебаффы и сохранение прогресса.
 
-**Как использовать:**
-1. Добавьте `RpgStatsManager` на объект сцены.
-2. Назначьте `BuffDefinition` и `StatusEffectDefinition` в массивы.
-3. При необходимости задайте свой `Save Key`.
-4. Если нужно автосохранение при runtime-изменениях, включите `Auto Save`. По умолчанию он выключен.
-5. Если игрок должен атаковать или уклоняться, комбинируйте его с `RpgAttackController` и `RpgEvadeController`.
-6. Вызывайте `TakeDamage`, `Heal`, `TryApplyBuff`, `TryApplyStatus`, `ResetProfile`, `LoadProfile`, `SaveProfile`.
-7. Для UI используйте `HpState`, `HpPercentState`, `LevelState` или UnityEvent.
-
-**Навигация:** [← К RPG](./README.md)
+## Содержание
+- [Назначение](#назначение)
+- [Поля (Inspector)](#поля-inspector)
+- [API](#api)
+- [События](#события)
+- [Пример использования](#пример-использования)
+- [См. также](#см-также)
 
 ---
 
-## Основные поля
+## Назначение
+`RpgStatsManager` — это «мозг» RPG-героя. Он хранит текущее HP, рассчитывает множители урона и защиты, управляет временем действия баффов и обеспечивает сохранение всех этих данных между игровыми сессиями.
 
-| Поле | Тип | Назначение |
-|------|-----|------------|
-| `_buffDefinitions` | `BuffDefinition[]` | Определения баффов |
-| `_statusDefinitions` | `StatusEffectDefinition[]` | Определения статус-эффектов |
-| `_saveKey` | `string` | Ключ сохранения профиля |
-| `_autoSave` | `bool` | Автозапись json-профиля после изменений; по умолчанию выключено |
-| `_hpRegenPerSecond` | `float` | Регенерация HP в секунду |
-| `_regenInterval` | `float` | Интервал проверки регена и тиков статусов |
+---
 
-## Reactive state
+## Поля (Inspector)
 
-| Поле | Тип | Назначение |
-|------|-----|------------|
-| `HpState` | `ReactivePropertyFloat` | Текущее HP |
-| `HpPercentState` | `ReactivePropertyFloat` | HP в процентах (0..1) |
-| `LevelState` | `ReactivePropertyInt` | Текущий уровень |
+| Поле | Описание |
+|------|----------|
+| **Base HP** | Начальное количество здоровья на 1-м уровне. |
+| **Stat Growth** | Ссылка на `RpgStatGrowth` (ScriptableObject) для масштабирования статов. |
+| **Save Key** | Ключ для хранения в `PlayerPrefs` или файле (напр. "Player_Battle_Stats"). |
+| **Auto Save** | Если включено, сохранение происходит при каждом изменении уровня или смерти. |
 
-## Основные методы
+---
 
-| Метод | Что делает |
-|------|------------|
-| `TakeDamage(float amount)` | Наносит урон, возвращает фактический урон |
-| `Heal(float amount)` | Восстанавливает HP, возвращает фактическое лечение |
-| `SetMaxHp(float maxHp, bool clampCurrent)` | Устанавливает максимальное HP |
-| `SetLevel(int level)` | Устанавливает уровень |
-| `GetOutgoingDamageMultiplier()` | Возвращает итоговый множитель исходящего урона |
-| `GetMovementSpeedMultiplier()` | Возвращает текущий speed multiplier |
-| `AddInvulnerabilityLock()` / `RemoveInvulnerabilityLock()` | Управляет временной неуязвимостью |
-| `TryApplyBuff(string buffId, out string failReason)` | Применяет бафф |
-| `TryApplyStatus(string statusId, out string failReason)` | Применяет статус-эффект |
-| `RemoveBuff(string buffId)` | Снимает бафф |
-| `RemoveStatus(string statusId)` | Снимает статус |
-| `HasBuff(string buffId)` | Проверяет наличие баффа |
-| `HasStatus(string statusId)` | Проверяет наличие статуса |
-| `ResetProfile()` | Сбрасывает профиль |
-| `LoadProfile()` / `SaveProfile()` | Загружает или сохраняет профиль |
+## API
+
+| Метод | Описание |
+|-------|----------|
+| **TakeDamage(float val)** | Наносит урон с учетом защиты и активных баффов. |
+| **Heal(float val)** | Восстанавливает здоровье. |
+| **AddBuff(BuffDefinition buff)** | Применяет временный статовый бонус. |
+| **SetLevel(int level)** | Устанавливает новый уровень и пересчитывает статы согласно кривой роста. |
+| **GetDamageMultiplier()** | Возвращает итоговый множитель исходящего урона. |
+
+---
 
 ## События
+Компонент предоставляет UnityEvents для легкой связи с UI и анимациями:
+- **OnHealthChanged(float current, float max)** — срабатывает при любом изменении HP.
+- **OnDeath** — вызывается при падении здоровья до 0.
+- **OnLevelChanged(int level)** — срабатывает при смене уровня.
 
-- `OnDamaged` — при получении урона (float = фактический урон).
-- `OnHealed` — при лечении (float = фактическое лечение).
-- `OnDeath` — при HP = 0.
-- `OnBuffApplied` / `OnBuffExpired` — при применении/истечении баффа.
-- `OnStatusApplied` / `OnStatusExpired` — при применении/истечении статуса.
+---
 
-## Пример кода
+## Пример использования
 
+### Получение множителя урона для меча (C#)
 ```csharp
 using Neo.Rpg;
-using UnityEngine;
 
-public class EnemyDamageExample : MonoBehaviour
+public void OnAttack()
 {
-    [SerializeField] private float damageAmount = 25f;
-
-    public void DealDamage()
-    {
-        if (RpgStatsManager.Instance != null)
-        {
-            RpgStatsManager.Instance.TakeDamage(damageAmount);
-        }
-    }
+    float multiplier = playerStats.GetOutgoingDamageMultiplier();
+    float finalDamage = baseWeaponDamage * multiplier;
+    // Наносим урон...
 }
 ```
+
+### Отображение в HealthBar (No-Code)
+1. Добавьте `RpgHpBarUI` на ваш Canvas.
+2. В коде инициализации или через поиск укажите ссылку на `RpgStatsManager`.
+
+---
+
+## См. также
+- [RpgCombatant (для врагов)](./RpgCombatant.md)
+- [Buff Definition (SO)](./BuffDefinition.md)
+- [← Назад к RPG README](./README.md)

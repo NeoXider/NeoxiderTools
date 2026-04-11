@@ -43,6 +43,16 @@ namespace Neo.Rpg
         [SerializeField] private float _hpRegenPerSecond;
         [SerializeField] [Min(0.05f)] private float _regenInterval = 0.2f;
 
+        [SerializeField] [Tooltip("Manual XP reward amount. When negative, uses the StatGrowth rule.")]
+        private float _xpRewardOverride = -1f;
+
+        [Header("Professional & NoCode")]
+        [SerializeField] [Tooltip("Automatically grant XP to the player if they deal the killing blow.")]
+        private bool _autoGrantXpToPlayer = true;
+
+        [SerializeField] [Tooltip("Raised when an XP reward is generated on death.")]
+        private UnityEventInt _onXpRewardGenerated = new();
+
         [Header("Reactive State")] public ReactivePropertyFloat HpState = new(100f);
 
         public ReactivePropertyFloat HpPercentState = new(1f);
@@ -62,6 +72,7 @@ namespace Neo.Rpg
         private readonly List<ActiveStatusEntry> _activeStatuses = new();
         private int _invulnerabilityLocks;
         private float _regenAccumulator;
+        private IRpgCombatReceiver _lastAttacker;
 
         /// <summary>
         ///     Gets the active buff ids.
@@ -256,6 +267,8 @@ namespace Neo.Rpg
                 return 0f;
             }
 
+            _lastAttacker = info.Source;
+
             if (_healthProvider != null)
             {
                 float baseDefense = _statGrowth != null ? _statGrowth.DefensePercent.Evaluate(Level) : 0f;
@@ -267,7 +280,7 @@ namespace Neo.Rpg
                 _onDamaged?.Invoke(actualDamage);
                 if (IsDead)
                 {
-                    _onDeath?.Invoke();
+                    HandleDeath();
                 }
 
                 return actualDamage;
@@ -284,10 +297,47 @@ namespace Neo.Rpg
             _onDamaged?.Invoke(actualDamageLocal);
             if (IsDead)
             {
-                _onDeath?.Invoke();
+                HandleDeath();
             }
 
             return actualDamageLocal;
+        }
+
+        private void HandleDeath()
+        {
+            _onDeath?.Invoke();
+
+            if (_lastAttacker != null && _lastAttacker is Component attackerComp)
+            {
+                bool isPlayer = attackerComp.CompareTag("Player") || 
+                               (RpgStatsManager.HasInstance && (attackerComp.gameObject == RpgStatsManager.Instance.gameObject || 
+                                                                attackerComp.transform.IsChildOf(RpgStatsManager.Instance.transform)));
+
+                if (isPlayer)
+                {
+                    int xp = Mathf.RoundToInt(_xpRewardOverride >= 0f
+                        ? _xpRewardOverride
+                        : (_statGrowth != null ? _statGrowth.XpReward.Evaluate(Level) : 0f));
+
+                    if (xp > 0)
+                    {
+                        _onXpRewardGenerated?.Invoke(xp);
+
+                        if (_autoGrantXpToPlayer)
+                        {
+                            var progManager = attackerComp.GetComponentInParent<Neo.Progression.ProgressionManager>();
+                            if (progManager != null)
+                            {
+                                progManager.AddXp(xp);
+                            }
+                            else if (Neo.Progression.ProgressionManager.HasInstance)
+                            {
+                                Neo.Progression.ProgressionManager.I.AddXp(xp);
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         /// <inheritdoc />

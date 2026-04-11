@@ -1,0 +1,79 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eeba7c2125f7aae4fa65338e02e8f79d, type: 3}
+  m_Name: PlayerStatGrowth
+  m_EditorClassIdentifier: 
+  MaxHp:
+    Mode: 0
+    FormulaType: 0
+    BaseValue: 100
+    AddPerLevel: 50
+    MultiplierPerLevel: 0
+    UseCurve: 0
+    Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  HpRegen:
+    Mode: 0
+    FormulaType: 0
+    BaseValue: 0
+    AddPerLevel: 6
+    MultiplierPerLevel: 0
+    UseCurve: 0
+    Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  DamagePercent:
+    Mode: 0
+    FormulaType: 0
+    BaseValue: 0
+    AddPerLevel: 15
+    MultiplierPerLevel: 0
+    UseCurve: 0
+    Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  DefensePercent:
+    Mode: 0
+    FormulaType: 0
+    BaseValue: 0
+    AddPerLevel: 3
+    MultiplierPerLevel: 0
+    UseCurve: 0
+    Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+  XpReward:
+    Mode: 0
+    FormulaType: 0
+    BaseValue: 10
+    AddPerLevel: 5
+    MultiplierPerLevel: 0
+    UseCurve: 0
+    Curve:
+      serializedVersion: 2
+      m_Curve: []
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4

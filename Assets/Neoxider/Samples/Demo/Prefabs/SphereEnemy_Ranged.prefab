@@ -1,0 +1,434 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &3699692906312089920
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 3736904441165468617}
+  - component: {fileID: 4898973039097128699}
+  - component: {fileID: 4440874363905219282}
+  - component: {fileID: 3377639586897533969}
+  - component: {fileID: 4105882804384721007}
+  - component: {fileID: 5546551304762847516}
+  - component: {fileID: 4103046344282737288}
+  - component: {fileID: 4717516279983518636}
+  - component: {fileID: 6184273167296563158}
+  - component: {fileID: 7843042989033410415}
+  - component: {fileID: 1547419321212121954}
+  - component: {fileID: 2533420794970810615}
+  - component: {fileID: 7038777891141725185}
+  m_Layer: 0
+  m_Name: SphereEnemy_Ranged
+  m_TagString: Enemy
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &3736904441165468617
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!33 &4898973039097128699
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!135 &4440874363905219282
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}
+--- !u!23 &3377639586897533969
+MeshRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_CastShadows: 1
+  m_ReceiveShadows: 1
+  m_DynamicOccludee: 1
+  m_StaticShadowCaster: 0
+  m_MotionVectors: 1
+  m_LightProbeUsage: 1
+  m_ReflectionProbeUsage: 1
+  m_RayTracingMode: 2
+  m_RayTraceProcedural: 0
+  m_RenderingLayerMask: 1
+  m_RendererPriority: 0
+  m_Materials:
+  - {fileID: 10303, guid: 0000000000000000f000000000000000, type: 0}
+  m_StaticBatchInfo:
+    firstSubMesh: 0
+    subMeshCount: 0
+  m_StaticBatchRoot: {fileID: 0}
+  m_ProbeAnchor: {fileID: 0}
+  m_LightProbeVolumeOverride: {fileID: 0}
+  m_ScaleInLightmap: 1
+  m_ReceiveGI: 1
+  m_PreserveUVs: 1
+  m_IgnoreNormalsForChartDetection: 0
+  m_ImportantGI: 0
+  m_StitchLightmapSeams: 1
+  m_SelectedEditorRenderState: 3
+  m_MinimumChartSize: 4
+  m_AutoUVMaxDistance: 0.5
+  m_AutoUVMaxAngle: 89
+  m_LightmapParameters: {fileID: 0}
+  m_SortingLayerID: 0
+  m_SortingLayer: 0
+  m_SortingOrder: 0
+  m_AdditionalVertexStreams: {fileID: 0}
+--- !u!195 &4105882804384721007
+NavMeshAgent:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_AgentTypeID: 0
+  m_Radius: 0.5
+  m_Speed: 3.5
+  m_Acceleration: 8
+  avoidancePriority: 50
+  m_AngularSpeed: 120
+  m_StoppingDistance: 10
+  m_AutoTraverseOffMeshLink: 1
+  m_AutoBraking: 1
+  m_AutoRepath: 1
+  m_Height: 1
+  m_BaseOffset: 0.5
+  m_WalkableMask: 4294967295
+  m_ObstacleAvoidanceType: 4
+--- !u!114 &5546551304762847516
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d927283126b0e8a4b9253977c0c02379, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  isActive: 1
+  animator: {fileID: 0}
+  mode: 0
+  rotationPolicy: 0
+  updateRotation: 1
+  walkSpeed: 3
+  runSpeed: 6
+  acceleration: 8
+  turnSpeed: 260
+  stoppingDistance: 2
+  agentRadius: 0.5
+  areaMask: -1
+  autoUpdatePath: 1
+  pathUpdateInterval: 0.5
+  maxSampleDistance: 100
+  followTarget: {fileID: 0}
+  triggerDistance: 0
+  followMovementBounds: {fileID: 0}
+  patrolPoints: []
+  patrolZone: {fileID: 0}
+  patrolWaitTime: 1
+  loopPatrol: 1
+  combinedTarget: {fileID: 0}
+  aggroDistance: 10
+  maxFollowDistance: 20
+  onMovementStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onMovementStopped:
+    m_PersistentCalls:
+      m_Calls: []
+  onModeChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onTargetChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onDestinationReached:
+    m_PersistentCalls:
+      m_Calls: []
+  onPathBlocked:
+    m_PersistentCalls:
+      m_Calls: []
+  onPathUpdated:
+    m_PersistentCalls:
+      m_Calls: []
+  onPathStatusChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolCompleted:
+    m_PersistentCalls:
+      m_Calls: []
+  onPatrolPointReached:
+    m_PersistentCalls:
+      m_Calls: []
+  onStartFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onStopFollowing:
+    m_PersistentCalls:
+      m_Calls: []
+  onSpeedChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  debugMode: 0
+  drawGizmos: 1
+  drawPathGizmos: 1
+  lastDecision: 
+--- !u!114 &4103046344282737288
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5657cb29e168c7f4ca93b902d36c055f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _healthProvider: {fileID: 0}
+  _levelProvider: {fileID: 0}
+  _statGrowth: {fileID: 11400000, guid: dd1fcf58382bb3049b6c46cbdcda9aba, type: 2}
+  _maxHp: 100
+  _currentHp: 100
+  _level: 1
+  _buffDefinitions: []
+  _statusDefinitions: []
+  _restoreOnAwake: 1
+  _hpRegenPerSecond: 0
+  _regenInterval: 0.2
+  HpState:
+    _value: 100
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  HpPercentState:
+    _value: 1
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LevelState:
+    _value: 1
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  InvulnerableState:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  _onDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onHealed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+  _onBuffApplied:
+    m_PersistentCalls:
+      m_Calls: []
+  _onBuffExpired:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatusApplied:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatusExpired:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &4717516279983518636
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37225a960f96c0149b29d15c01abbc75, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _findByTag: 1
+  _targetTag: Player
+  _findByName: 0
+  _targetName: Player
+  _setModeToFollowOnFind: 1
+  _findOnAwake: 1
+--- !u!114 &6184273167296563158
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b3bd974028434d44bc5c95618811328, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &7843042989033410415
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d5ae5150b3ed94d42b8771c3e39993fa, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _attacks:
+  - {fileID: 11400000, guid: d6c2c19f95e28884ca86519a9c5a2188, type: 2}
+  _presets: []
+  _origin: {fileID: 0}
+  _projectileSpawnPoint: {fileID: 0}
+  _combatantSource: {fileID: 0}
+  _profileSource: {fileID: 0}
+  _targetSelector: {fileID: 0}
+  _enableBuiltInInput: 1
+  _primaryAttackBinding:
+    _triggerType: 0
+    _mouseButton: 0
+    _keyCode: 0
+  _onAttackStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAttackResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onPresetUsed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTargetResolved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAttackFailed:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &1547419321212121954
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dbef37aa16854c742bd40856156c4c64, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetTag: Player
+  attackRange: 15
+  attackInterval: 1
+--- !u!114 &2533420794970810615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d6ab33014411caa4ba594a590e80e120, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  action: 0
+  destroyDelay: 2
+  debugLog: 0
+  _onDeathBegin:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDeathComplete:
+    m_PersistentCalls:
+      m_Calls: []
+--- !u!114 &7038777891141725185
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3699692906312089920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b28726ecc59c84843a31fe9a58fe4e2e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  targetTag: Player
+  targetOverride: {fileID: 0}
+  targetReceiverOverride: {fileID: 0}
+  damage: 3
+  damageRange: 2.5
+  cooldown: 1
+  damageType: Contact
+  selfCombatant: {fileID: 0}
+  debugLog: 0
+  IsAttacking:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  TargetInRange:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  _onDamageDealt:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTargetFound:
+    m_PersistentCalls:
+      m_Calls: []
+  _onTargetLost:
+    m_PersistentCalls:
+      m_Calls: []
+  _onAttack:
+    m_PersistentCalls:
+      m_Calls: []

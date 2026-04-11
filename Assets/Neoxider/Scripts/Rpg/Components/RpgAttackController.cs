@@ -504,7 +504,12 @@ namespace Neo.Rpg
                 return _profileSource;
             }
 
-            return TryResolveReceiver(gameObject, out IRpgCombatReceiver receiver) ? receiver : null;
+            if (TryResolveReceiver(gameObject, out IRpgCombatReceiver receiver))
+            {
+                return receiver;
+            }
+
+            return GetComponentInParent<IRpgCombatReceiver>();
         }
 
         private Vector3 GetOriginPosition()
@@ -540,13 +545,13 @@ namespace Neo.Rpg
                 return false;
             }
 
-            receiver = target.GetComponent<RpgCombatant>();
+            receiver = target.GetComponent<RpgStatsManager>();
             if (receiver != null)
             {
                 return true;
             }
 
-            receiver = target.GetComponent<RpgStatsManager>();
+            receiver = target.GetComponent<RpgCombatant>();
             return receiver != null;
         }
 

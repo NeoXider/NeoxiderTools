@@ -3,15 +3,37 @@ using UnityEngine;
 
 namespace Neo.Rpg
 {
+    public enum RpgStatGrowthMode
+    {
+        Formula = 0,
+        Curve = 1
+    }
+
+    public enum RpgStatFormulaType
+    {
+        Linear = 0,
+        Exponential = 1,
+        Quadratic = 2,
+        Power = 3,
+        Flat = 4
+    }
+
     /// <summary>
     /// Describes how a single stat grows along with the character level.
     /// </summary>
     [Serializable]
     public struct RpgStatGrowthRule
     {
+        public RpgStatGrowthMode Mode;
+        public RpgStatFormulaType FormulaType;
+
         public float BaseValue;
         public float AddPerLevel;
-        public bool UseCurve;
+        public float MultiplierPerLevel;
+
+        // Legacy compatibility
+        [HideInInspector] public bool UseCurve;
+        
         public AnimationCurve Curve;
 
         /// <summary>
@@ -19,11 +41,35 @@ namespace Neo.Rpg
         /// </summary>
         public float Evaluate(int level)
         {
-            if (UseCurve && Curve != null && Curve.length > 0)
+            if ((Mode == RpgStatGrowthMode.Curve || UseCurve) && Curve != null && Curve.length > 0)
             {
                 return Curve.Evaluate(level);
             }
-            return BaseValue + (AddPerLevel * Mathf.Max(0, level - 1));
+
+            int levelMinusOne = Mathf.Max(0, level - 1);
+
+            switch (FormulaType)
+            {
+                case RpgStatFormulaType.Flat:
+                    return BaseValue;
+
+                case RpgStatFormulaType.Linear:
+                    return BaseValue + (AddPerLevel * levelMinusOne);
+
+                case RpgStatFormulaType.Exponential:
+                    float multiplier = MultiplierPerLevel <= 0f ? 1.1f : MultiplierPerLevel; 
+                    return BaseValue * Mathf.Pow(multiplier, levelMinusOne);
+
+                case RpgStatFormulaType.Quadratic:
+                    return BaseValue + (AddPerLevel * levelMinusOne * levelMinusOne);
+                
+                case RpgStatFormulaType.Power:
+                    float exponent = MultiplierPerLevel <= 0f ? 2f : MultiplierPerLevel;
+                    return BaseValue + (AddPerLevel * Mathf.Pow(Mathf.Max(1, level), exponent));
+
+                default:
+                    return BaseValue + (AddPerLevel * levelMinusOne);
+            }
         }
     }
 
@@ -44,5 +90,9 @@ namespace Neo.Rpg
 
         [Tooltip("A flat percentage added to overall defense per level.")]
         public RpgStatGrowthRule DefensePercent = new() { BaseValue = 0f, AddPerLevel = 0.5f };
+
+        [Header("Progression Growth")]
+        [Tooltip("The amount of XP rewarded when this combatant is defeated.")]
+        public RpgStatGrowthRule XpReward = new() { BaseValue = 10f, AddPerLevel = 5f };
     }
 }

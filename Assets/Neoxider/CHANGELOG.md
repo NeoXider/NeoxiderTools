@@ -1,8 +1,76 @@
-# Changelog
 
-All notable changes to this project will be documented in this file.
+## [7.13.13] - 2026-04-12
+### Updated
+- **Documentation**: Standardized `Progression` and `RPG` module documentation. Key files (`README.md`, `ProgressionManager.md`, `RpgStatsManager.md`, `RpgCombatant.md`) now feature anchored TOCs, standardized headers, API tables, and improved intra-doc navigation.
+
+## [7.13.12] - 2026-04-12
+### Updated
+- **Documentation**: Standardized `VampireSurvivor_Guide.md` according to project documentation guidelines (added TOC, purpose, standardized headers, and back-links).
+- **Documentation Index**: Registered the Vampire Survivor 3D guide in the main `Docs/README.md` index under a new "Guides" section.
+
+## [7.13.11] - 2026-04-12
+### Updated
+- **Documentation**: Completely refreshed the `VampireSurvivor_Guide.md` with instructions for the new numeric NPC HUD, stable billboard configurations, and automatic damage scaling.
+
+## [7.13.9] - 2026-04-12
+### Fixed
+- **RPG System**: Fixed `MeleeWeapon` and `AuraWeapon` not applying the player's level-based damage multiplier. They now correctly deal scaled damage matching the HUD values.
+
+## [7.13.7] - 2026-04-12
+### Fixed
+- **Demo HUD**: Changed NPC HP bar billboard mode to `AwayFromCamera` and enabled `ignoreY` to prevent "spinning" and "flipping" artifacts during movement.
+
+## [7.13.6] - 2026-04-12
+### Added
+- **Demo HUD**: Added numeric HP display (Current / Max) to NPC world-space health bars for better combat feedback.
+
+## [7.13.5] - 2026-04-12
+### Changed
+- **Demo HUD**: Enhanced damage indicator to show final calculated damage value (Base * Multiplier) in real-time.
+
+## [7.13.3] - 2026-04-12
+### Added
+- **Demo HUD**: Added "Damage Bonus" indicator to `DemoPlayerUI` to visualize player power scaling from level.
+
+## [7.13.2] - 2026-04-12
+### Changed
+- **RPG Stats**: Increased base HP regeneration scaling by 3x (from 2 to 6 per level in `PlayerStatGrowth`).
+
+## [7.13.1] - 2026-04-12
+### Fixed
+- **RPG XP Grant**: Improved player detection in `RpgCombatant` to support damage from child objects (weapons, auras, projectiles).
+- **RPG XP Grant**: Fixed missing damage source in `MeleeWeapon` (and `AuraWeapon`) which prevented XP attribution.
+- **RPG XP Grant**: Improved `RpgAttackController` source resolution to check parent hierarchy for combat receivers.
+
+## [7.13.0] - 2026-04-12
+### Added
+- **RPG**: NoCode support for `RpgCombatant` with `OnXpRewardGenerated` UnityEvent and `AutoGrantXpToPlayer` setting.
+- **Progression**: Reactive binding for `XpToNextLevelState` in `ProgressionBarUI` for instant UI updates.
+
+### Fixed
+- **RPG**: XP reward granting logic to use GameObject comparison instead of strict reference comparison (resolves component mismatch issues).
+- **Demo**: Fixed `Level Curve Definition` in the RPG demo showing `Next: 0` by switching to Formula mode.
+- **Demo**: Fixed persistence issues where Level/XP would not reset upon game restart.
 
 ## [Unreleased]
+
+## [7.12.0] - 2026-04-12
+### Added
+- Integrated **RPG Experience (XP)** system into `RpgCombatant`.
+- NPCs now grant XP upon defeat based on their level and a new data-driven growth rule.
+- Added `XpReward` rule to `RpgStatGrowthDefinition` with preview support in Editor.
+- Added `RpgProgressionHelper` utility for manual XP injection (e.g. from consumables or quests).
+- Added `_xpRewardOverride` and attacker tracking to `RpgCombatant`.
+
+## [7.11.1] - 2026-04-11
+
+### Rpg System — Stat Growth Custom Formulas
+- **RpgStatGrowthDefinition** now supports advanced mathematical formulas (`Linear`, `Exponential`, `Quadratic`, `Power`, `Flat`) and custom Animation Curves, removing the restriction to pure linear growth.
+- **RpgStatGrowthRuleDrawer**: Implemented a custom PropertyDrawer for cleaner configuration in the Inspector. Unused options fade dynamically based on the selected formula.
+- **RpgStatGrowthDefinitionEditor**: Added real-time Level Preview tables in the inspector to easily review 1-100 level stat progressions.
+- **Npc & Demo**: Updated `EnemyMeleeStatGrowth` and `EnemyRangedStatGrowth` assets to use the new formula-based system and applied them to NPC prefabs.
+- **RPG Demo Scene**: Added a "You Lose" overlay with global Restart (R key) logic.
+- Documentation `RpgStatGrowth.md` updated with new formulas and examples.
 
 ## [7.11.0] - 2026-04-11
 

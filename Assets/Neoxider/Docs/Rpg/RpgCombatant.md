@@ -1,57 +1,65 @@
 # RpgCombatant
 
-**Что это:** локальный `MonoBehaviour`-receiver для врагов, NPC, destructible-объектов и любых сценовых актёров без persistence.
+Облегченная версия системы параметров для NPC, разрушаемых объектов и врагов, не требующих сохранения.
 
-**Навигация:** [← К RPG](./README.md)
+## Содержание
+- [Назначение](#назначение)
+- [Поля (Inspector)](#поля-inspector)
+- [API](#api)
+- [События](#события)
+- [Пример использования](#пример-использования)
+- [См. также](#см-также)
 
 ---
 
-## Когда использовать
+## Назначение
+`RpgCombatant` используется там, где не нужен полноценный `RpgStatsManager` с сохранением прогресса. Он идеально подходит для стаи монстров, ящиков или стен. Позволяет задать HP, уровень и обрабатывать входящий урон.
 
-- Нужен HP/level/buffs/statuses на объекте сцены, но не нужен `SaveProvider`.
-- Нужна цель для `RpgAttackController`.
-- Нужен combat actor, который можно убивать, лечить, баффать и делать временно неуязвимым.
+---
 
-## Что умеет
+## Поля (Inspector)
 
-- Хранит `CurrentHp`, `MaxHp`, `Level`.
-- Принимает `TakeDamage()` / `Heal()`.
-- Поддерживает `SetMaxHp(float)` и `IncreaseMaxHp(float)` для динамического изменения запаса здоровья (например, при левелапах).
-- Поддерживает `TryApplyBuff()` и `TryApplyStatus()`.
-- Учитывает `DefensePercent`, `DamagePercent`, `HpRegenPerSecond`, `MovementSpeedPercent`.
-- Поддерживает invulnerability locks для evade и других способностей.
+| Поле | Описание |
+|------|----------|
+| **Initial HP** | Количество здоровья при спавне. |
+| **Level** | Влияет на сложность (если подключен `StatGrowth`). |
+| **Armor** | Поглощение входящего урона (фиксированное число). |
+| **Immortal** | Если включено, объект получает события о попаданиях, но здоровье не уменьшается. |
+| **Auto Grant XP** | Если включено, при смерти этот объект передаст опыт в `ProgressionManager` игрока. |
 
-## Типичный сценарий
+---
 
-1. Добавьте `RpgCombatant` на врага.
-2. Назначьте массивы `BuffDefinition[]` и `StatusEffectDefinition[]`.
-3. Если враг умеет атаковать, добавьте рядом `RpgAttackController`.
-4. Если нужен dodge/roll, добавьте `RpgEvadeController`.
+## API
 
-## Интеграция API (Типы Урона и Резисты)
+| Метод | Описание |
+|-------|----------|
+| **TakeDamage(float damage, GameObject source)** | Основной метод получения урона. |
+| **SetLevel(int level)** | Динамическое изменение уровня существа. |
+| **RestoreHP(float val)** | Лечение. |
+| **GetHealthPercent()** | Возвращает процент HP (0..1) для UI. |
 
-`RpgCombatant` принимает объект `RpgDamageInfo` вместо устаревшего `float`, что позволяет передавать источник урон и его тип (стихию).
+---
 
-### Пример передачи урона
+## События
+- **OnHealthChanged(float val)** — текущее здоровье.
+- **OnDeath** — вызывается при смерти.
+- **OnHit** — вызывается при любом полученном уроне.
 
-```csharp
-RpgCombatant target = GetComponent<RpgCombatant>();
+---
 
-// Создаем контекст урона
-var damageInfo = new RpgDamageInfo(
-    amount: 50f, 
-    source: this.gameObject, 
-    damageType: "Fire"
-);
+## Пример использования
 
-// Применяем урон с учетом стихийных резистов
-float actualDamageTaken = target.TakeDamage(damageInfo);
-```
+### Настройка «Взрывающейся бочки» (No-Code)
+1. Добавьте `RpgCombatant`.
+2. В секции **Logic** привяжите событие `OnDeath` к вызову вашего метода `Explosion.Bang()`.
+3. Установите `Initial HP = 1`.
 
-### Стихийные Резисты (Elemental Resistances)
+### Передача опыта игроку
+Включите галочку **Auto Grant XP To Player**. Теперь при убийстве этого NPC через `MeleeWeapon` или `AuraWeapon`, игрок автоматически получит опыт в `ProgressionManager`.
 
-Чтобы создать бафф для защиты от стихии:
-1. Создайте пресет `BuffDefinition`.
-2. Добавьте `BuffStatModifier` и установите Stat Type в `SpecificDefensePercent`.
-3. Задайте `SpecificDamageType` (например `Fire` или `Ice`).
-4. Ядро `RpgCombatMath` автоматически извлечет `damageType` из `RpgDamageInfo` при атаке и снизит входящий урон на указанный `SpecificDefensePercent`.
+---
+
+## См. также
+- [RpgStatsManager (для игрока)](./RpgStatsManager.md)
+- [DemoNpcUI (авто-полоска HP)](./DemoNpcUI.md)
+- [← Назад к RPG README](./README.md)

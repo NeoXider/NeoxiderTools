@@ -10,6 +10,8 @@ using Random = UnityEngine.Random;
 
 namespace Neo.Tools
 {
+    public enum SpawnMode { Loop, Waves }
+
     /// <summary>
     ///     Spawns prefabs with configurable delays, per-axis Euler rotation ranges,
     ///     optional parent, and local or world rotation application.
@@ -63,6 +65,36 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
         private bool _useParentRotation;
 
+        [Header("Mode & Wave Settings")]
+        [SerializeField]
+        [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
+        public SpawnMode spawnMode = SpawnMode.Loop;
+        
+        [SerializeField]
+        [Tooltip("Number of objects to spawn in the first wave.")]
+        private int _baseWaveCount = 3;
+        
+        [SerializeField]
+        [Tooltip("How many MORE objects to spawn each subsequent wave.")]
+        private int _countPerWave = 2;
+        
+        [SerializeField]
+        [Tooltip("Time to wait after a wave finishes before starting the next one.")]
+        private float _timeBetweenWaves = 5f;
+        
+        [Tooltip("Maximum allowed waves limit. 0 for infinite waves.")]
+        public int maxWaves;
+        
+        /// <summary>
+        /// Invoked when a new wave starts. Passes the current wave number.
+        /// </summary>
+        public UnityEvent<int> OnWaveStarted;
+
+        /// <summary>
+        /// Invoked after a GameObject is spawned during a wave. Passes the object and wave index.
+        /// </summary>
+        public UnityEvent<GameObject, int> OnWaveObjectSpawned;
+
         [Space] [Header("Other Settings")] [SerializeField]
         /// <summary>
         /// Spawn point. If unset, uses this spawner's transform.
@@ -94,6 +126,8 @@ namespace Neo.Tools
         }
 
         public bool isSpawning { get; private set; }
+
+        public int CurrentWave { get; private set; } = 1;
 
         public List<GameObject> SpawnedObjects { get; } = new();
 
@@ -163,13 +197,46 @@ namespace Neo.Tools
         public IEnumerator SpawnObjects()
         {
             isSpawning = true;
+            CurrentWave = 1;
 
-            while (isSpawning && (spawnLimit == 0 || _spawnedCount < spawnLimit))
+            if (spawnMode == SpawnMode.Waves)
             {
-                SpawnRandomObject();
-                _spawnedCount++;
-                float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
-                yield return new WaitForSeconds(delay);
+                while (isSpawning && (maxWaves == 0 || CurrentWave <= maxWaves))
+                {
+                    OnWaveStarted?.Invoke(CurrentWave);
+                    int spawnAmount = _baseWaveCount + ((CurrentWave - 1) * _countPerWave);
+                    
+                    for (int i = 0; i < spawnAmount; i++)
+                    {
+                        if (!isSpawning) break;
+                        
+                        GameObject obj = SpawnRandomObject();
+                        // Delay between individual spawns within a wave
+                        float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                        yield return new WaitForSeconds(delay);
+                    }
+                    
+                    if (isSpawning && (maxWaves == 0 || CurrentWave < maxWaves))
+                    {
+                        CurrentWave++;
+                        yield return new WaitForSeconds(_timeBetweenWaves);
+                    }
+                    else
+                    {
+                        isSpawning = false;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                while (isSpawning && (spawnLimit == 0 || _spawnedCount < spawnLimit))
+                {
+                    SpawnRandomObject();
+                    _spawnedCount++;
+                    float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
+                    yield return new WaitForSeconds(delay);
+                }
             }
 
             isSpawning = false;
@@ -270,6 +337,11 @@ namespace Neo.Tools
             }
 
             OnObjectSpawned?.Invoke(spawnedObject);
+            
+            if (spawnMode == SpawnMode.Waves)
+            {
+                OnWaveObjectSpawned?.Invoke(spawnedObject, CurrentWave);
+            }
 
             return spawnedObject;
         }

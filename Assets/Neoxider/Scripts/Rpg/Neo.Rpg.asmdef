@@ -9,7 +9,9 @@
         "Neo.Save",
         "Neo.Reactive",
         "Neo.Condition",
-        "Neo.PropertyAttribute"
+        "Neo.PropertyAttribute",
+        "Neo.Tools.Time",
+        "Neo.Progression"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
