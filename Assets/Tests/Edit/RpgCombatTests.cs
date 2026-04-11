@@ -16,7 +16,7 @@ namespace Neo.Rpg.Tests
             try
             {
                 combatant.AddInvulnerabilityLock();
-                float dealt = combatant.TakeDamage(50f);
+                float dealt = combatant.TakeDamage(new RpgDamageInfo(50f));
 
                 Assert.That(dealt, Is.EqualTo(0f));
                 Assert.That(combatant.CurrentHp, Is.EqualTo(100f));
@@ -346,6 +346,36 @@ namespace Neo.Rpg.Tests
                 Object.DestroyImmediate(source);
                 Object.DestroyImmediate(target);
             }
+        }
+
+        [Test]
+        public void RpgCombatMath_GetIncomingDamageMultiplier_WithSpecificResistance_ReducesDamage()
+        {
+            var buffId = "FireResistBuff";
+            
+            BuffDefinition buffDef = ScriptableObject.CreateInstance<BuffDefinition>();
+            SetPrivateField(buffDef, "_id", buffId);
+            
+            BuffStatModifier mod = new();
+            SetPrivateField(mod, "_statType", BuffStatType.SpecificDefensePercent);
+            SetPrivateField(mod, "_specificDamageType", "Fire");
+            SetPrivateField(mod, "_value", 50f);
+            SetPrivateField(buffDef, "_modifiers", new[] { mod });
+
+            System.Collections.Generic.List<ActiveBuffEntry> activeBuffs = new()
+            {
+                new ActiveBuffEntry { BuffId = buffId, ExpiresAtUtc = Neo.Rpg.RpgTimeUtility.GetCurrentUnixTimestamp() + 10f }
+            };
+
+            System.Func<string, BuffDefinition> resolveBuff = id => id == buffId ? buffDef : null;
+
+            // Fire attack should be reduced by 50%
+            float fireMultiplier = RpgCombatMath.GetIncomingDamageMultiplier(activeBuffs, resolveBuff, "Fire");
+            Assert.That(fireMultiplier, Is.EqualTo(0.5f).Within(0.001f), "Fire damage should be reduced by 50%");
+
+            // Ice attack should not be reduced
+            float iceMultiplier = RpgCombatMath.GetIncomingDamageMultiplier(activeBuffs, resolveBuff, "Ice");
+            Assert.That(iceMultiplier, Is.EqualTo(1.0f).Within(0.001f), "Ice damage should not be reduced");
         }
 
         private static void SetPrivateField(object target, string fieldName, object value)

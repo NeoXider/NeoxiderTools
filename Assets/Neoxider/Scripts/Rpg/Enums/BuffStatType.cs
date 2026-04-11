@@ -7,6 +7,7 @@ namespace Neo.Rpg
     {
         DamagePercent,
         DefensePercent,
+        SpecificDefensePercent,
         HpRegenPerSecond,
         MovementSpeedPercent,
         Custom

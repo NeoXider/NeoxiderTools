@@ -21,6 +21,12 @@ namespace Neo.Progression
         [SerializeField] private QuestManager _questManager;
         [SerializeField] private QuestConfig _quest;
         [SerializeField] [TextArea(2, 4)] private string _description;
+        [SerializeField] private bool _isPremium;
+
+        /// <summary>
+        ///     Gets whether this reward is only granted to premium track/pass owners.
+        /// </summary>
+        public bool IsPremium => _isPremium;
 
         /// <summary>
         ///     Gets the configured reward type.

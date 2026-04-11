@@ -42,7 +42,7 @@ namespace Neo.Tools
             if (receiver != null && amount > 0)
             {
                 float scaled = amount * _damageMultiplier;
-                receiver.TakeDamage(scaled);
+                receiver.TakeDamage(new RpgDamageInfo(scaled));
             }
         }
 

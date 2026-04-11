@@ -27,3 +27,31 @@
 2. Назначьте массивы `BuffDefinition[]` и `StatusEffectDefinition[]`.
 3. Если враг умеет атаковать, добавьте рядом `RpgAttackController`.
 4. Если нужен dodge/roll, добавьте `RpgEvadeController`.
+
+## Интеграция API (Типы Урона и Резисты)
+
+`RpgCombatant` принимает объект `RpgDamageInfo` вместо устаревшего `float`, что позволяет передавать источник урон и его тип (стихию).
+
+### Пример передачи урона
+
+```csharp
+RpgCombatant target = GetComponent<RpgCombatant>();
+
+// Создаем контекст урона
+var damageInfo = new RpgDamageInfo(
+    amount: 50f, 
+    source: this.gameObject, 
+    damageType: "Fire"
+);
+
+// Применяем урон с учетом стихийных резистов
+float actualDamageTaken = target.TakeDamage(damageInfo);
+```
+
+### Стихийные Резисты (Elemental Resistances)
+
+Чтобы создать бафф для защиты от стихии:
+1. Создайте пресет `BuffDefinition`.
+2. Добавьте `BuffStatModifier` и установите Stat Type в `SpecificDefensePercent`.
+3. Задайте `SpecificDamageType` (например `Fire` или `Ice`).
+4. Ядро `RpgCombatMath` автоматически извлечет `damageType` из `RpgDamageInfo` при атаке и снизит входящий урон на указанный `SpecificDefensePercent`.

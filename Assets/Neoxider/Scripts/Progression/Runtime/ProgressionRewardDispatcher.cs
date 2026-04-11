@@ -12,9 +12,9 @@ namespace Neo.Progression
     public static class ProgressionRewardDispatcher
     {
         /// <summary>
-        ///     Dispatches all supplied rewards.
+        ///     Dispatches all supplied rewards. If premiumOnly is true, only premium rewards are dispatched.
         /// </summary>
-        public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager)
+        public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager, bool premiumOnly = false)
         {
             if (rewards == null || manager == null)
             {
@@ -23,6 +23,16 @@ namespace Neo.Progression
 
             foreach (ProgressionReward reward in rewards)
             {
+                if (premiumOnly && !reward.IsPremium)
+                {
+                    continue;
+                }
+
+                if (!premiumOnly && reward.IsPremium && !manager.HasPremium)
+                {
+                    continue;
+                }
+
                 DispatchReward(reward, manager);
             }
         }

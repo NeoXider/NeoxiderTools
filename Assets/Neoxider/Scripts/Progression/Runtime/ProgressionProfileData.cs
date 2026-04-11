@@ -12,6 +12,7 @@ namespace Neo.Progression
     {
         [SerializeField] private int _version = 2;
         [SerializeField] private int _availablePerkPoints;
+        [SerializeField] private bool _hasPremium;
         [SerializeField] private List<string> _unlockedNodeIds = new();
         [SerializeField] private List<string> _purchasedPerkIds = new();
 
@@ -31,6 +32,15 @@ namespace Neo.Progression
         {
             get => _availablePerkPoints;
             set => _availablePerkPoints = Mathf.Max(0, value);
+        }
+
+        /// <summary>
+        ///     Gets or sets whether the user owns the premium track.
+        /// </summary>
+        public bool HasPremium
+        {
+            get => _hasPremium;
+            set => _hasPremium = value;
         }
 
         /// <summary>
@@ -62,6 +72,7 @@ namespace Neo.Progression
             {
                 Version = _version,
                 AvailablePerkPoints = _availablePerkPoints,
+                HasPremium = _hasPremium,
                 _unlockedNodeIds = new List<string>(_unlockedNodeIds),
                 _purchasedPerkIds = new List<string>(_purchasedPerkIds)
             };

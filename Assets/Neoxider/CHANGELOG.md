@@ -4,6 +4,37 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [7.11.0] - 2026-04-11
+
+### Rpg System — Advanced Combat & Damage Routing
+- **RpgDamageInfo** struct introduced to pass contextual combat data (Amount, Source, DamageType) instead of raw floats.
+- `RpgCombatant` and `RpgStatsManager` now accept and route `RpgDamageInfo` through the combat pipeline.
+- Added **Elemental Resistances**:
+  - `SpecificDefensePercent` added to `BuffStatType`.
+  - `SpecificDamageType` field added to `BuffStatModifier`.
+  - `RpgCombatMath` now calculates damage reduction dynamically based on `DamageType` and active buffs.
+- `RpgAttackController` fully refactored to populate and send `RpgDamageInfo` with its configured settings.
+- Restructured `RpgCombatMath` visibility and parameters for unit testing and modular use.
+- **Stat Growth**: Introduced `RpgStatGrowthDefinition` to automatically scale `MaxHp`, `Regen`, `DamagePercent`, and `DefensePercent` based on `Level`.
+- **Demo Scripting & Survival Scene**:
+  - `RpgWaveSpawner`: Added a flexible wave survival spawner to instantly prototype combat scaling logic.
+  - `PlayerCombatSwitcher`: Created utility class for fast swapping of `RpgAttackPreset`s in testing environments.
+  - Added `GenerateSurvivalDemoScene` Editor script (**Neoxider/Tools/Generate RPG Survival Demo Scene**) to construct an RPG combat playground end-to-end.
+
+### Progression System — Premium Tracks & Decoupled Architecture
+- `ProgressionManager` converted into a modular, decoupled `MonoBehaviour` (removed legacy Singleton).
+- Added **Premium Track Support (BattlePass)**:
+  - Added `HasPremium` flag to progression tracking.
+  - Added `ProgressionManager.ActivatePremium()` to retroactively grant missed premium rewards.
+  - Set `ProgressionReward.IsPremiumOnly` flag.
+  - Updated `ProgressionRewardDispatcher` to intercept and manage selective payouts.
+- Extended public API for event integration and manual overrides for designer/NoCode tools.
+
+### Testing & Infrastructure
+- Extensive Unit Tests added for Premium rewards logic, Retroactive payout systems, and `RpgCombatMath` elemental resistances mechanics.
+- Replaced legacy static teardowns (`Object.DestroyImmediate`) to match the new component dependency patterns in `ProgressionManagerTests`.
+- All XML Documentation and Markdown Guides (`RpgCombatant.md`, `ProgressionManager.md` for both EN & RU) updated with the latest API code examples and use cases.
+
 ## [7.10.0] - 2026-04-11
 
 ### InteractiveObject — Мобильная поддержка

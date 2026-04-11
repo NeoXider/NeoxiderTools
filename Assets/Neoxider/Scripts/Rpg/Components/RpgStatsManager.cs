@@ -27,6 +27,10 @@ namespace Neo.Rpg
 
         [SerializeField] private LevelComponent _levelProvider;
 
+        [Header("Stat Growth")]
+        [Tooltip("When set, base MaxHp, Regen, and multi-stats grow with Level automatically.")]
+        [SerializeField] private RpgStatGrowthDefinition _statGrowth;
+
         [Header("Definitions")] [SerializeField]
         private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
 
@@ -193,7 +197,9 @@ namespace Neo.Rpg
         public float GetOutgoingDamageMultiplier()
         {
             EnsureInitialized();
-            return RpgCombatMath.GetOutgoingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition);
+            float baseDamagePercent = _statGrowth != null ? _statGrowth.DamagePercent.Evaluate(Level) : 0f;
+            float multiplier = RpgCombatMath.GetOutgoingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition);
+            return multiplier * (1f + (baseDamagePercent / 100f));
         }
 
         /// <inheritdoc />
@@ -223,21 +229,25 @@ namespace Neo.Rpg
         /// <summary>
         ///     Applies damage to the character.
         /// </summary>
-        /// <param name="amount">Damage amount (positive value).</param>
+        /// <param name="info">Damage information payload.</param>
         /// <returns>Actual damage dealt after modifiers.</returns>
-        public float TakeDamage(float amount)
+        public float TakeDamage(RpgDamageInfo info)
         {
             EnsureInitialized();
-            if (amount <= 0f || IsDead || IsInvulnerable)
+            if (info.Amount <= 0f || IsDead || IsInvulnerable)
             {
                 return 0f;
             }
 
+            float baseDefense = _statGrowth != null ? _statGrowth.DefensePercent.Evaluate(Level) : 0f;
+
             if (_healthProvider != null)
             {
                 float multiplier =
-                    RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition);
-                float actualDamage = _healthProvider.Decrease(RpgResourceId.Hp, amount * multiplier);
+                    RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition, info.DamageType);
+                multiplier *= Mathf.Clamp01(1f - (baseDefense / 100f));
+                    
+                float actualDamage = _healthProvider.Decrease(RpgResourceId.Hp, info.Amount * multiplier);
                 PersistAndNotify();
                 _onDamaged?.Invoke(actualDamage);
                 if (IsDead)
@@ -248,9 +258,12 @@ namespace Neo.Rpg
                 return actualDamage;
             }
 
+            float dmgMultiplier = RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition, info.DamageType);
+            dmgMultiplier *= Mathf.Clamp01(1f - (baseDefense / 100f));
+            
             float actualDamageProfile =
                 Mathf.Min(
-                    amount * RpgCombatMath.GetIncomingDamageMultiplier(_profile.ActiveBuffs, ResolveBuffDefinition),
+                    info.Amount * dmgMultiplier,
                     _profile.CurrentHp);
             _profile.CurrentHp -= actualDamageProfile;
             PersistAndNotify();
@@ -576,6 +589,13 @@ namespace Neo.Rpg
 
             _rpgInitialized = true;
             _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
+            
+            if (_levelProvider != null)
+            {
+                _levelProvider.LevelState.RemoveListener(HandleLevelChanged);
+                _levelProvider.LevelState.AddListener(HandleLevelChanged);
+            }
+
             if (_loadOnAwake)
             {
                 LoadProfileInternal(true);
@@ -583,6 +603,43 @@ namespace Neo.Rpg
             else
             {
                 ApplyProfile(new RpgProfileData(), true);
+            }
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (_levelProvider != null)
+            {
+                _levelProvider.LevelState.RemoveListener(HandleLevelChanged);
+            }
+        }
+        
+        private void HandleLevelChanged(int newLevel)
+        {
+            RecalculateBaseStatsFromGrowth();
+            RefreshRuntimeState(true);
+            if (_autoSave)
+            {
+                SaveProfile();
+            }
+        }
+        
+        private void RecalculateBaseStatsFromGrowth()
+        {
+            if (_statGrowth == null || _profile == null) return;
+            
+            int currentLevel = Level;
+            float oldMax = _profile.MaxHp > 0 ? _profile.MaxHp : 1f;
+            float newMax = _statGrowth.MaxHp.Evaluate(currentLevel);
+            
+            _profile.MaxHp = Mathf.Max(1f, newMax);
+            _hpRegenPerSecond = _statGrowth.HpRegen.Evaluate(currentLevel);
+
+            if (_profile.CurrentHp > 0f)
+            {
+                float percent = _profile.CurrentHp / oldMax;
+                _profile.CurrentHp = _profile.MaxHp * percent;
             }
         }
 
@@ -616,6 +673,9 @@ namespace Neo.Rpg
             _profile = profile ?? new RpgProfileData();
             _profile.Version = ProfileVersion;
             _profile.Sanitize();
+            
+            RecalculateBaseStatsFromGrowth();
+            
             RefreshRuntimeState(invokeEvents);
         }
 
@@ -633,7 +693,8 @@ namespace Neo.Rpg
                 float damage = def.TickDamagePerSecond * deltaTime * entry.Stacks;
                 if (damage > 0f)
                 {
-                    TakeDamage(damage);
+                    RpgDamageInfo tickDamage = new RpgDamageInfo(damage, "StatusTick", null);
+                    TakeDamage(tickDamage);
                 }
             }
         }

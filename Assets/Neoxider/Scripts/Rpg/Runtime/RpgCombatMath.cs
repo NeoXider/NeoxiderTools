@@ -4,28 +4,34 @@ using UnityEngine;
 
 namespace Neo.Rpg
 {
-    internal static class RpgCombatMath
+    public static class RpgCombatMath
     {
-        internal static float GetOutgoingDamageMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
+        public static float GetOutgoingDamageMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
             Func<string, BuffDefinition> resolveBuff)
         {
             return 1f + GetPercentSum(activeBuffs, resolveBuff, BuffStatType.DamagePercent) / 100f;
         }
 
-        internal static float GetIncomingDamageMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
-            Func<string, BuffDefinition> resolveBuff)
+        public static float GetIncomingDamageMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
+            Func<string, BuffDefinition> resolveBuff, string damageType)
         {
             float defensePercent = GetPercentSum(activeBuffs, resolveBuff, BuffStatType.DefensePercent);
+            
+            if (!string.IsNullOrEmpty(damageType))
+            {
+                defensePercent += GetSpecificFlatSum(activeBuffs, resolveBuff, BuffStatType.SpecificDefensePercent, damageType);
+            }
+
             return Mathf.Clamp01(1f - defensePercent / 100f);
         }
 
-        internal static float GetRegenPerSecond(float baseRegen, IEnumerable<ActiveBuffEntry> activeBuffs,
+        public static float GetRegenPerSecond(float baseRegen, IEnumerable<ActiveBuffEntry> activeBuffs,
             Func<string, BuffDefinition> resolveBuff)
         {
             return Mathf.Max(0f, baseRegen + GetFlatSum(activeBuffs, resolveBuff, BuffStatType.HpRegenPerSecond));
         }
 
-        internal static float GetMovementSpeedMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
+        public static float GetMovementSpeedMultiplier(IEnumerable<ActiveBuffEntry> activeBuffs,
             IEnumerable<ActiveStatusEntry> activeStatuses,
             Func<string, BuffDefinition> resolveBuff,
             Func<string, StatusEffectDefinition> resolveStatus)
@@ -50,7 +56,7 @@ namespace Neo.Rpg
             return Mathf.Max(0f, buffMultiplier * statusMultiplier);
         }
 
-        internal static bool HasBlockingStatus(IEnumerable<ActiveStatusEntry> activeStatuses,
+        public static bool HasBlockingStatus(IEnumerable<ActiveStatusEntry> activeStatuses,
             Func<string, StatusEffectDefinition> resolveStatus)
         {
             if (activeStatuses == null)
@@ -98,6 +104,37 @@ namespace Neo.Rpg
                 {
                     BuffStatModifier modifier = modifiers[i];
                     if (modifier != null && modifier.StatType == statType)
+                    {
+                        total += modifier.Value;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+        private static float GetSpecificFlatSum(IEnumerable<ActiveBuffEntry> activeBuffs,
+            Func<string, BuffDefinition> resolveBuff, BuffStatType statType, string specificType)
+        {
+            float total = 0f;
+            if (activeBuffs == null)
+            {
+                return total;
+            }
+
+            foreach (ActiveBuffEntry entry in activeBuffs)
+            {
+                BuffDefinition definition = resolveBuff(entry.BuffId);
+                if (definition == null)
+                {
+                    continue;
+                }
+
+                BuffStatModifier[] modifiers = definition.Modifiers;
+                for (int i = 0; i < modifiers.Length; i++)
+                {
+                    BuffStatModifier modifier = modifiers[i];
+                    if (modifier != null && modifier.StatType == statType && string.Equals(modifier.SpecificDamageType, specificType, StringComparison.OrdinalIgnoreCase))
                     {
                         total += modifier.Value;
                     }

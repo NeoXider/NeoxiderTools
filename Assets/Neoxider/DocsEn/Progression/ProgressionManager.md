@@ -3,11 +3,12 @@
 **What it is:** a `MonoBehaviour` from `Scripts/Progression/Runtime/ProgressionManager.cs` that owns XP, levels, perk points, unlock nodes, perks, and persistent profile storage through `SaveProvider`.
 
 **How to use:**
-1. Add `ProgressionManager` to a scene object.
+1. Add `ProgressionManager`, `LevelComponent` (and optionally `UnlockContext`, `PerkContext`) to a scene object (such as a Player or Weapon).
 2. Assign `LevelCurveDefinition`, `UnlockTreeDefinition`, and `PerkTreeDefinition`.
-3. Set `Save Key` if the project needs a separate profile namespace.
+3. Set `Save Key` if the project needs a separate profile namespace (e.g. `Weapon_Sword_Progression`).
 4. Call `AddXp`, `TryUnlockNode`, `TryBuyPerk`, `ResetProgression`, `LoadProfile`, or `SaveProfile`.
 5. Bind UI to the reactive state fields or the exposed UnityEvents.
+6. Support for `Premium` (BattlePass-like) progressions is available via `ActivatePremium()`.
 
 **Navigation:** [← Progression](./README.md)
 
@@ -46,22 +47,32 @@ using UnityEngine;
 
 public class ProgressionRewardExample : MonoBehaviour
 {
+    [SerializeField] private ProgressionManager targetProgression;
     [SerializeField] private int xpReward = 50;
     [SerializeField] private string unlockNodeId = "weapon-tier-2";
 
     public void GrantXp()
     {
-        if (ProgressionManager.Instance != null)
+        if (targetProgression != null)
         {
-            ProgressionManager.Instance.AddXp(xpReward);
+            targetProgression.AddXp(xpReward);
         }
     }
 
     public void UnlockTier()
     {
-        if (ProgressionManager.Instance != null)
+        if (targetProgression != null)
         {
-            ProgressionManager.Instance.TryUnlockNode(unlockNodeId, out _);
+            targetProgression.TryUnlockNode(unlockNodeId, out _);
+        }
+    }
+    
+    public void PurchaseBattlepass()
+    {
+        if (targetProgression != null)
+        {
+            // Activate Premium track retroactively granting rewards for past levels
+            targetProgression.ActivatePremium();
         }
     }
 }
@@ -82,6 +93,13 @@ public class ProgressionRewardExample : MonoBehaviour
 - `GrantedPerkPoints` awarded by level ups
 - perks purchased with perk points
 - unlock nodes open new branches or systems
+
+### Battle Pass
+
+- `LevelCurveDefinition` with multiple `ProgressionRewards` 
+- Some rewards marked as `IsPremiumOnly = true`
+- Use `ProgressionManager.ActivatePremium()` when purchased by user
+- Independent profiles per season by switching `Save Key`
 
 ### Narrative game
 

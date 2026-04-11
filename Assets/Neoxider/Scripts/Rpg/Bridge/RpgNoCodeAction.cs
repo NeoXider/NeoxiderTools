@@ -41,7 +41,7 @@ namespace Neo.Rpg
             switch (_actionType)
             {
                 case RpgNoCodeActionType.TakeDamage:
-                    manager.TakeDamage(_amount);
+                    manager.TakeDamage(new RpgDamageInfo(_amount, null, null));
                     EmitSuccess($"Took damage: {_amount}");
                     break;
                 case RpgNoCodeActionType.Heal:

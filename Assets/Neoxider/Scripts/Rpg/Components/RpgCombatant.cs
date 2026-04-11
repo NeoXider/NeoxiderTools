@@ -23,6 +23,10 @@ namespace Neo.Rpg
 
         [SerializeField] private LevelComponent _levelProvider;
 
+        [Header("Stat Growth")]
+        [Tooltip("When set, base MaxHp, Regen, and multi-stats grow with Level automatically.")]
+        [SerializeField] private RpgStatGrowthDefinition _statGrowth;
+
         [Header("Base Stats")] [SerializeField] [Min(1f)]
         private float _maxHp = 100f;
 
@@ -118,6 +122,12 @@ namespace Neo.Rpg
 
         private void Awake()
         {
+            if (_levelProvider != null)
+            {
+                _levelProvider.LevelState.AddListener(HandleLevelChanged);
+            }
+            RecalculateBaseStatsFromGrowth();
+
             _maxHp = Mathf.Max(1f, _maxHp);
             if (_restoreOnAwake)
             {
@@ -129,6 +139,38 @@ namespace Neo.Rpg
             }
 
             RefreshRuntimeState(true);
+        }
+
+        private void OnDestroy()
+        {
+            if (_levelProvider != null)
+            {
+                _levelProvider.LevelState.RemoveListener(HandleLevelChanged);
+            }
+        }
+
+        private void HandleLevelChanged(int newLevel)
+        {
+            RecalculateBaseStatsFromGrowth();
+            RefreshRuntimeState(true);
+        }
+        
+        private void RecalculateBaseStatsFromGrowth()
+        {
+            if (_statGrowth == null) return;
+            
+            int currentLevel = Level;
+            float oldMax = _maxHp > 0 ? _maxHp : 1f;
+            float newMax = _statGrowth.MaxHp.Evaluate(currentLevel);
+            
+            _maxHp = Mathf.Max(1f, newMax);
+            _hpRegenPerSecond = _statGrowth.HpRegen.Evaluate(currentLevel);
+
+            if (_currentHp > 0f && !_restoreOnAwake)
+            {
+                float percent = _currentHp / oldMax;
+                _currentHp = _maxHp * percent;
+            }
         }
 
         private void Update()
@@ -207,17 +249,20 @@ namespace Neo.Rpg
             !IsDead && !RpgCombatMath.HasBlockingStatus(_activeStatuses, ResolveStatusDefinition);
 
         /// <inheritdoc />
-        public float TakeDamage(float amount)
+        public float TakeDamage(RpgDamageInfo info)
         {
-            if (amount <= 0f || IsDead || IsInvulnerable)
+            if (info.Amount <= 0f || IsDead || IsInvulnerable)
             {
                 return 0f;
             }
 
             if (_healthProvider != null)
             {
-                float multiplier = RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
-                float actualDamage = _healthProvider.Decrease(RpgResourceId.Hp, amount * multiplier);
+                float baseDefense = _statGrowth != null ? _statGrowth.DefensePercent.Evaluate(Level) : 0f;
+                float multiplier = RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition, info.DamageType);
+                multiplier *= Mathf.Clamp01(1f - (baseDefense / 100f));
+                
+                float actualDamage = _healthProvider.Decrease(RpgResourceId.Hp, info.Amount * multiplier);
                 RefreshRuntimeState(true);
                 _onDamaged?.Invoke(actualDamage);
                 if (IsDead)
@@ -228,8 +273,11 @@ namespace Neo.Rpg
                 return actualDamage;
             }
 
+            float localBaseDef = _statGrowth != null ? _statGrowth.DefensePercent.Evaluate(Level) : 0f;
             float adjustedAmount =
-                amount * RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
+                info.Amount * RpgCombatMath.GetIncomingDamageMultiplier(_activeBuffs, ResolveBuffDefinition, info.DamageType);
+            adjustedAmount *= Mathf.Clamp01(1f - (localBaseDef / 100f));
+            
             float actualDamageLocal = Mathf.Min(adjustedAmount, _currentHp);
             _currentHp -= actualDamageLocal;
             RefreshRuntimeState(true);
@@ -374,7 +422,9 @@ namespace Neo.Rpg
         /// <inheritdoc />
         public float GetOutgoingDamageMultiplier()
         {
-            return RpgCombatMath.GetOutgoingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
+            float baseDamagePercent = _statGrowth != null ? _statGrowth.DamagePercent.Evaluate(Level) : 0f;
+            float multiplier = RpgCombatMath.GetOutgoingDamageMultiplier(_activeBuffs, ResolveBuffDefinition);
+            return multiplier * (1f + (baseDamagePercent / 100f));
         }
 
         /// <inheritdoc />
@@ -435,6 +485,7 @@ namespace Neo.Rpg
             }
 
             _level = Mathf.Max(1, level);
+            RecalculateBaseStatsFromGrowth();
             RefreshRuntimeState(true);
         }
 
@@ -512,7 +563,8 @@ namespace Neo.Rpg
                     continue;
                 }
 
-                TakeDamage(definition.TickDamagePerSecond * deltaTime * entry.Stacks);
+                RpgDamageInfo tickDamage = new RpgDamageInfo(definition.TickDamagePerSecond * deltaTime * entry.Stacks, "StatusTick", null);
+                TakeDamage(tickDamage);
             }
         }
 

@@ -731,6 +731,35 @@ namespace Neo.Editor.Tests
 
         #endregion
 
+        #region NumberFormatExtensions
+
+        [Test]
+        public void NumberFormat_Double_RoundsCorrectly()
+        {
+            var opts = new NumberFormatOptions(NumberNotation.IdleShort, 2, NumberRoundingMode.ToEven, false);
+            
+            // Expected bug check:
+            string val1 = (999.995d).ToPrettyString(opts);
+            string val2 = (999.999d).ToPrettyString(opts);
+            string val3 = (1000d).ToPrettyString(opts);
+            string val4 = (999999.995d).ToPrettyString(opts);
+            string val5 = (999999.999d).ToPrettyString(opts);
+            string val6 = (1000000d).ToPrettyString(opts);
+            string val7 = (999999999.999d).ToPrettyString(opts);
+
+            UnityEngine.Debug.Log($"val1: {val1}, val2: {val2}, val3: {val3}, val4: {val4}, val5: {val5}, val6: {val6}, val7: {val7}");
+
+            Assert.AreEqual("1.00K", val1);
+            Assert.AreEqual("1.00K", val2);
+            Assert.AreEqual("1.00K", val3);
+            Assert.AreEqual("1.00M", val4);
+            Assert.AreEqual("1.00M", val5);
+            Assert.AreEqual("1.00M", val6);
+            Assert.AreEqual("1.00B", val7);
+        }
+
+        #endregion
+
         #region RandomExtensions (validation only)
 
         [Test]

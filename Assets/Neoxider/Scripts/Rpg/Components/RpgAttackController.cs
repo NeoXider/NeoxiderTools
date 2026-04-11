@@ -371,7 +371,7 @@ namespace Neo.Rpg
             }
 
             bool affected = definition.HitMode == RpgHitMode.Damage
-                ? receiver.TakeDamage(amount) > 0f
+                ? receiver.TakeDamage(new RpgDamageInfo(amount, definition.DamageType, sourceReceiver)) > 0f
                 : receiver.Heal(amount) > 0f;
 
             ApplyEffects(definition, sourceReceiver, receiver);

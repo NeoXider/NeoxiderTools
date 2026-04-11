@@ -51,7 +51,7 @@ namespace Neo.Progression.Tests
             }
             finally
             {
-                ProgressionManager.DestroyInstance();
+                Object.DestroyImmediate(managerObject);
                 if (levelCurve != null)
                 {
                     Object.DestroyImmediate(levelCurve);
@@ -101,7 +101,7 @@ namespace Neo.Progression.Tests
 
                 firstManager.SaveProfile();
                 firstLevel.Save();
-                ProgressionManager.DestroyInstance();
+                Object.DestroyImmediate(firstManagerObject);
 
                 GameObject secondManagerObject = new("ProgressionManager_Second");
                 LevelComponent secondLevel = secondManagerObject.AddComponent<LevelComponent>();
@@ -125,7 +125,7 @@ namespace Neo.Progression.Tests
                 }
                 finally
                 {
-                    ProgressionManager.DestroyInstance();
+                    Object.DestroyImmediate(secondManagerObject);
                 }
             }
             finally
@@ -144,6 +144,52 @@ namespace Neo.Progression.Tests
                 {
                     Object.DestroyImmediate(perkTree);
                 }
+            }
+        }
+
+        [Test]
+        public void ActivatePremium_SetsHasPremium_AndGrantsRetroactiveRewards()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            LevelCurveDefinition levelCurve = CreateLevelCurve(
+                CreateLevel(1, 0, 0),
+                CreateLevel(2, 100, 1));
+
+            Core.Level.LevelCurveDefinition coreCurve =
+                ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
+            coreCurve.SetLinear(100);
+
+            GameObject managerObject = new("ProgressionManager");
+            LevelComponent levelComponent = managerObject.AddComponent<LevelComponent>();
+            levelComponent.LevelCurveDefinition = coreCurve;
+
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+            SetPrivateField(manager, "_levelProvider", levelComponent);
+            manager.SetDefinitions(levelCurve, null, null);
+            manager.SaveKey = "ProgressionTests.Premium";
+
+            try
+            {
+                manager.EnsureInitialized();
+                manager.ResetProgression();
+
+                Assert.That(manager.HasPremium, Is.False, "Should not have premium initially.");
+
+                manager.ActivatePremium();
+
+                Assert.That(manager.HasPremium, Is.True, "Should have premium after activation.");
+
+                // Reload to verify saving
+                manager.LoadProfile();
+                Assert.That(manager.HasPremium, Is.True, "Should still have premium after loading from save.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                if (levelCurve != null) Object.DestroyImmediate(levelCurve);
+                if (coreCurve != null) Object.DestroyImmediate(coreCurve);
             }
         }
 

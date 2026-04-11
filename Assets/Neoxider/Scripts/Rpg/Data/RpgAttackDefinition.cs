@@ -12,6 +12,7 @@ namespace Neo.Rpg
         [SerializeField] private string _displayName = "Attack";
         [SerializeField] private RpgAttackDeliveryType _deliveryType = RpgAttackDeliveryType.Direct;
         [SerializeField] private RpgHitMode _hitMode = RpgHitMode.Damage;
+        [SerializeField] private string _damageType = "";
         [SerializeField] [Min(0f)] private float _power = 10f;
         [SerializeField] [Min(0f)] private float _range = 2f;
         [SerializeField] [Min(0f)] private float _radius = 0.5f;
@@ -62,6 +63,11 @@ namespace Neo.Rpg
         ///     Gets whether the effect deals damage or healing.
         /// </summary>
         public RpgHitMode HitMode => _hitMode;
+
+        /// <summary>
+        ///     Gets the damage type identifier (e.g. Physical, Fire, Magic).
+        /// </summary>
+        public string DamageType => _damageType;
 
         /// <summary>
         ///     Gets the base power before source multipliers.

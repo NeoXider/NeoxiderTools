@@ -470,10 +470,11 @@ namespace Neo.Extensions
             decimal compact = prefix / divisor;
             compact = Round(compact, decimals, options.RoundingMode);
 
-            if (compact >= 1000m)
+            while (compact >= 1000m)
             {
                 compact /= 1000m;
                 tier++;
+                compact = Round(compact, decimals, options.RoundingMode);
             }
 
             string numberText = FormatDecimalValue(compact, decimals, options);
@@ -500,10 +501,11 @@ namespace Neo.Extensions
             decimal mantissa = prefix / divisor;
             mantissa = Round(mantissa, decimals, options.RoundingMode);
 
-            if (mantissa >= 10m)
+            while (mantissa >= 10m)
             {
                 mantissa /= 10m;
                 exponent++;
+                mantissa = Round(mantissa, decimals, options.RoundingMode);
             }
 
             string mantissaText = FormatDecimalValue(mantissa, decimals, options);
@@ -545,10 +547,11 @@ namespace Neo.Extensions
 
             compact = Round(compact, options.Decimals, options.RoundingMode);
 
-            if (compact >= 1000m)
+            while (compact >= 1000m)
             {
                 compact /= 1000m;
                 tier++;
+                compact = Round(compact, options.Decimals, options.RoundingMode);
             }
 
             string numberText = FormatDecimalValue(compact, options.Decimals, options);
@@ -579,10 +582,11 @@ namespace Neo.Extensions
             }
 
             abs = Round(abs, options.Decimals, options.RoundingMode);
-            if (abs >= 10m)
+            while (abs >= 10m)
             {
                 abs /= 10m;
                 exponent++;
+                abs = Round(abs, options.Decimals, options.RoundingMode);
             }
 
             string mantissa = FormatDecimalValue(abs, options.Decimals, options);
@@ -612,10 +616,11 @@ namespace Neo.Extensions
 
             compact = Round(compact, options.Decimals, options.RoundingMode);
 
-            if (compact >= 1000d)
+            while (compact >= 1000d && tier < int.MaxValue - 2)
             {
                 compact /= 1000d;
                 tier++;
+                compact = Round(compact, options.Decimals, options.RoundingMode);
             }
 
             string numberText = NormalizeDecimalPart(

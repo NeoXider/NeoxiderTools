@@ -16,7 +16,7 @@ namespace Neo.Progression
     [NeoDoc("Progression/ProgressionManager.md")]
     [CreateFromMenu("Neoxider/Progression/ProgressionManager")]
     [AddComponentMenu("Neoxider/Progression/" + nameof(ProgressionManager))]
-    public sealed class ProgressionManager : Singleton<ProgressionManager>
+    public sealed class ProgressionManager : MonoBehaviour
     {
         private const int ProfileVersion = 2;
         private const string DefaultSaveKey = "ProgressionV2.Profile";
@@ -63,7 +63,15 @@ namespace Neo.Progression
         /// <summary>
         ///     Gets a backwards-compatible singleton alias.
         /// </summary>
-        public static ProgressionManager Instance => I;
+        public static ProgressionManager Instance { get; private set; }
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+            }
+        }
 
         /// <summary>
         ///     Gets or sets the level curve definition.
@@ -126,6 +134,11 @@ namespace Neo.Progression
         public int AvailablePerkPoints => _profile.AvailablePerkPoints;
 
         /// <summary>
+        ///     Gets whether the active profile has the premium track enabled.
+        /// </summary>
+        public bool HasPremium => _profile.HasPremium;
+
+        /// <summary>
         ///     Gets the unlocked node identifiers.
         /// </summary>
         public IReadOnlyCollection<string> UnlockedNodeIds => _unlockedNodeIds;
@@ -172,7 +185,6 @@ namespace Neo.Progression
         /// <summary>XP remaining to the next level (for NeoCondition and reactive state binding).</summary>
         public int XpToNextLevelStateValue => XpToNextLevelState.CurrentValue;
 
-        protected override bool DontDestroyOnLoadEnabled => true;
 
         private void OnValidate()
         {
@@ -468,6 +480,34 @@ namespace Neo.Progression
         }
 
         /// <summary>
+        ///     Activates the premium track and retroactively grants premium rewards for already achieved levels.
+        /// </summary>
+        public void ActivatePremium()
+        {
+            EnsureInitialized();
+            if (_profile.HasPremium)
+            {
+                return;
+            }
+
+            _profile.HasPremium = true;
+            SaveProfile();
+
+            if (_levelProvider != null && _levelCurve != null)
+            {
+                for (int level = 1; level <= _levelProvider.Level; level++)
+                {
+                    if (_levelCurve.TryGetDefinition(level, out ProgressionLevelDefinition definition))
+                    {
+                        ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, premiumOnly: true);
+                    }
+                }
+            }
+
+            PersistAndNotify();
+        }
+
+        /// <summary>
         ///     Loads the profile from the active save provider.
         /// </summary>
         public void LoadProfile()
@@ -489,9 +529,8 @@ namespace Neo.Progression
             _onProfileSaved?.Invoke();
         }
 
-        protected override void Init()
+        public void Init()
         {
-            base.Init();
             if (_progressionInitialized)
             {
                 return;

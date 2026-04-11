@@ -24,7 +24,7 @@ namespace Neo.Rpg.Tests
             {
                 manager.ResetProfile();
                 float before = manager.CurrentHp;
-                float dealt = manager.TakeDamage(25f);
+                float dealt = manager.TakeDamage(new RpgDamageInfo(25f));
 
                 Assert.That(dealt, Is.EqualTo(25f));
                 Assert.That(manager.CurrentHp, Is.EqualTo(before - 25f));
@@ -48,7 +48,7 @@ namespace Neo.Rpg.Tests
             try
             {
                 manager.ResetProfile();
-                manager.TakeDamage(50f);
+                manager.TakeDamage(new RpgDamageInfo(50f));
                 float healed = manager.Heal(30f);
 
                 Assert.That(healed, Is.EqualTo(30f));
@@ -73,10 +73,10 @@ namespace Neo.Rpg.Tests
             try
             {
                 manager.ResetProfile();
-                manager.TakeDamage(1000f);
+                manager.TakeDamage(new RpgDamageInfo(1000f));
                 Assert.That(manager.IsDead, Is.True);
 
-                float dealt = manager.TakeDamage(100f);
+                float dealt = manager.TakeDamage(new RpgDamageInfo(100f));
                 Assert.That(dealt, Is.EqualTo(0f));
             }
             finally
@@ -97,7 +97,7 @@ namespace Neo.Rpg.Tests
             firstManager.EnsureInitialized();
 
             firstManager.ResetProfile();
-            firstManager.TakeDamage(30f);
+            firstManager.TakeDamage(new RpgDamageInfo(30f));
             firstManager.SetLevel(5);
             firstManager.SaveProfile();
 
@@ -136,7 +136,7 @@ namespace Neo.Rpg.Tests
             {
                 manager.ResetProfile();
                 provider.DeleteKey(manager.SaveKey);
-                manager.TakeDamage(10f);
+                manager.TakeDamage(new RpgDamageInfo(10f));
 
                 Assert.That(provider.HasKey(manager.SaveKey), Is.False);
             }
@@ -162,7 +162,7 @@ namespace Neo.Rpg.Tests
             {
                 manager.ResetProfile();
                 provider.DeleteKey(manager.SaveKey);
-                manager.TakeDamage(10f);
+                manager.TakeDamage(new RpgDamageInfo(10f));
 
                 Assert.That(provider.HasKey(manager.SaveKey), Is.True);
                 string json = provider.GetString(manager.SaveKey);
@@ -237,7 +237,7 @@ namespace Neo.Rpg.Tests
                 Assert.That(manager.CurrentHp, Is.EqualTo(100f));
                 Assert.That(manager.MaxHp, Is.EqualTo(100f));
 
-                float dealt = manager.TakeDamage(25f);
+                float dealt = manager.TakeDamage(new RpgDamageInfo(25f));
                 Assert.That(dealt, Is.EqualTo(25f));
                 Assert.That(manager.CurrentHp, Is.EqualTo(75f));
 

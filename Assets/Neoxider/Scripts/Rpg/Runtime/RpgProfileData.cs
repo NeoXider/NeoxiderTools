@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Neo.Rpg
 {
-    internal static class RpgTimeUtility
+    public static class RpgTimeUtility
     {
-        internal static double GetCurrentUnixTimestamp()
+        public static double GetCurrentUnixTimestamp()
         {
             return DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
         }

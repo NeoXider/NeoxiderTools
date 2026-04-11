@@ -97,7 +97,7 @@ namespace Neo.Shop
         private void SetAmount(float count)
         {
             amount = count;
-            Set(amount.RoundToDecimal(@decimal).ToString());
+            Set(amount);
         }
 
         private enum MoneyDisplayMode
