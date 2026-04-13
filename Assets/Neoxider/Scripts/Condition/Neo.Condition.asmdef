@@ -3,7 +3,9 @@
     "rootNamespace": "Neo.Condition",
     "references": [
         "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-        "GUID:699bb923824f1724b91c66f5ba9ace74"
+        "GUID:699bb923824f1724b91c66f5ba9ace74",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,6 +14,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
     "noEngineReferences": false
 }

@@ -1,6 +1,10 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using Neo.Network;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Tools
 {
@@ -11,7 +15,13 @@ namespace Neo.Tools
     [CreateFromMenu("Neoxider/Tools/Interact/InteractiveObject",
         "Prefabs/Tools/Interact/Interactive Sphere.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
-    public class InteractiveObject : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
+    public class InteractiveObject : 
+#if MIRROR
+        NetworkBehaviour,
+#else
+        MonoBehaviour,
+#endif
+        IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         public enum KeyboardInteractionMode
         {
@@ -31,6 +41,11 @@ namespace Neo.Tools
 
         [Tooltip("Create EventSystem automatically if it is missing in scene.")] [SerializeField]
         private bool _autoCreateEventSystemIfMissing = true;
+
+        [Header("Networking")]
+        [Tooltip("If true, interactions (clicks/keys) are sent directly to the Server. (Requires Mirror)")]
+        [SerializeField]
+        private bool isNetworked;
 
         public bool interactable = true;
 
@@ -161,6 +176,16 @@ namespace Neo.Tools
         private bool wasHoveredByRaycast;
         private bool wasInRange;
 
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+        }
+#endif
+
         private void Awake()
         {
             InteractiveObjectSceneSetup.EnsureEventSystem(this, _autoCheckEventSystem, _autoCreateEventSystemIfMissing);
@@ -267,7 +292,7 @@ namespace Neo.Tools
                 return;
             }
 
-            ProcessClick(eventData.button);
+            ProcessClickEvent(eventData.button);
         }
 
         public void OnPointerEnter(PointerEventData eventData)
@@ -321,19 +346,19 @@ namespace Neo.Tools
                     if (buttonIndex == (int)downUpMouseButton && startedOnObject)
                     {
                         isInteractingThisFrame = true;
-                        onInteractDown?.Invoke();
+                        TriggerInteractDown();
                     }
                 }
                 else if (!mouseHeld && wasHeld)
                 {
                     if (buttonIndex == (int)downUpMouseButton && canUseCurrentMouseTarget)
                     {
-                        onInteractUp?.Invoke();
+                        TriggerInteractUp();
                     }
 
                     if (mouseButtonsPressedOnObject[buttonIndex] && IsHovered && canUseCurrentMouseTarget)
                     {
-                        ProcessClick((PointerEventData.InputButton)buttonIndex);
+                        ProcessClickEvent((PointerEventData.InputButton)buttonIndex);
                     }
 
                     mouseButtonsPressedOnObject[buttonIndex] = false;
@@ -460,12 +485,12 @@ namespace Neo.Tools
             if (keyDown && canInteract)
             {
                 isInteractingThisFrame = true;
-                onInteractDown?.Invoke();
+                TriggerInteractDown();
             }
 
             if (keyUp && canInteract)
             {
-                onInteractUp?.Invoke();
+                TriggerInteractUp();
             }
         }
 
@@ -754,7 +779,7 @@ namespace Neo.Tools
             return (interactionDistance <= 0f && !checkObstacles) || IsInRange(interactionPoint);
         }
 
-        private void ProcessClick(PointerEventData.InputButton button)
+        private void ProcessClickEvent(PointerEventData.InputButton button)
         {
             if (lastProcessedClickFrame == Time.frameCount && lastProcessedClickButton == button)
             {
@@ -766,30 +791,103 @@ namespace Neo.Tools
 
             if (button == PointerEventData.InputButton.Left)
             {
-                if (doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold)
-                {
-                    onDoubleClick.Invoke();
-                }
-                else
-                {
-                    onClick.Invoke();
-                }
-
+                bool isDouble = doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold;
+                TriggerClick(button, isDouble);
                 clickTime = Time.time;
-                return;
             }
-
-            if (button == PointerEventData.InputButton.Right)
+            else
             {
-                onRightClick.Invoke();
-                return;
-            }
-
-            if (button == PointerEventData.InputButton.Middle)
-            {
-                onMiddleClick.Invoke();
+                TriggerClick(button, false);
             }
         }
+
+        private void TriggerInteractDown()
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient) CmdInteractDown();
+                else if (NeoNetworkState.IsServer) { onInteractDown?.Invoke(); RpcInteractDown(); }
+                return;
+            }
+#endif
+            onInteractDown?.Invoke();
+        }
+
+        private void TriggerInteractUp()
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient) CmdInteractUp();
+                else if (NeoNetworkState.IsServer) { onInteractUp?.Invoke(); RpcInteractUp(); }
+                return;
+            }
+#endif
+            onInteractUp?.Invoke();
+        }
+
+        private void TriggerClick(PointerEventData.InputButton button, bool isDouble = false)
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient) CmdClick((int)button, isDouble);
+                else if (NeoNetworkState.IsServer) { InvokeClick(button, isDouble); RpcClick((int)button, isDouble); }
+                return;
+            }
+#endif
+            InvokeClick(button, isDouble);
+        }
+
+        private void InvokeClick(PointerEventData.InputButton button, bool isDouble)
+        {
+            if (button == PointerEventData.InputButton.Left)
+            {
+                if (isDouble) onDoubleClick?.Invoke();
+                else onClick?.Invoke();
+            }
+            else if (button == PointerEventData.InputButton.Right)
+            {
+                onRightClick?.Invoke();
+            }
+            else if (button == PointerEventData.InputButton.Middle)
+            {
+                onMiddleClick?.Invoke();
+            }
+        }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdInteractDown()
+        {
+            if (isServerOnly) onInteractDown?.Invoke();
+            RpcInteractDown();
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcInteractDown() => onInteractDown?.Invoke();
+
+        [Command(requiresAuthority = false)]
+        private void CmdInteractUp()
+        {
+            if (isServerOnly) onInteractUp?.Invoke();
+            RpcInteractUp();
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcInteractUp() => onInteractUp?.Invoke();
+
+        [Command(requiresAuthority = false)]
+        private void CmdClick(int buttonInt, bool isDouble)
+        {
+            if (isServerOnly) InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+            RpcClick(buttonInt, isDouble);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcClick(int buttonInt, bool isDouble) => InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+#endif
 
         private bool HasEnabledInteractionCollider()
         {
@@ -1155,3 +1253,4 @@ namespace Neo.Tools
         #endregion
     }
 }
+

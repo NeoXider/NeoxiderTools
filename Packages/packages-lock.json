@@ -10,6 +10,13 @@
       },
       "hash": "ec25df8f791e01508353c1c39b02ecf5f427f149"
     },
+    "com.mirrornetworking.mirror": {
+      "version": "96.6.4",
+      "depth": 0,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
+    },
     "com.unity.2d.animation": {
       "version": "9.2.0",
       "depth": 1,
@@ -220,7 +227,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.1",
-      "depth": 1,
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"

@@ -1,27 +1,40 @@
 {
-    "name": "Neo.Tests.Play",
-    "rootNamespace": "Neo.Tests.Play",
-    "references": [
-        "Neo.Save",
-        "Neo.Tools.Inventory",
-        "Neo.Core",
-        "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner",
-        "Neo.Tools.Managers",
-        "Neo.Tools.Input",
-        "Neo.Tools.InteractableObject"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": true,
-    "precompiledReferences": [
-        "nunit.framework.dll"
-    ],
-    "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
-    "versionDefines": [],
-    "noEngineReferences": false
+    "name":  "Neo.Tests.Play",
+    "rootNamespace":  "Neo.Tests.Play",
+    "references":  [
+                       "Neo.Save",
+                       "Neo.Tools.Inventory",
+                       "Neo.Core",
+                       "UnityEngine.TestRunner",
+                       "UnityEditor.TestRunner",
+                       "Neo.Tools.Managers",
+                       "Neo.Tools.Input",
+                       "Neo.Tools.InteractableObject",
+                       "Neo.Network",
+                       "Mirror",
+                       "Neo.Condition",
+                       "Neo.Tools.Spawner",
+                       "Neo.Tools.Components",
+                       "Neo.Tools.View",
+                       "Neo.Shop"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  true,
+    "precompiledReferences":  [
+                                  "nunit.framework.dll"
+                              ],
+    "autoReferenced":  false,
+    "defineConstraints":  [
+                              "UNITY_INCLUDE_TESTS"
+                          ],
+    "versionDefines":  [
+
+                       ],
+    "noEngineReferences":  false
 }

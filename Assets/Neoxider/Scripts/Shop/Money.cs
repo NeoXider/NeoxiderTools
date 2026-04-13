@@ -5,13 +5,26 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
+
 namespace Neo.Shop
 {
     [NeoDoc("Shop/Money.md")]
     [CreateFromMenu("Neoxider/Shop/Money")]
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
+#if MIRROR
+    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd
+#else
     public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]
+        public bool isShared = false;
+
         [Space] [SerializeField] private string _moneySave = "Money";
 
         public ReactivePropertyFloat CurrentMoney = new();
@@ -44,6 +57,21 @@ namespace Neo.Shop
         [Button]
         public void Add(float amount)
         {
+#if MIRROR
+            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdAdd(amount);
+                return;
+            }
+#endif
+            AddLocal(amount);
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer) RpcAdd(amount);
+#endif
+        }
+
+        private void AddLocal(float amount)
+        {
             CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
             AllMoney.Value = AllMoney.CurrentValue + amount;
             LastChangeMoney.Value = amount;
@@ -56,14 +84,29 @@ namespace Neo.Shop
         {
             if (CanSpend(amount))
             {
-                CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
-                LastChangeMoney.Value = -amount;
-                ApplyMoneyToText();
-                Save();
+#if MIRROR
+                if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdSpend(amount);
+                    return true;
+                }
+#endif
+                SpendLocal(amount);
+#if MIRROR
+                if (isShared && NeoNetworkState.IsServer) RpcSpend(amount);
+#endif
                 return true;
             }
 
             return false;
+        }
+
+        private void SpendLocal(float amount)
+        {
+            CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
+            LastChangeMoney.Value = -amount;
+            ApplyMoneyToText();
+            Save();
         }
 
         protected override void Init()
@@ -85,11 +128,42 @@ namespace Neo.Shop
 
         public void AddLevelMoney(float count)
         {
+#if MIRROR
+            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdAddLevelMoney(count);
+                return;
+            }
+#endif
+            AddLevelMoneyLocal(count);
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer) RpcAddLevelMoney(count);
+#endif
+        }
+
+        private void AddLevelMoneyLocal(float count)
+        {
             LevelMoney.Value = LevelMoney.CurrentValue + count;
             ApplyLevelMoneyToText();
         }
 
         public float SetLevelMoney(float count = 0)
+        {
+#if MIRROR
+            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdSetLevelMoney(count);
+                return count;
+            }
+#endif
+            float res = SetLevelMoneyLocal(count);
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer) RpcSetLevelMoney(count);
+#endif
+            return res;
+        }
+
+        private float SetLevelMoneyLocal(float count)
         {
             float prev = LevelMoney.CurrentValue;
             LevelMoney.Value = count;
@@ -99,6 +173,22 @@ namespace Neo.Shop
 
         public float SetMoney(float count = 0)
         {
+#if MIRROR
+            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdSetMoney(count);
+                return count;
+            }
+#endif
+            float res = SetMoneyLocal(count);
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer) RpcSetMoney(count);
+#endif
+            return res;
+        }
+
+        private float SetMoneyLocal(float count)
+        {
             LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
             CurrentMoney.Value = count;
             ApplyMoneyToText();
@@ -106,6 +196,22 @@ namespace Neo.Shop
         }
 
         public float SetMoneyForLevel(bool resetLevelMoney = true)
+        {
+#if MIRROR
+            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdSetMoneyForLevel(resetLevelMoney);
+                return LevelMoney.CurrentValue;
+            }
+#endif
+            float res = SetMoneyForLevelLocal(resetLevelMoney);
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer) RpcSetMoneyForLevel(resetLevelMoney);
+#endif
+            return res;
+        }
+
+        private float SetMoneyForLevelLocal(bool resetLevelMoney)
         {
             float count = LevelMoney.CurrentValue;
             CurrentMoney.Value = CurrentMoney.CurrentValue + LevelMoney.CurrentValue;
@@ -174,5 +280,37 @@ namespace Neo.Shop
                 }
             }
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdAdd(float amount) { AddLocal(amount); RpcAdd(amount); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcAdd(float amount) { if (isServer) return; AddLocal(amount); }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSpend(float amount) { SpendLocal(amount); RpcSpend(amount); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcSpend(float amount) { if (isServer) return; SpendLocal(amount); }
+
+        [Command(requiresAuthority = false)]
+        private void CmdAddLevelMoney(float amount) { AddLevelMoneyLocal(amount); RpcAddLevelMoney(amount); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcAddLevelMoney(float amount) { if (isServer) return; AddLevelMoneyLocal(amount); }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSetLevelMoney(float amount) { SetLevelMoneyLocal(amount); RpcSetLevelMoney(amount); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcSetLevelMoney(float amount) { if (isServer) return; SetLevelMoneyLocal(amount); }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSetMoney(float amount) { SetMoneyLocal(amount); RpcSetMoney(amount); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcSetMoney(float amount) { if (isServer) return; SetMoneyLocal(amount); }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSetMoneyForLevel(bool resetLevelMoney) { SetMoneyForLevelLocal(resetLevelMoney); RpcSetMoneyForLevel(resetLevelMoney); }
+        [ClientRpc(includeOwner = true)]
+        private void RpcSetMoneyForLevel(bool resetLevelMoney) { if (isServer) return; SetMoneyForLevelLocal(resetLevelMoney); }
+#endif
     }
 }

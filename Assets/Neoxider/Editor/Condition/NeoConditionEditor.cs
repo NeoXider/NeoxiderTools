@@ -89,7 +89,7 @@ namespace Neo.Editor.Condition
         {
             serializedObject.Update();
 
-            DrawConditionOverview();
+
 
             // --- Logic Mode ---
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), new GUIContent("Logic Mode"));
@@ -129,75 +129,6 @@ namespace Neo.Editor.Condition
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawConditionOverview()
-        {
-            SerializedProperty conditionsProp = serializedObject.FindProperty("_conditions");
-            SerializedProperty logicModeProp = serializedObject.FindProperty("_logicMode");
-            SerializedProperty checkModeProp = serializedObject.FindProperty("_checkMode");
-            SerializedProperty onlyOnChangeProp = serializedObject.FindProperty("_onlyOnChange");
-
-            int sceneSearchCount = 0;
-            int gameObjectModeCount = 0;
-
-            for (int i = 0; i < conditionsProp.arraySize; i++)
-            {
-                SerializedProperty entryProp = conditionsProp.GetArrayElementAtIndex(i);
-                if (entryProp.FindPropertyRelative("_useSceneSearch").boolValue)
-                {
-                    sceneSearchCount++;
-                }
-
-                if (entryProp.FindPropertyRelative("_sourceMode").enumValueIndex == (int)SourceMode.GameObject)
-                {
-                    gameObjectModeCount++;
-                }
-            }
-
-            List<NeoxiderEditorGUI.Badge> badges = new()
-            {
-                new NeoxiderEditorGUI.Badge($"Conditions {conditionsProp.arraySize}",
-                    new Color(0.20f, 0.50f, 0.78f, 1f)),
-                new NeoxiderEditorGUI.Badge(logicModeProp.enumDisplayNames[logicModeProp.enumValueIndex],
-                    new Color(0.36f, 0.60f, 0.86f, 1f)),
-                new NeoxiderEditorGUI.Badge(checkModeProp.enumDisplayNames[checkModeProp.enumValueIndex],
-                    new Color(0.42f, 0.34f, 0.82f, 1f))
-            };
-
-            if (onlyOnChangeProp.boolValue)
-            {
-                badges.Add(new NeoxiderEditorGUI.Badge("Only On Change", new Color(0.18f, 0.62f, 0.32f, 1f)));
-            }
-
-            if (sceneSearchCount > 0)
-            {
-                badges.Add(new NeoxiderEditorGUI.Badge($"Scene Search {sceneSearchCount}",
-                    new Color(0.20f, 0.68f, 0.44f, 1f)));
-            }
-
-            if (gameObjectModeCount > 0)
-            {
-                badges.Add(new NeoxiderEditorGUI.Badge($"GameObject Mode {gameObjectModeCount}",
-                    new Color(0.78f, 0.58f, 0.18f, 1f)));
-            }
-
-            NeoxiderEditorGUI.DrawSummaryCard("NeoCondition", null, true, badges.ToArray());
-
-            if (conditionsProp.arraySize == 0)
-            {
-                EditorGUILayout.HelpBox(
-                    "There are no conditions. Add at least one entry or the component will not evaluate anything.",
-                    MessageType.Warning);
-            }
-
-            if (sceneSearchCount > 0 && checkModeProp.enumValueIndex == (int)CheckMode.EveryFrame)
-            {
-                EditorGUILayout.HelpBox(
-                    "Scene Search together with Every Frame can be heavy. If you do not need instant per-frame response, prefer Interval or Manual.",
-                    MessageType.Info);
-            }
-
-            EditorGUILayout.Space(4f);
-        }
 
         // ============================
         //  Conditions list

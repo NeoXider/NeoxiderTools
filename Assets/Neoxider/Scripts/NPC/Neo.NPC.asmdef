@@ -1,19 +1,36 @@
 {
-    "name": "Neo.NPC",
-    "rootNamespace": "",
-    "references": [
-        "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
-        "GUID:699bb923824f1724b91c66f5ba9ace74",
-        "Neo.Rpg",
-        "Neo.Tools.Managers"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+    "name":  "Neo.NPC",
+    "rootNamespace":  "",
+    "references":  [
+                       "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
+                       "GUID:699bb923824f1724b91c66f5ba9ace74",
+                       "Neo.Rpg",
+                       "Neo.Tools.Managers",
+                       "Neo.Save",
+                       "Neo.Network",
+                       "Mirror"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+                           {
+                               "define":  "MIRROR",
+                               "name":  "com.mirrornetworking.mirror",
+                               "expression":  ""
+                           }
+                       ],
+    "noEngineReferences":  false
 }

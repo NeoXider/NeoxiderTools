@@ -5,6 +5,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
 
 namespace Neo.Tools
 {
@@ -28,8 +32,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/View/Selector.md")]
     [CreateFromMenu("Neoxider/Tools/View/Selector")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
+#if MIRROR
+    public class Selector : NetworkBehaviour
+#else
     public class Selector : MonoBehaviour
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If enabled, changing the selection locally is replicated to all clients.")]
+        [SerializeField]
+        public bool isNetworked = false;
         #region Private Methods
 
         /// <summary>
@@ -41,6 +53,29 @@ namespace Neo.Tools
         ///     Fill mode and empty effective index always use exclusive deactivation.
         /// </param>
         private void UpdateSelection(bool deactivateNonSelected = true)
+        {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdSyncState(_currentIndex, deactivateNonSelected);
+                    return;
+                }
+            }
+#endif
+
+            ApplyUpdateSelection(deactivateNonSelected);
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                RpcSyncState(_currentIndex, deactivateNonSelected);
+            }
+#endif
+        }
+
+        private void ApplyUpdateSelection(bool deactivateNonSelected)
         {
             int total = Count;
             if (total == 0)
@@ -215,6 +250,24 @@ namespace Neo.Tools
 
             NotifyCountActiveChangedIfNeeded();
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdSyncState(int newIndex, bool deactivateNonSelected)
+        {
+            _currentIndex = newIndex;
+            ApplyUpdateSelection(deactivateNonSelected);
+            RpcSyncState(newIndex, deactivateNonSelected);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcSyncState(int newIndex, bool deactivateNonSelected)
+        {
+            if (isServerOnly) return;
+            _currentIndex = newIndex;
+            ApplyUpdateSelection(deactivateNonSelected);
+        }
+#endif
 
         /// <summary>
         ///     Logical active count when there are no item GameObjects to inspect (virtual <see cref="Count"/> or empty items).
@@ -722,8 +775,17 @@ namespace Neo.Tools
             }
         }
 
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+#else
         private void OnValidate()
         {
+#endif
             _items ??= Array.Empty<GameObject>();
 
             if (_setChild)
@@ -1615,3 +1677,4 @@ namespace Neo.Tools
         #endregion
     }
 }
+

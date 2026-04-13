@@ -1,22 +1,38 @@
 {
-    "name": "Neo.Tools.Inventory",
-    "rootNamespace": "",
-    "references": [
-        "Neo.Extensions",
-        "Neo.PropertyAttribute",
-        "Neo.Save",
-        "Unity.TextMeshPro",
-        "Neo.Tools.Managers",
-        "Neo.Tools.View",
-        "Neo.Tools.Input"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+    "name":  "Neo.Tools.Inventory",
+    "rootNamespace":  "",
+    "references":  [
+                       "Neo.Extensions",
+                       "Neo.PropertyAttribute",
+                       "Neo.Save",
+                       "Unity.TextMeshPro",
+                       "Neo.Tools.Managers",
+                       "Neo.Tools.View",
+                       "Neo.Tools.Input",
+                       "Neo.Network",
+                       "Mirror"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+                           {
+                               "define":  "MIRROR",
+                               "name":  "com.mirrornetworking.mirror",
+                               "expression":  ""
+                           }
+                       ],
+    "noEngineReferences":  false
 }

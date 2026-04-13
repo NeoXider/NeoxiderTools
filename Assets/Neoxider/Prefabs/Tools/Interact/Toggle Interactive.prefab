@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 543604064348591570}
   - component: {fileID: 2632243074264794542}
   - component: {fileID: 7059326784344086503}
+  - component: {fileID: 4789896890632265357}
   m_Layer: 0
   m_Name: Toggle Interactive
   m_TagString: Untagged
@@ -120,12 +121,33 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 19444e84bc40cec42a00099ff57b5c99, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   _autoCheckEventSystem: 1
+  _autoCreateEventSystemIfMissing: 1
+  routeEventsToServer: 0
   interactable: 1
+  useHoverDetection: 1
   useMouseInteraction: 0
   useKeyboardInteraction: 1
+  keyboardInteractionMode: 0
+  requireViewForKeyboardInteraction: 1
+  requireDirectLookRay: 1
+  includeTriggerCollidersInLookRay: 1
+  includeTriggerCollidersInMouseRaycast: 1
+  useScreenCenterRay: 0
+  targetCollider3D: {fileID: 0}
+  targetCollider2D: {fileID: 0}
   interactionDistance: 2
   distanceCheckPoint: {fileID: 0}
+  viewCheckPoint: {fileID: 0}
+  checkObstacles: 1
+  obstacleLayers:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  includeTriggerCollidersInObstacleCheck: 0
+  ignoreDistancePointHierarchyColliders: 1
   downUpMouseButton: 0
   keyboardKey: 101
   onInteractDown:
@@ -152,6 +174,9 @@ MonoBehaviour:
   onHoverExit:
     m_PersistentCalls:
       m_Calls: []
+  onHoverChanged:
+    m_PersistentCalls:
+      m_Calls: []
   doubleClickThreshold: 0.3
   onClick:
     m_PersistentCalls:
@@ -171,6 +196,9 @@ MonoBehaviour:
   onExitRange:
     m_PersistentCalls:
       m_Calls: []
+  drawDebugRay: 0
+  drawInteractionRayForOneSecond: 0
+  interactionRayDrawDuration: 1
 --- !u!114 &7059326784344086503
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -209,9 +237,28 @@ MonoBehaviour:
   Off:
     m_PersistentCalls:
       m_Calls: []
-  OnValueChanged:
-    m_PersistentCalls:
-      m_Calls: []
+  Value:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+--- !u!114 &4789896890632265357
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6663968143986737711}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &7961243268982524038
 GameObject:
   m_ObjectHideFlags: 0
@@ -398,7 +445,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aea01aa3b2c18534fbc5faaefe19b382, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  targetCamera: {fileID: 0}
   billboardMode: 1
   ignoreY: 1
-  targetCamera: {fileID: 0}
   customDirection: {x: 0, y: 0, z: 1}

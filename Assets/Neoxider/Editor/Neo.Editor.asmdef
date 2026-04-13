@@ -39,7 +39,10 @@
         "Neo.Tools",
         "GUID:a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
         "GUID:cb15191f0f8bcab4a89eff645ad33e36",
-        "GUID:b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7"
+        "GUID:b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
+        "Neo.Network",
+        "Mirror",
+        "Neo.Network.Core"
     ],
     "includePlatforms": [
         "Editor"

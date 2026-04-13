@@ -12,8 +12,10 @@
         "GUID:f51ebe6a0ceec4240a699833d6309b23",
         "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
         "GUID:d06531eb44124d14385b705adce5c111",
+        "Neo.Rpg",
         "GUID:0dce7003042d59947888919f20c2d48e",
-        "Neo.Rpg"
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -22,6 +24,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "define": "MIRROR",
+            "name": "com.mirrornetworking.mirror",
+            "expression": ""
+        }
+    ],
     "noEngineReferences": false
 }

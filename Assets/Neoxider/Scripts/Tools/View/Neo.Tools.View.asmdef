@@ -10,7 +10,9 @@
         "GUID:f6cc3e1d3a691d646830fdfbc1333dd9",
         "GUID:f379901b708384043af2b7e935332075",
         "GUID:c4e3ca8dc710d5440b6cd2f90408487f",
-        "GUID:0dce7003042d59947888919f20c2d48e"
+        "GUID:0dce7003042d59947888919f20c2d48e",
+        "GUID:30817c1a0e6d646d99c048fc403f5979",
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -19,6 +21,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.mirrornetworking.mirror",
+            "expression": "",
+            "define": "MIRROR"
+        }
+    ],
     "noEngineReferences": false
 }

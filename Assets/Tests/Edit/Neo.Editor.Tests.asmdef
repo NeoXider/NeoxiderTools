@@ -17,6 +17,7 @@
         "GUID:cc847819497c5264f8512c5522338360",
         "Neo.Tools.Inventory",
         "Neo.Settings",
+        "Mirror",
         "GUID:b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7",
         "GUID:9834a790bd826c4449125155ed09b637",
         "GUID:2a2f30532c56439469034d4a07bcb431",
@@ -33,7 +34,8 @@
         "GUID:b86d3b465747c5244a16a0298b3c8eb4",
         "GUID:52d640c113350b04ead51de4b2c3be9f",
         "GUID:d06531eb44124d14385b705adce5c111",
-        "GUID:6055be8ebefd69e48b49212b09b47b2f"
+        "GUID:6055be8ebefd69e48b49212b09b47b2f",
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
     ],
     "includePlatforms": [
         "Editor"

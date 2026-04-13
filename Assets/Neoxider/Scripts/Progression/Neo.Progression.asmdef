@@ -1,25 +1,41 @@
 {
-    "name": "Neo.Progression",
-    "rootNamespace": "Neo.Progression",
-    "references": [
-        "Neo.Core",
-        "Neo.Extensions",
-        "Neo.Tools.Managers",
-        "Neo.Save",
-        "Neo.Reactive",
-        "Neo.Condition",
-        "Neo.Quest",
-        "Neo.Shop",
-        "Neo.Bonus",
-        "Neo.PropertyAttribute"
-    ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
-    "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
-    "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
-    "noEngineReferences": false
+    "name":  "Neo.Progression",
+    "rootNamespace":  "Neo.Progression",
+    "references":  [
+                       "Neo.Core",
+                       "Neo.Extensions",
+                       "Neo.Tools.Managers",
+                       "Neo.Save",
+                       "Neo.Reactive",
+                       "Neo.Condition",
+                       "Neo.Quest",
+                       "Neo.Shop",
+                       "Neo.Bonus",
+                       "Neo.PropertyAttribute",
+                       "Neo.Network",
+                       "Mirror"
+                   ],
+    "includePlatforms":  [
+
+                         ],
+    "excludePlatforms":  [
+
+                         ],
+    "allowUnsafeCode":  false,
+    "overrideReferences":  false,
+    "precompiledReferences":  [
+
+                              ],
+    "autoReferenced":  true,
+    "defineConstraints":  [
+
+                          ],
+    "versionDefines":  [
+                           {
+                               "define":  "MIRROR",
+                               "name":  "com.mirrornetworking.mirror",
+                               "expression":  ""
+                           }
+                       ],
+    "noEngineReferences":  false
 }

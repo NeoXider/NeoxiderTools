@@ -3,6 +3,10 @@ using Neo.Save;
 using Neo.Shop;
 using UnityEngine;
 using UnityEngine.Events;
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
 
 namespace Neo.Tools
 {
@@ -34,8 +38,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/Components/Counter.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
+#if MIRROR
+    public class Counter : NetworkBehaviour
+#else
     public class Counter : MonoBehaviour
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If true, changes to this counter are replicated to all players (Shared). If false, it acts as a personal local counter.")]
+        [SerializeField]
+        public bool isShared = false;
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
         private CounterValueMode _valueMode = CounterValueMode.Int;
 
@@ -128,6 +140,16 @@ namespace Neo.Tools
                 Send();
             }
         }
+
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isShared)
+            {
+                base.OnValidate();
+            }
+        }
+#endif
 
         /// <summary>
         ///     Loads value from SaveProvider now and notifies subscribers (OnLoaded*, and OnValueChanged* if Invoke Events On Load).
@@ -313,6 +335,29 @@ namespace Neo.Tools
                 return;
             }
 
+#if MIRROR
+            if (isShared && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdSetValue(newValue);
+                    return;
+                }
+            }
+#endif
+
+            ApplyValueLocally(newValue);
+
+#if MIRROR
+            if (isShared && NeoNetworkState.IsServer)
+            {
+                RpcSetValue(newValue);
+            }
+#endif
+        }
+
+        private void ApplyValueLocally(float newValue)
+        {
             Value.Value = newValue;
             if (_valueMode == CounterValueMode.Int)
             {
@@ -330,6 +375,22 @@ namespace Neo.Tools
 
             SaveValue();
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdSetValue(float newValue)
+        {
+            ApplyValueLocally(newValue);
+            RpcSetValue(newValue);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcSetValue(float newValue)
+        {
+            if (isServerOnly) return;
+            ApplyValueLocally(newValue);
+        }
+#endif
 
         private void InvokeValueChanged()
         {
@@ -381,3 +442,4 @@ namespace Neo.Tools
         }
     }
 }
+

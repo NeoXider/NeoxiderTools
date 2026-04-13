@@ -7,6 +7,10 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
 
 namespace Neo.Tools
 {
@@ -19,8 +23,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/Spawner/Spawner.md")]
     [CreateFromMenu("Neoxider/Tools/Spawner/Spawner")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Spawner))]
+#if MIRROR
+    public class Spawner : NetworkBehaviour
+#else
     public class Spawner : MonoBehaviour
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If enabled, StartSpawn/StopSpawn/Clear are replicated, and Server dynamically spawns NetworkIdentities.")]
+        [SerializeField]
+        public bool isNetworked = false;
         [Header("Spawn Settings")] [SerializeField]
         private GameObject[] _prefabs;
 
@@ -139,8 +151,17 @@ namespace Neo.Tools
             }
         }
 
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+#else
         private void OnValidate()
         {
+#endif
             _spawnTransform ??= transform;
 
             // Validate delay range
@@ -173,6 +194,16 @@ namespace Neo.Tools
         [Button]
         public void StartSpawn()
         {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdStartSpawn();
+                    return;
+                }
+            }
+#endif
             if (isSpawning)
             {
                 return;
@@ -188,6 +219,16 @@ namespace Neo.Tools
         [Button]
         public void StopSpawn()
         {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdStopSpawn();
+                    return;
+                }
+            }
+#endif
             isSpawning = false;
         }
 
@@ -204,6 +245,12 @@ namespace Neo.Tools
                 while (isSpawning && (maxWaves == 0 || CurrentWave <= maxWaves))
                 {
                     OnWaveStarted?.Invoke(CurrentWave);
+#if MIRROR
+                    if (isNetworked && NeoNetworkState.IsServer)
+                    {
+                        RpcNotifyWaveStarted(CurrentWave);
+                    }
+#endif
                     int spawnAmount = _baseWaveCount + ((CurrentWave - 1) * _countPerWave);
                     
                     for (int i = 0; i < spawnAmount; i++)
@@ -248,6 +295,15 @@ namespace Neo.Tools
         [Button]
         public GameObject SpawnRandomObject()
         {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                if (_prefabs == null || _prefabs.Length == 0) return null;
+                int rIndex = _prefabs.GetRandomIndex();
+                CmdSpawnById(rIndex, GetSpawnPosition(), GetSpawnRotation());
+                return null;
+            }
+#endif
             if (_prefabs == null || _prefabs.Length == 0)
             {
                 Debug.LogWarning($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
@@ -276,6 +332,13 @@ namespace Neo.Tools
         [Button]
         public GameObject SpawnById(int prefabId, Vector3 position)
         {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdSpawnById(prefabId, position, GetSpawnRotation());
+                return null;
+            }
+#endif
             if (_prefabs == null || _prefabs.Length == 0)
             {
                 Debug.LogError($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
@@ -310,6 +373,13 @@ namespace Neo.Tools
         /// <param name="parent">Parent transform, or null for no parent.</param>
         public GameObject SpawnObject(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent)
         {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                Debug.LogWarning("[Spawner] Client cannot explicitly SpawnObject with a direct GameObject reference. Please use SpawnById or SpawnRandomObject which are safely routed to the Server.", this);
+                return null;
+            }
+#endif
             if (prefab == null)
             {
                 return null;
@@ -323,6 +393,21 @@ namespace Neo.Tools
             {
                 return null;
             }
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                NetworkIdentity id = spawnedObject.GetComponent<NetworkIdentity>();
+                if (id != null)
+                {
+                    NetworkServer.Spawn(spawnedObject);
+                }
+                else
+                {
+                    Debug.LogWarning($"[Spawner] Spawned object {spawnedObject.name} has no NetworkIdentity. Mirror cannot replicate it.", this);
+                }
+            }
+#endif
 
             if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
             {
@@ -343,8 +428,48 @@ namespace Neo.Tools
                 OnWaveObjectSpawned?.Invoke(spawnedObject, CurrentWave);
             }
 
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                NetworkIdentity netId = spawnedObject.GetComponent<NetworkIdentity>();
+                if (netId != null)
+                {
+                    RpcNotifyObjectSpawned(netId.gameObject, CurrentWave);
+                }
+            }
+#endif
+
             return spawnedObject;
         }
+
+#if MIRROR
+        [ClientRpc]
+        private void RpcNotifyWaveStarted(int wave)
+        {
+            if (isServerOnly) return;
+            CurrentWave = wave;
+            OnWaveStarted?.Invoke(wave);
+        }
+
+        [ClientRpc]
+        private void RpcNotifyObjectSpawned(GameObject netObj, int wave)
+        {
+            if (isServerOnly || netObj == null) return;
+            
+            if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
+            {
+                SpawnedObjects.RemoveAll(obj => obj == null);
+            }
+            SpawnedObjects.Add(netObj);
+
+            OnObjectSpawned?.Invoke(netObj);
+            
+            if (spawnMode == SpawnMode.Waves)
+            {
+                OnWaveObjectSpawned?.Invoke(netObj, wave);
+            }
+        }
+#endif
 
         private IEnumerator DelayedDestroy(GameObject objectToDestroy, float delay)
         {
@@ -422,6 +547,16 @@ namespace Neo.Tools
         [Button]
         public void Clear()
         {
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdClear();
+                    return;
+                }
+            }
+#endif
             StopAllCoroutines(); // Stop spawn and delayed destroy coroutines
             isSpawning = false;
 
@@ -442,6 +577,37 @@ namespace Neo.Tools
 
             SpawnedObjects.Clear();
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdStartSpawn()
+        {
+            StartSpawn();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdStopSpawn()
+        {
+            StopSpawn();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdClear()
+        {
+            Clear();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSpawnById(int prefabId, Vector3 position, Quaternion rotation)
+        {
+            if (_prefabs == null || prefabId < 0 || prefabId >= _prefabs.Length) return;
+            GameObject prefabToSpawn = _prefabs[prefabId];
+            if (prefabToSpawn != null)
+            {
+                SpawnObject(prefabToSpawn, position, rotation, _parentTransform);
+            }
+        }
+#endif
 
         public int GetActiveObjectCount()
         {
@@ -512,3 +678,4 @@ namespace Neo.Tools
         }
     }
 }
+

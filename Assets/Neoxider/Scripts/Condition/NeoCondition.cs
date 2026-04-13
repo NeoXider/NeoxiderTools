@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
 
 namespace Neo.Condition
 {
@@ -42,8 +46,16 @@ namespace Neo.Condition
     [NeoDoc("Condition/NeoCondition.md")]
     [CreateFromMenu("Neoxider/Condition/NeoCondition")]
     [AddComponentMenu("Neoxider/Condition/NeoCondition")]
+#if MIRROR
+    public class NeoCondition : NetworkBehaviour
+#else
     public class NeoCondition : MonoBehaviour
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If enabled, evaluates locally but triggers UnityEvents globally for all clients.")]
+        [SerializeField]
+        public bool isNetworked = false;
         [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]
         private LogicMode _logicMode = LogicMode.AND;
 
@@ -130,6 +142,16 @@ namespace Neo.Condition
             RestartCheckMode();
         }
 
+#if MIRROR
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+        }
+#endif
+
         private void Update()
         {
             if (_checkMode == CheckMode.EveryFrame)
@@ -161,6 +183,29 @@ namespace Neo.Condition
                 return;
             }
 
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdCheckResult(result);
+                    return;
+                }
+            }
+#endif
+
+            InvokeEvents(result);
+
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                RpcInvokeEvents(result);
+            }
+#endif
+        }
+
+        private void InvokeEvents(bool result)
+        {
             _onResult?.Invoke(result);
             _onInvertedResult?.Invoke(!result);
 
@@ -173,6 +218,22 @@ namespace Neo.Condition
                 _onFalse?.Invoke();
             }
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdCheckResult(bool result)
+        {
+            InvokeEvents(result);
+            RpcInvokeEvents(result);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcInvokeEvents(bool result)
+        {
+            if (isServerOnly) return; // Prevent double invocation on host
+            InvokeEvents(result);
+        }
+#endif
 
         /// <summary>Evaluates conditions without invoking events.</summary>
         /// <returns>True if conditions are met according to LogicMode.</returns>
@@ -311,3 +372,4 @@ namespace Neo.Condition
         }
     }
 }
+

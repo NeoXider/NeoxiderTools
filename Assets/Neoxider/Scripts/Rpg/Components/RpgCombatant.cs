@@ -8,13 +8,21 @@ using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
+#if MIRROR
+    using Mirror;
+#endif
+
     /// <summary>
     ///     Scene-local RPG combat receiver for enemies, NPCs, destructibles, or non-persistent actors.
     /// </summary>
     [NeoDoc("Rpg/RpgCombatant.md")]
     [CreateFromMenu("Neoxider/RPG/RpgCombatant")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgCombatant))]
+#if MIRROR
+    public sealed class RpgCombatant : NetworkBehaviour, IRpgCombatReceiver
+#else
     public sealed class RpgCombatant : MonoBehaviour, IRpgCombatReceiver
+#endif
     {
         [Header("Resources & Level (optional)")]
         [Tooltip("When set, HP/Mana and level are taken from here instead of local fields.")]
@@ -30,8 +38,25 @@ namespace Neo.Rpg
         [Header("Base Stats")] [SerializeField] [Min(1f)]
         private float _maxHp = 100f;
 
+#if MIRROR
+        [SyncVar(hook = nameof(OnCurrentHpChanged))] 
+#endif
         [SerializeField] [Min(0f)] private float _currentHp = 100f;
+
+#if MIRROR
+        [SyncVar(hook = nameof(OnLevelChanged))]
+#endif
         [SerializeField] [Min(1)] private int _level = 1;
+
+        private void OnCurrentHpChanged(float oldHp, float newHp)
+        {
+            RefreshRuntimeState(true);
+        }
+
+        private void OnLevelChanged(int oldLevel, int newLevel)
+        {
+            RefreshRuntimeState(true);
+        }
 
         [Header("Definitions")] [SerializeField]
         private BuffDefinition[] _buffDefinitions = Array.Empty<BuffDefinition>();
