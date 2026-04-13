@@ -53,7 +53,7 @@ namespace Neo.Tests.Play
         {
             var counterObj = new GameObject("Counter");
             var counter = counterObj.AddComponent<Counter>();
-            counter.isShared = true;
+            counter.isNetworked = true;
             
             var id = counterObj.AddComponent<NetworkIdentity>();
             typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10001);
@@ -129,6 +129,65 @@ namespace Neo.Tests.Play
             Assert.IsTrue(onTrueFired);
 
             Object.DestroyImmediate(condObj);
+        }
+
+        [UnityTest]
+        public IEnumerator RandomRange_CmdGenerate_UpdatesGlobally()
+        {
+            var randObj = new GameObject("RandomRange");
+            var randomRange = randObj.AddComponent<RandomRange>();
+            randomRange.isNetworked = true;
+            randomRange.SetMin(1);
+            randomRange.SetMax(100);
+
+            var id = randObj.AddComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10004);
+            NetworkClient.RegisterPrefab(randObj);
+            NetworkServer.Spawn(randObj);
+
+            yield return null;
+
+            int invokedValue = -1;
+            randomRange.OnGeneratedInt.AddListener(v => invokedValue = v);
+
+            randomRange.Generate();
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.IsTrue(randomRange.ValueInt >= 1 && randomRange.ValueInt <= 100);
+            Assert.AreEqual(randomRange.ValueInt, invokedValue);
+
+            Object.DestroyImmediate(randObj);
+        }
+
+        [UnityTest]
+        public IEnumerator Selector_CmdSetRandom_UpdatesGlobally()
+        {
+            var selectorObj = new GameObject("Selector");
+            var selector = selectorObj.AddComponent<Selector>();
+            selector.isNetworked = true;
+
+            var id = selectorObj.AddComponent<NetworkIdentity>();
+            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10005);
+            NetworkClient.RegisterPrefab(selectorObj);
+            NetworkServer.Spawn(selectorObj);
+
+            yield return null;
+            
+            selector.Count = 5;
+            typeof(Selector).GetField("_useRandomSelection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(selector, true);
+
+            int invokedValue = -1;
+            selector.OnSelectionChanged.AddListener(v => invokedValue = v);
+
+            selector.SetRandom(true);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.IsTrue(selector.Value >= 0 && selector.Value < 5);
+            Assert.AreEqual(selector.Value, invokedValue);
+
+            Object.DestroyImmediate(selectorObj);
         }
     }
 }

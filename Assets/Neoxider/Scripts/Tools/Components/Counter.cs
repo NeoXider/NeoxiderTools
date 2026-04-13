@@ -47,7 +47,7 @@ namespace Neo.Tools
         [Header("Networking")]
         [Tooltip("If true, changes to this counter are replicated to all players (Shared). If false, it acts as a personal local counter.")]
         [SerializeField]
-        public bool isShared = false;
+        public bool isNetworked = false;
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
         private CounterValueMode _valueMode = CounterValueMode.Int;
 
@@ -141,10 +141,36 @@ namespace Neo.Tools
             }
         }
 
+        public static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<Counter>> Registry = new();
+
+        protected virtual void OnEnable()
+        {
+            if (!string.IsNullOrEmpty(_saveKey))
+            {
+                if (!Registry.TryGetValue(_saveKey, out var list))
+                {
+                    list = new System.Collections.Generic.List<Counter>();
+                    Registry[_saveKey] = list;
+                }
+                if (!list.Contains(this))
+                {
+                    list.Add(this);
+                }
+            }
+        }
+
+        protected virtual void OnDisable()
+        {
+            if (!string.IsNullOrEmpty(_saveKey) && Registry.TryGetValue(_saveKey, out var list))
+            {
+                list.Remove(this);
+            }
+        }
+
 #if MIRROR
         protected override void OnValidate()
         {
-            if (isShared)
+            if (isNetworked)
             {
                 base.OnValidate();
             }
@@ -336,7 +362,7 @@ namespace Neo.Tools
             }
 
 #if MIRROR
-            if (isShared && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
             {
                 if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
@@ -349,7 +375,7 @@ namespace Neo.Tools
             ApplyValueLocally(newValue);
 
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsServer)
             {
                 RpcSetValue(newValue);
             }

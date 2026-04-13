@@ -68,7 +68,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Money_Shared_AddMoneyUpdatesGlobally()
         {
-            _money.isShared = true;
+            _money.isNetworked = true;
             
             _money.Add(150);
 
@@ -81,7 +81,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Money_Shared_SpendMoneyUpdatesGlobally()
         {
-            _money.isShared = true;
+            _money.isNetworked = true;
             _money.SetMoney(200);
             yield return new WaitForSeconds(0.1f);
 
@@ -95,7 +95,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Money_Personal_ChangesRemainLocal()
         {
-            _money.isShared = false;
+            _money.isNetworked = false;
             
             _money.Add(100);
             yield return new WaitForSeconds(0.1f);

@@ -267,6 +267,12 @@ namespace Neo.Tools
             _currentIndex = newIndex;
             ApplyUpdateSelection(deactivateNonSelected);
         }
+
+        [Command(requiresAuthority = false)]
+        private void CmdSetRandom(bool deactivateOthers)
+        {
+            ExecuteSetRandom(deactivateOthers);
+        }
 #endif
 
         /// <summary>
@@ -1160,6 +1166,22 @@ namespace Neo.Tools
                 return;
             }
 
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdSetRandom(deactivateOthers);
+                    return;
+                }
+            }
+#endif
+
+            ExecuteSetRandom(deactivateOthers);
+        }
+
+        private void ExecuteSetRandom(bool deactivateOthers)
+        {
             int total = Count;
             if (total == 0)
             {

@@ -23,9 +23,10 @@ namespace Neo.Shop
     {
         [Header("Networking")]
         [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]
-        public bool isShared = false;
+        public bool isNetworked = false;
 
         [Space] [SerializeField] private string _moneySave = "Money";
+        public string SaveKey => _moneySave;
 
         public ReactivePropertyFloat CurrentMoney = new();
         public ReactivePropertyFloat LevelMoney = new();
@@ -58,7 +59,7 @@ namespace Neo.Shop
         public void Add(float amount)
         {
 #if MIRROR
-            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
                 CmdAdd(amount);
                 return;
@@ -66,7 +67,7 @@ namespace Neo.Shop
 #endif
             AddLocal(amount);
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer) RpcAdd(amount);
+            if (isNetworked && NeoNetworkState.IsServer) RpcAdd(amount);
 #endif
         }
 
@@ -85,7 +86,7 @@ namespace Neo.Shop
             if (CanSpend(amount))
             {
 #if MIRROR
-                if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
                     CmdSpend(amount);
                     return true;
@@ -93,7 +94,7 @@ namespace Neo.Shop
 #endif
                 SpendLocal(amount);
 #if MIRROR
-                if (isShared && NeoNetworkState.IsServer) RpcSpend(amount);
+                if (isNetworked && NeoNetworkState.IsServer) RpcSpend(amount);
 #endif
                 return true;
             }
@@ -129,7 +130,7 @@ namespace Neo.Shop
         public void AddLevelMoney(float count)
         {
 #if MIRROR
-            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
                 CmdAddLevelMoney(count);
                 return;
@@ -137,7 +138,7 @@ namespace Neo.Shop
 #endif
             AddLevelMoneyLocal(count);
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer) RpcAddLevelMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) RpcAddLevelMoney(count);
 #endif
         }
 
@@ -150,7 +151,7 @@ namespace Neo.Shop
         public float SetLevelMoney(float count = 0)
         {
 #if MIRROR
-            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
                 CmdSetLevelMoney(count);
                 return count;
@@ -158,7 +159,7 @@ namespace Neo.Shop
 #endif
             float res = SetLevelMoneyLocal(count);
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer) RpcSetLevelMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) RpcSetLevelMoney(count);
 #endif
             return res;
         }
@@ -174,7 +175,7 @@ namespace Neo.Shop
         public float SetMoney(float count = 0)
         {
 #if MIRROR
-            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
                 CmdSetMoney(count);
                 return count;
@@ -182,7 +183,7 @@ namespace Neo.Shop
 #endif
             float res = SetMoneyLocal(count);
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer) RpcSetMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) RpcSetMoney(count);
 #endif
             return res;
         }
@@ -198,7 +199,7 @@ namespace Neo.Shop
         public float SetMoneyForLevel(bool resetLevelMoney = true)
         {
 #if MIRROR
-            if (isShared && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
                 CmdSetMoneyForLevel(resetLevelMoney);
                 return LevelMoney.CurrentValue;
@@ -206,7 +207,7 @@ namespace Neo.Shop
 #endif
             float res = SetMoneyForLevelLocal(resetLevelMoney);
 #if MIRROR
-            if (isShared && NeoNetworkState.IsServer) RpcSetMoneyForLevel(resetLevelMoney);
+            if (isNetworked && NeoNetworkState.IsServer) RpcSetMoneyForLevel(resetLevelMoney);
 #endif
             return res;
         }

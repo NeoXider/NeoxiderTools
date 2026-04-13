@@ -347,7 +347,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -929,6 +929,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9672dbea5fe2a52419084f9068f5df4e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
   startOnAwake: 1
   _count: -1
   _items: []
@@ -996,7 +1000,7 @@ GameObject:
   m_Component:
   - component: {fileID: 404522313}
   - component: {fileID: 404522312}
-  - component: {fileID: 404522311}
+  - component: {fileID: 404522314}
   m_Layer: 0
   m_Name: EventSystem
   m_TagString: Untagged
@@ -1004,26 +1008,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &404522311
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 404522310}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4f231c4fb786f3946a6b90b886c48677, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  m_SendPointerHoverToParent: 1
-  m_HorizontalAxis: Horizontal
-  m_VerticalAxis: Vertical
-  m_SubmitButton: Submit
-  m_CancelButton: Cancel
-  m_InputActionsPerSecond: 10
-  m_RepeatDelay: 0.5
-  m_ForceModuleActive: 0
 --- !u!114 &404522312
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1054,6 +1038,37 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &404522314
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 404522310}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01614664b831546d2ae94a42149d80ac, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SendPointerHoverToParent: 1
+  m_MoveRepeatDelay: 0.5
+  m_MoveRepeatRate: 0.1
+  m_XRTrackingOrigin: {fileID: 0}
+  m_ActionsAsset: {fileID: -944628639613478452, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_PointAction: {fileID: -1654692200621890270, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MoveAction: {fileID: -8784545083839296357, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_SubmitAction: {fileID: 392368643174621059, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_CancelAction: {fileID: 7727032971491509709, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_LeftClickAction: {fileID: 3001919216989983466, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_MiddleClickAction: {fileID: -2185481485913320682, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_RightClickAction: {fileID: -4090225696740746782, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_ScrollWheelAction: {fileID: 6240969308177333660, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDevicePositionAction: {fileID: 6564999863303420839, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_TrackedDeviceOrientationAction: {fileID: 7970375526676320489, guid: ca9f5fa95ffab41fb9a615ab714db018, type: 3}
+  m_DeselectOnBackgroundClick: 1
+  m_PointerBehavior: 0
+  m_CursorLockBehavior: 0
+  m_ScrollDeltaPerTick: 6
 --- !u!1 &424776048
 GameObject:
   m_ObjectHideFlags: 0
@@ -1664,8 +1679,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e3d14afff090714f8bf33dd629b2958, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   interactable: 1
-  executionMode: 0
+  isNetworked: 0
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -1901,7 +1919,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -2533,6 +2551,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: deda62a1dd14fb647b7844aadb429aff, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
   _logicMode: 0
   _conditions:
   - _sourceMode: 0
@@ -2692,7 +2714,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -3267,7 +3289,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 1
@@ -3531,6 +3553,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0d39ae855f4e100479994a7347adfc7d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
   _valueMode: 0
   _min: 0
   _max: 10
@@ -3589,6 +3615,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c2d6229a281546e47ac64695c725a591, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
   _valueMode: 0
   Value:
     _value: 0
@@ -3627,6 +3657,81 @@ MonoBehaviour:
   OnLoadedFloat:
     m_PersistentCalls:
       m_Calls: []
+--- !u!1 &1784382013
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1784382014}
+  - component: {fileID: 1784382015}
+  m_Layer: 0
+  m_Name: moneyt
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1784382014
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1784382013}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.2382977, y: 5.9115653, z: -0.7295165}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1784382015
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1784382013}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef413a1a82b5c5e4688c11efcb2b9257, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  _dontDestroyOnLoad: 0
+  _setInstanceOnAwake: 1
+  isNetworked: 0
+  _moneySave: Money
+  CurrentMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LevelMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  AllMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  LastChangeMoney:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  st_levelMoney: []
+  st_money: []
+  t_levelMoney: []
+  t_money: []
 --- !u!1 &1799762796
 GameObject:
   m_ObjectHideFlags: 0
@@ -3864,8 +3969,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1e3d14afff090714f8bf33dd629b2958, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
   interactable: 1
-  executionMode: 0
+  isNetworked: 0
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -4385,7 +4493,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -4684,7 +4792,7 @@ MonoBehaviour:
   syncInterval: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  routeEventsToServer: 0
+  isNetworked: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -4900,3 +5008,4 @@ SceneRoots:
   - {fileID: 1626436880}
   - {fileID: 346103207}
   - {fileID: 1271773999}
+  - {fileID: 1784382014}

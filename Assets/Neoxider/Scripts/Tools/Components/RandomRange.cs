@@ -2,6 +2,10 @@ using Neo.Reactive;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
+#if MIRROR
+using Mirror;
+using Neo.Network;
+#endif
 
 namespace Neo.Tools
 {
@@ -20,8 +24,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/Components/RandomRange.md")]
     [CreateFromMenu("Neoxider/Tools/Components/RandomRange")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(RandomRange))]
+#if MIRROR
+    public class RandomRange : NetworkBehaviour
+#else
     public class RandomRange : MonoBehaviour
+#endif
     {
+        [Header("Networking")]
+        [Tooltip("If true, the generated random value will be synchronized to all clients so everyone gets the same number.")]
+        public bool isNetworked = false;
+
         [Header("Mode")] [Tooltip("Generate integer (inclusive min..max) or float (min..max).")] [SerializeField]
         private RandomRangeValueMode _valueMode = RandomRangeValueMode.Int;
 
@@ -73,7 +85,28 @@ namespace Neo.Tools
         [Button]
         public void Generate()
         {
-            float newVal;
+#if MIRROR
+            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            {
+                if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+                {
+                    CmdGenerate();
+                    return;
+                }
+                
+                // Server generates and multicasts
+                float val = RollRandomValue();
+                ApplyValueLocally(val);
+                RpcReceiveValue(val);
+                return;
+            }
+#endif
+            float localVal = RollRandomValue();
+            ApplyValueLocally(localVal);
+        }
+
+        private float RollRandomValue()
+        {
             if (_valueMode == RandomRangeValueMode.Int)
             {
                 int minI = Mathf.RoundToInt(_min);
@@ -84,18 +117,42 @@ namespace Neo.Tools
                     minI = maxI;
                     maxI = t;
                 }
-
-                newVal = Random.Range(minI, maxI + 1);
+                return Random.Range(minI, maxI + 1);
             }
-            else
-            {
-                newVal = _min < _max ? Random.Range(_min, _max) : _min;
-            }
+            return _min < _max ? Random.Range(_min, _max) : _min;
+        }
 
+        private void ApplyValueLocally(float newVal)
+        {
             Value.Value = newVal;
             OnGeneratedInt?.Invoke(ValueInt);
             OnGeneratedFloat?.Invoke(newVal);
         }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdGenerate()
+        {
+            float val = RollRandomValue();
+            ApplyValueLocally(val);
+            RpcReceiveValue(val);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcReceiveValue(float val)
+        {
+            if (isServer) return; // Server already applied
+            ApplyValueLocally(val);
+        }
+
+        protected override void OnValidate()
+        {
+            if (isNetworked)
+            {
+                base.OnValidate();
+            }
+        }
+#endif
 
         /// <summary>Sets minimum bound (int).</summary>
         public void SetMin(int value)
