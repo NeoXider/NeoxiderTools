@@ -1,4 +1,8 @@
 
+## [7.13.14] - 2026-04-13
+### Fixed
+- **Tools / Text**: Fixed formatting of compact time string in `TimeSpanExtensions` (`ToCompactString`) to strictly use zero-padded format (`00h 00m`). Fixed missing assembly references and ambiguous namespaces in EditMode tests.
+
 ## [7.13.13] - 2026-04-12
 ### Updated
 - **Documentation**: Standardized `Progression` and `RPG` module documentation. Key files (`README.md`, `ProgressionManager.md`, `RpgStatsManager.md`, `RpgCombatant.md`) now feature anchored TOCs, standardized headers, API tables, and improved intra-doc navigation.

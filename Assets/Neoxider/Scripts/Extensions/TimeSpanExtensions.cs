@@ -43,7 +43,12 @@ namespace Neo.Extensions
 
             void AppendPart(int number, string suffix)
             {
-                if (number <= 0 || added >= maxParts)
+                if (added >= maxParts)
+                {
+                    return;
+                }
+
+                if (number <= 0 && added == 0)
                 {
                     return;
                 }
@@ -53,7 +58,15 @@ namespace Neo.Extensions
                     builder.Append(' ');
                 }
 
-                builder.Append(number);
+                if (added > 0)
+                {
+                    builder.Append(number.ToString("D2"));
+                }
+                else
+                {
+                    builder.Append(number);
+                }
+
                 builder.Append(suffix);
                 added++;
             }

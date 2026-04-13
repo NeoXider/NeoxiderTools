@@ -124,8 +124,8 @@ namespace Neo.Editor.Tests
         public void TimeSpanExtension_CompactString()
         {
             var ts = new TimeSpan(1, 2, 30, 45);
-            Assert.AreEqual("1d 2h 30m", ts.ToCompactString(false, 3));
-            Assert.AreEqual("1d 2h 30m 45s", ts.ToCompactString(true, 4));
+            Assert.AreEqual("1d 02h 30m", ts.ToCompactString(false, 3));
+            Assert.AreEqual("1d 02h 30m 45s", ts.ToCompactString(true, 4));
         }
 
         [Test]
