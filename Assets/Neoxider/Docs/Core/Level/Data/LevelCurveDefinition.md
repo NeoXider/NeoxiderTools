@@ -1,10 +1,10 @@
-# LevelCurveDefinition
+﻿# LevelCurveDefinition
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — кривая уровней (формула XP для каждого уровня).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Level → Level Curve**.
 
 ## Основные настройки (Inspector)
 

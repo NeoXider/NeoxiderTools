@@ -1,10 +1,10 @@
-# RpgAttackPreset
+﻿# RpgAttackPreset
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — пресет атаки для назначения NPC и игроку.
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → RPG → Attack Preset**.
 
 ## Основные настройки (Inspector)
 

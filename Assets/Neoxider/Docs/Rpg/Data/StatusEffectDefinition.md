@@ -1,10 +1,10 @@
-# StatusEffectDefinition
+﻿# StatusEffectDefinition
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — описание статус-эффекта (тип, длительность, параметры).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → RPG → Status Effect**.
 
 ## Основные настройки (Inspector)
 

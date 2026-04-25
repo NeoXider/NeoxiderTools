@@ -1,10 +1,10 @@
-# CardAnimationConfig
+﻿# CardAnimationConfig
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — настройки анимации карт (переворот, движение, hover, easing).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Cards → Animation Config**.
 
 ## Основные настройки (Inspector)
 

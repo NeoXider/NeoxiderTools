@@ -1,10 +1,10 @@
-# SaveProviderSettings
+﻿# SaveProviderSettings
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — настройки провайдера сохранений (тип, путь, слот).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Save → Provider Settings**.
 
 ## Основные настройки (Inspector)
 

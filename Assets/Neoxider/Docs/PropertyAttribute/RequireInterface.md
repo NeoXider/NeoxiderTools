@@ -1,10 +1,10 @@
-# RequireInterface
+﻿# RequireInterface
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** PropertyAttribute — ограничение выбора в Inspector только объектами с указанным интерфейсом.
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Использовать: `[RequireInterface(typeof(IMyInterface))]` на `SerializeField`.
 
 ## Основные настройки (Inspector)
 

@@ -1,10 +1,10 @@
-# PerkTreeDefinition
+﻿# PerkTreeDefinition
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — дерево перков (ветки, стоимость очков, зависимости).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Progression → Perk Tree**.
 
 ## Основные настройки (Inspector)
 

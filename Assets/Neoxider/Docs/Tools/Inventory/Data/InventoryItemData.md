@@ -1,10 +1,10 @@
-# InventoryItemData
+﻿# InventoryItemData
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — определение предмета инвентаря (id, название, иконка, maxStack, категория).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Inventory → Item Data**.
 
 ## Основные настройки (Inspector)
 

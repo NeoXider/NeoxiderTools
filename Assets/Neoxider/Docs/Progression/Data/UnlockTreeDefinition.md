@@ -1,10 +1,10 @@
-# UnlockTreeDefinition
+﻿# UnlockTreeDefinition
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** ScriptableObject — дерево разблокировок (узлы с условиями и наградами).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Создать: **Create → Neoxider → Progression → Unlock Tree**.
 
 ## Основные настройки (Inspector)
 

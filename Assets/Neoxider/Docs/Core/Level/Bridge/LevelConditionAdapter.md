@@ -1,10 +1,10 @@
-# LevelConditionAdapter
+﻿# LevelConditionAdapter
 
-**Назначение:** Документация сгенерирована автоматически.
+**Назначение:** No-Code условие для системы уровней (LevelAtLeast, XpAtLeast, XpToNextLevelAtMost).
 
 ## Подключение
 
-- Добавьте компонент через меню Unity.
+- Используется внутри NeoCondition.
 
 ## Основные настройки (Inspector)
 
