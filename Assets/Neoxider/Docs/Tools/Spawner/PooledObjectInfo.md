@@ -1,32 +1,19 @@
 # PooledObjectInfo
 
-**Что это:** Компонент, автоматически вешаемый на объекты, созданные пулом. Хранит ссылку на пул и даёт метод **Return()** для возврата в пул.
-
-**Как использовать:** см. разделы ниже.
-
----
-
-
-Компонент, автоматически вешаемый на объекты, созданные пулом. Хранит ссылку на пул и даёт метод **Return()** для возврата в пул.
-
-Не добавляется вручную — пул ставит его при первом создании экземпляра.
+**Назначение:** Служебный скрипт. Вешается автоматически пулом `NeoObjectPool` на каждый заспавненный объект, чтобы тот "помнил", какому пулу он принадлежит. Содержит удобную кнопку `Return to pool`.
 
 ## API
 
-- **OwnerPool** — пул, которому принадлежит объект.
-- **Return()** — вернуть объект в пул (то же, что `PoolManager.Release(gameObject)`).
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `void Return()` | Возвращает текущий `GameObject` обратно в пул (через `PoolManager.Release()`). Можно вызывать из UnityEvent (например, по окончанию анимации). |
 
-## Пример
+## Примеры
 
-```csharp
-// Возврат по таймеру или при коллизии
-if (gameObject.TryGetComponent(out PooledObjectInfo info))
-    info.Return();
-// или
-gameObject.ReturnToPool(); // Neo.Tools.PoolExtensions
-```
+### Пример No-Code (в Inspector)
+Вы можете повесить `TimerObject` на префаб, который берется из пула, и в его UnityEvent `OnTimerEnd` перетащить самого себя (свой компонент `PooledObjectInfo`) и выбрать метод `Return`. Объект будет автоматически возвращаться в пул через X секунд.
 
 ## См. также
-
-- [PoolManager](./PoolManager.md)
-- [IPoolable](./IPoolable.md) / [PoolableBehaviour](./PoolableBehaviour.md)
+- [PoolManager](PoolManager.md)
+- [Despawner](Despawner.md)
+- ← [Tools/Spawner](../README.md)

@@ -1,158 +1,58 @@
-# Компонент PlayerController3DPhysics
+# PlayerController3DPhysics
 
-**Что это:** Компонент подходит для FPS/TPS-прототипов, где нужна физическая реакция и предсказуемое управление без сложной зависимости от внешних систем.
+**Назначение:** Мощный 3D контроллер от первого лица (или третьего, если камера вынесена), основанный на `Rigidbody`. Поддерживает ходьбу, бег, прыжки (с койот-таймом и буферизацией ввода), вращение камеры (Look) с учетом чувствительности мыши, а также интеграцию с `CursorLockController` и паузой. Поддерживает как Legacy Input Manager, так и New Input System.
 
-**Как использовать:** см. разделы ниже.
+## Поля (Inspector)
 
----
+| Поле | Описание |
+|------|----------|
+| **Rigidbody** | Ссылка на `Rigidbody` персонажа. Настраивается автоматически. |
+| **Camera Pivot** | Трансформ для вращения камеры по вертикали (Pitch). По умолчанию берется `Camera.main`. |
+| **Walk / Run Speed** | Скорость ходьбы и бега. |
+| **Jump Impulse** | Сила прыжка. Можно отключить прыжки галочкой `Can Jump`. |
+| **Ground Check Radius** | Радиус сферы для проверки земли (OverlapSphere). |
+| **Look Yaw Mode** | Как вращать персонажа при обзоре: `RotateCharacter`, `RotateCameraPivot` или `RotateBoth`. |
+| **Use Game Settings Mouse Sensitivity** | Брать ли чувствительность мыши из глобального класса `GameSettings` (авто-обновление). |
+| **Lock Cursor On Start** | Автоматически блокировать и скрывать курсор при старте игры. |
+| **Disable Look On Pause** | Отключать ли вращение камеры, когда игра ставится на паузу через `EventManager.OnPause`. |
+| **Toggle Cursor On Escape** | Позволять ли игроку освобождать курсор клавишей Escape. |
 
+## API
 
-## 1. Введение
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `void SetMovementEnabled(bool enabled)` | Разрешает/запрещает персонажу двигаться (ходьба, бег). |
+| `void SetJumpEnabled(bool enabled)` | Разрешает/запрещает прыжки. |
+| `void SetLookEnabled(bool enabled)` | Разрешает/запрещает вращение камеры мышью. |
+| `void Teleport(Vector3 worldPosition)` | Мгновенно перемещает персонажа, сбрасывая его текущую скорость. |
+| `void SetMoveInput(Vector2? input)` | Использовать кастомный ввод (например, экранный джойстик). Передайте `null`, чтобы вернуть управление с клавиатуры. |
+| `bool IsGrounded { get; }` | Находится ли персонаж на земле прямо сейчас. |
 
-`PlayerController3DPhysics` — контроллер персонажа для 3D через `Rigidbody`: движение, бег, прыжок, mouse-look и базовая работа с курсором.
+## Unity Events
 
-Компонент подходит для FPS/TPS-прототипов, где нужна физическая реакция и предсказуемое управление без сложной зависимости от внешних систем.
+| Событие | Аргументы | Описание |
+|---------|-----------|----------|
+| `OnJumped` / `OnLanded` | *(нет)* | Вызывается в момент прыжка или касания земли. |
+| `OnMoveStart` / `OnMoveStop` | *(нет)* | Вызывается, когда персонаж начинает движение (нажаты клавиши) или останавливается. |
 
----
+## Примеры
 
-## 2. Что делает
+### Пример No-Code (в Inspector)
+Разместите капсулу с `Rigidbody` на сцене. Добавьте `PlayerController3DPhysics`. Добавьте камеру как дочерний объект капсулы и перетащите её в `Camera Pivot`. Настройте маску `Ground Mask` на слой `Default` (или слой земли). Запустите игру — вы сразу сможете бегать (WASD), прыгать (Space) и осматриваться (Мышь).
 
-- Перемещает игрока по осям `Horizontal/Vertical`.
-- Поддерживает бег (`LeftShift`) и прыжок (`Jump`).
-- Проверяет землю через `CheckSphere`.
-- Управляет обзором:
-  - `pitch` ограниченно вращает `cameraPivot`;
-  - `yaw` может вращать:
-    - только персонажа,
-    - только `cameraPivot`,
-    - и персонажа, и `cameraPivot`.
-- Поддерживает режимы направления движения:
-  - от поворота персонажа,
-  - от yaw камеры,
-  - по мировым осям (стратегический/RTS стиль).
-- Есть смещение угла движения (`_movementYawOffset`) для тонкой настройки направлений WASD.
-- Может блокировать курсор на старте.
-- **Pause Look When Cursor Visible** (по умолчанию включено): при видимом курсоре (`Cursor.visible == true`) не обрабатывает ввод мыши и не вращает камеру. Удобно для паузы/меню без связи с `CursorLockController`.
-- Если на том же объекте активен `CursorLockController`, встроенные `_lockCursorOnStart` и `_toggleCursorOnEscape` автоматически не используются, чтобы не было двойного управления курсором.
-- Опционально **Use Game Settings Mouse Sensitivity** (по умолчанию вкл.): чувствительность из **`GameSettings.MouseSensitivity`** с обновлением по событию **`GameSettings.OnSettingsChanged`** (модуль **Neo.Settings**, сервис **`GameSettingsComponent`** в сцене). Иначе используется только поле **Mouse Sensitivity** в инспекторе.
-- Можно назначить **External Cursor Lock Controller**: тогда контроллер игрока будет уважать `CursorLockController`, который находится не на игроке, а, например, на странице меню/паузы или на общем UI-root.
-- Внешний `CursorLockController` может работать как в automatic-, так и в manual-сценариях. Рекомендуемый дефолтный режим для него — **AutomaticAndManual**.
-- В `CursorLockController` можно опционально включить отдельный `Cursor Access Key` (например `Z`) для быстрого показа курсора в hold- или toggle-режиме, если игроку нужен временный доступ к UI без открытия отдельного меню. По умолчанию этот режим выключен.
+### Пример (Код)
+```csharp
+[SerializeField] private PlayerController3DPhysics _player;
 
----
+public void ImmobilizePlayerForCutscene()
+{
+    // Отбираем у игрока возможность ходить и крутить камерой
+    _player.SetMovementEnabled(false);
+    _player.SetLookEnabled(false);
+}
+```
 
-## 3. Настройка в сцене
-
-1. Создайте объект `Player`:
-   - `CapsuleCollider`
-   - `Rigidbody` (`Freeze Rotation` по X/Y/Z можно оставить выключенным, скрипт сам фиксирует вращение)
-2. Добавьте `PlayerController3DPhysics`.
-3. В поле `_cameraPivot` укажите камеру (или pivot камеры как дочерний объект игрока).
-4. Создайте дочерний `GroundCheck` у ног игрока и назначьте в `_groundCheck`.
-5. Настройте `_groundMask` на слои земли.
-6. Убедитесь, что в Input Manager есть оси:
-   - `Horizontal`
-   - `Vertical`
-   - `Mouse X`
-   - `Mouse Y`
-   - `Jump`
-
----
-
-## 4. Полезные параметры
-
-- `_inputBackend` — выбор системы ввода:
-  - `AutoPreferNew` (по умолчанию): New Input System, если пакет доступен; иначе fallback на Legacy;
-  - `NewInputSystem`;
-  - `LegacyInputManager`.
-- `_movementReference` — режим базиса движения.
-- `_movementYawOffset` — сдвиг направления движения (в градусах).
-- `_walkSpeed`, `_runSpeed` — базовые скорости.
-- `_movementEnabled` — стартовое состояние обработки движения и буфера прыжка (в инспекторе; в рантайме — `SetMovementEnabled`).
-- `_canJump` — стартовое «можно прыгать» (в инспекторе; в рантайме — `SetJumpEnabled`). Пока движение выключено (`SetMovementEnabled(false)`), прыжок по вводу не буферизуется.
-- `_groundAcceleration`, `_airAcceleration` — отзывчивость на земле/в воздухе.
-- `_jumpImpulse` — сила прыжка.
-- `_coyoteTime`, `_jumpBufferTime` — устойчивый прыжок в динамике.
-- `_extraGravityMultiplier` — ускоренное падение.
-- `_lookYawMode` — как применять горизонтальный поворот.
-- `_minPitch`, `_maxPitch` — лимиты вертикального взгляда.
-- `_lockCursorOnStart` — блокировка курсора при запуске.
-- `_toggleCursorOnEscape` — локальный toggle по Escape. Используйте его, только если **нет** `CursorLockController` на том же объекте.
-- `_externalCursorLockController` — внешний `CursorLockController`. Нужен, если курсором управляет не сам игрок, а отдельный UI-объект.
-
----
-
-## 5. Публичный API
-
-**Состояние (только чтение)**
-
-- `IsGrounded` — на земле ли персонаж.
-- `IsRunning` — активен ли спринт по вводу.
-- `MovementEnabled` — обрабатывается ли движение и буфер прыжка.
-- `JumpEnabled` — разрешён ли прыжок (ввод и импульс).
-- `LookEnabled` — включён ли поворот камеры (см. также паузу и курсор).
-
-**Методы**
-
-- `SetMovementEnabled(bool)` — включает/выключает ходьбу, бег и накопление прыжка по вводу. При `false` обнуляет ввод, спринт и буфер прыжка. Удобно из UI/паузы.
-- `SetJumpEnabled(bool)` — включает/выключает прыжок; при выключении сбрасывает буфер прыжка.
-- `SetLookEnabled(bool)` — включает/выключает обзор; при включении и активном `Pause Look When Cursor Visible` может заблокировать курсор.
-- `SetCursorLocked(bool)` — lock/unlock курсора.
-- `Teleport(Vector3)` — телепорт с очисткой линейной и угловой скорости `Rigidbody`.
-
-**Внешний ввод (мобильный джойстик)**
-
-- `SetMoveInput(Vector2?)` — передать вектор движения (x=strafe, y=forward) от экранного джойстика. `null` — вернуть к клавиатуре.
-- `SetLookInput(Vector2?)` — передать вектор обзора (x=yaw, y=pitch) от тачпада. `null` — вернуть к мыши.
-- `SetJumpInput()` — одноразовый прыжок от экранной кнопки. Автосброс после потребления.
-- `SetRunInput(bool)` — состояние спринта от UI-переключателя.
-
-> Когда внешний ввод задан (`!=null`), встроенное чтение клавиатуры/геймпада для этой оси отключается.
-
-**Паттерн меню / паузы**
-
-1. Открытие: `SetMovementEnabled(false)` и `SetLookEnabled(false)` (или `PausePage` + `CursorLockController` + `timeScale`).
-2. Закрытие: `SetMovementEnabled(true)` и `SetLookEnabled(true)` (если игра не на паузе).
-
-Если курсором управляет **PausePage** (**Control Cursor**), после снятия паузы по умолчанию восстанавливаются `Cursor.lockState` и `Cursor.visible` как до паузы; для классического FPS после меню паузы включите у **PausePage** **After Pause Cursor = ForceLockedHidden** (см. [`PausePage`](../../UI/PausePage.md)).
-
-Отдельно можно отключить только прыжок (например, вода, кат-сцена): `SetJumpEnabled(false)` без отключения ходьбы.
-
-События **OnMoveStart** / **OnMoveStop** — при начале и окончании движения. Если **Ground Check** не назначен, в Awake выводится однократное предупреждение.
-
----
-
-## 6. Сценарий: меню или пауза как отдельная UI-страница
-
-Если меню/пауза живут отдельным объектом страницы, удобная схема такая:
-
-1. На игроке:
-   - `Pause Look When Cursor Visible = true`
-   - `_toggleCursorOnEscape = false`, если курсором будет управлять UI-страница
-   - при использовании внешней страницы назначьте её `CursorLockController` в поле **External Cursor Lock Controller**
-2. На объекте страницы:
-   - `CursorLockController` (удобно **Preset = UI_Page_ShowCursorWhileActive**)
-   - либо вручную: `Apply On Enable = true`, `Lock On Enable = false`, `Apply On Disable = true`, `Lock On Disable = true`
-3. В события открытия/закрытия страницы добавьте:
-   - открыть страницу → `PlayerController3DPhysics.SetLookEnabled(false)`
-   - закрыть страницу → `PlayerController3DPhysics.SetLookEnabled(true)`
-
-Так страница берёт мышь под UI, а игрок возвращает обзор при закрытии страницы. Если внешний `CursorLockController` назначен в поле игрока, локальный Escape-toggle у игрока не будет конфликтовать с этим UI-источником управления.
-
-Если у вас несколько UI-страниц или временных механик, которые хотят забирать курсор, используйте отдельные `CursorLockController` и отпускайте временное владение через `ReleaseControl()`. Подробная схема описана в [`CursorLockController.md`](./CursorLockController.md).
-
----
-
-## 7. Быстрый тест
-
-1. Добавьте плоскость (`Plane`) как землю.
-2. Поместите игрока выше земли (`Y > 1`).
-3. Запустите Play:
-   - `WASD` — движение
-   - `Shift` — бег
-   - `Space` — прыжок
-   - мышь — обзор
-   - курсор должен скрыться/залочиться, если включен `_lockCursorOnStart`.
-
-> В этой версии нет жесткой compile-time зависимости от `Unity.InputSystem`: если пакет отсутствует, контроллер автоматически использует Legacy Input Manager и пишет предупреждение в лог один раз.
-
+## См. также
+- [CursorLockController](CursorLockController.md)
+- [KeyboardMover](KeyboardMover.md)
+- ← [Tools/Move](../README.md)

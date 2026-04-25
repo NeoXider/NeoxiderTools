@@ -1,4 +1,14 @@
 
+## [7.13.15] - 2026-04-25
+### Documentation
+- **Quality Standardization**: Rewrote 20+ key module docs (StateMachine, Save, Reactive, Extensions) from source code — full API tables, real Inspector fields, No-Code + Code examples, cross-references.
+- **Placeholder Cleanup**: Removed all auto-generated `| ... |` field descriptions (193 files across RU/EN). Every field now has a meaningful description derived from source.
+- **Header Cleanup**: Replaced all `## Новые поля (Автогенерация)` headers with `## Дополнительные поля` (42 RU files).
+- **Purpose Cleanup**: Removed all `Документация сгенерирована автоматически` / `Auto-Generated documentation` placeholders (137 EN files, 1 RU file) — replaced with component-specific descriptions.
+- **StateMachine NoCode**: Fully documented `StateData`, `StateMachineData`, `StateTransition`, `ConditionEntryPredicate` with real API from source (RU + EN).
+- **EN Parity**: Major Extensions docs (CoroutineExtensions, ColorExtension, StringExtension, ComponentExtensions, PrimitiveExtensions) rewritten with full API tables and examples.
+- **Save Module**: `ISaveProvider`, `PlayerPrefsSaveProvider`, `SaveProviderExtensions` — complete API documentation (RU + EN).
+
 ## [7.13.14] - 2026-04-13
 ### Fixed
 - **Tools / Text**: Fixed formatting of compact time string in `TimeSpanExtensions` (`ToCompactString`) to strictly use zero-padded format (`00h 00m`). Fixed missing assembly references and ambiguous namespaces in EditMode tests.

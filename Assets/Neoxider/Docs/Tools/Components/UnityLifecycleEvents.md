@@ -41,3 +41,4 @@
 ## См. также
 
 - [Counter](./Counter.md), [ScoreManager](./ScoreManager.md)
+

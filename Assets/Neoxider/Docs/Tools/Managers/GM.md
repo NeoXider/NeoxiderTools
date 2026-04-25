@@ -1,4 +1,4 @@
-# GM (Game Manager)
+﻿# GM (Game Manager)
 
 **Что это:** `GM` — глобальный менеджер состояний игры. Он хранит текущее и предыдущее состояние, управляет паузой через `Time.timeScale`, задаёт целевой FPS и рассылает state-change события через [`EM`](./EM.md). Файл: `Scripts/Tools/Managers/GM.cs`, пространство имён: `Neo.Tools`.
 
@@ -70,3 +70,16 @@
 - [EM](./EM.md)
 - [Bootstrap](./Bootstrap.md)
 - [Singleton](./Singleton.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `IsNotPlaying` | Is Not Playing. |
+| `IsPlaying` | Is Playing. |
+| `_lastState` | Last State. |
+| `_state` | State. |
+| `fps` | Fps. |
+| `startOnAwake` | Start On Awake. |
+| `useTimeScalePause` | Use Time Scale Pause. |

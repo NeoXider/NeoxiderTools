@@ -1,179 +1,52 @@
 # SetText
 
-**Что это:** компонент для вывода чисел в `TMP_Text` с форматированием (Plain, Grouped, IdleShort, Scientific) и анимацией через DOTween. Подходит для денег, очков, урона, процентов. Пространство имён: `Neo.Tools`. Файл: `Scripts/Tools/Text/SetText.cs`.
+**Назначение:** Компонент для вывода форматированных числовых и текстовых значений в `TMP_Text`. Поддерживает разделители тысяч, десятичные знаки, нотации (Grouped, Scientific, Short), проценты, валюту, `BigInteger` и анимацию смены числа через DOTween.
 
-**Как использовать:** добавить на объект с `TMP_Text`, назначить поле `text`, настроить формат (numberNotation, decimal, prefix/suffix), вызывать `Set(int)` / `Set(float)` / `Set(string)` из кода или UnityEvent.
+## Поля (Inspector)
 
----
+| Поле | Описание |
+|------|----------|
+| **Text** | Ссылка на `TMP_Text` (авто-назначение). |
+| **Separator** | Разделитель тысяч (по умолчанию `.`). |
+| **Decimal** | Количество знаков после запятой (0–10). |
+| **Number Notation** | Стиль нотации: `Grouped` (1.000), `Scientific`, `Short` (1K, 1M). |
+| **Start Add / End Add** | Префикс и суффикс для итогового текста. |
+| **Time Anim** | Длительность анимации перехода числа (DOTween). |
+| **Ease** | Кривая анимации. |
 
-## Класс и назначение
+## API
 
-Компонент объединяет:
-- визуальный вывод в `TMP_Text`;
-- форматирование (`Plain`, `Grouped`, `IdleShort`, `Scientific`);
-- режим округления;
-- префиксы/суффиксы;
-- анимацию чисел.
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `void Set(int value)` | Установить целое число (с анимацией). |
+| `void Set(float value)` | Установить дробное число (с анимацией). |
+| `void Set(string value)` | Установить строку (без анимации). |
+| `void SetPercentage(float value, bool addSign)` | Установить процент (0–100). |
+| `void SetCurrency(float value, string symbol)` | Установить валюту с символом. |
+| `void SetBigInteger(BigInteger value)` | Установить большое число. |
+| `void Clear()` | Очистить текст. |
 
----
+## Unity Events
 
-## 3. Настройки в Inspector
+| Событие | Аргументы | Описание |
+|---------|-----------|----------|
+| `OnTextUpdated` | `string` | Вызывается после каждого обновления текста. |
 
-### Text Component
-- `text` (`TMP_Text`) — целевой текстовый компонент.
+## Примеры
 
-### Formatting
-- `separator` (`string`) — разделитель групп разрядов.
-- `decimal` (`int`) — число знаков после запятой.
-- `numberNotation` (`NumberNotation`) — стиль вывода числа.
-- `roundingMode` (`NumberRoundingMode`) — стратегия округления.
-- `trimTrailingZeros` (`bool`) — убирать хвостовые нули в дробной части.
-- `decimalSeparator` (`string`) — разделитель дробной части.
-- `startAdd` (`string`) — префикс для `Set(string)`.
-- `endAdd` (`string`) — суффикс для `Set(string)`.
-- `indexOffset` (`int`) — смещение для целых значений в `Set(int)`.
+### Пример No-Code (в Inspector)
+Повесьте `SetText` на объект с `TextMeshPro`. Настройте `Separator = " "`, `Decimal = 0`, `Number Notation = Short`. Подключите событие из `ScoreManager.OnScoreChanged` к `SetText.Set(int)`. Теперь при изменении счёта текст обновится с анимацией.
 
-### Animation
-- `_timeAnim` (`float`) — длительность анимации.
-- `_ease` (`Ease`) — easing-функция DOTween.
-- `_onEnableAnim` (`bool`) — поведение анимации при disabled/enable объекта.
-
----
-
-## 4. Нотации чисел
-
-Нотация выбирается через `numberNotation` в `SetText` или в `NumberFormatOptions.Notation`.
-
-### `Plain`
-Прямой вывод числа без суффиксов и без группировки.
-
-Пример (`1234567.89`, `decimals=2`):
-- `1234567.89`
-
-### `Grouped`
-Вывод с группировкой разрядов.
-
-Пример (`1234567.89`, `separator=" "`, `decimalSeparator=","`):
-- `1 234 567,89`
-
-### `IdleShort`
-Короткая idle-нотация с суффиксами (`K`, `M`, `B`, `T`, `Qa`, `Qi`...).
-
-Примеры:
-- `950` -> `950`
-- `1_200` -> `1.2K`
-- `12_345_678` -> `12.35M` (при `decimals=2`)
-
-### `Scientific`
-Научная нотация вида `mantissa e exponent`.
-
-Пример (`1234567`, `decimals=2`):
-- `1.23e6`
-
----
-
-## 5. Режимы округления
-
-Режим задается через `roundingMode` (`SetText`) или `NumberFormatOptions.RoundingMode`.
-
-- `ToEven` — банковское округление (к ближайшему четному на .5).
-- `AwayFromZero` — округление от нуля.
-- `ToZero` — усечение дробной части к нулю.
-- `ToPositiveInfinity` — округление вверх (`Ceiling`).
-- `ToNegativeInfinity` — округление вниз (`Floor`).
-
-Пример для `-12.345` при `decimals = 2`:
-- `ToEven` -> `-12.34`
-- `AwayFromZero` -> `-12.35`
-- `ToZero` -> `-12.34`
-- `ToPositiveInfinity` -> `-12.34`
-- `ToNegativeInfinity` -> `-12.35`
-
----
-
-## 6. Публичный API SetText
-
-### Свойства
-- `Separator` (`string`)
-- `DecimalPlaces` (`int`)
-- `NumberNotationStyle` (`NumberNotation`)
-- `RoundingMode` (`NumberRoundingMode`)
-- `IndexOffset` (`int`)
-
-### Методы
-- `Set(int value)` — вывод целого (с учетом `indexOffset`) с анимацией.
-- `Set(float value)` — вывод `float` с анимацией и форматированием.
-- `Set(string value)` — прямой вывод строки без числового форматтера.
-- `SetPercentage(float value, bool addPercentSign = true)`
-- `SetCurrency(float value, string currencySymbol = "$")`
-- `SetBigInteger(BigInteger value)`
-- `SetBigInteger(string value)`
-- `SetFormatted(float value, NumberFormatOptions options)`
-- `SetFormatted(BigInteger value, NumberFormatOptions options)`
-- `Clear()`
-
-### События
-- `OnTextUpdated` — вызывается при установке текста через `Set(string)`.
-
----
-
-## 7. Примеры
-
-### Extension API (без SetText)
-
+### Пример (Код)
 ```csharp
-using Neo.Extensions;
-using System.Numerics;
+[SerializeField] private SetText _goldText;
 
-NumberFormatOptions idle = NumberFormatOptions.IdleShort;
-idle.Decimals = 2;
-idle.RoundingMode = NumberRoundingMode.AwayFromZero;
-idle.Prefix = "$";
-
-string s1 = 12500.ToPrettyString(idle);               // "$12.5K"
-string s2 = 987654321f.ToIdleString(1);               // "987.7M"
-string s3 = BigInteger.Parse("999999999999999999999")
-    .ToPrettyString(idle);                            // idle-строка с крупным суффиксом
-```
-
-### SetText (Inspector + код)
-
-```csharp
-using Neo.Extensions;
-using Neo.Tools;
-using System.Numerics;
-
-public class DemoTextUsage : UnityEngine.MonoBehaviour
+public void UpdateGold(int amount)
 {
-    public SetText moneyText;
-
-    private void Start()
-    {
-        moneyText.NumberNotationStyle = NumberNotation.IdleShort;
-        moneyText.RoundingMode = NumberRoundingMode.ToEven;
-        moneyText.DecimalPlaces = 2;
-
-        moneyText.Set(15234.567f);                    // анимированный вывод
-        moneyText.SetCurrency(15234.567f, "$");       // "$15.23K"
-
-        BigInteger huge = BigInteger.Parse("123456789012345678901234567890");
-        moneyText.SetBigInteger(huge);                // вывод без анимации
-    }
+    _goldText.Set(amount);
 }
 ```
 
-### Точечная переопределяемая настройка через `SetFormatted`
-
-```csharp
-NumberFormatOptions sci = new NumberFormatOptions(
-    NumberNotation.Scientific,
-    decimals: 3,
-    roundingMode: NumberRoundingMode.ToPositiveInfinity,
-    trimTrailingZeros: true,
-    groupSeparator: ",",
-    decimalSeparator: ".",
-    prefix: "",
-    suffix: " dmg");
-
-setText.SetFormatted(1234567.891f, sci);              // "1.235e6 dmg"
-```
+## См. также
+- [TimeToText](TimeToText.md)
+- ← [Tools/Text](README.md)

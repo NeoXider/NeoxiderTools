@@ -1,4 +1,4 @@
-# NpcAnimatorDriver
+﻿# NpcAnimatorDriver
 
 **Что это:** Компонент **автоматического управления аниматором** NPC по скорости NavMeshAgent: в каждом кадре выставляет параметры **Speed** (float, 0..1) и **IsMoving** (bool). Добавьте на тот же объект, что *...
 
@@ -38,3 +38,13 @@
 
 - **NpcNavigation** — навигация (патруль, преследование). NpcAnimatorDriver читает скорость из того же **NavMeshAgent**.
 - **NpcAnimationCore** — внутренняя логика (pure C#), используется внутри NpcAnimatorDriver.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `animator` | Animator. |
+| `dampTime` | Damp Time. |
+| `isMovingParameter` | Is Moving Parameter. |
+| `speedParameter` | Speed Parameter. |

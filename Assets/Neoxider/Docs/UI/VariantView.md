@@ -1,4 +1,4 @@
-# Компонент VariantView
+﻿# Компонент VariantView
 
 **Что это:** Переключая всего один индекс, можно одновременно изменить спрайты у нескольких изображений, цвета, тексты и включить/выключить нужные `GameObject`'ы. Это идеальное решение для элементов, имеющих не...
 
@@ -35,3 +35,27 @@
 - `SetCurrentState(int index)`: Устанавливает состояние по указанному индексу. Возвращает `void`.
 - `AddState(int newStateCount)`: (Для редактора) Расширяет массивы состояний. Возвращает `void`.
 - `ClearAllStates()`: (Для редактора) Очищает все настроенные состояния. Возвращает `void`.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `GameObjectVariant` | Game Object Variant. |
+| `ImageColor` | Image Color. |
+| `ImageVariant` | Image Variant. |
+| `MaxStates` | Max States. |
+| `TmpColorTextVariant` | Tmp Color Text Variant. |
+| `_currentStateIndex` | Current State Index. |
+| `_imageColors` | Image Colors. |
+| `_imageVariants` | Image Variants. |
+| `_maxStates` | Max States. |
+| `_objectVariants` | Object Variants. |
+| `_textColorVariants` | Text Color Variants. |
+| `colors` | Colors. |
+| `image` | Image. |
+| `objects` | Objects. |
+| `sprites` | Sprites. |
+| `texts` | Texts. |
+| `tmp` | Tmp. |
+| `use_text` | Use_text. |

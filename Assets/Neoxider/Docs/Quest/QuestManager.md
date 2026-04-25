@@ -1,89 +1,40 @@
 # QuestManager
 
-**Что это:** компонент `QuestManager` (MonoBehaviour). В сцене должен быть один экземпляр. Хранит список состояний квестов (QuestState), принимает и завершает квесты, засчитывает цели, проверяет Start Conditions и вызывает события. Файл: `Assets/Neoxider/Scripts/Quest/QuestManager.cs`, пространство имён: `Neo.Quest`.
+**Назначение:** Главный менеджер квестов (Singleton). Хранит состояния всех выданных, проваленных и выполненных квестов. Автоматически сохраняет прогресс в `SaveProvider`. Отвечает за логику выдачи квеста (с проверкой условий) и учет выполнения задач (объективов).
 
-**Как с ним работать:**
-1. Добавить на GameObject в сцену: **Add Component → Neoxider → Quest → QuestManager**.
-2. В **Known Quests** перетащить все QuestConfig, по Id которых будет вызываться AcceptQuest(questId).
-3. В **Condition Context** указать GameObject для проверки Start Conditions (обычно игрок). Если пусто — используется gameObject менеджера.
-4. Принимать квест: из кода `QuestManager.Instance.AcceptQuest(quest)` или через `QuestNoCodeAction` + UnityEvent (On Click).
-5. Засчитывать цели: `CompleteObjective(questId, index)` или `QuestNoCodeAction(CompleteObjective)` по NeoCondition.On True; для KillCount/CollectCount — вызывать NotifyKill(enemyId) / NotifyCollect(itemId) из своей логики.
+## Подключение
 
----
+1. Добавьте `Add Component > Neoxider > Quest > QuestManager` на глобальный объект сцены.
+2. В поле `_knownQuests` перетащите все доступные в игре `QuestConfig`. Это база данных, из которой менеджер будет брать информацию по ID.
+3. Убедитесь, что галочки `_autoSave` и `_autoLoad` включены.
 
-## Доступ
+## Основные настройки (Inspector)
 
-- **QuestManager.Instance** — синглтон. Может быть null до Awake менеджера или после Destroy. Проверяйте на null при отписке от событий и в сценах без менеджера.
+| Поле | Описание |
+|------|----------|
+| `_conditionContext` | `GameObject` (обычно сам игрок), который передается в `ConditionEntry` для проверок. Например, чтобы проверить уровень игрока перед выдачей квеста. |
+| `_knownQuests` | База данных всех существующих квестов. |
+| `_saveKey` | Ключ в `SaveProvider` для сохранения прогресса. |
+| `_autoSave`, `_autoLoad` | Автоматически сохранять/загружать список квестов. |
+| События (`_onQuestAccepted` и др) | Unity Events, на которые можно подписать UI (например, для вывода уведомления "Квест обновлен"). |
 
----
+## API и Использование
 
-## Поля в инспекторе
+```csharp
+// Взять квест по ID (вернет false, если не подходим по условиям или уже взят)
+bool success = QuestManager.I.AcceptQuest("kill_boars");
 
-| Поле | Назначение |
-|------|------------|
-| **Condition Context** | GameObject, передаваемый в ConditionEntry.Evaluate(context) при проверке Start Conditions. |
-| **Known Quests** | Список QuestConfig. По нему разрешается questId → конфиг при AcceptQuest(string), GetState(string) и т.д. |
-| **Editor Quest Id** / **Editor Objective Index** | Для кнопок в блоке Editor: тестовый приём квеста и зачёт цели по введённому Id и индексу. |
+// Засчитать выполнение первого задания (индекс 0) в квесте
+QuestManager.I.CompleteObjective("kill_boars", 0);
 
----
+// Если задача типа KillCount: убили врага 'boar', менеджер сам найдет квесты, где нужен этот моб и прибавит +1
+QuestManager.I.NotifyKill("boar");
 
-## Методы
+// Провалить квест
+QuestManager.I.FailQuest("escort_npc");
+```
 
-| Метод | Возврат | Описание |
-|-------|---------|----------|
-| AcceptQuest(string questId) | bool | Принять по Id. Ищет конфиг в Known Quests, проверяет Start Conditions, создаёт QuestState, вызывает события. |
-| AcceptQuest(QuestConfig quest) | bool | То же по ссылке на конфиг. |
-| TryAcceptQuest(string questId, out string failReason) | bool | Принять по Id; при неудаче в failReason: "Quest not found.", "Already accepted or completed.", "Start conditions not met." |
-| CompleteObjective(string questId, int objectiveIndex) | void | Зачесть цель. Для счётчиков — +1; при достижении RequiredCount цель закрывается. При всех целях выполненных — квест Completed, OnQuestCompleted. |
-| CompleteObjective(QuestConfig quest, int objectiveIndex) | void | То же по конфигу. |
-| FailQuest(string questId) / FailQuest(QuestConfig quest) | void | Перевести квест в Failed, вызвать OnQuestFailed. |
-| ResetQuest(string questId) / ResetQuest(QuestConfig quest) | bool | Удалить состояние квеста из реестра (сброс). Можно заново пройти квест. |
-| RestartQuest(string questId) / RestartQuest(QuestConfig quest) | bool | Перезапустить квест: сбросить состояние и снова принять квест. Удобно для повторного прохождения. |
-| ResetAllQuests() | void | Полный сброс всех квестов (Active/Completed/Failed). |
-| NotifyKill(string enemyId) | void | +1 к прогрессу по целям KillCount с таким TargetId. |
-| NotifyCollect(string itemId) | void | +1 к прогрессу по целям CollectCount с таким TargetId. |
-| GetState(string questId) / GetState(QuestConfig quest) | QuestState или null | Состояние квеста. |
-| IsActive(QuestConfig quest) | bool | Есть состояние со статусом Active. |
-| IsCompleted(QuestConfig quest) | bool | Есть состояние со статусом Completed. |
-| GetObjectiveProgress(QuestConfig quest, int index) | int | Текущий прогресс по цели. |
-
-**Списки:** AllQuests (все состояния), ActiveQuests (только Active).
-
----
-
-## События (UnityEvent)
-
-| Событие | Параметры | Когда |
-|---------|-----------|--------|
-| On Quest Accepted | string questId | Квест принят. |
-| On Objective Progress | string, int, int (questId, index, currentCount) | Изменился прогресс по цели. |
-| On Objective Completed | string, int (questId, index) | Одна цель перешла в «выполнена». |
-| On Quest Completed | string questId | Все цели выполнены. |
-| On Quest Failed | string questId | Вызван FailQuest. |
-| On Any Quest Accepted | — | Любой квест принят. |
-| On Any Quest Completed | — | Любой квест завершён. |
-
----
-
-## C#-события
-
-- QuestAccepted (QuestConfig)
-- ObjectiveProgress (QuestConfig, int objectiveIndex, int currentCount)
-- QuestCompleted (QuestConfig)
-
-Подписка в OnEnable, отписка в OnDisable; при отписке проверять Instance != null.
-
----
-
-## Кнопки в инспекторе (блок Editor)
-
-- **Accept Quest (Editor Id)** — принять квест по полю Editor Quest Id.
-- **Complete Objective (Editor)** — зачесть цель по Editor Quest Id и Editor Objective Index.
-
----
-
-## Рестарт и повторное прохождение
-
-- Для переигрывания проваленного/завершённого квеста используйте `RestartQuest(...)`.
-- Для ручного сброса только одного квеста используйте `ResetQuest(...)`, затем `AcceptQuest(...)`.
-- Для «новой игры» используйте `ResetAllQuests()`.
+## См. также
+- [QuestConfig](QuestConfig.md)
+- [QuestState](QuestState.md) - как хранится прогресс.
+- [Корень модуля](../README.md)

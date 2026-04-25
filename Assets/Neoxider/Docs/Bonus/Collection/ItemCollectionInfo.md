@@ -1,4 +1,4 @@
-### Класс ItemCollectionInfo
+﻿### Класс ItemCollectionInfo
 
 **Что это:** компонент отображения информации о коллекционном предмете (название, описание, изображение). Пространство имён `Neo.Bonus`, файл `Scripts/Bonus/Collection/ItemCollectionInfo.cs`.
 
@@ -26,3 +26,15 @@
 
 **Unity Events**:
 У данного класса нет публичных `UnityEvent`.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `_collection` | Collection. |
+| `_imageItem` | Image Item. |
+| `_setNativeSize` | Set Native Size. |
+| `_textDefaultValue` | Text Default Value. |
+| `_textDescription` | Text Description. |
+| `_textName` | Text Name. |

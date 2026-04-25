@@ -1,4 +1,4 @@
-# Leaderboard
+﻿# Leaderboard
 
 **Что это:** Синглтон фейкового лидерборда: генерирует список записей (имя, счёт), сортировка, контейнер с LeaderboardItem. Для прототипов и демо.
 
@@ -21,3 +21,39 @@
 ## См. также
 
 - [LeaderboardMove](./LeaderboardMove.md) — анимация скролла лидерборда.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `LeaderboardUser` | Leaderboard User. |
+| `OnSort` | On Sort. |
+| `SortOrder` | Sort Order. |
+| `container` | Container. |
+| `count` | Count. |
+| `formatNum` | Format Num. |
+| `formatScore` | Format Score. |
+| `generateLeaderboardItemsOnValidate` | Generate Leaderboard Items On Validate. |
+| `generateLeaderboardOnAwake` | Generate Leaderboard On Awake. |
+| `leaderboardItemPlayer` | Leaderboard Item Player. |
+| `leaderboardItems` | Leaderboard Items. |
+| `name` | Name. |
+| `names` | Names. |
+| `noScoreText` | No Score Text. |
+| `num` | Num. |
+| `onAwakeSort` | On Awake Sort. |
+| `player` | Player. |
+| `playerSaveKey` | Player Save Key. |
+| `prefab` | Prefab. |
+| `rangeScore` | Range Score. |
+| `score` | Score. |
+| `sep` | Sep. |
+| `sortOrder` | Sort Order. |
+| `sortUsers` | Sort Users. |
+| `timeFormat` | Time Format. |
+| `timeSeparator` | Time Separator. |
+| `useNum` | Use Num. |
+| `useTimeFormat` | Use Time Format. |
+| `useZero` | Use Zero. |
+| `users` | Users. |

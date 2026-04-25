@@ -1,4 +1,4 @@
-# Кнопка ButtonChangePage
+﻿# Кнопка ButtonChangePage
 
 **Что это:** В дополнение к основной функции, компонент включает в себя встроенную анимацию нажатия (масштабирование), что делает его универсальным решением для навигации по интерфейсу.
 
@@ -36,3 +36,17 @@
 
 **Unity Events**
 - `OnClick`: Вызывается в момент клика, в дополнение к логике смены страницы.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `_idPage` | Id Page. |
+| `_imageTarget` | Image Target. |
+| `_onePage` | One Page. |
+| `_scaleAnim` | Scale Anim. |
+| `_timeAnimImage` | Time Anim Image. |
+| `_useAnimPage` | Use Anim Page. |
+| `intecactable` | Intecactable. |
+| `true` | True. |

@@ -1,55 +1,39 @@
 # Money
 
-`Money` is a reusable currency component and an implementation source for `IMoneySpend` and `IMoneyAdd`. It can act as the main singleton `Money.I` or as an explicitly referenced local currency source. File: `Assets/Neoxider/Scripts/Shop/Money.cs`, namespace: `Neo.Shop`.
+**Purpose:** Global in-game currency manager (Singleton). It automatically saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding.
 
-## Common use
+## Setup
 
-1. Add `Money` to a scene object.
-2. Leave `Set Instance On Awake` enabled only on the primary currency source.
-3. Pass additional `Money` instances by reference to systems that should not depend on `Money.I`.
-4. Use `Add`, `Spend`, `SetMoney`, or level-money helpers depending on the economy flow.
+- Add the component via `Add Component > Neoxider > Shop > Money` to a manager object in the scene (preferably a persistent prefab that survives scene loads).
+- Typically, one instance is used per game (`Money.I`).
 
-## Main fields
+## Key Fields (Inspector)
 
-- `Money Save` is the base save key.
-- `CurrentMoney` stores the current balance.
-- `LevelMoney` stores per-level or per-session income.
-- `AllMoney` stores the total accumulated amount.
-- `LastChangeMoney` stores the last delta applied to the balance.
+| Field | Description |
+|-------|-------------|
+| `_moneySave` | The `SaveProvider` save key for the main balance. |
+| `st_levelMoney` | References to `SetText` components for displaying current level earnings. |
+| `st_money` | References to `SetText` components for displaying the global balance. |
+| `t_levelMoney` | Direct references to `TMP_Text` components for level earnings. |
+| `t_money` | Direct references to `TMP_Text` components for the main balance. |
 
-## Main API
+## API & Usage
 
-| API | Description |
-|-----|-------------|
-| `money` | Current balance. |
-| `levelMoney` | Current `LevelMoney` amount. |
-| `allMoney` | Total accumulated amount. |
-| `LastChangeMoneyValue` | Last applied delta. |
-| `Add(float amount)` | Adds money to current and total values. |
-| `Spend(float amount)` | Tries to spend money and returns `true` on success. |
-| `CanSpend(float amount)` | Checks whether enough money is available. |
-| `AddLevelMoney(float amount)` | Adds to `LevelMoney`. |
-| `SetLevelMoney(float amount = 0)` | Sets `LevelMoney` directly. |
-| `SetMoney(float amount = 0)` | Sets the current balance directly. |
-| `SetMoneyForLevel(bool resetLevelMoney = true)` | Transfers `LevelMoney` into the current balance. |
+You can access the manager from anywhere via the global singleton:
+```csharp
+// Add 100 coins
+Money.I.Add(100f);
 
-## Reactive values
+// Try to spend 50 coins
+bool success = Money.I.Spend(50f);
+if (success) {
+    // Purchase successful
+}
+```
 
-The current version uses `ReactivePropertyFloat`, not legacy `UnityEvent`-style money callbacks. Subscribe to `.OnChanged` on:
+To display the balance in the UI, it is recommended to use the `TextMoney` component.
 
-- `CurrentMoney`
-- `LevelMoney`
-- `AllMoney`
-- `LastChangeMoney`
+## See Also
 
-## Save behavior
-
-- Persistence uses `SaveProvider.SetFloat()` and `SaveProvider.GetFloat()`.
-- `CurrentMoney` and `AllMoney` are stored.
-- `LevelMoney` is usually session-scoped and is not treated as permanent balance.
-
-## See also
-
-- [README](./README.md)
-- [Russian Shop docs](../../Docs/Shop/README.md)
-- [SaveProvider](../Save/SaveProvider.md)
+- [TextMoney](TextMoney.md) - UI component for text display.
+- [Module Root](../README.md)

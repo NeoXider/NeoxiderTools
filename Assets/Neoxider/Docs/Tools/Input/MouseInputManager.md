@@ -1,4 +1,4 @@
-# MouseInputManager
+﻿# MouseInputManager
 
 **Что это:** `MouseInputManager` — singleton-компонент для обработки мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`. Файл: `Scripts/Tools/Input/MouseInputManager.cs`.
 
@@ -52,3 +52,22 @@
 
 - [MouseEffect](./MouseEffect.md)
 - [README](./README.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `10f` | 10f. |
+| `drawGizmos` | Draw Gizmos. |
+| `enableClick` | Enable Click. |
+| `enableHold` | Enable Hold. |
+| `enablePress` | Enable Press. |
+| `enableRelease` | Enable Release. |
+| `gizmoBaseFontSize` | Gizmo Base Font Size. |
+| `gizmoColor` | Gizmo Color. |
+| `gizmoDrawText` | Gizmo Draw Text. |
+| `gizmoRadius` | Gizmo Radius. |
+| `gizmoTextColor` | Gizmo Text Color. |
+| `gizmoTextOffset` | Gizmo Text Offset. |
+| `gizmoTextScale` | Gizmo Text Scale. |

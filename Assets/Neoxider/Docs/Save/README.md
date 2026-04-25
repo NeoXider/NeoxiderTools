@@ -1,4 +1,4 @@
-# Save
+﻿# Save
 
 **Что это:** модуль `Save` объединяет provider-based key/value API, сохранение состояния scene-компонентов и отдельное глобальное хранилище. Скрипты лежат в `Scripts/Save/`.
 
@@ -54,3 +54,16 @@ int score = SaveProvider.GetInt("score", 0);
 - [`SaveProviderSettingsComponent.md`](./SaveProviderSettingsComponent.md)
 - [`GlobalData.md`](./GlobalData.md)
 - [`GlobalSave.md`](./GlobalSave.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `AllSavedComponents` | All Saved Components. |
+| `ComponentKey` | Component Key. |
+| `Fields` | Fields. |
+| `Items` | Items. |
+| `Key` | Key. |
+| `TypeName` | Type Name. |
+| `Value` | Value. |

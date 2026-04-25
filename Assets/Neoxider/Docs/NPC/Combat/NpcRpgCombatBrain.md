@@ -1,4 +1,4 @@
-# NpcRpgCombatBrain
+﻿# NpcRpgCombatBrain
 
 **Что это:** модульный combat brain для NPC, который соединяет `NpcNavigation`, `RpgTargetSelector`, `RpgAttackController` и `NpcCombatPreset` в один готовый автоматический боевой цикл.
 
@@ -77,3 +77,29 @@
 - при необходимости NPC перестаёт двигаться внутри attack range
 
 Так melee и ranged враги собираются из одного набора компонентов.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `CurrentTarget` | Current Target. |
+| `HasTarget` | Has Target. |
+| `_attackController` | Attack Controller. |
+| `_combatant` | Combatant. |
+| `_debugMode` | Debug Mode. |
+| `_decisionInterval` | Decision Interval. |
+| `_lastDecision` | Last Decision. |
+| `_lookOrigin` | Look Origin. |
+| `_navigation` | Navigation. |
+| `_onAttackFailed` | On Attack Failed. |
+| `_onAttackTriggered` | On Attack Triggered. |
+| `_onChaseStarted` | On Chase Started. |
+| `_onDecisionChanged` | On Decision Changed. |
+| `_onHoldingPosition` | On Holding Position. |
+| `_onTargetAcquired` | On Target Acquired. |
+| `_onTargetLost` | On Target Lost. |
+| `_preset` | Preset. |
+| `_profileSource` | Profile Source. |
+| `_targetSelector` | Target Selector. |
+| `true` | True. |

@@ -1,4 +1,4 @@
-# ProgressionManager
+﻿# ProgressionManager
 
 Центральный компонент системы мета-прогрессии (наследует `Singleton<ProgressionManager>`). Отвечает за накопление опыта, расчет уровней, управление очками перков и сохранение профиля.
 
@@ -118,3 +118,42 @@ public class Portal : MonoBehaviour
 - [Progression No-Code Actions](./ProgressionNoCodeAction.md)
 - [Level Curve Definition (SO)](./LevelCurveDefinition.md)
 - [← Назад к Progression](./README.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `AutoSave` | Auto Save. |
+| `AvailablePerkPoints` | Available Perk Points. |
+| `ConditionContext` | Condition Context. |
+| `CurrentLevel` | Current Level. |
+| `DefaultSaveKey` | Default Save Key. |
+| `HasPremium` | Has Premium. |
+| `LevelStateValue` | Level State Value. |
+| `OnLevelChanged` | On Level Changed. |
+| `OnNodeUnlocked` | On Node Unlocked. |
+| `OnPerkPointsChanged` | On Perk Points Changed. |
+| `OnPerkPurchased` | On Perk Purchased. |
+| `PerkPointsStateValue` | Perk Points State Value. |
+| `PurchasedPerkIds` | Purchased Perk Ids. |
+| `SaveKey` | Save Key. |
+| `TotalXp` | Total Xp. |
+| `UnlockedNodeIds` | Unlocked Node Ids. |
+| `XpStateValue` | Xp State Value. |
+| `XpToNextLevelState` | Xp To Next Level State. |
+| `XpToNextLevelStateValue` | Xp To Next Level State Value. |
+| `_conditionContext` | Condition Context. |
+| `_levelCurve` | Level Curve. |
+| `_levelProvider` | Level Provider. |
+| `_onLevelChanged` | On Level Changed. |
+| `_onNodeUnlocked` | On Node Unlocked. |
+| `_onPerkPointsChanged` | On Perk Points Changed. |
+| `_onPerkPurchased` | On Perk Purchased. |
+| `_onProfileLoaded` | On Profile Loaded. |
+| `_onProfileReset` | On Profile Reset. |
+| `_onProfileSaved` | On Profile Saved. |
+| `_onXpChanged` | On Xp Changed. |
+| `_perkTree` | Perk Tree. |
+| `_unlockTree` | Unlock Tree. |
+| `true` | True. |

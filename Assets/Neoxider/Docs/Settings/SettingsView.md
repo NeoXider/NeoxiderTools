@@ -1,4 +1,4 @@
-# SettingsView
+﻿# SettingsView
 
 **Что это:** `Neo.Settings.SettingsView` — MonoBehaviour для привязки **Unity UI** (`Slider`, `Toggle`, `Dropdown`) к **`GameSettings`**. Локализация подписей — через **`ISettingsLocalization`** и ключи наподобие `settings.preset_high`. Файл: `Scripts/Settings/SettingsView.cs`.
 
@@ -28,3 +28,23 @@
 ## См. также
 
 - [GameSettings.md](./GameSettings.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `SettingsViewCommitMode` | Settings View Commit Mode. |
+| `_commitMode` | Commit Mode. |
+| `_framerateDropdown` | Framerate Dropdown. |
+| `_fullScreenToggle` | Full Screen Toggle. |
+| `_graphicsPresetDropdown` | Graphics Preset Dropdown. |
+| `_mouseSensitivitySlider` | Mouse Sensitivity Slider. |
+| `_qualityDropdown` | Quality Dropdown. |
+| `_resetDisplayButton` | Reset Display Button. |
+| `_resetGraphicsButton` | Reset Graphics Button. |
+| `_resetInputButton` | Reset Input Button. |
+| `_resetPerformanceButton` | Reset Performance Button. |
+| `_resolutionBlockRoot` | Resolution Block Root. |
+| `_resolutionDropdown` | Resolution Dropdown. |
+| `_vSyncToggle` | V Sync Toggle. |

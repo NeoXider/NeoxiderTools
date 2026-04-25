@@ -1,4 +1,4 @@
-# RpgAttackController
+﻿# RpgAttackController
 
 **Что это:** универсальный runtime-компонент для запуска melee, ranged и area атак по `RpgAttackDefinition`.
 
@@ -42,3 +42,25 @@
 - Дополнительные эффекты берутся из `RpgAttackDefinition.Effects`.
 - Для AI/skills/spells можно использовать `RpgAttackPreset` и `RpgTargetSelector`.
 - Для новых проектов это основной replacement для `AttackExecution` и `AdvancedAttackCollider`.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `EnableBuiltInInput` | Enable Built In Input. |
+| `IsCasting` | Is Casting. |
+| `_attacks` | Attacks. |
+| `_combatantSource` | Combatant Source. |
+| `_onAttackFailed` | On Attack Failed. |
+| `_onAttackResolved` | On Attack Resolved. |
+| `_onAttackStarted` | On Attack Started. |
+| `_onPresetUsed` | On Preset Used. |
+| `_onTargetResolved` | On Target Resolved. |
+| `_origin` | Origin. |
+| `_presets` | Presets. |
+| `_primaryAttackBinding` | Primary Attack Binding. |
+| `_profileSource` | Profile Source. |
+| `_projectileSpawnPoint` | Projectile Spawn Point. |
+| `_targetSelector` | Target Selector. |
+| `true` | True. |

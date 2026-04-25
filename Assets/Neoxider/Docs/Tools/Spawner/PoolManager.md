@@ -1,47 +1,41 @@
 # PoolManager
 
-**Что это:** Синглтон пулов объектов: предзаполнение по конфигу (prefab + initial size + max size), получение/возврат через Get/Release, опциональное расширение пула с лимитом.
+**Назначение:** Центральный менеджер пулов объектов. Автоматически создает пулы при первом обращении (или загружает преднастроенные на старте), предотвращая лишние вызовы `Instantiate` и `Destroy`.
 
-**Как использовать:** см. разделы ниже.
+## Поля (Inspector)
 
----
+| Поле | Описание |
+|------|----------|
+| **Default Initial Size** | Базовый стартовый размер пула, если он создается "на лету" (без предварительной настройки). |
+| **Default Expand Pool** | Разрешено ли пулу автоматически увеличиваться, если все объекты заняты. |
+| **Preconfigured Pools** | Список префабов (с их лимитами), которые нужно загрузить в пул сразу при старте сцены. |
 
+## API
 
-Синглтон пулов объектов: предзаполнение по конфигу (prefab + initial size + max size), получение/возврат через Get/Release, опциональное расширение пула с лимитом.
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `static GameObject Get(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)` | Запрашивает объект из пула. Если пула для этого префаба нет — он создается автоматически. |
+| `static void Release(GameObject instance)` | Возвращает объект обратно в пул. Если объект не из пула — уничтожает его (`Destroy`). |
 
-**Добавить:** Neoxider → Tools → PoolManager (или через Singleton).
+## Примеры
 
-## Основное
+### Пример No-Code (в Inspector)
+Добавьте компонент `PoolManager` на пустой объект `Managers`. Раскройте `Preconfigured Pools` и добавьте туда префаб пули с `Initial Size = 50`. При старте уровня игра сразу создаст 50 пуль, и стрельба не вызовет лагов.
 
-- **Preconfigured Pools** — префаб, начальный размер, возможность расширения, **max size** (макс. размер пула при expand; по умолчанию 100, при 0 тоже 100).
-- **Default Initial Size**, **Default Expand Pool**, **Default Max Size** — значения по умолчанию для пулов, созданных «на лету» (Default Max Size = 100).
-
-Получение — `PoolManager.Get(prefab, position, rotation, parent)`; возврат — `PoolManager.Release(instance)` или `instance.GetComponent<PooledObjectInfo>().Return()` / `instance.ReturnToPool()` (Neo.Tools).
-
-## Использование в коде
-
+### Пример (Код)
 ```csharp
-// Получить из пула
-GameObject go = PoolManager.Get(bulletPrefab, firePoint.position, firePoint.rotation, parent);
+[SerializeField] private GameObject _bulletPrefab;
+[SerializeField] private Transform _firePoint;
 
-// Вариант через расширение (если PoolManager нет — будет Instantiate)
-GameObject go = bulletPrefab.SpawnFromPool(pos, rot, parent);
-
-// Вернуть в пул
-PoolManager.Release(go);
-go.ReturnToPool(); // то же самое
+public void Shoot()
+{
+    // Берем пулю из пула (создаст пул автоматически, если его еще нет)
+    GameObject bullet = PoolManager.Get(_bulletPrefab, _firePoint.position, _firePoint.rotation);
+}
 ```
 
-## Объекты из пула (IPoolable)
-
-Чтобы при взятии/возврате сбрасывать состояние, реализуйте **IPoolable** на компоненте префаба (или наследуйте **PoolableBehaviour**):
-
-- **OnPoolCreate()** — один раз при создании экземпляра пулом (кэш компонентов).
-- **OnPoolGet()** — каждый раз при выдаче из пула (сброс HP, таймеров, позиции).
-- **OnPoolRelease()** — при возврате в пул (остановить эффекты, отписаться от событий).
-
 ## См. также
-
-- [Spawner](./Spawner.md)
-- [PooledObjectInfo](./PooledObjectInfo.md)
-- [PoolableBehaviour](./PoolableBehaviour.md) / IPoolable
+- [Spawner](Spawner.md)
+- [PooledObjectInfo](PooledObjectInfo.md)
+- [Despawner](Despawner.md)
+- ← [Tools/Spawner](../README.md)
