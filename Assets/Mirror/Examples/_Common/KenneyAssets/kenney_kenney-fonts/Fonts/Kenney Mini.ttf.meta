@@ -19,3 +19,11 @@ TrueTypeFontImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/_Common/KenneyAssets/kenney_kenney-fonts/Fonts/Kenney
+    Mini.ttf
+  uploadId: 736421

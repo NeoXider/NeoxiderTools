@@ -5,3 +5,10 @@ PackageManifestImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/BenchmarkStinkySteak/Dependencies/Unity-Simulation-Timer/package.json
+  uploadId: 736421

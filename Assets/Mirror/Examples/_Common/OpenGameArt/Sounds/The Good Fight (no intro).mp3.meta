@@ -21,3 +21,11 @@ AudioImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/_Common/OpenGameArt/Sounds/The Good Fight (no
+    intro).mp3
+  uploadId: 736421

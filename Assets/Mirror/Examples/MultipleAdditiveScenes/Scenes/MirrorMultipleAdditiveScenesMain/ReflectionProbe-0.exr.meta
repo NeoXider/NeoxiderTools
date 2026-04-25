@@ -90,3 +90,10 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/MultipleAdditiveScenes/Scenes/MirrorMultipleAdditiveScenesMain/ReflectionProbe-0.exr
+  uploadId: 736421

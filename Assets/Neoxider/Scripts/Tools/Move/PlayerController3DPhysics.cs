@@ -2,6 +2,9 @@ using System;
 using Neo.Settings;
 using UnityEngine;
 using UnityEngine.Events;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Tools
 {
@@ -13,7 +16,12 @@ namespace Neo.Tools
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
         "Prefabs/Tools/First Person Controller.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
-    public class PlayerController3DPhysics : MonoBehaviour
+    public class PlayerController3DPhysics : 
+#if MIRROR
+        NetworkBehaviour
+#else
+        MonoBehaviour
+#endif
     {
         [Header("References")] [SerializeField]
         private Rigidbody _rigidbody;
@@ -113,6 +121,18 @@ namespace Neo.Tools
         private bool _externalJumpPressed;
         private bool _externalRunHeld;
 
+        private bool HasInputAuthority
+        {
+            get
+            {
+#if MIRROR
+                return isLocalPlayer;
+#else
+                return true;
+#endif
+            }
+        }
+
         /// <summary>
         ///     Gets whether the character is currently grounded.
         /// </summary>
@@ -180,7 +200,7 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (_toggleCursorOnEscape && !HasExternalCursorControl() && ReadEscapePressed())
+            if (HasInputAuthority && _toggleCursorOnEscape && !HasExternalCursorControl() && ReadEscapePressed())
             {
                 if (Cursor.visible)
                 {
@@ -195,7 +215,10 @@ namespace Neo.Tools
             }
 
             CaptureInput();
-            HandleLookInput();
+            if (HasInputAuthority)
+            {
+                HandleLookInput();
+            }
             bool movingNow = _movementEnabled && _moveInput.sqrMagnitude > 0.001f;
             if (movingNow != _wasMoving)
             {
@@ -214,6 +237,8 @@ namespace Neo.Tools
         private void FixedUpdate()
         {
             UpdateGroundState();
+            if (!HasInputAuthority) return;
+
             UpdateJumpTimers(Time.fixedDeltaTime);
             ApplyLookRotation();
             HandleMovement(Time.fixedDeltaTime);
@@ -397,6 +422,15 @@ namespace Neo.Tools
 
         private void CaptureInput()
         {
+            if (!HasInputAuthority)
+            {
+                _moveInput = Vector2.zero;
+                IsRunning = false;
+                _jumpBufferTimer = 0f;
+                _lookInput = Vector2.zero;
+                return;
+            }
+
             if (_movementEnabled)
             {
                 _moveInput = _externalMoveInput ?? ReadMoveInput();

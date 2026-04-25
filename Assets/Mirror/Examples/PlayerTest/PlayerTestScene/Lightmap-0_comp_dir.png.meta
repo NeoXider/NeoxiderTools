@@ -90,3 +90,10 @@ TextureImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/PlayerTest/PlayerTestScene/Lightmap-0_comp_dir.png
+  uploadId: 736421

@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 using UnityEngine.Events;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Tools
 {
@@ -11,7 +14,12 @@ namespace Neo.Tools
     [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DPhysics")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
-    public class PlayerController2DPhysics : MonoBehaviour
+    public class PlayerController2DPhysics : 
+#if MIRROR
+        NetworkBehaviour
+#else
+        MonoBehaviour
+#endif
     {
         [Header("References")] [SerializeField]
         private Rigidbody2D _rigidbody;
@@ -70,6 +78,18 @@ namespace Neo.Tools
         private float? _externalMoveInputX;
         private bool _externalJumpPressed;
         private bool _externalRunHeld;
+
+        private bool HasInputAuthority
+        {
+            get
+            {
+#if MIRROR
+                return isLocalPlayer;
+#else
+                return true;
+#endif
+            }
+        }
 
         /// <summary>
         ///     Gets whether the character is currently grounded.
@@ -134,12 +154,18 @@ namespace Neo.Tools
 
         private void FixedUpdate()
         {
-            HandleMovement(Time.fixedDeltaTime);
+            if (HasInputAuthority)
+            {
+                HandleMovement(Time.fixedDeltaTime);
+            }
         }
 
         private void LateUpdate()
         {
-            UpdateCameraFollow(Time.deltaTime);
+            if (HasInputAuthority)
+            {
+                UpdateCameraFollow(Time.deltaTime);
+            }
         }
 
         private void OnDrawGizmosSelected()
@@ -243,6 +269,14 @@ namespace Neo.Tools
 
         private void CaptureInput()
         {
+            if (!HasInputAuthority)
+            {
+                _moveInputX = 0f;
+                IsRunning = false;
+                _jumpPressedThisFrame = false;
+                return;
+            }
+
             if (_movementEnabled)
             {
                 _moveInputX = _externalMoveInputX ?? ReadMoveXInput();
@@ -404,6 +438,8 @@ namespace Neo.Tools
 
         private void TryConsumeJump()
         {
+            if (!HasInputAuthority) return;
+
             if (!_canJump)
             {
                 return;

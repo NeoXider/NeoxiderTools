@@ -1,5 +1,12 @@
 fileFormatVersion: 2
 guid: d37be086c50d58c4b8081e09c29b82cd
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Hosting/Edgegap/Editor/Images/discord-brands-solid.svg
+  uploadId: 736421
 ScriptedImporter:
   internalIDToNameTable: []
   externalObjects: {}
@@ -7,7 +14,7 @@ ScriptedImporter:
   userData: 
   assetBundleName: 
   assetBundleVariant: 
-  script: {fileID: 11500000, guid: a57477913897c46af95d590f580878bd, type: 3}
+  script: {fileID: 12408, guid: 0000000000000000e000000000000000, type: 0}
   svgType: 1
   texturedSpriteMeshType: 0
   svgPixelsPerUnit: 100
@@ -18,6 +25,7 @@ ScriptedImporter:
   viewportOptions: 0
   preserveViewport: 0
   advancedMode: 0
+  tessellationMode: 0
   predefinedResolutionIndex: 1
   targetResolution: 1080
   resolutionMultiplier: 1
@@ -38,17 +46,15 @@ ScriptedImporter:
   useSVGPixelsPerUnit: 0
   spriteData:
     TessellationDetail: 0
+    SpriteName: discord-brands-solid
+    SpritePivot: {x: 0.5, y: 0.5}
+    SpriteAlignment: 0
+    SpriteBorder: {x: 0, y: 0, z: 0, w: 0}
     SpriteRect:
-      name: 
-      originalName: 
-      pivot: {x: 0, y: 0}
-      alignment: 0
-      border: {x: 0, y: 0, z: 0, w: 0}
-      rect:
-        serializedVersion: 2
-        x: 0
-        y: 0
-        width: 0
-        height: 0
-      spriteID: b67348b14ced09b4db8c7331e442fc87
+      serializedVersion: 2
+      x: 0
+      y: 0
+      width: 256
+      height: 195
+    SpriteID: b67348b14ced09b4db8c7331e442fc87
     PhysicsOutlines: []

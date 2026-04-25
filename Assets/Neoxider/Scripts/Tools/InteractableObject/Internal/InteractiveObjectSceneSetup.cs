@@ -55,10 +55,9 @@ namespace Neo.Tools
             Camera cam = Camera.main ?? Object.FindFirstObjectByType<Camera>();
             if (cam == null)
             {
-                Debug.LogError(
-                    $"[InteractiveObject] No camera found on {owner.gameObject.name}. Component will be disabled.",
-                    owner);
-                return false;
+                // In multiplayer or dynamic scenes, the camera might spawn later.
+                // We return true here so the InteractiveObject isn't disabled prematurely.
+                return true;
             }
 
             bool isUi = owner.GetComponentInParent<Canvas>() != null && owner.TryGetComponent<RectTransform>(out _);

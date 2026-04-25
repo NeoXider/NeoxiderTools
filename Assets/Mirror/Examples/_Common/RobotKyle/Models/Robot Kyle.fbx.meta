@@ -801,3 +801,10 @@ ModelImporter:
   animationType: 3
   additionalBone: 0
   userData: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 129321
+  packageName: Mirror
+  packageVersion: 96.0.1
+  assetPath: Assets/Mirror/Examples/_Common/RobotKyle/Models/Robot Kyle.fbx
+  uploadId: 736421
