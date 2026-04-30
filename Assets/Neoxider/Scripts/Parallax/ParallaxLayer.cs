@@ -391,7 +391,7 @@ namespace Neo
                     continue;
                 }
 
-                if (Application.isPlaying && !immediate)
+                if (Application.isPlaying)
                 {
                     Destroy(child.gameObject);
                 }

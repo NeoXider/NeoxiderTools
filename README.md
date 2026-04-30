@@ -340,12 +340,9 @@
 
 | Пакет | Способ установки |
 |-------|-----------------|
-| **TextMeshPro** | Автоматически через UPM |
-| **AI Navigation** | Автоматически через UPM |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
-| **Odin Inspector** (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
 
 ### Основной пакет
 
@@ -355,16 +352,10 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 Window -> Package Manager -> **+** -> Add package from git URL.
 
-Конкретная версия (тег `v5.5.2`):
+Если нужна конкретная версия, добавьте тег в конец URL (например, `#5.5.2`):
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.2
-```
-
-Ветка `demo` (новые функции):
-
-```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#5.5.2
 ```
 
 ### Ручная установка

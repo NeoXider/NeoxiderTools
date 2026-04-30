@@ -1,4 +1,9 @@
 
+## [7.13.16] - 2026-04-30
+### Fixed
+- **Tools / Managers**: Removed invalid `RuntimeInitializeOnLoadMethod` usage from generic manager classes (`Singleton<T>`, `SingletonById<T>`). Added a non-generic runtime reset bootstrap (`SingletonRuntimeReset`) to keep static-state reset behavior across Play sessions without Unity startup errors.
+- **Runtime Stability**: Normalized object destruction in play mode to use `Destroy(...)` (instead of `DestroyImmediate(...)`) in runtime code paths (`ObjectExtensions`, `NeoObjectPool`, `MeshEmission`, `ParallaxLayer`) to prevent startup spam: `Destroying GameObjects immediately is not permitted...`.
+
 ## [7.13.15] - 2026-04-25
 ### Documentation
 - **Quality Standardization**: Rewrote 20+ key module docs (StateMachine, Save, Reactive, Extensions) from source code — full API tables, real Inspector fields, No-Code + Code examples, cross-references.

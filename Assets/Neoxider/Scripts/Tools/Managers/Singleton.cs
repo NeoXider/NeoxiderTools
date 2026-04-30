@@ -147,13 +147,10 @@ namespace Neo.Tools
             }
         }
 
-#if UNITY_EDITOR
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        internal static void ResetStaticStateForRuntime()
         {
             _instance = null;
             _searchFailed = false;
         }
-#endif
     }
 }

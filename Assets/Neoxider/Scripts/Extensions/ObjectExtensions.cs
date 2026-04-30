@@ -22,14 +22,7 @@ namespace Neo.Extensions
 
             if (Application.isPlaying)
             {
-                if (immediate)
-                {
-                    Object.DestroyImmediate(obj);
-                }
-                else
-                {
-                    Object.Destroy(obj);
-                }
+                Object.Destroy(obj);
             }
             else
             {
