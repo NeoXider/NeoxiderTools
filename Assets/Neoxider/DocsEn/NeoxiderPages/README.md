@@ -13,7 +13,7 @@ Assets/Neoxider/Samples~/NeoxiderPages/
 
 ## Main concepts
 
-- `PM` manages page switching and previous/current page state.
+- `PM` manages page switching and previous/current page state. All **`UIPage`** instances must be **children (descendants)** of the GameObject that has **`PM`** — page discovery walks only that subtree (including inactive objects).
 - `UIPage` marks a GameObject as a page.
 - `BtnChangePage` connects UI buttons to page actions.
 - `UIKit` exposes a simple static API for page changes.

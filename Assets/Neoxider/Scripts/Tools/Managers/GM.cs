@@ -43,13 +43,14 @@ namespace Neo.Tools
             set
             {
                 _lastState = _state;
+                _state = value;
                 if (EM.TryGetInstance(out EM em))
                 {
                     em.OnStateChange?.Invoke(_state);
                 }
 
                 Debug.Log("[GM]".SetColor(Color.yellow)
-                          + $": {State}".Gradient(Color.cyan, Color.blue));
+                          + $": {_state}".Gradient(Color.cyan, Color.blue));
             }
         }
 

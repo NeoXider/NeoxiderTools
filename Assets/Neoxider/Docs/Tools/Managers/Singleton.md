@@ -87,6 +87,10 @@ if (MyManager.TryGetInstance(out MyManager manager))
 }
 ```
 
+## Запуск среды Unity (`RuntimeInitializeOnLoad`)
+
+Не вешайте `[RuntimeInitializeOnLoadMethod]` на статические методы **внутри** типа, наследующего `Singleton<T>` — Unity покажет ошибку («метод … находится в generic-классе»). Используйте отдельный **не-generic** статический регистратор (как `SingletonRuntimeReset`, `SaveManagerSubsystemRegistration`, `MouseInputManagerSubsystemRegistration`) или вызывайте из него `internal static`-очистку.
+
 ## Практические рекомендации
 
 - Не используйте `I` везде по умолчанию. Для опциональных связей лучше `TryGetInstance`.

@@ -47,6 +47,7 @@ This makes save keys stable across application restarts as long as the object ke
 5. When a new scene loads, only newly discovered saveable components are loaded.
 
 ## Notes
+- Domain reload (`SubsystemRegistration`): static save registration caches are cleared by `SaveManagerSubsystemRegistration`, which calls `SaveManager.ClearSubsystemCaches()`. Hooks are intentionally **not** on `SaveManager` itself because Unity disallows `[RuntimeInitializeOnLoadMethod]` on types that inherit generic bases such as `Singleton<T>`.
 - Use explicit save calls for important gameplay events, not just on quit.
 - Prefer `ISaveIdentityProvider` for runtime-spawned objects or objects that may move inside the hierarchy.
 - If you restructure scene hierarchies after release, verify compatibility with older save files.

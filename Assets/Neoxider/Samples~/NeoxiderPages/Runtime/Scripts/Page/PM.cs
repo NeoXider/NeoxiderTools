@@ -531,15 +531,13 @@ namespace Neo.Pages
         }
 
         /// <summary>
-        ///     Finds all <see cref="UIPage" /> in the current active scene (including inactive objects).
+        ///     Finds all <see cref="UIPage" /> under this PM instance (descendants of the PM transform),
+        ///     including components on inactive GameObjects.
         /// </summary>
         /// <returns>Array of found pages.</returns>
         public UIPage[] FindAllScenePages()
         {
-            return Resources.FindObjectsOfTypeAll<UIPage>()
-                .Where(p => p.gameObject.scene.IsValid()
-                            && gameObject.scene == p.gameObject.scene)
-                .ToArray();
+            return GetComponentsInChildren<UIPage>(true);
         }
 
         /// <summary>

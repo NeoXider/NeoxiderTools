@@ -115,15 +115,15 @@ public class MouseInputManager : Singleton<MouseInputManager>
         }
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    private static void ResetStaticsOnReload()
+    /// <seealso cref="MouseInputManagerSubsystemRegistration"/>
+    internal static void ResetSubsystemPollingState()
     {
         LastEventData = default;
         HasEventData = false;
     }
 
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-    private static void Bootstrap()
+    /// <seealso cref="MouseInputManagerSubsystemRegistration"/>
+    internal static void EnableAutoCreateForRuntime()
     {
         CreateInstance = true;
     }

@@ -1,4 +1,4 @@
-﻿# MouseInputManager
+# MouseInputManager
 
 **Что это:** `MouseInputManager` — singleton-компонент для обработки мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`. Файл: `Scripts/Tools/Input/MouseInputManager.cs`.
 
@@ -44,9 +44,9 @@
 
 ## Жизненный цикл
 
-- Через `RuntimeInitializeOnLoadMethod` включает `CreateInstance = true`, поэтому менеджер может быть создан автоматически.
+- Через `MouseInputManagerSubsystemRegistration` (<c>[RuntimeInitializeOnLoadMethod]</c>) перед загрузкой сцены включается `CreateInstance = true`, поэтому менеджер может быть создан автоматически. Хук вынесен из самого класса менеджера: Unity запрещает такие методы на наследниках generic-баз вроде `Singleton<T>` (иначе ошибка вида «method … is in a generic class»).
 - В `Init()` пытается взять `Camera.main`, если `targetCamera` не задан.
-- При domain reload очищает `LastEventData` и `HasEventData`.
+- При перезагрузке подсистемы / домена через тот же bootstrap очищаются `LastEventData` и `HasEventData`.
 
 ## См. также
 

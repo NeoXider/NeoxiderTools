@@ -26,6 +26,10 @@
 | `interactableLayers` | Interactable Layers. |
 | `targetCamera` | Target Camera. |
 
+## Notes
+
+- **Domain reload:** static polling state and `CreateInstance` bootstrap are driven by `MouseInputManagerSubsystemRegistration` (not `[RuntimeInitializeOnLoadMethod]` on `MouseInputManager` itself) so Unity does not reject hooks on `Singleton<T>` subclasses.
+
 ## See Also
 
 - [Module Root](../README.md)

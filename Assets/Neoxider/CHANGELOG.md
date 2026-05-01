@@ -1,4 +1,27 @@
 
+## [7.13.19] - 2026-05-02
+### Changed
+- **NeoxiderPages / PM**: `FindAllScenePages` no longer uses `Resources.FindObjectsOfTypeAll` (global loaded-object scan). It now collects `UIPage` only under the PM GameObject via `GetComponentsInChildren<UIPage>(true)` — faster at runtime and matches the intended hierarchy (pages must live under PM).
+
+### Documentation
+- **NeoxiderPages**: `PM.md`, `Docs/NeoxiderPages/README.md`, `DocsEn/NeoxiderPages/README.md` — document that all managed pages must be descendants of the PM object.
+
+## [7.13.18] - 2026-04-30
+### Fixed
+- **Unity / Domain reload**: Moved `[RuntimeInitializeOnLoadMethod]` static reset/bootstrap for **`SaveManager`** and **`MouseInputManager`** out of **`Singleton<T>`** subclasses into non-generic **`SaveManagerSubsystemRegistration`** and **`MouseInputManagerSubsystemRegistration`**. This removes Editor startup errors (“method `ResetStaticState` … in a generic class”) while preserving the same subsystem behaviour.
+
+### Tests
+- **EditMode**: **`SubsystemRegistrationStaticResetEditModeTests`** covers **`SaveManager.ClearSubsystemCaches`**, **`MouseInputManager.ResetSubsystemPollingState`**, and **`EnableAutoCreateForRuntime`**.
+
+### Documentation
+- **Save**: `SaveManager.md` — domain reload / subsystem registration note (**RU**/**EN**).
+- **Tools / Input**: `MouseInputManager.md` (**RU**/**EN**) — bootstrap lives in **`MouseInputManagerSubsystemRegistration`**.
+- **Managers**: `Singleton.md` (**RU**/**EN**) — rule: no `[RuntimeInitializeOnLoadMethod]` on **`Singleton<T>`** subclasses.
+
+## [7.13.17] - 2026-04-30
+### Fixed
+- **Tools / Managers / GM**: Fixed `State` setter — it now assigns `_state = value` so transitions (`StartGame`, `Menu`, `End`, etc.) persist. Previously the internal state never updated, so `G.Start`/`EM.GameStart` could appear stuck (e.g. perpetual `NotStarted`), `G.End` could no-op, and UI (`PM` via `G.OnEnd`) might not switch.
+
 ## [7.13.16] - 2026-04-30
 ### Fixed
 - **Tools / Managers**: Removed invalid `RuntimeInitializeOnLoadMethod` usage from generic manager classes (`Singleton<T>`, `SingletonById<T>`). Added a non-generic runtime reset bootstrap (`SingletonRuntimeReset`) to keep static-state reset behavior across Play sessions without Unity startup errors.
