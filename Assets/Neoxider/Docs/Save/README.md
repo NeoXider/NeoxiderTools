@@ -4,6 +4,7 @@
 
 **Оглавление:**
 - [`SaveProvider`](./SaveProvider.md)
+- [`SaveFileEncryption`](./SaveFileEncryption.md)
 - [`SaveManager`](./SaveManager.md)
 - [`SaveableBehaviour`](./SaveableBehaviour.md)
 - [`ISaveIdentityProvider`](./ISaveIdentityProvider.md)

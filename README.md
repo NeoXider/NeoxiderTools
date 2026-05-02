@@ -1,6 +1,6 @@
 # Neoxider — коллекция мощных инструментов для Unity
 
-[![Version](https://img.shields.io/badge/version-7.13.19-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-7.14.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 > **RU:** Готовые решения для Unity, которые легко интегрируются в ваш проект. Более 150 модулей для быстрой разработки игр без лишних сложностей.
 > 
@@ -340,6 +340,7 @@
 
 | Пакет | Способ установки |
 |-------|-----------------|
+| **Input System** (`com.unity.inputsystem`) | Рекомендуется для модулей Input / swipe / нового ввода; в шаблоне проекта уже указан в `Packages/manifest.json`. В UPM-пакете Neoxider указан как зависимость для совместимости версий. |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |

@@ -17,6 +17,22 @@ namespace Neo.Save
         [SerializeField]
         private string _fileName = "save.json";
 
+        [Header("File encryption (AES + Base64)")]
+        [Tooltip(
+            "When using File provider: encrypt JSON on disk (AES-CBC). OFF by default. If enabled with empty key/IV below, built-in defaults from SaveFileEncryption are used (replace for production).")]
+        [SerializeField]
+        private bool _encryptFileSave;
+
+        [Tooltip(
+            "AES key (UTF-8): 16, 24, or 32 bytes. Leave empty together with IV to use built-in default key when encryption is on.")]
+        [SerializeField]
+        private string _fileEncryptionKey = "";
+
+        [Tooltip(
+            "AES IV (UTF-8): 16 bytes. Leave empty together with key to use built-in default IV when encryption is on.")]
+        [SerializeField]
+        private string _fileEncryptionIv = "";
+
         /// <summary>
         ///     Provider type.
         /// </summary>
@@ -39,7 +55,23 @@ namespace Neo.Save
                     return new PlayerPrefsSaveProvider();
 
                 case SaveProviderType.File:
-                    return new FileSaveProvider(string.IsNullOrEmpty(_fileName) ? "save.json" : _fileName);
+                {
+                    var options = new FileSaveProviderOptions();
+                    if (_encryptFileSave)
+                    {
+                        if (FileSaveEncryptionConfig.TryCreate(true, _fileEncryptionKey, _fileEncryptionIv,
+                                out FileSaveEncryptionConfig enc, out string err))
+                        {
+                            options.Encryption = enc;
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[SaveProviderSettings] File encryption disabled: {err}");
+                        }
+                    }
+
+                    return new FileSaveProvider(string.IsNullOrEmpty(_fileName) ? "save.json" : _fileName, options);
+                }
 
                 default:
                     Debug.LogWarning(

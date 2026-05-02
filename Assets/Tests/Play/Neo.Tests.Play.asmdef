@@ -9,7 +9,8 @@
         "UnityEditor.TestRunner",
         "Neo.Tools.Managers",
         "Neo.Tools.Input",
-        "Neo.Tools.InteractableObject"
+        "Neo.Tools.InteractableObject",
+        "Neo.Shop"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

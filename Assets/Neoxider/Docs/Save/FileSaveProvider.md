@@ -1,6 +1,16 @@
 # FileSaveProvider
 
-**Назначение:** Реализация `ISaveProvider`, которая хранит все данные в JSON-файле по пути `Application.persistentDataPath`. Поддерживает несколько слотов сохранения (переключение через `ChangeSlot`). При уничтожении объекта автоматически сохраняет изменённые данные.
+**Назначение:** Реализация `ISaveProvider`, которая хранит все данные в одном JSON-файле в каталоге `Application.persistentDataPath` (каталог можно переопределить через **`FileSaveProviderOptions`**). Поддерживает несколько слотов сохранения (`ChangeSlot`). При финализации может дописать изменения на диск.
+
+Опционально файл сохраняется в формате **AES-CBC + Base64** — см. **[SaveFileEncryption](SaveFileEncryption.md)** и **[SaveProviderSettings](Settings/SaveProviderSettings.md)**.
+
+**По умолчанию** в настройках провайдера шифрование **выключено** (обычный JSON). При включении можно оставить ключ/IV пустыми — подставятся **`SaveFileEncryption.DefaultEncryptionKey`** и **`DefaultEncryptionIv`**.
+
+---
+
+## Шифрование файла
+
+При передаче **`FileSaveEncryptionConfig`** через **`FileSaveProviderOptions.Encryption`** при сохранении JSON шифруется; при загрузке поддерживаются как **открытый JSON** (начинается с `{`), так и **зашифрованный** файл — чтобы можно было включить шифрование после выпуска открытого сохранения.
 
 ---
 
@@ -8,7 +18,7 @@
 
 | Метод / Свойство | Описание |
 |------------------|----------|
-| `FileSaveProvider(string fileName = "save.json")` | Конструктор. Создаёт/загружает файл из `persistentDataPath`. |
+| `FileSaveProvider(string fileName = "save.json", FileSaveProviderOptions options = null)` | Конструктор. По умолчанию каталог — `persistentDataPath`; через `options.PersistenceRoot` можно переопределить (например тестами). |
 | `void ChangeSlot(string fileName)` | Сохраняет текущие данные (если есть изменения) и переключается на другой файл. |
 | `SaveProviderType ProviderType` | Всегда `SaveProviderType.File`. |
 | `int GetInt(string key, int default)` | Получить целое число по ключу. |
@@ -65,6 +75,7 @@ int otherLevel = save.GetInt("Level");  // данные из slot2
 ---
 
 ## См. также
+- [SaveFileEncryption](SaveFileEncryption.md) — AES и ключи
 - [ISaveProvider](ISaveProvider.md) — интерфейс, который реализует этот класс
 - [PlayerPrefsSaveProvider](PlayerPrefsSaveProvider.md) — альтернативный провайдер через PlayerPrefs
 - [SaveProvider](SaveProvider.md) — синглтон-обёртка

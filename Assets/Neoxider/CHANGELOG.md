@@ -1,4 +1,43 @@
 
+## [7.14.0] - 2026-05-03
+### Added
+- **Save / File**: optional **AES-CBC** payload for file provider (`SaveFileEncryption`, `FileSaveEncryptionConfig`, `FileSaveProviderOptions`); migration-friendly load (plain JSON or ciphertext); **built-in default key/IV** when encryption is on and custom fields are both empty; partial key/only IV rejected.
+- **UPM package** (`package.json`): **`com.unity.inputsystem`** dependency.
+- **Tests (EditMode)**: `SaveEncryptionEditModeTests`, `DialogueControllerEditModeTests`, `VisualToggleEditModeTests`, `SubsystemRegistrationStaticResetEditModeTests` (via `InternalsVisibleTo`); **PlayMode**: `ShopPurchasePlayModeTests`.
+- **Docs**: `Docs/NO_CODE_AUDIT.md` (No-Code / Inspector roadmap), Save encryption RU pages, link from `Docs/README.md`.
+
+### Changed
+- **NeoxiderPages / `PM`**: `FindAllScenePages` uses **`GetComponentsInChildren<UIPage>(true)`** (pages must live under **PM**); RU/EN sample docs updated.
+- **Save / settings**: `SaveProviderSettings` — file encryption off by default; tooltips for empty key/IV → defaults.
+
+### Fixed
+- **Tests**: `InternalsVisibleTo("Neo.Editor.Tests")` for **Neo.Save** and **Neo.Tools.Input** so `SaveManager` / `MouseInputManager` subsystem hooks are testable from **EditMode**.
+
+## [7.13.21] - 2026-05-03
+### Changed
+- **Save / File encryption**: When encryption is enabled but Key and IV fields are both empty, **`SaveFileEncryption.DefaultEncryptionKey`** / **`DefaultEncryptionIv`** are used (override anytime by setting both custom strings). Partial fill (only key or only IV) is rejected with an error. File encryption remains **off** by default in **Save Provider Settings**.
+
+### Tests
+- **EditMode**: Expanded **`SaveEncryptionEditModeTests`** — built-in defaults, whitespace → defaults, partial-key validation, disabled config, plain-json migration with built-in cipher config.
+
+### Documentation
+- **Save**: `SaveFileEncryption.md`, `SaveProviderSettings.md`, `FileSaveProvider.md` — default-off encryption, built-in key behaviour (**RU**).
+- **Planning**: `Docs/NO_CODE_AUDIT.md` — аудит No-Code / Inspector UX (биндинг UI, триггеры, roadmap); ссылка из `Docs/README.md`.
+
+## [7.13.20] - 2026-05-03
+### Added
+- **Save / File**: AES-CBC + Base64 encryption for **File** saves (`SaveFileEncryption`, `FileSaveEncryptionConfig`, optional `FileSaveProviderOptions`). Configure key/IV in **Save Provider Settings** when provider type is **File**. Plain JSON files saved **without** encryption remain readable after encryption is enabled (migration-friendly load path).
+
+### Changed
+- **UPM package** (`package.json`): added **`com.unity.inputsystem`** dependency (aligned with template `Packages/manifest.json`).
+
+### Tests
+- **EditMode**: `SaveEncryptionEditModeTests`, `DialogueControllerEditModeTests`, `VisualToggleEditModeTests`.
+- **PlayMode**: `ShopPurchasePlayModeTests` (Shop free-item purchase flow).
+
+### Documentation
+- **Save**: `FileSaveProvider.md`, `SaveProviderSettings.md`, `SaveFileEncryption.md` (**RU**).
+
 ## [7.13.19] - 2026-05-02
 ### Changed
 - **NeoxiderPages / PM**: `FindAllScenePages` no longer uses `Resources.FindObjectsOfTypeAll` (global loaded-object scan). It now collects `UIPage` only under the PM GameObject via `GetComponentsInChildren<UIPage>(true)` — faster at runtime and matches the intended hierarchy (pages must live under PM).

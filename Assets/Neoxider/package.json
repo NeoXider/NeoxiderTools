@@ -1,18 +1,19 @@
 {
     "name": "com.neoxider.tools",
     "displayName": "Neoxider Tools",
-    "version": "7.13.19",
+    "version": "7.14.0",
     "unity": "2022.1",
     "unityRelease": "0f1",
     "description": "Production-ready Unity tools and gameplay modules for rapid development, with no-code components, samples, and module documentation.",
     "author": {
         "name": "Neoxider"
     },
-    "dependencies": {
-        "com.unity.textmeshpro": "3.0.6",
-        "com.unity.ai.navigation": "1.1.7",
-        "com.unity.render-pipelines.universal": "14.0.12"
-    },
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.ai.navigation": "1.1.7",
+    "com.unity.render-pipelines.universal": "14.0.12",
+    "com.unity.inputsystem": "1.14.2"
+  },
     "repository": {
         "type": "git",
         "url": "https://github.com/NeoXider/NeoxiderTools.git"
