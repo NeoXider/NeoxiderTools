@@ -20,8 +20,7 @@ namespace Neo.Condition
         private bool _cacheValid;
         private bool _hasLoggedDestroyedWarning;
         private bool _hasLoggedMissingMemberWarning;
-        private bool _hasLoggedSearchNotFoundWarning;
-        private bool _hasSearchedByName;
+        private BindingSourceGameObjectResolver.ResolveCache _resolveCache;
 
         public ConditionValueSource(ConditionEntry entry, bool isOther)
         {
@@ -29,7 +28,7 @@ namespace Neo.Condition
             _isOther = isOther;
         }
 
-        internal GameObject FoundByNameObject { get; private set; }
+        internal GameObject FoundByNameObject => _resolveCache.FoundByNameObject;
 
         public bool EnsureCache(GameObject fallbackObject)
         {
@@ -101,9 +100,7 @@ namespace Neo.Condition
         public void InvalidateCacheFull()
         {
             InvalidateCache();
-            FoundByNameObject = null;
-            _hasSearchedByName = false;
-            _hasLoggedSearchNotFoundWarning = false;
+            BindingSourceGameObjectResolver.InvalidateFindCache(ref _resolveCache);
         }
 
         /// <summary>
@@ -121,43 +118,9 @@ namespace Neo.Condition
             bool wait = _isOther ? _entry.OtherWaitForObject : _entry.WaitForObject;
             GameObject sourceObj = _isOther ? _entry.OtherSourceObject : _entry.SourceObject;
 
-            if (useSearch && !string.IsNullOrEmpty(searchName))
-            {
-                if (FoundByNameObject != null)
-                {
-                    return FoundByNameObject;
-                }
-
-                if (_hasSearchedByName && FoundByNameObject == null)
-                {
-                    _hasSearchedByName = false;
-                    _hasLoggedSearchNotFoundWarning = false;
-                }
-
-                FoundByNameObject = GameObject.Find(searchName);
-                _hasSearchedByName = true;
-                if (FoundByNameObject == null)
-                {
-                    if (!wait && !_hasLoggedSearchNotFoundWarning)
-                    {
-                        Debug.LogWarning(
-                            $"[NeoCondition] GameObject.Find(\"{searchName}\") — object not found in scene.");
-                        _hasLoggedSearchNotFoundWarning = true;
-                    }
-
-                    return null;
-                }
-
-                _hasLoggedSearchNotFoundWarning = false;
-                return FoundByNameObject;
-            }
-
-            if (IsSourceObjectDestroyed(sourceObj))
-            {
-                return null;
-            }
-
-            return sourceObj != null ? sourceObj : fallbackObject;
+            return BindingSourceGameObjectResolver.Resolve(useSearch, searchName, wait, sourceObj, fallbackObject,
+                ref _resolveCache, "[NeoCondition]",
+                _isOther ? _entry.OtherFindRetryIntervalSeconds : _entry.FindRetryIntervalSeconds);
         }
 
         private static bool IsSourceObjectDestroyed(GameObject obj)

@@ -1,17 +1,40 @@
 
-## [7.14.0] - 2026-05-03
+## [8.0.0] - 2026-05-02
+
+Мажорный релиз: **Neo.NoCode**, доработки **NeoCondition** / общего резолва **`GameObject.Find`**, опциональное управление курсором в **PlayerController3DPhysics**, плюс накопленные изменения Save/Shop/тестов из ветки **7.15.0**.
+
+### Breaking changes
+- **Binding / Find по имени** (`BindingSourceGameObjectResolver`): пока объект не найден, повторный **`GameObject.Find`** вызывается не чаще чем раз в **`Find Retry Interval (sec)`** (по умолчанию **1**; **0** = без ограничения по времени, как раньше по смыслу «каждая проверка»). Меняет частоту опроса сцены при «позднем» появлении объекта.
+- **Neo.NoCode / `ComponentFloatBinding` (инспектор)**: при включённом **Find By Name** больше не используется **Source Root** как запасной объект для пикеров; для настройки без инстанса в сцене — **Prefab Preview** (как в **NeoCondition**). Сериализованные сцены с «Find + Source Root» нужно перепроверить.
+- **Новые поля** в **`ConditionEntry`** (`_findRetryIntervalSeconds`, `_otherFindRetryIntervalSeconds`) и **`ComponentFloatBinding`** (`_findRetryIntervalSeconds`, `_prefabPreview`) — у старых ассетов Unity подставит значения по умолчанию.
+
 ### Added
-- **Save / File**: optional **AES-CBC** payload for file provider (`SaveFileEncryption`, `FileSaveEncryptionConfig`, `FileSaveProviderOptions`); migration-friendly load (plain JSON or ciphertext); **built-in default key/IV** when encryption is on and custom fields are both empty; partial key/only IV rejected.
-- **UPM package** (`package.json`): **`com.unity.inputsystem`** dependency.
-- **Tests (EditMode)**: `SaveEncryptionEditModeTests`, `DialogueControllerEditModeTests`, `VisualToggleEditModeTests`, `SubsystemRegistrationStaticResetEditModeTests` (via `InternalsVisibleTo`); **PlayMode**: `ShopPurchasePlayModeTests`.
-- **Docs**: `Docs/NO_CODE_AUDIT.md` (No-Code / Inspector roadmap), Save encryption RU pages, link from `Docs/README.md`.
+- **Neo.NoCode** (`Assets/Neoxider/Scripts/NoCode/`): **`ComponentFloatBinding`**, **`NoCodeBindText`** (делегирование в **`SetText`** или fallback **`TMP_Text`**), **`SetProgress`** (**`Slider.normalizedValue`** / **`Image.fillAmount`**); режимы **Once** / **Reactive** / **Poll**.
+- **ConditionEntry** / **NeoCondition** / **ComponentFloatBinding**: **`Find Retry Interval (sec)`** (и **Other:** для порога **Other Object**); инспектор **NeoCondition** и **NoCode** — поля и подсказки.
+- **ComponentFloatBinding**: **`PrefabPreview`** (редактор), выравнивание UI с **NeoCondition** (**Find By Name**, **Wait For Object**, превью/подсказки).
+- **PlayerController3DPhysics**: **`Enable Cursor Control`** (по умолчанию вкл.) и свойство **`CursorControlEnabled`** — полное отключение вмешательства в курсор из контроллера.
+- **Документация**: **`Docs/NoCode/README.md`**; **PlayerController3DPhysics** RU/EN; **NeoCondition** (Find/Wait/интервал); **Move/README**; ссылки из **`Docs/README.md`**, **`DocsEn/README.md`**; **`NO_CODE_AUDIT.md`**.
+- **Tests (EditMode)**: **`NoCodeBindEditModeTests`**; **`MoneyPersistenceEditModeTests`**; расширения Save/Dialogue/Visual/Subsystem; **PlayMode**: **`ShopPurchasePlayModeTests`**.
+- **Shop / Money**: опция **`_persistMoney`**; **`ClearSavedMoneyAndReset`**, **`ReloadBalanceFromSave`**, **`SetCurrentMoney`**; **`SetMoney`** пишет в сейв при включённой персистенции.
+- **Save / File**: опциональное **AES-CBC** для файлового провайдера; миграция plain/cipher; встроенные key/IV по умолчанию при пустых полях; отклонение частично заполненного ключа.
+- **UPM** (`package.json`): зависимость **`com.unity.inputsystem`**.
 
 ### Changed
-- **NeoxiderPages / `PM`**: `FindAllScenePages` uses **`GetComponentsInChildren<UIPage>(true)`** (pages must live under **PM**); RU/EN sample docs updated.
-- **Save / settings**: `SaveProviderSettings` — file encryption off by default; tooltips for empty key/IV → defaults.
+- **BindingSourceGameObjectResolver**: троттлинг повторов **`GameObject.Find`**; **`Wait`** по-прежнему влияет только на **Warning** в консоли, не на блокировку кадра.
+- **PlayerController3DPhysics**: курсор при старте — в **`Start()`**; при **`Enable Cursor Control = off`** не вызываются **Start**-блокировка, Escape, **`SetCursorLocked`**, авто-блок при **`SetLookEnabled`**.
+- **Docs**: канонический **`NO_CODE_AUDIT.md`**; Save encryption (RU); **`Local/Audits/`** в **`.gitignore`**.
+- **NeoxiderPages / PM**: `GetComponentsInChildren<UIPage>(true)` под PM.
+- **Save / settings**: шифрование файла по умолчанию выкл.; подсказки для пустых key/IV.
 
 ### Fixed
-- **Tests**: `InternalsVisibleTo("Neo.Editor.Tests")` for **Neo.Save** and **Neo.Tools.Input** so `SaveManager` / `MouseInputManager` subsystem hooks are testable from **EditMode**.
+- **Tests**: `InternalsVisibleTo("Neo.Editor.Tests")` для **Neo.Save** и **Neo.Tools.Input** (подсистемы в EditMode).
+- **Save / File encryption**: пустые key+IV → встроенные дефолты; частичный ввод ключа/IV — ошибка.
+- **GM / State**: исправлено присваивание в сеттере `State` (раньше внутреннее состояние не обновлялось).
+- **Unity / Domain reload**: сброс подсистем **SaveManager** / **MouseInputManager** вынесен из generic **`Singleton<T>`**.
+- **Singleton**: убран некорректный `RuntimeInitializeOnLoadMethod` у generic-наследников; bootstrap в не-generic типах.
+
+## [7.15.0] - 2026-05-03
+*Внутренняя ветка разработки; релиз оформлен как **[8.0.0]** (см. выше).*
 
 ## [7.13.21] - 2026-05-03
 ### Changed

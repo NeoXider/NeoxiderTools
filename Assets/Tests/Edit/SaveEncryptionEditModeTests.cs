@@ -1,8 +1,10 @@
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests.Edit
 {
@@ -228,6 +230,48 @@ namespace Neo.Editor.Tests.Edit
                     Encryption = cfg
                 });
                 Assert.That(withEnc.GetInt("migrated"), Is.EqualTo(8));
+            }
+            finally
+            {
+                TryDeleteDir(tempDir);
+            }
+        }
+
+        [Test]
+        public void FileSaveProvider_EmptyFile_LoadsEmptyData()
+        {
+            string tempDir = Path.Combine(Path.GetTempPath(), "NeoSaveEmpty_" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            const string fileName = "empty.json";
+
+            try
+            {
+                File.WriteAllText(Path.Combine(tempDir, fileName), string.Empty);
+                var provider = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                Assert.That(provider.HasKey("any"), Is.False);
+                Assert.That(provider.GetInt("k", 7), Is.EqualTo(7));
+            }
+            finally
+            {
+                TryDeleteDir(tempDir);
+            }
+        }
+
+        [Test]
+        public void FileSaveProvider_InvalidJson_StartsFreshDictionary()
+        {
+            LogAssert.Expect(LogType.Error, new Regex(@"\[FileSaveProvider\] Unrecognized save file format"));
+
+            string tempDir = Path.Combine(Path.GetTempPath(), "NeoSaveBad_" + System.Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(tempDir);
+            const string fileName = "bad.json";
+
+            try
+            {
+                File.WriteAllText(Path.Combine(tempDir, fileName), "{not valid json");
+                var provider = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                Assert.That(provider.HasKey("gold"), Is.False);
+                Assert.That(provider.GetFloat("gold", 3.5f), Is.EqualTo(3.5f));
             }
             finally
             {

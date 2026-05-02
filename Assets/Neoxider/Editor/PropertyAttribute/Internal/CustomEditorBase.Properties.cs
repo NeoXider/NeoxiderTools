@@ -478,6 +478,13 @@ namespace Neo.Editor
                 return false;
             }
 
+            // Let CustomPropertyDrawer run for the whole serialized class (e.g. ComponentFloatBinding), instead of
+            // expanding child fields and bypassing the drawer.
+            if (string.Equals(property.type, "ComponentFloatBinding", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
             if (property.propertyType != SerializedPropertyType.Generic || !property.hasVisibleChildren)
             {
                 return false;

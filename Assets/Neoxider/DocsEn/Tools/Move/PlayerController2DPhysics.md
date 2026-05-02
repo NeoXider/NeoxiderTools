@@ -37,6 +37,10 @@
 | `_runKey` | Run Key. |
 | `true` | True. |
 
+## Cursor
+
+This controller does **not** change `Cursor.lockState` / `Cursor.visible`. There is no FPS-style mouse look here — unlike **PlayerController3DPhysics**, no **Enable Cursor Control** switch is needed. Use **CursorLockController** or your UI flow for menus and pointer visibility.
+
 ## See Also
 
 - [Module Root](../README.md)

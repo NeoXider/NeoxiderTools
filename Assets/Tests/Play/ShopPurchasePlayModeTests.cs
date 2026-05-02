@@ -1,14 +1,15 @@
 using System.Collections;
 using Neo.Save;
-using Neo.Shop;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
+using ShopBehaviour = Neo.Shop.Shop;
+using ShopItemBehaviour = Neo.Shop.ShopItem;
 
 namespace Neo.Tests.Play
 {
     /// <summary>
-    ///     Shop purchase flow requires Play Mode so <see cref="Shop"/> receives Start() and IMoneySpend wiring.
+    ///     Shop purchase flow requires Play Mode so <see cref="ShopBehaviour"/> receives Start() and IMoneySpend wiring.
     /// </summary>
     public sealed class ShopPurchasePlayModeTests
     {
@@ -78,19 +79,19 @@ namespace Neo.Tests.Play
             var root = new GameObject("ShopRoot");
             root.SetActive(false);
 
-            var shop = root.AddComponent<Shop>();
+            var shop = root.AddComponent<ShopBehaviour>();
             var child = new GameObject("ShopItem");
             child.transform.SetParent(root.transform);
-            ShopItem shopItem = child.AddComponent<ShopItem>();
+            ShopItemBehaviour shopItem = child.AddComponent<ShopItemBehaviour>();
 
             var walletGo = new GameObject("Wallet");
             walletGo.AddComponent<FakeMoney>();
 
-            typeof(Shop).GetField("_prices", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            typeof(ShopBehaviour).GetField("_prices", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.SetValue(shop, new[] { 0 });
-            typeof(Shop).GetField("_shopItems", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            typeof(ShopBehaviour).GetField("_shopItems", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.SetValue(shop, new[] { shopItem });
-            typeof(Shop).GetField("_useSetItem", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            typeof(ShopBehaviour).GetField("_useSetItem", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.SetValue(shop, false);
 
             shop.moneySpendSource = walletGo;

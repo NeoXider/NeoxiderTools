@@ -83,6 +83,11 @@ namespace Neo.Condition
         private bool _waitForObject;
 
         [Tooltip(
+            "Seconds between GameObject.Find attempts while the object is still missing. Only when Find By Name is used. 0 = retry on every check (no throttle).")]
+        [SerializeField]
+        private float _findRetryIntervalSeconds = BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
+
+        [Tooltip(
             "Prefab for previewing components/properties in the Editor when the object is not in the scene. Not used at runtime.")]
         [SerializeField]
         private GameObject _prefabPreview;
@@ -123,6 +128,9 @@ namespace Neo.Condition
         [SerializeField] private bool _otherUseSceneSearch;
         [SerializeField] private string _otherSearchObjectName = "";
         [SerializeField] private bool _otherWaitForObject;
+        [Tooltip("Other-object branch: seconds between Find retries when Other Find By Name finds nothing. 0 = every check.")]
+        [SerializeField]
+        private float _otherFindRetryIntervalSeconds = BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
         [SerializeField] private GameObject _otherSourceObject;
         [SerializeField] private int _otherComponentIndex;
         [SerializeField] private string _otherComponentTypeName = "";
@@ -176,6 +184,41 @@ namespace Neo.Condition
         {
             get => _waitForObject;
             set => _waitForObject = value;
+        }
+
+        /// <summary>
+        ///     Seconds between <see cref="GameObject.Find"/> retries while the target is still missing (Find By Name only).
+        ///     0 = retry on every evaluation (no throttle).
+        /// </summary>
+        public float FindRetryIntervalSeconds
+        {
+            get => _findRetryIntervalSeconds;
+            set
+            {
+                float v = Mathf.Max(0f, value);
+                if (!Mathf.Approximately(_findRetryIntervalSeconds, v))
+                {
+                    _findRetryIntervalSeconds = v;
+                    InvalidateCacheFull();
+                }
+            }
+        }
+
+        /// <summary>
+        ///     Same as <see cref="FindRetryIntervalSeconds"/> for the &quot;Other object&quot; threshold branch when it uses Find By Name.
+        /// </summary>
+        public float OtherFindRetryIntervalSeconds
+        {
+            get => _otherFindRetryIntervalSeconds;
+            set
+            {
+                float v = Mathf.Max(0f, value);
+                if (!Mathf.Approximately(_otherFindRetryIntervalSeconds, v))
+                {
+                    _otherFindRetryIntervalSeconds = v;
+                    InvalidateCacheFull();
+                }
+            }
         }
 
         /// <summary>

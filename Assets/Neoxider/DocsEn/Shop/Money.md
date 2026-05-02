@@ -1,6 +1,6 @@
 # Money
 
-**Purpose:** Global in-game currency manager (Singleton). It automatically saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding.
+**Purpose:** Global in-game currency manager (Singleton). By default it saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding. You can disable persistence for session-only modes and demos (NoCode-friendly).
 
 ## Setup
 
@@ -12,6 +12,7 @@
 | Field | Description |
 |-------|-------------|
 | `_moneySave` | The `SaveProvider` save key for the main balance. |
+| `_persistMoney` | When enabled (default), balance is loaded on start and written on changes. When disabled, balance stays in memory only (no load/setfloat for currency keys). |
 | `st_levelMoney` | References to `SetText` components for displaying current level earnings. |
 | `st_money` | References to `SetText` components for displaying the global balance. |
 | `t_levelMoney` | Direct references to `TMP_Text` components for level earnings. |
@@ -29,9 +30,22 @@ bool success = Money.I.Spend(50f);
 if (success) {
     // Purchase successful
 }
+
+// Set balance (persists when persistence is on)
+Money.I.SetMoney(500f);
+// Alias for UnityEvent / buttons:
+Money.I.SetCurrentMoney(500f);
+
+// Remove persisted keys and reset runtime balance to zero
+Money.I.ClearSavedMoneyAndReset();
+
+// Reload balance from SaveProvider after external key changes
+Money.I.ReloadBalanceFromSave();
 ```
 
 To display the balance in the UI, it is recommended to use the `TextMoney` component.
+
+**NoCode / UnityEvent:** wire `Add`, `Spend`, `SetCurrentMoney`, `ClearSavedMoneyAndReset`, `ReloadBalanceFromSave` to `UnityEvent` or UI buttons (for `float` parameters use the matching Unity event type).
 
 ## See Also
 

@@ -14,6 +14,10 @@
 | **Time Anim** | Длительность анимации перехода числа (DOTween). |
 | **Ease** | Кривая анимации. |
 
+## Привязка к числу с другого объекта (No-Code)
+
+Сам **`SetText`** не содержит полей «источник данных»: он только предоставляет методы **`Set(...)`**. Чтобы в инспекторе выбрать **объект → компонент → поле / `ReactivePropertyFloat`** (как в **NeoCondition**), добавьте на тот же **`GameObject`** компонент **`NoCode Bind Text`** из сборки **`Neo.NoCode`** — он читает значение и вызывает **`SetText.Set(float)`** (или пишет в **`TMP_Text`**, если **`SetText`** не назначен). Правила поиска объекта (**Find By Name**, **Source Root**) совпадают с документацией [**NoCode/README.md**](../../NoCode/README.md). В инспекторе **`SetText`**, если **`NoCodeBindText`** отсутствует, показываются подсказка и кнопка **Add NoCode Bind Text**.
+
 ## API
 
 | Метод / Свойство | Описание |
@@ -35,7 +39,7 @@
 ## Примеры
 
 ### Пример No-Code (в Inspector)
-Повесьте `SetText` на объект с `TextMeshPro`. Настройте `Separator = " "`, `Decimal = 0`, `Number Notation = Short`. Подключите событие из `ScoreManager.OnScoreChanged` к `SetText.Set(int)`. Теперь при изменении счёта текст обновится с анимацией.
+Повесьте **`SetText`** и при необходимости **`NoCode Bind Text`** на объект с **`TextMeshPro`**. Для вывода числа с другого компонента настройте биндинг в **`NoCodeBindText`** (см. [**NoCode/README.md**](../../NoCode/README.md)). Отдельно: **`SetText`** — **`Separator`**, **`Decimal`**, **`Number Notation`**, из **`ScoreManager`** можно по-прежнему вызывать **`SetText.Set(int)`** через **`UnityEvent`**.
 
 ### Пример (Код)
 ```csharp
@@ -48,5 +52,6 @@ public void UpdateGold(int amount)
 ```
 
 ## См. также
+- [**Neo.NoCode — привязка float к UI**](../../NoCode/README.md)
 - [TimeToText](TimeToText.md)
 - ← [Tools/Text](README.md)

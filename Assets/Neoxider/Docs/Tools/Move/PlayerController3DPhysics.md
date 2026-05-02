@@ -13,9 +13,15 @@
 | **Ground Check Radius** | Радиус сферы для проверки земли (OverlapSphere). |
 | **Look Yaw Mode** | Как вращать персонажа при обзоре: `RotateCharacter`, `RotateCameraPivot` или `RotateBoth`. |
 | **Use Game Settings Mouse Sensitivity** | Брать ли чувствительность мыши из глобального класса `GameSettings` (авто-обновление). |
-| **Lock Cursor On Start** | Автоматически блокировать и скрывать курсор при старте игры. |
+| **Enable Cursor Control** | **По умолчанию включено.** Управляет ли этот компонент курсором: блокировка при старте, Escape, `SetCursorLocked`, авто-блок при `SetLookEnabled(true)` с *Pause Look When Cursor Visible*. Если **выключить** — курсор не трогается (удобно, когда всё делает `CursorLockController` или UI). Само движение/обзор от мыши не отключаются. |
+| **Lock Cursor On Start** | В **`Start()`** (не в `Awake`) блокировать и скрывать курсор при входе в режим игры. Игнорируется, если **Enable Cursor Control** выключен или назначен активный внешний `CursorLockController`. |
+| **Pause Look When Cursor Visible** | Не крутить камеру, пока курсор видим (разблокирован). |
 | **Disable Look On Pause** | Отключать ли вращение камеры, когда игра ставится на паузу через `EventManager.OnPause`. |
-| **Toggle Cursor On Escape** | Позволять ли игроку освобождать курсор клавишей Escape. |
+| **Toggle Cursor On Escape** | Переключать блокировку курсора и look по Escape (см. код). Не выполняется, если **Enable Cursor Control** выключен. |
+
+### Курсор и ранний запуск
+
+Блокировка курсора при включённом **Lock Cursor On Start** выполняется в **`Start()`**, не в `Awake`. Если нужно полностью исключить вмешательство контроллера в курсор — снимите **Enable Cursor Control** в Inspector (или выставьте `CursorControlEnabled = false` до первого кадра).
 
 ## API
 
@@ -24,6 +30,8 @@
 | `void SetMovementEnabled(bool enabled)` | Разрешает/запрещает персонажу двигаться (ходьба, бег). |
 | `void SetJumpEnabled(bool enabled)` | Разрешает/запрещает прыжки. |
 | `void SetLookEnabled(bool enabled)` | Разрешает/запрещает вращение камеры мышью. |
+| `void SetCursorLocked(bool locked)` | Блокирует/показывает курсор. **Ничего не делает**, если **Enable Cursor Control** снят. |
+| `bool CursorControlEnabled { get; set; }` | Включить/выключить любое изменение курсора из этого компонента (по умолчанию `true`). |
 | `void Teleport(Vector3 worldPosition)` | Мгновенно перемещает персонажа, сбрасывая его текущую скорость. |
 | `void SetMoveInput(Vector2? input)` | Использовать кастомный ввод (например, экранный джойстик). Передайте `null`, чтобы вернуть управление с клавиатуры. |
 | `bool IsGrounded { get; }` | Находится ли персонаж на земле прямо сейчас. |

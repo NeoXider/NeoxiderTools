@@ -2,6 +2,7 @@
     "name": "Neo.Editor.Tests",
     "rootNamespace": "",
     "references": [
+        "Neo.NoCode",
         "GUID:0dce7003042d59947888919f20c2d48e",
         "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
         "GUID:06352c69ddcbf8b49919bc3cb4c52b7d",

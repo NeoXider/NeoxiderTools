@@ -1112,8 +1112,9 @@ MonoBehaviour:
   _conditions:
   - _sourceMode: 0
     _useSceneSearch: 0
-    _searchObjectName: 
+    _searchObjectName: "\u043F\u0430\u0432\u0430\u043F\u0432\u0430"
     _waitForObject: 0
+    _findRetryIntervalSeconds: 1
     _prefabPreview: {fileID: 0}
     _sourceObject: {fileID: 415127919}
     _componentIndex: 0
@@ -1131,6 +1132,7 @@ MonoBehaviour:
     _otherUseSceneSearch: 0
     _otherSearchObjectName: 
     _otherWaitForObject: 0
+    _otherFindRetryIntervalSeconds: 1
     _otherSourceObject: {fileID: 0}
     _otherComponentIndex: 0
     _otherComponentTypeName: 
@@ -1432,6 +1434,7 @@ MonoBehaviour:
     _useSceneSearch: 0
     _searchObjectName: 
     _waitForObject: 0
+    _findRetryIntervalSeconds: 1
     _prefabPreview: {fileID: 0}
     _sourceObject: {fileID: 2058589021}
     _componentIndex: 0
@@ -1449,6 +1452,7 @@ MonoBehaviour:
     _otherUseSceneSearch: 0
     _otherSearchObjectName: 
     _otherWaitForObject: 0
+    _otherFindRetryIntervalSeconds: 1
     _otherSourceObject: {fileID: 0}
     _otherComponentIndex: 0
     _otherComponentTypeName: 
@@ -2541,18 +2545,19 @@ MonoBehaviour:
   _conditions:
   - _sourceMode: 0
     _useSceneSearch: 0
-    _searchObjectName: 
+    _searchObjectName: health
     _waitForObject: 0
+    _findRetryIntervalSeconds: 1
     _prefabPreview: {fileID: 0}
     _sourceObject: {fileID: 415127919}
     _componentIndex: 0
     _componentTypeName: Neo.Tools.Health
-    _propertyName: IsAlive
-    _valueType: 2
+    _propertyName: HpValue
+    _valueType: 0
     _compareOp: 5
     _invert: 0
     _thresholdSource: 0
-    _thresholdInt: 100
+    _thresholdInt: 0
     _thresholdFloat: 0
     _thresholdBool: 0
     _thresholdString: 
@@ -2560,6 +2565,7 @@ MonoBehaviour:
     _otherUseSceneSearch: 0
     _otherSearchObjectName: 
     _otherWaitForObject: 0
+    _otherFindRetryIntervalSeconds: 1
     _otherSourceObject: {fileID: 0}
     _otherComponentIndex: 0
     _otherComponentTypeName: 

@@ -6,7 +6,9 @@ using UnityEngine.Events;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump.
+    ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump. Cursor lock / Escape can be
+    ///     fully disabled via <see cref="CursorControlEnabled"/> when another system (e.g. <see cref="CursorLockController"/>)
+    ///     owns the pointer.
     /// </summary>
     [RequireComponent(typeof(Rigidbody))]
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
@@ -61,7 +63,15 @@ namespace Neo.Tools
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Header("Cursor")] [SerializeField] private bool _lockCursorOnStart = true;
+        [Header("Cursor")]
+        [Tooltip(
+            "When off, this component never changes Cursor.lockState / Cursor.visible (no lock on Start, no Escape toggle, SetLookEnabled will not auto-lock, SetCursorLocked is a no-op). Use when CursorLockController or your UI owns the cursor. Default: on.")]
+        [SerializeField]
+        private bool _enableCursorControl = true;
+
+        [Tooltip("Lock and hide cursor in Start() when Enable Cursor Control is on and no external CursorLockController.")]
+        [SerializeField]
+        private bool _lockCursorOnStart = true;
 
         [Tooltip(
             "When cursor is visible (unlocked), do not rotate camera. Enabled by default so that UI/menu doesn't cause look.")]
@@ -139,6 +149,16 @@ namespace Neo.Tools
         /// </summary>
         public bool LookEnabled => _lookEnabled;
 
+        /// <summary>
+        ///     When false, this controller does not modify <see cref="Cursor"/> (no automatic lock on Start, no Escape
+        ///     toggle, <see cref="SetCursorLocked"/> and look auto-lock are skipped). Default is true.
+        /// </summary>
+        public bool CursorControlEnabled
+        {
+            get => _enableCursorControl;
+            set => _enableCursorControl = value;
+        }
+
         private bool IsLookActive => _lookEnabled && (!_pauseLookWhenCursorVisible || !Cursor.visible);
 
         private void Awake()
@@ -172,7 +192,7 @@ namespace Neo.Tools
 
         private void Start()
         {
-            if (_lockCursorOnStart && !HasExternalCursorControl())
+            if (_enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl())
             {
                 SetCursorLocked(true);
             }
@@ -180,7 +200,8 @@ namespace Neo.Tools
 
         private void Update()
         {
-            if (_toggleCursorOnEscape && !HasExternalCursorControl() && ReadEscapePressed())
+            if (_enableCursorControl && _toggleCursorOnEscape && !HasExternalCursorControl() &&
+                ReadEscapePressed())
             {
                 if (Cursor.visible)
                 {
@@ -306,14 +327,14 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Enables or disables look processing. When enabling and Pause Look When Cursor Visible is on, also locks the cursor.
-        ///     Callable from UnityEvent (dynamic bool).
+        ///     Enables or disables look processing. When enabling and Pause Look When Cursor Visible is on, also locks the
+        ///     cursor if <see cref="CursorControlEnabled"/> is true. Callable from UnityEvent (dynamic bool).
         /// </summary>
         /// <param name="enabled">True to process look input; otherwise false.</param>
         public void SetLookEnabled(bool enabled)
         {
             _lookEnabled = enabled;
-            if (enabled && _pauseLookWhenCursorVisible && !HasExternalCursorControl())
+            if (_enableCursorControl && enabled && _pauseLookWhenCursorVisible && !HasExternalCursorControl())
             {
                 SetCursorLocked(true);
             }
@@ -325,11 +346,17 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Locks or unlocks the cursor and updates visibility accordingly.
+        ///     Locks or unlocks the cursor and updates visibility accordingly. No-op when <see cref="CursorControlEnabled" />
+        ///     is false.
         /// </summary>
         /// <param name="locked">True to lock and hide cursor; false to unlock and show.</param>
         public void SetCursorLocked(bool locked)
         {
+            if (!_enableCursorControl)
+            {
+                return;
+            }
+
             Cursor.lockState = locked ? CursorLockMode.Locked : CursorLockMode.None;
             Cursor.visible = !locked;
         }

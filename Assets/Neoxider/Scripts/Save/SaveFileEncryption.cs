@@ -15,7 +15,7 @@ namespace Neo.Save
         ///     Default AES key (UTF-8, 16 bytes) used when file encryption is enabled and no custom key is set in settings.
         ///     Override via Save Provider Settings or replace at runtime before creating the provider.
         /// </summary>
-        public const string DefaultEncryptionKey = "NeoXiderSaveK16";
+        public const string DefaultEncryptionKey = "NeoXiderSaveK16.";
 
         /// <summary>
         ///     Default AES IV (UTF-8, 16 bytes) used when file encryption is enabled and no custom IV is set.

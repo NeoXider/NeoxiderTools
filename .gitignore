@@ -74,3 +74,5 @@ crashlytics-build.properties
 .idea/
 .vscode/
 
+# Local scratch audits and one-off reports (not versioned; see /Local/README.md)
+/Local/Audits/

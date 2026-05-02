@@ -1,18 +1,21 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v7.14.0`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.0.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
 - [Полезные компоненты](./UsefulComponents.md) - быстрый вход по сценарию `Add Component / GameObject`
 - [Корневой README пакета](../README.md) - установка, обзор, samples
 - [English onboarding](../DocsEn/README.md) - англоязычный вход по модулям и ключевым страницам
-- [Аудит No-Code / Inspector UX](./NO_CODE_AUDIT.md) - разрывы, идеи и roadmap (биндинг UI, триггеры, действия)
+- [No-Code: привязка float → UI (Neo.NoCode)](./NoCode/README.md) — `NoCodeBindText`, `SetProgress`
+- [No-Code: аудит, границы, варианты решений](./NO_CODE_AUDIT.md) — без нодового «визуального программирования»; пресеты, данные, каталоги действий
+- **Локальные копии черновиков аудита (не в git):** `Local/Audits/`, см. [`/Local/README.md`](../../../Local/README.md)
 
 ## Оглавление модулей
 
 | Модуль | Описание | Документация |
 |--------|----------|--------------|
+| **NoCode** | Привязка числа к `SetText`/TMP и Slider/Image без отдельных вью-скриптов | [`NoCode/README.md`](./NoCode/README.md) |
 | **Animations** | Float, Color, `Vector3` и другие runtime-анимации значений | [`Animations/README.md`](./Animations/README.md) |
 | **Audio** | `AudioManager`, микшер, random music и audio helper-компоненты | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Слоты, колесо фортуны, коллекции и награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
