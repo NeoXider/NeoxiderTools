@@ -76,3 +76,6 @@ crashlytics-build.properties
 
 # Local scratch audits and one-off reports (not versioned; see /Local/README.md)
 /Local/Audits/
+
+# Temporary Documentation
+TempDocs/

@@ -23,12 +23,24 @@ namespace Neo.NoCode
         [SerializeField]
         private TMP_Text _fallbackText;
 
+        [Header("Time Display")]
+        [Tooltip("If set, pushes float value (in seconds) to TimeToText.")]
+        [SerializeField]
+        private TimeToText _timeToText;
+
         protected override void ApplyFloat(float value)
         {
             SetText st = _setText != null ? _setText : GetComponent<SetText>();
             if (st != null)
             {
                 st.Set(value);
+                return;
+            }
+
+            TimeToText ttt = _timeToText != null ? _timeToText : GetComponent<TimeToText>();
+            if (ttt != null)
+            {
+                ttt.Set(value);
                 return;
             }
 
