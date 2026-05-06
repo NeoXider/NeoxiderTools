@@ -71,6 +71,9 @@ namespace Neo.Tools
         /// </summary>
         public static bool HasInstance => _instance != null;
 
+        /// <summary>Backwards-compatible singleton alias for <see cref="I"/>.</summary>
+        public static T Instance => I;
+
         protected virtual bool DontDestroyOnLoadEnabled => _dontDestroyOnLoad;
 
         protected virtual bool SetInstanceOnAwakeEnabled => _setInstanceOnAwake;
