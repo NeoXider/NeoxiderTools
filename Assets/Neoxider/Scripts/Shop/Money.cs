@@ -116,7 +116,7 @@ namespace Neo.Shop
             CurrentMoney.Value = CurrentMoney.CurrentValue - amount;
             LastChangeMoney.Value = -amount;
             ApplyMoneyToText();
-            Save();
+            PersistBalanceToSave();
         }
 
         protected override void Init()
