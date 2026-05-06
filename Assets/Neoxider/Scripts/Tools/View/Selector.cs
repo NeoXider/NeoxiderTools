@@ -117,6 +117,7 @@ namespace Neo.Tools
             {
                 if (_notifySelectorItemsOnly)
                 {
+                    bool forceBootstrap = !_selectorItemBootstrapNotifyDone && _controlGameObjectActive;
                     for (int i = 0; i < items.Length; i++)
                     {
                         GameObject item = items[i];
@@ -135,11 +136,11 @@ namespace Neo.Tools
                             {
                                 if (exclusiveApply)
                                 {
-                                    si.SetActive(shouldBeActive);
+                                    si.SetActive(shouldBeActive, forceBootstrap);
                                 }
                                 else if (shouldBeActive)
                                 {
-                                    si.SetActive(true);
+                                    si.SetActive(true, forceBootstrap);
                                 }
                             }
                         }
@@ -162,6 +163,11 @@ namespace Neo.Tools
                                 catch (Exception) { }
                             }
                         }
+                    }
+
+                    if (_controlGameObjectActive)
+                    {
+                        _selectorItemBootstrapNotifyDone = true;
                     }
                 }
                 else if (effectiveIndex < 0 && _controlGameObjectActive)
@@ -472,6 +478,12 @@ namespace Neo.Tools
         private HashSet<int> _usedIndicesForUnique;
         private HashSet<int> _excludedIndices;
 
+        /// <summary>
+        /// After the first <see cref="ApplyUpdateSelection"/> pass over real items in <see cref="_notifySelectorItemsOnly"/>
+        /// mode, we stop forcing <see cref="SelectorItem.SetActive(bool,bool)"/> notifications (avoids duplicate events).
+        /// </summary>
+        private bool _selectorItemBootstrapNotifyDone;
+
         [Header("Inspector / Debug Lists (Runtime)")]
         [Tooltip(
             "Snapshot of excluded pool indices for Random (ExcludeIndex/IncludeIndex/IncludeAllIndices). " +
@@ -779,6 +791,11 @@ namespace Neo.Tools
             {
                 Set(_startIndex);
             }
+        }
+
+        private void OnDisable()
+        {
+            _selectorItemBootstrapNotifyDone = false;
         }
 
 #if MIRROR
@@ -1596,7 +1613,24 @@ namespace Neo.Tools
         /// </summary>
         private void TryInitializeFromChildren(bool forceSync = false)
         {
-            if (!_autoUpdateFromChildren || _count > 0)
+            if (!_autoUpdateFromChildren)
+            {
+                return;
+            }
+
+            // Count > 0 means "virtual items" (no GameObjects). If Items is empty but there are real children,
+            // child sync was skipped and SelectorItem / events never run — reset Count so children drive Items.
+            if (_count > 0 && (_items == null || _items.Length == 0) && HasChildObjectsForItemsSync())
+            {
+                Debug.LogWarning(
+                    $"[Selector] '{name}': Count > 0 with empty Items skips syncing from children. " +
+                    "Resetting Count to -1 and building Items from children. " +
+                    "Use Count > 0 only for virtual slots with no child objects.",
+                    this);
+                _count = -1;
+            }
+
+            if (_count > 0)
             {
                 return;
             }
@@ -1611,6 +1645,24 @@ namespace Neo.Tools
             {
                 RefreshItemsFromChildren(startOnAwake);
             }
+        }
+
+        private bool HasChildObjectsForItemsSync()
+        {
+            if (transform == null)
+            {
+                return false;
+            }
+
+            foreach (Transform child in transform)
+            {
+                if (child != null && child.gameObject != null && child.gameObject != gameObject)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private bool IsItemsSyncedWithChildren()

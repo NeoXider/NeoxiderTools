@@ -55,6 +55,60 @@ namespace Neo.Tools
         public CollisionEvent onCollisionStay = new();
         public CollisionEvent onCollisionExit = new();
 
+        /// <summary>
+        /// Подписка в коде (<c>+=</c>) — срабатывает вместе с <see cref="onTriggerEnter"/> и т.д.
+        /// При <see cref="isNetworked"/>: на сервере с полным <see cref="Collider"/> / <see cref="Collision"/>;
+        /// на клиентах после <c>ClientRpc</c> (для коллизий на клиенте <see cref="Collision"/> недоступен — передаётся <c>null</c>, как у UnityEvent).
+        /// </summary>
+        public event Action<Collider> TriggerEnterOccurred;
+        public event Action<Collider> TriggerStayOccurred;
+        public event Action<Collider> TriggerExitOccurred;
+        public event Action<Collision> CollisionEnterOccurred;
+        public event Action<Collision> CollisionStayOccurred;
+        public event Action<Collision> CollisionExitOccurred;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchTriggerEnter(Collider c)
+        {
+            onTriggerEnter.Invoke(c);
+            TriggerEnterOccurred?.Invoke(c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchTriggerStay(Collider c)
+        {
+            onTriggerStay.Invoke(c);
+            TriggerStayOccurred?.Invoke(c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchTriggerExit(Collider c)
+        {
+            onTriggerExit.Invoke(c);
+            TriggerExitOccurred?.Invoke(c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchCollisionEnter(Collision c)
+        {
+            onCollisionEnter.Invoke(c);
+            CollisionEnterOccurred?.Invoke(c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchCollisionStay(Collision c)
+        {
+            onCollisionStay.Invoke(c);
+            CollisionStayOccurred?.Invoke(c);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void DispatchCollisionExit(Collision c)
+        {
+            onCollisionExit.Invoke(c);
+            CollisionExitOccurred?.Invoke(c);
+        }
+
         /* Collision -------------------------------------------------- */
         private void OnCollisionEnter(Collision c)
         {
@@ -62,12 +116,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onCollisionEnter.Invoke(c);
+                DispatchCollisionEnter(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onCollisionEnter.Invoke(c);
+                DispatchCollisionEnter(c);
                 var netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionEnter(netId != null ? netId.gameObject : null);
             }
@@ -80,12 +134,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onCollisionExit.Invoke(c);
+                DispatchCollisionExit(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onCollisionExit.Invoke(c);
+                DispatchCollisionExit(c);
                 var netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionExit(netId != null ? netId.gameObject : null);
             }
@@ -98,12 +152,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onCollisionStay.Invoke(c);
+                DispatchCollisionStay(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onCollisionStay.Invoke(c);
+                DispatchCollisionStay(c);
                 var netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionStay(netId != null ? netId.gameObject : null);
             }
@@ -117,12 +171,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onTriggerEnter.Invoke(c);
+                DispatchTriggerEnter(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onTriggerEnter.Invoke(c);
+                DispatchTriggerEnter(c);
                 var netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerEnter(netId != null ? netId.gameObject : null);
             }
@@ -135,12 +189,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onTriggerExit.Invoke(c);
+                DispatchTriggerExit(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onTriggerExit.Invoke(c);
+                DispatchTriggerExit(c);
                 var netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerExit(netId != null ? netId.gameObject : null);
             }
@@ -153,12 +207,12 @@ namespace Neo.Tools
             
             if (!isNetworked)
             {
-                onTriggerStay.Invoke(c);
+                DispatchTriggerStay(c);
             }
 #if MIRROR
             else if (NeoNetworkState.IsServer)
             {
-                onTriggerStay.Invoke(c);
+                DispatchTriggerStay(c);
                 var netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerStay(netId != null ? netId.gameObject : null);
             }
@@ -172,42 +226,45 @@ namespace Neo.Tools
         private void RpcCollisionEnter(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onCollisionEnter.Invoke(null); // Native Collision object cannot be sent across network
+            DispatchCollisionEnter(null); // Native Collision object cannot be sent across network
         }
         
         [ClientRpc]
         private void RpcCollisionExit(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onCollisionExit.Invoke(null);
+            DispatchCollisionExit(null);
         }
 
         [ClientRpc]
         private void RpcCollisionStay(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onCollisionStay.Invoke(null);
+            DispatchCollisionStay(null);
         }
 
         [ClientRpc]
         private void RpcTriggerEnter(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onTriggerEnter.Invoke(target != null ? target.GetComponent<Collider>() : null);
+            var col = target != null ? target.GetComponent<Collider>() : null;
+            DispatchTriggerEnter(col);
         }
 
         [ClientRpc]
         private void RpcTriggerExit(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onTriggerExit.Invoke(target != null ? target.GetComponent<Collider>() : null);
+            var col = target != null ? target.GetComponent<Collider>() : null;
+            DispatchTriggerExit(col);
         }
 
         [ClientRpc]
         private void RpcTriggerStay(GameObject target)
         {
             if (NeoNetworkState.IsServer) return;
-            onTriggerStay.Invoke(target != null ? target.GetComponent<Collider>() : null);
+            var col = target != null ? target.GetComponent<Collider>() : null;
+            DispatchTriggerStay(col);
         }
         
         protected override void OnValidate()

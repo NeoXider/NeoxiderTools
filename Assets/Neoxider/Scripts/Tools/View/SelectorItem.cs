@@ -83,13 +83,26 @@ namespace Neo.Tools
         [Button]
         public void SetActive(bool active)
         {
-            if (_isActive == active)
+            SetActive(active, false);
+        }
+
+        /// <summary>
+        ///     Same as <see cref="SetActive(bool)"/>, but when <paramref name="forceNotify"/> is true and the logical state
+        ///     already matches, still invokes <see cref="OnActivated"/> / <see cref="OnDeactivated"/> so Inspector-wired
+        ///     side effects (e.g. disabling another object) run on the first selector sync.
+        /// </summary>
+        public void SetActive(bool active, bool forceNotify)
+        {
+            if (_isActive == active && !forceNotify)
             {
                 return;
             }
 
-            _isActive = active;
-            Active.Value = active;
+            if (_isActive != active)
+            {
+                _isActive = active;
+                Active.Value = active;
+            }
 
             if (active)
             {

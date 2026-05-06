@@ -66,7 +66,8 @@ namespace Neo.Tools
         [Tooltip("Require looking at object when interacting with keyboard.")] [SerializeField]
         private bool requireViewForKeyboardInteraction = true;
 
-        [Tooltip("Require direct line of sight from check point to object.")] [SerializeField]
+        [Tooltip("For keyboard: require a forward ray from the view source to hit this object's collider. Not tied to checkObstacles (walls still use checkObstacles on the distance ray in IsInRange).")]
+        [SerializeField]
         private bool requireDirectLookRay = true;
 
         [Tooltip("Include trigger colliders in look ray checks.")] [SerializeField]
@@ -669,7 +670,9 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (!requireDirectLookRay || !checkObstacles)
+            // Без луча взгляда — только «в зоне» (и прочие флаги режима). Раньше луч отключался вместе с
+            // checkObstacles, из‑за чего при выключенных препятствиях клавиша срабатывала по одной дистанции.
+            if (!requireDirectLookRay)
             {
                 CacheDebugRay(origin, target, Color.cyan);
                 return true;
@@ -723,8 +726,16 @@ namespace Neo.Tools
             if (cachedCollider2D != null && cachedCollider2D.enabled)
             {
                 Vector2 origin2D = new(origin.x, origin.y);
-                Vector2 dir2D = new Vector2(toTarget.x, toTarget.y).normalized;
-                int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, distance + 0.05f, ~0);
+                Vector3 fwd = lookSource.forward;
+                Vector2 dir2D = new Vector2(fwd.x, fwd.y);
+                if (dir2D.sqrMagnitude < 1e-6f)
+                {
+                    dir2D = new Vector2(toTarget.x, toTarget.y);
+                }
+
+                dir2D.Normalize();
+                float maxRay2D = interactionDistance > 0f ? interactionDistance + 0.05f : distance + 2f;
+                int hitCount2D = Physics2D.RaycastNonAlloc(origin2D, dir2D, lookHits2D, maxRay2D, ~0);
                 float nearestDistance2D = float.MaxValue;
                 Collider2D nearestCollider2D = null;
                 for (int i = 0; i < hitCount2D; i++)
@@ -740,6 +751,11 @@ namespace Neo.Tools
                         continue;
                     }
 
+                    if (!includeTriggerCollidersInLookRay && hitCollider.isTrigger)
+                    {
+                        continue;
+                    }
+
                     float hitDistance = lookHits2D[i].distance;
                     if (hitDistance < nearestDistance2D)
                     {
@@ -748,14 +764,15 @@ namespace Neo.Tools
                     }
                 }
 
-                bool hasTargetHit = nearestCollider2D != null && nearestCollider2D.transform.IsChildOf(transform);
-                Vector3 debugEnd = hasTargetHit ? nearestCollider2D.bounds.center : target;
+                bool hasTargetHit = nearestCollider2D != null && IsTargetHierarchyCollider(nearestCollider2D);
+                Vector3 debugEnd = hasTargetHit ? (Vector3)nearestCollider2D.bounds.center : origin + (Vector3)(dir2D * maxRay2D);
                 CacheDebugRay(origin, debugEnd, hasTargetHit ? Color.green : Color.red);
                 return hasTargetHit;
             }
 
-            CacheDebugRay(origin, target, Color.cyan);
-            return true;
+            // Требуем луч взгляда, но нет валидного коллайдера — нельзя подтвердить прицел.
+            CacheDebugRay(origin, target, Color.red);
+            return false;
         }
 
         private Vector3 GetInteractionTargetPosition()

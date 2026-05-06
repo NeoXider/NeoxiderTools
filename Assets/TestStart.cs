@@ -1,3 +1,4 @@
+using System;
 using Mirror;
 using UnityEngine;
 
@@ -20,15 +21,13 @@ public class TestStart : NetworkBehaviour
     public GameObject startPanel;
     public float time = 3;
 
-    void Start()
-    {
-    }
+    /// <summary>На каждом клиенте после <see cref="RpcShowStartPanel"/>, когда панель включена.</summary>
+    public static event Action OnStartPanelShownClients;
 
-    void Update()
-    {
-    }
+    /// <summary>На каждом клиенте после авто-скрытия по таймеру.</summary>
+    public static event Action OnStartPanelHiddenClients;
 
-     /// <summary>Вызывать с кнопки UI (клиент должен быть подключён и ready).</summary>
+    /// <summary>Вызывать с кнопки UI (клиент должен быть подключён и ready).</summary>
     public void StartGame()
     {
         if (!NetworkClient.active)
@@ -64,6 +63,8 @@ public class TestStart : NetworkBehaviour
             startPanel.SetActive(true);
             Invoke(nameof(Off), time);
         }
+
+        OnStartPanelShownClients?.Invoke();
     }
 
     void Off()
@@ -72,5 +73,7 @@ public class TestStart : NetworkBehaviour
         {
             startPanel.SetActive(false);
         }
+
+        OnStartPanelHiddenClients?.Invoke();
     }
 }
