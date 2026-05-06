@@ -22,8 +22,14 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        /// <summary>
+        ///     Clears static caches across subsystem / domain reloads. Invoked from
+        ///     <see cref="SaveManagerSubsystemRegistration"/> rather than via
+        ///     <see cref="RuntimeInitializeOnLoadMethodAttribute"/> on this type —
+        ///     Unity forbids runtime-init hooks on inheritance chains rooted in generics such as
+        ///     <c>Neo.Tools.Singleton&lt;T&gt;</c>.
+        /// </summary>
+        internal static void ClearSubsystemCaches()
         {
             _saveableComponents.Clear();
             IsLoad = false;

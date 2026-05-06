@@ -1,4 +1,4 @@
-# RpgTargetSelector
+﻿# RpgTargetSelector
 
 **Что это:** reusable `MonoBehaviour`-selector цели для AI, skill logic и spell casting.
 
@@ -20,3 +20,17 @@
 - `ClearTarget()` помечен `[Button]`
 
 Это удобно для быстрой проверки AI target logic прямо в инспекторе.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `HasTarget` | Has Target. |
+| `HasTargetState` | Has Target State. |
+| `_combatantSource` | Combatant Source. |
+| `_onTargetCleared` | On Target Cleared. |
+| `_onTargetSelected` | On Target Selected. |
+| `_origin` | Origin. |
+| `_profileSource` | Profile Source. |
+| `_query` | Query. |

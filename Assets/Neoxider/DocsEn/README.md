@@ -7,7 +7,8 @@ Use it as the main navigation page for package modules, utility submodules, and 
 ## Start Here
 
 - [Package README](../README.md)
-- [Russian docs index](../Docs/README.md)
+- [No-Code UI binding (Neo.NoCode)](../Docs/NoCode/README.md) — `NoCodeBindText`, `SetProgress` (RU)
+- [Russian docs index](../Docs/README.md) (includes [No-Code strategy / non-goals for visual scripting](../Docs/NO_CODE_AUDIT.md))
 - [Tools index](./Tools/README.md)
 - [Condition](./Condition/README.md)
 - [Save](./Save/README.md)
@@ -19,12 +20,13 @@ Use it as the main navigation page for package modules, utility submodules, and 
 - Every top-level module has an English entry page in this tree.
 - Selected deeper English pages are available for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, `Progression`, and `Animations`.
 - When a detailed page is still RU-only, this index keeps a direct link to the Russian documentation.
-- Full coverage audit: [COVERAGE_AUDIT.md](./COVERAGE_AUDIT.md)
+- Full coverage audit documents are **local-only**: place files such as `COVERAGE_AUDIT.md` under `Local/Audits/` at the repository root (ignored by git). See [`/Local/README.md`](../../../Local/README.md).
 
 ## Module Index
 
 | Module | What it covers | English docs |
 |--------|----------------|--------------|
+| **NoCode** | Bind floats to `SetText`/TMP and Slider/Image via reflection-safe resolver (RU hub) | [`../Docs/NoCode/README.md`](../Docs/NoCode/README.md) |
 | **Animations** | Float, Color, and `Vector3` animation helpers | [`Animations/README.md`](./Animations/README.md) |
 | **Audio** | `AudioManager`, mixer helpers, random music, and audio utilities | [`Audio/README.md`](./Audio/README.md) |
 | **Bonus** | Slots, wheel rewards, collections, and timed rewards | [`Bonus/README.md`](./Bonus/README.md) |

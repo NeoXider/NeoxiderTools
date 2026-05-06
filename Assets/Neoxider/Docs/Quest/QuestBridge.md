@@ -1,4 +1,4 @@
-# Quest NoCode Action
+﻿# Quest NoCode Action
 
 **Что это:** универсальный мост для вызова квестового API из UnityEvent без кода.
 Основной компонент: `QuestNoCodeAction` (`Scripts/Quest/Bridge/QuestNoCodeAction.cs`).
@@ -31,3 +31,17 @@
 - Ограничить принятие по последовательности — через `QuestFlowConfig` + `QuestNoCodeAction(Accept)` с Flow Config.
 
 Пошаговые сценарии настройки в инспекторе — [Scenarios](Scenarios.md).
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `ActionType` | Action Type. |
+| `_actionType` | Action Type. |
+| `_flowConfig` | Flow Config. |
+| `_objectiveIndex` | Objective Index. |
+| `_onFailed` | On Failed. |
+| `_onResultMessage` | On Result Message. |
+| `_onSuccess` | On Success. |
+| `_quest` | Quest. |

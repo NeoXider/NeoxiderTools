@@ -2,6 +2,7 @@
     "name": "Neo.Editor.Tests",
     "rootNamespace": "",
     "references": [
+        "Neo.NoCode",
         "GUID:0dce7003042d59947888919f20c2d48e",
         "GUID:fc2c2e8c20e00494ea983f7a9158e1a2",
         "GUID:06352c69ddcbf8b49919bc3cb4c52b7d",
@@ -29,13 +30,16 @@
         "GUID:bb2541e88ef2c6942b810dc6c0cc4c3b",
         "GUID:da27a8eb20772f14fb862c90278fa41c",
         "GUID:699bb923824f1724b91c66f5ba9ace74",
+        "GUID:29dfd0d7fe74aaa439f2173b848b2400",
         "GUID:f379901b708384043af2b7e935332075",
         "GUID:e39216118ba4530449063f6f478fa729",
         "GUID:b86d3b465747c5244a16a0298b3c8eb4",
         "GUID:52d640c113350b04ead51de4b2c3be9f",
         "GUID:d06531eb44124d14385b705adce5c111",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
-        "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
+        "GUID:fada5146ea9de7e4c86a6e4307efdfbf",
+        "GUID:cd6c82e59aff8684681614f3d7f08cac",
+        "GUID:8d381d1cc9d17434d8639fca19b57c5b"
     ],
     "includePlatforms": [
         "Editor"

@@ -38,6 +38,8 @@
 - страница выключается -> `CursorLockController` снова прячет/блокирует курсор
 - в событии закрытия страницы вызывается `PlayerController3DPhysics.SetLookEnabled(true)`
 
+Если курсором должен заниматься только UI (`CursorLockController` на корне меню и т.п.), на самом `PlayerController3DPhysics` можно снять **Enable Cursor Control** — тогда контроллер не будет ни блокировать курсор в `Start()`, ни обрабатывать Escape для курсора; см. [PlayerController3DPhysics](./PlayerController3DPhysics.md).
+
 Дополнительно можно использовать отдельный gameplay-shortcut, например `Z`, через `CursorLockController.Cursor Access Key`:
 
 - `HoldToShowCursor` — курсор виден, пока удерживается клавиша

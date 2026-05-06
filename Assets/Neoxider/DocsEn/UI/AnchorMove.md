@@ -1,0 +1,18 @@
+# AnchorMove
+
+**Purpose:** See Inspector fields below for configuration.
+
+## Setup
+
+- Add the component via the Unity menu.
+
+## Key Fields (Inspector)
+
+| Field | Description |
+|-------|-------------|
+| `x` | X. |
+| `y` | Y. |
+
+## See Also
+
+- [Module Root](../README.md)

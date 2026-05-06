@@ -1,71 +1,60 @@
 # PickableItem
 
-**Что это:** По умолчанию приоритет проверки такой:
+**Назначение:** Компонент для предметов на уровне (монеты, аптечки, оружие), которые игрок может подобрать. Реагирует на триггеры (2D/3D), фильтрует по тегу, поддерживает валидацию коллектора и автоматическое уничтожение/деактивацию после сбора.
 
-**Как использовать:** см. разделы ниже.
-
----
-
-
-`PickableItem` — компонент подбираемого предмета в мире.
-
-## Что умеет
-
-- Подбор по триггеру 3D (`OnTriggerEnter`) и/или 2D (`OnTriggerEnter2D`).
-- Ручной вызов `Collect()` из кнопок, `InteractiveObject`, `PhysicsEvents` через UnityEvent.
-- Дополнительные алиасы методов подбора: `Pickup()`, `PickupFromGameObject(...)`, `PickupFromCollider(...)`, `PickupFromCollider2D(...)`.
-- Выдача предмета в `InventoryComponent`.
-- Фильтр по тегу собирающего объекта.
-- Опциональная валидация: у сборщика должен быть `InventoryComponent` (на объекте или в родителях).
-- Поведение после подбора: отключить коллайдеры, деактивировать объект, уничтожить объект.
-- **Активация в руке**: при применении предмета в руке (`InventoryHand.UseEquippedItem()`) у экземпляра в Hand Anchor вызывается **Activate()**; срабатывает **OnActivate** — подпишите для эффекта (звук, частицы, логика использования).
-
-По умолчанию приоритет проверки такой:
-1. наличие `InventoryComponent` у сборщика (основной фильтр),
-2. тег (`Required Collector Tag`) как вторичный фильтр, если он задан.
-
-## Поля
+## Поля (Inspector)
 
 | Поле | Описание |
 |------|----------|
-| `Item Data` | ScriptableObject предмета (`InventoryItemData`). |
-| `Item Id` | fallback id, если `Item Data` не задан. |
-| `Amount` | Количество предмета. |
-| `Target Inventory` | Явная ссылка на инвентарь. |
-| `Auto Find Inventory` | Искать `InventoryComponent.FindDefault()` при пустой ссылке. |
-| `Collect On Trigger 3D/2D` | Автосбор через триггеры. |
-| `Required Collector Tag` | Вторичный фильтр по тегу (пусто = фильтр отключён). |
-| `Require Collector Inventory` | Основной фильтр (по умолчанию включен): без `InventoryComponent` у сборщика подбор отклоняется. |
-| `Search Collector Inventory In Parents` | Искать инвентарь у родителей объекта-сборщика. |
-| `Use Collector Inventory As Target` | Использовать инвентарь сборщика как target (удобно для нескольких игроков). |
-| `Collect Only Once` | Предотвращает повторный сбор. |
+| **Item Data** | Ссылка на `InventoryItemData` (приоритетный источник ID). |
+| **Item Id** | Запасной ID предмета, если `Item Data` не назначен. |
+| **Amount** | Количество предметов, добавляемых при подборе. |
+| **Target Inventory** | Целевой инвентарь. Если пуст и `Auto Find` включен — найдет сам. |
+| **Collect On Trigger 3D / 2D** | Подбирать автоматически при входе в 3D/2D триггер. |
+| **Required Collector Tag** | Фильтр по тегу (пусто = без фильтра). Например, `Player`. |
+| **Require Collector Inventory** | Требовать наличие `InventoryComponent` на объекте-собирателе. |
+| **Collect Only Once** | Подбирается только один раз (защита от повторного сбора). |
+| **Destroy After Collect** | Удалить `GameObject` после успешного подбора. |
+| **Deactivate After Collect** | Деактивировать объект, если `Destroy` выключен. |
 
-## События
+## API
 
-| Событие | Аргументы | Когда вызывается |
-|---------|-----------|------------------|
-| **OnActivate** | — | При активации предмета (вызов Activate(), в т.ч. при применении в руке). Подпишите для эффекта использования. |
-| `OnCollectStarted` | — | Перед попыткой выдать предмет. |
-| `OnCollected` | `(itemId, addedAmount)` | Успешный подбор. |
-| `OnCollectFailed` | — | Не удалось подобрать (нет инвентаря, лимиты и т.д.). |
-| `OnAfterCollectDespawn` | — | Перед destroy/deactivate после успешного подбора. |
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `bool Collect()` | Попытаться подобрать предмет вручную (без привязки к коллектору). |
+| `bool CollectFromGameObject(GameObject collector)` | Подобрать с указанием коллектора (для проверки тега/инвентаря). |
+| `void Activate()` | Вызывает событие `OnActivate` (для использования предмета в руке). |
+| `void Configure(...)` | Настроить предмет из кода (ItemData, fallbackId, amount, targetInventory). |
+| `int ResolvedItemId { get; }` | Возвращает итоговый ID предмета. |
 
-## Методы для UnityEvent
+## Unity Events
 
-- **Activate()** — вызвать активацию (вызывает OnActivate). InventoryHand вызывает его у экземпляра в руке при UseEquippedItem().
+| Событие | Аргументы | Описание |
+|---------|-----------|----------|
+| `OnCollectStarted` | *(нет)* | Начало сбора (до добавления в инвентарь). |
+| `OnCollected` | `int itemId, int amount` | Предмет успешно добавлен в инвентарь. |
+| `OnCollectFailed` | *(нет)* | Сбор не удался (нет инвентаря, фильтр не пройден и т.д.). |
+| `OnAfterCollectDespawn` | *(нет)* | Вызывается перед уничтожением/деактивацией объекта. |
+| `OnActivate` | *(нет)* | Предмет активирован (для использования в руке через `InventoryHand`). |
 
-- `Collect()`
-- `Pickup()`
-- `CollectFromGameObject(GameObject collector)`
-- `CollectFromCollider(Collider collider3D)`
-- `CollectFromCollider2D(Collider2D collider2D)`
-- `PickupFromGameObject(GameObject collector)`
-- `PickupFromCollider(Collider collider3D)`
-- `PickupFromCollider2D(Collider2D collider2D)`
+## Примеры
 
-## Пример связки с InteractiveObject
+### Пример No-Code (в Inspector)
+Создайте префаб монеты. Добавьте `SphereCollider` → `Is Trigger = true`. Повесьте `PickableItem`. Установите `Item Id = 10`, `Amount = 1`, `Collect On Trigger 3D = true`, `Destroy After Collect = true`. Теперь, когда игрок входит в триггер, монета подберется и исчезнет.
 
-1. На объект предмета добавьте `PickableItem`.
-2. Добавьте `InteractiveObject`.
-3. В `InteractiveObject.onClick` назначьте `PickableItem.Collect`.
-4. Теперь предмет подбирается по клику (без дополнительного кода).
+### Пример (Код)
+```csharp
+[SerializeField] private PickableItem _keyPickup;
+
+public void ForcePickupKey()
+{
+    bool success = _keyPickup.Collect();
+    if (success) Debug.Log("Ключ подобран!");
+}
+```
+
+## См. также
+- [InventoryPickupBridge](InventoryPickupBridge.md)
+- [InventoryComponent](InventoryComponent.md)
+- [InventoryDropper](InventoryDropper.md)
+- ← [Tools/Inventory](README.md)

@@ -118,10 +118,15 @@ namespace Neo.Editor
 
         public static void DrawSummaryCard(string title, string subtitle, params Badge[] badges)
         {
-            DrawSummaryCard(title, subtitle, false, badges);
+            DrawSummaryCard(title, subtitle, false, true, badges);
         }
 
         public static void DrawSummaryCard(string title, string subtitle, bool compact, params Badge[] badges)
+        {
+            DrawSummaryCard(title, subtitle, compact, true, badges);
+        }
+
+        public static void DrawSummaryCard(string title, string subtitle, bool compact, bool showOverviewLabel, params Badge[] badges)
         {
             Rect rect = EditorGUILayout.BeginVertical(compact ? CompactCardBoxStyle : CardBoxStyle);
             if (Event.current.type == EventType.Repaint)
@@ -132,8 +137,11 @@ namespace Neo.Editor
             using (new EditorGUILayout.HorizontalScope())
             {
                 EditorGUILayout.LabelField(title, SummaryTitleStyle);
-                GUILayout.FlexibleSpace();
-                GUILayout.Label("Overview", EditorStyles.miniBoldLabel, GUILayout.Width(56f));
+                if (showOverviewLabel)
+                {
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label("Overview", EditorStyles.miniBoldLabel, GUILayout.Width(56f));
+                }
             }
 
             if (!string.IsNullOrWhiteSpace(subtitle))

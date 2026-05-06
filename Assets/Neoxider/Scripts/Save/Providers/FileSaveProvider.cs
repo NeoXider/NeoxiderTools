@@ -12,6 +12,8 @@ namespace Neo.Save
     /// </summary>
     public class FileSaveProvider : ISaveProvider
     {
+        private readonly string _rootDirectory;
+        private readonly FileSaveEncryptionConfig _encryption;
         private string _filePath;
         private Dictionary<string, SaveValue> _data;
         private bool _isDirty;
@@ -23,9 +25,14 @@ namespace Neo.Save
         ///     File name for persistence (e.g. "save.json"). Written under
         ///     Application.persistentDataPath.
         /// </param>
-        public FileSaveProvider(string fileName = "save.json")
+        public FileSaveProvider(string fileName = "save.json", FileSaveProviderOptions options = null)
         {
-            _filePath = Path.Combine(Application.persistentDataPath, fileName);
+            options ??= new FileSaveProviderOptions();
+            _rootDirectory = string.IsNullOrEmpty(options.PersistenceRoot)
+                ? Application.persistentDataPath
+                : options.PersistenceRoot;
+            _encryption = options.Encryption;
+            _filePath = Path.Combine(_rootDirectory, fileName);
             _data = new Dictionary<string, SaveValue>();
             Load();
         }
@@ -41,7 +48,7 @@ namespace Neo.Save
                 Save();
             }
 
-            _filePath = Path.Combine(Application.persistentDataPath, fileName);
+            _filePath = Path.Combine(_rootDirectory, fileName);
             Load();
         }
 
@@ -215,7 +222,20 @@ namespace Neo.Save
                     Directory.CreateDirectory(directory);
                 }
 
-                File.WriteAllText(_filePath, json);
+                string payload = json;
+                if (_encryption != null && _encryption.Enabled)
+                {
+                    if (!SaveFileEncryption.TryEncrypt(json, _encryption.Key, _encryption.Iv, out string cipher) ||
+                        string.IsNullOrEmpty(cipher))
+                    {
+                        Debug.LogError("[FileSaveProvider] Encryption failed; save aborted.");
+                        return;
+                    }
+
+                    payload = cipher;
+                }
+
+                File.WriteAllText(_filePath, payload);
                 _isDirty = false;
                 OnDataSaved?.Invoke();
             }
@@ -234,19 +254,12 @@ namespace Neo.Save
             {
                 if (File.Exists(_filePath))
                 {
-                    string json = File.ReadAllText(_filePath);
-                    SaveData saveData = JsonUtility.FromJson<SaveData>(json);
-
-                    _data = new Dictionary<string, SaveValue>();
-                    if (saveData != null && saveData.items != null)
+                    string raw = File.ReadAllText(_filePath).Trim().TrimStart('\ufeff');
+                    if (!TryBuildDictionaryFromFilePayload(raw, out _data))
                     {
-                        foreach (KeyValuePair item in saveData.items)
-                        {
-                            if (!string.IsNullOrEmpty(item.key))
-                            {
-                                _data[item.key] = item.value;
-                            }
-                        }
+                        Debug.LogError(
+                            $"[FileSaveProvider] Unrecognized save file format (path: {_filePath}). Resetting in memory.");
+                        _data = new Dictionary<string, SaveValue>();
                     }
                 }
                 else
@@ -262,6 +275,73 @@ namespace Neo.Save
                 _data = new Dictionary<string, SaveValue>();
                 OnDataLoaded?.Invoke();
             }
+        }
+
+        private bool TryBuildDictionaryFromFilePayload(string raw, out Dictionary<string, SaveValue> data)
+        {
+            data = new Dictionary<string, SaveValue>();
+            if (string.IsNullOrEmpty(raw))
+            {
+                return true;
+            }
+
+            if (TryDeserializeSaveDataJson(raw, out SaveData fromPlain))
+            {
+                return CopyItemsToDictionary(fromPlain, ref data);
+            }
+
+            if (_encryption != null && _encryption.Enabled &&
+                SaveFileEncryption.TryDecrypt(raw, _encryption.Key, _encryption.Iv, out string decrypted) &&
+                TryDeserializeSaveDataJson(decrypted, out SaveData fromCipher))
+            {
+                return CopyItemsToDictionary(fromCipher, ref data);
+            }
+
+            return false;
+        }
+
+        private static bool TryDeserializeSaveDataJson(string json, out SaveData saveData)
+        {
+            saveData = null;
+            if (string.IsNullOrEmpty(json))
+            {
+                return false;
+            }
+
+            json = json.Trim();
+            if (json.Length == 0 || json[0] != '{')
+            {
+                return false;
+            }
+
+            try
+            {
+                saveData = JsonUtility.FromJson<SaveData>(json);
+                return saveData != null;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        private static bool CopyItemsToDictionary(SaveData saveData, ref Dictionary<string, SaveValue> data)
+        {
+            data = new Dictionary<string, SaveValue>();
+            if (saveData?.items == null)
+            {
+                return true;
+            }
+
+            foreach (KeyValuePair item in saveData.items)
+            {
+                if (!string.IsNullOrEmpty(item.key))
+                {
+                    data[item.key] = item.value;
+                }
+            }
+
+            return true;
         }
 
         /// <summary>

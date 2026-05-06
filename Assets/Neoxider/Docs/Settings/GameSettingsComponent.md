@@ -1,4 +1,4 @@
-# GameSettingsComponent
+﻿# GameSettingsComponent
 
 **Что это:** `Neo.Settings.GameSettingsComponent` — **`Singleton<MonoBehaviour>`**, точка входа Unity: префикс ключей **`SaveProvider`**, таблица **пресет → QualitySettings**, списки разрешений и FPS, debounce для **`SettingsPersistMode.Deferred`**, дефолты для **`ResetGroup`**. Файл: `Scripts/Settings/GameSettingsComponent.cs`.
 
@@ -34,3 +34,22 @@
 ## См. также
 
 - [GameSettings.md](./GameSettings.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `2f` | 2f. |
+| `QualityLevelIndex` | Quality Level Index. |
+| `_customResolutionPresets` | Custom Resolution Presets. |
+| `_defaultCustomQualityLevel` | Default Custom Quality Level. |
+| `_defaultFramerateCap` | Default Framerate Cap. |
+| `_defaultFullScreenMode` | Default Full Screen Mode. |
+| `_defaultGraphicsPreset` | Default Graphics Preset. |
+| `_defaultResolutionIndex` | Default Resolution Index. |
+| `_defaultVSync` | Default VSync. |
+| `_deferredSaveDelaySeconds` | Deferred Save Delay Seconds. |
+| `_framerateCapPresets` | Framerate Cap Presets. |
+| `_saveKeyPrefix` | Save Key Prefix. |
+| `true` | True. |

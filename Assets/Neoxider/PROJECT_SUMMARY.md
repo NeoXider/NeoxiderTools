@@ -5,7 +5,7 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `7.8.0`
+- **Текущая версия**: `8.0.0`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
@@ -31,7 +31,7 @@ Assets/Neoxider/
 
 - **Core gameplay modules**: `Core` (Level, Resources), `Cards`, `GridSystem`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`.
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move`, `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
-- **No-code / Inspector workflows**: `Condition`, `PropertyAttribute`, UnityEvent-driven components.
+- **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `SetProgress` → TMP / Slider / Image), `PropertyAttribute`, UnityEvent-driven components.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
 - **Optional sample module**: `Samples~/NeoxiderPages`.
 

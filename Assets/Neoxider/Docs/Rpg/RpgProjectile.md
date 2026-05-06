@@ -1,4 +1,4 @@
-# RpgProjectile
+﻿# RpgProjectile
 
 **Что это:** lightweight projectile runtime для дальних атак в RPG-модуле.
 
@@ -18,3 +18,12 @@
 - Стрелы, пули, магические снаряды.
 - Heal projectile.
 - Projectile AoE chain, если payload на цели должен быть единым и управляться definition.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `_onExpired` | On Expired. |
+| `_onHit` | On Hit. |
+| `_onInitialized` | On Initialized. |

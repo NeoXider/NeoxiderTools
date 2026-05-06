@@ -1,4 +1,4 @@
-# DeckView
+﻿# DeckView
 
 **Что это:** Визуальное представление колоды карт. Реализует `IDeckView`, отображает стопку и верхнюю карту.
 
@@ -21,3 +21,19 @@
 - **Config** — DeckConfig с данными колоды.
 
 См. также [DeckComponent](../DeckComponent.md).
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `1` | 1. |
+| `SpawnPoint` | Spawn Point. |
+| `VisibleCardCount` | Visible Card Count. |
+| `_cardOffset` | Card Offset. |
+| `_config` | Config. |
+| `_deckImage` | Deck Image. |
+| `_deckSprite` | Deck Sprite. |
+| `_spawnPoint` | Spawn Point. |
+| `_topCardImage` | Top Card Image. |
+| `_topCardSprite` | Top Card Sprite. |

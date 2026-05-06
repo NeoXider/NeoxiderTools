@@ -73,6 +73,101 @@ namespace Neo.Extensions
         }
 
         /// <summary>
+        ///     Converts a <see cref="TimeSpan" /> to a compact string based on a specific <see cref="TimeFormat" />.
+        /// </summary>
+        /// <param name="value">Source time span.</param>
+        /// <param name="format">The time format specifying which units to include.</param>
+        /// <returns>Compact string such as "0h 05m".</returns>
+        public static string ToCompactString(this TimeSpan value, TimeFormat format)
+        {
+            TimeSpan abs = value.Duration();
+            StringBuilder builder = new(24);
+            bool added = false;
+
+            void Append(int number, string suffix, bool force2Digits)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.Append(' ');
+                }
+
+                if (added && force2Digits)
+                {
+                    builder.Append(number.ToString("D2"));
+                }
+                else
+                {
+                    builder.Append(number);
+                }
+
+                builder.Append(suffix);
+                added = true;
+            }
+
+            switch (format)
+            {
+                case TimeFormat.Milliseconds:
+                    Append((int)abs.TotalMilliseconds, "ms", false);
+                    break;
+                case TimeFormat.SecondsMilliseconds:
+                    Append((int)abs.TotalSeconds, "s", false);
+                    Append(abs.Milliseconds, "ms", true);
+                    break;
+                case TimeFormat.Seconds:
+                    Append((int)abs.TotalSeconds, "s", false);
+                    break;
+                case TimeFormat.Minutes:
+                    Append((int)abs.TotalMinutes, "m", false);
+                    break;
+                case TimeFormat.MinutesSeconds:
+                    Append((int)abs.TotalMinutes, "m", false);
+                    Append(abs.Seconds, "s", true);
+                    break;
+                case TimeFormat.MinutesSecondsMilliseconds:
+                    Append((int)abs.TotalMinutes, "m", false);
+                    Append(abs.Seconds, "s", true);
+                    Append(abs.Milliseconds, "ms", true);
+                    break;
+                case TimeFormat.Hours:
+                    Append((int)abs.TotalHours, "h", false);
+                    break;
+                case TimeFormat.HoursMinutes:
+                    Append((int)abs.TotalHours, "h", false);
+                    Append(abs.Minutes, "m", true);
+                    break;
+                case TimeFormat.HoursMinutesSeconds:
+                    Append((int)abs.TotalHours, "h", false);
+                    Append(abs.Minutes, "m", true);
+                    Append(abs.Seconds, "s", true);
+                    break;
+                case TimeFormat.Days:
+                    Append((int)abs.TotalDays, "d", false);
+                    break;
+                case TimeFormat.DaysHours:
+                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Hours, "h", true);
+                    break;
+                case TimeFormat.DaysHoursMinutes:
+                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Hours, "h", true);
+                    Append(abs.Minutes, "m", true);
+                    break;
+                case TimeFormat.DaysHoursMinutesSeconds:
+                    Append((int)abs.TotalDays, "d", false);
+                    Append(abs.Hours, "h", true);
+                    Append(abs.Minutes, "m", true);
+                    Append(abs.Seconds, "s", true);
+                    break;
+                default:
+                    Append((int)abs.TotalSeconds, "s", false);
+                    break;
+            }
+
+            string result = builder.ToString();
+            return value.Ticks < 0 ? "-" + result : result;
+        }
+
+        /// <summary>
         ///     Converts a <see cref="TimeSpan" /> to a clock-like string.
         /// </summary>
         /// <param name="value">Source time span.</param>

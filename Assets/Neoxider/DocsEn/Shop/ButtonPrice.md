@@ -1,44 +1,32 @@
 # ButtonPrice
 
-`ButtonPrice` is a shop button view component with three visual states: `Buy`, `Select`, and `Selected`. It displays the current price, supports thousand separators, and can switch from buy mode to select mode when the price reaches zero. File: `Assets/Neoxider/Scripts/Shop/ButtonPrice.cs`, namespace: `Neo.UI`.
+**Purpose:** A smart shop button that automatically switches its visual state and text based on its logical state: "Buy", "Select", or "Selected".
 
-## Typical use
+## Setup
 
-1. Add `ButtonPrice` to an item button.
-2. Configure visuals for the three states in the Inspector.
-3. Let `ShopItem` drive it automatically, or update it from code through `SetPrice(...)` or `SetVisual(...)`.
+1. Add the `Add Component > Neoxider > UI > ButtonPrice` component to a button object.
+2. Create and assign GameObjects for each visual state (e.g., different button backgrounds for Buy and Selected) in the `_visual` field.
+3. Configure the text fields for the price and button name.
+4. Set up the `OnBuy`, `OnSelect`, and `OnSelected` events.
 
-## Main features
+## Key Fields (Inspector)
 
-- Three-state presentation: `Buy`, `Select`, `Selected`
-- Optional automatic state conversion when price becomes `0`
-- Separate visual groups per state
-- Price formatting with a custom thousands separator
+| Field | Description |
+|-------|-------------|
+| `_textPrice` | Array of `TMP_Text` references where the formatted price will be displayed. |
+| `_textButton` | Array of `TMP_Text` references where the button text ("Buy", "Select") will be displayed. |
+| `_visual` | A group of objects (`GameObject[]`) that are enabled/disabled depending on the button's state (Buy / Select / Selected). |
+| `_price` | The current price. If the price is 0, the state can automatically switch to "Select" (if configured). |
+| `_textPrice_0` | Whether to show the price if it equals zero (e.g., "0" or "Free"). If `false`, the price text is hidden. |
+| `_textButtonAndPrice` | If `true`, the price and text are written into the same text field. |
+| `_type` | The current button type: `Buy`, `Select`, `Selected`. |
+| `_textBuy` | String for the button in the "Buy" state (default "Buy"). |
+| `_textSelect` | String for the button in the "Select" state (default "Select"). |
+| `_textSelected` | String for the button in the "Selected" state (default "Selected"). |
+| `_customSeparator` | Separator for thousands in the price (e.g., `.`). |
+| `_editorView` | Enables visualization of states directly in the Unity Editor. |
 
-## Main API
+## See Also
 
-| API | Description |
-|-----|-------------|
-| `SetAutoVisual(int price, ButtonType type)` | Sets price and auto-corrects the visual state if needed. |
-| `SetVisual(int price, ButtonType type)` | Sets both price and explicit visual state. |
-| `SetPrice(int price)` | Convenience method for price-based refresh. |
-| `SetVisual(ButtonType type)` | Applies one visual state directly. |
-| `TrySetVisualId(int id)` | Attempts to switch by numeric state id after validating the current price rules. |
-| `SetVisualId(int id)` | Forces state by numeric id (`0 = Buy`, `1 = Select`, `2 = Selected`). |
-
-## Events
-
-- `OnBuy`
-- `OnSelect`
-- `OnSelected`
-
-## Notes
-
-- `ShopItem` commonly pushes both price and state into `ButtonPrice`.
-- The component is primarily a presentation helper; business rules still belong in `Shop` and `ShopItem`.
-
-## See also
-
-- [README](./README.md)
-- [Shop](./Shop.md)
-- [Russian Shop docs](../../Docs/Shop/README.md)
+- [ShopItem](ShopItem.md) - The component that often controls this button.
+- [Module Root](../README.md)

@@ -58,6 +58,9 @@ if (MyManager.TryGetInstance(out MyManager manager))
 }
 ```
 
+## Unity runtime initialization
+Do not place `[RuntimeInitializeOnLoadMethod]` on static methods **declared inside** a type that inherits `Singleton<T>` — Unity reports an error (“method … is in a generic class”). Use a separate non-generic static bootstrap class (same pattern as **`SingletonRuntimeReset`**, **`SaveManagerSubsystemRegistration`**, **`MouseInputManagerSubsystemRegistration`**) or call into an `internal static` reset helper from such a class.
+
 ## See also
 - [`Bootstrap`](./Bootstrap.md)
 - [`README`](./README.md)

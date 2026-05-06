@@ -1,33 +1,44 @@
-# InventoryView и InventoryItemView
+# InventoryView
 
-**Что это:** Компонент рендера инвентаря в UI.
+**Назначение:** Главный UI-компонент для отображения содержимого инвентаря в виде списка. Умеет автоматически спавнить `InventoryItemView` для каждого предмета (из префаба) или обновлять заранее расставленные вручную ячейки (Manual Mode).
 
-**Как использовать:** см. разделы ниже.
+## Поля (Inspector)
 
----
+| Поле | Описание |
+|------|----------|
+| **Inventory** | Ссылка на `InventoryComponent`. Если пустая, найдет автоматически. |
+| **View Mode** | `SpawnFromPrefab` — динамически создает ячейки. `ManualList` — обновляет только ваши заранее расставленные `InventoryItemView`. |
+| **Source Mode** | Откуда брать список предметов: `DatabaseItems` (все из БД), `SnapshotItems` (только имеющиеся), `Hybrid` (объединение). |
+| **Show Only Non Zero** | Скрывать ячейки предметов, количество которых равно 0. |
+| **Item View Prefab** | Префаб ячейки (с `InventoryItemView`) для режима `SpawnFromPrefab`. |
+| **Items Root** | Контейнер, в который спавнятся ячейки. По умолчанию — текущий трансформ. |
+| **Manual Views** | Список заранее расставленных `InventoryItemView` для режима `ManualList`. |
 
+## API
 
-## InventoryView
+| Метод / Свойство | Описание |
+|------------------|----------|
+| `void SetInventory(InventoryComponent inventory)` | Привязать к другому инвентарю и обновить UI. |
+| `void Refresh()` | Принудительно перерисовать все ячейки. |
 
-Компонент рендера инвентаря в UI.
+## Примеры
 
-- Источник: `InventoryComponent`.
-- Режимы:
-  - `SpawnFromPrefab` — автоматически спавнит `InventoryItemView` по данным из `InventoryDatabase`.
-  - `ManualList` — использует заранее заданные `InventoryItemView`.
-- Источник данных для списка:
-  - `DatabaseItems` — только из `InventoryDatabase` (порядок как в базе).
-  - `SnapshotItems` — только из фактического содержимого инвентаря (порядок = порядок добавления).
-  - `Hybrid` — сначала слоты из базы в порядке базы, затем недостающие из снимка.
-- Обновляется по `OnInventoryChanged` и (опционально) `OnLoaded`.
-- Есть опция refresh на следующий кадр при `OnEnable`, чтобы корректно отображать стартовое состояние после загрузки.
+### Пример No-Code (в Inspector)
+Создайте UI-панель с `Vertical Layout Group`. Повесьте `InventoryView`. В поле `Item View Prefab` перетащите префаб строки (с `InventoryItemView`). Выберите `Source Mode = Hybrid`, `Show Only Non Zero = true`. При запуске игры панель автоматически покажет список предметов из инвентаря.
 
-## InventoryItemView
+### Пример (Код)
+```csharp
+[SerializeField] private InventoryView _shopView;
 
-Представление одной записи предмета (все UI-поля опциональны):
+public void OpenShopUI(InventoryComponent shopInventory)
+{
+    _shopView.SetInventory(shopInventory);
+    _shopView.gameObject.SetActive(true);
+}
+```
 
-- `Image` для иконки,
-- `TMP_Text` для названия,
-- `TMP_Text` для количества.
-
-Подходит и для автоматически созданных элементов, и для ручной раскладки.
+## См. также
+- [InventoryItemView](InventoryItemView.md)
+- [InventorySlotGridView](InventorySlotGridView.md)
+- [InventoryComponent](InventoryComponent.md)
+- ← [Tools/Inventory](README.md)

@@ -47,6 +47,7 @@ Assets/Neoxider/Samples~/NeoxiderPages/
 
 - **`PM`** (`Runtime/Scripts/Page/PM.cs`)
   - singleton `PM.I`
+  - все **`UIPage` должны быть потомками** объекта с **PM** в иерархии сцены (поиск страниц ограничен поддеревом PM)
   - `ChangePage(pageId)` — переключение (выбирает стратегию: Exclusive/Popup по настройке `UIPage`)
   - `SetPage(pageId)` — активирует страницу и деактивирует остальные (Exclusive)
   - `ActivePage(pageId)` — активирует страницу, не выключая остальные (Popup)

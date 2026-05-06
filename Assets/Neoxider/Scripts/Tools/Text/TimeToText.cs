@@ -60,8 +60,11 @@ namespace Neo.Tools
         [Tooltip("Display mode: Clock = colon-separated (11:11), Compact = unit format (11d 11m)")] [SerializeField]
         private TimeDisplayMode _displayMode = TimeDisplayMode.Clock;
 
-        [Tooltip("The format to use when displaying time (Clock mode only)")] [SerializeField]
+        [Tooltip("The format to use when displaying time (Clock mode, and Compact mode if enabled)")] [SerializeField]
         private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
+
+        [Tooltip("If true, Compact mode forces the units specified in Time Format. If false, it dynamically skips zero units.")] [SerializeField]
+        private bool _compactUseTimeFormat = true;
 
         [Tooltip("Include seconds in compact output (Compact mode only)")] [SerializeField]
         private bool _compactIncludeSeconds = true;
@@ -143,6 +146,19 @@ namespace Neo.Tools
             set
             {
                 _displayMode = value;
+                UpdateDisplay();
+            }
+        }
+
+        /// <summary>
+        ///     Gets or sets whether Compact mode strictly uses TimeFormat.
+        /// </summary>
+        public bool CompactUseTimeFormat
+        {
+            get => _compactUseTimeFormat;
+            set
+            {
+                _compactUseTimeFormat = value;
                 UpdateDisplay();
             }
         }
@@ -231,7 +247,9 @@ namespace Neo.Tools
             {
                 float displayValue = _allowNegative && time < 0 ? Mathf.Abs(time) : time;
                 string formatted = _displayMode == TimeDisplayMode.Compact
-                    ? TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts)
+                    ? (_compactUseTimeFormat 
+                        ? TimeSpan.FromSeconds(displayValue).ToCompactString(timeFormat) 
+                        : TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts))
                     : displayValue.FormatTime(timeFormat, separator);
                 if (_allowNegative && time < 0)
                 {

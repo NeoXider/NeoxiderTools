@@ -67,6 +67,14 @@ namespace Neo.Editor
         /// </summary>
         protected virtual bool UseCustomNeoxiderInspectorGUI => false;
 
+        /// <summary>
+        ///     Invoked right after <see cref="DrawNeoPropertiesWithCollapsibleUnityEvents" /> (default MonoBehaviour
+        ///     property pass). Use for extra notes or UI that should sit with the main inspector block.
+        /// </summary>
+        protected virtual void OnAfterDrawNeoProperties()
+        {
+        }
+
         protected virtual void OnDisable()
         {
             if (_isAnimating)
@@ -409,6 +417,7 @@ namespace Neo.Editor
                 else
                 {
                     DrawNeoPropertiesWithCollapsibleUnityEvents();
+                    OnAfterDrawNeoProperties();
                 }
             }
             else

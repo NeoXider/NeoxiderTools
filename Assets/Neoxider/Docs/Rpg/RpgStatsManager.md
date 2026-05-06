@@ -1,4 +1,4 @@
-# RpgStatsManager
+﻿# RpgStatsManager
 
 Главный компонент управления состоянием персонажа. Поддерживает динамические статы, баффы, дебаффы и сохранение прогресса.
 
@@ -72,3 +72,47 @@ public void OnAttack()
 - [RpgCombatant (для врагов)](./RpgCombatant.md)
 - [Buff Definition (SO)](./BuffDefinition.md)
 - [← Назад к RPG README](./README.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `1f` | 1f. |
+| `AutoSave` | Auto Save. |
+| `CanPerformActions` | Can Perform Actions. |
+| `CurrentHp` | Current Hp. |
+| `DefaultSaveKey` | Default Save Key. |
+| `HpPercentState` | Hp Percent State. |
+| `HpPercentStateValue` | Hp Percent State Value. |
+| `HpState` | Hp State. |
+| `HpStateValue` | Hp State Value. |
+| `IsDead` | Is Dead. |
+| `IsInvulnerable` | Is Invulnerable. |
+| `LevelState` | Level State. |
+| `LevelStateValue` | Level State Value. |
+| `MaxHp` | Max Hp. |
+| `OnBuffApplied` | On Buff Applied. |
+| `OnBuffExpired` | On Buff Expired. |
+| `OnDamaged` | On Damaged. |
+| `OnHealed` | On Healed. |
+| `OnStatusApplied` | On Status Applied. |
+| `OnStatusExpired` | On Status Expired. |
+| `SaveKey` | Save Key. |
+| `_autoSave` | Auto Save. |
+| `_buffDefinitions` | Buff Definitions. |
+| `_healthProvider` | Health Provider. |
+| `_hpRegenPerSecond` | Hp Regen Per Second. |
+| `_levelProvider` | Level Provider. |
+| `_onBuffApplied` | On Buff Applied. |
+| `_onBuffExpired` | On Buff Expired. |
+| `_onDamaged` | On Damaged. |
+| `_onDeath` | On Death. |
+| `_onHealed` | On Healed. |
+| `_onProfileLoaded` | On Profile Loaded. |
+| `_onProfileSaved` | On Profile Saved. |
+| `_onStatusApplied` | On Status Applied. |
+| `_onStatusExpired` | On Status Expired. |
+| `_statGrowth` | Stat Growth. |
+| `_statusDefinitions` | Status Definitions. |
+| `true` | True. |

@@ -1,4 +1,4 @@
-# CardViewUniversal
+﻿# CardViewUniversal
 
 **Что это:** универсальная вью карты: реализует ICardView, ICardDisplayMode, ICardViewAnimations. Режимы отображения (переворот / всегда открыта / всегда закрыта), готовые анимации через CardViewAnimationTemplates. Пространство имён `Neo.Cards`, файл `Scripts/Cards/View/CardViewUniversal.cs`.
 
@@ -61,3 +61,22 @@ Tween idleTween = CardViewAnimationTemplates.Idle(transform, 1.2f, 0.02f, animat
 - [Interfaces](../Interfaces.md) — ICardView, ICardDisplayMode, ICardViewAnimations
 - [CardView](./CardView.md) — простая вью без режимов и набора анимаций
 - [CustomCardViewGuide](./CustomCardViewGuide.md) — как сделать свою реализацию карты
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `20f` | 20f. |
+| `IsFaceUp` | Is Face Up. |
+| `Transform` | Transform. |
+| `_animationConfig` | Animation Config. |
+| `_cardImage` | Card Image. |
+| `_displayMode` | Display Mode. |
+| `_flipDuration` | Flip Duration. |
+| `_flipEase` | Flip Ease. |
+| `_hoverDuration` | Hover Duration. |
+| `_hoverScale` | Hover Scale. |
+| `_moveDuration` | Move Duration. |
+| `_moveEase` | Move Ease. |
+| `_spriteRenderer` | Sprite Renderer. |

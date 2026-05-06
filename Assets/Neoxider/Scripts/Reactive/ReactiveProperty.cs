@@ -29,6 +29,13 @@ namespace Neo.Reactive
         [SerializeField] protected T _value;
         [SerializeField] protected TEvent _onChanged = new();
 
+        /// <summary>
+        ///     Code subscriptions (via <see cref="AddListener"/>). Invoked directly so notifications work in Edit Mode;
+        ///     <see cref="UnityEvent{T}.Invoke"/> can skip runtime listeners outside Play Mode.
+        /// </summary>
+        [NonSerialized]
+        private List<UnityAction<T>> _codeListeners;
+
         protected ReactivePropertyBase()
         {
         }
@@ -53,28 +60,44 @@ namespace Neo.Reactive
                 }
 
                 _value = value;
-                _onChanged?.Invoke(_value);
+                NotifySubscribers();
             }
         }
 
-        /// <summary>Change subscription (code and Inspector). AddListener / RemoveListener / RemoveAllListeners.</summary>
+        /// <summary>Inspector / serialized UnityEvent subscribers.</summary>
         public TEvent OnChanged => _onChanged;
 
-        /// <summary>Subscribe to changes (wrapper for OnChanged.AddListener).</summary>
+        /// <summary>Subscribe from code (not serialized). Prefer over <see cref="OnChanged"/>.AddListener in tooling/tests.</summary>
         public void AddListener(UnityAction<T> call)
         {
-            _onChanged?.AddListener(call);
+            if (call == null)
+            {
+                return;
+            }
+
+            _codeListeners ??= new List<UnityAction<T>>();
+            for (int i = 0; i < _codeListeners.Count; i++)
+            {
+                if (_codeListeners[i] == call)
+                {
+                    return;
+                }
+            }
+
+            _codeListeners.Add(call);
         }
 
-        /// <summary>Unsubscribe (wrapper for OnChanged.RemoveListener).</summary>
+        /// <summary>Unsubscribe (matches listeners from <see cref="AddListener"/> or <see cref="OnChanged"/>).</summary>
         public void RemoveListener(UnityAction<T> call)
         {
+            _codeListeners?.Remove(call);
             _onChanged?.RemoveListener(call);
         }
 
-        /// <summary>Remove all listeners (wrapper for OnChanged.RemoveAllListeners).</summary>
+        /// <summary>Clear code listeners and UnityEvent subscribers.</summary>
         public void RemoveAllListeners()
         {
+            _codeListeners?.Clear();
             _onChanged?.RemoveAllListeners();
         }
 
@@ -90,10 +113,38 @@ namespace Neo.Reactive
             _value = value;
         }
 
-        /// <summary>Invoke OnChanged with the current value.</summary>
+        /// <summary>Invoke subscribers with the current value.</summary>
         public void ForceNotify()
         {
-            _onChanged?.Invoke(_value);
+            NotifySubscribers();
+        }
+
+        private void NotifySubscribers()
+        {
+            if (_codeListeners != null)
+            {
+                for (int i = 0; i < _codeListeners.Count; i++)
+                {
+                    UnityAction<T> listener = _codeListeners[i];
+                    try
+                    {
+                        listener?.Invoke(_value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Debug.LogException(ex);
+                    }
+                }
+            }
+
+            try
+            {
+                _onChanged?.Invoke(_value);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogException(ex);
+            }
         }
     }
 

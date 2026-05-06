@@ -15,8 +15,7 @@ namespace Neo.Tools
     {
         private static readonly Dictionary<string, T> ById = new();
 
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStaticState()
+        internal static void ResetStaticStateForRuntime()
         {
             ById.Clear();
         }

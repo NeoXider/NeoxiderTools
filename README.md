@@ -1,5 +1,7 @@
 # Neoxider — коллекция мощных инструментов для Unity
 
+[![Version](https://img.shields.io/badge/version-8.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+
 > **RU:** Готовые решения для Unity, которые легко интегрируются в ваш проект. Более 150 модулей для быстрой разработки игр без лишних сложностей.
 > 
 > **EN:** Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.
@@ -105,26 +107,26 @@
 
 | Модуль | Описание |
 |--------|----------|
-| [**Condition**](#condition--no-code-условия) | No-Code условия: проверка полей, AND/OR логика, события |
-| [**Tools**](#tools--инструменты) | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод |
-| [**UI**](#ui--интерфейс) | UI-панели, анимации кнопок, переключатели |
-| [**Bonus**](#bonus--бонусные-системы) | Слоты, колесо фортуны, коллекции, награды по времени |
-| [**Shop**](#shop--магазин) | Магазин, валюта, покупки |
-| [**Save**](#save--сохранения) | PlayerPrefs, JSON-файлы, атрибут `[SaveField]` |
-| [**Quest**](#quest--квесты) | Конфиги квестов, менеджер, цели, runtime-состояние |
-| [**Progression**](Assets/Neoxider/Docs/Progression/README.md) | XP, уровни, unlock tree, perk tree и persistent progression |
-| [**Cards**](#cards--карточные-игры) | MVP-архитектура, покер, "Пьяница" |
-| [**StateMachine**](#statemachine--машина-состояний) | Код + No-Code, визуальный редактор |
-| [**Animations**](#animations--анимации) | Float, Color, Vector3 анимации |
-| [**Audio**](#audio--звук) | AudioManager, микшер, random music |
-| [**Extensions**](#extensions--расширения-c) | 300+ extension-методов |
-| [**Editor**](#editor--инструменты-редактора) | Окна настроек, поиск missing scripts, авто-билд |
-| [**Level**](#level--уровни) | Менеджер уровней, карта |
-| [**NPC**](#npc) | Навигация NPC, патруль, chase и animator driver |
-| [**Parallax**](#parallax) | Параллакс-слои |
-| [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
-| [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
-| [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
+| ⚙️ [**Condition**](#condition--no-code-условия) | No-Code условия: проверка полей, AND/OR логика, события |
+| 🛠️ [**Tools**](#tools--инструменты) | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод |
+| 🖼️ [**UI**](#ui--интерфейс) | UI-панели, анимации кнопок, переключатели |
+| 🎁 [**Bonus**](#bonus--бонусные-системы) | Слоты, колесо фортуны, коллекции, награды по времени |
+| 🛒 [**Shop**](#shop--магазин) | Магазин, валюта, покупки |
+| 💾 [**Save**](#save--сохранения) | PlayerPrefs, JSON-файлы, атрибут `[SaveField]` |
+| 📜 [**Quest**](#quest--квесты) | Конфиги квестов, менеджер, цели, runtime-состояние |
+| 📈 [**Progression**](Assets/Neoxider/Docs/Progression/README.md) | XP, уровни, unlock tree, perk tree и persistent progression |
+| 🃏 [**Cards**](#cards--карточные-игры) | MVP-архитектура, покер, "Пьяница" |
+| 🤖 [**StateMachine**](#statemachine--машина-состояний) | Код + No-Code, визуальный редактор |
+| ✨ [**Animations**](#animations--анимации) | Float, Color, Vector3 анимации |
+| 🎵 [**Audio**](#audio--звук) | AudioManager, микшер, random music |
+| 🔌 [**Extensions**](#extensions--расширения-c) | 300+ extension-методов |
+| 🛠️ [**Editor**](#editor--инструменты-редактора) | Окна настроек, поиск missing scripts, авто-билд |
+| 🗺️ [**Level**](#level--уровни) | Менеджер уровней, карта |
+| 🚶 [**NPC**](#npc) | Навигация NPC, патруль, chase и animator driver |
+| 🌌 [**Parallax**](#parallax) | Параллакс-слои |
+| 🔲 [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
+| 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
+| ⚡ [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
 
 ---
 
@@ -338,12 +340,10 @@
 
 | Пакет | Способ установки |
 |-------|-----------------|
-| **TextMeshPro** | Автоматически через UPM |
-| **AI Navigation** | Автоматически через UPM |
+| **Input System** (`com.unity.inputsystem`) | Рекомендуется для модулей Input / swipe / нового ввода; в шаблоне проекта уже указан в `Packages/manifest.json`. В UPM-пакете Neoxider указан как зависимость для совместимости версий. |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
-| **Odin Inspector** (опционально) | Asset Store — расширенный инспектор, все компоненты работают и без него |
 
 ### Основной пакет
 
@@ -353,16 +353,10 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 Window -> Package Manager -> **+** -> Add package from git URL.
 
-Конкретная версия (тег `v5.5.2`):
+Если нужна конкретная версия, добавьте тег в конец URL (например, `#5.5.2`):
 
 ```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#v5.5.2
-```
-
-Ветка `demo` (новые функции):
-
-```
-https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#demo
+https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#5.5.2
 ```
 
 ### Ручная установка

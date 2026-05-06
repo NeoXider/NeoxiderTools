@@ -203,7 +203,7 @@ namespace Neo.Samples
             }
 
             float damage = _attackDamage * (_player != null ? _player.GetOutgoingDamageMultiplier() : 1f);
-            _enemy.TakeDamage(new RpgDamageInfo { Amount = damage });
+            _enemy.TakeDamage(new RpgDamageInfo(damage, source: _player));
             Log($"[PLAYER] attacks [ENEMY] for <color=orange>{damage:F0}</color> dmg!");
         }
 
@@ -215,7 +215,7 @@ namespace Neo.Samples
             }
 
             float damage = _attackDamage * 0.8f * (_enemy != null ? _enemy.GetOutgoingDamageMultiplier() : 1f);
-            _player.TakeDamage(new RpgDamageInfo { Amount = damage });
+            _player.TakeDamage(new RpgDamageInfo(damage, source: _enemy));
             Log($"[ENEMY] attacks [PLAYER] for <color=orange>{damage:F0}</color> dmg!");
         }
 

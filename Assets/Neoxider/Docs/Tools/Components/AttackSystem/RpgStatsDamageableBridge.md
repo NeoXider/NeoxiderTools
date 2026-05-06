@@ -1,4 +1,4 @@
-# RpgStatsDamageableBridge
+﻿# RpgStatsDamageableBridge
 
 **Что это:** мост из `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`, реализующий `IDamageable` и `IHealable` с перенаправлением в `RpgStatsManager`.
 
@@ -27,3 +27,13 @@
 ## Рекомендация
 
 Для новых проектов используйте `RpgStatsManager` и `RpgNoCodeAction` напрямую. Этот мост нужен для совместимости с `AdvancedAttackCollider` и другими потребителями `IDamageable`.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `1f` | 1f. |
+| `DamageMultiplier` | Damage Multiplier. |
+| `HealMultiplier` | Heal Multiplier. |
+| `_combatant` | Combatant. |

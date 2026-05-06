@@ -2,13 +2,30 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-**Version 7.8.0** · Unity 2022.1+ · Namespace `Neo`
+[![Version](https://img.shields.io/badge/version-8.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
 - [English Docs Entry](./DocsEn/README.md)
 - [Changelog](./CHANGELOG.md)
 - [Project Summary](./PROJECT_SUMMARY.md)
+
+---
+
+## Table of Contents
+- [What You Get](#what-you-get)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Games built with NeoxiderTools](#games-built-with-neoxidertools)
+- [Featured Modules](#featured-modules)
+- [Samples](#samples)
+- [Documentation Notes](#documentation-notes)
+- [Tests](#tests)
+- [Project Layout](#project-layout)
+- [Support](#support)
+
+---
 
 ## What You Get
 
@@ -31,30 +48,18 @@ Open `Window > Package Manager > + > Add package from git URL` and paste the URL
 
 Copy `Assets/Neoxider` into your Unity project.
 
-## Dependencies
+## Requirements
 
-### Installed automatically through UPM
-
-- `com.unity.textmeshpro`
-- `com.unity.ai.navigation`
-
-### Required dependencies
-
-- `UniTask` for async-heavy modules such as cards, dialogue, and typed text workflows.
-- `DOTween` is required for the package runtime modules.
-- `DOTween Pro` is required for the `NeoxiderPages` sample module.
-- `Spine Unity Runtime` only if you use Spine-specific integrations.
-- `Odin Inspector` is optional. Components work without it.
-
-### Optional docs viewer
-
-For enhanced markdown rendering inside the Inspector you can install `MarkdownRenderer`:
-
-```text
-https://github.com/NeoXider/MarkdownRenderer.git
-```
-
-Without it, the package still works. Inspector documentation fallbacks remain available.
+- **Unity 2022.1+**
+- **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`
+- **Required (3rd party)**:
+  - `UniTask` (for async-heavy modules such as cards, dialogue)
+  - `DOTween` (for package runtime modules)
+- **Optional**:
+  - `DOTween Pro` (required for `NeoxiderPages` sample)
+  - `Spine Unity Runtime` (only for Spine integrations)
+  - `Odin Inspector` (components work perfectly without it)
+  - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
 
 ## Quick Start
 

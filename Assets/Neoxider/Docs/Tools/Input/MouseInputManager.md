@@ -44,11 +44,30 @@
 
 ## Жизненный цикл
 
-- Через `RuntimeInitializeOnLoadMethod` включает `CreateInstance = true`, поэтому менеджер может быть создан автоматически.
+- Через `MouseInputManagerSubsystemRegistration` (<c>[RuntimeInitializeOnLoadMethod]</c>) перед загрузкой сцены включается `CreateInstance = true`, поэтому менеджер может быть создан автоматически. Хук вынесен из самого класса менеджера: Unity запрещает такие методы на наследниках generic-баз вроде `Singleton<T>` (иначе ошибка вида «method … is in a generic class»).
 - В `Init()` пытается взять `Camera.main`, если `targetCamera` не задан.
-- При domain reload очищает `LastEventData` и `HasEventData`.
+- При перезагрузке подсистемы / домена через тот же bootstrap очищаются `LastEventData` и `HasEventData`.
 
 ## См. также
 
 - [MouseEffect](./MouseEffect.md)
 - [README](./README.md)
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `10f` | 10f. |
+| `drawGizmos` | Draw Gizmos. |
+| `enableClick` | Enable Click. |
+| `enableHold` | Enable Hold. |
+| `enablePress` | Enable Press. |
+| `enableRelease` | Enable Release. |
+| `gizmoBaseFontSize` | Gizmo Base Font Size. |
+| `gizmoColor` | Gizmo Color. |
+| `gizmoDrawText` | Gizmo Draw Text. |
+| `gizmoRadius` | Gizmo Radius. |
+| `gizmoTextColor` | Gizmo Text Color. |
+| `gizmoTextOffset` | Gizmo Text Offset. |
+| `gizmoTextScale` | Gizmo Text Scale. |

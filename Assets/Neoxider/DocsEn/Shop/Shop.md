@@ -1,83 +1,38 @@
 # Shop
 
-`Shop` is the main runtime controller of the shop module. It loads saved prices and equipped state through `SaveProvider`, shows previews, creates missing `ShopItem` views when configured, processes purchases through `IMoneySpend`, and refreshes visuals. File: `Assets/Neoxider/Scripts/Shop/Shop.cs`, namespace: `Neo.Shop`.
+**Purpose:** The main controller for the in-game shop. It handles the generation of shop items (UI) based on `ShopItemData`, processes purchases (interacting with the player's balance), saves purchased items, and manages the currently selected (equipped) item.
 
-## Typical setup
+## Setup
 
-1. Create one or more `ShopItemData` assets.
-2. Add `Shop` to a scene object.
-3. Assign `Shop Item Datas`.
-4. Assign either ready-made `Shop Items` or a `Prefab` plus `Container` for auto-generation.
-5. Set `Money Spend Source` to a component implementing `IMoneySpend`, or leave it empty to use `Money.I`.
+1. Add the component via `Add Component > Neoxider > Shop > Shop` to an object in the scene.
+2. In the `_shopItemDatas` field, assign a list of items (`ScriptableObject`).
+3. Assign the `_prefab` (a prefab with a `ShopItem` component) and `_container` (usually a Layout Group where buttons will spawn).
+4. If you have a preview window, assign the `_shopItemPreview`.
 
-## What it handles
+## Key Fields (Inspector)
 
-- Loads startup prices from `ShopItemData` or saved values.
-- Restores the last equipped item.
-- Can auto-create missing `ShopItem` entries from a prefab.
-- Can auto-subscribe item buy buttons.
-- Purchases via `IMoneySpend`.
-- Updates preview and item visuals after selection or purchase.
-
-## Main properties
-
-| Property | Description |
-|----------|-------------|
-| `Prices` | Current runtime price array. |
-| `ShopItemDatas` | Assigned item data assets. |
-| `PreviewId` | Current preview item id. |
-| `Id` | Current selected item id. Setting it calls selection logic. |
-
-## Main inspector settings
-
-- `Shop Item Datas`
-- `Shop Item Preview`
-- `Shop Items`
-- `Use Set Item`
-- `Auto Subscribe`
-- `Activate Saved Equipped`
-- `Key Save`
-- `Key Save Equipped`
-- `Change Preview On Purchase Failed`
-- `Container`
-- `Prefab`
-- `moneySpendSource`
-
-## Main API
-
-| API | Description |
-|-----|-------------|
-| `ShowPreview(int id)` | Shows one item in the preview without buying it. |
-| `Buy()` | Buys the item currently shown in preview. |
-| `Buy(int id)` | Buys an item by id. |
-| `Visual()` | Refreshes all `ShopItem` visuals. |
+| Field | Description |
+|-------|-------------|
+| `_prices` | Default prices array (used if `ShopItemData` is not provided). |
+| `_shopItemDatas` | Array of item data (ScriptableObject `ShopItemData`), from which icons, descriptions, and base prices are taken. |
+| `_shopItemPreview` | Reference to a UI preview component (same `ShopItem` class) that will display the selected item before purchase. |
+| `_shopItems` | (Auto-populated) Array of UI items already present in the scene. |
+| `_useSetItem` | If `true`, the shop tracks the "Equipped/Selected" item, highlighting it among others. |
+| `_autoSubscribe` | If `true`, the shop automatically subscribes to the `buttonBuy` of all spawned `ShopItem`s. |
+| `_activateSavedEquipped` | Automatically select the saved equipped item when the scene loads. |
+| `_keySave` | Base key for saving purchase progress in `SaveProvider`. |
+| `_keySaveEquipped` | Key for saving the ID of the equipped item. |
+| `_changePreviewOnPurchaseFailed` | Change the preview to the item if a purchase attempt fails due to insufficient funds. |
+| `_container` | The `Transform` parent where item prefabs will be instantiated. |
+| `_prefab` | The item prefab (must have a `ShopItem` component). |
+| `moneySpendSource` | Source of funds to deduct. The object must implement the `IMoneySpend` interface. If left empty, the global `Money.I` is used. |
 
 ## Events
+- `OnSelect` — Triggered when an item is selected (equipped).
+- `OnPurchased` — Triggered upon a successful purchase.
+- `OnPurchaseFailed` — Triggered when a purchase fails (e.g., not enough money).
+- `OnLoad` — Triggered after the shop data finishes loading.
 
-- `OnSelect`
-- `OnPurchased`
-- `OnPurchaseFailed`
-- `OnLoad`
+## See Also
 
-## Save behavior
-
-The current version uses `SaveProvider`, not direct `PlayerPrefs` calls:
-
-- prices are read through `SaveProvider.GetInt(...)`
-- changed prices are written through `SaveProvider.SetInt(...)`
-- the equipped item id is stored through `SaveProvider.SetInt(...)`
-
-`Shop.Save()` updates values in the active provider backend and does not force a separate `SaveProvider.Save()` call by itself.
-
-## Purchase behavior
-
-- If an item price is already `0`, the item is selected without spending money.
-- If the purchase succeeds and `ShopItemData.isSinglePurchase` is enabled, the item price becomes `0`.
-- If the player cannot afford an item, `OnPurchaseFailed` is raised.
-- If `Change Preview On Purchase Failed` is enabled, the preview can still switch to the failed item.
-
-## See also
-
-- [README](./README.md)
-- [Money](./Money.md)
-- [Russian Shop docs](../../Docs/Shop/README.md)
+- [Module Root](../README.md)

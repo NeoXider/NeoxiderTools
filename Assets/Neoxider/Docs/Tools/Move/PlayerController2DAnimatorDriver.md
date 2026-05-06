@@ -1,4 +1,4 @@
-# Компонент PlayerController2DAnimatorDriver
+﻿# Компонент PlayerController2DAnimatorDriver
 
 **Что это:** Подходит для платформера и 2D top-down: можно использовать как базовые state-параметры (idle/walk/run/jump), так и BlendTree.
 
@@ -73,3 +73,21 @@
 - Int: `LocomotionState`
 - Trigger: `Jump`
 
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `8f` | 8f. |
+| `IsReady` | Is Ready. |
+| `_blendDampTime` | Blend Damp Time. |
+| `_blendXParam` | Blend XParam. |
+| `_blendYParam` | Blend YParam. |
+| `_isGroundedParam` | Is Grounded Param. |
+| `_isMovingParam` | Is Moving Param. |
+| `_isRunningParam` | Is Running Param. |
+| `_jumpTriggerParam` | Jump Trigger Param. |
+| `_locomotionStateParam` | Locomotion State Param. |
+| `_movingThreshold` | Moving Threshold. |
+| `_speedParam` | Speed Param. |

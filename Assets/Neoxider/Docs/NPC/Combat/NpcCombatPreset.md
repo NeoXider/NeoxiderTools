@@ -1,4 +1,4 @@
-# NpcCombatPreset
+﻿# NpcCombatPreset
 
 **Что это:** ScriptableObject-профиль поведения для `NpcRpgCombatBrain`.
 
@@ -48,3 +48,22 @@
 - `Run While Chasing`: `false`
 - `Stop Movement Inside Attack Range`: `true`
 - `Auto Restore Navigation Mode`: по ситуации
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `15f` | 15f. |
+| `2f` | 2f. |
+| `AutoRestoreNavigationMode` | Auto Restore Navigation Mode. |
+| `DisplayName` | Display Name. |
+| `FaceTargetBeforeAttack` | Face Target Before Attack. |
+| `Id` | Id. |
+| `LoseTargetDistance` | Lose Target Distance. |
+| `PreferredAttackDistance` | Preferred Attack Distance. |
+| `RunWhileChasing` | Run While Chasing. |
+| `StopMovementInsideAttackRange` | Stop Movement Inside Attack Range. |
+| `_attackPreset` | Attack Preset. |
+| `_displayName` | Display Name. |
+| `_id` | Id. |

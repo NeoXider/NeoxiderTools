@@ -1,4 +1,4 @@
-# Компонент PausePage
+﻿# Компонент PausePage
 
 **Что это:** В `OnValidate` компонент ищет `Animator` на том же объекте и выставляет `updateMode = UnscaledTime`, чтобы анимации UI шли во время паузы.
 
@@ -60,3 +60,13 @@
 2. Включите нужные опции: **Use Time Scale**, **Send Pause**, при необходимости **Control Cursor**.
 3. Выберите **After Pause Cursor**: **ForceLockedHidden** для классического FPS после паузы, **RestorePrevious** если важно вернуть ровно то, что было до паузы.
 4. При показе панели (`SetActive(true)`) пауза и курсор (если включено) применяются; при скрытии — восстанавливаются.
+
+
+## Дополнительные поля
+
+| Поле | Описание |
+|------|----------|
+| `AfterPauseCursorBehavior` | After Pause Cursor Behavior. |
+| `_afterPauseCursor` | After Pause Cursor. |
+| `_controlCursor` | Control Cursor. |
+| `_timeScaleOnPause` | Time Scale On Pause. |

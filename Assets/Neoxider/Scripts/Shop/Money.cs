@@ -29,6 +29,10 @@ namespace Neo.Shop
         [Space] [SerializeField] private string _moneySave = "Money";
         public string SaveKey => _moneySave;
 
+        [Tooltip("When off, balance is not loaded from or written to SaveProvider (session-only; demos / arenas / NoCode).")]
+        [SerializeField]
+        private bool _persistMoney = true;
+
         public ReactivePropertyFloat CurrentMoney = new();
         public ReactivePropertyFloat LevelMoney = new();
         public ReactivePropertyFloat AllMoney = new();
@@ -50,7 +54,11 @@ namespace Neo.Shop
 
         private void Start()
         {
-            Load();
+            if (_persistMoney)
+            {
+                LoadFromSave();
+            }
+
             SetLevelMoney();
             ApplyMoneyToText();
             ApplyLevelMoneyToText();
@@ -77,7 +85,7 @@ namespace Neo.Shop
             CurrentMoney.Value = CurrentMoney.CurrentValue + amount;
             AllMoney.Value = AllMoney.CurrentValue + amount;
             LastChangeMoney.Value = amount;
-            Save();
+            PersistBalanceToSave();
             ApplyMoneyToText();
         }
 
@@ -116,16 +124,51 @@ namespace Neo.Shop
             base.Init();
         }
 
-        private void Load()
+        private void LoadFromSave()
         {
             CurrentMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave, CurrentMoney.CurrentValue));
             AllMoney.SetValueWithoutNotify(SaveProvider.GetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue));
         }
 
-        private void Save()
+        private void PersistBalanceToSave()
         {
+            if (!_persistMoney)
+            {
+                return;
+            }
+
             SaveProvider.SetFloat(_moneySave, CurrentMoney.CurrentValue);
             SaveProvider.SetFloat(_moneySave + nameof(AllMoney), AllMoney.CurrentValue);
+        }
+
+        /// <summary>
+        ///     Reloads current and all-time balance from <see cref="SaveProvider"/> when persistence is enabled.
+        ///     Use after external changes to save keys, or from UnityEvent / NoCode flows.
+        /// </summary>
+        public void ReloadBalanceFromSave()
+        {
+            if (!_persistMoney)
+            {
+                return;
+            }
+
+            LoadFromSave();
+            ApplyMoneyToText();
+        }
+
+        /// <summary>
+        ///     Removes persisted money keys, resets runtime balance to zero, then re-persists zeros when persistence is on.
+        ///     Wire from a reset button or UnityEvent for NoCode.
+        /// </summary>
+        public void ClearSavedMoneyAndReset()
+        {
+            SaveProvider.DeleteKey(_moneySave);
+            SaveProvider.DeleteKey(_moneySave + nameof(AllMoney));
+            LastChangeMoney.Value = 0f;
+            CurrentMoney.Value = 0f;
+            AllMoney.Value = 0f;
+            ApplyMoneyToText();
+            PersistBalanceToSave();
         }
 
         public void AddLevelMoney(float count)
@@ -194,7 +237,16 @@ namespace Neo.Shop
             LastChangeMoney.Value = count - CurrentMoney.CurrentValue;
             CurrentMoney.Value = count;
             ApplyMoneyToText();
+            PersistBalanceToSave();
             return CurrentMoney.CurrentValue;
+        }
+
+        /// <summary>
+        ///     Same as <see cref="SetMoney"/> but explicit name for UnityEvent / Inspector wiring (NoCode).
+        /// </summary>
+        public void SetCurrentMoney(float amount)
+        {
+            SetMoney(amount);
         }
 
         public float SetMoneyForLevel(bool resetLevelMoney = true)
@@ -225,7 +277,7 @@ namespace Neo.Shop
             }
 
             ApplyMoneyToText();
-            Save();
+            PersistBalanceToSave();
             return count;
         }
 

@@ -1,4 +1,104 @@
 
+## [8.0.0] - 2026-05-02
+
+Мажорный релиз: **Neo.NoCode**, доработки **NeoCondition** / общего резолва **`GameObject.Find`**, опциональное управление курсором в **PlayerController3DPhysics**, плюс накопленные изменения Save/Shop/тестов из ветки **7.15.0**.
+
+### Breaking changes
+- **Binding / Find по имени** (`BindingSourceGameObjectResolver`): пока объект не найден, повторный **`GameObject.Find`** вызывается не чаще чем раз в **`Find Retry Interval (sec)`** (по умолчанию **1**; **0** = без ограничения по времени, как раньше по смыслу «каждая проверка»). Меняет частоту опроса сцены при «позднем» появлении объекта.
+- **Neo.NoCode / `ComponentFloatBinding` (инспектор)**: при включённом **Find By Name** больше не используется **Source Root** как запасной объект для пикеров; для настройки без инстанса в сцене — **Prefab Preview** (как в **NeoCondition**). Сериализованные сцены с «Find + Source Root» нужно перепроверить.
+- **Новые поля** в **`ConditionEntry`** (`_findRetryIntervalSeconds`, `_otherFindRetryIntervalSeconds`) и **`ComponentFloatBinding`** (`_findRetryIntervalSeconds`, `_prefabPreview`) — у старых ассетов Unity подставит значения по умолчанию.
+
+### Added
+- **Neo.NoCode** (`Assets/Neoxider/Scripts/NoCode/`): **`ComponentFloatBinding`**, **`NoCodeBindText`** (делегирование в **`SetText`** или fallback **`TMP_Text`**), **`SetProgress`** (**`Slider.normalizedValue`** / **`Image.fillAmount`**); режимы **Once** / **Reactive** / **Poll**.
+- **ConditionEntry** / **NeoCondition** / **ComponentFloatBinding**: **`Find Retry Interval (sec)`** (и **Other:** для порога **Other Object**); инспектор **NeoCondition** и **NoCode** — поля и подсказки.
+- **ComponentFloatBinding**: **`PrefabPreview`** (редактор), выравнивание UI с **NeoCondition** (**Find By Name**, **Wait For Object**, превью/подсказки).
+- **PlayerController3DPhysics**: **`Enable Cursor Control`** (по умолчанию вкл.) и свойство **`CursorControlEnabled`** — полное отключение вмешательства в курсор из контроллера.
+- **Документация**: **`Docs/NoCode/README.md`**; **PlayerController3DPhysics** RU/EN; **NeoCondition** (Find/Wait/интервал); **Move/README**; ссылки из **`Docs/README.md`**, **`DocsEn/README.md`**; **`NO_CODE_AUDIT.md`**.
+- **Tests (EditMode)**: **`NoCodeBindEditModeTests`**; **`MoneyPersistenceEditModeTests`**; расширения Save/Dialogue/Visual/Subsystem; **PlayMode**: **`ShopPurchasePlayModeTests`**.
+- **Shop / Money**: опция **`_persistMoney`**; **`ClearSavedMoneyAndReset`**, **`ReloadBalanceFromSave`**, **`SetCurrentMoney`**; **`SetMoney`** пишет в сейв при включённой персистенции.
+- **Save / File**: опциональное **AES-CBC** для файлового провайдера; миграция plain/cipher; встроенные key/IV по умолчанию при пустых полях; отклонение частично заполненного ключа.
+- **UPM** (`package.json`): зависимость **`com.unity.inputsystem`**.
+
+### Changed
+- **BindingSourceGameObjectResolver**: троттлинг повторов **`GameObject.Find`**; **`Wait`** по-прежнему влияет только на **Warning** в консоли, не на блокировку кадра.
+- **PlayerController3DPhysics**: курсор при старте — в **`Start()`**; при **`Enable Cursor Control = off`** не вызываются **Start**-блокировка, Escape, **`SetCursorLocked`**, авто-блок при **`SetLookEnabled`**.
+- **Docs**: канонический **`NO_CODE_AUDIT.md`**; Save encryption (RU); **`Local/Audits/`** в **`.gitignore`**.
+- **NeoxiderPages / PM**: `GetComponentsInChildren<UIPage>(true)` под PM.
+- **Save / settings**: шифрование файла по умолчанию выкл.; подсказки для пустых key/IV.
+
+### Fixed
+- **Tests**: `InternalsVisibleTo("Neo.Editor.Tests")` для **Neo.Save** и **Neo.Tools.Input** (подсистемы в EditMode).
+- **Save / File encryption**: пустые key+IV → встроенные дефолты; частичный ввод ключа/IV — ошибка.
+- **GM / State**: исправлено присваивание в сеттере `State` (раньше внутреннее состояние не обновлялось).
+- **Unity / Domain reload**: сброс подсистем **SaveManager** / **MouseInputManager** вынесен из generic **`Singleton<T>`**.
+- **Singleton**: убран некорректный `RuntimeInitializeOnLoadMethod` у generic-наследников; bootstrap в не-generic типах.
+
+## [7.15.0] - 2026-05-03
+*Внутренняя ветка разработки; релиз оформлен как **[8.0.0]** (см. выше).*
+
+## [7.13.21] - 2026-05-03
+### Changed
+- **Save / File encryption**: When encryption is enabled but Key and IV fields are both empty, **`SaveFileEncryption.DefaultEncryptionKey`** / **`DefaultEncryptionIv`** are used (override anytime by setting both custom strings). Partial fill (only key or only IV) is rejected with an error. File encryption remains **off** by default in **Save Provider Settings**.
+
+### Tests
+- **EditMode**: Expanded **`SaveEncryptionEditModeTests`** — built-in defaults, whitespace → defaults, partial-key validation, disabled config, plain-json migration with built-in cipher config.
+
+### Documentation
+- **Save**: `SaveFileEncryption.md`, `SaveProviderSettings.md`, `FileSaveProvider.md` — default-off encryption, built-in key behaviour (**RU**).
+- **Planning**: `Docs/NO_CODE_AUDIT.md` — аудит No-Code / Inspector UX (биндинг UI, триггеры, roadmap); ссылка из `Docs/README.md`.
+
+## [7.13.20] - 2026-05-03
+### Added
+- **Save / File**: AES-CBC + Base64 encryption for **File** saves (`SaveFileEncryption`, `FileSaveEncryptionConfig`, optional `FileSaveProviderOptions`). Configure key/IV in **Save Provider Settings** when provider type is **File**. Plain JSON files saved **without** encryption remain readable after encryption is enabled (migration-friendly load path).
+
+### Changed
+- **UPM package** (`package.json`): added **`com.unity.inputsystem`** dependency (aligned with template `Packages/manifest.json`).
+
+### Tests
+- **EditMode**: `SaveEncryptionEditModeTests`, `DialogueControllerEditModeTests`, `VisualToggleEditModeTests`.
+- **PlayMode**: `ShopPurchasePlayModeTests` (Shop free-item purchase flow).
+
+### Documentation
+- **Save**: `FileSaveProvider.md`, `SaveProviderSettings.md`, `SaveFileEncryption.md` (**RU**).
+
+## [7.13.19] - 2026-05-02
+### Changed
+- **NeoxiderPages / PM**: `FindAllScenePages` no longer uses `Resources.FindObjectsOfTypeAll` (global loaded-object scan). It now collects `UIPage` only under the PM GameObject via `GetComponentsInChildren<UIPage>(true)` — faster at runtime and matches the intended hierarchy (pages must live under PM).
+
+### Documentation
+- **NeoxiderPages**: `PM.md`, `Docs/NeoxiderPages/README.md`, `DocsEn/NeoxiderPages/README.md` — document that all managed pages must be descendants of the PM object.
+
+## [7.13.18] - 2026-04-30
+### Fixed
+- **Unity / Domain reload**: Moved `[RuntimeInitializeOnLoadMethod]` static reset/bootstrap for **`SaveManager`** and **`MouseInputManager`** out of **`Singleton<T>`** subclasses into non-generic **`SaveManagerSubsystemRegistration`** and **`MouseInputManagerSubsystemRegistration`**. This removes Editor startup errors (“method `ResetStaticState` … in a generic class”) while preserving the same subsystem behaviour.
+
+### Tests
+- **EditMode**: **`SubsystemRegistrationStaticResetEditModeTests`** covers **`SaveManager.ClearSubsystemCaches`**, **`MouseInputManager.ResetSubsystemPollingState`**, and **`EnableAutoCreateForRuntime`**.
+
+### Documentation
+- **Save**: `SaveManager.md` — domain reload / subsystem registration note (**RU**/**EN**).
+- **Tools / Input**: `MouseInputManager.md` (**RU**/**EN**) — bootstrap lives in **`MouseInputManagerSubsystemRegistration`**.
+- **Managers**: `Singleton.md` (**RU**/**EN**) — rule: no `[RuntimeInitializeOnLoadMethod]` on **`Singleton<T>`** subclasses.
+
+## [7.13.17] - 2026-04-30
+### Fixed
+- **Tools / Managers / GM**: Fixed `State` setter — it now assigns `_state = value` so transitions (`StartGame`, `Menu`, `End`, etc.) persist. Previously the internal state never updated, so `G.Start`/`EM.GameStart` could appear stuck (e.g. perpetual `NotStarted`), `G.End` could no-op, and UI (`PM` via `G.OnEnd`) might not switch.
+
+## [7.13.16] - 2026-04-30
+### Fixed
+- **Tools / Managers**: Removed invalid `RuntimeInitializeOnLoadMethod` usage from generic manager classes (`Singleton<T>`, `SingletonById<T>`). Added a non-generic runtime reset bootstrap (`SingletonRuntimeReset`) to keep static-state reset behavior across Play sessions without Unity startup errors.
+- **Runtime Stability**: Normalized object destruction in play mode to use `Destroy(...)` (instead of `DestroyImmediate(...)`) in runtime code paths (`ObjectExtensions`, `NeoObjectPool`, `MeshEmission`, `ParallaxLayer`) to prevent startup spam: `Destroying GameObjects immediately is not permitted...`.
+
+## [7.13.15] - 2026-04-25
+### Documentation
+- **Quality Standardization**: Rewrote 20+ key module docs (StateMachine, Save, Reactive, Extensions) from source code — full API tables, real Inspector fields, No-Code + Code examples, cross-references.
+- **Placeholder Cleanup**: Removed all auto-generated `| ... |` field descriptions (193 files across RU/EN). Every field now has a meaningful description derived from source.
+- **Header Cleanup**: Replaced all `## Новые поля (Автогенерация)` headers with `## Дополнительные поля` (42 RU files).
+- **Purpose Cleanup**: Removed all `Документация сгенерирована автоматически` / `Auto-Generated documentation` placeholders (137 EN files, 1 RU file) — replaced with component-specific descriptions.
+- **StateMachine NoCode**: Fully documented `StateData`, `StateMachineData`, `StateTransition`, `ConditionEntryPredicate` with real API from source (RU + EN).
+- **EN Parity**: Major Extensions docs (CoroutineExtensions, ColorExtension, StringExtension, ComponentExtensions, PrimitiveExtensions) rewritten with full API tables and examples.
+- **Save Module**: `ISaveProvider`, `PlayerPrefsSaveProvider`, `SaveProviderExtensions` — complete API documentation (RU + EN).
+
 ## [7.13.14] - 2026-04-13
 ### Fixed
 - **Tools / Text**: Fixed formatting of compact time string in `TimeSpanExtensions` (`ToCompactString`) to strictly use zero-padded format (`00h 00m`). Fixed missing assembly references and ambiguous namespaces in EditMode tests.

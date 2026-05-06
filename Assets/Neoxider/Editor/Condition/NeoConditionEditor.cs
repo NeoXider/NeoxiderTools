@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Neo.Condition;
+using Neo.Editor.Binding;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -89,7 +90,7 @@ namespace Neo.Editor.Condition
         {
             serializedObject.Update();
 
-
+            DrawConditionEditorHints();
 
             // --- Logic Mode ---
             EditorGUILayout.PropertyField(serializedObject.FindProperty("_logicMode"), new GUIContent("Logic Mode"));
@@ -129,6 +130,40 @@ namespace Neo.Editor.Condition
             serializedObject.ApplyModifiedProperties();
         }
 
+        /// <summary>
+        ///     Warnings only — summary badges UI removed for a cleaner inspector.
+        /// </summary>
+        private void DrawConditionEditorHints()
+        {
+            SerializedProperty conditionsProp = serializedObject.FindProperty("_conditions");
+            SerializedProperty checkModeProp = serializedObject.FindProperty("_checkMode");
+
+            int sceneSearchCount = 0;
+            for (int i = 0; i < conditionsProp.arraySize; i++)
+            {
+                SerializedProperty entryProp = conditionsProp.GetArrayElementAtIndex(i);
+                if (entryProp.FindPropertyRelative("_useSceneSearch").boolValue)
+                {
+                    sceneSearchCount++;
+                }
+            }
+
+            if (conditionsProp.arraySize == 0)
+            {
+                EditorGUILayout.HelpBox(
+                    "There are no conditions. Add at least one entry or the component will not evaluate anything.",
+                    MessageType.Warning);
+            }
+
+            if (sceneSearchCount > 0 && checkModeProp.enumValueIndex == (int)CheckMode.EveryFrame)
+            {
+                EditorGUILayout.HelpBox(
+                    "Scene Search together with Every Frame can be heavy. If you do not need instant per-frame response, prefer Interval or Manual.",
+                    MessageType.Info);
+            }
+
+            EditorGUILayout.Space(4f);
+        }
 
         // ============================
         //  Conditions list
@@ -180,6 +215,7 @@ namespace Neo.Editor.Condition
             SerializedProperty useSceneSearchProp = entryProp.FindPropertyRelative("_useSceneSearch");
             SerializedProperty searchNameProp = entryProp.FindPropertyRelative("_searchObjectName");
             SerializedProperty waitForObjectProp = entryProp.FindPropertyRelative("_waitForObject");
+            SerializedProperty findRetryIntervalProp = entryProp.FindPropertyRelative("_findRetryIntervalSeconds");
             SerializedProperty prefabPreviewProp = entryProp.FindPropertyRelative("_prefabPreview");
             SerializedProperty sourceObjProp = entryProp.FindPropertyRelative("_sourceObject");
             SerializedProperty compTypeProp = entryProp.FindPropertyRelative("_componentTypeName");
@@ -197,6 +233,7 @@ namespace Neo.Editor.Condition
             SerializedProperty otherUseSceneSearchProp = entryProp.FindPropertyRelative("_otherUseSceneSearch");
             SerializedProperty otherSearchNameProp = entryProp.FindPropertyRelative("_otherSearchObjectName");
             SerializedProperty otherWaitForObjectProp = entryProp.FindPropertyRelative("_otherWaitForObject");
+            SerializedProperty otherFindRetryIntervalProp = entryProp.FindPropertyRelative("_otherFindRetryIntervalSeconds");
             SerializedProperty otherSourceObjProp = entryProp.FindPropertyRelative("_otherSourceObject");
             SerializedProperty otherCompTypeProp = entryProp.FindPropertyRelative("_otherComponentTypeName");
             SerializedProperty otherCompIdxProp = entryProp.FindPropertyRelative("_otherComponentIndex");
@@ -351,6 +388,12 @@ namespace Neo.Editor.Condition
                         "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later."),
                     waitForObjectProp.boolValue);
 
+                if (findRetryIntervalProp != null)
+                {
+                    EditorGUILayout.PropertyField(findRetryIntervalProp, new GUIContent("Find Retry Interval (sec)",
+                        "How often GameObject.Find runs again while the object is still missing. Non-blocking. 0 = retry every check. Default 1 s."));
+                }
+
                 if (Application.isPlaying && condition != null)
                 {
                     IReadOnlyList<ConditionEntry> entries = condition.Conditions;
@@ -464,6 +507,7 @@ namespace Neo.Editor.Condition
                             thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
                             thresholdStringProp,
                             otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp, otherWaitForObjectProp,
+                            otherFindRetryIntervalProp,
                             otherSourceObjProp, otherCompTypeProp, otherCompIdxProp, otherPropNameProp);
                     }
                 }
@@ -474,7 +518,7 @@ namespace Neo.Editor.Condition
                     string selectedCompType = compTypeProp.stringValue;
                     if (!string.IsNullOrEmpty(selectedCompType))
                     {
-                        Component selectedComp = FindComponentByTypeName(targetObj, selectedCompType);
+                        Component selectedComp = ComponentBindingInspectorShared.FindComponentByTypeName(targetObj, selectedCompType);
                         if (selectedComp != null)
                         {
                             DrawPropertyDropdown(selectedComp, propNameProp, valueTypeProp,
@@ -493,7 +537,7 @@ namespace Neo.Editor.Condition
                                     thresholdSourceProp, thresholdIntProp, thresholdFloatProp, thresholdBoolProp,
                                     thresholdStringProp,
                                     otherSourceModeProp, otherUseSceneSearchProp, otherSearchNameProp,
-                                    otherWaitForObjectProp,
+                                    otherWaitForObjectProp, otherFindRetryIntervalProp,
                                     otherSourceObjProp, otherCompTypeProp, otherCompIdxProp, otherPropNameProp);
                             }
                         }
@@ -526,6 +570,7 @@ namespace Neo.Editor.Condition
             SerializedProperty otherUseSceneSearchProp,
             SerializedProperty otherSearchNameProp,
             SerializedProperty otherWaitForObjectProp,
+            SerializedProperty otherFindRetryIntervalProp,
             SerializedProperty otherSourceObjProp,
             SerializedProperty otherCompTypeProp,
             SerializedProperty otherCompIdxProp,
@@ -579,6 +624,12 @@ namespace Neo.Editor.Condition
                     otherWaitForObjectProp.boolValue = EditorGUILayout.Toggle(
                         new GUIContent("Other: Wait For Object"),
                         otherWaitForObjectProp.boolValue);
+                    if (otherFindRetryIntervalProp != null)
+                    {
+                        EditorGUILayout.PropertyField(otherFindRetryIntervalProp,
+                            new GUIContent("Other: Find Retry Interval (sec)",
+                                "How often Other GameObject.Find runs while that object is missing. 0 = every check. Default 1 s."));
+                    }
                     if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
                     {
                         otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
@@ -623,7 +674,7 @@ namespace Neo.Editor.Condition
                         string otherCompType = otherCompTypeProp.stringValue;
                         if (!string.IsNullOrEmpty(otherCompType))
                         {
-                            Component otherComp = FindComponentByTypeName(otherTargetObj, otherCompType);
+                            Component otherComp = ComponentBindingInspectorShared.FindComponentByTypeName(otherTargetObj, otherCompType);
                             if (otherComp != null)
                             {
                                 DrawPropertyDropdown(otherComp, otherPropNameProp, null,
@@ -720,41 +771,9 @@ namespace Neo.Editor.Condition
             SerializedProperty compIdxProp, SerializedProperty propNameProp,
             SerializedProperty isMethodProp = null)
         {
-            Component[] components = targetObj.GetComponents<Component>();
             List<string> names = new();
             List<string> typeNames = new();
-
-            for (int i = 0; i < components.Length; i++)
-            {
-                if (components[i] == null)
-                {
-                    continue;
-                }
-
-                Type t = components[i].GetType();
-                if (t == typeof(Transform))
-                {
-                    continue;
-                }
-
-                string displayName = t.Name;
-                int duplicateCount = 0;
-                for (int j = 0; j < i; j++)
-                {
-                    if (components[j] != null && components[j].GetType() == t)
-                    {
-                        duplicateCount++;
-                    }
-                }
-
-                if (duplicateCount > 0)
-                {
-                    displayName += $" ({duplicateCount + 1})";
-                }
-
-                names.Add(displayName);
-                typeNames.Add(t.FullName);
-            }
+            ComponentBindingInspectorShared.BuildComponentPickLists(targetObj, names, typeNames);
 
             if (names.Count == 0)
             {
@@ -762,19 +781,7 @@ namespace Neo.Editor.Condition
                 return;
             }
 
-            int currentIndex = -1;
-            string currentType = compTypeProp.stringValue;
-            if (!string.IsNullOrEmpty(currentType))
-            {
-                for (int i = 0; i < typeNames.Count; i++)
-                {
-                    if (typeNames[i] == currentType)
-                    {
-                        currentIndex = i;
-                        break;
-                    }
-                }
-            }
+            int currentIndex = ComponentBindingInspectorShared.IndexOfFullName(typeNames, compTypeProp.stringValue);
 
             EditorGUI.BeginChangeCheck();
             int newIndex = EditorGUILayout.Popup("Component", Mathf.Max(currentIndex, 0), names.ToArray());
@@ -805,91 +812,14 @@ namespace Neo.Editor.Condition
             SerializedProperty argFloatProp = null,
             SerializedProperty argStringProp = null)
         {
-            Type compType = comp.GetType();
             List<string> propertyNames = new();
             List<ValueType> propertyTypes = new();
             List<string> displayNames = new();
             List<bool> isMethodList = new();
             List<ArgumentKind> argumentKinds = new();
 
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.Instance;
-
-            foreach (PropertyInfo prop in compType.GetProperties(flags))
-            {
-                if (!prop.CanRead || prop.GetIndexParameters().Length > 0)
-                {
-                    continue;
-                }
-
-                ValueType? vt = GetValueType(prop.PropertyType);
-                if (vt == null || IsUnityNoiseMember(prop.Name))
-                {
-                    continue;
-                }
-
-                propertyNames.Add(prop.Name);
-                propertyTypes.Add(vt.Value);
-                displayNames.Add($"{prop.Name}  ({vt.Value})  [prop]");
-                isMethodList.Add(false);
-                argumentKinds.Add(ArgumentKind.Int);
-            }
-
-            foreach (FieldInfo field in compType.GetFields(flags))
-            {
-                ValueType? vt = GetValueType(field.FieldType);
-                if (vt == null || IsUnityNoiseMember(field.Name))
-                {
-                    continue;
-                }
-
-                propertyNames.Add(field.Name);
-                propertyTypes.Add(vt.Value);
-                displayNames.Add($"{field.Name}  ({vt.Value})");
-                isMethodList.Add(false);
-                argumentKinds.Add(ArgumentKind.Int);
-            }
-
-            if (isMethodProp != null)
-            {
-                foreach (MethodInfo method in compType.GetMethods(flags))
-                {
-                    if (IsUnityNoiseMember(method.Name))
-                    {
-                        continue;
-                    }
-
-                    ParameterInfo[] parameters = method.GetParameters();
-                    if (parameters.Length != 1)
-                    {
-                        continue;
-                    }
-
-                    ArgumentKind? argKind = GetArgumentKind(parameters[0].ParameterType);
-                    if (argKind == null)
-                    {
-                        continue;
-                    }
-
-                    ValueType? returnVt = GetValueType(method.ReturnType);
-                    if (returnVt == null)
-                    {
-                        continue;
-                    }
-
-                    string paramLabel = argKind switch
-                    {
-                        ArgumentKind.Int => "int",
-                        ArgumentKind.Float => "float",
-                        ArgumentKind.String => "string",
-                        _ => "?"
-                    };
-                    propertyNames.Add(method.Name);
-                    propertyTypes.Add(returnVt.Value);
-                    displayNames.Add($"{method.Name} ({paramLabel}) → {returnVt.Value} [method]");
-                    isMethodList.Add(true);
-                    argumentKinds.Add(argKind.Value);
-                }
-            }
+            ComponentBindingInspectorShared.BuildConditionMemberLists(comp, isMethodProp != null, propertyNames,
+                propertyTypes, displayNames, isMethodList, argumentKinds);
 
             if (displayNames.Count == 0)
             {
@@ -897,29 +827,12 @@ namespace Neo.Editor.Condition
                 return;
             }
 
-            int currentIndex = -1;
             string currentPropName = propNameProp.stringValue;
             bool currentIsMethod = isMethodProp != null && isMethodProp.boolValue;
             int currentArgKind = argKindProp != null ? argKindProp.enumValueIndex : 0;
-            for (int i = 0; i < propertyNames.Count; i++)
-            {
-                if (propertyNames[i] != currentPropName)
-                {
-                    continue;
-                }
-
-                if (isMethodProp == null)
-                {
-                    currentIndex = i;
-                    break;
-                }
-
-                if (isMethodList[i] == currentIsMethod && (!isMethodList[i] || (int)argumentKinds[i] == currentArgKind))
-                {
-                    currentIndex = i;
-                    break;
-                }
-            }
+            bool disambiguateMethods = isMethodProp != null;
+            int currentIndex = ComponentBindingInspectorShared.FindConditionMemberIndex(propertyNames, isMethodList,
+                argumentKinds, currentPropName, currentIsMethod, currentArgKind, disambiguateMethods);
 
             if (currentIndex < 0)
             {
@@ -974,27 +887,6 @@ namespace Neo.Editor.Condition
             }
 
             EditorGUI.indentLevel--;
-        }
-
-        private static ArgumentKind? GetArgumentKind(Type parameterType)
-        {
-            if (parameterType == typeof(int) || parameterType == typeof(long) || parameterType == typeof(short) ||
-                parameterType == typeof(byte))
-            {
-                return ArgumentKind.Int;
-            }
-
-            if (parameterType == typeof(float) || parameterType == typeof(double))
-            {
-                return ArgumentKind.Float;
-            }
-
-            if (parameterType == typeof(string))
-            {
-                return ArgumentKind.String;
-            }
-
-            return null;
         }
 
         // ============================
@@ -1200,7 +1092,8 @@ namespace Neo.Editor.Condition
                         continue;
                     }
 
-                    if (GetArgumentKind(method.GetParameters()[0].ParameterType) != kind)
+                    if (ComponentBindingInspectorShared.TryGetConditionArgumentKind(method.GetParameters()[0]
+                            .ParameterType) != kind)
                     {
                         continue;
                     }
@@ -1384,75 +1277,14 @@ namespace Neo.Editor.Condition
         //  Helpers
         // ============================
 
-        private static Component FindComponentByTypeName(GameObject obj, string typeName)
-        {
-            Component[] components = obj.GetComponents<Component>();
-            foreach (Component comp in components)
-            {
-                if (comp == null)
-                {
-                    continue;
-                }
-
-                if (comp.GetType().FullName == typeName || comp.GetType().Name == typeName)
-                {
-                    return comp;
-                }
-            }
-
-            return null;
-        }
-
-        private static ValueType? GetValueType(Type type)
-        {
-            if (type == typeof(int) || type == typeof(long) || type == typeof(short) || type == typeof(byte))
-            {
-                return ValueType.Int;
-            }
-
-            if (type == typeof(float) || type == typeof(double))
-            {
-                return ValueType.Float;
-            }
-
-            if (type == typeof(bool))
-            {
-                return ValueType.Bool;
-            }
-
-            if (type == typeof(string))
-            {
-                return ValueType.String;
-            }
-
-            return null;
-        }
-
-        private static bool IsUnityNoiseMember(string name)
-        {
-            switch (name)
-            {
-                case "useGUILayout":
-                case "runInEditMode":
-                case "enabled":
-                case "isActiveAndEnabled":
-                case "gameObject":
-                case "tag":
-                case "name":
-                case "hideFlags":
-                case "destroyCancellationToken":
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
         private static void ResetConditionEntry(SerializedProperty entry)
         {
             entry.FindPropertyRelative("_sourceMode").enumValueIndex = (int)SourceMode.Component;
             entry.FindPropertyRelative("_useSceneSearch").boolValue = false;
             entry.FindPropertyRelative("_searchObjectName").stringValue = "";
             entry.FindPropertyRelative("_waitForObject").boolValue = false;
+            entry.FindPropertyRelative("_findRetryIntervalSeconds").floatValue =
+                BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
             entry.FindPropertyRelative("_prefabPreview").objectReferenceValue = null;
             entry.FindPropertyRelative("_sourceObject").objectReferenceValue = null;
             entry.FindPropertyRelative("_componentIndex").intValue = 0;
@@ -1475,6 +1307,8 @@ namespace Neo.Editor.Condition
             entry.FindPropertyRelative("_otherUseSceneSearch").boolValue = false;
             entry.FindPropertyRelative("_otherSearchObjectName").stringValue = "";
             entry.FindPropertyRelative("_otherWaitForObject").boolValue = false;
+            entry.FindPropertyRelative("_otherFindRetryIntervalSeconds").floatValue =
+                BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
             entry.FindPropertyRelative("_otherSourceObject").objectReferenceValue = null;
             entry.FindPropertyRelative("_otherComponentIndex").intValue = 0;
             entry.FindPropertyRelative("_otherComponentTypeName").stringValue = "";
