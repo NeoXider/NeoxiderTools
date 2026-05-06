@@ -11,7 +11,22 @@ namespace Neo.Tools
     /// <summary>
     ///     Rigidbody-based 3D player controller with mouse-look, movement, sprint and jump.
     /// </summary>
+    /// <remarks>
+    ///     With Mirror, this type is a <see cref="Mirror.NetworkBehaviour"/> and expects a networked player prefab.
+    ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable"/> on the same GameObject yourself when you need replication;
+    ///     typical settings: <c>syncDirection = ClientToServer</c>, <c>Coordinate Space = World</c> if needed.
+    ///     Leave <c>NetworkRigidbodyUnreliable.useFixedUpdate</c> disabled on stock Mirror: when it is on, the rigidbody
+    ///     component’s <c>FixedUpdate</c> shadows the transform’s pending snapshot apply, so remote proxies may not move.
+    ///     <see cref="Awake"/> assigns <c>NetworkRigidbodyUnreliable.target</c> to this character's <see cref="Rigidbody"/> transform
+    ///     so a wrong child target in the Inspector cannot break replication.
+    ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable.Awake</c>,
+    ///     which must see the correct target when caching the Rigidbody.
+    /// </remarks>
+    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody))]
+#if MIRROR
+    [RequireComponent(typeof(NetworkIdentity))]
+#endif
     [NeoDoc("Tools/Move/PlayerController3DPhysics.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
         "Prefabs/Tools/First Person Controller.prefab")]
@@ -188,6 +203,14 @@ namespace Neo.Tools
             {
                 _externalCursorLockController = GetComponent<CursorLockController>();
             }
+
+#if MIRROR
+            var netRb = GetComponent<NetworkRigidbodyUnreliable>();
+            if (netRb != null && netRb.target != _rigidbody.transform)
+            {
+                netRb.target = _rigidbody.transform;
+            }
+#endif
         }
 
         private void Start()

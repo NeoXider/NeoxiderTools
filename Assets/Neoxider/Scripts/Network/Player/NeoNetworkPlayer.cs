@@ -97,16 +97,35 @@ namespace Neo.Network
         {
             SetObjectsActive(_localOnlyObjects, true);
             SetObjectsActive(_remoteOnlyObjects, false);
+            SetChildAudioListenersEnabled(true);
             _onLocalPlayerStarted?.Invoke();
             Debug.Log($"[NeoNetworkPlayer] Local player started: {gameObject.name}");
         }
 
         private void SetupRemotePlayer()
         {
+            SetChildAudioListenersEnabled(false);
             SetObjectsActive(_localOnlyObjects, false);
             SetObjectsActive(_remoteOnlyObjects, true);
             _onRemotePlayerStarted?.Invoke();
             Debug.Log($"[NeoNetworkPlayer] Remote player started: {gameObject.name}");
+        }
+
+        /// <summary>
+        ///     Unity allows only one active <see cref="AudioListener"/> in the loaded world.
+        ///     Remote player prefabs often still contain a listener on the camera; disable it even
+        ///     when <see cref="_localOnlyObjects"/> is not wired in the Inspector.
+        /// </summary>
+        private void SetChildAudioListenersEnabled(bool enabled)
+        {
+            var listeners = GetComponentsInChildren<AudioListener>(true);
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                if (listeners[i] != null)
+                {
+                    listeners[i].enabled = enabled;
+                }
+            }
         }
 
         private static void SetObjectsActive(GameObject[] objects, bool active)

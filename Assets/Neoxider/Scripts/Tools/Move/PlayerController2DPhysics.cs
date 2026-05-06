@@ -10,7 +10,20 @@ namespace Neo.Tools
     /// <summary>
     ///     Rigidbody2D-based side-scroller controller with run, jump and optional camera follow.
     /// </summary>
+    /// <remarks>
+    ///     With Mirror, this type is a <see cref="Mirror.NetworkBehaviour"/> and expects a networked player prefab.
+    ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable2D"/> on the same GameObject yourself when you need replication;
+    ///     typical settings: <c>syncDirection = ClientToServer</c>.
+    ///     Leave <c>NetworkRigidbodyUnreliable2D.useFixedUpdate</c> disabled on stock Mirror (same shadow-<c>FixedUpdate</c> issue as 3D).
+    ///     <see cref="Awake"/> assigns <c>NetworkRigidbodyUnreliable2D.target</c> to this character's <see cref="Rigidbody2D"/> transform
+    ///     so a wrong child target in the Inspector cannot break replication.
+    ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable2D.Awake</c>.
+    /// </remarks>
+    [DefaultExecutionOrder(-100)]
     [RequireComponent(typeof(Rigidbody2D))]
+#if MIRROR
+    [RequireComponent(typeof(NetworkIdentity))]
+#endif
     [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DPhysics")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
@@ -129,6 +142,14 @@ namespace Neo.Tools
                     "[PlayerController2DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
                     this);
             }
+
+#if MIRROR
+            var netRb = GetComponent<NetworkRigidbodyUnreliable2D>();
+            if (netRb != null && netRb.target != _rigidbody.transform)
+            {
+                netRb.target = _rigidbody.transform;
+            }
+#endif
         }
 
         private void Update()

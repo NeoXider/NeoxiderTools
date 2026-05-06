@@ -16,6 +16,7 @@ namespace Neo.Shop
     [CreateFromMenu("Neoxider/Shop/Money")]
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
 #if MIRROR
+    [RequireComponent(typeof(NetworkIdentity))]
     public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd
 #else
     public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
