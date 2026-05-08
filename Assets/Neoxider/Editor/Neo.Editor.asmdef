@@ -44,7 +44,10 @@
         "Mirror",
         "Neo.Network.Core",
         "GUID:7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b",
-        "GUID:a1d60b5ab1083554fb8e5e485286d541"
+        "GUID:a1d60b5ab1083554fb8e5e485286d541",
+        "GUID:72872094b21c16e48b631b2224833d49",
+        "GUID:6806a62c384838046a3c66c44f06d75f",
+        "Unity.TextMeshPro"
     ],
     "includePlatforms": [
         "Editor"

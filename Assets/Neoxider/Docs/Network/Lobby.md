@@ -140,7 +140,29 @@ Scene: Game (Gameplay Scene)
 └── Standard gameplay with NeoNetworkPlayer
 ```
 
+## Быстрый старт: Демо-сцена
+
+Используйте Editor-генератор для автоматического создания настроенной демо-сцены:
+
+**Меню:** `Neoxider → Network → Create Lobby Demo Scene`
+
+Генератор создаст:
+- `NeoLobbyManager` + `KcpTransport` + `NetworkDiscovery` + `NeoNetworkDiscovery`
+- Room Player префаб (`NeoLobbyPlayer` + `NetworkIdentity`)
+- UI панель с кнопками Host / Join / Ready / Leave
+- Автоматическую привязку событий (player count, status, discovery)
+- EventSystem
+
+После генерации:
+1. Сохраните сцену (диалог появится автоматически)
+2. В Inspector `NeoLobbyManager` укажите **Gameplay Scene** (сцена после лобби)
+3. Добавьте обе сцены в Build Settings
+4. Запустите — кнопка Host создаёт лобби, Join подключается
+
+---
+
 ## См. также
 - [Multiplayer Guide](Multiplayer_Guide.md) — основной гайд
 - [NeoNetworkManager](NeoNetworkManager.md) — базовый менеджер (без лобби)
 - [NoCode Network Spec](NoCode_Network_Spec.md) — Правило 10
+
