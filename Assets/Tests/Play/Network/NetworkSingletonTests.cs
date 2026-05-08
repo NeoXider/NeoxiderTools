@@ -67,7 +67,7 @@ namespace Neo.Tests.Play
 
             GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(dummyId, (uint)99999);
+            NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
             Transport.active = transport;
@@ -80,7 +80,7 @@ namespace Neo.Tests.Play
             _singleton = _singletonObj.AddComponent<TestNetworkSingleton>();
             
             NetworkIdentity identity = _singletonObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(identity, (uint)54321);
+            NetworkTestHelper.SetAssetId(identity, 54321);
 
             // Register prefab
             NetworkClient.RegisterPrefab(_singletonObj);

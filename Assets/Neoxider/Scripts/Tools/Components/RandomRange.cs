@@ -34,6 +34,15 @@ namespace Neo.Tools
         [Tooltip("If true, the generated random value will be synchronized to all clients so everyone gets the same number.")]
         public bool isNetworked = false;
 
+#if MIRROR
+        /// <summary>Server-authoritative last random value, synced to late-joining clients.</summary>
+        [SyncVar]
+        private float _syncValue;
+
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+#endif
+
         [Header("Mode")] [Tooltip("Generate integer (inclusive min..max) or float (min..max).")] [SerializeField]
         private RandomRangeValueMode _valueMode = RandomRangeValueMode.Int;
 
@@ -96,6 +105,7 @@ namespace Neo.Tools
                 
                 // Server generates and multicasts
                 float val = RollRandomValue();
+                _syncValue = val;
                 ApplyValueLocally(val);
                 RpcReceiveValue(val);
                 return;
@@ -131,9 +141,13 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdGenerate()
+        private void CmdGenerate(NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
             float val = RollRandomValue();
+            _syncValue = val;
             ApplyValueLocally(val);
             RpcReceiveValue(val);
         }
@@ -150,6 +164,16 @@ namespace Neo.Tools
             if (isNetworked)
             {
                 base.OnValidate();
+            }
+        }
+
+        /// <summary>Late-join: apply server-authoritative value to newly connected client.</summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                ApplyValueLocally(_syncValue);
             }
         }
 #endif

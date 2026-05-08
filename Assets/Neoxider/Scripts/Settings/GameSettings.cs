@@ -88,12 +88,27 @@ namespace Neo.Settings
             s_context = component;
         }
 
-        internal static void ResetStaticStateForTesting()
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
         {
             s_context = null;
+            s_localization = null;
             s_mouseSensitivity = 2f;
             s_graphicsPreset = GraphicsPreset.High;
+            s_qualityLevelIndex = 0;
+            s_fullScreen = true;
+            s_fullScreenMode = FullScreenMode.FullScreenWindow;
+            s_resolutionAuto = true;
+            s_resolutionIndex = 0;
+            s_framerateCap = -1;
+            s_vSync = false;
+            // Prevent listener leaks when Domain Reload is disabled
+            OnSettingsChanged = null;
+            OnAfterSettingsLoaded = null;
         }
+
+        /// <summary>Alias for tests that need to reset state explicitly.</summary>
+        internal static void ResetStaticStateForTesting() => ResetStaticState();
 
         /// <summary>Releases context when the service is destroyed.</summary>
         public static void Detach(GameSettingsComponent component)

@@ -33,6 +33,16 @@ namespace Neo.Condition
         Interval
     }
 
+    /// <summary>Who evaluates the condition when isNetworked is true.</summary>
+    public enum ConditionAuthority
+    {
+        /// <summary>Server re-evaluates conditions itself (secure, default). Use when conditions check shared state.</summary>
+        ServerRevalidate,
+
+        /// <summary>Server trusts client result. Use when conditions check client-local state (UI, input) that the server cannot access.</summary>
+        TrustClient
+    }
+
     /// <summary>
     ///     No-Code condition system. Evaluates field/property values of any component via Inspector without code.
     ///     Supports AND/OR logic, inversion, and manual or automatic checking.
@@ -56,6 +66,20 @@ namespace Neo.Condition
         [Tooltip("If enabled, evaluates locally but triggers UnityEvents globally for all clients.")]
         [SerializeField]
         public bool isNetworked = false;
+
+        [Tooltip("ServerRevalidate: server evaluates conditions itself (secure). TrustClient: server trusts client result (for client-local conditions like UI/input).")]
+        [SerializeField]
+        private ConditionAuthority _authority = ConditionAuthority.ServerRevalidate;
+
+#if MIRROR
+        /// <summary>Server-authoritative last result, synced to late-joining clients.</summary>
+        [SyncVar]
+        private bool _syncResult;
+
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+#endif
+
         [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]
         private LogicMode _logicMode = LogicMode.AND;
 
@@ -151,11 +175,15 @@ namespace Neo.Condition
             }
         }
 #endif
+        private float _nextEveryFrameCheck;
 
         private void Update()
         {
             if (_checkMode == CheckMode.EveryFrame)
             {
+                // Throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz)
+                if (Time.time < _nextEveryFrameCheck) return;
+                _nextEveryFrameCheck = Time.time + 0.016f;
                 Check();
             }
         }
@@ -188,7 +216,10 @@ namespace Neo.Condition
             {
                 if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
-                    CmdCheckResult(result);
+                    if (_authority == ConditionAuthority.TrustClient)
+                        CmdClientResult(result); // Client sends its result (for client-local conditions)
+                    else
+                        CmdRequestCheck();        // Client asks server to re-evaluate (secure)
                     return;
                 }
             }
@@ -199,6 +230,7 @@ namespace Neo.Condition
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
+                _syncResult = result;
                 RpcInvokeEvents(result);
             }
 #endif
@@ -220,9 +252,38 @@ namespace Neo.Condition
         }
 
 #if MIRROR
+        /// <summary>Client requests server to re-evaluate conditions (ServerRevalidate mode).</summary>
         [Command(requiresAuthority = false)]
-        private void CmdCheckResult(bool result)
+        private void CmdRequestCheck(NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
+            // Server evaluates conditions itself — never trust client-provided result
+            bool result = Evaluate();
+            bool changed = !_lastResult.HasValue || _lastResult.Value != result;
+            _lastResult = result;
+
+            if (_onlyOnChange && !changed) return;
+
+            _syncResult = result;
+            InvokeEvents(result);
+            RpcInvokeEvents(result);
+        }
+
+        /// <summary>Client sends its local result (TrustClient mode). Use only for client-local conditions.</summary>
+        [Command(requiresAuthority = false)]
+        private void CmdClientResult(bool result, NetworkConnectionToClient sender = null)
+        {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
+            bool changed = !_lastResult.HasValue || _lastResult.Value != result;
+            _lastResult = result;
+
+            if (_onlyOnChange && !changed) return;
+
+            _syncResult = result;
             InvokeEvents(result);
             RpcInvokeEvents(result);
         }
@@ -230,8 +291,20 @@ namespace Neo.Condition
         [ClientRpc(includeOwner = true)]
         private void RpcInvokeEvents(bool result)
         {
-            if (isServerOnly) return; // Prevent double invocation on host
+            if (isServer) return; // Prevent double invocation on host
+            _lastResult = result;
             InvokeEvents(result);
+        }
+
+        /// <summary>Late-join: apply server-authoritative result to newly connected client.</summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                _lastResult = _syncResult;
+                InvokeEvents(_syncResult);
+            }
         }
 #endif
 

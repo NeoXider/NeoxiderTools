@@ -42,6 +42,18 @@ namespace Neo.Tools
         [Tooltip("If enabled, changing the selection locally is replicated to all clients.")]
         [SerializeField]
         public bool isNetworked = false;
+
+#if MIRROR
+        /// <summary>Server-authoritative index, synced to late-joining clients.</summary>
+        [SyncVar] private int _syncIndex;
+        /// <summary>Server-authoritative fill mode, synced to late-joining clients.</summary>
+        [SyncVar] private bool _syncFillMode;
+        /// <summary>Server-authoritative deactivateNonSelected flag.</summary>
+        [SyncVar] private bool _syncDeactivateNonSelected = true;
+
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+#endif
         #region Private Methods
 
         /// <summary>
@@ -70,6 +82,9 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
+                _syncIndex = _currentIndex;
+                _syncFillMode = _fillMode;
+                _syncDeactivateNonSelected = deactivateNonSelected;
                 RpcSyncState(_currentIndex, deactivateNonSelected);
             }
 #endif
@@ -259,8 +274,15 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdSyncState(int newIndex, bool deactivateNonSelected)
+        private void CmdSyncState(int newIndex, bool deactivateNonSelected, NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
+            _syncIndex = newIndex;
+            _syncFillMode = _fillMode;
+            _syncDeactivateNonSelected = deactivateNonSelected;
+
             _currentIndex = newIndex;
             ApplyUpdateSelection(deactivateNonSelected);
             RpcSyncState(newIndex, deactivateNonSelected);
@@ -275,9 +297,28 @@ namespace Neo.Tools
         }
 
         [Command(requiresAuthority = false)]
-        private void CmdSetRandom(bool deactivateOthers)
+        private void CmdSetRandom(bool deactivateOthers, NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
             ExecuteSetRandom(deactivateOthers);
+            _syncIndex = _currentIndex;
+            _syncFillMode = _fillMode;
+        }
+
+        /// <summary>
+        ///     Late-join: apply server's authoritative state to newly connected client.
+        /// </summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                _currentIndex = _syncIndex;
+                _fillMode = _syncFillMode;
+                ApplyUpdateSelection(_syncDeactivateNonSelected);
+            }
         }
 #endif
 

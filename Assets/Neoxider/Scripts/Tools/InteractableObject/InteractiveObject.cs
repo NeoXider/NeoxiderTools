@@ -875,9 +875,14 @@ namespace Neo.Tools
         }
 
 #if MIRROR
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+
         [Command(requiresAuthority = false)]
-        private void CmdInteractDown()
+        private void CmdInteractDown(NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
             if (isServerOnly) onInteractDown?.Invoke();
             RpcInteractDown();
         }
@@ -886,8 +891,10 @@ namespace Neo.Tools
         private void RpcInteractDown() => onInteractDown?.Invoke();
 
         [Command(requiresAuthority = false)]
-        private void CmdInteractUp()
+        private void CmdInteractUp(NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
             if (isServerOnly) onInteractUp?.Invoke();
             RpcInteractUp();
         }
@@ -896,8 +903,10 @@ namespace Neo.Tools
         private void RpcInteractUp() => onInteractUp?.Invoke();
 
         [Command(requiresAuthority = false)]
-        private void CmdClick(int buttonInt, bool isDouble)
+        private void CmdClick(int buttonInt, bool isDouble, NetworkConnectionToClient sender = null)
         {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
             if (isServerOnly) InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
             RpcClick(buttonInt, isDouble);
         }

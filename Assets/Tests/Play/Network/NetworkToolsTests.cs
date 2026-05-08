@@ -25,7 +25,7 @@ namespace Neo.Tests.Play
 
             GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(dummyId, (uint)99998);
+            NetworkTestHelper.SetAssetId(dummyId, 99998);
             _networkManager.playerPrefab = dummyPlayer;
 
             Transport.active = transport;
@@ -56,7 +56,7 @@ namespace Neo.Tests.Play
             counter.isNetworked = true;
             
             var id = counterObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10001);
+            NetworkTestHelper.SetAssetId(id, 10001);
             NetworkClient.RegisterPrefab(counterObj);
             NetworkServer.Spawn(counterObj);
 
@@ -83,7 +83,7 @@ namespace Neo.Tests.Play
             selector.isNetworked = true;
 
             var id = selectorObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10002);
+            NetworkTestHelper.SetAssetId(id, 10002);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
@@ -113,7 +113,7 @@ namespace Neo.Tests.Play
             typeof(NeoCondition).GetField("_onlyOnChange", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(condition, false);
 
             var id = condObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10003);
+            NetworkTestHelper.SetAssetId(id, 10003);
             NetworkClient.RegisterPrefab(condObj);
             NetworkServer.Spawn(condObj);
 
@@ -141,7 +141,7 @@ namespace Neo.Tests.Play
             randomRange.SetMax(100);
 
             var id = randObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10004);
+            NetworkTestHelper.SetAssetId(id, 10004);
             NetworkClient.RegisterPrefab(randObj);
             NetworkServer.Spawn(randObj);
 
@@ -168,7 +168,7 @@ namespace Neo.Tests.Play
             selector.isNetworked = true;
 
             var id = selectorObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10005);
+            NetworkTestHelper.SetAssetId(id, 10005);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 

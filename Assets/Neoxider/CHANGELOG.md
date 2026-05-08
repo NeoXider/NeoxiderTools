@@ -1,4 +1,41 @@
 
+## [8.1.0] - 2026-05-08
+
+Мультиплеер: полная реализация анализа — базовый класс, NoCode-сетевые компоненты, серверная безопасность, лобби и универсальная синхронизация.
+
+### Added
+- **NeoNetworkComponent** — абстрактный базовый класс для сетевых компонентов. Предоставляет `isNetworked`, `RateLimitCheck()`, `ApplyNetworkState()`, `ShouldDispatchToServer()`, `ShouldBroadcastRpc()`. Устраняет boilerplate в каждом компоненте.
+- **NetworkPropertySync** — универсальный NoCode синхронизатор любого поля/свойства через Reflection. Типы: Float/Int/Bool/String/Vector3. Направления: ServerToClients/OwnerToServer. Rate-limiting, threshold, SyncVar late-join.
+- **NetworkActionRelay** — многоканальный NoCode broadcast UnityEvent по сети (void/float/string). Три режима scope: `AllClients`, `ServerOnly`, `OthersOnly`. Rate-limiting. Offline fallback.
+- **NetworkOwnerFilter** — NoCode фильтр по сетевой роли (`LocalPlayerOnly`, `ServerOnly`, `Everyone`). Offline fallback (всегда allowed).
+- **NeoNetworkDiscovery** — NoCode обёртка над Mirror `NetworkDiscovery` для LAN-обнаружения серверов. Авто-реклама при хосте, авто-поиск при клиенте, `ConnectToFirstServer()`.
+- **NeoLobbyManager** — NoCode обёртка над Mirror `NetworkRoomManager`. Лобби с ready-проверкой, `MinPlayersToStart`, UnityEvents для всех lifecycle.
+- **NeoLobbyPlayer** — NoCode обёртка над Mirror `NetworkRoomPlayer`. `ToggleReady()`, `SetReady(bool)`, события `OnReadyChanged`, `OnBecameLocalPlayer`.
+- **Тесты (PlayMode)**: `NetworkActionRelayTests` (6 кейсов), `NetworkOwnerFilterTests` (3 кейса).
+- **Документация**: `NeoNetworkComponent.md`, `NetworkPropertySync.md`, `Lobby.md`, `NetworkActionRelay.md`, `NetworkOwnerFilter.md` — все по стандарту DOCUMENTATION.md (Что это / Как использовать / Поля / Методы / События / Примеры / См. также).
+- **NoCode_Network_Spec**: Правила 8–11 (серверная валидация, Late-Join SyncVar, таблица компонентов, NeoNetworkComponent).
+- **Multiplayer_Guide**: секция 5 «NoCode мультиплеер для любой механики», полная таблица всех 12 компонентов.
+
+### Changed
+- **NeoNetworkState** — единый статический API. `NeoNetworkHelpers` удалён.
+- **Money** — рефакторинг: 12 индивидуальных Cmd/Rpc методов (6 пар) заменены на `MoneyOp` enum + единый `CmdMoneyOp` + единый `RpcMoneyOp` + `ExecuteOp` switch. Серверная валидация `CanSpend()`.
+
+### Security (P0)
+- **Counter**: `[SyncVar] _syncValue`, rate-limiting (50ms), `NetworkConnectionToClient sender`.
+- **Money**: `[SyncVar] _syncCurrentMoney`, rate-limiting, `CanSpend()` валидация, `OnStartClient()` late-join.
+- **Selector**: `[SyncVar] _syncIndex` + `_syncFillMode` + `_syncDeactivateNonSelected`, rate-limiting, `OnStartClient()` late-join.
+- **NeoCondition**: `[SyncVar] _syncResult`, rate-limiting (50ms), `OnStartClient()` late-join. Новый `ConditionAuthority` enum (`ServerRevalidate` / `TrustClient`).
+
+### Fixed
+- **[P0] NeoCondition: серверная валидация** — клиент больше не отправляет готовый bool результат серверу (`CmdCheckResult(bool)` → `CmdRequestCheck()`). В режиме `ServerRevalidate` (default) сервер сам вычисляет условия. Режим `TrustClient` — для клиент-локальных условий (UI, input).
+- **[P0] ReactiveProperty: ConcurrentModification** — итерация по snapshot count + bounds guard в `NotifySubscribers()`. Предотвращает skip/crash при `AddListener`/`RemoveListener` внутри callback.
+- **[P0] NoCodeBindText: GetComponent кеширование** — `SetText`, `TimeToText`, `TMP_Text` теперь кешируются в `OnEnable`, а не вызываются на каждый `ApplyFloat`.
+- **[P0] SaveProvider: static events leak** — `OnDataSaved`, `OnDataLoaded`, `OnKeyChanged` очищаются в `ResetStaticState` для корректной работы при Domain Reload OFF.
+- **[P1] RandomRange**: `[SyncVar] _syncValue`, rate-limiting (50ms), `OnStartClient()` late-join.
+- **[P1] InteractiveObject**: rate-limiting (50ms) на `CmdInteractDown/Up/Click`.
+- **[P1] NeoCondition: EveryFrame throttle** — `CheckMode.EveryFrame` теперь не чаще 60hz (16ms) для предотвращения reflection overhead.
+- **[P1] GameSettings: полный ResetStaticState** — `[RuntimeInitializeOnLoadMethod]`, очистка всех static полей + event delegates.
+
 ## [8.0.0] - 2026-05-02
 
 Мажорный релиз: **Neo.NoCode**, доработки **NeoCondition** / общего резолва **`GameObject.Find`**, опциональное управление курсором в **PlayerController3DPhysics**, плюс накопленные изменения Save/Shop/тестов из ветки **7.15.0**.

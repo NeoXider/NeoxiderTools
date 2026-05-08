@@ -121,10 +121,14 @@ namespace Neo.Reactive
 
         private void NotifySubscribers()
         {
-            if (_codeListeners != null)
+            if (_codeListeners is { Count: > 0 })
             {
-                for (int i = 0; i < _codeListeners.Count; i++)
+                // Snapshot: prevents ConcurrentModification if a listener calls Add/RemoveListener
+                int count = _codeListeners.Count;
+                for (int i = 0; i < count; i++)
                 {
+                    // Guard: list may have shrunk if a listener removed itself
+                    if (i >= _codeListeners.Count) break;
                     UnityAction<T> listener = _codeListeners[i];
                     try
                     {

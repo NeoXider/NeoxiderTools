@@ -28,26 +28,46 @@ namespace Neo.NoCode
         [SerializeField]
         private TimeToText _timeToText;
 
+        // Cached resolved references (avoid GetComponent on every ApplyFloat)
+        private SetText _resolvedSetText;
+        private TimeToText _resolvedTimeToText;
+        private TMP_Text _resolvedTmp;
+        private bool _resolved;
+
+        protected override void OnEnable()
+        {
+            ResolveReferences();
+            base.OnEnable();
+        }
+
+        private void ResolveReferences()
+        {
+            _resolvedSetText = _setText != null ? _setText : GetComponent<SetText>();
+            _resolvedTimeToText = _timeToText != null ? _timeToText : GetComponent<TimeToText>();
+            _resolvedTmp = _fallbackText != null ? _fallbackText : GetComponent<TMP_Text>();
+            _resolved = _resolvedSetText != null || _resolvedTimeToText != null || _resolvedTmp != null;
+        }
+
         protected override void ApplyFloat(float value)
         {
-            SetText st = _setText != null ? _setText : GetComponent<SetText>();
-            if (st != null)
+            // Lazy re-resolve: handles components added after OnEnable (edit-mode tests, runtime AddComponent)
+            if (!_resolved) ResolveReferences();
+
+            if (_resolvedSetText != null)
             {
-                st.Set(value);
+                _resolvedSetText.Set(value);
                 return;
             }
 
-            TimeToText ttt = _timeToText != null ? _timeToText : GetComponent<TimeToText>();
-            if (ttt != null)
+            if (_resolvedTimeToText != null)
             {
-                ttt.Set(value);
+                _resolvedTimeToText.Set(value);
                 return;
             }
 
-            TMP_Text tmp = _fallbackText != null ? _fallbackText : GetComponent<TMP_Text>();
-            if (tmp != null)
+            if (_resolvedTmp != null)
             {
-                tmp.text = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                _resolvedTmp.text = value.ToString(System.Globalization.CultureInfo.InvariantCulture);
             }
         }
     }

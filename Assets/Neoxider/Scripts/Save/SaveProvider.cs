@@ -21,6 +21,10 @@ namespace Neo.Save
             _provider = null;
             _settings = null;
             _isInitialized = false;
+            // Prevent listener leaks when Domain Reload is disabled
+            OnDataSaved = null;
+            OnDataLoaded = null;
+            OnKeyChanged = null;
         }
 
         /// <summary>

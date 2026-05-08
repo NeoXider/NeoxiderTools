@@ -36,7 +36,7 @@ namespace Neo.Tests.Play
 
             GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(dummyId, (uint)99999);
+            NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
             Transport.active = transport;
@@ -50,7 +50,7 @@ namespace Neo.Tests.Play
             if (_interactiveObject.onInteractDown == null) _interactiveObject.onInteractDown = new UnityEngine.Events.UnityEvent();
 
             NetworkIdentity identity = _objInteractive.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(identity, (uint)12345);
+            NetworkTestHelper.SetAssetId(identity, 12345);
 
             NetworkClient.RegisterPrefab(_objInteractive);
 

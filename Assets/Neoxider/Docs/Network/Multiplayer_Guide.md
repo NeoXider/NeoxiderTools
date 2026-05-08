@@ -12,10 +12,18 @@
 Вам не нужно писать `#if MIRROR` в вашей логике. Архитектура библиотеки решает проблему синхронизации с помощью абстрактных компонентов:
 
 | Компонент Neoxider Tools | Если установлен Mirror | Если Mirror отсутствует (Соло игра) |
-|-------------------------|------------------------|------------------------------------|
+|-------------------------|------------------------|--------------------------------------|
+| `NeoNetworkComponent` | Базовый класс: isNetworked, rate-limiting, late-join template | Обычный `MonoBehaviour` |
 | `NetworkSingleton<T>` | Наследует `NetworkBehaviour`, поддерживает `[SyncVar]` | Наследует `MonoBehaviour`, работает как обычный скрипт |
 | `NetworkReactiveProperty` | Синхронизирует данные из `[SyncVar]` в No-Code эвенты | Обычное UnityEvent-свойство |
 | `NeoNetworkManager` | Обертка над NetworkManager | Обычный скрипт (неактивен) |
+| `NetworkPropertySync` | Синхронизация любого поля через Reflection (Float/Int/Bool/String/Vector3) | No-op |
+| `NetworkActionRelay` | Многоканальный сетевой broadcast UnityEvent (void/float/string) | Обычный локальный вызов событий |
+| `NetworkOwnerFilter` | Фильтр по роли (LocalPlayer/Server/Everyone) | Всегда пропускает (solo = allowed) |
+| `NeoNetworkDiscovery` | LAN-обнаружение серверов (обёртка Mirror NetworkDiscovery) | N/A (requires Mirror) |
+| `NeoLobbyManager` | Лобби + ready-проверка (обёртка Mirror NetworkRoomManager) | N/A (requires Mirror) |
+| `NeoLobbyPlayer` | Игрок в лобби с NoCode готовностью | N/A (requires Mirror) |
+| `NeoNetworkState` | Статические проверки IsServer/IsClient/IsHost/CanMutateState | Возвращает безопасные значения по умолчанию |
 
 ### Деградация в синглплеер (Отказоустойчивость)
 Если вы делаете соло-игру, просто удалите пакет Mirror. Весь ваш код, использующий `NetworkSingleton<T>`, автоматически преобразуется в `MonoBehaviour`.
@@ -77,6 +85,34 @@ NeoNetworkManager.Singleton.StartClient();
 ## 4. Тесты и надежность
 Библиотека NeoxiderTools снабжена интеграционными `PlayMode` тестами. Разворачивание локального хоста, спавн игроков и проверка `HasServerAuthority` проверяется автоматически с использованием In-Memory транспорта (`DummyTransport`), что гарантирует стабильность работы мультиплеера даже во время агрессивного рефакторинга.
 
+---
+
+## 5. NoCode мультиплеер для любой механики
+
+С новыми компонентами `NetworkActionRelay` и `NetworkOwnerFilter` можно сделать мультиплеер **без единой строки кода**:
+
+### Пример: Двери / Рычаги
+1. На рычаге: `InteractiveObject` (isNetworked=true), `OnInteract → NetworkActionRelay.Trigger()`
+2. `NetworkActionRelay` → Channel "open", scope=AllClients → `onTriggered → Animator.SetBool("isOpen", true)`
+3. Результат: любой игрок дернет рычаг → все увидят анимацию двери.
+
+### Пример: Серверный подбор предмета
+1. `PhysicsEvents3D.OnTriggerEnter → NetworkOwnerFilter.Filter()` (ServerOnly)
+2. `onAllowed → InventoryComponent.AddItem()` + `Destroy(gameObject)`
+3. Результат: только сервер обрабатывает предмет, дублей нет.
+
+### Пример: Глобальный счёт
+1. `Counter (isNetworked=true)` на сцене — общая переменная для всех.
+2. `PhysicsEvents3D.OnTriggerEnter → Counter.Add(1)` — Cmd на сервер → Rpc всем.
+3. Late-join клиент увидит актуальное значение через `[SyncVar]`.
+
+> [!TIP]
+> Все сетевые компоненты имеют **серверную валидацию** (rate-limiting, проверка CanSpend, sender) и **Late-Join синхронизацию** через SyncVar. См. [NoCode Network Spec](NoCode_Network_Spec.md), Правила 8–10.
+
 ## См. также
 - [NeoNetworkManager (Документация)](NeoNetworkManager.md)
 - [NetworkSingleton (Документация)](NetworkSingleton.md)
+- [NetworkActionRelay (Документация)](NetworkActionRelay.md)
+- [NetworkOwnerFilter (Документация)](NetworkOwnerFilter.md)
+- [NoCode Network Spec (Стандарты)](NoCode_Network_Spec.md)
+

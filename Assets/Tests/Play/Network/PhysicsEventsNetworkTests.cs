@@ -34,7 +34,7 @@ namespace Neo.Tests.Play
 
             GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(dummyId, (uint)99999);
+            NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
             Transport.active = transport;
@@ -56,7 +56,7 @@ namespace Neo.Tests.Play
             _triggerCollider.isTrigger = true;
 
             NetworkIdentity identity = _objTrigger.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(identity, (uint)11111);
+            NetworkTestHelper.SetAssetId(identity, 11111);
             NetworkClient.RegisterPrefab(_objTrigger);
             NetworkServer.Spawn(_objTrigger);
             if (!NetworkClient.ready) NetworkClient.Ready();

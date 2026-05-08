@@ -1,6 +1,6 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.0.0`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.1.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
@@ -38,6 +38,7 @@
 | **Shop** | Магазин, валюта и покупки | [`Shop/README.md`](./Shop/README.md) |
 | **StateMachine** | Код + No-Code, runtime state machine и визуальный редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
 | **Tools** | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод и utility runtime | [`Tools/README.md`](./Tools/README.md) |
+| **Network** | Мультиплеер: NeoNetworkManager, SyncVar-мосты, NetworkPropertySync, NetworkActionRelay, Lobby, Discovery | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
 | **UI** | UI-панели, анимации кнопок, переключатели и presentation helpers | [`UI/README.md`](./UI/README.md) |
 
 ## Подмодули `Tools`
@@ -74,3 +75,5 @@
 | Название | Описание | Ссылка |
 |----------|----------|--------|
 | **Vampire Survivors 3D** | Пошаговое руководство по созданию клона Vampire Survivors в 3D | [`VampireSurvivor_Guide.md`](./VampireSurvivor_Guide.md) |
+| **Multiplayer Guide** | NoCode мультиплеер: таблица компонентов, паттерн синхронизации, примеры механик | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
+| **NoCode Network Spec** | Стандарты: правила 1–11 для сетевых компонентов | [`Network/NoCode_Network_Spec.md`](./Network/NoCode_Network_Spec.md) |

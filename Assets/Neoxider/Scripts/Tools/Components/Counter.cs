@@ -48,6 +48,16 @@ namespace Neo.Tools
         [Tooltip("If true, changes to this counter are replicated to all players (Shared). If false, it acts as a personal local counter.")]
         [SerializeField]
         public bool isNetworked = false;
+
+#if MIRROR
+        /// <summary>Server-authoritative value, synced to late-joining clients.</summary>
+        [SyncVar]
+        private float _syncValue;
+
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+#endif
+
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
         private CounterValueMode _valueMode = CounterValueMode.Int;
 
@@ -377,6 +387,7 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
+                _syncValue = newValue;
                 RpcSetValue(newValue);
             }
 #endif
@@ -404,8 +415,13 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdSetValue(float newValue)
+        private void CmdSetValue(float newValue, NetworkConnectionToClient sender = null)
         {
+            // Rate-limit: reject commands arriving faster than CmdRateLimit
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+
+            _syncValue = newValue;
             ApplyValueLocally(newValue);
             RpcSetValue(newValue);
         }
@@ -415,6 +431,18 @@ namespace Neo.Tools
         {
             if (isServerOnly) return;
             ApplyValueLocally(newValue);
+        }
+
+        /// <summary>
+        ///     Late-join: when a new client connects, apply the server's authoritative value.
+        /// </summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                ApplyValueLocally(_syncValue);
+            }
         }
 #endif
 

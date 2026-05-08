@@ -26,6 +26,12 @@ namespace Neo.Shop
         [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]
         public bool isNetworked = false;
 
+#if MIRROR
+        [SyncVar] private float _syncCurrentMoney;
+        private float _lastCmdTime;
+        private const float CmdRateLimit = 0.05f;
+#endif
+
         [Space] [SerializeField] private string _moneySave = "Money";
         public string SaveKey => _moneySave;
 
@@ -70,13 +76,13 @@ namespace Neo.Shop
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                CmdAdd(amount);
+                CmdMoneyOp(MoneyOp.Add, amount);
                 return;
             }
 #endif
             AddLocal(amount);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) RpcAdd(amount);
+            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.Add, amount); }
 #endif
         }
 
@@ -97,13 +103,13 @@ namespace Neo.Shop
 #if MIRROR
                 if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
-                    CmdSpend(amount);
+                    CmdMoneyOp(MoneyOp.Spend, amount);
                     return true;
                 }
 #endif
                 SpendLocal(amount);
 #if MIRROR
-                if (isNetworked && NeoNetworkState.IsServer) RpcSpend(amount);
+                if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.Spend, amount); }
 #endif
                 return true;
             }
@@ -176,13 +182,13 @@ namespace Neo.Shop
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                CmdAddLevelMoney(count);
+                CmdMoneyOp(MoneyOp.AddLevelMoney, count);
                 return;
             }
 #endif
             AddLevelMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) RpcAddLevelMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.AddLevelMoney, count); }
 #endif
         }
 
@@ -197,13 +203,13 @@ namespace Neo.Shop
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                CmdSetLevelMoney(count);
+                CmdMoneyOp(MoneyOp.SetLevelMoney, count);
                 return count;
             }
 #endif
             float res = SetLevelMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) RpcSetLevelMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetLevelMoney, count); }
 #endif
             return res;
         }
@@ -221,13 +227,13 @@ namespace Neo.Shop
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                CmdSetMoney(count);
+                CmdMoneyOp(MoneyOp.SetMoney, count);
                 return count;
             }
 #endif
             float res = SetMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) RpcSetMoney(count);
+            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetMoney, count); }
 #endif
             return res;
         }
@@ -254,13 +260,13 @@ namespace Neo.Shop
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                CmdSetMoneyForLevel(resetLevelMoney);
+                CmdMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f);
                 return LevelMoney.CurrentValue;
             }
 #endif
             float res = SetMoneyForLevelLocal(resetLevelMoney);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) RpcSetMoneyForLevel(resetLevelMoney);
+            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f); }
 #endif
             return res;
         }
@@ -336,35 +342,71 @@ namespace Neo.Shop
         }
 
 #if MIRROR
-        [Command(requiresAuthority = false)]
-        private void CmdAdd(float amount) { AddLocal(amount); RpcAdd(amount); }
-        [ClientRpc(includeOwner = true)]
-        private void RpcAdd(float amount) { if (isServer) return; AddLocal(amount); }
+        /// <summary>Operation type for the unified network dispatch.</summary>
+        private enum MoneyOp : byte
+        {
+            Add = 0,
+            Spend = 1,
+            AddLevelMoney = 2,
+            SetLevelMoney = 3,
+            SetMoney = 4,
+            SetMoneyForLevel = 5
+        }
 
-        [Command(requiresAuthority = false)]
-        private void CmdSpend(float amount) { SpendLocal(amount); RpcSpend(amount); }
-        [ClientRpc(includeOwner = true)]
-        private void RpcSpend(float amount) { if (isServer) return; SpendLocal(amount); }
+        private bool RateLimit()
+        {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return true;
+            _lastCmdTime = Time.time;
+            return false;
+        }
 
-        [Command(requiresAuthority = false)]
-        private void CmdAddLevelMoney(float amount) { AddLevelMoneyLocal(amount); RpcAddLevelMoney(amount); }
-        [ClientRpc(includeOwner = true)]
-        private void RpcAddLevelMoney(float amount) { if (isServer) return; AddLevelMoneyLocal(amount); }
+        private void SyncBalance() { _syncCurrentMoney = CurrentMoney.CurrentValue; }
 
-        [Command(requiresAuthority = false)]
-        private void CmdSetLevelMoney(float amount) { SetLevelMoneyLocal(amount); RpcSetLevelMoney(amount); }
-        [ClientRpc(includeOwner = true)]
-        private void RpcSetLevelMoney(float amount) { if (isServer) return; SetLevelMoneyLocal(amount); }
+        /// <summary>Applies the operation locally without network dispatch.</summary>
+        private void ExecuteOp(MoneyOp op, float amount)
+        {
+            switch (op)
+            {
+                case MoneyOp.Add:            AddLocal(amount); break;
+                case MoneyOp.Spend:          SpendLocal(amount); break;
+                case MoneyOp.AddLevelMoney:  AddLevelMoneyLocal(amount); break;
+                case MoneyOp.SetLevelMoney:  SetLevelMoneyLocal(amount); break;
+                case MoneyOp.SetMoney:       SetMoneyLocal(amount); break;
+                case MoneyOp.SetMoneyForLevel: SetMoneyForLevelLocal(amount != 0f); break;
+            }
+        }
 
+        /// <summary>Single unified Command — replaces 6 individual CmdXxx methods.</summary>
         [Command(requiresAuthority = false)]
-        private void CmdSetMoney(float amount) { SetMoneyLocal(amount); RpcSetMoney(amount); }
-        [ClientRpc(includeOwner = true)]
-        private void RpcSetMoney(float amount) { if (isServer) return; SetMoneyLocal(amount); }
+        private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
+        {
+            if (RateLimit()) return;
+            // Server-side validation
+            if (op == MoneyOp.Spend && !CanSpend(amount)) return;
 
-        [Command(requiresAuthority = false)]
-        private void CmdSetMoneyForLevel(bool resetLevelMoney) { SetMoneyForLevelLocal(resetLevelMoney); RpcSetMoneyForLevel(resetLevelMoney); }
+            ExecuteOp(op, amount);
+            SyncBalance();
+            RpcMoneyOp(op, amount);
+        }
+
+        /// <summary>Single unified ClientRpc — replaces 6 individual RpcXxx methods.</summary>
         [ClientRpc(includeOwner = true)]
-        private void RpcSetMoneyForLevel(bool resetLevelMoney) { if (isServer) return; SetMoneyForLevelLocal(resetLevelMoney); }
+        private void RpcMoneyOp(MoneyOp op, float amount)
+        {
+            if (isServer) return;
+            ExecuteOp(op, amount);
+        }
+
+        /// <summary>Late-join: apply server-authoritative balance to newly connected client.</summary>
+        public override void OnStartClient()
+        {
+            base.OnStartClient();
+            if (isNetworked && !isServer)
+            {
+                CurrentMoney.Value = _syncCurrentMoney;
+                ApplyMoneyToText();
+            }
+        }
 #endif
     }
 }

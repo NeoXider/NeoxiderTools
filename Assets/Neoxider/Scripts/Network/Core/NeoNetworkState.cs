@@ -7,8 +7,12 @@ namespace Neo.Network
 {
     /// <summary>
     /// Static helper to check network state globally safely.
-    /// Falls back to true when Mirror is uninstalled (Solo mode).
+    /// Falls back to safe solo-mode defaults when Mirror is not installed.
     /// </summary>
+    /// <remarks>
+    /// Supersedes the former <c>NeoNetworkHelpers</c> class — all network state
+    /// queries are now consolidated here.
+    /// </remarks>
     public static class NeoNetworkState
     {
         /// <summary>
@@ -35,6 +39,71 @@ namespace Neo.Network
             {
 #if MIRROR
                 return NetworkClient.active;
+#else
+                return true;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// True if the runtime is a pure client (connected to a remote server, NOT hosting).
+        /// In Solo mode (no Mirror), always false.
+        /// </summary>
+        public static bool IsClientOnly
+        {
+            get
+            {
+#if MIRROR
+                return NetworkClient.active && !NetworkServer.active;
+#else
+                return false;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// True if the runtime is a host (server + client simultaneously).
+        /// In Solo mode (no Mirror), always true.
+        /// </summary>
+        public static bool IsHost
+        {
+            get
+            {
+#if MIRROR
+                return NetworkServer.active && NetworkClient.active;
+#else
+                return true;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Whether any network session is currently running (server, client, or host).
+        /// In Solo mode (no Mirror), always false.
+        /// </summary>
+        public static bool IsNetworkActive
+        {
+            get
+            {
+#if MIRROR
+                return NetworkServer.active || NetworkClient.active;
+#else
+                return false;
+#endif
+            }
+        }
+
+        /// <summary>
+        /// Whether it is safe to perform server-authoritative operations
+        /// (spawn, mutate game state, save world data, etc.).
+        /// Returns <c>true</c> in solo mode.
+        /// </summary>
+        public static bool CanMutateState
+        {
+            get
+            {
+#if MIRROR
+                return NetworkServer.active;
 #else
                 return true;
 #endif

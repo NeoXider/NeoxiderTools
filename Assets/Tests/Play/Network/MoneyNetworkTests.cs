@@ -25,7 +25,7 @@ namespace Neo.Tests.Play
 
             GameObject dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(dummyId, (uint)99997);
+            NetworkTestHelper.SetAssetId(dummyId, 99997);
             _networkManager.playerPrefab = dummyPlayer;
 
             Transport.active = transport;
@@ -37,18 +37,30 @@ namespace Neo.Tests.Play
             yield return null;
 
             _moneyObj = new GameObject("MoneySingleton");
-            _money = _moneyObj.AddComponent<Money>();
             
+            // Money inherits NetworkSingleton → NetworkBehaviour → NetworkIdentity is auto-added
             var id = _moneyObj.AddComponent<NetworkIdentity>();
-            typeof(NetworkIdentity).GetProperty("assetId").SetValue(id, (uint)10005);
+            NetworkTestHelper.SetAssetId(id, 10005);
             NetworkClient.RegisterPrefab(_moneyObj);
+            
+            _money = _moneyObj.AddComponent<Money>();
+            _money.isNetworked = true;
+            
+            // Re-initialize so Money is registered in NetworkBehaviours array
+            // InitializeNetworkBehaviours is internal — call via reflection
+            typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                .Invoke(id, null);
             NetworkServer.Spawn(_moneyObj);
-
+            
+            yield return null;
             yield return null;
             
-            // Clean state
+            // Clean state — local only to avoid RPC before full spawn
+            _money.isNetworked = false;
             _money.SetMoney(0);
             _money.SetLevelMoney(0);
+            _money.isNetworked = true;
             yield return new WaitForSeconds(0.1f);
         }
 
