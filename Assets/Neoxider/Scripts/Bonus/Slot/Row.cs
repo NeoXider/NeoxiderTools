@@ -54,6 +54,9 @@ namespace Neo.Bonus
         public UnityEvent OnStop = new();
         private float _acc; // units/s²
 
+        /// <summary>Desired visible symbol ids bottom→top when the reel stops; cleared after apply.</summary>
+        private int[] _spinTargetIdsBottomUp;
+
         // Visual source (optional)
         private SpritesData _allSpritesData;
         private float _bottomSpawn; // below window
@@ -213,10 +216,15 @@ namespace Neo.Bonus
             }
         }
 
-        public void Spin(SpritesData allSpritesData, SlotVisualData[] /*ignored*/ finalVisuals)
+        /// <param name="targetVisibleIdsBottomUp">Length must match <see cref="countSlotElement"/> or null to skip forcing symbols at stop.</param>
+        public void Spin(SpritesData allSpritesData, int[] targetVisibleIdsBottomUp)
         {
             StopAllCoroutines(); // safety
             _allSpritesData = allSpritesData;
+
+            _spinTargetIdsBottomUp = targetVisibleIdsBottomUp != null && targetVisibleIdsBottomUp.Length > 0
+                ? (int[])targetVisibleIdsBottomUp.Clone()
+                : null;
 
             // (optional) shuffle visuals
             if (_allSpritesData?.visuals != null && _allSpritesData.visuals.Length > 0)
@@ -356,11 +364,103 @@ namespace Neo.Bonus
 
         private void FinishStop()
         {
+            ApplySpinTargetVisualsIfNeeded();
+
             _vel = 0f;
             _acc = 0f;
             _state = State.Idle;
             is_spinning = false;
             OnStop?.Invoke();
+        }
+
+        private void ApplySpinTargetVisualsIfNeeded()
+        {
+            if (_spinTargetIdsBottomUp == null || SlotElements == null || SlotElements.Length == 0)
+            {
+                _spinTargetIdsBottomUp = null;
+                return;
+            }
+
+            if (_spinTargetIdsBottomUp.Length != countSlotElement)
+            {
+                Debug.LogWarning(
+                    $"[{nameof(Row)}] Target id count {_spinTargetIdsBottomUp.Length} != {nameof(countSlotElement)} {countSlotElement}. Ignoring targets.",
+                    this);
+                _spinTargetIdsBottomUp = null;
+                return;
+            }
+
+            SlotElement[] topDown = GetVisibleTopDown();
+            if (topDown == null || topDown.Length != countSlotElement)
+            {
+                _spinTargetIdsBottomUp = null;
+                return;
+            }
+
+            if (_allSpritesData?.visuals == null || _allSpritesData.visuals.Length == 0)
+            {
+                _spinTargetIdsBottomUp = null;
+                return;
+            }
+
+            for (int topIdx = 0; topIdx < countSlotElement; topIdx++)
+            {
+                int bottomUpIdx = countSlotElement - 1 - topIdx;
+                int id = _spinTargetIdsBottomUp[bottomUpIdx];
+                SlotElement el = topDown[topIdx];
+                SlotVisualData v = FindVisualById(id);
+                if (el != null && v != null)
+                {
+                    el.SetVisuals(v);
+                }
+            }
+
+            _spinTargetIdsBottomUp = null;
+        }
+
+        private SlotVisualData FindVisualById(int id)
+        {
+            if (_allSpritesData?.visuals == null)
+            {
+                return null;
+            }
+
+            foreach (SlotVisualData x in _allSpritesData.visuals)
+            {
+                if (x != null && x.id == id)
+                {
+                    return x;
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>Returns row index in the visible window (0 = bottom) if this element is locked to a window slot.</summary>
+        public bool TryGetWindowRowFromBottom(SlotElement element, out int rowFromBottom)
+        {
+            rowFromBottom = -1;
+            if (element == null || SlotElements == null || SlotElements.Length == 0 || countSlotElement <= 0)
+            {
+                return false;
+            }
+
+            SlotElement[] topDown = GetVisibleTopDown();
+            if (topDown == null || topDown.Length != countSlotElement)
+            {
+                return false;
+            }
+
+            for (int topIdx = 0; topIdx < topDown.Length; topIdx++)
+            {
+                if (topDown[topIdx] == element)
+                {
+                    rowFromBottom = countSlotElement - 1 - topIdx;
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         // ---------------- Positions + wrap ----------------

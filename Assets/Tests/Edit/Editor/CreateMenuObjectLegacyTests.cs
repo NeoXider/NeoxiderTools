@@ -26,7 +26,6 @@ namespace Neo.Editor.Tests
                 .ToArray();
 
             CollectionAssert.DoesNotContain(menuPaths, "Neoxider/Bonus/TimeReward");
-            CollectionAssert.DoesNotContain(menuPaths, "Neoxider/Bonus/WheelFortune");
             CollectionAssert.DoesNotContain(menuPaths, "Neoxider/UI/UIReady");
             CollectionAssert.DoesNotContain(menuPaths, "Neoxider/Tools/Other/AiNavigation");
         }

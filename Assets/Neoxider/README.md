@@ -1,8 +1,10 @@
+![NeoxiderTools Cover](./Images/cover_1_nodes.png)
+
 # NeoxiderTools
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-8.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-8.2.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)

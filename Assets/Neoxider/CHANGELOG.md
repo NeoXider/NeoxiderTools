@@ -1,4 +1,19 @@
 
+## [8.2.0] - 2026-05-10
+
+Слот: опциональная визуализация выигрышных линий в рантайме и синхронизация документации с пакетом.
+
+### Added
+- **Bonus / Slot** — `PaylineLineGeometry` (общая геометрия ячеек линии выплат для гизмо и рантайма); `WinLineRendererPlayback` + блок **`SpinController`** «Win line (optional LineRenderer)»: анимация выигрышных полилиний после остановки барабанов (последовательно или параллельно, зацикливание до следующего спина).
+
+### Changed
+- **Bonus / Slot** — `SpinController`: программный API настройки (`Rows`, `ActivePaylineCount`, `VisibleWindowRows`, `BetSelectionIndex`, `ConfigureSlotRuntime`, `WinLinePlayback`, `CurrentSpinPrice`, `GetRuntimeSnapshot` / `SpinRuntimeSnapshot`); `CheckSpin`: `LinesDataAsset`, `SpritesMultiplierData`, `SetSequenceLength`, `SetFallbackPaylineWindowRows`.
+- **Bonus / Slot** — `CheckSpin`: fallback без `Lines Data` — диапазон рядов окна (`Fallback Window Row Min` / `Max`, **−1** = весь видимый диапазон; по умолчанию все ряды, например 0–2 при высоте 3); миграция со старого поля индекса; гизмо и `Docs/Bonus/Slot/CheckSpin.md`; префаб `SlotUI`.
+- **Bonus / Slot** — `WinLineRendererPlayback`: режимы цвета по длине линии (`AccentGlow`, `SolidFlat`, `LinearGradient`, поле `Gradient`); альфа только из выбранных цветов/градиента (без отдельного ослабления в коде).
+- **Документация** — `Docs/Bonus/Slot/SpinController.md` (Payline API, `SpinRuntimeSnapshot`, порядок разделов, Win Line Playback), `Docs/Bonus/Slot/CheckSpin.md` (`SequenceLength`, запросы линий), `Docs/Bonus/Slot/README.md`; `DocsEn/Bonus/Slot/SpinController.md` (`SpinRuntimeSnapshot`, сводка инспектора, события), `DocsEn/Bonus/CheckSpin.md` (API таблица); обзор `Docs/Bonus.md`; `DocsEn/Bonus/README.md`; канонический индекс `Docs/README.md` (`v8.2.0`); корневой `README.md` и `Assets/Neoxider/README.md` (badge версии); `PROJECT_SUMMARY.md` (`8.2.0`).
+
+---
+
 ## [8.1.0] - 2026-05-08
 
 Мультиплеер: полная реализация анализа — базовый класс, NoCode-сетевые компоненты, серверная безопасность, лобби и универсальная синхронизация.
@@ -11,13 +26,15 @@
 - **NeoNetworkDiscovery** — NoCode обёртка над Mirror `NetworkDiscovery` для LAN-обнаружения серверов. Авто-реклама при хосте, авто-поиск при клиенте, `ConnectToFirstServer()`.
 - **NeoLobbyManager** — NoCode обёртка над Mirror `NetworkRoomManager`. Лобби с ready-проверкой, `MinPlayersToStart`, UnityEvents для всех lifecycle.
 - **NeoLobbyPlayer** — NoCode обёртка над Mirror `NetworkRoomPlayer`. `ToggleReady()`, `SetReady(bool)`, события `OnReadyChanged`, `OnBecameLocalPlayer`.
-- **Тесты (PlayMode)**: `NetworkActionRelayTests` (6 кейсов), `NetworkOwnerFilterTests` (3 кейса).
+- **Тесты (PlayMode)**: `NetworkActionRelayTests` (6 кейсов), `NetworkOwnerFilterTests` (3 кейса), `BonusPlayModeTests` (слот `Row` + `WheelFortune`).
+- **Тесты (Edit Mode)**: `CheckSpinTests` (линии слота и `ResolveSectorIndex`).
 - **Документация**: `NeoNetworkComponent.md`, `NetworkPropertySync.md`, `Lobby.md`, `NetworkActionRelay.md`, `NetworkOwnerFilter.md` — все по стандарту DOCUMENTATION.md (Что это / Как использовать / Поля / Методы / События / Примеры / См. также).
 - **NoCode_Network_Spec**: Правила 8–11 (серверная валидация, Late-Join SyncVar, таблица компонентов, NeoNetworkComponent).
 - **Multiplayer_Guide**: секция 5 «NoCode мультиплеер для любой механики», полная таблица всех 12 компонентов.
 
 ### Changed
-- **NeoNetworkState** — единый статический API. `NeoNetworkHelpers` удалён.
+- **Bonus / WheelFortune** — единый поддерживаемый компонент колеса; сняты Legacy/Obsolete; удалён `WheelFortuneImproved` и демо-сцена `WheelFortuneNew`; добавлен `WheelFortune.ResolveSectorIndex` для тестов и внешней логики.
+- **Bonus / Slot** — план спина применяется к символам при остановке барабана (`Row.Spin` + целевые id); `CheckSpin` с fallback-линией без `LinesData`, защитой от null и настраиваемой длиной совпадения; `SpinController.ChanceWin`, гизмо линий, выплата без принудительного минимума 1; исправлен сброс ставки в `Start`.
 - **Money** — рефакторинг: 12 индивидуальных Cmd/Rpc методов (6 пар) заменены на `MoneyOp` enum + единый `CmdMoneyOp` + единый `RpcMoneyOp` + `ExecuteOp` switch. Серверная валидация `CanSpend()`.
 
 ### Security (P0)

@@ -9,12 +9,9 @@ using UnityEditor;
 
 namespace Neo.Bonus
 {
-    [LegacyComponent("Neo.Bonus.WheelFortuneImproved")]
-    [Obsolete(
-        "Use Neo.Bonus.WheelFortuneImproved for new setups. This type remains supported for backward compatibility.")]
     [NeoDoc("Bonus/WheelFortune/WheelFortune.md")]
     [CreateFromMenu("Neoxider/Bonus/WheelFortune", "Prefabs/Bonus/WheelFortune.prefab")]
-    [AddComponentMenu("Neoxider/Bonus/WheelFortune (Legacy)")]
+    [AddComponentMenu("Neoxider/Bonus/" + nameof(WheelFortune))]
     public class WheelFortune : MonoBehaviour
     {
         public enum SpinState
@@ -87,7 +84,7 @@ namespace Neo.Bonus
                 _canUse = value;
                 if (_canvasGroup != null)
                 {
-                    _canvasGroup.interactable = true;
+                    _canvasGroup.interactable = value;
                 }
             }
         }
@@ -106,11 +103,15 @@ namespace Neo.Bonus
 
         private void OnEnable()
         {
-            _wheelTransform.rotation = Quaternion.identity;
+            if (_wheelTransform != null)
+            {
+                _wheelTransform.rotation = Quaternion.identity;
+            }
+
             State = SpinState.Idle;
             if (_canvasGroup != null)
             {
-                _canvasGroup.interactable = true;
+                _canvasGroup.interactable = _canUse;
             }
         }
 
@@ -366,7 +367,7 @@ namespace Neo.Bonus
             State = SpinState.Idle;
             if (_canvasGroup != null)
             {
-                _canvasGroup.interactable = true;
+                _canvasGroup.interactable = _canUse;
             }
 
             OnWinIdVariant?.Invoke(GetResultId());
@@ -374,18 +375,38 @@ namespace Neo.Bonus
 
         private int GetResultId()
         {
-            float sectorAngle = 360f / items.Length;
-            float wheelAngle = _wheelTransform.rotation.eulerAngles.z;
-            float arrowAngle = _arrow != null ? _arrow.transform.eulerAngles.z : 0f;
-            float relativeAngle = (wheelAngle + _wheelOffsetZ - arrowAngle + 360f) % 360f;
+            if (items == null || items.Length == 0 || _wheelTransform == null)
+            {
+                return -1;
+            }
+
+            return ResolveSectorIndex(
+                _wheelTransform.rotation.eulerAngles.z,
+                _arrow != null ? _arrow.rotation.eulerAngles.z : 0f,
+                _wheelOffsetZ,
+                items.Length);
+        }
+
+        /// <summary>
+        ///     Determines which sector index (0..itemCount-1) aligns with the arrow for the given angles.
+        /// </summary>
+        public static int ResolveSectorIndex(float wheelEulerZ, float arrowEulerZ, float wheelOffsetZ, int itemCount)
+        {
+            if (itemCount <= 0)
+            {
+                return -1;
+            }
+
+            float sectorAngle = 360f / itemCount;
+            float relativeAngle = (wheelEulerZ + wheelOffsetZ - arrowEulerZ + 360f) % 360f;
             int id = Mathf.FloorToInt((relativeAngle + sectorAngle / 2f) / sectorAngle);
-            return (id + items.Length) % items.Length;
+            return (id + itemCount) % itemCount;
         }
 
         [Button]
         public void Spin()
         {
-            if (items.Length == 0)
+            if (items == null || items.Length == 0)
             {
                 return;
             }

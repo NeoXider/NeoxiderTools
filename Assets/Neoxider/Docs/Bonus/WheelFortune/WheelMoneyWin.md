@@ -13,4 +13,4 @@
 
 ## См. также
 
-- [WheelFortuneImproved](./WheelFortuneImproved.md), [Money](../Shop/Money.md)
+- [WheelFortune](./WheelFortune.md), [Money](../Shop/Money.md)

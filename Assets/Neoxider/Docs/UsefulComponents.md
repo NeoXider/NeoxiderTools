@@ -79,7 +79,7 @@
 | Компонент | Кратко |
 |-----------|--------|
 | **CooldownReward**, **TimeReward** | Награда по кулдауну / по времени. |
-| **WheelFortuneImproved**, **WheelFortune** (устаревший), **LineRoulett** | Колесо удачи (рекомендуется WheelFortuneImproved), линейная рулетка. |
+| **WheelFortune**, **LineRoulett** | Колесо фортуны, линейная рулетка. |
 | **Box**, **ItemCollection**, **ItemCollectionInfo** | Коллекции и боксы. |
 | **SpinController**, **Row**, **SlotElement** | Слот-механики. |
 

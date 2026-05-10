@@ -6,10 +6,10 @@ Collections, slot machines, wheels of fortune, and time-based rewards. Scripts i
 
 | Submodule | Description | Russian docs |
 |-----------|-------------|--------------|
-| **Slot** | Slot machine: reels, lines, spin, bets | [Slot/README](../../Docs/Bonus/Slot/README.md) |
+| **Slot** | Slot machine: reels, lines, spin, bets; optional winning-line **LineRenderer** (`SpinController` → Win Line Playback) | [Slot/README](../../Docs/Bonus/Slot/README.md) |
 | **Collection** | Collectibles, boxes, visual manager | [Collection/README](../../Docs/Bonus/Collection/README.md) |
 | **TimeReward** | CooldownReward, TimeReward (time-gated rewards) | [TimeReward/README](../../Docs/Bonus/TimeReward/README.md) |
-| **WheelFortune** | Wheel of fortune, WheelFortuneImproved, WheelMoneyWin | [WheelFortune/README](../../Docs/Bonus/WheelFortune/README.md) |
+| **WheelFortune** | Wheel of fortune (`WheelFortune`), WheelMoneyWin | [WheelFortune/README](../../Docs/Bonus/WheelFortune/README.md) |
 | **LineRoulett** | Linear roulette (root script) | [LineRoulett](../../Docs/Bonus/LineRoulett.md) |
 
 ## See also

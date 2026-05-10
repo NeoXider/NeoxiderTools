@@ -311,20 +311,23 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 0
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 00000000
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -408,6 +411,10 @@ MonoBehaviour:
     isActive: 1
     _linesData: {fileID: 0}
     _spritesMultiplierData: {fileID: 0}
+    _sequenceLength: 3
+    _fallbackWindowRowMin: 1
+    _fallbackWindowRowMax: 1
+    _legacyFallbackWindowRowIndexOrUnused: -1000001
   betsData: {fileID: 0}
   allSpritesData: {fileID: 11400000, guid: 87fd999ab091c9245b9e352b99d8a7e9, type: 2}
   _moneyGameObject: {fileID: 0}
@@ -418,7 +425,7 @@ MonoBehaviour:
   - {fileID: 3414780370214872413}
   - {fileID: 4618745833018689320}
   _isSingleSpeed: 1
-  chanseWin: 0.346
+  chanceWin: 0.346
   _delaySpinRoll: 0.2
   _speedControll:
     speed: 5000
@@ -428,6 +435,55 @@ MonoBehaviour:
   offsetY: -175
   _lineSlot:
     lines: []
+  _winLinePlayback:
+    enabled: 0
+    renderers: []
+    layout: 1
+    colorStyle: 0
+    color: {r: 1, g: 0.88, b: 0.18, a: 1}
+    colorLineStart: {r: 1, g: 0.92, b: 0.2, a: 1}
+    colorLineEnd: {r: 1, g: 0.35, b: 0.08, a: 1}
+    customLineGradient:
+      serializedVersion: 2
+      key0: {r: 1, g: 1, b: 1, a: 1}
+      key1: {r: 1, g: 1, b: 1, a: 1}
+      key2: {r: 0, g: 0, b: 0, a: 0}
+      key3: {r: 0, g: 0, b: 0, a: 0}
+      key4: {r: 0, g: 0, b: 0, a: 0}
+      key5: {r: 0, g: 0, b: 0, a: 0}
+      key6: {r: 0, g: 0, b: 0, a: 0}
+      key7: {r: 0, g: 0, b: 0, a: 0}
+      ctime0: 0
+      ctime1: 65535
+      ctime2: 0
+      ctime3: 0
+      ctime4: 0
+      ctime5: 0
+      ctime6: 0
+      ctime7: 0
+      atime0: 0
+      atime1: 65535
+      atime2: 0
+      atime3: 0
+      atime4: 0
+      atime5: 0
+      atime6: 0
+      atime7: 0
+      m_Mode: 0
+      m_ColorSpace: -1
+      m_NumColorKeys: 2
+      m_NumAlphaKeys: 2
+    width: 0.055
+    widthPulseSpeed: 2.8
+    widthPulseMinScale: 0.72
+    widthPulseMaxScale: 1.28
+    travelSpeed: 0
+    holdSeconds: 1.05
+    stepGapSeconds: 0.12
+    cycleGapSeconds: 0.4
+    loopUntilNextSpin: 1
+    worldOffset: {x: 0, y: 0, z: -0.025}
+    cornerVertices: 4
   _textCountLine: {fileID: 0}
   OnStartSpin:
     m_PersistentCalls:
@@ -458,6 +514,20 @@ MonoBehaviour:
   _betsId: 0
   _logFinalVisuals: 0
   _gridIndexBase: 1
+  _slotSceneDebugEnabled: 1
+  _drawPaylineGizmos: 1
+  _drawSlotElementGizmos: 1
+  _gizmoPaylineColor: {r: 0.2, g: 1, b: 0.4, a: 0.85}
+  _gizmoPaylineWidth: 8
+  _gizmoJointRadiusMultiplier: 0.1
+  _gizmoBannerRaiseHandles: 2.45
+  _gizmoBannerFontSize: 9
+  _gizmoBannerTextColor: {r: 0.95, g: 1, b: 0.72, a: 1}
+  _gizmoPaylineCaptionFontSize: 9
+  _gizmoPaylineCaptionColor: {r: 1, g: 1, b: 1, a: 1}
+  _gizmoPaylineCaptionRaiseHandles: 2
+  _gizmoPaylineWarningColor: {r: 1, g: 0.52, b: 0.32, a: 1}
+  _gizmoBannerWarningDownHandles: 0.7
 --- !u!1001 &1969437332703834904
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -583,27 +653,27 @@ PrefabInstance:
       value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[0]
+      propertyPath: 'yPositions.Array.data[0]'
       value: -180
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[1]
+      propertyPath: 'yPositions.Array.data[1]'
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[2]
+      propertyPath: 'yPositions.Array.data[2]'
       value: 190
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[3]
+      propertyPath: 'yPositions.Array.data[3]'
       value: 375
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[4]
+      propertyPath: 'yPositions.Array.data[4]'
       value: 560
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[5]
+      propertyPath: 'yPositions.Array.data[5]'
       value: 745
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
@@ -900,27 +970,27 @@ PrefabInstance:
       value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[0]
+      propertyPath: 'yPositions.Array.data[0]'
       value: -180
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[1]
+      propertyPath: 'yPositions.Array.data[1]'
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[2]
+      propertyPath: 'yPositions.Array.data[2]'
       value: 190
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[3]
+      propertyPath: 'yPositions.Array.data[3]'
       value: 375
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[4]
+      propertyPath: 'yPositions.Array.data[4]'
       value: 560
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[5]
+      propertyPath: 'yPositions.Array.data[5]'
       value: 745
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
@@ -1217,27 +1287,27 @@ PrefabInstance:
       value: 5000
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[0]
+      propertyPath: 'yPositions.Array.data[0]'
       value: -180
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[1]
+      propertyPath: 'yPositions.Array.data[1]'
       value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[2]
+      propertyPath: 'yPositions.Array.data[2]'
       value: 190
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[3]
+      propertyPath: 'yPositions.Array.data[3]'
       value: 375
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[4]
+      propertyPath: 'yPositions.Array.data[4]'
       value: 560
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}
-      propertyPath: yPositions.Array.data[5]
+      propertyPath: 'yPositions.Array.data[5]'
       value: 745
       objectReference: {fileID: 0}
     - target: {fileID: 6579138986391991344, guid: a554267c320e07e4d96c2418211bf58d, type: 3}

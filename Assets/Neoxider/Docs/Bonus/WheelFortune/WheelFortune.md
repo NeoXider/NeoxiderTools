@@ -1,17 +1,11 @@
-﻿### Класс WheelFortune (устаревший)
+﻿### Класс WheelFortune
 
-**Что это:** См. описание ниже.
+**Что это:** Компонент колеса фортуны для UI Canvas.
 
 **Как использовать:** см. разделы ниже.
 
 ---
 
-
-**Статус:** `deprecated`.
-
-**Замена:** [WheelFortuneImproved](./WheelFortuneImproved.md).
-
-**Рекомендуется использовать [WheelFortuneImproved](./WheelFortuneImproved.md)** для новых настроек. Текущий тип сохранён для обратной совместимости, но скрыт из меню добавления компонентов; существующие префабы и сцены продолжают работать.
 
 - **Пространство имен**: `Neo.Bonus`
 - **Путь к файлу**: `Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelFortune.cs`

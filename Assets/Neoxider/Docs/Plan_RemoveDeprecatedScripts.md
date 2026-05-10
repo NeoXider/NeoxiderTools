@@ -1,13 +1,13 @@
 # План: удаление устаревших скриптов (выполнить позже)
 
-**Что это:** Этот план описывает шаги по удалению устаревших скриптов **TimeReward**, **AiNavigation**, **WheelFortune**, **UIReady** и обновлению префабов/сцен, чтобы не осталось Missing Script. Выполнять **по...
+**Что это:** Этот план описывает шаги по удалению устаревших скриптов **TimeReward**, **AiNavigation**, **UIReady** и обновлению префабов/сцен, чтобы не осталось Missing Script.
 
 **Как использовать:** см. разделы ниже.
 
 ---
 
 
-Этот план описывает шаги по удалению устаревших скриптов **TimeReward**, **AiNavigation**, **WheelFortune**, **UIReady** и обновлению префабов/сцен, чтобы не осталось Missing Script. Выполнять **после** перехода на реактивные поля (7.0.0).
+Этот план описывает шаги по удалению устаревших скриптов **TimeReward**, **AiNavigation**, **UIReady** и обновлению префабов/сцен. Компонент **WheelFortune** остаётся поддерживаемым (тип **WheelFortuneImproved** удалён из пакета). Выполнять **после** перехода на реактивные поля (7.0.0).
 
 ---
 
@@ -19,19 +19,6 @@
 
 - **Префаб:** `Assets/Neoxider/Prefabs/Bonus/TimeReward.prefab`  
   Либо удалить компонент TimeReward с префаба, либо заменить на CooldownReward, либо удалить сам префаб.
-
-### WheelFortune (guid: `0a88b1e25429f4748918c9172538abc0`)
-
-- **Префаб:** `Assets/Neoxider/Prefabs/Bonus/WheelFortune.prefab`  
-  Удалить компонент или заменить на WheelFortuneImproved.
-- **Сцены:** проверить и обновить:
-  - `Assets/Scenes/DemoNeo.unity`
-  - `Assets/Scenes/AutoSaves/DemoNeo_AutoSave.unity`
-  - `Assets/Neoxider/Samples~/Demo/Scenes/Bonuses/WheelFortuneNew.unity`
-  - `Assets/Neoxider/Samples~/Demo/Scenes/Bonuses/WheelFortuneExample.unity`
-  - `Assets/Scenes/AutoSaves/WheelFortuneExample_AutoSave.unity`
-  - `Assets/Scenes/AutoSaves/WheelFortune_AutoSave.unity`  
-  На объектах с компонентом WheelFortune — удалить компонент или заменить на WheelFortuneImproved.
 
 ### UIReady (guid: `97c57a1e8a32a1743ad637ad53ef1fec`)
 
@@ -63,11 +50,7 @@
    - `Assets/Neoxider/Scripts/Tools/Other/AiNavigation.cs`  
    - `Assets/Neoxider/Scripts/Tools/Other/AiNavigation.cs.meta`
 
-3. **WheelFortune**  
-   - `Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelFortune.cs`  
-   - `Assets/Neoxider/Scripts/Bonus/WheelFortune/WheelFortune.cs.meta`
-
-4. **UIReady**  
+3. **UIReady**  
    - `Assets/Neoxider/Scripts/UI/UIReady.cs`  
    - `Assets/Neoxider/Scripts/UI/UIReady.cs.meta`
 
@@ -76,7 +59,7 @@
 ## Порядок выполнения
 
 1. Открыть каждый перечисленный префаб и сцену в Unity.
-2. Найти объекты с компонентами TimeReward, WheelFortune, UIReady, AiNavigation (по нужному guid или по имени скрипта).
+2. Найти объекты с компонентами TimeReward, UIReady, AiNavigation (по нужному guid или по имени скрипта).
 3. Удалить компонент или заменить на указанную альтернативу.
 4. Сохранить префабы и сцены.
 5. Удалить перечисленные .cs и .meta файлы из проекта.

@@ -1,68 +1,70 @@
-# Neoxider — коллекция мощных инструментов для Unity
+# Neoxider — a collection of powerful tools for Unity
 
-[![Version](https://img.shields.io/badge/version-8.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[🇺🇸 English](README.md) | [🇷🇺 Русский](README_RU.md)
 
-> **RU:** Готовые решения для Unity, которые легко интегрируются в ваш проект. Более 150 модулей для быстрой разработки игр без лишних сложностей.
-> 
+[![Version](https://img.shields.io/badge/version-8.2.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+
 > **EN:** Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.
-
-**Neoxider** — экосистема готовых инструментов для Unity, созданная разработчиками для разработчиков. Легко настраивается через Inspector, не требует глубокого погружения в код, но остаётся полностью прозрачной и расширяемой. Идеально подходит для прототипирования и продакшн-проектов.
+> 
+> **RU:** Готовые решения для Unity, которые легко интегрируются в ваш проект. Более 150 модулей для быстрой разработки игр без лишних сложностей.
 
 **Neoxider** is an ecosystem of ready-to-use Unity tools, built by developers for developers. Easy to configure through Inspector, no deep code diving required, yet fully transparent and extensible. Perfect for prototyping and production projects.
 
-📖 **[Полная документация (RU) →](Assets/Neoxider/Docs/README.md)** · 📖 **[English docs →](Assets/Neoxider/DocsEn/README.md)** · 📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** · 📝 **[Changelog →](Assets/Neoxider/CHANGELOG.md)**
+**Neoxider** — экосистема готовых инструментов для Unity, созданная разработчиками для разработчиков. Легко настраивается через Inspector, не требует глубокого погружения в код, но остаётся полностью прозрачной и расширяемой. Идеально подходит для прототипирования и продакшн-проектов.
 
-**Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — канонический индекс всех модулей. **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — английский entry point для верхнеуровневых модулей и ключевых страниц; если глубокая страница ещё не переведена, индекс ведёт в соответствующий русский раздел. Tools-подмодули и samples (NeoxiderPages, UI Extension) включены в оба индекса.
+📖 **[Full documentation (RU) →](Assets/Neoxider/Docs/README.md)** · 📖 **[English docs →](Assets/Neoxider/DocsEn/README.md)** · 📌 **[PROJECT_SUMMARY →](Assets/Neoxider/PROJECT_SUMMARY.md)** · 📝 **[Changelog →](Assets/Neoxider/CHANGELOG.md)**
+
+**Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — English entry point for high-level modules and core pages; if a deep page is not translated yet, the index points to the corresponding Russian section. Tools submodules and samples (NeoxiderPages, UI Extension) are included in both indexes. **Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — canonical index of all modules.
 
 ---
 
-## 📑 Содержание
+## 📑 Table of Contents
 
-- [No-Code условия — NeoCondition](#no-code-условия--neocondition)
-- [Чем примечателен Neoxider](#чем-примечателен-neoxider)
+- [No-Code conditions — NeoCondition](#no-code-conditions--neocondition)
+- [Why choose Neoxider](#why-choose-neoxider)
 - [Demo Scenes](#demo-scenes)
-- [Games built with NeoxiderTools](#games-built-with-neoxidertools) — игры на базе экосистемы
+- [Games built with NeoxiderTools](#games-built-with-neoxidertools) — games powered by the ecosystem
 - [Demo Games](#demo-games)
-- [Быстрый старт](#быстрый-старт)
-- [Таблица модулей](#таблица-модулей)
-  - [Condition](#condition--no-code-условия) · [Tools](#tools--инструменты) · [UI](#ui--интерфейс) · [Bonus](#bonus--бонусные-системы) · [Shop](#shop--магазин) · [Save](#save--сохранения) · [Quest](#quest--квесты) · [Cards](#cards--карточные-игры) · [StateMachine](#statemachine--машина-состояний) · [Animations](#animations--анимации) · [Audio](#audio--звук) · [Extensions](#extensions--расширения-c) · [Editor](#editor--инструменты-редактора) · [Level](#level--уровни) · [NPC](#npc) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute) · [Reactive](#reactive)
-- [Топовые модули](#топовые-модули)
-- [Установка через UPM](#установка-через-upm) — [Зависимости](#зависимости), [Основной пакет](#основной-пакет), [Ручная установка](#ручная-установка)
-- [Установка Demo Scenes и NeoxiderPages](#установка-demo-scenes-и-neoxiderpages)
+- [Quick Start](#quick-start)
+- [Modules Table](#modules-table)
+  - [Condition](#condition--no-code-conditions) · [Tools](#tools) · [UI](#ui) · [Bonus](#bonus) · [Shop](#shop) · [Save](#save) · [Quest](#quest) · [Cards](#cards) · [StateMachine](#statemachine) · [Animations](#animations) · [Audio](#audio) · [Extensions](#extensions--c-extensions) · [Editor](#editor--editor-tools) · [Level](#level) · [NPC](#npc) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute) · [Reactive](#reactive)
+- [Top Modules](#top-modules)
+- [Installation via UPM](#installation-via-upm) — [Dependencies](#dependencies), [Main Package](#main-package), [Manual Installation](#manual-installation)
+- [Installing Demo Scenes and NeoxiderPages](#installing-demo-scenes-and-neoxiderpages)
 - [FAQ](#faq)
-- [Поддержка и вклад](#поддержка-и-вклад)
+- [Support and Contribution](#support-and-contribution)
 
 ---
 
-## No-Code условия — NeoCondition
+## No-Code conditions — NeoCondition
 
-Проектируйте сложную игровую логику **без единой строчки кода**. Компонент `NeoCondition` позволяет прямо в Inspector:
+Design complex game logic **without a single line of code**. The `NeoCondition` component allows you directly in the Inspector to:
 
-- **Проверять любые данные** — HP, очки, состояние объекта, любое public поле или свойство любого компонента
-- **Комбинировать условия** — AND/OR логика, инверсия (NOT), несколько проверок в одном компоненте
-- **Реагировать на изменения** — события `OnTrue`, `OnFalse`, `OnResult` подключаются к любым объектам через UnityEvent
-- **Проверять свойства GameObject** — `activeSelf`, `tag`, `layer` и другие — без дополнительных компонентов
-- **Работать с будущими объектами** — находите объекты по имени, настраивайте условия для префабов до их спавна через Prefab Preview
-- **Выбирать режим проверки** — Interval, EveryFrame, Manual; фильтр Only On Change исключает лишние срабатывания
+- **Check any data** — HP, scores, object state, any public field or property of any component
+- **Combine conditions** — AND/OR logic, inversion (NOT), multiple checks in a single component
+- **React to changes** — events `OnTrue`, `OnFalse`, `OnResult` connect to any objects via UnityEvent
+- **Check GameObject properties** — `activeSelf`, `tag`, `layer` and others — without extra components
+- **Work with future objects** — find objects in the scene by name, configure conditions for prefabs before they spawn via Prefab Preview
+- **Choose verification mode** — Interval, EveryFrame, Manual; the Only On Change filter eliminates unnecessary triggers
 
-> **Пример:** «Когда `Health.Hp <= 0` — показать Game Over» — одна настройка в Inspector, ноль строк в коде.
+> **Example:** "When `Health.Hp <= 0` — show Game Over" — one setting in Inspector, zero lines of code.
 
-📖 [Документация NeoCondition →](Assets/Neoxider/Docs/Condition/NeoCondition.md)
+📖 [NeoCondition Documentation →](Assets/Neoxider/Docs/Condition/NeoCondition.md)
 
 ---
 
-## Чем примечателен Neoxider
+## Why choose Neoxider
 
-- **Production-ready** — каждая подсистема поставляется с примерами, документацией и продуманными интеграциями
-- **No-Code там, где нужно** — большинство компонентов настраиваются через Inspector и UnityEvent, но остаются расширяемыми
-- **Гибридный подход** — No-Code + Code для максимальной гибкости
-- **Модульность** — изоляция через Assembly Definition Files, импортируйте только нужные модули
-- **Расширяемость** — наследование, интерфейсы, публичный API у каждого компонента
-- **Автоматическое сохранение** — мощный модуль атрибутов сохранения, многие скрипты хранят данные автоматически
-- **Документация внутри** — у каждого модуля есть собственный README в `Assets/Neoxider/Docs/`
+- **Production-ready** — each subsystem comes with examples, documentation, and thoughtful integrations
+- **No-Code where needed** — most components are configured via Inspector and UnityEvent, yet remain extensible
+- **Hybrid approach** — No-Code + Code for maximum flexibility
+- **Modularity** — isolation via Assembly Definition Files, import only the modules you need
+- **Extensibility** — inheritance, interfaces, public API for each component
+- **Auto-save** — powerful save attributes module, many scripts store data automatically
+- **Built-in documentation** — each module has its own README in `Assets/Neoxider/Docs/`
 
-> Обратите особое внимание модулю **Extensions**, если любите писать код — 300+ методов-расширений для C# и Unity API.
-> Множество скриптов поддерживают работу через код: Singleton, ChanceSystem, Timer и другие.
+> Pay special attention to the **Extensions** module if you like writing code — 300+ extension methods for C# and Unity API.
+> Many scripts support code-based interaction: Singleton, ChanceSystem, Timer and others.
 
 ---
 
@@ -73,12 +75,12 @@
 
 ## Games built with NeoxiderTools
 
-> **RU:** Реальные релизы и демо, где **NeoxiderTools** — основа геймплея (в т.ч. no-code в Inspector).  
 > **EN:** Shipping titles and jams that build on **NeoxiderTools** (including inspector-driven workflows).
+> **RU:** Реальные релизы и демо, где **NeoxiderTools** — основа геймплея (в т.ч. no-code в Inspector).  
 
-| Игра · Game | Жанры · Genres | Платформа | Ссылка · Link | Примечание · Notes |
-|-------------|----------------|-----------|---------------|-------------------|
-| [**Внуки понарошку: пенсия прилагается**](https://myindie.ru/games/game/fake-grandkids) | Arcade, Survival | Windows | [MyIndie — страница · store page](https://myindie.ru/games/game/fake-grandkids) | RU; **UralGameJam 2026**; логика через NeoCondition и экосистему NeoxiderTools · v7.8.0|
+| Game · Игра | Genres · Жанры | Platform | Link · Ссылка | Notes · Примечание |
+|-------------|----------------|----------|---------------|--------------------|
+| [**Fake Grandkids** *(Внуки понарошку)*](https://myindie.ru/games/game/fake-grandkids) | Arcade, Survival | Windows | [MyIndie — store page](https://myindie.ru/games/game/fake-grandkids) | RU; **UralGameJam 2026**; logic via NeoCondition and NeoxiderTools ecosystem · v7.8.0|
 
 ## Demo Games
 <img width="354" height="623" alt="2025-11-02_22-31-20" src="https://github.com/user-attachments/assets/56c255c1-5e96-410c-b212-ea865ea4521f" />
@@ -87,68 +89,68 @@
 
 ---
 
-## Быстрый старт
+## Quick Start
 
-1. **Установите зависимости** — Unity 2022+ (рекомендуется)
-2. **Импортируйте** папку `Assets/Neoxider` в проект (или через [UPM](#установка-через-upm))
-3. **Добавьте системный префаб** `Prefabs/--System--.prefab` в сцену — менеджеры событий и UI
-4. **Перетаскивайте компоненты** из Inspector — большинство работает без кода через UnityEvent
-5. **Изучите документацию** — откройте README в `Docs/` для нужного модуля
+1. **Install dependencies** — Unity 2022+ (recommended)
+2. **Import** the `Assets/Neoxider` folder into your project (or via [UPM](#installation-via-upm))
+3. **Add the system prefab** `Prefabs/--System--.prefab` to the scene — event managers and UI
+4. **Drag and drop components** from Inspector — most work without code via UnityEvent
+5. **Explore the documentation** — open the README in `Docs/` for the required module
 
-## Тесты
+## Tests
 
-- Базовые `EditMode` тесты находятся в `Assets/Neoxider/Editor/Tests/`.
-- Они покрывают критичные сценарии для `Save`, `Level`, `Bootstrap` и legacy/editor-поведения.
-- Для запуска в Unity используйте `Test Runner` или пакет `com.unity.test-framework`.
-
----
-
-## Таблица модулей
-
-| Модуль | Описание |
-|--------|----------|
-| ⚙️ [**Condition**](#condition--no-code-условия) | No-Code условия: проверка полей, AND/OR логика, события |
-| 🛠️ [**Tools**](#tools--инструменты) | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод |
-| 🖼️ [**UI**](#ui--интерфейс) | UI-панели, анимации кнопок, переключатели |
-| 🎁 [**Bonus**](#bonus--бонусные-системы) | Слоты, колесо фортуны, коллекции, награды по времени |
-| 🛒 [**Shop**](#shop--магазин) | Магазин, валюта, покупки |
-| 💾 [**Save**](#save--сохранения) | PlayerPrefs, JSON-файлы, атрибут `[SaveField]` |
-| 📜 [**Quest**](#quest--квесты) | Конфиги квестов, менеджер, цели, runtime-состояние |
-| 📈 [**Progression**](Assets/Neoxider/Docs/Progression/README.md) | XP, уровни, unlock tree, perk tree и persistent progression |
-| 🃏 [**Cards**](#cards--карточные-игры) | MVP-архитектура, покер, "Пьяница" |
-| 🤖 [**StateMachine**](#statemachine--машина-состояний) | Код + No-Code, визуальный редактор |
-| ✨ [**Animations**](#animations--анимации) | Float, Color, Vector3 анимации |
-| 🎵 [**Audio**](#audio--звук) | AudioManager, микшер, random music |
-| 🔌 [**Extensions**](#extensions--расширения-c) | 300+ extension-методов |
-| 🛠️ [**Editor**](#editor--инструменты-редактора) | Окна настроек, поиск missing scripts, авто-билд |
-| 🗺️ [**Level**](#level--уровни) | Менеджер уровней, карта |
-| 🚶 [**NPC**](#npc) | Навигация NPC, патруль, chase и animator driver |
-| 🌌 [**Parallax**](#parallax) | Параллакс-слои |
-| 🔲 [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
-| 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
-| ⚡ [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
+- Baseline `EditMode` tests are located in `Assets/Neoxider/Editor/Tests/`.
+- They cover critical scenarios for `Save`, `Level`, `Bootstrap` and legacy/editor behaviors.
+- Use `Test Runner` or the `com.unity.test-framework` package to run them in Unity.
 
 ---
 
-## Модули
+## Modules Table
 
-### Condition — No-Code условия
+| Module | Description |
+|--------|-------------|
+| ⚙️ [**Condition**](#condition--no-code-conditions) | No-Code conditions: field validation, AND/OR logic, events |
+| 🛠️ [**Tools**](#tools) | 150+ components: movement, physics, spawners, timers, input |
+| 🖼️ [**UI**](#ui) | UI panels, button animations, toggles |
+| 🎁 [**Bonus**](#bonus) | Slots, fortune wheel, collections, time rewards |
+| 🛒 [**Shop**](#shop) | Shop, currency, purchases |
+| 💾 [**Save**](#save) | PlayerPrefs, JSON files, `[SaveField]` attribute |
+| 📜 [**Quest**](#quest) | Quest configs, manager, objectives, runtime state |
+| 📈 [**Progression**](Assets/Neoxider/Docs/Progression/README.md) | XP, levels, unlock tree, perk tree and persistent progression |
+| 🃏 [**Cards**](#cards) | MVP architecture, poker, "Drunkard" |
+| 🤖 [**StateMachine**](#statemachine) | Code + No-Code, visual editor |
+| ✨ [**Animations**](#animations) | Float, Color, Vector3 animations |
+| 🎵 [**Audio**](#audio) | AudioManager, mixer, random music |
+| 🔌 [**Extensions**](#extensions--c-extensions) | 300+ extension methods |
+| 🛠️ [**Editor**](#editor--editor-tools) | Settings windows, missing scripts finder, auto-build |
+| 🗺️ [**Level**](#level) | Level manager, map |
+| 🚶 [**NPC**](#npc) | NPC navigation, patrol, chase, and animator driver |
+| 🌌 [**Parallax**](#parallax) | Parallax layers |
+| 🔲 [**GridSystem**](#gridsystem) | Grid generation, origin anchor, pathfinding, Match3/TicTacToe |
+| 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject attributes |
+| ⚡ [**Reactive**](#reactive) | Reactive serializable `float`, `int`, `bool` properties |
 
-- **NeoCondition** — проверка любых полей/свойств компонентов и GameObject'ов через Inspector
-- **AND/OR логика**, инверсия (NOT), несколько условий в одном компоненте
-- **Source Mode** — чтение данных из компонентов или свойств самого GameObject (`activeSelf`, `tag`, `layer`)
-- **Find By Name** — поиск объектов в сцене по имени с кешированием
-- **Wait For Object + Prefab Preview** — настройка условий для префабов до спавна
-- События: `OnTrue`, `OnFalse`, `OnResult(bool)`, `OnInvertedResult(bool)`
+---
 
-📖 [Документация →](Assets/Neoxider/Docs/Condition/NeoCondition.md)
+## Modules
 
-### Tools — Инструменты
+### Condition — No-Code conditions
 
-Самая большая категория — базовые "кирпичики" для построения игр:
+- **NeoCondition** — check any fields/properties of components and GameObjects via Inspector
+- **AND/OR logic**, inversion (NOT), multiple conditions in a single component
+- **Source Mode** — reading data from components or properties of the GameObject itself (`activeSelf`, `tag`, `layer`)
+- **Find By Name** — find objects in the scene by name with caching
+- **Wait For Object + Prefab Preview** — setup conditions for prefabs before spawning
+- Events: `OnTrue`, `OnFalse`, `OnResult(bool)`, `OnInvertedResult(bool)`
 
-| Подмодуль | Компоненты |
-|-----------|-----------|
+📖 [Documentation →](Assets/Neoxider/Docs/Condition/NeoCondition.md)
+
+### Tools
+
+The largest category — building blocks for your games:
+
+| Submodule | Components |
+|-----------|------------|
 | **Components** | Counter, Health, ScoreManager, DialogueManager, Loot, TypewriterEffect, AttackSystem |
 | **Input** | SwipeController, MouseInputManager, MouseEffect, MultiKeyEventTrigger |
 | **Movement** | MovementToolkit, Follow, CameraConstraint, DistanceChecker |
@@ -158,194 +160,194 @@
 | **Random** | ChanceManager, ChanceSystemBehaviour |
 | **Time** | Timer, TimerObject |
 | **Debug** | ErrorLogger, FPS |
-| **Draw** | Drawer (линии, коллайдеры) |
+| **Draw** | Drawer (lines, colliders) |
 | **FakeLeaderboard** | Leaderboard, LeaderboardItem |
 | **InteractableObject** | InteractiveObject, PhysicsEvents2D/3D |
 
-📖 [Документация →](Assets/Neoxider/Docs/Tools/README.md) | [Physics →](Assets/Neoxider/Docs/Tools/Physics/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Tools/README.md) | [Physics →](Assets/Neoxider/Docs/Tools/Physics/README.md)
 
-### UI — Интерфейс
+### UI
 
-- **UI** — менеджер UI-панелей (страниц)
-- **ButtonScale / ButtonShake** — анимации кнопок
-- **AnimationFly** — анимация "летящих" элементов
-- **VisualToggle** — универсальный переключатель визуальных состояний
-- **VariantView** — управление визуальными состояниями
+- **UI** — UI panels (pages) manager
+- **ButtonScale / ButtonShake** — button animations
+- **AnimationFly** — "flying" elements animation
+- **VisualToggle** — universal visual state toggle
+- **VariantView** — visual states management
 
-📖 [Документация →](Assets/Neoxider/Docs/UI/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/UI/README.md)
 
-### Bonus — Бонусные системы
+### Bonus
 
-- **Slot** — слот-машина
-- **WheelFortune** — колесо фортуны
-- **Collection** — система коллекций
-- **TimeReward** — награды по времени
-- **LineRoulett** — линейная рулетка
+- **Slot** — slot machine
+- **WheelFortune** — fortune wheel
+- **Collection** — collections system
+- **TimeReward** — time-based rewards
+- **LineRoulett** — linear roulette
 
-📖 [Документация →](Assets/Neoxider/Docs/Bonus/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Bonus/README.md)
 
-### Shop — Магазин
+### Shop
 
-- **Shop** — центральный контроллер
-- **ShopItem** — визуальное представление товара
-- **Money** — система валюты
-- **ButtonPrice** — кнопка с ценой
-- **TextMoney** — UI отображение денег
+- **Shop** — central controller
+- **ShopItem** — visual representation of an item
+- **Money** — currency system
+- **ButtonPrice** — button with a price
+- **TextMoney** — UI display of money
 
-📖 [Документация →](Assets/Neoxider/Docs/Shop/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Shop/README.md)
 
-### Save — Сохранения
+### Save
 
-- **SaveProvider** — статический API (как PlayerPrefs)
-- **ISaveProvider** — интерфейс для кастомных провайдеров
-- **SaveManager** — ядро системы
-- **GlobalSave** — глобальное хранилище
-- **SaveableBehaviour** — базовый класс для сохраняемых компонентов
+- **SaveProvider** — static API (like PlayerPrefs)
+- **ISaveProvider** — interface for custom providers
+- **SaveManager** — core system
+- **GlobalSave** — global storage
+- **SaveableBehaviour** — base class for saveable components
 
-📖 [Документация →](Assets/Neoxider/Docs/Save/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Save/README.md)
 
-### Quest — Квесты
+### Quest
 
-- **QuestConfig** — ScriptableObject квеста: ID, title, description, objectives, start conditions
-- **QuestManager** — принятие квестов, учёт прогресса, события и Condition Context
-- **QuestState** — runtime-состояние квеста и прогресс по целям
-- **QuestNoCodeAction** — универсальный no-code bridge для UnityEvent
-- **NotifyKill / NotifyCollect** — инкремент целей-счётчиков без ручного обхода состояний
+- **QuestConfig** — quest ScriptableObject: ID, title, description, objectives, start conditions
+- **QuestManager** — accepting quests, tracking progress, events, and Condition Context
+- **QuestState** — runtime quest state and objectives progress
+- **QuestNoCodeAction** — universal no-code bridge for UnityEvent
+- **NotifyKill / NotifyCollect** — increment counter-objectives without manual state traversal
 
-📖 [Документация →](Assets/Neoxider/Docs/Quest/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Quest/README.md)
 
-### Cards — Карточные игры
+### Cards
 
-- **MVP архитектура**: Model, View, Presenter
+- **MVP architecture**: Model, View, Presenter
 - **CardComponent, DeckComponent, HandComponent, BoardComponent**
-- **Poker** подмодуль с комбинациями
-- **DrunkardGame** — готовая игра "Пьяница"
+- **Poker** submodule with combinations
+- **DrunkardGame** — ready-to-play "Drunkard" game
 
-📖 [Документация →](Assets/Neoxider/Docs/Cards/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Cards/README.md)
 
-### StateMachine — Машина состояний
+### StateMachine
 
-- Код-реализация через `IState` интерфейс
-- No-Code конфигурация через ScriptableObject
-- Система предикатов для сложных условий переходов
-- Визуальный редактор в Inspector
+- Code implementation via `IState` interface
+- No-Code configuration via ScriptableObject
+- Predicate system for complex transition conditions
+- Visual editor in Inspector
 
-📖 [Документация →](Assets/Neoxider/Docs/StateMachine/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/StateMachine/README.md)
 
-### Animations — Анимации
+### Animations
 
-- **FloatAnimator** — анимация float значений
-- **ColorAnimator** — анимация цветов
-- **Vector3Animator** — анимация векторов
+- **FloatAnimator** — animating float values
+- **ColorAnimator** — animating colors
+- **Vector3Animator** — animating vectors
 
-📖 [Документация →](Assets/Neoxider/Docs/Animations/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Animations/README.md)
 
-### Audio — Звук
+### Audio
 
-- **AMSettings** — настройки аудио менеджера
-- **RandomMusicController** — контроллер случайной музыки
-- **SettingMixer** — управление микшером
-- **AudioSimple** — упрощенная система воспроизведения
+- **AMSettings** — audio manager settings
+- **RandomMusicController** — random music controller
+- **SettingMixer** — mixer management
+- **AudioSimple** — simplified playback system
 
-📖 [Документация →](Assets/Neoxider/Docs/Audio/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Audio/README.md)
 
-### Extensions — Расширения C#
+### Extensions — C# Extensions
 
-300+ методов-расширений:
-- **Transform** — позиция, ротация, масштаб, иерархия
+300+ extension methods:
+- **Transform** — position, rotation, scale, hierarchy
 - **Collections** — ForEach, Shuffle, GetRandom, FindDuplicates
 - **String** — CamelCase, Truncate, Bold, Rainbow, Gradient
 - **Random** — Chance, WeightedIndex, RandomColor
 - **Coroutine** — Delay, WaitUntil, RepeatUntil
-- **Color, Audio, Screen, Layout** и многое другое
+- **Color, Audio, Screen, Layout** and much more
 
-📖 [Документация →](Assets/Neoxider/Docs/Extensions/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Extensions/README.md)
 
-### Editor — Инструменты редактора
+### Editor — Editor Tools
 
-- **NeoxiderSettingsWindow** — окно глобальных настроек
-- **FindAndRemoveMissingScripts** — поиск потерянных скриптов
-- **TextureMaxSizeChanger** — массовое изменение текстур
-- **SaveProjectZip** — резервные копии проекта
-- **AutoBuildName** — автоматическое именование билдов
-- **NeoUpdateChecker** — автопроверка обновлений через GitHub
+- **NeoxiderSettingsWindow** — global settings window
+- **FindAndRemoveMissingScripts** — missing scripts finder
+- **TextureMaxSizeChanger** — bulk texture resizing
+- **SaveProjectZip** — project backups
+- **AutoBuildName** — automatic build naming
+- **NeoUpdateChecker** — auto update checker via GitHub
 
-📖 [Документация →](Assets/Neoxider/Docs/Editor/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/Editor/README.md)
 
-### Level — Уровни
+### Level
 
-- **LevelManager** — менеджер уровней
-- **LevelButton** — кнопка уровня
-- **Map** — карта уровней
+- **LevelManager** — level manager
+- **LevelButton** — level button
+- **Map** — level map
 
 ### NPC
 
-- **NpcNavigation** — перемещение NPC с логикой патруля и преследования
-- **NpcAnimatorDriver** — синхронизация состояния движения с Animator
-- Используется вместе с movement/nav workflow и анимационными связками
+- **NpcNavigation** — NPC movement with patrol and chase logic
+- **NpcAnimatorDriver** — syncing movement state with Animator
+- Used in conjunction with movement/nav workflows and animation binders
 
-📖 [Документация →](Assets/Neoxider/Docs/NPC/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/NPC/README.md)
 
 ### Parallax
 
-- **ParallaxLayer** — параллакс с предпросмотром, зазорами, рандомизацией
+- **ParallaxLayer** — parallax with preview, gap-handling, randomization
 
 ### GridSystem
 
-- **FieldGenerator** — генератор поля
-- **FieldCell** — ячейка поля
-- **FieldSpawner** — спавн объектов на поле
-- **GridShapeMask + Origin** — произвольные формы и якорь построения поля
-- **GridPathfinder** — pathfinding с диагностикой причин отсутствия пути
-- **Match3 / TicTacToe** — прикладные игровые надстройки + demo-сцены
+- **FieldGenerator** — field generator
+- **FieldCell** — field cell
+- **FieldSpawner** — spawning objects on the field
+- **GridShapeMask + Origin** — arbitrary shapes and grid anchor
+- **GridPathfinder** — pathfinding with diagnostics for missing paths
+- **Match3 / TicTacToe** — applied game add-ons + demo scenes
 
 ### PropertyAttribute
 
-- `[Button]` — кнопки в Inspector из методов
-- `[GUIColor]` — цветовое оформление полей
-- `[RequireInterface]` — валидация интерфейсов
-- Inject-атрибуты: `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]`
+- `[Button]` — buttons in Inspector from methods
+- `[GUIColor]` — field colorization
+- `[RequireInterface]` — interface validation
+- Inject attributes: `[GetComponent]`, `[FindInScene]`, `[LoadFromResources]`
 
-📖 [Документация →](Assets/Neoxider/Docs/PropertyAttribute/README.md)
+📖 [Documentation →](Assets/Neoxider/Docs/PropertyAttribute/README.md)
 
 ### Reactive
 
-- **ReactivePropertyFloat** — сериализуемое реактивное значение `float`
-- **ReactivePropertyInt** — сериализуемое реактивное значение `int`
-- **ReactivePropertyBool** — сериализуемое реактивное значение `bool`
-- **SetValueWithoutNotify / ForceNotify** — управление оповещениями при загрузке и ручной синхронизации
+- **ReactivePropertyFloat** — serializable reactive `float` value
+- **ReactivePropertyInt** — serializable reactive `int` value
+- **ReactivePropertyBool** — serializable reactive `bool` value
+- **SetValueWithoutNotify / ForceNotify** — notification control during loading and manual sync
 
-📖 [Документация →](Assets/Neoxider/Docs/Reactive/README.md)
-
----
-
-## Топовые модули
-
-- **NeoCondition** — No-Code условия: проверяйте любые данные и стройте логику целиком в Inspector
-- **Counter** — универсальный счётчик с арифметикой, событиями и автосохранением
-- **SpineController** — фасад для Spine с UnityEvent-обёртками и автозаполнением
-- **ParallaxLayer** — параллакс с предпросмотром и автоматической переработкой тайлов
-- **DialogueManager** — диалоги с персонажами, портретами и событиями на каждой реплике
-- **ChanceManager** — декларативная система вероятностей для лута и рулеток
-- **ObjectPool / Spawner** — расширяемый пул с волнами и случайным выбором префабов
-- **MovementToolkit** — контроллеры движения (клавиатура, мышь, 2D/3D, follow-камеры)
-- **Physics** — ExplosiveForce, ImpulseZone, MagneticField с кастомными режимами
-- **Timer / TimerObject** — таймеры с паузой, повтором и событиями прогресса
+📖 [Documentation →](Assets/Neoxider/Docs/Reactive/README.md)
 
 ---
 
-## Установка через UPM
+## Top Modules
 
-### Зависимости
+- **NeoCondition** — No-Code conditions: check any data and build logic entirely in Inspector
+- **Counter** — universal counter with arithmetic, events, and auto-save
+- **SpineController** — facade for Spine with UnityEvent wrappers and auto-completion
+- **ParallaxLayer** — parallax with preview and automatic tile recycling
+- **DialogueManager** — dialogues with characters, portraits, and events on each line
+- **ChanceManager** — declarative probability system for loot and roulettes
+- **ObjectPool / Spawner** — extensible pool with waves and random prefab selection
+- **MovementToolkit** — movement controllers (keyboard, mouse, 2D/3D, follow-cameras)
+- **Physics** — ExplosiveForce, ImpulseZone, MagneticField with custom modes
+- **Timer / TimerObject** — timers with pause, replay, and progress events
 
-| Пакет | Способ установки |
-|-------|-----------------|
-| **Input System** (`com.unity.inputsystem`) | Рекомендуется для модулей Input / swipe / нового ввода; в шаблоне проекта уже указан в `Packages/manifest.json`. В UPM-пакете Neoxider указан как зависимость для совместимости версий. |
+---
+
+## Installation via UPM
+
+### Dependencies
+
+| Package | Installation Method |
+|---------|---------------------|
+| **Input System** (`com.unity.inputsystem`) | Recommended for Input / swipe modules; already in project template via `Packages/manifest.json`. Listed as dependency in UPM package for compatibility. |
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
-| **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
+| **DOTween Pro** (for NeoxiderPages) | Asset Store — required for the NeoxiderPages sample module |
 
-### Основной пакет
+### Main Package
 
 ```
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
@@ -353,56 +355,56 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 Window -> Package Manager -> **+** -> Add package from git URL.
 
-Если нужна конкретная версия, добавьте тег в конец URL (например, `#5.5.2`):
+If you need a specific version, append the tag to the URL (e.g., `#5.5.2`):
 
 ```
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider#5.5.2
 ```
 
-### Ручная установка
+### Manual Installation
 
-Скопируйте папку `Assets/Neoxider` в ваш Unity-проект.
+Copy the `Assets/Neoxider` folder into your Unity project.
 
 ---
 
-## Установка Demo Scenes и NeoxiderPages
+## Installing Demo Scenes and NeoxiderPages
 
-После установки основного пакета через UPM, дополнительные модули доступны через **Package Manager**:
+After installing the main package via UPM, additional modules are available through the **Package Manager**:
 
-1. **Window -> Package Manager** -> найти **Neoxider Tools** (In Project)
-2. В правой панели внизу — секция **Samples**
-3. Нажать **Import** рядом с нужным модулем:
-   - **Demo Scenes** — демо-сцены и примеры использования
-   - **NeoxiderPages** — модуль страниц и экранов (PageManager, UIPage, UIKit), требуется **DOTween Pro**
+1. **Window -> Package Manager** -> find **Neoxider Tools** (In Project)
+2. In the right panel at the bottom — **Samples** section
+3. Click **Import** next to the required module:
+   - **Demo Scenes** — demo scenes and usage examples
+   - **NeoxiderPages** — pages and screens module (PageManager, UIPage, UIKit), requires **DOTween Pro**
 
-Файлы копируются в `Assets/Samples/Neoxider Tools/<version>/`.
+Files are copied to `Assets/Samples/Neoxider Tools/<version>/`.
 
-> Альтернативно: скачайте `.unitypackage` из [Releases](https://github.com/NeoXider/NeoxiderTools/releases)
+> Alternatively: download `.unitypackage` from [Releases](https://github.com/NeoXider/NeoxiderTools/releases)
 
-**Быстрый вызов страниц:**
+**Quick page call:**
 
 ```csharp
 UIKit.ShowPage("PageEnd");
-// или
+// or
 PM.I.ChangePageByName("PageEnd");
 ```
 
-`PageSubscriber` автоматически ищет `PageId` по стандартным именам: `PageGame`, `PageWin`, `PageLose`, `PageEnd` (настраивается в Inspector).
+`PageSubscriber` automatically looks up `PageId` by standard names: `PageGame`, `PageWin`, `PageLose`, `PageEnd` (configurable in Inspector).
 
 ---
 
 ## FAQ
 
-**Можно использовать выборочно?** Да, импортируйте только нужные папки — зависимости указаны в документации каждого модуля.
+**Can I use it selectively?** Yes, import only the needed folders — dependencies are listed in each module's documentation.
 
-**Есть примеры сцен?** Да, в папке `Demo` — минимальные сцены для каждого крупного модуля.
+**Are there sample scenes?** Yes, in the `Demo` folder — minimal scenes for every major module.
 
-**Работает с 3D?** Большинство систем — да. Исключение: чисто 2D-решения вроде `ParallaxLayer`.
+**Does it work with 3D?** Most systems do. Exception: pure 2D solutions like `ParallaxLayer`.
 
 ---
 
-## Поддержка и вклад
+## Support and Contribution
 
-Neoxider активно развивается. Нашли баг или хотите предложить модуль — открывайте issue/PR. Все изменения документируются в [Changelog](Assets/Neoxider/CHANGELOG.md).
+Neoxider is actively evolving. Found a bug or want to suggest a module? Open an issue/PR. All changes are documented in the [Changelog](Assets/Neoxider/CHANGELOG.md).
 
-Удачи в разработке!
+Good luck with your development!
