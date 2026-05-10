@@ -28,6 +28,17 @@ namespace Neo.Bonus
         [SerializeField] public SpriteRenderer spriteRenderer;
         [SerializeField] public TMP_Text textDescription;
 
+        [Header("Visual transitions")]
+        [Tooltip("Длительность плавной смены спрайта (alpha-crossfade). 0 = мгновенная смена (как раньше).")]
+        [Min(0f)]
+        public float crossfadeSeconds = 0.08f;
+
+        [Tooltip("Максимальный множитель Y-stretch при «motion-blur» (1 = нет растяжения).")]
+        [Range(1f, 2f)]
+        public float motionStretchMaxY = 1.0f;
+
+        private float _crossfadeStart = -1f;
+
         [Header("Debug Gizmo")] [Tooltip("Enable/disable gizmo label above element")]
         public bool gizmoEnabled = true;
 
@@ -75,6 +86,9 @@ namespace Neo.Bonus
 
         public int id { get; private set; }
 
+        private Vector3 _baseLocalScale = Vector3.one;
+        private bool _baseScaleCaptured;
+
         private void OnValidate()
         {
             spriteRenderer ??= GetComponent<SpriteRenderer>();
@@ -85,14 +99,65 @@ namespace Neo.Bonus
             }
         }
 
+        private void Awake()
+        {
+            CaptureBaseScale();
+        }
+
+        private void Update()
+        {
+            if (_crossfadeStart >= 0f && crossfadeSeconds > 0f)
+            {
+                float t = (Time.unscaledTime - _crossfadeStart) / crossfadeSeconds;
+                if (t >= 1f)
+                {
+                    ApplyAlpha(1f);
+                    _crossfadeStart = -1f;
+                }
+                else
+                {
+                    // simple alpha pop with sprite already swapped — half-fade-out then full visible
+                    float a = t < 0.5f ? 1f - t * 2f : (t - 0.5f) * 2f;
+                    ApplyAlpha(a);
+                }
+            }
+        }
+
+        /// <summary>Sets vertical stretch for motion-blur feel. Pass 1 for idle.</summary>
+        public void SetMotionStretch(float yScale)
+        {
+            if (!_baseScaleCaptured)
+            {
+                CaptureBaseScale();
+            }
+
+            if (motionStretchMaxY <= 1.0001f)
+            {
+                yScale = 1f;
+            }
+            else
+            {
+                yScale = Mathf.Clamp(yScale, 1f, motionStretchMaxY);
+            }
+
+            transform.localScale = new Vector3(_baseLocalScale.x, _baseLocalScale.y * yScale, _baseLocalScale.z);
+        }
+
         /// <summary>
         ///     Sets the element visuals from slot data.
         /// </summary>
         public void SetVisuals(SlotVisualData data)
         {
+            SetVisuals(data, false);
+        }
+
+        /// <summary>
+        ///     Sets visuals; optionally with smooth crossfade (only when sprite actually changes).
+        /// </summary>
+        public void SetVisuals(SlotVisualData data, bool smooth)
+        {
             if (data == null)
             {
-                // Hide element when there is no data
                 if (image)
                 {
                     image.enabled = false;
@@ -108,13 +173,16 @@ namespace Neo.Bonus
                     textDescription.gameObject.SetActive(false);
                 }
 
+                _crossfadeStart = -1f;
+                ApplyAlpha(1f);
                 return;
             }
 
-            // Set ID
+            Sprite prevSprite = image != null ? image.sprite : spriteRenderer != null ? spriteRenderer.sprite : null;
+            bool changed = prevSprite != data.sprite || id != data.id;
+
             id = data.id;
 
-            // Set sprite
             if (image != null)
             {
                 image.enabled = true;
@@ -127,7 +195,6 @@ namespace Neo.Bonus
                 spriteRenderer.sprite = data.sprite;
             }
 
-            // Set description
             if (textDescription != null)
             {
                 bool hasDescription = !string.IsNullOrEmpty(data.description);
@@ -136,6 +203,44 @@ namespace Neo.Bonus
                 {
                     textDescription.text = data.description;
                 }
+            }
+
+            if (smooth && changed && crossfadeSeconds > 0f && Application.isPlaying)
+            {
+                _crossfadeStart = Time.unscaledTime;
+            }
+            else
+            {
+                _crossfadeStart = -1f;
+                ApplyAlpha(1f);
+            }
+        }
+
+        private void CaptureBaseScale()
+        {
+            if (_baseScaleCaptured)
+            {
+                return;
+            }
+
+            _baseLocalScale = transform.localScale;
+            _baseScaleCaptured = true;
+        }
+
+        private void ApplyAlpha(float a)
+        {
+            if (image != null)
+            {
+                Color c = image.color;
+                c.a = a;
+                image.color = c;
+            }
+
+            if (spriteRenderer != null)
+            {
+                Color c = spriteRenderer.color;
+                c.a = a;
+                spriteRenderer.color = c;
             }
         }
 

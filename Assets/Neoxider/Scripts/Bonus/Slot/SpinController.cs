@@ -193,6 +193,16 @@ namespace Neo.Bonus
 
         private int[] _lastWinningPaylineIndices = Array.Empty<int>();
 
+        /// <summary>
+        ///     If set, the next <see cref="StartSpin"/> uses this matrix as the outcome instead of randomized plan
+        ///     (and bypasses CheckSpin shaping). Cleared after one spin.
+        ///     Shape: <c>[columns, rows]</c>, y=0 bottom, values are symbol IDs from <see cref="allSpritesData"/>.
+        /// </summary>
+        private int[,] _forcedNextOutcome;
+
+        /// <summary>True while a forced outcome is queued for the next spin.</summary>
+        public bool HasForcedNextOutcome => _forcedNextOutcome != null;
+
         /// <summary>ID matrix (same orientation as Elements): y=0 bottom.</summary>
         public int[,] FinalElementIDs
         {
@@ -839,6 +849,105 @@ namespace Neo.Bonus
             return sliced;
         }
 
+        /// <summary>
+        ///     Forces the next spin to land on the supplied outcome. <paramref name="idsBottomUp"/> is
+        ///     <c>[columns, rows]</c> with <c>y=0</c> at the bottom of the visible window. Ids must exist in
+        ///     <see cref="allSpritesData"/>. Pass <c>null</c> to clear a previously queued forced outcome.
+        ///     Bypasses CheckSpin win/lose shaping for that single spin (your matrix is the truth).
+        /// </summary>
+        public void ForceNextOutcome(int[,] idsBottomUp)
+        {
+            if (idsBottomUp == null)
+            {
+                _forcedNextOutcome = null;
+                return;
+            }
+
+            int cols = _rows?.Length ?? 0;
+            int rows = WindowHeight;
+            if (idsBottomUp.GetLength(0) != cols || idsBottomUp.GetLength(1) != rows)
+            {
+                Debug.LogWarning(
+                    $"[{nameof(SpinController)}] ForceNextOutcome shape [{idsBottomUp.GetLength(0)},{idsBottomUp.GetLength(1)}] " +
+                    $"does not match grid [{cols},{rows}]. Outcome ignored.",
+                    this);
+                _forcedNextOutcome = null;
+                return;
+            }
+
+            _forcedNextOutcome = (int[,])idsBottomUp.Clone();
+        }
+
+        /// <summary>
+        ///     Convenience: force the next spin to be a winning combination on a given payline definition,
+        ///     filling that line with <paramref name="symbolId"/> and the rest with non-matching ids.
+        ///     Returns false if <paramref name="lineDefinitionIndex"/> is out of range or symbols cannot be picked.
+        /// </summary>
+        public bool ForceNextOutcomeOnPayline(int lineDefinitionIndex, int symbolId)
+        {
+            int cols = _rows?.Length ?? 0;
+            int rows = WindowHeight;
+            if (cols <= 0 || rows <= 0 || allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0)
+            {
+                return false;
+            }
+
+            LinesData.InnerArray[] defs = GetPaylineDefinitionsSnapshot();
+            if (lineDefinitionIndex < 0 || lineDefinitionIndex >= defs.Length)
+            {
+                return false;
+            }
+
+            int[] cor = defs[lineDefinitionIndex]?.corY;
+            if (cor == null || cor.Length != cols)
+            {
+                return false;
+            }
+
+            int[,] outcome = new int[cols, rows];
+            int nSym = allSpritesData.visuals.Length;
+
+            for (int x = 0; x < cols; x++)
+            for (int y = 0; y < rows; y++)
+            {
+                int rid;
+                int guard = 0;
+                do
+                {
+                    rid = allSpritesData.visuals[Random.Range(0, nSym)].id;
+                } while (rid == symbolId && ++guard < 16 && nSym > 1);
+
+                outcome[x, y] = rid == symbolId ? FindAlternativeId(symbolId) : rid;
+            }
+
+            for (int x = 0; x < cols; x++)
+            {
+                int y = cor[x];
+                if ((uint)y < (uint)rows)
+                {
+                    outcome[x, y] = symbolId;
+                }
+            }
+
+            ForceNextOutcome(outcome);
+            return true;
+        }
+
+        private int FindAlternativeId(int avoidId)
+        {
+            int n = allSpritesData?.visuals?.Length ?? 0;
+            for (int i = 0; i < n; i++)
+            {
+                int candidate = allSpritesData.visuals[i].id;
+                if (candidate != avoidId)
+                {
+                    return candidate;
+                }
+            }
+
+            return avoidId;
+        }
+
         /// <summary>Random plan plus optional win/lose shaping for CheckSpin.</summary>
         private int[,] BuildPlanIdMatrix()
         {
@@ -850,6 +959,23 @@ namespace Neo.Bonus
             {
                 return planIds;
             }
+
+            // Forced outcome path — bypasses random plan & CheckSpin shaping.
+            if (_forcedNextOutcome != null
+                && _forcedNextOutcome.GetLength(0) == cols
+                && _forcedNextOutcome.GetLength(1) == vr)
+            {
+                for (int x = 0; x < cols; x++)
+                for (int y = 0; y < vr; y++)
+                {
+                    planIds[x, y] = _forcedNextOutcome[x, y];
+                }
+
+                _forcedNextOutcome = null;
+                return planIds;
+            }
+
+            _forcedNextOutcome = null;
 
             int nSym = allSpritesData.visuals.Length;
             for (int x = 0; x < cols; x++)
@@ -1199,7 +1325,23 @@ namespace Neo.Bonus
                 row.countSlotElement = _countVerticalElements;
                 row.spaceY = _space.y;
                 row.offsetY = offsetY;
+
+                // Predictive id assignment requires extraStepsAtDecel >= visible window height.
+                if (row.extraStepsAtDecel < _countVerticalElements)
+                {
+                    row.extraStepsAtDecel = _countVerticalElements;
+                }
+
                 row.ApplyLayout();
+
+                if (row.SlotElements != null && row.SlotElements.Length > 0
+                    && row.SlotElements.Length < _countVerticalElements + 1)
+                {
+                    Debug.LogWarning(
+                        $"[{nameof(SpinController)}] Row '{row.name}' has only {row.SlotElements.Length} SlotElement(s) " +
+                        $"but window height is {_countVerticalElements}. Need at least {_countVerticalElements + 1} for buffer wraps.",
+                        row);
+                }
 
                 if (_isSingleSpeed)
                 {

@@ -65,7 +65,7 @@ namespace Neo.Bonus
 
         [SerializeField] [Range(0, 360)] private float _wheelAngleInspector;
 
-        public UnityEvent<int> OnWinIdVariant;
+        public UnityEvent<int> OnWinIdVariant = new();
 
         private float _alignmentElapsed;
         private float _alignmentStartAngle;
@@ -275,7 +275,11 @@ namespace Neo.Bonus
 
         private void OnValidate()
         {
-            _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
+            if (_wheelTransform != null)
+            {
+                _wheelTransform.eulerAngles = new Vector3(0, 0, _wheelAngleInspector);
+            }
+
             if (_debugLogId)
             {
                 Debug.Log("Wheel Id: " + GetResultId());
