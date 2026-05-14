@@ -17,14 +17,31 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            NeoNetworkManager manager = Object.FindFirstObjectByType<NeoNetworkManager>();
-            if (manager != null)
+            NeoNetworkManager[] managers = Object.FindObjectsByType<NeoNetworkManager>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
+
+            for (int i = 0; i < managers.Length; i++)
             {
-                manager.StopNetwork();
+                if (managers[i] != null)
+                {
+                    managers[i].StopNetwork();
+                }
             }
 
             yield return null;
+
+            NetworkManager.ResetStatics();
             NetworkClient.ClearSpawners();
+
+            for (int i = 0; i < managers.Length; i++)
+            {
+                if (managers[i] != null)
+                {
+                    Object.DestroyImmediate(managers[i].gameObject);
+                }
+            }
+
+            yield return null;
         }
 
         [UnityTest]
