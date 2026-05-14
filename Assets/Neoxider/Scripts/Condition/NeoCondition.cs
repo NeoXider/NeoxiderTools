@@ -1,11 +1,11 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Condition
@@ -56,17 +56,8 @@ namespace Neo.Condition
     [NeoDoc("Condition/NeoCondition.md")]
     [CreateFromMenu("Neoxider/Condition/NeoCondition")]
     [AddComponentMenu("Neoxider/Condition/NeoCondition")]
-#if MIRROR
-    public class NeoCondition : NetworkBehaviour
-#else
-    public class NeoCondition : MonoBehaviour
-#endif
+    public class NeoCondition : NeoNetworkComponent
     {
-        [Header("Networking")]
-        [Tooltip("If enabled, evaluates locally but triggers UnityEvents globally for all clients.")]
-        [SerializeField]
-        public bool isNetworked = false;
-
         [Tooltip("ServerRevalidate: server evaluates conditions itself (secure). TrustClient: server trusts client result (for client-local conditions like UI/input).")]
         [SerializeField]
         private ConditionAuthority _authority = ConditionAuthority.ServerRevalidate;
@@ -297,14 +288,10 @@ namespace Neo.Condition
         }
 
         /// <summary>Late-join: apply server-authoritative result to newly connected client.</summary>
-        public override void OnStartClient()
+        protected override void ApplyNetworkState()
         {
-            base.OnStartClient();
-            if (isNetworked && !isServer)
-            {
-                _lastResult = _syncResult;
-                InvokeEvents(_syncResult);
-            }
+            _lastResult = _syncResult;
+            InvokeEvents(_syncResult);
         }
 #endif
 

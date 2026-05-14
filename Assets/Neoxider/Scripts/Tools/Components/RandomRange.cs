@@ -1,10 +1,10 @@
 using Neo.Reactive;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Tools
@@ -24,16 +24,8 @@ namespace Neo.Tools
     [NeoDoc("Tools/Components/RandomRange.md")]
     [CreateFromMenu("Neoxider/Tools/Components/RandomRange")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(RandomRange))]
-#if MIRROR
-    public class RandomRange : NetworkBehaviour
-#else
-    public class RandomRange : MonoBehaviour
-#endif
+    public class RandomRange : NeoNetworkComponent
     {
-        [Header("Networking")]
-        [Tooltip("If true, the generated random value will be synchronized to all clients so everyone gets the same number.")]
-        public bool isNetworked = false;
-
 #if MIRROR
         /// <summary>Server-authoritative last random value, synced to late-joining clients.</summary>
         [SyncVar]
@@ -168,14 +160,7 @@ namespace Neo.Tools
         }
 
         /// <summary>Late-join: apply server-authoritative value to newly connected client.</summary>
-        public override void OnStartClient()
-        {
-            base.OnStartClient();
-            if (isNetworked && !isServer)
-            {
-                ApplyValueLocally(_syncValue);
-            }
-        }
+        protected override void ApplyNetworkState() => ApplyValueLocally(_syncValue);
 #endif
 
         /// <summary>Sets minimum bound (int).</summary>

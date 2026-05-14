@@ -1,4 +1,23 @@
 
+## [8.2.1] - 2026-05-14
+
+### Added
+- **NoCode Multiplayer**: `NetworkAuthorityMode` (`None`, `OwnerOnly`, `ServerOnly`) with sender-based validation for scene objects.
+- **NeoNetworkManager**: `Scene Player Template` mode for NoCode scene-authored players; the scene object is disabled and spawned as network copies through a stable Mirror spawn handler.
+- **Selector**: network authority mode, SyncVar late-join state for fill mode/excluded indices/active snapshot, and regression coverage for host duplicate events.
+- **Editor**: replicated UnityEvents and replicated reactive values are highlighted when `isNetworked` is enabled.
+- **Tests**: coverage for `InteractiveObject`, `NetworkEventDispatcher`, `NetworkActionRelay`, authority filtering, offline fallback, and reactive network bridge updates.
+
+### Changed
+- **NoCode Multiplayer**: default authority is `None`; components keep offline/single-player behavior unless `isNetworked` and a network session are active.
+- **NoCode Multiplayer**: non-singleton networked NoCode components now inherit from `NeoNetworkComponent`; singleton managers inherit through `NetworkSingleton<T>` without per-component class-level `#if MIRROR`.
+- **NetworkActionRelay**: `OthersOnly` uses `TargetRpc` to exclude the sender correctly; `ServerOnly` no longer sends RPC.
+
+### Fixed
+- **InteractiveObject**: keyboard interaction in `ViewOrMouse` mode no longer falls back to distance-only activation when the look source is missing; pressing `E` requires the look ray to hit the object collider.
+- **InteractiveObject / NetworkEventDispatcher**: host/server path runs before pure-client command path, preventing host duplicate/missed replication issues.
+- **NetworkEventDispatcher**: authority check now uses the Mirror `sender` connection instead of local `HasAuthority(gameObject)`.
+
 ## [8.2.0] - 2026-05-10
 
 Слот: опциональная визуализация выигрышных линий в рантайме и синхронизация документации с пакетом.

@@ -77,30 +77,70 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator InteractiveObject_RouteToServer_CmdFiresEventGlobally()
+        public IEnumerator InteractiveObject_NetworkedHostInteract_FiresOnce()
         {
-            // Configure InteractiveObject to route to server
-            // Using reflection to set private serialized field
-            var field = typeof(InteractiveObject).GetField("isNetworked", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            field.SetValue(_interactiveObject, true);
+            _interactiveObject.IsNetworked = true;
+            _interactiveObject.AuthorityMode = NetworkAuthorityMode.None;
 
-            // Listen to event
-            _interactiveObject.onInteractDown.AddListener(() => _eventFired = true);
+            int eventCount = 0;
+            _interactiveObject.onInteractDown.AddListener(() =>
+            {
+                _eventFired = true;
+                eventCount++;
+            });
 
-            // Trigger local click (mimics input)
-            // It will see routeEventsToServer = true, call CmdInteractDown()
-            // Wait, we are the host. IsServer = true, IsClient = true.
-            // The logic: if (routeEventsToServer && isClient && !isServer) -> it only routes if strictly client.
-            // But wait, if we are Host (isServer), it shouldn't Cmd! It should just fire locally because Host is Server!
-            
-            // If it fires locally because it's the host, it still achieves server logic execution.
-            // Let's invoke local click reflection wrapper: TriggerInteractDown
             var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return new WaitForSeconds(0.1f);
             
-            Assert.IsTrue(_eventFired, "Host should directly execute the event.");
+            Assert.IsTrue(_eventFired, "Host should execute the networked interaction.");
+            Assert.AreEqual(1, eventCount, "Host should not receive duplicate local + RPC interaction events.");
+        }
+
+        [UnityTest]
+        public IEnumerator InteractiveObject_OfflineFallback_FiresLocally()
+        {
+            _interactiveObject.IsNetworked = false;
+
+            int eventCount = 0;
+            _interactiveObject.onInteractDown.AddListener(() => eventCount++);
+
+            var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            triggerMethod.Invoke(_interactiveObject, null);
+
+            yield return null;
+
+            Assert.AreEqual(1, eventCount, "Offline/non-networked interaction should fire locally.");
+        }
+
+        [UnityTest]
+        public IEnumerator InteractiveObject_DefaultAuthorityNone_AllowsSceneObject()
+        {
+            _interactiveObject.IsNetworked = true;
+            _interactiveObject.AuthorityMode = NetworkAuthorityMode.None;
+
+            int eventCount = 0;
+            _interactiveObject.onInteractDown.AddListener(() => eventCount++);
+
+            var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            triggerMethod.Invoke(_interactiveObject, null);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.AreEqual(1, eventCount, "Default no-authority mode should work on scene objects.");
+        }
+
+        [UnityTest]
+        public IEnumerator NetworkAuthorityMode_Helper_FiltersRemoteSender()
+        {
+            var remoteSender = new NetworkConnectionToClient(42, "remote");
+
+            Assert.IsTrue(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.None));
+            Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.ServerOnly));
+            Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.OwnerOnly));
+
+            yield return null;
         }
     }
 }

@@ -16,7 +16,8 @@
         "Neo.Tools.Spawner",
         "Neo.Tools.Components",
         "Neo.Tools.View",
-        "Neo.Shop"
+        "Neo.Shop",
+        "Neo.Reactive"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

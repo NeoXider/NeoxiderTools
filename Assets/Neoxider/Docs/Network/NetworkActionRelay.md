@@ -66,3 +66,19 @@
 - [NetworkOwnerFilter](NetworkOwnerFilter.md) — фильтр по роли перед действием
 - [NetworkEventDispatcher](../Tools/Network/NetworkEventDispatcher.md) — legacy версия (один канал)
 - [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты
+## Authority and scope notes
+
+`Authority Mode` controls who may trigger relay channels over the network:
+
+| Mode | Behavior |
+|------|----------|
+| `None` | Default NoCode mode. Works on non-owned scene objects. |
+| `OwnerOnly` | Only the owning client can send a remote command; host/server is allowed. |
+| `ServerOnly` | Remote clients cannot trigger the relay; server/host can. |
+
+Mirror commands still use `requiresAuthority = false`; the relay validates `sender` manually so scene objects do not need ownership setup.
+
+Scope behavior:
+- `AllClients`: sends the channel event to every client; dedicated server also invokes locally.
+- `ServerOnly`: invokes only on the server/host and does not RPC.
+- `OthersOnly`: sends `TargetRpc` to every client except the sender; host-local is excluded when the host triggered it.

@@ -16,17 +16,9 @@ namespace Neo.Tools
     [NeoDoc("Tools/InteractableObject/PhysicsEvents2D.md")]
     [CreateFromMenu("Neoxider/Tools/Physics/PhysicsEvents2D")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PhysicsEvents2D))]
-#if MIRROR
-    public sealed class PhysicsEvents2D : NetworkBehaviour
-#else
-    public sealed class PhysicsEvents2D : MonoBehaviour
-#endif
+    public sealed class PhysicsEvents2D : NeoNetworkComponent
     {
         public bool interactable = true;
-
-        [Header("Networking")]
-        [Tooltip("If enabled, collisions and triggers are caught on the Server and replicated to all Clients via RPC.")]
-        public bool isNetworked = false;
 
         [Header("Filtering")]
         [Tooltip("When enabled, other object must match requiredTag (if requiredTag is non-empty).")]

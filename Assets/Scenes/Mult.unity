@@ -528,6 +528,10 @@ MonoBehaviour:
   _onClientDisconnected:
     m_PersistentCalls:
       m_Calls: []
+  _useScenePlayerTemplate: 0
+  _scenePlayerTemplate: {fileID: 0}
+  _disableScenePlayerTemplate: 1
+  _scenePlayerTemplateSpawnId: 46ae4fd1a71e4af08786045a41fe09e4
 --- !u!114 &157609601
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1392,8 +1396,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  interactable: 1
   isNetworked: 0
+  interactable: 1
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -2503,8 +2507,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  interactable: 1
   isNetworked: 0
+  interactable: 1
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -2768,9 +2772,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 1
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 1
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -2781,7 +2786,7 @@ MonoBehaviour:
   includeTriggerCollidersInLookRay: 1
   includeTriggerCollidersInMouseRaycast: 1
   useScreenCenterRay: 0
-  targetCollider3D: {fileID: 0}
+  targetCollider3D: {fileID: 2054945907}
   targetCollider2D: {fileID: 0}
   interactionDistance: 3
   distanceCheckPoint: {fileID: 0}

@@ -342,9 +342,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -835,6 +836,10 @@ PrefabInstance:
     - target: {fileID: 7246856623113841072, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
       propertyPath: m_Name
       value: SlotUI
+      objectReference: {fileID: 0}
+    - target: {fileID: 7246856623113841072, guid: 0b236f3e79dd0e04692c9b4a5daf8a74, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1848,8 +1853,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  interactable: 1
   isNetworked: 0
+  interactable: 1
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -2192,9 +2197,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -3026,9 +3032,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -3618,9 +3625,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 1
@@ -4339,8 +4347,8 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  interactable: 1
   isNetworked: 0
+  interactable: 1
   filterByTag: 0
   filterByLayer: 1
   layers:
@@ -4876,9 +4884,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0
@@ -5182,9 +5191,10 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
+  isNetworked: 0
   _autoCheckEventSystem: 1
   _autoCreateEventSystemIfMissing: 1
-  isNetworked: 0
+  authorityMode: 0
   interactable: 1
   useHoverDetection: 1
   useMouseInteraction: 0

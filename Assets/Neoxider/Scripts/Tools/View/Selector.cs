@@ -1,13 +1,13 @@
 using System;
 using System.Collections.Generic;
 using Neo.Save;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Tools
@@ -32,17 +32,8 @@ namespace Neo.Tools
     [NeoDoc("Tools/View/Selector.md")]
     [CreateFromMenu("Neoxider/Tools/View/Selector")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Selector))]
-#if MIRROR
-    public class Selector : NetworkBehaviour
-#else
-    public class Selector : MonoBehaviour
-#endif
+    public class Selector : NeoNetworkComponent
     {
-        [Header("Networking")]
-        [Tooltip("If enabled, changing the selection locally is replicated to all clients.")]
-        [SerializeField]
-        public bool isNetworked = false;
-
 #if MIRROR
         /// <summary>Server-authoritative index, synced to late-joining clients.</summary>
         [SyncVar] private int _syncIndex;
@@ -50,6 +41,10 @@ namespace Neo.Tools
         [SyncVar] private bool _syncFillMode;
         /// <summary>Server-authoritative deactivateNonSelected flag.</summary>
         [SyncVar] private bool _syncDeactivateNonSelected = true;
+        /// <summary>Server-authoritative excluded random pool indices.</summary>
+        [SyncVar] private string _syncExcludedIndices = string.Empty;
+        /// <summary>Server-authoritative active item snapshot for additive selection modes.</summary>
+        [SyncVar] private string _syncActiveIndices = string.Empty;
 
         private float _lastCmdTime;
         private const float CmdRateLimit = 0.05f;
@@ -71,7 +66,7 @@ namespace Neo.Tools
             {
                 if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
-                    CmdSyncState(_currentIndex, deactivateNonSelected);
+                    CmdSyncState(_currentIndex, _fillMode, deactivateNonSelected);
                     return;
                 }
             }
@@ -82,10 +77,8 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
             {
-                _syncIndex = _currentIndex;
-                _syncFillMode = _fillMode;
-                _syncDeactivateNonSelected = deactivateNonSelected;
-                RpcSyncState(_currentIndex, deactivateNonSelected);
+                SyncNetworkState(deactivateNonSelected);
+                RpcSyncState(_currentIndex, _fillMode, deactivateNonSelected, _syncActiveIndices);
             }
 #endif
         }
@@ -274,26 +267,31 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdSyncState(int newIndex, bool deactivateNonSelected, NetworkConnectionToClient sender = null)
+        private void CmdSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, NetworkConnectionToClient sender = null)
         {
             if (Time.time - _lastCmdTime < CmdRateLimit) return;
             _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
 
             _syncIndex = newIndex;
-            _syncFillMode = _fillMode;
+            _syncFillMode = fillMode;
             _syncDeactivateNonSelected = deactivateNonSelected;
 
             _currentIndex = newIndex;
+            _fillMode = fillMode;
             ApplyUpdateSelection(deactivateNonSelected);
-            RpcSyncState(newIndex, deactivateNonSelected);
+            SyncNetworkState(deactivateNonSelected);
+            RpcSyncState(newIndex, fillMode, deactivateNonSelected, _syncActiveIndices);
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcSyncState(int newIndex, bool deactivateNonSelected)
+        private void RpcSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, string activeIndices)
         {
-            if (isServerOnly) return;
+            if (isServerOnly || isServer) return;
             _currentIndex = newIndex;
+            _fillMode = fillMode;
             ApplyUpdateSelection(deactivateNonSelected);
+            ApplyActiveIndicesSnapshot(activeIndices);
         }
 
         [Command(requiresAuthority = false)]
@@ -301,24 +299,80 @@ namespace Neo.Tools
         {
             if (Time.time - _lastCmdTime < CmdRateLimit) return;
             _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
 
             ExecuteSetRandom(deactivateOthers);
-            _syncIndex = _currentIndex;
-            _syncFillMode = _fillMode;
+            SyncNetworkState(deactivateOthers);
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdExcludeIndex(int index, NetworkConnectionToClient sender = null)
+        {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
+
+            ApplyExcludeIndex(index);
+            BroadcastExcludedIndices();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdIncludeIndex(int index, NetworkConnectionToClient sender = null)
+        {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
+
+            ApplyIncludeIndex(index);
+            BroadcastExcludedIndices();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdIncludeAllIndices(NetworkConnectionToClient sender = null)
+        {
+            if (Time.time - _lastCmdTime < CmdRateLimit) return;
+            _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
+
+            ApplyIncludeAllIndices();
+            BroadcastExcludedIndices();
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcSyncExcludedIndices(string excludedIndices)
+        {
+            if (isServerOnly || isServer) return;
+            ApplyExcludedIndicesSnapshot(excludedIndices);
         }
 
         /// <summary>
         ///     Late-join: apply server's authoritative state to newly connected client.
         /// </summary>
-        public override void OnStartClient()
+        protected override void ApplyNetworkState()
         {
-            base.OnStartClient();
-            if (isNetworked && !isServer)
-            {
-                _currentIndex = _syncIndex;
-                _fillMode = _syncFillMode;
-                ApplyUpdateSelection(_syncDeactivateNonSelected);
-            }
+            ApplyExcludedIndicesSnapshot(_syncExcludedIndices);
+            _currentIndex = _syncIndex;
+            _fillMode = _syncFillMode;
+            ApplyUpdateSelection(_syncDeactivateNonSelected);
+            ApplyActiveIndicesSnapshot(_syncActiveIndices);
+        }
+
+        private bool AuthorizedSender(NetworkConnectionToClient sender) =>
+            NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+
+        private void SyncNetworkState(bool deactivateNonSelected)
+        {
+            _syncIndex = _currentIndex;
+            _syncFillMode = _fillMode;
+            _syncDeactivateNonSelected = deactivateNonSelected;
+            _syncExcludedIndices = SerializeIndices(_excludedIndices);
+            _syncActiveIndices = SerializeActiveIndices();
+        }
+
+        private void BroadcastExcludedIndices()
+        {
+            _syncExcludedIndices = SerializeIndices(_excludedIndices);
+            RpcSyncExcludedIndices(_syncExcludedIndices);
         }
 #endif
 
@@ -475,6 +529,11 @@ namespace Neo.Tools
         [Tooltip("Whether to loop back to the beginning when reaching the end")]
         [SerializeField]
         private bool _loop = true;
+
+        [Header("Network Authority")]
+        [Tooltip("Who may change this Selector over the network. Default None keeps NoCode scene objects simple.")]
+        [SerializeField]
+        private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
         [Tooltip("Allow effective index -1 (nothing selected). Useful for skins/empty state")] [SerializeField]
         private bool _allowEmptyEffectiveIndex;
@@ -754,6 +813,15 @@ namespace Neo.Tools
         ///     logical count (0/1 or fill prefix length). Subscribe to <see cref="OnCountActiveChanged"/> when the value changes.
         /// </summary>
         public int CountActive => ComputeCountActive();
+
+        /// <summary>
+        ///     Manual NoCode authority policy. Defaults to None for scene-object friendly workflows.
+        /// </summary>
+        public NetworkAuthorityMode AuthorityMode
+        {
+            get => _authorityMode;
+            set => _authorityMode = value;
+        }
 
         /// <summary>
         ///     When true, Selector notifies SelectorItem components instead of calling GameObject.SetActive.
@@ -1395,7 +1463,8 @@ namespace Neo.Tools
                 return;
             }
 
-            _currentIndex = total - 1;
+            (int min, int max) = GetCurrentBounds();
+            _currentIndex = max;
             UpdateSelection();
         }
 
@@ -1493,9 +1562,20 @@ namespace Neo.Tools
         /// <param name="index">Index to exclude.</param>
         public void ExcludeIndex(int index)
         {
-            _excludedIndices ??= new HashSet<int>();
-            _excludedIndices.Add(index);
-            SyncExcludedIndicesInspector();
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive && NeoNetworkState.IsClientOnly)
+            {
+                CmdExcludeIndex(index);
+                return;
+            }
+#endif
+            ApplyExcludeIndex(index);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                BroadcastExcludedIndices();
+            }
+#endif
         }
 
         /// <summary>
@@ -1504,8 +1584,20 @@ namespace Neo.Tools
         /// <param name="index">Index to include.</param>
         public void IncludeIndex(int index)
         {
-            _excludedIndices?.Remove(index);
-            SyncExcludedIndicesInspector();
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive && NeoNetworkState.IsClientOnly)
+            {
+                CmdIncludeIndex(index);
+                return;
+            }
+#endif
+            ApplyIncludeIndex(index);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                BroadcastExcludedIndices();
+            }
+#endif
         }
 
         /// <summary>
@@ -1513,8 +1605,20 @@ namespace Neo.Tools
         /// </summary>
         public void IncludeAllIndices()
         {
-            _excludedIndices?.Clear();
-            SyncExcludedIndicesInspector();
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive && NeoNetworkState.IsClientOnly)
+            {
+                CmdIncludeAllIndices();
+                return;
+            }
+#endif
+            ApplyIncludeAllIndices();
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                BroadcastExcludedIndices();
+            }
+#endif
         }
 
         /// <summary>
@@ -1526,6 +1630,13 @@ namespace Neo.Tools
             _excludedIndices = indices != null ? new HashSet<int>(indices) : new HashSet<int>();
             SyncExcludedIndicesInspector();
             SyncIncludedIndicesInspector();
+            SaveState();
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                BroadcastExcludedIndices();
+            }
+#endif
         }
 
         /// <summary>
@@ -1647,6 +1758,142 @@ namespace Neo.Tools
             int min = effMin - _indexOffset;
             int max = total - 1 - _indexOffset;
             return (min, max);
+        }
+
+        private void ApplyExcludeIndex(int index)
+        {
+            _excludedIndices ??= new HashSet<int>();
+            _excludedIndices.Add(index);
+            SyncExcludedIndicesInspector();
+            SaveState();
+        }
+
+        private void ApplyIncludeIndex(int index)
+        {
+            _excludedIndices?.Remove(index);
+            SyncExcludedIndicesInspector();
+            SaveState();
+        }
+
+        private void ApplyIncludeAllIndices()
+        {
+            _excludedIndices?.Clear();
+            SyncExcludedIndicesInspector();
+            SaveState();
+        }
+
+        private static string SerializeIndices(IEnumerable<int> indices)
+        {
+            if (indices == null)
+            {
+                return string.Empty;
+            }
+
+            List<int> sorted = new(indices);
+            if (sorted.Count == 0)
+            {
+                return string.Empty;
+            }
+
+            sorted.Sort();
+            return string.Join(",", sorted);
+        }
+
+        private static HashSet<int> DeserializeIndices(string data)
+        {
+            HashSet<int> result = new();
+            if (string.IsNullOrWhiteSpace(data))
+            {
+                return result;
+            }
+
+            string[] parts = data.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            for (int i = 0; i < parts.Length; i++)
+            {
+                if (int.TryParse(parts[i].Trim(), out int value))
+                {
+                    result.Add(value);
+                }
+            }
+
+            return result;
+        }
+
+        private void ApplyExcludedIndicesSnapshot(string excludedIndices)
+        {
+            _excludedIndices = DeserializeIndices(excludedIndices);
+            SyncExcludedIndicesInspector();
+        }
+
+        private string SerializeActiveIndices()
+        {
+            if (!HasItems)
+            {
+                return string.Empty;
+            }
+
+            List<int> activeIndices = new();
+            for (int i = 0; i < _items.Length; i++)
+            {
+                GameObject item = _items[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                bool active;
+                if (_notifySelectorItemsOnly && item.TryGetComponent(out SelectorItem selectorItem))
+                {
+                    active = selectorItem.ActiveValue;
+                }
+                else
+                {
+                    active = item.activeSelf;
+                }
+
+                if (active)
+                {
+                    activeIndices.Add(i);
+                }
+            }
+
+            return SerializeIndices(activeIndices);
+        }
+
+        private void ApplyActiveIndicesSnapshot(string activeIndices)
+        {
+            if (!_controlGameObjectActive || !HasItems)
+            {
+                return;
+            }
+
+            HashSet<int> active = DeserializeIndices(activeIndices);
+            for (int i = 0; i < _items.Length; i++)
+            {
+                GameObject item = _items[i];
+                if (item == null)
+                {
+                    continue;
+                }
+
+                bool shouldBeActive = active.Contains(i);
+                if (_notifySelectorItemsOnly && item.TryGetComponent(out SelectorItem selectorItem))
+                {
+                    selectorItem.SetActive(shouldBeActive);
+                }
+                else if (item.activeSelf != shouldBeActive)
+                {
+                    try
+                    {
+                        item.SetActive(shouldBeActive);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+
+            NotifyCountActiveChangedIfNeeded();
         }
 
         /// <summary>

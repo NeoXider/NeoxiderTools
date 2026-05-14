@@ -1,10 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-#if MIRROR
-using Mirror;
-#endif
-
 namespace Neo.Network
 {
     /// <summary>
@@ -32,12 +28,7 @@ namespace Neo.Network
     /// </summary>
     [NeoDoc("Network/NetworkOwnerFilter.md")]
     [AddComponentMenu("Neoxider/Network/Network Owner Filter")]
-    public class NetworkOwnerFilter :
-#if MIRROR
-        NetworkBehaviour
-#else
-        MonoBehaviour
-#endif
+    public class NetworkOwnerFilter : NeoNetworkComponent
     {
         [Header("Filter")]
         [Tooltip("Which network role is allowed to pass.")]

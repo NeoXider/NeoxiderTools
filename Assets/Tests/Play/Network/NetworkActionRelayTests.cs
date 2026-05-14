@@ -49,6 +49,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("Relay");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             // Configure channel via reflection (serialized field)
             var channelsField = typeof(NetworkActionRelay).GetField("_channels",
@@ -67,14 +68,14 @@ namespace Neo.Tests.Play
             NetworkServer.Spawn(relayObj);
             yield return null;
 
-            bool fired = false;
-            channel.onTriggered.AddListener(() => fired = true);
+            int firedCount = 0;
+            channel.onTriggered.AddListener(() => firedCount++);
 
             relay.Trigger(0);
 
             yield return new WaitForSeconds(0.15f);
 
-            Assert.IsTrue(fired, "Void trigger should fire onTriggered event.");
+            Assert.AreEqual(1, firedCount, "Void trigger should fire once on host, without local + RPC duplicates.");
             Object.DestroyImmediate(relayObj);
         }
 
@@ -85,6 +86,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("RelayFloat");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             var channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -120,6 +122,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("RelayString");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             var channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -155,6 +158,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("RelayServerOnly");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             var channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -172,15 +176,48 @@ namespace Neo.Tests.Play
             NetworkServer.Spawn(relayObj);
             yield return null;
 
-            bool fired = false;
-            channel.onTriggered.AddListener(() => fired = true);
+            int firedCount = 0;
+            channel.onTriggered.AddListener(() => firedCount++);
 
             relay.Trigger(0);
 
             yield return new WaitForSeconds(0.15f);
 
-            // In Host mode, server is local — event should fire
-            Assert.IsTrue(fired, "ServerOnly scope should still fire on Host (which is also the server).");
+            Assert.AreEqual(1, firedCount, "ServerOnly scope should fire once on Host and should not RPC back.");
+            Object.DestroyImmediate(relayObj);
+        }
+
+        [UnityTest]
+        public IEnumerator OthersOnly_Scope_DoesNotEchoToHostSender()
+        {
+            var relayObj = new GameObject("RelayOthersOnly");
+            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
+
+            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            var channel = new NetworkActionChannel
+            {
+                channelName = "others",
+                scope = NetworkActionScope.OthersOnly,
+                onTriggered = new UnityEvent()
+            };
+            channelsField.SetValue(relay, new[] { channel });
+
+            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkTestHelper.SetAssetId(id, 88016);
+            NetworkClient.RegisterPrefab(relayObj);
+            NetworkServer.Spawn(relayObj);
+            yield return null;
+
+            int firedCount = 0;
+            channel.onTriggered.AddListener(() => firedCount++);
+
+            relay.Trigger(0);
+
+            yield return new WaitForSeconds(0.15f);
+
+            Assert.AreEqual(0, firedCount, "OthersOnly should not echo to the host client that triggered it.");
             Object.DestroyImmediate(relayObj);
         }
 
@@ -191,6 +228,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("RelayByName");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             var channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
@@ -224,6 +262,7 @@ namespace Neo.Tests.Play
         {
             var relayObj = new GameObject("RelayInvalid");
             var relay = relayObj.AddComponent<NetworkActionRelay>();
+            relay.isNetworked = true;
 
             var id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88015);

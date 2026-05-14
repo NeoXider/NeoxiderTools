@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using Neo.Network;
 
 #if MIRROR
@@ -15,20 +16,32 @@ namespace Neo.Tools
     /// </summary>
     [NeoDoc("Tools/Network/NetworkEventDispatcher.md")]
     [AddComponentMenu("Neoxider/Tools/Network/Network Event Dispatcher")]
-    public class NetworkEventDispatcher : 
-#if MIRROR
-        NetworkBehaviour
-#else
-        MonoBehaviour
-#endif
+    public class NetworkEventDispatcher : NeoNetworkComponent
     {
-        [Tooltip("If true, requires the caller to have network authority over this object.")]
-        public bool requiresAuthority = false;
+        [Tooltip("Who may trigger this event over the network. Default None lets NoCode scene objects work without ownership.")]
+        [SerializeField]
+        [FormerlySerializedAs("requiresAuthority")]
+        private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
         [Space]
         [Header("Global Replicated Event")]
         [Tooltip("This event fires identically on ALL connected clients and the server when dispatched.")]
-        public UnityEvent onNetworkEvent;
+        public UnityEvent onNetworkEvent = new();
+
+        /// <summary>Manual NoCode authority policy. Defaults to None.</summary>
+        public NetworkAuthorityMode AuthorityMode
+        {
+            get => _authorityMode;
+            set => _authorityMode = value;
+        }
+
+        /// <summary>Compatibility wrapper for older code that used a boolean owner-only gate.</summary>
+        [System.Obsolete("Use AuthorityMode instead.")]
+        public bool requiresAuthority
+        {
+            get => _authorityMode == NetworkAuthorityMode.OwnerOnly;
+            set => _authorityMode = value ? NetworkAuthorityMode.OwnerOnly : NetworkAuthorityMode.None;
+        }
 
         /// <summary>
         /// Universal entry point. Call this from any local UnityEvent to broadcast to everyone.
@@ -36,17 +49,17 @@ namespace Neo.Tools
         public void DispatchGlobalEvent()
         {
 #if MIRROR
-            if (NeoNetworkState.IsClient || NeoNetworkState.IsServer)
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
             {
-                if (NeoNetworkState.IsClient)
+                if (NeoNetworkState.IsServer)
+                {
+                    bool skipHostLocalRpc = NeoNetworkState.IsClient;
+                    onNetworkEvent?.Invoke();
+                    RpcDispatchEvent(skipHostLocalRpc);
+                }
+                else if (NeoNetworkState.IsClientOnly)
                 {
                     CmdDispatchEvent();
-                }
-                else if (NeoNetworkState.IsServer)
-                {
-                    // If invoked directly from dedicated server, broadcast to all clients
-                    onNetworkEvent?.Invoke();
-                    RpcDispatchEvent();
                 }
                 return;
             }
@@ -57,9 +70,9 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdDispatchEvent()
+        private void CmdDispatchEvent(NetworkConnectionToClient sender = null)
         {
-            if (requiresAuthority && !NeoNetworkState.HasAuthority(gameObject))
+            if (!NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
                 return; // Unauthorized
             }
@@ -71,12 +84,17 @@ namespace Neo.Tools
             }
 
             // Sync to all clients
-            RpcDispatchEvent();
+            RpcDispatchEvent(false);
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcDispatchEvent()
+        private void RpcDispatchEvent(bool skipHostLocal)
         {
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             onNetworkEvent?.Invoke();
         }
 #endif

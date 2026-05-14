@@ -173,6 +173,7 @@ namespace Neo.Editor
                                 EditorGUILayout.Space(2);
                             }
 
+                            DrawNetworkReplicationMarker(p);
                             EditorGUILayout.PropertyField(p, new GUIContent(label), true);
 
                             if (!p.isExpanded && callCount > 0)

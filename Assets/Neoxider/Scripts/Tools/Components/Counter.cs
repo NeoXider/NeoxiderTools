@@ -1,11 +1,11 @@
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Shop;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Tools
@@ -38,17 +38,8 @@ namespace Neo.Tools
     [NeoDoc("Tools/Components/Counter.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Counter")]
     [AddComponentMenu("Neoxider/Tools/" + nameof(Counter))]
-#if MIRROR
-    public class Counter : NetworkBehaviour
-#else
-    public class Counter : MonoBehaviour
-#endif
+    public class Counter : NeoNetworkComponent
     {
-        [Header("Networking")]
-        [Tooltip("If true, changes to this counter are replicated to all players (Shared). If false, it acts as a personal local counter.")]
-        [SerializeField]
-        public bool isNetworked = false;
-
 #if MIRROR
         /// <summary>Server-authoritative value, synced to late-joining clients.</summary>
         [SyncVar]
@@ -436,14 +427,7 @@ namespace Neo.Tools
         /// <summary>
         ///     Late-join: when a new client connects, apply the server's authoritative value.
         /// </summary>
-        public override void OnStartClient()
-        {
-            base.OnStartClient();
-            if (isNetworked && !isServer)
-            {
-                ApplyValueLocally(_syncValue);
-            }
-        }
+        protected override void ApplyNetworkState() => ApplyValueLocally(_syncValue);
 #endif
 
         private void InvokeValueChanged()

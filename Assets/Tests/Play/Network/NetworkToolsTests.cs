@@ -2,6 +2,7 @@ using System.Collections;
 using Mirror;
 using Neo.Condition;
 using Neo.Network;
+using Neo.Reactive;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
@@ -105,6 +106,109 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator Selector_NetworkedHostSet_FiresSelectionChangedOnce()
+        {
+            var selectorObj = new GameObject("SelectorHostOnce");
+            var selector = selectorObj.AddComponent<Selector>();
+            selector.isNetworked = true;
+
+            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkTestHelper.SetAssetId(id, 10006);
+            NetworkClient.RegisterPrefab(selectorObj);
+            NetworkServer.Spawn(selectorObj);
+
+            yield return null;
+
+            selector.Count = 5;
+
+            int fireCount = 0;
+            int invokedValue = -1;
+            selector.OnSelectionChanged.AddListener(v =>
+            {
+                fireCount++;
+                invokedValue = v;
+            });
+
+            selector.Set(2);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.AreEqual(2, selector.Value);
+            Assert.AreEqual(2, invokedValue);
+            Assert.AreEqual(1, fireCount, "Host should not receive a duplicate ClientRpc echo.");
+
+            Object.DestroyImmediate(selectorObj);
+        }
+
+        [UnityTest]
+        public IEnumerator Selector_NetworkedFillMode_ActivatesPrefix()
+        {
+            var selectorObj = new GameObject("SelectorFillNetworked");
+            var first = new GameObject("First");
+            var second = new GameObject("Second");
+            var third = new GameObject("Third");
+            first.transform.SetParent(selectorObj.transform);
+            second.transform.SetParent(selectorObj.transform);
+            third.transform.SetParent(selectorObj.transform);
+
+            var selector = selectorObj.AddComponent<Selector>();
+            selector.isNetworked = true;
+            selector.startOnAwake = false;
+
+            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkTestHelper.SetAssetId(id, 10007);
+            NetworkClient.RegisterPrefab(selectorObj);
+            NetworkServer.Spawn(selectorObj);
+
+            yield return null;
+
+            selector.FillMode = true;
+            selector.Set(1);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.IsTrue(selector.FillMode);
+            Assert.IsTrue(first.activeSelf);
+            Assert.IsTrue(second.activeSelf);
+            Assert.IsFalse(third.activeSelf);
+            Assert.AreEqual(2, selector.CountActive);
+
+            Object.DestroyImmediate(selectorObj);
+        }
+
+        [UnityTest]
+        public IEnumerator Selector_NetworkedExcludeInclude_UpdatesPool()
+        {
+            var selectorObj = new GameObject("SelectorExcludeNetworked");
+            var selector = selectorObj.AddComponent<Selector>();
+            selector.isNetworked = true;
+
+            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkTestHelper.SetAssetId(id, 10008);
+            NetworkClient.RegisterPrefab(selectorObj);
+            NetworkServer.Spawn(selectorObj);
+
+            yield return null;
+
+            selector.Count = 3;
+            selector.ExcludeIndex(1);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.IsTrue(selector.IsExcluded(1));
+            Assert.AreEqual(1, selector.ExcludedCount);
+
+            selector.IncludeIndex(1);
+
+            yield return new WaitForSeconds(0.1f);
+
+            Assert.IsFalse(selector.IsExcluded(1));
+            Assert.AreEqual(0, selector.ExcludedCount);
+
+            Object.DestroyImmediate(selectorObj);
+        }
+
+        [UnityTest]
         public IEnumerator NeoCondition_CmdCheckResult_FiresGlobalEvents()
         {
             var condObj = new GameObject("Condition");
@@ -158,6 +262,25 @@ namespace Neo.Tests.Play
             Assert.AreEqual(randomRange.ValueInt, invokedValue);
 
             Object.DestroyImmediate(randObj);
+        }
+
+        [Test]
+        public void NetworkReactivePropertyBridge_SetFromNetwork_UpdatesAndNotifies()
+        {
+            var property = new ReactivePropertyFloat(1f);
+            float observedValue = -1f;
+            int notifyCount = 0;
+            property.AddListener(value =>
+            {
+                observedValue = value;
+                notifyCount++;
+            });
+
+            NetworkReactivePropertyBridge.SetFromNetwork(property, 7.5f);
+
+            Assert.AreEqual(7.5f, property.CurrentValue, 0.001f);
+            Assert.AreEqual(7.5f, observedValue, 0.001f);
+            Assert.AreEqual(1, notifyCount);
         }
 
         [UnityTest]

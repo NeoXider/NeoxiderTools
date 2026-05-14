@@ -4,7 +4,6 @@ using UnityEngine;
 using UnityEngine.Events;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Network
@@ -36,12 +35,7 @@ namespace Neo.Network
     /// </summary>
     [NeoDoc("Network/NetworkPropertySync.md")]
     [AddComponentMenu("Neoxider/Network/Network Property Sync")]
-    public class NetworkPropertySync :
-#if MIRROR
-        NetworkBehaviour
-#else
-        MonoBehaviour
-#endif
+    public class NetworkPropertySync : NeoNetworkComponent
     {
         [Header("Target")]
         [Tooltip("The component whose field/property will be synchronized.")]
@@ -96,7 +90,7 @@ namespace Neo.Network
         private void Update()
         {
 #if MIRROR
-            if (_targetComponent == null || string.IsNullOrEmpty(_fieldName)) return;
+            if (!isNetworked || _targetComponent == null || string.IsNullOrEmpty(_fieldName)) return;
             if (Time.time - _lastSyncTime < _syncInterval) return;
 
             bool canWrite = false;
@@ -226,21 +220,17 @@ namespace Neo.Network
         private void OnStringSynced(string _, string newVal) { WriteString(newVal); onValueChanged?.Invoke(); }
         private void OnVector3Synced(Vector3 _, Vector3 newVal) { WriteVector3(newVal); onValueChanged?.Invoke(); }
 
-        public override void OnStartClient()
+        protected override void ApplyNetworkState()
         {
-            base.OnStartClient();
-            if (!isServer)
+            ResolveMember();
+            if (_cachedMember == null) return;
+            switch (_valueType)
             {
-                ResolveMember();
-                if (_cachedMember == null) return;
-                switch (_valueType)
-                {
-                    case SyncValueType.Float:   WriteFloat(_syncFloat); break;
-                    case SyncValueType.Int:      WriteInt(_syncInt); break;
-                    case SyncValueType.Bool:     WriteBool(_syncBool); break;
-                    case SyncValueType.String:   WriteString(_syncString); break;
-                    case SyncValueType.Vector3:  WriteVector3(_syncVector3); break;
-                }
+                case SyncValueType.Float:   WriteFloat(_syncFloat); break;
+                case SyncValueType.Int:      WriteInt(_syncInt); break;
+                case SyncValueType.Bool:     WriteBool(_syncBool); break;
+                case SyncValueType.String:   WriteString(_syncString); break;
+                case SyncValueType.Vector3:  WriteVector3(_syncVector3); break;
             }
         }
 #endif

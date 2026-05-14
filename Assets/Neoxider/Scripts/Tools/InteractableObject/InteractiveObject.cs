@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
+using UnityEngine.Serialization;
 using Neo.Network;
 #if MIRROR
 using Mirror;
@@ -15,12 +16,7 @@ namespace Neo.Tools
     [CreateFromMenu("Neoxider/Tools/Interact/InteractiveObject",
         "Prefabs/Tools/Interact/Interactive Sphere.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(InteractiveObject))]
-    public class InteractiveObject : 
-#if MIRROR
-        NetworkBehaviour,
-#else
-        MonoBehaviour,
-#endif
+    public class InteractiveObject : NeoNetworkComponent,
         IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
     {
         public enum KeyboardInteractionMode
@@ -42,10 +38,10 @@ namespace Neo.Tools
         [Tooltip("Create EventSystem automatically if it is missing in scene.")] [SerializeField]
         private bool _autoCreateEventSystemIfMissing = true;
 
-        [Header("Networking")]
-        [Tooltip("If true, interactions (clicks/keys) are sent directly to the Server. (Requires Mirror)")]
+        [Tooltip("Who may trigger this interaction over the network. Default None lets NoCode scene objects work without ownership.")]
         [SerializeField]
-        private bool isNetworked;
+        [FormerlySerializedAs("requireAuthority")]
+        private NetworkAuthorityMode authorityMode = NetworkAuthorityMode.None;
 
         public bool interactable = true;
 
@@ -650,15 +646,10 @@ namespace Neo.Tools
                 return true;
             }
 
-            if (distanceCheckPoint == null)
-            {
-                return true;
-            }
-
             Transform lookSource = ResolveLookSource();
             if (lookSource == null)
             {
-                return true;
+                return false;
             }
 
             Vector3 origin = lookSource.position;
@@ -821,10 +812,18 @@ namespace Neo.Tools
         private void TriggerInteractDown()
         {
 #if MIRROR
-            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
             {
-                if (NeoNetworkState.IsClient) CmdInteractDown();
-                else if (NeoNetworkState.IsServer) { onInteractDown?.Invoke(); RpcInteractDown(); }
+                if (NeoNetworkState.IsServer)
+                {
+                    bool skipHostLocalRpc = NeoNetworkState.IsClient;
+                    onInteractDown?.Invoke();
+                    RpcInteractDown(skipHostLocalRpc);
+                }
+                else if (NeoNetworkState.IsClient)
+                {
+                    CmdInteractDown();
+                }
                 return;
             }
 #endif
@@ -834,10 +833,18 @@ namespace Neo.Tools
         private void TriggerInteractUp()
         {
 #if MIRROR
-            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
             {
-                if (NeoNetworkState.IsClient) CmdInteractUp();
-                else if (NeoNetworkState.IsServer) { onInteractUp?.Invoke(); RpcInteractUp(); }
+                if (NeoNetworkState.IsServer)
+                {
+                    bool skipHostLocalRpc = NeoNetworkState.IsClient;
+                    onInteractUp?.Invoke();
+                    RpcInteractUp(skipHostLocalRpc);
+                }
+                else if (NeoNetworkState.IsClient)
+                {
+                    CmdInteractUp();
+                }
                 return;
             }
 #endif
@@ -847,10 +854,18 @@ namespace Neo.Tools
         private void TriggerClick(PointerEventData.InputButton button, bool isDouble = false)
         {
 #if MIRROR
-            if (isNetworked && (NeoNetworkState.IsClient || NeoNetworkState.IsServer))
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
             {
-                if (NeoNetworkState.IsClient) CmdClick((int)button, isDouble);
-                else if (NeoNetworkState.IsServer) { InvokeClick(button, isDouble); RpcClick((int)button, isDouble); }
+                if (NeoNetworkState.IsServer)
+                {
+                    bool skipHostLocalRpc = NeoNetworkState.IsClient;
+                    InvokeClick(button, isDouble);
+                    RpcClick((int)button, isDouble, skipHostLocalRpc);
+                }
+                else if (NeoNetworkState.IsClient)
+                {
+                    CmdClick((int)button, isDouble);
+                }
                 return;
             }
 #endif
@@ -878,41 +893,61 @@ namespace Neo.Tools
         private float _lastCmdTime;
         private const float CmdRateLimit = 0.05f;
 
+        private bool AuthorizedSender(NetworkConnectionToClient sender)
+        {
+            return NeoNetworkState.IsAuthorized(gameObject, sender, authorityMode);
+        }
+
         [Command(requiresAuthority = false)]
         private void CmdInteractDown(NetworkConnectionToClient sender = null)
         {
             if (Time.time - _lastCmdTime < CmdRateLimit) return;
             _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
             if (isServerOnly) onInteractDown?.Invoke();
-            RpcInteractDown();
+            RpcInteractDown(false);
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcInteractDown() => onInteractDown?.Invoke();
+        private void RpcInteractDown(bool skipHostLocal)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            onInteractDown?.Invoke();
+        }
 
         [Command(requiresAuthority = false)]
         private void CmdInteractUp(NetworkConnectionToClient sender = null)
         {
             if (Time.time - _lastCmdTime < CmdRateLimit) return;
             _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
             if (isServerOnly) onInteractUp?.Invoke();
-            RpcInteractUp();
+            RpcInteractUp(false);
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcInteractUp() => onInteractUp?.Invoke();
+        private void RpcInteractUp(bool skipHostLocal)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            onInteractUp?.Invoke();
+        }
 
         [Command(requiresAuthority = false)]
         private void CmdClick(int buttonInt, bool isDouble, NetworkConnectionToClient sender = null)
         {
             if (Time.time - _lastCmdTime < CmdRateLimit) return;
             _lastCmdTime = Time.time;
+            if (!AuthorizedSender(sender)) return;
             if (isServerOnly) InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
-            RpcClick(buttonInt, isDouble);
+            RpcClick(buttonInt, isDouble, false);
         }
 
         [ClientRpc(includeOwner = true)]
-        private void RpcClick(int buttonInt, bool isDouble) => InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+        private void RpcClick(int buttonInt, bool isDouble, bool skipHostLocal)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+        }
 #endif
 
         private bool HasEnabledInteractionCollider()
@@ -1205,6 +1240,25 @@ namespace Neo.Tools
         {
             get => distanceCheckPoint;
             set => distanceCheckPoint = value;
+        }
+
+        /// <summary>
+        ///     When enabled, interaction events are replicated through Mirror while a network session is active.
+        ///     When disabled, or when no network session is active, events run locally.
+        /// </summary>
+        public bool IsNetworked
+        {
+            get => isNetworked;
+            set => isNetworked = value;
+        }
+
+        /// <summary>
+        ///     Manual NoCode authority policy. Defaults to None so scene objects work without ownership.
+        /// </summary>
+        public NetworkAuthorityMode AuthorityMode
+        {
+            get => authorityMode;
+            set => authorityMode = value;
         }
 
         /// <summary>

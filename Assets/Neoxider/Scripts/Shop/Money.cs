@@ -1,4 +1,5 @@
 using Neo.Extensions;
+using Neo.Network;
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
@@ -7,7 +8,6 @@ using UnityEngine;
 
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Shop
@@ -17,10 +17,8 @@ namespace Neo.Shop
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Money))]
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
-    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd
-#else
-    public class Money : Singleton<Money>, IMoneySpend, IMoneyAdd
 #endif
+    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd
     {
         [Header("Networking")]
         [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]

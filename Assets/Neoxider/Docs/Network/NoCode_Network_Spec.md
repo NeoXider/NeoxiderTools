@@ -62,6 +62,17 @@ private void CmdSetValue(float newValue, NetworkConnectionToClient sender = null
 }
 ```
 
+### Authority mode for NoCode scene objects
+NoCode multiplayer components should use `NetworkAuthorityMode` instead of raw Mirror ownership checks:
+
+| Mode | Behavior |
+|------|----------|
+| `None` | Default. Any client/server trigger is accepted; works on non-owned scene objects. |
+| `OwnerOnly` | Remote client commands are accepted only when `sender == NetworkIdentity.connectionToClient`. Host/server is allowed. |
+| `ServerOnly` | Only server/host-originated actions are accepted. Remote client commands are rejected. |
+
+Commands should remain `[Command(requiresAuthority = false)]`; validation is done manually through `NeoNetworkState.IsAuthorized(gameObject, sender, authorityMode)`.
+
 ## Правило 9: Late-Join синхронизация
 Компоненты с `isNetworked = true` обязаны использовать `[SyncVar]` для хранения авторитетного значения на сервере. При подключении нового клиента значение автоматически доставляется через Mirror, а `OnStartClient()` применяет его в локальное состояние:
 
@@ -74,6 +85,28 @@ public override void OnStartClient()
     if (isNetworked && !isServer) ApplyValueLocally(_syncValue);
 }
 ```
+
+### ReactiveProperty late-join
+Reactive variables work with the same rule when the authoritative value is stored in a `[SyncVar]`.
+The `ReactiveProperty*` object itself is not a Mirror SyncVar. Keep a primitive SyncVar (`float`, `int`, `bool`) and apply it into the reactive variable:
+
+```csharp
+[SyncVar] private float _syncValue;
+public ReactivePropertyFloat Value = new();
+
+private void ApplyValueLocally(float value)
+{
+    NetworkReactivePropertyBridge.SetFromNetwork(Value, value);
+}
+
+public override void OnStartClient()
+{
+    base.OnStartClient();
+    if (isNetworked && !isServer) ApplyValueLocally(_syncValue);
+}
+```
+
+In the editor, replicated UnityEvents and replicated reactive values are marked when `isNetworked` is enabled. The marker means the field is driven by Cmd/Rpc or SyncVar late-join logic, not just a local UnityEvent.
 
 ## Правило 10: Универсальные NoCode сетевые компоненты
 Для быстрого добавления мультиплеера к **любой** механике без кода используйте:
@@ -98,3 +131,29 @@ public override void OnStartClient()
 Для синглтон-менеджеров используйте `NetworkSingleton<T>` с аналогичными утилитами.
 
 
+## Правило 12: Сценовый игрок как NoCode-шаблон
+
+NoCode-проекты часто настраивают игрока прямо в сцене: камеры, UI, UnityEvents, биндинги, ссылки на менеджеры и дочерние объекты уже привязаны в Inspector. Поэтому prefab-only flow Mirror не всегда удобен.
+
+Для такого сценария используйте `NeoNetworkManager`:
+
+- включите `Use Scene Player Template`;
+- назначьте сценовый объект игрока в `Scene Player Template`;
+- оставьте `Disable Scene Player Template` включённым;
+- на объекте игрока должен быть `NetworkIdentity`.
+
+Поведение:
+
+1. Сценовый объект является только шаблоном.
+2. При старте сети шаблон выключается.
+3. Сервер создаёт активную копию для каждого подключения и вызывает `NetworkServer.AddPlayerForConnection`.
+4. Клиенты создают свои копии через Mirror spawn handler с тем же стабильным runtime id.
+
+Требование: у сервера и всех клиентов должна быть одинаковая сцена с тем же назначенным `Scene Player Template`. Если игрок не зависит от сценовых NoCode-ссылок, используйте обычный Mirror `Player Prefab`.
+
+## Implementation note: shared inheritance
+
+Do not duplicate class-level `#if MIRROR` inheritance blocks in every NoCode component.
+Non-singleton networked NoCode components should inherit from `NeoNetworkComponent`.
+Singleton managers should inherit from `NetworkSingleton<T>`.
+Component scripts may still wrap Mirror-only fields and Cmd/Rpc methods with `#if MIRROR`.

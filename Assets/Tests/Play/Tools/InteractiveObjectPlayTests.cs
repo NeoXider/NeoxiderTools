@@ -79,6 +79,14 @@ namespace Neo.Tests.Play
             return (bool)mi.Invoke(obj, null);
         }
 
+        private static bool InvokeIsInViewForKeyboardInteraction(InteractiveObject obj)
+        {
+            var mi = typeof(InteractiveObject).GetMethod("IsInViewForKeyboardInteraction",
+                BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.IsNotNull(mi, "Method 'IsInViewForKeyboardInteraction()' not found");
+            return (bool)mi.Invoke(obj, null);
+        }
+
         /// <summary>
         ///     Creates an InteractiveObject sphere at `position` with specified settings.
         /// </summary>
@@ -412,6 +420,22 @@ namespace Neo.Tests.Play
             // IsInRange distance check should pass since 3 < 10.
             Assert.IsTrue(InvokeIsInRange(io),
                 "Object with trigger as its own collider should still be reachable");
+        }
+
+        [UnityTest]
+        public IEnumerator KeyboardView_DoesNotFallbackToDistance_WhenDistancePointMissing()
+        {
+            var io = CreateInteractive(new Vector3(3f, 0, 3f),
+                interactionDistance: 10f, checkObstacles: false);
+
+            SetPrivateField(io, "distanceCheckPoint", null);
+            SetPrivateField(io, "viewCheckPoint", null);
+
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Assert.IsFalse(InvokeIsInViewForKeyboardInteraction(io),
+                "Keyboard interaction must require the look ray to hit the object, not only distance.");
         }
 
         // ═══════════════════════════════════════════════════════════

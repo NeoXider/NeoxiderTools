@@ -3,13 +3,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Extensions;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 #if MIRROR
 using Mirror;
-using Neo.Network;
 #endif
 
 namespace Neo.Tools
@@ -23,16 +23,8 @@ namespace Neo.Tools
     [NeoDoc("Tools/Spawner/Spawner.md")]
     [CreateFromMenu("Neoxider/Tools/Spawner/Spawner")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Spawner))]
-#if MIRROR
-    public class Spawner : NetworkBehaviour
-#else
-    public class Spawner : MonoBehaviour
-#endif
+    public class Spawner : NeoNetworkComponent
     {
-        [Header("Networking")]
-        [Tooltip("If enabled, StartSpawn/StopSpawn/Clear are replicated, and Server dynamically spawns NetworkIdentities.")]
-        [SerializeField]
-        public bool isNetworked = false;
         [Header("Spawn Settings")] [SerializeField]
         private GameObject[] _prefabs;
 

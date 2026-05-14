@@ -32,7 +32,7 @@ namespace Neo.Tests.Play
 
     public class TestNetworkManager : NeoNetworkManager
     {
-        void OnValidate() { } // Suppress base Unity warnings during programmatic instantiation
+        public override void OnValidate() { } // Suppress base Unity warnings during programmatic instantiation
     }
 
     public class TestNetworkSingleton : NetworkSingleton<TestNetworkSingleton>

@@ -127,5 +127,34 @@ namespace Neo.Network
             return true;
 #endif
         }
+
+#if MIRROR
+        /// <summary>
+        /// Checks a manual NoCode authority policy for commands declared with requiresAuthority = false.
+        /// </summary>
+        public static bool IsAuthorized(GameObject obj, NetworkConnectionToClient sender, NetworkAuthorityMode mode)
+        {
+            switch (mode)
+            {
+                case NetworkAuthorityMode.None:
+                    return true;
+                case NetworkAuthorityMode.ServerOnly:
+                    return sender == null || sender == NetworkServer.localConnection;
+                case NetworkAuthorityMode.OwnerOnly:
+                    if (sender == null || sender == NetworkServer.localConnection)
+                    {
+                        return true;
+                    }
+
+                    return obj != null
+                           && obj.TryGetComponent(out NetworkIdentity identity)
+                           && identity.connectionToClient != null
+                           && sender == identity.connectionToClient;
+                default:
+                    return true;
+            }
+        }
+
+#endif
     }
 }

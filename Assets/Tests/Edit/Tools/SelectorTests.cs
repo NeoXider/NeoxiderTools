@@ -227,6 +227,71 @@ namespace Neo.Tools.Tests
         }
 
         [Test]
+        public void SetLast_UsesCurrentBounds_WhenIndexOffsetIsPositive()
+        {
+            GameObject root = new("SelectorSetLastOffsetRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            GameObject c = new("C");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+            c.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                selector.IndexOffset = 1;
+
+                selector.SetLast();
+
+                Assert.That(selector.Value, Is.EqualTo(1), "Value should be max bound, not raw Count - 1.");
+                Assert.That(selector.GetSelectedItem(), Is.SameAs(c));
+                Assert.That(a.activeSelf, Is.False);
+                Assert.That(b.activeSelf, Is.False);
+                Assert.That(c.activeSelf, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
+        public void ExcludeIndex_ImmediatelyPersistsWhenSaveEnabled()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            const string saveKey = "SelectorTests.ExcludePersists";
+
+            GameObject root = new("SelectorExcludePersistRoot");
+            GameObject a = new("A");
+            GameObject b = new("B");
+            a.transform.SetParent(root.transform);
+            b.transform.SetParent(root.transform);
+
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_saveEnabled", true);
+                SetPrivateString(selector, "_saveKey", saveKey);
+
+                selector.ExcludeIndex(1);
+
+                Assert.That(provider.HasKey(saveKey + "_Excluded"), Is.True);
+                Assert.That(provider.GetString(saveKey + "_Excluded"), Is.EqualTo("1"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void UniqueSelection_DoesNotRepeatUntilReset()
         {
             GameObject root = new("SelectorUniqueRoot");

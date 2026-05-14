@@ -347,6 +347,8 @@ namespace Neo.Editor
                 return;
             }
 
+            DrawNetworkReplicationMarker(property);
+
             if (property.propertyType == SerializedPropertyType.Boolean)
             {
                 DrawBooleanToggle(property);
@@ -966,6 +968,143 @@ namespace Neo.Editor
 
             SerializedProperty calls = property.FindPropertyRelative("m_PersistentCalls.m_Calls");
             return calls != null && calls.isArray;
+        }
+
+        private void DrawNetworkReplicationMarker(SerializedProperty property)
+        {
+            if (!IsNetworkReplicationHighlighted(property))
+            {
+                return;
+            }
+
+            Rect rect = GUILayoutUtility.GetRect(0f, 18f, GUILayout.ExpandWidth(true));
+            rect = EditorGUI.IndentedRect(rect);
+
+            Color accent = new(0.22f, 0.78f, 1f, 1f);
+            EditorGUI.DrawRect(rect, new Color(0.05f, 0.15f, 0.22f, 0.92f));
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 3f, rect.height), accent);
+
+            GUIStyle style = new(EditorStyles.miniBoldLabel)
+            {
+                normal = { textColor = new Color(0.68f, 0.92f, 1f, 1f) },
+                alignment = TextAnchor.MiddleLeft
+            };
+
+            GUI.Label(new Rect(rect.x + 8f, rect.y, rect.width - 8f, rect.height),
+                "NETWORK REPLICATED when isNetworked is enabled", style);
+        }
+
+        private bool IsNetworkReplicationHighlighted(SerializedProperty property)
+        {
+            if (property == null || target == null || !IsNetworkedEnabled())
+            {
+                return false;
+            }
+
+            if (IsUnityEventProperty(property))
+            {
+                return IsReplicatedUnityEventProperty(property);
+            }
+
+            return IsReplicatedReactiveProperty(property);
+        }
+
+        private bool IsNetworkedEnabled()
+        {
+            SerializedProperty networked = serializedObject?.FindProperty("isNetworked");
+            if (networked != null && networked.propertyType == SerializedPropertyType.Boolean)
+            {
+                return networked.boolValue;
+            }
+
+            SerializedProperty privateNetworked = serializedObject?.FindProperty("_isNetworked");
+            return privateNetworked != null &&
+                   privateNetworked.propertyType == SerializedPropertyType.Boolean &&
+                   privateNetworked.boolValue;
+        }
+
+        private bool IsReplicatedUnityEventProperty(SerializedProperty property)
+        {
+            string propertyName = property.name ?? string.Empty;
+            string propertyPath = property.propertyPath ?? string.Empty;
+            string targetName = target.GetType().Name;
+
+            if (targetName == "InteractiveObject")
+            {
+                return propertyName == "onInteractDown" ||
+                       propertyName == "onInteractUp" ||
+                       propertyName == "onClick" ||
+                       propertyName == "onDoubleClick" ||
+                       propertyName == "onRightClick" ||
+                       propertyName == "onMiddleClick";
+            }
+
+            if (targetName == "NetworkEventDispatcher")
+            {
+                return propertyName == "onNetworkEvent";
+            }
+
+            if (targetName == "NetworkActionRelay")
+            {
+                return propertyName == "onTriggered" ||
+                       propertyName == "onTriggeredFloat" ||
+                       propertyName == "onTriggeredString" ||
+                       propertyPath.EndsWith(".onTriggered", StringComparison.Ordinal) ||
+                       propertyPath.EndsWith(".onTriggeredFloat", StringComparison.Ordinal) ||
+                       propertyPath.EndsWith(".onTriggeredString", StringComparison.Ordinal);
+            }
+
+            if (targetName == "Counter")
+            {
+                return propertyName == "OnValueChangedInt" ||
+                       propertyName == "OnValueChangedFloat" ||
+                       propertyName == "OnRepeatByCounterValue";
+            }
+
+            if (targetName == "RandomRange")
+            {
+                return propertyName == "OnGeneratedInt" ||
+                       propertyName == "OnGeneratedFloat";
+            }
+
+            if (targetName == "Selector")
+            {
+                return propertyName == "OnSelectionChanged" ||
+                       propertyName == "OnSelectionChangedGameObject" ||
+                       propertyName == "OnCountActiveChanged";
+            }
+
+            if (targetName == "NeoCondition")
+            {
+                return propertyName == "_onTrue" ||
+                       propertyName == "_onFalse" ||
+                       propertyName == "_onResult" ||
+                       propertyName == "_onInvertedResult";
+            }
+
+            if (targetName == "Spawner")
+            {
+                return propertyName == "OnObjectSpawned" ||
+                       propertyName == "OnWaveStarted" ||
+                       propertyName == "OnWaveObjectSpawned";
+            }
+
+            return false;
+        }
+
+        private bool IsReplicatedReactiveProperty(SerializedProperty property)
+        {
+            string propertyType = property.type ?? string.Empty;
+            if (!propertyType.Contains("ReactiveProperty", StringComparison.Ordinal))
+            {
+                return false;
+            }
+
+            string targetName = target.GetType().Name;
+            string propertyName = property.name ?? string.Empty;
+
+            return (targetName == "Counter" || targetName == "RandomRange") &&
+                   propertyName == "Value";
         }
 
         private static SerializedProperty GetPersistentCallsArray(SerializedProperty unityEventProperty)
