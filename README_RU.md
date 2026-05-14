@@ -105,9 +105,10 @@
 ## Быстрый старт мультиплеера
 
 1. Установите **Mirror** в проект (см. [Mirror](https://github.com/MirrorNetworking/Mirror) / Package Manager).
-2. На сцене добавьте **`NeoNetworkManager`** и транспорт Mirror (например **Telepathy**); в **Player Prefab** укажите префаб игрока с `NetworkIdentity`.
-3. Запуск сессии из UI или кода: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (подробности в гайде).
-4. Для NoCode-компонентов включайте **`isNetworked`** там, где нужна репликация, и следуйте **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** и **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
+2. На сцене добавьте **`NeoNetworkManager`** и транспорт Mirror (например **Telepathy**).
+3. Для NoCode оставьте игрока настроенным прямо в сцене: добавьте `NetworkIdentity`, включите **Use Scene Player Template**, назначьте игрока в **Scene Player Template**, а **Player Prefab** оставьте пустым.
+4. Запуск сессии из UI или кода: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (подробности в гайде).
+5. Для NoCode-компонентов включайте **`isNetworked`** там, где нужна репликация, и следуйте **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** и **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
 
 ## Тесты
 

@@ -38,7 +38,10 @@
 ### Настройка сцены
 1. Создайте пустой объект на сцене и добавьте компонент `NeoNetworkManager`.
 2. Добавьте компонент `Telepathy Transport` (стандартный транспорт Mirror).
-3. Перетащите ваш префаб игрока (с `NetworkIdentity`) в поле **Player Prefab** в компоненте `NeoNetworkManager`.
+3. Для NoCode-проекта оставьте игрока прямо в сцене: добавьте на него `NetworkIdentity`, включите **Use Scene Player Template** в `NeoNetworkManager` и назначьте этот объект в **Scene Player Template**. Поле **Player Prefab** оставьте пустым.
+
+> [!NOTE]
+> Обычный Mirror **Player Prefab** используйте только если игрок не зависит от сценовых NoCode-ссылок. Для Inspector/UnityEvent workflow рекомендуемый путь — сценовый игрок-шаблон.
 
 ### Подключение
 Вызвать старт сервера можно как из C# кода, так и через No-Code (кнопку в UI -> UnityEvent):

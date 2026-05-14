@@ -76,9 +76,10 @@ Copy `Assets/Neoxider` into your Unity project.
 ## Multiplayer quick start
 
 1. Install **Mirror** (see [Mirror](https://github.com/MirrorNetworking/Mirror)).
-2. Add **`NeoNetworkManager`** + a Mirror **Transport** to the scene; set **Player Prefab** (`NetworkIdentity`).
-3. Call `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` from UI or code (details in the guide).
-4. Enable **`isNetworked`** on NoCode components that should replicate; read **[Multiplayer_Guide.md](./Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](./Docs/Network/NoCode_Network_Spec.md)**.
+2. Add **`NeoNetworkManager`** + a Mirror **Transport** to the scene.
+3. For NoCode, keep the player configured in the scene: add `NetworkIdentity`, enable **Use Scene Player Template**, assign the player to **Scene Player Template**, and leave **Player Prefab** empty.
+4. Call `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` from UI or code (details in the guide).
+5. Enable **`isNetworked`** on NoCode components that should replicate; read **[Multiplayer_Guide.md](./Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](./Docs/Network/NoCode_Network_Spec.md)**.
 
 ## Games built with NeoxiderTools
 

@@ -105,9 +105,10 @@ Design complex game logic **without a single line of code**. The `NeoCondition` 
 ## Multiplayer quick start
 
 1. Install **Mirror** in the project (see [Mirror](https://github.com/MirrorNetworking/Mirror) / Package Manager).
-2. Add **`NeoNetworkManager`** + a Mirror **Transport** (e.g. Telepathy) to the scene; assign **Player Prefab** with `NetworkIdentity`.
-3. Start a session from UI or code: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (see guide).
-4. For NoCode components, enable **`isNetworked`** where needed and follow **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
+2. Add **`NeoNetworkManager`** + a Mirror **Transport** (e.g. Telepathy) to the scene.
+3. For NoCode, keep the player configured in the scene: add `NetworkIdentity`, enable **Use Scene Player Template**, assign the player to **Scene Player Template**, and leave **Player Prefab** empty.
+4. Start a session from UI or code: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (see guide).
+5. For NoCode components, enable **`isNetworked`** where needed and follow **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
 
 ## Tests
 

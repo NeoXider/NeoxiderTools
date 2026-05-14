@@ -135,6 +135,7 @@ namespace Neo.Tools
         private bool _movementEnabled = true;
 
         private bool _newInputUnavailableWarningShown;
+        private bool _kinematicMovementWarningShown;
         private float _pitch;
         private bool _wasGrounded;
         private bool _wasMoving;
@@ -235,11 +236,21 @@ namespace Neo.Tools
 
         private void Start()
         {
+            EnsureLocalRigidbodyDynamic();
+
             if (HasInputAuthority && _enableCursorControl && _lockCursorOnStart && !HasExternalCursorControl())
             {
                 SetCursorLocked(true);
             }
         }
+
+#if MIRROR
+        public override void OnStartLocalPlayer()
+        {
+            base.OnStartLocalPlayer();
+            EnsureLocalRigidbodyDynamic();
+        }
+#endif
 
         private void Update()
         {
@@ -558,6 +569,12 @@ namespace Neo.Tools
 
         private void HandleMovement(float deltaTime)
         {
+            if (_rigidbody.isKinematic)
+            {
+                WarnKinematicMovementOnce();
+                return;
+            }
+
             Quaternion basisRotation = GetMovementBasisRotation();
             Vector3 forward = basisRotation * Vector3.forward;
             Vector3 right = basisRotation * Vector3.right;
@@ -577,6 +594,12 @@ namespace Neo.Tools
 
         private void HandleJump()
         {
+            if (_rigidbody.isKinematic)
+            {
+                WarnKinematicMovementOnce();
+                return;
+            }
+
             if (!_canJump || _jumpBufferTimer <= 0f || _coyoteTimer <= 0f)
             {
                 return;
@@ -596,8 +619,36 @@ namespace Neo.Tools
             _onJumped?.Invoke();
         }
 
+        private void EnsureLocalRigidbodyDynamic()
+        {
+            if (!HasInputAuthority || _rigidbody == null || !_rigidbody.isKinematic)
+            {
+                return;
+            }
+
+            _rigidbody.isKinematic = false;
+        }
+
+        private void WarnKinematicMovementOnce()
+        {
+            if (_kinematicMovementWarningShown)
+            {
+                return;
+            }
+
+            _kinematicMovementWarningShown = true;
+            Debug.LogWarning(
+                "[PlayerController3DPhysics] Rigidbody is kinematic, so velocity-based movement is skipped. Disable Is Kinematic for the local player.",
+                this);
+        }
+
         private void ApplyExtraGravity()
         {
+            if (_rigidbody.isKinematic)
+            {
+                return;
+            }
+
             if (IsGrounded || _extraGravityMultiplier <= 1f)
             {
                 return;

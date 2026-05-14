@@ -1,5 +1,6 @@
 #if MIRROR
 using Mirror;
+using System.Reflection;
 #endif
 using UnityEngine;
 using UnityEngine.Events;
@@ -45,6 +46,8 @@ namespace Neo.Network
         private uint _scenePlayerTemplateAssetId;
         private uint _registeredScenePlayerTemplateAssetId;
         private bool _scenePlayerTemplateSpawnHandlerRegistered;
+        private static readonly FieldInfo NetworkIdentityHasSpawnedField =
+            typeof(NetworkIdentity).GetField("hasSpawned", BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
 
         /// <summary>Raised on the server when it starts listening.</summary>
@@ -123,6 +126,7 @@ namespace Neo.Network
 
         public override void OnValidate()
         {
+            ApplyScenePlayerTemplateMode();
             base.OnValidate();
             EnsureScenePlayerTemplateSpawnId();
 
@@ -132,20 +136,50 @@ namespace Neo.Network
 
         public override void Awake()
         {
-            base.Awake();
             PrepareScenePlayerTemplate();
+            base.Awake();
         }
 
         public override void Start()
         {
-            base.Start();
             PrepareScenePlayerTemplate();
+            base.Start();
+        }
+
+        public new void StartHost()
+        {
+            PrepareScenePlayerTemplate();
+            RegisterScenePlayerTemplateSpawnHandler();
+            base.StartHost();
+            DisableScenePlayerTemplateInstance();
+        }
+
+        public new void StartServer()
+        {
+            PrepareScenePlayerTemplate();
+            base.StartServer();
+            DisableScenePlayerTemplateInstance();
+        }
+
+        public new void StartClient()
+        {
+            PrepareScenePlayerTemplate();
+            RegisterScenePlayerTemplateSpawnHandler();
+            base.StartClient();
+        }
+
+        public new void StartClient(System.Uri uri)
+        {
+            PrepareScenePlayerTemplate();
+            RegisterScenePlayerTemplateSpawnHandler();
+            base.StartClient(uri);
         }
 
         public override void OnStartServer()
         {
             base.OnStartServer();
             PrepareScenePlayerTemplate();
+            DisableScenePlayerTemplateInstance();
             _onServerStarted?.Invoke();
             Debug.Log("[NeoNetworkManager] Server started.");
         }
@@ -154,6 +188,8 @@ namespace Neo.Network
         {
             base.OnStartClient();
             RegisterScenePlayerTemplateSpawnHandler();
+            if (!NetworkServer.active)
+                DisableScenePlayerTemplateInstance();
         }
 
         public override void OnStopServer()
@@ -200,7 +236,7 @@ namespace Neo.Network
         /// </summary>
         public void StartAsHost()
         {
-            StartHost();
+            ((NeoNetworkManager)this).StartHost();
         }
 
         /// <summary>
@@ -208,7 +244,7 @@ namespace Neo.Network
         /// </summary>
         public void StartAsClient()
         {
-            StartClient();
+            ((NeoNetworkManager)this).StartClient();
         }
 
         /// <summary>
@@ -216,7 +252,7 @@ namespace Neo.Network
         /// </summary>
         public void StartAsServer()
         {
-            StartServer();
+            ((NeoNetworkManager)this).StartServer();
         }
 
         /// <summary>
@@ -245,15 +281,53 @@ namespace Neo.Network
 
         private void PrepareScenePlayerTemplate()
         {
+            NormalizeScenePlayerTemplateMode();
+
             if (!_useScenePlayerTemplate)
                 return;
 
-            autoCreatePlayer = false;
+            ApplyScenePlayerTemplateMode();
 
             if (_scenePlayerTemplate == null || !_disableScenePlayerTemplate)
                 return;
 
-            _scenePlayerTemplate.SetActive(false);
+            DisableScenePlayerTemplateInstance();
+        }
+
+        private void DisableScenePlayerTemplateInstance()
+        {
+            if (!_useScenePlayerTemplate || !_disableScenePlayerTemplate || _scenePlayerTemplate == null)
+                return;
+
+            if (_scenePlayerTemplate.activeSelf)
+                _scenePlayerTemplate.SetActive(false);
+        }
+
+        private void NormalizeScenePlayerTemplateMode()
+        {
+            if (_useScenePlayerTemplate)
+                return;
+
+            if (playerPrefab == null)
+                return;
+
+            if (!playerPrefab.TryGetComponent(out NetworkIdentity identity) || identity.sceneId == 0)
+                return;
+
+            _useScenePlayerTemplate = true;
+            _scenePlayerTemplate = playerPrefab;
+            Debug.LogWarning(
+                "[NeoNetworkManager] Player Prefab references a scene object. Switching to Scene Player Template mode automatically.",
+                this);
+        }
+
+        private void ApplyScenePlayerTemplateMode()
+        {
+            if (!_useScenePlayerTemplate)
+                return;
+
+            autoCreatePlayer = false;
+            playerPrefab = null;
         }
 
         private void TryAddSceneTemplatePlayer()
@@ -281,10 +355,7 @@ namespace Neo.Network
             Vector3 position = startPosition != null ? startPosition.position : _scenePlayerTemplate.transform.position;
             Quaternion rotation = startPosition != null ? startPosition.rotation : _scenePlayerTemplate.transform.rotation;
 
-            player = Instantiate(_scenePlayerTemplate, position, rotation);
-            if (player.TryGetComponent(out NetworkIdentity identity))
-                identity.sceneId = 0;
-
+            player = InstantiateScenePlayerTemplate(position, rotation);
             player.name = conn != null
                 ? $"{_scenePlayerTemplate.name} (Player {conn.connectionId})"
                 : $"{_scenePlayerTemplate.name} (Player)";
@@ -319,14 +390,63 @@ namespace Neo.Network
 
         private GameObject SpawnScenePlayerTemplate(SpawnMessage message)
         {
-            GameObject player = Instantiate(_scenePlayerTemplate, message.position, message.rotation);
-            if (player.TryGetComponent(out NetworkIdentity identity))
-                identity.sceneId = 0;
-
+            GameObject player = InstantiateScenePlayerTemplate(message.position, message.rotation);
             player.transform.localScale = message.scale;
             player.name = $"{_scenePlayerTemplate.name} (Remote Player)";
             player.SetActive(true);
             return player;
+        }
+
+        private GameObject InstantiateScenePlayerTemplate(Vector3 position, Quaternion rotation)
+        {
+            NetworkIdentity[] templateIdentities = _scenePlayerTemplate.GetComponentsInChildren<NetworkIdentity>(true);
+            ulong[] originalSceneIds = new ulong[templateIdentities.Length];
+            bool[] originalHasSpawned = new bool[templateIdentities.Length];
+
+            for (int i = 0; i < templateIdentities.Length; i++)
+            {
+                originalSceneIds[i] = templateIdentities[i].sceneId;
+                originalHasSpawned[i] = GetHasSpawned(templateIdentities[i]);
+                templateIdentities[i].sceneId = 0;
+                SetHasSpawned(templateIdentities[i], false);
+            }
+
+            GameObject player;
+            try
+            {
+                player = Instantiate(_scenePlayerTemplate, position, rotation);
+            }
+            finally
+            {
+                for (int i = 0; i < templateIdentities.Length; i++)
+                {
+                    templateIdentities[i].sceneId = originalSceneIds[i];
+                    SetHasSpawned(templateIdentities[i], originalHasSpawned[i]);
+                }
+            }
+
+            ClearSceneIds(player);
+            return player;
+        }
+
+        private static bool GetHasSpawned(NetworkIdentity identity)
+        {
+            return NetworkIdentityHasSpawnedField != null &&
+                   (bool)NetworkIdentityHasSpawnedField.GetValue(identity);
+        }
+
+        private static void SetHasSpawned(NetworkIdentity identity, bool value)
+        {
+            NetworkIdentityHasSpawnedField?.SetValue(identity, value);
+        }
+
+        private static void ClearSceneIds(GameObject target)
+        {
+            NetworkIdentity[] identities = target.GetComponentsInChildren<NetworkIdentity>(true);
+            for (int i = 0; i < identities.Length; i++)
+            {
+                identities[i].sceneId = 0;
+            }
         }
 
         private static void UnspawnScenePlayerTemplate(GameObject spawned)
