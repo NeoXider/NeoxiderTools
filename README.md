@@ -18,6 +18,8 @@
 
 **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — English entry point for high-level modules and core pages; if a deep page is not translated yet, the index points to the corresponding Russian section. Tools submodules and samples (NeoxiderPages, UI Extension) are included in both indexes. **Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — canonical index of all modules.
 
+**Multiplayer:** Neo.Network wraps **Mirror** (optional compile). Full guide: [Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · NoCode rules: [NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md).
+
 ---
 
 ## 📑 Table of Contents
@@ -28,6 +30,7 @@
 - [Games built with NeoxiderTools](#games-built-with-neoxidertools) — games powered by the ecosystem
 - [Demo Games](#demo-games)
 - [Quick Start](#quick-start)
+- [Multiplayer quick start](#multiplayer-quick-start)
 - [Modules Table](#modules-table)
   - [Condition](#condition--no-code-conditions) · [Tools](#tools) · [UI](#ui) · [Bonus](#bonus) · [Shop](#shop) · [Save](#save) · [Quest](#quest) · [Cards](#cards) · [StateMachine](#statemachine) · [Animations](#animations) · [Audio](#audio) · [Extensions](#extensions--c-extensions) · [Editor](#editor--editor-tools) · [Level](#level) · [NPC](#npc) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute) · [Reactive](#reactive)
 - [Top Modules](#top-modules)
@@ -99,6 +102,13 @@ Design complex game logic **without a single line of code**. The `NeoCondition` 
 4. **Drag and drop components** from Inspector — most work without code via UnityEvent
 5. **Explore the documentation** — open the README in `Docs/` for the required module
 
+## Multiplayer quick start
+
+1. Install **Mirror** in the project (see [Mirror](https://github.com/MirrorNetworking/Mirror) / Package Manager).
+2. Add **`NeoNetworkManager`** + a Mirror **Transport** (e.g. Telepathy) to the scene; assign **Player Prefab** with `NetworkIdentity`.
+3. Start a session from UI or code: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (see guide).
+4. For NoCode components, enable **`isNetworked`** where needed and follow **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
+
 ## Tests
 
 - Baseline `EditMode` tests are located in `Assets/Neoxider/Editor/Tests/`.
@@ -131,6 +141,7 @@ Design complex game logic **without a single line of code**. The `NeoCondition` 
 | 🔲 [**GridSystem**](#gridsystem) | Grid generation, origin anchor, pathfinding, Match3/TicTacToe |
 | 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject attributes |
 | ⚡ [**Reactive**](#reactive) | Reactive serializable `float`, `int`, `bool` properties |
+| 🌐 [**Network**](#network--multiplayer) | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery |
 
 ---
 
@@ -321,6 +332,14 @@ The largest category — building blocks for your games:
 
 📖 [Documentation →](Assets/Neoxider/Docs/Reactive/README.md)
 
+### Network / Multiplayer
+
+- **Neo.Network** — optional Mirror integration; without Mirror the same scripts compile as local `MonoBehaviour` flows
+- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **NetworkOwnerFilter**, lobby/discovery wrappers — Inspector-first replication patterns
+- **Authority** — `NetworkAuthorityMode` for scene objects; see NoCode spec
+
+📖 [Multiplayer Guide →](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · 📖 [NoCode Network Spec →](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)
+
 ---
 
 ## Top Modules
@@ -348,6 +367,7 @@ The largest category — building blocks for your games:
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (for NeoxiderPages) | Asset Store — required for the NeoxiderPages sample module |
+| **Mirror** (for `Neo.Network`) | [Mirror](https://github.com/MirrorNetworking/Mirror) / Asset Store — optional; required only when you enable multiplayer features |
 
 ### Main Package
 

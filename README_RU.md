@@ -18,6 +18,8 @@
 
 **Документация (RU):** [Docs/README.md](Assets/Neoxider/Docs/README.md) — канонический индекс всех модулей. **Documentation (EN):** [DocsEn/README.md](Assets/Neoxider/DocsEn/README.md) — английский entry point для верхнеуровневых модулей и ключевых страниц; если глубокая страница ещё не переведена, индекс ведёт в соответствующий русский раздел. Tools-подмодули и samples (NeoxiderPages, UI Extension) включены в оба индекса.
 
+**Мультиплеер:** модуль **Neo.Network** — обёртка над **Mirror** (опциональная сборка). Гайд: [Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · правила NoCode: [NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md).
+
 ---
 
 ## 📑 Содержание
@@ -28,6 +30,7 @@
 - [Games built with NeoxiderTools](#games-built-with-neoxidertools) — игры на базе экосистемы
 - [Demo Games](#demo-games)
 - [Быстрый старт](#быстрый-старт)
+- [Быстрый старт мультиплеера](#быстрый-старт-мультиплеера)
 - [Таблица модулей](#таблица-модулей)
   - [Condition](#condition--no-code-условия) · [Tools](#tools--инструменты) · [UI](#ui--интерфейс) · [Bonus](#bonus--бонусные-системы) · [Shop](#shop--магазин) · [Save](#save--сохранения) · [Quest](#quest--квесты) · [Cards](#cards--карточные-игры) · [StateMachine](#statemachine--машина-состояний) · [Animations](#animations--анимации) · [Audio](#audio--звук) · [Extensions](#extensions--расширения-c) · [Editor](#editor--инструменты-редактора) · [Level](#level--уровни) · [NPC](#npc) · [Parallax](#parallax) · [GridSystem](#gridsystem) · [PropertyAttribute](#propertyattribute) · [Reactive](#reactive)
 - [Топовые модули](#топовые-модули)
@@ -99,6 +102,13 @@
 4. **Перетаскивайте компоненты** из Inspector — большинство работает без кода через UnityEvent
 5. **Изучите документацию** — откройте README в `Docs/` для нужного модуля
 
+## Быстрый старт мультиплеера
+
+1. Установите **Mirror** в проект (см. [Mirror](https://github.com/MirrorNetworking/Mirror) / Package Manager).
+2. На сцене добавьте **`NeoNetworkManager`** и транспорт Mirror (например **Telepathy**); в **Player Prefab** укажите префаб игрока с `NetworkIdentity`.
+3. Запуск сессии из UI или кода: `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` (подробности в гайде).
+4. Для NoCode-компонентов включайте **`isNetworked`** там, где нужна репликация, и следуйте **[Multiplayer_Guide.md](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)** и **[NoCode_Network_Spec.md](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)**.
+
 ## Тесты
 
 - Базовые `EditMode` тесты находятся в `Assets/Neoxider/Editor/Tests/`.
@@ -131,6 +141,7 @@
 | 🔲 [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
 | 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
 | ⚡ [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
+| 🌐 [**Network**](#network--multiplayer) | Мультиплеер на Mirror: `NeoNetworkManager`, NoCode-синхронизация (`NetworkPropertySync`, `NetworkActionRelay`), лобби/discovery |
 
 ---
 
@@ -321,6 +332,14 @@
 
 📖 [Документация →](Assets/Neoxider/Docs/Reactive/README.md)
 
+### Network / Multiplayer
+
+- **Neo.Network** — опциональная интеграция с **Mirror**; без Mirror те же сценарии собираются как локальные `MonoBehaviour`
+- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **NetworkOwnerFilter**, обёртки лобби/discovery — паттерны репликации из Inspector
+- **Authority** — `NetworkAuthorityMode` для объектов сцены; см. спецификацию NoCode
+
+📖 [Гайд по мультиплееру →](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · 📖 [NoCode Network Spec →](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)
+
 ---
 
 ## Топовые модули
@@ -348,6 +367,7 @@
 | **UniTask** | Git URL: `https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask` |
 | **DOTween** | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) |
 | **DOTween Pro** (для NeoxiderPages) | Asset Store — обязателен для sample-модуля NeoxiderPages |
+| **Mirror** (для `Neo.Network`) | [Mirror](https://github.com/MirrorNetworking/Mirror) / Asset Store — опционально; нужен только для сетевых сценариев |
 
 ### Основной пакет
 

@@ -19,6 +19,7 @@
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Quick Start](#quick-start)
+- [Multiplayer quick start](#multiplayer-quick-start)
 - [Games built with NeoxiderTools](#games-built-with-neoxidertools)
 - [Featured Modules](#featured-modules)
 - [Samples](#samples)
@@ -34,6 +35,7 @@
 - **RPG module** — full RPG runtime with persistent player profile (`RpgStatsManager`), scene combat actors (`RpgCombatant`), HP/levels/buffs/statuses, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors and attack presets for AI/skills/spells, evade (`RpgEvadeController`), built-in configurable input, and no-code bridges.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
 - Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
+- **Multiplayer (optional Mirror)** — `Neo.Network` NoCode bridges (`NetworkPropertySync`, `NetworkActionRelay`, lobby/discovery wrappers). Without Mirror, the same scripts compile for offline/solo flows.
 - Editor helpers, package samples, prefabs, and module-focused documentation.
 
 ## Installation
@@ -62,6 +64,7 @@ Copy `Assets/Neoxider` into your Unity project.
   - `Spine Unity Runtime` (only for Spine integrations)
   - `Odin Inspector` (components work perfectly without it)
   - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
+  - **Mirror** (required only for `Neo.Network` / multiplayer; see [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md))
 
 ## Quick Start
 
@@ -69,6 +72,13 @@ Copy `Assets/Neoxider` into your Unity project.
 2. Add `Assets/Neoxider/Prefabs/--System--.prefab` if your scene uses the built-in managers/UI bootstrap.
 3. Add components through `Add Component > Neoxider`.
 4. Open the module guide in [Docs/README.md](./Docs/README.md) and start from the module you need.
+
+## Multiplayer quick start
+
+1. Install **Mirror** (see [Mirror](https://github.com/MirrorNetworking/Mirror)).
+2. Add **`NeoNetworkManager`** + a Mirror **Transport** to the scene; set **Player Prefab** (`NetworkIdentity`).
+3. Call `NeoNetworkManager.Singleton.StartHost()` / `StartClient()` from UI or code (details in the guide).
+4. Enable **`isNetworked`** on NoCode components that should replicate; read **[Multiplayer_Guide.md](./Docs/Network/Multiplayer_Guide.md)** and **[NoCode_Network_Spec.md](./Docs/Network/NoCode_Network_Spec.md)**.
 
 ## Games built with NeoxiderTools
 
@@ -99,6 +109,7 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 | **Cards** | MVP architecture, poker, "Drunkard", and deck/hand runtime flow | [Cards](./Docs/Cards/README.md) |
 | **GridSystem** | Grid generation, origin anchor, pathfinding, Match3, and TicTacToe | [GridSystem](./Docs/GridSystem.md) |
 | **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
+| **Network** | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery | [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md) · [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) |
 | **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [Editor](./Docs/Editor/README.md) |
 
 ## Samples
@@ -115,6 +126,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 - The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
 - English onboarding starts in [DocsEn/README.md](./DocsEn/README.md).
 - English coverage includes module entry pages plus selected deeper pages for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, and `Progression`.
+- Multiplayer docs (RU): [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md), [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) — indexed from [Docs/README.md](./Docs/README.md) under **Network**.
 - Internal backlog and maintainer-only notes are intentionally not part of the main user docs index.
 
 ## Tests
