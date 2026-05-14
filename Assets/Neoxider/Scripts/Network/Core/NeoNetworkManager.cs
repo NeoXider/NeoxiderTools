@@ -194,6 +194,12 @@ namespace Neo.Network
                 DisableScenePlayerTemplateInstance();
         }
 
+        public override void OnStartHost()
+        {
+            base.OnStartHost();
+            NetworkContextActionRelay.RegisterMirrorHandlers();
+        }
+
         public override void OnStopServer()
         {
             base.OnStopServer();

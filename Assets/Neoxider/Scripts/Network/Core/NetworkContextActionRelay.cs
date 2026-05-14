@@ -685,7 +685,34 @@ namespace Neo.Network
                 return;
             }
 
-            SendToClients(message, skipHostLocalRpc);
+            BroadcastAllClientsApply(message.contextNetId, message, skipHostLocalRpc);
+        }
+
+        /// <summary>
+        ///     Mirror <see cref="ClientRpc"/> uses <see cref="NetworkIdentity.observers"/> (same path as generated RPCs).
+        ///     Raw <see cref="NetworkConnection.Send{T}"/> for custom messages can fail to reach every client in some setups;
+        ///     when observers are not built yet, fall back to <see cref="SendToClients"/>.
+        /// </summary>
+        private void BroadcastAllClientsApply(uint contextNetId, NetworkContextActionMessage message, bool skipHostLocal)
+        {
+            if (netIdentity != null && netIdentity.observers != null && netIdentity.observers.Count > 0)
+            {
+                RpcApplyFromServer(contextNetId);
+                return;
+            }
+
+            SendToClients(message, skipHostLocal);
+        }
+
+        [ClientRpc]
+        private void RpcApplyFromServer(uint contextNetId)
+        {
+            if (!TryResolveNetworkObject(contextNetId, out GameObject root))
+            {
+                return;
+            }
+
+            ApplyResolved(root);
         }
 
         private static void EnsureMessageHandlers()
