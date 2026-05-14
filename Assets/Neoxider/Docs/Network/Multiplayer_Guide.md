@@ -19,6 +19,7 @@
 | `NeoNetworkManager` | Обертка над NetworkManager | Обычный скрипт (неактивен) |
 | `NetworkPropertySync` | Синхронизация любого поля через Reflection (Float/Int/Bool/String/Vector3) | No-op |
 | `NetworkActionRelay` | Многоканальный сетевой broadcast UnityEvent (void/float/string) | Обычный локальный вызов событий |
+| `NetworkContextActionRelay` | Контекстные действия: `Trigger(Collider)` / `Trigger()` + цель внутри сетевого игрока (без ссылки на template) | Локальный резолв без сети |
 | `NetworkOwnerFilter` | Фильтр по роли (LocalPlayer/Server/Everyone) | Всегда пропускает (solo = allowed) |
 | `NeoNetworkDiscovery` | LAN-обнаружение серверов (обёртка Mirror NetworkDiscovery) | N/A (requires Mirror) |
 | `NeoLobbyManager` | Лобби + ready-проверка (обёртка Mirror NetworkRoomManager) | N/A (requires Mirror) |
@@ -92,7 +93,12 @@ NeoNetworkManager.Singleton.StartClient();
 
 ## 5. NoCode мультиплеер для любой механики
 
-С новыми компонентами `NetworkActionRelay` и `NetworkOwnerFilter` можно сделать мультиплеер **без единой строки кода**:
+С новыми компонентами `NetworkActionRelay`, **`NetworkContextActionRelay`** и `NetworkOwnerFilter` можно сделать мультиплеер **без единой строки кода**:
+
+### Пример: Персональный pickup (дочерний объект у вошедшего игрока)
+1. На триггере: `PhysicsEvents3D` (isNetworked=true), `OnTriggerEnter → NetworkContextActionRelay.Trigger(Collider)` (динамический аргумент).
+2. `NetworkContextActionRelay`: Context = **Event Argument**, Root = **Network Identity In Parents**, Target = **Child By Name** `Sphere`, Action = **Set Active** true, Scope = **All Clients**.
+3. Результат: включается `Sphere` **у того игрока**, чей коллайдер вошёл в триггер, а не у объекта из сценового шаблона.
 
 ### Пример: Двери / Рычаги
 1. На рычаге: `InteractiveObject` (isNetworked=true), `OnInteract → NetworkActionRelay.Trigger()`
@@ -116,6 +122,7 @@ NeoNetworkManager.Singleton.StartClient();
 - [NeoNetworkManager (Документация)](NeoNetworkManager.md)
 - [NetworkSingleton (Документация)](NetworkSingleton.md)
 - [NetworkActionRelay (Документация)](NetworkActionRelay.md)
+- [NetworkContextActionRelay (Документация)](NetworkContextActionRelay.md)
 - [NetworkOwnerFilter (Документация)](NetworkOwnerFilter.md)
 - [NoCode Network Spec (Стандарты)](NoCode_Network_Spec.md)
 

@@ -142,7 +142,7 @@ Design complex game logic **without a single line of code**. The `NeoCondition` 
 | 🔲 [**GridSystem**](#gridsystem) | Grid generation, origin anchor, pathfinding, Match3/TicTacToe |
 | 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject attributes |
 | ⚡ [**Reactive**](#reactive) | Reactive serializable `float`, `int`, `bool` properties |
-| 🌐 [**Network**](#network--multiplayer) | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery |
+| 🌐 [**Network**](#network--multiplayer) | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`, **`NetworkContextActionRelay`**), lobby/discovery |
 
 ---
 
@@ -336,7 +336,7 @@ The largest category — building blocks for your games:
 ### Network / Multiplayer
 
 - **Neo.Network** — optional Mirror integration; without Mirror the same scripts compile as local `MonoBehaviour` flows
-- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **NetworkOwnerFilter**, lobby/discovery wrappers — Inspector-first replication patterns
+- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **`NetworkContextActionRelay`**, **NetworkOwnerFilter**, lobby/discovery wrappers — Inspector-first replication patterns
 - **Authority** — `NetworkAuthorityMode` for scene objects; see NoCode spec
 
 📖 [Multiplayer Guide →](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · 📖 [NoCode Network Spec →](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)

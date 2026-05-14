@@ -63,6 +63,7 @@
 Если Mirror не установлен, все действия выполняются локально. Компонент ведёт себя как обычный MonoBehaviour.
 
 ## См. также
+- [NetworkContextActionRelay](NetworkContextActionRelay.md) — контекстные действия на сетевом игроке (триггер/UI без ссылки на template)
 - [NetworkOwnerFilter](NetworkOwnerFilter.md) — фильтр по роли перед действием
 - [NetworkEventDispatcher](../Tools/Network/NetworkEventDispatcher.md) — legacy версия (один канал)
 - [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты

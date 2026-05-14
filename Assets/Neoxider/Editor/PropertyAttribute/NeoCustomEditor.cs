@@ -81,5 +81,9 @@ namespace Neo.Editor
     [CustomEditor(typeof(Neo.Tools.RandomRange), true)]
     [CanEditMultipleObjects]
     public class RandomRangeNeoEditor : NeoCustomEditor { }
+
+    [CustomEditor(typeof(Neo.Network.NetworkContextActionRelay), true)]
+    [CanEditMultipleObjects]
+    public class NetworkContextActionRelayNeoEditor : NeoCustomEditor { }
 #endif
 }

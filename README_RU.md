@@ -142,7 +142,7 @@
 | 🔲 [**GridSystem**](#gridsystem) | Генерация сеток, origin-якорь, pathfinding, Match3/TicTacToe |
 | 🏷️ [**PropertyAttribute**](#propertyattribute) | `[Button]`, `[GUIColor]`, inject-атрибуты |
 | ⚡ [**Reactive**](#reactive) | Реактивные сериализуемые свойства `float`, `int`, `bool` |
-| 🌐 [**Network**](#network--multiplayer) | Мультиплеер на Mirror: `NeoNetworkManager`, NoCode-синхронизация (`NetworkPropertySync`, `NetworkActionRelay`), лобби/discovery |
+| 🌐 [**Network**](#network--multiplayer) | Мультиплеер на Mirror: `NeoNetworkManager`, NoCode-синхронизация (`NetworkPropertySync`, `NetworkActionRelay`, **`NetworkContextActionRelay`**), лобби/discovery |
 
 ---
 
@@ -336,7 +336,7 @@
 ### Network / Multiplayer
 
 - **Neo.Network** — опциональная интеграция с **Mirror**; без Mirror те же сценарии собираются как локальные `MonoBehaviour`
-- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **NetworkOwnerFilter**, обёртки лобби/discovery — паттерны репликации из Inspector
+- **NeoNetworkManager**, **NetworkPropertySync**, **NetworkActionRelay**, **`NetworkContextActionRelay`**, **NetworkOwnerFilter**, обёртки лобби/discovery — паттерны репликации из Inspector
 - **Authority** — `NetworkAuthorityMode` для объектов сцены; см. спецификацию NoCode
 
 📖 [Гайд по мультиплееру →](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) · 📖 [NoCode Network Spec →](Assets/Neoxider/Docs/Network/NoCode_Network_Spec.md)

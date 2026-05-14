@@ -2,13 +2,15 @@
 ## [8.2.1] - 2026-05-14
 
 ### Added
+- **NetworkContextActionRelay**: NoCode контекстные сетевые действия (`Trigger` / `Trigger(Collider)`): по `netId` игрока на клиентах находится runtime-копия и применяется действие к дочерней цели (имя/путь/компонент); bridge-`UnityEvent`; scope как у `NetworkActionRelay`; универсальный `InvokeComponentMethod` для вызова методов компонентов без сборочной зависимости Core→Tools.
 - **NoCode Multiplayer**: `NetworkAuthorityMode` (`None`, `OwnerOnly`, `ServerOnly`) with sender-based validation for scene objects.
 - **NeoNetworkManager**: `Scene Player Template` mode for NoCode scene-authored players; the scene object is disabled and spawned as network copies through a stable Mirror spawn handler.
 - **Selector**: network authority mode, SyncVar late-join state for fill mode/excluded indices/active snapshot, and regression coverage for host duplicate events.
 - **Editor**: replicated UnityEvents and replicated reactive values are highlighted when `isNetworked` is enabled.
-- **Tests**: coverage for `InteractiveObject`, `NetworkEventDispatcher`, `NetworkActionRelay`, authority filtering, offline fallback, and reactive network bridge updates.
+- **Tests**: coverage for `InteractiveObject`, `NetworkEventDispatcher`, `NetworkActionRelay`, **`NetworkContextActionRelay`**, authority filtering, offline fallback, and reactive network bridge updates.
 
 ### Changed
+- **Сцена `Mult.unity`**: триггер `Trigger Cube (1)` вызывает `NetworkContextActionRelay.Trigger(Collider)` вместо прямого `SetActive` на `Sphere` из шаблона — `Sphere` включается у runtime-игрока, вошедшего в зону.
 - **NoCode Multiplayer**: default authority is `None`; components keep offline/single-player behavior unless `isNetworked` and a network session are active.
 - **NoCode Multiplayer**: non-singleton networked NoCode components now inherit from `NeoNetworkComponent`; singleton managers inherit through `NetworkSingleton<T>` without per-component class-level `#if MIRROR`.
 - **NetworkActionRelay**: `OthersOnly` uses `TargetRpc` to exclude the sender correctly; `ServerOnly` no longer sends RPC.

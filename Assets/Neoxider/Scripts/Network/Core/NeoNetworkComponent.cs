@@ -29,7 +29,8 @@ namespace Neo.Network
         public bool isNetworked = false;
 
 #if MIRROR
-        private float _lastCmdTime;
+        // NegativeInfinity: first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".
+        private float _lastCmdTime = float.NegativeInfinity;
 
         /// <summary>Minimum interval between Commands (seconds). Override to customize per-component.</summary>
         protected virtual float NetworkRateLimit => 0.05f;

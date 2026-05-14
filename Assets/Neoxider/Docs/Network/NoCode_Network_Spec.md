@@ -46,6 +46,8 @@ public class ВашСетевойКомпонентNeoEditor : NeoCustomEditor {
 
 Для модификации этих значений из внешних триггеров без прямого указания ссылки (чтобы система сама нашла нужный кошелек) используйте компонент-обертку **`ModifyCounterByKey`**. Он умеет искать и `Money` (глобальную казну), и `Counter` по их уникальному строковому параметру `SaveKey`.
 
+Для действий над **дочерними объектами конкретного игрока** (оружие, `Sphere`, визуал), когда событие приходит от коллайдера/UI и нельзя хранить прямую ссылку на объект из сценового `Scene Player Template`, используйте **`NetworkContextActionRelay`** (см. `NetworkContextActionRelay.md`): по `netId` игрока на каждом клиенте находится его runtime-копия и применяется действие к найденной цели.
+
 ## Правило 8: Серверная валидация (Server-Side Validation)
 Каждый `[Command]` обязан содержать минимальную серверную защиту:
 - **Rate-limiting** — отклонять команды, приходящие чаще чем `CmdRateLimit` (50ms по умолчанию).
@@ -115,6 +117,7 @@ In the editor, replicated UnityEvents and replicated reactive values are marked 
 |-----------|-----------|------|
 | **NetworkPropertySync** | Автосинхронизация любого поля/свойства через Reflection (Float/Int/Bool/String/Vector3) | `Neoxider/Network/Network Property Sync` |
 | **NetworkActionRelay** | Многоканальный broadcast UnityEvent (void/float/string) с выбором scope (AllClients, ServerOnly, OthersOnly) | `Neoxider/Network/Network Action Relay` |
+| **NetworkContextActionRelay** | Контекстные сетевые действия: `Trigger()` / `Trigger(Collider)` + поиск цели внутри сетевого игрока по имени/пути/компоненту (без ссылки на template) | `Neoxider/Network/Network Context Action Relay` |
 | **NetworkOwnerFilter** | Фильтр-проверка роли (LocalPlayer, Server, Everyone) перед вызовом действия | `Neoxider/Network/Network Owner Filter` |
 | **NeoNetworkDiscovery** | LAN-обнаружение серверов (обёртка Mirror NetworkDiscovery) | `Neoxider/Network/Neo Network Discovery` |
 | **NeoLobbyManager** | Лобби с ready-проверкой (обёртка Mirror NetworkRoomManager) | `Neoxider/Network/Neo Lobby Manager` |

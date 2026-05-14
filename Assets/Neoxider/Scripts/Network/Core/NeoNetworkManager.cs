@@ -180,6 +180,7 @@ namespace Neo.Network
             base.OnStartServer();
             PrepareScenePlayerTemplate();
             DisableScenePlayerTemplateInstance();
+            NetworkContextActionRelay.RegisterMirrorHandlers();
             _onServerStarted?.Invoke();
             Debug.Log("[NeoNetworkManager] Server started.");
         }
@@ -187,6 +188,7 @@ namespace Neo.Network
         public override void OnStartClient()
         {
             base.OnStartClient();
+            NetworkContextActionRelay.RegisterMirrorHandlers();
             RegisterScenePlayerTemplateSpawnHandler();
             if (!NetworkServer.active)
                 DisableScenePlayerTemplateInstance();
