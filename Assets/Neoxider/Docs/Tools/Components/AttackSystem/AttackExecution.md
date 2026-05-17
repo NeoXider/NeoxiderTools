@@ -1,6 +1,6 @@
 # Инструмент Attack Execution
 
-> **Legacy.** RPG-модуль предоставляет статы боя. Используйте [RpgStatsManager](../../Rpg/RpgStatsManager.md).TakeDamage() из логики атаки или [RpgNoCodeAction](../../Rpg/RpgNoCodeAction.md).
+> **Legacy.** RPG-модуль предоставляет статы боя. Используйте [RpgCharacter](../../Rpg/RpgCharacter.md).Damage() из логики атаки или [RpgNoCodeAction](../../Rpg/RpgNoCodeAction.md).
 
 **Что это:** Менеджер таймингов и состояний для выполнения атаки.
 

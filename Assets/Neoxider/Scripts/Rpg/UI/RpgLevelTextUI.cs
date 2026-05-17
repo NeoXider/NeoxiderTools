@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -6,93 +7,63 @@ using UnityEngine.UI;
 namespace Neo.Rpg.UI
 {
     /// <summary>
-    ///     Universal UI connector for an RpgCombatant or RpgStatsManager Level representation.
+    ///     UI connector for the level of an <see cref="RpgCharacter"/>.
     /// </summary>
     [NeoDoc("Rpg/UI/RpgLevelTextUI.md")]
     [AddComponentMenu("Neoxider/RPG/UI/" + nameof(RpgLevelTextUI))]
     public sealed class RpgLevelTextUI : MonoBehaviour
     {
         [Header("Target")]
-        [Tooltip("Target (RpgCombatant or RpgStatsManager).")]
-        [SerializeField] private Component target;
+        [Tooltip("Character to display. If empty, the component searches its parents on Start.")]
+        [SerializeField] private RpgCharacter _character;
 
         [Header("UI Bindings")]
-        [Tooltip("Optional Canvas Text for Level value representation.")]
         public Text levelText;
 
         [Header("Settings")]
-        [Tooltip("Format for the Level text (e.g. 'Lv.{0}'). {0}=Current Level.")]
+        [Tooltip("Format for the Level text. {0}=Current Level.")]
         [SerializeField] private string textFormat = "Lv.{0}";
 
-        [Header("Events (NoCode / TMP)")]
-        [SerializeField] private UnityEvent<int> onLevelChanged = new();
-        [SerializeField] private UnityEvent<string> onLevelTextChanged = new();
+        [Header("Events")]
+        [SerializeField] private UnityEvent<int> _onLevelChanged = new();
+        [SerializeField] private UnityEvent<string> _onLevelTextChanged = new();
 
-        public UnityEvent<int> OnLevelChanged => onLevelChanged;
-        public UnityEvent<string> OnLevelTextChanged => onLevelTextChanged;
+        public UnityEvent<int> OnLevelChanged => _onLevelChanged;
+        public UnityEvent<string> OnLevelTextChanged => _onLevelTextChanged;
 
-        private RpgCombatant _combatant;
-        private RpgStatsManager _statsManager;
         private ReactivePropertyInt _boundProperty;
+
+        public RpgCharacter Character { get => _character; set { Unbind(); _character = value; Bind(); } }
 
         private void Start()
         {
-            if (target != null)
-            {
-                Bind(target);
-            }
+            if (_character == null) _character = GetComponentInParent<RpgCharacter>();
+            Bind();
         }
 
-        private void OnDestroy()
+        private void OnDestroy() => Unbind();
+
+        private void Bind()
         {
-            if (_boundProperty != null)
-            {
-                _boundProperty.RemoveListener(OnLevelChangedInternal);
-            }
+            if (_character == null) return;
+            _boundProperty = _character.LevelState;
+            _boundProperty.AddListener(OnLevelChangedInternal);
+            OnLevelChangedInternal(_boundProperty.CurrentValue);
         }
 
-        public void Bind(Component receiverComponent)
+        private void Unbind()
         {
-            if (_boundProperty != null)
-            {
-                _boundProperty.RemoveListener(OnLevelChangedInternal);
-                _boundProperty = null;
-            }
-
-            _combatant = receiverComponent as RpgCombatant;
-            _statsManager = receiverComponent as RpgStatsManager;
-            target = receiverComponent;
-
-            if (_combatant != null)
-            {
-                _boundProperty = _combatant.LevelState;
-                _boundProperty.AddListener(OnLevelChangedInternal);
-                OnLevelChangedInternal(_boundProperty.Value);
-            }
-            else if (_statsManager != null)
-            {
-                _boundProperty = _statsManager.LevelState;
-                _boundProperty.AddListener(OnLevelChangedInternal);
-                OnLevelChangedInternal(_boundProperty.Value);
-            }
-            else
-            {
-                Debug.LogWarning($"[RpgLevelTextUI] Target '{receiverComponent?.name}' is neither RpgCombatant nor RpgStatsManager.", this);
-            }
+            if (_boundProperty == null) return;
+            _boundProperty.RemoveListener(OnLevelChangedInternal);
+            _boundProperty = null;
         }
 
         private void OnLevelChangedInternal(int levelVal)
         {
-            onLevelChanged?.Invoke(levelVal);
-
+            _onLevelChanged?.Invoke(levelVal);
             string text = string.Format(textFormat, levelVal);
-
-            if (levelText != null)
-            {
-                levelText.text = text;
-            }
-
-            onLevelTextChanged?.Invoke(text);
+            if (levelText != null) levelText.text = text;
+            _onLevelTextChanged?.Invoke(text);
         }
     }
 }

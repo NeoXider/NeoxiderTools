@@ -10,7 +10,7 @@
 
 - Ищет цель по `RpgTargetQuery`
 - Поддерживает `Nearest`, `Farthest`, `LowestCurrentHp`, `HighestCurrentHp`, `LowestHpPercent`, `HighestLevel`, `Random`
-- Работает с `RpgCombatant` и `RpgStatsManager`
+- Работает с `RpgCharacter`
 - Хранит `CurrentTarget`
 - Имеет события выбора/очистки цели
 

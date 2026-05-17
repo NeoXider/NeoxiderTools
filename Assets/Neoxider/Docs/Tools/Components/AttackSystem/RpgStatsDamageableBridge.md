@@ -1,39 +1,23 @@
-﻿# RpgStatsDamageableBridge
+# RpgStatsDamageableBridge
 
-**Что это:** мост из `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`, реализующий `IDamageable` и `IHealable` с перенаправлением в `RpgStatsManager`.
+**Что это:** мост из `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`, реализующий `IDamageable` и `IHealable` с перенаправлением в `RpgCharacter`.
 
-**Навигация:** [← AttackSystem](./README.md) · [RPG](../Rpg/README.md)
-
----
+**Навигация:** [← AttackSystem](./README.md) · [RPG](../../Rpg/README.md)
 
 ## Назначение
 
-Позволяет компонентам, работающим с `IDamageable`/`IHealable` (например `AdvancedAttackCollider`), наносить урон и лечить через `RpgStatsManager` вместо устаревшего `Health`.
+Позволяет legacy-компонентам, работающим с `IDamageable`/`IHealable` (например `AdvancedAttackCollider`), наносить урон и лечить через новый RPG-слой.
 
 ## Использование
 
-1. Добавьте `RpgStatsDamageableBridge` на объект игрока.
-2. Убедитесь, что в сцене есть `RpgStatsManager` (или назначьте его в поле `Manager`).
-3. Компоненты, ищущие `IDamageable`, будут вызывать `TakeDamage`/`Heal` через этот мост.
+1. Добавьте `RpgStatsDamageableBridge` на объект с `RpgCharacter` или его дочерний объект.
+2. При необходимости назначьте `_character` вручную.
+3. Legacy-компоненты будут вызывать `TakeDamage`/`Heal`, а мост передаст вызов в `RpgCharacter.Damage` / `RpgCharacter.Heal`.
 
 ## Поля
 
 | Поле | Назначение |
 |------|------------|
-| `_manager` | Ссылка на RpgStatsManager (если пусто — используется Instance) |
-| `_damageMultiplier` | Множитель урона перед передачей в RpgStatsManager |
-| `_healMultiplier` | Множитель лечения перед передачей в RpgStatsManager |
-
-## Рекомендация
-
-Для новых проектов используйте `RpgStatsManager` и `RpgNoCodeAction` напрямую. Этот мост нужен для совместимости с `AdvancedAttackCollider` и другими потребителями `IDamageable`.
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `1f` | 1f. |
-| `DamageMultiplier` | Damage Multiplier. |
-| `HealMultiplier` | Heal Multiplier. |
-| `_combatant` | Combatant. |
+| `_character` | Явная ссылка на `RpgCharacter`; если пусто, ищется в родителях |
+| `_damageMultiplier` | Множитель урона перед передачей в `RpgCharacter` |
+| `_healMultiplier` | Множитель лечения перед передачей в `RpgCharacter` |

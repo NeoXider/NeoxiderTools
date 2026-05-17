@@ -20,6 +20,12 @@
 | `IsInvulnerable` | Target is currently invulnerable |
 | `CanEvade` | `RpgEvadeController` is ready |
 | `AttackReady` | `RpgAttackController` can use `_attackId` |
+| `ResourceAtLeast` / `ResourceBelow` | Checks the current value of any resource through `_resource` |
+| `ResourcePercentAtLeast` / `ResourcePercentBelow` | Checks the percent of any resource through `_resource` (threshold 0-100) |
+| `StatAtLeast` / `StatBelow` | Checks any stat value through `_stat` |
+| `UpgradePointsAtLeast` | Checks free upgrade points |
+| `UpgradeLevelAtLeast` | Checks how many times the selected stat was upgraded |
+| `XpAtLeast` | Checks current XP |
 
 ## Invert option
 
@@ -29,5 +35,5 @@ When `_invert` is enabled, the evaluation result is inverted.
 
 1. Add `RpgConditionAdapter` to an object.
 2. Select `Evaluation Mode`.
-3. Fill `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, or `Attack Id`.
+3. Fill `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat`.
 4. Use in `NeoCondition` as an `IConditionEvaluator` source, or call `EvaluateCurrent()` from code.

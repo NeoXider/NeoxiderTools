@@ -26,6 +26,15 @@
 | `ResetProfile` | Resets profile |
 | `SaveProfile` | Saves profile |
 | `LoadProfile` | Loads profile |
+| `SetMaxResource` / `AddMaxResource` | Changes the max value of any resource through `_resource` (`HP`, `Mana`, `Stamina`, `Shield`, or a custom ID) |
+| `SpendResource` / `RefillResource` / `RestoreResource` | Spends, refills, or fully restores the selected resource |
+| `RestoreAllResources` | Restores every resource on the character to max |
+| `AddStatBase` / `SetStatBase` | Changes the base value of any stat through `_stat` |
+| `AddLevel` / `AddXp` / `AddUpgradePoints` | Drives level, XP, and manual upgrade points |
+| `UpgradeStat` | Spends upgrade points on the selected stat when its upgrade rule allows it |
+| `ApplyInlineBuff` | Applies an inline buff by `_inlineBuffIndex` |
+| `ClearAllBuffs` / `ClearAllStatuses` | Clears all active buffs or statuses |
+| `LockInvulnerable` / `UnlockInvulnerable` / `SetInvulnerable` | Controls character invulnerability |
 
 ## Events
 
@@ -37,5 +46,5 @@
 
 1. Add `RpgNoCodeAction` to an object.
 2. Select `Action Type`.
-3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, or `Attack Id` depending on type.
+3. Fill `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource`, or `_stat` depending on type.
 4. Bind `Execute()` to `Button.onClick` or another UnityEvent.

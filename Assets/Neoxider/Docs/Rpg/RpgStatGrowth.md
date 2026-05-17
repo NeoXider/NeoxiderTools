@@ -1,8 +1,8 @@
 # RpgStatGrowthDefinition
 
-`RpgStatGrowthDefinition` is a ScriptableObject defining stat growth formulas for `RpgCombatant`. Using formulas and curves, it determines how characteristics such as Maximum HP, Damage multiplier, Defense multiplier, and HP Regeneration scale directly with a character's level. 
+`RpgStatGrowthDefinition` is a legacy ScriptableObject for stat growth formulas. New projects should use `RpgCharacterTemplate` + `RpgProgressionDefinition`.
 
-You can assign a created `RpgStatGrowthDefinition` to any `RpgCombatant` (e.g. your Player or your Enemy NPCs) so their stats scale beautifully dependent on the level you set.
+You can model the same growth on `RpgCharacter` with progression rules and resource/stat modifiers.
 
 ## Creating a Stat Growth Definition
 1. In the Project window, Right-Click -> `Create` -> `Neoxider` -> `RPG` -> `StatGrowthDefinition`.
@@ -33,4 +33,4 @@ Curve mode allows you to draw the exact intended statistics by mapping an X,Y an
 The custom Editor window contains a **Level Preview**. It automatically plots exact calculations for 1 to 100 levels so designers can test their growth balance without needing to run the game in Play Mode.
 
 ## Integrating With Characters
-Drag and drop your `StatGrowthDefinition` into the `Stat Growth (SO)` field on your `RpgCombatant` component in your prefabs. Next time the scene starts, the combatant will load it up and apply it!
+For new prefabs, drag a `RpgCharacterTemplate` into `RpgCharacter` and configure the `RpgProgressionDefinition`.

@@ -20,6 +20,12 @@
 | `IsInvulnerable` | Цель сейчас неуязвима |
 | `CanEvade` | `RpgEvadeController` готов к запуску |
 | `AttackReady` | `RpgAttackController` может запустить атаку по `_attackId` |
+| `ResourceAtLeast` / `ResourceBelow` | Проверяет текущее значение любого ресурса через `_resource` |
+| `ResourcePercentAtLeast` / `ResourcePercentBelow` | Проверяет процент любого ресурса через `_resource` (threshold 0–100) |
+| `StatAtLeast` / `StatBelow` | Проверяет значение любого стата через `_stat` |
+| `UpgradePointsAtLeast` | Проверяет количество свободных upgrade points |
+| `UpgradeLevelAtLeast` | Проверяет сколько раз выбранный стат был улучшен |
+| `XpAtLeast` | Проверяет текущее значение XP |
 
 ## Опция Invert
 
@@ -29,5 +35,5 @@
 
 1. Добавьте `RpgConditionAdapter` на объект.
 2. Выберите `Evaluation Mode`.
-3. Заполните `Threshold`, `Level Threshold`, `Buff Id`, `Status Id` или `Attack Id`.
+3. Заполните `Threshold`, `Level Threshold`, `Buff Id`, `Status Id`, `Attack Id`, `_resource` или `_stat`.
 4. Используйте в `NeoCondition` как источник типа `IConditionEvaluator` или вызывайте `EvaluateCurrent()` из кода.

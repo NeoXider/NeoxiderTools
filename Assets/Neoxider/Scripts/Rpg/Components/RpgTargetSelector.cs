@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -14,8 +15,7 @@ namespace Neo.Rpg
     {
         [Header("Setup")] [SerializeField] private Transform _origin;
 
-        [SerializeField] private RpgCombatant _combatantSource;
-        [SerializeField] private RpgStatsManager _profileSource;
+        [SerializeField] private RpgCharacter _characterSource;
 
         [Header("Targeting")] [SerializeField] private RpgTargetQuery _query = new();
 
@@ -79,17 +79,12 @@ namespace Neo.Rpg
                 return null;
             }
 
-            if (target.TryGetComponent(out RpgCombatant combatant))
+            if (target.TryGetComponent(out RpgCharacter character))
             {
-                return combatant;
+                return character;
             }
 
-            if (target.TryGetComponent(out RpgStatsManager manager))
-            {
-                return manager;
-            }
-
-            return null;
+            return target.GetComponentInParent<RpgCharacter>();
         }
     }
 }

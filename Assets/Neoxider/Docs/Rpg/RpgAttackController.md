@@ -37,7 +37,7 @@
 
 ## Что важно
 
-- Источником статов может быть `RpgCombatant` или `RpgStatsManager`.
+- Источником статов должен быть `RpgCharacter`.
 - Для урона учитывается `GetOutgoingDamageMultiplier()`.
 - Дополнительные эффекты берутся из `RpgAttackDefinition.Effects`.
 - Для AI/skills/spells можно использовать `RpgAttackPreset` и `RpgTargetSelector`.

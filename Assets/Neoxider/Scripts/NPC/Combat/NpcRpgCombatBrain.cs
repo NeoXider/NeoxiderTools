@@ -1,4 +1,5 @@
 using Neo.Rpg;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -19,8 +20,7 @@ namespace Neo.NPC.Combat
         [SerializeField] private NpcNavigation _navigation;
         [SerializeField] private RpgTargetSelector _targetSelector;
         [SerializeField] private RpgAttackController _attackController;
-        [SerializeField] private RpgCombatant _combatant;
-        [SerializeField] private RpgStatsManager _profileSource;
+        [SerializeField] private RpgCharacter _character;
         [SerializeField] private Transform _lookOrigin;
 
         [Header("Behaviour")] [SerializeField] private bool _autoAcquireTarget = true;
@@ -109,8 +109,7 @@ namespace Neo.NPC.Combat
             _navigation ??= GetComponent<NpcNavigation>();
             _targetSelector ??= GetComponent<RpgTargetSelector>();
             _attackController ??= GetComponent<RpgAttackController>();
-            _combatant ??= GetComponent<RpgCombatant>();
-            _profileSource ??= GetComponent<RpgStatsManager>();
+            _character ??= GetComponent<RpgCharacter>();
             _lookOrigin ??= transform;
         }
 
@@ -330,16 +329,7 @@ namespace Neo.NPC.Combat
 
         private IRpgCombatReceiver ResolveActor()
         {
-            if (_combatant != null)
-            {
-                return _combatant;
-            }
-
-            if (_profileSource != null)
-            {
-                return _profileSource;
-            }
-
+            if (_character != null) return _character;
             return GetComponent<IRpgCombatReceiver>();
         }
 

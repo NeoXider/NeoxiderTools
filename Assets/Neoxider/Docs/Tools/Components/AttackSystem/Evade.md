@@ -1,6 +1,6 @@
 # Evade — уклонение / рывок с перезарядкой
 
-> **Legacy.** RPG-модуль предоставляет слой статов. Для механики уклонения используйте Evade или реализуйте свою; интегрируйте с [RpgStatsManager](../../Rpg/RpgStatsManager.md) для боевого потока.
+> **Legacy.** RPG-модуль предоставляет слой статов. Для новых проектов интегрируйте уклонение с [RpgCharacter](../../Rpg/RpgCharacter.md).
 
 **Что это:** Для NeoCondition и рефлексии используйте примитивные геттеры: `ReloadProgressValue`, `RemainingCooldownTimeValue`.
 

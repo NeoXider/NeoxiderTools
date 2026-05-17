@@ -18,7 +18,7 @@
 | HandLayoutType (enum) | CardLayoutType | Obsolete | В Cards/Config/HandLayoutType.cs; использовать enum CardLayoutType. |
 | HandComponent.LegacyLayoutType (свойство) | HandComponent.LayoutType (CardLayoutType) | Obsolete | Устаревшее только свойство LegacyLayoutType; сам HandComponent актуален. |
 | UIReady | SceneFlowController | Obsolete | Загрузка сцен, прогресс, Quit/Restart/Pause; см. Level/SceneFlowController.md. |
-| Health | Neo.Rpg.RpgStatsManager / Neo.Rpg.RpgCombatant | Obsolete | Persistent player profile через `RpgStatsManager`, локальные актёры через `RpgCombatant`. |
+| Health | Neo.Rpg.Components.RpgCharacter | Obsolete | Persistent/local RPG actor через `RpgCharacter`. |
 | AttackExecution | Neo.Rpg.RpgAttackController + RpgAttackDefinition | Obsolete | Универсальная melee/ranged/aoe система атак. |
 | Evade | Neo.Rpg.RpgEvadeController | Obsolete | Уклонение, cooldown и invulnerability locks. |
 | AdvancedAttackCollider | Neo.Rpg.RpgAttackController + Neo.Rpg.RpgProjectile | Obsolete | Для legacy `IDamageable` мостом служит `RpgStatsDamageableBridge`. |

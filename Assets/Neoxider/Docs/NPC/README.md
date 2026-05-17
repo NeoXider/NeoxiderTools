@@ -17,7 +17,7 @@
 1. Добавьте `NpcNavigation` на объект с `NavMeshAgent`.
 2. Настройте режим поведения, цели или точки патруля.
 3. Если нужна автоматическая синхронизация анимации, добавьте `NpcAnimatorDriver`.
-4. Для боевого NPC добавьте `RpgCombatant`, `RpgTargetSelector`, `RpgAttackController`, `NpcRpgCombatBrain` и назначьте `NpcCombatPreset`.
+4. Для боевого NPC добавьте `RpgCharacter`, `RpgTargetSelector`, `RpgAttackController`, `NpcRpgCombatBrain` и назначьте `NpcCombatPreset`.
 5. Для melee/ranged варианта обычно меняется только `RpgAttackPreset`/`NpcCombatPreset`, а не архитектура NPC.
 
 ## Что входит в модуль
@@ -40,7 +40,7 @@
 
 - База движения: `NavMeshAgent` + `NpcNavigation`
 - Анимация: `NpcAnimatorDriver`
-- RPG-актор: `RpgCombatant`
+- RPG-актор: `RpgCharacter`
 - Выбор цели: `RpgTargetSelector`
 - Исполнение атаки: `RpgAttackController`
 - Поведение: `NpcRpgCombatBrain`

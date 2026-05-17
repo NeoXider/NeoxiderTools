@@ -4,11 +4,11 @@ using UnityEngine.Events;
 namespace Neo.Rpg
 {
     /// <summary>
-    ///     Handles death of an <see cref="RpgCombatant"/> by performing a configurable action.
-    ///     Attach alongside any RpgCombatant — fully NoCode, no additional scripts required.
+    ///     Handles death of an <see cref="Components.RpgCharacter"/> by performing a configurable action.
+    ///     Attach alongside any Components.RpgCharacter — fully NoCode, no additional scripts required.
     /// </summary>
     [NeoDoc("Rpg/RpgDeathHandler.md")]
-    [RequireComponent(typeof(RpgCombatant))]
+    [RequireComponent(typeof(Components.RpgCharacter))]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgDeathHandler))]
     public sealed class RpgDeathHandler : MonoBehaviour
     {
@@ -43,18 +43,18 @@ namespace Neo.Rpg
         /// <summary>Raised after death action is performed.</summary>
         public UnityEvent OnDeathComplete => _onDeathComplete;
 
-        private RpgCombatant _combatant;
+        private Components.RpgCharacter _combatant;
 
         private void Awake()
         {
-            _combatant = GetComponent<RpgCombatant>();
-            _combatant.OnDeath.AddListener(HandleDeath);
+            _combatant = GetComponent<Components.RpgCharacter>();
+            _combatant.OnDeathEvent.AddListener(HandleDeath);
         }
 
         private void OnDestroy()
         {
             if (_combatant != null)
-                _combatant.OnDeath.RemoveListener(HandleDeath);
+                _combatant.OnDeathEvent.RemoveListener(HandleDeath);
         }
 
         private void HandleDeath()

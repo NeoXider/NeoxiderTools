@@ -24,7 +24,7 @@
 - `RpgAttackController`
 - `NpcCombatPreset`
 
-Обычно на том же объекте также нужен `RpgCombatant`.
+Обычно на том же объекте также нужен `RpgCharacter`.
 
 ## Основные настройки
 
@@ -60,7 +60,7 @@
 
 1. Добавьте `NavMeshAgent`
 2. Добавьте `NpcNavigation`
-3. Добавьте `RpgCombatant`
+3. Добавьте `RpgCharacter`
 4. Добавьте `RpgTargetSelector`
 5. Добавьте `RpgAttackController`
 6. Добавьте `NpcRpgCombatBrain`

@@ -41,7 +41,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject attributes, and inspector helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Quest configs, manager, objectives, and runtime quest state | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
+| **RPG** | `RpgCharacter`: universal resources/stats, buffs, statuses, progression, multiplayer, and no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | `PlayerPrefs`, JSON files, provider API, scene/global saves, and save attributes | [`Save/README.md`](./Save/README.md) |
 | **Settings** | `GameSettings`, scene service, `SettingsView` UI | [`Settings/README.md`](./Settings/README.md) |
@@ -74,6 +74,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 
 - [NeoxiderPages](./NeoxiderPages/README.md)
 - [UI Extension](./UI%20Extension/README.md)
+- `Assets/Scenes/RpgCharacterQuickDemo.unity` - quick smoke scene for Damage/Heal/Stamina/DarkMana/Upgrade API.
 
 ## Notes
 

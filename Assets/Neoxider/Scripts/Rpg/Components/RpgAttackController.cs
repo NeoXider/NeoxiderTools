@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Rpg.Components;
 using UnityEngine;
 
 namespace Neo.Rpg
@@ -18,8 +19,9 @@ namespace Neo.Rpg
         [SerializeField] private RpgAttackPreset[] _presets = Array.Empty<RpgAttackPreset>();
         [SerializeField] private Transform _origin;
         [SerializeField] private Transform _projectileSpawnPoint;
-        [SerializeField] private RpgCombatant _combatantSource;
-        [SerializeField] private RpgStatsManager _profileSource;
+        [Tooltip("Optional RpgCharacter providing damage multipliers, level, and outgoing buff bonuses. " +
+                 "When empty the controller searches the parent hierarchy.")]
+        [SerializeField] private RpgCharacter _characterSource;
         [SerializeField] private RpgTargetSelector _targetSelector;
 
         [Header("Built-in Input")] [SerializeField]
@@ -494,14 +496,9 @@ namespace Neo.Rpg
 
         private IRpgCombatReceiver ResolveSourceReceiver()
         {
-            if (_combatantSource != null)
+            if (_characterSource != null)
             {
-                return _combatantSource;
-            }
-
-            if (_profileSource != null)
-            {
-                return _profileSource;
+                return _characterSource;
             }
 
             if (TryResolveReceiver(gameObject, out IRpgCombatReceiver receiver))
@@ -540,18 +537,9 @@ namespace Neo.Rpg
         private static bool TryResolveReceiver(GameObject target, out IRpgCombatReceiver receiver)
         {
             receiver = null;
-            if (target == null)
-            {
-                return false;
-            }
-
-            receiver = target.GetComponent<RpgStatsManager>();
-            if (receiver != null)
-            {
-                return true;
-            }
-
-            receiver = target.GetComponent<RpgCombatant>();
+            if (target == null) return false;
+            receiver = target.GetComponent<RpgCharacter>();
+            if (receiver == null) receiver = target.GetComponentInParent<RpgCharacter>();
             return receiver != null;
         }
 

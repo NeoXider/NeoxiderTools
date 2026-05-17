@@ -19,7 +19,7 @@ For combat NPCs, the intended stack is:
 
 - `NpcNavigation`
 - `NpcAnimatorDriver`
-- `RpgCombatant`
+- `RpgCharacter`
 - `RpgTargetSelector`
 - `RpgAttackController`
 - `NpcRpgCombatBrain`

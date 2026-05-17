@@ -2514,6 +2514,14 @@ PrefabInstance:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 1743225779}
+    - target: {fileID: 8811223344556677889, guid: 3781ccd360fc4bf40a142ead67e53498, type: 3}
+      propertyPath: showGizmos
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8811223344556677889, guid: 3781ccd360fc4bf40a142ead67e53498, type: 3}
+      propertyPath: showOverlay
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

@@ -36,18 +36,18 @@ namespace Neo.Rpg.Components.Weapons
         /// </summary>
         protected virtual void DealDamage(Collider target)
         {
-            var combatant = target.GetComponentInParent<RpgCombatant>();
-            if (combatant != null)
+            var character = target.GetComponentInParent<RpgCharacter>();
+            if (character != null)
             {
                 var source = GetComponentInParent<IRpgCombatReceiver>();
                 float amount = damage;
-                
+
                 if (source != null)
                 {
                     amount *= source.GetOutgoingDamageMultiplier();
                 }
 
-                combatant.TakeDamage(new RpgDamageInfo(amount, source: source));
+                character.Damage(amount);
             }
         }
     }

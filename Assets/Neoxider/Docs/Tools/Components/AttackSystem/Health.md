@@ -1,6 +1,6 @@
 # Инструмент Health
 
-> **Legacy.** Для новых проектов используйте [RpgStatsManager](../../Rpg/RpgStatsManager.md) (HP, баффы, статусы, persistence). Health остаётся для обратной совместимости и per-entity HP (враги).
+> **Legacy.** Для новых проектов используйте [RpgCharacter](../../Rpg/RpgCharacter.md) (ресурсы, баффы, статусы, persistence). Health остаётся для обратной совместимости.
 
 **Что это:** Реализует систему здоровья для игрового объекта.
 

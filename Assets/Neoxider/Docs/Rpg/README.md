@@ -1,6 +1,6 @@
 # Модуль RPG
 
-Полноценная боевая система для создания RPG в 3D и 2D. Включает управление статами, способностями, поиском целей, уклонениями и статус-эффектами.
+Полноценная боевая система для создания RPG в 3D и 2D. Центральный компонент персонажа — `RpgCharacter`: ресурсы, статы, баффы, статусы, рост уровня, сохранение и Mirror-мультиплеер находятся в одном API.
 
 ## Содержание
 - [Назначение](#назначение)
@@ -18,19 +18,22 @@
 ---
 
 ## Оглавление файлов
-- [RpgStatsManager](./RpgStatsManager.md) — профиль персонажа, баффы, статы и сохранение.
-- [RpgCombatant](./RpgCombatant.md) — компонент для NPC и разрушаемых объектов.
+- [RpgCharacter](./RpgCharacter.md) — универсальный персонаж для игрока, NPC, мобов, питомцев и разрушаемых объектов.
+- [RpgCharacterTemplate](./RpgCharacterTemplate.md) — SO-шаблон ресурсов, статов, эффектов и progression.
+- [RpgProgressionDefinition](./RpgProgressionDefinition.md) — режим роста уровня: all-stats, manual upgrades или hybrid.
 - [RpgAttackController](./RpgAttackController.md) — управление очередью и запуском атак.
 - [RpgAttackDefinition](./RpgAttackDefinition.md) — ScriptableObject с параметрами атаки.
 - [RpgEvadeController](./RpgEvadeController.md) — система уклонений и i-frames.
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — мост для UnityEvents.
+- [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG-условия для NeoCondition.
+- [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — реактивная привязка ресурсов и статов к UI/NoCode.
 
 ---
 
 ## Как использовать
 
-1. **Игрок**: Добавьте `RpgStatsManager`, `RpgAttackController` и `RpgEvadeController`.
-2. **Враги**: Добавьте `RpgCombatant` и настройте HP.
+1. **Игрок**: Добавьте `RpgCharacter`, `RpgAttackController` и `RpgEvadeController`.
+2. **Враги/NPC/питомцы**: Добавьте `RpgCharacter` и настройте нужные ресурсы (`HP`, `Mana`, `Stamina`, `Shield` или custom ID).
 3. **Атаки**: Создайте `RpgAttackDefinition` (Melee/Ranged/Aoe) и назначьте его в контроллер.
 4. **Урон**: Используйте Unity-теги для разделения фракций (враги атакуют игрока, игрок — врагов).
 
@@ -39,7 +42,7 @@
 ## Ключевые концепции
 
 ### Persistence (Сохранение)
-`RpgStatsManager` автоматически сохраняет уровень и состояние HP через `SaveProvider`. Это полезно для главного героя. Для обычных врагов используйте `RpgCombatant` (без сохранения).
+`RpgCharacter` сохраняет уровень, XP, upgrade points, ресурсы, статы, баффы и статусы через `SaveProvider`, если включён persistence-блок и задан save key. Для обычных врагов сохранение можно не включать.
 
 ### Data-Driven Attacks
 Все параметры атак вынесены в файлы. Вы можете мгновенно изменить радиус взрыва или скорость полета снаряда во время игры без перекомпиляции.
@@ -50,28 +53,27 @@
 
 ### 1. Нанесение урона кнопкой (No-Code)
 1. На объект кнопки или триггера добавьте `RpgNoCodeAction`.
-2. Выберите действие `DealDamage`.
-3. Укажите цель (это должен быть объект с `RpgStatsManager` или `RpgCombatant`).
-4. Задайте силу `Power` (базовый урон).
+2. Выберите действие `TakeDamage`.
+3. Укажите цель с `RpgCharacter`.
+4. Задайте `Amount` (базовый урон).
 5. Смонтируйте вызов `Execute()` на событие клика или столкновения.
 
 ### 2. Изменение статов (C#)
 
 ```csharp
 using Neo.Rpg;
+using Neo.Rpg.Components;
 using UnityEngine;
 
 public class PoisonTrap : MonoBehaviour
 {
-    // Ссылка на дебафф, настроенный в редакторе
-    [SerializeField] private BuffDefinition poisonBuff; 
+    [SerializeField] private StatusEffectDefinition poisonStatus;
 
     private void OnTriggerEnter(Collider other)
     {
-        // Пробуем получить менеджер статов у вошедшего объекта
-        if (other.TryGetComponent(out RpgStatsManager stats))
+        if (other.TryGetComponent(out RpgCharacter character))
         {
-            stats.AddBuff(poisonBuff);
+            character.ApplyStatus(poisonStatus);
             Debug.Log($"{other.name} отравлен!");
         }
     }

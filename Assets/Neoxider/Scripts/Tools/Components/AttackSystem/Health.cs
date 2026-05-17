@@ -9,9 +9,9 @@ namespace Neo.Tools
     ///     Component that handles health system with damage, healing and auto-healing capabilities.
     ///     Implements IDamageable, IHealable, IRestorable for use with AttackExecution and other combat components.
     /// </summary>
-    [LegacyComponent("Neo.Rpg.RpgStatsManager or Neo.Rpg.RpgCombatant")]
+    [LegacyComponent("Neo.Rpg.Components.RpgCharacter")]
     [Obsolete(
-        "Use Neo.Rpg.RpgStatsManager for persistent player stats or Neo.Rpg.RpgCombatant for scene-local actors.")]
+        "Use Neo.Rpg.Components.RpgCharacter (universal resource/stat/buff system, multiplayer-ready).")]
     [NeoDoc("Tools/Components/AttackSystem/Health.md")]
     [CreateFromMenu("Neoxider/Tools/Components/Health")]
     [AddComponentMenu("Neoxider/Tools/Components/AttackSystem/Health (Legacy)")]

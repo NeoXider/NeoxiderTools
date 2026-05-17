@@ -2,7 +2,7 @@
 
 **Что это:** legacy-компоненты старой боевой системы: здоровье, исполнение атаки, уклонение, hit-collider логика.
 
-**Важно:** для новых проектов рекомендуется использовать модуль [**RPG**](../../Rpg/README.md) (`RpgStatsManager`, баффы, статус-эффекты, persistence). Компоненты ниже помечены как legacy.
+**Важно:** для новых проектов рекомендуется использовать модуль [**RPG**](../../Rpg/README.md) (`RpgCharacter`, баффы, статус-эффекты, persistence). Компоненты ниже помечены как legacy.
 
 **Оглавление:** см. список ссылок ниже.
 
@@ -12,7 +12,7 @@
 
 | Legacy | Замена |
 |--------|--------|
-| Health | [RpgStatsManager](../../Rpg/README.md) или `RpgCombatant` |
+| Health | [RpgCharacter](../../Rpg/RpgCharacter.md) |
 | AttackExecution | [RpgAttackController](../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../Rpg/RpgAttackDefinition.md) |
 | Evade | [RpgEvadeController](../../Rpg/RpgEvadeController.md) |
 | AdvancedAttackCollider | [RpgAttackController](../../Rpg/RpgAttackController.md) + [RpgProjectile](../../Rpg/RpgProjectile.md) |

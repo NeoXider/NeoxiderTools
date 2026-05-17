@@ -70,10 +70,6 @@ namespace Neo.Editor
     [CanEditMultipleObjects]
     public class SelectorNeoEditor : NeoCustomEditor { }
 
-    [CustomEditor(typeof(Neo.Rpg.RpgCombatant), true)]
-    [CanEditMultipleObjects]
-    public class RpgCombatantNeoEditor : NeoCustomEditor { }
-
     [CustomEditor(typeof(Neo.Network.NeoNetworkPlayer), true)]
     [CanEditMultipleObjects]
     public class NeoNetworkPlayerNeoEditor : NeoCustomEditor { }

@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -6,15 +7,16 @@ using UnityEngine.UI;
 namespace Neo.Rpg.UI
 {
     /// <summary>
-    ///     Universal UI connector for an RpgCombatant or RpgStatsManager HP bar.
+    ///     UI connector for the HP percentage of an <see cref="RpgCharacter"/>.
+    ///     Slider / Image fillAmount / Text get updated whenever the character's HP changes.
     /// </summary>
     [NeoDoc("Rpg/UI/RpgHpBarUI.md")]
     [AddComponentMenu("Neoxider/RPG/UI/" + nameof(RpgHpBarUI))]
     public sealed class RpgHpBarUI : MonoBehaviour
     {
         [Header("Target")]
-        [Tooltip("Target (RpgCombatant or RpgStatsManager).")]
-        [SerializeField] private Component target;
+        [Tooltip("Character to display. If empty, the component searches its parents on Start.")]
+        [SerializeField] private RpgCharacter _character;
 
         [Header("UI Bindings")]
         [Tooltip("Optional Canvas Slider to control.")]
@@ -27,64 +29,42 @@ namespace Neo.Rpg.UI
         public Text hpText;
 
         [Header("Settings")]
-        [Tooltip("Format for the HP text (e.g. '{0} / {1}' or '{2:0}%'). {0}=Current, {1}=Max, {2}=Percent.")]
+        [Tooltip("Format for the HP text. {0}=Current, {1}=Max, {2}=Percent.")]
         [SerializeField] private string textFormat = "{0} / {1}";
 
-        [Header("Events (NoCode / TMP)")]
-        [SerializeField] private UnityEvent<float> onHpPercentChanged = new();
-        [SerializeField] private UnityEvent<string> onHpTextChanged = new();
+        [Header("Events")]
+        [SerializeField] private UnityEvent<float> _onHpPercentChanged = new();
+        [SerializeField] private UnityEvent<string> _onHpTextChanged = new();
 
-        public UnityEvent<float> OnHpPercentChanged => onHpPercentChanged;
-        public UnityEvent<string> OnHpTextChanged => onHpTextChanged;
+        public UnityEvent<float> OnHpPercentChanged => _onHpPercentChanged;
+        public UnityEvent<string> OnHpTextChanged => _onHpTextChanged;
 
-        private RpgCombatant _combatant;
-        private RpgStatsManager _statsManager;
         private ReactivePropertyFloat _boundProperty;
+
+        public RpgCharacter Character { get => _character; set { Unbind(); _character = value; Bind(); } }
 
         private void Start()
         {
-            if (target != null)
-            {
-                Bind(target);
-            }
+            if (_character == null) _character = GetComponentInParent<RpgCharacter>();
+            Bind();
         }
 
-        private void OnDestroy()
+        private void OnDestroy() => Unbind();
+
+        private void Bind()
         {
-            if (_boundProperty != null)
-            {
-                _boundProperty.RemoveListener(OnHpChanged);
-            }
+            if (_character == null) return;
+            _boundProperty = _character.HpPercentState;
+            if (_boundProperty == null) return;
+            _boundProperty.AddListener(OnHpChanged);
+            OnHpChanged(_boundProperty.CurrentValue);
         }
 
-        public void Bind(Component receiverComponent)
+        private void Unbind()
         {
-            if (_boundProperty != null)
-            {
-                _boundProperty.RemoveListener(OnHpChanged);
-                _boundProperty = null;
-            }
-
-            _combatant = receiverComponent as RpgCombatant;
-            _statsManager = receiverComponent as RpgStatsManager;
-            target = receiverComponent;
-
-            if (_combatant != null)
-            {
-                _boundProperty = _combatant.HpPercentState;
-                _boundProperty.AddListener(OnHpChanged);
-                OnHpChanged(_boundProperty.Value);
-            }
-            else if (_statsManager != null)
-            {
-                _boundProperty = _statsManager.HpPercentState;
-                _boundProperty.AddListener(OnHpChanged);
-                OnHpChanged(_boundProperty.Value);
-            }
-            else
-            {
-                Debug.LogWarning($"[RpgHpBarUI] Target '{receiverComponent?.name}' is neither RpgCombatant nor RpgStatsManager.", this);
-            }
+            if (_boundProperty == null) return;
+            _boundProperty.RemoveListener(OnHpChanged);
+            _boundProperty = null;
         }
 
         private void OnHpChanged(float hpPercent)
@@ -92,16 +72,18 @@ namespace Neo.Rpg.UI
             if (hpSlider != null) hpSlider.value = hpPercent;
             if (hpFillImage != null) hpFillImage.fillAmount = hpPercent;
 
-            onHpPercentChanged?.Invoke(hpPercent);
+            _onHpPercentChanged?.Invoke(hpPercent);
 
-            float currentHp = 0f, maxHp = 0f;
-            if (_combatant != null) { currentHp = _combatant.CurrentHp; maxHp = _combatant.MaxHp; }
-            else if (_statsManager != null) { currentHp = _statsManager.CurrentHp; maxHp = _statsManager.MaxHp; }
+            float current = _character != null ? _character.HpValue : 0f;
+            float max = _character != null ? _character.MaxHpValue : 0f;
 
-            string text = string.Format(textFormat, Mathf.RoundToInt(currentHp), Mathf.RoundToInt(maxHp), Mathf.RoundToInt(hpPercent * 100f));
+            string text = string.Format(textFormat,
+                Mathf.RoundToInt(current),
+                Mathf.RoundToInt(max),
+                Mathf.RoundToInt(hpPercent * 100f));
 
             if (hpText != null) hpText.text = text;
-            onHpTextChanged?.Invoke(text);
+            _onHpTextChanged?.Invoke(text);
         }
     }
 }

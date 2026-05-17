@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -12,9 +13,9 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgEvadeController))]
     public sealed class RpgEvadeController : MonoBehaviour
     {
-        [Header("Setup")] [SerializeField] private RpgCombatant _combatant;
-
-        [SerializeField] private RpgStatsManager _profileManager;
+        [Header("Setup")]
+        [Tooltip("Character to drive invulnerability while evading. If empty, searches this GO.")]
+        [SerializeField] private RpgCharacter _character;
 
         [Header("Built-in Input")] [SerializeField]
         private bool _enableBuiltInInput = true;
@@ -146,17 +147,8 @@ namespace Neo.Rpg
 
         private IRpgCombatReceiver ResolveReceiver()
         {
-            if (_combatant != null)
-            {
-                return _combatant;
-            }
-
-            if (_profileManager != null)
-            {
-                return _profileManager;
-            }
-
-            return GetComponent<RpgCombatant>() as IRpgCombatReceiver ?? GetComponent<RpgStatsManager>();
+            if (_character != null) return _character;
+            return GetComponent<RpgCharacter>() ?? GetComponentInParent<RpgCharacter>();
         }
     }
 }

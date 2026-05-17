@@ -1,4 +1,5 @@
 using Neo.Progression;
+using Neo.Rpg.Components;
 using UnityEngine;
 
 namespace Neo.Rpg
@@ -40,12 +41,11 @@ namespace Neo.Rpg
         /// <summary>
         ///     Calculates the XP reward for a combatant based on its level and stats.
         /// </summary>
-        public static int CalculateXpReward(RpgCombatant combatant)
+        public static int CalculateXpReward(RpgCharacter character)
         {
-            if (combatant == null) return 0;
-            // This is handled internally in RpgCombatant now, 
-            // but this helper can be used for UI previews.
-            return 0; 
+            if (character == null) return 0;
+            // Reserved for UI previews; the actual XP grant is handled by RpgCharacter.OnDeath flow.
+            return 0;
         }
     }
 }

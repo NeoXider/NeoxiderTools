@@ -13,7 +13,7 @@
 1. `NavMeshAgent`
 2. `NpcNavigation`
 3. `NpcAnimatorDriver` при необходимости
-4. `RpgCombatant`
+4. `RpgCharacter`
 5. `RpgTargetSelector`
 6. `RpgAttackController`
 7. `NpcRpgCombatBrain`

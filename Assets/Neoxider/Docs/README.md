@@ -31,7 +31,7 @@
 | **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject-атрибуты и inspector helper-утилиты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
 | **Quest** | Конфиги квестов, менеджер, цели и runtime-состояние | [`Quest/README.md`](./Quest/README.md) |
 | **Progression** | XP, уровни, unlock tree, perk tree и persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | HP, уровни, баффы, статусы, melee/ranged/aoe, evade, target selectors, attack presets и no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
+| **RPG** | `RpgCharacter`: универсальные ресурсы/статы, баффы, статусы, progression, multiplayer и no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
 | **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
 | **Save** | `PlayerPrefs`, JSON-файлы, provider API, scene/global saves и атрибуты сохранения | [`Save/README.md`](./Save/README.md) |
 | **Settings** | `GameSettings`, сервис настроек, UI `SettingsView`, URP/Quality presets, интеграция с `SaveProvider` | [`Settings/README.md`](./Settings/README.md) |
@@ -77,3 +77,4 @@
 | **Vampire Survivors 3D** | Пошаговое руководство по созданию клона Vampire Survivors в 3D | [`VampireSurvivor_Guide.md`](./VampireSurvivor_Guide.md) |
 | **Multiplayer Guide** | NoCode мультиплеер: таблица компонентов, паттерн синхронизации, примеры механик | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
 | **NoCode Network Spec** | Стандарты: правила 1–11 для сетевых компонентов | [`Network/NoCode_Network_Spec.md`](./Network/NoCode_Network_Spec.md) |
+| **RpgCharacter Quick Demo** | Мини-сцена для проверки Damage/Heal/Stamina/DarkMana/Upgrade API | `Assets/Scenes/RpgCharacterQuickDemo.unity` |

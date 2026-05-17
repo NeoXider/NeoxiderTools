@@ -6,7 +6,7 @@
 1. Добавить компонент на GameObject (Add Component → Neoxider/Core/Health Component).
 2. В списке пулов задать записи с id (например "HP", "Mana"), current/max, при необходимости реген и лимиты за раз.
 3. Из кода вызывать GetCurrent(id), Decrease(id, amount), Increase(id, amount), TrySpend(id, amount, out reason). Для скиллов с тратой ресурса — RpgAttackDefinition.CostResourceId / CostAmount.
-4. RpgStatsManager и RpgCombatant при назначенном HealthComponent делегируют им HP/Mana и TrySpendResource.
+4. `RpgCharacter` использует тот же подход универсальных ресурсов и даёт RPG API поверх HP/Mana/Stamina/custom pools.
 5. События задаются **в каждой записи пула** в инспекторе: OnChanged(current, max), OnDepleted, для HP — OnDamage, OnHeal, OnDeath, OnChangeMax. На уровне компонента только глобальное **OnPoolsChanged** (когда меняется список пулов). Для NeoCondition использовать свойства HpCurrentValue, HpPercentValue, ManaCurrentValue, ManaPercentValue.
 
 ---
@@ -56,4 +56,4 @@ if (res.TrySpend(RpgResourceId.Mana, 25f, out string reason))
 ## См. также
 
 - [Level.md](./Level.md) — уровень и XP.
-- [Rpg/README.md](../Rpg/README.md) — RpgStatsManager, RpgCombatant, стоимость атак.
+- [Rpg/README.md](../Rpg/README.md) — RpgCharacter, ресурсы, стоимость атак.

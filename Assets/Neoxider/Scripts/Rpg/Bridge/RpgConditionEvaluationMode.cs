@@ -14,6 +14,15 @@ namespace Neo.Rpg
         CanPerformActions,
         IsInvulnerable,
         CanEvade,
-        AttackReady
+        AttackReady,
+        ResourceAtLeast,
+        ResourceBelow,
+        ResourcePercentAtLeast,
+        ResourcePercentBelow,
+        StatAtLeast,
+        StatBelow,
+        UpgradePointsAtLeast,
+        UpgradeLevelAtLeast,
+        XpAtLeast
     }
 }

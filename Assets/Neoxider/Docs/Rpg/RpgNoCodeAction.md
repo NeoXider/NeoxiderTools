@@ -26,6 +26,15 @@
 | `ResetProfile` | Сбрасывает профиль |
 | `SaveProfile` | Сохраняет профиль |
 | `LoadProfile` | Загружает профиль |
+| `SetMaxResource` / `AddMaxResource` | Меняет максимум любого ресурса через `_resource` (`HP`, `Mana`, `Stamina`, `Shield` или custom ID) |
+| `SpendResource` / `RefillResource` / `RestoreResource` | Списывает, восполняет или полностью восстанавливает выбранный ресурс |
+| `RestoreAllResources` | Восстанавливает все ресурсы персонажа до максимума |
+| `AddStatBase` / `SetStatBase` | Меняет базовое значение любого стата через `_stat` |
+| `AddLevel` / `AddXp` / `AddUpgradePoints` | Управляет уровнем, опытом и очками улучшений |
+| `UpgradeStat` | Тратит upgrade points на выбранный стат, если правило улучшения разрешает |
+| `ApplyInlineBuff` | Применяет inline buff по индексу `_inlineBuffIndex` |
+| `ClearAllBuffs` / `ClearAllStatuses` | Очищает все активные баффы или статусы |
+| `LockInvulnerable` / `UnlockInvulnerable` / `SetInvulnerable` | Управляет неуязвимостью персонажа |
 
 ## События
 
@@ -37,5 +46,5 @@
 
 1. Добавьте `RpgNoCodeAction` на объект.
 2. Выберите `Action Type`.
-3. Заполните `Amount`, `Level`, `Buff Id`, `Status Id` или `Attack Id` в зависимости от типа.
+3. Заполните `Amount`, `Level`, `Buff Id`, `Status Id`, `Attack Id`, `_resource` или `_stat` в зависимости от типа.
 4. Привяжите `Execute()` к `Button.onClick` или другому UnityEvent.

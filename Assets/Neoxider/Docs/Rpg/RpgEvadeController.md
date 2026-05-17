@@ -9,7 +9,7 @@
 ## Что умеет
 
 - `TryStartEvade()` запускает evade.
-- Даёт временный invulnerability lock на `RpgCombatant` или `RpgStatsManager`.
+- Даёт временный invulnerability lock на `RpgCharacter`.
 - Хранит `IsEvading`, `CanEvade`, `RemainingCooldownState`.
 - Подходит как replacement для legacy `Evade`.
 

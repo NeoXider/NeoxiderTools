@@ -20,6 +20,24 @@ namespace Neo.Rpg
         StartEvade,
         ResetProfile,
         SaveProfile,
-        LoadProfile
+        LoadProfile,
+        SetMaxResource,
+        AddMaxResource,
+        SpendResource,
+        RefillResource,
+        RestoreResource,
+        RestoreAllResources,
+        AddStatBase,
+        SetStatBase,
+        AddLevel,
+        AddXp,
+        AddUpgradePoints,
+        UpgradeStat,
+        ApplyInlineBuff,
+        ClearAllBuffs,
+        ClearAllStatuses,
+        LockInvulnerable,
+        UnlockInvulnerable,
+        SetInvulnerable
     }
 }

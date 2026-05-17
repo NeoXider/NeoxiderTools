@@ -1887,10 +1887,10 @@ MonoBehaviour:
     _findRetryIntervalSeconds: 1
     _prefabPreview: {fileID: 0}
     _sourceObject: {fileID: 0}
-    _componentIndex: 5
-    _componentTypeName: Neo.Core.Resources.HealthComponent
-    _propertyName: HpCurrentValue
-    _valueType: 1
+    _componentIndex: 0
+    _componentTypeName: Neo.Condition.NeoCondition
+    _propertyName: LastResult
+    _valueType: 2
     _compareOp: 0
     _invert: 0
     _thresholdSource: 0
@@ -2514,6 +2514,14 @@ PrefabInstance:
       propertyPath: m_Material
       value: 
       objectReference: {fileID: 1743225779}
+    - target: {fileID: 8811223344556677889, guid: 3781ccd360fc4bf40a142ead67e53498, type: 3}
+      propertyPath: showGizmos
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8811223344556677889, guid: 3781ccd360fc4bf40a142ead67e53498, type: 3}
+      propertyPath: showOverlay
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:

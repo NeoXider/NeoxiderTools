@@ -1,11 +1,12 @@
 using Neo.Reactive;
+using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
     /// <summary>
-    ///     Deals melee/contact damage to nearby <see cref="RpgCombatant"/> targets on a cooldown.
+    ///     Deals melee/contact damage to nearby <see cref="RpgCharacter"/> targets on a cooldown.
     ///     Uses proximity check (not physics collisions), compatible with NavMeshAgent.
     ///     Fully NoCode — configure via Inspector, wire UnityEvents.
     /// </summary>
@@ -14,7 +15,7 @@ namespace Neo.Rpg
     public sealed class RpgContactDamage : MonoBehaviour
     {
         [Header("Targeting")]
-        [Tooltip("Tag of the target to damage. Leave empty to damage any RpgCombatant in range.")]
+        [Tooltip("Tag of the target to damage. Leave empty to damage any RpgCharacter in range.")]
         [SerializeField] private string targetTag = "Player";
 
         [Tooltip("If set, uses this specific transform as the target instead of searching by tag.")]
@@ -37,8 +38,8 @@ namespace Neo.Rpg
         [SerializeField] private string damageType = "Contact";
 
         [Header("Self")]
-        [Tooltip("Optional — if set, stops attacking when own combatant is dead.")]
-        [SerializeField] private RpgCombatant selfCombatant;
+        [Tooltip("Optional — if set, stops attacking when own character is dead.")]
+        [SerializeField] private RpgCharacter selfCharacter;
 
         [Header("Debug")]
         [SerializeField] private bool debugLog;
@@ -72,14 +73,14 @@ namespace Neo.Rpg
 
         private void Start()
         {
-            if (selfCombatant == null)
-                selfCombatant = GetComponent<RpgCombatant>();
+            if (selfCharacter == null)
+                selfCharacter = GetComponent<RpgCharacter>();
             CacheTarget();
         }
 
         private void Update()
         {
-            if (selfCombatant != null && selfCombatant.IsDead)
+            if (selfCharacter != null && selfCharacter.IsDead)
             {
                 IsAttacking.Value = false;
                 return;
@@ -125,7 +126,7 @@ namespace Neo.Rpg
 
             if (_cachedTargetCombatant == null || _cachedTargetCombatant.IsDead) return;
 
-            float dealt = _cachedTargetCombatant.TakeDamage(new RpgDamageInfo(damage, damageType, selfCombatant));
+            float dealt = _cachedTargetCombatant.TakeDamage(new RpgDamageInfo(damage, damageType, selfCharacter));
             _lastHitTime = Time.time;
             IsAttacking.Value = true;
 
