@@ -8,7 +8,7 @@
 
 **Файл:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` · Меню: `Neoxider/RPG/RpgCharacter`.
 
-**Демо:** `Assets/Scenes/RpgCharacterQuickDemo.unity` — откройте сцену, нажмите Play и проверьте Damage/Heal/Stamina/DarkMana/Upgrade кнопками на экране.
+**Демо:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` — откройте сцену, нажмите Play и проверьте Damage/Heal/Stamina/DarkMana/Upgrade кнопками на экране.
 
 ---
 

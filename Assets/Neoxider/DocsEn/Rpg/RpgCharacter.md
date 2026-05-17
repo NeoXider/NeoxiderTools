@@ -8,7 +8,7 @@ modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
 
 **File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` · Menu: `Neoxider/RPG/RpgCharacter`.
 
-**Demo:** `Assets/Scenes/RpgCharacterQuickDemo.unity` — open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
+**Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` — open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
 
 ---
 

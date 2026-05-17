@@ -74,7 +74,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 
 - [NeoxiderPages](./NeoxiderPages/README.md)
 - [UI Extension](./UI%20Extension/README.md)
-- `Assets/Scenes/RpgCharacterQuickDemo.unity` - quick smoke scene for Damage/Heal/Stamina/DarkMana/Upgrade API.
+- `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` - quick smoke scene for Damage/Heal/Stamina/DarkMana/Upgrade API.
 
 ## Notes
 

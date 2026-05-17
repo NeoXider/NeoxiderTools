@@ -440,7 +440,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dae3e940e2b5d8d448bf3f0cc49519c1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.Demo.RpgCharacterQuickDemo
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Rpg.Demo.RpgCharacterQuickDemo
   _player: {fileID: 0}
   _enemy: {fileID: 0}
   _configureOnAwake: 1
@@ -1249,7 +1249,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dae3e940e2b5d8d448bf3f0cc49519c1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.Demo.RpgCharacterQuickDemo
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Rpg.Demo.RpgCharacterQuickDemo
   _player: {fileID: 0}
   _enemy: {fileID: 0}
   _configureOnAwake: 1

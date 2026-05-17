@@ -1,4 +1,22 @@
 
+## [8.4.0] - 2026-05-17
+
+### Added
+- **RPG**: added `RpgCharacter` as the unified RPG facade for resources, stats, level/XP/upgrades, buffs, statuses, regen, profile persistence, NoCode APIs, and Mirror-aware synchronization.
+- **RPG data**: added `RpgCharacterTemplate`, progression rules, inline buffs, custom resource/stat IDs, reactive resource/stat bindings, and focused RPG tests.
+- **Samples**: added `RpgCharacterQuickDemo` under `Samples~/Demo` for quick Damage/Heal/Stamina/DarkMana/Upgrade smoke checks.
+
+### Changed
+- **RPG combat and UI**: attack controllers, no-code actions, condition adapters, HP/level UI, legacy damage bridge, and NPC integration now resolve `RpgCharacter` instead of duplicated `RpgCombatant` / `RpgStatsManager` state.
+- **HealthComponent**: remains the low-level resource pool backend and exposes UnityEvent-friendly resource methods used by `RpgCharacter`.
+- **Documentation**: RPG docs now point at `RpgCharacter`, keep migration stubs for removed legacy pages, and document the sample scene path.
+
+### Removed
+- **RPG legacy duplication**: removed `RpgCombatant` and `RpgStatsManager` runtime scripts and their duplicate HP/level/buff/status logic.
+
+### Fixed
+- **NetworkSingleton**: moved `RuntimeInitializeOnLoadMethod` reset out of the generic class into `NetworkSingletonRuntimeReset`, removing Unity's generic runtime-init error.
+
 ## [8.3.1] - 2026-05-17
 
 ### Fixed

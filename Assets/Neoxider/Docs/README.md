@@ -1,6 +1,6 @@
 # Neoxider Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.3.1`.
+Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.4.0`.
 
 Используйте этот файл как главную точку входа в пользовательскую документацию.
 
@@ -77,4 +77,4 @@
 | **Vampire Survivors 3D** | Пошаговое руководство по созданию клона Vampire Survivors в 3D | [`VampireSurvivor_Guide.md`](./VampireSurvivor_Guide.md) |
 | **Multiplayer Guide** | NoCode мультиплеер: таблица компонентов, паттерн синхронизации, примеры механик | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
 | **NoCode Network Spec** | Стандарты: правила 1–11 для сетевых компонентов | [`Network/NoCode_Network_Spec.md`](./Network/NoCode_Network_Spec.md) |
-| **RpgCharacter Quick Demo** | Мини-сцена для проверки Damage/Heal/Stamina/DarkMana/Upgrade API | `Assets/Scenes/RpgCharacterQuickDemo.unity` |
+| **RpgCharacter Quick Demo** | Мини-сцена для проверки Damage/Heal/Stamina/DarkMana/Upgrade API | `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` |

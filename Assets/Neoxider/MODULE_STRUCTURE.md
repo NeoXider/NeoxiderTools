@@ -103,8 +103,7 @@ Scripts/Rpg/
     RpgAttackEvent.cs
     RpgStringEvent.cs
   Components/
-    RpgStatsManager.cs
-    RpgCombatant.cs
+    RpgCharacter.cs
     RpgAttackController.cs
     ...
   Bridge/
@@ -114,6 +113,7 @@ Scripts/Rpg/
     RpgNoCodeActionType.cs
   Runtime/
     RpgProfileData.cs
+    RpgEffectShelf.cs
     RpgCombatMath.cs
     RpgTargetingUtility.cs
 ```

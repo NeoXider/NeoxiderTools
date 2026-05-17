@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "Neo.Rpg",
+        "Neo.Network",
         "Neo.NPC",
         "Neo.Progression",
         "Neo.Save",
