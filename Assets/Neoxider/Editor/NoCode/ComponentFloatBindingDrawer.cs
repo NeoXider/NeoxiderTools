@@ -212,8 +212,15 @@ namespace Neo.Editor.NoCode
             }
 
             int compIndex = ComponentBindingInspectorShared.IndexOfFullName(fullTypeNames, typeProp.stringValue);
-            if (compIndex < 0)
+            // Stale stored value (e.g. component removed, Source Root changed): auto-snap to the first valid
+            // component so the dropdown actually drives selection. Without this, the popup shows index 0 but
+            // typeProp keeps the stale string, and picking the same-looking row doesn't update anything
+            // because EndChangeCheck returns false.
+            if (compIndex < 0 && fullTypeNames.Count > 0)
             {
+                typeProp.stringValue = fullTypeNames[0];
+                memberProp.stringValue = "";
+                Apply(property);
                 compIndex = 0;
             }
 
@@ -232,9 +239,12 @@ namespace Neo.Editor.NoCode
             Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue);
             if (selected == null)
             {
+                // We auto-snap above, so we should not normally land here. If we do (e.g. very edge race
+                // after a domain reload), don't return — let the user still see the type field and the
+                // member dropdown attempt below so they can keep clicking without re-opening the inspector.
                 row = new Rect(position.x, y, position.width, line * 2f);
                 EditorGUI.HelpBox(row,
-                    "Stored component type not found on the resolved source object. Pick Component again.",
+                    "Stored component type not found. Pick a component from the dropdown above.",
                     MessageType.Warning);
                 EditorGUI.EndProperty();
                 return;

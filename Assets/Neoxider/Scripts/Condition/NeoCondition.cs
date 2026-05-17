@@ -66,9 +66,6 @@ namespace Neo.Condition
         /// <summary>Server-authoritative last result, synced to late-joining clients.</summary>
         [SyncVar]
         private bool _syncResult;
-
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
 #endif
 
         [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]
@@ -247,8 +244,7 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdRequestCheck(NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
 
             // Server evaluates conditions itself — never trust client-provided result
             bool result = Evaluate();
@@ -266,8 +262,7 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdClientResult(bool result, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
 
             bool changed = !_lastResult.HasValue || _lastResult.Value != result;
             _lastResult = result;

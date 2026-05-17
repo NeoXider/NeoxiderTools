@@ -44,9 +44,6 @@ namespace Neo.Tools
         /// <summary>Server-authoritative value, synced to late-joining clients.</summary>
         [SyncVar]
         private float _syncValue;
-
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
 #endif
 
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
@@ -408,9 +405,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSetValue(float newValue, NetworkConnectionToClient sender = null)
         {
-            // Rate-limit: reject commands arriving faster than CmdRateLimit
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
 
             _syncValue = newValue;
             ApplyValueLocally(newValue);

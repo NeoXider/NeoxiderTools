@@ -30,9 +30,6 @@ namespace Neo.Tools
         /// <summary>Server-authoritative last random value, synced to late-joining clients.</summary>
         [SyncVar]
         private float _syncValue;
-
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
 #endif
 
         [Header("Mode")] [Tooltip("Generate integer (inclusive min..max) or float (min..max).")] [SerializeField]
@@ -135,8 +132,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdGenerate(NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
 
             float val = RollRandomValue();
             _syncValue = val;

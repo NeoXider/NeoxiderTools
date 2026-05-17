@@ -80,9 +80,6 @@ namespace Neo.Network
         [SyncVar(hook = nameof(OnBoolSynced))]   private bool _syncBool;
         [SyncVar(hook = nameof(OnStringSynced))]  private string _syncString = "";
         [SyncVar(hook = nameof(OnVector3Synced))] private Vector3 _syncVector3;
-
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
 #endif
 
         // ────────────────────── Unity ──────────────────────
@@ -177,40 +174,35 @@ namespace Neo.Network
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             _syncFloat = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncInt(int v)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             _syncInt = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncBool(bool v)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             _syncBool = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncString(string v)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             _syncString = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncVector3(Vector3 v)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             _syncVector3 = v;
         }
 

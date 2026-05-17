@@ -52,6 +52,9 @@ namespace Neo.Tests.Play
             _relay.ActionBoolValue = true;
             _relay.Scope = NetworkActionScope.AllClients;
             _relay.AuthorityMode = NetworkAuthorityMode.None;
+            // The host test deliberately triggers with a non-local player's collider; the new local-only
+            // de-dup filter would skip it. Disable for this synthetic scenario.
+            _relay.TriggerOnlyForLocalContext = false;
 
             yield return null;
         }

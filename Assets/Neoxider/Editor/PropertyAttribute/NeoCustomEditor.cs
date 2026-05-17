@@ -82,8 +82,24 @@ namespace Neo.Editor
     [CanEditMultipleObjects]
     public class RandomRangeNeoEditor : NeoCustomEditor { }
 
-    [CustomEditor(typeof(Neo.Network.NetworkContextActionRelay), true)]
+    // NOTE: NetworkContextActionRelay has its OWN dedicated editor (NetworkContextActionRelayEditor)
+    // that inherits from CustomEditorBase and draws a fully custom NoCode-style inspector.
+    // Don't register a NeoCustomEditor fallback for it here — Unity would pick one of the two arbitrarily.
+
+    [CustomEditor(typeof(Neo.Network.NetworkActionRelay), true)]
     [CanEditMultipleObjects]
-    public class NetworkContextActionRelayNeoEditor : NeoCustomEditor { }
+    public class NetworkActionRelayNeoEditor : NeoCustomEditor { }
+
+    [CustomEditor(typeof(Neo.Network.NetworkPropertySync), true)]
+    [CanEditMultipleObjects]
+    public class NetworkPropertySyncNeoEditor : NeoCustomEditor { }
+
+    [CustomEditor(typeof(Neo.Network.NetworkOwnerFilter), true)]
+    [CanEditMultipleObjects]
+    public class NetworkOwnerFilterNeoEditor : NeoCustomEditor { }
+
+    [CustomEditor(typeof(Neo.Tools.NetworkEventDispatcher), true)]
+    [CanEditMultipleObjects]
+    public class NetworkEventDispatcherNeoEditor : NeoCustomEditor { }
 #endif
 }

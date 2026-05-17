@@ -100,8 +100,13 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
-        public IEnumerator MultScene_NetworkContextActionRelay_EnablesRuntimePlayerSphere()
+        public IEnumerator MultScene_NetworkContextActionRelay_PickupDisablesCubeAndEnablesPlayerSphere()
         {
+            // Mult.unity wires Trigger Cube (1) with TWO NetworkContextActionRelays:
+            //   1. Self → Root → SetActive(false) — the cube itself disappears (visible to all clients).
+            //   2. EventArgument → NetworkIdentityInParents → ChildByName("Sphere") → SetActive(true) —
+            //      the entering player's Sphere child lights up (visible to all clients).
+            // Both fire from PhysicsEvents3D.onTriggerEnter.
             Scene scene = EditorSceneManager.LoadSceneInPlayMode(MultScenePath,
                 new LoadSceneParameters(LoadSceneMode.Single));
 
@@ -112,8 +117,26 @@ namespace Neo.Tests.Play
 
             yield return null;
 
-            NetworkContextActionRelay relay = FindNetworkContextActionRelayInLoadedScenes();
-            Assert.IsNotNull(relay, "Mult.unity should include NetworkContextActionRelay (search included inactive objects and all loaded scene roots).");
+            NetworkContextActionRelay[] relays = FindAllNetworkContextActionRelaysInLoadedScenes();
+            Assert.AreEqual(2, relays.Length,
+                "Mult.unity should now contain two NetworkContextActionRelays on Trigger Cube (1): pickup-self + bonus-on-player.");
+
+            NetworkContextActionRelay pickupRelay = null;
+            NetworkContextActionRelay bonusRelay = null;
+            for (int i = 0; i < relays.Length; i++)
+            {
+                if (relays[i].ContextSource == NetworkContextSourceMode.Self)
+                {
+                    pickupRelay = relays[i];
+                }
+                else if (relays[i].ContextSource == NetworkContextSourceMode.EventArgument)
+                {
+                    bonusRelay = relays[i];
+                }
+            }
+
+            Assert.IsNotNull(pickupRelay, "One relay must be configured as Pickup (ContextSource=Self).");
+            Assert.IsNotNull(bonusRelay, "One relay must be configured as Bonus (ContextSource=EventArgument).");
 
             NeoNetworkManager manager = Object.FindFirstObjectByType<NeoNetworkManager>();
             Assert.IsNotNull(manager);
@@ -127,6 +150,9 @@ namespace Neo.Tests.Play
 
             yield return null;
 
+            Assert.IsTrue(pickupRelay.gameObject.activeSelf,
+                "Pickup trigger cube must be active once the server has spawned scene objects.");
+
             GameObject localPlayer = NetworkClient.localPlayer.gameObject;
             Transform sphere = FindDeepChild(localPlayer.transform, "Sphere");
             Assert.IsNotNull(sphere, "Runtime player should contain a child named Sphere.");
@@ -135,11 +161,20 @@ namespace Neo.Tests.Play
             Collider playerCollider = localPlayer.GetComponentInChildren<Collider>(true);
             Assert.IsNotNull(playerCollider, "Runtime player should have at least one Collider for trigger tests.");
 
-            relay.Trigger(playerCollider);
+            pickupRelay.Trigger(playerCollider);
+            bonusRelay.Trigger(playerCollider);
             yield return null;
 
+            Assert.IsFalse(pickupRelay.gameObject.activeSelf,
+                "Pickup relay should disable its own GameObject when the local player triggers it.");
             Assert.IsTrue(sphere.gameObject.activeSelf,
-                "NetworkContextActionRelay should enable Sphere on the runtime player matching the trigger collider.");
+                "Bonus relay should enable the Sphere child of the entering player.");
+        }
+
+        private static NetworkContextActionRelay[] FindAllNetworkContextActionRelaysInLoadedScenes()
+        {
+            return Object.FindObjectsByType<NetworkContextActionRelay>(
+                FindObjectsInactive.Include, FindObjectsSortMode.None);
         }
 
         private static NetworkContextActionRelay FindNetworkContextActionRelayInLoadedScenes()

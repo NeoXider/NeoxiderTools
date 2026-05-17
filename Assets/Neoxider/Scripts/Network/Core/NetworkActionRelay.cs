@@ -65,11 +65,6 @@ namespace Neo.Network
         [Tooltip("Who may trigger relay channels over the network. Default None lets NoCode scene objects work without ownership.")]
         [SerializeField] private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
-#if MIRROR
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
-#endif
-
         /// <summary>Number of configured channels.</summary>
         public int ChannelCount => _channels?.Length ?? 0;
 
@@ -327,8 +322,7 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerVoid(int idx, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!ValidateIndex(idx)) return;
             if (!AuthorizedSender(sender)) return;
 
@@ -338,8 +332,7 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerFloat(int idx, float value, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!ValidateIndex(idx)) return;
             if (!AuthorizedSender(sender)) return;
 
@@ -349,8 +342,7 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerString(int idx, string value, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!ValidateIndex(idx)) return;
             if (!AuthorizedSender(sender)) return;
 

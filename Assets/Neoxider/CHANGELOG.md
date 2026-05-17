@@ -1,4 +1,23 @@
 
+## [8.3.1] - 2026-05-17
+
+### Fixed
+- **NetworkContextActionRelay**: replicated action was lost when the trigger's `NetworkIdentity` had no observers (AOI / early-spawn) — replaced the observer-driven `[ClientRpc]` path with direct `NetworkConnection.Send`. Every connected client now receives the action regardless of observer state.
+- **NetworkContextActionRelay**: two relays on one `NetworkIdentity` (e.g. pickup-self + bonus-on-player) used to resolve to the first relay on receipt — added `relayComponentIndex` to `NetworkContextActionMessage` and resolution now indexes `NetworkIdentity.NetworkBehaviours[idx]` deterministically.
+- **NetworkContextActionRelay**: server-side application + skip-host-local in broadcast removes the host's double-apply that happened with the old RPC echo.
+- **Duplicate serialized `_lastCmdTime`**: cleaned up shadowed private fields in `NeoCondition`, `Selector`, `Counter`, `InteractiveObject`, `RandomRange`, `NetworkActionRelay`, `NetworkPropertySync` — they now rely on the inherited `NeoNetworkComponent.RateLimitCheck()`. Removes Unity warnings `The same field name is serialized multiple times…`.
+
+### Added
+- **NetworkContextActionRelay**: `Trigger Only For Local Context` (default `true`) — input-side filter that lets only the client owning the entering collider dispatch a trigger event, eliminating N-fold duplicate sends from every peer's physics simulation.
+- **NetworkContextActionRelay**: dedicated custom inspector (`NetworkContextActionRelayEditor`) — Neoxider-styled, reflection-driven dropdowns for component / method selection (shared `ComponentBindingInspectorShared` helpers with `NeoCondition`), argument field shown conditionally on selected method, collapsible Events block, Diagnostics section with `Verbose Logging` toggle, Editor Preview Target.
+- **NetworkContextActionRelay**: structured verbose logs at every hop — `Trigger`, `Client → Server`, `OnServerMessage`, `DispatchOnServer`, `Broadcast complete`, `Client RECEIVED`, `OnClientMessage`, `ApplyResolved` — for diagnosing multiplayer dispatch issues.
+- **EN docs**: `DocsEn/Network/NetworkContextActionRelay.md` (mirrors RU page).
+- **Editor / NeoCustomEditor**: explicit `[CustomEditor]` registrations for `NetworkActionRelay`, `NetworkPropertySync`, `NetworkOwnerFilter`, `NetworkEventDispatcher` so they keep the Neoxider inspector look instead of falling back to Mirror's `NetworkBehaviourInspector`.
+
+### Changed
+- **Mult.unity** Trigger Cube (1) now uses two relays: pickup-self (Context = `Self`, `SetActive(false)` on the cube) + bonus-on-player (Context = `EventArgument`, `SetActive(true)` on the Sphere child). The Sphere was also moved out of `First Person Camera` (which is in `NeoNetworkPlayer._localOnlyObjects`) so it stays visible on remote players.
+- **NetworkContextActionRelay**: `NetworkContextActionMessage` moved from a nested struct to namespace scope so Mirror's weaver reliably generates Read/Write extensions; `_triggerOnlyForLocalContext` filter checks the event argument rather than the resolved context (works for both `Self` and `EventArgument` modes).
+
 ## [8.2.1] - 2026-05-14
 
 ### Added

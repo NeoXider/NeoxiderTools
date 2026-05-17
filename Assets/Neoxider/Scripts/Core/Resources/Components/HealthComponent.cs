@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Neo;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
@@ -10,6 +11,7 @@ namespace Neo.Core.Resources
     ///     Manages one or more resource pools (HP, Mana, etc.): current/max, regen, limits, events.
     ///     Primary use: HP and Mana; also supports arbitrary pools by id. Implements IResourcePoolProvider.
     /// </summary>
+    [NeoDoc("Core/Resources/Components/HealthComponent.md")]
     [AddComponentMenu("Neoxider/Core/Health Component")]
     public sealed class HealthComponent : MonoBehaviour, IResourcePoolProvider
     {

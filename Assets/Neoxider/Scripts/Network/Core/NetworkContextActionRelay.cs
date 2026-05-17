@@ -8,6 +8,22 @@ using Mirror;
 
 namespace Neo.Network
 {
+#if MIRROR
+    /// <summary>
+    ///     Mirror <see cref="NetworkMessage"/> carrying a relay action from one peer to another.
+    ///     Defined at namespace scope (not nested inside <see cref="NetworkContextActionRelay"/>)
+    ///     so Mirror's weaver reliably generates Read/Write extensions for it.
+    ///     <para><see cref="relayComponentIndex"/> disambiguates multiple <see cref="NetworkContextActionRelay"/>s
+    ///     attached to the same <see cref="NetworkIdentity"/> (e.g., "pickup self" + "bonus on player" on one trigger cube).</para>
+    /// </summary>
+    public struct NetworkContextActionMessage : NetworkMessage
+    {
+        public uint relayNetId;
+        public byte relayComponentIndex;
+        public uint contextNetId;
+    }
+#endif
+
     public enum NetworkContextSourceMode
     {
         Self = 0,
@@ -85,6 +101,22 @@ namespace Neo.Network
         [SerializeField] private NetworkActionScope _scope = NetworkActionScope.AllClients;
         [SerializeField] private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
+        [Tooltip("When ON, the relay fires only when the resolved context belongs to the local player. " +
+                 "Recommended for physics triggers: every client runs physics on every replicated collider, " +
+                 "so without this filter the same trigger fires on every client and the server gets duplicate messages. " +
+                 "With this ON, only the player who really walked into the trigger sends the action.")]
+        [SerializeField] private bool _triggerOnlyForLocalContext = true;
+
+        [Header("Diagnostics")]
+        [Tooltip("Print trace logs at every step (Trigger → Send → Server → Client). Use to debug why a relay does not replicate to other clients.")]
+        [SerializeField] private bool _verboseLogging;
+
+        [Header("Editor Helpers")]
+        [Tooltip("Optional reference GameObject used by the custom inspector to build component/method dropdowns. " +
+                 "It is NOT used at runtime — runtime always resolves the target via Context + Target Mode. " +
+                 "Drag a representative object (e.g., the player prefab/template) to enable the dropdown pickers.")]
+        [SerializeField] private GameObject _editorPreviewTarget;
+
         [Header("Events")]
         [SerializeField] private UnityEvent _onNetworkTriggered = new();
         [SerializeField] private GameObjectEvent _onContextResolved = new();
@@ -134,6 +166,18 @@ namespace Neo.Network
         {
             get => _authorityMode;
             set => _authorityMode = value;
+        }
+
+        /// <summary>
+        ///     When true (default), <see cref="Trigger(Collider)"/>/<see cref="Trigger(GameObject)"/> ignore
+        ///     contexts whose <see cref="NetworkIdentity"/> is not owned by the local player. Prevents
+        ///     duplicate dispatches when every client's local physics fires <see cref="OnTriggerEnter"/>
+        ///     for replicated colliders.
+        /// </summary>
+        public bool TriggerOnlyForLocalContext
+        {
+            get => _triggerOnlyForLocalContext;
+            set => _triggerOnlyForLocalContext = value;
         }
 
         public string TargetChildName
@@ -208,9 +252,32 @@ namespace Neo.Network
             set => _explicitContext = value;
         }
 
+        /// <summary>
+        ///     Editor-only reference object used to build dropdowns for component / method pickers
+        ///     in the custom inspector. Never read at runtime.
+        /// </summary>
+        public GameObject EditorPreviewTarget
+        {
+            get => _editorPreviewTarget;
+            set => _editorPreviewTarget = value;
+        }
+
         public UnityEvent OnNetworkTriggered => _onNetworkTriggered;
         public GameObjectEvent OnContextResolved => _onContextResolved;
         public GameObjectEvent OnTargetResolved => _onTargetResolved;
+
+        /// <summary>Enable to print step-by-step trace logs (Trigger → Send → Receive → Apply).</summary>
+        public bool VerboseLogging
+        {
+            get => _verboseLogging;
+            set => _verboseLogging = value;
+        }
+
+        private void LogVerbose(string message)
+        {
+            if (!_verboseLogging) return;
+            Debug.Log($"[NetworkContextActionRelay] {message}", this);
+        }
 
 #if MIRROR
         private void Awake()
@@ -237,15 +304,24 @@ namespace Neo.Network
         /// </summary>
         public static void RegisterMirrorHandlers()
         {
+            ushort msgId = Mirror.NetworkMessageId<NetworkContextActionMessage>.Id;
+            bool didServer = false;
+            bool didClient = false;
+
             if (NetworkServer.active)
             {
                 NetworkServer.ReplaceHandler<NetworkContextActionMessage>(OnServerMessage, false);
+                didServer = true;
             }
 
             if (NetworkClient.active)
             {
                 NetworkClient.ReplaceHandler<NetworkContextActionMessage>(OnClientMessage, false);
+                didClient = true;
             }
+
+            Debug.Log(
+                $"[NetworkContextActionRelay] RegisterMirrorHandlers: msgId={msgId}, server={didServer}, client={didClient}");
         }
 #endif
 
@@ -284,6 +360,26 @@ namespace Neo.Network
 
         private void TriggerFromSource(GameObject eventArgument)
         {
+#if MIRROR
+            // De-duplication on the event-argument side: every client's local physics fires OnTriggerEnter
+            // for every replicated collider, so a single player walking into a trigger produces N messages
+            // from N clients. With this filter on, only the client that actually owns the entering collider
+            // dispatches; remote clients ignore the duplicate event and wait for the server's broadcast.
+            // We check the EVENT ARGUMENT (the entering collider) rather than the resolved context, so the
+            // filter still works when ContextSource = Self (e.g. shared-object pickup pattern).
+            if (_triggerOnlyForLocalContext && eventArgument != null &&
+                isNetworked && NeoNetworkState.IsNetworkActive && NeoNetworkState.IsClient)
+            {
+                NetworkIdentity eventIdentity = eventArgument.GetComponentInParent<NetworkIdentity>(true);
+                if (eventIdentity != null && !eventIdentity.isLocalPlayer && !eventIdentity.isOwned)
+                {
+                    LogVerbose(
+                        $"Skipping trigger on '{name}': event argument '{eventArgument.name}' (netId={eventIdentity.netId}) is not the local player and TriggerOnlyForLocalContext is ON.");
+                    return;
+                }
+            }
+#endif
+
             GameObject context = ResolveContextSource(eventArgument);
             TriggerWithContext(context);
         }
@@ -314,10 +410,14 @@ namespace Neo.Network
                     return;
                 }
 
+                LogVerbose(
+                    $"Trigger on '{name}': contextNetId={contextNetId} ('{root.name}'), relayNetId={message.relayNetId}, IsClientOnly={NeoNetworkState.IsClientOnly}, IsServer={NeoNetworkState.IsServer}");
+
                 if (NeoNetworkState.IsClientOnly)
                 {
                     EnsureMessageHandlers();
                     NetworkClient.Send(message);
+                    LogVerbose($"Client → Server: NetworkClient.Send dispatched (relayNetId={message.relayNetId}, contextNetId={contextNetId})");
                     return;
                 }
 
@@ -418,6 +518,9 @@ namespace Neo.Network
                 Debug.LogWarning($"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
                 return;
             }
+
+            LogVerbose(
+                $"ApplyResolved on '{name}': root='{root.name}' (id={root.GetInstanceID()}) → target='{target.name}' (id={target.GetInstanceID()}, was active={target.activeSelf}) → action={_action}");
 
             _onNetworkTriggered?.Invoke();
             _onContextResolved?.Invoke(root);
@@ -615,12 +718,6 @@ namespace Neo.Network
         }
 
 #if MIRROR
-        public struct NetworkContextActionMessage : NetworkMessage
-        {
-            public uint relayNetId;
-            public uint contextNetId;
-        }
-
         private static bool TryGetNetworkIdentity(GameObject source, out NetworkIdentity identity)
         {
             identity = null;
@@ -656,16 +753,38 @@ namespace Neo.Network
             return new NetworkContextActionMessage
             {
                 relayNetId = relayNetId,
+                relayComponentIndex = (byte)ComponentIndex,
                 contextNetId = contextNetId
             };
         }
 
+        /// <summary>
+        ///     Server-side dispatch: applies the action authoritatively (when meaningful for the local instance)
+        ///     and broadcasts a <see cref="NetworkContextActionMessage"/> to the remaining clients.
+        ///
+        ///     The original implementation tried to deliver the per-client effect via Mirror's <c>[ClientRpc]</c>,
+        ///     which is observer-driven: the RPC reaches every connection that observes the trigger's
+        ///     <see cref="NetworkIdentity"/>. In practice this is fragile for triggers that live on scene
+        ///     <see cref="NetworkIdentity"/> objects — the observer list can be empty mid-spawn or be filtered by
+        ///     AOI/interest management. The result was a "host sees it, remote doesn't" bug.
+        ///
+        ///     This version always uses the direct <see cref="NetworkConnection.Send{T}"/> path so every
+        ///     connected client receives the action regardless of the relay's observer state. The host's
+        ///     local connection is skipped because the server already applied locally, avoiding a double-apply.
+        /// </summary>
         private void DispatchOnServer(NetworkContextActionMessage message, NetworkConnectionToClient sender)
         {
             if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
             {
+                Debug.LogWarning(
+                    $"[NetworkContextActionRelay] '{name}': could not resolve contextNetId={message.contextNetId} on server.",
+                    this);
                 return;
             }
+
+            int connectionCount = NetworkServer.connections != null ? NetworkServer.connections.Count : 0;
+            LogVerbose(
+                $"DispatchOnServer on '{name}': scope={_scope}, sender={(sender != null ? sender.connectionId.ToString() : "null")}, host={NeoNetworkState.IsHost}, connections={connectionCount}");
 
             if (_scope == NetworkActionScope.ServerOnly)
             {
@@ -673,46 +792,32 @@ namespace Neo.Network
                 return;
             }
 
-            bool skipHostLocalRpc = sender == NetworkServer.localConnection && NeoNetworkState.IsClient;
-            if (_scope == NetworkActionScope.AllClients && (!NeoNetworkState.IsClient || skipHostLocalRpc))
-            {
-                ApplyResolved(root);
-            }
+            bool isHost = NeoNetworkState.IsHost;
+            bool senderIsHostLocal = IsHostLocalConnection(sender);
 
             if (_scope == NetworkActionScope.OthersOnly)
             {
-                SendToOthers(sender, message, ShouldSkipHostSender(sender));
+                // Sender is excluded by definition. On host, the host's local connection is the sender
+                // (or stand-in for it) when the trigger fired on the host — so skip it as well.
+                int sent = SendToOthers(sender, message, skipHostSender: senderIsHostLocal);
+                LogVerbose($"OthersOnly broadcast complete on '{name}': sent to {sent} connection(s)");
                 return;
             }
 
-            BroadcastAllClientsApply(message.contextNetId, message, skipHostLocalRpc);
-        }
-
-        /// <summary>
-        ///     Mirror <see cref="ClientRpc"/> uses <see cref="NetworkIdentity.observers"/> (same path as generated RPCs).
-        ///     Raw <see cref="NetworkConnection.Send{T}"/> for custom messages can fail to reach every client in some setups;
-        ///     when observers are not built yet, fall back to <see cref="SendToClients"/>.
-        /// </summary>
-        private void BroadcastAllClientsApply(uint contextNetId, NetworkContextActionMessage message, bool skipHostLocal)
-        {
-            if (netIdentity != null && netIdentity.observers != null && netIdentity.observers.Count > 0)
+            // AllClients: apply once on the host's client view (via the server-side apply) and broadcast to remotes.
+            // On a dedicated server we still apply server-side for parity, but it does not display anywhere.
+            if (isHost)
             {
-                RpcApplyFromServer(contextNetId);
-                return;
+                ApplyResolved(root);
+                int sent = SendToClients(message, skipHostLocal: true);
+                LogVerbose($"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
             }
-
-            SendToClients(message, skipHostLocal);
-        }
-
-        [ClientRpc]
-        private void RpcApplyFromServer(uint contextNetId)
-        {
-            if (!TryResolveNetworkObject(contextNetId, out GameObject root))
+            else
             {
-                return;
+                // Dedicated server: do not call ApplyResolved (no client view here) — just relay to all clients.
+                int sent = SendToClients(message, skipHostLocal: false);
+                LogVerbose($"AllClients broadcast complete on '{name}' (dedicated): sent to {sent} connection(s)");
             }
-
-            ApplyResolved(root);
         }
 
         private static void EnsureMessageHandlers()
@@ -722,34 +827,61 @@ namespace Neo.Network
 
         private static void OnServerMessage(NetworkConnectionToClient sender, NetworkContextActionMessage message)
         {
-            if (!TryResolveRelay(message.relayNetId, out NetworkContextActionRelay relay))
+            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
             {
+                Debug.LogWarning(
+                    $"[NetworkContextActionRelay] Server: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found. (Did the trigger spawn yet?)");
                 return;
             }
 
             if (relay.RateLimitCheck()) return;
-            if (!relay.AuthorizedSender(sender)) return;
+            if (!relay.AuthorizedSender(sender))
+            {
+                Debug.LogWarning(
+                    $"[NetworkContextActionRelay] Server: sender {sender?.connectionId} not authorized for relay '{relay.name}'.");
+                return;
+            }
+
             if (message.contextNetId == NoNetId) return;
 
+            relay.LogVerbose(
+                $"OnServerMessage on '{relay.name}#{message.relayComponentIndex}': from connId={(sender != null ? sender.connectionId.ToString() : "null")}, relayNetId={message.relayNetId}, contextNetId={message.contextNetId}");
             relay.DispatchOnServer(message, sender);
         }
 
         private static void OnClientMessage(NetworkContextActionMessage message)
         {
-            if (!TryResolveRelay(message.relayNetId, out NetworkContextActionRelay relay))
+            // Unconditional entry log — if you don't see this on a client while triggering on host,
+            // the handler is not registered or the message ID does not match between processes.
+            Debug.Log(
+                $"[NetworkContextActionRelay] Client RECEIVED: relayNetId={message.relayNetId}, componentIndex={message.relayComponentIndex}, contextNetId={message.contextNetId}");
+
+            if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
             {
+                Debug.LogWarning(
+                    $"[NetworkContextActionRelay] Client: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found locally.");
                 return;
             }
 
             if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
             {
+                Debug.LogWarning(
+                    $"[NetworkContextActionRelay] Client: contextNetId={message.contextNetId} not spawned locally on '{relay.name}'.");
                 return;
             }
 
+            relay.LogVerbose(
+                $"OnClientMessage on '{relay.name}#{message.relayComponentIndex}': applying with relayNetId={message.relayNetId}, contextNetId={message.contextNetId} ('{root.name}')");
             relay.ApplyResolved(root);
         }
 
-        private static bool TryResolveRelay(uint relayNetId, out NetworkContextActionRelay relay)
+        /// <summary>
+        ///     Resolves the EXACT relay on the spawned NetworkIdentity by <paramref name="componentIndex"/>.
+        ///     Multiple relays can be attached to one NetworkIdentity (e.g. "pickup self" + "bonus on player"
+        ///     on the same trigger cube) — without the component index we'd always pick the first one and
+        ///     the wrong action would fire on the wrong context.
+        /// </summary>
+        private static bool TryResolveRelay(uint relayNetId, byte componentIndex, out NetworkContextActionRelay relay)
         {
             relay = null;
             if (!TryResolveNetworkObject(relayNetId, out GameObject relayObject))
@@ -757,6 +889,20 @@ namespace Neo.Network
                 return false;
             }
 
+            // Preferred path: index into NetworkIdentity.NetworkBehaviours — same ordering on every peer
+            // because Mirror sorts NetworkBehaviours by Component order at spawn.
+            if (relayObject.TryGetComponent(out NetworkIdentity identity) &&
+                identity.NetworkBehaviours != null &&
+                componentIndex < identity.NetworkBehaviours.Length)
+            {
+                relay = identity.NetworkBehaviours[componentIndex] as NetworkContextActionRelay;
+                if (relay != null)
+                {
+                    return true;
+                }
+            }
+
+            // Fallback for legacy messages without a valid index or relays sitting on a child NetworkIdentity.
             relay = relayObject.GetComponent<NetworkContextActionRelay>();
             if (relay == null)
             {
@@ -766,8 +912,9 @@ namespace Neo.Network
             return relay != null;
         }
 
-        private void SendToClients(NetworkContextActionMessage message, bool skipHostLocal)
+        private int SendToClients(NetworkContextActionMessage message, bool skipHostLocal)
         {
+            int sent = 0;
             foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
             {
                 if (connection == null)
@@ -781,11 +928,15 @@ namespace Neo.Network
                 }
 
                 connection.Send(message);
+                sent++;
             }
+
+            return sent;
         }
 
-        private void SendToOthers(NetworkConnectionToClient sender, NetworkContextActionMessage message, bool skipHostSender)
+        private int SendToOthers(NetworkConnectionToClient sender, NetworkContextActionMessage message, bool skipHostSender)
         {
+            int sent = 0;
             foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
             {
                 if (IsSenderConnection(connection, sender, skipHostSender))
@@ -794,7 +945,10 @@ namespace Neo.Network
                 }
 
                 connection.Send(message);
+                sent++;
             }
+
+            return sent;
         }
 
         private static bool TryResolveNetworkObject(uint netId, out GameObject result)

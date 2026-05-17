@@ -45,9 +45,6 @@ namespace Neo.Tools
         [SyncVar] private string _syncExcludedIndices = string.Empty;
         /// <summary>Server-authoritative active item snapshot for additive selection modes.</summary>
         [SyncVar] private string _syncActiveIndices = string.Empty;
-
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
 #endif
         #region Private Methods
 
@@ -269,8 +266,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
 
             _syncIndex = newIndex;
@@ -297,8 +293,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSetRandom(bool deactivateOthers, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
 
             ExecuteSetRandom(deactivateOthers);
@@ -308,8 +303,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdExcludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
 
             ApplyExcludeIndex(index);
@@ -319,8 +313,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdIncludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
 
             ApplyIncludeIndex(index);
@@ -330,8 +323,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdIncludeAllIndices(NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
 
             ApplyIncludeAllIndices();

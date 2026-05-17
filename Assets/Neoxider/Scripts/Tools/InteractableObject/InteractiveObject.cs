@@ -890,9 +890,6 @@ namespace Neo.Tools
         }
 
 #if MIRROR
-        private float _lastCmdTime;
-        private const float CmdRateLimit = 0.05f;
-
         private bool AuthorizedSender(NetworkConnectionToClient sender)
         {
             return NeoNetworkState.IsAuthorized(gameObject, sender, authorityMode);
@@ -901,8 +898,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdInteractDown(NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
             if (isServerOnly) onInteractDown?.Invoke();
             RpcInteractDown(false);
@@ -918,8 +914,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdInteractUp(NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
             if (isServerOnly) onInteractUp?.Invoke();
             RpcInteractUp(false);
@@ -935,8 +930,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdClick(int buttonInt, bool isDouble, NetworkConnectionToClient sender = null)
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return;
-            _lastCmdTime = Time.time;
+            if (RateLimitCheck()) return;
             if (!AuthorizedSender(sender)) return;
             if (isServerOnly) InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
             RpcClick(buttonInt, isDouble, false);
