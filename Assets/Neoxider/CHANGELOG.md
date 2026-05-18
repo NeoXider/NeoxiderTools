@@ -1,4 +1,64 @@
 
+## [Unreleased]
+
+### Fixed
+- **Network / scene NetworkIdentity offline reactivation**: Mirror's `NetworkScenePostProcess` (callback order 1) force-disables every scene `NetworkIdentity` during scene processing so `NetworkServer.SpawnObjects()` can spawn them. In offline scenes (Mirror installed, no session) the spawn step never runs, so any Neo component required to live on a `NetworkIdentity` (e.g. `Money`, `RpgCharacter`, `Selector`, `Counter`, `InteractiveObject`, both `PlayerController{2D,3D}Physics`, all `NeoNetworkComponent` subclasses) stayed disabled forever. Fix is two-tier:
+  - **Editor `NeoMirrorScenePostProcess`** (`Editor/Network/`, callback order 100) runs **after** Mirror's post-processor in the same scene-processing pass — both at build time (the corrected state is baked into the built scene file) and at Play Mode entry (`Awake` sees objects already active). This covers 99% of cases with zero runtime overhead.
+  - **Runtime `NeoMirrorSceneReactivator`** (`Scripts/Network/Core/`) listens to `SceneManager.sceneLoaded` as a safety net for dynamic additive scene loads that bypass `[PostProcessScene]`. Opt out via `NeoMirrorSceneReactivator.Enabled = false`.
+  - Components opt in by implementing the new `INeoOptionalNetworked` interface (implemented by `NeoNetworkComponent`, `Money`, `PlayerController{2D,3D}Physics`).
+  - Removed the old `Money.OnStopClient` / `MoneyMirrorReactivateHost` coroutine workaround, which only covered post-session shutdown and never fired in offline play.
+
+## [8.5.0] - 2026-05-18
+
+### Added
+- **Shop / dynamic storefront views**: added `ShopListView` as an optional category/filter layer that owns `ShopItem` creation and reuse. `Shop` can now run as the catalog/purchase controller only (`Auto Spawn Items = false`), while one or more views render categories, owned/unowned filters, and button actions (`Buy`, `Preview`, `Select`).
+- **Shop / NoCode category tabs**: added `ShopCategoryButton`, a small Button helper with serialized category string / Show All toggle so category tabs can be configured in the Inspector without manual UnityEvent string parameters.
+- **Shop / runtime API**: added `Shop.SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`, `RefreshVisuals()`, `GetCategories(...)`, and `OnShopChanged` for dynamic catalogs and external views.
+- **ShopItem**: now exposes `BoundItemId`, `BoundItemData`, `BoundBundleData`, `LegacyId`, and `Clear()` so spawned/reused views can be inspected and reset safely.
+- **Money / currency keys**: `Money` instances can now be resolved by `SaveKey` (`FindBySaveKey`, `TryFindBySaveKey`). `ShopItemData` and `ShopBundleData` use `CurrencyOverrideSaveKey` for asset-safe multi-currency purchases.
+- **TextMoney**: added optional money save key selection and `SetMoneySaveKey(string)` so UI can display a specific wallet by key; empty key keeps the previous fallback to explicit `Money Source` then `Money.I`.
+- **UI / AnimationFly**: added explicit coordinate-space controls (`Auto`, `World`, `Canvas`, `Screen`) and spawn-space controls (`Auto`, `World`, `Canvas`) so effects can cleanly fly World -> Canvas, Canvas -> Canvas, Canvas -> World, or World -> World. Added NoCode/API helpers `PlayByTypeWorldToCanvas`, `PlayByTypeCanvasToCanvas`, `PlayByTypeCanvasToWorld`, `PlayByTypeWorldToWorld`, plus generic `Play(...)` overloads with explicit spaces and callbacks.
+- **NeoxiderPages / UIPage animation mode**: added `UIPageAnimationMode` (`ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`) for explicit show/hide animation behavior. Page `DOTweenAnimation` is forced to unscaled time and `autoKill = false` so page animations can restart reliably during pause/menu flows.
+- **Shop**: stable `string Id` on `ShopItemData` (auto-filled from `nameItem` in `OnValidate`, mirroring the [`QuestConfig`](Scripts/Quest/QuestConfig.cs) pattern). Item identity now survives reordering of `_shopItemDatas` in the inspector. New string API: `Shop.Buy(string)`, `BuyBundle(string)`, `Select(string)`, `ShowPreview(string)`, `IsOwned(string)`, `IsBundleOwned(string)`, `GetPrice(string)`, `SetRuntimePrice / ClearRuntimePrice`, `GetItemsInCategory(string)`, `EquippedId`, `PreviewIdString`. New events `OnSelectId`, `OnPurchasedId`, `OnPurchaseFailedId`, `OnPurchasedBundle`, `OnInventoryGranted`.
+- **Shop / `ShopProfileData`**: serializable profile (owned item IDs, owned bundle IDs, runtime price overrides, equipped ID) persisted as a single JSON blob through `SaveProvider.SetString` under `_keySave` (default `"Shop"`). Replaces the legacy index-based keys (`Shop0..ShopN`, `ShopEquipped`). Includes `Sanitize()` / `Clone()` and helper APIs (`TryAddOwned…`, `SetPriceOverride`, `GetPriceOrDefault`, etc.).
+- **Shop / `ShopBundleData`**: ScriptableObject for bundles — a set of `ShopItemData` sold for a single price. `Shop.BuyBundle(id)` charges the bundle price, adds every contained item to `OwnedItemIds`, grants per-item `InventoryItemData` to the resolved inventory, fires `OnPurchasedBundle`. Bundle-level `CurrencyOverrideSaveKey` and `isSinglePurchase` are supported.
+- **Shop / `ShopPurchaseFlow`**: enum (`BuyAndEquip` / `BuyOnly` / `EquipOnly` / `Browse`) replacing legacy bool combinations (`_useSetItem`, `_activateSavedEquipped`) for the top-level mode. Old bools remain serialized for back-compat (`_useSetItem` migrated to `_propagateSelectionVisual` via `FormerlySerializedAs`).
+- **Shop / categories**: optional `string Category` on `ShopItemData` and `Shop.GetItemsInCategory(category)` for filtering / tabs.
+- **Shop / multi-currency**: optional `CurrencyOverrideSaveKey` on both `ShopItemData` and `ShopBundleData`. Save-key currency beats the shop default (`moneySpendSource` → `Money.I`) and avoids invalid scene GameObject references inside ScriptableObject assets.
+- **Shop ↔ Inventory integration (optional)** via the new `ShopInventoryGrantBridge` MonoBehaviour in `Neo.Tools.Inventory`. The bridge listens to `Shop.OnPurchasedId` (which fires per-item, including items unpacked from bundles) and grants the configured `InventoryItemData + amount` mapping to the resolved `InventoryComponent` (explicit field or singleton fallback). Public NoCode entry point: `bridge.GrantForShopItemId(string)`. Public code entry: `bridge.GrantDirect(InventoryItemData, int)`, `bridge.SetShop(...)`, `bridge.SetInventory(...)`. **Direction is reversed on purpose**: `Neo.Tools.Inventory.asmdef` now references `Neo.Shop`, and `Neo.Shop.asmdef` does NOT reference `Neo.Tools.Inventory` — this avoids the asmdef cycle `Neo.Shop → Neo.Tools.Inventory → Neo.Tools.View → Neo.Tools.Components → Neo.Shop` (Tools.View needs `ScoreManager` from Tools.Components, which needs Money from Shop).
+- **Shop / `ShopItem`**: new `Visual(ShopBundleData, int, int)` overload that mirrors the regular item visual using the bundle's name / description / sprite / icon — bundle UIs can reuse the same `ShopItem` prefabs.
+- **Tests (PlayMode)**: rewrote `Assets/Tests/Play/ShopPurchasePlayModeTests.cs` to cover the new string API: free-item legacy `int` proxy, paid-item owned bookkeeping, single-purchase idempotence, runtime price overrides, bundles, per-item currency override, reorder stability of owned ids, `Browse` / `EquipOnly` flows, and inventory grants (single item + bundle).
+- **Tests (EditMode)**: new `Assets/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, price override CRUD, clone independence.
+- **Docs**: added [Docs/Shop/ShopBundleData.md](Docs/Shop/ShopBundleData.md) + EN mirror, refreshed [Docs/Shop/Shop.md](Docs/Shop/Shop.md), [Docs/Shop/ShopItemData.md](Docs/Shop/ShopItemData.md), [Docs/Shop/README.md](Docs/Shop/README.md), [DocsEn/Shop/README.md](DocsEn/Shop/README.md), [DocsEn/Shop/Shop.md](DocsEn/Shop/Shop.md), [DocsEn/Shop/ShopItemData.md](DocsEn/Shop/ShopItemData.md) with the new API, optional Inventory section, and the int-API obsolete notice.
+
+### Changed
+- **Shop / free purchases**: free unowned items now fire `OnPurchasedId` too, so `ShopInventoryGrantBridge` can grant free consumables/items just like paid purchases.
+- **Shop / view safety**: `ShopListView` clears reused `ShopItem` cells before hiding them; `ShopBundleData.Items` returns an empty list instead of null; `ButtonPrice` ignores invalid visual ids; `TextMoney` can switch source via `SetMoneySource(Money)` and re-subscribes safely.
+- **UI / AnimationFly**: UI-prefab movement can now use `RectTransform.anchoredPosition`, supports random offsets for start/end/middle, optional rotation, optional `SetAsLastSibling`, and configurable destroy-on-complete. Legacy `Execute(...)` methods remain available and route through the new resolver without applying `Count Multiplier` twice.
+- **NeoxiderPages / UIPage**: legacy `_playBackward` / `_onlyPlayBackward` settings migrate to the new `Animation Mode`. Closing animations now restart from the end before playing backward, and delayed deactivation uses realtime waiting instead of scaled `Invoke`.
+- **Shop**: heavy rewrite. Public int-id API (`Id`, `PreviewId`, `Buy()`, `Buy(int)`, `ShowPreview(int)`, `Prices`) is preserved as `[Obsolete]` proxies that resolve through `_shopItemDatas[i].Id`. UnityEvent subscriptions to `OnSelect<int>` / `OnPurchased<int>` / `OnPurchaseFailed<int>` keep firing in parallel with the new `…Id` string events, so existing scene wiring (Demo, Demoi, ClickerExample) continues to work.
+- **Shop / inspector layout**: fields are now grouped under headers `Flow / Items + Bundles / Spawn / Save / Currency / Inventory integration / Advanced / Legacy`; advanced toggles (`_autoSubscribe`, `_changePreviewOnPurchaseFailed`, `_propagateSelectionVisual`) are separated from the high-level `ShopPurchaseFlow` mode selector.
+
+### Removed (Breaking)
+- **Shop / save format**: legacy save keys `Shop0`, `Shop1`, …, `ShopN`, `ShopEquipped` are no longer read. Persisted purchases from older versions do **not** migrate — on first launch after 8.5.0 the shop starts with an empty `ShopProfileData`. Wipe is intentional (see plan in `Local/plans` and PR notes); migration would have shipped permanent legacy reads.
+- **Shop / OnValidate-driven price clobbering**: `Shop.OnValidate` no longer rewrites `_prices` from `ShopItemData.price`. Prices come from `ShopItemData.price` + `ShopProfileData.PriceOverrides`. The `_prices` field stays serialized for scene compatibility and is ignored at runtime.
+
+### Notes
+- This release does **not** touch the Mirror-side `Shop.Buy → Money.Spend → CmdMoneyOp(true)` race condition — that is tracked separately and was deliberately out of scope for this refactor.
+
+## [8.4.2] - 2026-05-17
+
+### Added
+- **Samples**: `Samples~/Demo/Scenes/RpgCombatNpcDemo.unity` (with companion `RpgCombatNpcDemo/Assets/` folder) — self-contained end-to-end RPG combat scene with a `KeyboardMover`-driven Player (HP 100, `PlayerSwordSlash` direct attack), a `MeleeNpc` (HP 80) that drains the player's HP via `RpgContactDamage` when in range, and a `RangedNpc` (HP 60) that fires `ArrowProjectile`s through `RpgAttackController` + `RpgTargetSelector` + `NpcRpgCombatBrain`. Includes character templates, attack definitions/presets, NPC combat preset, and projectile prefab as sibling assets.
+- **Tests / PlayMode**: `RpgCombatPlayModeTests` — covers (1) player direct attack hits NPC and reduces HP by full power, (2) melee NPC `RpgContactDamage` drains player HP while in range, (3) ranged NPC `RpgAttackController` projectile delivery reduces player HP by full power. Test asmdef now references `Neo.Rpg`.
+
+## [8.4.1] - 2026-05-17
+
+### Fixed
+- **Movement / PlayerController2DPhysics**: when Mirror is installed but no Mirror session is active, the 2D controller now accepts offline input instead of waiting for `isLocalPlayer`. The same offline authority fallback was applied to `PlayerController3DPhysics`.
+- **Editor / GameObject -> Neoxider**: prefab-backed menu entries now instantiate the prefab `GameObject` and find the requested component inside it, instead of falling back to an empty GameObject when the component is not loaded directly from the prefab root.
+- **Editor / GameObject -> Neoxider**: menu creation now auto-discovers prefabs under `Prefabs/` that contain the requested component when `CreateFromMenu` has no explicit prefab path; `SpinController` is also explicitly mapped to `Prefabs/Bonus/Slot/SlotUI.prefab`.
+
 ## [8.4.0] - 2026-05-17
 
 ### Added

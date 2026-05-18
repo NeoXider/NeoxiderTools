@@ -1,23 +1,52 @@
 # UIPage
 
-**Что это:** Компонент страницы UI для работы с **PM** (Page Manager). Указывает тип страницы (PageId), режим popup и опционально анимацию (DOTween).
+**Назначение:** компонент UI-страницы для работы с `PM` (Page Manager). Хранит `PageId`, режим popup и настройки анимации открытия/закрытия.
 
-**Как использовать:** см. разделы ниже.
+## Подключение
 
----
+1. Добавьте `UIPage` на корневой GameObject страницы.
+2. Назначьте `Page Id`.
+3. Если страница должна открываться поверх других, включите `Popup`.
+4. Если страница не должна закрываться при эксклюзивном переключении, включите `Ignore On Exclusive Change`.
+5. Для анимации добавьте `DOTweenAnimation` и назначьте его в поле `Animation`.
 
+## Основные поля (Inspector)
 
-Компонент страницы UI для работы с **PM** (Page Manager). Указывает тип страницы (PageId), режим popup и опционально анимацию (DOTween).
+| Поле | Описание |
+|------|----------|
+| `Page Id` | Идентификатор страницы для переключения через `PM`. |
+| `Popup` | Страница открывается поверх текущих страниц без их деактивации. |
+| `Ignore On Exclusive Change` | `PM` не деактивирует эту страницу при обычном эксклюзивном переключении. |
+| `Animation` | `DOTweenAnimation`, который проигрывается при открытии/закрытии. |
+| `Animation Mode` | Когда проигрывать анимацию: `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
 
-**Добавить:** GameObject → Neoxider → Pages → UIPage.
+## Animation Mode
 
-## Основное
+| Режим | Поведение |
+|------|-----------|
+| `ForwardOnly` | При `StartActive()` страница включается и forward-анимация перезапускается с начала. При `EndActive()` страница выключается сразу. |
+| `BackwardOnly` | При `StartActive()` страница только включается. При `EndActive()` reverse-анимация перезапускается с конца и после неё страница выключается. |
+| `ForwardAndBackward` | При открытии forward-анимация перезапускается с начала, при закрытии reverse-анимация перезапускается с конца. |
 
-- **Page Id** — идентификатор страницы для переключения через PM.
-- **Popup** — страница открывается поверх других без их деактивации.
-- **Ignore On Exclusive Change** — PM не деактивирует эту страницу при эксклюзивном переключении.
+Анимация страницы принудительно переводится в unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) и `autoKill = false`, чтобы она корректно работала в паузе/меню и могла перезапускаться.
+
+## API
+
+| Метод | Назначение |
+|------|------------|
+| `StartActive()` | Включить страницу и проиграть анимацию открытия согласно `Animation Mode`. |
+| `EndActive()` | Закрыть страницу и проиграть reverse-анимацию согласно `Animation Mode`. |
+| `SetActive(bool)` | Напрямую включить/выключить GameObject страницы. |
+
+## Совместимость
+
+Старые поля `_playBackward` и `_onlyPlayBackward` автоматически мигрируют в `Animation Mode`:
+
+- `_onlyPlayBackward = true` → `BackwardOnly`;
+- `_playBackward = true` → `ForwardAndBackward`;
+- `_playBackward = false` → `ForwardOnly`.
 
 ## См. также
 
-- [BtnChangePage](./BtnChangePage.md) — кнопка смены страницы.
-- **PM** — менеджер страниц (синглтон в NeoxiderPages).
+- [PM](./PM.md)
+- [BtnChangePage](./BtnChangePage.md)

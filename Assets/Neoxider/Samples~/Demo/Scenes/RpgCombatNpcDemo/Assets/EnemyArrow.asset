@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cecf91e6a1768444cafef352c083fcf6, type: 3}
+  m_Name: EnemyArrow
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.RpgAttackDefinition
+  _id: EnemyArrow
+  _displayName: Arrow
+  _deliveryType: 2
+  _hitMode: 0
+  _damageType: Physical
+  _power: 12
+  _range: 10
+  _radius: 0.4
+  _castDelay: 0.2
+  _cooldown: 1.5
+  _use2D: 0
+  _use3D: 1
+  _targetLayers:
+    serializedVersion: 2
+    m_Bits: 8
+  _maxTargets: 1
+  _effects:
+    _targetBuffIds: []
+    _targetStatusIds: []
+    _selfBuffIds: []
+  _projectilePrefab: {fileID: 8886827490207229403, guid: dd0d29e25fd8bf94ab7c064bcd6881cf, type: 3}
+  _projectileSpeed: 9
+  _projectileLifetime: 4
+  _projectileMaxHits: 1
+  _impactEffectPrefab: {fileID: 0}
+  _costResourceId: Mana
+  _costAmount: 0

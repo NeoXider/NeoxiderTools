@@ -11,14 +11,12 @@ namespace Neo.Pages.Editor
     {
         private const float ModeButtonHeight = 22f;
         private const string SourceLabelAll = "Source: all project folders";
+        private SerializedProperty animationModeProp;
         private SerializedProperty animationProp;
 
         private string generateName = "Menu";
         private SerializedProperty ignoreOnExclusiveChangeProp;
-        private SerializedProperty onlyPlayBackwardProp;
-
         private SerializedProperty pageIdProp;
-        private SerializedProperty playBackwardProp;
         private SerializedProperty popupProp;
         private int selectorMode; // 0 dropdown, 1 asset
 
@@ -30,8 +28,7 @@ namespace Neo.Pages.Editor
             popupProp = serializedObject.FindProperty("popup");
             ignoreOnExclusiveChangeProp = serializedObject.FindProperty("ignoreOnExclusiveChange");
             animationProp = serializedObject.FindProperty("_animation");
-            playBackwardProp = serializedObject.FindProperty("_playBackward");
-            onlyPlayBackwardProp = serializedObject.FindProperty("_onlyPlayBackward");
+            animationModeProp = serializedObject.FindProperty("_animationMode");
         }
 
         protected override void DrawCustomNeoxiderInspectorGUI()
@@ -48,8 +45,10 @@ namespace Neo.Pages.Editor
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Anim", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(animationProp);
-            EditorGUILayout.PropertyField(playBackwardProp);
-            EditorGUILayout.PropertyField(onlyPlayBackwardProp);
+            EditorGUILayout.PropertyField(animationModeProp);
+            EditorGUILayout.HelpBox(
+                "Page animations are restarted on every show/hide and forced to unscaled time. ForwardOnly animates show only, BackwardOnly animates hide only, ForwardAndBackward animates both.",
+                MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
         }

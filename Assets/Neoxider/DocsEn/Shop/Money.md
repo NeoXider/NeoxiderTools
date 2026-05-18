@@ -2,6 +2,19 @@
 
 **Purpose:** Global in-game currency manager (Singleton). By default it saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding. You can disable persistence for session-only modes and demos (NoCode-friendly).
 
+## Lookup by Save Key
+
+`Money` instances register themselves at runtime and can be resolved by save key:
+
+```csharp
+Money gems = Money.FindBySaveKey("Gems");
+bool found = Money.TryFindBySaveKey("Gems", out Money wallet);
+```
+
+This is used by `ShopItemData.CurrencyOverrideSaveKey`, `ShopBundleData.CurrencyOverrideSaveKey`, and `TextMoney`.
+
+If no key is selected, systems fall back to the usual `Money.I` singleton or the Shop default currency.
+
 ## Setup
 
 - Add the component via `Add Component > Neoxider > Shop > Money` to a manager object in the scene (preferably a persistent prefab that survives scene loads).

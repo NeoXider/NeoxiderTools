@@ -156,7 +156,6 @@ namespace Neo.Editor
         {
             if (target == null)
             {
-                Debug.LogWarning("[NeoCustomEditor] DrawMethodButtons: target == null");
                 return;
             }
 

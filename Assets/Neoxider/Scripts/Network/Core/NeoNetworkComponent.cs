@@ -19,14 +19,18 @@ namespace Neo.Network
     [NeoDoc("Network/NeoNetworkComponent.md")]
     public abstract class NeoNetworkComponent :
 #if MIRROR
-        NetworkBehaviour
+        NetworkBehaviour,
 #else
-        MonoBehaviour
+        MonoBehaviour,
 #endif
+        INeoOptionalNetworked
     {
         [Header("Networking")]
         [Tooltip("If true, state changes are replicated across the network. If false, component works locally.")]
         public bool isNetworked = false;
+
+        /// <inheritdoc />
+        bool INeoOptionalNetworked.IsNetworked => isNetworked;
 
 #if MIRROR
         // NegativeInfinity: first RateLimitCheck must not treat t=0 as "within 0.05s of last=0".

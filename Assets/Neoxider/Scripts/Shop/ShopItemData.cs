@@ -9,6 +9,10 @@ namespace Neo.Shop
     [CreateAssetMenu(fileName = "Shop Item Data", menuName = "Neoxider/Shop/Shop Item Data", order = 32)]
     public class ShopItemData : ScriptableObject
     {
+        [Tooltip("Stable identifier used as save key and shop lookup id. Auto-filled from name on validate.")]
+        [SerializeField]
+        private string _id = "";
+
         [Tooltip("Can this item be bought only once?")] [SerializeField]
         private bool _isSinglePurchase = true;
 
@@ -26,6 +30,19 @@ namespace Neo.Shop
 
         [Tooltip("Item icon (e.g. for list display)")] [SerializeField]
         private Sprite _icon;
+
+        [Tooltip("Optional grouping label. Used by Shop.GetItemsInCategory(...) and UI filters.")]
+        [SerializeField]
+        private string _category = "";
+
+        [Tooltip("Optional Money.SaveKey used for this item currency. Empty = use Shop default currency.")]
+        [SerializeField]
+        private string _currencyOverrideSaveKey = "";
+
+        /// <summary>
+        ///     Stable identifier. Auto-filled from <see cref="nameItem"/> on validate when empty.
+        /// </summary>
+        public string Id => _id;
 
         /// <summary>
         ///     Whether this item can be bought only once.
@@ -56,5 +73,23 @@ namespace Neo.Shop
         ///     Item description text.
         /// </summary>
         public string description => _description;
+
+        /// <summary>
+        ///     Optional category. Empty string = no category.
+        /// </summary>
+        public string Category => _category;
+
+        /// <summary>
+        ///     Optional per-item Money.SaveKey. Empty means use the Shop default.
+        /// </summary>
+        public string CurrencyOverrideSaveKey => _currencyOverrideSaveKey;
+
+        private void OnValidate()
+        {
+            if (string.IsNullOrEmpty(_id) && !string.IsNullOrEmpty(_nameItem))
+            {
+                _id = _nameItem.Replace(" ", "_");
+            }
+        }
     }
 }

@@ -1,3 +1,16 @@
+## Поиск по ключу сохранения
+
+Экземпляры `Money` регистрируются в рантайме и могут находиться по ключу сохранения:
+
+```csharp
+Money gems = Money.FindBySaveKey("Gems");
+bool found = Money.TryFindBySaveKey("Gems", out Money wallet);
+```
+
+Это используется в `ShopItemData.CurrencyOverrideSaveKey`, `ShopBundleData.CurrencyOverrideSaveKey` и `TextMoney`.
+
+Если ключ не выбран, системы возвращаются к обычному fallback: `Money.I` или валюта магазина по умолчанию.
+
 # Money
 
 **Назначение:** Глобальный менеджер игровой валюты (Singleton). По умолчанию сохраняет и загружает баланс через `SaveProvider`, поддерживает реактивные свойства (`ReactiveProperty`) для привязки к UI. Можно отключить запись в сейв для сессионных режимов и демо (NoCode).

@@ -77,6 +77,14 @@ namespace Neo.Network
         protected virtual bool SetInstanceOnAwakeEnabled => _setInstanceOnAwake;
 
         /// <summary>
+        ///     When <see cref="SetInstanceOnAwakeEnabled"/> is true and another instance is already
+        ///     registered, the default behaviour is to destroy this GameObject. Override and return
+        ///     <see langword="false"/> when multiple instances are valid (e.g. several
+        ///     <see cref="Neo.Shop.Money"/> wallets keyed by different save keys).
+        /// </summary>
+        protected virtual bool DestroyGameObjectOnDuplicateSingleton => true;
+
+        /// <summary>
         ///     <see langword="true"/> when this component is the static instance.
         /// </summary>
         protected bool IsCurrentSingletonInstance => ReferenceEquals(_instance, this as T);
@@ -110,7 +118,10 @@ namespace Neo.Network
                 }
                 else if (_instance != this)
                 {
-                    Destroy(gameObject);
+                    if (DestroyGameObjectOnDuplicateSingleton)
+                    {
+                        Destroy(gameObject);
+                    }
                 }
             }
         }

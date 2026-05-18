@@ -1,4 +1,5 @@
 using System;
+using Neo.Network;
 using Neo.Settings;
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,13 +34,16 @@ namespace Neo.Tools
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController3DPhysics",
         "Prefabs/Tools/First Person Controller.prefab")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController3DPhysics))]
-    public class PlayerController3DPhysics : 
+    public class PlayerController3DPhysics :
 #if MIRROR
-        NetworkBehaviour
+        NetworkBehaviour,
 #else
-        MonoBehaviour
+        MonoBehaviour,
 #endif
+        INeoOptionalNetworked
     {
+        bool INeoOptionalNetworked.IsNetworked => false;
+
         [Header("References")] [SerializeField]
         private Rigidbody _rigidbody;
 
@@ -152,12 +156,19 @@ namespace Neo.Tools
             get
             {
 #if MIRROR
-                return isLocalPlayer;
+                return !IsMirrorNetworkActive() || isLocalPlayer;
 #else
                 return true;
 #endif
             }
         }
+
+#if MIRROR
+        private static bool IsMirrorNetworkActive()
+        {
+            return NetworkClient.active || NetworkServer.active;
+        }
+#endif
 
         /// <summary>
         ///     Gets whether the character is currently grounded.

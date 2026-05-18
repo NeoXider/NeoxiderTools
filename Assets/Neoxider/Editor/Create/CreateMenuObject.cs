@@ -92,27 +92,12 @@ namespace Neo
 
         public static T Create<T>() where T : MonoBehaviour
         {
-            GameObject parentObject = Selection.activeGameObject;
-            GameObject myObject = new(typeof(T).Name);
-            myObject.transform.SetParent(parentObject?.transform);
-            T component = myObject.AddComponent<T>();
-            Selection.activeGameObject = myObject;
-            return component;
+            return CreateEmpty(typeof(T)) as T;
         }
 
         public static T Create<T>(string path) where T : MonoBehaviour
         {
-            T prefab = GetResources<T>(path);
-            if (prefab == null)
-            {
-                return Create<T>();
-            }
-
-            GameObject parentObject = Selection.activeGameObject;
-            T component = Object.Instantiate(prefab, parentObject?.transform);
-            component.name = typeof(T).Name;
-            Selection.activeGameObject = component.gameObject;
-            return component;
+            return Create(typeof(T), path) as T;
         }
 
         public static T GetResources<T>(string path) where T : Object
@@ -132,31 +117,124 @@ namespace Neo
                 return null;
             }
 
-            MethodInfo createNoArg = typeof(CreateMenuObject).GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m => m.Name == "Create" && m.IsGenericMethod && m.GetParameters().Length == 0);
-            MethodInfo createWithPath = typeof(CreateMenuObject).GetMethods(BindingFlags.Public | BindingFlags.Static)
-                .FirstOrDefault(m =>
-                    m.Name == "Create" && m.IsGenericMethod && m.GetParameters().Length == 1 &&
-                    m.GetParameters()[0].ParameterType == typeof(string));
-
-            if (string.IsNullOrEmpty(prefabPath))
+            string resolvedPrefabPath = ResolvePrefabPath(componentType, prefabPath);
+            if (!string.IsNullOrEmpty(resolvedPrefabPath))
             {
-                if (createNoArg == null)
+                MonoBehaviour prefabComponent = CreateFromPrefab(componentType, resolvedPrefabPath);
+                if (prefabComponent != null)
                 {
-                    return null;
+                    return prefabComponent;
                 }
-
-                object result = createNoArg.MakeGenericMethod(componentType).Invoke(null, null);
-                return result as MonoBehaviour;
             }
 
-            if (createWithPath == null)
+            return CreateEmpty(componentType);
+        }
+
+        private static MonoBehaviour CreateEmpty(Type componentType)
+        {
+            GameObject parentObject = Selection.activeGameObject;
+            GameObject myObject = new(componentType.Name);
+            Undo.RegisterCreatedObjectUndo(myObject, $"Create {componentType.Name}");
+            myObject.transform.SetParent(parentObject?.transform);
+            MonoBehaviour component = myObject.AddComponent(componentType) as MonoBehaviour;
+            Selection.activeGameObject = myObject;
+            return component;
+        }
+
+        private static MonoBehaviour CreateFromPrefab(Type componentType, string assetPath)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"CreateMenuObject: prefab not found at '{assetPath}'. Creating empty {componentType.Name}.");
+                return null;
+            }
+
+            GameObject parentObject = Selection.activeGameObject;
+            Object createdObject = PrefabUtility.InstantiatePrefab(prefab, parentObject?.transform);
+            GameObject instance = createdObject as GameObject;
+            if (instance == null)
+            {
+                instance = Object.Instantiate(prefab, parentObject?.transform);
+            }
+
+            Undo.RegisterCreatedObjectUndo(instance, $"Create {prefab.name}");
+            MonoBehaviour component = instance.GetComponent(componentType) as MonoBehaviour ??
+                                      instance.GetComponentInChildren(componentType, true) as MonoBehaviour;
+            if (component == null)
+            {
+                component = instance.AddComponent(componentType) as MonoBehaviour;
+                Debug.LogWarning(
+                    $"CreateMenuObject: prefab '{assetPath}' does not contain {componentType.Name}; added it to the root instance.",
+                    instance);
+            }
+
+            Selection.activeGameObject = instance;
+            return component;
+        }
+
+        private static string ResolvePrefabPath(Type componentType, string prefabPath)
+        {
+            if (!string.IsNullOrEmpty(prefabPath))
+            {
+                string explicitPath = ToAssetPath(prefabPath);
+                if (AssetDatabase.LoadAssetAtPath<GameObject>(explicitPath) != null)
+                {
+                    return explicitPath;
+                }
+
+                Debug.LogWarning(
+                    $"CreateMenuObject: prefab path '{explicitPath}' for {componentType.Name} was not found. Trying auto-discovery.");
+            }
+
+            return FindPrefabPathForComponent(componentType);
+        }
+
+        private static string ToAssetPath(string prefabPath)
+        {
+            if (prefabPath.StartsWith("Assets/", StringComparison.Ordinal) ||
+                prefabPath.StartsWith("Packages/", StringComparison.Ordinal))
+            {
+                return prefabPath;
+            }
+
+            return startPath + prefabPath;
+        }
+
+        private static string FindPrefabPathForComponent(Type componentType)
+        {
+            string prefabRoot = startPath + "Prefabs";
+            if (!AssetDatabase.IsValidFolder(prefabRoot))
             {
                 return null;
             }
 
-            object created = createWithPath.MakeGenericMethod(componentType).Invoke(null, new object[] { prefabPath });
-            return created as MonoBehaviour;
+            string[] guids = AssetDatabase.FindAssets("t:Prefab", new[] { prefabRoot });
+            return guids
+                .Select(AssetDatabase.GUIDToAssetPath)
+                .Where(path => PrefabContainsComponent(path, componentType))
+                .OrderBy(path => GetPrefabMatchScore(path, componentType))
+                .ThenBy(path => path.Length)
+                .FirstOrDefault();
+        }
+
+        private static bool PrefabContainsComponent(string path, Type componentType)
+        {
+            GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            return prefab != null && prefab.GetComponentInChildren(componentType, true) != null;
+        }
+
+        private static int GetPrefabMatchScore(string path, Type componentType)
+        {
+            string fileName = Path.GetFileNameWithoutExtension(path);
+            if (string.Equals(fileName, componentType.Name, StringComparison.OrdinalIgnoreCase))
+            {
+                return 0;
+            }
+
+            return fileName != null && fileName.IndexOf(componentType.Name, StringComparison.OrdinalIgnoreCase) >= 0
+                ? 1
+                : 2;
         }
 
         #region Dynamic Menu

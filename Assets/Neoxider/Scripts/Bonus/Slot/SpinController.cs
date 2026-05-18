@@ -26,7 +26,7 @@ namespace Neo.Bonus
     ///     No spin animation here — rotation/braking lives in Row.
     /// </summary>
     [NeoDoc("Bonus/Slot/SpinController.md")]
-    [CreateFromMenu("Neoxider/Bonus/SpinController")]
+    [CreateFromMenu("Neoxider/Bonus/SpinController", "Prefabs/Bonus/Slot/SlotUI.prefab")]
     [AddComponentMenu("Neoxider/" + "Bonus/" + nameof(SpinController))]
     public class SpinController : MonoBehaviour
     {

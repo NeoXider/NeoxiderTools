@@ -97,6 +97,11 @@ namespace Neo
 
             public void TrySetVisualId(int id)
             {
+                if (!Enum.IsDefined(typeof(ButtonType), id))
+                {
+                    return;
+                }
+
                 ButtonType type = CheckAutoType(_price, (ButtonType)id);
 
                 SetVisual(_price, type);
@@ -105,6 +110,11 @@ namespace Neo
 
             public void SetVisualId(int id)
             {
+                if (!Enum.IsDefined(typeof(ButtonType), id))
+                {
+                    return;
+                }
+
                 _type = (ButtonType)id;
 
                 if (_visual != null)

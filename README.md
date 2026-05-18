@@ -4,7 +4,7 @@
 
 [🇷🇺 Русский](README_RU.md) | [🇺🇸 English](README.md)
 
-[![Version](https://img.shields.io/badge/version-8.4.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-8.4.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 > **EN:** Ready-to-use Unity tools that integrate easily into your project. 150+ modules for fast game development without unnecessary complexity.
 >

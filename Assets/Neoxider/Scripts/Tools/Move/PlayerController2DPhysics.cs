@@ -1,4 +1,5 @@
 using System;
+using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
 #if MIRROR
@@ -27,13 +28,16 @@ namespace Neo.Tools
     [NeoDoc("Tools/Move/PlayerController2DPhysics.md")]
     [CreateFromMenu("Neoxider/Tools/Movement/PlayerController2DPhysics")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(PlayerController2DPhysics))]
-    public class PlayerController2DPhysics : 
+    public class PlayerController2DPhysics :
 #if MIRROR
-        NetworkBehaviour
+        NetworkBehaviour,
 #else
-        MonoBehaviour
+        MonoBehaviour,
 #endif
+        INeoOptionalNetworked
     {
+        bool INeoOptionalNetworked.IsNetworked => false;
+
         [Header("References")] [SerializeField]
         private Rigidbody2D _rigidbody;
 
@@ -97,12 +101,19 @@ namespace Neo.Tools
             get
             {
 #if MIRROR
-                return isLocalPlayer;
+                return !IsMirrorNetworkActive() || isLocalPlayer;
 #else
                 return true;
 #endif
             }
         }
+
+#if MIRROR
+        private static bool IsMirrorNetworkActive()
+        {
+            return NetworkClient.active || NetworkServer.active;
+        }
+#endif
 
         /// <summary>
         ///     Gets whether the character is currently grounded.

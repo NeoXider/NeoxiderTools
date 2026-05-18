@@ -9,161 +9,612 @@ using UnityEngine.Serialization;
 
 namespace Neo.Shop
 {
+    /// <summary>
+    ///     Shop controller. Holds a list of <see cref="ShopItemData"/> (and optional <see cref="ShopBundleData"/>),
+    ///     handles purchase / equip flow via <see cref="ShopPurchaseFlow"/>, and persists owned items +
+    ///     equipped id + runtime price overrides as a single JSON blob (<see cref="ShopProfileData"/>).
+    ///
+    ///     Item identity is the stable <see cref="ShopItemData.Id"/> string. Old int-indexed API
+    ///     (<see cref="Id"/>, <see cref="Buy(int)"/>, <c>OnPurchased&lt;int&gt;</c>) is preserved as
+    ///     <see cref="ObsoleteAttribute"/> proxies that resolve through the item array; events fire in both
+    ///     int and string forms so existing scene wiring keeps working.
+    ///
+    ///     Inventory integration is handled by a separate bridge component
+    ///     (<c>Neo.Tools.ShopInventoryGrantBridge</c>) — drop it onto the same GameObject as Shop or
+    ///     InventoryComponent and configure mappings (shopItemId → InventoryItemData + amount). The
+    ///     bridge subscribes to <see cref="OnPurchasedId"/> / <see cref="OnPurchasedBundle"/>. Kept
+    ///     out of <c>Neo.Shop</c> deliberately to avoid pulling <c>Neo.Tools.Inventory</c> into the
+    ///     Shop assembly closure.
+    /// </summary>
     [NeoDoc("Shop/Shop.md")]
     [CreateFromMenu("Neoxider/Shop/Shop")]
     [AddComponentMenu("Neoxider/" + "Shop/" + nameof(Shop))]
     public class Shop : MonoBehaviour
     {
-        [Header("Price if null shopItemDatas")] [SerializeField]
-        private int[] _prices;
+        [Header("Flow")]
+        [Tooltip("High-level purchase/equip mode. See ShopPurchaseFlow for semantics.")]
+        [SerializeField]
+        private ShopPurchaseFlow _purchaseFlow = ShopPurchaseFlow.BuyAndEquip;
 
-        [SerializeField] private ShopItemData[] _shopItemDatas;
+        [Header("Items / Bundles")]
+        [SerializeField]
+        private ShopItemData[] _shopItemDatas;
+
+        [Tooltip("Optional list of bundles. Each bundle grants its items on purchase.")] [SerializeField]
+        private ShopBundleData[] _bundles;
 
         [SerializeField] private ShopItem _shopItemPreview;
 
         [SerializeField] private ShopItem[] _shopItems;
 
-        [Space] [Header("Settings")] [SerializeField]
-        private bool _useSetItem = true;
-
-        [SerializeField] private bool _autoSubscribe = true;
-
-        [Tooltip("If true, saved ShopEquipped item is auto-activated on load")] [SerializeField]
-        private bool _activateSavedEquipped = true;
-
-        [SerializeField] private string _keySave = "Shop";
-        [SerializeField] private string _keySaveEquipped = "ShopEquipped";
-
-        [Tooltip(
-            "If true, when purchase fails (not enough money) the preview switches to the item being bought. If false, the preview does not change.")]
+        [Header("Spawn Shop Items")]
+        [Tooltip("Parent transform for spawned ShopItems. Falls back to this GameObject when null.")]
         [SerializeField]
-        private bool _changePreviewOnPurchaseFailed;
-
-        [Space] [Header("Spawn Shop Items")] [SerializeField]
         private Transform _container;
 
-        [SerializeField] private ShopItem _prefab;
+        [Tooltip("Optional prefab. Shop spawns missing ShopItems until count matches _shopItemDatas.Length.")]
+        [SerializeField]
+        private ShopItem _prefab;
 
-        [Space]
-        [Tooltip("GameObject with IMoneySpend (e.g. Money). If null, Money.I is used.")]
+        [Tooltip("When enabled, Shop fills its own _shopItems list from Prefab. Disable when using external views such as ShopListView.")]
+        [SerializeField]
+        private bool _autoSpawnItems = true;
+
+        [Header("Save")]
+        [Tooltip("Single SaveProvider key. ShopProfileData JSON is stored here. Wipe-friendly: deleting the key resets the whole shop.")]
+        [SerializeField]
+        private string _keySave = "Shop";
+
+        [Header("Currency")]
+        [Tooltip("Default IMoneySpend source. When null, Money.I is used. Per-item / per-bundle Currency Override Save Key takes precedence.")]
         [FormerlySerializedAs("IMoneySpend")]
         [SerializeField]
         public GameObject moneySpendSource;
 
-        [Space] public UnityEvent<int> OnSelect;
-        public UnityEvent<int> OnPurchased;
-        public UnityEvent<int> OnPurchaseFailed;
-        public UnityEvent OnLoad;
+        [Header("Advanced")]
+        [Tooltip("Auto-subscribe ShopItem.buttonBuy.onClick to Buy(itemIndex).")]
+        [SerializeField]
+        private bool _autoSubscribe = true;
 
+        [Tooltip("On failed purchase, switch the preview to the item the player tried to buy.")] [SerializeField]
+        private bool _changePreviewOnPurchaseFailed;
+
+        [Tooltip("Propagate selection to ShopItem.Select(bool) on every list entry. Set false if your UI does its own highlighting.")]
+        [FormerlySerializedAs("_useSetItem")]
+        [SerializeField]
+        private bool _propagateSelectionVisual = true;
+
+        [Tooltip(
+            "When true (and PurchaseFlow is BuyAndEquip / EquipOnly), the saved equipped item is auto-selected at load time. Has no effect for BuyOnly / Browse flows.")]
+        [SerializeField]
+        private bool _activateSavedEquipped = true;
+
+        [Header("Legacy (deprecated)")]
+        [Tooltip("Устарело — цены теперь берутся из ShopItemData.price + runtime overrides из ShopProfileData. Поле сохранено для совместимости со старыми сценами и игнорируется в рантайме.")]
+        [SerializeField]
+        private int[] _prices;
+
+#pragma warning disable 0414
+        [Tooltip("Устарело — теперь весь сейв магазина живёт в едином ключе Save Key (JSON ShopProfileData). Поле игнорируется в рантайме.")]
+        [SerializeField]
+        private string _keySaveEquipped = "ShopEquipped";
+#pragma warning restore 0414
+
+        [Space] [Header("Events (int — legacy)")]
+        public UnityEvent<int> OnSelect = new();
+        public UnityEvent<int> OnPurchased = new();
+        public UnityEvent<int> OnPurchaseFailed = new();
+        public UnityEvent OnLoad = new();
+
+        [Header("Events (string)")]
+        public ShopStringEvent OnSelectId = new();
+        public ShopStringEvent OnPurchasedId = new();
+        public ShopStringEvent OnPurchaseFailedId = new();
+        public ShopBundleEvent OnPurchasedBundle = new();
+        public UnityEvent OnShopChanged = new();
+
+        // --- runtime state ---
         private UnityEventDelegateCache _buyDelegates;
-        private int _id;
+        private IMoneySpend _defaultMoney;
+        private ShopProfileData _profile = new();
+        private bool _started;
 
-        private IMoneySpend _money;
-        private int _savedEquippedId;
-
-        private bool load;
-
+        /// <summary>
+        ///     Legacy: prices array. Kept for backwards-compatible serialization. Runtime ignores it —
+        ///     prices come from <see cref="ShopItemData.price"/> + <see cref="ShopProfileData.PriceOverrides"/>.
+        /// </summary>
+        [Obsolete("Use GetPrice(string) / ShopItemData.price. _prices is ignored in runtime since v8.5.")]
         public int[] Prices => _prices;
+
+        /// <summary>Read-only view of the item-data list.</summary>
         public ShopItemData[] ShopItemDatas => _shopItemDatas;
 
-        public int PreviewId { get; private set; }
+        /// <summary>Read-only view of the bundle list. Never null in runtime (returns empty array when not configured).</summary>
+        public ShopBundleData[] Bundles => _bundles ?? Array.Empty<ShopBundleData>();
 
+        /// <summary>Whether Shop creates missing item views by itself.</summary>
+        public bool AutoSpawnItems
+        {
+            get => _autoSpawnItems;
+            set => _autoSpawnItems = value;
+        }
+
+        /// <summary>Currently equipped item ID. Empty when nothing is equipped.</summary>
+        public string EquippedId => _profile.EquippedId;
+
+        /// <summary>Item ID currently shown in the preview slot. Empty when no preview.</summary>
+        public string PreviewIdString { get; private set; } = "";
+
+        /// <summary>Currently selected item index in <see cref="ShopItemDatas"/>. -1 when nothing matches.</summary>
+        [Obsolete("Use EquippedId. Integer-indexed API will be removed in v9.")]
         public int Id
         {
-            get => _id;
-            set => Select(value);
+            get => IndexOfItemDataById(_profile.EquippedId);
+            set => Select(ItemIdByIndex(value));
         }
+
+        /// <summary>Preview slot index. -1 when no preview.</summary>
+        [Obsolete("Use PreviewIdString. Integer-indexed API will be removed in v9.")]
+        public int PreviewId => IndexOfItemDataById(PreviewIdString);
 
         private void Awake()
         {
-            Load();
-            LoadEquipped();
-            Spawn();
-            Subscriber(true);
-            // Initialize preview with saved index when valid
-            ShowPreview(PreviewId);
+            LoadProfile();
+            SpawnItems();
+            Subscribe(true);
+            PreviewIdString = string.IsNullOrEmpty(_profile.EquippedId)
+                ? FirstItemId()
+                : _profile.EquippedId;
+            VisualPreview();
         }
 
         private void Start()
         {
-            if (moneySpendSource != null)
-            {
-                _money = moneySpendSource.GetComponent<IMoneySpend>() ?? Money.I;
-            }
-            else
-            {
-                _money = Money.I;
-            }
+            _defaultMoney = ResolveDefaultCurrency();
 
-            Visual();
+            VisualAll();
 
-            // Activate saved item when the option is enabled
-            if (_activateSavedEquipped && _useSetItem)
+            ShopPurchaseFlow flow = _purchaseFlow;
+            bool shouldAutoEquip = _activateSavedEquipped &&
+                                   (flow == ShopPurchaseFlow.BuyAndEquip || flow == ShopPurchaseFlow.EquipOnly);
+            if (shouldAutoEquip && !string.IsNullOrEmpty(_profile.EquippedId))
             {
-                int equippedId = Mathf.Clamp(_savedEquippedId, 0, _prices.Length - 1);
-                Select(equippedId);
+                Select(_profile.EquippedId);
             }
 
-            load = true;
+            _started = true;
             OnLoad?.Invoke();
         }
 
         private void OnEnable()
         {
-            if (load)
+            if (!_started)
             {
-                Visual();
-                // Restore selection state after visual update
-                if (_useSetItem)
-                {
-                    Select(_id);
-                }
+                return;
+            }
+
+            VisualAll();
+            if (_propagateSelectionVisual && !string.IsNullOrEmpty(_profile.EquippedId))
+            {
+                PropagateSelectionVisual(_profile.EquippedId);
             }
         }
 
         private void OnDestroy()
         {
-            Subscriber(false);
+            Subscribe(false);
         }
 
-        public void OnValidate()
+        private void OnValidate()
         {
             _shopItems ??= GetComponentsInChildren<ShopItem>(true);
-
-            if (NotNullDatas())
-            {
-                _prices = _shopItemDatas.Select(p => p.price).ToArray();
-            }
         }
 
-        private void Spawn()
+        // ---------- Public API: string -------------------------------------------------
+
+        /// <summary>
+        ///     Initiates the purchase / equip flow for the given item id. Behaviour depends on
+        ///     <see cref="ShopPurchaseFlow"/>. Owned items don't spend money again.
+        /// </summary>
+        public void Buy(string itemId)
         {
-            if (_prefab == null)
+            if (string.IsNullOrEmpty(itemId))
             {
                 return;
             }
 
-            List<ShopItem> shopItemsList = _shopItems?.ToList() ?? new List<ShopItem>();
-            Transform parent = _container != null ? _container : transform;
-
-            for (int i = shopItemsList.Count; i < _prices.Length; i++)
+            ShopPurchaseFlow flow = _purchaseFlow;
+            if (flow == ShopPurchaseFlow.Browse)
             {
-                ShopItem newShopItem = Instantiate(_prefab, parent);
-                newShopItem.gameObject.SetActive(true);
-                shopItemsList.Add(newShopItem);
+                return;
             }
 
-            _shopItems = shopItemsList.ToArray();
-
-            if (_prefab.gameObject.scene.IsValid())
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
             {
-                _prefab.gameObject.SetActive(false);
+                return;
+            }
+
+            if (flow == ShopPurchaseFlow.EquipOnly)
+            {
+                Select(itemId);
+                ShowPreview(itemId);
+                return;
+            }
+
+            float price = GetPrice(itemId);
+            bool isOwned = _profile.IsItemOwned(itemId);
+            bool isFree = price <= 0f;
+
+            if (isOwned || isFree)
+            {
+                if (isFree && !isOwned)
+                {
+                    if (data.isSinglePurchase)
+                    {
+                        _profile.TryAddOwnedItem(itemId);
+                    }
+
+                    SaveProfile();
+                    VisualAll();
+                    InvokePurchasedEvents(itemId);
+                }
+
+                if (flow == ShopPurchaseFlow.BuyAndEquip)
+                {
+                    Select(itemId);
+                }
+
+                ShowPreview(itemId);
+                return;
+            }
+
+            IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
+            if (money != null && money.Spend(price))
+            {
+                if (data.isSinglePurchase)
+                {
+                    _profile.TryAddOwnedItem(itemId);
+                }
+
+                SaveProfile();
+                VisualAll();
+
+                InvokePurchasedEvents(itemId);
+
+                if (flow == ShopPurchaseFlow.BuyAndEquip)
+                {
+                    Select(itemId);
+                }
+
+                ShowPreview(itemId);
+                return;
+            }
+
+            int failedIndex = IndexOfItemDataById(itemId);
+            if (failedIndex >= 0)
+            {
+                OnPurchaseFailed?.Invoke(failedIndex);
+            }
+
+            OnPurchaseFailedId?.Invoke(itemId);
+
+            if (_changePreviewOnPurchaseFailed)
+            {
+                ShowPreview(itemId);
             }
         }
 
-        private void Subscriber(bool subscribe)
+        /// <summary>Purchases the bundle and grants all its items (and per-item inventory hooks) on success.</summary>
+        public void BuyBundle(string bundleId)
         {
-            if (_shopItems == null || _shopItems.Length == 0)
+            if (string.IsNullOrEmpty(bundleId))
+            {
+                return;
+            }
+
+            ShopPurchaseFlow flow = _purchaseFlow;
+            if (flow == ShopPurchaseFlow.Browse || flow == ShopPurchaseFlow.EquipOnly)
+            {
+                return;
+            }
+
+            ShopBundleData bundle = ResolveBundleById(bundleId);
+            if (bundle == null)
+            {
+                return;
+            }
+
+            if (bundle.isSinglePurchase && _profile.IsBundleOwned(bundleId))
+            {
+                return;
+            }
+
+            float price = Mathf.Max(0, bundle.price);
+            IMoneySpend money = ResolveCurrency(bundle.CurrencyOverrideSaveKey);
+
+            bool needsSpend = price > 0f;
+            if (needsSpend && (money == null || !money.Spend(price)))
+            {
+                OnPurchaseFailedId?.Invoke(bundleId);
+                return;
+            }
+
+            if (bundle.Items != null)
+            {
+                for (int i = 0; i < bundle.Items.Count; i++)
+                {
+                    ShopItemData item = bundle.Items[i];
+                    if (item == null)
+                    {
+                        continue;
+                    }
+
+                    if (item.isSinglePurchase)
+                    {
+                        _profile.TryAddOwnedItem(item.Id);
+                    }
+
+                    OnPurchasedId?.Invoke(item.Id);
+                }
+            }
+
+            if (bundle.isSinglePurchase)
+            {
+                _profile.TryAddOwnedBundle(bundleId);
+            }
+
+            SaveProfile();
+            VisualAll();
+            OnPurchasedBundle?.Invoke(bundle);
+        }
+
+        /// <summary>Selects the item by id. Fires OnSelectId (and int proxy when index is resolvable).</summary>
+        public void Select(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId))
+            {
+                _profile.EquippedId = "";
+                SaveProfile();
+                OnSelectId?.Invoke("");
+                return;
+            }
+
+            _profile.EquippedId = itemId;
+            SaveProfile();
+
+            int index = IndexOfItemDataById(itemId);
+            if (index >= 0)
+            {
+                OnSelect?.Invoke(index);
+            }
+
+            OnSelectId?.Invoke(itemId);
+
+            if (_propagateSelectionVisual)
+            {
+                PropagateSelectionVisual(itemId);
+            }
+        }
+
+        /// <summary>Sets the preview slot to the given item id; updates the visual immediately.</summary>
+        public void ShowPreview(string itemId)
+        {
+            PreviewIdString = itemId ?? "";
+            VisualPreview();
+        }
+
+        /// <summary>True when <paramref name="itemId"/> is in the owned set.</summary>
+        public bool IsOwned(string itemId)
+        {
+            return _profile.IsItemOwned(itemId);
+        }
+
+        /// <summary>True when <paramref name="bundleId"/> is in the owned-bundles set.</summary>
+        public bool IsBundleOwned(string bundleId)
+        {
+            return _profile.IsBundleOwned(bundleId);
+        }
+
+        /// <summary>
+        ///     Runtime price for <paramref name="itemId"/>. Returns 0 when item is unknown; applies
+        ///     runtime override from <see cref="ShopProfileData.PriceOverrides"/> when present.
+        /// </summary>
+        public float GetPrice(string itemId)
+        {
+            ShopItemData data = ResolveItemDataById(itemId);
+            if (data == null)
+            {
+                return 0f;
+            }
+
+            return _profile.GetPriceOrDefault(itemId, data.price);
+        }
+
+        /// <summary>Persists a runtime price override (e.g. discount) for the given item.</summary>
+        public void SetRuntimePrice(string itemId, float price)
+        {
+            if (string.IsNullOrEmpty(itemId))
+            {
+                return;
+            }
+
+            _profile.SetPriceOverride(itemId, price);
+            SaveProfile();
+            VisualAll();
+        }
+
+        /// <summary>Removes a runtime price override; subsequent GetPrice calls return ShopItemData.price.</summary>
+        public void ClearRuntimePrice(string itemId)
+        {
+            if (_profile.ClearPriceOverride(itemId))
+            {
+                SaveProfile();
+                VisualAll();
+            }
+        }
+
+        /// <summary>Replaces the runtime catalog and refreshes all connected views.</summary>
+        public void SetItems(ShopItemData[] items, bool resetPreviewToFirst = true)
+        {
+            _shopItemDatas = items ?? Array.Empty<ShopItemData>();
+            if (resetPreviewToFirst || ResolveItemDataById(PreviewIdString) == null)
+            {
+                PreviewIdString = FirstItemId();
+            }
+
+            if (!string.IsNullOrEmpty(_profile.EquippedId) && ResolveItemDataById(_profile.EquippedId) == null)
+            {
+                _profile.EquippedId = "";
+                SaveProfile();
+            }
+
+            VisualAll();
+            VisualPreview();
+        }
+
+        /// <summary>Replaces the runtime bundle catalog.</summary>
+        public void SetBundles(ShopBundleData[] bundles)
+        {
+            _bundles = bundles ?? Array.Empty<ShopBundleData>();
+            OnShopChanged?.Invoke();
+        }
+
+        /// <summary>Assigns the default currency source at runtime.</summary>
+        public void SetMoneySpendSource(GameObject source)
+        {
+            moneySpendSource = source;
+            _defaultMoney = ResolveDefaultCurrency();
+        }
+
+        /// <summary>NoCode-friendly toggle for Shop-owned item spawning.</summary>
+        public void SetAutoSpawnItems(bool autoSpawnItems)
+        {
+            _autoSpawnItems = autoSpawnItems;
+        }
+
+        /// <summary>Filtered list of item-data assets by <see cref="ShopItemData.Category"/>.</summary>
+        public IReadOnlyList<ShopItemData> GetItemsInCategory(string category)
+        {
+            if (_shopItemDatas == null || _shopItemDatas.Length == 0)
+            {
+                return Array.Empty<ShopItemData>();
+            }
+
+            return _shopItemDatas
+                .Where(d => d != null && string.Equals(d.Category ?? "", category ?? "", StringComparison.Ordinal))
+                .ToArray();
+        }
+
+        /// <summary>Distinct category labels from configured items, in first-seen order.</summary>
+        public IReadOnlyList<string> GetCategories(bool includeEmpty = false)
+        {
+            if (_shopItemDatas == null || _shopItemDatas.Length == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            List<string> categories = new();
+            HashSet<string> seen = new(StringComparer.Ordinal);
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                ShopItemData data = _shopItemDatas[i];
+                if (data == null)
+                {
+                    continue;
+                }
+
+                string category = data.Category ?? "";
+                if (!includeEmpty && string.IsNullOrEmpty(category))
+                {
+                    continue;
+                }
+
+                if (seen.Add(category))
+                {
+                    categories.Add(category);
+                }
+            }
+
+            return categories;
+        }
+
+        /// <summary>Refreshes Shop-owned item visuals and preview, then notifies external views.</summary>
+        public void RefreshVisuals()
+        {
+            VisualAll();
+            VisualPreview();
+        }
+
+        // ---------- Public API: legacy int proxy --------------------------------------
+
+        /// <summary>Legacy alias for <see cref="Buy(string)"/>.</summary>
+        [Obsolete("Use Buy(string itemId). Will be removed in v9.")]
+        public void Buy()
+        {
+            string id = string.IsNullOrEmpty(PreviewIdString) ? _profile.EquippedId : PreviewIdString;
+            if (!string.IsNullOrEmpty(id))
+            {
+                Buy(id);
+            }
+        }
+
+        /// <summary>Legacy alias for <see cref="Buy(string)"/> via array index.</summary>
+        [Obsolete("Use Buy(string itemId). Will be removed in v9.")]
+        public void Buy(int id)
+        {
+            string resolved = ItemIdByIndex(id);
+            if (!string.IsNullOrEmpty(resolved))
+            {
+                Buy(resolved);
+            }
+        }
+
+        /// <summary>Legacy alias for <see cref="ShowPreview(string)"/> via array index.</summary>
+        [Obsolete("Use ShowPreview(string itemId). Will be removed in v9.")]
+        public void ShowPreview(int id)
+        {
+            ShowPreview(ItemIdByIndex(id));
+        }
+
+        // ---------- Internals ----------------------------------------------------------
+
+        private void SpawnItems()
+        {
+            if (_shopItemDatas == null)
+            {
+                return;
+            }
+
+            if (!_autoSpawnItems)
+            {
+                return;
+            }
+
+            List<ShopItem> list = _shopItems != null ? _shopItems.ToList() : new List<ShopItem>();
+
+            if (_prefab != null)
+            {
+                Transform parent = _container != null ? _container : transform;
+                for (int i = list.Count; i < _shopItemDatas.Length; i++)
+                {
+                    ShopItem inst = Instantiate(_prefab, parent);
+                    inst.gameObject.SetActive(true);
+                    list.Add(inst);
+                }
+
+                if (_prefab.gameObject.scene.IsValid())
+                {
+                    _prefab.gameObject.SetActive(false);
+                }
+            }
+
+            _shopItems = list.ToArray();
+        }
+
+        private void Subscribe(bool subscribe)
+        {
+            if (_shopItems == null || _shopItems.Length == 0 || !_autoSubscribe)
             {
                 return;
             }
@@ -174,174 +625,246 @@ namespace Neo.Shop
                 _buyDelegates.Clear();
                 for (int i = 0; i < _shopItems.Length; i++)
                 {
-                    int id = i;
-                    if (_autoSubscribe && _shopItems[i].buttonBuy != null)
+                    if (_shopItems[i] == null || _shopItems[i].buttonBuy == null)
                     {
-                        _buyDelegates.SubscribeAt(i, _shopItems[i].buttonBuy.onClick, () => Buy(id));
+                        continue;
                     }
+
+                    int index = i;
+                    _buyDelegates.SubscribeAt(i, _shopItems[i].buttonBuy.onClick, () => BuyByIndexInternal(index));
                 }
             }
-            else
+            else if (_buyDelegates != null)
             {
-                if (_buyDelegates != null && _autoSubscribe)
+                for (int i = 0; i < _shopItems.Length && i < _buyDelegates.Count; i++)
                 {
-                    for (int i = 0; i < _shopItems.Length && i < _buyDelegates.Count; i++)
+                    if (_shopItems[i] != null && _shopItems[i].buttonBuy != null)
                     {
-                        if (_shopItems[i].buttonBuy != null)
-                        {
-                            _buyDelegates.UnsubscribeAt(i, _shopItems[i].buttonBuy.onClick);
-                        }
+                        _buyDelegates.UnsubscribeAt(i, _shopItems[i].buttonBuy.onClick);
                     }
                 }
             }
         }
 
-        private void Load()
+        private void BuyByIndexInternal(int index)
         {
-            if (NotNullDatas())
+            string id = ItemIdByIndex(index);
+            if (!string.IsNullOrEmpty(id))
             {
-                _prices ??= _shopItemDatas.Select(p => p.price).ToArray();
-            }
-            else if (_prices == null)
-            {
-                _prices = Array.Empty<int>();
-                return;
-            }
-
-            if (_prices.Length == 0)
-            {
-                return;
-            }
-
-            int[] prices = new int[_prices.Length];
-            for (int i = 0; i < _prices.Length; i++)
-            {
-                int defaultValue = NotNullDatas() && i < _shopItemDatas.Length ? _shopItemDatas[i].price : _prices[i];
-                prices[i] = SaveProvider.GetInt(_keySave + i, defaultValue);
-            }
-
-            _prices = prices;
-        }
-
-        private void Save()
-        {
-            if (_prices == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < _prices.Length; i++)
-            {
-                SaveProvider.SetInt(_keySave + i, _prices[i]);
+                Buy(id);
             }
         }
 
-        private void LoadEquipped()
+        private void InvokePurchasedEvents(string itemId)
         {
-            _savedEquippedId = SaveProvider.GetInt(_keySaveEquipped);
-            _savedEquippedId = Mathf.Clamp(_savedEquippedId, 0,
-                _prices != null && _prices.Length > 0 ? _prices.Length - 1 : 0);
-            PreviewId = _savedEquippedId;
+            int index = IndexOfItemDataById(itemId);
+            if (index >= 0)
+            {
+                OnPurchased?.Invoke(index);
+            }
+
+            OnPurchasedId?.Invoke(itemId);
         }
 
-        public void ShowPreview(int id)
+        private void LoadProfile()
         {
-            PreviewId = id;
-            VisualPreview();
+            string json = SaveProvider.GetString(_keySave, "");
+            if (string.IsNullOrEmpty(json))
+            {
+                _profile = new ShopProfileData();
+                return;
+            }
+
+            try
+            {
+                _profile = JsonUtility.FromJson<ShopProfileData>(json) ?? new ShopProfileData();
+            }
+            catch
+            {
+                _profile = new ShopProfileData();
+            }
+
+            _profile.Sanitize();
+        }
+
+        private void SaveProfile()
+        {
+            _profile.Sanitize();
+            string json = JsonUtility.ToJson(_profile);
+            SaveProvider.SetString(_keySave, json);
+        }
+
+        private void VisualAll()
+        {
+            if (_shopItems == null || _shopItemDatas == null)
+            {
+                OnShopChanged?.Invoke();
+                return;
+            }
+
+            for (int i = 0; i < _shopItems.Length; i++)
+            {
+                if (_shopItems[i] == null)
+                {
+                    continue;
+                }
+
+                ShopItemData data = i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
+                float price = data != null ? GetPrice(data.Id) : 0f;
+                bool owned = data != null && _profile.IsItemOwned(data.Id);
+                _shopItems[i].Visual(data, owned ? 0 : Mathf.RoundToInt(price), i);
+            }
+
+            OnShopChanged?.Invoke();
         }
 
         private void VisualPreview()
         {
-            if (_prices == null || PreviewId < 0 || PreviewId >= _prices.Length)
+            if (_shopItemPreview == null)
             {
                 return;
             }
 
-            ShopItemData data = _shopItemDatas != null && PreviewId < _shopItemDatas.Length
-                ? _shopItemDatas[PreviewId]
-                : null;
-            _shopItemPreview?.Visual(data, _prices[PreviewId], PreviewId);
-        }
-
-        public void Buy()
-        {
-            Buy(PreviewId);
-        }
-
-        public void Buy(int id)
-        {
-            if (_prices == null || id < 0 || id >= _prices.Length)
+            ShopItemData data = ResolveItemDataById(PreviewIdString);
+            if (data == null)
             {
+                int idx = IndexOfItemDataById(_profile.EquippedId);
+                _shopItemPreview.Visual((ShopItemData)null, 0, idx);
                 return;
             }
 
-            if (NotNullDatas() && id >= _shopItemDatas.Length)
-            {
-                return;
-            }
-
-            if (_prices[id] == 0)
-            {
-                Visual();
-                Select(id);
-                ShowPreview(id);
-            }
-            else if (_money != null && _money.Spend(_prices[id]))
-            {
-                if (NotNullDatas() && _shopItemDatas[id].isSinglePurchase)
-                {
-                    _prices[id] = 0;
-                }
-
-                Save();
-                Visual();
-                Select(id);
-                OnPurchased?.Invoke(id);
-                ShowPreview(id);
-            }
-            else
-            {
-                OnPurchaseFailed?.Invoke(id);
-                if (_changePreviewOnPurchaseFailed)
-                {
-                    ShowPreview(id);
-                }
-            }
+            bool owned = _profile.IsItemOwned(data.Id);
+            float price = GetPrice(data.Id);
+            _shopItemPreview.Visual(data, owned ? 0 : Mathf.RoundToInt(price), IndexOfItemDataById(data.Id));
         }
 
-        private void Select(int id)
+        private void PropagateSelectionVisual(string itemId)
         {
-            _id = id;
-            SaveProvider.SetInt(_keySaveEquipped, _id);
-            OnSelect?.Invoke(id);
-
-            if (_useSetItem)
-            {
-                for (int i = 0; i < _shopItems.Length; i++)
-                {
-                    _shopItems[i].Select(i == id);
-                }
-            }
-        }
-
-        public void Visual()
-        {
-            if (_shopItems == null || _prices == null)
+            if (_shopItems == null || _shopItemDatas == null)
             {
                 return;
             }
 
             for (int i = 0; i < _shopItems.Length; i++)
             {
-                ShopItemData data = _shopItemDatas != null && i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
-                int price = i < _prices.Length ? _prices[i] : 0;
-                _shopItems[i].Visual(data, price, i);
+                if (_shopItems[i] == null)
+                {
+                    continue;
+                }
+
+                ShopItemData data = i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
+                bool active = data != null && data.Id == itemId;
+                _shopItems[i].Select(active);
             }
         }
 
-        private bool NotNullDatas()
+        private IMoneySpend ResolveDefaultCurrency()
         {
-            return _shopItemDatas != null && _shopItemDatas.Length > 0;
+            if (moneySpendSource != null)
+            {
+                IMoneySpend src = moneySpendSource.GetComponent<IMoneySpend>();
+                if (src != null)
+                {
+                    return src;
+                }
+            }
+
+            return Money.I;
+        }
+
+        private IMoneySpend ResolveCurrency(string overrideSaveKey)
+        {
+            if (!string.IsNullOrEmpty(overrideSaveKey) && Money.TryFindBySaveKey(overrideSaveKey, out Money keyedMoney))
+            {
+                return keyedMoney;
+            }
+
+            return _defaultMoney ?? Money.I;
+        }
+
+        private ShopItemData ResolveItemDataById(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId) || _shopItemDatas == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                ShopItemData data = _shopItemDatas[i];
+                if (data != null && data.Id == itemId)
+                {
+                    return data;
+                }
+            }
+
+            return null;
+        }
+
+        private ShopBundleData ResolveBundleById(string bundleId)
+        {
+            if (string.IsNullOrEmpty(bundleId) || _bundles == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < _bundles.Length; i++)
+            {
+                ShopBundleData bundle = _bundles[i];
+                if (bundle != null && bundle.Id == bundleId)
+                {
+                    return bundle;
+                }
+            }
+
+            return null;
+        }
+
+        private int IndexOfItemDataById(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId) || _shopItemDatas == null)
+            {
+                return -1;
+            }
+
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                if (_shopItemDatas[i] != null && _shopItemDatas[i].Id == itemId)
+                {
+                    return i;
+                }
+            }
+
+            return -1;
+        }
+
+        private string ItemIdByIndex(int index)
+        {
+            if (_shopItemDatas == null || index < 0 || index >= _shopItemDatas.Length)
+            {
+                return "";
+            }
+
+            ShopItemData data = _shopItemDatas[index];
+            return data != null ? data.Id : "";
+        }
+
+        private string FirstItemId()
+        {
+            if (_shopItemDatas == null)
+            {
+                return "";
+            }
+
+            for (int i = 0; i < _shopItemDatas.Length; i++)
+            {
+                if (_shopItemDatas[i] != null && !string.IsNullOrEmpty(_shopItemDatas[i].Id))
+                {
+                    return _shopItemDatas[i].Id;
+                }
+            }
+
+            return "";
         }
     }
 }

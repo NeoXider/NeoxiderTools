@@ -1,26 +1,46 @@
 # ShopItemData
 
-**Purpose:** A `ScriptableObject` for storing shop item information. It allows you to configure item properties (price, icon, name) directly in the Inspector without altering the code.
+**Purpose:** A `ScriptableObject` describing one shop item. Since version **8.5.0** it carries a stable `Id`, an optional category, and an optional per-item currency. Inventory grants are configured in a separate bridge — see [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md).
+
+## Currency Override
+
+Use `Currency Override Save Key` for asset-safe multi-currency setup.
+
+- Empty key: use the Shop default currency.
+- Non-empty key: Shop resolves `Money.FindBySaveKey(key)` and spends from that wallet.
+- The GameObject `Currency Override` field was removed: a `ScriptableObject` should not store scene wallet references.
 
 ## Setup
 
-1. Create an item data object via the context menu: `Right Click > Create > Neoxider > Shop > Shop Item Data`.
-2. Configure the fields.
-3. Add the created object to the `_shopItemDatas` array in the `Shop` controller.
+1. `Right Click > Create > Neoxider > Shop > Shop Item Data`.
+2. Set `Id` (or leave empty — `OnValidate` auto-fills from `_nameItem`, mirroring [QuestConfig](../Quest/QuestConfig.md)).
+3. Configure remaining fields.
+4. Add the asset to the `_shopItemDatas` array of the [Shop](./Shop.md) controller.
 
-## Key Fields (Inspector)
+## Key fields (Inspector)
 
 | Field | Description |
 |-------|-------------|
-| `_isSinglePurchase` | Can this item be bought only once? (e.g., a unique skin or level unlock). |
-| `_nameItem` | The item's display name in the shop. |
-| `_description` | The item's description text. |
-| `_price` | The initial price of the item. |
-| `_sprite` | The main item image (e.g., for the preview window). |
-| `_icon` | The item icon (e.g., for a small list slot). |
+| `_id` | **Stable identifier**. Used as the ownership / equipped / lookup key. Auto-filled from `_nameItem` on validate when empty. **Do not change after release** — it invalidates saves. |
+| `_isSinglePurchase` | Buyable only once? When `true`, after the first purchase the item id is added to `ShopProfileData.OwnedItemIds`. |
+| `_nameItem`, `_description` | UI text. |
+| `_price` | Base price. Runtime discounts are applied with `Shop.SetRuntimePrice(id, price)`. |
+| `_sprite`, `_icon` | Preview sprite and small icon. |
+| `_category` | Optional category string (`"weapons"`, `"skins"`, ...). Used by `Shop.GetItemsInCategory(category)`. Empty string = no category. |
+| `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the item is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
 
-## See Also
+> Inventory grants are configured in [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) — its mapping table maps `ShopItemData.Id → InventoryItemData + Amount`.
 
-- [Shop](Shop.md) - Main controller.
-- [ShopItem](ShopItem.md) - UI representation of the item.
-- [Module Root](../README.md)
+## Code API
+
+```csharp
+ShopItemData data = ...;
+data.Id;                  // "sword_basic"
+data.price;               // base price
+data.Category;            // "weapons"
+data.CurrencyOverrideSaveKey;
+```
+
+## See also
+
+- [Shop](./Shop.md) · [ShopItem](./ShopItem.md) · [Module root](../README.md)

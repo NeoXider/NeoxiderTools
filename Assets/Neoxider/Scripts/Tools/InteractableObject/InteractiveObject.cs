@@ -989,6 +989,17 @@ namespace Neo.Tools
                     return false;
                 }
 
+                // Guard against the new InputSystem sentinel (inf,-inf) and other NaN/out-of-frustum
+                // values that surface in headless / PlayMode-test sessions without a real mouse device.
+                // Without this guard Camera.ScreenPointToRay logs "Screen position out of view frustum"
+                // and breaks every test that has an InteractiveObject in the scene.
+                if (!float.IsFinite(mousePos.x) || !float.IsFinite(mousePos.y) ||
+                    mousePos.x < 0f || mousePos.y < 0f ||
+                    mousePos.x > cam.pixelWidth || mousePos.y > cam.pixelHeight)
+                {
+                    return false;
+                }
+
                 ray = cam.ScreenPointToRay(mousePos);
             }
 

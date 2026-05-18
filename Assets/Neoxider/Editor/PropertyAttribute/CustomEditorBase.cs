@@ -433,6 +433,21 @@ namespace Neo.Editor
                 _wasResetPressed = false;
             }
 
+            if (target == null)
+            {
+                if (hasNeoNamespace)
+                {
+                    if (CustomEditorSettings.EnableRainbowComponentOutline)
+                    {
+                        EndRainbowLineTracking();
+                    }
+
+                    EditorGUILayout.EndVertical();
+                }
+
+                return;
+            }
+
             ProcessAttributeAssignments();
 
             if (!isOdinActive && !hasNeoNamespace)

@@ -36,6 +36,11 @@ namespace Neo.Shop
         [Space] public UnityEvent OnSelectItem;
         public UnityEvent OnDeselectItem;
 
+        public int LegacyId => _id;
+        public string BoundItemId { get; private set; } = "";
+        public ShopItemData BoundItemData { get; private set; }
+        public ShopBundleData BoundBundleData { get; private set; }
+
         private void OnValidate()
         {
             buttonBuy ??= GetComponentInChildren<Button>(true);
@@ -43,6 +48,57 @@ namespace Neo.Shop
 
 
         public void Visual(ShopItemData shopItemData, int price, int id)
+        {
+            _id = id;
+            BoundItemData = shopItemData;
+            BoundBundleData = null;
+            BoundItemId = shopItemData != null ? shopItemData.Id : "";
+            ApplyPrice(price);
+
+            if (shopItemData != null)
+            {
+                ApplyDisplay(shopItemData.nameItem, shopItemData.description, shopItemData.sprite, shopItemData.icon);
+            }
+            else
+            {
+                ApplyDisplay("", "", null, null);
+            }
+        }
+
+        /// <summary>
+        ///     Visualises a <see cref="ShopBundleData"/> in this slot — uses bundle name, description,
+        ///     sprite, and icon. Useful for bundle UI tabs / dialogs alongside the regular item list.
+        /// </summary>
+        public void Visual(ShopBundleData bundleData, int price, int id)
+        {
+            _id = id;
+            BoundItemData = null;
+            BoundBundleData = bundleData;
+            BoundItemId = bundleData != null ? bundleData.Id : "";
+            ApplyPrice(price);
+
+            if (bundleData != null)
+            {
+                ApplyDisplay(bundleData.nameBundle, bundleData.description, bundleData.sprite, bundleData.icon);
+            }
+            else
+            {
+                ApplyDisplay("", "", null, null);
+            }
+        }
+
+        public void Clear()
+        {
+            _id = -1;
+            BoundItemData = null;
+            BoundBundleData = null;
+            BoundItemId = "";
+            ApplyDisplay("", "", null, null);
+            ApplyPrice(0);
+            Select(false);
+        }
+
+        private void ApplyPrice(int price)
         {
             if (buttonPrice != null)
             {
@@ -53,38 +109,38 @@ namespace Neo.Shop
             {
                 _textPrice.text = price.ToString();
             }
+        }
 
-            if (shopItemData != null)
+        private void ApplyDisplay(string name, string description, Sprite sprite, Sprite icon)
+        {
+            if (_textName != null)
             {
-                if (_textName != null)
-                {
-                    _textName.text = shopItemData.nameItem;
-                }
+                _textName.text = name;
+            }
 
-                if (_textDescription != null)
-                {
-                    _textDescription.text = shopItemData.description;
-                }
+            if (_textDescription != null)
+            {
+                _textDescription.text = description;
+            }
 
-                if (_imageItem != null)
-                {
-                    _imageItem.sprite = shopItemData.sprite;
-                }
+            if (_imageItem != null)
+            {
+                _imageItem.sprite = sprite;
+            }
 
-                if (_spriteRendererItem != null)
-                {
-                    _spriteRendererItem.sprite = shopItemData.sprite;
-                }
+            if (_spriteRendererItem != null)
+            {
+                _spriteRendererItem.sprite = sprite;
+            }
 
-                if (_imageIco != null)
-                {
-                    _imageIco.sprite = shopItemData.icon;
-                }
+            if (_imageIco != null)
+            {
+                _imageIco.sprite = icon;
+            }
 
-                if (_spriteRendererIcon != null)
-                {
-                    _spriteRendererIcon.sprite = shopItemData.icon;
-                }
+            if (_spriteRendererIcon != null)
+            {
+                _spriteRendererIcon.sprite = icon;
             }
         }
 

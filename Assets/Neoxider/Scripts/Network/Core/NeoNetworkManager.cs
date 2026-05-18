@@ -148,7 +148,7 @@ namespace Neo.Network
 
         public new void StartHost()
         {
-            PrepareScenePlayerTemplate();
+            PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
             base.StartHost();
             DisableScenePlayerTemplateInstance();
@@ -156,21 +156,21 @@ namespace Neo.Network
 
         public new void StartServer()
         {
-            PrepareScenePlayerTemplate();
+            PrepareScenePlayerTemplate(true);
             base.StartServer();
             DisableScenePlayerTemplateInstance();
         }
 
         public new void StartClient()
         {
-            PrepareScenePlayerTemplate();
+            PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
             base.StartClient();
         }
 
         public new void StartClient(System.Uri uri)
         {
-            PrepareScenePlayerTemplate();
+            PrepareScenePlayerTemplate(true);
             RegisterScenePlayerTemplateSpawnHandler();
             base.StartClient(uri);
         }
@@ -178,7 +178,7 @@ namespace Neo.Network
         public override void OnStartServer()
         {
             base.OnStartServer();
-            PrepareScenePlayerTemplate();
+            PrepareScenePlayerTemplate(true);
             DisableScenePlayerTemplateInstance();
             NetworkContextActionRelay.RegisterMirrorHandlers();
             _onServerStarted?.Invoke();
@@ -190,6 +190,7 @@ namespace Neo.Network
             base.OnStartClient();
             NetworkContextActionRelay.RegisterMirrorHandlers();
             RegisterScenePlayerTemplateSpawnHandler();
+            PrepareScenePlayerTemplate(true);
             if (!NetworkServer.active)
                 DisableScenePlayerTemplateInstance();
         }
@@ -287,7 +288,7 @@ namespace Neo.Network
             }
         }
 
-        private void PrepareScenePlayerTemplate()
+        private void PrepareScenePlayerTemplate(bool allowDisableTemplate = false)
         {
             NormalizeScenePlayerTemplateMode();
 
@@ -296,7 +297,7 @@ namespace Neo.Network
 
             ApplyScenePlayerTemplateMode();
 
-            if (_scenePlayerTemplate == null || !_disableScenePlayerTemplate)
+            if (!allowDisableTemplate || _scenePlayerTemplate == null || !_disableScenePlayerTemplate)
                 return;
 
             DisableScenePlayerTemplateInstance();

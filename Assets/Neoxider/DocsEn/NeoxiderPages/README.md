@@ -21,4 +21,5 @@ Assets/Neoxider/Samples~/NeoxiderPages/
 ## More docs
 
 - Russian docs: [`../../Docs/NeoxiderPages/README.md`](../../Docs/NeoxiderPages/README.md)
+- [UIPage](./UIPage.md)
 - UI module: [`../UI/README.md`](../UI/README.md)

@@ -14,6 +14,7 @@
 | **InventoryHand** | Система «руки»: один выбранный предмет в Hand Anchor; переключение влево/вправо, интеграция с Selector; при наличии HandView на предмете применяются офсеты и масштаб вьюшки, затем общий масштаб (по умолчанию дельта). |
 | **HandView** | Вьюшка руки на префабе предмета: смещение позиции/поворота и базовый масштаб в руке; InventoryHand читает с экземпляра и применяет первой. |
 | **InventoryPickupBridge** | Вспомогательный мост для вызовов Collect из UnityEvent (InteractiveObject, PhysicsEvents и т.д.). |
+| **ShopInventoryGrantBridge** | Bridge, связывающий [Shop](../../Shop/Shop.md) и инвентарь. Listen на `OnPurchasedId` + таблица mappings `shopItemId → InventoryItemData + amount`. Цена опциональная связи: Shop остаётся без зависимости от Inventory. |
 | **InventoryItemData** | ScriptableObject с описанием предмета (id, name, icon, maxStack, category, `Supports Instance State`). |
 | **InventoryDatabase** | ScriptableObject-база предметов для lookup по id и ограничений maxStack. |
 | **InventoryInitialStateData** | ScriptableObject с начальным заполнением инвентаря. |
@@ -83,3 +84,4 @@ if (inventory.GetCount(coin.ItemId) >= 10) { ... }
 - [PickableItem](./PickableItem.md)
 - [InventoryDropper](./InventoryDropper.md) — дроп в мир; при подключении через Hand обрабатывает DropEquipped, свойство AllowDropInput.
 - [InventoryView](./InventoryView.md)
+- [ShopInventoryGrantBridge](./ShopInventoryGrantBridge.md) — опциональная связка с модулем Shop.

@@ -3,6 +3,7 @@ using Neo.Network;
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
@@ -18,8 +19,14 @@ namespace Neo.Shop
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
-    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd
+    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd, INeoOptionalNetworked
     {
+        /// <inheritdoc />
+        bool INeoOptionalNetworked.IsNetworked => isNetworked;
+
+
+        private static readonly List<Money> Registry = new();
+
         [Header("Networking")]
         [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]
         public bool isNetworked = false;
@@ -55,6 +62,57 @@ namespace Neo.Shop
 
         /// <summary>Last amount change (for NeoCondition and reflection).</summary>
         public float LastChangeMoneyValue => LastChangeMoney.CurrentValue;
+
+        public static Money FindBySaveKey(string saveKey)
+        {
+            if (string.IsNullOrEmpty(saveKey))
+            {
+                return I;
+            }
+
+            for (int i = Registry.Count - 1; i >= 0; i--)
+            {
+                Money money = Registry[i];
+                if (money == null)
+                {
+                    Registry.RemoveAt(i);
+                    continue;
+                }
+
+                if (money.SaveKey == saveKey)
+                {
+                    return money;
+                }
+            }
+
+            Money[] allMoney = FindObjectsByType<Money>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            for (int i = 0; i < allMoney.Length; i++)
+            {
+                if (allMoney[i] != null && allMoney[i].SaveKey == saveKey)
+                {
+                    Register(allMoney[i]);
+                    return allMoney[i];
+                }
+            }
+
+            return null;
+        }
+
+        public static bool TryFindBySaveKey(string saveKey, out Money money)
+        {
+            money = FindBySaveKey(saveKey);
+            return money != null;
+        }
+
+        private void OnEnable()
+        {
+            Register(this);
+        }
+
+        private void OnDisable()
+        {
+            Registry.Remove(this);
+        }
 
         private void Start()
         {
@@ -123,9 +181,24 @@ namespace Neo.Shop
             PersistBalanceToSave();
         }
 
+        /// <summary>
+        ///     Shop supports several <see cref="Money"/> wallets (different <see cref="SaveKey"/>);
+        ///     they must not destroy each other as duplicate singletons.
+        /// </summary>
+        protected override bool DestroyGameObjectOnDuplicateSingleton => false;
+
         protected override void Init()
         {
             base.Init();
+            Register(this);
+        }
+
+        private static void Register(Money money)
+        {
+            if (money != null && !Registry.Contains(money))
+            {
+                Registry.Add(money);
+            }
         }
 
         private void LoadFromSave()
@@ -405,6 +478,7 @@ namespace Neo.Shop
                 ApplyMoneyToText();
             }
         }
+
 #endif
     }
 }
