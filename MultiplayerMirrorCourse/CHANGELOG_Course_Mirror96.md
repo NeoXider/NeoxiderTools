@@ -1,67 +1,96 @@
-# Соответствие курса линии Mirror v96.x
+# Версии Mirror и актуальность курса
 
-**Год актуализации материалов: 2026.** В URL GitBook фигурирует сегмент **`2025-change-log`** — это **официальное имя** страницы документации (крупный свод на дату выхода **v96.0.1** в Asset Store, **2025-02-27**). Все **последующие** патчи и миноры линии `v96.x` за **2026** смотрите в [GitHub Releases](https://github.com/MirrorNetworking/Mirror/releases).
+Курс ориентирован на Mirror `96.x`. В этом проекте локально установлен Mirror `96.0.1` (`Assets/Mirror/version.txt`).
 
-Источники (проверяйте оба — после **v96.0.1** новые фиксы чаще всего сначала появляются на GitHub):
+Последняя сверенная версия в GitHub Releases: `96.10.0` от 2026-04-02. Это не значит, что проект уже обновлён. Это значит, что курс помечает места, которые нужно проверить перед апдейтом с `96.0.1`.
 
-- [2025 Change Log (Asset Store / GitBook)](https://mirror-networking.gitbook.io/docs/manual/general/changelog/2025-change-log) — структурированный список фич для **v96.0.1** (дата публикации в Store — 2025-02-27).
-- [Releases на GitHub](https://github.com/MirrorNetworking/Mirror/releases) — **v96.9.x**, **v96.10.x** и далее (**2026**).
+Этот файл нужен не как полный changelog Mirror, а как учебная карта:
 
-> **Правило курса:** перед релизом игры сверяйте **свой** тег пакета с таблицей ниже и с последними 2–3 релизами на GitHub; строки с пометкой «post-96.0.1» появились **после** записи в GitBook на дату v96.0.1.
-
----
-
-## Таблица: фичи и изменения API → уроки курса
-
-| Тема Mirror | Урок | Комментарий |
-|-------------|------|---------------|
-| `NetworkTransformHybrid` (редкий reliable full state + unreliable дельты) | 03 | v96.0.1 |
-| `velocity` / `angularVelocity` на приёмнике `NetworkTransform` | 03 | v96.0.1 |
-| `NetworkTransform`: `FixedUpdate`, `Physics.SyncTransforms` в `ResetState` / телепорт | 03 | v96.0.1 |
-| `NetworkRigidbody*` + **`useFixedUpdate`**: дочерний `FixedUpdate` перекрывает родительский; на **stock** пакете оставляйте **Use Fixed Update** выключенным или ждите фикса upstream | 03 | поведение кода v96.x, зафиксировано в курсе **2026** |
-| `SnapShotSettings` вместо старых полей snapshot в `NetworkClient` | 03, 15 | v96.0.1 *change* |
-| Hex Spatial Hash Interest Management (2D/3D) | 07 | [док](https://mirror-networking.gitbook.io/docs/manual/interest-management/hex-spatial-hashing.md), v96.0.1 |
-| Scene Distance Interest Management | 07 | v96.0.1 |
-| Interest Management: все формы в **LateUpdate** | 07 | v96.0.1 *fix* |
-| `SetHostVisibility`: terrain tree details, lights, audio, particles | 07, 12 | v96.0.1 |
-| `SetHostVisibility`: все **Canvas** renderers | 07, 12 | **v96.10.0** (post-96.0.1) |
-| `HashSet` в `SyncVar` / `Command` / `ClientRpc` / `TargetRpc` / `NetworkMessage` | 05, 06, 26 | v96.0.1 |
-| `Vector4Long`, half floats для кватернионов; **HalfFloats** в Compression | 13 | v96.0.1 |
-| **Vector X Byte** structs (организация типов сжатия) | 13 | **v96.10.0** (post-96.0.1) |
-| Отложенное применение spawn payload на клиенте; меньше гонок `netId` | 02, 04 | v96.0.1 *change* |
-| `NetworkIdentity.OnDestroy` проверяет `spawned[netId]` перед удалением | 02 | v96.0.1 *fix* |
-| `NetworkServer`: `dontListen` → **`listen`** (семантика без двойного отрицания) | 01, 14 | v96.0.1 *change* |
-| `connectionId` перенесён на **`NetworkConnectionToClient`** | 01, 02, 06 | v96.0.1 *change* |
-| `NetworkManager` / `Transport`: deprecated **`OnApplicationQuit`** → **`OnDestroy`** | 01, 15 | v96.0.1 *change* |
-| `NetworkAnimator`: без двойного вызова trigger на host | 21 | v96.0.1 *fix* |
-| **Reader / Writer Processor** работает **между сборками** (asmdef) | 05 | v96.0.1 *fix* |
-| **Simple Web Transport**: jslib, WebAssembly, меньше аллокаций на сообщение | 01, 18 | v96.0.1 + post-96.0.1 |
-| **Encryption Transport**: лог HW acceleration, реализует **Port Transport**; Bouncy Castle в папке транспорта | 01, 29 | v96.0.1 |
-| **Network Manager**: кнопка **Clear** у списка spawnable prefabs (редактор) | 02 | v96.0.1 |
-| **NetworkServer** проверяет `listen`, отклоняет если не слушает | 01, 14 | v96.0.1 *fix* |
-| **NetworkManager.StopClient** больше не зовёт `OnClientDisconnectInternal` (зовёт транспорт) | 15 | v96.0.1 *fix* |
-| **NetworkServer** корректно вызывает `NetworkClient.InvokeUnSpawnHandler` из `UnSpawnInternal` | 02 | v96.0.1 *fix* |
-| **Netgraph** улучшения | 13 | v96.0.1 |
-| **Edgegap Plugin** в примерах (версия обновлялась, напр. 2.3.1) | 14, 25 | v96.0.1 |
-| Примеры: **Pooling** в Room / Multiple Additive Scene; портал ждёт `RemovePlayerForConnection` | 27, 08 | v96.0.1 |
-| **PredictionUtils**: `freezeRotation` перед constraints | 10 | v96.0.1 *fix* |
-| Режим Play в **Prefab Mode** с сетью | — | v96.0.1 *fix*; см. документацию Unity + Mirror |
-| **KCP**: `OnClientError` при shutdown без null-крашей | 15 | v96.0.1 *fix* |
-| **NetworkIdentity**: проверка **unreliableBaseline** при baseline | 02, 04 | **v96.9.19** |
-| **DestroyOwnedObjects** — производительность | 02 | **v96.9.22** |
-| **GetStableHashCode16** вместо усечения хеша | 05 | **v96.9.21** |
-| WebGL: не заливать ошибками unreliable EntityStateMessages | 18 | **v96.9.23** |
+- какие темы курса зависят от версии;
+- какие документы проверять;
+- какие smoke-тесты запускать после обновления;
+- какие изменения стоит объяснить новичку отдельно.
 
 ---
 
-## Урок 10 (Lag Compensation)
+## Источники
 
-Модули **`LagCompensation` / история позиций** зависят от ветки и namespace в пакете. Не копируйте код из сторонних блогов: возьмите **пример из репозитория Mirror** на **том же теге**, что в `Packages/manifest.json`.
+- [Mirror documentation](https://mirror-networking.gitbook.io/docs/)
+- [Mirror GitHub Releases](https://github.com/MirrorNetworking/Mirror/releases)
+- [Mirror repository README](https://github.com/MirrorNetworking/Mirror)
+- [Mirror Network Identity docs](https://mirror-networking.gitbook.io/docs/manual/components/network-identity)
+- [Mirror Synchronization docs](https://mirror-networking.gitbook.io/docs/manual/guides/synchronization)
+- [Mirror Remote Actions docs](https://mirror-networking.gitbook.io/docs/manual/guides/communications/remote-actions)
+- [Mirror Network Transform docs](https://mirror-networking.gitbook.io/docs/manual/components/network-transform)
+- [Mirror Interest Management docs](https://mirror-networking.gitbook.io/docs/manual/interest-management)
+- [Unity Dedicated Server build docs](https://docs.unity3d.com/Manual/dedicated-server-build.html)
+- [Unity Multiplayer Play Mode package docs](https://docs.unity3d.com/Packages/com.unity.multiplayer.playmode@1.6/manual/index.html)
 
 ---
 
-## Как поддерживать этот файл в актуальном виде (2026)
+## Что важно для курса
 
-1. Раз в месяц открыть [GitHub Releases](https://github.com/MirrorNetworking/Mirror/releases) и просмотреть **Features / Fixes** для вашей линии `96.x` (в **2026** основной поток правок — там).
-2. Новую строку добавлять в таблицу: **тема → урок → краткий комментарий**.
-3. Если API переименован — обновить соответствующий `.md` урока, а не только changelog.
+| Тема | Уроки | Комментарий |
+|------|-------|-------------|
+| `NetworkIdentity` на root, nested identities не поддерживаются | 02 | Проверять каждый network prefab. |
+| Dynamic spawn через `NetworkServer.Spawn` | 02 | Клиент просит, сервер спавнит. |
+| `netId` назначается runtime instance | 02, 04 | Prefab asset с `netId = 0` - нормально. |
+| `SyncVar` идёт server -> clients | 04 | Клиент меняет state через `Command`. |
+| Sync-коллекции для списков и словарей | 05 | Не отправлять JSON всего списка без причины. |
+| `Command` требует authority по умолчанию | 06 | `requiresAuthority = false` требует строгой валидации. |
+| Interest Management управляет observers | 07 | Это не замена античиту, но снижает трафик и утечки данных. |
+| `NetworkTransform` использует snapshot/interpolation подход | 03, 10, 20 | Проверять Sync Direction, reliable/unreliable variant, Send Rate и buffer. |
+| Dedicated server требует headless bootstrap | 14, 23, 25 | UI-кнопки не подходят. |
+| Custom `NetworkMessage` полезны для protocol/auth | 19, 26 | Версионировать и лимитировать. |
+| Multiplayer Play Mode полезен для локальной проверки | 01, 22 | Не заменяет отдельный build и dedicated smoke. |
+| WebGL требует подходящий transport | 01, 16, 17 | Browser client не работает через KCP-only. |
+
+---
+
+## Учтённые релизы после 96.0.1
+
+| Версия | Дата | Важно |
+|--------|------|-------|
+| `96.9.16` | 2026-02-26 | SimpleWebTransport memory allocation fixes. |
+| `96.9.19` | 2026-03-01 | NetworkIdentity unreliable baseline fix. |
+| `96.9.21` | 2026-03-26 | `GetStableHashCode16` вместо усечения хеша. |
+| `96.9.22` | 2026-03-26 | `DestroyOwnedObjects` performance. |
+| `96.9.23` | 2026-03-26 | WebGL unreliable EntityStateMessages noise fix. |
+| `96.10.0` | 2026-04-02 | `SetHostVisibility` затрагивает Canvas renderers; Vector X Byte structs. |
+
+---
+
+## Учебные решения по Mirror 96.x
+
+| Решение | Почему так |
+|---------|------------|
+| Базовый transport для desktop: KCP | Mirror docs называют KCP default transport; он UDP и требует открыть UDP port. |
+| Sync state через `SyncVar`/SyncCollections | Это проще и безопаснее для новичка, чем самописный протокол. |
+| Event через RPC, long-lived state через Sync | Так меньше десинхронов после late join/reconnect. |
+| Movement сначала через `NetworkTransform` | Это даёт быстрый baseline; prediction включается только по реальной необходимости. |
+| Interest Management не с первого урока | Новичку сначала нужен connect/spawn/state, а не оптимизация видимости. |
+| Dedicated отдельно от Host | Host скрывает server/client ошибки и не показывает headless проблемы. |
+
+---
+
+## Как обновлять Mirror
+
+1. Отдельная ветка.
+2. Записать old/new version.
+3. Прочитать GitHub Releases между версиями.
+4. Обновить package.
+5. Собрать client и dedicated server.
+6. Прогнать smoke tests.
+7. Обновить этот файл и уроки, если API/поведение изменились.
+8. Подготовить rollback.
+
+Минимальный smoke после обновления:
+
+- Host + Client connect.
+- Dedicated + Client connect.
+- Player spawn/despawn.
+- `SyncVar` hook.
+- `Command` с валидным и невалидным request.
+- `NetworkTransform` под latency/loss simulation.
+- Dynamic prefab spawn/destroy.
+- Custom `NetworkMessage`, если используется.

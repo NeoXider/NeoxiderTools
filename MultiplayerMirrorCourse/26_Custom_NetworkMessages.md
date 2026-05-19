@@ -1,81 +1,123 @@
-# Урок 26: Кастомные NetworkMessage и тонкая сериализация
+# Урок 26: кастомные NetworkMessage и протокол
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 11/15 · Mirror `96.x`
+
+| Ключевые слова | `NetworkMessage`, protocol, version, serializer, payload |
+|----------------|----------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Продвинутый трек** · урок **11/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | `NetworkMessage`, `RegisterHandler`, версии сообщений, совместимость, `HashSet` |
-
----
-
-## Цели
-
-Понять, **когда** выходить за рамки `Command`/`ClientRpc`/`SyncVar`: одноразовые сообщения, handshake, телеметрия; спроектировать **эволюцию** протокола без «все клиенты обязаны обновиться в один час».
-
----
-
-## Проблема и контекст
-
-| Всё через Rpc | Лишняя семантика, сложнее версионировать |
-|---------------|-------------------------------------------|
-| «Спрятали» данные в строке JSON внутри Rpc | Нет типобезопасности, дорого сериализовать |
-| Разные порядки регистрации handlerов | Тихий игнор сообщений |
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Protocol messages before/without spawned objects. |
+| Кто владеет state | Messages carry requests/data; server still validates. |
+| Как проверить | Valid/invalid message handled before player spawn, with size/rate limits. |
+| Артефакт | `NETWORK_PROTOCOL.md` with message schema and version. |
 
 ---
 
-## Теория
+## Что должно получиться
 
-`NetworkMessage` в Mirror — это **явный контракт** между клиентом и сервером: структура данных + код обработчика. Добавляйте **поле версии схемы** или отдельный `protocolVersion` в первом handshake-сообщении при эволюции.
+Вы понимаете, когда RPC неудобен, и умеете описать сетевое сообщение без привязки к конкретному spawned object.
 
-В **v96** расширена поддержка типов сериализации (в т.ч. `HashSet` и др.) — сверяйтесь с [CHANGELOG курса](CHANGELOG_Course_Mirror96.md) и официальным changelog Mirror под ваш тег.
+---
 
-### Сравнение с Rpc/Command
+## Проблема
 
-| Механизм | Когда уместен |
+RPC привязан к `NetworkBehaviour`. Для auth, handshake, matchmaking, telemetry или системных сообщений это часто лишняя зависимость.
+
+---
+
+## Когда использовать NetworkMessage
+
+| Сценарий | Почему message |
 |----------|----------------|
-| `Command` | Игрок просит сервер сделать действие с валидацией |
-| `ClientRpc` | Сервер уведомляет клиентов о событии мира |
-| `SyncVar` | Небольшое состояние, часто меняющееся |
-| `NetworkMessage` | Потоковые/служебные данные, версионируемые пакето, метрики |
+| Handshake/version | До spawn объекта. |
+| Auth payload | Не относится к player object. |
+| Match list | Глобальный протокол. |
+| Server notice | Системное сообщение. |
+| Telemetry/dev diagnostics | Не gameplay state. |
 
 ---
 
 ## Практика
 
-1. Один простой message: «пинг матча» с `ulong token` — сервер логирует получение.
-2. Зафиксируйте **порядок** регистрации handlerов в `OnStartClient` / `OnStartServer` (зависит от архитектуры).
-3. Добавьте тест: старый клиент с `protocolVersion=1`, новый сервер `=2` — что происходит? Должно быть **явное** отключение с текстом.
+```csharp
+using Mirror;
 
-### Шаг 1 — минимальная схема
+public struct ClientHelloMessage : NetworkMessage
+{
+    public int protocolVersion;
+    public string clientVersion;
+    public string token;
+}
 
-Опишите в `PROTOCOL.md`: таблица `MsgId`, поля, направление (C→S или S→C), частота.
+public struct ServerRejectMessage : NetworkMessage
+{
+    public string reason;
+}
+```
 
-### Шаг 2 — ограничение размера
+Правила:
 
-Сообщение > **нескольких KB** — сигнал к разбиению: chunking, ссылка на CDN, потоковая загрузка уровня вне игрового сокета.
-
-### Шаг 3 — безопасность
-
-Любое сообщение — потенциальный вектор атаки (урок 29): лимиты частоты, проверка размера, не доверять клиенту.
+- у сообщения есть версия протокола;
+- payload ограничен по размеру;
+- сервер валидирует все поля;
+- секреты не пишутся в лог.
 
 ---
 
-## Типичные ошибки
+## Проверка себя
 
-- Разный порядок регистрации handlerов на клиенте и сервере.
-- Нет версии протокола — невозможен поэтапный rollout.
-- Сериализация «всего инвентаря» в одном message при входе.
+- Сообщение можно обработать без spawned player.
+- Есть ограничение размера и частоты.
+- Есть version field.
+- Ошибка протокола ведёт к понятному disconnect/reject.
 
 ---
 
-## Советы и паттерны
+## Минимальная диагностика
 
-Тяжёлые данные — chunked или URL на CDN, не гигантский message.
+| Симптом | Что проверить |
+|---------|---------------|
+| Message handler падает до spawn | Null checks, auth state, connection lifecycle. |
+| Protocol mismatch | Version field и reject reason. |
+| Memory/traffic spike | Payload size limit, no giant JSON, rate limit. |
+| Gameplay state расходится | Вы используете message там, где нужен Sync/Command flow. |
 
-Для телеметрии используйте отдельный канал (UDP syslog, HTTP batch), если нагрузка на игровой сокет мешает бою.
+---
+
+## Частые ошибки
+
+- Делать gameplay state через messages вместо SyncVar/Commands без причины.
+- Не версионировать протокол.
+- Отправлять большие JSON payload.
+- Доверять message от клиента.
+
+---
+
+## Лайфхаки
+
+- Держите список сообщений в `NETWORK_PROTOCOL.md`.
+- Для нестандартных типов используйте явные Reader/Writer.
+- Если message влияет на матч, он всё равно проходит server validation.
+
+---
+
+## Профессиональный минимум
+
+- Каждое message имеет direction, version, max size и handler owner.
+- Client messages валидируются как недоверенные.
+- Protocol changes проходят migration/backward compatibility decision.
+- Auth/protocol logs не раскрывают secrets.
 
 ---
 
 ## Домашнее задание
 
-Опишите, какие **3 события** в вашей игре лучше как `NetworkMessage`, а не как `ClientRpc`, и почему (размер, частота, направление, версия).
+Опишите три сообщения вашей игры:
+
+| Message | Направление | Поля | Лимит | Что проверяет сервер |
+|---------|-------------|------|-------|----------------------|

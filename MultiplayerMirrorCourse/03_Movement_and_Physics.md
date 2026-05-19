@@ -1,177 +1,165 @@
-# Урок 3: Движение, физика и NetworkTransform
+# Урок 3: движение, физика и NetworkTransform
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 3/15 · Mirror `96.x`
+
+| Ключевые слова | `NetworkTransform`, `isLocalPlayer`, `isOwned`, Rigidbody, prediction |
+|----------------|------------------------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Базовый трек** · урок **3/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | `NetworkTransformReliable`, `NetworkTransformUnreliable`, `NetworkTransformHybrid`, `SnapShotSettings` |
-|----------------|----------------------------------------------------------------------------------------------------------|
-
----
-
-## Цели
-
-Выбрать тип `NetworkTransform` под задачу, настроить интервал отправки, понять client vs server authority для движения, учесть **FixedUpdate** и телепорт в актуальных версиях Mirror.
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Player prefab, movement script, камера локального игрока. |
+| Кто владеет state | Input читает client-owner; позицию синхронизирует выбранная authority-схема. |
+| Как проверить | Два клиента двигают только свои player object; remote copies не читают input. |
+| Артефакт | `MOVEMENT_NET.md` с authority, `NetworkTransform` variant, Send Rate/buffer. |
 
 ---
 
-## Проблема и контекст
+## Что должно получиться
 
-| Без правильной синхронизации | Эффект |
-|------------------------------|--------|
-| Позиция каждый кадр всем | Перегруз канала |
-| Редкие апдейты без интерполяции | «Слайдшоу» |
-| Reliable на быстрых объектах | Head-of-line blocking, рост пинга |
-| Телепорт без `SyncTransforms` / API трансформа | CharacterController и не-kinematic Rigidbody «сопротивляются» (улучшено в v96) |
+Игрок двигает только свой объект, а остальные клиенты видят движение как удалённые копии. Вы понимаете, когда брать server authority, client authority и почему движение не надо отправлять вручную каждый кадр без причины.
 
 ---
 
-## Теория
+## Проблема
 
-Mirror шлёт снимки с заданным **sync interval**. Между ними клиент **интерполирует** (unreliable-поток) или ждёт надёжную доставку (reliable).
-
-- **`NetworkTransformUnreliable`** — динамика, потери допустимы, snapshot interpolation.
-- **`NetworkTransformReliable`** — лифты, двери, редкие но важные апдейты.
-- **`NetworkTransformHybrid`** (v96) — редкий полный надёжный снимок + частые дельты по unreliable.
-
-На приёмнике в v96 доступны **velocity / angularVelocity** — удобно для визуализации без численного дифференцирования.
-
-Настройки интерполяции клиента уводят в **`SnapShotSettings`** (не опирайтесь на устаревшие поля в старых туториалах).
-
-Телепорт: **`NetworkTransform`** в **v96** вызывает **`Physics.SyncTransforms`** из **`ResetState`** (в т.ч. из **`OnTeleport`**), чтобы **CharacterController** и **не-kinematic Rigidbody** не «отбрасывали» принудительную позицию.
+Самая частая ошибка: один и тот же `Update()` двигает все копии игрока на всех клиентах. На host это иногда выглядит нормально, а отдельный client сразу показывает хаос.
 
 ---
 
-## Практика
+## Теория коротко
 
-### Шаг 1. Компонент на игроке
+Есть две разные задачи:
 
-Добавьте `NetworkTransformUnreliable` (или Hybrid по сценарию). Отключите лишние оси (scale часто не нужен). `Sync Interval` около `0.033` с — разумный старт.
+| Задача | Где решается |
+|--------|--------------|
+| Читать ввод локального игрока | Только owner/local player. |
+| Передать позицию другим | Через `NetworkTransform` или свою сетевую схему. |
 
-### Шаг 2. Движение локального игрока
+Типовой guard:
 
 ```csharp
 void Update()
 {
     if (!isLocalPlayer) return;
-    // ввод → CharacterController.Move / Rigidbody
+
+    float x = Input.GetAxisRaw("Horizontal");
+    float z = Input.GetAxisRaw("Vertical");
+    Move(x, z);
 }
 ```
 
-### Шаг 3. Физика
-
-Для стекующихся тел с серверным авторитетом изучите **`NetworkRigidbodyReliable` / `NetworkRigidbodyUnreliable`** и changelog v96. Для **client authority** (типично `syncDirection = ClientToServer` на игроке) компонент выставляет `Rigidbody` в kinematic на стороне без ввода и синхронизирует **целевой `Transform`**.
+Для owned objects, которые не являются player prefab, может быть уместнее `isOwned`. Для первого player movement используйте `isLocalPlayer`, пока не поймёте разницу.
 
 ---
 
-## Дополнение: `NetworkRigidbody*` и галочка **Use Fixed Update**
+## Выбор подхода
 
-В **stock** Mirror (в т.ч. v96) у `NetworkRigidbodyUnreliable` / `NetworkRigidbodyReliable` (и 2D-вариантов) объявлен **свой** `FixedUpdate()` для переключения kinematic, при этом у родительского `NetworkTransform*` тоже есть `FixedUpdate()`, который при **`useFixedUpdate == true`** должен **применить** отложенный `pendingSnapshot`. В C# метод дочернего класса **перекрывает** сообщение Unity: вызывается только `FixedUpdate` у **NetworkRigidbody**, базовый **не выполняется**, снимки не попадают в `Apply` → **удалённые копии персонажа «застывают»** на спавне, хотя Cmd/Rpc идут.
+| Подход | Когда подходит |
+|--------|----------------|
+| Client authority + проверки | Кооп, прототипы, нестрогая честность. |
+| Server authority | PvP, экономика позиции, важная физика. |
+| Server authority + prediction | PvP action, где задержка ломает ощущение. |
+| NetworkTransform | Базовая синхронизация transform без ручного протокола. |
 
-**Практическое правило без правок пакета Mirror:** на префабе игрока у `NetworkRigidbody*` оставьте **`Use Fixed Update` выключенным** — тогда применение идёт в **`Update`**, как заложено в ветке без отложенного FixedUpdate. Если принципиально нужен fixed-тайминг применения — либо ждите фикса upstream, либо свой тонкий слой (не дублируйте Mirror в учебном проекте без необходимости).
+В Mirror `96.x` есть разные варианты NetworkTransform. Не выбирайте их по названию: измеряйте поведение под задержкой и потерями.
 
-Согласуйте это с уроком **20** (`FixedUpdate` / сетевой тик): отключённый **Use Fixed Update** у NR **не** отменяет ваш `FixedUpdate` для сил/скорости на **владеющем** клиенте.
+По документации Mirror `NetworkTransform` бывает reliable и unreliable. Reliable экономнее по bandwidth, unreliable обычно лучше для низкой задержки движения. В новых версиях настройка частоты может жить на `NetworkManager` как `Send Rate`, поэтому не ищите старый `syncInterval`, если inspector уже изменился.
 
----
-
-## Типичные ошибки
-
-- Нет `if (!isLocalPlayer) return` — двигаются все копии игрока.
-- Удалённый игрок не двигается при **`NetworkRigidbody*` + `Use Fixed Update` включён** — см. дополнение выше (stock Mirror).
-- Две активные **Main Camera** на префабе — включать камеру в `OnStartLocalPlayer`.
-- Client authority + без серверных проверок — speedhack через память (см. урок 9).
+Буферизация движения - это не баг, а способ сгладить latency/loss/jitter. Чем хуже сеть, тем выше нужен buffer, но тем больше визуальная задержка.
 
 ---
 
-## Советы и паттерны
+## Практика
 
-- Для соревновательного PvP планируйте **server authority** + prediction (урок 10), а не «голый» client authority.
-- Телепорты делайте через поддерживаемый API вашей версии `NetworkTransform` / RPC + серверную позицию.
+1. На player prefab добавьте `NetworkTransform` подходящего типа вашей версии.
+2. Отключите sync лишних осей, если scale/rotation не нужны.
+3. В movement script добавьте guard `if (!isLocalPlayer) return;`.
+4. Камеру и input включайте в `OnStartLocalPlayer`.
+5. Запустите Host + отдельный Client.
+
+Пример локальной камеры:
+
+```csharp
+public sealed class LocalPlayerSetup : NetworkBehaviour
+{
+    [SerializeField] Camera playerCamera;
+    [SerializeField] AudioListener audioListener;
+
+    public override void OnStartLocalPlayer()
+    {
+        playerCamera.enabled = true;
+        audioListener.enabled = true;
+    }
+
+    public override void OnStartClient()
+    {
+        if (isLocalPlayer) return;
+
+        playerCamera.enabled = false;
+        audioListener.enabled = false;
+    }
+}
+```
+
+---
+
+## Проверка себя
+
+- Нажатие WASD в первом клиенте двигает только его игрока.
+- Второй клиент видит движение первого, но своим вводом его не контролирует.
+- В сцене активна только камера локального игрока.
+- При 150 ms latency движение остаётся понятным, даже если не идеально.
+
+---
+
+## Минимальная диагностика
+
+| Симптом | Что проверить |
+|---------|---------------|
+| Все игроки двигаются от одного input | Нет guard `isLocalPlayer` или `isOwned`. |
+| Две камеры активны | Камера включается только в `OnStartLocalPlayer`. |
+| Remote movement дёргается | Send Rate, buffer multiplier, reliable/unreliable variant, packet loss. |
+| PvP speedhack возможен | Server не проверяет скорость, cooldown и допустимую позицию. |
+
+---
+
+## Частые ошибки
+
+- Нет `isLocalPlayer`/`isOwned` guard.
+- Две активные камеры и два `AudioListener`.
+- Синхронизация scale "на всякий случай".
+- Физика считается на клиенте, а сервер никак не проверяет speedhack.
+- Попытка решить PvP movement одним `NetworkTransform` без prediction/валидации.
+
+---
+
+## Лайфхаки
+
+- В `OnStartLocalPlayer` меняйте цвет/маркер локального игрока. Новичкам так проще видеть ownership.
+- Для платформ, дверей и лифтов начинайте с server authority.
+- Для Rigidbody не смешивайте ручной transform movement и физические силы без ясной схемы.
+- Решение по движению документируйте в `MOVEMENT_NET.md`.
+
+---
+
+## Профессиональный минимум
+
+- Movement не отправляется вручную каждый кадр без измеренной причины.
+- Для PvP есть server validation или отдельный план prediction/reconciliation.
+- У `NetworkTransform` отключены лишние axes.
+- Решение проверено с latency/loss simulation, а не только на localhost.
 
 ---
 
 ## Домашнее задание
 
-Сделайте движущуюся платформу: **`NetworkTransformReliable`**, `Client Authority` снят, движение только в `if (isServer)`. Замерьте трафик и CPU на сервере при 4 клиентах; запишите вывод в `MOVEMENT_NET.md`.
+Сделайте две сущности:
 
----
+1. Игрок с локальным вводом и сетевой синхронизацией.
+2. Движущаяся платформа, которую двигает только сервер.
 
-## Углублённо: выбор между Reliable, Unreliable и Hybrid
-
-| Тип | Когда |
-|-----|--------|
-| Unreliable | Позиции в бою, допустимы потери кадров |
-| Reliable | Редкие, критичные состояния |
-| Hybrid (v96) | Нужен баланс: редкий полный снимок + частые дельты |
-
-Hybrid полезен, когда важно **восстановиться** после потери серии дельт, но нельзя тащить весь мир по reliable каждые 20 мс.
-
----
-
-## Практика: телепорт и физика
-
-После телепорта тестируйте: `CharacterController`, non-kinematic `Rigidbody`, составные коллайдеры. В v96 `NetworkTransform` инициирует `Physics.SyncTransforms` из `ResetState` — всё равно проверьте **свои** кастомные телепорты вне компонента.
-
----
-
-## Связь с тиком (урок 20)
-
-Серверная кинематика платформы — в `FixedUpdate`. Отправка снимка может быть реже физического шага — интерполяция на клиенте сглаживает.
-
----
-
-## FAQ
-
-**Вопрос:** Нужен ли `NetworkRigidbody`?  
-**Ответ:** Если нужен **Rigidbody** + снимки позиции/поворота в одном стиле с `NetworkTransform*` — да; для «только трансформ» хватит NT. Для client authority на игроке обычно **`syncDirection = ClientToServer`** на NR; **не включайте `Use Fixed Update`** на stock Mirror (см. дополнение выше).
-
-**Вопрос:** `isLocalPlayer` или `isOwned` для ввода движения?  
-**Ответ:** Для **одного** префаба игрока из `playerPrefab` чаще совпадают. Если объект **owned**, но не `localPlayer` (кастомный спавн, питомцы), ввод должен завязать на **`isOwned`** + направление синка, как в `NetworkBehaviour.authority` в документации Mirror.
-
-**Вопрос:** Какой `syncInterval` стартовый?  
-**Ответ:** 0.03–0.05 с для персонажей — типичный диапазон; подтвердите профайлером.
-
-**Вопрос:** Client authority для коопа?  
-**Ответ:** Возможно; для PvP — осторожно (урок 9).
-
----
-
-## Антипаттерны
-
-1. Синхронизация scale «на всякий случай».
-2. Движение удалённых игроков в `Update` на локальном клиенте без `isLocalPlayer` guard на вводе, но с движением тела — путаница ролей.
-3. Игнорировать jitter при настройке интерполяции.
-
----
-
-## Расширенный чек-лист
-
-- [ ] Оси трансформа отключены лишние.
-- [ ] Камера только у `isLocalPlayer`.
-- [ ] Телепорты протестированы с физикой.
-
----
-
-## Глоссарий
-
-| Термин | Смысл |
-|--------|--------|
-| Snapshot | Снимок состояния для сети |
-| Interpolation | Сглаживание между снимками |
-| Jitter | Разброс задержек |
-
----
-
-## Контрольные вопросы
-
-1. Почему reliable плох для быстрой позиции?
-2. Что даёт velocity на приёмнике в v96?
-3. Как платформа на сервере влияет на клиент без authority?
-
----
-
-## Расширенное домашнее задание
-
-1. Переключите одного персонажа на Hybrid и сравните subjective качество при 150 мс lag (урок 15).
-2. Документируйте выбор в `MOVEMENT_NET.md`.
-
+В `MOVEMENT_NET.md` запишите, кто имеет authority и какой компонент синхронизации используется.

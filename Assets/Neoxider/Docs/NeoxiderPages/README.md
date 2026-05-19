@@ -62,7 +62,7 @@ Assets/Neoxider/Samples~/NeoxiderPages/
   - опциональная анимация через `DOTweenAnimation` на том же объекте
 
 - **`BtnChangePage`** (`Runtime/Scripts/Page/BtnChangePage.cs`)
-  - компонент на UI-кнопку: `Action` = OpenPage/Back/CloseCurrent
+  - компонент на UI-кнопку: `Action` = OpenPage/Cancel/CloseCurrent
   - для OpenPage использует `targetPageId: PageId`
   - может выполнить `GameState.State` (Start/Restart/Pause/…)
   - опционально анимирует нажатие (DOTween)
@@ -98,7 +98,7 @@ public class OpenShopExample : MonoBehaviour
 - Добавь `BtnChangePage` на UI-кнопку.
 - Выбери `Action`:
   - `OpenPage` и задай `targetPageId`
-  - либо `Back` / `CloseCurrent`
+  - либо `Cancel` / `CloseCurrent`
 
 ### Отреагировать на смену страницы
 
@@ -160,7 +160,7 @@ public class PageAnalytics : MonoBehaviour
 1. На кнопке открой компонент `BtnChangePage`.
 2. Выбери `Action`:
    - `OpenPage` — открыть страницу по `targetPageId`
-   - `Back` — вернуться на предыдущую
+   - `Cancel` — вернуться на предыдущую
    - `CloseCurrent` — закрыть текущую
 
 ### Переключение из кода
@@ -225,7 +225,7 @@ public class OpenPagesExamples
 
 - `Assets/Neoxider/Samples~/NeoxiderPages/Runtime/Scripts/Page/BtnChangePage.cs`
   - UI-кнопка переключения страниц через `PM.I`
-  - `Action`: `OpenPage` / `Back` / `CloseCurrent`
+  - `Action`: `OpenPage` / `Cancel` / `CloseCurrent`
   - для `OpenPage` использует `targetPageId: PageId`
   - может выполнить `GameState.State` перед переключением
 

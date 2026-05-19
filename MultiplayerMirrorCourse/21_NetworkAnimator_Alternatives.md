@@ -1,77 +1,127 @@
-# Урок 21: NetworkAnimator и альтернативы
+# Урок 21: NetworkAnimator и ручная синхронизация анимаций
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 6/15 · Mirror `96.x`
+
+| Ключевые слова | `NetworkAnimator`, Animator parameters, stateId, root motion |
+|----------------|--------------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Продвинутый трек** · урок **6/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | `NetworkAnimator`, триггеры, host, ручная синхронизация параметров, root motion |
-
----
-
-## Цели
-
-Синхронизировать анимации без лишнего трафика; знать про фиксы **дублирования триггеров на host** в линии **v96**; выбрать между `NetworkAnimator` и **минимальным** набором `SyncVar` под ваш жанр.
-
----
-
-## Проблема и контекст
-
-| Подход | Риск |
-|--------|------|
-| RPC на каждый кадр blend tree | Перегруз |
-| Только локальный Animator | Другие игроки «скользят» |
-| Root motion без согласования с сетью | Телепорты, рассинхрон хитбоксов |
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Animator sync strategy for player/NPC. |
+| Кто владеет state | Server/gameplay model owns meaningful animation state; client may play cosmetics. |
+| Как проверить | Remote client sees correct states; traffic compared between approaches. |
+| Артефакт | Animation sync decision: NetworkAnimator, stateId, RPC, local-only. |
 
 ---
 
-## Теория
+## Что должно получиться
 
-`NetworkAnimator` синхронизирует параметры/состояния через механизм Mirror. Альтернатива — **минимальный набор** `SyncVar` + локальный `Animator` (например enum состояния + float speed), если нужен жёсткий контроль над байтами и поведением на host.
-
-Проверьте changelog: поведение триггеров на **host** могло отличаться в старых версиях — тестируйте host+client в одном процессе (урок 22).
-
-### Что синхронизировать в шутере
-
-Часто достаточно: **состояние оружия + направление/скорость** вместо полного дерева blend. Полный `NetworkAnimator` оправдан в коопе с богатыми локомоциями.
+Вы выбираете, что реально нужно отправлять по сети: Animator-параметры, state ID или событие gameplay.
 
 ---
 
-## Практика
+## Проблема
 
-1. Включите `NetworkAnimator` на префабе с `NetworkIdentity`.
-2. Замерьте трафик vs ручная синхронизация двух параметров (урок 13).
-3. Прогоните сценарий: host стреляет + триггер анимации, клиент видит ровно один импульс.
-
-### Шаг 1 — список параметров
-
-Выписать все параметры Animator и отметить: **кто authority**, какая частота изменений, нужен ли сетевой канал.
-
-### Шаг 2 — root motion
-
-Если используете root motion, согласуйте с `NetworkTransform` / серверной кинематикой: кто двигает коллайдер игрока в мире.
-
-### Шаг 3 — слои IK
-
-IK-слои могут гонять дополнительные обновления — проверьте стоимость на слабых клиентах.
+Анимация часто кажется сетевой проблемой, хотя большая часть visual state восстанавливается локально из movement и gameplay state.
 
 ---
 
-## Типичные ошибки
+## Варианты
 
-- Анимировать root motion без согласования с `NetworkTransform`.
-- Триггеры в `Update` на host без идемпотентности.
-- Смешение локальных и сетевых параметров в одном контроллере без дисциплины.
+| Подход | Когда подходит |
+|--------|----------------|
+| `NetworkAnimator` | Быстрый старт, немного параметров. |
+| `SyncVar stateId` | Явные состояния: idle/run/attack/dead. |
+| Rpc event | Разовый эффект: удар, эмоция, звук. |
+| Локальная анимация | Cosmetic, зависит от локальных данных. |
+
+Gameplay-critical окна удара не должны зависеть только от красивого trigger в Animator.
 
 ---
 
-## Советы и паттерны
+## Практика: ручной stateId
 
-Для FPS часто достаточно: **состояние оружия + направление** вместо полного дерева.
+```csharp
+using Mirror;
+using UnityEngine;
 
-Для melee добавьте **окно активного кадра** на сервере, не полагайтесь только на визуал клиента.
+public sealed class NetworkAnimationState : NetworkBehaviour
+{
+    [SerializeField] Animator animator;
+
+    [SyncVar(hook = nameof(OnStateChanged))]
+    int stateId;
+
+    [Server]
+    public void ServerSetState(int newStateId)
+    {
+        stateId = newStateId;
+    }
+
+    void OnStateChanged(int oldValue, int newValue)
+    {
+        animator.CrossFade(newValue, 0.1f);
+    }
+}
+```
+
+---
+
+## Проверка себя
+
+- Remote client видит переходы анимации.
+- Трафик сравнен с `NetworkAnimator`.
+- Root motion не двигает авторитетную позицию в обход movement-схемы.
+- Gameplay damage считается сервером, а не animation event на клиенте.
+
+---
+
+## Минимальная диагностика
+
+| Симптом | Что проверить |
+|---------|---------------|
+| Анимация едет, позиция откатывается | Root motion конфликтует с movement authority. |
+| Трафик высокий | Слишком много Animator parameters sync. |
+| Урон не совпадает с visual | Gameplay window не отделён от animation event. |
+| Host красивый, Client сломан | Проверка была только host-side. |
+
+---
+
+## Частые ошибки
+
+- Синхронизировать все Animator параметры.
+- Root motion двигает объект, а NetworkTransform пытается догнать.
+- Атака засчитывается клиентским animation event.
+- Тестировать только Host.
+
+---
+
+## Лайфхаки
+
+- Сначала отправляйте смысл: `isMoving`, `weaponId`, `stateId`.
+- Visual-only layers держите локальными.
+- Для PvP отделяйте "окно урона" от визуальной анимации.
+
+---
+
+## Профессиональный минимум
+
+- Синхронизируется смысл, а не каждый cosmetic parameter.
+- Animation event не является единственным источником gameplay damage.
+- Root motion strategy согласована с movement strategy.
+- Сравнение подходов записано в profiling notes.
 
 ---
 
 ## Домашнее задание
 
-Реализуйте «ручной» вариант: `SyncVar int stateId` + локальный `Animator.CrossFade` в hook; сравните байты/сек с `NetworkAnimator` на типичной сессии.
+Сравните два варианта на одном персонаже:
+
+1. `NetworkAnimator`.
+2. `SyncVar stateId`.
+
+Запишите байты/сек и качество визуала.

@@ -1,205 +1,171 @@
-# Урок 2: NetworkIdentity, жизненный цикл и спавн
+# Урок 2: NetworkIdentity, netId и спавн объектов
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 2/15 · Mirror `96.x`
+
+| Ключевые слова | `NetworkIdentity`, `netId`, `assetId`, `sceneId`, `NetworkServer.Spawn` |
+|----------------|---------------------------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Базовый трек** · урок **2/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | `NetworkIdentity`, `netId`, `NetworkServer.Spawn`, authority |
-|----------------|----------------------------------------------------------------|
-
----
-
-## Цели
-
-Понимать `assetId`, `sceneId`, `netId`, различать server / client authority, вызывать корректный жизненный цикл и спавнить/уничтожать объекты с учётом поведения клиента в **v96** (отложенное применение spawn payload).
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Dynamic network prefab: projectile, pickup или test cube. |
+| Кто владеет state | Server создаёт и уничтожает spawned instance. |
+| Как проверить | Host + Client видят один и тот же spawned object с ненулевым `netId`. |
+| Артефакт | Prefab в spawnable list и лог `spawn prefab netId`. |
 
 ---
 
-## Проблема и контекст
+## Что должно получиться
 
-| Симптом | Причина |
-|---------|---------|
-| «Объект есть, а `SyncVar` с ссылкой на соседа — null» | Гонка порядка применения данных при спавне (частично снята в v96 за счёт отложенного payload — всё равно проектируйте зависимости аккуратно) |
-| Пуля не видна клиентам | Префаб не в **Registered Spawnable Prefabs** |
-| Два `NetworkIdentity` на объекте | Mirror откажет корректной регистрации |
+Вы умеете:
+
+- отличать prefab asset от spawned instance;
+- понимать, почему у prefab `netId == 0`;
+- спавнить динамический объект только с сервера;
+- уничтожать сетевой объект через Mirror;
+- находить типовые ошибки `NetworkIdentity`.
 
 ---
 
-## Теория
+## Проблема
 
-### Идентификаторы
+Если объект не является сетевым spawned-объектом, Mirror не сможет доставить его SyncVar, Command и Rpc как ожидается. Большая часть ошибок "SyncVar не работает" на самом деле начинается здесь.
 
-- **`assetId`** — связь с префабом при динамическом спавне.
-- **`sceneId`** — объекты, расставленные в сцене до старта.
-- **`netId`** — уникальный id экземпляра в рантайме на сервере.
+---
 
-### Authority
+## Теория коротко
 
-По умолчанию сервер владеет состоянием. **Client authority** чаще всего на префабе игрока для движения (осознанно: в PvP лучше server-driven + prediction, см. уроки 3 и 10).
+`NetworkIdentity` - паспорт сетевого объекта.
+
+| ID | Где используется |
+|----|------------------|
+| `assetId` | Связь dynamic prefab с asset в проекте. |
+| `sceneId` | Сетевые объекты, заранее лежащие в сцене. |
+| `netId` | Runtime ID конкретного spawned instance. |
+
+У prefab asset в Project `netId` обычно 0. Это нормально. У объекта в активном матче после spawn `netId` должен быть ненулевым.
+
+Mirror не поддерживает nested `NetworkIdentity`: не ставьте identity на child objects внутри одного сетевого prefab.
+
+---
+
+## Жизненный цикл
+
+Для сетевой инициализации используйте callbacks `NetworkBehaviour`:
+
+| Callback | Когда применять |
+|----------|-----------------|
+| `OnStartServer` | Инициализация серверного state. |
+| `OnStartClient` | Клиент получил spawned object и начальные данные. |
+| `OnStartLocalPlayer` | Настроить ввод, камеру, локальный HUD. |
+| `OnStopServer` / `OnStopClient` | Отписки, cleanup, логи. |
+
+`Start()` можно использовать для обычной Unity-инициализации, но не завязывайте на него сетевой порядок.
+
+---
+
+## Практика: серверный спавн
+
+Prefab снаряда:
+
+1. Корень prefab: `NetworkIdentity`.
+2. Скрипт снаряда наследуется от `NetworkBehaviour`.
+3. Prefab добавлен в `NetworkManager` как spawnable prefab.
+
+Сервер создаёт объект:
 
 ```csharp
-// Сервер передаёт authority клиенту (пример: транспорт)
-vehicleIdentity.AssignClientAuthority(playerConn);
-```
+using Mirror;
+using UnityEngine;
 
-### Жизненный цикл `NetworkBehaviour`
-
-Используйте `OnStartServer`, `OnStartClient`, `OnStartLocalPlayer`, `OnStopServer` вместо «голого» `Start`, когда нужна сетевая инициализация.
-
-### Редактор и жизненный цикл объекта (v96+)
-
-- В инспекторе **`Network Manager`** появилась кнопка **Clear** для списка spawnable prefabs — быстрее чистить прототипы.
-- **`NetworkIdentity.OnDestroy`** в **v96.0.1** проверяет словарь `spawned[netId]` перед удалением — меньше крашей при нестандартном порядке уничтожения.
-- Для **unreliable baseline** на клиенте смотрите фиксы линии **96.9.19+** ([CHANGELOG](CHANGELOG_Course_Mirror96.md)) — при странных baseline-сообщениях обновите пакет.
-
----
-
-## Практика
-
-### Шаг 1. Префаб снаряда
-
-1. Корень префаба: `NetworkIdentity` + ваш `Projectile` (`NetworkBehaviour`).
-2. Добавьте префаб в список спавна на `NetworkManager`.
-
-### Шаг 2. Спавн на сервере
-
-```csharp
-[Server]
-void Fire(Vector3 pos, Vector3 dir)
+public sealed class ProjectileSpawner : NetworkBehaviour
 {
-    var go = Instantiate(projectilePrefab, pos, Quaternion.LookRotation(dir));
-    NetworkServer.Spawn(go);
+    [SerializeField] GameObject projectilePrefab;
+
+    [Server]
+    public void SpawnProjectile(Vector3 position, Vector3 direction)
+    {
+        GameObject instance = Instantiate(
+            projectilePrefab,
+            position,
+            Quaternion.LookRotation(direction));
+
+        NetworkServer.Spawn(instance);
+    }
 }
 ```
 
-### Шаг 3. Уничтожение
+Уничтожение:
 
 ```csharp
-NetworkServer.Destroy(go);
+[Server]
+public void DestroyProjectile(GameObject projectile)
+{
+    NetworkServer.Destroy(projectile);
+}
 ```
 
 ---
 
-## Типичные ошибки
+## Проверка себя
 
-- `NetworkIdentity` на **дочернем** объекте префаба вместо корня.
-- Спавн с **клиента** без Command → только сервер должен вызывать `NetworkServer.Spawn` для сетевых объектов.
-- Забыли `base` в переопределениях менеджера при кастомном `OnServerAddPlayer`.
+- Сервер спавнит объект, оба клиента его видят.
+- В инспекторе runtime-instance `netId != 0`.
+- При `NetworkServer.Destroy` объект исчезает у всех.
+- Если убрать prefab из spawnable list, ошибка воспроизводится и понятна.
 
 ---
 
-## Советы и паттерны
+## Минимальная диагностика
 
-- Для тяжёлых сцен со связями между объектами: сначала минимальный state, затем дозаполнение через `SyncVar` hooks или отдельное сообщение после готовности всех `netId` на клиенте.
-- Логируйте `netId` при отладке десинхронов.
+| Симптом | Что проверить |
+|---------|---------------|
+| Объект виден только серверу | Использован ли `NetworkServer.Spawn(instance)` после `Instantiate`? |
+| Ошибка spawn prefab | Prefab зарегистрирован в `NetworkManager` или через `NetworkClient.RegisterPrefab`. |
+| `netId == 0` в матче | Вы смотрите prefab asset или объект не spawned. |
+| RPC/SyncVar не работает | Скрипт на объекте с `NetworkIdentity` и объект уже spawned. |
+
+---
+
+## Частые ошибки
+
+- `NetworkIdentity` висит на child, а не на root.
+- На одном prefab несколько `NetworkIdentity`.
+- Клиент вызывает `Instantiate` и ждёт, что объект появится у всех.
+- Используется `Destroy(go)` вместо `NetworkServer.Destroy(go)`.
+- Ссылки на другие сетевые объекты ожидаются слишком рано при spawn.
+
+---
+
+## Лайфхаки
+
+- Для ссылок между сетевыми объектами безопаснее хранить `uint netId` и резолвить через `NetworkClient.spawned`, если порядок spawn важен.
+- Логируйте `netId`, `assetId` и имя prefab при сложных десинхронах.
+- Динамические сетевые prefab держите в отдельной папке `NetworkPrefabs`.
+- Для часто создаваемых объектов позже изучите pooling, но сначала добейтесь корректного spawn/destroy.
+
+---
+
+## Профессиональный минимум
+
+- Клиент не делает сетевой `Instantiate`.
+- Все dynamic network prefabs лежат в понятной папке и зарегистрированы.
+- У каждого сетевого prefab один `NetworkIdentity` на root.
+- Destroy сетевого объекта идёт через `NetworkServer.Destroy`.
 
 ---
 
 ## Домашнее задание
 
-Реализуйте спавн снаряда только с сервера по `[Command]` от владельца игрока; клиент не вызывает `Spawn` напрямую. Зафиксируйте в комментарии к PR: какие `SyncVar` ссылаются на другие `NetworkIdentity` и как вы избегаете гонки порядка.
+Сделайте кнопку "Fire" у локального игрока:
 
----
+1. Клиент нажимает кнопку.
+2. Игрок вызывает `Command`.
+3. Сервер проверяет cooldown.
+4. Сервер спавнит projectile.
+5. Оба клиента видят projectile.
 
-## Углублённо: `netId` и отладка десинхронов
-
-`netId` живёт в рантайме и привязан к **сессии сервера**. Не путайте с `assetId` префаба или SteamID игрока. В логах всегда пишите **оба**, если речь о динамическом объекте: `netId=… asset=…`.
-
-### Когда два объекта «дружат» через ссылку
-
-Если `SyncVar` хранит `NetworkIdentity` соседа, клиент может получить ссылку **раньше**, чем сосед заспавнен — даже с отложенным payload в v96. Паттерны:
-
-1. **Ленивая привязка**: hook на `SyncVar` проверяет `neighbor != null && neighbor.netId != 0`, иначе ждёт следующего кадра.
-2. **Id + поиск**: храните `uint neighborNetId` и резолвите через `NetworkClient.spawned` когда появится (осторожно с порядком уничтожения).
-3. **Позднее сообщение**: после спавна всех частей шлите одно `TargetRpc`/`Message` «связка готова».
-
----
-
-## Таблица: какой спавн API когда
-
-| Ситуация | API |
-|----------|-----|
-| Динамический объект из префаба | `Instantiate` + `NetworkServer.Spawn` |
-| Уничтожить сетевой объект | `NetworkServer.Destroy` |
-| Игрок | `OnServerAddPlayer` + player prefab |
-
----
-
-## Практика: лог жизненного цикла
-
-Добавьте на тестовый объект:
-
-```csharp
-public class NetLifeLog : NetworkBehaviour
-{
-    public override void OnStartServer() => UnityEngine.Debug.Log($"[Life] OnStartServer netId={netId}");
-    public override void OnStartClient() => UnityEngine.Debug.Log($"[Life] OnStartClient netId={netId} isLocal={isLocalPlayer}");
-    public override void OnStopServer() => UnityEngine.Debug.Log($"[Life] OnStopServer netId={netId}");
-}
-```
-
-Прогоните Host+Client и сохраните вывод — это база для постмортемов «пропал объект».
-
----
-
-## FAQ
-
-**Вопрос:** Можно ли менять `playerPrefab` в рантайме?  
-**Ответ:** Технически возможно, но легко сломать консистентность; версионируйте и тестируйте smoke.
-
-**Вопрос:** Что если `NetworkIdentity` не на корне?  
-**Ответ:** Избегайте; многие примеры и инструменты ожидают корневой identity.
-
-**Вопрос:** Нужен ли пул для снарядов?  
-**Ответ:** При высоком темпе стрельбы — да (урок 13); не забудьте сбрасывать сетевое состояние при reuse.
-
----
-
-## Связь с уроками
-
-- **1** — `NetworkManager` и список spawnable.
-- **6** — `Command` для запроса спавна.
-- **28** — изменения spawn pipeline в changelog.
-
----
-
-## Антипаттерны
-
-1. `Destroy(go)` вместо `NetworkServer.Destroy` для сетевых объектов.
-2. Спавн из `Awake` клиента «для теста».
-3. Один префаб на 20 разных ролей без `isServer` веток.
-
----
-
-## Расширенный чек-лист префаба сетевого объекта
-
-- [ ] `NetworkIdentity` на корне.
-- [ ] Все `NetworkBehaviour` ожидают корректный порядок `Start`.
-- [ ] Префаб в spawnable list.
-- [ ] Нет второго identity на детях.
-
----
-
-## Глоссарий
-
-| Термин | Смысл |
-|--------|--------|
-| `netId` | Идентификатор экземпляра в сессии |
-| `assetId` | Связь с префабом |
-| Authority | Кто может менять состояние |
-
----
-
-## Контрольные вопросы
-
-1. Почему клиент не должен звать `Spawn` напрямую?
-2. Чем опасны ссылки между только что созданными объектами?
-3. Где взять список всех заспавненных на клиенте? (концептуально)
-
----
-
-## Расширенное домашнее задание
-
-1. Реализуйте пул снарядов с корректным `Spawn`/`UnSpawn`.
-2. Добавьте метрику: сколько активных снарядов одновременно.
-
+В заметках укажите, где находится `NetworkIdentity` и где объект получает `netId`.

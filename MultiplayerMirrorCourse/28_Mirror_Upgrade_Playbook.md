@@ -1,72 +1,115 @@
-# Урок 28: Обновление Mirror — playbook
+# Урок 28: playbook обновления Mirror
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 13/15 · Mirror `96.x`
+
+| Ключевые слова | upgrade, changelog, rollback, smoke, package version |
+|----------------|------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Продвинутый трек** · урок **13/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | changelog, регрессия, ветка, пакет из git, откат, smoke |
-
----
-
-## Цели
-
-Безопасно поднять версию Mirror: где читать breaking changes, как прогнать регресс, что зафиксировать в документации проекта; не ломать прод «тихим» обновлением зависимостей.
-
----
-
-## Проблема и контекст
-
-| Обновили «само собой» | Сборка зелёная, онлайн в проде ломается |
-|------------------------|----------------------------------------|
-| Нет ветки отката | Часы простоя |
-| Обновили Mirror, не обновили транспорт/Steam | Краш на коннекте |
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Mirror package update branch and PR checklist. |
+| Кто владеет state | Upgrade PR owns dependency change only, not gameplay features. |
+| Как проверить | Client/server builds + smoke matrix before merge. |
+| Артефакт | `MIRROR_UPGRADE.md` and PR template old -> new. |
 
 ---
 
-## Теория
+## Что должно получиться
 
-Источник правды в **2026**: [changelog GitBook Mirror](https://mirror-networking.gitbook.io/docs/manual/general/changelog/2025-change-log) (имя `2025-change-log` — официальное имя страницы) + diff тега на [GitHub Releases](https://github.com/MirrorNetworking/Mirror/releases). Держите локальную копию выжимки в [CHANGELOG_Course_Mirror96.md](CHANGELOG_Course_Mirror96.md) и **своём** `MIRROR_UPGRADE.md` в репозитории игры.
-
-Типичные ломания при переходах: переименования API (`listen` вместо исторических флагов), настройки snapshot/`NetworkTransform`, поведение spawn и visibility, изменения сериализации типов.
+Вы обновляете Mirror отдельной задачей, а не "между делом" вместе с gameplay-фичей.
 
 ---
 
-## Практика
+## Проблема
 
-1. Ветка `chore/mirror-x.y.z` — только bump Mirror + необходимые правки.
-2. Список сцен для smoke (урок 22) + **один** headless self-test (урок 23).
-3. План отката: предыдущий UPM git hash или версия в `manifest.json`.
-
-### Шаг 1 — inventory зависимостей
-
-Перед bump перечислите: **Steamworks.NET**, кастомные транспорты, сторонние middleware. Каждый — потенциальный блокер.
-
-### Шаг 2 — дифф по вашему коду
-
-`git grep "Network"` по проекту — грубо, но ловит забытые устаревшие символы. Лучше: сборка **всех** платформ, которые вы реально шипите.
-
-### Шаг 3 — staged rollout
-
-Сначала **staging** матч-сервер, потом процент продакшена, потом full. Для инди без staging — хотя бы «ночной» релиз с мониторингом CCU.
+Mirror влияет на transport, spawn, serialization, editor tooling и callbacks. Обновление может сломать код, который в обычном singleplayer test даже не запускается.
 
 ---
 
-## Типичные ошибки
+## Правильный процесс
 
-- Обновлять Mirror без обновления транспорта / сторонних плагинов (Steam).
-- Смешивать в одном PR рефактор геймплея и bump Mirror.
-- Не читать changelog транспорта **SimpleWeb/KCP** при WebGL.
+1. Создать отдельную ветку.
+2. Зафиксировать текущую версию Mirror.
+3. Прочитать GitHub Releases между старой и новой версией.
+4. Обновить пакет.
+5. Собрать client и server.
+6. Прогнать smoke.
+7. Обновить docs/changelog проекта.
+8. Иметь rollback.
 
 ---
 
-## Советы и паттерны
+## Что проверять
 
-Закрепляйте версию в README команды и в `Packages/manifest.json` **одной** строкой в PR.
+| Зона | Проверка |
+|------|----------|
+| Spawn | player, dynamic prefab, destroy. |
+| SyncVar | initial state, hooks, owner-only. |
+| Commands/RPC | authority, requiresAuthority. |
+| Transport | connect/disconnect, WebGL if нужен. |
+| Scene loading | lobby/gameplay/additive. |
+| Dedicated | server build and READY log. |
 
-Добавьте правило: «любой PR с Mirror bump проходит smoke A–D».
+---
+
+## Проверка себя
+
+- PR обновления Mirror не содержит gameplay-фич.
+- В описании PR есть old -> new version.
+- Есть список пройденных smoke-сценариев.
+- Rollback понятен.
+
+---
+
+## Минимальная диагностика
+
+| Симптом | Что проверить |
+|---------|---------------|
+| После upgrade broken commands | Authority/default changes, `requiresAuthority`, sender validation. |
+| Spawn сломался | Prefab registration, NetworkIdentity changes, scene objects. |
+| WebGL шумит errors | Transport release notes and platform-specific fixes. |
+| Нельзя откатиться | No branch/tag/artifact before upgrade. |
+
+---
+
+## Частые ошибки
+
+- Обновлять Mirror и сразу менять gameplay.
+- Читать только старый GitBook, игнорируя GitHub Releases.
+- Не собирать dedicated/server target.
+- Не проверять WebGL/Steam path, если они есть.
+
+---
+
+## Лайфхаки
+
+- В проекте держите `MIRROR_UPGRADE.md`.
+- Для больших проектов используйте staged rollout: internal -> closed test -> public.
+- Если API поменялся, обновляйте учебные docs сразу.
+
+---
+
+## Профессиональный минимум
+
+- Upgrade is isolated, documented and reversible.
+- Smoke matrix includes platform-specific transports.
+- Release notes are linked in PR.
+- Course/docs updated in same dependency task when behavior changes.
 
 ---
 
 ## Домашнее задание
 
-Шаблон PR: «Mirror X→Y: проверено сценами A,B; риски: …; откат: revert commit Z».
+Сделайте шаблон PR:
+
+```text
+Mirror upgrade X -> Y
+Sources:
+Smoke passed:
+Risks:
+Rollback:
+```

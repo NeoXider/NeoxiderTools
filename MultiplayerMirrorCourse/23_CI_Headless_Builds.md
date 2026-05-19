@@ -1,96 +1,135 @@
 # Урок 23: CI и headless-сборки
 
----
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 8/15 · Mirror `96.x`
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Продвинутый трек** · урок **8/15** · Mirror **v96.x**
-
-| Ключевые слова | GitHub Actions, Linux Server, артефакты, `UNITY_SERVER`, batchmode |
-
----
-
-## Цели
-
-Собирать dedicated в пайплайне, версионировать билд, не хранить секреты в репозитории; понимать, **что именно** проверяет CI для Mirror-проекта и что остаётся ручным smoke (урок 22).
+| Ключевые слова | CI, Unity batchmode, server build, artifact, secrets |
+|----------------|------------------------------------------------------|
 
 ---
 
-## Проблема и контекст
+## Карта урока
 
-| Ручная сборка на ноутбуке | Забытые флаги, несовпадение версий с продом |
-|---------------------------|---------------------------------------------|
-| «Зелёный» PR без серверного билда | Ошибки `#if UNITY_SERVER` всплывают у хостинга |
-| Секреты в yaml | Утечка лицензии / токенов, блокировка аккаунта |
-
----
-
-## Теория
-
-Типичный pipeline: checkout → Unity **batchmode** (`ExecuteMethod` или готовый action **game-ci**) → артефакт `Server.zip` → деплой на VPS / контейнер. Кэш `Library` по желанию (ускоряет, но усложняет отладку кэша).
-
-CI для игры отвечает на вопрос: **«собирается ли артефакт в чистой среде?»** Он **не** доказывает, что матч честный или что `SyncVar` оптимальны — это зона уроков 9, 13, 22.
-
-### Слои ответственности
-
-| Слой | Пример проверки |
-|------|-----------------|
-| Компиляция | `BuildPipeline.BuildPlayer` без ошибок |
-| Статический анализ | Roslyn / custom lint (опционально) |
-| Минимальный рантайм | headless старт + выход 0 (см. ниже) |
-| Полный мультиплеер | вне CI или в отдельном дорогом job |
-
-### Почему Linux Server чаще всего
-
-Headless dedicated на Linux дешевле в облаке и проще автоматизировать. Убедитесь, что **все** ваши зависимости (нативные плагины, Steam SDK, файловые пути) поддерживают целевую ОС.
+| Что | Ответ |
+|-----|-------|
+| Объект работы | CI pipeline, server build method, artifacts. |
+| Кто владеет state | CI proves build reproducibility, not gameplay correctness. |
+| Как проверить | Clean runner builds server and optionally starts until READY log. |
+| Артефакт | `BUILDING.md` plus CI artifact naming rules. |
 
 ---
 
-## Практика
+## Что должно получиться
 
-1. Вынесите версию Mirror в `Packages/manifest.json` под git — PR с обновлением Mirror должен быть **явным**.
-2. Документируйте **точную** команду CLI для headless (см. урок 14).
-3. Добавьте в репозиторий `BUILDING.md` с одной таблицей: **Unity версия**, **ветка Mirror**, **сцена сервера**, **define-символы**.
-
-### Шаг 1 — минимальный batchmode (концепт)
-
-Параметры Unity Editor в batchmode обычно включают `-batchmode`, `-nographics`, `-quit`, `-projectPath`, `-executeMethod YourNamespace.CiEntry.BuildLinuxServer`. Имена методов и сборки зависят от вашего `Editor` скрипта — держите их **стабильными**, CI не любит переименования без обновления yaml.
-
-### Шаг 2 — секреты
-
-| Секрет | Где хранить |
-|--------|-------------|
-| Лицензия Unity (`*.ulf` / активация) | Secrets CI, не в git |
-| Ключи Steam / backend | Secrets + ограничение веток (`main` only) |
-| SSH на VPS | Deploy key с минимальными правами |
-
-### Шаг 3 — артефакт
-
-Структура артефакта должна совпадать с тем, что ожидает ваш Dockerfile или systemd unit: бинарник, `Data`, возможно отдельный `server.cfg`. Зафиксируйте **имя папки** — скрипты деплоя ломаются от переименования.
-
-### Шаг 4 — ночной job
-
-Ночной билд + публикация артефакта + **простой** post-step: скачать артефакт на runner, запустить с `-batchmode` тест «поднялся процесс, написал в лог READY, вышел» — отсекает глупые регрессии без полного мультиплеера.
+Вы понимаете, как собрать server build в чистой среде и сохранить артефакт без секретов в репозитории.
 
 ---
 
-## Типичные ошибки
+## Проблема
 
-- Секреты в yaml — используйте secrets store CI.
-- Разные версии Unity в локальной машине и в workflow — закрепите **точный** editor version в документации.
-- Сборка клиента вместо сервера — проверьте `BuildTarget.StandaloneLinux64` и subtarget **Server** (в зависимости от версии Unity и вашего скрипта).
-- Игнорирование **ошибок компиляции** в `#if UNITY_SERVER` ветках — локально вы не собирали server.
+Локальная сборка на ноутбуке не доказывает, что сервер собирается на CI runner, где нет ваших локальных файлов, кэша и случайных настроек.
 
 ---
 
-## Советы и паттерны
+## Минимальный pipeline
 
-Ночные билды + простой «connect self-test» (headless стартует и выходит с кодом 0).
+```text
+checkout
+restore/cache Library optional
+activate Unity
+run tests optional
+build Linux server
+upload artifact
+run smoke start optional
+```
 
-Кэшируйте `Library` только когда команда готова чинить «странные» падения из‑за кэша; на старте проекта **чистая** сборка проще для диагностики.
+CI не доказывает честность матча. Он отвечает на вопрос: "собирается ли проект и стартует ли server build в чистой среде?"
 
-Параллельте **client** и **server** jobs только если экономия времени оправдывает двойную нагрузку на лицензию/квоту runners.
+Для Unity Dedicated Server target используйте Build Profiles, script build with `StandaloneBuildSubtarget.Server` или CLI argument `-standaloneBuildSubtarget Server`, в зависимости от версии Unity и выбранного pipeline.
+
+---
+
+## Что документировать
+
+| Поле | Пример |
+|------|--------|
+| Unity version | Точная версия Editor. |
+| Mirror version | `Assets/Mirror/version.txt` или package tag. |
+| Build target | Linux Server / Dedicated. |
+| Entry method | `CiBuild.BuildServer`. |
+| Scenes | Bootstrap + gameplay scenes. |
+| Artifact name | `GameServer-linux-x64.zip`. |
+
+---
+
+## Секреты
+
+Не хранить в git:
+
+- Unity license;
+- Steam/backend keys;
+- Edgegap/cloud tokens;
+- SSH private keys;
+- production config.
+
+Используйте secrets store CI и ограничение по веткам.
+
+---
+
+## Проверка себя
+
+- CI собирает server build с нуля.
+- Server artifact можно скачать.
+- Лог сборки содержит Unity/Mirror version.
+- Секреты не появляются в yaml и логах.
+- `#if UNITY_SERVER` код компилируется.
+
+---
+
+## Минимальная диагностика
+
+| Симптом | Что проверить |
+|---------|---------------|
+| CI собирает не тот target | Build profile/subtarget/CLI args. |
+| Локально работает, CI нет | Unity version, scenes in build, missing packages, license. |
+| Server не стартует после build | Нет bootstrap или READY log; порт/args не переданы. |
+| Secret в логах | Masking, env vars, verbose output. |
+
+---
+
+## Частые ошибки
+
+- Разная Unity version локально и в CI.
+- Сборка client вместо server.
+- Игнор server-only compile errors.
+- Секреты в workflow-файле.
+- Нет версии артефакта.
+
+---
+
+## Лайфхаки
+
+- Первый pipeline делайте без кэша, чтобы упростить диагностику.
+- Кэш включайте после стабильной сборки.
+- Добавьте ночной build даже без деплоя.
+- Для smoke можно просто запустить server и дождаться `READY`.
+
+---
+
+## Профессиональный минимум
+
+- CI лог содержит Unity version, Mirror version, commit, build target.
+- Server artifact versioned and reproducible.
+- Server-only code компилируется на каждом relevant PR.
+- Secrets передаются через CI store и не печатаются.
 
 ---
 
 ## Домашнее задание
 
-Черновик `build-server.sh` или шагов GitHub Actions в виде списка **без секретов**: checkout → restore cache (опционально) → активация Unity → build → upload artifact → smoke exit code.
+Создайте `BUILDING.md`:
+
+- точная Unity version;
+- команда локальной server build;
+- структура CI steps;
+- где лежит artifact;
+- какие secrets нужны, без значений.

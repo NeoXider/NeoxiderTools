@@ -1,123 +1,158 @@
-# Урок 1: Архитектура Mirror, транспорты и базовая настройка
+# Урок 1: архитектура Mirror и первый NetworkManager
+
+**Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 1/15 · Mirror `96.x`
+
+| Ключевые слова | `NetworkManager`, `Transport`, Host, Client, Server, KCP |
+|----------------|-----------------------------------------------------------|
 
 ---
 
-**Навигация:** [Оглавление](README.md) · [Оформление](LESSON_STYLE.md) · **Базовый трек** · урок **1/15** · Mirror **v96.x**
+## Карта урока
 
-| Ключевые слова | `NetworkManager`, `Transport`, KCP, Host, Dedicated |
-|----------------|------------------------------------------------------|
-
----
-
-## Цели
-
-Понять, зачем в проекте отдельный **транспорт** и **сервер**, выбрать транспорт под платформу, поднять рабочую сцену с `NetworkManager` и написать **кастомный** менеджер с логированием подключений.
+| Что | Ответ |
+|-----|-------|
+| Объект работы | Сцена `NetSandbox`, GameObject `Network`, player prefab. |
+| Кто владеет state | `NetworkManager` управляет сессией; transport переносит bytes; player state пока минимальный. |
+| Как проверить | Host в Editor + отдельный Client через ParrelSync, Multiplayer Play Mode или build. |
+| Артефакт | Лог connect/disconnect с `connectionId` и записанный transport. |
 
 ---
 
-## Проблема и контекст
+## Что должно получиться
 
-| Без ясной архитектуры | Что происходит |
-|----------------------|----------------|
-| Смешение «кто сервер» в коде | Дубли логики, невозможно отладить host vs client |
-| Неверный транспорт для WebGL | Клиенты не подключаются вообще |
-| Нет кастомного `NetworkManager` | Нельзя отклонить клиента, выдать токен, залогировать `connectionId` |
+В конце урока у вас есть тестовая сцена, где:
 
-Mirror всегда опирается на модель **клиент — сервер**: состояние мира должен вести сервер (или роль сервера на хосте).
+- Host запускается из Editor;
+- отдельный Client подключается к Host;
+- сервер логирует `connectionId` и адрес;
+- player prefab появляется у подключившихся клиентов.
 
 ---
 
-## Теория: экосистема и топологии
+## Проблема
 
-### Почему Mirror
+Новички часто начинают со "скрипта игрока", хотя сеть ещё не поднята. В результате непонятно, что сломалось: transport, prefab, сцена, authority или movement.
 
-- **UNET** снят с поддержки.
-- **NGO** — официальный Netcode for GameObjects; другая модель и объём.
-- **Mirror** — зрелый open-source форк идей UNET, предсказуемый для классического server authority.
+Сначала нужна минимальная сетевая сцена без игровой логики.
 
-### Три роли инстанса
+---
 
-1. **Dedicated server** — только сервер, без локального игрока; лучший контроль честности при правильном коде.
-2. **Client** — отправляет ввод, отображает состояние.
-3. **Host** — сервер и локальный клиент в одном процессе; удобно для коопа, хуже как «честный» арбитр для соревновательного PvP.
+## Теория коротко
 
-### Транспорты
+Mirror состоит из трёх базовых слоёв:
 
-| Транспорт | Когда |
-|-----------|--------|
-| **KCP** (UDP + надёжность) | Экшены, шутеры по умолчанию |
-| **Telepathy** (TCP) | Пошаговые игры, меньше потерь, больше задержек при потере пакета |
-| **SimpleWeb** | WebGL / WebSockets |
-| **Multiplex** | Несколько транспортов на одном сервере (например KCP + Web) |
-| **Encryption** (отдельный пакет/компонент в составе Mirror) | TLS-подобное шифрование TCP; в **v96** реализует **`PortTransport`**, логирует статус аппаратного ускорения; зависимости (Bouncy Castle) лежат рядом с транспортом — не тащите дубликаты в проект |
-| **SimpleWeb** (доп. фиксы после v96.0.1) | WebGL / WebSockets: на линии **96.9.x** улучшены аллокации, совместимость **WebAssembly 2023**, меньше шума в консоли на WebGL при unreliable-сообщениях |
+| Слой | Задача |
+|------|--------|
+| `Transport` | Соединение, отправка и получение байтов. |
+| `NetworkManager` | Старт/стоп сервера и клиента, сцены, player prefab, callbacks. |
+| `NetworkBehaviour` | Ваши сетевые скрипты: SyncVar, Command, Rpc. |
 
-Подробная карта изменений по версиям: [CHANGELOG_Course_Mirror96.md](CHANGELOG_Course_Mirror96.md).
+Transport выбирается под платформу:
+
+| Transport | Когда начинать с него |
+|-----------|----------------------|
+| KCP | Desktop/mobile action, обычный старт для большинства проектов. |
+| Telepathy | TCP-сценарии, простые пошаговые прототипы. |
+| SimpleWeb | WebGL/WebSocket. |
+| Multiplex | Нужно поддержать несколько transport одновременно. |
+
+Важный ориентир из документации Mirror: `NetworkManager` должен быть единственным активным менеджером. Не вешайте на тот же GameObject `NetworkIdentity`.
 
 ---
 
 ## Практика
 
-### Шаг 1. Сцена
+1. Создайте сцену `NetSandbox`.
+2. Создайте пустой GameObject `Network`.
+3. Добавьте `NetworkManager`.
+4. Добавьте `KcpTransport`.
+5. Для первого теста добавьте `NetworkManagerHUD`.
+6. Создайте prefab `Player`.
+7. На корень `Player` добавьте `NetworkIdentity`.
+8. Назначьте `Player` в поле `NetworkManager.Player Prefab`.
+9. Запустите Host.
+10. Запустите второй Client через ParrelSync, Unity Multiplayer Play Mode или отдельный build.
 
-1. Установите Mirror (Package Manager > Add from git URL: `https://github.com/MirrorNetworking/Mirror.git`).
-2. Пустая сцена, объект `NetworkManager`, компоненты **Network Manager** + **Kcp Transport** + **NetworkManagerHUD** для тестов.
-3. Включите **Don't Destroy On Load**, при необходимости **Run in Background**.
-
-### Шаг 2. Кастомный менеджер
-
-Создайте `MyGameNetworkManager.cs`:
+Минимальный менеджер с логом:
 
 ```csharp
-using System.Collections.Generic;
 using Mirror;
 using UnityEngine;
 
-public class MyGameNetworkManager : NetworkManager
+public sealed class GameNetworkManager : NetworkManager
 {
-    public readonly List<NetworkConnectionToClient> ConnectedPlayers = new();
-
     public override void OnServerConnect(NetworkConnectionToClient conn)
     {
         base.OnServerConnect(conn);
-        Debug.Log($"[Server] connect id={conn.connectionId} addr={conn.address}");
-        ConnectedPlayers.Add(conn);
+        Debug.Log($"[NET] connect id={conn.connectionId} address={conn.address}");
     }
 
     public override void OnServerDisconnect(NetworkConnectionToClient conn)
     {
-        ConnectedPlayers.Remove(conn);
+        Debug.Log($"[NET] disconnect id={conn.connectionId}");
         base.OnServerDisconnect(conn);
     }
 }
 ```
 
-Замените компонент `NetworkManager` на сцене на ваш класс (или наследуйте и переопределяйте точечно).
-
-> **Важно (v96):** уточняйте API в вашей версии: флаг приёма соединений задаётся через **`listen`** (не используйте устаревшее имя `dontListen`).
+Замените стандартный `NetworkManager` на наследника только после того, как обычный manager уже завёлся.
 
 ---
 
-## Типичные ошибки
+## Проверка себя
 
-- Забыли **Player Prefab** или `NetworkIdentity` на префабе игрока — клиент «пустой».
-- В `OnServerAddPlayer` переопределили логику и **не вызвали** `base.OnServerAddPlayer(conn)` — игрок не спавнится.
-- Тестируют только **Host** и удивляются багам **только у клиента** — держите второй инстанс (см. советы).
+- В логе сервера видны разные `connectionId`.
+- У каждого подключившегося клиента создан player object.
+- Если закрыть Client, сервер пишет disconnect.
+- Если удалить `Player Prefab`, ошибка становится понятной: игрок не спавнится.
 
 ---
 
-## Советы и паттерны
+## Минимальная диагностика
 
-- **ParrelSync** — второе окно Unity на клоне проекта: Host в одном, Client в другом ([репозиторий](https://github.com/VeriorPies/ParrelSync)).
-- Вешайте **Network Messages** (диагностика) в тестовых билдах для разбора трафика.
-- Планируете **Dedicated** — закладывайте `#if UNITY_SERVER` для отключения тяжёлого UI на сервере (урок 14).
+| Симптом | Что проверить |
+|---------|---------------|
+| Client не подключается | Адрес, port, transport на `NetworkManager`, firewall. |
+| Host работает, Client нет | Запускался ли отдельный процесс, а не только Host? |
+| Player не появился | `Player Prefab` назначен и имеет `NetworkIdentity` на root. |
+| WebGL не подключается | Для браузера нужен WebSocket/SimpleWeb path, не KCP-only. |
+
+---
+
+## Частые ошибки
+
+- На `Network` висит `NetworkIdentity`.
+- Player prefab не назначен в `NetworkManager`.
+- `NetworkIdentity` добавлен не на корень prefab.
+- Тест идёт только в Host, отдельный Client ни разу не запускался.
+- Для WebGL пытаются использовать KCP без SimpleWeb/Multiplex.
+
+---
+
+## Лайфхаки
+
+- Держите `NetSandbox` отдельной сценой. Не тестируйте первую сеть на большом уровне.
+- В логах всегда пишите `connectionId`, scene и transport.
+- `NetworkManagerHUD` - временная учебная панель, а не UI для релиза.
+- Для dedicated-сервера уже сейчас думайте, как он стартует без кнопок.
+
+---
+
+## Профессиональный минимум
+
+- В сцене один активный `NetworkManager`.
+- На GameObject с `NetworkManager` нет `NetworkIdentity`.
+- Transport выбран под платформу и записан в `NETWORKING_DECISIONS.md`.
+- Есть лог connect/disconnect с `connectionId`, scene и transport.
 
 ---
 
 ## Домашнее задание
 
-1. Реализуйте `OnServerConnect` с отказом по условию (например заглушка «бан по IP» с `conn.Disconnect()`).
-2. Залогируйте `connectionId` и `address` для двух клиентов через ParrelSync или второй билд.
+Создайте `NETWORKING_DECISIONS.md` и запишите:
 
-**Готово, если:** в консоли сервера видны два разных `connectionId`, клиенты спавнят игрока.
-
+- выбранный transport;
+- как вы запускаете второй client;
+- имя тестовой сцены;
+- где лежит player prefab;
+- пример лога подключения двух клиентов.

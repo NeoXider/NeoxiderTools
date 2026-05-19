@@ -25,7 +25,7 @@ namespace Neo.Pages
         public enum Action
         {
             OpenPage = 0,
-            Back = 1,
+            Cancel = 1,
             CloseCurrent = 2
         }
 
@@ -87,9 +87,9 @@ namespace Neo.Pages
             {
                 if (_changeText)
                 {
-                    if (action == Action.Back)
+                    if (action == Action.Cancel)
                     {
-                        _textPage.text = "Back";
+                        _textPage.text = "Cancel";
                     }
                     else if (action == Action.CloseCurrent)
                     {
@@ -160,7 +160,7 @@ namespace Neo.Pages
         /// </summary>
         public void ChangePage()
         {
-            if (action == Action.Back)
+            if (action == Action.Cancel)
             {
                 PM.I.SwitchToPreviousPage();
             }
