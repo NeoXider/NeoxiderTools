@@ -1,6 +1,6 @@
 ﻿# ProgressionManager
 
-Центральный компонент системы мета-прогрессии (наследует `Singleton<ProgressionManager>`). Отвечает за накопление опыта, расчет уровней, управление очками перков и сохранение профиля.
+Центральный компонент системы мета-прогрессии (наследует `Singleton<ProgressionManager>`). Отвечает за выдачу наград по уровням, управление очками перков и сохранение progression-профиля.
 
 ## Содержание
 - [Назначение](#назначение)
@@ -13,7 +13,9 @@
 ---
 
 ## Назначение
-`ProgressionManager` служит единой точкой входа для всех систем, связанных с ростом игрока. Он объединяет данные об уровнях (`LevelCurve`), технологиях (`UnlockTree`) и улучшениях (`PerkTree`), обеспечивая их синхронизацию и сохранение.
+`ProgressionManager` служит единой точкой входа для всех систем, связанных с ростом игрока. Он объединяет reward track (`LevelCurveDefinition`), технологии (`UnlockTree`) и улучшения (`PerkTree`), обеспечивая их синхронизацию и сохранение.
+
+Важно: XP и текущий level берутся из `Neo.Core.Level.LevelComponent`. Если `Level Provider` не назначен и на том же объекте нет `LevelComponent`, `AddXp()` не меняет уровень и пишет warning. Сам `ProgressionManager` хранит rewards, perk points, unlock nodes, purchased perks и premium state.
 
 ---
 
@@ -21,7 +23,8 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| **Level Curve** | `LevelCurveDefinition` | Определяет пороги XP для уровней и награды за каждый уровень. |
+| **Level Provider** | `Neo.Core.Level.LevelComponent` | Считает XP и текущий уровень. Без него `AddXp()` только пишет warning. |
+| **Level Reward Track** | `LevelCurveDefinition` | Определяет perk points и rewards, которые выдаются при достижении уровня. |
 | **Unlock Tree** | `UnlockTreeDefinition` | Дерево технологий/разблокировок. |
 | **Perk Tree** | `PerkTreeDefinition` | Дерево покупаемых улучшений (перков). |
 | **Save Key** | `string` | Уникальный ключ для сохранения профиля (напр. "Player_Progression"). |
@@ -46,14 +49,15 @@
 
 | Метод | Описание |
 |-------|----------|
-| **AddXp(int amount)** | Добавляет опыт и автоматически пересчитывает уровень. |
+| **AddXp(int amount)** | Делегирует опыт в `LevelComponent`; при level-up выдаёт rewards за все пересечённые уровни. |
+| **SetLevel(int level)** / **TrySetLevel(int level, out string reason)** | Устанавливает уровень через `LevelComponent` без сброса progression-профиля. |
 | **AddPerkPoints(int amount)** | Прямое добавление очков перков. |
-
-_Обращение к менеджеру в коде происходит через `ProgressionManager.I` (или `ProgressionManager.Instance`)._
 | **TryUnlockNode(string id)** | Попытка разблокировать узел (возвращает успех и причину неудачи). |
 | **TryBuyPerk(string id)** | Попытка купить перк за очки. |
 | **ResetProgression()** | Полный сброс профиля до начального состояния. |
 | **SaveProfile()** / **LoadProfile()** | Ручное управление сохранением/загрузкой. |
+
+_Обращение к менеджеру в коде происходит через `ProgressionManager.I` (или `ProgressionManager.Instance`)._
 
 ---
 
@@ -86,8 +90,8 @@ public class Enemy : MonoBehaviour
 Вы можете отобразить прогресс опыта без написания кода, используя реактивные свойства менеджера:
 
 1. Создайте UI Slider для опыта.
-2. Подпишитесь на `UnityEvent` в инспекторе `ProgressionManager` (например, `OnXpChanged` или используйте `ProgressionStateListener`).
-3. Передайте значение в метод `Slider.SetValueWithoutNotify()`.
+2. Для bar используйте общий `SetProgress` и привяжите его к `ProgressionManager.XpStateValue` или `XpToNextLevelStateValue`.
+3. Для текста вроде `Level 3 | XP 120` используйте общий `NoCodeFormattedText` с несколькими sources.
 
 ### 3. Проверка уровня перед доступом (C#)
 
@@ -116,7 +120,7 @@ public class Portal : MonoBehaviour
 
 ## См. также
 - [Progression No-Code Actions](./ProgressionNoCodeAction.md)
-- [Level Curve Definition (SO)](./LevelCurveDefinition.md)
+- [Level Reward Track (SO)](./Data/LevelCurveDefinition.md)
 - [← Назад к Progression](./README.md)
 
 
@@ -144,7 +148,7 @@ public class Portal : MonoBehaviour
 | `XpToNextLevelState` | Xp To Next Level State. |
 | `XpToNextLevelStateValue` | Xp To Next Level State Value. |
 | `_conditionContext` | Condition Context. |
-| `_levelCurve` | Level Curve. |
+| `_levelCurve` | Level Reward Track. |
 | `_levelProvider` | Level Provider. |
 | `_onLevelChanged` | On Level Changed. |
 | `_onNodeUnlocked` | On Node Unlocked. |

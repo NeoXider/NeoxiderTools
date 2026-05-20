@@ -17,6 +17,7 @@ namespace Neo.Editor.Tests.Edit
     {
         public float Score = 40f;
         public ReactivePropertyFloat ReactiveScore = new ReactivePropertyFloat(0.25f);
+        public ReactivePropertyInt ReactiveLevel = new ReactivePropertyInt(1);
     }
 
     /// <summary>
@@ -46,6 +47,36 @@ namespace Neo.Editor.Tests.Edit
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
+        private static void InvokeBindingOnValidate(NoCodeFloatBindingBehaviour target)
+        {
+            typeof(NoCodeFloatBindingBehaviour)
+                .GetMethod("OnValidate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                ?.Invoke(target, null);
+        }
+
+        private static void InvokeFormattedTextOnValidate(NoCodeFormattedText target)
+        {
+            typeof(NoCodeFormattedText)
+                .GetMethod("OnValidate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                ?.Invoke(target, null);
+        }
+
+        private static void ForcePollTick(NoCodeFloatBindingBehaviour target)
+        {
+            const System.Reflection.BindingFlags flags =
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(NoCodeFloatBindingBehaviour).GetField("_nextPollTime", flags)?.SetValue(target, -1f);
+            typeof(NoCodeFloatBindingBehaviour).GetMethod("LateUpdate", flags)?.Invoke(target, null);
+        }
+
+        private static void ForceFormattedPollTick(NoCodeFormattedText target)
+        {
+            const System.Reflection.BindingFlags flags =
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic;
+            typeof(NoCodeFormattedText).GetField("_nextPollTime", flags)?.SetValue(target, -1f);
+            typeof(NoCodeFormattedText).GetMethod("LateUpdate", flags)?.Invoke(target, null);
+        }
+
         private static void AssignSlider(SetProgress progress, Slider slider)
         {
             SerializedObject so = new SerializedObject(progress);
@@ -58,6 +89,33 @@ namespace Neo.Editor.Tests.Edit
             SerializedObject so = new SerializedObject(progress);
             so.FindProperty("_minValue").floatValue = min;
             so.FindProperty("_maxValue").floatValue = max;
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void WireFormattedText(NoCodeFormattedText target, GameObject sourceRoot, params string[] members)
+        {
+            SerializedObject so = new SerializedObject(target);
+            SerializedProperty values = so.FindProperty("_values");
+            Assert.IsNotNull(values, "_values");
+            values.arraySize = members.Length;
+
+            for (int i = 0; i < members.Length; i++)
+            {
+                SerializedProperty binding = values.GetArrayElementAtIndex(i);
+                binding.FindPropertyRelative("_sourceRoot").objectReferenceValue = sourceRoot;
+                binding.FindPropertyRelative("_componentTypeName").stringValue = SourceTypeFullName;
+                binding.FindPropertyRelative("_memberName").stringValue = members[i];
+            }
+
+            so.ApplyModifiedPropertiesWithoutUndo();
+        }
+
+        private static void ConfigureFormattedText(NoCodeFormattedText target, string format,
+            NoCodeFloatUpdateMode mode)
+        {
+            SerializedObject so = new SerializedObject(target);
+            so.FindProperty("_format").stringValue = format;
+            so.FindProperty("_updateMode").enumValueIndex = (int)mode;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
@@ -175,6 +233,149 @@ namespace Neo.Editor.Tests.Edit
                 fs.ReactiveScore.Value = 0.9f;
 
                 Assert.That(slider.normalizedValue, Is.EqualTo(0.9f).Within(1e-5f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(dst);
+                Object.DestroyImmediate(src);
+            }
+        }
+
+        [Test]
+        public void NoCodeBindText_Reactive_UpdatesTMPWhenIntReactiveChanges()
+        {
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
+            dst.SetActive(false);
+            try
+            {
+                NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
+                fs.ReactiveLevel.Value = 2;
+                TMP_Text tmp = dst.AddComponent<TextMeshProUGUI>();
+                NoCodeBindText bind = dst.AddComponent<NoCodeBindText>();
+                WireBinding(bind, src, nameof(NoCodeBindEditModeFloatSource.ReactiveLevel));
+                SetUpdateMode(bind, NoCodeFloatUpdateMode.Reactive);
+
+                dst.SetActive(true);
+                bind.EditorInvokeRefreshFromSource();
+
+                Assert.AreEqual("2", tmp.text);
+
+                fs.ReactiveLevel.Value = 7;
+
+                Assert.AreEqual("7", tmp.text);
+            }
+            finally
+            {
+                Object.DestroyImmediate(dst);
+                Object.DestroyImmediate(src);
+            }
+        }
+
+        [Test]
+        public void NoCodeBindText_Reactive_PollsWhenMemberIsNotReactive()
+        {
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
+            dst.SetActive(false);
+            try
+            {
+                NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
+                fs.Score = 40f;
+                TMP_Text tmp = dst.AddComponent<TextMeshProUGUI>();
+                NoCodeBindText bind = dst.AddComponent<NoCodeBindText>();
+                WireBinding(bind, src, nameof(NoCodeBindEditModeFloatSource.Score));
+                SetUpdateMode(bind, NoCodeFloatUpdateMode.Reactive);
+
+                dst.SetActive(true);
+                bind.EditorInvokeRefreshFromSource();
+
+                Assert.AreEqual("40", tmp.text);
+
+                fs.Score = 72f;
+                ForcePollTick(bind);
+
+                Assert.AreEqual("72", tmp.text);
+            }
+            finally
+            {
+                Object.DestroyImmediate(dst);
+                Object.DestroyImmediate(src);
+            }
+        }
+
+        [Test]
+        public void NoCodeBindings_PollInterval_DefaultsTo016AndClampsTo0016()
+        {
+            GameObject dst = new GameObject("dst");
+            try
+            {
+                SetProgress progress = dst.AddComponent<SetProgress>();
+                SerializedObject so = new SerializedObject(progress);
+                SerializedProperty interval = so.FindProperty("_pollIntervalSeconds");
+                Assert.IsNotNull(interval, "_pollIntervalSeconds");
+                Assert.That(interval.floatValue, Is.EqualTo(0.16f).Within(1e-6f));
+
+                interval.floatValue = 0.001f;
+                so.ApplyModifiedPropertiesWithoutUndo();
+
+                InvokeBindingOnValidate(progress);
+                so.Update();
+
+                Assert.That(interval.floatValue, Is.EqualTo(0.016f).Within(1e-6f));
+
+                NoCodeFormattedText formatted = dst.AddComponent<NoCodeFormattedText>();
+                SerializedObject formattedSo = new SerializedObject(formatted);
+                SerializedProperty formattedInterval = formattedSo.FindProperty("_pollIntervalSeconds");
+                Assert.IsNotNull(formattedInterval, "NoCodeFormattedText._pollIntervalSeconds");
+                Assert.That(formattedInterval.floatValue, Is.EqualTo(0.16f).Within(1e-6f));
+
+                formattedInterval.floatValue = 0.001f;
+                formattedSo.ApplyModifiedPropertiesWithoutUndo();
+
+                InvokeFormattedTextOnValidate(formatted);
+                formattedSo.Update();
+
+                Assert.That(formattedInterval.floatValue, Is.EqualTo(0.016f).Within(1e-6f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(dst);
+            }
+        }
+
+        [Test]
+        public void NoCodeFormattedText_FormatsMultipleValuesAndSubscribesToIntReactive()
+        {
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
+            dst.SetActive(false);
+            try
+            {
+                NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
+                fs.Score = 12.5f;
+                fs.ReactiveLevel.Value = 2;
+
+                TMP_Text tmp = dst.AddComponent<TextMeshProUGUI>();
+                NoCodeFormattedText formatted = dst.AddComponent<NoCodeFormattedText>();
+                WireFormattedText(formatted, src,
+                    nameof(NoCodeBindEditModeFloatSource.ReactiveLevel),
+                    nameof(NoCodeBindEditModeFloatSource.Score));
+                ConfigureFormattedText(formatted, "Level {0:0} | Score {1:0.0}", NoCodeFloatUpdateMode.Reactive);
+
+                dst.SetActive(true);
+                formatted.EditorInvokeRefreshFromSource();
+
+                Assert.AreEqual("Level 2 | Score 12.5", tmp.text);
+
+                fs.ReactiveLevel.Value = 3;
+
+                Assert.AreEqual("Level 3 | Score 12.5", tmp.text);
+
+                fs.Score = 99.5f;
+                ForceFormattedPollTick(formatted);
+
+                Assert.AreEqual("Level 3 | Score 99.5", tmp.text);
             }
             finally
             {

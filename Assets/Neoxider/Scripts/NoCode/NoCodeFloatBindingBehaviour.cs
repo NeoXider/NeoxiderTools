@@ -8,26 +8,47 @@ namespace Neo.NoCode
     /// </summary>
     public abstract class NoCodeFloatBindingBehaviour : MonoBehaviour
     {
+        private const float DefaultPollIntervalSeconds = 0.16f;
+        private const float MinPollIntervalSeconds = 0.016f;
+
         [SerializeField] private ComponentFloatBinding _binding = new();
 
         [SerializeField] private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
 
-        [Tooltip("When Update Mode is Poll, refreshes every LateUpdate.")]
+        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")]
         [SerializeField]
         private bool _pollInLateUpdate = true;
 
-        private ReactivePropertyFloat _subscribedReactive;
+        [Tooltip("Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
+        [Min(MinPollIntervalSeconds)]
+        [SerializeField]
+        private float _pollIntervalSeconds = DefaultPollIntervalSeconds;
+
+        private ReactivePropertyFloat _subscribedFloat;
+        private ReactivePropertyInt _subscribedInt;
+        private ReactivePropertyBool _subscribedBool;
+        private float _nextPollTime;
+        private bool _useReactivePollFallback;
 
         public ComponentFloatBinding Binding => _binding;
+
+        private float PollIntervalSeconds => Mathf.Max(MinPollIntervalSeconds, _pollIntervalSeconds);
+
+        private bool HasReactiveSubscription =>
+            _subscribedFloat != null || _subscribedInt != null || _subscribedBool != null;
 
         protected virtual void OnValidate()
         {
             _binding.Invalidate();
+            _pollIntervalSeconds = PollIntervalSeconds;
+            _useReactivePollFallback = false;
         }
 
         protected virtual void OnEnable()
         {
             _binding.Invalidate();
+            _useReactivePollFallback = false;
+            _nextPollTime = Time.unscaledTime + PollIntervalSeconds;
             TrySubscribeReactive();
             RefreshFromSource();
             TrySubscribeReactive();
@@ -35,52 +56,116 @@ namespace Neo.NoCode
 
         protected virtual void OnDisable()
         {
-            if (_subscribedReactive != null)
+            if (_subscribedFloat != null)
             {
-                _subscribedReactive.RemoveListener(OnReactiveValueChanged);
-                _subscribedReactive = null;
+                _subscribedFloat.RemoveListener(OnReactiveFloatChanged);
+                _subscribedFloat = null;
+            }
+
+            if (_subscribedInt != null)
+            {
+                _subscribedInt.RemoveListener(OnReactiveIntChanged);
+                _subscribedInt = null;
+            }
+
+            if (_subscribedBool != null)
+            {
+                _subscribedBool.RemoveListener(OnReactiveBoolChanged);
+                _subscribedBool = null;
             }
         }
 
         protected virtual void LateUpdate()
         {
-            if (_updateMode == NoCodeFloatUpdateMode.Poll && _pollInLateUpdate)
+            bool shouldPoll = _updateMode == NoCodeFloatUpdateMode.Poll ||
+                              (_updateMode == NoCodeFloatUpdateMode.Reactive && _useReactivePollFallback);
+            if (!shouldPoll || !_pollInLateUpdate)
             {
-                RefreshFromSource();
+                return;
             }
+
+            float now = Time.unscaledTime;
+            if (now < _nextPollTime)
+            {
+                return;
+            }
+
+            RefreshFromSource();
+            _nextPollTime = now + PollIntervalSeconds;
         }
 
-        private void OnReactiveValueChanged(float _)
+        private void OnReactiveFloatChanged(float _)
         {
             RefreshFromSource();
         }
 
-        private void TrySubscribeReactive()
+        private void OnReactiveIntChanged(int _)
         {
-            if (_updateMode != NoCodeFloatUpdateMode.Reactive || _subscribedReactive != null)
+            RefreshFromSource();
+        }
+
+        private void OnReactiveBoolChanged(bool _)
+        {
+            RefreshFromSource();
+        }
+
+        private bool TrySubscribeReactive()
+        {
+            if (_updateMode != NoCodeFloatUpdateMode.Reactive ||
+                HasReactiveSubscription)
+            {
+                return HasReactiveSubscription;
+            }
+
+            if (!_binding.TryGetReactiveProperty(this, out ReactivePropertyFloat reactiveFloat,
+                    out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool))
+            {
+                return false;
+            }
+
+            if (reactiveFloat != null)
+            {
+                reactiveFloat.AddListener(OnReactiveFloatChanged);
+                _subscribedFloat = reactiveFloat;
+                return true;
+            }
+
+            if (reactiveInt != null)
+            {
+                reactiveInt.AddListener(OnReactiveIntChanged);
+                _subscribedInt = reactiveInt;
+                return true;
+            }
+
+            reactiveBool.AddListener(OnReactiveBoolChanged);
+            _subscribedBool = reactiveBool;
+            return true;
+        }
+
+        private void EnableReactivePollFallback()
+        {
+            if (_updateMode != NoCodeFloatUpdateMode.Reactive || HasReactiveSubscription)
             {
                 return;
             }
 
-            if (!_binding.TryGetReactivePropertyFloat(this, out ReactivePropertyFloat reactive))
-            {
-                return;
-            }
-
-            reactive.AddListener(OnReactiveValueChanged);
-            _subscribedReactive = reactive;
+            _useReactivePollFallback = true;
         }
 
         protected void RefreshFromSource()
         {
-            TrySubscribeReactive();
+            bool reactive = TrySubscribeReactive();
             if (!_binding.TryReadFloat(this, out float value))
             {
                 return;
             }
 
             ApplyFloat(value);
-            TrySubscribeReactive();
+            reactive |= TrySubscribeReactive();
+            if (!reactive)
+            {
+                EnableReactivePollFallback();
+            }
         }
 
         protected abstract void ApplyFloat(float value);

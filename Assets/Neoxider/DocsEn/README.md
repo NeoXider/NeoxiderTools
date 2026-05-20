@@ -7,7 +7,7 @@ Use it as the main navigation page for package modules, utility submodules, and 
 ## Start Here
 
 - [Package README](../README.md)
-- [No-Code UI binding (Neo.NoCode)](../Docs/NoCode/README.md) — `NoCodeBindText`, `SetProgress` (RU)
+- [No-Code UI binding (Neo.NoCode)](../Docs/NoCode/README.md) — `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress` (RU)
 - [Russian docs index](../Docs/README.md) (includes [No-Code strategy / non-goals for visual scripting](../Docs/NO_CODE_AUDIT.md))
 - [Tools index](./Tools/README.md)
 - [Condition](./Condition/README.md)

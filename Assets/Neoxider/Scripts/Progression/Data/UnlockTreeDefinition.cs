@@ -131,6 +131,12 @@ namespace Neo.Progression
                 {
                     issues.Add($"Duplicate unlock node id '{node.Id}'.");
                 }
+
+                if (node.UnlockedByDefault && node.Rewards.Count > 0)
+                {
+                    issues.Add(
+                        $"Unlock node '{node.Id}' is unlocked by default, but default-node rewards are not dispatched automatically.");
+                }
             }
 
             foreach (KeyValuePair<string, UnlockNodeDefinition> pair in nodeMap)

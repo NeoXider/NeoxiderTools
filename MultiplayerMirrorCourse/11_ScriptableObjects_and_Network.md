@@ -117,6 +117,12 @@ public sealed class PlayerClassState : NetworkBehaviour
 
 ---
 
+## Для RPG/Progression
+
+Ability, item, perk и unlock node передаются по сети как stable ID. Клиент может показывать иконку и локализованное имя из своего каталога, но стоимость, доступность, reward и итоговый stat change проверяет server-side catalog. Эта связка используется в [31_RPG_Combat_Server_Authority.md](31_RPG_Combat_Server_Authority.md) и [32_Progression_XP_Rewards.md](32_Progression_XP_Rewards.md).
+
+---
+
 ## Домашнее задание
 
 Сделайте каталог классов:

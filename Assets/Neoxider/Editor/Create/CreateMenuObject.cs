@@ -505,7 +505,6 @@ namespace Neo
             ("Combat", "Bullet", "Prefabs/Bullet.prefab"),
             ("Player", "Player (First Person Controller)", "Prefabs/Tools/First Person Controller.prefab"),
             ("Interaction", "Interactive Sphere", "Prefabs/Tools/Interact/Interactive Sphere.prefab"),
-            ("Interaction", "Trigger Cube", "Prefabs/Tools/Interact/Trigger Cube.prefab"),
             ("Interaction", "Toggle Interactive", "Prefabs/Tools/Interact/Toggle Interactive.prefab")
         };
 

@@ -7,7 +7,7 @@
 - [Полезные компоненты](./UsefulComponents.md) - быстрый вход по сценарию `Add Component / GameObject`
 - [Корневой README пакета](../README.md) - установка, обзор, samples
 - [English onboarding](../DocsEn/README.md) - англоязычный вход по модулям и ключевым страницам
-- [No-Code: привязка float → UI (Neo.NoCode)](./NoCode/README.md) — `NoCodeBindText`, `SetProgress`
+- [No-Code: привязка чисел → UI (Neo.NoCode)](./NoCode/README.md) — `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress`
 - [No-Code: аудит, границы, варианты решений](./NO_CODE_AUDIT.md) — без нодового «визуального программирования»; пресеты, данные, каталоги действий
 - **Локальные копии черновиков аудита (не в git):** `Local/Audits/`, см. [`/Local/README.md`](../../../Local/README.md)
 

@@ -27,6 +27,12 @@
 
 Этот путь даёт connect, spawn, movement, state, commands, server validation, UI и smoke tests.
 
+Если цель - RPG/Progression, после быстрого маршрута добавьте обязательный доменный блок:
+
+`05 -> 11 -> 31 -> 32 -> 33 -> 22 -> 29`
+
+Здесь `05` и `11` уже не optional: RPG почти сразу требует collections/resources и stable IDs для abilities, perks, unlock nodes и rewards.
+
 Что сознательно пропущено в быстром маршруте:
 
 | Пропуск | Почему можно позже |
@@ -53,6 +59,7 @@
 | Интернет | 16-19 | NAT, relay/backend, Steam, auth. |
 | Продакшн | 20-25 | Tick, animation, smoke, CI, logs, hosting. |
 | Зрелость | 26-30 | Protocol, scenes, upgrade, security, stack decision. |
+| RPG/Progression | 31-33 | Server-authoritative RPG loop, XP/rewards, perks, capstone smoke. |
 
 ---
 
@@ -70,6 +77,7 @@
 | Интернет | `MATCH_FLOW.md`, `AUTH_FLOW.md`. |
 | Продакшн | CI artifact, logs, hosting contract. |
 | Зрелость | Upgrade/security/stack decision docs. |
+| RPG/Progression | `SMOKE_RPG_PROGRESSION.md`, `PROGRESSION_FLOW.md`. |
 
 ---
 
@@ -112,6 +120,7 @@
 7. Что будет, если игрок за CGNAT?
 8. Где хранятся секреты?
 9. Какие документы уже появились после курса?
+10. Какой server-side flow выдаёт XP/rewards и где сохраняется progression profile?
 
 ---
 
@@ -125,3 +134,4 @@
 | Плохо выглядит движение | Сначала измерить latency/loss, потом выбирать interpolation/prediction. |
 | WebGL не подключается | Проверить transport: KCP не подходит для браузерного клиента. |
 | Dedicated не стартует | Убрать зависимость от HUD и добавить CLI bootstrap. |
+| XP/перки работают только в Host | Вернуться к `31-33`: reward должен идти server-side и проверяться отдельным Client. |

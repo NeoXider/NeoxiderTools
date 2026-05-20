@@ -22,6 +22,7 @@
 2. Пройдите короткий маршрут новичка: `00a -> 01 -> 02 -> 03 -> 04 -> 06 -> 09 -> 12 -> 15 -> 22`.
 3. Вернитесь к пропущенным урокам `05`, `07`, `08`, `10`, `11`, `13`, `14`, когда базовый gameplay уже работает.
 4. Уроки `16-30` проходите, когда проект выходит за localhost: интернет, auth, CI, logs, cloud, upgrade, security.
+5. Если цель - RPG/Progression, после базового state/actions пройдите доменный маршрут `31-33`.
 
 Каждый урок должен дать артефакт: сцену, кодовый прототип, таблицу решения, лог, smoke-сценарий или документ проекта. Если после урока ничего нельзя показать и проверить, урок не пройден.
 
@@ -34,6 +35,7 @@
 | Первый playable prototype | `00 -> 00a -> 01 -> 02 -> 03 -> 04 -> 06 -> 09 -> 12 -> 15 -> 22` | Connect, spawn, movement, HP, command, UI, smoke. |
 | Кооператив без интернета | `01-15`, затем `22` | Локальный co-op test flow и release checklist. |
 | PvP/action | `01-15`, затем `20`, `21`, `29` | Tick/movement decisions, animation state, anti-cheat checks. |
+| RPG/Progression | `00-06`, затем `09`, `11`, `12`, `31-33`, `22`, `29` | Честный бой, XP, level rewards, perks, UI и smoke. |
 | Игра через интернет | `16-19`, затем `23-25` | NAT/relay/backend/auth, CI, hosting contract. |
 | Поддержка проекта | `24`, `28`, `29`, `30` | Logs, upgrade playbook, security, stack decision. |
 
@@ -105,6 +107,9 @@
 | 28 | [28_Mirror_Upgrade_Playbook.md](28_Mirror_Upgrade_Playbook.md) | Playbook обновления Mirror. |
 | 29 | [29_Network_Security_Checklist.md](29_Network_Security_Checklist.md) | Security checklist. |
 | 30 | [30_Appendix_NGO_Fusion_HostMigration.md](30_Appendix_NGO_Fusion_HostMigration.md) | Решение по стеку и план B. |
+| 31 | [31_RPG_Combat_Server_Authority.md](31_RPG_Combat_Server_Authority.md) | RPG combat без доверия клиенту. |
+| 32 | [32_Progression_XP_Rewards.md](32_Progression_XP_Rewards.md) | XP, уровни, rewards и profile. |
+| 33 | [33_RPG_Progression_Capstone.md](33_RPG_Progression_Capstone.md) | Итоговый RPG/Progression vertical slice. |
 
 ---
 
@@ -120,6 +125,8 @@
 - `MIRROR_UPGRADE.md`
 - `SECURITY_CHECKLIST.md`
 - `NETCODE_STACK_DECISION.md`
+- `SMOKE_RPG_PROGRESSION.md`
+- `PROGRESSION_FLOW.md`
 
 Внутренние учебные документы курса:
 

@@ -26,11 +26,12 @@
 
 ## Как использовать
 
-1. **Создание данных**: Создайте asset'ы `LevelCurveDefinition`, `UnlockTreeDefinition` и `PerkTreeDefinition` через меню `Neoxider/Progression`.
-2. **Менеджер**: Добавьте `ProgressionManager` на сцену и назначьте созданные asset'ы.
-3. **Сохранение**: Настройте `Save Key` для уникальности профиля.
-4. **Интерфейс**: Подключите UI к `XpState`, `LevelState` или событиям менеджера.
-5. **Геймплей**: Вызывайте `AddXp()` при выполнении задач или убийстве врагов.
+1. **Создание данных**: Создайте `Level Reward Track` (`LevelCurveDefinition`), `UnlockTreeDefinition` и `PerkTreeDefinition` через меню `Neoxider/Progression`.
+2. **Level Provider**: Добавьте `LevelComponent` на тот же GameObject или назначьте его в поле `Level Provider`. Через него считаются XP и текущий уровень.
+3. **Менеджер**: Добавьте `ProgressionManager` на сцену и назначьте созданные asset'ы.
+4. **Сохранение**: Настройте `Save Key` для уникальности профиля. `SaveProfile()` пишет через `SaveProvider` и делает flush.
+5. **Интерфейс**: Подключите UI к `XpState`, `LevelState` или событиям менеджера.
+6. **Геймплей**: Вызывайте `AddXp()` только из доверенной игровой логики: server-side reward, quest completion, boss death.
 
 ---
 
@@ -38,7 +39,8 @@
 
 ### Roguelite / Meta Run
 Постоянная прогрессия между забегами.
-- `LevelCurveDefinition`: опыт аккаунта.
+- `LevelComponent`: XP и текущий уровень аккаунта.
+- `LevelCurveDefinition`: rewards/perk points по уровням.
 - `PerkTreeDefinition`: постоянные улучшения статов.
 - `UnlockTreeDefinition`: открытие новых видов оружия или режимов.
 
@@ -76,6 +78,8 @@ public class QuestReward : MonoBehaviour
 1. На объект-триггер добавьте `ProgressionNoCodeAction`.
 2. Установите `Action Type = AddXp` и `Amount = 500`.
 3. Вызовите метод `Execute()` из UnityEvent (например, после завершения диалога или смерти босса).
+
+В multiplayer этот UnityEvent должен срабатывать в доверенной server-side логике. UI-кнопка клиента не должна напрямую выдавать XP.
 
 ### 2. Разблокировка способностей или локаций (C#)
 

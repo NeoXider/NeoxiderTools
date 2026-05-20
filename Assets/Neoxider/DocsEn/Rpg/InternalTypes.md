@@ -21,7 +21,8 @@
 | `RpgButtonBinding` | Button-to-RPG action binding. |
 | `RpgStatGrowthDefinition` | Stat growth definition (formula, coefficients). |
 | `RpgTargetQuery` | Target search query. |
-| `RpgProfileData` | RPG character profile data. |
+| `RpgCharacterProfileData` | Universal RPG character profile data. |
+| `ActiveBuffEntry` / `ActiveStatusEntry` | Active buffs and statuses for runtime/save/network. |
 
 ## Events
 | Type | Description |
@@ -33,7 +34,6 @@
 ## Helpers / Runtime
 | Type | Description |
 |------|-------------|
-| `RpgProgressionHelper` | Helper for RPG + Progression integration. |
 | `IRpgCombatReceiver` | Damage receiver interface. |
 | `RpgCombatMath` | Damage calculation utility. |
 | `RpgTargetingUtility` | Target search utility. |

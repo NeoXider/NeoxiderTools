@@ -36,12 +36,6 @@ namespace Neo
             CreateFromPrefab("Prefabs/Tools/Interact/Interactive Sphere.prefab");
         }
 
-        [MenuItem("GameObject/Neoxider/Presets/Interaction/Trigger Cube", false, -29)]
-        private static void CreateTriggerCube()
-        {
-            CreateFromPrefab("Prefabs/Tools/Interact/Trigger Cube.prefab");
-        }
-
         [MenuItem("GameObject/Neoxider/Presets/Interaction/Toggle Interactive", false, -28)]
         private static void CreateToggleInteractive()
         {

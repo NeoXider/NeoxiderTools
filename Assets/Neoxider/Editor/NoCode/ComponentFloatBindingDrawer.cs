@@ -69,6 +69,12 @@ namespace Neo.Editor.NoCode
             if (root != null)
             {
                 h += (line + sp) * 3 + line * 1.25f;
+                float reactiveInfoHeight = ReactivePollInfoHeight(property, root);
+                if (reactiveInfoHeight > 0f)
+                {
+                    h += reactiveInfoHeight + sp;
+                }
+
                 return h;
             }
 
@@ -257,7 +263,7 @@ namespace Neo.Editor.NoCode
             {
                 row = new Rect(position.x, y, position.width, line * 2f);
                 EditorGUI.HelpBox(row,
-                    "No float / int / bool / ReactivePropertyFloat fields or properties on this component.",
+                    "No float / int / bool / ReactivePropertyFloat / ReactivePropertyInt / ReactivePropertyBool fields or properties on this component.",
                     MessageType.Info);
                 EditorGUI.EndProperty();
                 return;
@@ -283,6 +289,14 @@ namespace Neo.Editor.NoCode
             }
 
             y += line + sp;
+
+            if (TryBuildReactivePollInfo(property, root, out string reactivePollInfo))
+            {
+                float infoHeight = HelpBoxHeight(reactivePollInfo);
+                row = new Rect(position.x, y, position.width, infoHeight);
+                EditorGUI.HelpBox(row, reactivePollInfo, MessageType.Info);
+                y += infoHeight + sp;
+            }
 
             row = new Rect(position.x, y, position.width, line * 1.2f);
             Color c0 = GUI.contentColor;
@@ -313,6 +327,54 @@ namespace Neo.Editor.NoCode
             return wait
                 ? $"GameObject \"{objectName}\" not found — waiting for spawn (no warning).\nDrag a prefab into Prefab Preview to edit properties."
                 : $"GameObject \"{objectName}\" not found in the scene.\nDrag a prefab into Prefab Preview to edit properties.";
+        }
+
+        private static float ReactivePollInfoHeight(SerializedProperty property, GameObject root)
+        {
+            return TryBuildReactivePollInfo(property, root, out string text)
+                ? HelpBoxHeight(text)
+                : 0f;
+        }
+
+        private static bool TryBuildReactivePollInfo(SerializedProperty property, GameObject root, out string text)
+        {
+            text = null;
+            SerializedProperty updateModeProp = property.serializedObject.FindProperty("_updateMode");
+            if (updateModeProp == null ||
+                updateModeProp.enumValueIndex != (int)NoCodeFloatUpdateMode.Reactive)
+            {
+                return false;
+            }
+
+            SerializedProperty typeProp = property.FindPropertyRelative("_componentTypeName");
+            SerializedProperty memberProp = property.FindPropertyRelative("_memberName");
+            if (typeProp == null || memberProp == null)
+            {
+                return false;
+            }
+
+            Component selected = ComponentBindingInspectorShared.FindComponentByTypeName(root, typeProp.stringValue);
+            if (!ComponentBindingInspectorShared.TryGetFloatBindingMemberType(selected, memberProp.stringValue,
+                    out System.Type memberType))
+            {
+                return false;
+            }
+
+            if (ComponentBindingInspectorShared.IsReactiveFloatBindingMemberType(memberType))
+            {
+                return false;
+            }
+
+            float pollInterval = 0.16f;
+            SerializedProperty pollIntervalProp = property.serializedObject.FindProperty("_pollIntervalSeconds");
+            if (pollIntervalProp != null)
+            {
+                pollInterval = Mathf.Max(0.016f, pollIntervalProp.floatValue);
+            }
+
+            text =
+                $"Non-reactive {ComponentBindingInspectorShared.FormatClrTypeDisplayName(memberType)}: Reactive mode will poll every {pollInterval:0.###} s. Use ReactiveProperty* for instant updates.";
+            return true;
         }
 
         private static float HelpBoxHeight(string text)

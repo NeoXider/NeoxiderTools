@@ -16,7 +16,7 @@
 
 ## Привязка к числу с другого объекта (No-Code)
 
-Сам **`SetText`** не содержит полей «источник данных»: он только предоставляет методы **`Set(...)`**. Чтобы в инспекторе выбрать **объект → компонент → поле / `ReactivePropertyFloat`** (как в **NeoCondition**), добавьте на тот же **`GameObject`** компонент **`NoCode Bind Text`** из сборки **`Neo.NoCode`** — он читает значение и вызывает **`SetText.Set(float)`** (или пишет в **`TMP_Text`**, если **`SetText`** не назначен). Правила поиска объекта (**Find By Name**, **Source Root**) совпадают с документацией [**NoCode/README.md**](../../NoCode/README.md). В инспекторе **`SetText`**, если **`NoCodeBindText`** отсутствует, показываются подсказка и кнопка **Add NoCode Bind Text**.
+Сам **`SetText`** не содержит полей «источник данных»: он только предоставляет методы **`Set(...)`**. Чтобы в инспекторе выбрать **объект → компонент → поле / `ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`** (как в **NeoCondition**), добавьте на тот же **`GameObject`** компонент **`NoCode Bind Text`** из сборки **`Neo.NoCode`** — он читает значение и вызывает **`SetText.Set(float)`** (или пишет в **`TMP_Text`**, если **`SetText`** не назначен). Для обычных не-reactive полей в режиме **Reactive** инспектор показывает info-панель, а компонент обновляет значение через poll fallback. Для строки из нескольких значений используйте **`NoCodeFormattedText`**. Правила поиска объекта (**Find By Name**, **Source Root**) совпадают с документацией [**NoCode/README.md**](../../NoCode/README.md).
 
 ## API
 
@@ -39,7 +39,7 @@
 ## Примеры
 
 ### Пример No-Code (в Inspector)
-Повесьте **`SetText`** и при необходимости **`NoCode Bind Text`** на объект с **`TextMeshPro`**. Для вывода числа с другого компонента настройте биндинг в **`NoCodeBindText`** (см. [**NoCode/README.md**](../../NoCode/README.md)). Отдельно: **`SetText`** — **`Separator`**, **`Decimal`**, **`Number Notation`**, из **`ScoreManager`** можно по-прежнему вызывать **`SetText.Set(int)`** через **`UnityEvent`**.
+Повесьте **`SetText`** и при необходимости **`NoCode Bind Text`** или **`NoCodeFormattedText`** на объект с **`TextMeshPro`**. Для вывода числа с другого компонента настройте биндинг в **Neo.NoCode** (см. [**NoCode/README.md**](../../NoCode/README.md)). Отдельно: **`SetText`** — **`Separator`**, **`Decimal`**, **`Number Notation`**, из **`ScoreManager`** можно по-прежнему вызывать **`SetText.Set(int)`** через **`UnityEvent`**.
 
 ### Пример (Код)
 ```csharp
@@ -52,6 +52,6 @@ public void UpdateGold(int amount)
 ```
 
 ## См. также
-- [**Neo.NoCode — привязка float к UI**](../../NoCode/README.md)
+- [**Neo.NoCode — привязка чисел к UI**](../../NoCode/README.md)
 - [TimeToText](TimeToText.md)
 - ← [Tools/Text](README.md)

@@ -125,6 +125,16 @@ namespace Neo.Editor.Binding
                 return "ReactivePropertyFloat";
             }
 
+            if (type == typeof(ReactivePropertyInt))
+            {
+                return "ReactivePropertyInt";
+            }
+
+            if (type == typeof(ReactivePropertyBool))
+            {
+                return "ReactivePropertyBool";
+            }
+
             return type.Name;
         }
 
@@ -514,7 +524,7 @@ namespace Neo.Editor.Binding
         }
 
         /// <summary>
-        ///     Members readable by <see cref="Neo.NoCode.ComponentFloatBinding"/> (numeric + reactive float).
+        ///     Members readable by <see cref="Neo.NoCode.ComponentFloatBinding"/> (numeric + supported reactive values).
         /// </summary>
         public static void BuildFloatBindingMemberLists(Component comp, List<string> keys, List<string> labels)
         {
@@ -555,6 +565,40 @@ namespace Neo.Editor.Binding
             }
         }
 
+        public static bool TryGetFloatBindingMemberType(Component comp, string memberName, out Type memberType)
+        {
+            memberType = null;
+            if (comp == null || string.IsNullOrEmpty(memberName))
+            {
+                return false;
+            }
+
+            Type t = comp.GetType();
+            PropertyInfo pi = t.GetProperty(memberName, InstanceMembers);
+            if (pi != null && pi.CanRead && pi.GetIndexParameters().Length == 0 &&
+                IsFloatBindingMemberType(pi.PropertyType))
+            {
+                memberType = pi.PropertyType;
+                return true;
+            }
+
+            FieldInfo fi = t.GetField(memberName, InstanceMembers);
+            if (fi != null && !fi.IsLiteral && IsFloatBindingMemberType(fi.FieldType))
+            {
+                memberType = fi.FieldType;
+                return true;
+            }
+
+            return false;
+        }
+
+        public static bool IsReactiveFloatBindingMemberType(Type memberType)
+        {
+            return memberType == typeof(ReactivePropertyFloat) ||
+                   memberType == typeof(ReactivePropertyInt) ||
+                   memberType == typeof(ReactivePropertyBool);
+        }
+
         private static bool IsFloatBindingMemberType(Type memberType)
         {
             if (memberType == typeof(float) || memberType == typeof(int) || memberType == typeof(double) ||
@@ -563,7 +607,7 @@ namespace Neo.Editor.Binding
                 return true;
             }
 
-            return memberType == typeof(ReactivePropertyFloat);
+            return IsReactiveFloatBindingMemberType(memberType);
         }
     }
 }

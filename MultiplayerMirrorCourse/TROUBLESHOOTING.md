@@ -37,6 +37,12 @@
 | Dedicated ждёт кнопку | Запуск завязан на `NetworkManagerHUD`, нет bootstrap. | 14 |
 | CI собирает не то | Wrong build target/subtarget/scenes/version. | 23 |
 | После обновления Mirror сломался spawn/RPC | Не пройден upgrade smoke matrix. | 28 |
+| Пуля RPG видна только серверу | Projectile создан обычным `Instantiate`, нет `NetworkServer.Spawn` или prefab не registered. | 02, 31 |
+| XP начисляется только в Host | Reward вызывается локально, а не server-side death/reward flow. | 32, 33 |
+| Клиент может поставить себе уровень или XP | Есть public Command для trusted state (`CmdAddXp`, `CmdSetLevel`) без server-only защиты. | 09, 32 |
+| Reward за смерть выдался дважды | Death/reward flow не защищён server flag или выполняется на client и server. | 31, 33 |
+| Перки не сохраняются после restart | Profile write не делает flush (`SaveProvider.Save()`/backend write). | 32 |
+| Level-up reward пропущен при большом XP | Награды выдаются только за финальный уровень, нет цикла по crossed levels. | 32 |
 
 ---
 
@@ -68,3 +74,4 @@
 | Release test | `15`, `22` |
 | Dedicated/cloud | `14`, `23`, `25` |
 | Security | `09`, `19`, `29` |
+| RPG/Progression | `31`, `32`, `33` |

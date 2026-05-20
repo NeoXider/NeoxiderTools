@@ -140,6 +140,12 @@ public sealed class PlayerCombat : NetworkBehaviour
 
 ---
 
+## Для RPG/Progression
+
+Самая частая ошибка RPG-модуля: сервер проверяет урон, но XP/reward всё ещё выдаётся клиентской кнопкой или локальным событием смерти. Для боевого контура используйте [31_RPG_Combat_Server_Authority.md](31_RPG_Combat_Server_Authority.md), для XP и профиля - [32_Progression_XP_Rewards.md](32_Progression_XP_Rewards.md), итоговую проверку закрывайте по [33_RPG_Progression_Capstone.md](33_RPG_Progression_Capstone.md).
+
+---
+
 ## Домашнее задание
 
 Выберите три команды вашей игры и сделайте таблицу:

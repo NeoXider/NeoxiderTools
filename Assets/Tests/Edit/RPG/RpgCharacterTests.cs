@@ -1,8 +1,13 @@
+using System;
+using System.Collections.Generic;
+using System.Reflection;
 using Neo.Core.Resources;
 using Neo.Rpg;
 using Neo.Rpg.Components;
+using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
+using Object = UnityEngine.Object;
 #if MIRROR
 using Mirror;
 #endif
@@ -175,6 +180,109 @@ namespace Neo.Tests.Edit.RPG
             }
         }
 
+        [Test]
+        public void SaveAndLoadProfile_UsesSaveProvider()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            const string saveKey = "RpgCharacterTests.Profile";
+            RpgCharacterTemplate template = CreateBasicTemplate();
+
+            GameObject firstGo = new("RpgCharacter_First");
+            RpgCharacter first = AddCharacter(firstGo);
+            SetPrivateField(first, "_saveKey", saveKey);
+
+            try
+            {
+                first.ApplyTemplate(template);
+                first.Damage(40f);
+                first.SaveProfile();
+
+                Assert.That(provider.HasKey(saveKey), Is.True);
+                Assert.That(provider.SaveCallCount, Is.GreaterThan(0));
+
+                GameObject secondGo = new("RpgCharacter_Second");
+                RpgCharacter second = AddCharacter(secondGo);
+                SetPrivateField(second, "_saveKey", saveKey);
+
+                try
+                {
+                    second.ApplyTemplate(template);
+                    second.LoadProfile();
+
+                    Assert.That(second.HpValue, Is.EqualTo(60f));
+                    Assert.That(second.MaxHpValue, Is.EqualTo(100f));
+                }
+                finally
+                {
+                    Object.DestroyImmediate(secondGo);
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(template);
+                Object.DestroyImmediate(firstGo);
+            }
+        }
+
+        [Test]
+        public void NetworkSnapshot_RoundTripsCustomIdsWithSeparators()
+        {
+            const string resourceId = "Dark;Mana=1/2|x:y";
+            RpgCharacterTemplate template = CreateBasicTemplate();
+            template.resources = new[]
+            {
+                new RpgResourceDefinition
+                {
+                    id = new RpgStatId(RpgStatPreset.Hp),
+                    startCurrent = 100f,
+                    startMax = 100f,
+                    restoreOnAwake = true,
+                    restoreToFull = true
+                },
+                new RpgResourceDefinition
+                {
+                    id = new RpgStatId(resourceId),
+                    startCurrent = 10f,
+                    startMax = 30f,
+                    restoreOnAwake = true,
+                    restoreToFull = false
+                }
+            };
+
+            GameObject firstGo = new("RpgCharacter_First");
+            GameObject secondGo = new("RpgCharacter_Second");
+            RpgCharacter first = AddCharacter(firstGo);
+            RpgCharacter second = AddCharacter(secondGo);
+
+            try
+            {
+                first.ApplyTemplate(template);
+                second.ApplyTemplate(template);
+                first.Spend(resourceId, 3f);
+
+                MethodInfo buildSnapshot = typeof(RpgCharacter).GetMethod(
+                    "BuildSnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
+                MethodInfo applySnapshot = typeof(RpgCharacter).GetMethod(
+                    "ApplySnapshot", BindingFlags.Instance | BindingFlags.NonPublic);
+
+                Assert.That(buildSnapshot, Is.Not.Null, "Mirror snapshot API should exist in this project.");
+                Assert.That(applySnapshot, Is.Not.Null, "Mirror snapshot API should exist in this project.");
+
+                string snapshot = (string)buildSnapshot.Invoke(first, Array.Empty<object>());
+                applySnapshot.Invoke(second, new object[] { snapshot });
+
+                Assert.That(second.GetResource(resourceId), Is.EqualTo(7f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(template);
+                Object.DestroyImmediate(firstGo);
+                Object.DestroyImmediate(secondGo);
+            }
+        }
+
         private static RpgCharacterTemplate CreateBasicTemplate()
         {
             RpgCharacterTemplate template = ScriptableObject.CreateInstance<RpgCharacterTemplate>();
@@ -198,6 +306,100 @@ namespace Neo.Tests.Edit.RPG
             go.AddComponent<NetworkIdentity>();
 #endif
             return go.AddComponent<RpgCharacter>();
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(fieldInfo, Is.Not.Null,
+                $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
+            fieldInfo.SetValue(target, value);
+        }
+
+        private sealed class DictionarySaveProvider : ISaveProvider
+        {
+            private readonly Dictionary<string, object> _values = new(StringComparer.Ordinal);
+
+            public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
+            public int SaveCallCount { get; private set; }
+            public event Action OnDataSaved;
+            public event Action OnDataLoaded;
+            public event Action<string> OnKeyChanged;
+
+            public int GetInt(string key, int defaultValue = 0)
+            {
+                return _values.TryGetValue(key, out object value) && value is int intValue ? intValue : defaultValue;
+            }
+
+            public void SetInt(string key, int value)
+            {
+                _values[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public float GetFloat(string key, float defaultValue = 0f)
+            {
+                return _values.TryGetValue(key, out object value) && value is float floatValue
+                    ? floatValue
+                    : defaultValue;
+            }
+
+            public void SetFloat(string key, float value)
+            {
+                _values[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public string GetString(string key, string defaultValue = "")
+            {
+                return _values.TryGetValue(key, out object value) && value is string stringValue
+                    ? stringValue
+                    : defaultValue;
+            }
+
+            public void SetString(string key, string value)
+            {
+                _values[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public bool GetBool(string key, bool defaultValue = false)
+            {
+                return _values.TryGetValue(key, out object value) && value is bool boolValue ? boolValue : defaultValue;
+            }
+
+            public void SetBool(string key, bool value)
+            {
+                _values[key] = value;
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public bool HasKey(string key)
+            {
+                return _values.ContainsKey(key);
+            }
+
+            public void DeleteKey(string key)
+            {
+                _values.Remove(key);
+                OnKeyChanged?.Invoke(key);
+            }
+
+            public void DeleteAll()
+            {
+                _values.Clear();
+            }
+
+            public void Save()
+            {
+                SaveCallCount++;
+                OnDataSaved?.Invoke();
+            }
+
+            public void Load()
+            {
+                OnDataLoaded?.Invoke();
+            }
         }
     }
 }

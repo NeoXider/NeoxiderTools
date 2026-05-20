@@ -26,7 +26,7 @@ namespace Neo.Progression
         [SerializeField]
         private LevelComponent _levelProvider;
 
-        [Header("Definitions")]
+        [Header("Reward Track And Trees")]
         [Tooltip("Reward table: level -> perk points and rewards. Used when level increases.")]
         [SerializeField]
         private LevelCurveDefinition _levelCurve;
@@ -59,12 +59,14 @@ namespace Neo.Progression
 
         private readonly HashSet<string> _unlockedNodeIds = new(StringComparer.Ordinal);
         private ProgressionProfileData _profile = new();
+        private int _lastRewardedLevel = 1;
         private bool _progressionInitialized;
+        private bool _warnedMissingLevelProvider;
 
         /// <summary>
         ///     Gets a backwards-compatible singleton alias.
         /// </summary>
-        public static ProgressionManager Instance => I;
+        public static new ProgressionManager Instance => I;
 
         /// <summary>
         ///     Gets or sets the level curve definition.
@@ -236,12 +238,41 @@ namespace Neo.Progression
                 return;
             }
 
-            if (_levelProvider != null)
+            if (_levelProvider == null)
             {
-                _levelProvider.AddXp(amount);
+                WarnMissingLevelProvider("XP was not added.");
+                return;
             }
 
+            _levelProvider.AddXp(amount);
             PersistAndNotify();
+        }
+
+        /// <summary>
+        ///     Sets the level through the configured level provider.
+        /// </summary>
+        public void SetLevel(int level)
+        {
+            TrySetLevel(level, out _);
+        }
+
+        /// <summary>
+        ///     Tries to set the level through the configured level provider and returns a fail reason when unavailable.
+        /// </summary>
+        public bool TrySetLevel(int level, out string failReason)
+        {
+            EnsureInitialized();
+            if (_levelProvider == null)
+            {
+                failReason = "Level provider is not assigned.";
+                WarnMissingLevelProvider("Level was not changed.");
+                return false;
+            }
+
+            failReason = null;
+            _levelProvider.SetLevel(level);
+            PersistAndNotify();
+            return true;
         }
 
         /// <summary>
@@ -541,6 +572,7 @@ namespace Neo.Progression
             _profile.Version = ProfileVersion;
             string json = JsonUtility.ToJson(_profile, true);
             SaveProvider.SetString(_saveKey, json);
+            SaveProvider.Save();
             _onProfileSaved?.Invoke();
         }
 
@@ -554,8 +586,15 @@ namespace Neo.Progression
 
             _progressionInitialized = true;
             _saveKey = string.IsNullOrWhiteSpace(_saveKey) ? DefaultSaveKey : _saveKey.Trim();
+            if (_levelProvider == null)
+            {
+                TryGetComponent(out _levelProvider);
+            }
+
             if (_levelProvider != null)
             {
+                _levelProvider.EnsureInitialized();
+                _lastRewardedLevel = Mathf.Max(1, _levelProvider.Level);
                 _levelProvider.OnLevelUp.AddListener(DispatchRewardsForLevel);
             }
 
@@ -604,6 +643,7 @@ namespace Neo.Progression
             ApplyDefaultStates();
             ImportProfileSets();
             SyncProfileListsFromSets();
+            _lastRewardedLevel = Mathf.Max(1, CurrentLevel);
             RefreshRuntimeState(invokeEvents);
         }
 
@@ -674,6 +714,22 @@ namespace Neo.Progression
 
         private void DispatchRewardsForLevel(int level)
         {
+            if (level <= _lastRewardedLevel)
+            {
+                return;
+            }
+
+            for (int currentLevel = _lastRewardedLevel + 1; currentLevel <= level; currentLevel++)
+            {
+                _lastRewardedLevel = currentLevel;
+                DispatchRewardsForSingleLevel(currentLevel);
+            }
+
+            PersistAndNotify();
+        }
+
+        private void DispatchRewardsForSingleLevel(int level)
+        {
             if (_levelCurve == null || !_levelCurve.TryGetDefinition(level, out ProgressionLevelDefinition definition))
             {
                 return;
@@ -685,7 +741,6 @@ namespace Neo.Progression
             }
 
             ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this);
-            PersistAndNotify();
         }
 
         private bool EvaluateConditions(IReadOnlyList<ConditionEntry> conditions)
@@ -740,6 +795,27 @@ namespace Neo.Progression
             _onXpChanged?.Invoke(totalXp);
             _onLevelChanged?.Invoke(level);
             _onPerkPointsChanged?.Invoke(_profile.AvailablePerkPoints);
+        }
+
+        private void WarnMissingLevelProvider(string suffix)
+        {
+            if (_warnedMissingLevelProvider)
+            {
+                return;
+            }
+
+            _warnedMissingLevelProvider = true;
+            Debug.LogWarning($"[ProgressionManager] Level Provider is not assigned. {suffix}", this);
+        }
+
+        protected override void OnDestroy()
+        {
+            if (_levelProvider != null)
+            {
+                _levelProvider.OnLevelUp.RemoveListener(DispatchRewardsForLevel);
+            }
+
+            base.OnDestroy();
         }
     }
 }

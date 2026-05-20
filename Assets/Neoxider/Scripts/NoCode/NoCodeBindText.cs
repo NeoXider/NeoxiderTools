@@ -6,7 +6,7 @@ using UnityEngine;
 namespace Neo.NoCode
 {
     /// <summary>
-    ///     Reads a float from another component (field/property or <see cref="Neo.Reactive.ReactivePropertyFloat"/>)
+    ///     Reads a float from another component (field/property or supported reactive property)
     ///     and pushes it to <see cref="SetText"/> or <see cref="TMP_Text"/>.
     /// </summary>
     [NeoDoc("NoCode/README.md")]

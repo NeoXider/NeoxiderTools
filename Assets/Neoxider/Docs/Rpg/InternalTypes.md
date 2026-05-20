@@ -21,7 +21,8 @@
 | `RpgButtonBinding` | Привязка кнопки к RPG-действию. |
 | `RpgStatGrowthDefinition` | Определение роста статов (формула, коэффициенты). |
 | `RpgTargetQuery` | Запрос для поиска целей. |
-| `RpgProfileData` | Профильные данные RPG-персонажа. |
+| `RpgCharacterProfileData` | Универсальные профильные данные RPG-персонажа. |
+| `ActiveBuffEntry` / `ActiveStatusEntry` | Активные баффы и статусы для runtime/save/network. |
 
 ## Events
 | Тип | Описание |
@@ -33,7 +34,6 @@
 ## Helpers / Runtime
 | Тип | Описание |
 |-----|----------|
-| `RpgProgressionHelper` | Хелпер для интеграции RPG с Progression. |
 | `IRpgCombatReceiver` | Интерфейс получателя урона. |
 | `RpgCombatMath` | Утилита расчёта урона. |
 | `RpgTargetingUtility` | Утилита поиска целей. |

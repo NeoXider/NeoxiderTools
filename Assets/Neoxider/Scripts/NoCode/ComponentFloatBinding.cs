@@ -7,7 +7,7 @@ using UnityEngine;
 namespace Neo.NoCode
 {
     /// <summary>
-    ///     Resolves a float (or <see cref="ReactivePropertyFloat"/>) from a component field/property with
+    ///     Resolves a float (or supported reactive property) from a component field/property with
     ///     <see cref="ReflectionCache"/>. Refreshes member resolution when invalidated; no per-frame reflection.
     /// </summary>
     [Serializable]
@@ -271,7 +271,7 @@ namespace Neo.NoCode
         }
 
         /// <summary>
-        ///     Reads a numeric float; unwraps <see cref="ReactivePropertyFloat.CurrentValue"/>.
+        ///     Reads a numeric float; unwraps supported reactive property values.
         /// </summary>
         public bool TryReadFloat(MonoBehaviour host, out float value)
         {
@@ -287,6 +287,12 @@ namespace Neo.NoCode
                     return false;
                 case ReactivePropertyFloat rpf:
                     value = rpf.CurrentValue;
+                    return true;
+                case ReactivePropertyInt rpi:
+                    value = rpi.CurrentValue;
+                    return true;
+                case ReactivePropertyBool rpb:
+                    value = rpb.CurrentValue ? 1f : 0f;
                     return true;
                 case float f:
                     value = f;
@@ -310,19 +316,58 @@ namespace Neo.NoCode
             }
         }
 
-        /// <summary>
-        ///     Returns reactive instance when the member holds <see cref="ReactivePropertyFloat"/> (reference type).
-        /// </summary>
-        public bool TryGetReactivePropertyFloat(MonoBehaviour host, out ReactivePropertyFloat reactive)
+        public bool TryGetReactiveProperty(MonoBehaviour host, out ReactivePropertyFloat reactiveFloat,
+            out ReactivePropertyInt reactiveInt, out ReactivePropertyBool reactiveBool)
         {
-            reactive = null;
+            reactiveFloat = null;
+            reactiveInt = null;
+            reactiveBool = null;
             if (!TryReadRaw(host, out object raw))
             {
                 return false;
             }
 
-            reactive = raw as ReactivePropertyFloat;
-            return reactive != null;
+            switch (raw)
+            {
+                case ReactivePropertyFloat rpf:
+                    reactiveFloat = rpf;
+                    return true;
+                case ReactivePropertyInt rpi:
+                    reactiveInt = rpi;
+                    return true;
+                case ReactivePropertyBool rpb:
+                    reactiveBool = rpb;
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>
+        ///     Returns reactive instance when the member holds <see cref="ReactivePropertyFloat"/> (reference type).
+        /// </summary>
+        public bool TryGetReactivePropertyFloat(MonoBehaviour host, out ReactivePropertyFloat reactive)
+        {
+            bool result = TryGetReactiveProperty(host, out reactive, out _, out _);
+            return result && reactive != null;
+        }
+
+        /// <summary>
+        ///     Returns reactive instance when the member holds <see cref="ReactivePropertyInt" />.
+        /// </summary>
+        public bool TryGetReactivePropertyInt(MonoBehaviour host, out ReactivePropertyInt reactive)
+        {
+            bool result = TryGetReactiveProperty(host, out _, out reactive, out _);
+            return result && reactive != null;
+        }
+
+        /// <summary>
+        ///     Returns reactive instance when the member holds <see cref="ReactivePropertyBool" />.
+        /// </summary>
+        public bool TryGetReactivePropertyBool(MonoBehaviour host, out ReactivePropertyBool reactive)
+        {
+            bool result = TryGetReactiveProperty(host, out _, out _, out reactive);
+            return result && reactive != null;
         }
     }
 }

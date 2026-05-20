@@ -121,8 +121,31 @@ namespace Neo.Progression
         /// </summary>
         public IReadOnlyList<string> ValidateDefinition()
         {
+            return ValidateDefinition(null);
+        }
+
+        /// <summary>
+        ///     Validates identifiers, references, graph cycles, and optional unlock node dependencies.
+        /// </summary>
+        public IReadOnlyList<string> ValidateDefinition(UnlockTreeDefinition unlockTree)
+        {
             List<string> issues = new();
             Dictionary<string, PerkDefinition> perkMap = new(StringComparer.Ordinal);
+            HashSet<string> unlockNodeIds = null;
+
+            if (unlockTree != null)
+            {
+                unlockNodeIds = new HashSet<string>(StringComparer.Ordinal);
+                IReadOnlyList<UnlockNodeDefinition> nodes = unlockTree.Nodes;
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    UnlockNodeDefinition node = nodes[i];
+                    if (node != null && !string.IsNullOrWhiteSpace(node.Id))
+                    {
+                        unlockNodeIds.Add(node.Id);
+                    }
+                }
+            }
 
             for (int i = 0; i < _perks.Count; i++)
             {
@@ -143,6 +166,12 @@ namespace Neo.Progression
                 {
                     issues.Add($"Duplicate perk id '{perk.Id}'.");
                 }
+
+                if (perk.PurchasedByDefault && perk.Rewards.Count > 0)
+                {
+                    issues.Add(
+                        $"Perk '{perk.Id}' is purchased by default, but default-perk rewards are not dispatched automatically.");
+                }
             }
 
             foreach (KeyValuePair<string, PerkDefinition> pair in perkMap)
@@ -160,6 +189,23 @@ namespace Neo.Progression
                     if (!perkMap.ContainsKey(prerequisiteId))
                     {
                         issues.Add($"Perk '{pair.Key}' references missing prerequisite perk '{prerequisiteId}'.");
+                    }
+                }
+
+                IReadOnlyList<string> requiredUnlockNodes = pair.Value.RequiredUnlockNodeIds;
+                for (int i = 0; i < requiredUnlockNodes.Count; i++)
+                {
+                    string requiredUnlockNodeId = requiredUnlockNodes[i];
+                    if (string.IsNullOrWhiteSpace(requiredUnlockNodeId))
+                    {
+                        issues.Add($"Perk '{pair.Key}' contains an empty required unlock node id.");
+                        continue;
+                    }
+
+                    if (unlockNodeIds != null && !unlockNodeIds.Contains(requiredUnlockNodeId))
+                    {
+                        issues.Add(
+                            $"Perk '{pair.Key}' references missing required unlock node '{requiredUnlockNodeId}'.");
                     }
                 }
             }

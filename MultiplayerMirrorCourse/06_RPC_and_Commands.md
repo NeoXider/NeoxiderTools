@@ -152,6 +152,12 @@ public sealed class PlayerShopActions : NetworkBehaviour
 
 ---
 
+## Для RPG/Progression
+
+Команды RPG должны звучать как request: `CmdRequestAttack`, `CmdTryBuyPerk`, `CmdTryUseItem`. Не делайте публичные `CmdAddXp`, `CmdSetLevel`, `CmdSetDamage` для клиента. Готовый вертикальный пример разобран в [31_RPG_Combat_Server_Authority.md](31_RPG_Combat_Server_Authority.md) и [32_Progression_XP_Rewards.md](32_Progression_XP_Rewards.md).
+
+---
+
 ## Домашнее задание
 
 Сделайте покупку предмета:

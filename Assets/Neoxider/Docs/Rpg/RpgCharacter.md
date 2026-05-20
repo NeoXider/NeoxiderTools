@@ -117,9 +117,14 @@ string key = id;                           // "Stamina"
 шлют `[Command]` на сервер. Сервер применяет и пушит snapshot SyncVar — все клиенты получают.
 Если используешь обычные `Damage` / `Heal` / etc. — они тоже работают, но только локально.
 
+Важно для multiplayer: trusted state commands по умолчанию server-only. Клиент не должен через
+UnityEvent/no-code напрямую поднимать уровень, XP, max resource, stat base или invulnerable. Для
+старых прототипов есть `Allow Client State Commands`, но в production лучше оставить выключенным и
+слать только intent: attack, use item, interact, buy perk.
+
 ### Save / Load
 
-`SaveProfile()` / `LoadProfile()` / `ResetProfile()` — пишет в `PlayerPrefs[_saveKey]`. Сохраняет
+`SaveProfile()` / `LoadProfile()` / `ResetProfile()` — пишет через `Neo.Save.SaveProvider` по `_saveKey`. Сохраняет
 все ресурсы / статы / upgrade points / активные бафы / статусы по id (универсально, без жёстко
 зашитых полей).
 
@@ -154,6 +159,7 @@ string key = id;                           // "Stamina"
 ### `RpgResourceBinding`
 Drop на UI GameObject, drag `RpgCharacter`, pick resource id (например `Custom = "DarkMana"`).
 UnityEvent `OnCurrent(float)` / `OnMax(float)` / `OnPercent(float)` идут в Slider / TMP_Text без кода.
+Для готового текста из нескольких чисел используйте общий `NoCodeFormattedText`, а не отдельный RPG-only UI wrapper.
 
 ### `RpgStatBinding`
 То же для статов. `OnValue(float)`.
@@ -204,18 +210,23 @@ UI кнопка → `RpgCharacter.UpgradeVitality()`.
 `RpgCharacter : NeoNetworkComponent`. Включи `isNetworked` в Inspector — компонент становится
 сетевым:
 
-1. **Server is authority.** Изменения через `NetDamage` / `NetHeal` / `Net*` идут на сервер.
+1. **Server is authority.** Trusted state меняет серверная gameplay-логика. Клиентские кнопки
+   отправляют request/intent, а не итоговый урон, XP или level.
 2. **Snapshot SyncVar.** Сервер сериализует все ресурсы / статы / бафы / статусы / level / xp /
    upgradePoints / isDead / invulLocks в строку snapshot. Все клиенты получают через
    `[SyncVar(hook)]` и восстанавливают локальное состояние.
 3. **Authority Mode** — `None` / `OwnerOnly` (только клиент-владелец) / `ServerOnly` (только сервер).
-4. **Late join.** Когда новый клиент подключается, `ApplyNetworkState` (наследуется от
+4. **Allow Client State Commands** — legacy escape hatch для прототипов. Если включить, owner сможет
+   просить сервер выполнить state-команды. Для RPG/progression с экономикой держите выключенным.
+5. **Late join.** Когда новый клиент подключается, `ApplyNetworkState` (наследуется от
    `NeoNetworkComponent`) применяет последний snapshot.
 
 Test multiplayer:
 - Host + remote через `NetworkManagerHUD` / `NeoNetworkManager`.
 - Триггер pickup на сцене с `NetworkContextActionRelay.InvokeComponentMethod →
   RpgCharacter.ApplyInlineBuff(0)` — оба игрока видят результат.
+- Abuse check: отдельный Client не может напрямую выполнить `NetAddLevel`, `CmdAddXp`, `CmdSetLevel`
+  или другой trusted state command.
 
 ---
 
@@ -229,7 +240,7 @@ NPC — это тот же `RpgCharacter`, отдельных компонент
 2. + `NpcRpgCombatBrain` (поле `_character` → этот `RpgCharacter`)
 3. + `RpgAttackController` (`_characterSource` → этот `RpgCharacter`)
 4. + `RpgDeathHandler` (auto-attaches и слушает `OnDeath`)
-5. + `RpgHpBarUI` (drop на дочерний Canvas → авто-привязка по родителю)
+5. + UI через `RpgResourceBinding` + `SetProgress` для HP bar и `NoCodeFormattedText` для текста `HP / MaxHP`.
 
 ---
 

@@ -26,7 +26,7 @@
 - [RpgEvadeController](./RpgEvadeController.md) — система уклонений и i-frames.
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — мост для UnityEvents.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG-условия для NeoCondition.
-- [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — реактивная привязка ресурсов и статов к UI/NoCode.
+- [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — реактивная привязка ресурсов и статов к UI/NoCode; вывод текста и прогресс-баров делайте через общий `Neo.NoCode`.
 
 ---
 

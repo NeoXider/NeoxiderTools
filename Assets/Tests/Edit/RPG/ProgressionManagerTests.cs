@@ -5,6 +5,7 @@ using Neo.Core.Level;
 using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace Neo.Progression.Tests
@@ -61,6 +62,182 @@ namespace Neo.Progression.Tests
                 {
                     Object.DestroyImmediate(coreCurve);
                 }
+            }
+        }
+
+        [Test]
+        public void AddXp_JumpingSeveralLevels_GrantsIntermediateRewards()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            LevelCurveDefinition levelCurve = CreateLevelCurve(
+                CreateLevel(1, 0, 0),
+                CreateLevel(2, 100, 2),
+                CreateLevel(3, 200, 3),
+                CreateLevel(4, 300, 4));
+
+            Core.Level.LevelCurveDefinition coreCurve =
+                ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
+            coreCurve.SetLinear(100);
+
+            GameObject managerObject = new("ProgressionManager");
+            LevelComponent levelComponent = managerObject.AddComponent<LevelComponent>();
+            levelComponent.LevelCurveDefinition = coreCurve;
+
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+            SetPrivateField(manager, "_levelProvider", levelComponent);
+            manager.SetDefinitions(levelCurve, null, null);
+            manager.SaveKey = "ProgressionTests.MultiLevelRewards";
+
+            try
+            {
+                manager.EnsureInitialized();
+                manager.ResetProgression();
+                manager.AddXp(350);
+
+                Assert.That(manager.CurrentLevel, Is.EqualTo(4));
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(9),
+                    "Rewards for levels 2, 3, and 4 should all be granted.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                Object.DestroyImmediate(levelCurve);
+                Object.DestroyImmediate(coreCurve);
+            }
+        }
+
+        [Test]
+        public void SaveProfile_FlushesActiveSaveProvider()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject managerObject = new("ProgressionManager");
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+            manager.SaveKey = "ProgressionTests.SaveFlush";
+
+            try
+            {
+                manager.EnsureInitialized();
+                manager.AddPerkPoints(1);
+
+                Assert.That(provider.SaveCallCount, Is.GreaterThan(0),
+                    "Auto-save should flush the provider so file-backed saves reach disk.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [Test]
+        public void AddXp_WithoutLevelProvider_LogsWarningAndDoesNotPersistXp()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject managerObject = new("ProgressionManager");
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+            manager.SaveKey = "ProgressionTests.MissingLevelProvider";
+
+            try
+            {
+                manager.EnsureInitialized();
+
+                LogAssert.Expect(LogType.Warning,
+                    "[ProgressionManager] Level Provider is not assigned. XP was not added.");
+                manager.AddXp(100);
+
+                Assert.That(manager.TotalXp, Is.EqualTo(0));
+                Assert.That(provider.SaveCallCount, Is.EqualTo(0),
+                    "A missing level provider should fail loudly instead of saving an unchanged profile.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [Test]
+        public void SetLevel_DelegatesToLevelProviderWithoutResettingProfile()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            Core.Level.LevelCurveDefinition coreCurve =
+                ScriptableObject.CreateInstance<Core.Level.LevelCurveDefinition>();
+            coreCurve.SetLinear(100);
+
+            GameObject managerObject = new("ProgressionManager");
+            LevelComponent levelComponent = managerObject.AddComponent<LevelComponent>();
+            levelComponent.LevelCurveDefinition = coreCurve;
+
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+            SetPrivateField(manager, "_levelProvider", levelComponent);
+            manager.SaveKey = "ProgressionTests.SetLevel";
+
+            try
+            {
+                manager.EnsureInitialized();
+                manager.AddPerkPoints(3);
+                manager.SetLevel(5);
+
+                Assert.That(manager.CurrentLevel, Is.EqualTo(5));
+                Assert.That(manager.AvailablePerkPoints, Is.EqualTo(3),
+                    "Setting the level should not reset the progression profile.");
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                Object.DestroyImmediate(coreCurve);
+            }
+        }
+
+        [Test]
+        public void PerkTreeValidation_ReportsMissingRequiredUnlockNode()
+        {
+            UnlockTreeDefinition unlockTree = CreateUnlockTree(CreateNode("known-node", false, 1));
+            PerkTreeDefinition perkTree = CreatePerkTree(CreatePerk("perk", 1, 1, new[] { "missing-node" }));
+
+            try
+            {
+                IReadOnlyList<string> issues = perkTree.ValidateDefinition(unlockTree);
+
+                Assert.That(issues, Has.Some.Contains("missing required unlock node 'missing-node'"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(unlockTree);
+                Object.DestroyImmediate(perkTree);
+            }
+        }
+
+        [Test]
+        public void Validation_ReportsDefaultEntriesWithRewards()
+        {
+            UnlockNodeDefinition node = CreateNode("default-node", true, 1);
+            SetPrivateField(node, "_rewards", new List<ProgressionReward> { new() });
+            UnlockTreeDefinition unlockTree = CreateUnlockTree(node);
+
+            PerkDefinition perk = CreatePerk("default-perk", 0, 1, Array.Empty<string>());
+            SetPrivateField(perk, "_purchasedByDefault", true);
+            SetPrivateField(perk, "_rewards", new List<ProgressionReward> { new() });
+            PerkTreeDefinition perkTree = CreatePerkTree(perk);
+
+            try
+            {
+                string unlockIssues = string.Join("\n", unlockTree.ValidateDefinition());
+                string perkIssues = string.Join("\n", perkTree.ValidateDefinition(unlockTree));
+
+                Assert.That(unlockIssues, Does.Contain("default-node rewards are not dispatched automatically"));
+                Assert.That(perkIssues, Does.Contain("default-perk rewards are not dispatched automatically"));
+            }
+            finally
+            {
+                Object.DestroyImmediate(unlockTree);
+                Object.DestroyImmediate(perkTree);
             }
         }
 
@@ -277,6 +454,7 @@ namespace Neo.Progression.Tests
             private readonly Dictionary<string, object> _values = new(StringComparer.Ordinal);
 
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
+            public int SaveCallCount { get; private set; }
             public event Action OnDataSaved;
             public event Action OnDataLoaded;
             public event Action<string> OnKeyChanged;
@@ -347,6 +525,7 @@ namespace Neo.Progression.Tests
 
             public void Save()
             {
+                SaveCallCount++;
                 OnDataSaved?.Invoke();
             }
 

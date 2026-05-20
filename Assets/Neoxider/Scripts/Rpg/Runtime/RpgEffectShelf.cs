@@ -261,31 +261,30 @@ namespace Neo.Rpg.Runtime
 
         // ── Persistence helpers ──
 
-        /// <summary>Copies the active entries into a profile for save.</summary>
-        public void CopyTo(RpgProfileData profile)
+        /// <summary>Copies the active entries into save/snapshot collections.</summary>
+        public void CopyActiveEffectsTo(ICollection<ActiveBuffEntry> buffs, ICollection<ActiveStatusEntry> statuses)
         {
-            if (profile == null) return;
-            profile.ActiveBuffs.Clear();
-            foreach (ActiveBuffEntry e in _activeBuffs)
-                profile.ActiveBuffs.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
+            buffs?.Clear();
+            statuses?.Clear();
 
-            profile.ActiveStatusEffects.Clear();
+            foreach (ActiveBuffEntry e in _activeBuffs)
+                buffs?.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
+
             foreach (ActiveStatusEntry e in _activeStatuses)
-                profile.ActiveStatusEffects.Add(new ActiveStatusEntry
+                statuses?.Add(new ActiveStatusEntry
                 {
                     StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
                 });
         }
 
-        /// <summary>Restores the active entries from a profile (after load).</summary>
-        public void RestoreFrom(RpgProfileData profile)
+        /// <summary>Restores active entries from save/snapshot collections.</summary>
+        public void RestoreActiveEffects(IEnumerable<ActiveBuffEntry> buffs, IEnumerable<ActiveStatusEntry> statuses)
         {
             _activeBuffs.Clear();
             _activeStatuses.Clear();
             _statusTickAccumulators.Clear();
-            if (profile == null) return;
-            if (profile.ActiveBuffs != null) _activeBuffs.AddRange(profile.ActiveBuffs);
-            if (profile.ActiveStatusEffects != null) _activeStatuses.AddRange(profile.ActiveStatusEffects);
+            if (buffs != null) _activeBuffs.AddRange(buffs);
+            if (statuses != null) _activeStatuses.AddRange(statuses);
         }
 
         // ── Internals ──

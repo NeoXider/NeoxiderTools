@@ -37,9 +37,10 @@ namespace Neo.Progression
     }
 
     /// <summary>
-    ///     Stores the XP curve for the progression system.
+    ///     Stores level rewards for the progression system. The actual XP-to-level curve is owned by
+    ///     <see cref="Neo.Core.Level.LevelCurveDefinition" />.
     /// </summary>
-    [CreateAssetMenu(fileName = "Level Curve Definition", menuName = "Neoxider/Progression/Level Curve Definition")]
+    [CreateAssetMenu(fileName = "Level Reward Track", menuName = "Neoxider/Progression/Level Reward Track")]
     public sealed class LevelCurveDefinition : ScriptableObject
     {
         [SerializeField] private List<ProgressionLevelDefinition> _levels = new();
@@ -75,6 +76,7 @@ namespace Neo.Progression
 
         /// <summary>
         ///     Evaluates the highest reachable level for the supplied XP amount.
+        ///     Prefer the Core LevelComponent for runtime XP/level calculations.
         /// </summary>
         public int EvaluateLevel(int totalXp)
         {
@@ -119,6 +121,7 @@ namespace Neo.Progression
 
         /// <summary>
         ///     Returns the remaining XP needed to reach the next defined level.
+        ///     Prefer the Core LevelComponent for runtime XP/level calculations.
         /// </summary>
         public int GetXpToNextLevel(int totalXp)
         {
@@ -140,7 +143,7 @@ namespace Neo.Progression
         }
 
         /// <summary>
-        ///     Validates the curve definition and returns human-readable issues.
+        ///     Validates the reward track definition and returns human-readable issues.
         /// </summary>
         public IReadOnlyList<string> ValidateDefinition()
         {

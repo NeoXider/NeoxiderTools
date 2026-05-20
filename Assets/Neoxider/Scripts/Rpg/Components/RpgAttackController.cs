@@ -1,8 +1,12 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using Neo.Network;
 using Neo.Rpg.Components;
 using UnityEngine;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Rpg
 {
@@ -55,7 +59,8 @@ namespace Neo.Rpg
 
         private void Update()
         {
-            if (_enableBuiltInInput && _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame())
+            if (_enableBuiltInInput && CanProcessBuiltInInput() &&
+                _primaryAttackBinding != null && _primaryAttackBinding.IsPressedThisFrame())
             {
                 UsePrimaryAttack();
             }
@@ -345,12 +350,27 @@ namespace Neo.Rpg
                 return;
             }
 
+#if MIRROR
+            if (ShouldBlockClientProjectileSpawn())
+            {
+                EmitFailure("Networked projectile attacks must be executed by the server.");
+                return;
+            }
+#endif
+
             Transform spawn = _projectileSpawnPoint != null ? _projectileSpawnPoint :
                 _origin != null ? _origin : transform;
             Vector3 direction = GetAttackDirection(spawn.position, forcedTarget, aimAtTarget);
             RpgProjectile projectile = Instantiate(definition.ProjectilePrefab, spawn.position,
                 Quaternion.LookRotation(direction));
             projectile.Initialize(this, definition, ResolveSourceReceiver(), direction);
+
+#if MIRROR
+            if (NeoNetworkState.IsServer && projectile.TryGetComponent(out NetworkIdentity _))
+            {
+                NetworkServer.Spawn(projectile.gameObject);
+            }
+#endif
         }
 
         internal bool ApplyHitToGameObject(GameObject target, RpgAttackDefinition definition)
@@ -508,6 +528,56 @@ namespace Neo.Rpg
 
             return GetComponentInParent<IRpgCombatReceiver>();
         }
+
+        private GameObject ResolveSourceGameObject()
+        {
+            if (_characterSource != null)
+            {
+                return _characterSource.gameObject;
+            }
+
+            if (TryResolveReceiver(gameObject, out IRpgCombatReceiver receiver) && receiver is Component component)
+            {
+                return component.gameObject;
+            }
+
+            IRpgCombatReceiver parentReceiver = GetComponentInParent<IRpgCombatReceiver>();
+            return parentReceiver is Component parentComponent ? parentComponent.gameObject : gameObject;
+        }
+
+        private bool CanProcessBuiltInInput()
+        {
+#if MIRROR
+            if (!NeoNetworkState.IsNetworkActive)
+            {
+                return true;
+            }
+
+            GameObject source = ResolveSourceGameObject();
+            if (source != null && source.TryGetComponent(out NetworkIdentity _))
+            {
+                return NeoNetworkState.HasAuthority(source);
+            }
+
+            NetworkIdentity identity = GetComponentInParent<NetworkIdentity>();
+            return identity == null || NeoNetworkState.HasAuthority(identity.gameObject);
+#else
+            return true;
+#endif
+        }
+
+#if MIRROR
+        private bool ShouldBlockClientProjectileSpawn()
+        {
+            if (!NeoNetworkState.IsClientOnly)
+            {
+                return false;
+            }
+
+            GameObject source = ResolveSourceGameObject();
+            return source != null && source.GetComponentInParent<NetworkIdentity>() != null;
+        }
+#endif
 
         private Vector3 GetOriginPosition()
         {

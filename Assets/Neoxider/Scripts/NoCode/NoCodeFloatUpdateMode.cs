@@ -9,12 +9,13 @@ namespace Neo.NoCode
         Once = 0,
 
         /// <summary>
-        ///     Subscribe to <see cref="Neo.Reactive.ReactivePropertyFloat.OnChanged"/> when the member holds
-        ///     <see cref="Neo.Reactive.ReactivePropertyFloat"/>.
+        ///     Subscribe when the member holds <see cref="Neo.Reactive.ReactivePropertyFloat"/>,
+        ///     <see cref="Neo.Reactive.ReactivePropertyInt"/>, or <see cref="Neo.Reactive.ReactivePropertyBool"/>.
+        ///     Non-reactive numeric members fall back to polling with the component poll interval.
         /// </summary>
         Reactive = 1,
 
-        /// <summary>Call refresh every <see cref="LateUpdate"/> when poll is enabled.</summary>
+        /// <summary>Refresh in <see cref="UnityEngine.MonoBehaviour.LateUpdate"/> using the component poll interval.</summary>
         Poll = 2
     }
 }

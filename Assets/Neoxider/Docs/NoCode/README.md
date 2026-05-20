@@ -1,6 +1,6 @@
 # Neo.NoCode — привязка float к UI без лишних скриптов
 
-Сборка **`Neo.NoCode`** (`Assets/Neoxider/Scripts/NoCode/`) даёт компоненты, которые читают **число** с поля или свойства другого компонента (или из **`ReactivePropertyFloat`**) и обновляют **текст** или **индикатор прогресса** (Slider / Image).
+Сборка **`Neo.NoCode`** (`Assets/Neoxider/Scripts/NoCode/`) даёт компоненты, которые читают **число** с поля или свойства другого компонента (или из **`ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`**) и обновляют **текст** или **индикатор прогресса** (Slider / Image).
 
 Рефлексия выполняется только при резолве и после инвалидации кеша — см. принципы в [**`NO_CODE_AUDIT.md`**](../NO_CODE_AUDIT.md).
 
@@ -9,13 +9,14 @@
 | Компонент | Назначение |
 |-----------|------------|
 | **`NoCodeBindText`** | Вызывает **`SetText.Set(float)`** на том же объекте (или по ссылке), иначе пишет значение в **`TMP_Text`** (инвариантная строка). |
+| **`NoCodeFormattedText`** | Форматирует несколько числовых источников в одну строку через `String.Format`, например `"{0:0} / {1:0}"` или `"Level {0:0} | XP {1:0}"`. |
 | **`SetProgress`** | Маппинг значения в \([0,1]\) через **`InverseLerp(min, max, value)`** → **`Slider.normalizedValue`** и/или **`Image.fillAmount`**. |
 
 Меню создания: **Neoxider → NoCode → …**
 
 ## Настройка источника
 
-Общий блок **`ComponentFloatBinding`** у **`NoCodeBindText`** и **`SetProgress`** (в инспекторе — секция **Binding**):
+Общий блок **`ComponentFloatBinding`** у **`NoCodeBindText`**, **`NoCodeFormattedText`** и **`SetProgress`** (в инспекторе — секция **Binding** или список **Sources**):
 
 1. **Find By Name** — как в **NeoCondition**: искать корневой **`GameObject`** через **`GameObject.Find`** по строке **Object Name** вместо прямой ссылки.
 2. **Object Name** — имя объекта в активной сцене (при включённом Find By Name).
@@ -26,19 +27,19 @@
 
 Те же правила резолва объекта (поиск по имени / ссылка / fallback на хост), что и в условиях, вынесены в общий код **`BindingSourceGameObjectResolver`** (сборка `Neo.Condition`, используется и NoCode).
 
-**Component** и **Member** в инспекторе выбираются из выпадающих списков (типы компонентов на источнике и допустимые поля/свойства: число или **`ReactivePropertyFloat`**). Ручные строки **типа** и **члена** по-прежнему видны в подсказке «Manual names (advanced)».
+**Component** и **Member** в инспекторе выбираются из выпадающих списков (типы компонентов на источнике и допустимые поля/свойства: число или **`ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`**). Ручные строки **типа** и **члена** по-прежнему видны в подсказке «Manual names (advanced)».
 
 Произвольные методы вызова по строке в **v1** не поддерживаются (в отличие от расширенного режима NeoCondition).
 
 ## Режимы обновления
 
 - **Once** — один раз при включении компонента.
-- **Reactive** — если член имеет тип **`ReactivePropertyFloat`**, подписка на изменения через **`ReactiveProperty`** (уведомления доставляются и в Edit Mode при тестах/настройке); иначе значение читается при включении как при **Once**.
-- **Poll** — при включённом опросе — обновление в **`LateUpdate`** (флаг **Poll In Late Update**).
+- **Reactive** — если член имеет тип **`ReactivePropertyFloat`**, **`ReactivePropertyInt`** или **`ReactivePropertyBool`**, подписка на изменения через **`ReactiveProperty`** (уведомления доставляются и в Edit Mode при тестах/настройке). Если выбран обычный `float`/`int`/`bool`, инспектор покажет небольшую информационную панель, а компонент автоматически будет обновлять значение через poll fallback.
+- **Poll** — при включённом опросе — обновление в **`LateUpdate`** (флаг **Poll In Late Update**) с интервалом **Poll Interval Seconds**. По умолчанию **0.16** сек, минимум **0.016** сек.
 
 ## **`SetText` и привязка к данным**
 
-**`SetText`** только форматирует и выводит текст. Чтобы подставлять число с **другого компонента** без своего скрипта, на тот же объект добавьте **`NoCode Bind Text`** (`Neo.NoCode`): он использует тот же **`ComponentFloatBinding`**, что и **`SetProgress`**. В инспекторе **`SetText`** есть подсказка и кнопка добавления **`NoCodeBindText`**, если компонента ещё нет.
+**`SetText`** только форматирует и выводит текст. Чтобы подставлять число с **другого компонента** без своего скрипта, на тот же объект добавьте **`NoCode Bind Text`** (`Neo.NoCode`). Если нужен текст из нескольких значений, используйте **`NoCodeFormattedText`**. Оба используют тот же **`ComponentFloatBinding`**, что и **`SetProgress`**.
 
 ## Зависимости сборки
 

@@ -1,10 +1,10 @@
 ﻿# LevelCurveDefinition
 
-**Назначение:** ScriptableObject — кривая уровней (формула XP для каждого уровня).
+**Назначение:** ScriptableObject — reward track по уровням: perk points и дополнительные rewards. XP-to-level формулу считает `Neo.Core.Level.LevelCurveDefinition` в `LevelComponent`.
 
 ## Подключение
 
-- Создать: **Create → Neoxider → Level → Level Curve**.
+- Создать: **Create → Neoxider → Progression → Level Reward Track**.
 
 ## Основные настройки (Inspector)
 

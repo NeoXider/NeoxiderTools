@@ -137,6 +137,12 @@ public sealed class Health : NetworkBehaviour
 
 ---
 
+## Для RPG/Progression
+
+HP и текущие ресурсы можно показывать через replicated state, но XP, уровень, купленные перки и награды нельзя менять из UI hook. После этого урока вернитесь к доменному маршруту: [31_RPG_Combat_Server_Authority.md](31_RPG_Combat_Server_Authority.md) -> [32_Progression_XP_Rewards.md](32_Progression_XP_Rewards.md).
+
+---
+
 ## Домашнее задание
 
 Сделайте HP игрока:

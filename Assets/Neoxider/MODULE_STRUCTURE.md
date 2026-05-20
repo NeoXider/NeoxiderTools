@@ -23,7 +23,7 @@
 | **Data/** | Данные и конфиги | ScriptableObject-определения, сериализуемые структуры данных, списки конфигов. Один тип — один файл. |
 | **Components/** | MonoBehaviour-компоненты | Компоненты для сцен и префабов. Можно вводить подпапки по смыслу (например `Components/Combat/`). Один компонент — один файл. |
 | **Bridge/** | Связка с NoCode/внешними системами | Адаптеры для NeoCondition (`*ConditionAdapter`), NoCode-действия (`*NoCodeAction`), enum-режимы для них. Один адаптер/действие — один файл; enum режимов — отдельный файл. |
-| **Runtime/** | Не-компонентный рантайм | Классы данных профиля, утилиты, внутренние хелперы (например `RpgProfileData`, `RpgCombatMath`). Не MonoBehaviour. |
+| **Runtime/** | Не-компонентный рантайм | Классы данных профиля, утилиты, внутренние хелперы (например `RpgCharacterProfileData`, `RpgCombatMath`). Не MonoBehaviour. |
 | **Events/** | Типы событий модуля | Кастомные `UnityEvent<T>` и подобные, если вынесены в отдельные типы. Один тип — один файл. |
 | **Enums/** | Перечисления модуля | Публичные enum, если их несколько и вынос в отдельные файлы улучшает читаемость. Один enum — один файл. |
 
@@ -112,7 +112,8 @@ Scripts/Rpg/
     RpgNoCodeAction.cs
     RpgNoCodeActionType.cs
   Runtime/
-    RpgProfileData.cs
+    RpgCharacterProfileData.cs
+    RpgActiveEffectEntries.cs
     RpgEffectShelf.cs
     RpgCombatMath.cs
     RpgTargetingUtility.cs

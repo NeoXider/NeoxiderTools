@@ -155,6 +155,7 @@ Generic: `GetResourceCurrentState("DarkMana")`, `GetResourceMaxState(id)`,
 ### `RpgResourceBinding`
 Drop on a UI GameObject, drag the `RpgCharacter`, pick a resource id (e.g. `Custom = "DarkMana"`).
 UnityEvent `OnCurrent(float)` / `OnMax(float)` / `OnPercent(float)` go to Slider / TMP_Text without code.
+For text that combines several values, use the generic `NoCodeFormattedText` instead of a RPG-only UI wrapper.
 
 ### `RpgStatBinding`
 Same idea for stats. `OnValue(float)`.
@@ -230,7 +231,7 @@ An NPC is the same `RpgCharacter` — no separate component.
 2. + `NpcRpgCombatBrain` (`_character` field points to this `RpgCharacter`)
 3. + `RpgAttackController` (`_characterSource` → this `RpgCharacter`)
 4. + `RpgDeathHandler` (auto-attaches, listens to `OnDeath`)
-5. + `RpgHpBarUI` (drop on a child Canvas → auto-binds via the parent character)
+5. + UI through `RpgResourceBinding` + `SetProgress` for the HP bar and `NoCodeFormattedText` for `HP / MaxHP` text.
 
 ---
 

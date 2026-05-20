@@ -49,6 +49,7 @@
 - Не смешивать UI и authority.
 - Не говорить "работает", если проверено только в Host.
 - Не отправлять итог от клиента: отправляйте намерение, итог считает сервер.
+- Для доменных тем вроде RPG/Progression показывать vertical slice: input/request -> server validation -> state change -> sync/UI -> save/smoke, а не отдельный изолированный фрагмент.
 
 ---
 
