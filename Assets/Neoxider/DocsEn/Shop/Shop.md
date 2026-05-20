@@ -66,7 +66,7 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 | `_autoSubscribe` | Auto-subscribe `ShopItem.buttonBuy` to `Buy(index)`. |
 | `_changePreviewOnPurchaseFailed` | Switch preview to the item on failed purchase. |
 | `_propagateSelectionVisual` (formerly `_useSetItem`) | Call `ShopItem.Select(bool)` on every list entry when equipped changes. |
-| `_activateSavedEquipped` | Auto-select the saved equipped item at load time (effective only for `BuyAndEquip` / `EquipOnly`). |
+| `_activateSavedEquipped` | Auto-equip on load (`BuyAndEquip` / `EquipOnly` only): saved item, or the **first** catalog entry when save is empty or the id is invalid. |
 | `_prices`, `_keySaveEquipped` | **Deprecated.** Kept as `[SerializeField]` for legacy scene compatibility but ignored at runtime. |
 
 ## Public API

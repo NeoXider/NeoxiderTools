@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [8.5.2] - 2026-05-20
+
+### Fixed
+- **Shop / default equipped item**: with `Activate Saved Equipped` enabled (`BuyAndEquip` / `EquipOnly`), an empty or invalid `EquippedId` in save no longer leaves the storefront with no active skin — `TryActivateEquippedOnLoad()` selects the **first** catalog item via `Select(...)`, updates `ShopListView` selection, and persists the choice.
+
+### Changed
+- **Docs (Shop)**: `_activateSavedEquipped` tooltip and [Shop.md](Docs/Shop/Shop.md) / EN mirror describe the first-item fallback.
+
 ## [8.5.1] - 2026-05-20
 
 ### Fixed

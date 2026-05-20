@@ -66,7 +66,7 @@
 | `_autoSubscribe` | Авто-подписка `ShopItem.buttonBuy` на `Buy(index)`. |
 | `_changePreviewOnPurchaseFailed` | Менять превью при неудачной покупке. |
 | `_propagateSelectionVisual` (бывш. `_useSetItem`) | Вызывать `ShopItem.Select(bool)` на всех элементах при смене экипировки. |
-| `_activateSavedEquipped` | Автовыбор сохранённого предмета при загрузке (только для `BuyAndEquip` / `EquipOnly`). |
+| `_activateSavedEquipped` | Автовыбор при загрузке (только `BuyAndEquip` / `EquipOnly`): сохранённый предмет, а если сейва нет или id устарел — **первый** в `_shopItemDatas`. |
 | `_prices`, `_keySaveEquipped` | **Устарели.** Сохранены как `[SerializeField]` для совместимости старых сцен, но игнорируются в рантайме. |
 
 ## Публичный API

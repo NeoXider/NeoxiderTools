@@ -85,7 +85,7 @@ namespace Neo.Shop
         private bool _propagateSelectionVisual = true;
 
         [Tooltip(
-            "When true (and PurchaseFlow is BuyAndEquip / EquipOnly), the saved equipped item is auto-selected at load time. Has no effect for BuyOnly / Browse flows.")]
+            "When true (and PurchaseFlow is BuyAndEquip / EquipOnly), equips the saved item at load; if none is saved, selects the first catalog item. Has no effect for BuyOnly / Browse flows.")]
         [SerializeField]
         private bool _activateSavedEquipped = true;
 
@@ -175,13 +175,7 @@ namespace Neo.Shop
 
             VisualAll();
 
-            ShopPurchaseFlow flow = _purchaseFlow;
-            bool shouldAutoEquip = _activateSavedEquipped &&
-                                   (flow == ShopPurchaseFlow.BuyAndEquip || flow == ShopPurchaseFlow.EquipOnly);
-            if (shouldAutoEquip && !string.IsNullOrEmpty(_profile.EquippedId))
-            {
-                Select(_profile.EquippedId);
-            }
+            TryActivateEquippedOnLoad();
 
             _started = true;
             OnLoad?.Invoke();
@@ -209,6 +203,31 @@ namespace Neo.Shop
         private void OnValidate()
         {
             _shopItems ??= GetComponentsInChildren<ShopItem>(true);
+        }
+
+        private void TryActivateEquippedOnLoad()
+        {
+            if (!_activateSavedEquipped)
+            {
+                return;
+            }
+
+            ShopPurchaseFlow flow = _purchaseFlow;
+            if (flow != ShopPurchaseFlow.BuyAndEquip && flow != ShopPurchaseFlow.EquipOnly)
+            {
+                return;
+            }
+
+            string itemId = _profile.EquippedId;
+            if (string.IsNullOrEmpty(itemId) || ResolveItemDataById(itemId) == null)
+            {
+                itemId = FirstItemId();
+            }
+
+            if (!string.IsNullOrEmpty(itemId))
+            {
+                Select(itemId);
+            }
         }
 
         private void EnsureMissingItemIds()
