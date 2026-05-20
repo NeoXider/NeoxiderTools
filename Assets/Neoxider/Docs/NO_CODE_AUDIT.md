@@ -35,8 +35,8 @@
 |---------|----------------|------------------------------|
 | Условия | **NeoCondition** — поля, AND/OR, события | Нет симметричного универсального «событие → ограниченное действие над объектом» без мостовых скриптов |
 | Деньги | **Money**, **TextMoney**, `_persistMoney`, сброс/перезагрузка из Save ([`Shop/Money.md`](./Shop/Money.md)) | Для **других** источников чисел всё ещё часто нужны отдельные «вью»-компоненты по образцу TextMoney |
-| Текст | **SetText**, форматирование; привязка к полю/`ReactivePropertyFloat` — **Neo.NoCode** (`NoCodeBindText`) | Для **других** сцен без биндера всё ещё могут понадобиться точечные «вью»-компоненты |
-| RPG UI | **RpgHpBarUI** и т.д. | Привязка к конкретным типам в коде; не масштабируется на произвольный компонент из Inspector |
+| Текст | **SetText**, форматирование; привязка к полю/`ReactivePropertyFloat`/`ReactivePropertyInt`/`ReactivePropertyBool` — **Neo.NoCode** (`NoCodeBindText`, `NoCodeFormattedText`) | Для сложных действий всё ещё нужны доменные bridge-компоненты |
+| RPG UI | **RpgResourceBinding** / **RpgStatBinding** + общий **Neo.NoCode** | Специфичные HP/Level UI wrappers удалены; настройка идёт через универсальные биндинги |
 | Физика | **PhysicsEvents2D/3D**, UnityEvent с коллайдером | Типичный запрос «урон по триггеру на Other» часто требует промежуточного Behaviour |
 | Рефлексия | **ReflectionCache** (Neo.Condition); **Neo.NoCode** использует тот же кеш; резолв **`GameObject`** (ссылка / **Find** по имени / хост) — общий **`BindingSourceGameObjectResolver`** с NeoCondition | Не выделен единый слой **безопасных** действий для контактов и произвольных сценариев |
 
@@ -107,7 +107,6 @@
 
 | Приоритет | Эпик | Эффект |
 |-----------|------|--------|
-| P0 | Value → TMP/Slider с Reactive/полем: **частично** — сборка **Neo.NoCode** (`NoCodeBindText`, `SetProgress`, см. [`NoCode/README.md`](./NoCode/README.md)) | Меньше одноразовых «вью»-скриптов |
 | P1 | Контакт → урон/действие по пресетам и типам на Other | Триггеры без мостовых скриптов |
 | P2 | Списки шагов из каталога + общий кеш рефлексии с Condition | Единый стиль без нод |
 | P3 | Демо-сцена и cookbook в Docs | Ниже порог входа |
