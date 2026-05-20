@@ -75,6 +75,7 @@ namespace Neo.Pages
         [SerializeField] private bool autoSelectEditorPage = true;
 
         private Coroutine gmSubscribeRoutine;
+        private Coroutine exclusivePageTransitionRoutine;
         private UnityAction onEndHandler;
         private UnityAction onLoseHandler;
         private UnityAction onWinHandler;
@@ -108,6 +109,7 @@ namespace Neo.Pages
             UIKit.OnShowPage.RemoveListener(ChangePage);
             UIKit.OnShowPageByName.RemoveListener(ChangePageByName);
             StopGMIntegration();
+            StopExclusivePageTransition();
         }
 
         private void OnValidate()
@@ -390,8 +392,7 @@ namespace Neo.Pages
             previousUiPage = currentUiPage;
             currentUiPage = temp;
 
-            SetPageActive(previousUiPage, keepPreviousActive);
-            SetPageActive(currentUiPage, true);
+            ApplyExclusivePageTransition(currentUiPage, previousUiPage, keepPreviousActive);
 
             OnPageChanged?.Invoke(currentUiPage);
         }
@@ -435,42 +436,161 @@ namespace Neo.Pages
                 return null;
             }
 
-            ignoreList ??= new PageId[] { };
-            UIPage foundUiPage = null;
-
-            foreach (UIPage page in allPages)
+            ignoreList ??= Array.Empty<PageId>();
+            UIPage foundUiPage = FindPageInAllPages(targetPageId);
+            if (foundUiPage == null)
             {
-                if (page == null)
+                return null;
+            }
+
+            bool ignoreTarget = foundUiPage.PageId != null && ignoreList.Contains(foundUiPage.PageId);
+            StopExclusivePageTransition();
+
+            if (active)
+            {
+                if (!ignoreTarget)
                 {
-                    continue;
+                    SetPageActive(foundUiPage, true);
                 }
 
-                bool ignoreById = page.PageId != null && ignoreList.Contains(page.PageId);
-
-                if (page.PageId == targetPageId)
+                if (ShouldDeferHidingOtherPages(foundUiPage))
                 {
-                    foundUiPage = page;
-                    if (!ignoreById)
-                    {
-                        SetPageActive(page, active);
-                    }
+                    exclusivePageTransitionRoutine = StartCoroutine(
+                        DeactivateOtherPagesAfterShowAnimation(targetPageId, ignoreList, otherActive,
+                            foundUiPage.ShowAnimationDuration));
                 }
                 else
                 {
-                    if (page.IgnoreOnExclusiveChange)
-                    {
-                        continue;
-                    }
-
-                    if (!ignoreById)
-                    {
-                        SetPageActive(page, otherActive);
-                    }
+                    DeactivateOtherPages(targetPageId, ignoreList, otherActive);
                 }
+            }
+            else if (!ignoreTarget)
+            {
+                SetPageActive(foundUiPage, false);
             }
 
             OnPageChanged?.Invoke(foundUiPage);
             return foundUiPage;
+        }
+
+        private UIPage FindPageInAllPages(PageId targetPageId)
+        {
+            if (allPages == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < allPages.Length; i++)
+            {
+                UIPage page = allPages[i];
+                if (page != null && page.PageId == targetPageId)
+                {
+                    return page;
+                }
+            }
+
+            return null;
+        }
+
+        private static bool ShouldDeferHidingOtherPages(UIPage incoming)
+        {
+            return incoming != null && incoming.HasShowAnimation && incoming.ShowAnimationDuration > 0f;
+        }
+
+        private void ApplyExclusivePageTransition(UIPage incoming, UIPage outgoing, bool keepOutgoingActive)
+        {
+            StopExclusivePageTransition();
+
+            if (incoming != null)
+            {
+                SetPageActive(incoming, true);
+            }
+
+            if (keepOutgoingActive || outgoing == null)
+            {
+                return;
+            }
+
+            if (ShouldDeferHidingOtherPages(incoming))
+            {
+                exclusivePageTransitionRoutine =
+                    StartCoroutine(DeactivatePageAfterDelay(outgoing, incoming.ShowAnimationDuration));
+            }
+            else
+            {
+                SetPageActive(outgoing, false);
+            }
+        }
+
+        private void DeactivateOtherPages(PageId targetPageId, PageId[] ignoreList, bool otherActive)
+        {
+            if (allPages == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < allPages.Length; i++)
+            {
+                UIPage page = allPages[i];
+                if (page == null || page.PageId == targetPageId)
+                {
+                    continue;
+                }
+
+                ApplyOtherPageState(page, targetPageId, ignoreList, otherActive);
+            }
+        }
+
+        private IEnumerator DeactivateOtherPagesAfterShowAnimation(PageId targetPageId, PageId[] ignoreList,
+            bool otherActive, float waitSeconds)
+        {
+            if (waitSeconds > 0f)
+            {
+                yield return new WaitForSecondsRealtime(waitSeconds);
+            }
+
+            DeactivateOtherPages(targetPageId, ignoreList, otherActive);
+            exclusivePageTransitionRoutine = null;
+        }
+
+        private IEnumerator DeactivatePageAfterDelay(UIPage page, float waitSeconds)
+        {
+            if (waitSeconds > 0f)
+            {
+                yield return new WaitForSecondsRealtime(waitSeconds);
+            }
+
+            if (page != null)
+            {
+                SetPageActive(page, false);
+            }
+
+            exclusivePageTransitionRoutine = null;
+        }
+
+        private void ApplyOtherPageState(UIPage page, PageId targetPageId, PageId[] ignoreList, bool otherActive)
+        {
+            if (page.IgnoreOnExclusiveChange)
+            {
+                return;
+            }
+
+            bool ignoreById = page.PageId != null && ignoreList.Contains(page.PageId);
+            if (!ignoreById)
+            {
+                SetPageActive(page, otherActive);
+            }
+        }
+
+        private void StopExclusivePageTransition()
+        {
+            if (exclusivePageTransitionRoutine == null)
+            {
+                return;
+            }
+
+            StopCoroutine(exclusivePageTransitionRoutine);
+            exclusivePageTransitionRoutine = null;
         }
 
         public void ActivateAll(bool acteve)
@@ -512,11 +632,16 @@ namespace Neo.Pages
             if (isActive)
             {
                 uiPage.StartActive();
+                return;
             }
-            else
+
+            if (!uiPage.gameObject.activeInHierarchy)
             {
-                uiPage.EndActive();
+                uiPage.SetActive(false);
+                return;
             }
+
+            uiPage.EndActive();
         }
 
         /// <summary>

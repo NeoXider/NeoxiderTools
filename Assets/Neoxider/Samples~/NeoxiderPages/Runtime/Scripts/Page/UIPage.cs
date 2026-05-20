@@ -57,6 +57,16 @@ namespace Neo.Pages
         public bool IgnoreOnExclusiveChange => ignoreOnExclusiveChange;
         public UIPageAnimationMode AnimationMode => _animationMode;
 
+        /// <summary>
+        ///     True when this page plays a DOTween show animation on <see cref="StartActive"/>.
+        ///     Used by <see cref="PM"/> to keep the previous page visible until the incoming animation finishes.
+        /// </summary>
+        public bool HasShowAnimation =>
+            CanPlayForward() && _animation != null && _animation.isActive;
+
+        /// <summary>Realtime seconds to wait for the show tween (duration + delay). Zero when <see cref="HasShowAnimation"/> is false.</summary>
+        public float ShowAnimationDuration => HasShowAnimation ? GetAnimationWaitSeconds() : 0f;
+
         private void OnValidate()
         {
             if (pageId != null)
@@ -100,6 +110,12 @@ namespace Neo.Pages
         {
             StopDeactivateRoutine();
             CancelInvoke(nameof(OnRewind));
+
+            if (!gameObject.activeInHierarchy)
+            {
+                SetActive(false);
+                return;
+            }
 
             MigrateLegacyAnimationModeIfNeeded();
 

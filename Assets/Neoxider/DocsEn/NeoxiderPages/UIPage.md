@@ -30,12 +30,14 @@
 
 Page animation is forced to unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) and `autoKill = false`, so it works during pause/menu flows and can be restarted reliably.
 
+On exclusive switches via `PM` (e.g. Menu → Shop), when the **incoming** page has a show animation (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), the previous page stays active until that tween finishes, then receives `EndActive()` — no empty backdrop while the new page slides in.
+
 ## API
 
 | Method | Purpose |
 |--------|---------|
 | `StartActive()` | Enable the page and play the opening animation according to `Animation Mode`. |
-| `EndActive()` | Close the page and play the reverse animation according to `Animation Mode`. |
+| `EndActive()` | Close the page and play the reverse animation according to `Animation Mode`. If the GameObject is already inactive in the hierarchy, only `SetActive(false)` runs — no coroutine (avoids Unity's inactive coroutine error). |
 | `SetActive(bool)` | Directly enable/disable the page GameObject. |
 
 ## Compatibility

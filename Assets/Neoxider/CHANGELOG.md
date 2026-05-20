@@ -1,6 +1,20 @@
 
 ## [Unreleased]
 
+### Fixed
+- **NeoxiderPages / UIPage coroutine on inactive page**: `EndActive()` no longer calls `StartCoroutine` when the page GameObject is already inactive (e.g. after `PM.ActivateAll(false)` at startup or a fast double switch). `PM.SetPageActive(false)` skips `EndActive()` in that case and only ensures `SetActive(false)`.
+
+## [8.5.3] - 2026-05-20
+
+### Fixed
+- **NeoxiderPages / exclusive page transition**: opening a page with a DOTween show animation (e.g. Shop over Menu) no longer hides the previous page in the same frame — `PM` shows the incoming page first and defers `EndActive()` on other pages until the show tween finishes, so the old page stays visible as a backdrop instead of an empty canvas. `SwitchToPreviousPage` uses the same deferred hide when the restored page has a show animation.
+
+### Added
+- **UIPage**: `HasShowAnimation` and `ShowAnimationDuration` — used by `PM` to time exclusive transitions.
+
+### Changed
+- **Docs (NeoxiderPages)**: [UIPage.md](Docs/NeoxiderPages/UIPage.md) and EN mirror describe backdrop behaviour during exclusive switches.
+
 ## [8.5.2] - 2026-05-20
 
 ### Fixed
