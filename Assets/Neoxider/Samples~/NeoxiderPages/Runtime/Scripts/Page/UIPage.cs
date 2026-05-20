@@ -61,11 +61,23 @@ namespace Neo.Pages
         ///     True when this page plays a DOTween show animation on <see cref="StartActive"/>.
         ///     Used by <see cref="PM"/> to keep the previous page visible until the incoming animation finishes.
         /// </summary>
-        public bool HasShowAnimation =>
-            CanPlayForward() && _animation != null && _animation.isActive;
+        public bool HasShowAnimation => CanPlayForward() && _animation != null;
 
         /// <summary>Realtime seconds to wait for the show tween (duration + delay). Zero when <see cref="HasShowAnimation"/> is false.</summary>
-        public float ShowAnimationDuration => HasShowAnimation ? GetAnimationWaitSeconds() : 0f;
+        public float ShowAnimationDuration
+        {
+            get
+            {
+                if (!HasShowAnimation)
+                {
+                    return 0f;
+                }
+
+                float fromTween = GetAnimationWaitSeconds();
+                float fromComponent = _animation.duration + _animation.delay;
+                return Mathf.Max(fromTween, fromComponent);
+            }
+        }
 
         private void OnValidate()
         {
@@ -233,6 +245,32 @@ namespace Neo.Pages
             tween.Goto(tween.Duration(true), false);
             tween.PlayBackwards();
             return true;
+        }
+
+        /// <summary>
+        ///     Yields until the show tween completes (or immediately when there is no show animation).
+        ///     Used by <see cref="PM"/> before deactivating other pages on exclusive switches.
+        /// </summary>
+        public IEnumerator WaitForShowAnimation()
+        {
+            if (!HasShowAnimation)
+            {
+                yield break;
+            }
+
+            EnsureAnimationTween();
+            Tween tween = _animation != null ? _animation.tween : null;
+            if (tween != null && tween.active && !tween.IsComplete())
+            {
+                yield return tween.WaitForCompletion(true);
+                yield break;
+            }
+
+            float wait = ShowAnimationDuration;
+            if (wait > 0f)
+            {
+                yield return new WaitForSecondsRealtime(wait);
+            }
         }
 
         private IEnumerator DeactivateAfterAnimationRealtime()

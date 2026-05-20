@@ -1,8 +1,21 @@
 
 ## [Unreleased]
 
+## [8.5.4] - 2026-05-20
+
 ### Fixed
-- **NeoxiderPages / UIPage coroutine on inactive page**: `EndActive()` no longer calls `StartCoroutine` when the page GameObject is already inactive (e.g. after `PM.ActivateAll(false)` at startup or a fast double switch). `PM.SetPageActive(false)` skips `EndActive()` in that case and only ensures `SetActive(false)`.
+- **NeoxiderPages / exclusive page transitions (complete)**:
+  - Other pages hide **after** the incoming show tween finishes (`UIPage.WaitForShowAnimation`, DOTween `WaitForCompletion`), not in the same frame as the open — fixes empty backdrop when opening animated pages (e.g. Shop over Menu).
+  - `UIPage.Popup` pages are **not** deactivated on exclusive switches; popup open still uses `ActivePage` without touching the stack underneath.
+  - `HasShowAnimation` / `ShowAnimationDuration` detect show tweens reliably (no false skip when `DOTweenAnimation` was disabled in Inspector).
+  - No `StartCoroutine` on inactive page objects (`EndActive` / `SetPageActive(false)` guards) — fixes `Coroutine couldn't be started... 'Shop Page' is inactive` after `ActivateAll(false)` or fast switches.
+- **NeoxiderPages / `SwitchToPreviousPage`**: same show-tween wait before hiding the outgoing page when the restored page animates in.
+
+### Added
+- **UIPage**: `WaitForShowAnimation()` IEnumerator for `PM` transition timing.
+
+### Changed
+- **Docs (NeoxiderPages)**: [UIPage.md](Docs/NeoxiderPages/UIPage.md) / EN — popup + end-of-show behaviour on exclusive switches.
 
 ## [8.5.3] - 2026-05-20
 

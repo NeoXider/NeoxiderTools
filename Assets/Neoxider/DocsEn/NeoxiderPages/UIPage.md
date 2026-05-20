@@ -30,7 +30,7 @@
 
 Page animation is forced to unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) and `autoKill = false`, so it works during pause/menu flows and can be restarted reliably.
 
-On exclusive switches via `PM` (e.g. Menu → Shop), when the **incoming** page has a show animation (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), the previous page stays active until that tween finishes, then receives `EndActive()` — no empty backdrop while the new page slides in.
+On exclusive switches via `PM` (e.g. Menu → Shop), when the **incoming** page has a show animation, other pages (except `Popup` and `Ignore On Exclusive Change`) are hidden **after** the show tween completes (`WaitForShowAnimation`), then `EndActive()` runs — no empty backdrop. `Popup` pages are never deactivated on exclusive switches; opening a popup still goes through `ActivePage` and leaves other pages untouched.
 
 ## API
 

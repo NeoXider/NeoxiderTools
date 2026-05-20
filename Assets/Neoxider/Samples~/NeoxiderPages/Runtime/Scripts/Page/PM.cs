@@ -456,8 +456,7 @@ namespace Neo.Pages
                 if (ShouldDeferHidingOtherPages(foundUiPage))
                 {
                     exclusivePageTransitionRoutine = StartCoroutine(
-                        DeactivateOtherPagesAfterShowAnimation(targetPageId, ignoreList, otherActive,
-                            foundUiPage.ShowAnimationDuration));
+                        DeactivateOtherPagesAfterIncomingShow(foundUiPage, targetPageId, ignoreList, otherActive));
                 }
                 else
                 {
@@ -494,7 +493,7 @@ namespace Neo.Pages
 
         private static bool ShouldDeferHidingOtherPages(UIPage incoming)
         {
-            return incoming != null && incoming.HasShowAnimation && incoming.ShowAnimationDuration > 0f;
+            return incoming != null && incoming.HasShowAnimation;
         }
 
         private void ApplyExclusivePageTransition(UIPage incoming, UIPage outgoing, bool keepOutgoingActive)
@@ -514,7 +513,7 @@ namespace Neo.Pages
             if (ShouldDeferHidingOtherPages(incoming))
             {
                 exclusivePageTransitionRoutine =
-                    StartCoroutine(DeactivatePageAfterDelay(outgoing, incoming.ShowAnimationDuration));
+                    StartCoroutine(DeactivateOutgoingAfterIncomingShow(incoming, outgoing));
             }
             else
             {
@@ -541,28 +540,28 @@ namespace Neo.Pages
             }
         }
 
-        private IEnumerator DeactivateOtherPagesAfterShowAnimation(PageId targetPageId, PageId[] ignoreList,
-            bool otherActive, float waitSeconds)
+        private IEnumerator DeactivateOtherPagesAfterIncomingShow(UIPage incoming, PageId targetPageId,
+            PageId[] ignoreList, bool otherActive)
         {
-            if (waitSeconds > 0f)
+            if (incoming != null)
             {
-                yield return new WaitForSecondsRealtime(waitSeconds);
+                yield return incoming.WaitForShowAnimation();
             }
 
             DeactivateOtherPages(targetPageId, ignoreList, otherActive);
             exclusivePageTransitionRoutine = null;
         }
 
-        private IEnumerator DeactivatePageAfterDelay(UIPage page, float waitSeconds)
+        private IEnumerator DeactivateOutgoingAfterIncomingShow(UIPage incoming, UIPage outgoing)
         {
-            if (waitSeconds > 0f)
+            if (incoming != null)
             {
-                yield return new WaitForSecondsRealtime(waitSeconds);
+                yield return incoming.WaitForShowAnimation();
             }
 
-            if (page != null)
+            if (outgoing != null && !outgoing.Popup)
             {
-                SetPageActive(page, false);
+                SetPageActive(outgoing, false);
             }
 
             exclusivePageTransitionRoutine = null;
@@ -570,7 +569,7 @@ namespace Neo.Pages
 
         private void ApplyOtherPageState(UIPage page, PageId targetPageId, PageId[] ignoreList, bool otherActive)
         {
-            if (page.IgnoreOnExclusiveChange)
+            if (page.IgnoreOnExclusiveChange || page.Popup)
             {
                 return;
             }

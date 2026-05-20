@@ -30,7 +30,7 @@
 
 Анимация страницы принудительно переводится в unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) и `autoKill = false`, чтобы она корректно работала в паузе/меню и могла перезапускаться.
 
-При эксклюзивном переключении через `PM` (Menu → Shop и т.п.), если у **входящей** страницы есть show-анимация (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), предыдущая страница остаётся активной на время этой анимации и только потом получает `EndActive()` — без «пустого фона» под наезжающей страницей.
+При эксклюзивном переключении через `PM` (Menu → Shop и т.п.), если у **входящей** страницы есть show-анимация (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), остальные страницы (кроме `Popup` и `Ignore On Exclusive Change`) скрываются **после завершения** show-tween (`WaitForShowAnimation`), затем `EndActive()` — без «пустого фона». Страницы с **Popup** при эксклюзивном переключении не трогаются; открытие popup по-прежнему через `ChangePage` → `ActivePage` без выключения фона.
 
 ## API
 
