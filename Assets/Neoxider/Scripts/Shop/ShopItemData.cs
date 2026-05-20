@@ -84,6 +84,25 @@ namespace Neo.Shop
         /// </summary>
         public string CurrencyOverrideSaveKey => _currencyOverrideSaveKey;
 
+        /// <summary>
+        ///     Writes <paramref name="resolvedId"/> into <see cref="_id"/> only while it is empty.
+        ///     Used by <see cref="Shop"/> so saves and ownership resolve even if the asset forgot Id.
+        /// </summary>
+        public void AssignIdIfEmpty(string resolvedId)
+        {
+            if (!string.IsNullOrWhiteSpace(_id))
+            {
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(resolvedId))
+            {
+                return;
+            }
+
+            _id = resolvedId.Trim();
+        }
+
         private void OnValidate()
         {
             if (string.IsNullOrEmpty(_id) && !string.IsNullOrEmpty(_nameItem))

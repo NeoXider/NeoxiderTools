@@ -12,6 +12,8 @@
 
 Since version **8.5.0** item identity is the stable `string Id` from `ShopItemData` (no longer an array index). Save format is a hard break: legacy keys `Shop0/Shop1/.../ShopEquipped` are no longer read (see CHANGELOG `## [8.5.0] Breaking`).
 
+Since **8.5.1**, if catalog assets still have an empty `Id`, `Shop` backfills unique ids in `Awake` **before** `LoadProfile()` (details: [ShopItemData → Id auto-fill](./ShopItemData.md#id-auto-fill)). This fixes cases where every `ShopListView` cell showed the same state (e.g. **USED** with no price).
+
 ## Dynamic Views
 
 `Shop` can be used only as the purchase/catalog controller while external views own all visible cells.

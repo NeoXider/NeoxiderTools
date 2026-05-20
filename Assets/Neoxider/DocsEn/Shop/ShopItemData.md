@@ -13,7 +13,7 @@ Use `Currency Override Save Key` for asset-safe multi-currency setup.
 ## Setup
 
 1. `Right Click > Create > Neoxider > Shop > Shop Item Data`.
-2. Set `Id` (or leave empty — `OnValidate` auto-fills from `_nameItem`, mirroring [QuestConfig](../Quest/QuestConfig.md)).
+2. Set `Id` (or leave empty — see **Id auto-fill** below).
 3. Configure remaining fields.
 4. Add the asset to the `_shopItemDatas` array of the [Shop](./Shop.md) controller.
 
@@ -21,7 +21,7 @@ Use `Currency Override Save Key` for asset-safe multi-currency setup.
 
 | Field | Description |
 |-------|-------------|
-| `_id` | **Stable identifier**. Used as the ownership / equipped / lookup key. Auto-filled from `_nameItem` on validate when empty. **Do not change after release** — it invalidates saves. |
+| `_id` | **Stable identifier**. Ownership, equipped state, and `Shop` lookup key. **Do not change after release** — it invalidates saves. |
 | `_isSinglePurchase` | Buyable only once? When `true`, after the first purchase the item id is added to `ShopProfileData.OwnedItemIds`. |
 | `_nameItem`, `_description` | UI text. |
 | `_price` | Base price. Runtime discounts are applied with `Shop.SetRuntimePrice(id, price)`. |
@@ -30,6 +30,15 @@ Use `Currency Override Save Key` for asset-safe multi-currency setup.
 | `_currencyOverrideSaveKey` | Optional `Money.SaveKey`. When set, the item is charged from the matching `Money`; when empty, the Shop default `moneySpendSource` is used, then `Money.I`. |
 
 > Inventory grants are configured in [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) — its mapping table maps `ShopItemData.Id → InventoryItemData + Amount`.
+
+## Id auto-fill
+
+| When | Behavior |
+|------|----------|
+| **Editor** (`OnValidate`) | Empty `_id` → derived from `_nameItem` (spaces → `_`), same pattern as [QuestConfig](../Quest/QuestConfig.md). |
+| **Runtime** (since **8.5.1**) | [Shop](./Shop.md) calls `EnsureMissingItemIds()` in `Awake` **before** loading the save: `nameItem` → asset file name → `{base}_{index in Shop array}`. Same when `SetItems(...)` replaces the catalog. Writes go through `AssignIdIfEmpty` only while `_id` is empty. |
+
+For production builds, set unique `Id` values explicitly in the Inspector — runtime backfill is session memory and does not replace shipping assets with stable keys.
 
 ## Code API
 

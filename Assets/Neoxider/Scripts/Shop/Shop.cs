@@ -159,6 +159,7 @@ namespace Neo.Shop
 
         private void Awake()
         {
+            EnsureMissingItemIds();
             LoadProfile();
             SpawnItems();
             Subscribe(true);
@@ -208,6 +209,60 @@ namespace Neo.Shop
         private void OnValidate()
         {
             _shopItems ??= GetComponentsInChildren<ShopItem>(true);
+        }
+
+        private void EnsureMissingItemIds()
+        {
+            EnsureMissingItemIds(_shopItemDatas);
+        }
+
+        /// <summary>
+        ///     Fills empty <see cref="ShopItemData.Id"/> from display name, asset name, or index.
+        ///     Runs in <see cref="Awake"/> before <see cref="LoadProfile"/> so saves match real keys.
+        /// </summary>
+        private static void EnsureMissingItemIds(ShopItemData[] items)
+        {
+            if (items == null || items.Length == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < items.Length; i++)
+            {
+                ShopItemData data = items[i];
+                if (data == null)
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(data.Id))
+                {
+                    continue;
+                }
+
+                string basePart = SanitizeIdToken(data.nameItem);
+                if (string.IsNullOrEmpty(basePart))
+                {
+                    basePart = SanitizeIdToken(data.name);
+                }
+
+                if (string.IsNullOrEmpty(basePart))
+                {
+                    basePart = "shop_item";
+                }
+
+                data.AssignIdIfEmpty($"{basePart}_{i}");
+            }
+        }
+
+        private static string SanitizeIdToken(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return "";
+            }
+
+            return raw.Trim().Replace(" ", "_");
         }
 
         // ---------- Public API: string -------------------------------------------------
@@ -458,6 +513,7 @@ namespace Neo.Shop
         public void SetItems(ShopItemData[] items, bool resetPreviewToFirst = true)
         {
             _shopItemDatas = items ?? Array.Empty<ShopItemData>();
+            EnsureMissingItemIds(_shopItemDatas);
             if (resetPreviewToFirst || ResolveItemDataById(PreviewIdString) == null)
             {
                 PreviewIdString = FirstItemId();

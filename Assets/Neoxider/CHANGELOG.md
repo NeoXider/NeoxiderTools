@@ -1,12 +1,21 @@
 
 ## [Unreleased]
 
+## [8.5.1] - 2026-05-20
+
 ### Fixed
+- **Shop / empty item Ids**: when several `ShopItemData` assets left `Id` empty, every slot shared the same lookup key — `IsOwned`, `EquippedId`, and `ShopListView` could mark **all** cells as owned/equipped (e.g. **USED** with no price). `Shop` now backfills unique ids in **`Awake` before `LoadProfile()`** so saves and UI resolve per item; `SetItems(...)` runs the same pass when the catalog changes at runtime.
 - **Network / scene NetworkIdentity offline reactivation**: Mirror's `NetworkScenePostProcess` (callback order 1) force-disables every scene `NetworkIdentity` during scene processing so `NetworkServer.SpawnObjects()` can spawn them. In offline scenes (Mirror installed, no session) the spawn step never runs, so any Neo component required to live on a `NetworkIdentity` (e.g. `Money`, `RpgCharacter`, `Selector`, `Counter`, `InteractiveObject`, both `PlayerController{2D,3D}Physics`, all `NeoNetworkComponent` subclasses) stayed disabled forever. Fix is two-tier:
   - **Editor `NeoMirrorScenePostProcess`** (`Editor/Network/`, callback order 100) runs **after** Mirror's post-processor in the same scene-processing pass — both at build time (the corrected state is baked into the built scene file) and at Play Mode entry (`Awake` sees objects already active). This covers 99% of cases with zero runtime overhead.
   - **Runtime `NeoMirrorSceneReactivator`** (`Scripts/Network/Core/`) listens to `SceneManager.sceneLoaded` as a safety net for dynamic additive scene loads that bypass `[PostProcessScene]`. Opt out via `NeoMirrorSceneReactivator.Enabled = false`.
   - Components opt in by implementing the new `INeoOptionalNetworked` interface (implemented by `NeoNetworkComponent`, `Money`, `PlayerController{2D,3D}Physics`).
   - Removed the old `Money.OnStopClient` / `MoneyMirrorReactivateHost` coroutine workaround, which only covered post-session shutdown and never fired in offline play.
+
+### Added
+- **Shop / runtime Id backfill**: `ShopItemData.AssignIdIfEmpty(string)` writes `_id` only while it is empty; `Shop.EnsureMissingItemIds()` derives ids from `nameItem`, then the asset file name, then `{base}_{indexInShopArray}` so duplicate display names in one catalog still get distinct keys.
+
+### Changed
+- **Docs (Shop)**: [Shop.md](Docs/Shop/Shop.md), [ShopItemData.md](Docs/Shop/ShopItemData.md) and EN mirrors document editor `OnValidate` fill plus runtime backfill (since **8.5.1**). Recommend setting explicit `Id` on assets before shipping so saves stay stable across builds.
 
 ## [8.5.0] - 2026-05-18
 
