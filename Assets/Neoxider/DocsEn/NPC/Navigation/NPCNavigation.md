@@ -1,4 +1,4 @@
-# NpcNavigation
+﻿# NpcNavigation
 
 **Purpose:** See Inspector fields below for configuration.
 

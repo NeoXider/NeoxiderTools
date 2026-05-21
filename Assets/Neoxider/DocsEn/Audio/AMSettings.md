@@ -1,4 +1,4 @@
-# AMSettings
+﻿# AMSettings
 
 **Purpose:** Global audio settings manager (Singleton). It controls the `AudioMixer`, manages channel volumes (Master, Music, Efx), and automatically saves/loads settings between sessions (via `SaveProvider`). It also provides reactive properties (Mute states) for UI binding.
 

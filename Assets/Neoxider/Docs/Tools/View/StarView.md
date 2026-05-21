@@ -1,4 +1,4 @@
-# StarView
+﻿# StarView
 
 **Что это:** компонент визуализации звёздного рейтинга по счёту ScoreManager: подписывается на OnStarChange, активирует/деактивирует звёзды (VisualToggle[] или GameObject[]). Пространство имён `Neo.Tools`, файл `Scripts/Tools/View/StarView.cs`.
 

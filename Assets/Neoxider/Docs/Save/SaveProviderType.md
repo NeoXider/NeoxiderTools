@@ -1,4 +1,4 @@
-# SaveProviderType
+﻿# SaveProviderType
 
 **Назначение:** Enum для выбора типа бэкенда сохранения.
 

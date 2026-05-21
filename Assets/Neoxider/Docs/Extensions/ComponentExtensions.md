@@ -1,4 +1,4 @@
-# Расширения ComponentExtensions
+﻿# Расширения ComponentExtensions
 
 **Что это:** См. описание ниже.
 

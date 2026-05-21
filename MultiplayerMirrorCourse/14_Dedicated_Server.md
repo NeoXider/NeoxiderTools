@@ -1,4 +1,4 @@
-# Урок 14: dedicated server и headless запуск
+﻿# Урок 14: dedicated server и headless запуск
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 14/15 · Mirror `96.x`
 

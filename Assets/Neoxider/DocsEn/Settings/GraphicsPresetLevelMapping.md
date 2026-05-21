@@ -1,4 +1,4 @@
-# GraphicsPresetLevelMapping
+﻿# GraphicsPresetLevelMapping
 
 **Purpose:** A serializable struct mapping a named graphics preset (`GraphicsPreset`) to a Unity `QualitySettings` level index.
 

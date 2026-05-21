@@ -1,4 +1,4 @@
-# StateCondition
+﻿# StateCondition
 
 **Purpose:** Abstract base class for state transition conditions in `StateMachine`. Has a single method `Evaluate()` → `bool`. Three built-in implementations: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`.
 

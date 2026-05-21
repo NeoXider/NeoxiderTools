@@ -1,4 +1,4 @@
-# Tools / Text
+﻿# Tools / Text
 
 Text and time formatting for UI. Scripts in `Scripts/Tools/Text/`. Full docs are in Russian.
 

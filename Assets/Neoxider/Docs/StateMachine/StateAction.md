@@ -12,5 +12,6 @@
 
 ## См. также
 - [StateMachineBehaviour](StateMachineBehaviour.md)
-- [StateData](StateData.md)
+- [StateMachine](./StateMachine.md)
 - ← [StateMachine](README.md)
+

@@ -1,4 +1,4 @@
-# MouseEffect
+﻿# MouseEffect
 
 **Purpose:** See Inspector fields below for configuration.
 

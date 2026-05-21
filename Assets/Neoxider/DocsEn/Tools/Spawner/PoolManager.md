@@ -1,4 +1,4 @@
-# PoolManager
+﻿# PoolManager
 
 **Purpose:** Central object pool manager. Automatically creates pools upon first request (or pre-warms configured ones at start), preventing costly `Instantiate` and `Destroy` calls.
 

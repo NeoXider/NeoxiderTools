@@ -1,4 +1,4 @@
-# SaveProviderType
+﻿# SaveProviderType
 
 **Purpose:** Enum for selecting the save backend type.
 

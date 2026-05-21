@@ -1,4 +1,4 @@
-# SelectorItem
+﻿# SelectorItem
 
 **Purpose:** See Inspector fields below for configuration.
 

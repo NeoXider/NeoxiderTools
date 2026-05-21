@@ -1,4 +1,4 @@
-# Reactive module
+﻿# Reactive module
 
 The `Reactive` module provides serializable reactive properties for `float`, `int`, and `bool` values with typed `UnityEvent` callbacks.
 

@@ -1,4 +1,4 @@
-# PlayerPrefsSaveProvider
+﻿# PlayerPrefsSaveProvider
 
 **Purpose:** An `ISaveProvider` implementation via Unity `PlayerPrefs`. The simplest option — data is stored in the registry (Windows) or preferences file (macOS/Linux). Booleans are stored as `int` (0/1) with a `Bool_` prefix.
 

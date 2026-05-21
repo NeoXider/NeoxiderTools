@@ -1,4 +1,4 @@
-# PropertyAttribute module
+﻿# PropertyAttribute module
 
 Inspector attributes and drawers: `[Button]`, `[GUIColor]` (ColorAttribute), `[RequireInterface]`, inject attributes (`[GetComponent]`, `[FindInScene]`, `[LoadFromResources]`, etc.). Scripts in `Scripts/PropertyAttribute/`, editor in `Editor/PropertyAttribute/`. Full per-attribute pages are in Russian.
 

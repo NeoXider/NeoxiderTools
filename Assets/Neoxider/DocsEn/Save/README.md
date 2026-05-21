@@ -1,4 +1,4 @@
-# Save module
+﻿# Save module
 
 The `Save` module combines provider-based persistence, component-level scene saves, and global project-wide save data.
 

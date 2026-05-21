@@ -1,4 +1,4 @@
-# GameTimeController
+﻿# GameTimeController
 
 **Purpose:** See Inspector fields below for configuration.
 

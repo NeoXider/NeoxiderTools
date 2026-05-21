@@ -1,4 +1,4 @@
-# SpineController
+﻿# SpineController
 
 **Purpose:** A universal controller for Spine animations (`SkeletonAnimation`). Manages animation playback by index or name, skin switching with `PlayerPrefs` persistence, and auto-return to a default (idle) animation.
 

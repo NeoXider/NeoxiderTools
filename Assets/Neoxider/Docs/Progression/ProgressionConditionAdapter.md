@@ -1,4 +1,4 @@
-# ProgressionConditionAdapter
+﻿# ProgressionConditionAdapter
 
 **Что это:** `MonoBehaviour`-адаптер из `Scripts/Progression/Bridge/ProgressionConditionAdapter.cs`, который превращает состояние прогрессии в проверяемое условие для `NeoCondition` и других систем, работающих через `IConditionEvaluator`.
 

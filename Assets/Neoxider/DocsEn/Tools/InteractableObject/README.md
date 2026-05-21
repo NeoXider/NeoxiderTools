@@ -1,4 +1,4 @@
-# Tools / InteractableObject
+﻿# Tools / InteractableObject
 
 Click/hover interactions and 2D/3D physics events. Scripts in `Scripts/Tools/InteractableObject/`. Full docs are in Russian.
 

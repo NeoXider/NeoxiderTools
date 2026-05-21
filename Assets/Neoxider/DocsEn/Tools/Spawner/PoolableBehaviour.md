@@ -1,4 +1,4 @@
-# PoolableBehaviour
+﻿# PoolableBehaviour
 
 **Purpose:** A base class for scripts intended to work with pools. Implements the `IPoolable` interface. If your script inherits from this (instead of `MonoBehaviour`), it automatically receives callbacks when taken from or returned to a pool.
 

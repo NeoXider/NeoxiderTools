@@ -1,4 +1,4 @@
-# RpgAttackDefinition
+﻿# RpgAttackDefinition
 
 **What it is:** a `ScriptableObject` that describes a combat payload for `RpgAttackController`.
 

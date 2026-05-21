@@ -1,4 +1,4 @@
-# Расширения CoroutineExtensions
+﻿# Расширения CoroutineExtensions
 
 **Что это:** См. описание ниже.
 

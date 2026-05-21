@@ -1,4 +1,4 @@
-# TimeSpanExtensions
+﻿# TimeSpanExtensions
 
 **Purpose:** Extension methods for formatting `TimeSpan` values into human-readable strings.
 

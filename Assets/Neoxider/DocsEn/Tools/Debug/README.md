@@ -1,4 +1,4 @@
-# Tools / Debug
+﻿# Tools / Debug
 
 Debug utilities: FPS display, error logger. Scripts in `Scripts/Tools/Debug/`. Full docs are in Russian.
 

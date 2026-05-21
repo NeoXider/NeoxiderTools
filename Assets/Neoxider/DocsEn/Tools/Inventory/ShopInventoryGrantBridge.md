@@ -1,4 +1,4 @@
-# ShopInventoryGrantBridge
+﻿# ShopInventoryGrantBridge
 
 **Purpose:** optional bridge component linking [Shop](../../Shop/Shop.md) and [InventoryComponent](./InventoryComponent.md). Listens to `Shop.OnPurchasedId(itemId)` and, for every match in its `Mappings` table, calls `InventoryComponent.AddItemData(...)` and fires `OnGranted(data, amount)`.
 

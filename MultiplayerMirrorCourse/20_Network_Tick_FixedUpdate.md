@@ -1,4 +1,4 @@
-# Урок 20: сетевой тик, Update и FixedUpdate
+﻿# Урок 20: сетевой тик, Update и FixedUpdate
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 5/15 · Mirror `96.x`
 

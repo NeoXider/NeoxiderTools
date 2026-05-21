@@ -1,4 +1,4 @@
-# Loot
+﻿# Loot
 
 **Purpose:** See Inspector fields below for configuration.
 

@@ -1,4 +1,4 @@
-# MeleeWeapon
+﻿# MeleeWeapon
 
 **Purpose:** See Inspector fields below for configuration.
 
@@ -16,4 +16,4 @@
 
 ## See Also
 
-- [Module Root](../README.md)
+- [Module Root](../../README.md)

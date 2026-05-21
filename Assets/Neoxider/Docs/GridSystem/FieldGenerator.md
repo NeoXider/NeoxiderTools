@@ -1,4 +1,4 @@
-# FieldGenerator
+﻿# FieldGenerator
 
 **Что это:** генерирует и хранит runtime-сетку (форма, состояние ячеек, поиск пути). Конфиг в **Config**, события OnFieldGenerated, OnCellChanged, OnCellStateChanged. Требует компонент **Grid**. Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldGenerator.cs`.
 

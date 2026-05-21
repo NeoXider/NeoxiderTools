@@ -1,4 +1,4 @@
-# Simulation Timer
+﻿# Simulation Timer
 An Lightweight Efficient Timer for Unity. Inspired by Photon Fusion TickTimer
 ## Usage/Examples
 

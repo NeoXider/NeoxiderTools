@@ -1,4 +1,4 @@
-# GameSettings
+﻿# GameSettings
 
 **Что это:** статический класс `Neo.Settings.GameSettings` — текущие значения пользовательских настроек (мышь, графика, экран, FPS, vSync), запись на диск через **`SaveProvider`**, методы **`Set…` с `SettingsPersistMode`**. Файл: `Scripts/Settings/GameSettings.cs`.
 

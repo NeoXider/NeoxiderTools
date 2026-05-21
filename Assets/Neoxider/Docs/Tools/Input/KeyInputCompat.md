@@ -1,4 +1,4 @@
-# KeyInputCompat
+﻿# KeyInputCompat
 
 **Что это:** `KeyInputCompat` — статический адаптер для чтения клавиатуры через старую `Input Manager` и новую `Input System` без изменения вызывающего кода. Файл: `Scripts/Tools/Input/KeyInputCompat.cs`, пространство имён: `Neo.Tools`.
 

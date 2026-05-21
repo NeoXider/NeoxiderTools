@@ -1,4 +1,4 @@
-# ExplosiveForce
+﻿# ExplosiveForce
 
 **Purpose:** A one-time explosion that physically scatters objects within a specified radius (uses `Rigidbody.AddExplosionForce`). Supports delays, random force variations, and self-destruction after detonating.
 

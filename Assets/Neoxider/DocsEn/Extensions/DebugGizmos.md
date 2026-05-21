@@ -1,4 +1,4 @@
-# DebugGizmos
+﻿# DebugGizmos
 
 **Purpose:** See Inspector fields below for configuration.
 

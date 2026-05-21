@@ -1,4 +1,4 @@
-# StateMachine
+﻿# StateMachine
 
 **Что это:** модуль автомата состояний с двумя режимами работы: code-first через `StateMachine<TState>` и inspector/no-code через `StateMachineData` + `StateMachineBehaviourBase`. Скрипты находятся в `Scripts/StateMachine/`.
 

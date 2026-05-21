@@ -1,4 +1,4 @@
-# LightAnimator
+﻿# LightAnimator
 
 **Purpose:** See Inspector fields below for configuration.
 

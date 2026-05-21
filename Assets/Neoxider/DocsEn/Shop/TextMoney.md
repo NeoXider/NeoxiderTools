@@ -1,4 +1,4 @@
-# TextMoney
+﻿# TextMoney
 
 **Purpose:** A UI component that automatically subscribes to currency changes in the `Money` manager and displays the current balance in a `TextMeshPro` text field.
 

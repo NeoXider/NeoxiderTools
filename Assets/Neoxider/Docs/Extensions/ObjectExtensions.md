@@ -1,4 +1,4 @@
-# Расширения ObjectExtensions
+﻿# Расширения ObjectExtensions
 
 **Что это:** См. описание ниже.
 

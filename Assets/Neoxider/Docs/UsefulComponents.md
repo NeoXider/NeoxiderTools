@@ -1,4 +1,4 @@
-# Полезные компоненты Neoxider (Add Component / GameObject)
+﻿# Полезные компоненты Neoxider (Add Component / GameObject)
 
 **Что это:** Компоненты, которые удобно добавлять через **Add Component** (меню **Neoxider/…**) или через **GameObject → Neoxider/…** при создании объекта.
 

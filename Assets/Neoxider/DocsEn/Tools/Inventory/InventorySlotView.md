@@ -1,4 +1,4 @@
-# InventorySlotView
+﻿# InventorySlotView
 
 **Purpose:** A UI component representing a single physical cell within an `InventorySlotGridView`. It contains the component that draws the item itself (`InventoryItemView`), alongside logic for selection highlighting and click handling.
 

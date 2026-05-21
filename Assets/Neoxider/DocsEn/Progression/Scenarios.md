@@ -1,4 +1,4 @@
-# Scenarios
+﻿# Scenarios
 
 **What it is:** practical usage scenarios for `Progression`, with recommendations for how to configure the module in different game genres.
 

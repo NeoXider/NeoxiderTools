@@ -1,4 +1,4 @@
-# SettingsPersistMode
+﻿# SettingsPersistMode
 
 **Назначение:** Enum, определяющий способ записи изменения настройки в `SaveProvider`.
 

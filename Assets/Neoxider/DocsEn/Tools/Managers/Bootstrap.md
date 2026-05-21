@@ -1,4 +1,4 @@
-# Bootstrap
+﻿# Bootstrap
 
 ## Overview
 `Bootstrap` is the initialization coordinator for services and managers that implement `IInit`.

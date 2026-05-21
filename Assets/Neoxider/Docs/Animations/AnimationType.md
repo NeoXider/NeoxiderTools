@@ -1,4 +1,4 @@
-# AnimationType
+﻿# AnimationType
 
 **Что это:** перечисление типов анимации (RandomFlicker, Pulsing, SmoothTransition, PerlinNoise и др.). Задаёт математику расчёта значений по времени. Пространство имён `Neo.Animations`, файл `Scripts/Animations/AnimationType.cs`.
 

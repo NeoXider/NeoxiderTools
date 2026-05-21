@@ -1,4 +1,4 @@
-# Расширения TransformExtensions
+﻿# Расширения TransformExtensions
 
 **Что это:** См. описание ниже.
 

@@ -1,4 +1,4 @@
-# InventoryView
+﻿# InventoryView
 
 **Purpose:** The main UI component for displaying inventory contents as a list. It can automatically spawn `InventoryItemView` cells from a prefab or update pre-placed cells manually (Manual Mode).
 

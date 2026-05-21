@@ -1,4 +1,4 @@
-# TimeParsingExtensions
+﻿# TimeParsingExtensions
 
 **Что это:** Расширения для парсинга текстовых длительностей в секунды.
 

@@ -1,4 +1,4 @@
-# NoCode Multiplayer Guidelines (Spec)
+﻿# NoCode Multiplayer Guidelines (Spec)
 
 Данный документ описывает фундаментальные правила и стандарты для сетевых компонентов NeoxiderTools, чтобы обеспечить автоматическую синхронизацию в стиле "NoCode".
 

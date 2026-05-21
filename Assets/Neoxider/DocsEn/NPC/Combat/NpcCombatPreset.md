@@ -1,4 +1,4 @@
-# NpcCombatPreset
+﻿# NpcCombatPreset
 
 **Purpose:** See Inspector fields below for configuration.
 

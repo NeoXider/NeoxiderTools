@@ -1,4 +1,4 @@
-# ShopItem
+﻿# ShopItem
 
 **Purpose:** The visual representation of a shop item (`ShopItemData`) in the User Interface. It binds data (image, text) to UI elements and the purchase button.
 

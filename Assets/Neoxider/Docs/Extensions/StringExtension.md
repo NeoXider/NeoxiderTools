@@ -1,4 +1,4 @@
-# Расширения StringExtension
+﻿# Расширения StringExtension
 
 **Что это:** См. описание ниже.
 

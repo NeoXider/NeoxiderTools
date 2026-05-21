@@ -1,4 +1,4 @@
-# InventoryPickupBridge
+﻿# InventoryPickupBridge
 
 **Purpose:** A bridge utility attached to the player (or a child trigger). Forwards physics events (triggers, `PhysicsEvents3D`) to the `Collect()` method of a `PickableItem`. Great for No-Code setups.
 

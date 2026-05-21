@@ -1,4 +1,4 @@
-# GlobalSave
+﻿# GlobalSave
 
 **Что это:** статический класс для одного глобального объекта данных (GlobalData). Хранение через SaveProvider (по умолчанию PlayerPrefs). Загрузка при первом обращении к data, сохранение при присвоении data или вызове SaveProgress(). Пространство имён: `Neo.Save`. Файл: `Scripts/Save/GlobalSave/GlobalSave.cs`.
 

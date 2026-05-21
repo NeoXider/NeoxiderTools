@@ -1,4 +1,4 @@
-# Quest NoCode Action
+﻿# Quest NoCode Action
 
 `QuestNoCodeAction` is the UnityEvent bridge for calling quest runtime actions without custom code. It wraps the main quest API behind one scene-friendly component. File: `Assets/Neoxider/Scripts/Quest/Bridge/QuestNoCodeAction.cs`.
 

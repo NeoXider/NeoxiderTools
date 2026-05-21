@@ -1,4 +1,4 @@
-# TextScore
+﻿# TextScore
 
 **Что это:** компонент отображения очков из **ScoreManager**. Наследует [SetText](../Text/SetText.md): подписывается на `ScoreManager.I`, обновляет текст при изменении счёта или рекорда. Режимы: Current, Best.
 

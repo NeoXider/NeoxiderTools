@@ -1,4 +1,4 @@
-# HandView
+﻿# HandView
 
 **Purpose:** See Inspector fields below for configuration.
 

@@ -1,4 +1,4 @@
-# EM
+﻿# EM
 
 ## Overview
 `EM` is the global event manager for gameplay states, pause flow, and a few application-level callbacks.

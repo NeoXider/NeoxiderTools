@@ -1,4 +1,4 @@
-# Урок 6: Command, ClientRpc и TargetRpc
+﻿# Урок 6: Command, ClientRpc и TargetRpc
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 6/15 · Mirror `96.x`
 

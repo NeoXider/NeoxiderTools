@@ -1,4 +1,4 @@
-# Расширения ScreenExtensions
+﻿# Расширения ScreenExtensions
 
 **Что это:** См. описание ниже.
 

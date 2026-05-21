@@ -1,4 +1,4 @@
-# SimpleSpawner
+﻿# SimpleSpawner
 
 **Purpose:** A lightweight version of the spawner. Ideal for one-off spawning (like a projectile when shooting or a particle effect) without complex wave or delay logic. Compatible with `PoolManager`.
 

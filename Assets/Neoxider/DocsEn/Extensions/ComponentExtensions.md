@@ -1,4 +1,4 @@
-# ComponentExtensions
+﻿# ComponentExtensions
 
 **Purpose:** Extension methods for Unity `Component` — getting or adding components, and hierarchy path retrieval.
 

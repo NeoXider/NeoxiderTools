@@ -1,4 +1,4 @@
-# NpcTargetFinder
+﻿# NpcTargetFinder
 
 **Purpose:** See Inspector fields below for configuration.
 

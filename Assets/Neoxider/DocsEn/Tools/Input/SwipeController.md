@@ -1,4 +1,4 @@
-# SwipeController
+﻿# SwipeController
 
 **Purpose:** See Inspector fields below for configuration.
 

@@ -1,4 +1,4 @@
-# SaveIdentityUtility
+﻿# SaveIdentityUtility
 
 ## Overview
 `SaveIdentityUtility` is the helper responsible for building stable save identities for scene components.

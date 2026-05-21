@@ -1,4 +1,4 @@
-# PropertyAttribute — Internal Types (Drawers & Misc)
+﻿# PropertyAttribute — Internal Types (Drawers & Misc)
 
 | Тип | Описание |
 |-----|----------|

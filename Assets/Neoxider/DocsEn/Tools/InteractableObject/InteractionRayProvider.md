@@ -1,4 +1,4 @@
-# InteractionRayProvider
+﻿# InteractionRayProvider
 
 **Purpose:** See Inspector fields below for configuration.
 

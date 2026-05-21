@@ -1,4 +1,4 @@
-# GameSettings
+﻿# GameSettings
 
 **What it is:** static class `Neo.Settings.GameSettings` — current settings values, **`Set…`** mutations with **`SettingsPersistMode`**, **`SaveProvider`** load/save. File: `Scripts/Settings/GameSettings.cs`.
 

@@ -1,4 +1,4 @@
-# TimerObject
+﻿# TimerObject
 
 **Purpose:** A highly versatile timer for cooldowns, buffs, level timers, or day/night cycles. Supports state persistence (`SaveProvider`), unscaled time, automatic UI updates, and firing events at various progression stages.
 

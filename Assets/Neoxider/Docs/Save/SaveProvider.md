@@ -1,4 +1,4 @@
-# SaveProvider
+﻿# SaveProvider
 
 **Что это:** `SaveProvider` — статический фасад поверх активного `ISaveProvider`, который даёт API в стиле `PlayerPrefs` и проксирует события сохранения, загрузки и изменения ключей. Файл: `Scripts/Save/SaveProvider.cs`, пространство имён: `Neo.Save`.
 

@@ -1,4 +1,4 @@
-# Despawner
+﻿# Despawner
 
 **Purpose:** A utility to remove objects from the scene safely. It automatically detects if an object belongs to a pool (and returns it) or if it should be destroyed via `Destroy`. It can also spawn another prefab just before disappearing (e.g., an explosion effect).
 

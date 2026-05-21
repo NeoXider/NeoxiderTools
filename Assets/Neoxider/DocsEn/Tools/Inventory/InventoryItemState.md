@@ -1,4 +1,4 @@
-# Inventory item state (IInventoryItemState)
+﻿# Inventory item state (IInventoryItemState)
 
 **What it is:** Capture/restore JSON for unique per-instance item payload (`InventoryItemInstance.ComponentStates`), used with `InventoryItemData.Supports Instance State`. Files: `IInventoryItemState.cs`, `InventoryItemStateBehaviour.cs`, `InventoryItemStateUtility.cs`.
 

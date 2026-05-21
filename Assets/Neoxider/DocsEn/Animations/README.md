@@ -1,4 +1,4 @@
-# Animation system
+﻿# Animation system
 
 The animation system provides universal tools for smooth animation of various Unity components. The main idea is to offer easy-to-use components that can animate any values: numbers, colors, vectors, light intensity, and material emission.
 

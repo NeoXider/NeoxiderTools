@@ -1,4 +1,4 @@
-# StateMachineEvaluationContext
+﻿# StateMachineEvaluationContext
 
 **Назначение:** Контекст вычисления для `StateMachine`. Содержит ссылки на текущий `GameObject`, `Transform` и кешированные компоненты для оптимизации предикатов при оценке условий перехода.
 

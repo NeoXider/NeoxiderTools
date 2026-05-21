@@ -1,4 +1,4 @@
-# Компонент PlayerController3DAnimatorDriver
+﻿# Компонент PlayerController3DAnimatorDriver
 
 **Что это:** Скрипт не двигает персонажа: он только обновляет параметры `Animator` (idle/walk/run/jump и BlendTree), чтобы логика движения и анимации были разделены.
 

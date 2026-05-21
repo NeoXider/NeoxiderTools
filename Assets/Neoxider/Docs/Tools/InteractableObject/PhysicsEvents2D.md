@@ -1,4 +1,4 @@
-# PhysicsEvents2D
+﻿# PhysicsEvents2D
 
 **Что это:** компонент, перехватывающий сообщения 2D-физики (OnTriggerEnter2D, OnCollisionEnter2D и др.) и пробрасывающий их в UnityEvent. Фильтры: опционально по тегу (`filterByTag` + `requiredTag`) и по слою (`filterByLayer` + `layers`); при включённых обоих проверяются **и тег, и слой**. Пространство имён `Neo.Tools`, файл `Scripts/Tools/InteractableObject/PhysicsEvents2D.cs`.
 

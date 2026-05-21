@@ -1,4 +1,4 @@
-# SciFiAcademy asset layout
+﻿# SciFiAcademy asset layout
 
 ## For designers
 

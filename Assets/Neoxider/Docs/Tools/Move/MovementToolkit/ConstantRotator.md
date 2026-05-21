@@ -1,4 +1,4 @@
-# ConstantRotator
+﻿# ConstantRotator
 
 **Что это:** компонент постоянного вращения объекта вокруг оси. Режимы: Transform, Rigidbody, Rigidbody2D. Ось задаётся через AxisSource (LocalForward3D, Up2D, Right2D, Custom). Пространство имён `Neo.Tools`, файл `Scripts/Tools/Move/MovementToolkit/ConstantRotator.cs`.
 

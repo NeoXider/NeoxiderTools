@@ -14,7 +14,6 @@ using UnityEngine.Serialization;
 [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {
-    private const string DefaultSkinPrefsKey = "SkinChanger";
 
     [Header("References")]
     [SerializeField, FormerlySerializedAs("_skeletonAnim")] private SkeletonAnimation skeletonAnimation;
@@ -40,7 +39,7 @@ public sealed class SpineController : MonoBehaviour
     [SerializeField, Tooltip("Save selected skin in PlayerPrefs.")]
     private bool persistSkinSelection = true;
     [SerializeField, FormerlySerializedAs("_keySaveSkin"), Tooltip("PlayerPrefs key used to save selected skin. Set per controller to avoid collisions.")]
-    private string skinPrefsKey = DefaultSkinPrefsKey;
+    private string skinPrefsKey = "SkinChanger";
     [SerializeField, Tooltip("Additional index offset (e.g. when first skin in list is utility)."), FormerlySerializedAs("skinIndexOffset")] private int skinIndexOffset;
     [SerializeField, FormerlySerializedAs("addId"), Tooltip("Deprecated index offset toggle. Use 'Skin Index Offset' instead.")]
     private bool legacyAddIndex;
@@ -503,7 +502,7 @@ public sealed class SpineController : MonoBehaviour
 
     private string GetSkinPrefsKey()
     {
-        return string.IsNullOrWhiteSpace(skinPrefsKey) ? DefaultSkinPrefsKey : skinPrefsKey;
+        return string.IsNullOrWhiteSpace(skinPrefsKey) ? "SkinChanger" : skinPrefsKey;
     }
 
     private int GetLogicalSkinIndex(string skinName)

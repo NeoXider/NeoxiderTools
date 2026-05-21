@@ -1,4 +1,4 @@
-# BetsData
+﻿# BetsData
 
 **Purpose:** See Inspector fields below for configuration.
 

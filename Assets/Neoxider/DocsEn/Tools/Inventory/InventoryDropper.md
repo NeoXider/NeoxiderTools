@@ -1,4 +1,4 @@
-# InventoryDropper
+﻿# InventoryDropper
 
 **Purpose:** A component for dropping items from the inventory into the game world. Spawns the item's WorldDropPrefab with physics, colliders, and auto-configured `PickableItem` for re-pickup. Supports keyboard input, throw impulse, and random spawn offset.
 

@@ -1,4 +1,4 @@
-# ImageFillAmountAnimator
+﻿# ImageFillAmountAnimator
 
 **Purpose:** See Inspector fields below for configuration.
 

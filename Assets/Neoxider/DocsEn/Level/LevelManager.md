@@ -1,4 +1,4 @@
-# LevelManager
+﻿# LevelManager
 
 **Purpose:** Global level and map (chapter) controller. Tracks the current level (`CurrentLevel`), the maximum completed level (`MaxLevel`), and supports multiple maps (worlds). Automatically saves progress via `SaveProvider`.
 

@@ -1,4 +1,4 @@
-# RpgAttackDefinition
+﻿# RpgAttackDefinition
 
 **Что это:** `ScriptableObject`-описание атаки для `RpgAttackController`.
 

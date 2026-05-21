@@ -1,4 +1,4 @@
-# SaveProviderSettingsComponent
+﻿# SaveProviderSettingsComponent
 
 **Purpose:** See Inspector fields below for configuration.
 

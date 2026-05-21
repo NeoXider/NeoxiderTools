@@ -53,7 +53,7 @@ namespace Mirror
         // Set of static NetworkIdentities that don't move, updated less frequently
         readonly HashSet<NetworkIdentity> staticObjects = new HashSet<NetworkIdentity>();
 
-        // Scene bounds: ±9 km (18 km total) in each dimension
+        // Scene bounds: +/-9 km (18 km total) in each dimension
         const int MAX_Q = 19; // Covers -9 to 9 (~18 km)
         const int MAX_R = 23; // Covers -11 to 11 (~18 km)
         const ushort MAX_AREA = 9000; // Maximum area in meters
@@ -67,7 +67,7 @@ namespace Mirror
         void Awake()
         {
             grid = new HexGrid2D(visRange);
-            // Initialize cells list with null entries up to max size (±9 km bounds)
+            // Initialize cells list with null entries up to max size (+/-9 km bounds)
             int maxSize = MAX_Q * MAX_R;
             for (int i = 0; i < maxSize; i++)
                 cells.Add(null);
@@ -167,7 +167,7 @@ namespace Mirror
             // Convert position to grid cell coordinates
             Cell2D newCell = grid.WorldToCell(position);
 
-            // Check if the object is within ±9 km bounds
+            // Check if the object is within +/-9 km bounds
             if (Mathf.Abs(position.x) > MAX_AREA || Mathf.Abs(position.y) > MAX_AREA)
                 return; // Ignore objects outside bounds
 
@@ -294,7 +294,7 @@ namespace Mirror
             }
         }
 
-        // Computes a unique index for a cell in the sparse array, supporting ±9 km bounds
+        // Computes a unique index for a cell in the sparse array, supporting +/-9 km bounds
         int GetCellIndex(Cell2D cell)
         {
             int qOffset = cell.q + MAX_Q / 2; // Shift -9 to 9 -> 0 to 18
@@ -306,11 +306,11 @@ namespace Mirror
         // Draws debug gizmos in the Unity Editor to visualize the 2D grid
         void OnDrawGizmos()
         {
-            // Initialize the grid if it hasn’t been created yet (e.g., before Awake)
+            // Initialize the grid if it hasn't been created yet (e.g., before Awake)
             if (grid == null)
                 grid = new HexGrid2D(visRange);
 
-            // Only draw if there’s a local player to base the visualization on
+            // Only draw if there's a local player to base the visualization on
             if (NetworkClient.localPlayer != null)
             {
                 Vector3 playerPosition = NetworkClient.localPlayer.transform.position;

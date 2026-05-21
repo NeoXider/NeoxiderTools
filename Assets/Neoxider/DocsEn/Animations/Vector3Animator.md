@@ -1,4 +1,4 @@
-# Vector3Animator
+﻿# Vector3Animator
 
 **Namespace:** `Neo.Animations`  
 **File:** `Assets/Neoxider/Scripts/Animations/Vector3Animator.cs`

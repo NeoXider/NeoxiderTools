@@ -1,4 +1,4 @@
-# Расширения PrimitiveExtensions
+﻿# Расширения PrimitiveExtensions
 
 **Что это:** См. описание ниже.
 

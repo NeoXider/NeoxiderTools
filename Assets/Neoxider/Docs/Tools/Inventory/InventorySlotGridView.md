@@ -1,4 +1,4 @@
-# InventorySlotGridView
+﻿# InventorySlotGridView
 
 **Назначение:** UI-компонент для отображения физической сетки слотов (режим `SlotGrid` в `InventoryComponent`). Автоматически спавнит `InventorySlotView` для каждого слота (включая пустые) и управляет их обновлением.
 

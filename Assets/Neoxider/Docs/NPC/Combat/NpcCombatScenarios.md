@@ -1,4 +1,4 @@
-# Npc Combat Scenarios
+﻿# Npc Combat Scenarios
 
 **Что это:** готовые сценарии сборки автоматических NPC на базе `NpcNavigation`, `NpcRpgCombatBrain`, `RpgTargetSelector` и `RpgAttackController`.
 

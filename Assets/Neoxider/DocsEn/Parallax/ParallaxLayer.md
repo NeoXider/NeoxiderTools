@@ -1,4 +1,4 @@
-# ParallaxLayer
+﻿# ParallaxLayer
 
 **Purpose:** See Inspector fields below for configuration.
 

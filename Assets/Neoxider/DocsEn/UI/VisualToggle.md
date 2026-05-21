@@ -1,4 +1,4 @@
-# VisualToggle
+﻿# VisualToggle
 
 `VisualToggle` is a reusable two-state visual switch component. It can change sprites, colors, TMP text, and `GameObject` active state between start/end variants, and it can optionally sync with a Unity `Toggle`. File: `Assets/Neoxider/Scripts/UI/View/VisualToggle.cs`, namespace: `Neo.UI`.
 

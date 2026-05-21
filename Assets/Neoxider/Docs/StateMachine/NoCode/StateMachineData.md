@@ -1,4 +1,4 @@
-# StateMachineData
+﻿# StateMachineData
 
 **Назначение:** ScriptableObject-конфигурация полной машины состояний для No-Code. Содержит массив `StateData` (состояний) и список `StateTransition` (переходов). Загружается в `StateMachineBehaviour` при старте. Настраивается целиком в Inspector.
 

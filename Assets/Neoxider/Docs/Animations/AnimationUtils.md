@@ -1,4 +1,4 @@
-# AnimationUtils
+﻿# AnimationUtils
 
 **Что это:** статический класс расчёта анимированных значений по времени. Ядро системы анимаций (пространство имён `Neo.Animations`, файл `Scripts/Animations/AnimationUtils.cs`). Методы GetAnimatedFloat, GetAnimatedColor, GetAnimatedVector3, GetTargetValue, ApplyToLight, ApplyToMesh.
 

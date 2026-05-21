@@ -1,4 +1,4 @@
-# RandomShapeExtensions
+﻿# RandomShapeExtensions
 
 **Purpose:** Extension methods for generating random points within geometric shapes (circle, sphere, box, etc.).
 

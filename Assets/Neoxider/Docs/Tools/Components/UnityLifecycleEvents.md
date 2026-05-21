@@ -1,4 +1,4 @@
-# UnityLifecycleEvents
+﻿# UnityLifecycleEvents
 
 **Что это:** компонент пробрасывает события жизненного цикла (Awake, OnEnable, Start, OnDisable, OnDestroy, Update и др.) в UnityEvent. Настройка в Inspector. Файл: `Tools/InteractableObject/UnityLifecycleEvents.cs`.
 

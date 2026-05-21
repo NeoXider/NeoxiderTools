@@ -1,4 +1,4 @@
-# PrimitiveExtensions
+﻿# PrimitiveExtensions
 
 **Purpose:** Extension methods for `float`, `int`, and `bool` — rounding, time formatting, normalization, remapping, and type conversion.
 

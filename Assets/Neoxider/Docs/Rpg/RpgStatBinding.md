@@ -1,4 +1,4 @@
-# RpgStatBinding
+﻿# RpgStatBinding
 
 **Что это:** привязка одного стата `RpgCharacter` к UnityEvent.
 

@@ -1,4 +1,4 @@
-# RandomMusicController
+﻿# RandomMusicController
 
 **Что это:** класс (не MonoBehaviour) воспроизведения случайной музыки из списка без повторов подряд. Управляется через AM. Пространство имён: `Neo.Audio`. Файл: `Scripts/Audio/RandomMusicController.cs`.
 

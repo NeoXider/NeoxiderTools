@@ -1,4 +1,4 @@
-# RpgDeathHandler
+﻿# RpgDeathHandler
 
 **Purpose:** See Inspector fields below for configuration.
 

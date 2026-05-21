@@ -1,4 +1,4 @@
-# ConditionEntryPredicate
+﻿# ConditionEntryPredicate
 
 **Purpose:** State machine transition predicate using `NeoCondition`-style evaluation. Evaluates a `ConditionEntry` (component, property, comparison, threshold) against a context GameObject. Context slot is set via `ConditionContextSlot` — the ScriptableObject stores only the slot index, not scene references.
 

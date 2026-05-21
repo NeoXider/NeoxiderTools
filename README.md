@@ -1,4 +1,4 @@
-# Neoxider — a powerful toolkit collection for Unity
+﻿# Neoxider — a powerful toolkit collection for Unity
 
 ![Neoxider Cover](Images/neoxider_cover_cosmic.png)
 

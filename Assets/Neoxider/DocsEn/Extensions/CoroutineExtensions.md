@@ -1,4 +1,4 @@
-# CoroutineExtensions
+﻿# CoroutineExtensions
 
 **Purpose:** Extension methods for running delayed and conditional coroutine actions on any `MonoBehaviour` or `GameObject`. Also provides global static methods that work without an explicit owner. Returns a `CoroutineHandle` for stop/status control.
 

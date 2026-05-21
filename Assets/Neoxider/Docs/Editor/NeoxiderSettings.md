@@ -1,4 +1,4 @@
-# Настройки NeoxiderSettings
+﻿# Настройки NeoxiderSettings
 
 **Что это:** Настройки хранятся в файле `ProjectSettings/NeoxiderSettings.json`, что позволяет сохранять их в системе контроля версий и делиться ими с командой.
 

@@ -1,4 +1,4 @@
-# NPC module
+﻿# NPC module
 
 NPC navigation, patrol/chase logic, animator driver, and modular RPG-ready combat composition. Scripts are in `Scripts/NPC/`. Detailed component docs are still primarily in Russian.
 

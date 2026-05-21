@@ -1,4 +1,4 @@
-# Editor module
+﻿# Editor module
 
 Editor-only tools: custom inspectors, auto-build, Scene Saver, settings window, missing-scripts finder, texture tools, zip backup. Code in `Editor/`. Full docs are in Russian.
 

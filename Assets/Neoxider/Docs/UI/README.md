@@ -1,4 +1,4 @@
-# Модуль UI
+﻿# Модуль UI
 
 **Что это:** раздел документации по UI: анимации кнопок (ButtonScale, ButtonShake), страницы (UI, ButtonChangePage), пауза (PausePage), переключатели (VisualToggle, VariantView), FakeLoad, AnimationFly, AnchorMove. Скрипты в `Scripts/UI/`.
 

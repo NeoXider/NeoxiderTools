@@ -1,4 +1,4 @@
-# StateMachineBehaviourBase
+﻿# StateMachineBehaviourBase
 
 **Что это:** компонент автомата состояний. Работает с `StateMachineData` (ScriptableObject), события в инспекторе, runtime-управление и свойства текущего состояния. Пространство имён `Neo.StateMachine`, файл `Scripts/StateMachine/StateMachineBehaviourBase.cs`.
 

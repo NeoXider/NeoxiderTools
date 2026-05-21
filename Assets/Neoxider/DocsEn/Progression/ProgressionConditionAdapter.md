@@ -1,4 +1,4 @@
-# ProgressionConditionAdapter
+﻿# ProgressionConditionAdapter
 
 `ProgressionConditionAdapter` is a bridge component that exposes progression state as an evaluatable condition for `NeoCondition` and other systems using an evaluator-style workflow. File: `Assets/Neoxider/Scripts/Progression/Bridge/ProgressionConditionAdapter.cs`.
 

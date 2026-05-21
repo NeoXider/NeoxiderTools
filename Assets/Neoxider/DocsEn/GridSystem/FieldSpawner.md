@@ -1,4 +1,4 @@
-# FieldSpawner
+﻿# FieldSpawner
 
 **Purpose:** See Inspector fields below for configuration.
 

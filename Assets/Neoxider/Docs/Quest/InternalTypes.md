@@ -6,4 +6,5 @@
 | `QuestNoCodeAction` | No-Code действие для квестовой системы. |
 
 ## См. также
-- [QuestComponent](QuestComponent.md) — ← [Quest](README.md)
+- [QuestManager](./QuestManager.md) — ← [Quest](README.md)
+

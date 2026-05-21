@@ -1,4 +1,4 @@
-# Расширения RandomShapeExtensions
+﻿# Расширения RandomShapeExtensions
 
 **Что это:** См. описание ниже.
 

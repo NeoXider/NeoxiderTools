@@ -1,4 +1,4 @@
-# Tools
+﻿# Tools
 
 `Tools` is the broadest utility area of the package: inventory, movement, pooling, dialogue, input, time, manager helpers, and scene-level utility components.
 

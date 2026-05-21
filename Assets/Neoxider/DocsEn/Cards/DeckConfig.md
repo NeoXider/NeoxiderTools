@@ -1,4 +1,4 @@
-# DeckConfig
+﻿# DeckConfig
 
 `DeckConfig` is a `ScriptableObject` that stores deck visuals and deck-generation settings for 36-, 52-, or 54-card sets. It provides card-face sprites, back sprite, optional jokers, validation helpers, and deck generation methods. Creation menu: `Create > Neoxider > Cards > Deck Config`.
 

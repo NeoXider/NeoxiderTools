@@ -1,4 +1,4 @@
-# ToggleObject
+﻿# ToggleObject
 
 `ToggleObject` is a simple boolean state holder that raises `UnityEvent` callbacks when its value changes. Useful for no-code logic such as switching panels, toggling lights, or opening/closing doors. File: `Assets/Neoxider/Scripts/Tools/InteractableObject/ToggleObject.cs`, namespace: `Neo.Tools`.
 

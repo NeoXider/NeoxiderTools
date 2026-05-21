@@ -1,4 +1,4 @@
-# InventoryTotalCountText
+﻿# InventoryTotalCountText
 
 **Purpose:** A UI component that displays cumulative inventory statistics (rather than the count of one specific item). For example: the total number of all items, the number of unique item types, or the number of selected items. Automatically subscribes to inventory events.
 

@@ -1,4 +1,4 @@
-# Tools / Move / MovementToolkit
+﻿# Tools / Move / MovementToolkit
 
 Movement toolkit components implementing shared interfaces (e.g. `IMover`).
 

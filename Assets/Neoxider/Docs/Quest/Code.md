@@ -1,4 +1,4 @@
-# Использование квестов из C#
+﻿# Использование квестов из C#
 
 **Что это:** справочник по вызовам API модуля Quest из кода: QuestManager.Instance, AcceptQuest, CompleteObjective, GetState, события, NotifyKill/NotifyCollect. Не описывает настройку в инспекторе — см. [Scenarios](Scenarios.md), [QuestManager](QuestManager.md).
 

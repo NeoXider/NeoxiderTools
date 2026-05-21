@@ -1,4 +1,4 @@
-# Атрибуты свойств (Property Attributes)
+﻿# Атрибуты свойств (Property Attributes)
 
 **Что это:** кастомные атрибуты для инспектора Unity: [Button], [Color], [RequireInterface], inject-атрибуты (GetComponent, FindInScene, LoadFromResources и др.). Скрипты в `Scripts/PropertyAttribute/` и Editor.
 

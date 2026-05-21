@@ -1,4 +1,4 @@
-# RpgCombatant
+﻿# RpgCombatant
 
 `RpgCombatant` удалён в v8.4.0.
 

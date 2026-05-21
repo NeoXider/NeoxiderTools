@@ -1,4 +1,4 @@
-# Tools / Time
+﻿# Tools / Time
 
 Timers and timer objects (pause, repeat, milestones, save). Scripts in `Scripts/Tools/Time/`. Full docs are in Russian.
 

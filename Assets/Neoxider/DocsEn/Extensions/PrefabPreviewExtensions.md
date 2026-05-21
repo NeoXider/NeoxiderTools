@@ -1,4 +1,4 @@
-# PrefabPreviewExtensions
+﻿# PrefabPreviewExtensions
 
 **Purpose:** Extension methods for generating prefab preview thumbnails in the Editor.
 

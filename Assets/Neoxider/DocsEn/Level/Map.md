@@ -1,4 +1,4 @@
-# Map
+﻿# Map
 
 **Purpose:** A data class (`[Serializable]`) describing the parameters of a single chapter/map/world in the `LevelManager`. It is not a MonoBehaviour.
 

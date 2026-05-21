@@ -1,4 +1,4 @@
-# Spawner
+﻿# Spawner
 
 **Purpose:** A flexible object spawner component. Supports pooling (`PoolManager`), infinite loops, wave-based spawning (Waves), random delays, random rotation, and area spawning within a collider (2D/3D).
 

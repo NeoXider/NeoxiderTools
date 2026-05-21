@@ -1,4 +1,4 @@
-# ItemCollectionInfo
+﻿# ItemCollectionInfo
 
 **Purpose:** See Inspector fields below for configuration.
 

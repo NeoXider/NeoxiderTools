@@ -1,4 +1,4 @@
-# AnimationUtils
+﻿# AnimationUtils
 
 Static helper class for computing animated values over time. Core of the animation system (`Neo.Animations`, `Scripts/Animations/AnimationUtils.cs`). No instances; call static methods from code or use via animator components.
 

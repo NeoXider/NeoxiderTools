@@ -1,4 +1,4 @@
-# QuestFlowConfig
+﻿# QuestFlowConfig
 
 **Purpose:** Configuration for defining quest chains (storylines) and standalone side quests. Created as a `ScriptableObject`.
 

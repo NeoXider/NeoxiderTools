@@ -1,4 +1,4 @@
-# CooldownReward
+﻿# CooldownReward
 
 **Purpose:** See Inspector fields below for configuration.
 

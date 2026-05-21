@@ -1,4 +1,4 @@
-# RpgAttackController
+﻿# RpgAttackController
 
 **What it is:** a unified runtime attack caster for melee, ranged, and area attacks driven by `RpgAttackDefinition`.
 

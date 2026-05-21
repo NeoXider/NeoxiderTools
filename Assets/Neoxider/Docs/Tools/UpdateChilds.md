@@ -1,4 +1,4 @@
-2# Утилита UpdateChilds
+﻿2# Утилита UpdateChilds
 
 ## 1. Введение
 

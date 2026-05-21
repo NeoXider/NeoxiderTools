@@ -1,4 +1,4 @@
-# Settings module
+﻿# Settings module
 
 **What it is:** runtime assembly **Neo.Settings**: static **`GameSettings`**, **`GameSettingsComponent`** singleton (persistence via **Neo.Save.SaveProvider**, URP/QualitySettings presets), and UI binder **`SettingsView`**. Scripts live under `Assets/Neoxider/Scripts/Settings/`.
 

@@ -1,4 +1,4 @@
-# AnimatorParameterDriver
+﻿# AnimatorParameterDriver
 
 **Что это:** Компонент для **удобного изменения параметров Animator** из кода и через UnityEvent: триггер, bool, float, int. Имя параметра можно задать в переменной в инспекторе — тогда метод принимает только з...
 

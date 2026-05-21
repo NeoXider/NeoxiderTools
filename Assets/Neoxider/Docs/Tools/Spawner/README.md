@@ -1,4 +1,4 @@
-# Спавнеры (Spawner)
+﻿# Спавнеры (Spawner)
 
 **Что это:** инструменты спавна и пулов объектов: SpawnUtility, Spawner, SimpleSpawner, ObjectPool, PoolManager, Despawner. Скрипты в `Scripts/Tools/Spawner/`.
 

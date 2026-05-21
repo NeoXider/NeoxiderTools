@@ -1,4 +1,4 @@
-# FileSaveProvider
+﻿# FileSaveProvider
 
 **Назначение:** Реализация `ISaveProvider`, которая хранит все данные в одном JSON-файле в каталоге `Application.persistentDataPath` (каталог можно переопределить через **`FileSaveProviderOptions`**). Поддерживает несколько слотов сохранения (`ChangeSlot`). При финализации может дописать изменения на диск.
 

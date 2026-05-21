@@ -1,4 +1,4 @@
-# FieldSpawner
+﻿# FieldSpawner
 
 **Что это:** спавнит префабы в центре ячеек сгенерированного поля. Требует [FieldGenerator](FieldGenerator.md). Событие OnObjectSpawned(GameObject, FieldCell). Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldSpawner.cs`.
 

@@ -1,4 +1,4 @@
-# RPG Module — Internal Types
+﻿# RPG Module — Internal Types
 
 ## Enums
 | Type | Description |

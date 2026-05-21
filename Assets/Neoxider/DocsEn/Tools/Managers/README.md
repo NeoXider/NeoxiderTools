@@ -1,4 +1,4 @@
-# Tools / Managers
+﻿# Tools / Managers
 
 Managers and singleton patterns used by runtime systems. Scripts are located in `Scripts/Tools/Managers/`.
 

@@ -1,4 +1,4 @@
-# StatePredicate
+﻿# StatePredicate
 
 **Purpose:** A serializable predicate for No-Code transition conditions in `StateMachine`. Evaluates a component field (`int`, `float`, `bool`, `string`) against a target value without code.
 

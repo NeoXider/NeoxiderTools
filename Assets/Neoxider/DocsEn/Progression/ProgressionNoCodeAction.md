@@ -1,4 +1,4 @@
-# ProgressionNoCodeAction
+﻿# ProgressionNoCodeAction
 
 `ProgressionNoCodeAction` is a UnityEvent-friendly bridge component for triggering progression actions without writing code. File: `Assets/Neoxider/Scripts/Progression/Bridge/ProgressionNoCodeAction.cs`.
 

@@ -1,4 +1,4 @@
-# ShopBundleData
+﻿# ShopBundleData
 
 **Purpose:** A `ScriptableObject` describing a **bundle** — a set of `ShopItemData` sold for one combined price. On successful purchase the Shop adds every bundle item to `ShopProfileData.OwnedItemIds` and (optionally) grants each item's `InventoryItemData` to the attached inventory.
 

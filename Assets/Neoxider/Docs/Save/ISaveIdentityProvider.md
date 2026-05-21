@@ -1,4 +1,4 @@
-# ISaveIdentityProvider
+﻿# ISaveIdentityProvider
 
 **Что это:** `ISaveIdentityProvider` — интерфейс для компонентов, которым нужен собственный стабильный идентификатор в системе сохранений. Файл: `Scripts/Save/ISaveIdentityProvider.cs`, пространство имён: `Neo.Save`.
 

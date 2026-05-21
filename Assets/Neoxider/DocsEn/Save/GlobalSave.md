@@ -1,4 +1,4 @@
-# GlobalSave
+﻿# GlobalSave
 
 **Purpose:** A static class for a single global data object (`GlobalData`). Storage via `SaveProvider` (default PlayerPrefs). Lazy-loads on first access to `data`; auto-saves on assignment. Namespace: `Neo.Save`.
 

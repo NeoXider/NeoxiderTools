@@ -1,4 +1,4 @@
-# SaveProvider
+﻿# SaveProvider
 
 ## Overview
 `SaveProvider` is the static facade on top of the active `ISaveProvider`. It exposes a PlayerPrefs-like API while allowing the actual backend to be replaced.

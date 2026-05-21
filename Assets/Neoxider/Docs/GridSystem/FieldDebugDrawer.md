@@ -1,4 +1,4 @@
-# FieldDebugDrawer
+﻿# FieldDebugDrawer
 
 **Что это:** компонент визуализации сетки FieldGenerator в редакторе и в игре: Gizmos для сетки, путей и состояния ячеек. Требует [FieldGenerator](FieldGenerator.md). Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldDebugDrawer.cs`.
 

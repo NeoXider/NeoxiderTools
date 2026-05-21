@@ -1,4 +1,4 @@
-# RpgStatGrowthDefinition
+﻿# RpgStatGrowthDefinition
 
 `RpgStatGrowthDefinition` is a legacy ScriptableObject for stat growth formulas. New projects should use `RpgCharacterTemplate` + `RpgProgressionDefinition`.
 

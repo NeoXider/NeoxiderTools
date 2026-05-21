@@ -1,4 +1,4 @@
-# Edgegap Relay for Mirror
+﻿# Edgegap Relay for Mirror
 Documentation: https://docs.edgegap.com/docs/distributed-relay-manager/
 
 ## Prerequisites

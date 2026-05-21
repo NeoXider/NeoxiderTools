@@ -1,4 +1,4 @@
-# Tools / FakeLeaderboard
+﻿# Tools / FakeLeaderboard
 
 Mock leaderboard UI for demos. Scripts in `Scripts/Tools/FakeLeaderboard/`. Full docs are in Russian.
 

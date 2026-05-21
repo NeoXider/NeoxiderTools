@@ -1,4 +1,4 @@
-# ShopCategoryButton
+﻿# ShopCategoryButton
 
 **Назначение:** NoCode-хелпер для кнопок категорий магазина.
 

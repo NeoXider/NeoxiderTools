@@ -1,4 +1,4 @@
-# MouseInputManager
+﻿# MouseInputManager
 
 **Что это:** `MouseInputManager` — singleton-компонент для обработки мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`. Файл: `Scripts/Tools/Input/MouseInputManager.cs`.
 

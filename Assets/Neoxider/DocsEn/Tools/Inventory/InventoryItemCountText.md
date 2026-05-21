@@ -1,4 +1,4 @@
-# InventoryItemCountText
+﻿# InventoryItemCountText
 
 **Purpose:** A UI component that automatically displays the quantity of *one specific item* in the inventory (e.g., a coin counter). It subscribes to inventory events and updates the text whenever changes occur.
 

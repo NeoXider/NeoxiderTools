@@ -1,4 +1,4 @@
-# InventoryComponent
+﻿# InventoryComponent
 
 **Purpose:** The main inventory manager. Handles item storage, limits (max stacks, slot capacity), and automatic save/load. Supports both physical slots (`SlotGrid`) and a general item list (`Aggregated`).
 

@@ -1,4 +1,4 @@
-# CardView
+﻿# CardView
 
 **Purpose:** See Inspector fields below for configuration.
 

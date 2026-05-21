@@ -1,4 +1,4 @@
-# Расширения AudioExtensions
+﻿# Расширения AudioExtensions
 
 **Что это:** См. описание ниже.
 

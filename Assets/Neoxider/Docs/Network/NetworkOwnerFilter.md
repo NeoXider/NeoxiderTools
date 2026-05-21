@@ -1,4 +1,4 @@
-# NetworkOwnerFilter
+﻿# NetworkOwnerFilter
 
 **Что это:** `NetworkBehaviour` / `MonoBehaviour` компонент для фильтрации выполнения действий по сетевой роли (LocalPlayer, Server, Everyone). Путь: `Scripts/Network/Core/NetworkOwnerFilter.cs`, пространство имён `Neo.Network`.
 

@@ -1,4 +1,4 @@
-# SettingsPersistMode
+﻿# SettingsPersistMode
 
 **Purpose:** Enum defining how a settings change is written to `SaveProvider`.
 

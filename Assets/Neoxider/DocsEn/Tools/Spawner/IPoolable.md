@@ -1,4 +1,4 @@
-# IPoolable
+﻿# IPoolable
 
 **Purpose:** Interface for objects managed by `PoolManager`. Defines lifecycle callbacks for pool-spawned objects.
 

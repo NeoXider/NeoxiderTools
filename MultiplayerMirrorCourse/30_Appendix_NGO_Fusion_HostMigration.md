@@ -1,4 +1,4 @@
-# Урок 30: лимиты Mirror, host migration, NGO и Fusion
+﻿# Урок 30: лимиты Mirror, host migration, NGO и Fusion
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 15/15 · Mirror `96.x`
 

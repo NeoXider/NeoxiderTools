@@ -1,4 +1,4 @@
-# DeckComponent
+﻿# DeckComponent
 
 **Что это:** компонент колоды: инициализация, тасовка, выдача карт. Обёртка над DeckModel. Визуальная стопка, перемешивание, раздача в руку. Файл: `Scripts/Cards/Components/DeckComponent.cs`.
 

@@ -1,4 +1,4 @@
-# RequireInterface
+﻿# RequireInterface
 
 **Purpose:** See Inspector fields below for configuration.
 

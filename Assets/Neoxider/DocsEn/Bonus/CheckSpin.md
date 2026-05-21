@@ -1,4 +1,4 @@
-# CheckSpin
+﻿# CheckSpin
 
 **Purpose:** Serializable helper on **`SpinController`**: resolve paylines, compute multipliers, force-win / force-lose planning (`SetWin` / `SetLose`). Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./Slot/SpinController.md).
 

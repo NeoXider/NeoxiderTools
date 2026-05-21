@@ -1,4 +1,4 @@
-# PageSubscriber (NeoxiderPages)
+﻿# PageSubscriber (NeoxiderPages)
 
 **Что это:** Подписывается на **PM** и реагирует на страницы Game/Win/Lose: выполняет назначенные действия при открытии соответствующих страниц.
 

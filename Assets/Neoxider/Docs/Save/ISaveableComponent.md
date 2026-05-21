@@ -1,4 +1,4 @@
-# Интерфейс ISaveableComponent
+﻿# Интерфейс ISaveableComponent
 
 **Что это:** интерфейс сохраняемого компонента: маркер для SaveManager и колбэк OnDataLoaded(). Реализует SaveableBehaviour; вручную реализовывать не обязательно. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/ISaveableComponent.cs`.
 

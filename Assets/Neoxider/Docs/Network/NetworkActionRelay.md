@@ -65,7 +65,7 @@
 ## См. также
 - [NetworkContextActionRelay](NetworkContextActionRelay.md) — контекстные действия на сетевом игроке (триггер/UI без ссылки на template)
 - [NetworkOwnerFilter](NetworkOwnerFilter.md) — фильтр по роли перед действием
-- [NetworkEventDispatcher](../Tools/Network/NetworkEventDispatcher.md) — legacy версия (один канал)
+- [NetworkEventDispatcher (legacy)](./NetworkContextActionRelay.md) — legacy версия (один канал)
 - [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты
 ## Authority and scope notes
 
@@ -83,3 +83,4 @@ Scope behavior:
 - `AllClients`: sends the channel event to every client; dedicated server also invokes locally.
 - `ServerOnly`: invokes only on the server/host and does not RPC.
 - `OthersOnly`: sends `TargetRpc` to every client except the sender; host-local is excluded when the host triggered it.
+

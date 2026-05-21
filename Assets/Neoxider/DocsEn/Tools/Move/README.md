@@ -1,4 +1,4 @@
-# Tools / Move
+﻿# Tools / Move
 
 Movement and positioning: follow, character controllers, camera helpers, cursor control, MovementToolkit (IMover, KeyboardMover, MouseMover2D/3D, etc.). Scripts in `Scripts/Tools/Move/`. Full docs are in Russian.
 

@@ -1,4 +1,4 @@
-# LineRoulett
+﻿# LineRoulett
 
 **Purpose:** See Inspector fields below for configuration.
 

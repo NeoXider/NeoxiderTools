@@ -1,4 +1,4 @@
-# GameTimeController
+﻿# GameTimeController
 
 **Purpose:** A simple utility to control the game's time speed (`Time.timeScale`). Perfect for pausing the game or creating slow-motion effects via `UnityEvent`.
 

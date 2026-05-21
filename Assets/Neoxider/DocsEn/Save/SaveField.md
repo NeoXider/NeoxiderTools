@@ -1,4 +1,4 @@
-# SaveField
+﻿# SaveField
 
 **Purpose:** Attribute for marking fields to be saved by `SaveManager`. The key is passed in the constructor; optionally `autoSaveOnQuit` and `autoLoadOnAwake`. Namespace: `Neo.Save`.
 

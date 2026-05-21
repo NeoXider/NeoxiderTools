@@ -1,4 +1,4 @@
-# GM
+﻿# GM
 
 ## Overview
 `GM` is the global game state manager. It stores the current and previous game state, controls pause behavior through `Time.timeScale`, sets the target FPS, and notifies other systems through `EM`.

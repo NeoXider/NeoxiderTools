@@ -1,4 +1,4 @@
-# AnimationType
+﻿# AnimationType
 
 Enumeration of animation types used by FloatAnimator, ColorAnimator, Vector3Animator and by `AnimationUtils.GetAnimatedFloat` / `GetAnimatedColor` / `GetAnimatedVector3`. Namespace `Neo.Animations`, file `Scripts/Animations/AnimationType.cs`.
 

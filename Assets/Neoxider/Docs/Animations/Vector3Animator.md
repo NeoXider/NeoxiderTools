@@ -1,4 +1,4 @@
-# Vector3Animator
+﻿# Vector3Animator
 
 **Что это:** компонент-аниматор для Vector3 (позиция, масштаб, поворот). Расчёт каждый кадр, результат через свойство и события. Пространство имён: `Neo.Animations`. Файл: `Scripts/Animations/Vector3Animator.cs`.
 

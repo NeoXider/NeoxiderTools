@@ -1,4 +1,4 @@
-# Git-хуки для NeoxiderTools
+﻿# Git-хуки для NeoxiderTools
 
 ## pre-commit: Samples → Samples~
 

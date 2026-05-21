@@ -1,4 +1,4 @@
-### Класс ItemCollectionData
+﻿### Класс ItemCollectionData
 
 **Что это:** Common = 0,    // Обычный
 

@@ -1,4 +1,4 @@
-# Multiple Additive Scenes Example
+﻿# Multiple Additive Scenes Example
 
 In Build Settings, remove all scenes and add both of the scenes from the Scenes folder in the following order:
 

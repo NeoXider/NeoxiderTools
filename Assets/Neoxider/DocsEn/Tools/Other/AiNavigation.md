@@ -1,4 +1,4 @@
-# AiNavigation (Legacy)
+﻿# AiNavigation (Legacy)
 
 **Purpose:** A NavMeshAgent-based AI navigation component. Supports three modes: target following (`FollowTarget`), waypoint or zone patrol (`Patrol`), and a combined mode (`Combined` — patrols until a target enters aggro range, then chases).
 

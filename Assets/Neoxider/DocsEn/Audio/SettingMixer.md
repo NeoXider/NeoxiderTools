@@ -1,4 +1,4 @@
-# SettingMixer
+﻿# SettingMixer
 
 **Purpose:** Utility for directly controlling `AudioMixer` parameters via Unity Events (e.g., from standard UI sliders). It automatically converts normalized volume (0-1) into decibels (-80 to 20 dB).
 

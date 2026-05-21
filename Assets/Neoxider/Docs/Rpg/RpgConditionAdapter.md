@@ -1,4 +1,4 @@
-# RpgConditionAdapter
+﻿# RpgConditionAdapter
 
 **Что это:** `MonoBehaviour`-адаптер из `Scripts/Rpg/Bridge/RpgConditionAdapter.cs`, который превращает состояние RPG в проверяемое условие для `NeoCondition` и других систем, работающих через `IConditionEvaluator`.
 

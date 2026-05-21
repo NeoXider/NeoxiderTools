@@ -1,4 +1,4 @@
-# Tools / Random
+﻿# Tools / Random
 
 Weighted random and chance system. Scripts in `Scripts/Tools/Random/`. Full docs are in Russian.
 

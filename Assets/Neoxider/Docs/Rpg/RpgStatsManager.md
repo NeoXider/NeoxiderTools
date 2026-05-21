@@ -1,4 +1,4 @@
-# RpgStatsManager
+﻿# RpgStatsManager
 
 `RpgStatsManager` удалён в v8.4.0.
 

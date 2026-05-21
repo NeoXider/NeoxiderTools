@@ -1,4 +1,4 @@
-# MagneticField
+﻿# MagneticField
 
 **Purpose:** Creates a magnetic field that attracts or repels objects, or pulls them in a specific direction / toward a point. Automatically finds objects within its radius using `Physics.OverlapSphere`.
 

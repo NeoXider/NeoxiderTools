@@ -1,4 +1,4 @@
-# Money
+﻿# Money
 
 **Purpose:** Global in-game currency manager (Singleton). By default it saves and loads the balance using `SaveProvider`, and supports reactive properties (`ReactiveProperty`) for easy UI binding. You can disable persistence for session-only modes and demos (NoCode-friendly).
 

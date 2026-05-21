@@ -1,4 +1,4 @@
-# Ввод (Input)
+﻿# Ввод (Input)
 
 **Что это:** Инструменты для обработки ввода (мышь, клавиатура, сенсор). Компоненты, использующие клавиши через **KeyInputCompat** (например MultiKeyEventTrigger, InventoryHand, InventoryDropper, CursorLockCont...
 

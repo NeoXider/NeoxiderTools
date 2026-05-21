@@ -1,4 +1,4 @@
-# Урок 11: ScriptableObject, каталоги и ID по сети
+﻿# Урок 11: ScriptableObject, каталоги и ID по сети
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 11/15 · Mirror `96.x`
 

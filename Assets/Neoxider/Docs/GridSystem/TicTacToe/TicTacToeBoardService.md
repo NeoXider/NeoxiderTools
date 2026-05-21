@@ -1,4 +1,4 @@
-# TicTacToeBoardService
+﻿# TicTacToeBoardService
 
 **Что это:** runtime-сервис крестиков-ноликов на базе FieldGenerator: ходы, смена игрока, проверка победы и ничьей, сброс. События OnPlayerChanged, OnWinnerDetected, OnDrawDetected. Пространство имён `Neo.GridSystem.TicTacToe`, файл `Scripts/GridSystem/TicTacToe/TicTacToeBoardService.cs`.
 

@@ -1,4 +1,4 @@
-# UI
+﻿# UI
 
 `UI` is a lightweight page manager built around enabling and disabling `GameObject` screens. It centralizes page switching and supports instant, delayed, and animation-driven transitions. File: `Assets/Neoxider/Scripts/UI/Simple/UI.cs`, namespace: `Neo.UI`.
 

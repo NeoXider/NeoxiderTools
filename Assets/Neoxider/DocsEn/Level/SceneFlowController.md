@@ -1,4 +1,4 @@
-# SceneFlowController
+﻿# SceneFlowController
 
 **Purpose:** A convenient wrapper around Unity's standard `SceneManager`. It supports synchronous, asynchronous, and additive scene loading. It allows you to easily set up a UI loading screen (Progress Bar, Text) directly in the Inspector without writing loading coroutines.
 

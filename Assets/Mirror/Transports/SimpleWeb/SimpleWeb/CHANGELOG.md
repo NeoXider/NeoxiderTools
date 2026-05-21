@@ -1,4 +1,4 @@
-# [1.3.0](https://github.com/James-Frowen/SimpleWebTransport/compare/v1.2.7...v1.3.0) (2022-02-12)
+﻿# [1.3.0](https://github.com/James-Frowen/SimpleWebTransport/compare/v1.2.7...v1.3.0) (2022-02-12)
 
 
 ### Features

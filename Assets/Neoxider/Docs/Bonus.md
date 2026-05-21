@@ -45,7 +45,7 @@
 - Гибкая настройка через `ScriptableObject` (ставки, линии, символы, множители).
 - Управление ставками и количеством активных линий.
 - Контроль вероятности выигрыша (`ChanceWin`).
-- Опциональная подсветка выигрышных линий в рантайме через **LineRenderer** (`WinLineRendererPlayback` в инспекторе `SpinController`); подробнее — [SpinController](./Slot/SpinController.md).
+- Опциональная подсветка выигрышных линий в рантайме через **LineRenderer** (`WinLineRendererPlayback` в инспекторе `SpinController`); подробнее — [SpinController](./Bonus/Slot/SpinController.md).
 
 **Публичные свойства и поля (Public Properties and Fields):**
 - `float ChanceWin`: Вероятность выигрыша от 0 до 1 (сериализуемое поле ранее называлось `chanseWin`).
@@ -146,3 +146,4 @@
 
 **Unity Events:**
 - `OnWin (int)`: Вызывается после остановки рулетки. Передает ID выигравшего спрайта из массива `sprites`.
+

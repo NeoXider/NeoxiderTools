@@ -1,4 +1,4 @@
-# Neoxider — коллекция мощных инструментов для Unity
+﻿# Neoxider — коллекция мощных инструментов для Unity
 
 ![Neoxider Cover](Images/neoxider_cover_cosmic.png)
 

@@ -1,4 +1,4 @@
-# Progression
+﻿# Progression
 
 **What it is:** a meta-progression module for `XP`, levels, unlock trees, perk trees, and a persistent player profile. Scripts live in `Scripts/Progression/`.
 

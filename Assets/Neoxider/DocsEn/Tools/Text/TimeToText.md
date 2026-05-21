@@ -1,4 +1,4 @@
-# TimeToText
+﻿# TimeToText
 
 **Purpose:** A component for formatting and displaying time values (in seconds) on a `TMP_Text`. Supports two modes: `Clock` (05:30, 01:05:30) and `Compact` (1d 5h 30m). Ideal for timers, countdowns, and elapsed time displays.
 

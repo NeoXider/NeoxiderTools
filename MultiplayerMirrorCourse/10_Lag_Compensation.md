@@ -1,4 +1,4 @@
-# Урок 10: lag compensation и prediction без магии
+﻿# Урок 10: lag compensation и prediction без магии
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 10/15 · Mirror `96.x`
 

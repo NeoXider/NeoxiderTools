@@ -1,4 +1,4 @@
-# SpriteMultiplayerData
+﻿# SpriteMultiplayerData
 
 **Purpose:** See Inspector fields below for configuration.
 

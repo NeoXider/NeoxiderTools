@@ -1,4 +1,4 @@
-# RpgTargetSelector
+﻿# RpgTargetSelector
 
 **What it is:** a reusable `MonoBehaviour` target selector for AI, skill logic, and spell casting.
 

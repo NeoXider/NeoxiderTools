@@ -1,4 +1,4 @@
-# RpgResourceBinding
+﻿# RpgResourceBinding
 
 **Что это:** лёгкий компонент привязки одного ресурса `RpgCharacter` к UnityEvents и NoCode UI.
 

@@ -1,4 +1,4 @@
-# InventorySlotGridView
+﻿# InventorySlotGridView
 
 **Purpose:** A UI component for displaying a physical grid of slots (`SlotGrid` mode in `InventoryComponent`). It automatically spawns an `InventorySlotView` for each slot (including empty ones) and manages their updates.
 

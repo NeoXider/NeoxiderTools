@@ -1,4 +1,4 @@
-# RpgCharacterTemplate
+﻿# RpgCharacterTemplate
 
 **Что это:** ScriptableObject-архетип для `RpgCharacter`. Хранит стартовые ресурсы, статы, известные баффы/статусы, progression и display-данные.
 

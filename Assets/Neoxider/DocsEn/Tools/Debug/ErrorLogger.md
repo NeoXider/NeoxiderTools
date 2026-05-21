@@ -1,4 +1,4 @@
-# ErrorLogger
+﻿# ErrorLogger
 
 **Purpose:** See Inspector fields below for configuration.
 

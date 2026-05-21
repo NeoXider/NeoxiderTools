@@ -1,4 +1,4 @@
-# CardComponent
+﻿# CardComponent
 
 `CardComponent` is the scene-facing card component used for card presentation and interaction. It handles card data, face-up state, hover effects, click events, and move/flip animations. File: `Assets/Neoxider/Scripts/Cards/Components/CardComponent.cs`.
 

@@ -1,4 +1,4 @@
-# ReactiveProperty
+﻿# ReactiveProperty
 
 **Purpose:** A serializable reactive variable (R3-style). Stores a value and fires a `UnityEvent` when it changes. Works in both Inspector (No-Code) and from code. Three built-in types: `ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool`.
 

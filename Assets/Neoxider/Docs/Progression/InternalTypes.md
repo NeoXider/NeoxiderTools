@@ -11,5 +11,6 @@
 | `ProgressionRewardDispatcher` | Диспетчер выдачи наград. |
 
 ## См. также
-- [ProgressionComponent](ProgressionComponent.md)
+- [ProgressionManager](./ProgressionManager.md)
 - ← [Progression](README.md)
+

@@ -1,4 +1,4 @@
-# IState
+﻿# IState
 
 **Purpose:** Contract for state machine states. Defines five lifecycle methods: enter, update (three variants), exit. All concrete states must implement this interface.
 

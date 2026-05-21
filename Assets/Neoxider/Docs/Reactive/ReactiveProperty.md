@@ -1,4 +1,4 @@
-# ReactiveProperty
+﻿# ReactiveProperty
 
 **Назначение:** Сериализуемая реактивная переменная в стиле R3. Хранит значение и вызывает `UnityEvent` при изменении. Подходит для привязки в Inspector (No-Code) и из кода. Три готовых типа: `ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool`.
 

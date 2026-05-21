@@ -1,4 +1,4 @@
-# InventoryHand
+﻿# InventoryHand
 
 **Purpose:** Displays one selected inventory item on an anchor Transform (e.g., a hand bone). Supports slot switching (via `Selector` or code), item dropping (via `InventoryDropper`), item use, and synchronization with physical slot indices.
 

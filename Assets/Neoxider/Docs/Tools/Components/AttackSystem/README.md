@@ -2,7 +2,7 @@
 
 **Что это:** legacy-компоненты старой боевой системы: здоровье, исполнение атаки, уклонение, hit-collider логика.
 
-**Важно:** для новых проектов рекомендуется использовать модуль [**RPG**](../../Rpg/README.md) (`RpgCharacter`, баффы, статус-эффекты, persistence). Компоненты ниже помечены как legacy.
+**Важно:** для новых проектов рекомендуется использовать модуль [**RPG**](../../../Rpg/README.md) (`RpgCharacter`, баффы, статус-эффекты, persistence). Компоненты ниже помечены как legacy.
 
 **Оглавление:** см. список ссылок ниже.
 
@@ -12,10 +12,10 @@
 
 | Legacy | Замена |
 |--------|--------|
-| Health | [RpgCharacter](../../Rpg/RpgCharacter.md) |
-| AttackExecution | [RpgAttackController](../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../Rpg/RpgAttackDefinition.md) |
-| Evade | [RpgEvadeController](../../Rpg/RpgEvadeController.md) |
-| AdvancedAttackCollider | [RpgAttackController](../../Rpg/RpgAttackController.md) + [RpgProjectile](../../Rpg/RpgProjectile.md) |
+| Health | [RpgCharacter](../../../Rpg/RpgCharacter.md) |
+| AttackExecution | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgAttackDefinition](../../../Rpg/RpgAttackDefinition.md) |
+| Evade | [RpgEvadeController](../../../Rpg/RpgEvadeController.md) |
+| AdvancedAttackCollider | [RpgAttackController](../../../Rpg/RpgAttackController.md) + [RpgProjectile](../../../Rpg/RpgProjectile.md) |
 
 Для совместимости со старым `IDamageable` используйте [RpgStatsDamageableBridge](./RpgStatsDamageableBridge.md).
 
@@ -26,3 +26,4 @@
 - [AttackExecution](./AttackExecution.md) — исполнение атаки *(legacy)*.
 - [Evade](./Evade.md) — уклонение/рывок с перезарядкой *(legacy)*.
 - [Health](./Health.md) — здоровье, урон, лечение, авто-хил *(legacy)*.
+

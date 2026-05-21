@@ -1,4 +1,4 @@
-# ColorAnimator
+﻿# ColorAnimator
 
 **Что это:** компонент-аниматор цвета. Расчёт каждый кадр, результат через свойство и события. Пространство имён: `Neo.Animations`. Файл: `Scripts/Animations/ColorAnimator.cs`.
 

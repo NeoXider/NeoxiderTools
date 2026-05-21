@@ -1,4 +1,4 @@
-# Health Component
+﻿# Health Component
 
 **Что это:** MonoBehaviour, реализует `IResourcePoolProvider`. Управляет несколькими ресурсными пулами по id: HP, Mana и произвольные (ярость, энергия). Основной сценарий — здоровье и мана; те же API и события для любых пулов. Путь: `Scripts/Core/Resources/Components/HealthComponent.cs`, пространство имён `Neo.Core.Resources`.
 

@@ -1,4 +1,4 @@
-# MouseInputManager
+﻿# MouseInputManager
 
 **Purpose:** See Inspector fields below for configuration.
 

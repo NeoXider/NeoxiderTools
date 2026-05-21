@@ -1,4 +1,4 @@
-# Leaderboard
+﻿# Leaderboard
 
 **Purpose:** See Inspector fields below for configuration.
 

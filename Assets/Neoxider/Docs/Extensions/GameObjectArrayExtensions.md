@@ -1,4 +1,4 @@
-# Расширения GameObjectArrayExtensions
+﻿# Расширения GameObjectArrayExtensions
 
 **Что это:** См. описание ниже.
 

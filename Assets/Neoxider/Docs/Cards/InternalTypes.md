@@ -1,4 +1,4 @@
-# Cards Module — Internal Types
+﻿# Cards Module — Internal Types
 
 ## Config
 

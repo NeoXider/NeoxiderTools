@@ -1,4 +1,4 @@
-# GameSettingsSaveKeys
+﻿# GameSettingsSaveKeys
 
 **Назначение:** Статический класс с константами ключей сохранения для `GameSettings`. Суффиксы добавляются к `GameSettingsComponent.SaveKeyPrefix`.
 

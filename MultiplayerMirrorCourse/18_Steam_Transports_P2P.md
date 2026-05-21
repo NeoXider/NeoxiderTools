@@ -1,4 +1,4 @@
-# Урок 18: Steam, P2P и lobby metadata
+﻿# Урок 18: Steam, P2P и lobby metadata
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 3/15 · Mirror `96.x`
 

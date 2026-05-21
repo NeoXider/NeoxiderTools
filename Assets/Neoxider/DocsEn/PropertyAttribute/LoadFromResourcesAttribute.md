@@ -1,4 +1,4 @@
-# LoadFromResourcesAttribute
+﻿# LoadFromResourcesAttribute
 
 **Purpose:** Auto-inject attribute that calls `Resources.Load<T>()` and populates a field.
 

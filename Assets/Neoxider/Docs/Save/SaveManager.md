@@ -1,4 +1,4 @@
-# SaveManager
+﻿# SaveManager
 
 **Что это:** `SaveManager` — синглтон модуля `Save`, который регистрирует компоненты с `ISaveableComponent`, находит поля с атрибутом `SaveField`, сериализует их в общий JSON-контейнер и восстанавливает значения при загрузке. Файл: `Scripts/Save/SaveManager.cs`, пространство имён: `Neo.Save`.
 

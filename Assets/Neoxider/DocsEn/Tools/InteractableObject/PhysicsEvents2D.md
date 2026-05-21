@@ -1,4 +1,4 @@
-# PhysicsEvents2D
+﻿# PhysicsEvents2D
 
 `PhysicsEvents2D` forwards Unity 2D physics messages (`OnTriggerEnter2D`, `OnCollisionEnter2D`, etc.) into `UnityEvent` callbacks. Supports filters by `LayerMask` and `requiredTag`. File: `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents2D.cs`, namespace: `Neo.Tools`.
 

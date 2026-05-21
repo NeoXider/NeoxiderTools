@@ -1,4 +1,4 @@
-# CardData
+﻿# CardData
 
 `CardData` is a readonly value type that represents a single playing card. It stores suit, rank, joker flags, and comparison helpers for common card-game logic. File location is within the `Cards` module, namespace `Neo.Cards`.
 

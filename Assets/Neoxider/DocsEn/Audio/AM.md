@@ -1,4 +1,4 @@
-# AM (Audio Manager)
+﻿# AM (Audio Manager)
 
 **Purpose:** Central manager for sound effects and music. Implements the Singleton pattern (`AM.I`). Contains separate channels (`AudioSource`) for music and effects. Can play sounds by index, by passing an `AudioClip`, and supports a random background music mode (without consecutive repeats).
 

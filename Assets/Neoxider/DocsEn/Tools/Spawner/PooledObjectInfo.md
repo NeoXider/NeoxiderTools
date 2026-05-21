@@ -1,4 +1,4 @@
-# PooledObjectInfo
+﻿# PooledObjectInfo
 
 **Purpose:** A utility script. Automatically attached by `NeoObjectPool` to every spawned object so it "remembers" which pool it belongs to. Contains a convenient `Return to pool` method.
 

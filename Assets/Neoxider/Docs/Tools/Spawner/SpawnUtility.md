@@ -1,4 +1,4 @@
-# SpawnUtility
+﻿# SpawnUtility
 
 **Что это:** статический класс `SpawnUtility` — единая точка входа для спавна и деспавна объектов. Всегда работает через пул: если на сцене есть [PoolManager](./PoolManager.md), используются его пулы; иначе для каждого префаба создаётся свой пул. Пространство имён: `Neo.Tools`. Файл: `Assets/Neoxider/Scripts/Tools/Spawner/SpawnUtility.cs`.
 

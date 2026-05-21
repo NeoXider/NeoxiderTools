@@ -1,4 +1,4 @@
-# ProgressionNoCodeAction
+﻿# ProgressionNoCodeAction
 
 **Что это:** `MonoBehaviour`-bridge из `Scripts/Progression/Bridge/ProgressionNoCodeAction.cs` для запуска действий прогрессии из `UnityEvent` без написания кода.
 

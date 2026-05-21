@@ -1,4 +1,4 @@
-# StateMachine\<TState\>
+﻿# StateMachine\<TState\>
 
 **Purpose:** Core state machine with state and transition caching. Manages the state lifecycle (`OnEnter` → `OnUpdate` → `OnExit`), automatic transition evaluation, and provides observation events. `TState` must implement `IState`.
 

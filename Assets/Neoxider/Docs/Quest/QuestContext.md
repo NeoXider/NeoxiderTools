@@ -1,4 +1,4 @@
-# QuestContext
+﻿# QuestContext
 
 **Что это:** простой marker-компонент (`MonoBehaviour`) для объекта, который используется как контекст при проверке `Start Conditions` в `QuestManager`.
 

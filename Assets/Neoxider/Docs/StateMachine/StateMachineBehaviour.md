@@ -1,4 +1,4 @@
-# StateMachineBehaviour<TState>
+﻿# StateMachineBehaviour<TState>
 
 **Что это:** `StateMachineBehaviour<TState>` — generic `MonoBehaviour`-обёртка над `StateMachine<TState>` для кодовых state machine сценариев. Она управляет жизненным циклом состояний, может загружать `StateMachineData`, но не является тем же самым API, что `StateMachineBehaviourBase`. Файл: `Scripts/StateMachine/StateMachineBehaviour.cs`, пространство имён: `Neo.StateMachine`.
 

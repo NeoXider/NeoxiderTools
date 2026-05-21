@@ -1,4 +1,4 @@
-# GridSystem — Internal Types
+﻿# GridSystem — Internal Types
 
 | Тип | Описание |
 |-----|----------|

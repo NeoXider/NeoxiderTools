@@ -1,4 +1,4 @@
-# Расширения ColorExtension
+﻿# Расширения ColorExtension
 
 **Что это:** См. описание ниже.
 

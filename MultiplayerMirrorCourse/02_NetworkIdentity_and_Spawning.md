@@ -1,4 +1,4 @@
-# Урок 2: NetworkIdentity, netId и спавн объектов
+﻿# Урок 2: NetworkIdentity, netId и спавн объектов
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 2/15 · Mirror `96.x`
 

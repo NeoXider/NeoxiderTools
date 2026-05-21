@@ -1,4 +1,4 @@
-# Core
+﻿# Core
 
 **Что это:** Ядро общих систем уровня/XP и пулов ресурсов (HP, Mana и др.). Скрипты в `Assets/Neoxider/Scripts/Core`: модуль Level (уровень по кривой, XP, сохранение) и модуль Resources (HealthComponent — несколько ресурсных пулов с регеном и лимитами). Используются Progression и RPG.
 

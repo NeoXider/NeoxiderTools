@@ -1,4 +1,4 @@
-# UniversalRotator
+﻿# UniversalRotator
 
 ## Overview
 `UniversalRotator` is a flexible rotation component for both 2D and 3D.

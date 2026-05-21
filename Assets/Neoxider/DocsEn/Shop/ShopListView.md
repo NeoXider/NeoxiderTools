@@ -1,4 +1,4 @@
-# ShopListView
+﻿# ShopListView
 
 **Purpose:** optional dynamic UI view layer for `Shop`.
 

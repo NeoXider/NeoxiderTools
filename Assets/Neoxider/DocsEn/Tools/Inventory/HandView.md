@@ -1,4 +1,4 @@
-# HandView
+﻿# HandView
 
 **Purpose:** A helper component added to the **item prefab** (WorldDropPrefab). Defines local position, rotation, and scale offsets when the item is equipped in the hand via `InventoryHand`.
 

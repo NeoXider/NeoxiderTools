@@ -1,4 +1,4 @@
-# ISaveableComponent
+﻿# ISaveableComponent
 
 **Purpose:** Interface for saveable components: a marker for `SaveManager` and a callback `OnDataLoaded()`. `SaveableBehaviour` already implements this interface. Namespace: `Neo.Save`.
 

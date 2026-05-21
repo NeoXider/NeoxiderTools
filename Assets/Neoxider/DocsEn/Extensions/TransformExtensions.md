@@ -1,4 +1,4 @@
-# TransformExtensions
+﻿# TransformExtensions
 
 **Purpose:** A comprehensive set of extension methods for `UnityEngine.Transform` — position, rotation, scale manipulation, 2D look-at, closest transform, children utilities.
 

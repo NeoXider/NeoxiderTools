@@ -1,4 +1,4 @@
-# Level
+﻿# Level
 
 **Что это:** модуль управления прогрессом по уровням и картам. Включает `LevelManager`, `LevelButton`, `TextLevel`, `Map`, а также `SceneFlowController` для загрузки сцен и переходов. Скрипты лежат в `Scripts/Level/`.
 

@@ -1,4 +1,4 @@
-# Tools / Components
+﻿# Tools / Components
 
 Reusable components: counters, Animator driver, score, typewriter, loot, lifecycle events, AttackSystem, Interface. Scripts in `Scripts/Tools/Components/`. Per-component pages are in Russian.
 

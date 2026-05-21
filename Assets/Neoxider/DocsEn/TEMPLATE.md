@@ -1,4 +1,4 @@
-# [Component Name]
+﻿# [Component Name]
 
 **Purpose:** A brief description of what this component or module does.
 
@@ -28,6 +28,4 @@ public void DoSomething();
 Step-by-step instructions or code snippets showing how to use the component in practice.
 
 ## See Also
-
-- [Related Component 1](./Link1.md)
-- [Related Component 2](./Link2.md)
+- _Add links to related components/documentation here as needed._

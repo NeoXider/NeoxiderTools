@@ -1,4 +1,4 @@
-# RandomExtensions
+﻿# RandomExtensions
 
 **Purpose:** Extension methods and utilities for random number generation and collections.
 

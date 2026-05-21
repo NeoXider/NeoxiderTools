@@ -1,4 +1,4 @@
-# SaveableBehaviour
+﻿# SaveableBehaviour
 
 **Что это:** `SaveableBehaviour` — базовый `MonoBehaviour` для компонентов, которые должны участвовать в системе сохранений. Файл: `Scripts/Save/SaveableBehaviour.cs`, пространство имён: `Neo.Save`.
 

@@ -1,4 +1,4 @@
-# CameraRotationController
+﻿# CameraRotationController
 
 **Purpose:** See Inspector fields below for configuration.
 

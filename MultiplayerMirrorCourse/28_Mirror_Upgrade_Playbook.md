@@ -1,4 +1,4 @@
-# Урок 28: playbook обновления Mirror
+﻿# Урок 28: playbook обновления Mirror
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · продвинутый трек · урок 13/15 · Mirror `96.x`
 

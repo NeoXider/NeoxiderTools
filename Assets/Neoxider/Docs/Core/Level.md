@@ -1,4 +1,4 @@
-# Level Component
+﻿# Level Component
 
 **Что это:** MonoBehaviour, реализует `ILevelProvider`. Универсальный источник уровня и опыта: игрок, батлпасс, этап главы. Путь: `Scripts/Core/Level/Components/LevelComponent.cs`, пространство имён `Neo.Core.Level`.
 

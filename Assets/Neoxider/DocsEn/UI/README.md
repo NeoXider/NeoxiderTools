@@ -1,4 +1,4 @@
-# UI module
+﻿# UI module
 
 Reusable UI helpers: pages, buttons, animations, toggles, and presentation. Scripts in `Scripts/UI/`. Full per-component docs are in Russian.
 

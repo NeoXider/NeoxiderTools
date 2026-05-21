@@ -1,4 +1,4 @@
-# Интерфейс (Interface)
+﻿# Интерфейс (Interface)
 
 **Что это:** Этот раздел содержит интерфейсы боевой системы (контракты для урона, лечения, атаки): IDamageable, IHealable, IRestorable, IAttackable. Используются компонентами AttackSystem и другими.
 

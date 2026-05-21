@@ -1,4 +1,4 @@
-# Система анимаций (Animations)
+﻿# Система анимаций (Animations)
 
 **Что это:** модуль анимации значений: float, Color, Vector3, свет, эмиссия материалов. Компоненты FloatAnimator, ColorAnimator, Vector3Animator, ядро AnimationUtils, перечисление AnimationType. Скрипты в `Scripts/Animations/`.
 

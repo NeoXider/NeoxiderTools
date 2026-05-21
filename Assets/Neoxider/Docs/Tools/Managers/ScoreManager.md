@@ -1,4 +1,4 @@
-# ScoreManager (перенаправление)
+﻿# ScoreManager (перенаправление)
 
 **Что это:** ScoreManager относится к разделу **Components**, а не Managers. Скрипт: `Scripts/Tools/Components/ScoreManager.cs`.
 

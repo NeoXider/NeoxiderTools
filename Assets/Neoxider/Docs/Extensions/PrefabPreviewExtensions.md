@@ -1,4 +1,4 @@
-# PrefabPreviewExtensions
+﻿# PrefabPreviewExtensions
 
 **Что это:** См. описание ниже.
 

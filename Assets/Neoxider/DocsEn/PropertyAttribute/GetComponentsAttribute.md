@@ -1,4 +1,4 @@
-# GetComponentsAttribute
+﻿# GetComponentsAttribute
 
 **Purpose:** Auto-inject attribute that calls `GetComponents<T>()` and populates an array field.
 

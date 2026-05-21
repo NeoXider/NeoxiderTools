@@ -1,4 +1,4 @@
-# Компонент Swipe Controller
+﻿# Компонент Swipe Controller
 
 **Что это:** `SwipeController` — компонент для распознавания свайпов мышью и касанием. Поддерживает четыре направления, статический доступ к последнему свайпу и `UnityEvent<SwipeData>`. Файл: `Scripts/Tools/Input/SwipeController.cs`, пространство имён: `Neo.Tools`.
 

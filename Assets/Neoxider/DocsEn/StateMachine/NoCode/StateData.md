@@ -1,4 +1,4 @@
-# StateData
+﻿# StateData
 
 **Purpose:** ScriptableObject state for No-Code state machine. Contains a name and lists of enter, update, and exit actions. Implements `IState` — can be used directly in `StateMachine`. Fully configured in Inspector without code.
 

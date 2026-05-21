@@ -1,4 +1,4 @@
-# StateMachineEvaluationContext
+﻿# StateMachineEvaluationContext
 
 **Purpose:** Evaluation context for `StateMachine`. Holds references to the owning `GameObject`, `Transform`, and cached components for optimized predicate evaluation.
 

@@ -1,4 +1,4 @@
-# Inventory Core — Internal Types
+﻿# Inventory Core — Internal Types
 
 Internal core types for the inventory system. Not MonoBehaviours — used internally by `InventoryComponent` and `InventoryManager`.
 

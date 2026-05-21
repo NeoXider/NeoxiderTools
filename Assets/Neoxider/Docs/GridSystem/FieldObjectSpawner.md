@@ -1,4 +1,4 @@
-# FieldObjectSpawner
+﻿# FieldObjectSpawner
 
 **Что это:** спавнер объектов по ячейкам сгенерированного поля с учётом занятости ячеек и привязкой к ячейке. Требует [FieldGenerator](FieldGenerator.md). Событие OnObjectSpawned со SpawnedObjectInfo. Пространство имён `Neo.GridSystem`, файл `Scripts/GridSystem/FieldObjectSpawner.cs`.
 

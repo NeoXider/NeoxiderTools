@@ -1,4 +1,4 @@
-# CameraShake
+﻿# CameraShake
 
 **Purpose:** A camera (or any object) shake component built on DOTween. Supports separate position and/or rotation shake, configurable strength, vibrato, fade-out, and `Time.timeScale`-independent operation.
 

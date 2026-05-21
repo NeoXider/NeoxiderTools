@@ -1,4 +1,4 @@
-# EM (Event Manager)
+﻿# EM (Event Manager)
 
 **Что это:** `EM` — глобальный event manager для игровых состояний, паузы и нескольких системных событий приложения. Файл: `Scripts/Tools/Managers/EM.cs`, пространство имён: `Neo.Tools`.
 

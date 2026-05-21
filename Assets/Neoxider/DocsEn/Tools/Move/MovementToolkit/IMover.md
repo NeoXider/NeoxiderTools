@@ -1,4 +1,4 @@
-# IMover
+﻿# IMover
 
 ## Overview
 `IMover` is a simple interface used by movement components in `Tools/Move/MovementToolkit`.

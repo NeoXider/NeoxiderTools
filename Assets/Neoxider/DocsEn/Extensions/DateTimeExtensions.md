@@ -1,4 +1,4 @@
-# DateTimeExtensions
+﻿# DateTimeExtensions
 
 **Purpose:** Extensions for working with dates/times and `DateTime` (UTC conversions, formatting helpers).
 

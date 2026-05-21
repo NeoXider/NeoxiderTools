@@ -1,4 +1,4 @@
-# DeckConfig
+﻿# DeckConfig
 
 **Purpose:** See Inspector fields below for configuration.
 

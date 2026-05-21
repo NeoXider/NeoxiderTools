@@ -1,4 +1,4 @@
-# ProgressionManager
+﻿# ProgressionManager
 
 **What it is:** a `MonoBehaviour` from `Scripts/Progression/Runtime/ProgressionManager.cs` that owns XP, levels, perk points, unlock nodes, perks, and persistent profile storage through `SaveProvider`.
 

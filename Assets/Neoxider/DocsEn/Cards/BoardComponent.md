@@ -1,4 +1,4 @@
-# BoardComponent
+﻿# BoardComponent
 
 **Purpose:** See Inspector fields below for configuration.
 

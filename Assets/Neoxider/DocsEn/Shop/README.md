@@ -1,4 +1,4 @@
-# Shop module
+﻿# Shop module
 
 Shop controller, items, bundles, currency, inventory integration, and purchase UI. Scripts in `Scripts/Shop/`.
 

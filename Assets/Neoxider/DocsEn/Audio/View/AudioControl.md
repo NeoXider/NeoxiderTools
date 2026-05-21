@@ -1,4 +1,4 @@
-# AudioControl
+﻿# AudioControl
 
 **Purpose:** A smart UI component that automatically finds a `Slider` or `Toggle` on the object and binds it to the volume/mute settings in `AMSettings`. You don't need to write code or configure Unity Events — the component automatically synchronizes its state upon loading or when audio settings change.
 

@@ -1,4 +1,4 @@
-# RpgProgressionDefinition
+﻿# RpgProgressionDefinition
 
 **Что это:** ScriptableObject с правилами роста `RpgCharacter`.
 

@@ -1,4 +1,4 @@
-# RpgProjectile
+﻿# RpgProjectile
 
 **What it is:** a lightweight projectile runtime used by ranged RPG attacks.
 

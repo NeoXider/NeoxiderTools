@@ -1,4 +1,4 @@
-# Аудиосистема (Audio)
+﻿# Аудиосистема (Audio)
 
 **Что это:** модуль звука: AM (воспроизведение эффектов и музыки), AMSettings (громкость, мьют), AudioControl (слайдеры/тоглы), PlayAudio, PlayAudioBtn, RandomMusicController, SettingMixer. Скрипты в `Scripts/Audio/`.
 

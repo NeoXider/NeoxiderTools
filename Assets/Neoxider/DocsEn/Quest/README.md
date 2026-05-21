@@ -1,4 +1,4 @@
-# Quest module
+﻿# Quest module
 
 The `Quest` module provides a compact quest runtime built around `QuestConfig`, `QuestManager`, runtime `QuestState`, and a UnityEvent-friendly no-code bridge component.
 

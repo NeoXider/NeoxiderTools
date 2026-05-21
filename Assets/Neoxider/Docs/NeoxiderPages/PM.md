@@ -34,5 +34,6 @@
 
 - [UIPage](./UIPage.md)
 - [BtnChangePage](./BtnChangePage.md)
-- [GM](../../Tools/Managers/GM.md)
+- [GM](../Tools/Managers/GM.md)
+
 

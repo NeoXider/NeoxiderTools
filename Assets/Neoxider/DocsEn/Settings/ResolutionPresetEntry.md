@@ -1,4 +1,4 @@
-# ResolutionPresetEntry
+﻿# ResolutionPresetEntry
 
 **Purpose:** A serializable struct for a fixed resolution option (width × height). Used when preset resolution lists are needed beyond `Screen.resolutions`.
 

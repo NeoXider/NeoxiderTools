@@ -1,4 +1,4 @@
-# Audio module
+﻿# Audio module
 
 The **Audio** module provides tools for sound management in Unity: a central audio manager, volume/mute settings via AudioMixer, and simple play-on-event components.
 

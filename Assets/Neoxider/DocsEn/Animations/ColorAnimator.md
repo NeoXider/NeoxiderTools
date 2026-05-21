@@ -1,4 +1,4 @@
-# ColorAnimator
+﻿# ColorAnimator
 
 **Namespace:** `Neo.Animations`  
 **File:** `Assets/Neoxider/Scripts/Animations/ColorAnimator.cs`

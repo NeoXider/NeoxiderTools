@@ -1,4 +1,4 @@
-# MeshEmission
+﻿# MeshEmission
 
 **Purpose:** See Inspector fields below for configuration.
 

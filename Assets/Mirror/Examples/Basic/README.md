@@ -1,4 +1,4 @@
-# Basic Example
+﻿# Basic Example
 
 This is a bare bones example of a running game with Network Manager and UI prefab players:
 

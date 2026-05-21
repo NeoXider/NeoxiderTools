@@ -1,4 +1,4 @@
-# RpgNoCodeAction
+﻿# RpgNoCodeAction
 
 **Что это:** `MonoBehaviour`-bridge из `Scripts/Rpg/Bridge/RpgNoCodeAction.cs` для вызова RPG-действий без кода через UnityEvent.
 

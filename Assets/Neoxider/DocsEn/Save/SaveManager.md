@@ -1,4 +1,4 @@
-# SaveManager
+﻿# SaveManager
 
 ## Overview
 `SaveManager` is the runtime core of the `Save` module. It discovers components that implement `ISaveableComponent`, collects fields marked with `[SaveField]`, serializes them into a shared JSON container, and restores them on load.

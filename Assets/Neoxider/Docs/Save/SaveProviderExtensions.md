@@ -1,4 +1,4 @@
-# SaveProviderExtensions
+﻿# SaveProviderExtensions
 
 **Назначение:** Методы расширения для `ISaveProvider` — добавляют сохранение/загрузку массивов `int[]` и `float[]`. Массивы сериализуются в строку через запятую.
 

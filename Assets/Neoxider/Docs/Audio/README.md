@@ -1,4 +1,4 @@
-# Модуль Audio
+﻿# Модуль Audio
 
 **Что это:** модуль звука: синглтоны AM (воспроизведение эффектов и музыки) и AMSettings (громкость, мьют), компоненты PlayAudio, PlayAudioBtn, AudioControl, RandomMusicController, SettingMixer. Скрипты в `Scripts/Audio/`.
 

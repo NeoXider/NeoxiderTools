@@ -1,4 +1,4 @@
-# Tools / Components / AttackSystem
+﻿# Tools / Components / AttackSystem
 
 **Legacy.** For new projects use the [RPG module](../../../Rpg/README.md) with `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, and `RpgEvadeController`.
 

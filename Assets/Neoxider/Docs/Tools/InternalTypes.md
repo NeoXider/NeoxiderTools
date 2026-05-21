@@ -1,4 +1,4 @@
-# Tools — Misc Internal Types
+﻿# Tools — Misc Internal Types
 
 | Тип | Описание |
 |-----|----------|

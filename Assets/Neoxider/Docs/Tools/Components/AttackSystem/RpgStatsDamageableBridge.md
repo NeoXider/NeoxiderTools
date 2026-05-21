@@ -2,7 +2,7 @@
 
 **Что это:** мост из `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`, реализующий `IDamageable` и `IHealable` с перенаправлением в `RpgCharacter`.
 
-**Навигация:** [← AttackSystem](./README.md) · [RPG](../../Rpg/README.md)
+**Навигация:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
 
 ## Назначение
 
@@ -21,3 +21,4 @@
 | `_character` | Явная ссылка на `RpgCharacter`; если пусто, ищется в родителях |
 | `_damageMultiplier` | Множитель урона перед передачей в `RpgCharacter` |
 | `_healMultiplier` | Множитель лечения перед передачей в `RpgCharacter` |
+

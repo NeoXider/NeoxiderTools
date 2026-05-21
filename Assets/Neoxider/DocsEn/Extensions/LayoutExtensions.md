@@ -1,4 +1,4 @@
-# LayoutExtensions
+﻿# LayoutExtensions
 
 **Purpose:** Extension methods providing `LayoutUtils` grid/arrangement helpers directly on `Transform` collections.
 

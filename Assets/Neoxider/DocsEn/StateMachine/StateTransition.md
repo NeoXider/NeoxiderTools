@@ -1,4 +1,4 @@
-# StateTransition
+﻿# StateTransition
 
 **Purpose:** Describes a transition between states in the state machine. Supports gated transitions via `StatePredicate` (AND logic — all predicates must pass), priority ordering, and two modes: code (CLR types) and No-Code (`StateData` references).
 

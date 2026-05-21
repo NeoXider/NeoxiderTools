@@ -16,4 +16,5 @@
 | `ILevelProvider` | Интерфейс провайдера уровней. |
 
 ## См. также
-- [LevelComponent](LevelComponent.md) — ← [Level](README.md)
+- [LevelComponent](../Core/Level/Components/LevelComponent.md) — ← [Level](README.md)
+

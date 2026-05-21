@@ -13,4 +13,5 @@
 
 ## См. также
 
-- [WheelFortune](./WheelFortune.md), [Money](../Shop/Money.md)
+- [WheelFortune](./WheelFortune.md), [Money](../../Shop/Money.md)
+

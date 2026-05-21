@@ -1,4 +1,4 @@
-
+﻿
 # Система Сохранения (Save)
 
 **Что это:** обзор модуля Save (SaveManager, провайдеры, GlobalSave). Навигация по классам — в [Save/README](Save/README.md).

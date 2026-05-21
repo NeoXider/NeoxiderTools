@@ -1,4 +1,4 @@
-# DistanceChecker
+﻿# DistanceChecker
 
 ## Overview
 `DistanceChecker` monitors distance between two objects and fires events when crossing a threshold (approach/depart).

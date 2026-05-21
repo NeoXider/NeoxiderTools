@@ -226,5 +226,6 @@ GameObject cardPrefab
 - [CardData](./CardData.md) — структура данных карты
 - [DeckConfig](./DeckConfig.md) — конфигурация колоды
 - [HandComponent](./HandComponent.md) — компонент руки
-- [CardView](./CardView.md) — MVP версия (для кода)
+- [CardView](./View/CardView.md) — MVP версия (для кода)
+
 

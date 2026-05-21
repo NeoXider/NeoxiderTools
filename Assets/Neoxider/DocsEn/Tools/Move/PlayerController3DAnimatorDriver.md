@@ -1,4 +1,4 @@
-# PlayerController3DAnimatorDriver
+﻿# PlayerController3DAnimatorDriver
 
 **Purpose:** See Inspector fields below for configuration.
 

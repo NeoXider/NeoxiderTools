@@ -1,4 +1,4 @@
-# ConstantRotator
+﻿# ConstantRotator
 
 **Purpose:** See Inspector fields below for configuration.
 

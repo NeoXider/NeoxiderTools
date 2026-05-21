@@ -1,4 +1,4 @@
-# SciFiAcademy ScriptableObject configs
+﻿# SciFiAcademy ScriptableObject configs
 
 Put ScriptableObject assets for the SciFiAcademy room set here:
 

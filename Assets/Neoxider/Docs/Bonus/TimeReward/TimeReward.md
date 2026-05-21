@@ -1,4 +1,4 @@
-# TimeReward
+﻿# TimeReward
 
 **Что это:** устаревший `MonoBehaviour` для наград по кулдауну из `Assets/Neoxider/Scripts/Bonus/TimeReward/TimeReward.cs`. Компонент сохранён для обратной совместимости со старыми сценами и префабами.
 

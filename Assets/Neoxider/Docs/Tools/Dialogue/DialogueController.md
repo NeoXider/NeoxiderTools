@@ -1,4 +1,4 @@
-# DialogueController
+﻿# DialogueController
 
 **Что это:** Основной контроллер диалоговой системы.
 

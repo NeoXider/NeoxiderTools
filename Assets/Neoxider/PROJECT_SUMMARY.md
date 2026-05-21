@@ -1,4 +1,4 @@
-# NeoxiderTools Project Summary
+﻿# NeoxiderTools Project Summary
 
 Краткая актуальная сводка по пакету `NeoxiderTools` для разработчика и мейнтейнера.
 

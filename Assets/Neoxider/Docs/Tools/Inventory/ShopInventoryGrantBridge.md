@@ -1,4 +1,4 @@
-# ShopInventoryGrantBridge
+﻿# ShopInventoryGrantBridge
 
 **Назначение:** опциональный bridge-компонент, связывающий [Shop](../../Shop/Shop.md) и [InventoryComponent](./InventoryComponent.md). Слушает `Shop.OnPurchasedId(itemId)` и на каждом срабатывании ищет совпадение в таблице `Mappings`. При совпадении вызывает `InventoryComponent.AddItemData(...)` и поднимает `OnGranted(data, amount)`.
 

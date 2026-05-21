@@ -1,4 +1,4 @@
-# UIReady
+﻿# UIReady
 
 **Purpose:** See Inspector fields below for configuration.
 

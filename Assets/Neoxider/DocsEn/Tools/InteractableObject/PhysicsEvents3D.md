@@ -1,4 +1,4 @@
-# PhysicsEvents3D
+﻿# PhysicsEvents3D
 
 `PhysicsEvents3D` forwards Unity 3D physics messages (`OnTriggerEnter`, `OnCollisionEnter`, etc.) into `UnityEvent` callbacks. Supports filters by `LayerMask` and `requiredTag`. File: `Assets/Neoxider/Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`, namespace: `Neo.Tools`.
 

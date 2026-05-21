@@ -1,4 +1,4 @@
-# ConditionEntryPredicate
+﻿# ConditionEntryPredicate
 
 **Назначение:** Предикат перехода машины состояний, который использует `NeoCondition`-стиль проверки условий. Оценивает `ConditionEntry` (компонент, свойство, сравнение, порог) в контексте указанного GameObject. Слот контекста задаётся через `ConditionContextSlot` — ScriptableObject не хранит ссылки на сцену, только номер слота.
 

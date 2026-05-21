@@ -1,4 +1,4 @@
-# Condition — Internal Types
+﻿# Condition — Internal Types
 
 | Type | Description |
 |------|-------------|

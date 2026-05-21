@@ -108,7 +108,7 @@ namespace Neo.Tests
             Assert.IsFalse(hideRoutine.MoveNext());
         }
 
-        private static object CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
+        public static object CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
         {
             GameObject pageObject = new(pageIdName);
             pageObject.transform.SetParent(parent.transform);

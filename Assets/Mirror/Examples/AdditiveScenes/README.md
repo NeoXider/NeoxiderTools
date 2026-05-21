@@ -1,4 +1,4 @@
-# Additive Scenes Example
+﻿# Additive Scenes Example
 
 IMPORTANT: Make sure you have a layer in project settings called Player for this example to work well.
 

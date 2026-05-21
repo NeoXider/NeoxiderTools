@@ -1,4 +1,4 @@
-# Урок 33: итоговый RPG/Progression vertical slice
+﻿# Урок 33: итоговый RPG/Progression vertical slice
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · RPG/Progression трек · Mirror `96.x`
 

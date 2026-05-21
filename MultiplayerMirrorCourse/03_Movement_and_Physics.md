@@ -1,4 +1,4 @@
-# Урок 3: движение, физика и NetworkTransform
+﻿# Урок 3: движение, физика и NetworkTransform
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 3/15 · Mirror `96.x`
 

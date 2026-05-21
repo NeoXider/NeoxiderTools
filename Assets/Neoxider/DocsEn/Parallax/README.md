@@ -1,4 +1,4 @@
-# Parallax module
+﻿# Parallax module
 
 Parallax layers for 2D scrolling. Scripts in `Scripts/Parallax/`. Full docs are in Russian.
 

@@ -12,5 +12,6 @@
 | `NpcPatrolCore` | Ядро патрулирования (точки, зоны, циклы). |
 
 ## См. также
-- [NpcNavigation](NpcNavigation.md)
+- [NpcNavigation](./Navigation/NPCNavigation.md)
 - ← [NPC](README.md)
+

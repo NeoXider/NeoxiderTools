@@ -1,4 +1,4 @@
-# RevertAmount
+﻿# RevertAmount
 
 **Purpose:** A micro-utility that inverts an incoming value (`1 - amount`) and forwards it via a `UnityEvent<float>`. Useful for inverting progress (e.g., making an HP bar deplete when a timer counts up).
 

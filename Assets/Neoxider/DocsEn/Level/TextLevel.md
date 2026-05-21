@@ -1,4 +1,4 @@
-# TextLevel
+﻿# TextLevel
 
 **Purpose:** A UI component that automatically subscribes to the `LevelManager` and displays the current or maximum level in a `TextMeshPro` text field.
 

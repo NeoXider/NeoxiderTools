@@ -1,4 +1,4 @@
-# Cards module
+﻿# Cards module
 
 Card game utilities: MVP (Model, View, Presenter), deck/hand/board components, poker combinations, and sample games (e.g. Drunkard). Scripts in `Scripts/Cards/`. Full documentation is in Russian; key entry points below.
 

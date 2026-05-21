@@ -1,4 +1,4 @@
-# MultiKeyEventTrigger
+﻿# MultiKeyEventTrigger
 
 **Purpose:** See Inspector fields below for configuration.
 

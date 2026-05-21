@@ -1,4 +1,4 @@
-# VariantView
+﻿# VariantView
 
 **Purpose:** See Inspector fields below for configuration.
 

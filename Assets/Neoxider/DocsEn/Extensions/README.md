@@ -1,4 +1,4 @@
-# Extensions module
+﻿# Extensions module
 
 Extension methods for C# and Unity API. No Inspector components; static helpers only. Scripts in `Scripts/Extensions/`. XML docs in code are in English. Full per-class pages and examples are in Russian.
 

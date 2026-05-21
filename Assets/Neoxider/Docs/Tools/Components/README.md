@@ -17,9 +17,10 @@
 
 ## Папки
 
-- [AttackSystem](./AttackSystem) — система атак и урона *(Health, Evade, AttackExecution, AdvancedAttackCollider — legacy; для новых проектов используйте [RPG](../Rpg/README.md))*
+- [AttackSystem](./AttackSystem) — система атак и урона *(Health, Evade, AttackExecution, AdvancedAttackCollider — legacy; для новых проектов используйте [RPG](../../Rpg/README.md))*
 - [Interface](./Interface) — интерфейсы боевой системы (IDamageable, IHealable и др.)
 
 ---
 
 Для предложений по доработке скриптов компонентов см. [SCRIPT_IMPROVEMENTS](./SCRIPT_IMPROVEMENTS.md).
+

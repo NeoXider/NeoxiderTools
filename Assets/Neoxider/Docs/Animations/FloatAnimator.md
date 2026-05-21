@@ -1,4 +1,4 @@
-# FloatAnimator
+﻿# FloatAnimator
 
 **Что это:** компонент-аниматор для float. Расчёт каждый кадр, результат через свойство и события. Пространство имён: `Neo.Animations`. Файл: `Scripts/Animations/FloatAnimator.cs`.
 

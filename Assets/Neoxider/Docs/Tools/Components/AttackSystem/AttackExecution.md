@@ -1,6 +1,6 @@
 # Инструмент Attack Execution
 
-> **Legacy.** RPG-модуль предоставляет статы боя. Используйте [RpgCharacter](../../Rpg/RpgCharacter.md).Damage() из логики атаки или [RpgNoCodeAction](../../Rpg/RpgNoCodeAction.md).
+> **Legacy.** RPG-модуль предоставляет статы боя. Используйте [RpgCharacter](../../../Rpg/RpgCharacter.md).Damage() из логики атаки или [RpgNoCodeAction](../../../Rpg/RpgNoCodeAction.md).
 
 **Что это:** Менеджер таймингов и состояний для выполнения атаки.
 
@@ -65,3 +65,4 @@
 - `OnStartAttack`: Вызывается в момент начала атаки (например, для запуска анимации замаха).
 - `OnAttack`: Вызывается в момент, когда атака должна нанести урон (после задержки `delayTimeAttack`).
 - `OnEndAttack`: Вызывается, когда перезарядка завершена и можно атаковать снова.
+

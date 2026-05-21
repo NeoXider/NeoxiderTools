@@ -1,4 +1,4 @@
-# LevelButton
+﻿# LevelButton
 
 **Purpose:** UI button for the level map. Automatically changes its visual state (Locked, Available, Passed) based on player progression, and notifies the `LevelManager` when clicked.
 

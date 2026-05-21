@@ -1,4 +1,4 @@
-# Интерфейсы IMoneySpend и IMoneyAdd
+﻿# Интерфейсы IMoneySpend и IMoneyAdd
 
 **Что это:** контракты для списания и начисления валюты (файл `Assets/Neoxider/Scripts/Shop/InterfaceMoney.cs`, глобальное пространство имён). `IMoneySpend`: метод `bool Spend(float count)`. `IMoneyAdd`: метод `void Add(float count)`. Реализует [Money](Money.md); [Shop](Shop.md) использует IMoneySpend для оплаты.
 

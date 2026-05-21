@@ -1,4 +1,4 @@
-# GameSettingsSaveKeys
+﻿# GameSettingsSaveKeys
 
 **Purpose:** A static class containing save key constants for `GameSettings`. Suffixes are appended to `GameSettingsComponent.SaveKeyPrefix`.
 

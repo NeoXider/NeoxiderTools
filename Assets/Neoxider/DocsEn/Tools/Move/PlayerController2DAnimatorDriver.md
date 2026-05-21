@@ -1,4 +1,4 @@
-# PlayerController2DAnimatorDriver
+﻿# PlayerController2DAnimatorDriver
 
 **Purpose:** See Inspector fields below for configuration.
 

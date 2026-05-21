@@ -1,4 +1,4 @@
-# AudioControl
+﻿# AudioControl
 
 **Что это:** компонент-мост: связывает Toggle или Slider с AMSettings (громкость Master/Music/Efx, мьют), а также поддерживает кастомный режим через события. Пространство имён: `Neo.Audio`. Файл: `Scripts/Audio/View/AudioControl.cs`.
 

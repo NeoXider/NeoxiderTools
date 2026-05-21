@@ -1,4 +1,4 @@
-# FloatAnimator
+﻿# FloatAnimator
 
 **Namespace:** `Neo.Animations`  
 **File:** `Assets/Neoxider/Scripts/Animations/FloatAnimator.cs`

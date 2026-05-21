@@ -1,4 +1,4 @@
-# PhysicsEvents3D
+﻿# PhysicsEvents3D
 
 **Что это:** 3D-версия PhysicsEvents2D: перехватывает OnTriggerEnter, OnCollisionEnter и др., пробрасывает в UnityEvent. Фильтры: опционально по тегу (`filterByTag` + `requiredTag`) и по слою (`filterByLayer` + `layers`); при включённых обоих проверяются **и тег, и слой**. Пространство имён `Neo.Tools`, файл `Scripts/Tools/InteractableObject/PhysicsEvents3D.cs`.
 

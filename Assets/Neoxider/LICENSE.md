@@ -1,4 +1,4 @@
-# Neoxider Tools License Agreement
+﻿# Neoxider Tools License Agreement
 
 Copyright (c) 2025 Neoxider
 

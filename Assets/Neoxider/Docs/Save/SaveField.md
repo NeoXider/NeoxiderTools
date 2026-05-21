@@ -1,4 +1,4 @@
-# Атрибут SaveField
+﻿# Атрибут SaveField
 
 **Что это:** атрибут для пометки полей, сохраняемых SaveManager. Ключ (key) задаётся в конструкторе; опционально autoSaveOnQuit, autoLoadOnAwake. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/SaveField.cs`.
 

@@ -1,4 +1,4 @@
-# QuestObjectiveData
+﻿# QuestObjectiveData
 
 **Purpose:** A data class (`[Serializable]`) describing a single specific task within a quest (`QuestConfig`). It is not a MonoBehaviour.
 

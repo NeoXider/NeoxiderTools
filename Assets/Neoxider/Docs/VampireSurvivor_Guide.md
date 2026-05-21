@@ -84,7 +84,8 @@
 ---
 
 ## См. также
-- [RPG Module Index](../Rpg/README.md)
-- [Tools Module Index](../Tools/README.md)
-- [Progression System](../Progression/README.md)
+- [RPG Module Index](./Rpg/README.md)
+- [Tools Module Index](./Tools/README.md)
+- [Progression System](./Progression/README.md)
 - ← [Назад к общему оглавлению](../README.md)
+

@@ -1,4 +1,4 @@
-# InteractionRayProvider
+﻿# InteractionRayProvider
 
 Компонент для камеры, который управляет режимом рейкаста для **всех** `InteractiveObject` в сцене.
 

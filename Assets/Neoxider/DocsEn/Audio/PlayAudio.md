@@ -1,4 +1,4 @@
-# PlayAudio
+﻿# PlayAudio
 
 **Purpose:** A utility for simply playing a sound via the `AM.I` manager. It supports playing a specific `AudioClip`, a random clip from a list, or a sound by its index (Legacy mode).
 

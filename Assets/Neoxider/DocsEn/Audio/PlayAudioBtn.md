@@ -1,4 +1,4 @@
-# PlayAudioBtn
+﻿# PlayAudioBtn
 
 **Purpose:** A utility for playing sounds upon UI (User Interface) interactions. It automatically intercepts clicks, hovers, and selections on buttons or other UI elements.
 

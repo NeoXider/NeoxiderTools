@@ -1,4 +1,4 @@
-# StringExtension
+﻿# StringExtension
 
 **Purpose:** Extension methods for `string` — camelCase splitting, truncation, parsing, HEX-to-Color conversion, and rich text formatting (bold, italic, color, rainbow, gradient).
 

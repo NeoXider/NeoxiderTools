@@ -1,4 +1,4 @@
-# ButtonPrice
+﻿# ButtonPrice
 
 **Purpose:** A smart shop button that automatically switches its visual state and text based on its logical state: "Buy", "Select", or "Selected".
 

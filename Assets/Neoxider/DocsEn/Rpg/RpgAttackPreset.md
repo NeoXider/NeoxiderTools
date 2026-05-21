@@ -1,4 +1,4 @@
-# RpgAttackPreset
+﻿# RpgAttackPreset
 
 **What it is:** a `ScriptableObject` preset that combines an `RpgAttackDefinition` with targeting rules for AI, skills, and spells.
 

@@ -1,4 +1,4 @@
-# CardAnimationConfig
+﻿# CardAnimationConfig
 
 **Purpose:** See Inspector fields below for configuration.
 

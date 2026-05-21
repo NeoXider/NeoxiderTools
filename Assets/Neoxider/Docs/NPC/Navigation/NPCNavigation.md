@@ -1,4 +1,4 @@
-# NpcNavigation
+﻿# NpcNavigation
 
 **Что это:** Компонент Unity (`MonoBehaviour`) для навигации NPC поверх `NavMeshAgent`: Follow / Patrol / Combined, переключение поведения без дополнительных `MonoBehaviour` на объекте (стратегии в pure C#). Файл: `Assets/Neoxider/Scripts/NPC/NpcNavigation.cs`.
 

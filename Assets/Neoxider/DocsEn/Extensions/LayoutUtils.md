@@ -1,4 +1,4 @@
-# LayoutUtils
+﻿# LayoutUtils
 
 **Purpose:** Static utility class for computing layout positions (grid, circle, line, arc). Returns `Vector3` arrays. Used by `LayoutExtensions` to arrange `Transform` collections.
 

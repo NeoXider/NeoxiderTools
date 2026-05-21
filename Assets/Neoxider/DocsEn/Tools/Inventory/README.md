@@ -1,4 +1,4 @@
-# Tools / Inventory
+﻿# Tools / Inventory
 
 The inventory module covers item storage, pickup, drop, hand/equip visuals, and basic UI binding.
 

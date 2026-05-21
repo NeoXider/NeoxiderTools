@@ -1,4 +1,4 @@
-# SaveProviderExtensions
+﻿# SaveProviderExtensions
 
 **Purpose:** Extension methods for `ISaveProvider` — adds `int[]` and `float[]` save/load support. Arrays are serialized as comma-separated strings.
 

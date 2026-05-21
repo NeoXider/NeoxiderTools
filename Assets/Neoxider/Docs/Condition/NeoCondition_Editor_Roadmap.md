@@ -1,4 +1,4 @@
-# NeoCondition — Roadmap развития Editor/No-Code системы
+﻿# NeoCondition — Roadmap развития Editor/No-Code системы
 
 **Что это:** Сделать `NeoCondition` профессиональной, расширяемой и переиспользуемой системой:
 

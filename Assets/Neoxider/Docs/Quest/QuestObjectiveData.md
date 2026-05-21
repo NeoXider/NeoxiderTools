@@ -1,4 +1,4 @@
-# QuestObjectiveData
+﻿# QuestObjectiveData
 
 **Назначение:** Класс данных (`[Serializable]`), описывающий одну конкретную задачу внутри квеста (`QuestConfig`). Не является MonoBehaviour.
 

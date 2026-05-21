@@ -1,4 +1,4 @@
-# UnityLifecycleEvents
+﻿# UnityLifecycleEvents
 
 **Purpose:** See Inspector fields below for configuration.
 

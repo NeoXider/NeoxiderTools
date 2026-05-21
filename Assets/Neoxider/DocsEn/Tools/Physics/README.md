@@ -1,4 +1,4 @@
-# Tools / Physics
+﻿# Tools / Physics
 
 Physics helpers: explosion, impulse zones, magnetic field. Scripts in `Scripts/Tools/Physics/`. Full docs are in Russian.
 

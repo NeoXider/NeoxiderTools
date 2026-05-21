@@ -1,4 +1,4 @@
-# Модуль Settings
+﻿# Модуль Settings
 
 **Что это:** runtime-модуль **Neo.Settings** — статический API **`GameSettings`**, синглтон **`GameSettingsComponent`** (сейв через **Neo.Save.SaveProvider**, пресеты качества URP/QualitySettings), и UI-биндер **`SettingsView`**. Скрипты: `Assets/Neoxider/Scripts/Settings/`.
 

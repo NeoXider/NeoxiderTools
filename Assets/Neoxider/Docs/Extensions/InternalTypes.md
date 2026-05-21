@@ -1,4 +1,4 @@
-# Extensions — Additional Types
+﻿# Extensions — Additional Types
 
 | Тип | Описание |
 |-----|----------|

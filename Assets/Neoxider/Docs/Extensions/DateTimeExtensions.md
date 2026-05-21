@@ -1,4 +1,4 @@
-# DateTimeExtensions
+﻿# DateTimeExtensions
 
 **Что это:** Расширения для безопасной сериализации и расчётов с `DateTime` в UTC.
 

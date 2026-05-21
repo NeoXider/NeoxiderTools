@@ -1,4 +1,4 @@
-# Tools / Components / Interface
+﻿# Tools / Components / Interface
 
 InterfaceAttack and related (IDamageable, IHealable, etc.). Full docs are in Russian.
 

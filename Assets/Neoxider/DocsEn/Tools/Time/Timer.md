@@ -1,4 +1,4 @@
-# Timer
+﻿# Timer
 
 **Purpose:** A lightweight, non-MonoBehaviour timer class. Supports one-shot and repeating modes, pause/resume, and callback on completion. Used internally by various systems.
 

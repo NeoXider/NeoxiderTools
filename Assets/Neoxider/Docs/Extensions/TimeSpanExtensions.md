@@ -1,4 +1,4 @@
-# TimeSpanExtensions
+﻿# TimeSpanExtensions
 
 **Что это:** Расширения для форматирования `TimeSpan`.
 

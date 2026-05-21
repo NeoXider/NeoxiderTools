@@ -1,4 +1,4 @@
-# Урок 7: Interest Management
+﻿# Урок 7: Interest Management
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · базовый трек · урок 7/15 · Mirror `96.x`
 

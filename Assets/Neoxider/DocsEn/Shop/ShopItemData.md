@@ -1,4 +1,4 @@
-# ShopItemData
+﻿# ShopItemData
 
 **Purpose:** A `ScriptableObject` describing one shop item. Since version **8.5.0** it carries a stable `Id`, an optional category, and an optional per-item currency. Inventory grants are configured in a separate bridge — see [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md).
 

@@ -1,4 +1,4 @@
-# Модуль Extensions
+﻿# Модуль Extensions
 
 **Что это:** библиотека extension-методов и утилит для C# и Unity API (Transform, GameObject, string, коллекции, TimeSpan, UnityEvent и др.). Скрипты в `Scripts/Extensions/`.
 

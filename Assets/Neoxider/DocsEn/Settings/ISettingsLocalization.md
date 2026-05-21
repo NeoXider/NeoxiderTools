@@ -1,4 +1,4 @@
-# ISettingsLocalization
+﻿# ISettingsLocalization
 
 **Purpose:** Interface for localizing strings in the settings UI. Implemented outside the `Neo.Settings` module.
 

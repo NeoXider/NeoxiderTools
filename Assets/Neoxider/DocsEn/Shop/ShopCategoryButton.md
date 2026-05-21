@@ -1,4 +1,4 @@
-# ShopCategoryButton
+﻿# ShopCategoryButton
 
 **Purpose:** NoCode helper for shop category tabs.
 

@@ -1,4 +1,4 @@
-# GlobalData
+﻿# GlobalData
 
 **Purpose:** A serializable container class for global game data (currency, levels, settings). Empty by default — add your own fields. Saved via `GlobalSave`. Namespace: `Neo.Save`.
 

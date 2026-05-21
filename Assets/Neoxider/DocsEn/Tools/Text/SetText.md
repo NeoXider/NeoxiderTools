@@ -1,4 +1,4 @@
-# SetText
+﻿# SetText
 
 **Purpose:** A component for displaying formatted numeric and text values in `TMP_Text`. Supports thousand separators, decimal places, notation styles (Grouped, Scientific, Short), percentages, currency, `BigInteger`, and animated number transitions via DOTween.
 

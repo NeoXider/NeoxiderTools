@@ -1,4 +1,4 @@
-# NeoNetworkComponent
+﻿# NeoNetworkComponent
 
 **Что это:** Абстрактный базовый класс (`NetworkBehaviour` / `MonoBehaviour`) для всех сетевых NoCode компонентов. Устраняет дублирование boilerplate-кода (rate-limiting, late-join, dispatch). Путь: `Scripts/Network/Core/NeoNetworkComponent.cs`, пространство имён `Neo.Network`.
 

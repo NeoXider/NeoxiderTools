@@ -1,4 +1,4 @@
-# RpgProgressionDefinition
+﻿# RpgProgressionDefinition
 
 **What it is:** a ScriptableObject with `RpgCharacter` growth rules.
 

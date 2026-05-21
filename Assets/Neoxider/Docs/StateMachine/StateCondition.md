@@ -1,4 +1,4 @@
-# StateCondition
+﻿# StateCondition
 
 **Назначение:** Базовый абстрактный класс условия перехода для `StateMachine`. Содержит единственный метод `Evaluate()` → `bool`. Три готовые реализации: `BoolStateCondition`, `FloatStateCondition`, `EventStateCondition`.
 

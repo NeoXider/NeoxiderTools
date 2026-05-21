@@ -1,4 +1,4 @@
-# RpgConditionAdapter
+﻿# RpgConditionAdapter
 
 **What it is:** a `MonoBehaviour` adapter from `Scripts/Rpg/Bridge/RpgConditionAdapter.cs` that exposes RPG state as a condition for `NeoCondition` and other systems using `IConditionEvaluator`.
 

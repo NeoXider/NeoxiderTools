@@ -1,4 +1,4 @@
-# CameraAspectRatioScaler
+﻿# CameraAspectRatioScaler
 
 **Purpose:** See Inspector fields below for configuration.
 

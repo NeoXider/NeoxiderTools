@@ -1,4 +1,4 @@
-# GetComponentAttribute
+﻿# GetComponentAttribute
 
 **Purpose:** Auto-inject attribute that calls `GetComponent<T>()` and populates the field automatically.
 

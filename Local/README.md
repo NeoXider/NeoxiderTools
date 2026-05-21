@@ -1,4 +1,4 @@
-# Local (repo root)
+﻿# Local (repo root)
 
 Содержимое подкаталога **`Audits/`** в git **не отслеживается** (см. `.gitignore`).
 

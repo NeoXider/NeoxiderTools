@@ -1,4 +1,4 @@
-# Документация по модулю Slot
+﻿# Документация по модулю Slot
 
 **Что это:** модуль слот-машины: SpinController, Row, SlotElement, CheckSpin, данные в ScriptableObject. Скрипты в `Scripts/Bonus/Slot/`.
 

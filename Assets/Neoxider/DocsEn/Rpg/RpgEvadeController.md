@@ -1,4 +1,4 @@
-# RpgEvadeController
+﻿# RpgEvadeController
 
 **What it is:** an RPG-native evade ability with cooldown and optional invulnerability.
 

@@ -1,4 +1,4 @@
-# Match3BoardService
+﻿# Match3BoardService
 
 **Purpose:** See Inspector fields below for configuration.
 

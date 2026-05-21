@@ -1,4 +1,4 @@
-# GraphicsPresetLevelMapping
+﻿# GraphicsPresetLevelMapping
 
 **Назначение:** Сериализуемая структура, связывающая именованный пресет графики (`GraphicsPreset`) с индексом уровня качества Unity (`QualitySettings`).
 

@@ -1,4 +1,4 @@
-Mirror's PredictedRigidbody is optimized for low end devices / VR.
+﻿Mirror's PredictedRigidbody is optimized for low end devices / VR.
 While not interacting with the object, there's zero overhead!
 While interacting, overhead comes from sync & corrections.
 

@@ -266,5 +266,6 @@ NPC — это тот же `RpgCharacter`, отдельных компонент
 - [RpgProgressionDefinition](RpgProgressionDefinition.md) — режимы роста
 - [RpgResourceBinding](RpgResourceBinding.md) — NoCode UI binding
 - [RpgStatBinding](RpgStatBinding.md)
-- [BuffDefinition](BuffDefinition.md), [InlineBuffEntry](InlineBuffEntry.md)
+- [BuffDefinition](./Data/BuffDefinition.md), [InlineBuffEntry](./InternalTypes.md)
 - [Multiplayer_Guide](../Network/Multiplayer_Guide.md)
+

@@ -1,4 +1,4 @@
-# NetworkPropertySync
+﻿# NetworkPropertySync
 
 **Что это:** `NetworkBehaviour` / `MonoBehaviour` компонент для автоматической синхронизации любого поля или свойства любого компонента через Reflection. Поддерживает типы Float, Int, Bool, String, Vector3. Путь: `Scripts/Network/Core/NetworkPropertySync.cs`, пространство имён `Neo.Network`.
 

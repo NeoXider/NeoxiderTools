@@ -1,4 +1,4 @@
-# PickableItem
+﻿# PickableItem
 
 **Purpose:** A component for world items (coins, potions, weapons) that the player can pick up. Reacts to triggers (2D/3D), filters by tag, validates the collector, and auto-destroys/deactivates after collection.
 

@@ -1,4 +1,4 @@
-# SaveProviderSettingsComponent
+﻿# SaveProviderSettingsComponent
 
 **Что это:** MonoBehaviour для инициализации SaveProvider из ScriptableObject (Settings). Вызывается в Awake; после этого SaveProvider использует заданный провайдер. Пространство имён: `Neo.Save`. Файл: `Scripts/Save/Settings/SaveProviderSettingsComponent.cs`.
 

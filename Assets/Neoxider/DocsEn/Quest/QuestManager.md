@@ -1,4 +1,4 @@
-# QuestManager
+﻿# QuestManager
 
 **Purpose:** Main quest manager (Singleton). Stores the state of all accepted, failed, and completed quests. Automatically saves progress to `SaveProvider`. Handles quest acceptance logic (with condition checking) and tracks objective completion.
 

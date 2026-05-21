@@ -1,4 +1,4 @@
-# RpgCharacterTemplate
+﻿# RpgCharacterTemplate
 
 **What it is:** a ScriptableObject archetype for `RpgCharacter`. It stores starting resources, stats, known buffs/statuses, progression, and display data.
 

@@ -1,4 +1,4 @@
-# State Machine: настройка через StateMachineData
+﻿# State Machine: настройка через StateMachineData
 
 **Что это:** пошаговая настройка автомата через `StateMachineData` (ScriptableObject), предикаты переходов и компонент StateMachineBehaviour. Логика (состояния, переходы) — в SO; ссылки на объекты сцены для условий задаются в компоненте (Context for conditions).
 

@@ -1,4 +1,4 @@
-# ToggleAudio (NeoxiderPages)
+﻿# ToggleAudio (NeoxiderPages)
 
 **Что это:** Связывает UI-переключатель (VisualToggle) с аудио: музыка или эффекты (вкл/выкл) через центральный **AM**.
 

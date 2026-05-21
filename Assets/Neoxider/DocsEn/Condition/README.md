@@ -1,4 +1,4 @@
-# Condition module
+﻿# Condition module
 
 **NeoCondition** is a No-Code condition system. It evaluates field/property values of any component via the Inspector without code. Supports AND/OR logic, inversion, and manual or automatic checking.
 

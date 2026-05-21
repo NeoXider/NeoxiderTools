@@ -1,4 +1,4 @@
-# HandComponent
+﻿# HandComponent
 
 **Что это:** компонент руки: набор карт, раскладка (Fan, Line, Stack, Grid и др.), анимации. Обёртка над HandModel. Файл: `Scripts/Cards/Components/HandComponent.cs`.
 

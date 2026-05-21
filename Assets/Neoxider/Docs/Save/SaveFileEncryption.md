@@ -44,6 +44,7 @@
 
 ## См. также
 
-- [FileSaveProvider](../FileSaveProvider.md)
+- [FileSaveProvider](./FileSaveProvider.md)
 - [SaveProviderSettings](Settings/SaveProviderSettings.md)
 - ← [Save](../README.md)
+

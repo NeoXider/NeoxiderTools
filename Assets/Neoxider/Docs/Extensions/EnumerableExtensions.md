@@ -1,4 +1,4 @@
-# Расширения EnumerableExtensions
+﻿# Расширения EnumerableExtensions
 
 **Что это:** См. описание ниже.
 

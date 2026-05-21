@@ -1,4 +1,4 @@
-# ISettingsLocalization
+﻿# ISettingsLocalization
 
 **Назначение:** Интерфейс для локализации строк в UI настроек. Реализуется за пределами модуля `Neo.Settings`.
 

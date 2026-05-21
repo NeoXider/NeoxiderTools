@@ -1,4 +1,4 @@
-# SaveIdentityUtility
+﻿# SaveIdentityUtility
 
 **Что это:** `SaveIdentityUtility` — статический helper, который строит стабильные ключи для компонентов, участвующих в сохранении. Файл: `Scripts/Save/SaveIdentityUtility.cs`, пространство имён: `Neo.Save`.
 

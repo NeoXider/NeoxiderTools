@@ -1,4 +1,4 @@
-# ColorExtension
+﻿# ColorExtension
 
 **Purpose:** Extension methods for Unity `Color` — modify individual channels, darken, lighten, and convert to HEX string.
 

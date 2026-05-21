@@ -1,4 +1,4 @@
-# RpgStatBinding
+﻿# RpgStatBinding
 
 **What it is:** binds one `RpgCharacter` stat to a UnityEvent.
 

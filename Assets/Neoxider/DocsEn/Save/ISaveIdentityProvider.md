@@ -1,4 +1,4 @@
-# ISaveIdentityProvider
+﻿# ISaveIdentityProvider
 
 ## Overview
 `ISaveIdentityProvider` lets a component provide its own stable save identity instead of relying on the default scene-based identity.

@@ -1,4 +1,4 @@
-# QuestConfig
+﻿# QuestConfig
 
 **Purpose:** Configuration for a single quest. Created as a `ScriptableObject`. It stores UI text (title, description), a list of objectives, and the conditions under which the quest can be accepted.
 

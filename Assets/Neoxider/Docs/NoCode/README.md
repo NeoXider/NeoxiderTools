@@ -1,4 +1,4 @@
-# Neo.NoCode — привязка float к UI без лишних скриптов
+﻿# Neo.NoCode — привязка float к UI без лишних скриптов
 
 Сборка **`Neo.NoCode`** (`Assets/Neoxider/Scripts/NoCode/`) даёт компоненты, которые читают **число** с поля или свойства другого компонента (или из **`ReactivePropertyFloat` / `ReactivePropertyInt` / `ReactivePropertyBool`**) и обновляют **текст** или **индикатор прогресса** (Slider / Image).
 

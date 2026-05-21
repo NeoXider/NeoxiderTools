@@ -1,4 +1,4 @@
-# ISaveProvider
+﻿# ISaveProvider
 
 **Назначение:** Интерфейс единого API для всех бэкендов сохранения. Абстрагирует хранилище — код работает одинаково независимо от того, сохраняются данные в PlayerPrefs или в JSON-файл. Реализации: `PlayerPrefsSaveProvider`, `FileSaveProvider`.
 

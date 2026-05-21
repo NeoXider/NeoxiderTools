@@ -1,4 +1,4 @@
-# LoadAllFromResourcesAttribute
+﻿# LoadAllFromResourcesAttribute
 
 **Purpose:** Auto-inject attribute that calls `Resources.LoadAll<T>()` and populates an array field.
 

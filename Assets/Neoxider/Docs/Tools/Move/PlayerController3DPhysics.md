@@ -66,5 +66,6 @@ public void ImmobilizePlayerForCutscene()
 
 ## См. также
 - [CursorLockController](CursorLockController.md)
-- [KeyboardMover](KeyboardMover.md)
+- [KeyboardMover](./MovementToolkit/KeyboardMover.md)
 - ← [Tools/Move](../README.md)
+

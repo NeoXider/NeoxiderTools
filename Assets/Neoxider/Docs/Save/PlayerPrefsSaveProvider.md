@@ -1,4 +1,4 @@
-# PlayerPrefsSaveProvider
+﻿# PlayerPrefsSaveProvider
 
 **Назначение:** Реализация `ISaveProvider` через Unity `PlayerPrefs`. Самый простой вариант — данные хранятся в реестре (Windows) или файле настроек (macOS/Linux). Булевы значения хранятся как `int` (0/1) с префиксом `Bool_`.
 

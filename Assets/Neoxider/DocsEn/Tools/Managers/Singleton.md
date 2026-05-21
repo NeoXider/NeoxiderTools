@@ -1,4 +1,4 @@
-# Singleton<T>
+﻿# Singleton<T>
 
 ## Overview
 `Singleton<T>` is the generic base class for managers and services that need a single active instance and a shared access point.

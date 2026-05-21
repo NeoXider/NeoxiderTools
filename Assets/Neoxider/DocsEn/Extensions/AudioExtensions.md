@@ -1,4 +1,4 @@
-# AudioExtensions
+﻿# AudioExtensions
 
 **Purpose:** Extension methods for `AudioSource` providing smooth volume fade effects (fade in, fade out, fade to target).
 

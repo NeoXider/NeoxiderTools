@@ -1,4 +1,4 @@
-# ISaveProvider
+﻿# ISaveProvider
 
 **Purpose:** A unified API interface for all save backends. Abstracts storage — your code works the same regardless of whether data is saved to PlayerPrefs or a JSON file. Implementations: `PlayerPrefsSaveProvider`, `FileSaveProvider`.
 

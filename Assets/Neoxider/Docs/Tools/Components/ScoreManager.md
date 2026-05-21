@@ -1,4 +1,4 @@
-# ScoreManager
+﻿# ScoreManager
 
 **Что это:** синглтон управления очками: текущий счёт, рекорд, цель уровня, звёзды. Сохранение рекорда через SaveProvider. Пространство имён `Neo.Tools`, файл `Scripts/Tools/Components/ScoreManager.cs`.
 

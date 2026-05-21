@@ -1,4 +1,4 @@
-# Урок 31: RPG combat без доверия клиенту
+﻿# Урок 31: RPG combat без доверия клиенту
 
 **Навигация:** [Оглавление](README.md) · [Старт](00_START_HERE.md) · [Оформление](LESSON_STYLE.md) · RPG/Progression трек · Mirror `96.x`
 

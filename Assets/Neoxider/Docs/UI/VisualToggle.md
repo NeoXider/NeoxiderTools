@@ -1,4 +1,4 @@
-# VisualToggle
+﻿# VisualToggle
 
 **Что это:** компонент переключения между двумя визуальными состояниями (start/end): Image (спрайты, цвета), TMP (цвет, текст), активность GameObject. Опционально синхронизация с UI.Toggle. Пространство имён `Neo.UI`, файл `Scripts/UI/View/VisualToggle.cs`.
 

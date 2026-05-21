@@ -1,4 +1,4 @@
-# Лобби и LAN Discovery
+﻿# Лобби и LAN Discovery
 
 **Что это:** Три NoCode компонента для организации лобби, ready-проверки и автоматического поиска серверов в LAN. Обёртки вокруг встроенных Mirror компонентов (`NetworkRoomManager`, `NetworkRoomPlayer`, `NetworkDiscovery`). Путь: `Scripts/Network/Lobby/`, пространство имён `Neo.Network`.
 

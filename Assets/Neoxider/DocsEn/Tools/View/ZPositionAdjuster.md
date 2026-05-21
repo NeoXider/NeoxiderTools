@@ -1,4 +1,4 @@
-# ZPositionAdjuster
+﻿# ZPositionAdjuster
 
 **Purpose:** See Inspector fields below for configuration.
 

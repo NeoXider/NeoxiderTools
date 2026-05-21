@@ -1,4 +1,4 @@
-# SettingsGroup
+﻿# SettingsGroup
 
 **Purpose:** Enum for logical settings groups, used for persistence and reset management.
 

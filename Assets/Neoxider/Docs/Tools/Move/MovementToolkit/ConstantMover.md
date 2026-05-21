@@ -1,4 +1,4 @@
-# ConstantMover
+﻿# ConstantMover
 
 **Что это:** Компонент для постоянного перемещения объекта в заданном направлении. Поддерживает режимы Transform, Rigidbody и Rigidbody2D. По умолчанию перемещает вперёд (LocalForward) в режиме Transform.
 

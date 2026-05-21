@@ -1,4 +1,4 @@
-# SettingsView
+﻿# SettingsView
 
 **What it is:** Binds **UnityEngine.UI** controls to **`GameSettings`**. Optional **`ISettingsLocalization`** for labels. File: `Scripts/Settings/SettingsView.cs`.
 

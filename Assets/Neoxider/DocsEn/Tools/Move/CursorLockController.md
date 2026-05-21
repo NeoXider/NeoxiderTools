@@ -1,4 +1,4 @@
-# CursorLockController
+﻿# CursorLockController
 
 **Purpose:** A global or local manager for the mouse cursor state (visibility and `CursorLockMode`). Automatically handles UI lifecycles (opening/closing menus) and restores the previous cursor state using a snapshot stack system. Features presets for common scenarios (Gameplay, UI Page).
 

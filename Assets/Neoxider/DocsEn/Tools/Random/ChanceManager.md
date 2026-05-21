@@ -1,4 +1,4 @@
-# ChanceManager
+﻿# ChanceManager
 
 **Purpose:** Core runtime class for weighted random selection. Manages a list of chance entries (weights, labels), normalization, and evaluation. Used by `ChanceSystemBehaviour` as its engine.
 

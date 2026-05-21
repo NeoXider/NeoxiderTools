@@ -1,4 +1,4 @@
-# Inventory Core — Internal Types
+﻿# Inventory Core — Internal Types
 
 Внутренние типы ядра инвентаря. Не являются MonoBehaviour — используются `InventoryComponent` и `InventoryManager` внутренне.
 

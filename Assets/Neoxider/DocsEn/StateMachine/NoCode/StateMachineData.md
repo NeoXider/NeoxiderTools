@@ -1,4 +1,4 @@
-# StateMachineData
+﻿# StateMachineData
 
 **Purpose:** ScriptableObject configuration for a complete No-Code state machine. Contains a `StateData[]` array (states) and a `StateTransition` list (transitions). Loaded into `StateMachineBehaviour` at startup. Fully configured in Inspector.
 

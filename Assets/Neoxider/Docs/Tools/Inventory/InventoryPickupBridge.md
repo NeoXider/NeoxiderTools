@@ -1,4 +1,4 @@
-# InventoryPickupBridge
+﻿# InventoryPickupBridge
 
 **Назначение:** Мост-утилита, который вешается на персонажа (или его дочерний триггер). Перенаправляет физические события (триггеры, события от `PhysicsEvents3D`) в метод `Collect()` у `PickableItem`. Удобен для No-Code подхода.
 

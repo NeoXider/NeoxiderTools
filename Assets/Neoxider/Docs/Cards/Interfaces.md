@@ -68,7 +68,7 @@
 | Классические карты (дурак, пьяница), настройка в инспекторе | CardComponent + HandComponent/DeckComponent/BoardComponent (без ICardView). |
 | Классические карты с кодом (MVP) | ICardView (CardView или CardViewUniversal) + HandView + CardPresenter. |
 | Произвольные карты, свои анимации и режимы | CardViewUniversal (ICardView + ICardDisplayMode + ICardViewAnimations). |
-| Своя модель карты (CCG, roguelike) | Свой интерфейс вью + свои данные; анимации и раскладки — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
+| Своя модель карты (CCG, roguelike) | Свой интерфейс вью + свои данные; анимации и раскладки — [CardViewAnimationTemplates](View/CardViewUniversal.md#переиспользование-шаблонов), [CardLayoutCalculator](../../Scripts/Cards/Utils/CardLayoutCalculator.cs). |
 
 ---
 

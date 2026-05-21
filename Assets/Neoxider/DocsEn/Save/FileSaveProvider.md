@@ -1,4 +1,4 @@
-# FileSaveProvider
+﻿# FileSaveProvider
 
 **Purpose:** An `ISaveProvider` implementation that stores all data in a JSON file under `Application.persistentDataPath`. Supports multiple save slots (switch via `ChangeSlot`). Auto-saves dirty data on finalization.
 

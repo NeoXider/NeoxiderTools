@@ -1,4 +1,4 @@
-# AnimationFly
+﻿# AnimationFly
 
 **Purpose:** singleton fly animation for bonuses, currency, items, and UI icons. The component spawns prefabs and moves them along an arc with DOTween.
 

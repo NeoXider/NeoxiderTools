@@ -1,4 +1,4 @@
-# ImpulseZone
+﻿# ImpulseZone
 
 **Purpose:** A trigger zone (Collider) that applies an instant physical impulse to objects entering it. Perfect for trampolines, jump pads, wind tunnels, or speed boosters.
 

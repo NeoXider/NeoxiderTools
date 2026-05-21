@@ -1,4 +1,4 @@
-# Tools / Draw
+﻿# Tools / Draw
 
 Runtime drawing and debug visualization. Scripts in `Scripts/Tools/Draw/`. Full docs are in Russian.
 

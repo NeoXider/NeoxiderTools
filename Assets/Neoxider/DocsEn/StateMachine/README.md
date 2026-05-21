@@ -1,4 +1,4 @@
-# StateMachine module
+﻿# StateMachine module
 
 State machine runtime (IState, transitions), no-code ScriptableObject config, and visual editor. Scripts in `Scripts/StateMachine/`. Full docs are in Russian.
 

@@ -1,4 +1,4 @@
-# Bonus module
+﻿# Bonus module
 
 Collections, slot machines, wheels of fortune, and time-based rewards. Scripts in `Scripts/Bonus/`. Full per-component documentation is in Russian; links below point to the Russian docs.
 

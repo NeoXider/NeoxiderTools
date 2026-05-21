@@ -11,7 +11,7 @@
 
 ## Рекомендуемый компонент: CooldownReward
 
-**CooldownReward** наследует [TimerObject](../Tools/Time/README.md) и использует его движок таймера в режиме RealTime: один компонент объединяет настройки кулдауна, сохранение по UTC и логику наград (накопление, лимит за раз, события). Добавить в сцену: GameObject → Neoxider → Bonus → CooldownReward.
+**CooldownReward** наследует [TimerObject](../../Tools/Time/README.md) и использует его движок таймера в режиме RealTime: один компонент объединяет настройки кулдауна, сохранение по UTC и логику наград (накопление, лимит за раз, события). Добавить в сцену: GameObject → Neoxider → Bonus → CooldownReward.
 
 - Таймер: `duration` (кулдаун в секундах), `updateInterval`, пауза/старт/стоп через базовый TimerObject.
 - Сохранение: автоматически по ключу `LastRewardTime` + суффикс; режим RealTime (корректно после перезапуска игры).
@@ -25,3 +25,4 @@
 
 - **CooldownReward** (рекомендуется): наследник TimerObject, награды по кулдауну с сохранением.
 - [**TimeReward**](./TimeReward.md) (устарел): прежний класс модуля; оставлен для обратной совместимости.
+

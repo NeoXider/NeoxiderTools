@@ -1,4 +1,4 @@
-# StatusEffectDefinition
+﻿# StatusEffectDefinition
 
 **Purpose:** See Inspector fields below for configuration.
 

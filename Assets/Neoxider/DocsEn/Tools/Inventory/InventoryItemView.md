@@ -1,4 +1,4 @@
-# InventoryItemView
+﻿# InventoryItemView
 
 **Purpose:** A foundational UI component responsible for drawing a single item stack. It takes data (`InventoryItemData`) and updates the `Image` icon, name, and count text (`TMP_Text`). Used inside slots and standard lists.
 
