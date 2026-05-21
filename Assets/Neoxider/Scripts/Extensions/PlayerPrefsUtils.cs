@@ -10,6 +10,12 @@ namespace Neo.Extensions
     /// </summary>
     public static class PlayerPrefsUtils
     {
+        [System.Serializable]
+        private class StringArrayData
+        {
+            public string[] Value;
+        }
+
         private const char SEPARATOR = ',';
 
         #region Int Array
@@ -115,7 +121,8 @@ namespace Neo.Extensions
                 return;
             }
 
-            PlayerPrefs.SetString(key, string.Join(SEPARATOR.ToString(), array));
+            var data = new StringArrayData { Value = array };
+            PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
         }
 
         /// <summary>
@@ -134,7 +141,22 @@ namespace Neo.Extensions
                 return defaultValue ?? new string[0];
             }
 
-            return arrayString.Split(SEPARATOR);
+            try
+            {
+            string trimmedArrayString = arrayString.TrimStart();
+            if (trimmedArrayString.StartsWith("{", System.StringComparison.Ordinal) && trimmedArrayString.Contains("\"Value\""))
+            {
+                StringArrayData data = JsonUtility.FromJson<StringArrayData>(trimmedArrayString);
+                return data?.Value ?? defaultValue ?? new string[0];
+            }
+
+                return arrayString.Split(SEPARATOR);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error loading string array for key '{key}': {ex.Message}. Returning default value.");
+                return defaultValue ?? new string[0];
+            }
         }
 
         #endregion

@@ -14,6 +14,8 @@ using UnityEngine.Serialization;
 [AddComponentMenu("Neoxider/" + "Tools/" + nameof(SpineController))]
 public sealed class SpineController : MonoBehaviour
 {
+    private const string DefaultSkinPrefsKey = "SkinChanger";
+
     [Header("References")]
     [SerializeField, FormerlySerializedAs("_skeletonAnim")] private SkeletonAnimation skeletonAnimation;
     [SerializeField, FormerlySerializedAs("_spineData")] private SkeletonDataAsset skeletonDataAsset;
@@ -37,7 +39,8 @@ public sealed class SpineController : MonoBehaviour
     private int defaultSkinIndex;
     [SerializeField, Tooltip("Save selected skin in PlayerPrefs.")]
     private bool persistSkinSelection = true;
-    [SerializeField, FormerlySerializedAs("_keySaveSkin")] private string skinPrefsKey = "SkinChanger";
+    [SerializeField, FormerlySerializedAs("_keySaveSkin"), Tooltip("PlayerPrefs key used to save selected skin. Set per controller to avoid collisions.")]
+    private string skinPrefsKey = DefaultSkinPrefsKey;
     [SerializeField, Tooltip("Additional index offset (e.g. when first skin in list is utility)."), FormerlySerializedAs("skinIndexOffset")] private int skinIndexOffset;
     [SerializeField, FormerlySerializedAs("addId"), Tooltip("Deprecated index offset toggle. Use 'Skin Index Offset' instead.")]
     private bool legacyAddIndex;
@@ -282,7 +285,7 @@ public sealed class SpineController : MonoBehaviour
 
         if (persist && persistSkinSelection)
         {
-            PlayerPrefs.SetInt(skinPrefsKey, skinIndex);
+            PlayerPrefs.SetInt(GetSkinPrefsKey(), skinIndex);
         }
 
         OnSwapSkin?.Invoke();
@@ -340,7 +343,7 @@ public sealed class SpineController : MonoBehaviour
         }
 
         int skinIndex =
- persistSkinSelection ? PlayerPrefs.GetInt(skinPrefsKey, GetDefaultSkinIndex()) : GetDefaultSkinIndex();
+ persistSkinSelection ? PlayerPrefs.GetInt(GetSkinPrefsKey(), GetDefaultSkinIndex()) : GetDefaultSkinIndex();
         SetSkinByIndex(skinIndex, false);
     }
 
@@ -496,6 +499,11 @@ public sealed class SpineController : MonoBehaviour
     private int GetIndexOffset()
     {
         return skinIndexOffset + (legacyAddIndex ? 1 : 0);
+    }
+
+    private string GetSkinPrefsKey()
+    {
+        return string.IsNullOrWhiteSpace(skinPrefsKey) ? DefaultSkinPrefsKey : skinPrefsKey;
     }
 
     private int GetLogicalSkinIndex(string skinName)

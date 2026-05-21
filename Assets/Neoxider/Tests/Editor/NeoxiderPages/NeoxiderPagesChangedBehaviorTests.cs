@@ -1,78 +1,15 @@
+using System;
 using System.Collections;
+using System.Linq;
 using System.Reflection;
-using Neo.Pages;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace Neo.Tests
 {
-    public class NeoxiderPagesChangedBehaviorTests
+    public class NeoxiderMenuChangedBehaviorTests
     {
-        private const BindingFlags PrivateInstanceBinding = BindingFlags.Instance | BindingFlags.NonPublic;
-
-        [Test]
-        public void PM_SetPage_DoesNotClosePopup_WhenClosePopupsDisabled()
-        {
-            GameObject pmObject = new("PM");
-            PM pm = pmObject.AddComponent<PM>();
-
-            UIPage mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
-            UIPage popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
-            PageId mainPageId = GetPrivateField<PageId>(mainPage, "pageId");
-
-            SetPrivateField(pm, "allPages", new[] { mainPage, popupPage });
-            SetPrivateField(pm, "ignoredPageIds", new PageId[] { null });
-            SetPrivateField(pm, "closePopupsOnExclusivePageChange", false);
-
-            pm.SetPage(mainPageId);
-
-            Assert.IsTrue(mainPage.gameObject.activeSelf);
-            Assert.IsTrue(popupPage.gameObject.activeSelf);
-        }
-
-        [Test]
-        public void PM_SetPage_ClosesPopup_WhenClosePopupsEnabled()
-        {
-            GameObject pmObject = new("PM");
-            PM pm = pmObject.AddComponent<PM>();
-
-            UIPage mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
-            UIPage popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
-            PageId mainPageId = GetPrivateField<PageId>(mainPage, "pageId");
-
-            SetPrivateField(pm, "allPages", new[] { mainPage, popupPage });
-            SetPrivateField(pm, "ignoredPageIds", new PageId[] { null });
-            SetPrivateField(pm, "closePopupsOnExclusivePageChange", true);
-
-            pm.SetPage(mainPageId);
-
-            Assert.IsTrue(mainPage.gameObject.activeSelf);
-            Assert.IsFalse(popupPage.gameObject.activeSelf);
-        }
-
-        [Test]
-        public void UIPage_HideAnimationDuration_ReturnsZero_WhenModeNone()
-        {
-            GameObject pageObject = new("UI Page");
-            UIPage page = pageObject.AddComponent<UIPage>();
-
-            SetPrivateField(page, "_animationMode", UIPageAnimationMode.None);
-
-            Assert.AreEqual(0f, page.HideAnimationDuration, 0.0001f);
-        }
-
-        [Test]
-        public void UIPage_WaitForHideAnimation_DoesNotWait_WhenNoHideAnimation()
-        {
-            GameObject pageObject = new("UI Page");
-            UIPage page = pageObject.AddComponent<UIPage>();
-
-            IEnumerator hideRoutine = page.WaitForHideAnimation();
-
-            Assert.IsFalse(hideRoutine.MoveNext());
-        }
-
         [Test]
         public void GM_Menu_FromPause_RestoresTimeScale()
         {
@@ -88,13 +25,95 @@ namespace Neo.Tests
             Assert.AreEqual(GM.GameState.Menu, gm.State);
             Assert.AreEqual(1f, Time.timeScale, 0.0001f);
         }
+    }
 
-        private static UIPage CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
+    public class NeoxiderPagesChangedBehaviorTests
+    {
+        private static Type PMType;
+        private static Type UIPageType;
+        private static Type PageIdType;
+        private static Type UIPageAnimationModeType;
+        private const BindingFlags PrivateInstanceBinding = BindingFlags.Instance | BindingFlags.NonPublic;
+        private static bool _pagesTypesResolved;
+        private static bool _pagesTypesAvailable;
+
+        [Test]
+        public void PM_SetPage_DoesNotClosePopup_WhenClosePopupsDisabled()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = pmObject.AddComponent(PMType);
+
+            object mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
+            object popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
+            object mainPageId = GetPrivateField(mainPage, "pageId");
+
+            SetPrivateField(pm, "allPages", CreateArray(UIPageType, mainPage, popupPage));
+            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, null));
+            SetPrivateField(pm, "closePopupsOnExclusivePageChange", false);
+
+            InvokeInstanceMethod(pm, "SetPage", mainPageId);
+
+            Assert.IsTrue(((Component)mainPage).gameObject.activeSelf);
+            Assert.IsTrue(((Component)popupPage).gameObject.activeSelf);
+        }
+
+        [Test]
+        public void PM_SetPage_ClosesPopup_WhenClosePopupsEnabled()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pmObject = new("PM");
+            object pm = pmObject.AddComponent(PMType);
+
+            object mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
+            object popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
+            object mainPageId = GetPrivateField(mainPage, "pageId");
+
+            SetPrivateField(pm, "allPages", CreateArray(UIPageType, mainPage, popupPage));
+            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, null));
+            SetPrivateField(pm, "closePopupsOnExclusivePageChange", true);
+
+            InvokeInstanceMethod(pm, "SetPage", mainPageId);
+
+            Assert.IsTrue(((Component)mainPage).gameObject.activeSelf);
+            Assert.IsFalse(((Component)popupPage).gameObject.activeSelf);
+        }
+
+        [Test]
+        public void UIPage_HideAnimationDuration_ReturnsZero_WhenModeNone()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pageObject = new("UI Page");
+            object page = pageObject.AddComponent(UIPageType);
+
+            SetPrivateField(page, "_animationMode", Enum.Parse(UIPageAnimationModeType, "None"));
+
+            float hideAnimationDuration = (float)GetPropertyValue(page, "HideAnimationDuration");
+            Assert.AreEqual(0f, hideAnimationDuration, 0.0001f);
+        }
+
+        [Test]
+        public void UIPage_WaitForHideAnimation_DoesNotWait_WhenNoHideAnimation()
+        {
+            EnsurePagesModuleAvailable();
+
+            GameObject pageObject = new("UI Page");
+            object page = pageObject.AddComponent(UIPageType);
+
+            IEnumerator hideRoutine = (IEnumerator)InvokeInstanceMethod(page, "WaitForHideAnimation");
+
+            Assert.IsFalse(hideRoutine.MoveNext());
+        }
+
+        private static object CreateUiPage(GameObject parent, string pageIdName, bool popup, bool active)
         {
             GameObject pageObject = new(pageIdName);
             pageObject.transform.SetParent(parent.transform);
-            UIPage page = pageObject.AddComponent<UIPage>();
-            PageId pageId = ScriptableObject.CreateInstance<PageId>();
+            object page = pageObject.AddComponent(UIPageType);
+            ScriptableObject pageId = (ScriptableObject)ScriptableObject.CreateInstance(PageIdType);
             pageId.name = pageIdName;
 
             SetPrivateField(page, "pageId", pageId);
@@ -104,18 +123,79 @@ namespace Neo.Tests
             return page;
         }
 
-        private static void SetPrivateField<T>(object target, string fieldName, T value)
+        private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, PrivateInstanceBinding);
             Assert.IsNotNull(field, $"Field '{fieldName}' should exist on {target.GetType().Name}");
             field.SetValue(target, value);
         }
 
-        private static T GetPrivateField<T>(object target, string fieldName)
+        private static object GetPrivateField(object target, string fieldName)
         {
             FieldInfo field = target.GetType().GetField(fieldName, PrivateInstanceBinding);
             Assert.IsNotNull(field, $"Field '{fieldName}' should exist on {target.GetType().Name}");
-            return (T)field.GetValue(target);
+            return field.GetValue(target);
+        }
+
+        private static object GetPropertyValue(object target, string propertyName)
+        {
+            PropertyInfo property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(property, $"Property '{propertyName}' should exist on {target.GetType().Name}");
+            return property.GetValue(target);
+        }
+
+        private static object InvokeInstanceMethod(object target, string methodName, params object[] args)
+        {
+            MethodInfo method = target.GetType().GetMethod(methodName, BindingFlags.Instance | BindingFlags.Public);
+            Assert.IsNotNull(method, $"Method '{methodName}' should exist on {target.GetType().Name}");
+            return method.Invoke(target, args);
+        }
+
+        private static object CreateArray(Type elementType, params object[] values)
+        {
+            Array array = Array.CreateInstance(elementType, values.Length);
+            for (int i = 0; i < values.Length; i++)
+            {
+                array.SetValue(values[i], i);
+            }
+            return array;
+        }
+
+        private static void EnsurePagesModuleAvailable()
+        {
+            if (_pagesTypesResolved)
+            {
+                if (!_pagesTypesAvailable)
+                {
+                    Assert.Ignore("Neoxider Pages module is not available in this test assembly.");
+                }
+
+                return;
+            }
+
+            _pagesTypesResolved = true;
+            PMType = GetTypeOrNull("Neo.Pages.PM");
+            UIPageType = GetTypeOrNull("Neo.Pages.UIPage");
+            PageIdType = GetTypeOrNull("Neo.Pages.PageId");
+            UIPageAnimationModeType = GetTypeOrNull("Neo.Pages.UIPageAnimationMode");
+
+            _pagesTypesAvailable = PMType != null && UIPageType != null && PageIdType != null && UIPageAnimationModeType != null;
+            if (!_pagesTypesAvailable)
+            {
+                string message = $"Required Neoxider Pages types are missing. Missing: " +
+                                 $"{(PMType == null ? "Neo.Pages.PM " : string.Empty)}" +
+                                 $"{(UIPageType == null ? "Neo.Pages.UIPage " : string.Empty)}" +
+                                 $"{(PageIdType == null ? "Neo.Pages.PageId " : string.Empty)}" +
+                                 $"{(UIPageAnimationModeType == null ? "Neo.Pages.UIPageAnimationMode " : string.Empty)}";
+                Assert.Ignore(message.Trim());
+            }
+        }
+
+        private static Type GetTypeOrNull(string typeName)
+        {
+            return AppDomain.CurrentDomain.GetAssemblies()
+                .Select(assembly => assembly.GetType(typeName))
+                .FirstOrDefault(type => type != null);
         }
     }
 }

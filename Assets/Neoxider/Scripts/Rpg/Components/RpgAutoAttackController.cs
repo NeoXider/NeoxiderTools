@@ -19,10 +19,13 @@ namespace Neo.Rpg
 
         [Tooltip("How often to attempt an attack (in seconds).")]
         [SerializeField] [Min(0.1f)] private float attackInterval = 1f;
+        [Tooltip("How often to retry searching for target when current target is missing (in seconds).")]
+        [SerializeField] [Min(0.1f)] private float targetFindInterval = 0.5f;
 
         private RpgAttackController _attackController;
         private Transform _target;
         private float _lastAttackTime;
+        private float _nextTargetFindTime = -1f;
 
         private void Awake()
         {
@@ -32,13 +35,19 @@ namespace Neo.Rpg
         private void Start()
         {
             FindTarget();
+            _nextTargetFindTime = Time.time + targetFindInterval;
         }
 
         private void Update()
         {
             if (_target == null || !_target.gameObject.activeInHierarchy)
             {
-                FindTarget();
+                if (Time.time >= _nextTargetFindTime)
+                {
+                    FindTarget();
+                    _nextTargetFindTime = Time.time + targetFindInterval;
+                }
+
                 if (_target == null) return;
             }
 

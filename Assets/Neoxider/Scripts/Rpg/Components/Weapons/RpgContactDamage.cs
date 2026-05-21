@@ -23,6 +23,8 @@ namespace Neo.Rpg
 
         [Tooltip("If set, bypasses search and uses this specific combat receiver directly.")]
         [SerializeField] private Component targetReceiverOverride;
+        [Tooltip("How often to retry searching for target when target is missing.")]
+        [SerializeField] [Min(0.1f)] private float targetFindInterval = 0.5f;
 
         [Header("Damage")]
         [Tooltip("Damage dealt per hit.")]
@@ -70,12 +72,14 @@ namespace Neo.Rpg
         private IRpgCombatReceiver _cachedTargetCombatant;
         private float _lastHitTime = -999f;
         private bool _hadTarget;
+        private float _nextTargetFindTime = -1f;
 
         private void Start()
         {
             if (selfCharacter == null)
                 selfCharacter = GetComponent<RpgCharacter>();
             CacheTarget();
+            _nextTargetFindTime = Time.time + targetFindInterval;
         }
 
         private void Update()
@@ -96,8 +100,14 @@ namespace Neo.Rpg
                     _onTargetLost?.Invoke();
                     if (debugLog) Debug.Log($"[RpgContactDamage] Target lost on {name}");
                 }
-                CacheTarget();
-                if (_cachedTarget == null && targetReceiverOverride == null) return;
+
+                if (Time.time >= _nextTargetFindTime)
+                {
+                    CacheTarget();
+                    _nextTargetFindTime = Time.time + targetFindInterval;
+                }
+
+                if (_cachedTarget == null) return;
             }
 
             float dist = damageRange; // Default to in-range if we have a direct override without a transform
