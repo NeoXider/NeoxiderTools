@@ -11,7 +11,8 @@ namespace Neo.Pages
     {
         ForwardOnly = 0,
         BackwardOnly = 1,
-        ForwardAndBackward = 2
+        ForwardAndBackward = 2,
+        None = 3
     }
 
     [MovedFrom("")]
@@ -38,7 +39,7 @@ namespace Neo.Pages
         [Space] [Header("Anim")] [SerializeField]
         private DOTweenAnimation _animation;
 
-        [Tooltip("ForwardOnly: animate only on show. BackwardOnly: animate only on hide. ForwardAndBackward: animate both show and hide.")]
+        [Tooltip("None: no animation. ForwardOnly: animate only on show. BackwardOnly: animate only on hide. ForwardAndBackward: animate both show and hide.")]
         [SerializeField]
         private UIPageAnimationMode _animationMode = UIPageAnimationMode.ForwardAndBackward;
 
@@ -69,6 +70,21 @@ namespace Neo.Pages
             get
             {
                 if (!HasShowAnimation)
+                {
+                    return 0f;
+                }
+
+                float fromTween = GetAnimationWaitSeconds();
+                float fromComponent = _animation.duration + _animation.delay;
+                return Mathf.Max(fromTween, fromComponent);
+            }
+        }
+
+        public float HideAnimationDuration
+        {
+            get
+            {
+                if (!CanPlayBackward() || _animation == null)
                 {
                     return 0f;
                 }
@@ -131,7 +147,7 @@ namespace Neo.Pages
 
             MigrateLegacyAnimationModeIfNeeded();
 
-            if (CanPlayBackward() && _animation != null && _animation.isActive)
+            if (CanPlayBackward() && _animation != null)
             {
                 if (PlayBackwardRestart())
                 {
@@ -205,7 +221,7 @@ namespace Neo.Pages
 
         private void EnsureAnimationTween()
         {
-            if (_animation == null || !_animation.isActive)
+            if (_animation == null)
             {
                 return;
             }
@@ -267,6 +283,15 @@ namespace Neo.Pages
             }
 
             float wait = ShowAnimationDuration;
+            if (wait > 0f)
+            {
+                yield return new WaitForSecondsRealtime(wait);
+            }
+        }
+
+        public IEnumerator WaitForHideAnimation()
+        {
+            float wait = HideAnimationDuration;
             if (wait > 0f)
             {
                 yield return new WaitForSecondsRealtime(wait);

@@ -1,4 +1,4 @@
-# UIPage
+﻿# UIPage
 
 **Назначение:** компонент UI-страницы для работы с `PM` (Page Manager). Хранит `PageId`, режим popup и настройки анимации открытия/закрытия.
 
@@ -18,7 +18,7 @@
 | `Popup` | Страница открывается поверх текущих страниц без их деактивации. |
 | `Ignore On Exclusive Change` | `PM` не деактивирует эту страницу при обычном эксклюзивном переключении. |
 | `Animation` | `DOTweenAnimation`, который проигрывается при открытии/закрытии. |
-| `Animation Mode` | Когда проигрывать анимацию: `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
+| `Animation Mode` | Когда проигрывать анимацию: `None`, `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
 
 ## Animation Mode
 
@@ -30,7 +30,7 @@
 
 Анимация страницы принудительно переводится в unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) и `autoKill = false`, чтобы она корректно работала в паузе/меню и могла перезапускаться.
 
-При эксклюзивном переключении через `PM` (Menu → Shop и т.п.), если у **входящей** страницы есть show-анимация (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), остальные страницы (кроме `Popup` и `Ignore On Exclusive Change`) скрываются **после завершения** show-tween (`WaitForShowAnimation`), затем `EndActive()` — без «пустого фона». Страницы с **Popup** при эксклюзивном переключении не трогаются; открытие popup по-прежнему через `ChangePage` → `ActivePage` без выключения фона.
+При эксклюзивном переключении через `PM` (например Menu -> Shop), если у **входящей** страницы есть show-анимация (`ForwardOnly` / `ForwardAndBackward` + `DOTweenAnimation`), остальные страницы скрываются **после завершения** show-tween (`WaitForShowAnimation`), затем вызывается `EndActive()` - без пустого фона. Страницы с `Ignore On Exclusive Change` не трогаются. Активные `Popup`-страницы по умолчанию закрываются при открытии обычной non-popup страницы (`PM.closePopupsOnExclusivePageChange = true`) и закрываются через `EndActive()`, поэтому Back-анимация проигрывается. Если popup должен переживать exclusive-переходы, выключите эту настройку в `PM`. Открытие popup по-прежнему идет через `ChangePage` -> `ActivePage` без выключения фоновой страницы.
 
 ## API
 
@@ -52,3 +52,5 @@
 
 - [PM](./PM.md)
 - [BtnChangePage](./BtnChangePage.md)
+
+

@@ -1,6 +1,17 @@
 
 ## [Unreleased]
 
+## [8.5.5] - 2026-05-21
+
+### Fixed
+- **NeoxiderPages / page transitions**: exclusive page switches keep the outgoing page visible until the incoming page finishes its Forward animation, so animated pages (for example Shop over Menu) no longer reveal an empty backdrop mid-transition.
+- **NeoxiderPages / Back animation**: closing a non-popup page now routes through `UIPage.EndActive()`, reliably creates/reuses the DOTween tween, plays it backwards when `BackwardOnly` or `ForwardAndBackward` is selected, and disables the page after the Back animation. Pages without Back animation still disable immediately.
+- **NeoxiderPages / previous page restore**: `SwitchToPreviousPage()` enables the previous page at the start of the current page's close animation, preserving the expected backdrop while the current page collapses.
+- **NeoxiderPages / popup cleanup**: added `PM.closePopupsOnExclusivePageChange` (default `true`) so opening an exclusive non-popup page closes active popup pages through `UIPage.EndActive()` and plays their Back animation. This fixes Win/Lose popups staying visible when buttons trigger `G.Start()` / `PageGame`.
+
+### Changed
+- **NeoxiderPages sample package**: bumped `Samples~/NeoxiderPages/package.json.bak` from `1.2.0` to `1.2.1`.
+
 ## [8.5.4] - 2026-05-20
 
 ### Fixed

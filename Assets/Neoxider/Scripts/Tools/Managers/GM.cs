@@ -82,6 +82,11 @@ namespace Neo.Tools
         [Button]
         public virtual void Menu()
         {
+            if (State == GameState.Pause)
+            {
+                Resume();
+            }
+
             StopGame();
             State = GameState.Menu;
             EM.Menu();

@@ -1,4 +1,4 @@
-# NeoxiderPages (`Neo.Pages`)
+﻿# NeoxiderPages (`Neo.Pages`)
 
 `NeoxiderPages` — это sample-модуль навигации по страницам/экранам поверх Unity UI.
 Для корректной работы требуется **DOTween Pro** (и DOTween).
@@ -74,6 +74,14 @@ Assets/Neoxider/Samples~/NeoxiderPages/
   - удобные фасады `G`, `Audio`, `Wallet`, `Score`, `Level`, `GameState`
   - позволяет Pages-слою работать «поверх» Neoxider без прямого расползания ссылок по сцене
 
+## Поведение переходов
+
+- `ChangePage(pageId)` выбирает стратегию по целевой `UIPage`: обычная страница открывается через `SetPage`, popup-страница открывается через `ActivePage`.
+- `SetPage(pageId)` включает входящую страницу и, если у нее есть Forward-анимация, ждет `WaitForShowAnimation()` перед закрытием исходящих страниц. Это нужно, чтобы не показывать пустой фон между страницами.
+- Исходящие страницы закрываются через `UIPage.EndActive()`, поэтому Back-анимация воспроизводится в режимах `BackwardOnly` и `ForwardAndBackward`.
+- Активные popup-страницы по умолчанию закрываются при открытии обычной non-popup страницы. Настройка находится в `PM`: `closePopupsOnExclusivePageChange = true`.
+- Страницы с `Ignore On Exclusive Change` не закрываются при exclusive-переходах.
+- `BtnChangePage` не содержит логики ожидания/закрытия страниц: он вызывает `PM`, а управление переходом остается внутри `PM`.
 ## Пример использования
 
 ### Переключить страницу из кода
@@ -194,11 +202,13 @@ public class OpenPagesExamples
 
 ### Почему некоторые страницы не выключаются при SetPage?
 
-Скорее всего:
+Проверь:
 
-- у страницы включён `popup` (она открывается поверх через `ActivePage`)
-- или у неё включён `ignoreOnExclusiveChange` (её не трогают при `SetPage`)
+- у страницы включен `ignoreOnExclusiveChange` - такие страницы `PM` не закрывает при `SetPage`;
+- страница является `popup`, но в `PM` выключен `closePopupsOnExclusivePageChange`;
+- popup уже неактивен или не находится в списке страниц текущего `PM`.
 
+По умолчанию активный `popup` закрывается при открытии обычной non-popup страницы и закрывается через `EndActive()`, поэтому Back-анимация должна проиграться.
 ## Скрипты (справочник)
 
 Ниже перечислены основные `.cs` файлы внутри sample-модуля и их назначение.
@@ -270,3 +280,4 @@ public class OpenPagesExamples
 
 - `Assets/Neoxider/Samples~/NeoxiderPages/Editor/Inspectors/BtnChangePageEditor.cs`
   - удобный инспектор `BtnChangePage` с переключателем **Dropdown/Asset** + генерацией `PageId`
+

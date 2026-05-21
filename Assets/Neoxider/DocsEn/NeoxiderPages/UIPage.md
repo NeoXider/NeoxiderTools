@@ -1,4 +1,4 @@
-# UIPage
+﻿# UIPage
 
 **Purpose:** UI page component for `PM` (Page Manager). Stores `PageId`, popup mode, and open/close animation settings.
 
@@ -18,7 +18,7 @@
 | `Popup` | Opens above current pages without deactivating them. |
 | `Ignore On Exclusive Change` | `PM` does not deactivate this page during regular exclusive switches. |
 | `Animation` | `DOTweenAnimation` played on show/hide. |
-| `Animation Mode` | When the animation is played: `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
+| `Animation Mode` | When the animation is played: `None`, `ForwardOnly`, `BackwardOnly`, `ForwardAndBackward`. |
 
 ## Animation Mode
 
@@ -30,7 +30,7 @@
 
 Page animation is forced to unscaled time (`DOTweenAnimation.isIndependentUpdate = true`) and `autoKill = false`, so it works during pause/menu flows and can be restarted reliably.
 
-On exclusive switches via `PM` (e.g. Menu → Shop), when the **incoming** page has a show animation, other pages (except `Popup` and `Ignore On Exclusive Change`) are hidden **after** the show tween completes (`WaitForShowAnimation`), then `EndActive()` runs — no empty backdrop. `Popup` pages are never deactivated on exclusive switches; opening a popup still goes through `ActivePage` and leaves other pages untouched.
+On exclusive switches via `PM` (for example Menu -> Shop), when the **incoming** page has a show animation, other pages are hidden **after** the show tween completes (`WaitForShowAnimation`), then `EndActive()` runs, so the incoming page does not reveal an empty backdrop. `Ignore On Exclusive Change` pages are left untouched. `Popup` pages are closed by default when an exclusive non-popup page opens (`PM.closePopupsOnExclusivePageChange = true`), and they close through `EndActive()` so Back animation still plays. Disable that PM option when popups must survive exclusive page switches. Opening a popup still goes through `ChangePage` -> `ActivePage` and leaves the background page untouched.
 
 ## API
 
@@ -52,3 +52,5 @@ Legacy fields `_playBackward` and `_onlyPlayBackward` are migrated automatically
 
 - [PM](./PM.md)
 - [BtnChangePage](./BtnChangePage.md)
+
+

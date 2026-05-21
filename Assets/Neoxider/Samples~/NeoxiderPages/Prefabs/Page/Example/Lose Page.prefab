@@ -221,20 +221,23 @@ MonoBehaviour:
   m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
+  m_characterHorizontalScale: 1
   m_wordSpacing: 0
   m_lineSpacing: 0
   m_lineSpacingMax: 0
   m_paragraphSpacing: 0
   m_charWidthMaxAdj: 0
-  m_enableWordWrapping: 0
+  m_TextWrappingMode: 0
   m_wordWrappingRatios: 0.4
   m_overflowMode: 0
   m_linkedTextComponent: {fileID: 0}
   parentLinkedComponent: {fileID: 0}
   m_enableKerning: 1
+  m_ActiveFontFeatures: 6e72656b
   m_enableExtraPadding: 0
   checkPaddingRequired: 0
   m_isRichText: 1
+  m_EmojiFallbackSupport: 1
   m_parseCtrlCharacters: 1
   m_isOrthographic: 1
   m_isCullingEnabled: 0
@@ -592,9 +595,11 @@ MonoBehaviour:
   pageId: {fileID: 11400000, guid: e7d6eca647c388c4d9f36bbab239d726, type: 2}
   popup: 1
   ignoreOnExclusiveChange: 0
-  _animation: {fileID: 4394070271191383668}
-  _playBackward: 0
-  _onlyPlayBackward: 0
+  _animation: {fileID: 4452082432887727440}
+  _animationMode: 2
+  _legacyPlayBackward: 0
+  _legacyOnlyPlayBackward: 0
+  _legacyAnimationModeMigrated: 1
 --- !u!114 &4394070271191383668
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -924,6 +929,14 @@ PrefabInstance:
       propertyPath: m_fontSize
       value: 56.45
       objectReference: {fileID: 0}
+    - target: {fileID: 6292737689863095729, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
+    - target: {fileID: 7813094885827236335, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 8188983413707042002, guid: 392bf23d51e6c1743a4ee676be3e67ac, type: 3}
       propertyPath: m_Name
       value: Vertical Layout ScoreRecord
@@ -1073,6 +1086,10 @@ PrefabInstance:
       propertyPath: m_sharedMaterial
       value: 
       objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 2482034769485834533, guid: 3827e7d340fc8e348b5e8b986e72a28b, type: 3}
+      propertyPath: m_ActiveFontFeatures.Array.size
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 4007798580990167765, guid: 3827e7d340fc8e348b5e8b986e72a28b, type: 3}
       propertyPath: m_Name
       value: Cash_Amount
@@ -1109,7 +1126,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2728703062219368139, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
       propertyPath: m_fontSize
-      value: 72
+      value: 58
       objectReference: {fileID: 0}
     - target: {fileID: 5865943914215765888, guid: a3118a4d1c96c9d408b8d1bb863d2b7a, type: 3}
       propertyPath: m_Pivot.x

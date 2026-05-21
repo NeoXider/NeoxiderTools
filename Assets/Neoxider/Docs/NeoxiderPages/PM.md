@@ -1,4 +1,4 @@
-# PM (Page Manager)
+﻿# PM (Page Manager)
 
 **Что это:** Синглтон управления UI-страницами в NeoxiderPages: включение/выключение по PageId, переключение, возврат на предыдущую страницу, интеграция с GM (Win/Lose/End).
 
@@ -20,8 +20,19 @@
 - **SwitchToPreviousPage()** — вернуться на предыдущую страницу.
 - **GM Integration** — при смене состояния GM открывать Win/Lose/End страницы.
 
+
+## Exclusive-переходы, popup и анимации
+
+- `ChangePage(pageId)` выбирает стратегию по целевой `UIPage`: обычная страница открывается через `SetPage`, popup-страница открывается через `ActivePage`.
+- `BtnChangePage` не управляет закрытием страниц сам. Он только вызывает `PM` и, при необходимости, меняет `GameState`.
+- При exclusive-переходе, если у входящей страницы есть Forward-анимация, `PM` сначала запускает ее и ждет `WaitForShowAnimation()`, а уже потом закрывает исходящие страницы. Это убирает пустой фон между страницами.
+- Исходящие страницы закрываются через `UIPage.EndActive()`, поэтому Back-анимация воспроизводится в режимах `BackwardOnly` и `ForwardAndBackward`.
+- Активные popup-страницы по умолчанию закрываются при открытии обычной non-popup страницы. За это отвечает `closePopupsOnExclusivePageChange = true` в `PM`.
+- Если popup должен оставаться поверх при любых exclusive-переходах, выключите `closePopupsOnExclusivePageChange` или используйте `Ignore On Exclusive Change` на конкретной странице.
+
 ## См. также
 
 - [UIPage](./UIPage.md)
 - [BtnChangePage](./BtnChangePage.md)
 - [GM](../../Tools/Managers/GM.md)
+

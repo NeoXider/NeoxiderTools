@@ -66,6 +66,9 @@ namespace Neo.Pages
         [Space] [Header("Ignore Specific Pages (do not change active state)")] [SerializeField]
         private PageId[] ignoredPageIds;
 
+        [Tooltip("When enabled, opening an exclusive non-popup page closes active popup pages through UIPage.EndActive().")]
+        [SerializeField] private bool closePopupsOnExclusivePageChange = true;
+
         [Space] [Header("Page Change Event")] public UnityEvent<UIPage> OnPageChanged;
 
         [Space] [Header("Editor Settings")] [SerializeField]
@@ -510,15 +513,7 @@ namespace Neo.Pages
                 return;
             }
 
-            if (ShouldDeferHidingOtherPages(incoming))
-            {
-                exclusivePageTransitionRoutine =
-                    StartCoroutine(DeactivateOutgoingAfterIncomingShow(incoming, outgoing));
-            }
-            else
-            {
-                SetPageActive(outgoing, false);
-            }
+            SetPageActive(outgoing, false);
         }
 
         private void DeactivateOtherPages(PageId targetPageId, PageId[] ignoreList, bool otherActive)
@@ -552,33 +547,30 @@ namespace Neo.Pages
             exclusivePageTransitionRoutine = null;
         }
 
-        private IEnumerator DeactivateOutgoingAfterIncomingShow(UIPage incoming, UIPage outgoing)
-        {
-            if (incoming != null)
-            {
-                yield return incoming.WaitForShowAnimation();
-            }
-
-            if (outgoing != null && !outgoing.Popup)
-            {
-                SetPageActive(outgoing, false);
-            }
-
-            exclusivePageTransitionRoutine = null;
-        }
-
         private void ApplyOtherPageState(UIPage page, PageId targetPageId, PageId[] ignoreList, bool otherActive)
         {
-            if (page.IgnoreOnExclusiveChange || page.Popup)
+            if (page.IgnoreOnExclusiveChange)
             {
                 return;
             }
 
             bool ignoreById = page.PageId != null && ignoreList.Contains(page.PageId);
-            if (!ignoreById)
+            if (ignoreById)
             {
-                SetPageActive(page, otherActive);
+                return;
             }
+
+            if (page.Popup && !closePopupsOnExclusivePageChange)
+            {
+                return;
+            }
+
+            if (page.Popup && !page.gameObject.activeInHierarchy)
+            {
+                return;
+            }
+
+            SetPageActive(page, otherActive);
         }
 
         private void StopExclusivePageTransition()

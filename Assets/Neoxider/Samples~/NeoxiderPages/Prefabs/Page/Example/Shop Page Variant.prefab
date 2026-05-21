@@ -10,20 +10,24 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 1927951975478552425, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
       propertyPath: m_Name
-      value: Shop Page
+      value: Shop Page Variant
       objectReference: {fileID: 0}
     - target: {fileID: 1927951975478552425, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
       propertyPath: m_IsActive
-      value: 0
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3679945709943576976, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
       propertyPath: m_fontAsset
       value: 
-      objectReference: {fileID: 11400000, guid: 7a4be880a1e2bb94d95070e5df28febb, type: 2}
+      objectReference: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 3679945709943576976, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
       propertyPath: m_sharedMaterial
       value: 
-      objectReference: {fileID: 8090098580851223287, guid: 7a4be880a1e2bb94d95070e5df28febb, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+    - target: {fileID: 3679945709943576976, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
+      propertyPath: 'm_ActiveFontFeatures.Array.data[0]'
+      value: 1801810542
+      objectReference: {fileID: 0}
     - target: {fileID: 5228441096180423392, guid: ad834cb432d1e204ab7e793c0921e60b, type: 3}
       propertyPath: m_fontAsset
       value: 

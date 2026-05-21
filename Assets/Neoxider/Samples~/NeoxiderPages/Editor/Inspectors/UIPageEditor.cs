@@ -47,7 +47,7 @@ namespace Neo.Pages.Editor
             EditorGUILayout.PropertyField(animationProp);
             EditorGUILayout.PropertyField(animationModeProp);
             EditorGUILayout.HelpBox(
-                "Page animations are restarted on every show/hide and forced to unscaled time. ForwardOnly animates show only, BackwardOnly animates hide only, ForwardAndBackward animates both.",
+                "Page animations are restarted on every show/hide and forced to unscaled time. None disables page animation, ForwardOnly animates show only, BackwardOnly animates hide only, ForwardAndBackward animates both.",
                 MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
