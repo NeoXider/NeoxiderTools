@@ -1,130 +1,130 @@
-## Динамические вьюшки
+﻿## Р”РёРЅР°РјРёС‡РµСЃРєРёРµ РІСЊСЋС€РєРё
 
-`Shop` может работать только как контроллер каталога и покупок, а внешние вьюшки могут полностью управлять видимыми ячейками.
+`Shop` РјРѕР¶РµС‚ СЂР°Р±РѕС‚Р°С‚СЊ С‚РѕР»СЊРєРѕ РєР°Рє РєРѕРЅС‚СЂРѕР»Р»РµСЂ РєР°С‚Р°Р»РѕРіР° Рё РїРѕРєСѓРїРѕРє, Р° РІРЅРµС€РЅРёРµ РІСЊСЋС€РєРё РјРѕРіСѓС‚ РїРѕР»РЅРѕСЃС‚СЊСЋ СѓРїСЂР°РІР»СЏС‚СЊ РІРёРґРёРјС‹РјРё СЏС‡РµР№РєР°РјРё.
 
-- Выключите `Auto Spawn Items`, если список рисует `ShopListView`.
-- Используйте `ShopListView` для создания/переиспользования `ShopItem` и фильтрации по `ShopItemData.Category`.
-- Используйте `ShopCategoryButton` для вкладок категорий, настроенных только через Inspector.
-- Runtime-хелперы каталога: `SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`.
-- Хелперы/события обновления: `RefreshVisuals()`, `OnShopChanged`, `GetCategories(...)`.
+- Р’С‹РєР»СЋС‡РёС‚Рµ `Auto Spawn Items`, РµСЃР»Рё СЃРїРёСЃРѕРє СЂРёСЃСѓРµС‚ `ShopListView`.
+- РСЃРїРѕР»СЊР·СѓР№С‚Рµ `ShopListView` РґР»СЏ СЃРѕР·РґР°РЅРёСЏ/РїРµСЂРµРёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ `ShopItem` Рё С„РёР»СЊС‚СЂР°С†РёРё РїРѕ `ShopItemData.Category`.
+- РСЃРїРѕР»СЊР·СѓР№С‚Рµ `ShopCategoryButton` РґР»СЏ РІРєР»Р°РґРѕРє РєР°С‚РµРіРѕСЂРёР№, РЅР°СЃС‚СЂРѕРµРЅРЅС‹С… С‚РѕР»СЊРєРѕ С‡РµСЂРµР· Inspector.
+- Runtime-С…РµР»РїРµСЂС‹ РєР°С‚Р°Р»РѕРіР°: `SetItems(...)`, `SetBundles(...)`, `SetMoneySpendSource(...)`, `SetAutoSpawnItems(...)`.
+- РҐРµР»РїРµСЂС‹/СЃРѕР±С‹С‚РёСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ: `RefreshVisuals()`, `OnShopChanged`, `GetCategories(...)`.
 
-Так один `Shop` остаётся источником правды для сейва, владения, цен, валют, бандлов и событий inventory bridge.
+РўР°Рє РѕРґРёРЅ `Shop` РѕСЃС‚Р°С‘С‚СЃСЏ РёСЃС‚РѕС‡РЅРёРєРѕРј РїСЂР°РІРґС‹ РґР»СЏ СЃРµР№РІР°, РІР»Р°РґРµРЅРёСЏ, С†РµРЅ, РІР°Р»СЋС‚, Р±Р°РЅРґР»РѕРІ Рё СЃРѕР±С‹С‚РёР№ inventory bridge.
 
-## Переопределение валюты по ключу сохранения
+## РџРµСЂРµРѕРїСЂРµРґРµР»РµРЅРёРµ РІР°Р»СЋС‚С‹ РїРѕ РєР»СЋС‡Сѓ СЃРѕС…СЂР°РЅРµРЅРёСЏ
 
-`ShopItemData` и `ShopBundleData` могут выбирать валюту по `Money.SaveKey`.
+`ShopItemData` Рё `ShopBundleData` РјРѕРіСѓС‚ РІС‹Р±РёСЂР°С‚СЊ РІР°Р»СЋС‚Сѓ РїРѕ `Money.SaveKey`.
 
-- Оставьте `Currency Override Save Key` пустым, чтобы использовать валюту магазина по умолчанию (`moneySpendSource`, затем `Money.I`).
-- Укажите ключ, например `Gems`, чтобы списывать из `Money`, у которого `SaveKey == "Gems"`.
-- Старый GameObject override всё ещё поддерживается как fallback для сценовых настроек, но для ScriptableObject рекомендуется ключ сохранения.
+- РћСЃС‚Р°РІСЊС‚Рµ `Currency Override Save Key` РїСѓСЃС‚С‹Рј, С‡С‚РѕР±С‹ РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ РІР°Р»СЋС‚Сѓ РјР°РіР°Р·РёРЅР° РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ (`moneySpendSource`, Р·Р°С‚РµРј `Money.I`).
+- РЈРєР°Р¶РёС‚Рµ РєР»СЋС‡, РЅР°РїСЂРёРјРµСЂ `Gems`, С‡С‚РѕР±С‹ СЃРїРёСЃС‹РІР°С‚СЊ РёР· `Money`, Сѓ РєРѕС‚РѕСЂРѕРіРѕ `SaveKey == "Gems"`.
+- РЎС‚Р°СЂС‹Р№ GameObject override РІСЃС‘ РµС‰С‘ РїРѕРґРґРµСЂР¶РёРІР°РµС‚СЃСЏ РєР°Рє fallback РґР»СЏ СЃС†РµРЅРѕРІС‹С… РЅР°СЃС‚СЂРѕРµРє, РЅРѕ РґР»СЏ ScriptableObject СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ РєР»СЋС‡ СЃРѕС…СЂР°РЅРµРЅРёСЏ.
 
 # Shop
 
-**Назначение:** Главный контроллер внутриигрового магазина. Отвечает за:
+**РќР°Р·РЅР°С‡РµРЅРёРµ:** Р“Р»Р°РІРЅС‹Р№ РєРѕРЅС‚СЂРѕР»Р»РµСЂ РІРЅСѓС‚СЂРёРёРіСЂРѕРІРѕРіРѕ РјР°РіР°Р·РёРЅР°. РћС‚РІРµС‡Р°РµС‚ Р·Р°:
 
-- генерацию UI товаров на основе `ShopItemData`;
-- обработку покупок одиночных товаров и **бандлов** (`ShopBundleData`);
-- сохранение прогресса (купленные предметы, экипировка, runtime-скидки) в едином JSON-блобе через `SaveProvider`;
-- управление выбранным (экипированным) предметом;
-- мультивалюту: на уровне предмета и/или бандла можно переопределить источник `IMoneySpend`.
+- РіРµРЅРµСЂР°С†РёСЋ UI С‚РѕРІР°СЂРѕРІ РЅР° РѕСЃРЅРѕРІРµ `ShopItemData`;
+- РѕР±СЂР°Р±РѕС‚РєСѓ РїРѕРєСѓРїРѕРє РѕРґРёРЅРѕС‡РЅС‹С… С‚РѕРІР°СЂРѕРІ Рё **Р±Р°РЅРґР»РѕРІ** (`ShopBundleData`);
+- СЃРѕС…СЂР°РЅРµРЅРёРµ РїСЂРѕРіСЂРµСЃСЃР° (РєСѓРїР»РµРЅРЅС‹Рµ РїСЂРµРґРјРµС‚С‹, СЌРєРёРїРёСЂРѕРІРєР°, runtime-СЃРєРёРґРєРё) РІ РµРґРёРЅРѕРј JSON-Р±Р»РѕР±Рµ С‡РµСЂРµР· `SaveProvider`;
+- СѓРїСЂР°РІР»РµРЅРёРµ РІС‹Р±СЂР°РЅРЅС‹Рј (СЌРєРёРїРёСЂРѕРІР°РЅРЅС‹Рј) РїСЂРµРґРјРµС‚РѕРј;
+- РјСѓР»СЊС‚РёРІР°Р»СЋС‚Сѓ: РЅР° СѓСЂРѕРІРЅРµ РїСЂРµРґРјРµС‚Р° Рё/РёР»Рё Р±Р°РЅРґР»Р° РјРѕР¶РЅРѕ РїРµСЂРµРѕРїСЂРµРґРµР»РёС‚СЊ РёСЃС‚РѕС‡РЅРёРє `IMoneySpend`.
 
-**Интеграция с инвентарём** вынесена в отдельный bridge — [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) (живёт в `Neo.Tools.Inventory`). Bridge слушает `Shop.OnPurchasedId` и грантит `InventoryItemData` по табличке маппингов. Это сознательное решение: `Neo.Shop.asmdef` не зависит от `Neo.Tools.Inventory` (избегаем asmdef-цикла).
+**РРЅС‚РµРіСЂР°С†РёСЏ СЃ РёРЅРІРµРЅС‚Р°СЂС‘Рј** РІС‹РЅРµСЃРµРЅР° РІ РѕС‚РґРµР»СЊРЅС‹Р№ bridge вЂ” [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) (Р¶РёРІС‘С‚ РІ `Neo.Tools.Inventory`). Bridge СЃР»СѓС€Р°РµС‚ `Shop.OnPurchasedId` Рё РіСЂР°РЅС‚РёС‚ `InventoryItemData` РїРѕ С‚Р°Р±Р»РёС‡РєРµ РјР°РїРїРёРЅРіРѕРІ. Р­С‚Рѕ СЃРѕР·РЅР°С‚РµР»СЊРЅРѕРµ СЂРµС€РµРЅРёРµ: `Neo.Shop.asmdef` РЅРµ Р·Р°РІРёСЃРёС‚ РѕС‚ `Neo.Tools.Inventory` (РёР·Р±РµРіР°РµРј asmdef-С†РёРєР»Р°).
 
-С версии **8.5.0** идентичность предмета — стабильный `string Id` из `ShopItemData` (а не индекс массива). Сейв-формат жёстко поменялся: старые ключи `Shop0/Shop1/.../ShopEquipped` больше не читаются (см. CHANGELOG `## [8.5.0] Breaking`).
+РЎ РІРµСЂСЃРёРё **8.5.0** РёРґРµРЅС‚РёС‡РЅРѕСЃС‚СЊ РїСЂРµРґРјРµС‚Р° вЂ” СЃС‚Р°Р±РёР»СЊРЅС‹Р№ `string Id` РёР· `ShopItemData` (Р° РЅРµ РёРЅРґРµРєСЃ РјР°СЃСЃРёРІР°). РЎРµР№РІ-С„РѕСЂРјР°С‚ Р¶С‘СЃС‚РєРѕ РїРѕРјРµРЅСЏР»СЃСЏ: СЃС‚Р°СЂС‹Рµ РєР»СЋС‡Рё `Shop0/Shop1/.../ShopEquipped` Р±РѕР»СЊС€Рµ РЅРµ С‡РёС‚Р°СЋС‚СЃСЏ (СЃРј. CHANGELOG `## [8.5.0] Breaking`).
 
-С **8.5.1**, если в каталоге остались ассеты с пустым `Id`, `Shop` в `Awake` подставляет уникальные id **до** `LoadProfile()` (подробнее — [ShopItemData → Автозаполнение Id](./ShopItemData.md#автозаполнение-id)). Это устраняет ситуацию, когда все ячейки `ShopListView` показывают одно состояние (например **USED** без цены).
+РЎ **8.5.1**, РµСЃР»Рё РІ РєР°С‚Р°Р»РѕРіРµ РѕСЃС‚Р°Р»РёСЃСЊ Р°СЃСЃРµС‚С‹ СЃ РїСѓСЃС‚С‹Рј `Id`, `Shop` РІ `Awake` РїРѕРґСЃС‚Р°РІР»СЏРµС‚ СѓРЅРёРєР°Р»СЊРЅС‹Рµ id **РґРѕ** `LoadProfile()` (РїРѕРґСЂРѕР±РЅРµРµ вЂ” [ShopItemData в†’ РђРІС‚РѕР·Р°РїРѕР»РЅРµРЅРёРµ Id](./ShopItemData.md#Р°РІС‚РѕР·Р°РїРѕР»РЅРµРЅРёРµ-id)). Р­С‚Рѕ СѓСЃС‚СЂР°РЅСЏРµС‚ СЃРёС‚СѓР°С†РёСЋ, РєРѕРіРґР° РІСЃРµ СЏС‡РµР№РєРё `ShopListView` РїРѕРєР°Р·С‹РІР°СЋС‚ РѕРґРЅРѕ СЃРѕСЃС‚РѕСЏРЅРёРµ (РЅР°РїСЂРёРјРµСЂ **USED** Р±РµР· С†РµРЅС‹).
 
-## Подключение
+## РџРѕРґРєР»СЋС‡РµРЅРёРµ
 
-1. `Add Component > Neoxider > Shop > Shop` на пустой объект.
-2. В `_shopItemDatas` — массив `ShopItemData` (см. [ShopItemData](./ShopItemData.md)).
-3. (Опционально) `_bundles` — массив `ShopBundleData` (см. [ShopBundleData](./ShopBundleData.md)).
-4. `_prefab` + `_container` если хотите автоспавн UI; иначе руками положите готовые `ShopItem` в `_shopItems`.
-5. (Опционально) Добавьте [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) на ту же GO для авто-выдачи `InventoryItemData` при покупке.
+1. `Add Component > Neoxider > Shop > Shop` РЅР° РїСѓСЃС‚РѕР№ РѕР±СЉРµРєС‚.
+2. Р’ `_shopItemDatas` вЂ” РјР°СЃСЃРёРІ `ShopItemData` (СЃРј. [ShopItemData](./ShopItemData.md)).
+3. (РћРїС†РёРѕРЅР°Р»СЊРЅРѕ) `_bundles` вЂ” РјР°СЃСЃРёРІ `ShopBundleData` (СЃРј. [ShopBundleData](./ShopBundleData.md)).
+4. `_prefab` + `_container` РµСЃР»Рё С…РѕС‚РёС‚Рµ Р°РІС‚РѕСЃРїР°РІРЅ UI; РёРЅР°С‡Рµ СЂСѓРєР°РјРё РїРѕР»РѕР¶РёС‚Рµ РіРѕС‚РѕРІС‹Рµ `ShopItem` РІ `_shopItems`.
+5. (РћРїС†РёРѕРЅР°Р»СЊРЅРѕ) Р”РѕР±Р°РІСЊС‚Рµ [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) РЅР° С‚Сѓ Р¶Рµ GO РґР»СЏ Р°РІС‚Рѕ-РІС‹РґР°С‡Рё `InventoryItemData` РїСЂРё РїРѕРєСѓРїРєРµ.
 
-## Покупочный поток (`ShopPurchaseFlow`)
+## РџРѕРєСѓРїРѕС‡РЅС‹Р№ РїРѕС‚РѕРє (`ShopPurchaseFlow`)
 
-| Режим | Поведение |
+| Р РµР¶РёРј | РџРѕРІРµРґРµРЅРёРµ |
 |-------|-----------|
-| `BuyAndEquip` (по умолчанию) | Купить → авто-выбрать. Поведение, совместимое со старым `_useSetItem = true`. |
-| `BuyOnly` | Только покупка, экипировка не меняется. |
-| `EquipOnly` | Никаких списаний — только смена выбранного предмета (косметика, переключатель скинов). |
-| `Browse` | Read-only витрина: `Buy()` и `BuyBundle()` — no-op, превью работает. |
+| `BuyAndEquip` (РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ) | РљСѓРїРёС‚СЊ в†’ Р°РІС‚Рѕ-РІС‹Р±СЂР°С‚СЊ. РџРѕРІРµРґРµРЅРёРµ, СЃРѕРІРјРµСЃС‚РёРјРѕРµ СЃРѕ СЃС‚Р°СЂС‹Рј `_useSetItem = true`. |
+| `BuyOnly` | РўРѕР»СЊРєРѕ РїРѕРєСѓРїРєР°, СЌРєРёРїРёСЂРѕРІРєР° РЅРµ РјРµРЅСЏРµС‚СЃСЏ. |
+| `EquipOnly` | РќРёРєР°РєРёС… СЃРїРёСЃР°РЅРёР№ вЂ” С‚РѕР»СЊРєРѕ СЃРјРµРЅР° РІС‹Р±СЂР°РЅРЅРѕРіРѕ РїСЂРµРґРјРµС‚Р° (РєРѕСЃРјРµС‚РёРєР°, РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ СЃРєРёРЅРѕРІ). |
+| `Browse` | Read-only РІРёС‚СЂРёРЅР°: `Buy()` Рё `BuyBundle()` вЂ” no-op, РїСЂРµРІСЊСЋ СЂР°Р±РѕС‚Р°РµС‚. |
 
-## Основные настройки (Inspector)
+## РћСЃРЅРѕРІРЅС‹Рµ РЅР°СЃС‚СЂРѕР№РєРё (Inspector)
 
-| Поле | Описание |
+| РџРѕР»Рµ | РћРїРёСЃР°РЅРёРµ |
 |------|----------|
-| `_purchaseFlow` | Режим покупочного потока, см. таблицу выше. |
-| `_shopItemDatas` | Массив `ShopItemData`. Источник цен, иконок, описаний и стабильных id. |
-| `_bundles` | Опциональный массив `ShopBundleData`. |
-| `_shopItemPreview` | UI-предпросмотр выбранного товара. |
-| `_shopItems` | Заполняется автоматически дочерними `ShopItem` + автоспавном из `_prefab`. |
-| `_container`, `_prefab` | Контейнер и префаб для автоспавна. |
-| `_keySave` | Единый ключ `SaveProvider` для JSON `ShopProfileData`. Удаление этого ключа полностью сбрасывает магазин. |
-| `moneySpendSource` | Default-объект с `IMoneySpend`. Если `null`, используется `Money.I`. Item/Bundle `CurrencyOverrideSaveKey` имеют приоритет. |
-| `_autoSubscribe` | Авто-подписка `ShopItem.buttonBuy` на `Buy(index)`. |
-| `_changePreviewOnPurchaseFailed` | Менять превью при неудачной покупке. |
-| `_propagateSelectionVisual` (бывш. `_useSetItem`) | Вызывать `ShopItem.Select(bool)` на всех элементах при смене экипировки. |
-| `_activateSavedEquipped` | Автовыбор при загрузке (только `BuyAndEquip` / `EquipOnly`): сохранённый предмет, а если сейва нет или id устарел — **первый** в `_shopItemDatas`. |
-| `_prices`, `_keySaveEquipped` | **Устарели.** Сохранены как `[SerializeField]` для совместимости старых сцен, но игнорируются в рантайме. |
+| `_purchaseFlow` | Р РµР¶РёРј РїРѕРєСѓРїРѕС‡РЅРѕРіРѕ РїРѕС‚РѕРєР°, СЃРј. С‚Р°Р±Р»РёС†Сѓ РІС‹С€Рµ. |
+| `_shopItemDatas` | РњР°СЃСЃРёРІ `ShopItemData`. РСЃС‚РѕС‡РЅРёРє С†РµРЅ, РёРєРѕРЅРѕРє, РѕРїРёСЃР°РЅРёР№ Рё СЃС‚Р°Р±РёР»СЊРЅС‹С… id. |
+| `_bundles` | РћРїС†РёРѕРЅР°Р»СЊРЅС‹Р№ РјР°СЃСЃРёРІ `ShopBundleData`. |
+| `_shopItemPreview` | UI-РїСЂРµРґРїСЂРѕСЃРјРѕС‚СЂ РІС‹Р±СЂР°РЅРЅРѕРіРѕ С‚РѕРІР°СЂР°. |
+| `_shopItems` | Р—Р°РїРѕР»РЅСЏРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РґРѕС‡РµСЂРЅРёРјРё `ShopItem` + Р°РІС‚РѕСЃРїР°РІРЅРѕРј РёР· `_prefab`. |
+| `_container`, `_prefab` | РљРѕРЅС‚РµР№РЅРµСЂ Рё РїСЂРµС„Р°Р± РґР»СЏ Р°РІС‚РѕСЃРїР°РІРЅР°. |
+| `_keySave` | Р•РґРёРЅС‹Р№ РєР»СЋС‡ `SaveProvider` РґР»СЏ JSON `ShopProfileData`. РЈРґР°Р»РµРЅРёРµ СЌС‚РѕРіРѕ РєР»СЋС‡Р° РїРѕР»РЅРѕСЃС‚СЊСЋ СЃР±СЂР°СЃС‹РІР°РµС‚ РјР°РіР°Р·РёРЅ. |
+| `moneySpendSource` | Default-РѕР±СЉРµРєС‚ СЃ `IMoneySpend`. Р•СЃР»Рё `null`, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ `Money.I`. Item/Bundle `CurrencyOverrideSaveKey` РёРјРµСЋС‚ РїСЂРёРѕСЂРёС‚РµС‚. |
+| `_autoSubscribe` | РђРІС‚Рѕ-РїРѕРґРїРёСЃРєР° `ShopItem.buttonBuy` РЅР° `Buy(index)`. |
+| `_changePreviewOnPurchaseFailed` | РњРµРЅСЏС‚СЊ РїСЂРµРІСЊСЋ РїСЂРё РЅРµСѓРґР°С‡РЅРѕР№ РїРѕРєСѓРїРєРµ. |
+| `_propagateSelectionVisual` (Р±С‹РІС€. `_useSetItem`) | Р’С‹Р·С‹РІР°С‚СЊ `ShopItem.Select(bool)` РЅР° РІСЃРµС… СЌР»РµРјРµРЅС‚Р°С… РїСЂРё СЃРјРµРЅРµ СЌРєРёРїРёСЂРѕРІРєРё. |
+| `_activateSavedEquipped` | РђРІС‚РѕРІС‹Р±РѕСЂ РїСЂРё Р·Р°РіСЂСѓР·РєРµ (С‚РѕР»СЊРєРѕ `BuyAndEquip` / `EquipOnly`): СЃРѕС…СЂР°РЅС‘РЅРЅС‹Р№ РїСЂРµРґРјРµС‚, Р° РµСЃР»Рё СЃРµР№РІР° РЅРµС‚ РёР»Рё id СѓСЃС‚Р°СЂРµР» вЂ” **РїРµСЂРІС‹Р№** РІ `_shopItemDatas`. |
+| `_prices`, `_keySaveEquipped` | **РЈСЃС‚Р°СЂРµР»Рё.** РЎРѕС…СЂР°РЅРµРЅС‹ РєР°Рє `[SerializeField]` РґР»СЏ СЃРѕРІРјРµСЃС‚РёРјРѕСЃС‚Рё СЃС‚Р°СЂС‹С… СЃС†РµРЅ, РЅРѕ РёРіРЅРѕСЂРёСЂСѓСЋС‚СЃСЏ РІ СЂР°РЅС‚Р°Р№РјРµ. |
 
-## Публичный API
+## РџСѓР±Р»РёС‡РЅС‹Р№ API
 
-### String-based (рекомендуется с 8.5.0)
+### String-based (СЂРµРєРѕРјРµРЅРґСѓРµС‚СЃСЏ СЃ 8.5.0)
 
-| Член | Назначение |
+| Р§Р»РµРЅ | РќР°Р·РЅР°С‡РµРЅРёРµ |
 |------|-----------|
-| `EquippedId : string` | Текущий выбранный предмет. |
-| `PreviewIdString : string` | Предмет в превью-слоте. |
-| `Buy(string itemId)` | Купить / экипировать по id. Уважает `_purchaseFlow`. |
-| `BuyBundle(string bundleId)` | Купить бандл. Все items бандла попадают в owned; `OnPurchasedId` срабатывает для каждого предмета (bridge подхватит выдачу в инвентарь). |
-| `Select(string itemId)` | Экипировать без покупки. Передайте `""` для очистки. |
-| `ShowPreview(string itemId)` | Подсветить предмет в превью. |
-| `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | Проверка владения. |
-| `GetPrice(string itemId)` | Текущая цена (с учётом runtime-override). |
-| `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | Скидки / временные оверрайды цены. |
-| `GetItemsInCategory(string category)` | Фильтр по `ShopItemData.Category`. |
-| `ShopItemDatas`, `Bundles` | Доступ к каталогам. |
+| `EquippedId : string` | РўРµРєСѓС‰РёР№ РІС‹Р±СЂР°РЅРЅС‹Р№ РїСЂРµРґРјРµС‚. |
+| `PreviewIdString : string` | РџСЂРµРґРјРµС‚ РІ РїСЂРµРІСЊСЋ-СЃР»РѕС‚Рµ. |
+| `Buy(string itemId)` | РљСѓРїРёС‚СЊ / СЌРєРёРїРёСЂРѕРІР°С‚СЊ РїРѕ id. РЈРІР°Р¶Р°РµС‚ `_purchaseFlow`. |
+| `BuyBundle(string bundleId)` | РљСѓРїРёС‚СЊ Р±Р°РЅРґР». Р’СЃРµ items Р±Р°РЅРґР»Р° РїРѕРїР°РґР°СЋС‚ РІ owned; `OnPurchasedId` СЃСЂР°Р±Р°С‚С‹РІР°РµС‚ РґР»СЏ РєР°Р¶РґРѕРіРѕ РїСЂРµРґРјРµС‚Р° (bridge РїРѕРґС…РІР°С‚РёС‚ РІС‹РґР°С‡Сѓ РІ РёРЅРІРµРЅС‚Р°СЂСЊ). |
+| `Select(string itemId)` | Р­РєРёРїРёСЂРѕРІР°С‚СЊ Р±РµР· РїРѕРєСѓРїРєРё. РџРµСЂРµРґР°Р№С‚Рµ `""` РґР»СЏ РѕС‡РёСЃС‚РєРё. |
+| `ShowPreview(string itemId)` | РџРѕРґСЃРІРµС‚РёС‚СЊ РїСЂРµРґРјРµС‚ РІ РїСЂРµРІСЊСЋ. |
+| `IsOwned(string itemId)` / `IsBundleOwned(string bundleId)` | РџСЂРѕРІРµСЂРєР° РІР»Р°РґРµРЅРёСЏ. |
+| `GetPrice(string itemId)` | РўРµРєСѓС‰Р°СЏ С†РµРЅР° (СЃ СѓС‡С‘С‚РѕРј runtime-override). |
+| `SetRuntimePrice(string itemId, float price)` / `ClearRuntimePrice(string itemId)` | РЎРєРёРґРєРё / РІСЂРµРјРµРЅРЅС‹Рµ РѕРІРµСЂСЂР°Р№РґС‹ С†РµРЅС‹. |
+| `GetItemsInCategory(string category)` | Р¤РёР»СЊС‚СЂ РїРѕ `ShopItemData.Category`. |
+| `ShopItemDatas`, `Bundles` | Р”РѕСЃС‚СѓРї Рє РєР°С‚Р°Р»РѕРіР°Рј. |
 
-### Legacy int-API (`[Obsolete]`, удалится в v9)
+### Legacy int-API (`[Obsolete]`, СѓРґР°Р»РёС‚СЃСЏ РІ v9)
 
-| Член | Поведение |
+| Р§Р»РµРЅ | РџРѕРІРµРґРµРЅРёРµ |
 |------|-----------|
-| `Id : int` | Прокси: `IndexOfItemDataById(EquippedId)` / `Select(items[i].Id)`. |
+| `Id : int` | РџСЂРѕРєСЃРё: `IndexOfItemDataById(EquippedId)` / `Select(items[i].Id)`. |
 | `PreviewId : int` | `IndexOfItemDataById(PreviewIdString)`. |
-| `Buy()` | Покупает `PreviewIdString` (fallback на `EquippedId`). |
-| `Buy(int id)` | Резолвит `_shopItemDatas[id].Id` → `Buy(string)`. |
-| `ShowPreview(int id)` | Резолвит `_shopItemDatas[id].Id` → `ShowPreview(string)`. |
-| `Prices : int[]` | Возвращает устаревший массив; в рантайме игнорируется. |
+| `Buy()` | РџРѕРєСѓРїР°РµС‚ `PreviewIdString` (fallback РЅР° `EquippedId`). |
+| `Buy(int id)` | Р РµР·РѕР»РІРёС‚ `_shopItemDatas[id].Id` в†’ `Buy(string)`. |
+| `ShowPreview(int id)` | Р РµР·РѕР»РІРёС‚ `_shopItemDatas[id].Id` в†’ `ShowPreview(string)`. |
+| `Prices : int[]` | Р’РѕР·РІСЂР°С‰Р°РµС‚ СѓСЃС‚Р°СЂРµРІС€РёР№ РјР°СЃСЃРёРІ; РІ СЂР°РЅС‚Р°Р№РјРµ РёРіРЅРѕСЂРёСЂСѓРµС‚СЃСЏ. |
 
-## События
+## РЎРѕР±С‹С‚РёСЏ
 
-| Событие | Параметр | Когда срабатывает |
+| РЎРѕР±С‹С‚РёРµ | РџР°СЂР°РјРµС‚СЂ | РљРѕРіРґР° СЃСЂР°Р±Р°С‚С‹РІР°РµС‚ |
 |---------|----------|-------------------|
-| `OnSelect` | `int` индекс | Экипировка — legacy. |
-| `OnSelectId` | `string` id | Экипировка. |
-| `OnPurchased` | `int` индекс | Успешная покупка — legacy. |
-| `OnPurchasedId` | `string` id | Успешная покупка предмета. |
-| `OnPurchaseFailed` | `int` индекс | Не хватило денег — legacy. |
-| `OnPurchaseFailedId` | `string` id | Не хватило денег (для предмета или бандла). |
-| `OnPurchasedBundle` | `ShopBundleData` | Бандл куплен (после выдачи всех items). |
-| `OnLoad` | — | Готов после `Start()`. |
+| `OnSelect` | `int` РёРЅРґРµРєСЃ | Р­РєРёРїРёСЂРѕРІРєР° вЂ” legacy. |
+| `OnSelectId` | `string` id | Р­РєРёРїРёСЂРѕРІРєР°. |
+| `OnPurchased` | `int` РёРЅРґРµРєСЃ | РЈСЃРїРµС€РЅР°СЏ РїРѕРєСѓРїРєР° вЂ” legacy. |
+| `OnPurchasedId` | `string` id | РЈСЃРїРµС€РЅР°СЏ РїРѕРєСѓРїРєР° РїСЂРµРґРјРµС‚Р°. |
+| `OnPurchaseFailed` | `int` РёРЅРґРµРєСЃ | РќРµ С…РІР°С‚РёР»Рѕ РґРµРЅРµРі вЂ” legacy. |
+| `OnPurchaseFailedId` | `string` id | РќРµ С…РІР°С‚РёР»Рѕ РґРµРЅРµРі (РґР»СЏ РїСЂРµРґРјРµС‚Р° РёР»Рё Р±Р°РЅРґР»Р°). |
+| `OnPurchasedBundle` | `ShopBundleData` | Р‘Р°РЅРґР» РєСѓРїР»РµРЅ (РїРѕСЃР»Рµ РІС‹РґР°С‡Рё РІСЃРµС… items). |
+| `OnLoad` | вЂ” | Р“РѕС‚РѕРІ РїРѕСЃР»Рµ `Start()`. |
 
-> Inventory grant события (`OnGranted` с `(InventoryItemData, int)`) живут на [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), а не на Shop.
+> Inventory grant СЃРѕР±С‹С‚РёСЏ (`OnGranted` СЃ `(InventoryItemData, int)`) Р¶РёРІСѓС‚ РЅР° [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), Р° РЅРµ РЅР° Shop.
 
-## Совместимость со старыми сценами
+## РЎРѕРІРјРµСЃС‚РёРјРѕСЃС‚СЊ СЃРѕ СЃС‚Р°СЂС‹РјРё СЃС†РµРЅР°РјРё
 
-- Старые поля `_prices`, `_keySaveEquipped`, `_useSetItem` (теперь `_propagateSelectionVisual` через `FormerlySerializedAs`), `_activateSavedEquipped` остаются сериализуемыми — сцены, открытые в Unity, не теряют данные инспектора.
-- **Сейв-формат жёстко поменялся** (wipe): сохранённые покупки из старого формата `Shop0/Shop1` НЕ читаются. При первом запуске магазин стартует с пустым `ShopProfileData`.
-- UnityEvent-подписки на `OnSelect<int>` / `OnPurchased<int>` продолжают работать — `Buy(string)` поднимает оба варианта событий (`int` + `string`).
+- РЎС‚Р°СЂС‹Рµ РїРѕР»СЏ `_prices`, `_keySaveEquipped`, `_useSetItem` (С‚РµРїРµСЂСЊ `_propagateSelectionVisual` С‡РµСЂРµР· `FormerlySerializedAs`), `_activateSavedEquipped` РѕСЃС‚Р°СЋС‚СЃСЏ СЃРµСЂРёР°Р»РёР·СѓРµРјС‹РјРё вЂ” СЃС†РµРЅС‹, РѕС‚РєСЂС‹С‚С‹Рµ РІ Unity, РЅРµ С‚РµСЂСЏСЋС‚ РґР°РЅРЅС‹Рµ РёРЅСЃРїРµРєС‚РѕСЂР°.
+- **РЎРµР№РІ-С„РѕСЂРјР°С‚ Р¶С‘СЃС‚РєРѕ РїРѕРјРµРЅСЏР»СЃСЏ** (wipe): СЃРѕС…СЂР°РЅС‘РЅРЅС‹Рµ РїРѕРєСѓРїРєРё РёР· СЃС‚Р°СЂРѕРіРѕ С„РѕСЂРјР°С‚Р° `Shop0/Shop1` РќР• С‡РёС‚Р°СЋС‚СЃСЏ. РџСЂРё РїРµСЂРІРѕРј Р·Р°РїСѓСЃРєРµ РјР°РіР°Р·РёРЅ СЃС‚Р°СЂС‚СѓРµС‚ СЃ РїСѓСЃС‚С‹Рј `ShopProfileData`.
+- UnityEvent-РїРѕРґРїРёСЃРєРё РЅР° `OnSelect<int>` / `OnPurchased<int>` РїСЂРѕРґРѕР»Р¶Р°СЋС‚ СЂР°Р±РѕС‚Р°С‚СЊ вЂ” `Buy(string)` РїРѕРґРЅРёРјР°РµС‚ РѕР±Р° РІР°СЂРёР°РЅС‚Р° СЃРѕР±С‹С‚РёР№ (`int` + `string`).
 
-## Тесты
+## РўРµСЃС‚С‹
 
-- `Assets/Tests/Play/ShopPurchasePlayModeTests.cs` — основной PlayMode набор для покупок, бандлов, режимов магазина, multi-currency, инвентаря и `ShopListView`.
-- `Assets/Tests/Edit/ShopProfileDataTests.cs` — EditMode проверки профиля, JSON, sanitize и runtime price overrides.
-- `Assets/Tests/Edit/Save/ShopManagerTests.cs` — legacy-проверки Shop/Save.
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` вЂ” РѕСЃРЅРѕРІРЅРѕР№ PlayMode РЅР°Р±РѕСЂ РґР»СЏ РїРѕРєСѓРїРѕРє, Р±Р°РЅРґР»РѕРІ, СЂРµР¶РёРјРѕРІ РјР°РіР°Р·РёРЅР°, multi-currency, РёРЅРІРµРЅС‚Р°СЂСЏ Рё `ShopListView`.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` вЂ” EditMode РїСЂРѕРІРµСЂРєРё РїСЂРѕС„РёР»СЏ, JSON, sanitize Рё runtime price overrides.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` вЂ” legacy-РїСЂРѕРІРµСЂРєРё Shop/Save.
 
-## См. также
+## РЎРј. С‚Р°РєР¶Рµ
 
-- [Корень модуля](../README.md) · [ShopItemData](./ShopItemData.md) · [ShopBundleData](./ShopBundleData.md) · [Money](./Money.md) · [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) · [Tools/Inventory](../Tools/Inventory/README.md)
+- [РљРѕСЂРµРЅСЊ РјРѕРґСѓР»СЏ](../README.md) В· [ShopItemData](./ShopItemData.md) В· [ShopBundleData](./ShopBundleData.md) В· [Money](./Money.md) В· [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) В· [Tools/Inventory](../Tools/Inventory/README.md)

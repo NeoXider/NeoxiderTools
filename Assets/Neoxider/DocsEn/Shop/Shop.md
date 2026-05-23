@@ -1,4 +1,4 @@
-# Shop
+﻿# Shop
 
 **Purpose:** Main in-game shop controller. Responsible for:
 
@@ -8,11 +8,11 @@
 - managing the selected (equipped) item;
 - multi-currency support: per-item and per-bundle `IMoneySpend` overrides.
 
-**Inventory integration** lives in a separate bridge — [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) (in `Neo.Tools.Inventory`). The bridge listens to `Shop.OnPurchasedId` and grants `InventoryItemData` based on its mapping table. This is intentional: `Neo.Shop.asmdef` does not depend on `Neo.Tools.Inventory` (avoids an asmdef cycle).
+**Inventory integration** lives in a separate bridge вЂ” [ShopInventoryGrantBridge](../Tools/Inventory/ShopInventoryGrantBridge.md) (in `Neo.Tools.Inventory`). The bridge listens to `Shop.OnPurchasedId` and grants `InventoryItemData` based on its mapping table. This is intentional: `Neo.Shop.asmdef` does not depend on `Neo.Tools.Inventory` (avoids an asmdef cycle).
 
 Since version **8.5.0** item identity is the stable `string Id` from `ShopItemData` (no longer an array index). Save format is a hard break: legacy keys `Shop0/Shop1/.../ShopEquipped` are no longer read (see CHANGELOG `## [8.5.0] Breaking`).
 
-Since **8.5.1**, if catalog assets still have an empty `Id`, `Shop` backfills unique ids in `Awake` **before** `LoadProfile()` (details: [ShopItemData → Id auto-fill](./ShopItemData.md#id-auto-fill)). This fixes cases where every `ShopListView` cell showed the same state (e.g. **USED** with no price).
+Since **8.5.1**, if catalog assets still have an empty `Id`, `Shop` backfills unique ids in `Awake` **before** `LoadProfile()` (details: [ShopItemData в†’ Id auto-fill](./ShopItemData.md#id-auto-fill)). This fixes cases where every `ShopListView` cell showed the same state (e.g. **USED** with no price).
 
 ## Dynamic Views
 
@@ -38,7 +38,7 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 
 1. `Add Component > Neoxider > Shop > Shop` on an empty GameObject.
 2. Fill `_shopItemDatas` with `ShopItemData` assets (see [ShopItemData](./ShopItemData.md)).
-3. (Optional) `_bundles` — array of `ShopBundleData`.
+3. (Optional) `_bundles` вЂ” array of `ShopBundleData`.
 4. `_prefab` + `_container` for auto-spawn UI; or pre-place `ShopItem` components and assign `_shopItems`.
 5. (Optional) Add [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md) on the same GameObject to auto-grant `InventoryItemData` on purchase.
 
@@ -46,9 +46,9 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 
 | Mode | Behavior |
 |------|----------|
-| `BuyAndEquip` (default) | Buy → auto-select. Equivalent to the legacy `_useSetItem = true` path. |
+| `BuyAndEquip` (default) | Buy в†’ auto-select. Equivalent to the legacy `_useSetItem = true` path. |
 | `BuyOnly` | Purchase only; equipped item is not changed. |
-| `EquipOnly` | No spending — toggle selection only (skin/cosmetic UI). |
+| `EquipOnly` | No spending вЂ” toggle selection only (skin/cosmetic UI). |
 | `Browse` | Read-only storefront: `Buy()` and `BuyBundle()` are no-ops; preview still works. |
 
 ## Key fields (Inspector)
@@ -94,37 +94,37 @@ This keeps one `Shop` as the source of truth for save, ownership, prices, curren
 | `Id : int` | Proxy: `IndexOfItemDataById(EquippedId)` / `Select(items[i].Id)`. |
 | `PreviewId : int` | `IndexOfItemDataById(PreviewIdString)`. |
 | `Buy()` | Buys `PreviewIdString` (fallback to `EquippedId`). |
-| `Buy(int id)` | Resolves `_shopItemDatas[id].Id` → `Buy(string)`. |
-| `ShowPreview(int id)` | Resolves `_shopItemDatas[id].Id` → `ShowPreview(string)`. |
+| `Buy(int id)` | Resolves `_shopItemDatas[id].Id` в†’ `Buy(string)`. |
+| `ShowPreview(int id)` | Resolves `_shopItemDatas[id].Id` в†’ `ShowPreview(string)`. |
 | `Prices : int[]` | Legacy array; ignored at runtime. |
 
 ## Events
 
 | Event | Argument | When |
 |-------|----------|------|
-| `OnSelect` | `int` index | Equip — legacy. |
+| `OnSelect` | `int` index | Equip вЂ” legacy. |
 | `OnSelectId` | `string` id | Equip. |
-| `OnPurchased` | `int` index | Successful purchase — legacy. |
+| `OnPurchased` | `int` index | Successful purchase вЂ” legacy. |
 | `OnPurchasedId` | `string` id | Successful item purchase. |
-| `OnPurchaseFailed` | `int` index | Insufficient funds — legacy. |
+| `OnPurchaseFailed` | `int` index | Insufficient funds вЂ” legacy. |
 | `OnPurchaseFailedId` | `string` id | Insufficient funds (item or bundle). |
 | `OnPurchasedBundle` | `ShopBundleData` | Bundle purchased (after all items granted). |
-| `OnLoad` | — | Fired after `Start()`. |
+| `OnLoad` | вЂ” | Fired after `Start()`. |
 
 > Inventory grant events (`OnGranted` with `(InventoryItemData, int)`) live on [`ShopInventoryGrantBridge`](../Tools/Inventory/ShopInventoryGrantBridge.md), not on Shop itself.
 
 ## Legacy scene compatibility
 
-- Old serialized fields (`_prices`, `_keySaveEquipped`, `_useSetItem` → `_propagateSelectionVisual` via `FormerlySerializedAs`, `_activateSavedEquipped`) are kept — scenes opened in Unity preserve Inspector data.
+- Old serialized fields (`_prices`, `_keySaveEquipped`, `_useSetItem` в†’ `_propagateSelectionVisual` via `FormerlySerializedAs`, `_activateSavedEquipped`) are kept вЂ” scenes opened in Unity preserve Inspector data.
 - **Save format is a hard break (wipe)**: legacy `Shop0/Shop1` keys are not read; on first launch the shop starts with an empty `ShopProfileData`.
-- UnityEvent subscriptions to `OnSelect<int>` / `OnPurchased<int>` keep working — `Buy(string)` raises both `int` and `string` event variants.
+- UnityEvent subscriptions to `OnSelect<int>` / `OnPurchased<int>` keep working вЂ” `Buy(string)` raises both `int` and `string` event variants.
 
 ## Tests
 
-- `Assets/Tests/Play/ShopPurchasePlayModeTests.cs` — main PlayMode coverage for purchases, bundles, shop flows, multi-currency, inventory, and `ShopListView`.
-- `Assets/Tests/Edit/ShopProfileDataTests.cs` — EditMode profile, JSON, sanitize, and runtime price override coverage.
-- `Assets/Tests/Edit/Save/ShopManagerTests.cs` — legacy Shop/Save coverage.
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` вЂ” main PlayMode coverage for purchases, bundles, shop flows, multi-currency, inventory, and `ShopListView`.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` вЂ” EditMode profile, JSON, sanitize, and runtime price override coverage.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` вЂ” legacy Shop/Save coverage.
 
 ## See also
 
-- [Module root](../README.md) · [ShopItemData](./ShopItemData.md) · [Money](./Money.md) · [Russian Shop docs](../../Docs/Shop/README.md)
+- [Module root](../README.md) В· [ShopItemData](./ShopItemData.md) В· [Money](./Money.md) В· [Russian Shop docs](../../Docs/Shop/README.md)

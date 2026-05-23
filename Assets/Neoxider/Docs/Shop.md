@@ -36,6 +36,7 @@
 - `SetMoneyForLevel(bool resetLevelMoney = true)`: Переводит деньги, заработанные за уровень, на основной баланс. Возвращает `float` — переведенную сумму.
 - `CanSpend(float count)`: Проверяет, достаточно ли денег для совершения покупки. Возвращает `bool`.
 - `Spend(float count)`: Списывает указанное количество денег с основного баланса. Возвращает `bool` — `true` в случае успеха и `false`, если средств недостаточно.
+- `SpendFromButton(float count)`: `void`-обёртка для `Button.onClick` / `UnityEvent`, когда результат списания не нужен.
 - `Add(float count)`: Начисляет деньги на основной баланс.
 
 **Unity Events**

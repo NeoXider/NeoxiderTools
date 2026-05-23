@@ -56,8 +56,8 @@ Bridge живёт в `Neo.Tools.Inventory` (а не в `Neo.Shop`) — это с
 
 Shop покрыт EditMode и PlayMode тестами:
 
-- `Assets/Tests/Play/ShopPurchasePlayModeTests.cs` — покупки, бандлы, runtime-цены, режимы `Browse` / `EquipOnly`, интеграция с инвентарём, multi-currency и `ShopListView`.
-- `Assets/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides и clone.
-- `Assets/Tests/Edit/Save/ShopManagerTests.cs` — legacy-проверки Shop/Save.
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — покупки, бандлы, runtime-цены, режимы `Browse` / `EquipOnly`, интеграция с инвентарём, multi-currency и `ShopListView`.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides и clone.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` — legacy-проверки Shop/Save.
 
 Запуск: Unity Test Runner → EditMode / PlayMode.

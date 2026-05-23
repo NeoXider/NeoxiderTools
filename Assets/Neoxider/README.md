@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-8.5.5-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-8.5.8-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -65,6 +65,7 @@ Copy `Assets/Neoxider` into your Unity project.
   - `Odin Inspector` (components work perfectly without it)
   - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
   - **Mirror** (required only for `Neo.Network` / multiplayer; see [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md))
+  - **URP** (`com.unity.render-pipelines.universal`) only if your project uses URP-specific rendering features or 2D lights; the package no longer installs URP automatically.
 
 ## Quick Start
 
@@ -132,7 +133,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 
 ## Tests
 
-- Baseline `EditMode` tests live in `Assets/Neoxider/Editor/Tests/`.
+- Package tests live in `Assets/Neoxider/Tests/` (`Edit`, `Play`, and `PlayMode`), with editor-only tests under `Assets/Neoxider/Tests/Editor/`.
 - The package currently includes coverage for save flows, level helpers, bootstrap order, legacy visibility rules, and RPG combat/runtime behavior.
 
 ## Project Layout
@@ -141,7 +142,7 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 Assets/Neoxider/
   Scripts/       # Runtime modules and asmdef-separated code
   Editor/        # Editor tooling
-    Tests/       # EditMode tests for package runtime/editor-critical flows
+  Tests/         # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/          # User-facing documentation (RU)
   DocsEn/        # English onboarding and mirrored docs
   Samples~/      # UPM samples

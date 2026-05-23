@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 
@@ -52,11 +53,13 @@ namespace Neo.Extensions
 
             try
             {
-                return arrayString.Split(SEPARATOR).Select(int.Parse).ToArray();
+                return arrayString.Split(SEPARATOR)
+                    .Select(value => int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture))
+                    .ToArray();
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error loading int array for key '{key}': {ex.Message}. Returning default value.");
+                Debug.LogWarning($"Error loading int array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new int[0];
             }
         }
@@ -76,7 +79,8 @@ namespace Neo.Extensions
                 return;
             }
 
-            PlayerPrefs.SetString(key, string.Join(SEPARATOR.ToString(), array));
+            PlayerPrefs.SetString(key, string.Join(SEPARATOR.ToString(),
+                array.Select(value => value.ToString(CultureInfo.InvariantCulture))));
         }
 
         /// <summary>
@@ -97,11 +101,13 @@ namespace Neo.Extensions
 
             try
             {
-                return arrayString.Split(SEPARATOR).Select(float.Parse).ToArray();
+                return arrayString.Split(SEPARATOR)
+                    .Select(value => float.Parse(value, NumberStyles.Float, CultureInfo.InvariantCulture))
+                    .ToArray();
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error loading float array for key '{key}': {ex.Message}. Returning default value.");
+                Debug.LogWarning($"Error loading float array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new float[0];
             }
         }
@@ -121,8 +127,14 @@ namespace Neo.Extensions
                 return;
             }
 
-            var data = new StringArrayData { Value = array };
-            PlayerPrefs.SetString(key, JsonUtility.ToJson(data));
+            if (array.Any(value => !string.IsNullOrEmpty(value) && value.Contains(SEPARATOR.ToString())))
+            {
+                throw new ArgumentException(
+                    $"PlayerPrefs string array values cannot contain '{SEPARATOR}' because the legacy storage format uses it as a separator.",
+                    nameof(array));
+            }
+
+            PlayerPrefs.SetString(key, string.Join(SEPARATOR.ToString(), array));
         }
 
         /// <summary>
@@ -143,18 +155,19 @@ namespace Neo.Extensions
 
             try
             {
-            string trimmedArrayString = arrayString.TrimStart();
-            if (trimmedArrayString.StartsWith("{", System.StringComparison.Ordinal) && trimmedArrayString.Contains("\"Value\""))
-            {
-                StringArrayData data = JsonUtility.FromJson<StringArrayData>(trimmedArrayString);
-                return data?.Value ?? defaultValue ?? new string[0];
-            }
+                string trimmedArrayString = arrayString.TrimStart();
+                if (trimmedArrayString.StartsWith("{", StringComparison.Ordinal) &&
+                    trimmedArrayString.Contains("\"Value\""))
+                {
+                    StringArrayData data = JsonUtility.FromJson<StringArrayData>(trimmedArrayString);
+                    return data?.Value ?? defaultValue ?? new string[0];
+                }
 
                 return arrayString.Split(SEPARATOR);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error loading string array for key '{key}': {ex.Message}. Returning default value.");
+                Debug.LogWarning($"Error loading string array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new string[0];
             }
         }
@@ -191,11 +204,16 @@ namespace Neo.Extensions
             try
             {
                 int[] intArray = GetIntArray(key);
+                if (intArray.Any(i => i != 0 && i != 1))
+                {
+                    return defaultValue ?? new bool[0];
+                }
+
                 return intArray.Select(i => i == 1).ToArray();
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error loading bool array for key '{key}': {ex.Message}. Returning default value.");
+                Debug.LogWarning($"Error loading bool array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new bool[0];
             }
         }

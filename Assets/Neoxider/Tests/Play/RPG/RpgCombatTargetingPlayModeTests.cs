@@ -115,19 +115,19 @@ namespace Neo.Tests.Play.RPG
                 return _currentHp;
             }
 
-            public bool TrySpendResource(string resourceId, float amount, ref string failReason)
+            public bool TrySpendResource(string resourceId, float amount, out string failReason)
             {
                 failReason = string.Empty;
                 return true;
             }
 
-            public bool TryApplyBuff(string buffId, ref string failReason)
+            public bool TryApplyBuff(string buffId, out string failReason)
             {
                 failReason = string.Empty;
                 return true;
             }
 
-            public bool TryApplyStatus(string statusId, ref string failReason)
+            public bool TryApplyStatus(string statusId, out string failReason)
             {
                 failReason = string.Empty;
                 return true;
@@ -153,4 +153,3 @@ namespace Neo.Tests.Play.RPG
         }
     }
 }
-

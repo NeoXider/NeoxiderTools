@@ -1,6 +1,6 @@
 ﻿# Модуль Settings
 
-**Что это:** runtime-модуль **Neo.Settings** — статический API **`GameSettings`**, синглтон **`GameSettingsComponent`** (сейв через **Neo.Save.SaveProvider**, пресеты качества URP/QualitySettings), и UI-биндер **`SettingsView`**. Скрипты: `Assets/Neoxider/Scripts/Settings/`.
+**Что это:** runtime-модуль **Neo.Settings** — статический API **`GameSettings`**, синглтон **`GameSettingsComponent`** (сейв через **Neo.Save.SaveProvider**, пресеты качества `QualitySettings`), и UI-биндер **`SettingsView`**. Скрипты: `Assets/Neoxider/Scripts/Settings/`.
 
 **Оглавление:**
 
@@ -17,7 +17,7 @@
 2. Читайте настройки из **`GameSettings`** (свойства); меняйте через **`GameSettings.Set…(…, SettingsPersistMode)`** из кода или через **`SettingsView`** / обёртки на компоненте.
 3. Звук и громкости остаются в **`AMSettings`** — не дублируйте их в этом модуле.
 
-**Требования:** проект на **URP** (в `manifest` добавлен `com.unity.render-pipelines.universal`); v1 опирается на **`QualitySettings`**, без отдельных URP-тумблеров.
+**Требования:** модуль опирается на **`QualitySettings`** и не требует URP. Если проект использует URP-специфичные настройки, добавьте `com.unity.render-pipelines.universal` в свой проект отдельно.
 
 ---
 

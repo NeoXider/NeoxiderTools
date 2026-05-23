@@ -49,6 +49,9 @@ Money.I.SetMoney(500f);
 // Алиас для UnityEvent / кнопок:
 Money.I.SetCurrentMoney(500f);
 
+// Для обычного uGUI Button.onClick используйте void-обёртку:
+Money.I.SpendFromButton(50f);
+
 // Сбросить ключи в SaveProvider и обнулить баланс в рантайме
 Money.I.ClearSavedMoneyAndReset();
 
@@ -58,7 +61,7 @@ Money.I.ReloadBalanceFromSave();
 
 Для вывода баланса в UI рекомендуется использовать готовый компонент `TextMoney`.
 
-**NoCode / UnityEvent:** методы `Add`, `Spend`, `SetCurrentMoney`, `ClearSavedMoneyAndReset`, `ReloadBalanceFromSave` можно подключать к `UnityEvent` или кнопкам (для методов с параметром `float` используйте соответствующий тип события в UI).
+**NoCode / UnityEvent:** `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()` и `ReloadBalanceFromSave()` можно подключать к `UnityEvent`. `Spend(float)` возвращает `bool`, поэтому обычный `Button.onClick` его не показывает; для кнопок используйте `SpendFromButton(float)`. Если нужно узнать результат списания из кода, вызывайте `Spend(float)`.
 
 ## См. также
 

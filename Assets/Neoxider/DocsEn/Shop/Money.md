@@ -49,6 +49,9 @@ Money.I.SetMoney(500f);
 // Alias for UnityEvent / buttons:
 Money.I.SetCurrentMoney(500f);
 
+// For regular uGUI Button.onClick use the void wrapper:
+Money.I.SpendFromButton(50f);
+
 // Remove persisted keys and reset runtime balance to zero
 Money.I.ClearSavedMoneyAndReset();
 
@@ -58,7 +61,7 @@ Money.I.ReloadBalanceFromSave();
 
 To display the balance in the UI, it is recommended to use the `TextMoney` component.
 
-**NoCode / UnityEvent:** wire `Add`, `Spend`, `SetCurrentMoney`, `ClearSavedMoneyAndReset`, `ReloadBalanceFromSave` to `UnityEvent` or UI buttons (for `float` parameters use the matching Unity event type).
+**NoCode / UnityEvent:** wire `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()`, and `ReloadBalanceFromSave()` to `UnityEvent`. `Spend(float)` returns `bool`, so regular `Button.onClick` does not list it; use `SpendFromButton(float)` for buttons. Use `Spend(float)` from code when you need the success/fail result.
 
 ## See Also
 

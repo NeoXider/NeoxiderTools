@@ -7,9 +7,12 @@
 - **Shop / Money UnityEvents:** added `Money.SpendFromButton(float)` as a `void` wrapper around `Spend(float)` so uGUI `Button.onClick` can call money spending from the Inspector while the code API keeps the `bool Spend(float)` result.
 - **Condition / method arguments:** `NeoCondition` now reads method-call arguments fresh on every evaluation instead of reusing cached argument arrays, so methods like `Money.CanSpend(100)` reflect the current Inspector argument during Play Mode.
 - **Condition / bool compare editor:** bool conditions now persist only `==` / `!=` operators when switching from numeric members to bool members, preventing hidden stale comparison operators.
+- **Extensions / PlayerPrefsUtils:** restored legacy CSV string-array saves, added comma validation for string-array values, invariant numeric array parsing, warning-level invalid-data fallback, and strict bool-array validation.
 
 ### Changed
 - **Package dependencies:** removed hard package dependency on `com.unity.render-pipelines.universal`; URP-specific integrations remain optional instead of forcing URP installation.
+- **Package tests layout:** moved package tests from top-level `Assets/Tests` into `Assets/Neoxider/Tests` so test assets live with the Neoxider package.
+- **Root documentation:** refreshed root `README.md` and `README_RU.md` as synchronized English/Russian landing pages with current version, install flow, optional URP note, module map, samples, and test layout.
 
 ## [8.5.7] - 2026-05-21
 

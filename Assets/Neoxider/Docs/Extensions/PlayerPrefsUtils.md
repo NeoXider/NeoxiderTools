@@ -26,9 +26,17 @@
 - `GetIntArray(string key, ...)`: Загружает массив `int`.
 - `SetFloatArray(string key, float[] array)`: Сохраняет массив `float`.
 - `GetFloatArray(string key, ...)`: Загружает массив `float`.
-- `SetStringArray(string key, string[] array)`: Сохраняет массив `string`.
-- `GetStringArray(string key, ...)`: Загружает массив `string`.
+- `SetStringArray(string key, string[] array)`: Сохраняет массив `string` в legacy CSV-формате.
+- `GetStringArray(string key, ...)`: Загружает массив `string`; читает legacy CSV и старый JSON-формат `{"Value":[...]}`.
 - `SetBoolArray(string key, bool[] array)`: Сохраняет массив `bool`.
 - `GetBoolArray(string key, ...)`: Загружает массив `bool`.
+
+## Формат и валидация
+
+- `int[]`, `float[]`, `string[]` и `bool[]` сохраняются как строки с разделителем `,`.
+- Числа сохраняются и читаются через invariant culture, поэтому формат всегда использует точку для дробной части (`1.25`).
+- Значения `string[]` не могут содержать запятую. `SetStringArray` выбрасывает `ArgumentException`, если любой элемент содержит `,`, потому что иначе значение нельзя безопасно восстановить из CSV.
+- `GetBoolArray` принимает только `0` и `1`. Любые другие числа считаются повреждёнными данными и возвращают `defaultValue`.
+- При повреждённых данных методы возвращают `defaultValue` или пустой массив и пишут предупреждение в Console.
 
 *Примечание: После вызова Set-методов необходимо вручную вызвать `PlayerPrefs.Save()`, чтобы записать изменения на диск.*

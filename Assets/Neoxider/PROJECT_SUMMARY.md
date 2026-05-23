@@ -5,13 +5,13 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `8.5.5`
+- **Текущая версия**: `8.5.8`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
 - **Главный индекс документации**: [`Docs/README.md`](./Docs/README.md)
 - **Англоязычный вход**: [`DocsEn/README.md`](./DocsEn/README.md)
-- **Базовые EditMode тесты**: `Assets/Neoxider/Editor/Tests/`
+- **Тесты пакета**: `Assets/Neoxider/Tests/`
 
 ## Структура
 
@@ -19,7 +19,7 @@
 Assets/Neoxider/
   Scripts/      # Runtime modules grouped by domain
   Editor/       # Editor tools and inspectors
-    Tests/      # EditMode tests for runtime/editor-critical flows
+  Tests/        # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/         # Russian user-facing docs
   DocsEn/       # English onboarding and mirrored docs
   Samples~/     # UPM samples
@@ -48,6 +48,7 @@ Assets/Neoxider/
 - `DOTween` для tween-based анимаций и UI
 - `Spine Unity Runtime` только для Spine-интеграций
 - `MarkdownRenderer` опционально для улучшенного просмотра `.md` в инспекторе
+- `com.unity.render-pipelines.universal` только для проектов, которым нужны URP-специфичные rendering features или 2D lights; пакет больше не устанавливает URP автоматически
 
 ## Правила развития пакета
 
@@ -66,7 +67,7 @@ Assets/Neoxider/
 ## Тесты и качество
 
 - В пакете подключён `com.unity.test-framework`.
-- Базовые `EditMode` тесты лежат в `Editor/Tests/`.
+- Тесты пакета лежат в `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
 - На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap` и часть legacy/editor-регрессий.
 
 ## Канонические документы

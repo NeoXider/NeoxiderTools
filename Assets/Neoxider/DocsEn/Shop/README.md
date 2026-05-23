@@ -25,9 +25,9 @@ Recommended setup for category stores: keep one `Shop` for catalog, save, curren
 
 Shop has both EditMode and PlayMode coverage:
 
-- `Assets/Tests/Play/ShopPurchasePlayModeTests.cs` — purchases, bundles, runtime prices, `Browse` / `EquipOnly` flows, inventory integration, multi-currency, and `ShopListView`.
-- `Assets/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides, and clone.
-- `Assets/Tests/Edit/Save/ShopManagerTests.cs` — legacy Shop/Save coverage.
+- `Assets/Neoxider/Tests/Play/ShopPurchasePlayModeTests.cs` — purchases, bundles, runtime prices, `Browse` / `EquipOnly` flows, inventory integration, multi-currency, and `ShopListView`.
+- `Assets/Neoxider/Tests/Edit/ShopProfileDataTests.cs` — JSON round-trip, sanitize/dedupe, runtime price overrides, and clone.
+- `Assets/Neoxider/Tests/Edit/Save/ShopManagerTests.cs` — legacy Shop/Save coverage.
 
 Run them through Unity Test Runner → EditMode / PlayMode.
 
