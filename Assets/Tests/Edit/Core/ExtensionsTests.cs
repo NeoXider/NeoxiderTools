@@ -760,6 +760,82 @@ namespace Neo.Editor.Tests
 
         #endregion
 
+        #region PlayerPrefsUtils
+
+        private const string IntArrayKey = "test.playerprefs.intArray";
+        private const string FloatArrayKey = "test.playerprefs.floatArray";
+        private const string StringArrayKey = "test.playerprefs.stringArray";
+        private const string BoolArrayKey = "test.playerprefs.boolArray";
+
+        [TearDown]
+        public void PlayerPrefsUtilsTearDown()
+        {
+            PlayerPrefs.DeleteKey(IntArrayKey);
+            PlayerPrefs.DeleteKey(FloatArrayKey);
+            PlayerPrefs.DeleteKey(StringArrayKey);
+            PlayerPrefs.DeleteKey(BoolArrayKey);
+            PlayerPrefs.Save();
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_IntArray_SetGet_Roundtrip()
+        {
+            int[] source = new[] { 1, 2, 3 };
+            PlayerPrefsUtils.SetIntArray(IntArrayKey, source);
+            int[] result = PlayerPrefsUtils.GetIntArray(IntArrayKey, new int[] { 9, 9 });
+            CollectionAssert.AreEqual(source, result);
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_IntArray_EmptyOrMissing_ReturnsDefault()
+        {
+            CollectionAssert.AreEqual(new[] { 7, 8 }, PlayerPrefsUtils.GetIntArray("missing.int.array", new[] { 7, 8 }));
+            PlayerPrefs.SetString(IntArrayKey, "1,2,NaN");
+            CollectionAssert.AreEqual(new[] { 7, 8 }, PlayerPrefsUtils.GetIntArray(IntArrayKey, new[] { 7, 8 }));
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_FloatArray_SetGet_Roundtrip()
+        {
+            float[] source = new[] { 1.25f, 2.5f, 3.75f };
+            PlayerPrefsUtils.SetFloatArray(FloatArrayKey, source);
+            float[] result = PlayerPrefsUtils.GetFloatArray(FloatArrayKey, new float[] { 9f });
+            CollectionAssert.AreEqual(source, result);
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_StringArray_LoadsJsonAndLegacyFormat()
+        {
+            string[] source = new[] { "alpha", "beta", "gamma" };
+            PlayerPrefsUtils.SetStringArray(StringArrayKey, source);
+            Assert.AreEqual("alpha,beta,gamma", PlayerPrefs.GetString(StringArrayKey));
+            var jsonResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
+            CollectionAssert.AreEqual(source, jsonResult);
+
+            PlayerPrefs.SetString(StringArrayKey, "left,right");
+            var splitResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
+            CollectionAssert.AreEqual(new[] { "left", "right" }, splitResult);
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_BoolArray_SetGet_Roundtrip()
+        {
+            bool[] source = new[] { true, false, true };
+            PlayerPrefsUtils.SetBoolArray(BoolArrayKey, source);
+            bool[] result = PlayerPrefsUtils.GetBoolArray(BoolArrayKey, new bool[] { false });
+            CollectionAssert.AreEqual(source, result);
+        }
+
+        [Test]
+        public void PlayerPrefsUtils_BoolArray_InvalidData_ReturnsDefault()
+        {
+            PlayerPrefs.SetString(BoolArrayKey, "7,8,9");
+            bool[] result = PlayerPrefsUtils.GetBoolArray(BoolArrayKey, new[] { true, false });
+            CollectionAssert.AreEqual(new[] { true, false }, result);
+        }
+
+        #endregion
+
         #region RandomExtensions (validation only)
 
         [Test]

@@ -1,6 +1,16 @@
 ﻿
 ## [Unreleased]
 
+## [8.5.8] - 2026-05-23
+
+### Fixed
+- **Shop / Money UnityEvents:** added `Money.SpendFromButton(float)` as a `void` wrapper around `Spend(float)` so uGUI `Button.onClick` can call money spending from the Inspector while the code API keeps the `bool Spend(float)` result.
+- **Condition / method arguments:** `NeoCondition` now reads method-call arguments fresh on every evaluation instead of reusing cached argument arrays, so methods like `Money.CanSpend(100)` reflect the current Inspector argument during Play Mode.
+- **Condition / bool compare editor:** bool conditions now persist only `==` / `!=` operators when switching from numeric members to bool members, preventing hidden stale comparison operators.
+
+### Changed
+- **Package dependencies:** removed hard package dependency on `com.unity.render-pipelines.universal`; URP-specific integrations remain optional instead of forcing URP installation.
+
 ## [8.5.7] - 2026-05-21
 
 ### Fixed

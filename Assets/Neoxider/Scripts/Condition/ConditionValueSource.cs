@@ -80,7 +80,7 @@ namespace Neo.Condition
 
             if (_cachedMember is MethodInfo method)
             {
-                return method.Invoke(_cachedComponent, _cachedArgs);
+                return method.Invoke(_cachedComponent, new[] { GetArgumentValue() });
             }
 
             return null;
@@ -218,7 +218,6 @@ namespace Neo.Condition
                 if (method != null)
                 {
                     _cachedMember = method;
-                    _cachedArgs = new[] { GetArgumentValue() };
                     _cacheValid = true;
                     return true;
                 }

@@ -173,6 +173,11 @@ namespace Neo.Shop
             return false;
         }
 
+        public void SpendFromButton(float amount)
+        {
+            Spend(amount);
+        }
+
         private void SpendLocal(float amount)
         {
             CurrentMoney.Value = CurrentMoney.CurrentValue - amount;

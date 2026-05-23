@@ -723,7 +723,7 @@ namespace Neo.Editor.Condition
                 EditorGUILayout.BeginHorizontal();
                 int boolOp = compareOpProp.enumValueIndex <= 1 ? compareOpProp.enumValueIndex : 0;
                 int newBoolOp = EditorGUILayout.Popup("Compare", boolOp, BoolCompareOps);
-                if (newBoolOp != boolOp)
+                if (newBoolOp != compareOpProp.enumValueIndex)
                 {
                     compareOpProp.enumValueIndex = newBoolOp;
                 }
