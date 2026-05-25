@@ -28,11 +28,28 @@ namespace Neo.UI
 
         private void Awake()
         {
+            _rectTransform ??= GetComponent<RectTransform>();
+            if (_rectTransform == null)
+            {
+                enabled = false;
+                return;
+            }
+
             _startPositions = _rectTransform.localPosition;
         }
 
         private void OnEnable()
         {
+            if (_rectTransform == null)
+            {
+                _rectTransform = GetComponent<RectTransform>();
+            }
+
+            if (_rectTransform == null)
+            {
+                return;
+            }
+
             _rectTransform.localPosition = _startPositions;
 
             if (_shakeOnStart)
@@ -43,6 +60,7 @@ namespace Neo.UI
 
         private void OnDisable()
         {
+            StopShaking();
         }
 
         private void OnValidate()
@@ -75,8 +93,18 @@ namespace Neo.UI
 
         private void StartShaking()
         {
+            if (!_enableShake)
+            {
+                return;
+            }
+
             if (_shakeCoroutine == null)
             {
+                if (_rectTransform == null)
+                {
+                    return;
+                }
+
                 _shakeCoroutine = StartCoroutine(ShakeButton());
             }
             else

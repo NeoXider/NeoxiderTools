@@ -21,6 +21,3 @@
 - [Interface](./Interface) — интерфейсы боевой системы (IDamageable, IHealable и др.)
 
 ---
-
-Для предложений по доработке скриптов компонентов см. [SCRIPT_IMPROVEMENTS](./SCRIPT_IMPROVEMENTS.md).
-

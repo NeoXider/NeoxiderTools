@@ -15,6 +15,7 @@
 - Инициализируется лениво при первом обращении.
 - Ищет `SaveProviderSettings` в `Resources`.
 - Если настройки не найдены, использует `PlayerPrefsSaveProvider`.
+- Если `SaveProviderSettingsComponent` есть на сцене, но settings asset не назначен, провайдер также безопасно остаётся на fallback `PlayerPrefsSaveProvider`.
 - Проксирует вызовы к активному провайдеру.
 - Проксирует события провайдера наружу через единый статический API.
 - При замене провайдера корректно снимает старые подписки и вешает новые.
@@ -25,6 +26,7 @@
 |-----|----------|
 | `CurrentProvider` | Текущий активный `ISaveProvider`. |
 | `SetProvider(provider)` | Явно подменяет активный провайдер. |
+| `DebugLoggingEnabled` | Включает diagnostics-логи SaveProvider/SaveManager/FileSaveProvider. По умолчанию выключено. |
 | `GetInt / SetInt` | Работа с `int`. |
 | `GetFloat / SetFloat` | Работа с `float`. |
 | `GetString / SetString` | Работа со строками. |

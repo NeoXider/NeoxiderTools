@@ -1,0 +1,75 @@
+using System;
+using Mirror;
+using Neo.Network;
+using UnityEngine;
+
+/// <summary>
+/// Demo helper: a UI button calls <see cref="StartGame"/>, the client sends
+/// <see cref="CmdStartGame"/> to the server, and the server calls
+/// <see cref="RpcShowStartPanel"/> on every client.
+/// </summary>
+public class TestStart : NetworkBehaviour
+{
+    public GameObject startPanel;
+    public float time = 3;
+    [SerializeField] private bool _logConnectionWarnings;
+
+    /// <summary>Raised on each client after <see cref="RpcShowStartPanel"/> enables the panel.</summary>
+    public static event Action OnStartPanelShownClients;
+
+    /// <summary>Raised on each client after the panel auto-hides by timer.</summary>
+    public static event Action OnStartPanelHiddenClients;
+
+    /// <summary>Call from a UI button. The client must be connected and ready.</summary>
+    public void StartGame()
+    {
+        if (!NetworkClient.active)
+        {
+            NetworkDiagnostics.LogWarning(
+                "[TestStart] StartGame: no active client. Is this running on a dedicated server UI?",
+                this,
+                _logConnectionWarnings);
+            return;
+        }
+
+        if (!NetworkClient.ready)
+        {
+            NetworkDiagnostics.LogWarning("[TestStart] StartGame: client is not ready yet.", this, _logConnectionWarnings);
+            return;
+        }
+
+        CmdStartGame();
+    }
+
+    /// <summary>
+    /// Allows a scene object without client authority to relay the demo button action.
+    /// For production, prefer an owned player command or server-side validation.
+    /// </summary>
+    [Command(requiresAuthority = false)]
+    private void CmdStartGame()
+    {
+        RpcShowStartPanel();
+    }
+
+    [ClientRpc]
+    private void RpcShowStartPanel()
+    {
+        if (startPanel != null)
+        {
+            startPanel.SetActive(true);
+            Invoke(nameof(Off), time);
+        }
+
+        OnStartPanelShownClients?.Invoke();
+    }
+
+    private void Off()
+    {
+        if (startPanel != null)
+        {
+            startPanel.SetActive(false);
+        }
+
+        OnStartPanelHiddenClients?.Invoke();
+    }
+}

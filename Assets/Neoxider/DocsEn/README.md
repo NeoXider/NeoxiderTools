@@ -1,82 +1,58 @@
-# NeoxiderTools Docs (English)
+# NeoxiderTools Docs
 
-This folder is the English entry point for `NeoxiderTools`.
+Canonical English entry point for **NeoxiderTools** `v8.6.0`.
 
-Use it as the main navigation page for package modules, utility submodules, and optional samples.
-
-## Start Here
+## Start here
 
 - [Package README](../README.md)
-- [No-Code UI binding (Neo.NoCode)](../Docs/NoCode/README.md) — `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress` (RU)
-- [Russian docs index](../Docs/README.md) (includes [No-Code strategy / non-goals for visual scripting](../Docs/NO_CODE_AUDIT.md))
-- [Tools index](./Tools/README.md)
-- [Condition](./Condition/README.md)
-- [Save](./Save/README.md)
-- [UI](./UI/README.md)
-- [GridSystem](./GridSystem.md)
+- [Russian docs](../Docs/README.md)
+- [Useful components](../Docs/UsefulComponents.md)
+- [Package compatibility](./PackageCompatibility.md)
 
-## Coverage Notes
+## Modules
 
-- Every top-level module has an English entry page in this tree.
-- Selected deeper English pages are available for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, `Progression`, and `Animations`.
-- When a detailed page is still RU-only, this index keeps a direct link to the Russian documentation.
-- Full coverage audit documents are **local-only**: place files such as `COVERAGE_AUDIT.md` under `Local/Audits/` at the repository root (ignored by git). See [`/Local/README.md`](../../../Local/README.md).
+| Module | What it covers | Entry |
+|--------|----------------|-------|
+| **Animations** | Runtime value animation for float, color, and `Vector3` | [Animations](./Animations/README.md) |
+| **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
+| **Bonus** | Slots, wheel rewards, collections, timed rewards | [Bonus](./Bonus/README.md) |
+| **Cards** | Deck/hand/board runtime, poker, Drunkard sample | [Cards](./Cards/README.md) |
+| **Condition** | No-code conditions, reflection checks, AND/OR logic, events | [Condition](./Condition/README.md) |
+| **Core** | Level/XP helpers and core resources | [Core](./Core/README.md) |
+| **Editor** | Editor windows, missing-script scan, settings, maintenance tools | [Editor](./Editor/README.md) |
+| **Extensions** | Extension methods for C# and Unity APIs | [Extensions](./Extensions/README.md) |
+| **GridSystem** | Grid generation, Match3, TicTacToe | [GridSystem](./GridSystem/README.md) |
+| **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
+| **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
+| **NoCode** | UI data binding without glue scripts | [NoCode](./NoCode/README.md) |
+| **NPC** | Navigation, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
+| **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
+| **Progression** | XP, levels, unlock tree, perk tree | [Progression](./Progression/README.md) |
+| **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
+| **Quest** | Quest configs, objectives, manager, runtime state | [Quest](./Quest/README.md) |
+| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Reactive/README.md) |
+| **Rpg** | `RpgCharacter`, resources, stats, attacks, buffs/statuses, save/network/no-code bridges | [Rpg](./Rpg/README.md) |
+| **Save** | Save providers, attributes, scene/global save flow | [Save](./Save/README.md) |
+| **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
+| **Shop** | Shop data, purchases, currency UI | [Shop](./Shop/README.md) |
+| **StateMachine** | Runtime state machine and no-code data workflow | [StateMachine](./StateMachine/README.md) |
+| **Tools** | Movement, free-fly camera, input, physics, spawning, timers, UI helpers | [Tools](./Tools/README.md) |
+| **UI** | UI panels, button animations, toggles, presentation helpers | [UI](./UI/README.md) |
 
-## Module Index
+## Gameplay ownership
 
-| Module | What it covers | English docs |
-|--------|----------------|--------------|
-| **NoCode** | Bind floats to `SetText`/TMP and Slider/Image via reflection-safe resolver (RU hub) | [`../Docs/NoCode/README.md`](../Docs/NoCode/README.md) |
-| **Animations** | Float, Color, and `Vector3` animation helpers | [`Animations/README.md`](./Animations/README.md) |
-| **Audio** | `AudioManager`, mixer helpers, random music, and audio utilities | [`Audio/README.md`](./Audio/README.md) |
-| **Bonus** | Slots, wheel rewards, collections, and timed rewards | [`Bonus/README.md`](./Bonus/README.md) |
-| **Cards** | MVP architecture, poker, "Drunkard", and card runtime flow | [`Cards/README.md`](./Cards/README.md) |
-| **Condition** | No-code conditions, field checks, AND/OR logic, and event outputs | [`Condition/README.md`](./Condition/README.md) |
-| **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [`Editor/README.md`](./Editor/README.md) |
-| **Extensions** | 300+ extension methods for C# and Unity APIs | [`Extensions/README.md`](./Extensions/README.md) |
-| **GridSystem** | Grid generation, origin anchor, pathfinding, Match3, and TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Level manager, scene progression, and level map flow | [`Level/README.md`](./Level/README.md) |
-| **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [`NPC/README.md`](./NPC/README.md) |
-| **Parallax** | Parallax layers and related visual components | [`Parallax/README.md`](./Parallax/README.md) |
-| **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject attributes, and inspector helpers | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
-| **Quest** | Quest configs, manager, objectives, and runtime quest state | [`Quest/README.md`](./Quest/README.md) |
-| **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | `RpgCharacter`: universal resources/stats, buffs, statuses, progression, multiplayer, and no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
-| **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [`Reactive/README.md`](./Reactive/README.md) |
-| **Save** | `PlayerPrefs`, JSON files, provider API, scene/global saves, and save attributes | [`Save/README.md`](./Save/README.md) |
-| **Settings** | `GameSettings`, scene service, `SettingsView` UI | [`Settings/README.md`](./Settings/README.md) |
-| **Shop** | Shop flow, currency, and purchases | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | Code + no-code runtime state machine with visual editor workflow | [`StateMachine/README.md`](./StateMachine/README.md) |
-| **Tools** | 150+ components for movement, physics, spawners, timers, input, and utilities | [`Tools/README.md`](./Tools/README.md) |
-| **UI** | UI panels, button animations, toggles, and presentation helpers | [`UI/README.md`](./UI/README.md) |
-
-## `Tools` submodules
-
-- [Components](./Tools/Components/README.md)
-- [Dialogue](./Tools/Dialogue/README.md)
-- [Input](./Tools/Input/README.md)
-- [Inventory](./Tools/Inventory/README.md)
-- [InteractableObject](./Tools/InteractableObject/README.md)
-- [Managers](./Tools/Managers/README.md)
-- [Move](./Tools/Move/README.md)
-- [Physics](./Tools/Physics/README.md)
-- [Random](./Tools/Random/README.md)
-- [Spawner](./Tools/Spawner/README.md)
-- [Text](./Tools/Text/README.md)
-- [Time](./Tools/Time/README.md)
-- [View](./Tools/View/README.md)
-- [Debug](./Tools/Debug/README.md)
-- [Draw](./Tools/Draw/README.md)
-- [FakeLeaderboard](./Tools/FakeLeaderboard/README.md)
-- [Other](./Tools/Other/README.md)
+`Gameplay` is not a standalone Neoxider module. Gameplay systems are owned by concrete runtime modules (`Rpg`, `Quest`, `Progression`, `Cards`, `GridSystem`, `Tools`, `NoCode`, etc.). Do not add a new `Docs/Gameplay` or `Scripts/Gameplay` folder unless a real runtime assembly/API is introduced with clear ownership and tests.
 
 ## Samples and add-ons
 
-- [NeoxiderPages](./NeoxiderPages/README.md)
-- [UI Extension](./UI%20Extension/README.md)
-- `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` - quick smoke scene for Damage/Heal/Stamina/DarkMana/Upgrade API.
+| Section | Entry |
+|---------|-------|
+| **Examples** | [Examples](./Examples/README.md) |
+| **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
+| **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
 
-## Notes
+## Guides
 
-- Inspector-integrated documentation via `[NeoDoc("...")]` still points to the canonical Russian `Docs/` tree.
-- English pages mirror the Russian structure where possible, but some deep pages may still be RU-only.
+- [Multiplayer Guide](./Network/Multiplayer_Guide.md)
+- [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
+- [Vampire Survivors 3D guide](../Docs/VampireSurvivor_Guide.md)

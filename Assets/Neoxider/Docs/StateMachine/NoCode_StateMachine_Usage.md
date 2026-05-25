@@ -7,6 +7,8 @@
 ---
 **Важно:** ScriptableObject не может хранить ссылки на объекты сцены — поэтому в SO настраивают только логику (состояния, переходы, какое свойство проверять), а **какой GameObject читать** задаётся на компоненте в сцене (раздел **Context for conditions**).
 
+То же правило действует для действий (`StateAction`): SO хранит только тип действия и слот контекста. Для включения/выключения сценового объекта используйте `SetContextGameObjectActiveAction` с `Context Slot = Owner / Override1..5`. Старый `SetGameObjectActiveAction` с прямым `GameObject target` оставлен только для совместимости старых ассетов.
+
 ---
 
 ## 1. Компонент на сцене
@@ -24,6 +26,8 @@
 - `Auto Evaluate Transitions` — автоматическая проверка переходов каждый кадр.
 - `Show State In Insp` — отображение текущего состояния в инспекторе.
 - `Enable Debug Log` — логирование переходов.
+- `Exit Current State On Disable` — при выключении компонента вызвать `OnExit` текущего состояния и очистить current state.
+- `Reload Data On Enable` — при повторном включении компонента перезагрузить `StateMachineData`.
 
 ### 2.1 События компонента
 
@@ -111,6 +115,7 @@
 - В **Condition Entry** оставьте **Source Object** пустым — контекст возьмётся из слота. Заполните только Component, Property, Compare и порог.
 - Убедитесь, что **From State** и **To State** у перехода совпадают с состояниями в списке States.
 - Включите **Enable Debug Log** и смотрите консоль; **On Transition Evaluated** показывает результат проверки перехода.
+- Если логирование выключено, StateMachine не пишет runtime warning/log/error в консоль; используйте `On Transition Evaluated` и Events для UI/инструментов.
 
 ---
 

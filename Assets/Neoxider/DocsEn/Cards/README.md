@@ -11,6 +11,14 @@ Card game utilities: MVP (Model, View, Presenter), deck/hand/board components, p
 | [CardComponent](./CardComponent.md) | Scene-facing card component, interaction, and animation |
 | [Cards README](../../Docs/Cards/README.md) | Full Russian module documentation |
 
+## Custom cards and standalone views
+
+Cards are no longer limited to 36/52/54-card decks. Use `CardData.CreateCustom(...)` for TCG, deckbuilder, board-game, ability, or item cards. `DeckConfig` can generate a custom deck from `Custom Cards`, while `DeckModel.Initialize(IEnumerable<CardData>)` still accepts any explicit card list.
+
+`CardComponent`, `CardView`, and `CardViewUniversal` can also run without a `DeckConfig` by calling `SetSpriteOverrides(faceSprite, backSprite)`. This keeps the card view reusable in standalone card projects where card identity, rules, and art come from another data model.
+
+`BoardComponent` exposes `MaxCards`, `FaceUp`, `CanPlaceCard(...)`, `SetCapacity(...)`, and `SetFaceUp(...)` so one board component can support table rows, lanes, discard piles, market rows, or custom TCG zones.
+
 ## Main entry (Russian)
 
 - [Cards README](../../Docs/Cards/README.md) — quick start, layout types, card comparison, dependencies

@@ -1,10 +1,7 @@
 using System.IO;
 using System.Text;
-using System.Text.RegularExpressions;
 using Neo.Save;
 using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests.Edit
 {
@@ -260,8 +257,6 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void FileSaveProvider_InvalidJson_StartsFreshDictionary()
         {
-            LogAssert.Expect(LogType.Error, new Regex(@"\[FileSaveProvider\] Unrecognized save file format"));
-
             string tempDir = Path.Combine(Path.GetTempPath(), "NeoSaveBad_" + System.Guid.NewGuid().ToString("N"));
             Directory.CreateDirectory(tempDir);
             const string fileName = "bad.json";

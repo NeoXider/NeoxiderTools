@@ -1,6 +1,6 @@
 ﻿# Tools / Other
 
-Misc utilities: camera shake, AI navigation bridge, Spine controller, revert amount. Scripts in `Scripts/Tools/Other/`. Full docs are in Russian.
+Misc utilities: camera shake, AI navigation bridge, Spine controller, revert amount. Scripts in `Scripts/Tools/Other/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

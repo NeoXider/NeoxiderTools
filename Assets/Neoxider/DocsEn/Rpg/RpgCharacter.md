@@ -1,14 +1,14 @@
-# RpgCharacter
+﻿# RpgCharacter
 
-**Universal RPG facade.** One component per character — player, NPC, mob, pet. Replaces the
+**Universal RPG facade.** One component per character вЂ” player, NPC, mob, pet. Replaces the
 legacy `RpgCombatant` + `RpgStatsManager` (removed in v8.4.0). Supports any number of resources
 (HP / Mana / Stamina / DarkMana / Rage / any `Custom`), any number of stats
 (Strength / Defense / FireResist / any `Custom`), buffs (SO + inline), status effects, two growth
 modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
 
-**File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` · Menu: `Neoxider/RPG/RpgCharacter`.
+**File:** `Assets/Neoxider/Scripts/Rpg/Components/RpgCharacter.cs` В· Menu: `Neoxider/RPG/RpgCharacter`.
 
-**Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` — open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
+**Demo:** `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` вЂ” open the scene, press Play, and test Damage/Heal/Stamina/DarkMana/Upgrade with on-screen buttons.
 
 ---
 
@@ -16,14 +16,14 @@ modes (Dota-like and Dark-Souls-like), Save/Load and Mirror multiplayer.
 
 ```
 RpgCharacter : NeoNetworkComponent, IRpgCombatReceiver
-├── RpgCharacterTemplate (SO, optional)     — start resources / stats / buffs / progression
-├── RpgResourceDefinition[] _resources      — HP / Mana / Stamina / Shield / any Custom
-├── RpgStatDefinition[]     _stats          — Strength / Defense / FireResist / any Custom
-├── BuffDefinition[]        _knownBuffs     — re-usable SO buffs
-├── InlineBuffEntry[]       _inlineBuffs    — one-off buffs without SOs
-├── StatusEffectDefinition[] _knownStatuses — DoT / Slow / Stun
-├── RpgEffectShelf (runtime)                — single source of truth for buff/status lifetime
-└── RpgProgressionDefinition (SO, optional) — Dota | Souls | Hybrid + upgrade rules
+в”њв”Ђв”Ђ RpgCharacterTemplate (SO, optional)     вЂ” start resources / stats / buffs / progression
+в”њв”Ђв”Ђ RpgResourceDefinition[] _resources      вЂ” HP / Mana / Stamina / Shield / any Custom
+в”њв”Ђв”Ђ RpgStatDefinition[]     _stats          вЂ” Strength / Defense / FireResist / any Custom
+в”њв”Ђв”Ђ BuffDefinition[]        _knownBuffs     вЂ” re-usable SO buffs
+в”њв”Ђв”Ђ InlineBuffEntry[]       _inlineBuffs    вЂ” one-off buffs without SOs
+в”њв”Ђв”Ђ StatusEffectDefinition[] _knownStatuses вЂ” DoT / Slow / Stun
+в”њв”Ђв”Ђ RpgEffectShelf (runtime)                вЂ” single source of truth for buff/status lifetime
+в””в”Ђв”Ђ RpgProgressionDefinition (SO, optional) вЂ” Dota | Souls | Hybrid + upgrade rules
 ```
 
 No singleton. Multiple characters per scene is a first-class scenario (player + party + pets + enemies).
@@ -33,7 +33,7 @@ No singleton. Multiple characters per scene is a first-class scenario (player + 
 ## Universal ID
 
 `RpgStatId` = `RpgStatPreset` + optional `customId`. The inspector shows a dropdown with common
-values (`Hp`, `Mana`, `Stamina`, `Shield`, `Strength`, `FireResist`, …) plus a custom-string field
+values (`Hp`, `Mana`, `Stamina`, `Shield`, `Strength`, `FireResist`, вЂ¦) plus a custom-string field
 that activates when you pick `Custom`. Same for buff target id.
 
 ```csharp
@@ -52,7 +52,7 @@ string key = id;                           // "Stamina"
 
 ## Public API (UnityEvent-friendly)
 
-Every method takes 0–1 primitive / SO parameter — they appear in UnityEvent dropdowns and can be
+Every method takes 0вЂ“1 primitive / SO parameter вЂ” they appear in UnityEvent dropdowns and can be
 called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 `PhysicsEvents3D.onTriggerEnter`, `NeoCondition.OnTrue`.
 
@@ -61,7 +61,7 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 | Method | What it does |
 |---|---|
 | `Damage(float)` | HP using buff/status IncomingDamage% + Defense% modifiers |
-| `DamageType(string, float)` | + specific resist (`FireResist`, `IceResist`, …) |
+| `DamageType(string, float)` | + specific resist (`FireResist`, `IceResist`, вЂ¦) |
 | `Heal(float)` | heal HP |
 | `Spend(string id, float)` | spend a resource; returns `false` when not enough |
 | `Refill(string, float)` / `Increase(string, float)` | top up a resource |
@@ -71,7 +71,7 @@ called from `NetworkContextActionRelay.InvokeComponentMethod`, `Button.onClick`,
 ### NoCode shortcuts
 
 `SpendMana(float)`, `RefillMana(float)`, `SpendStamina(float)`, `RefillStamina(float)`,
-`SpendShield(float)` — explicit methods for the common pools, visible in UnityEvent dropdowns.
+`SpendShield(float)` вЂ” explicit methods for the common pools, visible in UnityEvent dropdowns.
 
 ### Stats
 
@@ -120,7 +120,7 @@ locally only.
 
 ### Save / Load
 
-`SaveProfile()` / `LoadProfile()` / `ResetProfile()` — writes to `PlayerPrefs[_saveKey]`.
+`SaveProfile()` / `LoadProfile()` / `ResetProfile()` вЂ” writes to `PlayerPrefs[_saveKey]`.
 Persists every resource / stat / upgrade-points / active buff / active status by id (universal,
 no hardcoded fields).
 
@@ -145,7 +145,7 @@ Generic: `GetResourceCurrentState("DarkMana")`, `GetResourceMaxState(id)`,
 | **Effects** | `_knownBuffs[]` (SO), `_inlineBuffs[]` (no SO), `_knownStatuses[]` (SO). |
 | **Progression** | `RpgProgressionDefinition` SO + optional `LevelComponent`. |
 | **Persistence** | save key, load on awake, autosave. |
-| **Authority** | `None` / `OwnerOnly` / `ServerOnly` — Command sender filter. |
+| **Authority** | `None` / `OwnerOnly` / `ServerOnly` вЂ” Command sender filter. |
 | **Events** | OnDamaged / OnHealed / OnDeath / OnRevived / OnBuffApplied / OnBuffExpired / OnStatusApplied / OnStatusExpired / OnLevelChanged / OnResourceChanged(id, value) / OnStatChanged(id, value) / OnProfileSaved / OnProfileLoaded. |
 
 ---
@@ -172,24 +172,24 @@ Same idea for stats. `OnValue(float)`.
    - `Action = InvokeComponentMethod`, `Component = RpgCharacter`, `Method = ApplyInlineBuff`, `Argument = 0`
 
 ### Potion restores 50 Stamina
-`Button.onClick` → `RpgCharacter.RefillStamina(50)`.
+`Button.onClick` в†’ `RpgCharacter.RefillStamina(50)`.
 
 ### Game-over when HP < 30%
 `NeoCondition`:
 - `Source = RpgCharacter`, `Property = HpPercentValue`, `op = <`, `threshold = 0.3`
-- `OnTrue` → `GameOverPanel.SetActive(true)`
+- `OnTrue` в†’ `GameOverPanel.SetActive(true)`
 
 ### Stamina bar in UI without code
-`Slider` + `RpgResourceBinding` (`Character = Player`, `ResourceId = Stamina`) →
-`OnPercent → Slider.value`.
+`Slider` + `RpgResourceBinding` (`Character = Player`, `ResourceId = Stamina`) в†’
+`OnPercent в†’ Slider.value`.
 
 ### Poison zone (DoT)
-`PhysicsEvents3D.OnTriggerStay` → `RpgCharacter.ApplyStatusByName("Poison")`.
+`PhysicsEvents3D.OnTriggerStay` в†’ `RpgCharacter.ApplyStatusByName("Poison")`.
 
 ### Dark Souls-style upgrades
 `RpgProgressionDefinition` with `growthMode = ManualUpgradePoints`,
 `upgradeRules = [{ statId = Vitality, increasePerPoint = 1, derivedResourceModifiers = [{ Hp, AddMaxFlat, 15 }] }]`.
-UI button → `RpgCharacter.UpgradeVitality()`.
+UI button в†’ `RpgCharacter.UpgradeVitality()`.
 
 ### Dota-style auto-growth
 `RpgProgressionDefinition` with `growthMode = AllStatsEveryLevel`. On level-up from
@@ -197,7 +197,7 @@ UI button → `RpgCharacter.UpgradeVitality()`.
 
 ### Two manas (Mana + DarkMana)
 In `_resources[]`: `Mana` (preset) + `DarkMana` (Custom string). Dark spell:
-`Button.onClick` → `RpgCharacter.Spend("DarkMana", 25)` or through `NetworkContextActionRelay`.
+`Button.onClick` в†’ `RpgCharacter.Spend("DarkMana", 25)` or through `NetworkContextActionRelay`.
 
 ---
 
@@ -210,26 +210,26 @@ becomes server-authoritative:
 2. **Snapshot SyncVar.** Server serializes every resource / stat / buff / status / level / xp /
    upgradePoints / isDead / invulLocks into one snapshot string. Clients receive via
    `[SyncVar(hook)]` and restore local state.
-3. **Authority Mode** — `None` / `OwnerOnly` (only the owning client) / `ServerOnly`.
+3. **Authority Mode** вЂ” `None` / `OwnerOnly` (only the owning client) / `ServerOnly`.
 4. **Late join.** When a new client connects, `ApplyNetworkState` (inherited from
    `NeoNetworkComponent`) applies the latest snapshot.
 
 Multiplayer test:
 - Host + remote via `NetworkManagerHUD` / `NeoNetworkManager`.
-- Pickup trigger on the scene with `NetworkContextActionRelay.InvokeComponentMethod →
-  RpgCharacter.ApplyInlineBuff(0)` — both players see the effect.
+- Pickup trigger on the scene with `NetworkContextActionRelay.InvokeComponentMethod в†’
+  RpgCharacter.ApplyInlineBuff(0)` вЂ” both players see the effect.
 
 ---
 
 ## NPC
 
-An NPC is the same `RpgCharacter` — no separate component.
+An NPC is the same `RpgCharacter` вЂ” no separate component.
 
 1. On the enemy prefab: `RpgCharacter` + `RpgCharacterTemplate` (e.g. "Orc"):
    - resources: HP 80, Stamina 50
    - stats: Strength 10, Defense 5
 2. + `NpcRpgCombatBrain` (`_character` field points to this `RpgCharacter`)
-3. + `RpgAttackController` (`_characterSource` → this `RpgCharacter`)
+3. + `RpgAttackController` (`_characterSource` в†’ this `RpgCharacter`)
 4. + `RpgDeathHandler` (auto-attaches, listens to `OnDeath`)
 5. + UI through `RpgResourceBinding` + `SetProgress` for the HP bar and `NoCodeFormattedText` for `HP / MaxHP` text.
 
@@ -238,25 +238,25 @@ An NPC is the same `RpgCharacter` — no separate component.
 ## Melee / ranged combat
 
 ### Melee
-- `RpgContactDamage` (`selfCharacter` → this character) + `targetTag = "Enemy"` — damage by proximity.
-- Alternative: `MeleeWeapon` (MonoBehaviour subclass) + trigger collider →
+- `RpgContactDamage` (`selfCharacter` в†’ this character) + `targetTag = "Enemy"` вЂ” damage by proximity.
+- Alternative: `MeleeWeapon` (MonoBehaviour subclass) + trigger collider в†’
   `target.GetComponentInParent<RpgCharacter>().Damage(amount)`.
 
 ### Ranged
 - `RpgAttackController` with `RpgAttackDefinition` (`deliveryType = Projectile`).
-- `RpgProjectile` spawns from `_projectileSpawnPoint`; on hit →
+- `RpgProjectile` spawns from `_projectileSpawnPoint`; on hit в†’
   `Damage` on the target's `RpgCharacter`.
 
 ### Aura / AoE
-- `AuraWeapon` (extends `MeleeWeapon`) — radius damage on a tick.
+- `AuraWeapon` (extends `MeleeWeapon`) вЂ” radius damage on a tick.
 
 ---
 
 ## See also
 
-- [RpgCharacterTemplate](RpgCharacterTemplate.md) — SO archetype
-- [RpgProgressionDefinition](RpgProgressionDefinition.md) — growth modes
-- [RpgResourceBinding](RpgResourceBinding.md) — NoCode UI binding
+- [RpgCharacterTemplate](RpgCharacterTemplate.md) вЂ” SO archetype
+- [RpgProgressionDefinition](RpgProgressionDefinition.md) вЂ” growth modes
+- [RpgResourceBinding](RpgResourceBinding.md) вЂ” NoCode UI binding
 - [RpgStatBinding](RpgStatBinding.md)
-- [BuffDefinition](BuffDefinition.md), [InlineBuffEntry](InlineBuffEntry.md)
+- [BuffDefinition](Data/BuffDefinition.md), [InlineBuffEntry](InternalTypes.md)
 - [Multiplayer_Guide](../Network/Multiplayer_Guide.md)

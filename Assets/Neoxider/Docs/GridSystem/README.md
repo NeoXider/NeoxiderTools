@@ -19,3 +19,7 @@
 
 Для отдельного сравнения/перевода см. английскую версию: [`../../DocsEn/GridSystem/README.md`](../../DocsEn/GridSystem/README.md).
 
+## Samples
+
+Активный UPM sample-путь: `Assets/Neoxider/Samples~/Demo/`. GridSystem-сцены лежат в `Scenes/GridSystem/`, setup/view-скрипты — в `Scripts/GridSystem/`.
+

@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-8.5.8-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-8.6.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -23,7 +23,7 @@
 - [Games built with NeoxiderTools](#games-built-with-neoxidertools)
 - [Featured Modules](#featured-modules)
 - [Samples](#samples)
-- [Documentation Notes](#documentation-notes)
+- [Documentation](#documentation)
 - [Tests](#tests)
 - [Project Layout](#project-layout)
 - [Support](#support)
@@ -36,6 +36,7 @@
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
 - Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
 - **Multiplayer (optional Mirror)** — `Neo.Network` NoCode bridges (`NetworkPropertySync`, `NetworkActionRelay`, lobby/discovery wrappers). Without Mirror, the same scripts compile for offline/solo flows.
+- **Free-fly tooling** — `FreeFlyCameraController` provides Unity Scene View style debug/spectator camera movement in `Tools/Move`, with RMB gating by default.
 - Editor helpers, package samples, prefabs, and module-focused documentation.
 
 ## Installation
@@ -55,6 +56,7 @@ Copy `Assets/Neoxider` into your Unity project.
 ## Requirements
 
 - **Unity 2022.1+**
+- Current compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md)
 - **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`
 - **Required (3rd party)**:
   - `UniTask` (for async-heavy modules such as cards, dialogue)
@@ -103,7 +105,7 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 | **RPG** | Persistent player profile, scene combatants, HP, levels, buffs, statuses, melee/ranged/aoe, evade, target selectors, attack presets, and no-code bridges | [RPG](./Docs/Rpg/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree, and persistent progression | [Progression](./Docs/Progression/README.md) |
 | **Condition** | No-code conditions, field checks, AND/OR logic, and UnityEvent outputs | [NeoCondition](./Docs/Condition/NeoCondition.md) |
-| **Tools** | 150+ components for movement, physics, spawners, timers, input, and utility runtime | [Tools](./Docs/Tools/README.md) |
+| **Tools** | 150+ components for movement, free-fly cameras, physics, spawners, timers, input, and utility runtime | [Tools](./Docs/Tools/README.md) |
 | **Quest** | Quest configs, goals, manager, and runtime quest state | [Quest](./Docs/Quest/README.md) |
 | **Reactive** | Serializable reactive properties for `float`, `int`, and `bool` | [Reactive](./Docs/Reactive/README.md) |
 | **Save** | `PlayerPrefs`, JSON files, provider-based save flow, scene/global data, save attributes | [Save](./Docs/Save/README.md) |
@@ -123,13 +125,12 @@ Import samples via `Package Manager > Neoxider Tools > Samples`.
 | **Demo Scenes** | `Assets/Neoxider/Samples~/Demo/` | Integration scenes for core modules and gameplay features |
 | **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) — requires `DOTween Pro` |
 
-## Documentation Notes
+## Documentation
 
 - The canonical user-facing navigation lives in [Docs/README.md](./Docs/README.md).
 - English onboarding starts in [DocsEn/README.md](./DocsEn/README.md).
-- English coverage includes module entry pages plus selected deeper pages for `Save`, `Tools/Managers`, `Tools/InteractableObject`, `Quest`, `UI`, `Shop`, `Cards`, and `Progression`.
-- Multiplayer docs (RU): [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md), [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) — indexed from [Docs/README.md](./Docs/README.md) under **Network**.
-- Internal backlog and maintainer-only notes are intentionally not part of the main user docs index.
+- Both indexes keep one canonical entry per module and route detailed pages through that module entry.
+- Compatibility notes: [RU](./Docs/PackageCompatibility.md), [EN](./DocsEn/PackageCompatibility.md).
 
 ## Tests
 

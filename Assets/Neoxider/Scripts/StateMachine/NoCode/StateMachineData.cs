@@ -151,7 +151,7 @@ namespace Neo.StateMachine.NoCode
         {
             if (stateMachine == null)
             {
-                Debug.LogError("[StateMachineData] Cannot load into null StateMachine.", this);
+                StateMachineLog.Error("[StateMachineData] Cannot load into null StateMachine.", this);
                 return;
             }
 
@@ -203,7 +203,7 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    Debug.LogWarning("[StateMachineData] No states defined.", this);
+                    StateMachineLog.Warning("[StateMachineData] No states defined.", this);
                 }
 
                 return false;
@@ -213,14 +213,14 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    Debug.LogWarning("[StateMachineData] Initial state is not set.", this);
+                    StateMachineLog.Warning("[StateMachineData] Initial state is not set.", this);
                 }
             }
             else if (initialState != null && !states.Contains(initialState))
             {
                 if (!silent)
                 {
-                    Debug.LogWarning(
+                    StateMachineLog.Warning(
                         $"[StateMachineData] Initial state '{initialState.StateName}' not found in states array.",
                         this);
                 }
@@ -231,7 +231,7 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    Debug.LogWarning($"[StateMachineData] Initial state '{initialStateName}' not found in states.",
+                    StateMachineLog.Warning($"[StateMachineData] Initial state '{initialStateName}' not found in states.",
                         this);
                 }
 
@@ -252,7 +252,7 @@ namespace Neo.StateMachine.NoCode
                     {
                         if (!silent)
                         {
-                            Debug.LogWarning(
+                            StateMachineLog.Warning(
                                 $"[StateMachineData] Transition from state '{transition.FromStateData.StateName}' not found in States array.",
                                 this);
                         }
@@ -262,7 +262,7 @@ namespace Neo.StateMachine.NoCode
                 {
                     if (!silent)
                     {
-                        Debug.LogWarning("[StateMachineData] Transition has null FromStateData.", this);
+                        StateMachineLog.Warning("[StateMachineData] Transition has null FromStateData.", this);
                     }
                 }
 
@@ -272,7 +272,7 @@ namespace Neo.StateMachine.NoCode
                     {
                         if (!silent)
                         {
-                            Debug.LogWarning(
+                            StateMachineLog.Warning(
                                 $"[StateMachineData] Transition to state '{transition.ToStateData.StateName}' not found in States array.",
                                 this);
                         }
@@ -282,7 +282,7 @@ namespace Neo.StateMachine.NoCode
                 {
                     if (!silent)
                     {
-                        Debug.LogWarning("[StateMachineData] Transition has null ToStateData.", this);
+                        StateMachineLog.Warning("[StateMachineData] Transition has null ToStateData.", this);
                     }
                 }
             }

@@ -10,6 +10,11 @@
 | `Rank` | Card rank. |
 | `IsJoker` | Whether the card is a joker. |
 | `IsRedJoker` | Whether the joker is red. |
+| `IsCustom` | Whether the card uses custom id/group/value data instead of built-in suit/rank data. |
+| `CustomId` | Stable custom identifier for TCG/board-game cards. |
+| `DisplayName` | Optional display name for custom cards. |
+| `SortValue` | Generic comparable value for custom card rules. |
+| `Group` | Optional custom grouping key such as faction, class, color, or lane. |
 
 ## Creating cards
 
@@ -17,7 +22,12 @@
 var aceOfSpades = new CardData(Suit.Spades, Rank.Ace);
 var redJoker = CardData.CreateJoker(isRed: true);
 var blackJoker = CardData.CreateJoker(isRed: false);
+var minion = CardData.CreateCustom("neutral_minion_01", "Neutral Minion", sortValue: 3, group: "Neutral");
 ```
+
+Custom cards compare by `SortValue`, then by `CustomId`. `HasSameRank(...)` maps to equal `SortValue`, and `HasSameSuit(...)` maps to equal non-empty `Group`.
+
+`customId` must be stable and non-empty because it is used for equality, hashing, deck validation, and sprite lookup.
 
 ## Comparison helpers
 

@@ -157,4 +157,42 @@ namespace Neo.Network
 
 #endif
     }
+
+    /// <summary>
+    /// Central logging gate for runtime network diagnostics.
+    /// Warnings and info logs are disabled by default to keep package code quiet in player builds.
+    /// </summary>
+    public static class NetworkDiagnostics
+    {
+        public static bool RuntimeLogsEnabled { get; set; }
+        public static bool RuntimeWarningsEnabled { get; set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            RuntimeLogsEnabled = false;
+            RuntimeWarningsEnabled = false;
+        }
+
+        public static void Log(string message, Object context = null, bool force = false)
+        {
+            if (force || RuntimeLogsEnabled)
+            {
+                Debug.Log(message, context);
+            }
+        }
+
+        public static void LogWarning(string message, Object context = null, bool force = false)
+        {
+            if (force || RuntimeWarningsEnabled)
+            {
+                Debug.LogWarning(message, context);
+            }
+        }
+
+        public static void LogError(string message, Object context = null)
+        {
+            Debug.LogError(message, context);
+        }
+    }
 }

@@ -20,3 +20,7 @@ Grid-system utilities: field generation, spawning, visualization, and board-serv
 Russian docs remain the primary source for some implementation details:
 
 - [GridSystem (RU)](../GridSystem/README.md)
+
+## Samples
+
+The active UPM sample path is `Assets/Neoxider/Samples~/Demo/`. GridSystem scenes are in `Scenes/GridSystem/`, and their setup/view scripts are in `Scripts/GridSystem/`.

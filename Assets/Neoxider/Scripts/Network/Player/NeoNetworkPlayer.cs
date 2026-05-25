@@ -33,6 +33,9 @@ namespace Neo.Network
         [SerializeField] private UnityEvent _onLocalPlayerStarted = new();
         [SerializeField] private UnityEvent _onRemotePlayerStarted = new();
 
+        [Header("Diagnostics")]
+        [SerializeField] private bool _debugLifecycleLog;
+
         /// <summary>Raised when this instance is confirmed as the local player.</summary>
         public UnityEvent OnLocalPlayerStarted => _onLocalPlayerStarted;
 
@@ -99,7 +102,10 @@ namespace Neo.Network
             SetObjectsActive(_remoteOnlyObjects, false);
             SetChildAudioListenersEnabled(true);
             _onLocalPlayerStarted?.Invoke();
-            Debug.Log($"[NeoNetworkPlayer] Local player started: {gameObject.name}");
+            if (_debugLifecycleLog)
+            {
+                NetworkDiagnostics.Log($"[NeoNetworkPlayer] Local player started: {gameObject.name}", this, true);
+            }
         }
 
         private void SetupRemotePlayer()
@@ -108,7 +114,10 @@ namespace Neo.Network
             SetObjectsActive(_localOnlyObjects, false);
             SetObjectsActive(_remoteOnlyObjects, true);
             _onRemotePlayerStarted?.Invoke();
-            Debug.Log($"[NeoNetworkPlayer] Remote player started: {gameObject.name}");
+            if (_debugLifecycleLog)
+            {
+                NetworkDiagnostics.Log($"[NeoNetworkPlayer] Remote player started: {gameObject.name}", this, true);
+            }
         }
 
         /// <summary>

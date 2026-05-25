@@ -213,19 +213,9 @@ namespace Neo.NoCode
             }
 
             Type type = _cachedComponent.GetType();
-            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
-            PropertyInfo prop = ReflectionCache.GetProperty(type, _memberName, flags);
-            if (prop != null && prop.CanRead)
+            if (TryResolveSupportedSourceMember(type, _memberName, out MemberInfo member))
             {
-                _cachedMember = prop;
-                _cacheValid = true;
-                return true;
-            }
-
-            FieldInfo field = ReflectionCache.GetField(type, _memberName, flags);
-            if (field != null)
-            {
-                _cachedMember = field;
+                _cachedMember = member;
                 _cacheValid = true;
                 return true;
             }
@@ -238,6 +228,49 @@ namespace Neo.NoCode
             }
 
             error = $"Member '{_memberName}' not found.";
+            return false;
+        }
+
+        /// <summary>
+        ///     Defines the NoCode binding contract: source members are readable fields or non-indexed readable properties.
+        ///     Methods are intentionally excluded so Inspector wiring remains a data-binding layer, not hidden behavior.
+        /// </summary>
+        public static bool IsSupportedSourceMember(MemberInfo member)
+        {
+            switch (member)
+            {
+                case FieldInfo:
+                    return true;
+                case PropertyInfo property:
+                    return property.CanRead && property.GetIndexParameters().Length == 0;
+                default:
+                    return false;
+            }
+        }
+
+        public static bool TryResolveSupportedSourceMember(Type componentType, string memberName, out MemberInfo member)
+        {
+            member = null;
+            if (componentType == null || string.IsNullOrEmpty(memberName))
+            {
+                return false;
+            }
+
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            PropertyInfo prop = ReflectionCache.GetProperty(componentType, memberName, flags);
+            if (IsSupportedSourceMember(prop))
+            {
+                member = prop;
+                return true;
+            }
+
+            FieldInfo field = ReflectionCache.GetField(componentType, memberName, flags);
+            if (IsSupportedSourceMember(field))
+            {
+                member = field;
+                return true;
+            }
+
             return false;
         }
 

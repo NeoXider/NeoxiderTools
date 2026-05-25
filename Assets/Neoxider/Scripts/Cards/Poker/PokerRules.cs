@@ -60,13 +60,20 @@ namespace Neo.Cards.Poker
                 return new List<int>();
             }
 
-            List<int> winners = new() { 0 };
-            PokerHandResult bestHand = hands[0];
+            List<int> winners = new();
+            PokerHandResult bestHand = null;
 
-            for (int i = 1; i < hands.Count; i++)
+            for (int i = 0; i < hands.Count; i++)
             {
                 if (hands[i] == null)
                 {
+                    continue;
+                }
+
+                if (bestHand == null)
+                {
+                    bestHand = hands[i];
+                    winners.Add(i);
                     continue;
                 }
 

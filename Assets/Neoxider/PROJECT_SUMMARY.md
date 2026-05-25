@@ -5,7 +5,7 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `8.5.8`
+- **Текущая версия**: `8.6.0`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
@@ -30,7 +30,7 @@ Assets/Neoxider/
 ## Ключевые продуктовые слои
 
 - **Core gameplay modules**: `Core` (Level, Resources), `Cards`, `GridSystem`, `Save`, `Shop`, `StateMachine`, `NPC`, `UI`, `Progression`.
-- **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move`, `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
+- **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (включая `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
 - **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `SetProgress` → TMP / Slider / Image), `PropertyAttribute`, UnityEvent-driven components.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
 - **Optional sample module**: `Samples~/NeoxiderPages`.
@@ -68,7 +68,7 @@ Assets/Neoxider/
 
 - В пакете подключён `com.unity.test-framework`.
 - Тесты пакета лежат в `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
-- На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap` и часть legacy/editor-регрессий.
+- На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine` и часть legacy/editor-регрессий.
 
 ## Канонические документы
 

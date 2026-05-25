@@ -36,6 +36,7 @@ namespace Neo.Shop
         [Space] public UnityEvent OnSelectItem;
         public UnityEvent OnDeselectItem;
 
+        [System.Obsolete("Use BoundItemId / BoundItemData / BoundBundleData. Integer view ids will be removed in v9.")]
         public int LegacyId => _id;
         public string BoundItemId { get; private set; } = "";
         public ShopItemData BoundItemData { get; private set; }
@@ -47,37 +48,45 @@ namespace Neo.Shop
         }
 
 
+        public void Visual(ShopItemData shopItemData, int price)
+        {
+            VisualInternal(shopItemData, null, price, -1);
+        }
+
+        [System.Obsolete("Use Visual(ShopItemData, int). Integer view ids will be removed in v9.")]
         public void Visual(ShopItemData shopItemData, int price, int id)
         {
-            _id = id;
-            BoundItemData = shopItemData;
-            BoundBundleData = null;
-            BoundItemId = shopItemData != null ? shopItemData.Id : "";
-            ApplyPrice(price);
-
-            if (shopItemData != null)
-            {
-                ApplyDisplay(shopItemData.nameItem, shopItemData.description, shopItemData.sprite, shopItemData.icon);
-            }
-            else
-            {
-                ApplyDisplay("", "", null, null);
-            }
+            VisualInternal(shopItemData, null, price, id);
         }
 
         /// <summary>
         ///     Visualises a <see cref="ShopBundleData"/> in this slot — uses bundle name, description,
         ///     sprite, and icon. Useful for bundle UI tabs / dialogs alongside the regular item list.
         /// </summary>
+        public void Visual(ShopBundleData bundleData, int price)
+        {
+            VisualInternal(null, bundleData, price, -1);
+        }
+
+        [System.Obsolete("Use Visual(ShopBundleData, int). Integer view ids will be removed in v9.")]
         public void Visual(ShopBundleData bundleData, int price, int id)
         {
-            _id = id;
-            BoundItemData = null;
+            VisualInternal(null, bundleData, price, id);
+        }
+
+        private void VisualInternal(ShopItemData shopItemData, ShopBundleData bundleData, int price, int legacyId)
+        {
+            _id = legacyId;
+            BoundItemData = shopItemData;
             BoundBundleData = bundleData;
-            BoundItemId = bundleData != null ? bundleData.Id : "";
+            BoundItemId = shopItemData != null ? shopItemData.Id : bundleData != null ? bundleData.Id : "";
             ApplyPrice(price);
 
-            if (bundleData != null)
+            if (shopItemData != null)
+            {
+                ApplyDisplay(shopItemData.nameItem, shopItemData.description, shopItemData.sprite, shopItemData.icon);
+            }
+            else if (bundleData != null)
             {
                 ApplyDisplay(bundleData.nameBundle, bundleData.description, bundleData.sprite, bundleData.icon);
             }

@@ -26,7 +26,6 @@
 | Компонент | Кратко |
 |-----------|--------|
 | **VisualToggle** | Вкл/выкл видимости (GameObject, Renderer, CanvasGroup и т.д.) по событиям. |
-| **UIReady** | Устаревший. Используйте SceneFlowController (Neoxider/Level). |
 | **ButtonPrice** | Отображение цены, блокировка кнопки при нехватке валюты. Индикатор очков/звёзд — см. **Selector** (режим fill). |
 | **UI** (Simple) | Простой контейнер кнопок/страниц. |
 | **VariantView**, **AnchorMove** | Варианты отображения, сдвиг по якорям. |
@@ -42,7 +41,7 @@
 | Подкатегория | Компоненты |
 |--------------|------------|
 | **Physics** | ExplosiveForce, ImpulseZone, MagneticField, PhysicsEvents2D, PhysicsEvents3D |
-| **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
+| **Movement** | Follow, DistanceChecker, CameraConstraint, CameraRotationController, FreeFlyCameraController, CursorLockController, PlayerController2D/3D Physics, PlayerController2D/3D AnimatorDriver, ScreenPositioner, AdvancedForceApplier, MouseMover2D/3D, ConstantMover, ConstantRotator, KeyboardMover, UniversalRotator |
 | **Spawner** | Spawner, SimpleSpawner, Despawner (удаление/возврат в пул, спавн при деспавне, OnDespawn) |
 | **Components** | RpgStatsDamageableBridge, Counter, Loot, TextScore, TypewriterEffectComponent; *Health, Evade, AttackExecution, AdvancedAttackCollider — legacy, см. [RPG](./Rpg/README.md) (`RpgCharacter`, `RpgAttackController`, `RpgEvadeController`)* |
 | **Dialogue** | DialogueController, DialogueUI. Редактор: кнопка в инспекторе или **Neoxider → Tools → Dialogue → Open Dialogue Editor**. |

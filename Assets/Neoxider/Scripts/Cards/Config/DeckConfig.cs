@@ -10,6 +10,27 @@ namespace Neo.Cards
     [CreateAssetMenu(fileName = "DeckConfig", menuName = "Neoxider/Cards/Deck Config")]
     public class DeckConfig : ScriptableObject
     {
+        [Serializable]
+        public sealed class CustomCardEntry
+        {
+            [SerializeField] private string _id;
+            [SerializeField] private string _displayName;
+            [SerializeField] private int _sortValue;
+            [SerializeField] private string _group;
+            [SerializeField] private Sprite _sprite;
+
+            public string Id => _id;
+            public string DisplayName => _displayName;
+            public int SortValue => _sortValue;
+            public string Group => _group;
+            public Sprite Sprite => _sprite;
+
+            public CardData ToCardData()
+            {
+                return CardData.CreateCustom(_id, _displayName, _sortValue, _group);
+            }
+        }
+
         [Header("Settings")] [Tooltip("Deck type for sprites (how many cards loaded in config)")] [SerializeField]
         private DeckType _deckType = DeckType.Standard52;
 
@@ -37,6 +58,13 @@ namespace Neo.Cards
 
         [SerializeField] private Sprite _blackJoker;
 
+        [Header("Custom Cards")]
+        [Tooltip("When enabled, GenerateDeck() uses Custom Cards instead of the built-in 36/52/54 deck types.")]
+        [SerializeField]
+        private bool _useCustomDeck;
+
+        [SerializeField] private List<CustomCardEntry> _customCards = new();
+
         /// <summary>
         ///     Sprite deck type (how many sprites are expected in the asset).
         /// </summary>
@@ -61,6 +89,16 @@ namespace Neo.Cards
         ///     Black joker sprite.
         /// </summary>
         public Sprite BlackJoker => _blackJoker;
+
+        /// <summary>
+        ///     Whether GenerateDeck() returns custom cards.
+        /// </summary>
+        public bool UseCustomDeck => _useCustomDeck;
+
+        /// <summary>
+        ///     Custom card definitions for TCG/board-game style decks.
+        /// </summary>
+        public IReadOnlyList<CustomCardEntry> CustomCards => _customCards;
 
         /// <summary>
         ///     Heart suit sprites.
@@ -89,6 +127,11 @@ namespace Neo.Cards
         /// <returns>Sprite, or null if missing.</returns>
         public Sprite GetSprite(CardData card)
         {
+            if (card.IsCustom)
+            {
+                return GetCustomSprite(card.CustomId);
+            }
+
             if (card.IsJoker)
             {
                 return card.IsRedJoker ? _redJoker : _blackJoker;
@@ -123,7 +166,31 @@ namespace Neo.Cards
         /// <returns>List of cards.</returns>
         public List<CardData> GenerateDeck()
         {
+            if (_useCustomDeck)
+            {
+                return GenerateCustomDeck();
+            }
+
             return GenerateDeck(_gameDeckType);
+        }
+
+        /// <summary>
+        ///     Generates a deck from custom card entries.
+        /// </summary>
+        public List<CardData> GenerateCustomDeck()
+        {
+            List<CardData> cards = new();
+            foreach (CustomCardEntry entry in _customCards)
+            {
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    continue;
+                }
+
+                cards.Add(entry.ToCardData());
+            }
+
+            return cards;
         }
 
         /// <summary>
@@ -178,6 +245,12 @@ namespace Neo.Cards
             if (_backSprite == null)
             {
                 errors.Add("Card back sprite is not assigned");
+            }
+
+            if (_useCustomDeck)
+            {
+                ValidateCustomCards(errors, warnings);
+                return errors.Count == 0;
             }
 
             ValidateSuit(_hearts, Suit.Hearts, expectedCount, errors);
@@ -246,6 +319,54 @@ namespace Neo.Cards
         {
             Rank minRank = _deckType.GetMinRank();
             return (int)rank - (int)minRank;
+        }
+
+        private Sprite GetCustomSprite(string customId)
+        {
+            if (string.IsNullOrWhiteSpace(customId) || _customCards == null)
+            {
+                return null;
+            }
+
+            foreach (CustomCardEntry entry in _customCards)
+            {
+                if (entry != null && entry.Id == customId)
+                {
+                    return entry.Sprite;
+                }
+            }
+
+            return null;
+        }
+
+        private void ValidateCustomCards(List<string> errors, List<string> warnings)
+        {
+            if (_customCards == null || _customCards.Count == 0)
+            {
+                errors.Add("Custom deck is enabled but no custom cards are configured");
+                return;
+            }
+
+            HashSet<string> ids = new();
+            for (int i = 0; i < _customCards.Count; i++)
+            {
+                CustomCardEntry entry = _customCards[i];
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    errors.Add($"Custom card #{i + 1}: id is empty");
+                    continue;
+                }
+
+                if (!ids.Add(entry.Id))
+                {
+                    errors.Add($"Custom card id '{entry.Id}' is duplicated");
+                }
+
+                if (entry.Sprite == null)
+                {
+                    warnings.Add($"Custom card '{entry.Id}' has no face sprite assigned");
+                }
+            }
         }
     }
 }

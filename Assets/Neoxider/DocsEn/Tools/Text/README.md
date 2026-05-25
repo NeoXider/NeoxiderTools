@@ -1,6 +1,6 @@
 ﻿# Tools / Text
 
-Text and time formatting for UI. Scripts in `Scripts/Tools/Text/`. Full docs are in Russian.
+Text and time formatting for UI. Scripts in `Scripts/Tools/Text/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

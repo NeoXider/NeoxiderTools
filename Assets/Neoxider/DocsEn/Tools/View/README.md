@@ -1,6 +1,6 @@
 ﻿# Tools / View
 
-View helpers: fill animator, billboard, selector, star view, light/material animators, Z adjuster. Scripts in `Scripts/Tools/View/`. Full docs are in Russian.
+View helpers: fill animator, billboard, selector, star view, light/material animators, Z adjuster. Scripts in `Scripts/Tools/View/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

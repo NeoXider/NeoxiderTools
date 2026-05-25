@@ -1,7 +1,10 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Neo.Cards;
+using Neo.Cards.Poker;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Neo.Editor.Tests
 {
@@ -32,6 +35,22 @@ namespace Neo.Editor.Tests
 
             Assert.IsTrue(redJoker.IsJoker, "Joker should be identified");
             Assert.AreNotEqual(redJoker, blackJoker, "Red and Black Jokers are different");
+        }
+
+        [Test]
+        public void CardData_CustomCards_SupportGenericGames()
+        {
+            CardData wolf = CardData.CreateCustom("beast_wolf", "Wolf", 2, "Beast");
+            CardData bear = CardData.CreateCustom("beast_bear", "Bear", 5, "Beast");
+            CardData fireball = CardData.CreateCustom("spell_fireball", "Fireball", 5, "Spell");
+
+            Assert.IsTrue(wolf.IsCustom);
+            Assert.AreEqual("beast_wolf", wolf.CustomId);
+            Assert.AreEqual("Wolf", wolf.ToString());
+            Assert.IsTrue(bear.Beats(wolf, null), "Higher SortValue in same custom group should beat lower card.");
+            Assert.IsFalse(fireball.Beats(wolf, null), "Different custom groups should not beat each other by default.");
+            Assert.IsTrue(bear.HasSameRank(fireball), "SortValue is the generic rank equivalent for custom games.");
+            Assert.IsFalse(bear.HasSameSuit(fireball), "Group is the generic suit/faction equivalent.");
         }
 
         [Test]
@@ -70,6 +89,89 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void DeckModel_ExplicitCustomDeck_PreservesCardsAndEmptyDrawsSafely()
+        {
+            var cards = new List<CardData>
+            {
+                CardData.CreateCustom("hero_mage", "Mage", 10, "Hero"),
+                CardData.CreateCustom("spell_arcane", "Arcane Bolt", 3, "Spell")
+            };
+            var deck = new DeckModel();
+
+            deck.Initialize(cards, false);
+
+            Assert.AreEqual(2, deck.RemainingCount);
+            Assert.AreEqual(cards[1], deck.Draw());
+            Assert.AreEqual(cards[0], deck.Draw());
+            Assert.IsNull(deck.Draw());
+            Assert.AreEqual(0, deck.Draw(3).Count);
+        }
+
+        [Test]
+        public void CardViewApis_AllowStandaloneCustomCardsWithoutDeckConfig()
+        {
+            var texture = new Texture2D(2, 2);
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f);
+            var cardObject = new GameObject("StandaloneCard");
+            var viewObject = new GameObject("StandaloneView");
+            var universalObject = new GameObject("StandaloneUniversalView");
+
+            try
+            {
+                var card = cardObject.AddComponent<CardComponent>();
+                var view = viewObject.AddComponent<CardView>();
+                var universal = universalObject.AddComponent<CardViewUniversal>();
+                CardData custom = CardData.CreateCustom("minion_custom", "Custom Minion", 4, "Neutral");
+
+                Assert.DoesNotThrow(() => card.SetSpriteOverrides(sprite));
+                Assert.DoesNotThrow(() => card.SetData(custom));
+                Assert.DoesNotThrow(() => card.Flip());
+
+                Assert.DoesNotThrow(() => view.SetSpriteOverrides(sprite));
+                Assert.DoesNotThrow(() => view.SetData(custom));
+                Assert.DoesNotThrow(() => view.Flip());
+
+                Assert.DoesNotThrow(() => universal.SetSpriteOverrides(sprite));
+                Assert.DoesNotThrow(() => universal.SetData(custom));
+                Assert.DoesNotThrow(() => universal.Flip());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(sprite);
+                UnityEngine.Object.DestroyImmediate(texture);
+                UnityEngine.Object.DestroyImmediate(cardObject);
+                UnityEngine.Object.DestroyImmediate(viewObject);
+                UnityEngine.Object.DestroyImmediate(universalObject);
+            }
+        }
+
+        [Test]
+        public void BoardComponent_CustomCapacityAndFaceUp_ArePubliclyConfigurable()
+        {
+            var boardObject = new GameObject("Board");
+            var cardObject = new GameObject("Card");
+
+            try
+            {
+                var board = boardObject.AddComponent<BoardComponent>();
+                var card = cardObject.AddComponent<CardComponent>();
+
+                board.SetCapacity(1, false);
+                board.SetFaceUp(false);
+
+                Assert.AreEqual(1, board.MaxCards);
+                Assert.IsFalse(board.FaceUp);
+                Assert.IsTrue(board.CanPlaceCard(card));
+                Assert.IsFalse(board.CanPlaceCard(null));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(cardObject);
+                UnityEngine.Object.DestroyImmediate(boardObject);
+            }
+        }
+
+        [Test]
         public void HandModel_SortingAndFetching_ReturnsExpected()
         {
             var hand = new HandModel();
@@ -100,6 +202,75 @@ namespace Neo.Editor.Tests
 
             List<CardData> testSuitCards = hand.GetCardsBySuit(Suit.Diamonds);
             Assert.AreEqual(2, testSuitCards.Count, "Should find two Diamonds");
+        }
+
+        [Test]
+        public void PokerEvaluator_RejectsHandsWithFewerThanFiveNonJokers()
+        {
+            var cards = new[]
+            {
+                new CardData(Suit.Hearts, Rank.Ace),
+                new CardData(Suit.Clubs, Rank.King),
+                new CardData(Suit.Diamonds, Rank.Queen),
+                new CardData(Suit.Spades, Rank.Jack),
+                CardData.CreateJoker(true)
+            };
+
+            Assert.Throws<ArgumentException>(() => PokerHandEvaluator.Evaluate(cards));
+        }
+
+        [Test]
+        public void PokerEvaluator_WheelStraight_UsesFiveAsHighCard()
+        {
+            var cards = new[]
+            {
+                new CardData(Suit.Hearts, Rank.Ace),
+                new CardData(Suit.Clubs, Rank.Two),
+                new CardData(Suit.Diamonds, Rank.Three),
+                new CardData(Suit.Spades, Rank.Four),
+                new CardData(Suit.Hearts, Rank.Five)
+            };
+
+            PokerHandResult result = PokerHandEvaluator.Evaluate(cards);
+
+            Assert.AreEqual(PokerCombination.Straight, result.Combination);
+            Assert.AreEqual(Rank.Five, result.CombinationRanks[0]);
+        }
+
+        [Test]
+        public void PokerRules_GetWinners_IgnoresNullHandsAndSupportsAllNull()
+        {
+            PokerHandResult pair = PokerHandEvaluator.Evaluate(new[]
+            {
+                new CardData(Suit.Hearts, Rank.Ace),
+                new CardData(Suit.Clubs, Rank.Ace),
+                new CardData(Suit.Diamonds, Rank.Queen),
+                new CardData(Suit.Spades, Rank.Jack),
+                new CardData(Suit.Hearts, Rank.Nine)
+            });
+
+            CollectionAssert.AreEqual(new[] { 1 }, PokerRules.GetWinners(new List<PokerHandResult> { null, pair }));
+            Assert.AreEqual(0, PokerRules.GetWinners(new List<PokerHandResult> { null, null }).Count);
+        }
+
+        [Test]
+        public void PokerRules_TexasHoldem_ReturnsSplitPotWinners()
+        {
+            var board = new[]
+            {
+                new CardData(Suit.Hearts, Rank.Ace),
+                new CardData(Suit.Clubs, Rank.King),
+                new CardData(Suit.Diamonds, Rank.Queen),
+                new CardData(Suit.Spades, Rank.Jack),
+                new CardData(Suit.Hearts, Rank.Ten)
+            };
+            var players = new List<IEnumerable<CardData>>
+            {
+                new[] { new CardData(Suit.Clubs, Rank.Two), new CardData(Suit.Diamonds, Rank.Three) },
+                new[] { new CardData(Suit.Spades, Rank.Four), new CardData(Suit.Clubs, Rank.Five) }
+            };
+
+            CollectionAssert.AreEqual(new[] { 0, 1 }, PokerRules.GetWinnersTexasHoldem(board, players));
         }
     }
 }

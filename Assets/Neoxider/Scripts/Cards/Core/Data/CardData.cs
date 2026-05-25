@@ -24,6 +24,31 @@ namespace Neo.Cards
         public bool IsJoker { get; }
 
         /// <summary>
+        ///     Whether this card uses a custom id instead of the built-in suit/rank model.
+        /// </summary>
+        public bool IsCustom { get; }
+
+        /// <summary>
+        ///     Stable custom id for non-standard card games.
+        /// </summary>
+        public string CustomId { get; }
+
+        /// <summary>
+        ///     Optional display name for custom cards.
+        /// </summary>
+        public string DisplayName { get; }
+
+        /// <summary>
+        ///     Generic comparable value for custom games (power, cost, rarity order, etc.).
+        /// </summary>
+        public int SortValue { get; }
+
+        /// <summary>
+        ///     Optional grouping key for custom games (faction, class, color, suit-like group).
+        /// </summary>
+        public string Group { get; }
+
+        /// <summary>
         ///     Joker color (true = red, false = black). Meaningful only when <see cref="IsJoker" /> is true.
         /// </summary>
         public bool IsRedJoker { get; }
@@ -39,6 +64,11 @@ namespace Neo.Cards
             Rank = rank;
             IsJoker = false;
             IsRedJoker = false;
+            IsCustom = false;
+            CustomId = string.Empty;
+            DisplayName = string.Empty;
+            SortValue = (int)rank;
+            Group = suit.ToString();
         }
 
         /// <summary>
@@ -56,6 +86,38 @@ namespace Neo.Cards
             Rank = default;
             IsJoker = true;
             IsRedJoker = isRedJoker;
+            IsCustom = false;
+            CustomId = string.Empty;
+            DisplayName = isRedJoker ? "Red Joker" : "Black Joker";
+            SortValue = int.MaxValue;
+            Group = "Joker";
+        }
+
+        private CardData(string customId, string displayName, int sortValue, string group)
+        {
+            if (string.IsNullOrWhiteSpace(customId))
+            {
+                throw new ArgumentException("Custom card id must be stable and non-empty.", nameof(customId));
+            }
+
+            Suit = default;
+            Rank = default;
+            IsJoker = false;
+            IsRedJoker = false;
+            IsCustom = true;
+            CustomId = customId.Trim();
+            DisplayName = string.IsNullOrWhiteSpace(displayName) ? CustomId : displayName.Trim();
+            SortValue = sortValue;
+            Group = string.IsNullOrWhiteSpace(group) ? string.Empty : group.Trim();
+        }
+
+        /// <summary>
+        ///     Creates a non-standard card for custom games (TCG, board-game cards, ability cards, etc.).
+        /// </summary>
+        public static CardData CreateCustom(string customId, string displayName = null, int sortValue = 0,
+            string group = null)
+        {
+            return new CardData(customId, displayName, sortValue, group);
         }
 
         /// <summary>
@@ -65,6 +127,17 @@ namespace Neo.Cards
         /// <returns>Positive if this card is higher, negative if lower, zero if equal.</returns>
         public int CompareTo(CardData other)
         {
+            if (IsCustom || other.IsCustom)
+            {
+                int valueCompare = SortValue.CompareTo(other.SortValue);
+                if (valueCompare != 0)
+                {
+                    return valueCompare;
+                }
+
+                return string.Compare(CustomId, other.CustomId, StringComparison.Ordinal);
+            }
+
             if (IsJoker && other.IsJoker)
             {
                 return 0;
@@ -91,6 +164,17 @@ namespace Neo.Cards
         /// <returns>True if this card beats <paramref name="other" />.</returns>
         public bool Beats(CardData other, Suit? trump)
         {
+            if (IsCustom || other.IsCustom)
+            {
+                if (!IsCustom || !other.IsCustom)
+                {
+                    return false;
+                }
+
+                bool sameGroup = string.IsNullOrEmpty(Group) || string.IsNullOrEmpty(other.Group) || Group == other.Group;
+                return sameGroup && SortValue > other.SortValue;
+            }
+
             if (IsJoker || other.IsJoker)
             {
                 return false;
@@ -138,6 +222,11 @@ namespace Neo.Cards
         /// <returns>True if ranks are equal.</returns>
         public bool HasSameRank(CardData other)
         {
+            if (IsCustom || other.IsCustom)
+            {
+                return IsCustom && other.IsCustom && SortValue == other.SortValue;
+            }
+
             if (IsJoker || other.IsJoker)
             {
                 return false;
@@ -153,6 +242,11 @@ namespace Neo.Cards
         /// <returns>True if suits are equal.</returns>
         public bool HasSameSuit(CardData other)
         {
+            if (IsCustom || other.IsCustom)
+            {
+                return IsCustom && other.IsCustom && !string.IsNullOrEmpty(Group) && Group == other.Group;
+            }
+
             if (IsJoker || other.IsJoker)
             {
                 return false;
@@ -196,6 +290,16 @@ namespace Neo.Cards
         /// </summary>
         public bool Equals(CardData other)
         {
+            if (IsCustom && other.IsCustom)
+            {
+                return CustomId == other.CustomId;
+            }
+
+            if (IsCustom || other.IsCustom)
+            {
+                return false;
+            }
+
             if (IsJoker && other.IsJoker)
             {
                 return IsRedJoker == other.IsRedJoker;
@@ -218,6 +322,11 @@ namespace Neo.Cards
         /// <inheritdoc />
         public override int GetHashCode()
         {
+            if (IsCustom)
+            {
+                return HashCode.Combine(IsCustom, CustomId);
+            }
+
             if (IsJoker)
             {
                 return HashCode.Combine(IsJoker, IsRedJoker);
@@ -231,6 +340,11 @@ namespace Neo.Cards
         /// </summary>
         public override string ToString()
         {
+            if (IsCustom)
+            {
+                return string.IsNullOrEmpty(DisplayName) ? CustomId : DisplayName;
+            }
+
             if (IsJoker)
             {
                 return IsRedJoker ? "Red Joker" : "Black Joker";
@@ -244,6 +358,11 @@ namespace Neo.Cards
         /// </summary>
         public string ToLongEnglishString()
         {
+            if (IsCustom)
+            {
+                return string.IsNullOrEmpty(DisplayName) ? CustomId : DisplayName;
+            }
+
             if (IsJoker)
             {
                 return IsRedJoker ? "Red Joker" : "Black Joker";

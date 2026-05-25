@@ -19,6 +19,7 @@
 - [CursorLockController](./CursorLockController.md)
 - [DistanceChecker](./DistanceChecker.md)
 - [Follow](./Follow.md)
+- [FreeFlyCameraController](./FreeFlyCameraController.md)
 - [PlayerController2DAnimatorDriver](./PlayerController2DAnimatorDriver.md)
 - [PlayerController2DPhysics](./PlayerController2DPhysics.md)
 - [PlayerController3DAnimatorDriver](./PlayerController3DAnimatorDriver.md)
@@ -49,6 +50,10 @@
 
 - [CursorLockController](./CursorLockController.md)
 - [PlayerController3DPhysics](./PlayerController3DPhysics.md)
+
+## Свободный полет камеры
+
+Для debug/spectator камеры используйте [FreeFlyCameraController](./FreeFlyCameraController.md). По умолчанию он работает как Unity Scene View: зажмите ПКМ для обзора и полета, используйте `W/A/S/D`, `Q/E`, `Left Shift`, `Left Alt` и колесо мыши для скорости. Если нужно постоянное управление без ПКМ, отключите `Require Look Button` и при необходимости `Move Only While Looking`.
 
 ## Папки
 

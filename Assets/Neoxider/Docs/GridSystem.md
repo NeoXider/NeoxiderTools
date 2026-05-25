@@ -295,15 +295,19 @@ bool moveApplied = tttBoard.TryMakeMove(new Vector2Int(1, 1));
 
 ## Демо
 
+UPM sample: `Demo Scenes` из `Assets/Neoxider/package.json`, путь внутри пакета — `Samples~/Demo`.
+
 Сцены:
-- `Assets/Neoxider/~Samples/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity`
-- `Assets/Neoxider/~Samples/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity`
+- `Assets/Neoxider/Samples~/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity`
+- `Assets/Neoxider/Samples~/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity`
 
 Setup-скрипты:
-- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemMatch3DemoSetup.cs`
-- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemTicTacToeDemoSetup.cs`
-- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemMatch3BoardView.cs` (runtime view для интерактивного Match3 поля)
-- `Assets/Neoxider/~Samples/Demo/Scripts/GridSystem/GridSystemTicTacToeBoardView.cs` (runtime view для кликабельного поля)
+- `Assets/Neoxider/Samples~/Demo/Scripts/GridSystem/GridSystemMatch3DemoSetup.cs`
+- `Assets/Neoxider/Samples~/Demo/Scripts/GridSystem/GridSystemTicTacToeDemoSetup.cs`
+- `Assets/Neoxider/Samples~/Demo/Scripts/GridSystem/GridSystemMatch3BoardView.cs` (runtime view для интерактивного Match3 поля)
+- `Assets/Neoxider/Samples~/Demo/Scripts/GridSystem/GridSystemTicTacToeBoardView.cs` (runtime view для кликабельного поля)
+
+CS project для локальной проверки sample-кода: `Neo.Rpg.Demo.csproj`. Все include-пути должны оставаться на `Assets/Neoxider/Samples~/Demo/...`.
 
 Если сцена пустая:
 1. Создайте объект.

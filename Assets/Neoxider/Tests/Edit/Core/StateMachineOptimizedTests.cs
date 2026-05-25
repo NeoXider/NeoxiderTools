@@ -1,6 +1,8 @@
 using System;
 using Neo.StateMachine;
+using Neo.StateMachine.NoCode;
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Neo.Editor.Tests.Edit
 {
@@ -78,6 +80,17 @@ namespace Neo.Editor.Tests.Edit
             public void OnLateUpdate() { }
         }
 
+        private class ExitCountingState : IState
+        {
+            public int ExitCount;
+
+            public void OnEnter() { }
+            public void OnExit() => ExitCount++;
+            public void OnUpdate() { }
+            public void OnFixedUpdate() { }
+            public void OnLateUpdate() { }
+        }
+
         #endregion
 
         [Test]
@@ -127,10 +140,23 @@ namespace Neo.Editor.Tests.Edit
         public void ChangeState_Null_DoesNotThrow()
         {
             var fsm = new StateMachine<IState>();
-            UnityEngine.TestTools.LogAssert.Expect(UnityEngine.LogType.Warning,
-                new System.Text.RegularExpressions.Regex("null state"));
             fsm.ChangeState(null);
             Assert.IsNull(fsm.CurrentState);
+        }
+
+        [Test]
+        public void Stop_ExitsCurrentStateAndClearsCurrent()
+        {
+            var fsm = new StateMachine<IState>();
+            var state = new ExitCountingState();
+
+            fsm.ChangeState(state);
+            fsm.Stop();
+            fsm.Stop();
+
+            Assert.That(state.ExitCount, Is.EqualTo(1));
+            Assert.That(fsm.CurrentState, Is.Null);
+            Assert.That(fsm.PreviousState, Is.SameAs(state));
         }
 
         [Test]
@@ -407,6 +433,57 @@ namespace Neo.Editor.Tests.Edit
         {
             var fsm = new StateMachine<IState>();
             Assert.IsTrue(fsm.CanTransitionTo<IdleState>(), "With no current state, any transition should be allowed.");
+        }
+
+        [Test]
+        public void Behaviour_OnDisable_StopsCurrentState()
+        {
+            var go = new GameObject("StateMachineHost");
+            try
+            {
+                var behaviour = go.AddComponent<StateMachineBehaviourBase>();
+                behaviour.ChangeState<ExitCountingState>();
+
+                var state = (ExitCountingState)behaviour.CurrentState;
+                InvokePrivate(behaviour, "OnDisable");
+
+                Assert.That(state.ExitCount, Is.EqualTo(1));
+                Assert.That(behaviour.CurrentState, Is.Null);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void ContextAction_UsesSceneObjectProvidedByComponentSlot()
+        {
+            var target = new GameObject("StateMachineActionTarget");
+            try
+            {
+                var action = new SetContextGameObjectActiveAction
+                {
+                    ContextSlot = ConditionContextSlot.Owner,
+                    SetActive = false
+                };
+
+                action.Execute(target);
+
+                Assert.That(target.activeSelf, Is.False);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(target);
+            }
+        }
+
+        private static void InvokePrivate(object target, string methodName)
+        {
+            var method = target.GetType().GetMethod(methodName,
+                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            Assert.That(method, Is.Not.Null, methodName);
+            method.Invoke(target, null);
         }
     }
 }

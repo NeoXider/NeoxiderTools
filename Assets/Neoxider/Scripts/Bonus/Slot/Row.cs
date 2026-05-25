@@ -69,6 +69,7 @@ namespace Neo.Bonus
         public float motionStretchVelRef = 30f;
 
         public UnityEvent OnStop = new();
+        [SerializeField] private bool _debugLogWarnings;
         private float _acc; // units/s²
 
         /// <summary>Desired visible symbol ids bottom→top when the reel stops; cleared after apply.</summary>
@@ -600,9 +601,8 @@ namespace Neo.Bonus
 
             if (_spinTargetIdsBottomUp.Length != countSlotElement)
             {
-                Debug.LogWarning(
-                    $"[{nameof(Row)}] Target id count {_spinTargetIdsBottomUp.Length} != {nameof(countSlotElement)} {countSlotElement}. Ignoring targets.",
-                    this);
+                LogWarning(
+                    $"Target id count {_spinTargetIdsBottomUp.Length} != {nameof(countSlotElement)} {countSlotElement}. Ignoring targets.");
                 _spinTargetIdsBottomUp = null;
                 return;
             }
@@ -936,6 +936,14 @@ namespace Neo.Bonus
             SlotElement[] topDown = GetVisibleTopDown();
             Array.Reverse(topDown); // now Bottom→Top
             return topDown;
+        }
+
+        private void LogWarning(string message)
+        {
+            if (_debugLogWarnings)
+            {
+                Debug.LogWarning($"[{nameof(Row)}] {message}", this);
+            }
         }
 
         // States

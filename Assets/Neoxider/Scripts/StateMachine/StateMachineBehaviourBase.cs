@@ -28,6 +28,12 @@ namespace Neo.StateMachine
         [Header("Settings")] [SerializeField] [Tooltip("Enable state transition logging")]
         private bool enableDebugLog;
 
+        [SerializeField] [Tooltip("Exit the current state when this component is disabled.")]
+        private bool exitCurrentStateOnDisable = true;
+
+        [SerializeField] [Tooltip("Reload StateMachineData when the component is enabled again after disable.")]
+        private bool reloadDataOnEnable = true;
+
 #pragma warning disable 0414
         [SerializeField] [Tooltip("Show current state in inspector")]
         private bool showStateInInspector = true;
@@ -63,6 +69,8 @@ namespace Neo.StateMachine
         [SerializeField] private float stateEnterTime;
 
         private StateMachine<IState> stateMachine;
+        private bool initialized;
+        private bool started;
 
         /// <summary>
         ///     Underlying State Machine instance.
@@ -109,8 +117,23 @@ namespace Neo.StateMachine
             InitializeStateMachine();
         }
 
+        private void OnEnable()
+        {
+            StateMachineLog.Enabled = enableDebugLog;
+            if (!initialized)
+            {
+                InitializeStateMachine();
+            }
+
+            if (started && reloadDataOnEnable && stateMachineData != null)
+            {
+                LoadFromStateMachineData();
+            }
+        }
+
         private void Start()
         {
+            started = true;
             if (stateMachineData != null)
             {
                 LoadFromStateMachineData();
@@ -119,7 +142,7 @@ namespace Neo.StateMachine
 
         private void Update()
         {
-            StateMachine.Update();
+            RunWithContext(() => StateMachine.Update());
 
             if (autoEvaluateTransitions)
             {
@@ -129,18 +152,27 @@ namespace Neo.StateMachine
 
         private void FixedUpdate()
         {
-            StateMachine.FixedUpdate();
+            RunWithContext(() => StateMachine.FixedUpdate());
         }
 
         private void LateUpdate()
         {
-            StateMachine.LateUpdate();
+            RunWithContext(() => StateMachine.LateUpdate());
         }
 
         private void OnDestroy()
         {
+            StateMachine?.Stop();
             StateMachine?.ClearStateCache();
             StateMachine?.ClearTransitionCache();
+        }
+
+        private void OnDisable()
+        {
+            if (exitCurrentStateOnDisable)
+            {
+                StateMachine?.Stop();
+            }
         }
 
         /// <summary>
@@ -149,11 +181,11 @@ namespace Neo.StateMachine
         /// <typeparam name="T">Target state type.</typeparam>
         public void ChangeState<T>() where T : class, IState, new()
         {
-            StateMachine.ChangeState<T>();
+            RunWithContext(() => StateMachine.ChangeState<T>());
 
             if (enableDebugLog)
             {
-                Debug.Log($"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
+                StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {typeof(T).Name}", this);
             }
         }
 
@@ -165,7 +197,7 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                Debug.LogWarning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
+                StateMachineLog.Warning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
                     this);
                 return;
             }
@@ -173,16 +205,16 @@ namespace Neo.StateMachine
             StateData stateData = Array.Find(stateMachineData.States, s => s != null && s.StateName == stateName);
             if (stateData != null)
             {
-                StateMachine.ChangeState(stateData);
+                RunWithContext(() => StateMachine.ChangeState(stateData));
 
                 if (enableDebugLog)
                 {
-                    Debug.Log($"[StateMachineBehaviour] Changed state to {stateName}", this);
+                    StateMachineLog.Info($"[StateMachineBehaviour] Changed state to {stateName}", this);
                 }
             }
             else
             {
-                Debug.LogWarning(
+                StateMachineLog.Warning(
                     $"[StateMachineBehaviour] State with name '{stateName}' not found in StateMachineData.", this);
             }
         }
@@ -224,7 +256,7 @@ namespace Neo.StateMachine
 
             if (stateMachineData.InitialState != null)
             {
-                StateMachine.ChangeState(stateMachineData.InitialState);
+                RunWithContext(() => StateMachine.ChangeState(stateMachineData.InitialState));
                 return;
             }
 
@@ -241,10 +273,11 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                Debug.LogWarning("[StateMachineBehaviour] Cannot load: StateMachineData is null.", this);
+                StateMachineLog.Warning("[StateMachineBehaviour] Cannot load: StateMachineData is null.", this);
                 return;
             }
 
+            StateMachine.Stop();
             StateMachine.ClearTransitionCache();
             stateMachineData.LoadIntoStateMachine(StateMachine);
 
@@ -266,6 +299,7 @@ namespace Neo.StateMachine
             previousStateName = "";
             stateChangeCount = 0;
             stateEnterTime = Time.time;
+            initialized = true;
             onInitialized?.Invoke();
         }
 
@@ -291,7 +325,7 @@ namespace Neo.StateMachine
                 {
                     string fromName = string.IsNullOrEmpty(previousStateName) ? "None" : previousStateName;
                     string toName = string.IsNullOrEmpty(currentStateName) ? "None" : currentStateName;
-                    Debug.Log($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
+                    StateMachineLog.Info($"[StateMachineBehaviour] State changed: {fromName} -> {toName}", this);
                 }
             });
 
@@ -304,11 +338,16 @@ namespace Neo.StateMachine
 
         private void EvaluateTransitionsInternal()
         {
+            RunWithContext(() => StateMachine.EvaluateTransitions());
+        }
+
+        private void RunWithContext(Action action)
+        {
             StateMachineEvaluationContext.Push(gameObject,
                 contextOverrides != null && contextOverrides.Length > 0 ? contextOverrides : null);
             try
             {
-                StateMachine.EvaluateTransitions();
+                action?.Invoke();
             }
             finally
             {

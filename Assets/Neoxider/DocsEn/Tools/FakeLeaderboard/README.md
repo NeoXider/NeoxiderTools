@@ -1,6 +1,6 @@
 ﻿# Tools / FakeLeaderboard
 
-Mock leaderboard UI for demos. Scripts in `Scripts/Tools/FakeLeaderboard/`. Full docs are in Russian.
+Mock leaderboard UI for demos. Scripts in `Scripts/Tools/FakeLeaderboard/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

@@ -1,6 +1,6 @@
 ﻿# Tools / Components / Interface
 
-InterfaceAttack and related (IDamageable, IHealable, etc.). Full docs are in Russian.
+InterfaceAttack and related (IDamageable, IHealable, etc.). Use this page as the English module entry.
 
 ## Russian docs
 

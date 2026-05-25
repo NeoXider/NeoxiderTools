@@ -1,10 +1,13 @@
 ﻿# TimeReward
 
-**Purpose:** See Inspector fields below for configuration.
+**Purpose:** Legacy time reward component kept for existing scenes and prefabs.
+
+Use [CooldownReward](./CooldownReward.md) for new setups. `TimeReward` is hidden from new `Add Component` / `CreateFromMenu` flows so new scenes do not accidentally depend on the legacy implementation.
 
 ## Setup
 
-- Add the component via the Unity menu.
+- Keep the component only on old scenes/prefabs that already use it.
+- For new scenes, add `CooldownReward` instead.
 
 ## Key Fields (Inspector)
 

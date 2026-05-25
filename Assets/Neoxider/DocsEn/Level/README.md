@@ -1,6 +1,6 @@
 ﻿# Level module
 
-Level flow, scene loading, level buttons, and progress. Scripts in `Scripts/Level/`. Full docs are in Russian.
+Level flow, scene loading, level buttons, and progress. Scripts in `Scripts/Level/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

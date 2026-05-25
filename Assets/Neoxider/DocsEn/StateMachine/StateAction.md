@@ -1,6 +1,6 @@
-# StateAction
+﻿# StateAction
 
-**Purpose:** A No-Code action for states in `StateMachineBehaviour`. Allows calling methods (via `UnityEvent`) on state enter, update, or exit — without writing code.
+**Purpose:** A No-Code action for states in `StateMachineBehaviour`. Allows calling methods (via `UnityEvent`) on state enter, update, or exit вЂ” without writing code.
 
 ## Fields (Inspector)
 
@@ -12,5 +12,5 @@
 
 ## See Also
 - [StateMachineBehaviour](StateMachineBehaviour.md)
-- [StateData](StateData.md)
-- ← [StateMachine](README.md)
+- [StateData](NoCode/StateData.md)
+- в†ђ [StateMachine](README.md)

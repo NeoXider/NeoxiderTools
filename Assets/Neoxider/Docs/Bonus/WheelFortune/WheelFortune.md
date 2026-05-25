@@ -55,3 +55,5 @@
 | `_wheelTransform` | Wheel Transform. |
 | `items` | Items. |
 | `true` | True. |
+
+Runtime-лог ID результата выключен по умолчанию и пишется только при включённом `_debugLogId`. Предупреждения `WheelMoneyWin` также выключены по умолчанию и включаются через `_debugLogWarnings`.

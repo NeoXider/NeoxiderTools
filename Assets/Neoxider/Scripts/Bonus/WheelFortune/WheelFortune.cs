@@ -282,7 +282,7 @@ namespace Neo.Bonus
 
             if (_debugLogId)
             {
-                Debug.Log("Wheel Id: " + GetResultId());
+                Debug.Log($"[{nameof(WheelFortune)}] Result id: {GetResultId()}", this);
             }
 
             _canvasGroup ??= GetComponent<CanvasGroup>();

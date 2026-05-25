@@ -20,6 +20,7 @@ namespace Neo.Bonus
         private string _textDefaultValue;
 
         [SerializeField] private bool _setNativeSize;
+        [SerializeField] private bool _debugLogWarnings;
 
         private Collection CollectionInstance => _collection != null ? _collection : Collection.I;
 
@@ -27,7 +28,11 @@ namespace Neo.Bonus
         {
             if (itemCollectionData == null)
             {
-                Debug.LogWarning("[ItemCollectionInfo] SetData: itemCollectionData is null!");
+                if (_debugLogWarnings)
+                {
+                    Debug.LogWarning($"[{nameof(ItemCollectionInfo)}] SetData: itemCollectionData is null.", this);
+                }
+
                 return;
             }
 

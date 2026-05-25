@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using Neo.Save;
 using Neo.Settings;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Object = UnityEngine.Object;
 
 namespace Neo.Tools.Tests
@@ -13,6 +15,7 @@ namespace Neo.Tools.Tests
         [SetUp]
         public void SetUp()
         {
+            ResetSettings();
             SaveProvider.SetProvider(new DictionarySaveProvider());
         }
 
@@ -28,26 +31,18 @@ namespace Neo.Tools.Tests
                 Object.DestroyImmediate(svc.gameObject);
             }
 
-            // Reset GameSettings static state
-            typeof(GameSettings).GetMethod("ResetStaticStateForTesting",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)?.Invoke(null, null);
+            ResetSettings();
         }
 
         private GameSettingsComponent CreateComponent()
         {
             var go = new GameObject("SettingsService");
             GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
-            Type type = typeof(GameSettingsComponent);
-            type.GetField("_saveKeyPrefix",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .SetValue(svc, "Neo.Settings.");
-            type.GetField("_persistInput",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, true);
-            type.GetField("_defaultMouseSensitivity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, 2f);
+            SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
+            SetPrivate(svc, "_persistInput", true);
+            SetPrivate(svc, "_defaultMouseSensitivity", 2f);
 
-            type.GetMethod("Init", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .Invoke(svc, null);
+            InvokeInit(svc);
             return svc;
         }
 
@@ -84,24 +79,148 @@ namespace Neo.Tools.Tests
         {
             var go = new GameObject("SettingsService");
             GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
-            Type type = typeof(GameSettingsComponent);
-            type.GetField("_saveKeyPrefix",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .SetValue(svc, "Neo.Settings.");
-            type.GetField("_persistInput",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, true);
-            type.GetField("_defaultMouseSensitivity",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(svc, 2f);
+            SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
+            SetPrivate(svc, "_persistInput", true);
+            SetPrivate(svc, "_defaultMouseSensitivity", 2f);
 
             // Set the saved data BEFORE calling Init! Because Init calls LoadState!
             string key = "Neo.Settings." + GameSettingsSaveKeys.MouseSensitivity;
             SaveProvider.SetFloat(key, 5.5f);
 
-            type.GetMethod("Init", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
-                .Invoke(svc, null);
+            InvokeInit(svc);
 
             Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(5.5f).Within(0.001f));
             Object.DestroyImmediate(go);
+        }
+
+        [Test]
+        public void LoadState_WithoutComponent_KeepsStaticDefaults()
+        {
+            LogAssert.Expect(LogType.Warning, "[GameSettings] LoadState: no GameSettingsComponent attached.");
+
+            Assert.DoesNotThrow(GameSettings.LoadState);
+
+            Assert.That(GameSettings.Context, Is.Null);
+            Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(2f));
+            Assert.That(GameSettings.GraphicsPreset, Is.EqualTo(GraphicsPreset.High));
+            Assert.That(GameSettings.FullScreen, Is.True);
+            Assert.That(GameSettings.ResolutionAuto, Is.True);
+            Assert.That(GameSettings.FramerateCap, Is.EqualTo(-1));
+            Assert.That(GameSettings.VSync, Is.False);
+        }
+
+        [Test]
+        public void LoadState_WithMissingSavedValues_UsesComponentDefaults()
+        {
+            GameSettingsComponent svc = CreateComponentWithDefaults(
+                mouseSensitivity: 3.5f,
+                graphicsPreset: GraphicsPreset.Low,
+                qualityLevel: 0,
+                fullScreen: false,
+                resolutionAuto: true,
+                resolutionIndex: 1,
+                framerateCap: 120,
+                vSync: true);
+
+            try
+            {
+                Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(3.5f));
+                Assert.That(GameSettings.GraphicsPreset, Is.EqualTo(GraphicsPreset.Low));
+                Assert.That(GameSettings.FullScreen, Is.False);
+                Assert.That(GameSettings.ResolutionAuto, Is.True);
+                Assert.That(GameSettings.ResolutionIndex, Is.EqualTo(1));
+                Assert.That(GameSettings.FramerateCap, Is.EqualTo(120));
+                Assert.That(GameSettings.VSync, Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(svc.gameObject);
+            }
+        }
+
+        [Test]
+        public void LoadState_WithInvalidSavedValues_ClampsOrFallsBackToDefaults()
+        {
+            const string prefix = "Neo.Settings.";
+            SaveProvider.SetFloat(prefix + GameSettingsSaveKeys.MouseSensitivity, -10f);
+            SaveProvider.SetInt(prefix + GameSettingsSaveKeys.GraphicsPreset, 999);
+            SaveProvider.SetInt(prefix + GameSettingsSaveKeys.QualityLevel, 999);
+            SaveProvider.SetInt(prefix + GameSettingsSaveKeys.ResolutionIndex, 99);
+            LogAssert.Expect(LogType.Warning,
+                $"[GameSettings] Quality level 999 clamped to [0,{Mathf.Max(0, QualitySettings.names.Length - 1)}].");
+            LogAssert.Expect(LogType.Warning, "[GameSettings] Resolution index 99 clamped.");
+
+            GameSettingsComponent svc = CreateComponentWithDefaults(
+                mouseSensitivity: 2f,
+                graphicsPreset: GraphicsPreset.Medium,
+                qualityLevel: 0,
+                fullScreen: true,
+                resolutionAuto: true,
+                resolutionIndex: 0,
+                framerateCap: -1,
+                vSync: false);
+
+            try
+            {
+                Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(0.01f));
+                Assert.That(GameSettings.GraphicsPreset, Is.EqualTo(GraphicsPreset.Medium));
+                Assert.That(GameSettings.QualityLevelIndex, Is.InRange(0, Mathf.Max(0, QualitySettings.names.Length - 1)));
+                Assert.That(GameSettings.ResolutionIndex, Is.EqualTo(1));
+            }
+            finally
+            {
+                Object.DestroyImmediate(svc.gameObject);
+            }
+        }
+
+        private static GameSettingsComponent CreateComponentWithDefaults(
+            float mouseSensitivity,
+            GraphicsPreset graphicsPreset,
+            int qualityLevel,
+            bool fullScreen,
+            bool resolutionAuto,
+            int resolutionIndex,
+            int framerateCap,
+            bool vSync)
+        {
+            var go = new GameObject("SettingsService");
+            GameSettingsComponent svc = go.AddComponent<GameSettingsComponent>();
+            SetPrivate(svc, "_saveKeyPrefix", "Neo.Settings.");
+            SetPrivate(svc, "_defaultMouseSensitivity", mouseSensitivity);
+            SetPrivate(svc, "_defaultGraphicsPreset", graphicsPreset);
+            SetPrivate(svc, "_defaultCustomQualityLevel", qualityLevel);
+            SetPrivate(svc, "_defaultFullScreen", fullScreen);
+            SetPrivate(svc, "_defaultResolutionAuto", resolutionAuto);
+            SetPrivate(svc, "_defaultResolutionIndex", resolutionIndex);
+            SetPrivate(svc, "_defaultFramerateCap", framerateCap);
+            SetPrivate(svc, "_defaultVSync", vSync);
+            SetPrivate(svc, "_customResolutionPresets", new[]
+            {
+                new ResolutionPresetEntry { Width = 1280, Height = 720 },
+                new ResolutionPresetEntry { Width = 1920, Height = 1080 }
+            });
+            InvokeInit(svc);
+            return svc;
+        }
+
+        private static void SetPrivate(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            Assert.That(field, Is.Not.Null, $"Field '{fieldName}' not found.");
+            field.SetValue(target, value);
+        }
+
+        private static void InvokeInit(GameSettingsComponent svc)
+        {
+            typeof(GameSettingsComponent)
+                .GetMethod("Init", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.Invoke(svc, null);
+        }
+
+        private static void ResetSettings()
+        {
+            typeof(GameSettings).GetMethod("ResetStaticStateForTesting",
+                BindingFlags.NonPublic | BindingFlags.Static)?.Invoke(null, null);
         }
 
         private sealed class DictionarySaveProvider : ISaveProvider

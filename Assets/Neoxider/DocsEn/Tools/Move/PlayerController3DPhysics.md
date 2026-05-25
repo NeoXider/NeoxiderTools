@@ -1,4 +1,4 @@
-# PlayerController3DPhysics
+﻿# PlayerController3DPhysics
 
 **Purpose:** A robust, Rigidbody-based 3D first-person (or third-person) character controller. Features walking, sprinting, jumping (with coyote time and input buffering), mouse-look with sensitivity settings, and built-in integration with `CursorLockController` and game pause states. Supports both Legacy Input Manager and the New Input System out of the box.
 
@@ -13,7 +13,7 @@
 | **Ground Check Radius** | The radius of the sphere used for ground detection (OverlapSphere). |
 | **Look Yaw Mode** | How to handle horizontal rotation: `RotateCharacter`, `RotateCameraPivot`, or `RotateBoth`. |
 | **Use Game Settings Mouse Sensitivity** | Pulls mouse sensitivity dynamically from `GameSettings`. |
-| **Enable Cursor Control** | **On by default.** When enabled, this component may lock/unlock the cursor (Start, Escape, `SetCursorLocked`, auto-lock when enabling look with *Pause Look When Cursor Visible*). When **disabled**, it never touches `Cursor`—useful when `CursorLockController` or your UI owns the pointer. Movement and mouse look still work. |
+| **Enable Cursor Control** | **On by default.** When enabled, this component may lock/unlock the cursor (Start, Escape, `SetCursorLocked`, auto-lock when enabling look with *Pause Look When Cursor Visible*). When **disabled**, it never touches `Cursor`вЂ”useful when `CursorLockController` or your UI owns the pointer. Movement and mouse look still work. |
 | **Lock Cursor On Start** | In **`Start()`** (not `Awake`), lock and hide the mouse cursor when entering play. Ignored if **Enable Cursor Control** is off or an active external `CursorLockController` is assigned. |
 | **Pause Look When Cursor Visible** | While the cursor is visible (unlocked), do not apply mouse look. |
 | **Disable Look On Pause** | Automatically disable mouse-look when `EventManager.OnPause` is invoked. |
@@ -46,7 +46,7 @@ Cursor locking when **Lock Cursor On Start** is enabled happens in **`Start()`**
 ## Examples
 
 ### No-Code Example (Inspector)
-Create a Capsule with a `Rigidbody`. Attach `PlayerController3DPhysics`. Make a Camera a child of the capsule and drag it into the `Camera Pivot` field. Set your `Ground Mask` to the layer of your floor. Press Play — you can immediately walk (WASD), jump (Space), and look around (Mouse).
+Create a Capsule with a `Rigidbody`. Attach `PlayerController3DPhysics`. Make a Camera a child of the capsule and drag it into the `Camera Pivot` field. Set your `Ground Mask` to the layer of your floor. Press Play вЂ” you can immediately walk (WASD), jump (Space), and look around (Mouse).
 
 ### Code Example
 ```csharp
@@ -62,5 +62,5 @@ public void ImmobilizePlayerForCutscene()
 
 ## See Also
 - [CursorLockController](CursorLockController.md)
-- [KeyboardMover](KeyboardMover.md)
-- ← [Tools/Move](../README.md)
+- [KeyboardMover](MovementToolkit/KeyboardMover.md)
+- в†ђ [Tools/Move](../README.md)

@@ -1,10 +1,26 @@
 using System;
+using System.Reflection;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
+using Object = UnityEngine.Object;
 
 namespace Neo.Save.Tests
 {
     public class SaveProviderTests
     {
+        [SetUp]
+        public void SetUp()
+        {
+            ResetSaveProvider();
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            ResetSaveProvider();
+        }
+
         [Test]
         public void SetProvider_DetachesOldProviderEvents()
         {
@@ -58,6 +74,59 @@ namespace Neo.Save.Tests
                 SaveProvider.OnDataLoaded -= OnLoaded;
                 SaveProvider.OnKeyChanged -= OnKeyChanged;
             }
+        }
+
+        [Test]
+        public void MissingSaveProviderSettings_FallsBackToPlayerPrefsWithoutLogs()
+        {
+            SaveProvider.DebugLoggingEnabled = false;
+
+            ISaveProvider provider = SaveProvider.CurrentProvider;
+
+            Assert.That(provider, Is.TypeOf<PlayerPrefsSaveProvider>());
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [Test]
+        public void SettingsComponentWithoutSettings_UsesFallbackProvider()
+        {
+            GameObject go = new("SaveProviderSettingsComponentTests");
+            SaveProvider.DebugLoggingEnabled = false;
+
+            try
+            {
+                go.AddComponent<SaveProviderSettingsComponent>();
+
+                Assert.That(SaveProvider.CurrentProvider, Is.TypeOf<PlayerPrefsSaveProvider>());
+                LogAssert.NoUnexpectedReceived();
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void RuntimeDiagnostics_AreSilentUntilDebugLoggingEnabled()
+        {
+            SaveProvider.DebugLoggingEnabled = false;
+            SaveProvider.SetProvider(new FakeSaveProvider());
+
+            SaveProvider.SetSlot("slot.json");
+            LogAssert.NoUnexpectedReceived();
+
+            SaveProvider.DebugLoggingEnabled = true;
+            LogAssert.Expect(LogType.Warning,
+                "[SaveProvider] SetSlot is not supported for provider type: PlayerPrefs");
+
+            SaveProvider.SetSlot("slot.json");
+        }
+
+        private static void ResetSaveProvider()
+        {
+            typeof(SaveProvider)
+                .GetMethod("ResetStaticState", BindingFlags.NonPublic | BindingFlags.Static)
+                ?.Invoke(null, null);
         }
 
         private sealed class FakeSaveProvider : ISaveProvider

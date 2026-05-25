@@ -110,6 +110,10 @@ namespace Neo.Network
         [Header("Diagnostics")]
         [Tooltip("Print trace logs at every step (Trigger → Send → Server → Client). Use to debug why a relay does not replicate to other clients.")]
         [SerializeField] private bool _verboseLogging;
+        [Tooltip("Print static Mirror handler registration logs. Usually needed only while diagnosing transport setup.")]
+        [SerializeField] private bool _verboseRegistrationLogging;
+
+        private static bool s_verboseRegistrationLogging;
 
         [Header("Editor Helpers")]
         [Tooltip("Optional reference GameObject used by the custom inspector to build component/method dropdowns. " +
@@ -270,18 +274,33 @@ namespace Neo.Network
         public bool VerboseLogging
         {
             get => _verboseLogging;
-            set => _verboseLogging = value;
+            set
+            {
+                _verboseLogging = value;
+                s_verboseRegistrationLogging = value || _verboseRegistrationLogging;
+            }
+        }
+
+        public bool VerboseRegistrationLogging
+        {
+            get => _verboseRegistrationLogging;
+            set
+            {
+                _verboseRegistrationLogging = value;
+                s_verboseRegistrationLogging = value || _verboseLogging;
+            }
         }
 
         private void LogVerbose(string message)
         {
             if (!_verboseLogging) return;
-            Debug.Log($"[NetworkContextActionRelay] {message}", this);
+            NetworkDiagnostics.Log($"[NetworkContextActionRelay] {message}", this, true);
         }
 
 #if MIRROR
         private void Awake()
         {
+            s_verboseRegistrationLogging |= _verboseRegistrationLogging || _verboseLogging;
             EnsureMessageHandlers();
         }
 
@@ -320,8 +339,12 @@ namespace Neo.Network
                 didClient = true;
             }
 
-            Debug.Log(
-                $"[NetworkContextActionRelay] RegisterMirrorHandlers: msgId={msgId}, server={didServer}, client={didClient}");
+            if (s_verboseRegistrationLogging)
+            {
+                NetworkDiagnostics.Log(
+                    $"[NetworkContextActionRelay] RegisterMirrorHandlers: msgId={msgId}, server={didServer}, client={didClient}",
+                    force: true);
+            }
         }
 #endif
 
@@ -389,7 +412,7 @@ namespace Neo.Network
             GameObject root = ResolveRoot(context);
             if (root == null)
             {
-                Debug.LogWarning($"[NetworkContextActionRelay] Context root not found on '{name}'.", this);
+                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Context root not found on '{name}'.", this);
                 return;
             }
 
@@ -398,7 +421,7 @@ namespace Neo.Network
             {
                 if (!TryGetNetworkIdentity(root, out NetworkIdentity identity))
                 {
-                    Debug.LogWarning($"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
+                    NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
                     return;
                 }
 
@@ -406,7 +429,7 @@ namespace Neo.Network
                 NetworkContextActionMessage message = CreateMessage(contextNetId);
                 if (message.relayNetId == NoNetId)
                 {
-                    Debug.LogWarning($"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.", this);
+                    NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.", this);
                     return;
                 }
 
@@ -515,7 +538,7 @@ namespace Neo.Network
             GameObject target = ResolveTarget(root);
             if (target == null)
             {
-                Debug.LogWarning($"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
+                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
                 return;
             }
 
@@ -589,7 +612,7 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(root, componentTypeName);
             if (component == null)
             {
-                Debug.LogWarning($"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
+                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
                 return null;
             }
 
@@ -601,7 +624,7 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(target, _methodComponentType);
             if (component == null)
             {
-                Debug.LogWarning($"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.", target);
+                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.", target);
                 return false;
             }
 
@@ -613,7 +636,7 @@ namespace Neo.Network
 
             if (method == null)
             {
-                Debug.LogWarning($"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.", component);
+                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.", component);
                 return false;
             }
 
@@ -776,7 +799,7 @@ namespace Neo.Network
         {
             if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     $"[NetworkContextActionRelay] '{name}': could not resolve contextNetId={message.contextNetId} on server.",
                     this);
                 return;
@@ -829,7 +852,7 @@ namespace Neo.Network
         {
             if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     $"[NetworkContextActionRelay] Server: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found. (Did the trigger spawn yet?)");
                 return;
             }
@@ -837,7 +860,7 @@ namespace Neo.Network
             if (relay.RateLimitCheck()) return;
             if (!relay.AuthorizedSender(sender))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     $"[NetworkContextActionRelay] Server: sender {sender?.connectionId} not authorized for relay '{relay.name}'.");
                 return;
             }
@@ -851,21 +874,19 @@ namespace Neo.Network
 
         private static void OnClientMessage(NetworkContextActionMessage message)
         {
-            // Unconditional entry log — if you don't see this on a client while triggering on host,
-            // the handler is not registered or the message ID does not match between processes.
-            Debug.Log(
-                $"[NetworkContextActionRelay] Client RECEIVED: relayNetId={message.relayNetId}, componentIndex={message.relayComponentIndex}, contextNetId={message.contextNetId}");
-
             if (!TryResolveRelay(message.relayNetId, message.relayComponentIndex, out NetworkContextActionRelay relay))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     $"[NetworkContextActionRelay] Client: relay for netId={message.relayNetId} component={message.relayComponentIndex} not found locally.");
                 return;
             }
 
+            relay.LogVerbose(
+                $"Client RECEIVED: relayNetId={message.relayNetId}, componentIndex={message.relayComponentIndex}, contextNetId={message.contextNetId}");
+
             if (!TryResolveNetworkObject(message.contextNetId, out GameObject root))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     $"[NetworkContextActionRelay] Client: contextNetId={message.contextNetId} not spawned locally on '{relay.name}'.");
                 return;
             }
@@ -1015,6 +1036,7 @@ namespace Neo.Network
 
         protected override void OnValidate()
         {
+            s_verboseRegistrationLogging = _verboseRegistrationLogging || _verboseLogging;
             if (isNetworked)
             {
                 base.OnValidate();

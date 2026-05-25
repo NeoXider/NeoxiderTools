@@ -191,6 +191,38 @@ namespace Neo.Tests.Play
         }
 
         [UnityTest]
+        public IEnumerator TypedItemApi_BuysSelectsPreviewsAndPricesByAsset()
+        {
+            SaveProvider.SetProvider(new MemorySaveProvider());
+
+            ShopItemDataAsset item = MakeItem("typed_sword", 30);
+            GameObject walletGo = Track(new GameObject("Wallet"));
+            FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
+
+            var built = BuildShop(new[] { item }, moneySource: walletGo);
+            built.root.SetActive(true);
+            yield return null;
+
+            built.shop.SetRuntimePrice(item, 12f);
+            Assert.That(built.shop.GetPrice(item), Is.EqualTo(12f));
+
+            built.shop.ShowPreview(item);
+            Assert.That(built.shop.PreviewIdString, Is.EqualTo("typed_sword"));
+
+            built.shop.Buy(item);
+
+            Assert.That(wallet.TotalSpent, Is.EqualTo(12f));
+            Assert.That(built.shop.IsOwned(item), Is.True);
+            Assert.That(built.shop.EquippedId, Is.EqualTo("typed_sword"));
+
+            built.shop.ClearRuntimePrice(item);
+            Assert.That(built.shop.GetPrice(item), Is.EqualTo(30f));
+
+            built.shop.Select((ShopItemDataAsset)null);
+            Assert.That(built.shop.EquippedId, Is.EqualTo(""));
+        }
+
+        [UnityTest]
         public IEnumerator Buy_SinglePurchase_DoesNotRebuy()
         {
             SaveProvider.SetProvider(new MemorySaveProvider());
@@ -257,6 +289,30 @@ namespace Neo.Tests.Play
             Assert.That(built.shop.IsOwned("a"), Is.True);
             Assert.That(built.shop.IsOwned("b"), Is.True);
             Assert.That(built.shop.IsBundleOwned("starter"), Is.True);
+        }
+
+        [UnityTest]
+        public IEnumerator TypedBundleApi_BuysBundleByAsset()
+        {
+            SaveProvider.SetProvider(new MemorySaveProvider());
+
+            ShopItemDataAsset a = MakeItem("typed_a", 0);
+            ShopItemDataAsset b = MakeItem("typed_b", 0);
+            ShopBundleDataAsset bundle = MakeBundle("typed_starter", 40, a, b);
+
+            GameObject walletGo = Track(new GameObject("Wallet"));
+            FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
+
+            var built = BuildShop(new[] { a, b }, new[] { bundle }, moneySource: walletGo);
+            built.root.SetActive(true);
+            yield return null;
+
+            built.shop.BuyBundle(bundle);
+
+            Assert.That(wallet.TotalSpent, Is.EqualTo(40f));
+            Assert.That(built.shop.IsOwned(a), Is.True);
+            Assert.That(built.shop.IsOwned(b), Is.True);
+            Assert.That(built.shop.IsBundleOwned(bundle), Is.True);
         }
 
         [UnityTest]

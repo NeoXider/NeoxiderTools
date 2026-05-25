@@ -19,6 +19,8 @@
 | `Back Sprite` | Card back sprite. |
 | `Hearts`, `Diamonds`, `Clubs`, `Spades` | Ordered face sprites for each suit. |
 | `Red Joker`, `Black Joker` | Optional joker sprites for 54-card decks. |
+| `Use Custom Deck` | Makes `GenerateDeck()` use the `Custom Cards` list. |
+| `Custom Cards` | Custom id, display name, sort value, group, and face sprite entries. |
 
 ## `DeckType` vs `GameDeckType`
 
@@ -37,9 +39,14 @@ This means the asset has enough visuals for a 52-card deck, but gameplay only us
 | API | Description |
 |-----|-------------|
 | `GetSprite(CardData data)` | Returns the sprite for a specific card. |
-| `GenerateDeck()` | Generates a deck based on `GameDeckType`. |
+| `GenerateDeck()` | Generates a deck based on `GameDeckType`, or `Custom Cards` when custom deck mode is enabled. |
+| `GenerateCustomDeck()` | Generates a deck from custom card entries only. |
 | `GenerateDeck(DeckType type)` | Generates a deck for the requested deck type. |
 | `Validate(out List<string> errors)` | Validates sprite completeness and configuration rules. |
+
+## Custom decks
+
+Enable `Use Custom Deck` when a game is not based on classic suits and ranks. Each custom entry creates a `CardData.CreateCustom(...)` card and can optionally carry a face sprite. Missing custom face sprites are warnings, not hard errors, so external art pipelines can still provide sprites through `CardComponent.SetSpriteOverrides(...)` or a custom view.
 
 ## Notes
 

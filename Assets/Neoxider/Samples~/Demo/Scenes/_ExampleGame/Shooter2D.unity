@@ -1192,7 +1192,7 @@ GameObject:
   - component: {fileID: 1432851472}
   - component: {fileID: 1432851476}
   m_Layer: 5
-  m_Name: UIReady
+  m_Name: SceneFlowController
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1291,19 +1291,35 @@ MonoBehaviour:
   m_GameObject: {fileID: 1432851471}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97c57a1e8a32a1743ad637ad53ef1fec, type: 3}
+  m_Script: {fileID: 11500000, guid: 9349aa2d9ee6ea142bf815d145c1a9a9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  loadMode: 0
-  ALS:
-    gameObjectLoad: {fileID: 0}
-    animator: {fileID: 0}
-    textProgress: {fileID: 0}
-    loadEndText:
-    - 'Loading... '
-    - Click a start
-    progress: 0
-    isProgressLoad: 0
+  _loadMode: 0
+  _sceneBuildIndex: 0
+  _sceneName:
+  _useSceneName: 0
+  _activateOnReady: 1
+  _loadOnStart: 0
+  _textProgress: {fileID: 0}
+  _textMeshProgress: {fileID: 0}
+  _sliderProgress: {fileID: 0}
+  _imageProgress: {fileID: 0}
+  _progressTextFormat: 1
+  _progressPrefix: 'Loading... '
+  _readyToProceedText: Press to continue
+  _progressPanel: {fileID: 0}
+  _onLoadStarted:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProgress:
+    m_PersistentCalls:
+      m_Calls: []
+  _onReadyToProceed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onLoadCompleted:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &1558015829
 GameObject:
   m_ObjectHideFlags: 0
@@ -2521,7 +2537,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls:
       - m_Target: {fileID: 1432851476}
-        m_TargetAssemblyTypeName: Neo.UI.UIReady, Neo.UI
+        m_TargetAssemblyTypeName: Neo.Level.SceneFlowController, Neo.Level
         m_MethodName: Restart
         m_Mode: 1
         m_Arguments:

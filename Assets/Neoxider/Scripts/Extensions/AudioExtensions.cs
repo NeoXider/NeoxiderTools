@@ -42,6 +42,11 @@ namespace Neo.Extensions
         public static CoroutineExtensions.CoroutineHandle FadeIn(this AudioSource source, float duration,
             float targetVolume = 1.0f)
         {
+            if (source == null)
+            {
+                return null;
+            }
+
             if (!source.isPlaying)
             {
                 source.volume = 0;

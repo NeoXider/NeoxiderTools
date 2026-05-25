@@ -15,6 +15,7 @@ namespace Neo.Tools
         private GameState _state = GameState.Menu;
 
         [SerializeField] private GameState _lastState;
+        [SerializeField] private bool _debugLog;
         public bool useTimeScalePause = true;
         [Space] public int fps = 60;
         private float lastTimeScale = 1;
@@ -49,8 +50,11 @@ namespace Neo.Tools
                     em.OnStateChange?.Invoke(_state);
                 }
 
-                Debug.Log("[GM]".SetColor(Color.yellow)
-                          + $": {_state}".Gradient(Color.cyan, Color.blue));
+                if (_debugLog)
+                {
+                    Debug.Log("[GM]".SetColor(Color.yellow)
+                              + $": {_state}".Gradient(Color.cyan, Color.blue), this);
+                }
             }
         }
 
@@ -65,7 +69,10 @@ namespace Neo.Tools
         protected override void Init()
         {
             base.Init();
-            Debug.Log("[GM] Initialized");
+            if (_debugLog)
+            {
+                Debug.Log("[GM] Initialized", this);
+            }
 
             if (startOnAwake)
             {

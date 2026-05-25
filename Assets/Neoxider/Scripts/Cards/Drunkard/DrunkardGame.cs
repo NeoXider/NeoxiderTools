@@ -18,6 +18,7 @@ namespace Neo.Cards
 
         [SerializeField] private bool _initializeOnStart = true;
         [SerializeField] private bool _debug;
+        [SerializeField] private bool _debugWarnings;
 
         [Header("Positions")] [SerializeField] private Transform _cardsParent;
 
@@ -140,6 +141,11 @@ namespace Neo.Cards
             if (_deckComponent.CardPrefab == null)
             {
                 Debug.LogError("[DrunkardGame] DeckComponent has no CardPrefab assigned!");
+            }
+
+            if (!_debugWarnings)
+            {
+                return;
             }
 
             if (_cardsParent == null)

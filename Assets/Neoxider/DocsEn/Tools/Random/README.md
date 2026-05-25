@@ -1,6 +1,6 @@
 ﻿# Tools / Random
 
-Weighted random and chance system. Scripts in `Scripts/Tools/Random/`. Full docs are in Russian.
+Weighted random and chance system. Scripts in `Scripts/Tools/Random/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

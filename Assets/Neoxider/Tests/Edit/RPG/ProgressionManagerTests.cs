@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using Neo.Core.Level;
 using Neo.Save;
+using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -129,6 +130,81 @@ namespace Neo.Progression.Tests
             finally
             {
                 Object.DestroyImmediate(managerObject);
+            }
+        }
+
+        [Test]
+        public void SingletonRuntimeReset_ClearsProgressionManagerInstance()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            GameObject managerObject = new("ProgressionManager_Reset");
+            ProgressionManager manager = managerObject.AddComponent<ProgressionManager>();
+
+            try
+            {
+                manager.EnsureInitialized();
+                Assert.That(ProgressionManager.Instance, Is.SameAs(manager));
+
+                InvokeSingletonRuntimeReset();
+
+                Assert.That(Singleton<ProgressionManager>.TryGetInstance(out ProgressionManager instance), Is.False);
+                Assert.That(instance, Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(managerObject);
+                InvokeSingletonRuntimeReset();
+            }
+        }
+
+        [Test]
+        public void SaveAndLoad_RestoresProfileStateWithoutLevelProvider()
+        {
+            DictionarySaveProvider provider = new();
+            SaveProvider.SetProvider(provider);
+
+            const string saveKey = "ProgressionTests.ProfileOnlyPersistence";
+
+            GameObject firstManagerObject = new("ProgressionManager_ProfileOnly_First");
+            ProgressionManager firstManager = firstManagerObject.AddComponent<ProgressionManager>();
+            firstManager.SaveKey = saveKey;
+
+            try
+            {
+                firstManager.EnsureInitialized();
+                firstManager.ResetProgression();
+                firstManager.AddPerkPoints(4);
+                firstManager.ActivatePremium();
+                firstManager.SaveProfile();
+
+                Object.DestroyImmediate(firstManagerObject);
+                InvokeSingletonRuntimeReset();
+
+                GameObject secondManagerObject = new("ProgressionManager_ProfileOnly_Second");
+                ProgressionManager secondManager = secondManagerObject.AddComponent<ProgressionManager>();
+                secondManager.SaveKey = saveKey;
+                secondManager.LoadProfile();
+
+                try
+                {
+                    Assert.That(secondManager.AvailablePerkPoints, Is.EqualTo(4));
+                    Assert.That(secondManager.HasPremium, Is.True);
+                    Assert.That(provider.SaveCallCount, Is.GreaterThan(0));
+                }
+                finally
+                {
+                    Object.DestroyImmediate(secondManagerObject);
+                    InvokeSingletonRuntimeReset();
+                }
+            }
+            finally
+            {
+                if (firstManagerObject != null)
+                {
+                    Object.DestroyImmediate(firstManagerObject);
+                }
             }
         }
 
@@ -447,6 +523,15 @@ namespace Neo.Progression.Tests
             Assert.That(fieldInfo, Is.Not.Null,
                 $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
             fieldInfo.SetValue(target, value);
+        }
+
+        private static void InvokeSingletonRuntimeReset()
+        {
+            MethodInfo resetMethod = typeof(Singleton<ProgressionManager>).GetMethod(
+                "ResetStaticStateForRuntime",
+                BindingFlags.Static | BindingFlags.NonPublic);
+            Assert.That(resetMethod, Is.Not.Null);
+            resetMethod.Invoke(null, null);
         }
 
         private sealed class DictionarySaveProvider : ISaveProvider

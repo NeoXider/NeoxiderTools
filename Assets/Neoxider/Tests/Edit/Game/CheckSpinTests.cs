@@ -77,5 +77,28 @@ namespace Neo.Editor.Tests
             float sector = 360f / 4f;
             Assert.That(WheelFortune.ResolveSectorIndex(sector, 0f, 0f, 4), Is.EqualTo(1));
         }
+
+        [Test]
+        public void SpinController_ChanseWinAlias_ClampsAndMirrorsChanceWin()
+        {
+            GameObject go = new("SpinControllerTest");
+            try
+            {
+                SpinController controller = go.AddComponent<SpinController>();
+
+                controller.ChanceWin = 1.5f;
+                Assert.That(controller.ChanceWin, Is.EqualTo(1f));
+
+#pragma warning disable CS0618
+                controller.chanseWin = -1f;
+                Assert.That(controller.ChanceWin, Is.EqualTo(0f));
+                Assert.That(controller.chanseWin, Is.EqualTo(controller.ChanceWin));
+#pragma warning restore CS0618
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(go);
+            }
+        }
     }
 }

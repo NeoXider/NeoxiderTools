@@ -40,6 +40,9 @@ namespace Neo.Tools.View
         [Header("Visibility")] [Tooltip("Threshold below which emission is fully disabled")] [Range(0f, 5f)]
         public float emissionCutoff = 0.3f;
 
+        [Header("Diagnostics")] [SerializeField]
+        private bool debugLog;
+
         private Material _material;
 
         private MeshRenderer _meshRenderer;
@@ -227,7 +230,10 @@ namespace Neo.Tools.View
 
             if (targetLight != null)
             {
-                Debug.Log($"[{gameObject.name}] Found Light: {targetLight.gameObject.name}");
+                if (debugLog)
+                {
+                    Debug.Log($"[{gameObject.name}] Found Light: {targetLight.gameObject.name}", this);
+                }
             }
             else
             {

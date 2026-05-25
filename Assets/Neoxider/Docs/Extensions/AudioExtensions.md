@@ -23,3 +23,5 @@
 - `FadeTo(this AudioSource source, float targetVolume, float duration)`: Плавно изменяет громкость `AudioSource` до `targetVolume` за указанное время `duration`. Возвращает `CoroutineHandle`, который можно использовать для остановки.
 - `FadeOut(this AudioSource source, float duration)`: Упрощенный вызов `FadeTo` для затухания звука до нуля.
 - `FadeIn(this AudioSource source, float duration, float targetVolume = 1.0f)`: Упрощенный вызов `FadeTo` для нарастания громкости до указанного значения.
+
+**Lifecycle:** `FadeIn(null, ...)` и `FadeTo(null, ...)` возвращают `null`. Fade-корутина завершается, если `AudioSource` был уничтожен во время анимации.

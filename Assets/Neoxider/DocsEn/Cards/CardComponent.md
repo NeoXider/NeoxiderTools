@@ -29,6 +29,8 @@
 
 - `Card Image`
 - `Sprite Renderer`
+- `Face Sprite Override`
+- `Back Sprite Override`
 
 ### Animation
 
@@ -60,8 +62,14 @@
 | `Flip()` / `FlipAsync()` | Flips the card with or without animation. |
 | `MoveToAsync(...)` | Moves the card in world space with animation. |
 | `MoveToLocalAsync(...)` | Moves the card in local space with animation. |
+| `SetSpriteOverrides(Sprite faceSprite, Sprite backSprite = null, bool refresh = true)` | Uses explicit sprites without requiring a `DeckConfig`. |
+| `ClearSpriteOverrides(bool refresh = true)` | Returns visual lookup to `DeckConfig`. |
 | `UpdateOriginalTransform()` | Stores the current baseline transform used by hover/reset logic. |
 | `ResetHover()` | Resets hover state and restores the card presentation. |
+
+## Standalone custom card views
+
+For TCG/deckbuilder/board-game cards, create custom data with `CardData.CreateCustom(...)`, assign it through `SetData(...)`, then call `SetSpriteOverrides(...)` with the current card art. This keeps the reusable card view independent from the classic 36/52/54-card `DeckConfig` sprite table.
 
 ## Notes
 

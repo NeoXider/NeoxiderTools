@@ -1,6 +1,7 @@
 using System;
 using Neo.Reactive;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace Neo.Network
 {
@@ -15,6 +16,10 @@ namespace Neo.Network
     ///     <para>
     ///         In solo mode this class is unused — <see cref="ReactivePropertyBase{T,TEvent}"/> works
     ///         unchanged as it always has.
+    ///     </para>
+    ///     <para>
+    ///         Warning: the bridge is generic on the reactive side, but Mirror is not a general-purpose object
+    ///         serializer. Use it only with SyncVar-supported types or custom Mirror serializers registered for the type.
     ///     </para>
     /// </summary>
     /// <example>
@@ -44,13 +49,21 @@ namespace Neo.Network
     public static class NetworkReactivePropertyBridge
     {
         /// <summary>
+        ///     Pushes a network-received value into any reactive property.
+        ///     Mirror still requires the SyncVar field type to be supported by its serializer.
+        /// </summary>
+        public static void SetFromNetwork<T, TEvent>(ReactivePropertyBase<T, TEvent> property, T newValue)
+            where TEvent : UnityEvent<T>, new()
+        {
+            ApplyFromNetwork(property, newValue);
+        }
+
+        /// <summary>
         ///     Pushes a network-received value into a <see cref="ReactivePropertyFloat"/>.
         /// </summary>
         public static void SetFromNetwork(ReactivePropertyFloat property, float newValue)
         {
-            if (property == null) return;
-            property.SetValueWithoutNotify(newValue);
-            property.ForceNotify();
+            ApplyFromNetwork(property, newValue);
         }
 
         /// <summary>
@@ -58,15 +71,19 @@ namespace Neo.Network
         /// </summary>
         public static void SetFromNetwork(ReactivePropertyInt property, int newValue)
         {
-            if (property == null) return;
-            property.SetValueWithoutNotify(newValue);
-            property.ForceNotify();
+            ApplyFromNetwork(property, newValue);
         }
 
         /// <summary>
         ///     Pushes a network-received value into a <see cref="ReactivePropertyBool"/>.
         /// </summary>
         public static void SetFromNetwork(ReactivePropertyBool property, bool newValue)
+        {
+            ApplyFromNetwork(property, newValue);
+        }
+
+        private static void ApplyFromNetwork<T, TEvent>(ReactivePropertyBase<T, TEvent> property, T newValue)
+            where TEvent : UnityEvent<T>, new()
         {
             if (property == null) return;
             property.SetValueWithoutNotify(newValue);

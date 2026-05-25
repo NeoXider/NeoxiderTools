@@ -401,7 +401,7 @@ namespace Neo.Network
         {
             if (_channels == null || idx < 0 || idx >= _channels.Length)
             {
-                Debug.LogWarning($"[NetworkActionRelay] Invalid channel index {idx} on '{name}'.", this);
+                NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Invalid channel index {idx} on '{name}'.", this);
                 return false;
             }
             return true;
@@ -415,7 +415,7 @@ namespace Neo.Network
                 if (string.Equals(_channels[i]?.channelName, channelName, System.StringComparison.Ordinal))
                     return i;
             }
-            Debug.LogWarning($"[NetworkActionRelay] Channel '{channelName}' not found on '{name}'.", this);
+            NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Channel '{channelName}' not found on '{name}'.", this);
             return -1;
         }
     }

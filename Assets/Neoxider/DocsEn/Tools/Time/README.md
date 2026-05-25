@@ -1,6 +1,6 @@
 ﻿# Tools / Time
 
-Timers and timer objects (pause, repeat, milestones, save). Scripts in `Scripts/Tools/Time/`. Full docs are in Russian.
+Timers and timer objects (pause, repeat, milestones, save). Scripts in `Scripts/Tools/Time/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

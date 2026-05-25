@@ -66,7 +66,7 @@ namespace Neo.Save
                         }
                         else
                         {
-                            Debug.LogWarning($"[SaveProviderSettings] File encryption disabled: {err}");
+                            SaveProvider.LogWarning($"[SaveProviderSettings] File encryption disabled: {err}");
                         }
                     }
 
@@ -74,7 +74,7 @@ namespace Neo.Save
                 }
 
                 default:
-                    Debug.LogWarning(
+                    SaveProvider.LogWarning(
                         $"[SaveProviderSettings] Unknown provider type: {_providerType}. Using PlayerPrefs as default.");
                     return new PlayerPrefsSaveProvider();
             }

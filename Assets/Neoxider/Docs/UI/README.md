@@ -2,13 +2,14 @@
 
 **Что это:** раздел документации по UI: анимации кнопок (ButtonScale, ButtonShake), страницы (UI, ButtonChangePage), пауза (PausePage), переключатели (VisualToggle, VariantView), FakeLoad, AnimationFly, AnchorMove. Скрипты в `Scripts/UI/`.
 
+Для загрузки сцен, Quit/Restart/Pause и progress UI используйте [SceneFlowController](../Level/SceneFlowController.md) из модуля Level.
+
 **Навигация:** [← К Docs](../README.md) · оглавление — список ниже
 
 ### Корневые скрипты
 - [**AnchorMove**](./AnchorMove.md): Утилита для удобного редактирования якорей `RectTransform`.
 - [**AnimationFly**](./AnimationFly.md): Менеджер для создания анимации "летящих" UI-элементов (монеты, бонусы).
 - [**PausePage**](./PausePage.md): Компонент для создания окон, ставящих игру на паузу.
-- [**UIReady**](./UIReady.md): Устаревший. Набор методов для кнопок (сцены, выход, пауза). Используйте [SceneFlowController](../Level/SceneFlowController.md) (модуль Level).
 
 ### Подмодули
 

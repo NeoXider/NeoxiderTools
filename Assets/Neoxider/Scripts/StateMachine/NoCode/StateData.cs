@@ -121,11 +121,11 @@ namespace Neo.StateMachine.NoCode
                 {
                     try
                     {
-                        action.Execute();
+                        action.Execute(StateMachineEvaluationContext.CurrentContextObject);
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogError($"[StateData] Error executing action in state '{stateName}': {ex.Message}",
+                        StateMachineLog.Error($"[StateData] Error executing action in state '{stateName}': {ex.Message}",
                             this);
                     }
                 }

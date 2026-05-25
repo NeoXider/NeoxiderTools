@@ -27,6 +27,7 @@
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — мост для UnityEvents.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG-условия для NeoCondition.
 - [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — реактивная привязка ресурсов и статов к UI/NoCode; вывод текста и прогресс-баров делайте через общий `Neo.NoCode`.
+- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy-мост для старого `AttackSystem` (`IDamageable/IHealable` -> `RpgCharacter`).
 
 ---
 

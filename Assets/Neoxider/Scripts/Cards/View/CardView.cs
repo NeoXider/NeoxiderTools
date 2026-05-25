@@ -18,6 +18,8 @@ namespace Neo.Cards
         [Header("Visual")] [SerializeField] private Image _cardImage;
 
         [SerializeField] private SpriteRenderer _spriteRenderer;
+        [SerializeField] private Sprite _faceSpriteOverride;
+        [SerializeField] private Sprite _backSpriteOverride;
 
         [Header("Animation")] [SerializeField] private float _flipDuration = 0.3f;
 
@@ -168,6 +170,35 @@ namespace Neo.Cards
         public void Initialize(DeckConfig config)
         {
             _config = config;
+            UpdateVisual();
+        }
+
+        /// <summary>
+        ///     Overrides face/back sprites so the view can be used without a DeckConfig.
+        /// </summary>
+        public void SetSpriteOverrides(Sprite faceSprite, Sprite backSprite = null, bool refresh = true)
+        {
+            _faceSpriteOverride = faceSprite;
+            _backSpriteOverride = backSprite;
+
+            if (refresh)
+            {
+                UpdateVisual();
+            }
+        }
+
+        /// <summary>
+        ///     Clears standalone sprite overrides and returns to DeckConfig sprites.
+        /// </summary>
+        public void ClearSpriteOverrides(bool refresh = true)
+        {
+            _faceSpriteOverride = null;
+            _backSpriteOverride = null;
+
+            if (refresh)
+            {
+                UpdateVisual();
+            }
         }
 
         /// <summary>
@@ -209,12 +240,11 @@ namespace Neo.Cards
 
         private void UpdateVisual()
         {
-            if (_config == null)
+            Sprite sprite = ResolveSprite();
+            if (sprite == null)
             {
                 return;
             }
-
-            Sprite sprite = IsFaceUp ? _config.GetSprite(Data) : _config.BackSprite;
 
             if (_cardImage != null)
             {
@@ -225,6 +255,26 @@ namespace Neo.Cards
             {
                 _spriteRenderer.sprite = sprite;
             }
+        }
+
+        private Sprite ResolveSprite()
+        {
+            if (IsFaceUp)
+            {
+                if (_faceSpriteOverride != null)
+                {
+                    return _faceSpriteOverride;
+                }
+
+                return _config != null ? _config.GetSprite(Data) : null;
+            }
+
+            if (_backSpriteOverride != null)
+            {
+                return _backSpriteOverride;
+            }
+
+            return _config != null ? _config.BackSprite : null;
         }
     }
 }

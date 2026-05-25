@@ -24,7 +24,7 @@ namespace Neo
             Type requireType = requireInterface.RequireType;
 
             // Validate property type and interface
-            if (IsValid(property, requireType))
+            if (IsValidProperty(property, requireType))
             {
                 // Add tooltip showing required interface
                 label.tooltip = $"Requires {requireType.Name} interface";
@@ -46,9 +46,12 @@ namespace Neo
         /// <param name="property">The property to validate</param>
         /// <param name="targetType">The required interface type</param>
         /// <returns>True if the property is valid for interface checking</returns>
-        private bool IsValid(SerializedProperty property, Type targetType)
+        public static bool IsValidProperty(SerializedProperty property, Type targetType)
         {
-            return targetType.IsInterface && property.propertyType == SerializedPropertyType.ObjectReference;
+            return targetType != null &&
+                   targetType.IsInterface &&
+                   property != null &&
+                   property.propertyType == SerializedPropertyType.ObjectReference;
         }
 
         /// <summary>
@@ -66,44 +69,45 @@ namespace Neo
             // Handle different types of Unity objects
             if (property.objectReferenceValue is GameObject gameObject)
             {
-                CheckGameObject(property, targetType, gameObject);
+                if (!IsReferenceValid(gameObject, targetType))
+                {
+                    property.objectReferenceValue = null;
+                    Debug.LogError($"GameObject must have a component that implements {targetType.Name} interface");
+                }
             }
             else if (property.objectReferenceValue is ScriptableObject scriptableObject)
             {
-                CheckScriptableObject(property, targetType, scriptableObject);
+                if (!IsReferenceValid(scriptableObject, targetType))
+                {
+                    property.objectReferenceValue = null;
+                    Debug.LogError($"ScriptableObject must implement {targetType.Name} interface");
+                }
             }
         }
 
-        /// <summary>
-        ///     Validates that a GameObject has a component implementing the required interface
-        /// </summary>
-        /// <param name="property">The property containing the GameObject reference</param>
-        /// <param name="targetType">The required interface type</param>
-        /// <param name="gameObject">The GameObject to check</param>
-        private void CheckGameObject(SerializedProperty property, Type targetType, GameObject gameObject)
+        public static bool IsReferenceValid(UnityEngine.Object reference, Type targetType)
         {
-            if (gameObject.GetComponent(targetType) == null)
+            if (reference == null)
             {
-                property.objectReferenceValue = null;
-                Debug.LogError($"GameObject must have a component that implements {targetType.Name} interface");
+                return true;
             }
-        }
 
-        /// <summary>
-        ///     Validates that a ScriptableObject implements the required interface
-        /// </summary>
-        /// <param name="property">The property containing the ScriptableObject reference</param>
-        /// <param name="targetType">The required interface type</param>
-        /// <param name="scriptableObject">The ScriptableObject to check</param>
-        private void CheckScriptableObject(SerializedProperty property, Type targetType,
-            ScriptableObject scriptableObject)
-        {
-            Type objectType = scriptableObject.GetType();
-            if (!targetType.IsAssignableFrom(objectType))
+            if (targetType == null || !targetType.IsInterface)
             {
-                property.objectReferenceValue = null;
-                Debug.LogError($"ScriptableObject must implement {targetType.Name} interface");
+                return false;
             }
+
+            if (reference is GameObject gameObject)
+            {
+                return gameObject.GetComponent(targetType) != null;
+            }
+
+            if (reference is ScriptableObject scriptableObject)
+            {
+                return targetType.IsAssignableFrom(scriptableObject.GetType());
+            }
+
+            return targetType.IsAssignableFrom(reference.GetType());
         }
     }
 }

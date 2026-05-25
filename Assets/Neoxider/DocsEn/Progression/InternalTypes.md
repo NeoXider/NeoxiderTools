@@ -1,4 +1,4 @@
-# Progression — Internal Types
+﻿# Progression вЂ” Internal Types
 
 | Type | Description |
 |------|-------------|
@@ -11,5 +11,5 @@
 | `ProgressionRewardDispatcher` | Reward dispatch handler. |
 
 ## See Also
-- [ProgressionComponent](ProgressionComponent.md)
-- ← [Progression](README.md)
+- [ProgressionComponent](ProgressionManager.md)
+- в†ђ [Progression](README.md)

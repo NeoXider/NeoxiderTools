@@ -64,4 +64,43 @@ namespace Neo.Tools.Tests
             Assert.That(MouseInputManager.CreateInstance, Is.True);
         }
     }
+
+    public sealed class SwipeControllerSubsystemCachesEditModeTests
+    {
+        private GameObject _go;
+
+        [TearDown]
+        public void TearDown()
+        {
+            SwipeController.ResetStaticStateForRuntime();
+            if (_go != null)
+            {
+                Object.DestroyImmediate(_go);
+            }
+        }
+
+        [Test]
+        public void ResetStaticStateForRuntime_ClearsInstanceAndPollingIsSafe()
+        {
+            _go = new GameObject("SwipeControllerTest");
+            SwipeController controller = _go.AddComponent<SwipeController>();
+            SetSwipeControllerInstance(controller);
+            Assume.That(SwipeController.Instance, Is.Not.Null);
+
+            SwipeController.ResetStaticStateForRuntime();
+
+            Assert.That(SwipeController.Instance, Is.Null);
+            Assert.That(SwipeController.GetSwipeDirection(out _), Is.False);
+        }
+
+        private static void SetSwipeControllerInstance(SwipeController controller)
+        {
+            FieldInfo field = typeof(SwipeController).GetField(
+                "instance",
+                BindingFlags.Static | BindingFlags.NonPublic);
+
+            Assert.That(field, Is.Not.Null);
+            field!.SetValue(null, controller);
+        }
+    }
 }

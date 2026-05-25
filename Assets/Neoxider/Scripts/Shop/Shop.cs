@@ -14,10 +14,11 @@ namespace Neo.Shop
     ///     handles purchase / equip flow via <see cref="ShopPurchaseFlow"/>, and persists owned items +
     ///     equipped id + runtime price overrides as a single JSON blob (<see cref="ShopProfileData"/>).
     ///
-    ///     Item identity is the stable <see cref="ShopItemData.Id"/> string. Old int-indexed API
+    ///     The preferred runtime API is typed (<see cref="Buy(ShopItemData)"/>,
+    ///     <see cref="BuyBundle(ShopBundleData)"/>, <see cref="Select(ShopItemData)"/>). Item identity is
+    ///     still persisted as the stable <see cref="ShopItemData.Id"/> string. Old int-indexed API
     ///     (<see cref="Id"/>, <see cref="Buy(int)"/>, <c>OnPurchased&lt;int&gt;</c>) is preserved as
-    ///     <see cref="ObsoleteAttribute"/> proxies that resolve through the item array; events fire in both
-    ///     int and string forms so existing scene wiring keeps working.
+    ///     <see cref="ObsoleteAttribute"/> proxies until v9 so existing scene wiring keeps working.
     ///
     ///     Inventory integration is handled by a separate bridge component
     ///     (<c>Neo.Tools.ShopInventoryGrantBridge</c>) — drop it onto the same GameObject as Shop or
@@ -284,7 +285,66 @@ namespace Neo.Shop
             return raw.Trim().Replace(" ", "_");
         }
 
-        // ---------- Public API: string -------------------------------------------------
+        // ---------- Public API: typed --------------------------------------------------
+
+        /// <summary>
+        ///     Initiates the purchase / equip flow for the given item asset. This is the canonical v8.6+
+        ///     API for code that already has catalog assets; it avoids array-index coupling before v9.
+        /// </summary>
+        public void Buy(ShopItemData itemData)
+        {
+            Buy(ItemIdOf(itemData));
+        }
+
+        /// <summary>Purchases the bundle asset and grants all contained items on success.</summary>
+        public void BuyBundle(ShopBundleData bundleData)
+        {
+            BuyBundle(BundleIdOf(bundleData));
+        }
+
+        /// <summary>Selects/equips the item asset. Pass null to clear selection.</summary>
+        public void Select(ShopItemData itemData)
+        {
+            Select(ItemIdOf(itemData));
+        }
+
+        /// <summary>Sets the preview slot to the given item asset. Pass null to clear preview.</summary>
+        public void ShowPreview(ShopItemData itemData)
+        {
+            ShowPreview(ItemIdOf(itemData));
+        }
+
+        /// <summary>True when the item asset is in the owned set.</summary>
+        public bool IsOwned(ShopItemData itemData)
+        {
+            return IsOwned(ItemIdOf(itemData));
+        }
+
+        /// <summary>True when the bundle asset is in the owned-bundles set.</summary>
+        public bool IsBundleOwned(ShopBundleData bundleData)
+        {
+            return IsBundleOwned(BundleIdOf(bundleData));
+        }
+
+        /// <summary>Runtime price for the item asset, including any runtime override.</summary>
+        public float GetPrice(ShopItemData itemData)
+        {
+            return itemData == null ? 0f : GetPrice(itemData.Id);
+        }
+
+        /// <summary>Persists a runtime price override for the item asset.</summary>
+        public void SetRuntimePrice(ShopItemData itemData, float price)
+        {
+            SetRuntimePrice(ItemIdOf(itemData), price);
+        }
+
+        /// <summary>Removes a runtime price override for the item asset.</summary>
+        public void ClearRuntimePrice(ShopItemData itemData)
+        {
+            ClearRuntimePrice(ItemIdOf(itemData));
+        }
+
+        // ---------- Public API: id -----------------------------------------------------
 
         /// <summary>
         ///     Initiates the purchase / equip flow for the given item id. Behaviour depends on
@@ -787,7 +847,7 @@ namespace Neo.Shop
                 ShopItemData data = i < _shopItemDatas.Length ? _shopItemDatas[i] : null;
                 float price = data != null ? GetPrice(data.Id) : 0f;
                 bool owned = data != null && _profile.IsItemOwned(data.Id);
-                _shopItems[i].Visual(data, owned ? 0 : Mathf.RoundToInt(price), i);
+                _shopItems[i].Visual(data, owned ? 0 : Mathf.RoundToInt(price));
             }
 
             OnShopChanged?.Invoke();
@@ -803,14 +863,13 @@ namespace Neo.Shop
             ShopItemData data = ResolveItemDataById(PreviewIdString);
             if (data == null)
             {
-                int idx = IndexOfItemDataById(_profile.EquippedId);
-                _shopItemPreview.Visual((ShopItemData)null, 0, idx);
+                _shopItemPreview.Visual((ShopItemData)null, 0);
                 return;
             }
 
             bool owned = _profile.IsItemOwned(data.Id);
             float price = GetPrice(data.Id);
-            _shopItemPreview.Visual(data, owned ? 0 : Mathf.RoundToInt(price), IndexOfItemDataById(data.Id));
+            _shopItemPreview.Visual(data, owned ? 0 : Mathf.RoundToInt(price));
         }
 
         private void PropagateSelectionVisual(string itemId)
@@ -921,6 +980,16 @@ namespace Neo.Shop
             }
 
             ShopItemData data = _shopItemDatas[index];
+            return data != null ? data.Id : "";
+        }
+
+        private static string ItemIdOf(ShopItemData data)
+        {
+            return data != null ? data.Id : "";
+        }
+
+        private static string BundleIdOf(ShopBundleData data)
+        {
             return data != null ? data.Id : "";
         }
 

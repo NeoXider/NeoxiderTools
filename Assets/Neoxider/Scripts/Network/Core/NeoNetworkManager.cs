@@ -33,6 +33,9 @@ namespace Neo.Network
         [Tooltip("Triggered when the client disconnects from the server.")]
         [SerializeField] private UnityEvent _onClientDisconnected = new();
 
+        [Header("Diagnostics")]
+        [SerializeField] private bool _debugLifecycleLog;
+
 #if MIRROR
         [Header("Scene Player Template")]
         [Tooltip("Use a player object configured in the scene as the NoCode template instead of a prefab asset.")]
@@ -131,7 +134,7 @@ namespace Neo.Network
             EnsureScenePlayerTemplateSpawnId();
 
             if (_scenePlayerTemplate != null && !_scenePlayerTemplate.TryGetComponent(out NetworkIdentity _))
-                Debug.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.");
+                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.", this);
         }
 
         public override void Awake()
@@ -182,7 +185,7 @@ namespace Neo.Network
             DisableScenePlayerTemplateInstance();
             NetworkContextActionRelay.RegisterMirrorHandlers();
             _onServerStarted?.Invoke();
-            Debug.Log("[NeoNetworkManager] Server started.");
+            LogLifecycle("Server started.");
         }
 
         public override void OnStartClient()
@@ -205,7 +208,7 @@ namespace Neo.Network
         {
             base.OnStopServer();
             _onServerStopped?.Invoke();
-            Debug.Log("[NeoNetworkManager] Server stopped.");
+            LogLifecycle("Server stopped.");
         }
 
         public override void OnStopClient()
@@ -230,14 +233,22 @@ namespace Neo.Network
             base.OnClientConnect();
             TryAddSceneTemplatePlayer();
             _onClientConnected?.Invoke();
-            Debug.Log("[NeoNetworkManager] Client connected.");
+            LogLifecycle("Client connected.");
         }
 
         public override void OnClientDisconnect()
         {
             base.OnClientDisconnect();
             _onClientDisconnected?.Invoke();
-            Debug.Log("[NeoNetworkManager] Client disconnected.");
+            LogLifecycle("Client disconnected.");
+        }
+
+        private void LogLifecycle(string message)
+        {
+            if (_debugLifecycleLog)
+            {
+                NetworkDiagnostics.Log($"[NeoNetworkManager] {message}", this, true);
+            }
         }
 
         /// <summary>
@@ -325,7 +336,7 @@ namespace Neo.Network
 
             _useScenePlayerTemplate = true;
             _scenePlayerTemplate = playerPrefab;
-            Debug.LogWarning(
+            NetworkDiagnostics.LogWarning(
                 "[NeoNetworkManager] Player Prefab references a scene object. Switching to Scene Player Template mode automatically.",
                 this);
         }
@@ -467,13 +478,13 @@ namespace Neo.Network
         {
             if (_scenePlayerTemplate == null)
             {
-                Debug.LogError("[NeoNetworkManager] Scene Player Template is enabled, but no template object is assigned.");
+                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template is enabled, but no template object is assigned.", this);
                 return false;
             }
 
             if (!_scenePlayerTemplate.TryGetComponent(out NetworkIdentity _))
             {
-                Debug.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.");
+                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.", this);
                 return false;
             }
 
@@ -519,9 +530,9 @@ namespace Neo.Network
         public bool IsClient => true;
         public bool IsHost => true;
 
-        public void StartAsHost() => Debug.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
-        public void StartAsClient() => Debug.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
-        public void StartAsServer() => Debug.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
+        public void StartAsHost() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
+        public void StartAsClient() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
+        public void StartAsServer() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StopNetwork() { }
 #endif
     }

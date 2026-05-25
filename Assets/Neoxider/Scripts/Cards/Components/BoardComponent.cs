@@ -83,6 +83,16 @@ namespace Neo.Cards
         public bool IsFull => _cards.Count >= _maxCards;
 
         /// <summary>
+        ///     Maximum cards this board accepts before reporting full.
+        /// </summary>
+        public int MaxCards => _maxCards;
+
+        /// <summary>
+        ///     Face-up state applied to newly placed cards when overrideFaceUp is true.
+        /// </summary>
+        public bool FaceUp => _faceUp;
+
+        /// <summary>
         ///     Slot transforms for slot layout mode.
         /// </summary>
         public Transform[] CardSlots => _cardSlots;
@@ -103,7 +113,7 @@ namespace Neo.Cards
         /// <param name="overrideFaceUp">If true, apply this component's FaceUp flag.</param>
         public async UniTask PlaceCardAsync(CardComponent card, bool animate = true, bool overrideFaceUp = true)
         {
-            if (card == null || IsFull)
+            if (!CanPlaceCard(card))
             {
                 return;
             }
@@ -150,6 +160,53 @@ namespace Neo.Cards
         public void PlaceCard(CardComponent card)
         {
             PlaceCardAsync(card, false).Forget();
+        }
+
+        /// <summary>
+        ///     Returns whether the board can accept this card right now.
+        /// </summary>
+        /// <param name="card">Card to place.</param>
+        public bool CanPlaceCard(CardComponent card)
+        {
+            return card != null && !IsFull;
+        }
+
+        /// <summary>
+        ///     Updates board capacity for custom layouts/games.
+        /// </summary>
+        /// <param name="maxCards">New maximum card count.</param>
+        /// <param name="regenerateSlots">Regenerate auto slots immediately.</param>
+        public void SetCapacity(int maxCards, bool regenerateSlots = true)
+        {
+            _maxCards = Mathf.Max(0, maxCards);
+
+            if (regenerateSlots && _autoGenerateSlots)
+            {
+                GenerateSlots();
+            }
+        }
+
+        /// <summary>
+        ///     Updates default face state for newly placed cards.
+        /// </summary>
+        /// <param name="faceUp">Face-up state.</param>
+        /// <param name="applyToExisting">Apply to cards already on the board.</param>
+        public void SetFaceUp(bool faceUp, bool applyToExisting = false)
+        {
+            _faceUp = faceUp;
+
+            if (!applyToExisting)
+            {
+                return;
+            }
+
+            foreach (CardComponent card in _cards)
+            {
+                if (card != null)
+                {
+                    card.IsFaceUp = faceUp;
+                }
+            }
         }
 
         /// <summary>

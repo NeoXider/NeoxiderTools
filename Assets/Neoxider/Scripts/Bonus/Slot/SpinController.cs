@@ -108,6 +108,7 @@ namespace Neo.Bonus
 
         [SerializeField] [Min(0)] private int _betsId;
         [SerializeField] private bool _logFinalVisuals;
+        [SerializeField] private bool _debugLogWarnings;
 
         [Tooltip("From which index to print coordinates in Debug: 0 (default) or 1, etc.")] [SerializeField]
         private int _gridIndexBase = 1;
@@ -436,13 +437,13 @@ namespace Neo.Bonus
 
             if (_rows == null || _rows.Length == 0)
             {
-                Debug.LogWarning($"[{nameof(SpinController)}] No Row assigned.", this);
+                LogWarning("No Row assigned.");
                 return;
             }
 
             if (allSpritesData?.visuals == null || allSpritesData.visuals.Length == 0)
             {
-                Debug.LogWarning($"[{nameof(SpinController)}] {nameof(SpritesData)} or visuals missing.", this);
+                LogWarning($"{nameof(SpritesData)} or visuals missing.");
                 return;
             }
 
@@ -867,10 +868,9 @@ namespace Neo.Bonus
             int rows = WindowHeight;
             if (idsBottomUp.GetLength(0) != cols || idsBottomUp.GetLength(1) != rows)
             {
-                Debug.LogWarning(
-                    $"[{nameof(SpinController)}] ForceNextOutcome shape [{idsBottomUp.GetLength(0)},{idsBottomUp.GetLength(1)}] " +
-                    $"does not match grid [{cols},{rows}]. Outcome ignored.",
-                    this);
+                LogWarning(
+                    $"ForceNextOutcome shape [{idsBottomUp.GetLength(0)},{idsBottomUp.GetLength(1)}] " +
+                    $"does not match grid [{cols},{rows}]. Outcome ignored.");
                 _forcedNextOutcome = null;
                 return;
             }
@@ -1005,7 +1005,7 @@ namespace Neo.Bonus
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[{nameof(SpinController)}] Plan build failed: {ex.Message}", this);
+                    LogWarning($"Plan build failed: {ex.Message}");
                 }
             }
 
@@ -1067,7 +1067,7 @@ namespace Neo.Bonus
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[{nameof(SpinController)}] Result evaluation failed: {ex.Message}", this);
+                LogWarning($"Result evaluation failed: {ex.Message}");
                 _lastWinningPaylineIndices = Array.Empty<int>();
                 Lose();
             }
@@ -1337,8 +1337,8 @@ namespace Neo.Bonus
                 if (row.SlotElements != null && row.SlotElements.Length > 0
                     && row.SlotElements.Length < _countVerticalElements + 1)
                 {
-                    Debug.LogWarning(
-                        $"[{nameof(SpinController)}] Row '{row.name}' has only {row.SlotElements.Length} SlotElement(s) " +
+                    LogWarning(
+                        $"Row '{row.name}' has only {row.SlotElements.Length} SlotElement(s) " +
                         $"but window height is {_countVerticalElements}. Need at least {_countVerticalElements + 1} for buffer wraps.",
                         row);
                 }
@@ -1528,6 +1528,14 @@ namespace Neo.Bonus
             }
 
             return pts;
+        }
+
+        private void LogWarning(string message, UnityEngine.Object context = null)
+        {
+            if (_debugLogWarnings)
+            {
+                Debug.LogWarning($"[{nameof(SpinController)}] {message}", context != null ? context : this);
+            }
         }
 
 #if UNITY_EDITOR

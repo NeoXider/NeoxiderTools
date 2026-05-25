@@ -26,7 +26,7 @@ namespace Neo.Network
         {
             if (prefab == null)
             {
-                Debug.LogError("[NeoNetworkSpawner] Prefab is null.");
+                NetworkDiagnostics.LogError("[NeoNetworkSpawner] Prefab is null.");
                 return null;
             }
 
@@ -39,7 +39,7 @@ namespace Neo.Network
             }
             else if (instance.TryGetComponent<NetworkIdentity>(out _))
             {
-                Debug.LogWarning(
+                NetworkDiagnostics.LogWarning(
                     "[NeoNetworkSpawner] Spawn of a networked prefab was called without an active server. Destroying the instance to avoid client-only ghosts.",
                     prefab);
                 Object.Destroy(instance);

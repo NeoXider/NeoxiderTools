@@ -56,7 +56,7 @@ namespace Neo.Network
             _discovery = GetComponent<NetworkDiscovery>();
             if (_discovery == null)
             {
-                Debug.LogError("[NeoNetworkDiscovery] Missing NetworkDiscovery component.", this);
+                NetworkDiagnostics.LogError("[NeoNetworkDiscovery] Missing NetworkDiscovery component.", this);
                 return;
             }
             _discovery.OnServerFound.AddListener(OnDiscoveredServer);
@@ -143,7 +143,7 @@ namespace Neo.Network
                 NetworkManager.singleton.StartClient();
                 return;
             }
-            Debug.LogWarning("[NeoNetworkDiscovery] No servers found to connect to.");
+            NetworkDiagnostics.LogWarning("[NeoNetworkDiscovery] No servers found to connect to.", this);
         }
 
         // ────────────────────── Internal ──────────────────────

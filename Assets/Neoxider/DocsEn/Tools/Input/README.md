@@ -1,6 +1,6 @@
 ﻿# Tools / Input
 
-Swipe, multi-key, mouse input and effects. Scripts in `Scripts/Tools/Input/`. Full docs are in Russian.
+Swipe, multi-key, mouse input and effects. Scripts in `Scripts/Tools/Input/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

@@ -626,7 +626,6 @@ namespace Neo.Tools
         [Button]
         public void DeleteAll()
         {
-            Debug.Log($"[Drawer] DeleteAll called for: {gameObject.name}");
             foreach (LineRenderer lr in new List<LineRenderer>(lines))
             {
                 Destroy(lr.gameObject);

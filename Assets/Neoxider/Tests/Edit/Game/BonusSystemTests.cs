@@ -5,6 +5,7 @@ using Neo.Save;
 using NUnit.Framework;
 using UnityEngine;
 
+#pragma warning disable CS0618
 namespace Neo.Editor.Tests
 {
     [TestFixture]
@@ -82,5 +83,17 @@ namespace Neo.Editor.Tests
             Assert.IsTrue(elapsed >= 3 && elapsed <= 7,
                 $"Save key was not advanced appropriately. Remaining pseudo elapsed: {elapsed}");
         }
+
+        [Test]
+        public void TimeReward_IsLegacyButNotUserCreationMenuEntry()
+        {
+            Type type = typeof(TimeReward);
+
+            Assert.That(type.GetCustomAttribute<ObsoleteAttribute>(), Is.Not.Null);
+            Assert.That(type.GetCustomAttribute<LegacyComponentAttribute>(), Is.Not.Null);
+            Assert.That(type.GetCustomAttribute<CreateFromMenuAttribute>(), Is.Null);
+            Assert.That(type.GetCustomAttribute<AddComponentMenu>(), Is.Null);
+        }
     }
 }
+#pragma warning restore CS0618

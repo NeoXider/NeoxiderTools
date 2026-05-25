@@ -22,6 +22,11 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
+        [Header("Diagnostics")]
+        [SerializeField] private bool _debugLog;
+
+        private static bool DebugLogEnabled => HasInstance && I._debugLog;
+
         /// <summary>
         ///     Clears static caches across subsystem / domain reloads. Invoked from
         ///     <see cref="SaveManagerSubsystemRegistration"/> rather than via
@@ -49,7 +54,10 @@ namespace Neo.Save
         private void OnApplicationQuit()
         {
             Save();
-            Debug.Log("[SaveManager] Game Quit & Saved");
+            if (_debugLog)
+            {
+                SaveProvider.Log("[SaveManager] Game Quit & Saved", this);
+            }
         }
 
         #region Singleton Pattern
@@ -61,7 +69,10 @@ namespace Neo.Save
             base.Init();
             RegisterAllSaveables();
             Load(); // auto-load
-            Debug.Log("[SaveManager] Initialized and Loaded");
+            if (_debugLog)
+            {
+                SaveProvider.Log("[SaveManager] Initialized and Loaded", this);
+            }
             IsLoad = true;
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -134,7 +145,7 @@ namespace Neo.Save
                     return;
                 }
 
-                Debug.LogWarning($"[SaveManager] Duplicate save identity detected: {key}", monoObj);
+                SaveProvider.LogWarning($"[SaveManager] Duplicate save identity detected: {key}", monoObj);
                 return;
             }
 
@@ -186,7 +197,10 @@ namespace Neo.Save
                 }
             }
 
-            Debug.Log($"[SaveManager] saveable count: {_saveableComponents.Count}");
+            if (DebugLogEnabled)
+            {
+                SaveProvider.Log($"[SaveManager] saveable count: {_saveableComponents.Count}", I);
+            }
             return newlyRegisteredComponents;
         }
 
@@ -194,7 +208,10 @@ namespace Neo.Save
         {
             List<MonoBehaviour> newlyRegistered = RegisterAllSaveables();
             Load(newlyRegistered); // only for newly registered objects
-            Debug.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.");
+            if (_debugLog)
+            {
+                SaveProvider.Log($"[SaveManager] Scene {scene.name} loaded. Re-registered & reloaded.", this);
+            }
         }
 
         #endregion
@@ -306,7 +323,7 @@ namespace Neo.Save
                                     }
                                     catch (Exception ex)
                                     {
-                                        Debug.LogWarning(
+                                        SaveProvider.LogWarning(
                                             $"[SaveManager] Failed to load field '{savedField.Key}' ({fieldType}): {ex.Message}. Keep default.");
                                         // keep current value (scene default)
                                     }
@@ -320,7 +337,7 @@ namespace Neo.Save
             }
             catch (Exception e)
             {
-                Debug.LogError("Error loading save data: " + e.Message + "\nStackTrace: " + e.StackTrace);
+                SaveProvider.LogError("Error loading save data: " + e.Message + "\nStackTrace: " + e.StackTrace);
             }
         }
 
@@ -451,7 +468,7 @@ namespace Neo.Save
         {
             if (monoObj == null || !(monoObj is ISaveableComponent))
             {
-                Debug.LogWarning("[SaveManager] Cannot save: null or not ISaveableComponent.");
+                SaveProvider.LogWarning("[SaveManager] Cannot save: null or not ISaveableComponent.");
                 return;
             }
 
@@ -461,7 +478,7 @@ namespace Neo.Save
             if (!_saveableComponents.TryGetValue(componentKey,
                     out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
-                Debug.LogError($"[SaveManager] Could not save {componentKey}: not registered.");
+                SaveProvider.LogError($"[SaveManager] Could not save {componentKey}: not registered.");
                 return;
             }
 
@@ -508,7 +525,10 @@ namespace Neo.Save
             string newJsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", newJsonData);
 
-            Debug.Log($"[SaveManager] Manually saved {componentKey}");
+            if (DebugLogEnabled)
+            {
+                SaveProvider.Log($"[SaveManager] Manually saved {componentKey}", I);
+            }
         }
 
         /// <summary>
@@ -519,7 +539,7 @@ namespace Neo.Save
         {
             if (monoObj == null || !(monoObj is ISaveableComponent))
             {
-                Debug.LogWarning("[SaveManager] Cannot load: null or not ISaveableComponent.");
+                SaveProvider.LogWarning("[SaveManager] Cannot load: null or not ISaveableComponent.");
                 return;
             }
 
@@ -529,7 +549,7 @@ namespace Neo.Save
             if (!_saveableComponents.TryGetValue(componentKey,
                     out (MonoBehaviour instance, List<FieldInfo> fields) reg))
             {
-                Debug.LogWarning($"[SaveManager] No registered fields for {componentKey}");
+                SaveProvider.LogWarning($"[SaveManager] No registered fields for {componentKey}");
                 return;
             }
 
@@ -567,19 +587,22 @@ namespace Neo.Save
                             }
                             catch (Exception ex)
                             {
-                                Debug.LogWarning(
+                                SaveProvider.LogWarning(
                                     $"[SaveManager] Load field '{savedField.Key}' failed: {ex.Message}. Keep default.");
                             }
                         }
                     }
 
                     (monoObj as ISaveableComponent)?.OnDataLoaded();
-                    Debug.Log($"[SaveManager] Manually loaded {componentKey}");
+                    if (DebugLogEnabled)
+                    {
+                        SaveProvider.Log($"[SaveManager] Manually loaded {componentKey}", I);
+                    }
                 }
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error loading save data for {componentKey}: " + e.Message);
+                SaveProvider.LogError($"Error loading save data for {componentKey}: " + e.Message);
             }
         }
 

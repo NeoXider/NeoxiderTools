@@ -42,9 +42,12 @@
 
 ## Что важно в текущей версии
 
-- `StateMachineBehaviour<TState>` и `StateMachineBehaviourBase` не равнозначны по API.
-- Generic-версия удобна для кода, но не даёт inspector-события и runtime-поля из `Base`.
-- `StateMachineData` не хранит прямые ссылки на scene object; для этого используются context slots.
+- `StateMachine<TState>` — C# ядро. Оно не зависит от сцены и может использоваться без компонента.
+- `StateMachineBehaviour<TState>` и `StateMachineBehaviourBase` — только scene wrappers: ticking, context slots, events, reload и lifecycle.
+- `StateMachineData` / `StateData` не должны хранить прямые ссылки на scene object; для этого используются context slots на компоненте.
+- Для действий по объектам сцены используйте `SetContextGameObjectActiveAction`, а не legacy `SetGameObjectActiveAction` с прямой ссылкой.
+- Runtime-логи StateMachine выключены по умолчанию и включаются только через `Enable Debug Log` на компоненте.
+- При `OnDisable` компонент выходит из текущего состояния, а при повторном enable может перезагрузить `StateMachineData`.
 - Кэширование состояний и переходов встроено в ядро и включено по умолчанию.
 
 ## Куда идти дальше

@@ -22,12 +22,38 @@ namespace Neo.UI
 
         private void Awake()
         {
+            _rectTransform ??= GetComponent<RectTransform>();
+            if (_rectTransform == null)
+            {
+                enabled = false;
+                return;
+            }
+
             _currentSize = _rectTransform.localScale;
         }
 
         private void OnEnable()
         {
+            if (_rectTransform == null)
+            {
+                _rectTransform = GetComponent<RectTransform>();
+            }
+
+            if (_rectTransform == null)
+            {
+                return;
+            }
+
             _rectTransform.localScale = _currentSize;
+        }
+
+        private void OnDisable()
+        {
+            if (_resizeCoroutine != null)
+            {
+                StopCoroutine(_resizeCoroutine);
+                _resizeCoroutine = null;
+            }
         }
 
         private void OnValidate()
@@ -42,6 +68,11 @@ namespace Neo.UI
                 StopCoroutine(_resizeCoroutine);
             }
 
+            if (_rectTransform == null)
+            {
+                return;
+            }
+
             _resizeCoroutine = StartCoroutine(ResizeButton(_pressedSize));
         }
 
@@ -50,6 +81,11 @@ namespace Neo.UI
             if (_resizeCoroutine != null)
             {
                 StopCoroutine(_resizeCoroutine);
+            }
+
+            if (_rectTransform == null)
+            {
+                return;
             }
 
             _resizeCoroutine = StartCoroutine(ResizeButton(_currentSize));

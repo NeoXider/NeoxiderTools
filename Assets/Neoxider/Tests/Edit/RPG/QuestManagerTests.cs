@@ -74,9 +74,7 @@ namespace Neo.Editor.Tests
             }
 
             // Reset singleton to avoid cross-test contamination
-            typeof(Singleton<QuestManager>)
-                .GetField("_instance", BindingFlags.NonPublic | BindingFlags.Static)
-                ?.SetValue(null, null);
+            ResetQuestManagerSingleton();
             SaveProvider.DeleteAll();
         }
 
@@ -152,6 +150,68 @@ namespace Neo.Editor.Tests
             Assert.IsNotNull(state, "After Load, quest state should be restored");
             Assert.AreEqual(QuestStatus.Active, state.Status);
             Assert.IsTrue(state.IsObjectiveCompleted(1));
+        }
+
+        [Test]
+        public void RuntimeStaticReset_ClearsQuestManagerSingletonCache()
+        {
+            Assert.AreSame(_questManager, QuestManager.Instance);
+
+            ResetQuestManagerSingleton();
+
+            Assert.IsFalse(QuestManager.HasInstance);
+            Assert.AreSame(_questManager, QuestManager.Instance);
+        }
+
+        [Test]
+        public void SceneReload_ReplacesQuestManagerSingletonCache()
+        {
+            Object.DestroyImmediate(_go);
+            _go = null;
+            ResetQuestManagerSingleton();
+
+            GameObject sceneObject = null;
+            GameObject reloadedObject = null;
+
+            try
+            {
+                sceneObject = new GameObject("QuestManagerSceneReload");
+                QuestManager sceneManager = sceneObject.AddComponent<QuestManager>();
+
+                Assert.AreSame(sceneManager, QuestManager.Instance);
+
+                Object.DestroyImmediate(sceneObject);
+                sceneObject = null;
+
+                Assert.IsFalse(QuestManager.HasInstance);
+                Assert.IsTrue(sceneManager == null);
+
+                reloadedObject = new GameObject("QuestManagerSceneReloaded");
+                QuestManager reloadedManager = reloadedObject.AddComponent<QuestManager>();
+
+                Assert.AreSame(reloadedManager, QuestManager.Instance);
+            }
+            finally
+            {
+                if (reloadedObject != null)
+                {
+                    Object.DestroyImmediate(reloadedObject);
+                }
+
+                if (sceneObject != null)
+                {
+                    Object.DestroyImmediate(sceneObject);
+                }
+
+                ResetQuestManagerSingleton();
+            }
+        }
+
+        private static void ResetQuestManagerSingleton()
+        {
+            typeof(Singleton<QuestManager>)
+                .GetMethod("ResetStaticStateForRuntime", BindingFlags.NonPublic | BindingFlags.Static)
+                ?.Invoke(null, null);
         }
     }
 }

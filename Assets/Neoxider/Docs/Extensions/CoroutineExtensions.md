@@ -29,3 +29,12 @@
 - `Start(IEnumerator routine)`: Глобально запускает любую корутину.
 
 *Примечание: Большинство методов имеют перегрузки для `GameObject` и для глобального вызова (например, `CoroutineExtensions.Delay(...)`). Все методы возвращают `CoroutineHandle`, у которого можно вызвать метод `Stop()`.*
+
+---
+
+## 3. Lifecycle и domain reload disabled
+
+- Глобальный `CoroutineHelper` сбрасывается через `RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)`, поэтому static-ссылка не переживает новый Play Mode запуск при отключенном domain reload.
+- Для владельца корутины автоматически добавляется скрытый `CoroutineLifecycleTracker`. Если `GameObject` владельца уничтожен до завершения корутины, все связанные `CoroutineHandle` переводятся в завершенное состояние.
+- `CoroutineHandle.Stop()` безопасен при уже уничтоженном владельце: handle будет завершен без исключений.
+- `CoroutineExtensions.Start(null)` не создает глобальный helper и возвращает неактивный handle.

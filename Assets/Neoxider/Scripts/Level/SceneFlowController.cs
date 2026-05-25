@@ -31,6 +31,15 @@ namespace Neo
             Percent
         }
 
+        public interface ISceneFlowSceneLoader
+        {
+            int ActiveSceneBuildIndex { get; }
+            void LoadScene(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single);
+            void LoadScene(string sceneName, LoadSceneMode mode = LoadSceneMode.Single);
+            AsyncOperation LoadSceneAsync(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single);
+            AsyncOperation LoadSceneAsync(string sceneName, LoadSceneMode mode = LoadSceneMode.Single);
+        }
+
         [NeoDoc("Level/SceneFlowController.md")]
         [CreateFromMenu("Neoxider/Level/SceneFlowController")]
         [AddComponentMenu("Neoxider/Level/" + nameof(SceneFlowController))]
@@ -71,6 +80,13 @@ namespace Neo
 
             private AsyncOperation _currentOperation;
             private bool _readyToProceedInvoked;
+            private static ISceneFlowSceneLoader _sceneLoader = new UnitySceneFlowSceneLoader();
+
+            public static ISceneFlowSceneLoader SceneLoader
+            {
+                get => _sceneLoader;
+                set => _sceneLoader = value ?? new UnitySceneFlowSceneLoader();
+            }
 
             /// <summary>Load mode (from component settings).</summary>
             public SceneFlowLoadMode LoadMode
@@ -104,6 +120,12 @@ namespace Neo
                 {
                     LoadScene();
                 }
+            }
+
+            [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+            private static void ResetStaticState()
+            {
+                _sceneLoader = new UnitySceneFlowSceneLoader();
             }
 
             /// <summary>Loads the scene by build index. Mode is taken from component settings.</summary>
@@ -154,7 +176,7 @@ namespace Neo
             /// <summary>Reloads the current active scene.</summary>
             public void Restart()
             {
-                int index = SceneManager.GetActiveScene().buildIndex;
+                int index = _sceneLoader.ActiveSceneBuildIndex;
                 LoadScene(index);
             }
 
@@ -193,16 +215,16 @@ namespace Neo
                     case SceneFlowLoadMode.Sync:
                         if (byName)
                         {
-                            SceneManager.LoadScene(sceneName);
+                            _sceneLoader.LoadScene(sceneName);
                         }
                         else
                         {
-                            SceneManager.LoadScene(buildIndex);
+                            _sceneLoader.LoadScene(buildIndex);
                         }
 
                         return;
                     case SceneFlowLoadMode.Async:
-                        StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, true));
+                        StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, _activateOnReady));
                         return;
                     case SceneFlowLoadMode.AsyncManual:
                         StartCoroutine(LoadSceneCoroutine(buildIndex, sceneName, false));
@@ -214,11 +236,11 @@ namespace Neo
             {
                 if (!string.IsNullOrEmpty(sceneName))
                 {
-                    SceneManager.LoadScene(sceneName, LoadSceneMode.Additive);
+                    _sceneLoader.LoadScene(sceneName, LoadSceneMode.Additive);
                 }
                 else if (buildIndex >= 0)
                 {
-                    SceneManager.LoadScene(buildIndex, LoadSceneMode.Additive);
+                    _sceneLoader.LoadScene(buildIndex, LoadSceneMode.Additive);
                 }
                 else
                 {
@@ -232,8 +254,8 @@ namespace Neo
                 bool byName = !string.IsNullOrEmpty(sceneName);
 
                 _currentOperation = byName
-                    ? SceneManager.LoadSceneAsync(sceneName)
-                    : SceneManager.LoadSceneAsync(buildIndex);
+                    ? _sceneLoader.LoadSceneAsync(sceneName)
+                    : _sceneLoader.LoadSceneAsync(buildIndex);
                 if (_currentOperation == null)
                 {
                     Debug.LogError("[SceneFlowController] LoadSceneAsync failed.");
@@ -337,6 +359,31 @@ namespace Neo
             [Serializable]
             public class UnityEventFloat : UnityEvent<float>
             {
+            }
+
+            private sealed class UnitySceneFlowSceneLoader : ISceneFlowSceneLoader
+            {
+                public int ActiveSceneBuildIndex => SceneManager.GetActiveScene().buildIndex;
+
+                public void LoadScene(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single)
+                {
+                    SceneManager.LoadScene(buildIndex, mode);
+                }
+
+                public void LoadScene(string sceneName, LoadSceneMode mode = LoadSceneMode.Single)
+                {
+                    SceneManager.LoadScene(sceneName, mode);
+                }
+
+                public AsyncOperation LoadSceneAsync(int buildIndex, LoadSceneMode mode = LoadSceneMode.Single)
+                {
+                    return SceneManager.LoadSceneAsync(buildIndex, mode);
+                }
+
+                public AsyncOperation LoadSceneAsync(string sceneName, LoadSceneMode mode = LoadSceneMode.Single)
+                {
+                    return SceneManager.LoadSceneAsync(sceneName, mode);
+                }
             }
         }
     }

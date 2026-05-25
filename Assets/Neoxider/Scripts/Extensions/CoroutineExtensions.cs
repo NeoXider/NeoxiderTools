@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Neo.Extensions
@@ -10,6 +11,17 @@ namespace Neo.Extensions
     public static class CoroutineExtensions
     {
         private static CoroutineHelper instance;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            if (instance != null)
+            {
+                instance.StopAllTrackedCoroutines();
+            }
+
+            instance = null;
+        }
 
         private static CoroutineHelper Instance
         {
@@ -33,6 +45,7 @@ namespace Neo.Extensions
         {
             private readonly MonoBehaviour owner;
             private Coroutine coroutine;
+            private CoroutineLifecycleTracker tracker;
 
             /// <summary>
             ///     Initializes a new coroutine handle.
@@ -66,24 +79,31 @@ namespace Neo.Extensions
             /// </summary>
             public void Stop()
             {
-                if (!IsRunning || owner == null)
+                if (!IsRunning)
                 {
                     return;
                 }
 
-                if (coroutine != null)
+                if (owner != null && coroutine != null)
                 {
                     owner.StopCoroutine(coroutine);
-                    coroutine = null;
                 }
 
-                IsRunning = false;
+                Complete();
             }
 
             internal void Complete()
             {
+                tracker?.Unregister(this);
+                tracker = null;
                 coroutine = null;
                 IsRunning = false;
+            }
+
+            internal void BindTracker(CoroutineLifecycleTracker lifecycleTracker)
+            {
+                tracker = lifecycleTracker;
+                tracker?.Register(this);
             }
         }
 
@@ -230,6 +250,11 @@ namespace Neo.Extensions
         /// <returns>A handle to the running coroutine, allowing it to be stopped.</returns>
         public static CoroutineHandle Start(IEnumerator routine)
         {
+            if (routine == null)
+            {
+                return new CoroutineHandle(null);
+            }
+
             return StartDelayedCoroutine(Instance, routine);
         }
 
@@ -241,6 +266,11 @@ namespace Neo.Extensions
 
         private static CoroutineHandle StartDelayedCoroutine(MonoBehaviour owner, IEnumerator routine)
         {
+            if (routine == null)
+            {
+                return new CoroutineHandle(null);
+            }
+
             if (owner == null)
             {
                 Debug.LogWarning(
@@ -249,18 +279,30 @@ namespace Neo.Extensions
             }
 
             CoroutineHandle handle = new(owner);
+            handle.BindTracker(GetOrAddLifecycleTracker(owner));
             handle.Coroutine = owner.StartCoroutine(WrapCoroutine(routine, handle));
             return handle;
         }
 
         private static IEnumerator WrapCoroutine(IEnumerator routine, CoroutineHandle handle)
         {
-            yield return routine;
-            handle.Complete();
+            try
+            {
+                yield return routine;
+            }
+            finally
+            {
+                handle.Complete();
+            }
         }
 
         private static MonoBehaviour GetOrAddCoroutineComponent(GameObject gameObject)
         {
+            if (gameObject == null)
+            {
+                return Instance;
+            }
+
             CoroutineRunner runner = gameObject.GetComponent<CoroutineRunner>();
             if (runner == null)
             {
@@ -268,6 +310,22 @@ namespace Neo.Extensions
             }
 
             return runner;
+        }
+
+        private static CoroutineLifecycleTracker GetOrAddLifecycleTracker(MonoBehaviour owner)
+        {
+            if (owner == null || owner.gameObject == null)
+            {
+                return null;
+            }
+
+            CoroutineLifecycleTracker tracker = owner.GetComponent<CoroutineLifecycleTracker>();
+            if (tracker == null)
+            {
+                tracker = owner.gameObject.AddComponent<CoroutineLifecycleTracker>();
+            }
+
+            return tracker;
         }
 
         private static IEnumerator DelayedAction(float seconds, Action action, bool useUnscaledTime)
@@ -394,5 +452,58 @@ namespace Neo.Extensions
     [AddComponentMenu("")]
     public class CoroutineHelper : MonoBehaviour
     {
+        internal void StopAllTrackedCoroutines()
+        {
+            StopAllCoroutines();
+            CoroutineLifecycleTracker tracker = GetComponent<CoroutineLifecycleTracker>();
+            tracker?.CompleteAll();
+        }
+    }
+
+    /// <summary>
+    ///     Completes coroutine handles when their owning GameObject is destroyed.
+    /// </summary>
+    [NeoDoc("Extensions/README.md")]
+    [AddComponentMenu("")]
+    public class CoroutineLifecycleTracker : MonoBehaviour
+    {
+        private readonly HashSet<CoroutineExtensions.CoroutineHandle> _handles = new();
+
+        internal void Register(CoroutineExtensions.CoroutineHandle handle)
+        {
+            if (handle != null)
+            {
+                _handles.Add(handle);
+            }
+        }
+
+        internal void Unregister(CoroutineExtensions.CoroutineHandle handle)
+        {
+            if (handle != null)
+            {
+                _handles.Remove(handle);
+            }
+        }
+
+        internal void CompleteAll()
+        {
+            if (_handles.Count == 0)
+            {
+                return;
+            }
+
+            var handles = new List<CoroutineExtensions.CoroutineHandle>(_handles);
+            _handles.Clear();
+
+            foreach (CoroutineExtensions.CoroutineHandle handle in handles)
+            {
+                handle?.Complete();
+            }
+        }
+
+        private void OnDestroy()
+        {
+            CompleteAll();
+        }
     }
 }

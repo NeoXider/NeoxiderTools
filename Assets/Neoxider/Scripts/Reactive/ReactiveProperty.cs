@@ -153,6 +153,19 @@ namespace Neo.Reactive
     }
 
     /// <summary>
+    ///     Code-first generic reactive variable for any C# value type or reference type.
+    ///     For Inspector/UnityEvent serialization, prefer the concrete wrappers such as
+    ///     <see cref="ReactivePropertyFloat"/>, <see cref="ReactivePropertyInt"/>, or
+    ///     <see cref="ReactivePropertyBool"/>.
+    /// </summary>
+    [Serializable]
+    public class ReactiveProperty<T> : ReactivePropertyBase<T, UnityEvent<T>>
+    {
+        public ReactiveProperty() { }
+        public ReactiveProperty(T initialValue) : base(initialValue) { }
+    }
+
+    /// <summary>
     ///     Reactive variable (float): value + UnityEvent. R3-style API.
     /// </summary>
     [Serializable]

@@ -80,7 +80,6 @@ if (inventory.GetCount(coin.ItemId) >= 10) { ... }
 - [InventoryItemState](./InventoryItemState.md) — `IInventoryItemState`, payload в save blob контейнера.
 - [InventoryHand](./InventoryHand.md) — рука, применение по E, дроп по G через Dropper; интеграция с Selector; HandView на предметах (офсеты и масштаб), масштаб руки — HandScaleMode (по умолчанию Relative, дельта).
 - [HandView](./HandView.md) — вьюшка руки на префабе предмета: позиция/поворот/масштаб в руке.
-- [План: один предмет / много предметов](./InventoryHand_Plan.md)
 - [PickableItem](./PickableItem.md)
 - [InventoryDropper](./InventoryDropper.md) — дроп в мир; при подключении через Hand обрабатывает DropEquipped, свойство AllowDropInput.
 - [InventoryView](./InventoryView.md)

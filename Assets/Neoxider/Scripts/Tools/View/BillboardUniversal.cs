@@ -21,12 +21,15 @@ namespace Neo.Tools
         [SerializeField] private bool ignoreY = true;
         [SerializeField] private Vector3 customDirection = Vector3.forward;
 
+        [Header("Fallback")]
+        [Tooltip("Resolve Camera.main only when Target Camera is empty. Disable when the camera is injected by scene setup.")]
+        [SerializeField] private bool useMainCameraFallback = true;
+        [SerializeField] private bool logMissingCamera;
+        private bool _missingCameraLogged;
+
         private void Start()
         {
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
+            ResolveCamera();
         }
 
         private void LateUpdate()
@@ -36,13 +39,18 @@ namespace Neo.Tools
 
         private void OnValidate()
         {
-            targetCamera ??= Camera.main;
+            if (!Application.isPlaying)
+            {
+                ResolveCamera();
+            }
+
             SetRotation();
         }
 
         private void SetRotation()
         {
-            if (targetCamera == null)
+            Camera camera = ResolveCamera();
+            if (camera == null)
             {
                 return;
             }
@@ -88,6 +96,28 @@ namespace Neo.Tools
         public void SetTargetCamera(Camera camera)
         {
             targetCamera = camera;
+            _missingCameraLogged = false;
+        }
+
+        private Camera ResolveCamera()
+        {
+            if (targetCamera != null)
+            {
+                return targetCamera;
+            }
+
+            if (useMainCameraFallback)
+            {
+                targetCamera = Camera.main;
+            }
+
+            if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
+            {
+                _missingCameraLogged = true;
+                Debug.LogWarning($"[{nameof(BillboardUniversal)}] Target camera is not assigned.", this);
+            }
+
+            return targetCamera;
         }
     }
 }

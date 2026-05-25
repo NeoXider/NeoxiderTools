@@ -4,6 +4,7 @@ using NUnit.Framework;
 using TMPro;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 using UnityEngine.UI;
 using Object = UnityEngine.Object;
 
@@ -18,6 +19,8 @@ namespace Neo.Editor.Tests.Edit
         public float Score = 40f;
         public ReactivePropertyFloat ReactiveScore = new ReactivePropertyFloat(0.25f);
         public ReactivePropertyInt ReactiveLevel = new ReactivePropertyInt(1);
+        public float ScoreProperty => Score;
+        public float GetScore() => Score;
     }
 
     /// <summary>
@@ -415,6 +418,55 @@ namespace Neo.Editor.Tests.Edit
                 prog.EditorInvokeRefreshFromSource();
 
                 Assert.That(slider.normalizedValue, Is.EqualTo(0.4f).Within(1e-5f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(dst);
+                Object.DestroyImmediate(src);
+            }
+        }
+
+        [Test]
+        public void ComponentFloatBindingContract_AllowsFieldsAndReadablePropertiesOnly()
+        {
+            System.Type sourceType = typeof(NoCodeBindEditModeFloatSource);
+
+            Assert.IsTrue(ComponentFloatBinding.TryResolveSupportedSourceMember(
+                sourceType,
+                nameof(NoCodeBindEditModeFloatSource.Score),
+                out System.Reflection.MemberInfo field));
+            Assert.IsTrue(ComponentFloatBinding.IsSupportedSourceMember(field));
+
+            Assert.IsTrue(ComponentFloatBinding.TryResolveSupportedSourceMember(
+                sourceType,
+                nameof(NoCodeBindEditModeFloatSource.ScoreProperty),
+                out System.Reflection.MemberInfo property));
+            Assert.IsTrue(ComponentFloatBinding.IsSupportedSourceMember(property));
+
+            Assert.IsFalse(ComponentFloatBinding.TryResolveSupportedSourceMember(
+                sourceType,
+                nameof(NoCodeBindEditModeFloatSource.GetScore),
+                out _));
+        }
+
+        [Test]
+        public void ComponentFloatBinding_MethodName_DoesNotInvokeHiddenBehaviour()
+        {
+            GameObject src = new GameObject("src");
+            GameObject dst = new GameObject("dst");
+            try
+            {
+                NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
+                fs.Score = 55f;
+                SetProgress progress = dst.AddComponent<SetProgress>();
+                WireBinding(progress, src, nameof(NoCodeBindEditModeFloatSource.GetScore));
+                LogAssert.Expect(LogType.Warning,
+                    $"[Neo.NoCode] Property/field '{nameof(NoCodeBindEditModeFloatSource.GetScore)}' not found on '{SourceTypeFullName}' on '{src.name}'.");
+
+                bool resolved = progress.Binding.TryReadFloat(progress, out float value);
+
+                Assert.IsFalse(resolved);
+                Assert.That(value, Is.EqualTo(0f));
             }
             finally
             {

@@ -228,7 +228,7 @@ namespace Neo.Save
                     if (!SaveFileEncryption.TryEncrypt(json, _encryption.Key, _encryption.Iv, out string cipher) ||
                         string.IsNullOrEmpty(cipher))
                     {
-                        Debug.LogError("[FileSaveProvider] Encryption failed; save aborted.");
+                        SaveProvider.LogError("[FileSaveProvider] Encryption failed; save aborted.");
                         return;
                     }
 
@@ -241,7 +241,7 @@ namespace Neo.Save
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
+                SaveProvider.LogError($"[FileSaveProvider] Failed to save data to {_filePath}: {ex.Message}");
             }
         }
 
@@ -257,7 +257,7 @@ namespace Neo.Save
                     string raw = File.ReadAllText(_filePath).Trim().TrimStart('\ufeff');
                     if (!TryBuildDictionaryFromFilePayload(raw, out _data))
                     {
-                        Debug.LogError(
+                        SaveProvider.LogError(
                             $"[FileSaveProvider] Unrecognized save file format (path: {_filePath}). Resetting in memory.");
                         _data = new Dictionary<string, SaveValue>();
                     }
@@ -271,7 +271,7 @@ namespace Neo.Save
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[FileSaveProvider] Failed to load data from {_filePath}: {ex.Message}");
+                SaveProvider.LogError($"[FileSaveProvider] Failed to load data from {_filePath}: {ex.Message}");
                 _data = new Dictionary<string, SaveValue>();
                 OnDataLoaded?.Invoke();
             }

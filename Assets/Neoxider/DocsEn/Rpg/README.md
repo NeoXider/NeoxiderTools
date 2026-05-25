@@ -15,6 +15,7 @@
 - [RpgNoCodeAction](./RpgNoCodeAction.md) — UnityEvent bridge for no-code flows.
 - [RpgConditionAdapter](./RpgConditionAdapter.md) — RPG checks for `NeoCondition`.
 - [RpgResourceBinding](./RpgResourceBinding.md) / [RpgStatBinding](./RpgStatBinding.md) — reactive resource/stat binding for UI and NoCode; text and progress output should use generic `Neo.NoCode`.
+- [RpgStatsDamageableBridge](../Tools/Components/AttackSystem/RpgStatsDamageableBridge.md) — legacy `AttackSystem` bridge (`IDamageable/IHealable` -> `RpgCharacter`).
 
 **Navigation:** [← DocsEn](../README.md)
 

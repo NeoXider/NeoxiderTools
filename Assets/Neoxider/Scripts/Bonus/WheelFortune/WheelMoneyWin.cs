@@ -14,12 +14,13 @@ namespace Neo
             [Header("References")] public TMP_Text prize;
 
             [Header("Settings")] public int[] wins = new int[8];
+            [SerializeField] private bool _debugLogWarnings;
 
             public void Win(int id)
             {
                 if (wins == null || id < 0 || id >= wins.Length)
                 {
-                    if (wins != null)
+                    if (_debugLogWarnings && wins != null)
                     {
                         Debug.LogWarning($"[WheelMoneyWin] Win(id={id}) out of range [0, {wins.Length}).", this);
                     }

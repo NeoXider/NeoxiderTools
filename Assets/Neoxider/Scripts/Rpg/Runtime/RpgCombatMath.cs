@@ -43,6 +43,11 @@ namespace Neo.Rpg
             {
                 foreach (ActiveStatusEntry entry in activeStatuses)
                 {
+                    if (entry == null || resolveStatus == null)
+                    {
+                        continue;
+                    }
+
                     StatusEffectDefinition definition = resolveStatus(entry.StatusId);
                     if (definition == null)
                     {
@@ -66,6 +71,11 @@ namespace Neo.Rpg
 
             foreach (ActiveStatusEntry entry in activeStatuses)
             {
+                if (entry == null || resolveStatus == null)
+                {
+                    continue;
+                }
+
                 StatusEffectDefinition definition = resolveStatus(entry.StatusId);
                 if (definition != null && definition.BlocksActions)
                 {
@@ -93,6 +103,11 @@ namespace Neo.Rpg
 
             foreach (ActiveBuffEntry entry in activeBuffs)
             {
+                if (entry == null || resolveBuff == null)
+                {
+                    continue;
+                }
+
                 BuffDefinition definition = resolveBuff(entry.BuffId);
                 if (definition == null)
                 {
@@ -124,6 +139,11 @@ namespace Neo.Rpg
 
             foreach (ActiveBuffEntry entry in activeBuffs)
             {
+                if (entry == null || resolveBuff == null)
+                {
+                    continue;
+                }
+
                 BuffDefinition definition = resolveBuff(entry.BuffId);
                 if (definition == null)
                 {

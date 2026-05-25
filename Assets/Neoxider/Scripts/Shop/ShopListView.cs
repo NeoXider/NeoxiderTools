@@ -347,27 +347,8 @@ namespace Neo.Shop
 
             bool owned = _shop.IsOwned(data.Id);
             float price = _shop.GetPrice(data.Id);
-            _views[index].Visual(data, owned ? 0 : Mathf.RoundToInt(price), IndexOfShopItem(data));
+            _views[index].Visual(data, owned ? 0 : Mathf.RoundToInt(price));
             _views[index].Select(_shop.EquippedId == data.Id);
-        }
-
-        private int IndexOfShopItem(ShopItemData data)
-        {
-            ShopItemData[] allItems = _shop != null ? _shop.ShopItemDatas : null;
-            if (allItems == null)
-            {
-                return -1;
-            }
-
-            for (int i = 0; i < allItems.Length; i++)
-            {
-                if (ReferenceEquals(allItems[i], data))
-                {
-                    return i;
-                }
-            }
-
-            return -1;
         }
 
         private void SubscribeButtons(bool subscribe)

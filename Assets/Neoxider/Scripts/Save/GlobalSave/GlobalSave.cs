@@ -43,7 +43,7 @@ namespace Neo.Save
             }
             catch (Exception e)
             {
-                Debug.LogError("Error loading data: " + e.Message);
+                SaveProvider.LogError("Error loading data: " + e.Message);
             }
         }
 
@@ -56,7 +56,7 @@ namespace Neo.Save
             }
             catch (Exception e)
             {
-                Debug.LogError("Error saving progress: " + e.Message);
+                SaveProvider.LogError("Error saving progress: " + e.Message);
             }
         }
     }

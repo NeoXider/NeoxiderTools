@@ -1,4 +1,4 @@
-# NPC Module — Core Types
+﻿# NPC Module вЂ” Core Types
 
 | Type | Description |
 |------|-------------|
@@ -12,5 +12,5 @@
 | `NpcPatrolCore` | Patrol core (waypoints, zones, cycles). |
 
 ## See Also
-- [NpcNavigation](NpcNavigation.md)
-- ← [NPC](README.md)
+- [NpcNavigation](Navigation/NPCNavigation.md)
+- в†ђ [NPC](README.md)

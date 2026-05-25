@@ -1,6 +1,6 @@
 ﻿# Tools / Dialogue
 
-Dialogue flow: controller, UI binding, and data assets. Scripts in `Scripts/Tools/Dialogue/`. Full docs are in Russian.
+Dialogue flow: controller, UI binding, and data assets. Scripts in `Scripts/Tools/Dialogue/`. Use this page as the English module entry.
 
 ## Russian docs (per-component)
 

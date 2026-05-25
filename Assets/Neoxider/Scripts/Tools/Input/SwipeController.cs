@@ -73,10 +73,6 @@ namespace Neo.Tools
         {
             get
             {
-                if (instance == null)
-                {
-                }
-
                 return instance;
             }
         }
@@ -84,6 +80,19 @@ namespace Neo.Tools
         private void Awake()
         {
             instance = this;
+        }
+
+        private void OnDestroy()
+        {
+            if (instance == this)
+            {
+                instance = null;
+            }
+        }
+
+        internal static void ResetStaticStateForRuntime()
+        {
+            instance = null;
         }
 
         private void Update()
@@ -100,10 +109,17 @@ namespace Neo.Tools
 
         public static bool GetSwipeDirection(out SwipeDirection direction)
         {
-            direction = Instance.lastSwipeDirection;
-            if (Instance.swipeDetected)
+            SwipeController controller = Instance;
+            if (controller == null)
             {
-                Instance.swipeDetected = false;
+                direction = default;
+                return false;
+            }
+
+            direction = controller.lastSwipeDirection;
+            if (controller.swipeDetected)
+            {
+                controller.swipeDetected = false;
                 return true;
             }
 

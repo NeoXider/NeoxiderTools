@@ -1,4 +1,5 @@
 using Neo.Reactive;
+using Neo.Network;
 using NUnit.Framework;
 
 namespace Neo.Editor.Tests
@@ -6,6 +7,11 @@ namespace Neo.Editor.Tests
     [TestFixture]
     public class ReactivePropertyTests
     {
+        private sealed class TestPayload
+        {
+            public int Count;
+        }
+
         [Test]
         public void ReactivePropertyInt_Initialization_SetsValue()
         {
@@ -83,6 +89,47 @@ namespace Neo.Editor.Tests
 
             prop.Value = 1.0f;
             Assert.AreEqual(1.0f, lastVal);
+        }
+
+        [Test]
+        public void ReactivePropertyGeneric_SupportsReferenceTypes()
+        {
+            var initial = new TestPayload { Count = 1 };
+            var next = new TestPayload { Count = 2 };
+            var prop = new ReactiveProperty<TestPayload>(initial);
+            TestPayload received = null;
+
+            prop.AddListener(value => received = value);
+            prop.Value = next;
+
+            Assert.AreSame(next, prop.CurrentValue);
+            Assert.AreSame(next, received);
+        }
+
+        [Test]
+        public void ReactivePropertyGeneric_SupportsValueTypes()
+        {
+            var prop = new ReactiveProperty<double>(1.5d);
+            double received = 0d;
+
+            prop.AddListener(value => received = value);
+            prop.OnNext(2.5d);
+
+            Assert.AreEqual(2.5d, prop.CurrentValue);
+            Assert.AreEqual(2.5d, received);
+        }
+
+        [Test]
+        public void NetworkReactivePropertyBridge_GenericOverload_UpdatesAndNotifies()
+        {
+            var prop = new ReactiveProperty<string>("local");
+            string received = null;
+
+            prop.AddListener(value => received = value);
+            NetworkReactivePropertyBridge.SetFromNetwork(prop, "server");
+
+            Assert.AreEqual("server", prop.CurrentValue);
+            Assert.AreEqual("server", received);
         }
     }
 }

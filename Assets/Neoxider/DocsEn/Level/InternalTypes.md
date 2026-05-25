@@ -1,4 +1,4 @@
-# Level — Internal Types
+﻿# Level вЂ” Internal Types
 
 | Type | Description |
 |------|-------------|
@@ -16,4 +16,4 @@
 | `ILevelProvider` | Level provider interface. |
 
 ## See Also
-- [LevelComponent](LevelComponent.md) — ← [Level](README.md)
+- [LevelComponent](../Core/Level/Components/LevelComponent.md) вЂ” в†ђ [Level](README.md)

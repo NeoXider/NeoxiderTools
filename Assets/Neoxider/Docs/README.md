@@ -1,80 +1,58 @@
-# Neoxider Docs
+# NeoxiderTools Docs
 
-Добро пожаловать в канонический индекс документации **NeoxiderTools** `v8.5.4`.
+Канонический вход в пользовательскую документацию пакета **NeoxiderTools** `v8.6.0`.
 
-Используйте этот файл как главную точку входа в пользовательскую документацию.
+## Быстрый вход
 
-- [Полезные компоненты](./UsefulComponents.md) - быстрый вход по сценарию `Add Component / GameObject`
-- [Корневой README пакета](../README.md) - установка, обзор, samples
-- [English onboarding](../DocsEn/README.md) - англоязычный вход по модулям и ключевым страницам
-- [No-Code: привязка чисел → UI (Neo.NoCode)](./NoCode/README.md) — `NoCodeBindText`, `NoCodeFormattedText`, `SetProgress`
-- [No-Code: аудит, границы, варианты решений](./NO_CODE_AUDIT.md) — без нодового «визуального программирования»; пресеты, данные, каталоги действий
-- **Локальные копии черновиков аудита (не в git):** `Local/Audits/`, см. [`/Local/README.md`](../../../Local/README.md)
+- [README пакета](../README.md)
+- [English docs](../DocsEn/README.md)
+- [Полезные компоненты](./UsefulComponents.md)
+- [Совместимость пакета](./PackageCompatibility.md)
 
-## Оглавление модулей
+## Модули
 
-| Модуль | Описание | Документация |
-|--------|----------|--------------|
-| **NoCode** | Привязка числа к `SetText`/TMP и Slider/Image без отдельных вью-скриптов | [`NoCode/README.md`](./NoCode/README.md) |
-| **Animations** | Float, Color, `Vector3` и другие runtime-анимации значений | [`Animations/README.md`](./Animations/README.md) |
-| **Audio** | `AudioManager`, микшер, random music и audio helper-компоненты | [`Audio/README.md`](./Audio/README.md) |
-| **Bonus** | Слоты, колесо фортуны, коллекции и награды по времени | [`Bonus/README.md`](./Bonus/README.md) |
-| **Cards** | MVP-архитектура, покер, «Пьяница» и карточный runtime-flow | [`Cards/README.md`](./Cards/README.md) |
-| **Core** | Уровень/XP (LevelComponent) и пулы ресурсов (HealthComponent) для Progression и RPG | [`Core/README.md`](./Core/README.md) |
-| **Condition** | No-Code условия: проверка полей, AND/OR логика, события | [`Condition/NeoCondition.md`](./Condition/NeoCondition.md) |
-| **Editor** | Окна настроек, поиск missing scripts, авто-билд и сервисные утилиты | [`Editor/README.md`](./Editor/README.md) |
-| **Extensions** | 300+ extension-методов для C# и Unity API | [`Extensions/README.md`](./Extensions/README.md) |
-| **GridSystem** | Генерация сеток, origin-якорь, pathfinding, Match3 и TicTacToe | [`GridSystem.md`](./GridSystem.md) |
-| **Level** | Менеджер уровней, загрузка сцен и карта прогресса | [`Level/README.md`](./Level/README.md) |
-| **NPC** | Навигация NPC, патруль, chase, animator driver и RPG-ready combat composition | [`NPC/README.md`](./NPC/README.md) |
-| **Parallax** | Параллакс-слои и связанные визуальные компоненты | [`Parallax/ParallaxLayer.md`](./Parallax/ParallaxLayer.md) |
-| **PropertyAttribute** | `[Button]`, `[GUIColor]`, inject-атрибуты и inspector helper-утилиты | [`PropertyAttribute/README.md`](./PropertyAttribute/README.md) |
-| **Quest** | Конфиги квестов, менеджер, цели и runtime-состояние | [`Quest/README.md`](./Quest/README.md) |
-| **Progression** | XP, уровни, unlock tree, perk tree и persistent progression | [`Progression/README.md`](./Progression/README.md) |
-| **RPG** | `RpgCharacter`: универсальные ресурсы/статы, баффы, статусы, progression, multiplayer и no-code bridges | [`Rpg/README.md`](./Rpg/README.md) |
-| **Reactive** | Реактивные сериализуемые свойства `float`, `int`, `bool` | [`Reactive/README.md`](./Reactive/README.md) |
-| **Save** | `PlayerPrefs`, JSON-файлы, provider API, scene/global saves и атрибуты сохранения | [`Save/README.md`](./Save/README.md) |
-| **Settings** | `GameSettings`, сервис настроек, UI `SettingsView`, URP/Quality presets, интеграция с `SaveProvider` | [`Settings/README.md`](./Settings/README.md) |
-| **Shop** | Магазин, валюта и покупки | [`Shop/README.md`](./Shop/README.md) |
-| **StateMachine** | Код + No-Code, runtime state machine и визуальный редактор | [`StateMachine/README.md`](./StateMachine/README.md) |
-| **Tools** | 150+ компонентов: движение, физика, спавнеры, таймеры, ввод и utility runtime | [`Tools/README.md`](./Tools/README.md) |
-| **Network** | Мультиплеер: NeoNetworkManager, SyncVar-мосты, NetworkPropertySync, NetworkActionRelay, Lobby, Discovery | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
-| **UI** | UI-панели, анимации кнопок, переключатели и presentation helpers | [`UI/README.md`](./UI/README.md) |
+| Модуль | Что внутри | Вход |
+|--------|------------|------|
+| **Animations** | Runtime-анимации значений: float, color, `Vector3` | [Animations](./Animations/README.md) |
+| **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
+| **Bonus** | Слоты, колесо фортуны, коллекции, награды по времени | [Bonus](./Bonus/README.md) |
+| **Cards** | Deck/hand/board runtime, poker, Drunkard sample, кастомные карточные игры | [Cards](./Cards/README.md) |
+| **Condition** | No-code условия, reflection-проверки, AND/OR, события | [Condition](./Condition/README.md) |
+| **Core** | Level/XP и базовые ресурсы | [Core](./Core/README.md) |
+| **Editor** | Editor windows, missing scripts scan, настройки, сервисные утилиты | [Editor](./Editor/README.md) |
+| **Extensions** | Extension-методы для C# и Unity API | [Extensions](./Extensions/README.md) |
+| **GridSystem** | Генерация сеток, Match3, TicTacToe | [GridSystem](./GridSystem/README.md) |
+| **Level** | Level manager, загрузка сцен, карта прогресса | [Level](./Level/README.md) |
+| **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
+| **NoCode** | Сценовые C#-контракты и inspector-обертки без ссылок из SO на объекты сцены | [NoCode](./NoCode/README.md) |
+| **NPC** | Навигация, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
+| **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
+| **Progression** | XP, уровни, unlock tree, perk tree | [Progression](./Progression/README.md) |
+| **PropertyAttribute** | Inspector attributes: button, color, inject helpers | [PropertyAttribute](./PropertyAttribute/README.md) |
+| **Quest** | Quest configs, цели, manager, runtime state | [Quest](./Quest/README.md) |
+| **Reactive** | Generic `ReactiveProperty<T>` и serializable wrappers для `float`, `int`, `bool` | [Reactive](./Reactive/README.md) |
+| **Rpg** | `RpgCharacter`, ресурсы, статы, атаки, buffs/statuses, save/network/no-code bridges | [Rpg](./Rpg/README.md) |
+| **Save** | Save providers, attributes, scene/global save flow | [Save](./Save/README.md) |
+| **Settings** | Game settings, scene service, UI bindings | [Settings](./Settings/README.md) |
+| **Shop** | Typed shop API, purchases, bundles, currency UI | [Shop](./Shop/README.md) |
+| **StateMachine** | Runtime state machine, C# core и no-code сценовые обертки | [StateMachine](./StateMachine/README.md) |
+| **Tools** | Движение, свободный полет камеры, ввод, физика, спавн, таймеры, UI helpers | [Tools](./Tools/README.md) |
+| **UI** | UI panels, button animations, toggles, presentation helpers | [UI](./UI/README.md) |
 
-## Подмодули `Tools`
+## Владение Gameplay
 
-| Подмодуль | Что внутри | Документация |
-|-----------|------------|--------------|
-| `Tools/Components` | `Counter`, `ScoreManager`, `TypewriterEffect`, `RpgStatsDamageableBridge`; *Health/Evade/AttackSystem — legacy, см. [RPG](./Rpg/README.md)* | [`Tools/Components/README.md`](./Tools/Components/README.md) |
-| `Tools/Dialogue` | `DialogueController`, `DialogueData`, `DialogueUI` | [`Tools/Dialogue/README.md`](./Tools/Dialogue/README.md) |
-| `Tools/Input` | `MouseInputManager`, `MultiKeyEventTrigger`, `SwipeController` | [`Tools/Input/README.md`](./Tools/Input/README.md) |
-| `Tools/Inventory` | `InventoryComponent`, `InventoryDropper`, `PickableItem` | [`Tools/Inventory/README.md`](./Tools/Inventory/README.md) |
-| `Tools/InteractableObject` | `InteractiveObject`, `PhysicsEvents2D`, `PhysicsEvents3D` | [`Tools/InteractableObject/README.md`](./Tools/InteractableObject/README.md) |
-| `Tools/Managers` | `GM`, `EM`, `Bootstrap`, `Singleton` | [`Tools/Managers/README.md`](./Tools/Managers/README.md) |
-| `Tools/Move` | Контроллеры движения и курсора | [`Tools/Move/README.md`](./Tools/Move/README.md) |
-| `Tools/Physics` | Magnetic, impulse, explosive helpers | [`Tools/Physics/README.md`](./Tools/Physics/README.md) |
-| `Tools/Random` | `ChanceManager`, `ChanceSystemBehaviour`, chance data | [`Tools/Random/README.md`](./Tools/Random/README.md) |
-| `Tools/Spawner` | Object pooling и спавнеры | [`Tools/Spawner/README.md`](./Tools/Spawner/README.md) |
-| `Tools/Text` | `SetText`, `TimeToText` | [`Tools/Text/README.md`](./Tools/Text/README.md) |
-| `Tools/Time` | `Timer`, `TimerObject` | [`Tools/Time/README.md`](./Tools/Time/README.md) |
-| `Tools/View` | Selector и view-утилиты | [`Tools/View/README.md`](./Tools/View/README.md) |
-| `Tools/Debug` | `FPS`, `ErrorLogger` и debug-хелперы | [`Tools/Debug/README.md`](./Tools/Debug/README.md) |
-| `Tools/Draw` | Компоненты рисования и визуальной отладки | [`Tools/Draw/README.md`](./Tools/Draw/README.md) |
-| `Tools/FakeLeaderboard` | Демо-лидерборд и элементы списка | [`Tools/FakeLeaderboard/README.md`](./Tools/FakeLeaderboard/README.md) |
-| `Tools/Other` | Прочие utility-компоненты и интеграции | [`Tools/Other/README.md`](./Tools/Other/README.md) |
+`Gameplay` не является отдельным модулем Neoxider. Gameplay-системы принадлежат конкретным runtime-модулям (`Rpg`, `Quest`, `Progression`, `Cards`, `GridSystem`, `Tools`, `NoCode` и т.д.). Не добавляйте новые папки `Docs/Gameplay` или `Scripts/Gameplay`, пока не появится реальная runtime-сборка/API с понятным владельцем и тестами.
 
 ## Samples и add-ons
 
-| Раздел | Что внутри | Документация |
-|--------|------------|--------------|
-| **NeoxiderPages** | Sample-модуль экранов, страниц и `UIKit` workflow | [`NeoxiderPages/README.md`](./NeoxiderPages/README.md) |
-| **UI Extension** | Готовые UI-prefab наборы и editor-меню | [`UI Extension/README.md`](./UI%20Extension/README.md) |
+| Раздел | Вход |
+|--------|------|
+| **Examples** | [Examples](./Examples/README.md) |
+| **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
+| **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
 
-## Гайды и туториалы
+## Гайды
 
-| Название | Описание | Ссылка |
-|----------|----------|--------|
-| **Vampire Survivors 3D** | Пошаговое руководство по созданию клона Vampire Survivors в 3D | [`VampireSurvivor_Guide.md`](./VampireSurvivor_Guide.md) |
-| **Multiplayer Guide** | NoCode мультиплеер: таблица компонентов, паттерн синхронизации, примеры механик | [`Network/Multiplayer_Guide.md`](./Network/Multiplayer_Guide.md) |
-| **NoCode Network Spec** | Стандарты: правила 1–11 для сетевых компонентов | [`Network/NoCode_Network_Spec.md`](./Network/NoCode_Network_Spec.md) |
-| **RpgCharacter Quick Demo** | Мини-сцена для проверки Damage/Heal/Stamina/DarkMana/Upgrade API | `Assets/Neoxider/Samples~/Demo/Scenes/RpgCharacterQuickDemo.unity` |
+- [Multiplayer Guide](./Network/Multiplayer_Guide.md)
+- [NoCode Network Spec](./Network/NoCode_Network_Spec.md)
+- [Vampire Survivors 3D guide](./VampireSurvivor_Guide.md)

@@ -179,9 +179,14 @@ namespace Neo.Cards
         [Button]
         public void Initialize()
         {
+            if (_config == null)
+            {
+                return;
+            }
+
             Model = new DeckModel();
             Model.OnDeckEmpty += HandleDeckEmpty;
-            Model.Initialize(_config.GameDeckType, _shuffleOnStart);
+            Model.Initialize(_config.GenerateDeck(), _shuffleOnStart);
 
             if (_showTrumpCard && _trumpCardDisplay != null)
             {

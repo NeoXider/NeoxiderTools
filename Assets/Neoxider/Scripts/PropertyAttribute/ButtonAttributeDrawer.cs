@@ -54,9 +54,7 @@ namespace Neo
             // Draw the button
             Rect buttonRect = new(position.x, position.y + totalHeight - buttonHeight, position.width,
                 buttonHeight);
-            string buttonText = string.IsNullOrEmpty(buttonAttribute.ButtonName)
-                ? methodInfo.Name
-                : buttonAttribute.ButtonName;
+            string buttonText = GetButtonText(methodInfo, buttonAttribute);
 
             if (GUI.Button(buttonRect, buttonText))
             {
@@ -87,23 +85,41 @@ namespace Neo
             return height;
         }
 
-        private MethodInfo GetMethodInfo(SerializedProperty property)
+        private static MethodInfo GetMethodInfo(SerializedProperty property)
         {
             Object targetObject = property.serializedObject.targetObject;
-            Type targetObjectType = targetObject.GetType();
+            return targetObject != null ? FindButtonMethod(targetObject.GetType()) : null;
+        }
 
-            // Find the method with ButtonAttribute
-            foreach (MethodInfo method in targetObjectType.GetMethods(BindingFlags.Instance | BindingFlags.Static |
-                                                                      BindingFlags.Public | BindingFlags.NonPublic))
+        public static MethodInfo FindButtonMethod(Type targetObjectType)
+        {
+            if (targetObjectType == null)
             {
-                object[] attributes = method.GetCustomAttributes(typeof(ButtonAttribute), false);
-                if (attributes.Length > 0)
+                return null;
+            }
+
+            MethodInfo[] methods = targetObjectType.GetMethods(BindingFlags.Instance | BindingFlags.Static |
+                                                               BindingFlags.Public | BindingFlags.NonPublic);
+            Array.Sort(methods, (left, right) => left.MetadataToken.CompareTo(right.MetadataToken));
+            foreach (MethodInfo method in methods)
+            {
+                if (method.GetCustomAttribute<ButtonAttribute>(false) != null)
                 {
                     return method;
                 }
             }
 
             return null;
+        }
+
+        public static string GetButtonText(MethodInfo method, ButtonAttribute buttonAttribute)
+        {
+            if (buttonAttribute != null && !string.IsNullOrEmpty(buttonAttribute.ButtonName))
+            {
+                return buttonAttribute.ButtonName;
+            }
+
+            return method != null ? method.Name : string.Empty;
         }
 
         private object DrawParameterField(Rect position, string label, object value, Type type)
@@ -146,7 +162,7 @@ namespace Neo
             return value;
         }
 
-        private object GetDefaultValue(Type type)
+        public static object GetDefaultValue(Type type)
         {
             if (type.IsValueType)
             {

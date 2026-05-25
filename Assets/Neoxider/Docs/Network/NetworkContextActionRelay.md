@@ -6,6 +6,8 @@
 
 **Inspector:** кастомный (`Assets/Neoxider/Editor/Network/NetworkContextActionRelayEditor.cs`) — наследует `CustomEditorBase` как у `NeoCondition`, рисует секции Context / Target / Action / Networking / Diagnostics / Editor Helpers / Events, выбор компонента и метода через reflection-дропдауны (общие хелперы `ComponentBindingInspectorShared` — те же что у NeoCondition).
 
+---
+
 ## Когда использовать
 
 - **Pickup** на сцене: триггер исчезает у всех при касании (`ContextSource = Self`, `Action = SetActive(false)`).

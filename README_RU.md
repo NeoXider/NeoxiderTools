@@ -2,7 +2,7 @@
 
 [Русский](README_RU.md) | [English](README.md)
 
-[![Version](https://img.shields.io/badge/version-8.5.8-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-8.6.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 `NeoxiderTools` — Unity-пакет для быстрой сборки игровых систем без скрытой магии. Внутри: no-code компоненты для Inspector, runtime-модули, editor-инструменты, samples и документация по точкам расширения.
 
@@ -54,7 +54,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 | Quest | Конфиги квестов, цели, менеджер, no-code actions, runtime state | [Quest](Assets/Neoxider/Docs/Quest/README.md) |
 | StateMachine | Runtime state machine и no-code transition predicates | [StateMachine](Assets/Neoxider/Docs/StateMachine/README.md) |
 | Network | Опциональные Mirror wrappers и no-code network action/sync bridges | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) |
-| Tools | Movement, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
+| Tools | Movement, свободный полет камеры, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
 | Extensions | 300+ extension-методов для C# и Unity API | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |
 
 ## No-code пример: NeoCondition

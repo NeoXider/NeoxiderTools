@@ -16,6 +16,7 @@
 - Initializes lazily on first access.
 - Tries to load `SaveProviderSettings` from `Resources`.
 - Falls back to `PlayerPrefsSaveProvider` when no settings asset exists.
+- Also keeps the safe `PlayerPrefsSaveProvider` fallback when a scene has `SaveProviderSettingsComponent` without an assigned settings asset.
 - Forwards all calls to the active provider.
 - Forwards provider events through a stable static event surface.
 - Correctly detaches old provider event handlers when `SetProvider()` is used.
@@ -23,6 +24,7 @@
 ## Public API
 - `ISaveProvider CurrentProvider`
 - `void SetProvider(ISaveProvider provider)`
+- `bool DebugLoggingEnabled`
 - `int GetInt(string key, int defaultValue = 0)`
 - `void SetInt(string key, int value)`
 - `float GetFloat(string key, float defaultValue = 0f)`

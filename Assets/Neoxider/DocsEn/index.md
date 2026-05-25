@@ -8,7 +8,6 @@
 - [Condition](./Condition/README.md)
 - [Core](./Core/README.md)
 - [Extensions](./Extensions/README.md)
-- [Gameplay](./Gameplay/README.md)
 - [GridSystem](./GridSystem/README.md)
 - [Level](./Level/README.md)
 - [Network](./Network/README.md)
@@ -28,5 +27,6 @@
 - [UI](./UI/README.md)
 
 ## Quick links
+- [Package Compatibility](./PackageCompatibility.md)
 - [NeoxiderPages](./NeoxiderPages/README.md)
 

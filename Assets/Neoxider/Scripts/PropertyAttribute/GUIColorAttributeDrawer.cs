@@ -34,6 +34,11 @@ namespace Neo
             // Restore the original GUI color
             GUI.color = originalColor;
         }
+
+        public static Color GetColor(GUIColorAttribute colorAttribute, Color fallback)
+        {
+            return colorAttribute != null ? colorAttribute.color : fallback;
+        }
     }
 }
 #endif

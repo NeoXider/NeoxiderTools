@@ -39,7 +39,10 @@
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:fada5146ea9de7e4c86a6e4307efdfbf",
         "GUID:cd6c82e59aff8684681614f3d7f08cac",
-        "GUID:8d381d1cc9d17434d8639fca19b57c5b"
+        "GUID:8d381d1cc9d17434d8639fca19b57c5b",
+        "Neo.Audio",
+        "Neo.Parallax",
+        "Neo.PropertyAttribute"
     ],
     "includePlatforms": [
         "Editor"

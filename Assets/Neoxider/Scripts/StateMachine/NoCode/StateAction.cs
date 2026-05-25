@@ -31,6 +31,15 @@ namespace Neo.StateMachine.NoCode
         ///     Runs the action.
         /// </summary>
         public abstract void Execute();
+
+        /// <summary>
+        ///     Runs the action with the active scene context supplied by StateMachineBehaviour.
+        ///     ScriptableObject actions should use context slots instead of storing scene object references.
+        /// </summary>
+        public virtual void Execute(GameObject contextObject)
+        {
+            Execute();
+        }
     }
 
     /// <summary>
@@ -66,13 +75,13 @@ namespace Neo.StateMachine.NoCode
             switch (logType)
             {
                 case LogType.Log:
-                    Debug.Log($"[StateAction] {message}");
+                    StateMachineLog.Info($"[StateAction] {message}");
                     break;
                 case LogType.Warning:
-                    Debug.LogWarning($"[StateAction] {message}");
+                    StateMachineLog.Warning($"[StateAction] {message}");
                     break;
                 case LogType.Error:
-                    Debug.LogError($"[StateAction] {message}");
+                    StateMachineLog.Error($"[StateAction] {message}");
                     break;
             }
         }
@@ -108,6 +117,46 @@ namespace Neo.StateMachine.NoCode
 
         public override void Execute()
         {
+            if (target != null)
+            {
+                target.SetActive(setActive);
+            }
+        }
+    }
+
+    /// <summary>
+    ///     Enables or disables a scene GameObject resolved from the StateMachineBehaviour context slots.
+    ///     Safe for ScriptableObject StateData because it stores only the slot, not a scene reference.
+    /// </summary>
+    [Serializable]
+    public class SetContextGameObjectActiveAction : StateAction
+    {
+        [SerializeField] private ConditionContextSlot contextSlot = ConditionContextSlot.Owner;
+
+        [SerializeField] private bool setActive = true;
+
+        public ConditionContextSlot ContextSlot
+        {
+            get => contextSlot;
+            set => contextSlot = value;
+        }
+
+        public bool SetActive
+        {
+            get => setActive;
+            set => setActive = value;
+        }
+
+        public override void Execute()
+        {
+            Execute(StateMachineEvaluationContext.GetContextBySlot((int)contextSlot));
+        }
+
+        public override void Execute(GameObject contextObject)
+        {
+            GameObject target = contextSlot == ConditionContextSlot.Owner && contextObject != null
+                ? contextObject
+                : StateMachineEvaluationContext.GetContextBySlot((int)contextSlot);
             if (target != null)
             {
                 target.SetActive(setActive);
@@ -189,7 +238,7 @@ namespace Neo.StateMachine.NoCode
             }
             else
             {
-                Debug.LogWarning("[StateAction] ChangeSceneAction: No scene name or build index specified.");
+                StateMachineLog.Warning("[StateAction] ChangeSceneAction: No scene name or build index specified.");
             }
         }
     }

@@ -11,12 +11,15 @@ namespace Neo
         [NeoDoc("UI/ButtonChangePage.md")]
         [CreateFromMenu("Neoxider/UI/ButtonChangePage")]
         [AddComponentMenu("Neoxider/" + "UI/" + nameof(ButtonChangePage))]
-        public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler
+        public class ButtonChangePage : MonoBehaviour, IPointerClickHandler, IPointerUpHandler, IPointerDownHandler,
+            ISubmitHandler
         {
             [Header("Settings")] public bool intecactable = true;
 
             [Header("References")] [SerializeField]
             private Image _imageTarget;
+
+            [SerializeField] private Selectable _selectable;
 
             [Header("Page")] [SerializeField] private bool _canSwitchPage = true;
             [SerializeField] private int _idPage;
@@ -33,6 +36,8 @@ namespace Neo
 
             private void Awake()
             {
+                _selectable ??= GetComponent<Selectable>();
+                _imageTarget ??= GetComponent<Image>();
                 startScale = transform.localScale;
             }
 
@@ -44,11 +49,40 @@ namespace Neo
             private void OnValidate()
             {
                 _imageTarget ??= GetComponent<Image>();
+                _selectable ??= GetComponent<Selectable>();
+            }
+
+            public bool Interactable
+            {
+                get => intecactable && (_selectable == null || _selectable.interactable);
+                set
+                {
+                    intecactable = value;
+                    if (_selectable != null)
+                    {
+                        _selectable.interactable = value;
+                    }
+                }
             }
 
             public void OnPointerClick(PointerEventData eventData)
             {
-                if (!intecactable)
+                if (eventData != null && eventData.button != PointerEventData.InputButton.Left)
+                {
+                    return;
+                }
+
+                ExecuteClick();
+            }
+
+            public void OnSubmit(BaseEventData eventData)
+            {
+                ExecuteClick();
+            }
+
+            public void ExecuteClick()
+            {
+                if (!Interactable)
                 {
                     return;
                 }
@@ -77,7 +111,7 @@ namespace Neo
 
             public void OnPointerDown(PointerEventData eventData)
             {
-                if (!intecactable || !_useAnimImage)
+                if (!Interactable || !_useAnimImage)
                 {
                     return;
                 }
@@ -88,7 +122,7 @@ namespace Neo
 
             public void OnPointerUp(PointerEventData eventData)
             {
-                if (intecactable && _useAnimImage)
+                if (Interactable && _useAnimImage)
                 {
                     transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
                 }

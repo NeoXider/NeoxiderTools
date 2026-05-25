@@ -28,7 +28,11 @@ namespace Neo.Save
             {
                 ISaveProvider provider = _settings.CreateProvider();
                 SaveProvider.SetProvider(provider);
+                return;
             }
+
+            _ = SaveProvider.CurrentProvider;
+            SaveProvider.Log("SaveProviderSettingsComponent has no settings assigned; using default provider.", this);
         }
     }
 }

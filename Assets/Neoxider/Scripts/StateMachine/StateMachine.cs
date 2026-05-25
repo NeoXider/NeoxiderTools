@@ -129,7 +129,7 @@ namespace Neo.StateMachine
         {
             if (newState == null)
             {
-                Debug.LogWarning("[StateMachine] Attempted to change to null state.");
+                StateMachineLog.Warning("[StateMachine] Attempted to change to null state.");
                 return;
             }
 
@@ -201,7 +201,7 @@ namespace Neo.StateMachine
         {
             if (transition == null)
             {
-                Debug.LogWarning("[StateMachine] Attempted to register null transition.");
+                StateMachineLog.Warning("[StateMachine] Attempted to register null transition.");
                 return;
             }
 
@@ -374,6 +374,24 @@ namespace Neo.StateMachine
         }
 
         /// <summary>
+        ///     Exits the current state without entering another one. Useful for MonoBehaviour disable/reload lifecycle.
+        /// </summary>
+        public void Stop()
+        {
+            if (CurrentState == null)
+            {
+                return;
+            }
+
+            PreviousState = CurrentState;
+            CurrentState = null;
+
+            PreviousState.OnExit();
+            OnStateExited?.Invoke(PreviousState);
+            OnStateChanged?.Invoke(PreviousState, null);
+        }
+
+        /// <summary>
         ///     Clears the state instance cache.
         /// </summary>
         public void ClearStateCache()
@@ -437,7 +455,36 @@ namespace Neo.StateMachine
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[StateMachine] Failed to create state of type {stateType.Name}: {ex.Message}");
+                StateMachineLog.Error($"[StateMachine] Failed to create state of type {stateType.Name}: {ex.Message}");
+            }
+        }
+    }
+
+    internal static class StateMachineLog
+    {
+        public static bool Enabled { get; set; }
+
+        public static void Info(string message, UnityEngine.Object context = null)
+        {
+            if (Enabled)
+            {
+                Debug.Log(message, context);
+            }
+        }
+
+        public static void Warning(string message, UnityEngine.Object context = null)
+        {
+            if (Enabled)
+            {
+                Debug.LogWarning(message, context);
+            }
+        }
+
+        public static void Error(string message, UnityEngine.Object context = null)
+        {
+            if (Enabled)
+            {
+                Debug.LogError(message, context);
             }
         }
     }

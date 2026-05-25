@@ -236,7 +236,7 @@ namespace Neo.Network
 
             if (_targetComponent == null || string.IsNullOrEmpty(_fieldName))
             {
-                Debug.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
+                NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
                 return;
             }
 
@@ -250,7 +250,7 @@ namespace Neo.Network
             PropertyInfo pi = type.GetProperty(_fieldName, flags);
             if (pi != null) { _cachedMember = pi; return; }
 
-            Debug.LogWarning($"[NetworkPropertySync] Field/Property '{_fieldName}' not found on {type.Name}.", this);
+            NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Field/Property '{_fieldName}' not found on {type.Name}.", this);
         }
 
         private object ReadValue()

@@ -14,6 +14,7 @@ namespace Neo.Bonus
         [SerializeField] [GetComponents(true)] private ItemCollection[] _items;
 
         [SerializeField] private bool _enableSetItem = true;
+        [SerializeField] private bool _debugLogWarnings;
         public UnityEvent<int> OnSetItem;
 
         private UnityAction[] _buttonActions;
@@ -46,7 +47,7 @@ namespace Neo.Bonus
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
             Subscriber(false);
 
@@ -56,6 +57,8 @@ namespace Neo.Bonus
                 Collection.I.OnItemRemoved.RemoveListener(OnCollectionItemChanged);
                 Collection.I.OnLoadItems.RemoveListener(OnCollectionLoaded);
             }
+
+            base.OnDestroy();
         }
 
         protected override void Init()
@@ -64,7 +67,7 @@ namespace Neo.Bonus
 
             if (_items == null || _items.Length == 0)
             {
-                Debug.LogWarning("[CollectionVisualManager] Items array is empty!");
+                LogWarning("Items array is empty.");
                 return;
             }
 
@@ -153,7 +156,7 @@ namespace Neo.Bonus
 
             if (!Collection.IsInitialized)
             {
-                Debug.LogWarning("[CollectionVisualManager] Collection is not initialized yet!");
+                LogWarning("Collection is not initialized yet.");
                 return;
             }
 
@@ -227,6 +230,14 @@ namespace Neo.Bonus
         {
             int id = Array.IndexOf(_items, itemCollection);
             SetItem(id);
+        }
+
+        private void LogWarning(string message)
+        {
+            if (_debugLogWarnings)
+            {
+                Debug.LogWarning($"[{nameof(CollectionVisualManager)}] {message}", this);
+            }
         }
     }
 }

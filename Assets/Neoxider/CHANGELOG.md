@@ -1,6 +1,29 @@
 ﻿
 ## [Unreleased]
 
+## [8.6.0] - 2026-05-25
+
+### Added
+- **Tools / Move:** added `FreeFlyCameraController`, a modular Unity Scene View style free-flight controller for debug/spectator cameras. RMB gates look and flight by default, with configurable keys, speed modifiers, cursor lock snapshot/restore, external input overrides, tests, and RU/EN documentation.
+- **Tests:** added targeted EditMode/smoke coverage for Audio, Parallax, PropertyAttribute, Level scene flow, Settings defaults, Progression save/load, Quest static reset, StateMachine lifecycle, Rpg combat edges, UI navigation, and Tools/Move free-fly behavior.
+- **Cards:** expanded custom-card support so card views, boards, deck configs, and runtime models can be reused for non-standard games such as TCG/deckbuilder layouts instead of only classic 36/52/54-card decks.
+
+### Changed
+- **Package version:** bumped `com.neoxider.tools` from `8.5.8` to `8.6.0` and synchronized root/package README badges, docs indexes, project summary, compatibility notes, and changelog.
+- **Docs:** normalized the main RU docs entry and package compatibility page to readable UTF-8, removed stale planning/backlog docs from navigation, kept one canonical module entry per module, and aligned the English docs with current module behavior.
+- **Tools docs:** added a dedicated Tools audit that separates runtime, editor-only, deprecated/compatibility, feature-doc, and maintenance-doc zones so new feature docs are not mixed with old plans.
+- **Gameplay ownership:** removed the docs-only `Gameplay` module boundary; gameplay docs now route through concrete runtime modules.
+- **NoCode / StateMachine:** clarified the split between testable C# runtime contracts and scene-only inspector wrappers. ScriptableObjects store data/slots, not direct scene object references.
+- **Network / Save / Bonus / Cards / StateMachine / UI / Tools:** gated or reduced runtime log noise, keeping diagnostics behind explicit debug/fallback settings where practical.
+- **Singleton/static lifecycle:** added or verified domain-reload-disabled reset paths for Quest, Progression, Save, Network, Bootstrap, MouseInputManager, and SwipeController flows.
+
+### Fixed
+- **UI:** removed legacy `UIReady` runtime/docs references and migrated package sample usage to `SceneFlowController`. `Assets/Scenes/AutoSaves` backups are intentionally left untouched.
+- **Bonus:** cleaned legacy TimeReward/WheelFortune/Slot compatibility issues and documentation around them.
+- **GridSystem / Samples:** kept sample/docs paths aligned after `Samples~` cleanup.
+- **Shop:** continued migration from integer-facing API toward stable typed/string item APIs ahead of v9.
+- **Save:** checked missing `SaveProviderSettings` fallback behavior while gating runtime logs.
+
 ## [8.5.8] - 2026-05-23
 
 ### Fixed
@@ -416,8 +439,6 @@
 - **RPG**: XP reward granting logic to use GameObject comparison instead of strict reference comparison (resolves component mismatch issues).
 - **Demo**: Fixed `Level Curve Definition` in the RPG demo showing `Next: 0` by switching to Formula mode.
 - **Demo**: Fixed persistence issues where Level/XP would not reset upon game restart.
-
-## [Unreleased]
 
 ## [7.12.0] - 2026-04-12
 ### Added
@@ -880,7 +901,7 @@
 - **Progression V2** пїЅ added a new `Neo.Progression` module with `ProgressionManager`, persistent `ProgressionProfileData`, `LevelCurveDefinition`, `UnlockTreeDefinition`, `PerkTreeDefinition`, reward dispatch, no-code bridges, and custom inspectors for validation.
 - **Meta progression API** пїЅ new runtime flow supports `XP`, levels, `perk points`, unlock nodes, perk purchases, and profile save/load through `SaveProvider`, with both reactive state and UnityEvent entry points.
 - **Legacy policy** пїЅ added `LegacyComponentAttribute` and updated the Neoxider create window so legacy components are excluded from the custom create menu.
-- **Deprecated components** пїЅ `TimeReward`, `WheelFortune`, `UIReady`, and `AiNavigation` are now consistently marked as legacy, hidden from `Add Component`, and documented with explicit replacements.
+- **Deprecated components** пїЅ `TimeReward`, `WheelFortune`, and `AiNavigation` are now consistently marked as legacy, hidden from `Add Component`, and documented with explicit replacements.
 - **Progression docs** пїЅ added RU/EN module docs for `ProgressionManager`, `ProgressionNoCodeAction`, `ProgressionConditionAdapter`, and scenario guides with recommended settings for arcade, RPG, strategy, narrative, and roguelite projects.
 - **Quality** пїЅ added edit mode tests for progression save/load flow and legacy create-menu filtering.
 
@@ -962,9 +983,9 @@
 пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ?пїЅпїЅ **breaking changes**:
 
 - **пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ:** пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (UnityEvent&lt;float&gt;, UnityEvent&lt;int&gt;, UnityEvent&lt;bool&gt;). пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (ReactivePropertyFloat, ReactivePropertyInt, ReactivePropertyBool). пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ `.OnChanged` (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ `counter.Value.OnChanged`, `money.Money.OnChanged`). пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ `OnValueChanged => Value.OnChanged` пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
-- **пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ):** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TimeReward, AiNavigation, WheelFortune, UIReady пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ. `Docs/Plan_RemoveDeprecatedScripts.md`.
+- **пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ):** пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TimeReward, AiNavigation, WheelFortune пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ. пїЅпїЅ. `Docs/Plan_RemoveDeprecatedScripts.md`.
 
-пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (`.OnChanged`) пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TimeReward, AiNavigation, WheelFortune, UIReady.
+пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ (`.OnChanged`) пїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ TimeReward, AiNavigation, WheelFortune.
 
 **пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (breaking):** пїЅ **ScoreManager** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ `ScoreValue`, `BestScoreValue`, `TargetScoreValue` (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: `Score`, `BestScore`, `TargetScore`, `Progress`, `CountStarsReactive`). пїЅ **Health** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ HP пїЅпїЅпїЅпїЅпїЅ `HpValue` пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ `Hp`, `HpPercent`. пїЅ **Drawer** пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ `DistanceValue`, пїЅ **TypewriterEffectComponent** пїЅ пїЅпїЅпїЅпїЅпїЅ `ProgressValue`.
 
@@ -1098,8 +1119,7 @@
 ### UI: SceneFlowController пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
 - **SceneFlowController** пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: LoadScene(int), LoadScene(string), LoadScene() пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ; пїЅпїЅпїЅпїЅпїЅпїЅ Sync, Async, AsyncManual, Additive; пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ Text/TMP, Slider, Image пїЅ UnityEvent\<float\> OnProgress; пїЅпїЅпїЅпїЅпїЅпїЅпїЅ OnLoadStarted, OnReadyToProceed, OnLoadCompleted; Quit, Restart, Pause, ProceedScene. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ: Docs/UI/SceneFlowController.md.
-- **UIReady** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ `[Obsolete]` пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ SceneFlowController; пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ.
-- **DEPRECATED_OR_REMOVAL_CANDIDATES.md** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (TimeReward, AiNavigation, HandLayoutType, HandComponent.LegacyLayoutType, UIReady) пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
+- **DEPRECATED_OR_REMOVAL_CANDIDATES.md** пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (TimeReward, AiNavigation, HandLayoutType, HandComponent.LegacyLayoutType) пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ.
 
 ### Create Neoxider Object (пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅ)
 
@@ -1315,8 +1335,8 @@
         - `Neo.GridSystem.Match3` (`Match3BoardService`, `Match3MatchFinder`, `Match3TileState`);
         - `Neo.GridSystem.TicTacToe` (`TicTacToeBoardService`, `TicTacToeWinChecker`, `TicTacToeCellState`);
     - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ demo-пїЅпїЅпїЅпїЅпїЅ:
-        - `~Samples/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity`
-        - `~Samples/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity`
+        - `Samples~/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity`
+        - `Samples~/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity`
     - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ demo setup/UI пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ.
 - **Extensions/NumberFormatExtensions** пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ `int`, `long`, `float`, `double`,
   `decimal`, `BigInteger`:

@@ -15,12 +15,15 @@ namespace Neo.Save
         private static bool _isInitialized;
         private static readonly object _lockObject = new();
 
+        public static bool DebugLoggingEnabled { get; set; }
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetStaticState()
         {
             _provider = null;
             _settings = null;
             _isInitialized = false;
+            DebugLoggingEnabled = false;
             // Prevent listener leaks when Domain Reload is disabled
             OnDataSaved = null;
             OnDataLoaded = null;
@@ -118,13 +121,13 @@ namespace Neo.Save
                 if (_settings != null)
                 {
                     _provider = _settings.CreateProvider();
-                    Debug.Log($"[SaveProvider] Initialized with {_provider.ProviderType} provider from Settings");
+                    Log($"Initialized with {_provider.ProviderType} provider from Settings");
                 }
                 else
                 {
                     // Use PlayerPrefs by default
                     _provider = new PlayerPrefsSaveProvider();
-                    Debug.Log("[SaveProvider] Initialized with default PlayerPrefs provider");
+                    Log("Initialized with default PlayerPrefs provider");
                 }
 
                 AttachProviderEvents(_provider);
@@ -139,7 +142,7 @@ namespace Neo.Save
         {
             if (provider == null)
             {
-                Debug.LogError("[SaveProvider] Cannot set null provider");
+                LogError("Cannot set null provider");
                 return;
             }
 
@@ -152,7 +155,7 @@ namespace Neo.Save
 
                 AttachProviderEvents(_provider);
 
-                Debug.Log($"[SaveProvider] Provider set to {_provider.ProviderType}");
+                Log($"Provider set to {_provider.ProviderType}");
             }
         }
 
@@ -284,12 +287,35 @@ namespace Neo.Save
             if (_provider is FileSaveProvider fsp)
             {
                 fsp.ChangeSlot(slotName);
-                Debug.Log($"[SaveProvider] Switched to slot: {slotName}");
+                Log($"Switched to slot: {slotName}");
             }
             else
             {
-                Debug.LogWarning(
-                    $"[SaveProvider] SetSlot is not supported for provider type: {_provider.ProviderType}");
+                LogWarning($"SetSlot is not supported for provider type: {_provider.ProviderType}");
+            }
+        }
+
+        internal static void Log(string message, UnityEngine.Object context = null)
+        {
+            if (DebugLoggingEnabled)
+            {
+                Debug.Log($"[SaveProvider] {message}", context);
+            }
+        }
+
+        internal static void LogWarning(string message, UnityEngine.Object context = null)
+        {
+            if (DebugLoggingEnabled)
+            {
+                Debug.LogWarning($"[SaveProvider] {message}", context);
+            }
+        }
+
+        internal static void LogError(string message, UnityEngine.Object context = null)
+        {
+            if (DebugLoggingEnabled)
+            {
+                Debug.LogError($"[SaveProvider] {message}", context);
             }
         }
     }

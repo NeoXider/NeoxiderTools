@@ -14,13 +14,17 @@ namespace Neo.Save.Examples
         private Vector3 playerPosition;
 
         [SaveField("Money")] [SerializeField] private float _money;
+        [SerializeField] private bool _debugLog;
         public bool IsLoad { get; private set; }
 
         // The Start method is no longer needed for setting position
         public void OnDataLoaded()
         {
             transform.position = playerPosition;
-            Debug.Log($"PlayerData for {gameObject.name} loaded. Position set to {playerPosition}");
+            if (_debugLog)
+            {
+                SaveProvider.Log($"PlayerData for {gameObject.name} loaded. Position set to {playerPosition}", this);
+            }
             IsLoad = true;
         }
     }

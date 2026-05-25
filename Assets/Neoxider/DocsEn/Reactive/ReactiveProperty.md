@@ -1,6 +1,6 @@
 ﻿# ReactiveProperty
 
-**Purpose:** A serializable reactive variable (R3-style). Stores a value and fires a `UnityEvent` when it changes. Works in both Inspector (No-Code) and from code. Three built-in types: `ReactivePropertyFloat`, `ReactivePropertyInt`, `ReactivePropertyBool`.
+**Purpose:** A reactive variable (R3-style). Stores a value and fires a `UnityEvent` when it changes. Works in Inspector (No-Code) through concrete wrappers and from code through generic `ReactiveProperty<T>`.
 
 ---
 
@@ -36,6 +36,15 @@
 | `ReactivePropertyFloat` | `float` | `UnityEventFloat` |
 | `ReactivePropertyInt` | `int` | `UnityEventInt` |
 | `ReactivePropertyBool` | `bool` | `UnityEventBool` |
+| `ReactiveProperty<T>` | any C# type | `UnityEvent<T>` |
+
+`ReactiveProperty<T>` is intended for code-first use. For Inspector fields, use the concrete wrappers or create a non-generic class on top of `ReactivePropertyBase<T, TEvent>`, because Unity does not reliably serialize open generic field types.
+
+## Mirror warning
+
+`ReactiveProperty<T>` is not network-synchronized by itself. For Mirror, keep the authoritative value in a `[SyncVar(hook = ...)]` and call `NetworkReactivePropertyBridge.SetFromNetwork(...)` from the hook method.
+
+The generic bridge accepts any `T` on the Reactive API side, but Mirror SyncVar only works with types supported by the Mirror serializer, or with types that have registered custom serializers.
 
 ---
 

@@ -22,7 +22,7 @@
 | `_arrow` | Arrow. |
 | `_autoStopTime` | Auto Stop Time. |
 | `_canvasGroup` | Canvas Group. |
-| `_debugLogId` | Debug Log Id. |
+| `_debugLogId` | Enables result id logging for wheel diagnostics. |
 | `_enableAlignment` | Enable Alignment. |
 | `_offsetZ` | Offset Z. |
 | `_setPrizes` | Set Prizes. |
