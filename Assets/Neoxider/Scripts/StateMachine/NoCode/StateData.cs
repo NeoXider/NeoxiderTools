@@ -125,7 +125,8 @@ namespace Neo.StateMachine.NoCode
                     }
                     catch (Exception ex)
                     {
-                        StateMachineLog.Error($"[StateData] Error executing action in state '{stateName}': {ex.Message}",
+                        StateMachineLog.Error(
+                            $"[StateData] Error executing action in state '{stateName}': {ex.Message}",
                             this);
                     }
                 }

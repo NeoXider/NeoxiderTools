@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -87,7 +87,8 @@ namespace Neo.Audio
                 }
                 else
                 {
-                    Debug.LogError("[AudioControl] No Toggle or Slider component found on this GameObject.", this);
+                    NeoDiagnostics.LogError("[AudioControl] No Toggle or Slider component found on this GameObject.",
+                        this);
                 }
             }
         }
@@ -120,7 +121,7 @@ namespace Neo.Audio
             TryResolveSettings();
             if (controlType != ControlType.Custom && settings == null)
             {
-                Debug.LogError("[AudioControl] AMSettings was not found in the scene.", this);
+                NeoDiagnostics.LogError("[AudioControl] AMSettings was not found in the scene.", this);
                 if (toggle != null)
                 {
                     toggle.interactable = false;

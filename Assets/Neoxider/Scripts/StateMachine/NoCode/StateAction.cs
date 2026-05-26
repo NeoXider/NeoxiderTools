@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.SceneManagement;
@@ -19,7 +19,7 @@ namespace Neo.StateMachine.NoCode
     /// {
     ///     public override void Execute()
     ///     {
-    ///         Debug.Log("Action executed!");
+    ///         global::NeoDiagnostics.Log("Action executed!");
     ///     }
     /// }
     /// </code>

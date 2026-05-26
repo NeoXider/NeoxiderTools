@@ -1,8 +1,30 @@
 # NeoCondition
 
-## Методы с аргументом
+`NeoCondition` - компонент для проверки условий по значениям полей, свойств и простых методов компонентов или самого `GameObject`. Модуль предназначен для NoCode-сценариев, но опирается на обычные C# контракты и кэширует reflection-резолв, чтобы не выполнять дорогой поиск каждый кадр.
 
-`NeoCondition` может проверять методы компонента с одним аргументом `int`, `float` или `string`, если метод возвращает `int`, `float`, `bool` или `string`. После выбора такого метода в поле **Property** инспектор показывает **Argument**. Значение аргумента читается при каждой проверке, поэтому изменение аргумента в Play Mode влияет на следующий `Check()`.
+## Быстрый старт
+
+1. Добавьте `NeoCondition` на объект через `Add Component -> Neoxider -> Condition -> NeoCondition`.
+2. Добавьте условие в список `Conditions`.
+3. Выберите источник:
+   - `Component` - читать поле, свойство или поддерживаемый метод компонента;
+   - `GameObject` - читать свойства объекта (`activeSelf`, `activeInHierarchy`, `tag`, `name`, `layer`, `isStatic`).
+4. Укажите `Source Object` или включите `Find By Name`, если объект появляется в сцене позже.
+5. Выберите `Component`, `Property`, оператор сравнения и порог.
+6. Подключите `On True`, `On False` или `On Result`.
+
+## Что Можно Проверять
+
+`NeoCondition` поддерживает значения `int`, `float`, `bool` и `string`.
+
+Для компонента можно выбрать:
+
+- public поле;
+- public свойство;
+- public метод без аргументов;
+- public метод с одним аргументом типа `int`, `float` или `string`.
+
+Если выбран метод с аргументом, в инспекторе появляется поле `Argument`. Значение аргумента читается при каждой проверке, поэтому его можно менять в Play Mode.
 
 Пример проверки денег:
 
@@ -14,322 +36,133 @@ Argument (float): 100
 Compare: == true
 ```
 
-Для обратной проверки используйте `== false` или `!= true`. Для bool-значений доступны только `==` и `!=`; старые числовые операторы (`>`, `<`, `>=`, `<=`) не сохраняются при переключении условия на bool.
-**Что это:** компонент проверки условий по значениям полей и свойств компонентов или GameObject (пространство имён `Neo.Condition`, файл `Scripts/Condition/NeoCondition.cs`). Источники: Component (поле/свойство) или GameObject (activeSelf, tag, layer и т.д.). Сравнение с константой или с другим объектом; режимы проверки: вручную, каждый кадр, по интервалу. События OnTrue/OnFalse/OnResult.
+Для bool-значений используйте только `==` и `!=`.
 
-**Как использовать:** см. раздел «Быстрый старт» ниже.
+## ConditionEntry
 
----
+| Поле | Назначение |
+| --- | --- |
+| `Source` | Источник данных: `Component` или `GameObject`. |
+| `Find By Name` | Искать объект в сцене через `GameObject.Find`. Поиск кэшируется и повторяется с интервалом. |
+| `Object Name` | Имя объекта для `Find By Name`. |
+| `Wait For Object` | Не логировать warning, пока объект еще не появился. Полезно для prefab/spawn-сценариев. |
+| `Find Retry Interval` | Интервал между повторными `GameObject.Find`, если объект не найден. `0` - проверять каждый вызов. |
+| `Prefab Preview` | Editor-only prefab для выбора компонентов и свойств, если runtime-объекта еще нет в сцене. |
+| `Source Object` | Прямая ссылка на объект. Если пусто и `Find By Name` выключен, используется объект с `NeoCondition`. |
+| `Component` | Компонент, из которого читается значение. |
+| `Property` | Поле, свойство или поддерживаемый метод. |
+| `Compare With` | Сравнение с константой или со значением другого объекта. |
+| `Compare` | `==`, `!=`, `>`, `<`, `>=`, `<=`. |
+| `Threshold` | Значение для сравнения с константой. |
+| `Other Object` | Второй источник значения при `Compare With = Other Object`. |
+| `NOT` | Инвертировать результат конкретного условия. |
 
-- **Переиспользование условий** в State Machine, триггерах и своих системах: [Condition_Reuse.md](./Condition_Reuse.md)
-- Roadmap развития Editor/архитектуры: [NeoCondition_Editor_Roadmap.md](./NeoCondition_Editor_Roadmap.md)
+## Режимы Проверки
 
-## Быстрый старт
+| Режим | Поведение |
+| --- | --- |
+| `Manual` | Проверка только при вызове `Check()`. |
+| `EveryFrame` | Проверка в `Update()`. Используйте аккуратно и предпочитайте кэшированные источники. |
+| `Interval` | Проверка с заданным интервалом. |
 
-1. Добавить `NeoCondition` на GameObject (Add Component → Neoxider → Condition → NeoCondition)
-2. Нажать **+** чтобы добавить условие
-3. Выбрать **Source** — режим источника данных:
-   - **Component** — читать поле/свойство из компонента
-   - **GameObject** — читать свойство самого игрового объекта (activeSelf, tag, layer и т.д.)
-4. (Опционально) Включить **Find By Name** — для поиска объекта в сцене по имени вместо прямой ссылки
-5. Выбрать **Source Object** или ввести **Object Name** (при Find By Name)
-6. Выбрать **Component** / **Property** из dropdown
-7. Выбрать **Compare With**:
-   - **Constant** — сравнить с числом или текстом (задать порог)
-   - **Other Object** — сравнить с полем/свойством другого объекта (выбрать второй объект, компонент и свойство)
-8. Выбрать оператор **Compare** (==, !=, >, <, >=, <=) и при Constant — задать порог
-9. Подключить события **On True** / **On False**
-
-## Архитектура
-
-```
-NeoCondition (MonoBehaviour)
-в"њв"Ђв"Ђ Logic Mode: AND / OR
-в"њв"Ђв"Ђ Conditions: List<ConditionEntry>
-в"'   в"њв"Ђв"Ђ [0] Source=Component: Health.currentHealth <= 0
-в"'   в"њв"Ђв"Ђ [1] Source=GameObject: GO.activeSelf == true
-в"'   в"њв"Ђв"Ђ [2] FindByName("Enemy"): Health.Hp <= 0
-в"'   в""в"Ђв"Ђ ...
-в"њв"Ђв"Ђ Check Mode: Manual / EveryFrame / Interval
-в"њв"Ђв"Ђ Check On Start: bool (default: true)
-в"њв"Ђв"Ђ Only On Change: bool
-в"њв"Ђв"Ђ On True: UnityEvent
-в"њв"Ђв"Ђ On False: UnityEvent
-в"њв"Ђв"Ђ On Result: UnityEvent<bool>
-в""в"Ђв"Ђ On Inverted Result: UnityEvent<bool>
-```
-
-## ConditionEntry (одно условие)
-
-| Поле | Описание |
-|------|----------|
-| **Source** | Режим источника: `Component` (поля компонента) или `GameObject` (свойства объекта) |
-| **Find By Name** | Искать целевой GameObject по имени в сцене (`GameObject.Find`). Кешируется пока объект жив |
-| **Object Name** | Имя объекта для поиска (отображается при включённом Find By Name) |
-| **Wait For Object** | Только при **Find By Name**: не логировать Warning, пока `GameObject.Find` не нашёл объект (резолв всё равно `null`). Не заменяет прямую ссылку |
-| **Find Retry Interval (sec)** | Только при **Find By Name**: не чаще чем раз в N секунд повторять `Find`, пока объект не найден. **0** — при каждой проверке. По умолчанию **1** |
-| **Prefab Preview** | Ссылка на префаб из Project для настройки компонентов/свойств до спавна объекта (только Editor, не используется в Runtime) |
-| **Source Object** | Прямая ссылка на GameObject. Пусто = текущий объект (при выключенном Find By Name) |
-| **Component** | Dropdown всех компонентов на объекте (только в режиме Component) |
-| **Property** | Dropdown полей/свойств (int, float, bool, string), а также методов с одним параметром (int/float/string). Для методов под полем Property появляется **Argument** (int, float или string). |
-| **Argument** (при выборе метода) | Значение аргумента для вызова метода (например itemId для `GetCount(int)`). Тип поля зависит от сигнатуры метода. |
-| **Compare With** | **Constant** — сравнивать с числом/текстом (порог). **Other Object** — сравнивать с переменной другого объекта |
-| **Compare** | == Equal, != NotEqual, > Greater, < Less, >= GreaterOrEqual, <= LessOrEqual |
-| **Threshold** | Значение для сравнения (только при Compare With = Constant; тип подбирается автоматически) |
-| **Other Object** (при Compare With = Other Object) | Второй источник: Source (Component/GameObject), Find By Name, объект, компонент и свойство. Если **Other Source Object** не задан — используется тот же объект, что и слева (удобно для сравнения двух полей одного объекта, например Health.Hp и Health.MaxHp). |
-| **NOT** | Инвертировать результат этого условия |
-
-## Source Mode
-
-### Component (по умолчанию)
-Читает public поля и свойства выбранного компонента: `int`, `float`, `bool`, `string`. Также можно вызывать **методы с одним параметром** (int, float или string) — в выпадающем Property они отображаются как `MethodName (int) → Int [method]`. После выбора метода появляется поле **Argument** для ввода значения аргумента (например itemId для `InventoryComponent.GetCount(int)`).
-
-### GameObject
-Читает свойства самого игрового объекта:
-
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `activeSelf` | bool | Объект включён |
-| `activeInHierarchy` | bool | Активен в иерархии (с учётом родителей) |
-| `isStatic` | bool | Статический объект |
-| `tag` | string | Тег объекта |
-| `name` | string | Имя объекта |
-| `layer` | int | Слой объекта |
-
-## Find By Name (поиск по имени)
-
-Позволяет найти целевой GameObject в сцене по имени вместо прямой ссылки. Полезно для:
-- Объектов, которые появляются динамически (спавн)
-- Ссылок между сценами
-- Объектов, на которые нельзя сделать прямую ссылку в Inspector
-
-**Оптимизация и повтор Find:**
-- После успешного поиска результат кешируется в **`BindingSourceGameObjectResolver`**; пока объект «жив», **`GameObject.Find`** не вызывается снова.
-- Пока объект **ещё не найден**, повторный **`GameObject.Find`** выполняется не чаще чем раз в **`Find Retry Interval (sec)`** (по умолчанию **1** с). Значение **0** — повторять при **каждой** проверке условия (без троттлинга по времени). Это не блокирует поток и не создаёт «бесконечный цикл» — только откладывает следующую попытку по времени.
-- Если объект уничтожен, кеш сбрасывается при следующем резолве и поиск выполняется снова (с тем же интервалом, пока объект не найден).
-- `InvalidateCache()` сбрасывает только reflection-кеш; кеш поиска по имени сохраняется.
-- `InvalidateCacheFull()` / `InvalidateAllCaches()` сбрасывает всё, включая кеш поиска.
-
-**Wait For Object (ожидание спавна):**
-- Относится **только** к режиму поиска по имени (`GameObject.Find`). Не заменяет прямую ссылку на объект и **не** блокирует кадр.
-- **Wait выключен:** пока объекта нет, результат резолва `null`; **Warning** в консоль **один раз** (пока кеш не сброшен), без спама из-за того, что **`GameObject.Find`** вызывается не чаще интервала.
-- **Wait включён:** предупреждений при отсутствии объекта **нет**; результат резолва всё равно `null`, пока объект не появился.
-- Полезно для **префабов**, которые появятся в сцене позже.
-- Пока объект не найден, следующая попытка **`GameObject.Find`** — по интервалу **`Find Retry Interval`**. После появления объекта он кешируется.
-
-**Связь с Neo.NoCode:** правила поиска объекта по имени и прямой ссылки совпадают с компонентами **`Neo.NoCode`** (`ComponentFloatBinding`: NoCode Bind Text, Set Progress) — общая реализация **`BindingSourceGameObjectResolver`** в сборке **`Neo.Condition`**. Подробнее: [`NoCode/README.md`](../NoCode/README.md).
-
-## Compare With: Other Object (сравнение двух переменных)
-
-Вместо сравнения с константой можно сравнивать **одну переменную с другой** — поле/свойство одного объекта с полем/свойством другого.
-
-- В условии выберите **Compare With** → **Other Object (variable)**.
-- Укажите **второй источник**: объект (прямая ссылка или Find By Name), режим Component или GameObject, компонент и свойство (или метод с одним аргументом — тогда задаётся Argument для правой стороны).
-- Оператор сравнения (==, !=, >, <, >=, <=) применяется к двум значениям: левая сторона (основной Source) и правая (Other Object).
-- Типы обеих сторон должны быть сравнимыми (int, float, bool, string). При несовпадении типов используется приведение (например, int и float).
-
-**Если Other Source Object пуст:** в качестве второго объекта используется **тот же объект, что и слева** (источник левой переменной). Так можно сравнивать два свойства одного объекта (например, `Health.Hp == Health.MaxHp` на одном GameObject), не заполняя поле «Other Source Object».
-
-**Примеры:**
-- `Health.Hp <= Health.MaxHp` — текущее HP не больше максимума (оба с одного объекта; Other Source Object можно оставить пустым).
-- `Player.Score >= Enemy.Score` — счёт игрока не меньше счёта врага (указать два разных объекта).
-- `ObjA.layer == ObjB.layer` — объекты на одном слое (режим GameObject для обоих).
-
-**Prefab Preview (настройка до спавна):**
-- Если объект не найден на сцене — в Inspector появляется поле **Prefab Preview**
-- Перетащите туда префаб из Project, чтобы Editor показал его компоненты и свойства
-- Позволяет полностью настроить условие (Component, Property, Compare, Threshold) до запуска игры
-- Поле автоматически скрывается, если объект уже найден на сцене
-- **Не используется в Runtime** — только для настройки в Editor
-
-**Визуализация в Inspector:**
-- Зелёная полоска слева у условий с поиском по имени
-- В Edit Mode — preview найденного объекта для настройки компонентов/свойств
-- В Edit Mode (объект не найден) — поле Prefab Preview + информационное сообщение
-- В Play Mode — отображение найденного объекта (`Found Object`)
-- Summary: `"PlayerHP".Health.Hp == 0`
-
-## Пример: проверка по RandomRange
-
-Для условий по случайному числу (например, «включить от 0 до 5 аномалий») используйте компонент **RandomRange** ([Tools/Components/RandomRange.md](../Tools/Components/RandomRange.md)): после вызова `Generate()` значение доступно в полях **ValueInt** и **ValueFloat**. В NeoCondition выберите объект с RandomRange, компонент RandomRange, свойство **ValueInt** (или **ValueFloat**), оператор (например, GreaterOrEqual) и порог. Так можно, например, по условию «ValueInt >= 1» включать таймер спавна аномалий или другую логику уровня.
+`Check On Start` выполняет первую проверку при старте. `Only On Change` вызывает события только при изменении результата.
 
 ## Logic Mode
 
-- **AND** — все условия должны быть `true`
-- **OR** — хотя бы одно условие должно быть `true`
+- `AND` - все условия должны вернуть `true`;
+- `OR` - достаточно одного условия `true`.
 
-## Check Mode
-
-| Режим | Описание |
-|-------|----------|
-| **Manual** | Проверка только при вызове `Check()` (из UnityEvent другого компонента) |
-| **EveryFrame** | Проверка каждый кадр в `Update()` |
-| **Interval** | Проверка с заданным интервалом (по умолчанию 0.5 сек) |
-
-## Параметры
-
-| Параметр | Описание |
-|----------|----------|
-| **Check On Start** | Выполнить проверку при `Start()` (по умолчанию **включено**) |
-| **Only On Change** | Вызывать события только когда результат изменился (не каждый тик) |
+Каждое условие может быть инвертировано через `NOT`.
 
 ## События
 
-| Событие | Описание |
-|---------|----------|
-| **On True** | Вызывается когда результат = true |
-| **On False** | Вызывается когда результат = false |
-| **On Result (bool)** | Вызывается при каждой проверке с текущим результатом |
-| **On Inverted Result (bool)** | Вызывается при каждой проверке с инвертированным результатом (!result) |
+| Событие | Когда вызывается |
+| --- | --- |
+| `On True` | Итоговый результат `true`. |
+| `On False` | Итоговый результат `false`. |
+| `On Result(bool)` | При каждой проверке с текущим результатом. |
+| `On Inverted Result(bool)` | При каждой проверке с инвертированным результатом. |
 
-## Защита от null / уничтоженных объектов
+## Find By Name
 
-NeoCondition безопасно обрабатывает ситуации, когда целевой объект или компонент уничтожается в рантайме:
+`Find By Name` нужен для объектов, которые нельзя безопасно сохранить прямой ссылкой: поздний spawn, сцены с runtime-сборкой, объекты из другой сцены.
 
-| Ситуация | Поведение |
-|----------|----------|
-| `Source Object` уничтожен | Warning в консоль (однократно), условие возвращает `false` |
-| Компонент уничтожен | Кеш сбрасывается, Warning, условие = `false` |
-| `Find By Name` объект уничтожен | Автоматический повторный поиск при следующей проверке |
-| `Find By Name` объект ещё не создан | `false` без Warning (при `Wait For Object = ON`) или Warning + `false` |
-| Ошибка reflection (поле удалено) | Warning, кеш сброшен, условие = `false` |
-| Исключение в одном условии | Не ломает остальные условия, Warning с индексом |
+Правила:
 
-Предупреждения выводятся **однократно** на каждое условие (не спамят в EveryFrame). Сброс через `ResetState()` или `InvalidateAllCaches()`.
+- успешный результат кэшируется, пока объект жив;
+- если объект не найден, повторный поиск выполняется не чаще `Find Retry Interval`;
+- при `Wait For Object = true` отсутствие объекта не логируется;
+- при уничтожении найденного объекта кэш сбрасывается на следующем resolve;
+- `InvalidateCache()` сбрасывает reflection-кэш, а `InvalidateCacheFull()` / `InvalidateAllCaches()` сбрасывают все кэши, включая поиск по имени.
 
-## Визуализация в Inspector
+Та же логика поиска используется в `Neo.NoCode` через `BindingSourceGameObjectResolver`, чтобы NoCode-привязки и условия работали одинаково.
 
-Каждое условие отображается с цветовой полоской слева:
-- **Голубая** — режим Component
-- **Жёлтая** — режим GameObject
-- **Зелёная** — поиск по имени (Find By Name)
-- **Красная** — инверсия (NOT) включена
+## Compare With: Other Object
+
+Вместо сравнения с константой можно сравнить два runtime-значения.
+
+Примеры:
+
+- `Health.Hp <= Health.MaxHp` - оба значения с одного объекта;
+- `Player.Score >= Enemy.Score` - сравнение двух объектов;
+- `ObjA.layer == ObjB.layer` - сравнение свойств `GameObject`.
+
+Если `Other Source Object` не задан, используется тот же объект, что и у основного условия.
+
+## Защита От Ошибок
+
+`NeoCondition` не должен ломать сцену при частично настроенном условии:
+
+- отсутствующий объект возвращает `false`;
+- отсутствующий компонент возвращает `false`;
+- удаленный объект сбрасывает кэш;
+- ошибка reflection логируется через `NeoDiagnostics` и не останавливает остальные условия;
+- предупреждения логируются без спама.
 
 ## Примеры
 
-### Пример 1: Game Over при HP <= 0
+### Game Over При HP <= 0
 
-1. На персонаже: компоненты `Health`, `NeoCondition`
-2. NeoCondition:
-   - Condition [0]: Source=Component, Component = Health, Property = currentHealth, Compare = LessOrEqual, Threshold = 0
-   - Check Mode = EveryFrame
-   - On True в†' GameOverPanel.SetActive(true)
-
-### Пример 2: Разблокировать уровень при Score >= 100
-
-1. На менеджере: `ScoreManager`, `NeoCondition`
-2. NeoCondition:
-   - Condition [0]: Source=Component, Component = ScoreManager, Property = Score, Compare = GreaterOrEqual, Threshold = 100
-   - Check Mode = Manual
-3. РќР° `ScoreManager.OnScoreChanged` в†' NeoCondition.Check()
-4. On True в†' NextLevelButton.SetInteractable(true)
-
-### Пример 3: Проверка — объект активен
-
-1. NeoCondition, Source=GameObject
-2. Condition [0]: Property = activeSelf, Compare = Equal, Threshold = true
-3. On False в†' ShowWarning("Object is disabled!")
-
-### Пример 4: Найти врага по имени и проверить его HP
-
-1. NeoCondition:
-   - Condition [0]: Find By Name = true, Object Name = "Boss", Source=Component
-   - Component = Health, Property = Hp, Compare = LessOrEqual, Threshold = 0
-   - Check Mode = Interval (0.5 сек)
-2. On True в†' ShowVictoryScreen()
-
-### Пример 5: Проверка префаба, который ещё не на сцене
-
-1. NeoCondition:
-   - Find By Name = true, Object Name = "Player"
-   - **Wait For Object** = true (ожидаем спавн без Warning)
-   - **Prefab Preview** = перетащить префаб Player из Project (для настройки)
-   - Component = Health, Property = Hp, Compare = GreaterOrEqual, Threshold = 1
-2. При спавне Player'а — условие автоматически подхватит объект и начнёт работать
-3. On True в†' UI.ShowPlayerAlive()
-
-### Пример 6: AND — убить врага когда HP <= 0 И нет щита
-
-1. NeoCondition, Logic = AND
-2. Condition [0]: Health.currentHealth <= 0
-3. Condition [1]: Shield.isActive == false (NOT)
-4. On True в†' Enemy.Die()
-
-### Пример 7: OR — показать предупреждение
-
-1. NeoCondition, Logic = OR
-2. Condition [0]: Health.currentHealth <= 20
-3. Condition [1]: Timer.timeRemaining <= 5
-4. On True в†' WarningUI.SetActive(true)
-
-### Пример 8: Проверка количества конкретного предмета по id (InventoryComponent.GetCount)
-
-1. На объекте с инвентарём: `InventoryComponent`, на другом объекте или том же — `NeoCondition`.
-2. NeoCondition, Condition [0]:
-   - Source = Component, Source Object = объект с InventoryComponent
-   - Component = InventoryComponent
-   - Property = **GetCount (int) → Int [method]** (выбрать метод из списка)
-   - **Argument (int)** = itemId нужного предмета (например 5 для «ключ»)
-   - Compare = GreaterOrEqual, Threshold = 3
-3. Условие выполняется, когда в инвентаре есть не меньше 3 предметов с указанным itemId.
-4. Аналогично для **Other Object**: можно сравнить количество одного предмета с количеством другого (выбрать для правой стороны тоже метод GetCount с другим Argument).
-
-## Публичный API
-
-```csharp
-// Проверить условия и вызвать события
-neoCondition.Check();
-
-// Оценить без вызова событий
-bool result = neoCondition.Evaluate();
-
-// Сбросить состояние (следующий Check вызовет событие)
-neoCondition.ResetState();
-
-// Текущий результат
-bool last = neoCondition.LastResult;
-
-// Добавить/удалить условие в рантайме
-neoCondition.AddCondition(entry);
-neoCondition.RemoveCondition(entry);
-
-// Сбросить кеш reflection (кеш Find By Name сохраняется)
-neoCondition.InvalidateAllCaches();
+```text
+Condition [0]:
+  Source = Component
+  Component = Health
+  Property = currentHealth
+  Compare = LessOrEqual
+  Threshold = 0
+Check Mode = EveryFrame
+On True -> GameOverPanel.SetActive(true)
 ```
 
-### ConditionEntry API
+### Разблокировка Уровня При Score >= 100
 
-```csharp
-entry.Source = SourceMode.Component;       // или SourceMode.GameObject
-entry.UseSceneSearch = true;               // включить поиск по имени
-entry.SearchObjectName = "Player";         // имя для поиска
-entry.WaitForObject = true;               // ожидать спавн без Warning
-entry.PrefabPreview = prefabAsset;        // только для Editor-настройки
-entry.SourceObject = someGameObject;       // прямая ссылка
-
-entry.InvalidateCache();                   // сбросить reflection-кеш (Find-кеш остаётся)
-entry.InvalidateCacheFull();               // полный сброс (включая Find-кеш)
-
-GameObject found = entry.FoundByNameObject; // найденный объект (runtime, read-only)
+```text
+Condition [0]:
+  Source = Component
+  Component = ScoreManager
+  Property = Score
+  Compare = GreaterOrEqual
+  Threshold = 100
+Check Mode = Manual
+ScoreManager.OnScoreChanged -> NeoCondition.Check()
+On True -> NextLevelButton.SetInteractable(true)
 ```
 
-## Производительность
+### Ожидание Spawn-Объекта
 
-- Reflection вызывается только при первом чтении, результат кешируется
-- `GameObject.Find()` вызывается однократно, результат кешируется пока объект жив
-- Для большого количества объектов используйте режим **Interval** (0.2-0.5 сек)
-- **EveryFrame** подходит для 10-20 условий, для сотен — Interval
-- **Manual** — самый быстрый, проверяет только по запросу
-- Уничтоженные объекты/компоненты обрабатываются безопасно без спама в консоль
+```text
+Find By Name = true
+Object Name = Player
+Wait For Object = true
+Prefab Preview = Player prefab
+Component = Health
+Property = Hp
+Compare = GreaterOrEqual
+Threshold = 1
+On True -> UI.ShowPlayerAlive()
+```
 
-## Namespace
+## Смежные Разделы
 
-`Neo.Condition`
-
-## Assembly
-
-`Neo.Condition` (`Assets/Neoxider/Scripts/Condition/Neo.Condition.asmdef`)
-
-## См. также
-
-- [Переиспользование условий в других системах](./Condition_Reuse.md) — как добавлять и использовать условия (IConditionEvaluator, ConditionEntry) в State Machine и своих компонентах.
+- [Condition_Reuse.md](./Condition_Reuse.md) - переиспользование условий в State Machine, триггерах и своих системах.
+- [NoCode/README.md](../NoCode/README.md) - NoCode-привязки, которые используют тот же resolver объектов.

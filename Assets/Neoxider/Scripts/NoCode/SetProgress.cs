@@ -13,13 +13,11 @@ namespace Neo.NoCode
     [AddComponentMenu("Neoxider/NoCode/" + nameof(SetProgress))]
     public sealed class SetProgress : NoCodeFloatBindingBehaviour
     {
-        [Header("Targets")]
-        [SerializeField] private Slider _slider;
+        [Header("Targets")] [SerializeField] private Slider _slider;
 
         [SerializeField] private Image _image;
 
-        [Header("Range")]
-        [SerializeField] private float _minValue = 0f;
+        [Header("Range")] [SerializeField] private float _minValue = 0f;
 
         [SerializeField] private float _maxValue = 1f;
 

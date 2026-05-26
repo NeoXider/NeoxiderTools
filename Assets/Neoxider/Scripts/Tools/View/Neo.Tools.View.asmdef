@@ -14,13 +14,17 @@
         "GUID:30817c1a0e6d646d99c048fc403f5979",
         "GUID:fada5146ea9de7e4c86a6e4307efdfbf"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+    ],
     "versionDefines": [
         {
             "name": "com.mirrornetworking.mirror",

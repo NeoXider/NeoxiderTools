@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using Neo.Extensions;
@@ -52,7 +52,7 @@ namespace Neo.Audio
         {
             if (audioSource == null)
             {
-                Debug.LogError("[RandomMusicController] AudioSource cannot be null.");
+                NeoDiagnostics.LogError("[RandomMusicController] AudioSource cannot be null.");
                 return;
             }
 
@@ -65,14 +65,14 @@ namespace Neo.Audio
         {
             if (_audioSource == null)
             {
-                Debug.LogError(
+                NeoDiagnostics.LogError(
                     "[RandomMusicController] AudioSource is not initialized. Call Initialize() first.");
                 return;
             }
 
             if (_tracks == null || _tracks.Length == 0)
             {
-                Debug.LogWarning("[RandomMusicController] Track list is empty.");
+                NeoDiagnostics.LogWarning("[RandomMusicController] Track list is empty.");
                 return;
             }
 
@@ -149,7 +149,7 @@ namespace Neo.Audio
             {
                 if (_tracks.Length == 0)
                 {
-                    Debug.LogWarning("[RandomMusicController] Track list is empty.");
+                    NeoDiagnostics.LogWarning("[RandomMusicController] Track list is empty.");
                     break;
                 }
 
@@ -164,7 +164,7 @@ namespace Neo.Audio
 
                 if (track == null)
                 {
-                    Debug.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
+                    NeoDiagnostics.LogWarning($"[RandomMusicController] Track at index {newTrackIndex} is null.");
                     break;
                 }
 

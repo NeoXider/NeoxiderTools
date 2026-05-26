@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v8.6.0`.
+Canonical English entry point for **NeoxiderTools** `v9.0.0`.
 
 ## Start here
 
@@ -8,6 +8,7 @@ Canonical English entry point for **NeoxiderTools** `v8.6.0`.
 - [Russian docs](../Docs/README.md)
 - [Useful components](../Docs/UsefulComponents.md)
 - [Package compatibility](./PackageCompatibility.md)
+- [Sample scenes](./Samples.md)
 
 ## Modules
 
@@ -21,10 +22,10 @@ Canonical English entry point for **NeoxiderTools** `v8.6.0`.
 | **Core** | Level/XP helpers and core resources | [Core](./Core/README.md) |
 | **Editor** | Editor windows, missing-script scan, settings, maintenance tools | [Editor](./Editor/README.md) |
 | **Extensions** | Extension methods for C# and Unity APIs | [Extensions](./Extensions/README.md) |
-| **GridSystem** | Grid generation, Match3, TicTacToe | [GridSystem](./GridSystem/README.md) |
+| **GridSystem** | Grid-game constructor: field generation, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
-| **NoCode** | UI data binding without glue scripts | [NoCode](./NoCode/README.md) |
+| **NoCode** | Scene-only C# contracts and inspector wrappers; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
 | **NPC** | Navigation, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
 | **Parallax** | Parallax layers | [Parallax](./Parallax/README.md) |
 | **Progression** | XP, levels, unlock tree, perk tree | [Progression](./Progression/README.md) |
@@ -47,6 +48,7 @@ Canonical English entry point for **NeoxiderTools** `v8.6.0`.
 
 | Section | Entry |
 |---------|-------|
+| **Sample scenes** | [Samples](./Samples.md) |
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **UI Extension** | [UI Extension](./UI%20Extension/README.md) |

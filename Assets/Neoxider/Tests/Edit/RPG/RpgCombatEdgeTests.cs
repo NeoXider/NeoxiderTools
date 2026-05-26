@@ -38,7 +38,7 @@ namespace Neo.Tests.Edit.RPG
                 CreateModifier(BuffStatType.DefensePercent, 75f),
                 CreateModifier(BuffStatType.SpecificDefensePercent, 50f, "fire")
             });
-            var active = new[] { new ActiveBuffEntry { BuffId = "defense" } };
+            ActiveBuffEntry[] active = new[] { new ActiveBuffEntry { BuffId = "defense" } };
 
             try
             {
@@ -57,9 +57,9 @@ namespace Neo.Tests.Edit.RPG
         [Test]
         public void CombatMath_StatusMovementMultiplierStacksAndBlocksActions()
         {
-            StatusEffectDefinition slow = CreateStatus("slow", movementSpeedMultiplier: 0.5f);
-            StatusEffectDefinition root = CreateStatus("root", movementSpeedMultiplier: 0f, blocksActions: true);
-            var active = new[]
+            StatusEffectDefinition slow = CreateStatus("slow", 0.5f);
+            StatusEffectDefinition root = CreateStatus("root", 0f, true);
+            ActiveStatusEntry[] active = new[]
             {
                 new ActiveStatusEntry { StatusId = "slow" },
                 new ActiveStatusEntry { StatusId = "root" }

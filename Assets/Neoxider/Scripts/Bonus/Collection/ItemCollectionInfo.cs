@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,7 +30,10 @@ namespace Neo.Bonus
             {
                 if (_debugLogWarnings)
                 {
-                    Debug.LogWarning($"[{nameof(ItemCollectionInfo)}] SetData: itemCollectionData is null.", this);
+                    NeoDiagnostics.LogWarning(
+                        $"[{nameof(ItemCollectionInfo)}] SetData: itemCollectionData is null.",
+                        this,
+                        true);
                 }
 
                 return;

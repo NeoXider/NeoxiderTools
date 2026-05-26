@@ -44,7 +44,22 @@ namespace Neo.Core.Level
         public LevelCurveDefinition LevelCurveDefinition
         {
             get => _levelCurve;
-            set => _levelCurve = value;
+            set
+            {
+                if (_levelCurve == value)
+                {
+                    return;
+                }
+
+                _levelCurve = value;
+                if (_model == null)
+                {
+                    return;
+                }
+
+                ApplyCurveFromDefinition();
+                SyncReactiveFromModel();
+            }
         }
 
         public UnityEventInt OnLevelUp => _onLevelUp;
@@ -147,14 +162,14 @@ namespace Neo.Core.Level
 
         public void AddXp(int amount)
         {
-            EnsureModel();
+            EnsureInitialized();
             _model.AddXp(amount);
             SyncReactiveFromModel();
         }
 
         public void SetLevel(int level)
         {
-            EnsureModel();
+            EnsureInitialized();
             _model.SetLevelDirect(level);
             SyncReactiveFromModel();
         }
@@ -232,7 +247,7 @@ namespace Neo.Core.Level
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[LevelComponent] Load failed: {e.Message}");
+                NeoDiagnostics.LogWarning($"[LevelComponent] Load failed: {e.Message}");
             }
 
             _onProfileLoaded?.Invoke();
@@ -254,10 +269,7 @@ namespace Neo.Core.Level
 
         private void ApplyCurveFromDefinition()
         {
-            if (_levelCurve != null)
-            {
-                _model.SetCurveDefinition(_levelCurve);
-            }
+            _model.SetCurveDefinition(_levelCurve);
         }
 
         private void SyncReactiveFromModel()

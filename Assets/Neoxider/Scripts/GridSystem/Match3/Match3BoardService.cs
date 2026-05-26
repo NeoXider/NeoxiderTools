@@ -65,6 +65,19 @@ namespace Neo.GridSystem.Match3
             _generator = GetComponent<FieldGenerator>();
         }
 
+        private FieldGenerator Generator
+        {
+            get
+            {
+                if (_generator == null)
+                {
+                    _generator = GetComponent<FieldGenerator>();
+                }
+
+                return _generator;
+            }
+        }
+
         private void Start()
         {
             if (_autoGenerateOnStart)
@@ -119,7 +132,7 @@ namespace Neo.GridSystem.Match3
         /// </summary>
         public void InitializeBoard()
         {
-            if (_generator == null)
+            if (Generator == null)
             {
                 return;
             }
@@ -151,6 +164,7 @@ namespace Neo.GridSystem.Match3
                 }
             }
 
+            ShuffleIfNoMoves();
             OnBoardChanged.Invoke();
         }
 
@@ -170,13 +184,19 @@ namespace Neo.GridSystem.Match3
                 return false;
             }
 
+            FieldGenerator generator = Generator;
+            if (generator == null)
+            {
+                return false;
+            }
+
             if (!AreAdjacent(a, b))
             {
                 return false;
             }
 
-            FieldCell cellA = _generator.GetCell(a);
-            FieldCell cellB = _generator.GetCell(b);
+            FieldCell cellA = generator.GetCell(a);
+            FieldCell cellB = generator.GetCell(b);
             if (!CanUseCell(cellA) || !CanUseCell(cellB))
             {
                 return false;
@@ -202,12 +222,52 @@ namespace Neo.GridSystem.Match3
         }
 
         /// <summary>
+        ///     Finds the first adjacent swap that creates a match without mutating the board.
+        /// </summary>
+        public bool TryFindValidSwap(out Vector3Int a, out Vector3Int b)
+        {
+            a = default;
+            b = default;
+
+            FieldGenerator generator = Generator;
+            if (generator == null)
+            {
+                return false;
+            }
+
+            foreach (FieldCell cell in generator.GetAllCells(false))
+            {
+                if (!CanUseCell(cell))
+                {
+                    continue;
+                }
+
+                foreach (FieldCell neighbor in generator.GetNeighbors(cell))
+                {
+                    if (!CanUseCell(neighbor) || IsEarlierOrSame(neighbor.Position, cell.Position))
+                    {
+                        continue;
+                    }
+
+                    if (WouldSwapCreateMatch(cell.Position, neighbor.Position))
+                    {
+                        a = cell.Position;
+                        b = neighbor.Position;
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
         ///     Finds all current match groups on the board.
         /// </summary>
         /// <returns>List of match groups.</returns>
         public List<List<FieldCell>> FindMatches()
         {
-            return Match3MatchFinder.FindMatches(_generator, _minMatchLength);
+            return Match3MatchFinder.FindMatches(Generator, _minMatchLength);
         }
 
         private int ClearMatches(List<List<FieldCell>> matches)
@@ -237,27 +297,43 @@ namespace Neo.GridSystem.Match3
             for (int z = 0; z < size.z; z++)
             for (int x = 0; x < size.x; x++)
             {
-                int writeY = 0;
+                List<FieldCell> segment = new();
                 for (int y = 0; y < size.y; y++)
                 {
-                    FieldCell readCell = _generator.GetCell(new Vector3Int(x, y, z));
-                    if (!CanUseCell(readCell) || readCell.ContentId <= 0)
+                    FieldCell cell = _generator.GetCell(new Vector3Int(x, y, z));
+                    if (!CanUseCell(cell))
                     {
+                        CollapseSegment(segment);
+                        segment.Clear();
                         continue;
                     }
 
-                    if (y != writeY)
-                    {
-                        FieldCell writeCell = _generator.GetCell(new Vector3Int(x, writeY, z));
-                        if (CanUseCell(writeCell))
-                        {
-                            writeCell.ContentId = readCell.ContentId;
-                            readCell.ContentId = 0;
-                        }
-                    }
-
-                    writeY++;
+                    segment.Add(cell);
                 }
+
+                CollapseSegment(segment);
+            }
+        }
+
+        private static void CollapseSegment(List<FieldCell> segment)
+        {
+            if (segment.Count == 0)
+            {
+                return;
+            }
+
+            List<int> values = new(segment.Count);
+            foreach (FieldCell cell in segment)
+            {
+                if (cell.ContentId > 0)
+                {
+                    values.Add(cell.ContentId);
+                }
+            }
+
+            for (int i = 0; i < segment.Count; i++)
+            {
+                segment[i].ContentId = i < values.Count ? values[i] : 0;
             }
         }
 
@@ -279,19 +355,25 @@ namespace Neo.GridSystem.Match3
 
         private bool AreAdjacent(Vector3Int a, Vector3Int b)
         {
-            FieldCell cellA = _generator.GetCell(a);
+            FieldGenerator generator = Generator;
+            if (generator == null)
+            {
+                return false;
+            }
+
+            FieldCell cellA = generator.GetCell(a);
             if (cellA == null)
             {
                 return false;
             }
 
-            FieldCell cellB = _generator.GetCell(b);
+            FieldCell cellB = generator.GetCell(b);
             if (cellB == null)
             {
                 return false;
             }
 
-            List<FieldCell> neighbors = _generator.GetNeighbors(cellA);
+            List<FieldCell> neighbors = generator.GetNeighbors(cellA);
             return neighbors.Contains(cellB);
         }
 
@@ -363,11 +445,17 @@ namespace Neo.GridSystem.Match3
 
         private int CountInDirection(Vector3Int origin, Vector3Int dir, int tileId)
         {
+            FieldGenerator generator = Generator;
+            if (generator == null)
+            {
+                return 0;
+            }
+
             int count = 0;
             Vector3Int current = origin + dir;
             while (true)
             {
-                FieldCell cell = _generator.GetCell(current);
+                FieldCell cell = generator.GetCell(current);
                 if (!CanUseCell(cell) || cell.ContentId != tileId)
                 {
                     break;
@@ -382,7 +470,12 @@ namespace Neo.GridSystem.Match3
 
         public bool ShuffleIfNoMoves()
         {
-            if (HasAnyValidSwap())
+            if (Generator == null)
+            {
+                return false;
+            }
+
+            if (TryFindValidSwap(out _, out _))
             {
                 return false;
             }
@@ -391,32 +484,6 @@ namespace Neo.GridSystem.Match3
             {
                 OnBoardShuffled.Invoke();
                 return true;
-            }
-
-            return false;
-        }
-
-        private bool HasAnyValidSwap()
-        {
-            foreach (FieldCell cell in _generator.GetAllCells(false))
-            {
-                if (!CanUseCell(cell))
-                {
-                    continue;
-                }
-
-                foreach (FieldCell neighbor in _generator.GetNeighbors(cell))
-                {
-                    if (!CanUseCell(neighbor))
-                    {
-                        continue;
-                    }
-
-                    if (WouldSwapCreateMatch(cell.Position, neighbor.Position))
-                    {
-                        return true;
-                    }
-                }
             }
 
             return false;
@@ -466,14 +533,29 @@ namespace Neo.GridSystem.Match3
                     cells[i].ContentId = values[i];
                 }
 
-                if (FindMatches().Count == 0 && HasAnyValidSwap())
+                if (FindMatches().Count == 0 && TryFindValidSwap(out _, out _))
                 {
                     return true;
                 }
             }
 
             FillBoardInitial();
-            return true;
+            return TryFindValidSwap(out _, out _);
+        }
+
+        private static bool IsEarlierOrSame(Vector3Int a, Vector3Int b)
+        {
+            if (a.z != b.z)
+            {
+                return a.z < b.z;
+            }
+
+            if (a.y != b.y)
+            {
+                return a.y < b.y;
+            }
+
+            return a.x <= b.x;
         }
 
         private static void ShuffleValues(List<int> values)

@@ -16,10 +16,11 @@ namespace Neo.Rpg
             Func<string, BuffDefinition> resolveBuff, string damageType)
         {
             float defensePercent = GetPercentSum(activeBuffs, resolveBuff, BuffStatType.DefensePercent);
-            
+
             if (!string.IsNullOrEmpty(damageType))
             {
-                defensePercent += GetSpecificFlatSum(activeBuffs, resolveBuff, BuffStatType.SpecificDefensePercent, damageType);
+                defensePercent += GetSpecificFlatSum(activeBuffs, resolveBuff, BuffStatType.SpecificDefensePercent,
+                    damageType);
             }
 
             return Mathf.Clamp01(1f - defensePercent / 100f);
@@ -154,7 +155,8 @@ namespace Neo.Rpg
                 for (int i = 0; i < modifiers.Length; i++)
                 {
                     BuffStatModifier modifier = modifiers[i];
-                    if (modifier != null && modifier.StatType == statType && string.Equals(modifier.SpecificDamageType, specificType, StringComparison.OrdinalIgnoreCase))
+                    if (modifier != null && modifier.StatType == statType && string.Equals(modifier.SpecificDamageType,
+                            specificType, StringComparison.OrdinalIgnoreCase))
                     {
                         total += modifier.Value;
                     }

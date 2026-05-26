@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.Serialization;
@@ -237,7 +237,7 @@ namespace Neo.Bonus
                 style.fontSize = 12;
                 style.alignment = TextAnchor.MiddleCenter;
                 style.fontStyle = FontStyle.Bold;
-                Handles.Label(labelPos, $"Δ{_wheelOffsetZ:0}", style);
+                Handles.Label(labelPos, $"О”{_wheelOffsetZ:0}", style);
             }
 
             int currentResultId = GetResultId();
@@ -282,7 +282,7 @@ namespace Neo.Bonus
 
             if (_debugLogId)
             {
-                Debug.Log($"[{nameof(WheelFortune)}] Result id: {GetResultId()}", this);
+                NeoDiagnostics.Log($"[{nameof(WheelFortune)}] Result id: {GetResultId()}", this, true);
             }
 
             _canvasGroup ??= GetComponent<CanvasGroup>();

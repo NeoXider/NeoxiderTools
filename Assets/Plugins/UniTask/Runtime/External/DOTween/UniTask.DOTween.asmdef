@@ -1,16 +1,19 @@
 {
     "name": "UniTask.DOTween",
     "references": [
-        "UniTask",
-        "DOTween.Modules"
+        "UniTask"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DOTween.dll"
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "UNITASK_DOTWEEN_SUPPORT"
+    ],
     "versionDefines": [
         {
             "name": "com.demigiant.dotween",

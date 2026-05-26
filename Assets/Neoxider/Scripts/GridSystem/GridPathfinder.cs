@@ -94,24 +94,24 @@ namespace Neo.GridSystem
         {
             if (generator == null || request == null)
             {
-                return new GridPathResult { Reason = NoPathReason.InvalidStartOrEnd };
+                return CreateFailure(NoPathReason.InvalidStartOrEnd);
             }
 
             FieldCell startCell = generator.GetCell(request.Start);
             FieldCell endCell = generator.GetCell(request.End);
             if (startCell == null || endCell == null)
             {
-                return new GridPathResult { Reason = NoPathReason.InvalidStartOrEnd };
+                return CreateFailure(NoPathReason.InvalidStartOrEnd);
             }
 
             if (!IsPassable(generator, startCell, request, true))
             {
-                return new GridPathResult { Reason = NoPathReason.StartNotPassable };
+                return CreateFailure(NoPathReason.StartNotPassable);
             }
 
             if (!IsPassable(generator, endCell, request, true))
             {
-                return new GridPathResult { Reason = NoPathReason.EndNotPassable };
+                return CreateFailure(NoPathReason.EndNotPassable);
             }
 
             Queue<FieldCell> queue = new();
@@ -144,7 +144,7 @@ namespace Neo.GridSystem
 
             if (!visited.Contains(endCell))
             {
-                return new GridPathResult { Reason = NoPathReason.NoPathFound };
+                return CreateFailure(NoPathReason.NoPathFound);
             }
 
             List<FieldCell> path = new();
@@ -162,6 +162,15 @@ namespace Neo.GridSystem
             {
                 Path = path,
                 Reason = NoPathReason.None
+            };
+        }
+
+        private static GridPathResult CreateFailure(NoPathReason reason)
+        {
+            return new GridPathResult
+            {
+                Path = new List<FieldCell>(),
+                Reason = reason
             };
         }
 

@@ -15,8 +15,8 @@ namespace Neo.Rpg
     {
         [Header("Action")] [SerializeField] private RpgNoCodeActionType _actionType = RpgNoCodeActionType.Heal;
 
-        [Tooltip("Target character. When empty, searches up the hierarchy on Execute().")]
-        [SerializeField] private RpgCharacter _character;
+        [Tooltip("Target character. When empty, searches up the hierarchy on Execute().")] [SerializeField]
+        private RpgCharacter _character;
 
         [SerializeField] private float _amount = 25f;
         [SerializeField] [Min(1)] private int _level = 1;
@@ -41,7 +41,10 @@ namespace Neo.Rpg
         public void Execute()
         {
             RpgCharacter character = null;
-            if (RequiresCharacter() && !TryGetCharacter(out character)) return;
+            if (RequiresCharacter() && !TryGetCharacter(out character))
+            {
+                return;
+            }
 
             switch (_actionType)
             {
@@ -54,7 +57,7 @@ namespace Neo.Rpg
                     EmitSuccess($"Healed: {_amount}");
                     break;
                 case RpgNoCodeActionType.SetMaxHp:
-                    character.SetMaxResource(Neo.Core.Resources.RpgResourceId.Hp, _amount);
+                    character.SetMaxResource(Core.Resources.RpgResourceId.Hp, _amount);
                     EmitSuccess($"Set max HP: {_amount}");
                     break;
                 case RpgNoCodeActionType.SetMaxResource:
@@ -66,8 +69,15 @@ namespace Neo.Rpg
                     EmitSuccess($"Add max {ResourceId}: {_amount}");
                     break;
                 case RpgNoCodeActionType.SpendResource:
-                    if (character.Spend(ResourceId, _amount)) EmitSuccess($"Spent {ResourceId}: {_amount}");
-                    else EmitFailed($"Cannot spend {ResourceId}: {_amount}");
+                    if (character.Spend(ResourceId, _amount))
+                    {
+                        EmitSuccess($"Spent {ResourceId}: {_amount}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Cannot spend {ResourceId}: {_amount}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.RefillResource:
                     character.Refill(ResourceId, _amount);
@@ -106,55 +116,127 @@ namespace Neo.Rpg
                     EmitSuccess($"Add upgrade points: {_intAmount}");
                     break;
                 case RpgNoCodeActionType.UpgradeStat:
-                    if (character.UpgradeStat(StatId)) EmitSuccess($"Upgraded stat: {StatId}");
-                    else EmitFailed($"Cannot upgrade stat: {StatId}");
+                    if (character.UpgradeStat(StatId))
+                    {
+                        EmitSuccess($"Upgraded stat: {StatId}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Cannot upgrade stat: {StatId}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.ApplyBuff:
-                    if (character.ApplyBuffById(_buffId)) EmitSuccess($"Applied buff: {_buffId}");
-                    else EmitFailed($"Buff not found: {_buffId}");
+                    if (character.ApplyBuffById(_buffId))
+                    {
+                        EmitSuccess($"Applied buff: {_buffId}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Buff not found: {_buffId}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.ApplyInlineBuff:
-                    if (character.ApplyInlineBuff(_inlineBuffIndex)) EmitSuccess($"Applied inline buff: {_inlineBuffIndex}");
-                    else EmitFailed($"Inline buff not found: {_inlineBuffIndex}");
+                    if (character.ApplyInlineBuff(_inlineBuffIndex))
+                    {
+                        EmitSuccess($"Applied inline buff: {_inlineBuffIndex}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Inline buff not found: {_inlineBuffIndex}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.ApplyStatus:
-                    if (character.ApplyStatusById(_statusId)) EmitSuccess($"Applied status: {_statusId}");
-                    else EmitFailed($"Status not found: {_statusId}");
+                    if (character.ApplyStatusById(_statusId))
+                    {
+                        EmitSuccess($"Applied status: {_statusId}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Status not found: {_statusId}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.RemoveBuff:
-                    if (character.RemoveBuff(_buffId)) EmitSuccess($"Removed buff: {_buffId}");
-                    else EmitFailed($"Buff not active: {_buffId}");
+                    if (character.RemoveBuff(_buffId))
+                    {
+                        EmitSuccess($"Removed buff: {_buffId}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Buff not active: {_buffId}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.RemoveStatus:
-                    if (character.RemoveStatus(_statusId)) EmitSuccess($"Removed status: {_statusId}");
-                    else EmitFailed($"Status not active: {_statusId}");
+                    if (character.RemoveStatus(_statusId))
+                    {
+                        EmitSuccess($"Removed status: {_statusId}");
+                    }
+                    else
+                    {
+                        EmitFailed($"Status not active: {_statusId}");
+                    }
+
                     break;
                 case RpgNoCodeActionType.UseAttackById:
                     string atkErr = null;
                     if (_attackController != null && _attackController.TryUseAttack(_attackId, out atkErr))
+                    {
                         EmitSuccess($"Used attack: {_attackId}");
-                    else EmitFailed(string.IsNullOrWhiteSpace(atkErr) ? "Attack controller missing." : atkErr);
+                    }
+                    else
+                    {
+                        EmitFailed(string.IsNullOrWhiteSpace(atkErr) ? "Attack controller missing." : atkErr);
+                    }
+
                     break;
                 case RpgNoCodeActionType.UsePrimaryAttack:
                     if (_attackController != null && _attackController.UsePrimaryAttack())
+                    {
                         EmitSuccess("Used primary attack.");
-                    else EmitFailed("Primary attack failed.");
+                    }
+                    else
+                    {
+                        EmitFailed("Primary attack failed.");
+                    }
+
                     break;
                 case RpgNoCodeActionType.UsePresetById:
                     string presetErr = null;
                     if (_attackController != null && _attackController.TryUsePreset(_presetId, out presetErr))
+                    {
                         EmitSuccess($"Used preset: {_presetId}");
-                    else EmitFailed(string.IsNullOrWhiteSpace(presetErr) ? "Preset failed." : presetErr);
+                    }
+                    else
+                    {
+                        EmitFailed(string.IsNullOrWhiteSpace(presetErr) ? "Preset failed." : presetErr);
+                    }
+
                     break;
                 case RpgNoCodeActionType.UsePrimaryPreset:
                     if (_attackController != null && _attackController.UsePrimaryPreset())
+                    {
                         EmitSuccess("Used primary preset.");
-                    else EmitFailed("Primary preset failed.");
+                    }
+                    else
+                    {
+                        EmitFailed("Primary preset failed.");
+                    }
+
                     break;
                 case RpgNoCodeActionType.StartEvade:
                     if (_evadeController != null && _evadeController.TryStartEvade())
+                    {
                         EmitSuccess("Evade started.");
-                    else EmitFailed("Evade failed.");
+                    }
+                    else
+                    {
+                        EmitFailed("Evade failed.");
+                    }
+
                     break;
                 case RpgNoCodeActionType.ResetProfile:
                     character.ResetProfile();
@@ -199,7 +281,11 @@ namespace Neo.Rpg
         private bool TryGetCharacter(out RpgCharacter character)
         {
             character = _character != null ? _character : GetComponentInParent<RpgCharacter>();
-            if (character != null) return true;
+            if (character != null)
+            {
+                return true;
+            }
+
             EmitFailed("RpgCharacter not found.");
             return false;
         }

@@ -1,4 +1,4 @@
-using System.Threading;
+﻿using System.Threading;
 using Cysharp.Threading.Tasks;
 using Neo.Reactive;
 using TMPro;
@@ -108,13 +108,15 @@ namespace Neo.Tools
         {
             if (_targetText == null)
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
+                NeoDiagnostics.LogWarning(
+                    $"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
                 return;
             }
 
             if (string.IsNullOrEmpty(_autoStartText))
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] AutoStartText is empty on {gameObject.name}", this);
+                NeoDiagnostics.LogWarning($"[TypewriterEffectComponent] AutoStartText is empty on {gameObject.name}",
+                    this);
                 return;
             }
 
@@ -131,7 +133,8 @@ namespace Neo.Tools
         {
             if (_targetText == null)
             {
-                Debug.LogWarning($"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
+                NeoDiagnostics.LogWarning(
+                    $"[TypewriterEffectComponent] TargetText is not assigned on {gameObject.name}", this);
                 return;
             }
 
@@ -140,7 +143,7 @@ namespace Neo.Tools
                 text = _targetText.text;
                 if (string.IsNullOrEmpty(text))
                 {
-                    Debug.LogWarning($"[TypewriterEffectComponent] Text is empty on {gameObject.name}", this);
+                    NeoDiagnostics.LogWarning($"[TypewriterEffectComponent] Text is empty on {gameObject.name}", this);
                     return;
                 }
 

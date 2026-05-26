@@ -10,6 +10,8 @@ using UnityEditor;
 using UnityEditor.Events;
 #endif
 
+#pragma warning disable CS0618 // Condition demo keeps the legacy Health sample contract until the scene is migrated.
+
 namespace Neo.Demo.Condition
 {
     /// <summary>
@@ -48,7 +50,8 @@ namespace Neo.Demo.Condition
         {
             if (IsSetUp)
             {
-                Debug.Log("[ConditionDemoSetup] Scene is already set up. Remove created objects to recreate.");
+                global::Neo.Demo.SampleDiagnostics.Log("[ConditionDemoSetup] Scene is already set up. Remove created objects to recreate.",
+                    this);
                 return;
             }
 
@@ -258,7 +261,7 @@ namespace Neo.Demo.Condition
             EditorUtility.SetDirty(this);
             Undo.CollapseUndoOperations(undoGroup);
 
-            Debug.Log("[ConditionDemoSetup] Demo scene configured! Save the scene (Ctrl+S).");
+            global::Neo.Demo.SampleDiagnostics.Log("[ConditionDemoSetup] Demo scene configured! Save the scene (Ctrl+S).", this);
         }
 #endif
 
@@ -346,7 +349,7 @@ namespace Neo.Demo.Condition
             tmp.fontSize = size;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = color;
-            tmp.enableWordWrapping = true;
+            tmp.textWrappingMode = TextWrappingModes.Normal;
             tmp.overflowMode = TextOverflowModes.Overflow;
 
             return obj;

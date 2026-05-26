@@ -1,10 +1,10 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Condition
 {
     /// <summary>
     ///     Shared rules for resolving a binding root GameObject: <see cref="GameObject.Find(string)"/>, explicit
-    ///     reference, or host fallback — used by <see cref="ConditionValueSource"/> and by Neo.NoCode float bindings.
+    ///     reference, or host fallback - used by <see cref="ConditionValueSource"/> and by Neo.NoCode float bindings.
     /// </summary>
     public static class BindingSourceGameObjectResolver
     {
@@ -64,7 +64,7 @@ namespace Neo.Condition
                     return null;
                 }
 
-                GameObject found = GameObject.Find(searchObjectName);
+                var found = GameObject.Find(searchObjectName);
                 cache.FoundByNameObject = found;
 
                 if (found != null)
@@ -76,8 +76,8 @@ namespace Neo.Condition
 
                 if (!waitForObject && !cache.HasLoggedSearchNotFoundWarning)
                 {
-                    Debug.LogWarning(
-                        $"{logPrefix} GameObject.Find(\"{searchObjectName}\") — object not found in scene.");
+                    NeoDiagnostics.LogWarning(
+                        $"{logPrefix} GameObject.Find(\"{searchObjectName}\") - object not found in scene.");
                     cache.HasLoggedSearchNotFoundWarning = true;
                 }
 

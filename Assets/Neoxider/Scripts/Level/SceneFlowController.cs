@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using TMPro;
 using UnityEngine;
@@ -146,7 +146,7 @@ namespace Neo
             {
                 if (string.IsNullOrEmpty(sceneName))
                 {
-                    Debug.LogWarning("[SceneFlowController] LoadScene(string): scene name is null or empty.");
+                    NeoDiagnostics.LogWarning("[SceneFlowController] LoadScene(string): scene name is null or empty.");
                     return;
                 }
 
@@ -186,7 +186,7 @@ namespace Neo
                 Application.Quit();
             }
 
-            /// <summary>Pause: true → Time.timeScale = 0, false → 1.</summary>
+            /// <summary>Pause: true -> Time.timeScale = 0, false -> 1.</summary>
             public void Pause(bool active)
             {
                 Time.timeScale = active ? 0f : 1f;
@@ -206,7 +206,7 @@ namespace Neo
                 bool byName = !string.IsNullOrEmpty(sceneName);
                 if (!byName && buildIndex < 0)
                 {
-                    Debug.LogWarning("[SceneFlowController] Invalid scene: no name and buildIndex < 0.");
+                    NeoDiagnostics.LogWarning("[SceneFlowController] Invalid scene: no name and buildIndex < 0.");
                     return;
                 }
 
@@ -244,7 +244,7 @@ namespace Neo
                 }
                 else
                 {
-                    Debug.LogWarning("[SceneFlowController] Additive: need scene name or valid build index.");
+                    NeoDiagnostics.LogWarning("[SceneFlowController] Additive: need scene name or valid build index.");
                 }
             }
 
@@ -258,7 +258,7 @@ namespace Neo
                     : _sceneLoader.LoadSceneAsync(buildIndex);
                 if (_currentOperation == null)
                 {
-                    Debug.LogError("[SceneFlowController] LoadSceneAsync failed.");
+                    NeoDiagnostics.LogError("[SceneFlowController] LoadSceneAsync failed.");
                     yield break;
                 }
 
@@ -293,7 +293,7 @@ namespace Neo
 
                 if (op == null)
                 {
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         "[SceneFlowController] Load operation became null. Possibly overlapping load requests.");
                     yield break;
                 }

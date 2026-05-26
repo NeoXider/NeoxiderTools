@@ -33,7 +33,7 @@ namespace Neo.Rpg
 
         // Legacy compatibility
         [HideInInspector] public bool UseCurve;
-        
+
         public AnimationCurve Curve;
 
         /// <summary>
@@ -54,21 +54,21 @@ namespace Neo.Rpg
                     return BaseValue;
 
                 case RpgStatFormulaType.Linear:
-                    return BaseValue + (AddPerLevel * levelMinusOne);
+                    return BaseValue + AddPerLevel * levelMinusOne;
 
                 case RpgStatFormulaType.Exponential:
-                    float multiplier = MultiplierPerLevel <= 0f ? 1.1f : MultiplierPerLevel; 
+                    float multiplier = MultiplierPerLevel <= 0f ? 1.1f : MultiplierPerLevel;
                     return BaseValue * Mathf.Pow(multiplier, levelMinusOne);
 
                 case RpgStatFormulaType.Quadratic:
-                    return BaseValue + (AddPerLevel * levelMinusOne * levelMinusOne);
-                
+                    return BaseValue + AddPerLevel * levelMinusOne * levelMinusOne;
+
                 case RpgStatFormulaType.Power:
                     float exponent = MultiplierPerLevel <= 0f ? 2f : MultiplierPerLevel;
-                    return BaseValue + (AddPerLevel * Mathf.Pow(Mathf.Max(1, level), exponent));
+                    return BaseValue + AddPerLevel * Mathf.Pow(Mathf.Max(1, level), exponent);
 
                 default:
-                    return BaseValue + (AddPerLevel * levelMinusOne);
+                    return BaseValue + AddPerLevel * levelMinusOne;
             }
         }
     }
@@ -82,17 +82,16 @@ namespace Neo.Rpg
     {
         [Header("Primary Resource Growth")]
         public RpgStatGrowthRule MaxHp = new() { BaseValue = 100f, AddPerLevel = 10f };
+
         public RpgStatGrowthRule HpRegen = new() { BaseValue = 0f, AddPerLevel = 0f };
 
-        [Header("Combat Modifiers Growth")]
-        [Tooltip("A flat percentage added to out-going damage per level.")]
+        [Header("Combat Modifiers Growth")] [Tooltip("A flat percentage added to out-going damage per level.")]
         public RpgStatGrowthRule DamagePercent = new() { BaseValue = 0f, AddPerLevel = 1f };
 
         [Tooltip("A flat percentage added to overall defense per level.")]
         public RpgStatGrowthRule DefensePercent = new() { BaseValue = 0f, AddPerLevel = 0.5f };
 
-        [Header("Progression Growth")]
-        [Tooltip("The amount of XP rewarded when this combatant is defeated.")]
+        [Header("Progression Growth")] [Tooltip("The amount of XP rewarded when this combatant is defeated.")]
         public RpgStatGrowthRule XpReward = new() { BaseValue = 10f, AddPerLevel = 5f };
     }
 }

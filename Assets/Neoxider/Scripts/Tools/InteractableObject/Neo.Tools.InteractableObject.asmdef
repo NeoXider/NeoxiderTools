@@ -9,13 +9,17 @@
         "Mirror",
         "Neo.Network"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+    ],
     "versionDefines": [
         {
             "name": "com.mirrornetworking.mirror",

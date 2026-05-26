@@ -15,6 +15,7 @@
 - [ImageFillAmountAnimator](./ImageFillAmountAnimator.md)
 - [LightAnimator](./LightAnimator.md)
 - [Selector](./Selector.md)
+- [SelectorModel](./SelectorModel.md)
 - [SelectorItem](./SelectorItem.md)
 - [StarView](./StarView.md)
 - [ZPositionAdjuster](./ZPositionAdjuster.md)

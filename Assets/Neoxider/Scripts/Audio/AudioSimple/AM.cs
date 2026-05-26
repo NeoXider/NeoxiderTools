@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Tools;
 using UnityEngine;
 
@@ -30,9 +30,14 @@ namespace Neo
             [SerializeField] private AudioClip[] _randomMusicTracks;
 
             private RandomMusicController _randomMusicController;
+            private bool _runtimeInitialized;
 
             public float startVolumeEfx { get; set; } = 1f;
             public float startVolumeMusic { get; set; } = 1f;
+
+#if UNITY_EDITOR
+            private bool _editorEnsureSourcesQueued;
+#endif
 
             /// <summary>AudioSource for sound effects.</summary>
             public AudioSource Efx => _efx;
@@ -42,15 +47,15 @@ namespace Neo
 
             private void OnValidate()
             {
-                if (_music == null)
+#if UNITY_EDITOR
+                if (!Application.isPlaying && !UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
                 {
-                    CreateMusic();
+                    QueueEnsureSourcesInEditor();
+                    return;
                 }
+#endif
 
-                if (_efx == null)
-                {
-                    CreateEfx();
-                }
+                EnsureSources();
             }
 
             /// <summary>Raised when music starts playing.</summary>
@@ -65,6 +70,22 @@ namespace Neo
             protected override void Init()
             {
                 base.Init();
+            }
+
+            private void Start()
+            {
+                EnsureRuntimeInitialized();
+            }
+
+            private void EnsureRuntimeInitialized()
+            {
+                if (_runtimeInitialized)
+                {
+                    return;
+                }
+
+                _runtimeInitialized = true;
+                EnsureSources();
 
                 _randomMusicController = new RandomMusicController();
                 if (_music != null)
@@ -83,29 +104,71 @@ namespace Neo
                 }
             }
 
+            private void EnsureSources()
+            {
+                if (_music == null)
+                {
+                    CreateMusic();
+                }
+
+                if (_efx == null)
+                {
+                    CreateEfx();
+                }
+            }
+
+#if UNITY_EDITOR
+            private void QueueEnsureSourcesInEditor()
+            {
+                if (_editorEnsureSourcesQueued)
+                {
+                    return;
+                }
+
+                _editorEnsureSourcesQueued = true;
+                UnityEditor.EditorApplication.delayCall += EnsureSourcesInEditorDelayed;
+            }
+
+            private void EnsureSourcesInEditorDelayed()
+            {
+                _editorEnsureSourcesQueued = false;
+
+                if (this == null || Application.isPlaying ||
+                    UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    return;
+                }
+
+                EnsureSources();
+                UnityEditor.EditorUtility.SetDirty(this);
+            }
+#endif
+
             /// <summary>
             ///     Plays a sound effect by index in the <c>_sounds</c> array at the given volume.
             /// </summary>
             /// <param name="id">Sound index in <c>_sounds</c>.</param>
-            /// <param name="volume">Playback volume (0–1).</param>
+            /// <param name="volume">Playback volume (0-1).</param>
             [Button]
             public void Play(int id, float volume)
             {
+                EnsureRuntimeInitialized();
+
                 if (_efx == null)
                 {
-                    Debug.LogWarning("[AM] Effects AudioSource is not initialized.");
+                    NeoDiagnostics.LogWarning("[AM] Effects AudioSource is not initialized.");
                     return;
                 }
 
                 if (_sounds == null || id < 0 || id >= _sounds.Length)
                 {
-                    Debug.LogWarning($"[AM] Sound ID {id} is out of range.");
+                    NeoDiagnostics.LogWarning($"[AM] Sound ID {id} is out of range.");
                     return;
                 }
 
                 if (_sounds[id].clip == null)
                 {
-                    Debug.LogWarning($"[AM] Sound clip at ID {id} is null.");
+                    NeoDiagnostics.LogWarning($"[AM] Sound clip at ID {id} is null.");
                     return;
                 }
 
@@ -121,7 +184,7 @@ namespace Neo
             {
                 if (_sounds == null || id < 0 || id >= _sounds.Length)
                 {
-                    Debug.LogWarning($"[AM] Sound ID {id} is out of range.");
+                    NeoDiagnostics.LogWarning($"[AM] Sound ID {id} is out of range.");
                     return;
                 }
 
@@ -134,18 +197,20 @@ namespace Neo
             ///     Plays a sound effect from an <see cref="AudioClip"/> at the given volume.
             /// </summary>
             /// <param name="clip">Clip to play.</param>
-            /// <param name="volume">Playback volume (0–1).</param>
+            /// <param name="volume">Playback volume (0-1).</param>
             public void Play(AudioClip clip, float volume)
             {
+                EnsureRuntimeInitialized();
+
                 if (_efx == null)
                 {
-                    Debug.LogWarning("[AM] Effects AudioSource is not initialized.");
+                    NeoDiagnostics.LogWarning("[AM] Effects AudioSource is not initialized.");
                     return;
                 }
 
                 if (clip == null)
                 {
-                    Debug.LogWarning("[AM] AudioClip is null.");
+                    NeoDiagnostics.LogWarning("[AM] AudioClip is null.");
                     return;
                 }
 
@@ -157,25 +222,27 @@ namespace Neo
             ///     Stops random music if it was active.
             /// </summary>
             /// <param name="id">Music index in <c>_musicClips</c>.</param>
-            /// <param name="volume">Playback volume (0–1).</param>
+            /// <param name="volume">Playback volume (0-1).</param>
             [Button]
             public void PlayMusic(int id, float volume)
             {
+                EnsureRuntimeInitialized();
+
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
+                    NeoDiagnostics.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
                 if (_musicClips == null || id < 0 || id >= _musicClips.Length)
                 {
-                    Debug.LogWarning($"[AM] Music clip ID {id} is out of range.");
+                    NeoDiagnostics.LogWarning($"[AM] Music clip ID {id} is out of range.");
                     return;
                 }
 
                 if (_musicClips[id] == null)
                 {
-                    Debug.LogWarning($"[AM] Music clip at ID {id} is null.");
+                    NeoDiagnostics.LogWarning($"[AM] Music clip at ID {id} is null.");
                     return;
                 }
 
@@ -208,18 +275,20 @@ namespace Neo
             ///     Stops random music if it was active.
             /// </summary>
             /// <param name="clip">Clip to play.</param>
-            /// <param name="volume">Playback volume (0–1).</param>
+            /// <param name="volume">Playback volume (0-1).</param>
             public void PlayMusicByClip(AudioClip clip, float volume)
             {
+                EnsureRuntimeInitialized();
+
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
+                    NeoDiagnostics.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
                 if (clip == null)
                 {
-                    Debug.LogWarning("[AM] AudioClip is null.");
+                    NeoDiagnostics.LogWarning("[AM] AudioClip is null.");
                     return;
                 }
 
@@ -256,15 +325,17 @@ namespace Neo
             /// </summary>
             public void EnableRandomMusic()
             {
+                EnsureRuntimeInitialized();
+
                 if (_randomMusicTracks == null || _randomMusicTracks.Length == 0)
                 {
-                    Debug.LogWarning("[AM] Random music track list is empty.");
+                    NeoDiagnostics.LogWarning("[AM] Random music track list is empty.");
                     return;
                 }
 
                 if (_music == null)
                 {
-                    Debug.LogWarning("[AM] Music AudioSource is not initialized.");
+                    NeoDiagnostics.LogWarning("[AM] Music AudioSource is not initialized.");
                     return;
                 }
 
@@ -309,10 +380,12 @@ namespace Neo
             /// <summary>
             ///     Sets volume for sound effects or music.
             /// </summary>
-            /// <param name="volume">Volume (0–1).</param>
+            /// <param name="volume">Volume (0-1).</param>
             /// <param name="efx">True for effects, false for music.</param>
             public void SetVolume(float volume, bool efx)
             {
+                EnsureRuntimeInitialized();
+
                 if (efx)
                 {
                     if (_efx != null)
@@ -334,6 +407,8 @@ namespace Neo
             /// </summary>
             public void ApplyStartVolumes()
             {
+                EnsureRuntimeInitialized();
+
                 if (_efx != null)
                 {
                     _efx.volume = startVolumeEfx;

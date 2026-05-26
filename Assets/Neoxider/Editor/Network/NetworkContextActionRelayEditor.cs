@@ -127,7 +127,8 @@ namespace Neo.Editor.Network
             SerializedProperty includeInactive = serializedObject.FindProperty("_includeInactive");
 
             EditorGUILayout.PropertyField(targetMode,
-                new GUIContent("Target Mode", "How to select the GameObject the action will run on, relative to the resolved root."));
+                new GUIContent("Target Mode",
+                    "How to select the GameObject the action will run on, relative to the resolved root."));
 
             switch (targetMode.enumValueIndex)
             {
@@ -170,7 +171,8 @@ namespace Neo.Editor.Network
             SerializedProperty methodArgumentMode = serializedObject.FindProperty("_methodArgumentMode");
 
             EditorGUILayout.PropertyField(action,
-                new GUIContent("Action", "What the relay does after resolving the target. Use Invoke Component Method for full reflection access."));
+                new GUIContent("Action",
+                    "What the relay does after resolving the target. Use Invoke Component Method for full reflection access."));
 
             switch (action.enumValueIndex)
             {
@@ -334,7 +336,8 @@ namespace Neo.Editor.Network
         private void DrawComponentTypeDropdown(GUIContent label, SerializedProperty fullTypeNameProp)
         {
             GameObject preview = ResolvePreviewTarget();
-            ComponentBindingInspectorShared.BuildComponentPickLists(preview, _componentDisplayNames, _componentFullNames);
+            ComponentBindingInspectorShared.BuildComponentPickLists(preview, _componentDisplayNames,
+                _componentFullNames);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -346,6 +349,7 @@ namespace Neo.Editor.Network
                         EditorGUILayout.LabelField("(drop Preview Target to enable dropdown)",
                             EditorStyles.miniLabel, GUILayout.Width(220));
                     }
+
                     return;
                 }
 
@@ -449,15 +453,27 @@ namespace Neo.Editor.Network
 
         private static MethodKind? ClassifyParameter(Type parameterType)
         {
-            if (parameterType == typeof(bool)) return MethodKind.Bool;
+            if (parameterType == typeof(bool))
+            {
+                return MethodKind.Bool;
+            }
+
             if (parameterType == typeof(float) || parameterType == typeof(double) ||
                 parameterType == typeof(int) || parameterType == typeof(long))
             {
                 return MethodKind.Float;
             }
 
-            if (parameterType == typeof(string)) return MethodKind.String;
-            if (parameterType == typeof(GameObject)) return MethodKind.GameObject;
+            if (parameterType == typeof(string))
+            {
+                return MethodKind.String;
+            }
+
+            if (parameterType == typeof(GameObject))
+            {
+                return MethodKind.GameObject;
+            }
+
             return null;
         }
 
@@ -474,7 +490,10 @@ namespace Neo.Editor.Network
             };
         }
 
-        private string[] BuildMethodLabelsArray() => _methodLabels.ToArray();
+        private string[] BuildMethodLabelsArray()
+        {
+            return _methodLabels.ToArray();
+        }
 
         private int IndexOfMethod(string storedName, int storedArgMode)
         {
@@ -487,9 +506,21 @@ namespace Neo.Editor.Network
             for (int i = 1; i < _methodInfos.Count; i++)
             {
                 MethodInfo m = _methodInfos[i];
-                if (m == null) continue;
-                if (m.Name != storedName) continue;
-                if (_methodKinds[i] != storedKind) continue;
+                if (m == null)
+                {
+                    continue;
+                }
+
+                if (m.Name != storedName)
+                {
+                    continue;
+                }
+
+                if (_methodKinds[i] != storedKind)
+                {
+                    continue;
+                }
+
                 return i;
             }
 
@@ -515,7 +546,10 @@ namespace Neo.Editor.Network
             }
 
             MethodInfo method = _methodInfos[index];
-            if (method == null) return;
+            if (method == null)
+            {
+                return;
+            }
 
             methodName.stringValue = method.Name;
             argumentMode.enumValueIndex = (int)KindToArgMode(_methodKinds[index]);
@@ -554,7 +588,8 @@ namespace Neo.Editor.Network
             {
                 Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
                 GUIStyle titleStyle = new(EditorStyles.boldLabel) { fontSize = 12 };
-                EditorGUI.LabelField(new Rect(headerRect.x + 6f, headerRect.y, headerRect.width - 6f, headerRect.height),
+                EditorGUI.LabelField(
+                    new Rect(headerRect.x + 6f, headerRect.y, headerRect.width - 6f, headerRect.height),
                     title, titleStyle);
                 if (Event.current.type == EventType.Repaint)
                 {

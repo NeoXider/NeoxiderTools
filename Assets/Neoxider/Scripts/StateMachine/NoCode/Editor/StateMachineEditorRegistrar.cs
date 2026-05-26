@@ -1,4 +1,4 @@
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace Neo.StateMachine.NoCode.Editor
@@ -50,7 +50,7 @@ namespace Neo.StateMachine.NoCode.Editor
             var stateMachineDataEditor = UnityEditor.Editor.CreateEditor(testData);
             if (stateMachineDataEditor == null || !(stateMachineDataEditor is StateMachineDataEditor))
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[StateMachineEditorRegistrar] StateMachineDataEditor is not registered correctly.");
             }
             else

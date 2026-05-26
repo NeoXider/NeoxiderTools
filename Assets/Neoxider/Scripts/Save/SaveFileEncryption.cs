@@ -21,6 +21,7 @@ namespace Neo.Save
         ///     Default AES IV (UTF-8, 16 bytes) used when file encryption is enabled and no custom IV is set.
         /// </summary>
         public const string DefaultEncryptionIv = "NeoXiderInitV16!";
+
         /// <summary>
         ///     Encrypts UTF-8 text to Base64 AES ciphertext (no BOM).
         /// </summary>
@@ -40,7 +41,7 @@ namespace Neo.Save
 
             try
             {
-                using Aes aes = Aes.Create();
+                using var aes = Aes.Create();
                 aes.Key = key;
                 aes.IV = iv;
                 using ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
@@ -74,7 +75,7 @@ namespace Neo.Save
 
             try
             {
-                using Aes aes = Aes.Create();
+                using var aes = Aes.Create();
                 aes.Key = key;
                 aes.IV = iv;
                 using ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);

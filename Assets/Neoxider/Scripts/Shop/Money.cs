@@ -28,7 +28,8 @@ namespace Neo.Shop
         private static readonly List<Money> Registry = new();
 
         [Header("Networking")]
-        [Tooltip("If true, money is shared globally across the network. If false, each player has their own local wallet.")]
+        [Tooltip(
+            "If true, money is shared globally across the network. If false, each player has their own local wallet.")]
         public bool isNetworked = false;
 
 #if MIRROR
@@ -40,7 +41,8 @@ namespace Neo.Shop
         [Space] [SerializeField] private string _moneySave = "Money";
         public string SaveKey => _moneySave;
 
-        [Tooltip("When off, balance is not loaded from or written to SaveProvider (session-only; demos / arenas / NoCode).")]
+        [Tooltip(
+            "When off, balance is not loaded from or written to SaveProvider (session-only; demos / arenas / NoCode).")]
         [SerializeField]
         private bool _persistMoney = true;
 
@@ -138,7 +140,11 @@ namespace Neo.Shop
 #endif
             AddLocal(amount);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.Add, amount); }
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.Add, amount);
+            }
 #endif
         }
 
@@ -165,7 +171,11 @@ namespace Neo.Shop
 #endif
                 SpendLocal(amount);
 #if MIRROR
-                if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.Spend, amount); }
+                if (isNetworked && NeoNetworkState.IsServer)
+                {
+                    SyncBalance();
+                    RpcMoneyOp(MoneyOp.Spend, amount);
+                }
 #endif
                 return true;
             }
@@ -264,7 +274,11 @@ namespace Neo.Shop
 #endif
             AddLevelMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.AddLevelMoney, count); }
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.AddLevelMoney, count);
+            }
 #endif
         }
 
@@ -285,7 +299,11 @@ namespace Neo.Shop
 #endif
             float res = SetLevelMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetLevelMoney, count); }
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetLevelMoney, count);
+            }
 #endif
             return res;
         }
@@ -309,7 +327,11 @@ namespace Neo.Shop
 #endif
             float res = SetMoneyLocal(count);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetMoney, count); }
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetMoney, count);
+            }
 #endif
             return res;
         }
@@ -342,7 +364,11 @@ namespace Neo.Shop
 #endif
             float res = SetMoneyForLevelLocal(resetLevelMoney);
 #if MIRROR
-            if (isNetworked && NeoNetworkState.IsServer) { SyncBalance(); RpcMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f); }
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.SetMoneyForLevel, resetLevelMoney ? 1f : 0f);
+            }
 #endif
             return res;
         }
@@ -431,7 +457,11 @@ namespace Neo.Shop
 
         private bool RateLimit()
         {
-            if (Time.time - _lastCmdTime < CmdRateLimit) return true;
+            if (Time.time - _lastCmdTime < CmdRateLimit)
+            {
+                return true;
+            }
+
             _lastCmdTime = Time.time;
             return false;
         }
@@ -443,11 +473,11 @@ namespace Neo.Shop
         {
             switch (op)
             {
-                case MoneyOp.Add:            AddLocal(amount); break;
-                case MoneyOp.Spend:          SpendLocal(amount); break;
-                case MoneyOp.AddLevelMoney:  AddLevelMoneyLocal(amount); break;
-                case MoneyOp.SetLevelMoney:  SetLevelMoneyLocal(amount); break;
-                case MoneyOp.SetMoney:       SetMoneyLocal(amount); break;
+                case MoneyOp.Add: AddLocal(amount); break;
+                case MoneyOp.Spend: SpendLocal(amount); break;
+                case MoneyOp.AddLevelMoney: AddLevelMoneyLocal(amount); break;
+                case MoneyOp.SetLevelMoney: SetLevelMoneyLocal(amount); break;
+                case MoneyOp.SetMoney: SetMoneyLocal(amount); break;
                 case MoneyOp.SetMoneyForLevel: SetMoneyForLevelLocal(amount != 0f); break;
             }
         }
@@ -456,9 +486,16 @@ namespace Neo.Shop
         [Command(requiresAuthority = false)]
         private void CmdMoneyOp(MoneyOp op, float amount, NetworkConnectionToClient sender = null)
         {
-            if (RateLimit()) return;
+            if (RateLimit())
+            {
+                return;
+            }
+
             // Server-side validation
-            if (op == MoneyOp.Spend && !CanSpend(amount)) return;
+            if (op == MoneyOp.Spend && !CanSpend(amount))
+            {
+                return;
+            }
 
             ExecuteOp(op, amount);
             SyncBalance();
@@ -469,7 +506,11 @@ namespace Neo.Shop
         [ClientRpc(includeOwner = true)]
         private void RpcMoneyOp(MoneyOp op, float amount)
         {
-            if (isServer) return;
+            if (isServer)
+            {
+                return;
+            }
+
             ExecuteOp(op, amount);
         }
 

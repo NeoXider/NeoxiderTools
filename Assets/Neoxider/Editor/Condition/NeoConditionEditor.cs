@@ -233,7 +233,8 @@ namespace Neo.Editor.Condition
             SerializedProperty otherUseSceneSearchProp = entryProp.FindPropertyRelative("_otherUseSceneSearch");
             SerializedProperty otherSearchNameProp = entryProp.FindPropertyRelative("_otherSearchObjectName");
             SerializedProperty otherWaitForObjectProp = entryProp.FindPropertyRelative("_otherWaitForObject");
-            SerializedProperty otherFindRetryIntervalProp = entryProp.FindPropertyRelative("_otherFindRetryIntervalSeconds");
+            SerializedProperty otherFindRetryIntervalProp =
+                entryProp.FindPropertyRelative("_otherFindRetryIntervalSeconds");
             SerializedProperty otherSourceObjProp = entryProp.FindPropertyRelative("_otherSourceObject");
             SerializedProperty otherCompTypeProp = entryProp.FindPropertyRelative("_otherComponentTypeName");
             SerializedProperty otherCompIdxProp = entryProp.FindPropertyRelative("_otherComponentIndex");
@@ -518,7 +519,8 @@ namespace Neo.Editor.Condition
                     string selectedCompType = compTypeProp.stringValue;
                     if (!string.IsNullOrEmpty(selectedCompType))
                     {
-                        Component selectedComp = ComponentBindingInspectorShared.FindComponentByTypeName(targetObj, selectedCompType);
+                        Component selectedComp =
+                            ComponentBindingInspectorShared.FindComponentByTypeName(targetObj, selectedCompType);
                         if (selectedComp != null)
                         {
                             DrawPropertyDropdown(selectedComp, propNameProp, valueTypeProp,
@@ -630,6 +632,7 @@ namespace Neo.Editor.Condition
                             new GUIContent("Other: Find Retry Interval (sec)",
                                 "How often Other GameObject.Find runs while that object is missing. 0 = every check. Default 1 s."));
                     }
+
                     if (!string.IsNullOrEmpty(otherSearchNameProp.stringValue))
                     {
                         otherTargetObj = GameObject.Find(otherSearchNameProp.stringValue);
@@ -674,7 +677,8 @@ namespace Neo.Editor.Condition
                         string otherCompType = otherCompTypeProp.stringValue;
                         if (!string.IsNullOrEmpty(otherCompType))
                         {
-                            Component otherComp = ComponentBindingInspectorShared.FindComponentByTypeName(otherTargetObj, otherCompType);
+                            Component otherComp =
+                                ComponentBindingInspectorShared.FindComponentByTypeName(otherTargetObj, otherCompType);
                             if (otherComp != null)
                             {
                                 DrawPropertyDropdown(otherComp, otherPropNameProp, null,

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.NPC
 {
@@ -13,22 +13,23 @@ namespace Neo.NPC
 
         [Header("Override")]
         [Tooltip("Explicit target. When assigned, scene search by tag/name is skipped.")]
-        [SerializeField] private Transform _targetOverride;
+        [SerializeField]
+        private Transform _targetOverride;
 
-        [Header("Search Settings")]
-        [SerializeField] private bool _findByTag = true;
+        [Header("Search Settings")] [SerializeField]
+        private bool _findByTag = true;
+
         [SerializeField] private string _targetTag = "Player";
-        
+
         [SerializeField] private bool _findByName = false;
         [SerializeField] private string _targetName = "Player";
 
-        [Header("Behavior")]
-        [SerializeField] private bool _setModeToFollowOnFind = true;
+        [Header("Behavior")] [SerializeField] private bool _setModeToFollowOnFind = true;
         [SerializeField] private bool _findOnAwake = true;
-        [SerializeField, Min(0f)] private float _retryInterval = DefaultRetryInterval;
+        [SerializeField] [Min(0f)] private float _retryInterval = DefaultRetryInterval;
 
-        [Header("Diagnostics")]
-        [SerializeField] private bool _debugLogMissingTarget;
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLogMissingTarget;
 
         private NpcNavigation _navigation;
         private float _nextSearchTime;
@@ -70,16 +71,16 @@ namespace Neo.NPC
 
             if (_findByTag && !string.IsNullOrEmpty(_targetTag))
             {
-                GameObject targetObj = GameObject.FindGameObjectWithTag(_targetTag);
+                var targetObj = GameObject.FindGameObjectWithTag(_targetTag);
                 if (targetObj != null)
                 {
                     target = targetObj.transform;
                 }
             }
-            
+
             if (target == null && _findByName && !string.IsNullOrEmpty(_targetName))
             {
-                GameObject targetObj = GameObject.Find(_targetName);
+                var targetObj = GameObject.Find(_targetName);
                 if (targetObj != null)
                 {
                     target = targetObj.transform;
@@ -95,7 +96,7 @@ namespace Neo.NPC
             if (_debugLogMissingTarget && !_hasWarnedMissingTarget)
             {
                 _hasWarnedMissingTarget = true;
-                Debug.LogWarning($"[NpcTargetFinder] Target not found on '{name}'.", this);
+                NeoDiagnostics.LogWarning($"[NpcTargetFinder] Target not found on '{name}'.", this);
             }
         }
 

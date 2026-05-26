@@ -126,7 +126,8 @@ namespace Neo.Editor
             DrawSummaryCard(title, subtitle, compact, true, badges);
         }
 
-        public static void DrawSummaryCard(string title, string subtitle, bool compact, bool showOverviewLabel, params Badge[] badges)
+        public static void DrawSummaryCard(string title, string subtitle, bool compact, bool showOverviewLabel,
+            params Badge[] badges)
         {
             Rect rect = EditorGUILayout.BeginVertical(compact ? CompactCardBoxStyle : CardBoxStyle);
             if (Event.current.type == EventType.Repaint)

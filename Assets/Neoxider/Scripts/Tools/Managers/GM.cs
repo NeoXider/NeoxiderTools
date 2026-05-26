@@ -1,4 +1,4 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -52,8 +52,8 @@ namespace Neo.Tools
 
                 if (_debugLog)
                 {
-                    Debug.Log("[GM]".SetColor(Color.yellow)
-                              + $": {_state}".Gradient(Color.cyan, Color.blue), this);
+                    NeoDiagnostics.Log("[GM]".SetColor(Color.yellow)
+                                       + $": {_state}".Gradient(Color.cyan, Color.blue), this);
                 }
             }
         }
@@ -71,7 +71,7 @@ namespace Neo.Tools
             base.Init();
             if (_debugLog)
             {
-                Debug.Log("[GM] Initialized", this);
+                NeoDiagnostics.Log("[GM] Initialized", this);
             }
 
             if (startOnAwake)

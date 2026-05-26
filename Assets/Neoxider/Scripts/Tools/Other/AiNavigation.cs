@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.AI;
@@ -316,7 +316,7 @@ namespace Neo.Tools
                     }
                     else
                     {
-                        Debug.LogWarning(
+                        NeoDiagnostics.LogWarning(
                             $"AiNavigation ({gameObject.name}): FollowTarget mode requires target to be set!");
                     }
 
@@ -331,7 +331,7 @@ namespace Neo.Tools
 
                     if (aggroDistance <= 0f)
                     {
-                        Debug.LogWarning(
+                        NeoDiagnostics.LogWarning(
                             $"AiNavigation ({gameObject.name}): Combined mode requires aggroDistance > 0! Currently {aggroDistance}");
                     }
 
@@ -469,13 +469,13 @@ namespace Neo.Tools
         {
             if (!isInitialized || agent == null || !agent.enabled)
             {
-                Debug.LogWarning("AiNavigation: Cannot set target - agent not ready");
+                NeoDiagnostics.LogWarning("AiNavigation: Cannot set target - agent not ready");
                 return;
             }
 
             if (!agent.isOnNavMesh)
             {
-                Debug.LogWarning($"AiNavigation: Agent {gameObject.name} is not on NavMesh!");
+                NeoDiagnostics.LogWarning($"AiNavigation: Agent {gameObject.name} is not on NavMesh!");
                 return;
             }
 
@@ -505,13 +505,13 @@ namespace Neo.Tools
         {
             if (!isInitialized || agent == null || !agent.enabled)
             {
-                Debug.LogWarning("AiNavigation: Cannot set destination - agent not ready");
+                NeoDiagnostics.LogWarning("AiNavigation: Cannot set destination - agent not ready");
                 return false;
             }
 
             if (!agent.isOnNavMesh)
             {
-                Debug.LogWarning($"AiNavigation: Agent {gameObject.name} is not on NavMesh!");
+                NeoDiagnostics.LogWarning($"AiNavigation: Agent {gameObject.name} is not on NavMesh!");
                 return false;
             }
 
@@ -530,7 +530,7 @@ namespace Neo.Tools
                 return true;
             }
 
-            Debug.LogWarning($"AiNavigation: Could not find valid NavMesh position near {destination}");
+            NeoDiagnostics.LogWarning($"AiNavigation: Could not find valid NavMesh position near {destination}");
             return false;
         }
 
@@ -623,7 +623,7 @@ namespace Neo.Tools
                 return true;
             }
 
-            Debug.LogWarning($"AiNavigation: Could not warp to position {position}");
+            NeoDiagnostics.LogWarning($"AiNavigation: Could not warp to position {position}");
             return false;
         }
 
@@ -671,13 +671,14 @@ namespace Neo.Tools
         {
             if (patrolZone == null && (patrolPoints == null || patrolPoints.Length == 0))
             {
-                Debug.LogWarning($"AiNavigation ({gameObject.name}): No patrol points or patrol zone set!");
+                NeoDiagnostics.LogWarning($"AiNavigation ({gameObject.name}): No patrol points or patrol zone set!");
                 return;
             }
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Starting patrol" + (patrolZone != null ? " in zone" : " with points"));
+                NeoDiagnostics.Log($"[{gameObject.name}] Starting patrol" +
+                                   (patrolZone != null ? " in zone" : " with points"));
             }
 
             if (movementMode == MovementMode.Combined && target == null && initialTarget != null)
@@ -686,7 +687,7 @@ namespace Neo.Tools
 
                 if (debugMode)
                 {
-                    Debug.Log($"[{gameObject.name}] Restored target from initialTarget: {target.name}");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Restored target from initialTarget: {target.name}");
                 }
             }
 
@@ -831,7 +832,7 @@ namespace Neo.Tools
 
             if (agent == null)
             {
-                Debug.LogError("AiNavigation: NavMeshAgent component is missing");
+                NeoDiagnostics.LogError("AiNavigation: NavMeshAgent component is missing");
                 enabled = false;
             }
         }
@@ -991,7 +992,8 @@ namespace Neo.Tools
             {
                 if (debugMode)
                 {
-                    Debug.LogWarning($"[{gameObject.name}] Combined: initialTarget is null! Set target in inspector.");
+                    NeoDiagnostics.LogWarning(
+                        $"[{gameObject.name}] Combined: initialTarget is null! Set target in inspector.");
                 }
 
                 if (!IsPatrolling)
@@ -1008,7 +1010,7 @@ namespace Neo.Tools
             if (debugMode && Time.time >= nextDebugLogTime)
             {
                 float dist = Mathf.Sqrt(distanceSqr);
-                Debug.Log(
+                NeoDiagnostics.Log(
                     $"[{gameObject.name}] Combined: dist={dist:F1}, aggroDistance={aggroDistance}, isFollowing={isFollowingTarget}, isPatrolling={IsPatrolling}, target={initialTarget.name}");
                 nextDebugLogTime = Time.time + 1f;
             }
@@ -1021,7 +1023,7 @@ namespace Neo.Tools
                 if (debugMode)
                 {
                     float dist = Mathf.Sqrt(distanceSqr);
-                    Debug.Log(
+                    NeoDiagnostics.Log(
                         $"[{gameObject.name}] AGGRO! Starting to follow {initialTarget.name} at distance {dist:F1}m");
                 }
 
@@ -1041,7 +1043,7 @@ namespace Neo.Tools
 
                     if (debugMode)
                     {
-                        Debug.Log($"[{gameObject.name}] Set destination to target: {initialTarget.position}");
+                        NeoDiagnostics.Log($"[{gameObject.name}] Set destination to target: {initialTarget.position}");
                     }
                 }
             }
@@ -1050,7 +1052,7 @@ namespace Neo.Tools
                 if (debugMode)
                 {
                     float dist = Mathf.Sqrt(distanceSqr);
-                    Debug.Log($"[{gameObject.name}] DE-AGGRO! Returning to patrol at distance {dist:F1}m");
+                    NeoDiagnostics.Log($"[{gameObject.name}] DE-AGGRO! Returning to patrol at distance {dist:F1}m");
                 }
 
                 isFollowingTarget = false;
@@ -1082,7 +1084,7 @@ namespace Neo.Tools
 
             if (patrolPoints[index] == null)
             {
-                Debug.LogWarning($"AiNavigation: Patrol point {index} is null!");
+                NeoDiagnostics.LogWarning($"AiNavigation: Patrol point {index} is null!");
                 MoveToNextPatrolPoint();
                 return;
             }
@@ -1117,14 +1119,15 @@ namespace Neo.Tools
 
                 if (debugMode)
                 {
-                    Debug.Log($"[{gameObject.name}] Moving to random point in zone: {hit.position}");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Moving to random point in zone: {hit.position}");
                 }
             }
             else
             {
                 if (debugMode)
                 {
-                    Debug.LogWarning($"[{gameObject.name}] Could not find valid NavMesh position in patrol zone");
+                    NeoDiagnostics.LogWarning(
+                        $"[{gameObject.name}] Could not find valid NavMesh position in patrol zone");
                 }
 
                 StartCoroutine(RetryMoveToRandomPoint());
@@ -1170,7 +1173,7 @@ namespace Neo.Tools
             if (debugMode)
             {
                 string pointInfo = patrolZone != null ? "random point in zone" : $"point {CurrentPatrolIndex}";
-                Debug.Log($"[{gameObject.name}] Reached patrol {pointInfo}, waiting {patrolWaitTime}s");
+                NeoDiagnostics.Log($"[{gameObject.name}] Reached patrol {pointInfo}, waiting {patrolWaitTime}s");
             }
 
             yield return new WaitForSeconds(patrolWaitTime);
@@ -1185,7 +1188,7 @@ namespace Neo.Tools
             {
                 if (debugMode)
                 {
-                    Debug.Log($"[{gameObject.name}] Moving to next random point in zone");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Moving to next random point in zone");
                 }
 
                 MoveToRandomPointInZone();
@@ -1202,7 +1205,7 @@ namespace Neo.Tools
 
                     if (debugMode)
                     {
-                        Debug.Log($"[{gameObject.name}] Patrol loop: returning to point 0");
+                        NeoDiagnostics.Log($"[{gameObject.name}] Patrol loop: returning to point 0");
                     }
                 }
                 else
@@ -1212,7 +1215,7 @@ namespace Neo.Tools
 
                     if (debugMode)
                     {
-                        Debug.Log($"[{gameObject.name}] Patrol completed (no loop)");
+                        NeoDiagnostics.Log($"[{gameObject.name}] Patrol completed (no loop)");
                     }
 
                     return;
@@ -1221,7 +1224,7 @@ namespace Neo.Tools
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Moving to patrol point {CurrentPatrolIndex}");
+                NeoDiagnostics.Log($"[{gameObject.name}] Moving to patrol point {CurrentPatrolIndex}");
             }
 
             MoveToPatrolPoint(CurrentPatrolIndex);
@@ -1240,7 +1243,7 @@ namespace Neo.Tools
 
             if (debugMode)
             {
-                Debug.Log($"[{gameObject.name}] Waiting {patrolWaitTime}s before resuming patrol");
+                NeoDiagnostics.Log($"[{gameObject.name}] Waiting {patrolWaitTime}s before resuming patrol");
             }
 
             StartCoroutine(WaitBeforeResumePatrol());
@@ -1263,7 +1266,7 @@ namespace Neo.Tools
             {
                 if (debugMode)
                 {
-                    Debug.Log($"[{gameObject.name}] Resuming patrol, moving to random point in zone");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Resuming patrol, moving to random point in zone");
                 }
 
                 MoveToRandomPointInZone();
@@ -1272,7 +1275,7 @@ namespace Neo.Tools
             {
                 if (debugMode)
                 {
-                    Debug.Log($"[{gameObject.name}] Resuming patrol, moving to point {CurrentPatrolIndex}");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Resuming patrol, moving to point {CurrentPatrolIndex}");
                 }
 
                 MoveToPatrolPoint(CurrentPatrolIndex);

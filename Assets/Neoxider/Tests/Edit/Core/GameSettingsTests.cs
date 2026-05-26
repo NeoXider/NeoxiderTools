@@ -22,6 +22,7 @@ namespace Neo.Tools.Tests
         [TearDown]
         public void TearDown()
         {
+            NeoDiagnostics.ResetStaticState();
             GameSettingsComponent[] all = Object.FindObjectsByType<GameSettingsComponent>(
                 FindObjectsInactive.Include, FindObjectsSortMode.None);
             GameSettingsComponent svc = all != null && all.Length > 0 ? all[0] : null;
@@ -96,6 +97,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void LoadState_WithoutComponent_KeepsStaticDefaults()
         {
+            NeoDiagnostics.Configure(warnings: true);
             LogAssert.Expect(LogType.Warning, "[GameSettings] LoadState: no GameSettingsComponent attached.");
 
             Assert.DoesNotThrow(GameSettings.LoadState);
@@ -113,14 +115,14 @@ namespace Neo.Tools.Tests
         public void LoadState_WithMissingSavedValues_UsesComponentDefaults()
         {
             GameSettingsComponent svc = CreateComponentWithDefaults(
-                mouseSensitivity: 3.5f,
-                graphicsPreset: GraphicsPreset.Low,
-                qualityLevel: 0,
-                fullScreen: false,
-                resolutionAuto: true,
-                resolutionIndex: 1,
-                framerateCap: 120,
-                vSync: true);
+                3.5f,
+                GraphicsPreset.Low,
+                0,
+                false,
+                true,
+                1,
+                120,
+                true);
 
             try
             {
@@ -141,6 +143,7 @@ namespace Neo.Tools.Tests
         [Test]
         public void LoadState_WithInvalidSavedValues_ClampsOrFallsBackToDefaults()
         {
+            NeoDiagnostics.Configure(warnings: true);
             const string prefix = "Neo.Settings.";
             SaveProvider.SetFloat(prefix + GameSettingsSaveKeys.MouseSensitivity, -10f);
             SaveProvider.SetInt(prefix + GameSettingsSaveKeys.GraphicsPreset, 999);
@@ -151,20 +154,21 @@ namespace Neo.Tools.Tests
             LogAssert.Expect(LogType.Warning, "[GameSettings] Resolution index 99 clamped.");
 
             GameSettingsComponent svc = CreateComponentWithDefaults(
-                mouseSensitivity: 2f,
-                graphicsPreset: GraphicsPreset.Medium,
-                qualityLevel: 0,
-                fullScreen: true,
-                resolutionAuto: true,
-                resolutionIndex: 0,
-                framerateCap: -1,
-                vSync: false);
+                2f,
+                GraphicsPreset.Medium,
+                0,
+                true,
+                true,
+                0,
+                -1,
+                false);
 
             try
             {
                 Assert.That(GameSettings.MouseSensitivity, Is.EqualTo(0.01f));
                 Assert.That(GameSettings.GraphicsPreset, Is.EqualTo(GraphicsPreset.Medium));
-                Assert.That(GameSettings.QualityLevelIndex, Is.InRange(0, Mathf.Max(0, QualitySettings.names.Length - 1)));
+                Assert.That(GameSettings.QualityLevelIndex,
+                    Is.InRange(0, Mathf.Max(0, QualitySettings.names.Length - 1)));
                 Assert.That(GameSettings.ResolutionIndex, Is.EqualTo(1));
             }
             finally
@@ -232,9 +236,9 @@ namespace Neo.Tools.Tests
 
             public SaveProviderType ProviderType => SaveProviderType.PlayerPrefs;
 
-            public event System.Action OnDataSaved;
-            public event System.Action OnDataLoaded;
-            public event System.Action<string> OnKeyChanged;
+            public event Action OnDataSaved;
+            public event Action OnDataLoaded;
+            public event Action<string> OnKeyChanged;
 
             public int GetInt(string key, int defaultValue = 0)
             {

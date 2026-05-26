@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using Mirror;
 using Neo.Network;
 using NUnit.Framework;
@@ -15,43 +16,55 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerFilterTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerFilterTest", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 89001);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
         }
 
         [UnityTest]
         public IEnumerator ServerOnly_AllowsOnHost()
         {
             var filterObj = new GameObject("FilterServerOnly");
-            var filter = filterObj.AddComponent<NetworkOwnerFilter>();
+            NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
-            var modeField = typeof(NetworkOwnerFilter).GetField("_mode",
+            FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.ServerOnly);
 
-            var id = filterObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 89010);
             NetworkClient.RegisterPrefab(filterObj);
             NetworkServer.Spawn(filterObj);
@@ -73,13 +86,13 @@ namespace Neo.Tests.Play
         public IEnumerator Everyone_AlwaysAllows()
         {
             var filterObj = new GameObject("FilterEveryone");
-            var filter = filterObj.AddComponent<NetworkOwnerFilter>();
+            NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
-            var modeField = typeof(NetworkOwnerFilter).GetField("_mode",
+            FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.Everyone);
 
-            var id = filterObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 89011);
             NetworkClient.RegisterPrefab(filterObj);
             NetworkServer.Spawn(filterObj);
@@ -99,13 +112,13 @@ namespace Neo.Tests.Play
         public IEnumerator IsAllowed_ReturnsCorrectBool()
         {
             var filterObj = new GameObject("FilterBool");
-            var filter = filterObj.AddComponent<NetworkOwnerFilter>();
+            NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
-            var modeField = typeof(NetworkOwnerFilter).GetField("_mode",
+            FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.ServerOnly);
 
-            var id = filterObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 89012);
             NetworkClient.RegisterPrefab(filterObj);
             NetworkServer.Spawn(filterObj);

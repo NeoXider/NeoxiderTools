@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo.Save;
 using Neo.Network;
@@ -37,15 +37,20 @@ namespace Neo.Tools
 #if MIRROR
         /// <summary>Server-authoritative index, synced to late-joining clients.</summary>
         [SyncVar] private int _syncIndex;
+
         /// <summary>Server-authoritative fill mode, synced to late-joining clients.</summary>
         [SyncVar] private bool _syncFillMode;
+
         /// <summary>Server-authoritative deactivateNonSelected flag.</summary>
         [SyncVar] private bool _syncDeactivateNonSelected = true;
+
         /// <summary>Server-authoritative excluded random pool indices.</summary>
         [SyncVar] private string _syncExcludedIndices = string.Empty;
+
         /// <summary>Server-authoritative active item snapshot for additive selection modes.</summary>
         [SyncVar] private string _syncActiveIndices = string.Empty;
 #endif
+
         #region Private Methods
 
         /// <summary>
@@ -53,7 +58,7 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="deactivateNonSelected">
         ///     If true (default), only the current selection is on (plus fill-mode rules). If false, only activates matching
-        ///     items and does not turn others off — used by <see cref="SetRandom(bool)"/> when additive random is requested.
+        ///     items and does not turn others off  - used by <see cref="SetRandom(bool)"/> when additive random is requested.
         ///     Fill mode and empty effective index always use exclusive deactivation.
         /// </param>
         private void UpdateSelection(bool deactivateNonSelected = true)
@@ -264,10 +269,18 @@ namespace Neo.Tools
 
 #if MIRROR
         [Command(requiresAuthority = false)]
-        private void CmdSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, NetworkConnectionToClient sender = null)
+        private void CmdSyncState(int newIndex, bool fillMode, bool deactivateNonSelected,
+            NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             _syncIndex = newIndex;
             _syncFillMode = fillMode;
@@ -283,7 +296,11 @@ namespace Neo.Tools
         [ClientRpc(includeOwner = true)]
         private void RpcSyncState(int newIndex, bool fillMode, bool deactivateNonSelected, string activeIndices)
         {
-            if (isServerOnly || isServer) return;
+            if (isServerOnly || isServer)
+            {
+                return;
+            }
+
             _currentIndex = newIndex;
             _fillMode = fillMode;
             ApplyUpdateSelection(deactivateNonSelected);
@@ -293,8 +310,15 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSetRandom(bool deactivateOthers, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             ExecuteSetRandom(deactivateOthers);
             SyncNetworkState(deactivateOthers);
@@ -303,8 +327,15 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdExcludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             ApplyExcludeIndex(index);
             BroadcastExcludedIndices();
@@ -313,8 +344,15 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdIncludeIndex(int index, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             ApplyIncludeIndex(index);
             BroadcastExcludedIndices();
@@ -323,8 +361,15 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdIncludeAllIndices(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             ApplyIncludeAllIndices();
             BroadcastExcludedIndices();
@@ -333,7 +378,11 @@ namespace Neo.Tools
         [ClientRpc(includeOwner = true)]
         private void RpcSyncExcludedIndices(string excludedIndices)
         {
-            if (isServerOnly || isServer) return;
+            if (isServerOnly || isServer)
+            {
+                return;
+            }
+
             ApplyExcludedIndicesSnapshot(excludedIndices);
         }
 
@@ -349,8 +398,10 @@ namespace Neo.Tools
             ApplyActiveIndicesSnapshot(_syncActiveIndices);
         }
 
-        private bool AuthorizedSender(NetworkConnectionToClient sender) =>
-            NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        private bool AuthorizedSender(NetworkConnectionToClient sender)
+        {
+            return NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        }
 
         private void SyncNetworkState(bool deactivateNonSelected)
         {
@@ -373,25 +424,8 @@ namespace Neo.Tools
         /// </summary>
         private int ComputeLogicalCountActive()
         {
-            int total = Count;
-            if (total == 0)
-            {
-                return 0;
-            }
-
-            int minEff = _allowEmptyEffectiveIndex ? -1 : 0;
-            int effectiveIndex = _currentIndex + _indexOffset;
-            if (effectiveIndex < minEff)
-            {
-                return 0;
-            }
-
-            if (effectiveIndex >= total)
-            {
-                return _fillMode ? total : 1;
-            }
-
-            return _fillMode ? effectiveIndex + 1 : 1;
+            SyncModelFromFields();
+            return _model.GetLogicalActiveCount();
         }
 
         /// <summary>
@@ -488,7 +522,7 @@ namespace Neo.Tools
         private bool _setChild;
 
         [Tooltip(
-            "When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update). True by default — selector reacts to OnTransformChildrenChanged.")]
+            "When enabled, automatically keep items array in sync with child objects (auto-populate + auto-update). True by default  - selector reacts to OnTransformChildrenChanged.")]
         [SerializeField]
         private bool _autoUpdateFromChildren = true;
 
@@ -545,7 +579,7 @@ namespace Neo.Tools
         private bool _notifySelectorItemsOnly;
 
         [Tooltip(
-            "When true (default), Selector applies selection to items: GameObject.SetActive for entries without SelectorItem; SelectorItem.SetActive when Notify Selector Items Only is on (SelectorItem does not toggle GameObject active by itself). When false, no SetActive calls at all — only index/events.")]
+            "When true (default), Selector applies selection to items: GameObject.SetActive for entries without SelectorItem; SelectorItem.SetActive when Notify Selector Items Only is on (SelectorItem does not toggle GameObject active by itself). When false, no SetActive calls at all  - only index/events.")]
         [SerializeField]
         private bool _controlGameObjectActive = true;
 
@@ -569,6 +603,7 @@ namespace Neo.Tools
         private int _lastCountActiveNotified = int.MinValue;
         private HashSet<int> _usedIndicesForUnique;
         private HashSet<int> _excludedIndices;
+        private readonly SelectorModel _model = new();
 
         /// <summary>
         /// After the first <see cref="ApplyUpdateSelection"/> pass over real items in <see cref="_notifySelectorItemsOnly"/>
@@ -751,28 +786,8 @@ namespace Neo.Tools
         {
             get
             {
-                if (!_uniqueSelectionMode || _usedIndicesForUnique == null)
-                {
-                    return 0;
-                }
-
-                (int min, int max) = GetCurrentBounds();
-                int range = max - min + 1;
-                if (range <= 0)
-                {
-                    return 0;
-                }
-
-                int used = 0;
-                for (int i = min; i <= max; i++)
-                {
-                    if (_usedIndicesForUnique.Contains(i))
-                    {
-                        used++;
-                    }
-                }
-
-                return range - used;
+                SyncModelFromFields();
+                return _model.UniqueRemainingCount;
             }
         }
 
@@ -834,7 +849,8 @@ namespace Neo.Tools
         /// </summary>
         public bool IsExcluded(int index)
         {
-            return _excludedIndices != null && _excludedIndices.Contains(index);
+            SyncModelFromFields();
+            return _model.IsExcluded(index);
         }
 
         /// <summary>
@@ -851,6 +867,28 @@ namespace Neo.Tools
         ///     Snapshot of included Random pool indices (all indices in current bounds except excluded).
         /// </summary>
         public IReadOnlyList<int> IncludedIndices => _includedIndicesInspector;
+
+        /// <summary>
+        ///     Creates a pure C# snapshot of this Selector's current selection state.
+        ///     Use <see cref="SelectorModel"/> directly when you need selection rules outside a scene component.
+        /// </summary>
+        public SelectorModel CreateModelSnapshot()
+        {
+            SyncModelFromFields();
+            SelectorModel snapshot = new();
+            snapshot.Configure(
+                _model.Count,
+                _model.CurrentIndex,
+                _model.IndexOffset,
+                _model.Loop,
+                _model.FillMode,
+                _model.AllowEmptyEffectiveIndex,
+                _model.UniqueSelectionMode,
+                _model.ResetUniqueWhenCycleComplete,
+                _model.ExcludedIndices,
+                _model.UsedIndicesForUnique);
+            return snapshot;
+        }
 
         #endregion
 
@@ -969,7 +1007,7 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    string data = string.Join(",", _excludedIndices);
+                    string data = SerializeIndices(_excludedIndices);
                     SaveProvider.SetString(excludedKey, data);
                 }
             }
@@ -1002,17 +1040,7 @@ namespace Neo.Tools
                 if (SaveProvider.HasKey(excludedKey))
                 {
                     string data = SaveProvider.GetString(excludedKey, string.Empty);
-                    if (!string.IsNullOrEmpty(data))
-                    {
-                        string[] parts = data.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                        for (int i = 0; i < parts.Length; i++)
-                        {
-                            if (int.TryParse(parts[i].Trim(), out int idx))
-                            {
-                                _excludedIndices.Add(idx);
-                            }
-                        }
-                    }
+                    _excludedIndices = DeserializeIndices(data);
                 }
             }
 
@@ -1127,7 +1155,7 @@ namespace Neo.Tools
             int total = Count;
             if (total == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot move to next - no items available (items array is null/empty or count is 0)");
                 return;
             }
@@ -1138,24 +1166,8 @@ namespace Neo.Tools
                 return;
             }
 
-            _currentIndex++;
-
-            (int min, int max) = GetCurrentBounds();
-            if (_currentIndex > max)
-            {
-                if (_loop)
-                {
-                    _currentIndex = min;
-                }
-                else
-                {
-                    _currentIndex = max;
-                }
-
-                OnFinished?.Invoke();
-            }
-
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.Next());
         }
 
         /// <summary>
@@ -1169,7 +1181,7 @@ namespace Neo.Tools
             int total = Count;
             if (total == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot move to previous - no items available (items array is null/empty or count is 0)");
                 return;
             }
@@ -1180,22 +1192,8 @@ namespace Neo.Tools
                 return;
             }
 
-            _currentIndex--;
-
-            (int min, int max) = GetCurrentBounds();
-            if (_currentIndex < min)
-            {
-                if (_loop)
-                {
-                    _currentIndex = max;
-                }
-                else
-                {
-                    _currentIndex = min;
-                }
-            }
-
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.Previous());
         }
 
         /// <summary>
@@ -1228,31 +1226,13 @@ namespace Neo.Tools
             int total = Count;
             if (total == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot set selection - no items available (items array is null/empty or count is 0)");
                 return;
             }
 
-            (int min, int max) = GetCurrentBounds();
-            if (_loop)
-            {
-                int range = max - min + 1;
-                if (range <= 0)
-                {
-                    _currentIndex = min;
-                }
-                else
-                {
-                    _currentIndex = ((index - min) % range + range) % range + min;
-                }
-            }
-            else
-            {
-                _currentIndex = Mathf.Clamp(index, min, max);
-            }
-
-            MarkIndexUsedInUniqueMode(_currentIndex);
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.Set(index));
         }
 
         /// <summary>
@@ -1280,7 +1260,7 @@ namespace Neo.Tools
 
             if (!_useRandomSelection)
             {
-                Debug.LogWarning("Selector: Random selection is disabled (_useRandomSelection = false)");
+                NeoDiagnostics.LogWarning("Selector: Random selection is disabled (_useRandomSelection = false)");
                 return;
             }
 
@@ -1300,122 +1280,16 @@ namespace Neo.Tools
 
         private void ExecuteSetRandom(bool deactivateOthers)
         {
-            int total = Count;
-            if (total == 0)
+            SyncModelFromFields();
+            SelectorModelResult result = _model.SetRandom(deactivateOthers, Random.Range);
+            if (Count == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot set random selection - no items available (items array is null/empty or count is 0)");
                 return;
             }
 
-            (int min, int max) = GetCurrentBounds();
-            if (min > max)
-            {
-                return;
-            }
-
-            bool IsExcludedIndex(int idx)
-            {
-                return _excludedIndices != null && _excludedIndices.Contains(idx);
-            }
-
-            int range = max - min + 1;
-            List<int> availableNonExcluded = new(range);
-            for (int i = min; i <= max; i++)
-            {
-                if (!IsExcludedIndex(i))
-                {
-                    availableNonExcluded.Add(i);
-                }
-            }
-
-            if (availableNonExcluded.Count == 0)
-            {
-                return;
-            }
-
-            if (range <= 1 || availableNonExcluded.Count == 1)
-            {
-                int only = availableNonExcluded[0];
-                _currentIndex = only;
-                if (_uniqueSelectionMode)
-                {
-                    MarkIndexUsedInUniqueMode(only);
-                }
-
-                UpdateSelection(deactivateOthers);
-                return;
-            }
-
-            if (_uniqueSelectionMode)
-            {
-                SetRandomUnique(min, max, range, IsExcludedIndex, deactivateOthers);
-                return;
-            }
-
-            int pick = Random.Range(0, availableNonExcluded.Count);
-            int newIndex = availableNonExcluded[pick];
-            if (newIndex == _currentIndex && availableNonExcluded.Count > 1)
-            {
-                int next = (pick + 1) % availableNonExcluded.Count;
-                newIndex = availableNonExcluded[next];
-            }
-
-            _currentIndex = newIndex;
-            UpdateSelection(deactivateOthers);
-        }
-
-        private void SetRandomUnique(int min, int max, int range, Func<int, bool> isExcluded, bool deactivateOthers)
-        {
-            _usedIndicesForUnique ??= new HashSet<int>();
-
-            List<int> available = new(range);
-            for (int i = min; i <= max; i++)
-            {
-                if (!_usedIndicesForUnique.Contains(i) && (isExcluded == null || !isExcluded(i)))
-                {
-                    available.Add(i);
-                }
-            }
-
-            if (available.Count == 0)
-            {
-                OnUniqueCycleComplete?.Invoke();
-                if (_resetUniqueWhenCycleComplete)
-                {
-                    _usedIndicesForUnique.Clear();
-                    SyncUsedIndicesForUniqueInspector();
-                    for (int i = min; i <= max; i++)
-                    {
-                        if (isExcluded == null || !isExcluded(i))
-                        {
-                            available.Add(i);
-                        }
-                    }
-                }
-                else
-                {
-                    return;
-                }
-            }
-
-            int chosen = available[Random.Range(0, available.Count)];
-            _usedIndicesForUnique.Add(chosen);
-            SyncUsedIndicesForUniqueInspector();
-            _currentIndex = chosen;
-            UpdateSelection(deactivateOthers);
-        }
-
-        private void MarkIndexUsedInUniqueMode(int index)
-        {
-            if (!_uniqueSelectionMode)
-            {
-                return;
-            }
-
-            _usedIndicesForUnique ??= new HashSet<int>();
-            _usedIndicesForUnique.Add(index);
-            SyncUsedIndicesForUniqueInspector();
+            ApplyModelResult(result);
         }
 
         /// <summary>
@@ -1429,14 +1303,13 @@ namespace Neo.Tools
             int total = Count;
             if (total == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot set to first - no items available (items array is null/empty or count is 0)");
                 return;
             }
 
-            (int min, int max) = GetCurrentBounds();
-            _currentIndex = min;
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.SetFirst());
         }
 
         /// <summary>
@@ -1450,14 +1323,13 @@ namespace Neo.Tools
             int total = Count;
             if (total == 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Selector: Cannot set to last - no items available (items array is null/empty or count is 0)");
                 return;
             }
 
-            (int min, int max) = GetCurrentBounds();
-            _currentIndex = max;
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.SetLast());
         }
 
         /// <summary>
@@ -1465,8 +1337,8 @@ namespace Neo.Tools
         /// </summary>
         public void ToggleFillMode()
         {
-            _fillMode = !_fillMode;
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.ToggleFillMode());
         }
 
         /// <summary>
@@ -1508,8 +1380,8 @@ namespace Neo.Tools
                 return false;
             }
 
-            (int min, int max) = GetCurrentBounds();
-            return index >= min && index <= max;
+            SyncModelFromFields();
+            return _model.IsValidIndex(index);
         }
 
         /// <summary>
@@ -1517,9 +1389,8 @@ namespace Neo.Tools
         /// </summary>
         public void Reset()
         {
-            (int min, int max) = GetCurrentBounds();
-            _currentIndex = min;
-            UpdateSelection();
+            SyncModelFromFields();
+            ApplyModelResult(_model.Reset());
         }
 
         /// <summary>
@@ -1529,10 +1400,10 @@ namespace Neo.Tools
         [Button("Reset Unique")]
         public void ResetUnique()
         {
-            if (_usedIndicesForUnique != null && _usedIndicesForUnique.Count > 0)
+            SyncModelFromFields();
+            if (_model.ResetUnique())
             {
-                _usedIndicesForUnique.Clear();
-                SyncUsedIndicesForUniqueInspector();
+                SyncFieldsFromModel();
                 OnUniqueReset?.Invoke();
             }
         }
@@ -1619,9 +1490,9 @@ namespace Neo.Tools
         /// <param name="indices">Indices to exclude from the Random pool.</param>
         public void SetExcludedIndices(IEnumerable<int> indices)
         {
-            _excludedIndices = indices != null ? new HashSet<int>(indices) : new HashSet<int>();
-            SyncExcludedIndicesInspector();
-            SyncIncludedIndicesInspector();
+            SyncModelFromFields();
+            _model.SetExcludedIndices(indices);
+            SyncFieldsFromModel();
             SaveState();
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsServer)
@@ -1641,14 +1512,14 @@ namespace Neo.Tools
         {
             if (!HasItems)
             {
-                Debug.LogWarning("Selector: No GameObjects to toggle");
+                NeoDiagnostics.LogWarning("Selector: No GameObjects to toggle");
                 return;
             }
 
             int effectiveIndex = index + _indexOffset;
             if (effectiveIndex < 0 || effectiveIndex >= _items.Length)
             {
-                Debug.LogWarning($"Selector: Index {index} with offset {_indexOffset} is out of bounds");
+                NeoDiagnostics.LogWarning($"Selector: Index {index} with offset {_indexOffset} is out of bounds");
                 return;
             }
 
@@ -1676,13 +1547,13 @@ namespace Neo.Tools
         {
             if (item == null)
             {
-                Debug.LogWarning("Selector: Cannot add null GameObject to items");
+                NeoDiagnostics.LogWarning("Selector: Cannot add null GameObject to items");
                 return;
             }
 
             if (_count > 0)
             {
-                Debug.LogWarning("Selector: Cannot add items when using count mode (_count > 0)");
+                NeoDiagnostics.LogWarning("Selector: Cannot add items when using count mode (_count > 0)");
                 return;
             }
 
@@ -1734,81 +1605,94 @@ namespace Neo.Tools
 
         #region Helpers
 
+        private void SyncModelFromFields()
+        {
+            _model.Configure(
+                Count,
+                _currentIndex,
+                _indexOffset,
+                _loop,
+                _fillMode,
+                _allowEmptyEffectiveIndex,
+                _uniqueSelectionMode,
+                _resetUniqueWhenCycleComplete,
+                _excludedIndices,
+                _usedIndicesForUnique);
+        }
+
+        private void SyncFieldsFromModel()
+        {
+            _currentIndex = _model.CurrentIndex;
+            _indexOffset = _model.IndexOffset;
+            _fillMode = _model.FillMode;
+            _excludedIndices = new HashSet<int>(_model.ExcludedIndices);
+            _usedIndicesForUnique = new HashSet<int>(_model.UsedIndicesForUnique);
+            SyncExcludedIndicesInspector();
+            SyncUsedIndicesForUniqueInspector();
+        }
+
+        private void ApplyModelResult(SelectorModelResult result)
+        {
+            SyncFieldsFromModel();
+
+            if (result.ReachedEnd)
+            {
+                OnFinished?.Invoke();
+            }
+
+            if (result.UniqueCycleComplete)
+            {
+                OnUniqueCycleComplete?.Invoke();
+            }
+
+            if (result.SelectionChanged)
+            {
+                UpdateSelection(result.DeactivateOthers);
+            }
+        }
+
         /// <summary>
         ///     Gets the current valid bounds for the selection index
         /// </summary>
         /// <returns>A tuple containing the minimum and maximum valid indices</returns>
         private (int min, int max) GetCurrentBounds()
         {
-            int total = Count;
-            if (total <= 0)
-            {
-                return (0, 0);
-            }
-
-            int effMin = _allowEmptyEffectiveIndex ? -1 : 0;
-            int min = effMin - _indexOffset;
-            int max = total - 1 - _indexOffset;
-            return (min, max);
+            SyncModelFromFields();
+            return _model.GetBounds();
         }
 
         private void ApplyExcludeIndex(int index)
         {
-            _excludedIndices ??= new HashSet<int>();
-            _excludedIndices.Add(index);
-            SyncExcludedIndicesInspector();
+            SyncModelFromFields();
+            _model.ExcludeIndex(index);
+            SyncFieldsFromModel();
             SaveState();
         }
 
         private void ApplyIncludeIndex(int index)
         {
-            _excludedIndices?.Remove(index);
-            SyncExcludedIndicesInspector();
+            SyncModelFromFields();
+            _model.IncludeIndex(index);
+            SyncFieldsFromModel();
             SaveState();
         }
 
         private void ApplyIncludeAllIndices()
         {
-            _excludedIndices?.Clear();
-            SyncExcludedIndicesInspector();
+            SyncModelFromFields();
+            _model.IncludeAllIndices();
+            SyncFieldsFromModel();
             SaveState();
         }
 
         private static string SerializeIndices(IEnumerable<int> indices)
         {
-            if (indices == null)
-            {
-                return string.Empty;
-            }
-
-            List<int> sorted = new(indices);
-            if (sorted.Count == 0)
-            {
-                return string.Empty;
-            }
-
-            sorted.Sort();
-            return string.Join(",", sorted);
+            return SelectorModel.SerializeIndices(indices);
         }
 
         private static HashSet<int> DeserializeIndices(string data)
         {
-            HashSet<int> result = new();
-            if (string.IsNullOrWhiteSpace(data))
-            {
-                return result;
-            }
-
-            string[] parts = data.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < parts.Length; i++)
-            {
-                if (int.TryParse(parts[i].Trim(), out int value))
-                {
-                    result.Add(value);
-                }
-            }
-
-            return result;
+            return SelectorModel.DeserializeIndices(data);
         }
 
         private void ApplyExcludedIndicesSnapshot(string excludedIndices)
@@ -1899,10 +1783,10 @@ namespace Neo.Tools
             }
 
             // Count > 0 means "virtual items" (no GameObjects). If Items is empty but there are real children,
-            // child sync was skipped and SelectorItem / events never run — reset Count so children drive Items.
+            // child sync was skipped and SelectorItem / events never run  - reset Count so children drive Items.
             if (_count > 0 && (_items == null || _items.Length == 0) && HasChildObjectsForItemsSync())
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     $"[Selector] '{name}': Count > 0 with empty Items skips syncing from children. " +
                     "Resetting Count to -1 and building Items from children. " +
                     "Use Count > 0 only for virtual slots with no child objects.",
@@ -1986,7 +1870,7 @@ namespace Neo.Tools
         /// </summary>
         /// <param name="applySelection">
         ///     When true (e.g. <see cref="startOnAwake"/> or explicit <see cref="RefreshItems"/>), calls
-        ///     <see cref="UpdateSelection"/> after sync. When false, only rebuilds <see cref="_items"/> and indices — no active-state
+        ///     <see cref="UpdateSelection"/> after sync. When false, only rebuilds <see cref="_items"/> and indices  - no active-state
         ///     propagation until a public API calls <see cref="UpdateSelection"/> (e.g. <see cref="Set"/>).
         /// </param>
         private void RefreshItemsFromChildren(bool applySelection)
@@ -2031,4 +1915,3 @@ namespace Neo.Tools
         #endregion
     }
 }
-

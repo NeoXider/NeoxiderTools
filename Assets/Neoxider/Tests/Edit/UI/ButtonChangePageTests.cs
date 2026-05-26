@@ -1,3 +1,4 @@
+using System.Reflection;
 using Neo.UI;
 using NUnit.Framework;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace Neo.Tests.Edit
             _eventSystem = new GameObject("EventSystem");
             _eventSystem.AddComponent<EventSystem>();
 
-            var ui = _root.AddComponent<UIManager>();
+            UIManager ui = _root.AddComponent<UIManager>();
             SetPrivateField(ui, "_pages", new[] { _pageA, _pageB });
             InvokePrivate(ui, "Awake");
         }
@@ -44,8 +45,8 @@ namespace Neo.Tests.Edit
             buttonGo.transform.SetParent(_root.transform);
             try
             {
-                var selectable = buttonGo.AddComponent<Button>();
-                var changePage = buttonGo.AddComponent<ButtonChangePage>();
+                Button selectable = buttonGo.AddComponent<Button>();
+                ButtonChangePage changePage = buttonGo.AddComponent<ButtonChangePage>();
                 SetPrivateField(changePage, "_selectable", selectable);
                 SetPrivateField(changePage, "_idPage", 1);
 
@@ -67,9 +68,9 @@ namespace Neo.Tests.Edit
             buttonGo.transform.SetParent(_root.transform);
             try
             {
-                var selectable = buttonGo.AddComponent<Button>();
+                Button selectable = buttonGo.AddComponent<Button>();
                 selectable.interactable = false;
-                var changePage = buttonGo.AddComponent<ButtonChangePage>();
+                ButtonChangePage changePage = buttonGo.AddComponent<ButtonChangePage>();
                 SetPrivateField(changePage, "_selectable", selectable);
                 SetPrivateField(changePage, "_idPage", 1);
 
@@ -86,7 +87,7 @@ namespace Neo.Tests.Edit
 
         private static void SetPrivateField(object target, string fieldName, object value)
         {
-            var field = target.GetType().GetField(fieldName,
+            FieldInfo field = target.GetType().GetField(fieldName,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
             field.SetValue(target, value);
@@ -94,7 +95,7 @@ namespace Neo.Tests.Edit
 
         private static void InvokePrivate(object target, string methodName)
         {
-            var method = target.GetType().GetMethod(methodName,
+            MethodInfo method = target.GetType().GetMethod(methodName,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, methodName);
             method.Invoke(target, null);

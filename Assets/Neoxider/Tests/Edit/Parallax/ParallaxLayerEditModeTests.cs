@@ -52,6 +52,29 @@ namespace Neo.Editor.Tests
             Assert.IsFalse(renderer.enabled);
         }
 
+        [Test]
+        public void SetTargetCamera_AfterMissingCamera_ReinitialisesTilePool()
+        {
+            Camera camera = CreateCamera();
+            SpriteRenderer renderer = CreateLayerRenderer();
+            ParallaxLayer layer = _layerObject.AddComponent<ParallaxLayer>();
+
+            SetPrivateField(layer, "targetCamera", null);
+            SetPrivateField(layer, "useMainCameraFallback", false);
+            SetPrivateField(layer, "templateRenderer", renderer);
+
+            InvokePrivate(layer, "Initialise");
+
+            Assert.AreEqual(0, _layerObject.transform.childCount);
+            Assert.IsTrue(renderer.enabled);
+
+            layer.SetTargetCamera(camera);
+
+            Assert.AreSame(camera, layer.TargetCamera);
+            Assert.GreaterOrEqual(_layerObject.transform.childCount, 3);
+            Assert.IsFalse(renderer.enabled);
+        }
+
         private Camera CreateCamera()
         {
             _cameraObject = new GameObject("ParallaxCamera");

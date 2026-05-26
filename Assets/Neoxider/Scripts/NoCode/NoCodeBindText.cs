@@ -19,13 +19,10 @@ namespace Neo.NoCode
         [SerializeField]
         private SetText _setText;
 
-        [Tooltip("Used when SetText is missing.")]
-        [SerializeField]
+        [Tooltip("Used when SetText is missing.")] [SerializeField]
         private TMP_Text _fallbackText;
 
-        [Header("Time Display")]
-        [Tooltip("If set, pushes float value (in seconds) to TimeToText.")]
-        [SerializeField]
+        [Header("Time Display")] [Tooltip("If set, pushes float value (in seconds) to TimeToText.")] [SerializeField]
         private TimeToText _timeToText;
 
         // Cached resolved references (avoid GetComponent on every ApplyFloat)
@@ -51,7 +48,10 @@ namespace Neo.NoCode
         protected override void ApplyFloat(float value)
         {
             // Lazy re-resolve: handles components added after OnEnable (edit-mode tests, runtime AddComponent)
-            if (!_resolved) ResolveReferences();
+            if (!_resolved)
+            {
+                ResolveReferences();
+            }
 
             if (_resolvedSetText != null)
             {

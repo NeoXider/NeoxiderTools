@@ -23,11 +23,9 @@ namespace Neo.Shop
     [AddComponentMenu("Neoxider/Shop/" + nameof(ShopListView))]
     public sealed class ShopListView : MonoBehaviour
     {
-        [Header("Source")]
-        [SerializeField] private Shop _shop;
+        [Header("Source")] [SerializeField] private Shop _shop;
 
-        [Tooltip("Empty category shows all items when Show All When Category Empty is enabled.")]
-        [SerializeField]
+        [Tooltip("Empty category shows all items when Show All When Category Empty is enabled.")] [SerializeField]
         private string _category = "";
 
         [SerializeField] private bool _showAllWhenCategoryEmpty = true;
@@ -38,29 +36,23 @@ namespace Neo.Shop
         [SerializeField]
         private bool _hideOwnedSinglePurchaseItems;
 
-        [Header("Views")]
-        [SerializeField] private ShopItem _itemPrefab;
+        [Header("Views")] [SerializeField] private ShopItem _itemPrefab;
         [SerializeField] private Transform _itemsRoot;
 
-        [Tooltip("Optional pre-authored views. Missing views are spawned from Item Prefab.")]
-        [SerializeField]
+        [Tooltip("Optional pre-authored views. Missing views are spawned from Item Prefab.")] [SerializeField]
         private List<ShopItem> _views = new();
 
-        [Tooltip("Disable the scene prefab object after cloning it.")]
-        [SerializeField]
+        [Tooltip("Disable the scene prefab object after cloning it.")] [SerializeField]
         private bool _hideScenePrefab = true;
 
-        [Header("Buttons")]
-        [SerializeField] private bool _autoBindButtons = true;
+        [Header("Buttons")] [SerializeField] private bool _autoBindButtons = true;
         [SerializeField] private ShopListButtonAction _buttonAction = ShopListButtonAction.Buy;
 
-        [Header("Refresh")]
-        [SerializeField] private bool _bindShopIfNull = true;
+        [Header("Refresh")] [SerializeField] private bool _bindShopIfNull = true;
         [SerializeField] private bool _refreshOnEnable = true;
         [SerializeField] private bool _refreshOnShopEvents = true;
 
-        [Header("Events")]
-        public ShopStringEvent OnCategoryChanged = new();
+        [Header("Events")] public ShopStringEvent OnCategoryChanged = new();
         public UnityEvent OnRefreshed = new();
 
         private readonly List<ShopItemData> _visibleItems = new();

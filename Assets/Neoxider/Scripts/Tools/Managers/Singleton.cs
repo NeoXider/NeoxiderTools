@@ -25,7 +25,7 @@ namespace Neo.Tools
         {
             get
             {
-                if (_instance == null && !_searchFailed)
+                if (_instance == null)
                 {
                     T[] all = FindObjectsByType<T>(FindObjectsInactive.Include, FindObjectsSortMode.None);
                     for (int i = 0; i < all.Length; i++)
@@ -91,6 +91,7 @@ namespace Neo.Tools
                 if (_instance == null)
                 {
                     _instance = this as T;
+                    _searchFailed = false;
                     if (DontDestroyOnLoadEnabled)
                     {
                         DontDestroyOnLoad(gameObject);

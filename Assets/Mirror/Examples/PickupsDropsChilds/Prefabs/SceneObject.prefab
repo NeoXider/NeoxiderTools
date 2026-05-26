@@ -27,12 +27,13 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8373046805013990044}
+  serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
-  m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &8203489863581598428
 MonoBehaviour:
@@ -58,10 +59,21 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8373046805013990044}
-  serializedVersion: 2
+  serializedVersion: 5
   m_Mass: 0.8
-  m_Drag: 0.5
-  m_AngularDrag: 0.8
+  m_LinearDamping: 0.5
+  m_AngularDamping: 0.8
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
   m_UseGravity: 1
   m_IsKinematic: 1
   m_Interpolate: 0
@@ -97,6 +109,7 @@ MonoBehaviour:
   showOverlay: 0
   overlayColor: {r: 0, g: 0, b: 0, a: 0.5}
   onlySyncOnChangeCorrectionMultiplier: 2
+  useFixedUpdate: 0
   rotationSensitivity: 0.01
   positionPrecision: 0.01
   scalePrecision: 0.01
@@ -115,16 +128,13 @@ MonoBehaviour:
   syncDirection: 0
   syncMode: 0
   syncInterval: 0
-  ballPrefab: {fileID: 8563961762736836479, guid: 90446831fd6fe7f43ae80c6fb7cb7a0d,
-    type: 3}
-  batPrefab: {fileID: 6507540558446839548, guid: b69a433c73f41474da198fa7ef37e343,
-    type: 3}
-  boxPrefab: {fileID: 7003386763226572670, guid: a4076fff9676bc243ae6d7d6c08341f3,
-    type: 3}
+  ballPrefab: {fileID: 8563961762736836479, guid: 90446831fd6fe7f43ae80c6fb7cb7a0d, type: 3}
+  batPrefab: {fileID: 6507540558446839548, guid: b69a433c73f41474da198fa7ef37e343, type: 3}
+  boxPrefab: {fileID: 7003386763226572670, guid: a4076fff9676bc243ae6d7d6c08341f3, type: 3}
   force: 1
   equippedItemConfig:
     usages: 0
     maxUsages: 0
   equippedItem: 0
-  direction: {x: 0, y: 0, z: 0}
   equippedObject: {fileID: 0}
+  direction: {x: 0, y: 0, z: 0}

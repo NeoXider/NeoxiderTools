@@ -38,6 +38,7 @@ namespace Neo.Shop
 
         [System.Obsolete("Use BoundItemId / BoundItemData / BoundBundleData. Integer view ids will be removed in v9.")]
         public int LegacyId => _id;
+
         public string BoundItemId { get; private set; } = "";
         public ShopItemData BoundItemData { get; private set; }
         public ShopBundleData BoundBundleData { get; private set; }

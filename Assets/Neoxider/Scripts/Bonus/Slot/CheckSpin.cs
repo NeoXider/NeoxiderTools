@@ -21,18 +21,20 @@ namespace Neo.Bonus
         [Tooltip("Match length along a payline (e.g. 3 for three-in-a-row).")] [SerializeField] [Min(2)]
         private int _sequenceLength = 3;
 
-        [Tooltip("Fallback без Lines Data: нижняя граница ряда окна **включительно** (0 = низ окна). **−1** = автоматически низ (0).")]
+        [Tooltip(
+            "Fallback без Lines Data: нижняя граница ряда окна **включительно** (0 = низ окна). **−1** = автоматически низ (0).")]
         [SerializeField]
         private int _fallbackWindowRowMin = -1;
 
-        [Tooltip("Fallback: верхняя граница **включительно**. **−1** = автоматически верх окна (WindowHeight−1). Для одной линии задайте то же значение, что и у Min.")]
+        [Tooltip(
+            "Fallback: верхняя граница **включительно**. **−1** = автоматически верх окна (WindowHeight−1). Для одной линии задайте то же значение, что и у Min.")]
         [SerializeField]
         private int _fallbackWindowRowMax = -1;
 
         /// <summary>
         ///     Старый формат: одно поле «ряд fallback». Если не равно сентинелу — имеет приоритет над Min/Max (миграция префабов).
         /// </summary>
-        [SerializeField, HideInInspector, FormerlySerializedAs("_fallbackWindowRowIndex")]
+        [SerializeField] [HideInInspector] [FormerlySerializedAs("_fallbackWindowRowIndex")]
         private int _legacyFallbackWindowRowIndexOrUnused = FallbackLegacyUnusedSentinel;
 
         public int SequenceLength => Mathf.Max(2, _sequenceLength);
@@ -191,7 +193,7 @@ namespace Neo.Bonus
 
             GetResolvedFallbackWindowRowRange(windowRowCount, out int rMin, out int rMax);
 
-            LinesData.InnerArray[] lines = new LinesData.InnerArray[rMax - rMin + 1];
+            var lines = new LinesData.InnerArray[rMax - rMin + 1];
             for (int i = 0; i < lines.Length; i++)
             {
                 int row = rMin + i;

@@ -27,8 +27,8 @@ namespace Neo.Rpg
                  "or per-tick amount/percent for the *PerTick modes.")]
         public float value = 1f;
 
-        [Tooltip("Seconds between ticks for the *PerTick modes. Ignored for *PerSecond / FromStat.")]
-        [Min(0.01f)] public float tickInterval = 1f;
+        [Tooltip("Seconds between ticks for the *PerTick modes. Ignored for *PerSecond / FromStat.")] [Min(0.01f)]
+        public float tickInterval = 1f;
 
         [Header("FromStat mode")]
         [Tooltip("When mode = FromStat, regen rate per second = stat value * scalingMultiplier.")]
@@ -37,8 +37,7 @@ namespace Neo.Rpg
         [Tooltip("Multiplier applied to the scaling stat (e.g. 0.2 = +20% of stat per second).")]
         public float scalingMultiplier = 1f;
 
-        [Header("Gates")]
-        [Tooltip("If true, regen stops once the pool reaches Max.")]
+        [Header("Gates")] [Tooltip("If true, regen stops once the pool reaches Max.")]
         public bool onlyWhenNotFull = true;
 
         [Tooltip("If true, regen stops while HP is at zero (dead).")]

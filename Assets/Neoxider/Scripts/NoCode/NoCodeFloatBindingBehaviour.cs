@@ -15,11 +15,11 @@ namespace Neo.NoCode
 
         [SerializeField] private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
 
-        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")]
-        [SerializeField]
+        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")] [SerializeField]
         private bool _pollInLateUpdate = true;
 
-        [Tooltip("Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
+        [Tooltip(
+            "Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
         [Min(MinPollIntervalSeconds)]
         [SerializeField]
         private float _pollIntervalSeconds = DefaultPollIntervalSeconds;
@@ -174,7 +174,10 @@ namespace Neo.NoCode
         /// <summary>
         ///     Edit Mode tests / editor utilities: apply binding when <see cref="OnEnable"/> did not run or after wiring via serialized object.
         /// </summary>
-        internal void EditorInvokeRefreshFromSource() => RefreshFromSource();
+        internal void EditorInvokeRefreshFromSource()
+        {
+            RefreshFromSource();
+        }
 #endif
     }
 }

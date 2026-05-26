@@ -19,8 +19,7 @@ namespace Neo.Rpg
         [Tooltip("Optional human-readable label for UI. Falls back to id.Value when empty.")]
         public string displayName;
 
-        [Header("Value")]
-        [Tooltip("Base value before any modifiers (level growth, buffs, upgrades, equipment).")]
+        [Header("Value")] [Tooltip("Base value before any modifiers (level growth, buffs, upgrades, equipment).")]
         public float baseValue = 10f;
 
         [Tooltip("Hard floor for the final value after all modifiers. -1 = unlimited.")]

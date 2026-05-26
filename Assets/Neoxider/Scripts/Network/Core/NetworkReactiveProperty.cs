@@ -85,7 +85,11 @@ namespace Neo.Network
         private static void ApplyFromNetwork<T, TEvent>(ReactivePropertyBase<T, TEvent> property, T newValue)
             where TEvent : UnityEvent<T>, new()
         {
-            if (property == null) return;
+            if (property == null)
+            {
+                return;
+            }
+
             property.SetValueWithoutNotify(newValue);
             property.ForceNotify();
         }

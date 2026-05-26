@@ -8,7 +8,6 @@
 
 ## С чего начать
 
-- Нужна карта runtime/editor/deprecated зон: [`TOOLS_AUDIT.md`](./TOOLS_AUDIT.md)
 - Нужен инвентарь, подбор предметов, дроп и hand-view: [`Inventory/README.md`](./Inventory/README.md)
 - Нужен спавн или object pooling: [`Spawner/README.md`](./Spawner/README.md)
 - Нужен movement/input workflow: [`Move/README.md`](./Move/README.md) и [`Input/README.md`](./Input/README.md)
@@ -42,7 +41,7 @@
 
 - **Runtime:** все пользовательские scene/runtime компоненты находятся в `Assets/Neoxider/Scripts/Tools/*` и разбиты по asmdef-подмодулям.
 - **Editor tools:** окна и инспекторы находятся в `Assets/Neoxider/Editor/Tools/*` и не должны подключаться к runtime asmdef.
-- **Deprecated / compatibility:** старый `AttackSystem` и `AiNavigation` оставлены для совместимости. Для новых проектов используйте `Rpg` и `NPC`. Подробный статус: [`TOOLS_AUDIT.md`](./TOOLS_AUDIT.md).
+- **Deprecated / compatibility:** старый `AttackSystem` и `AiNavigation` оставлены для совместимости. Для новых проектов используйте `Rpg` и `NPC`.
 
 ## Отдельные файлы верхнего уровня
 

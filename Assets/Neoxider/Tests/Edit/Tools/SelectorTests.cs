@@ -11,6 +11,83 @@ namespace Neo.Tools.Tests
     public class SelectorTests
     {
         [Test]
+        public void SelectorModel_SetAndStep_WorksWithoutMonoBehaviour()
+        {
+            SelectorModel model = new();
+            model.Configure(
+                3,
+                0,
+                0,
+                true,
+                false,
+                false,
+                false,
+                true,
+                null,
+                null);
+
+            model.Set(2);
+            Assert.That(model.CurrentIndex, Is.EqualTo(2));
+            Assert.That(model.IsAtEnd, Is.True);
+
+            model.Next();
+            Assert.That(model.CurrentIndex, Is.EqualTo(0));
+            Assert.That(model.GetLogicalActiveCount(), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void SelectorModel_Random_RespectsExcludedAndUniqueState()
+        {
+            SelectorModel model = new();
+            model.Configure(
+                4,
+                0,
+                0,
+                true,
+                false,
+                false,
+                true,
+                false,
+                new[] { 1 },
+                new[] { 0, 2 });
+
+            SelectorModelResult result = model.SetRandom(true, (_, _) => 0);
+
+            Assert.That(result.SelectionChanged, Is.True);
+            Assert.That(model.CurrentIndex, Is.EqualTo(3));
+            Assert.That(model.IsExcluded(1), Is.True);
+            Assert.That(model.UniqueRemainingCount, Is.Zero);
+        }
+
+        [Test]
+        public void Selector_CreateModelSnapshot_MirrorsCurrentSerializedState()
+        {
+            GameObject root = new("SelectorModelSnapshotRoot");
+            Selector selector = root.AddComponent<Selector>();
+
+            try
+            {
+                selector.startOnAwake = false;
+                SetPrivateBool(selector, "_autoUpdateFromChildren", false);
+                SetPrivateInt(selector, "_count", 5);
+                selector.IndexOffset = 1;
+                selector.Set(2);
+                selector.ExcludeIndex(4);
+
+                SelectorModel snapshot = selector.CreateModelSnapshot();
+
+                Assert.That(snapshot.Count, Is.EqualTo(5));
+                Assert.That(snapshot.CurrentIndex, Is.EqualTo(2));
+                Assert.That(snapshot.IndexOffset, Is.EqualTo(1));
+                Assert.That(snapshot.IsExcluded(4), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(root);
+            }
+        }
+
+        [Test]
         public void SetRandom_WithDeactivateOthersFalse_KeepsPreviouslyActiveItemsOn()
         {
             GameObject root = new("SelectorAdditiveRandomRoot");

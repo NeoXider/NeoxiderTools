@@ -24,17 +24,17 @@ namespace Neo.Network
     {
         [Header("Local Player Setup")]
         [Tooltip("GameObjects to enable only for the local player (e.g. Camera, Input, UI).")]
-        [SerializeField] private GameObject[] _localOnlyObjects;
+        [SerializeField]
+        private GameObject[] _localOnlyObjects;
 
-        [Tooltip("GameObjects to disable for the local player (e.g. name tag above own head).")]
-        [SerializeField] private GameObject[] _remoteOnlyObjects;
+        [Tooltip("GameObjects to disable for the local player (e.g. name tag above own head).")] [SerializeField]
+        private GameObject[] _remoteOnlyObjects;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onLocalPlayerStarted = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onLocalPlayerStarted = new();
         [SerializeField] private UnityEvent _onRemotePlayerStarted = new();
 
-        [Header("Diagnostics")]
-        [SerializeField] private bool _debugLifecycleLog;
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLifecycleLog;
 
         /// <summary>Raised when this instance is confirmed as the local player.</summary>
         public UnityEvent OnLocalPlayerStarted => _onLocalPlayerStarted;
@@ -127,7 +127,7 @@ namespace Neo.Network
         /// </summary>
         private void SetChildAudioListenersEnabled(bool enabled)
         {
-            var listeners = GetComponentsInChildren<AudioListener>(true);
+            AudioListener[] listeners = GetComponentsInChildren<AudioListener>(true);
             for (int i = 0; i < listeners.Length; i++)
             {
                 if (listeners[i] != null)
@@ -139,7 +139,11 @@ namespace Neo.Network
 
         private static void SetObjectsActive(GameObject[] objects, bool active)
         {
-            if (objects == null) return;
+            if (objects == null)
+            {
+                return;
+            }
+
             for (int i = 0; i < objects.Length; i++)
             {
                 if (objects[i] != null)

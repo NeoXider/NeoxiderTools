@@ -1,73 +1,47 @@
-﻿# MouseInputManager
+# MouseInputManager
 
-**Что это:** `MouseInputManager` — singleton-компонент для обработки мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`. Файл: `Scripts/Tools/Input/MouseInputManager.cs`.
+**Что это:** singleton-компонент для мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`.
 
-**Как использовать:**
-1. Добавьте `MouseInputManager` на сцену один раз или позвольте ему создаться автоматически.
-2. Настройте `targetCamera`, `interactableLayers`, `fallbackDepth`.
-3. Подписывайтесь на `OnPress`, `OnHold`, `OnRelease`, `OnClick` или их `in`-версии.
-4. При необходимости используйте `LastEventData` и `HasEventData` для polling-подхода.
+Файл: `Assets/Neoxider/Scripts/Tools/Input/MouseInputManager.cs`
 
----
+## Принцип модуля
 
-## Основное
+`MouseInputManager` можно использовать как scene component или как автоматически создаваемый runtime singleton. Для production-сцен лучше явно назначать `targetCamera` в Inspector или через `SetTargetCamera(Camera)`. `Camera.main` остается только отключаемым fallback и не дергается каждый кадр без retry interval.
 
-- **LastEventData**, **HasEventData** — последнее событие для опроса.
-- Подписка через делегаты/события на нажатие, удержание, отпускание, клик.
-- 3D raycast идёт через `Physics.RaycastNonAlloc`.
-- 2D raycast идёт через `Physics2D.GetRayIntersection`.
-- Если попадания нет, используется `fallbackDepth` и `ScreenToWorldPoint`.
+## Настройка
+
+1. Добавьте `MouseInputManager` на сцену один раз или позвольте bootstrap создать его автоматически.
+2. Назначьте `targetCamera` явно. Для простых сцен можно оставить `useMainCameraFallback`.
+3. Настройте `interactableLayers` и `fallbackDepth`.
+4. Включите нужные режимы: `enablePress`, `enableHold`, `enableRelease`, `enableClick`.
+5. Подпишитесь на события или используйте `LastEventData` / `HasEventData` для polling.
+
+## Camera Binding
+
+| Поле/API | Назначение |
+|----------|------------|
+| `targetCamera` | Камера для `ScreenPointToRay` и `ScreenToWorldPoint`. |
+| `useMainCameraFallback` | Разрешает поиск `Camera.main`, если явная камера не задана. |
+| `cameraFallbackRetryInterval` | Интервал между попытками `Camera.main`, пока камера отсутствует. |
+| `logMissingCamera` | Разрешает warning через `NeoDiagnostics`; глобальный diagnostics gate все равно контролирует вывод. |
+| `SetTargetCamera(Camera)` | Явная injection-точка из C# или scene setup. |
+| `TargetCamera` | Текущая активная ссылка. |
 
 ## События
 
-- `OnPress`
-- `OnHold`
-- `OnRelease`
-- `OnClick`
-- `OnPressIn`
-- `OnHoldIn`
-- `OnReleaseIn`
-- `OnClickIn`
+- `OnPress`, `OnHold`, `OnRelease`, `OnClick`
+- `OnPressIn`, `OnHoldIn`, `OnReleaseIn`, `OnClickIn`
 
-## MouseEventData
-
-Структура содержит:
-- `ScreenPosition`
-- `WorldPosition`
-- `HitObject`
-- `Hit3D`
-- `Hit2D`
-
-## Важное замечание
-
-Текущая реализация **не** содержит встроенной блокировки ввода поверх UI через `EventSystem`. Если такая логика нужна, её нужно добавлять отдельно поверх `MouseInputManager`.
+`MouseEventData` содержит `ScreenPosition`, `WorldPosition`, `HitObject`, `Hit3D`, `Hit2D`.
 
 ## Жизненный цикл
 
-- Через `MouseInputManagerSubsystemRegistration` (<c>[RuntimeInitializeOnLoadMethod]</c>) перед загрузкой сцены включается `CreateInstance = true`, поэтому менеджер может быть создан автоматически. Хук вынесен из самого класса менеджера: Unity запрещает такие методы на наследниках generic-баз вроде `Singleton<T>` (иначе ошибка вида «method … is in a generic class»).
-- В `Init()` пытается взять `Camera.main`, если `targetCamera` не задан.
-- При перезагрузке подсистемы / домена через тот же bootstrap очищаются `LastEventData` и `HasEventData`.
+- `MouseInputManagerSubsystemRegistration` перед загрузкой сцены включает `CreateInstance = true`.
+- При subsystem/domain reload очищаются `LastEventData` и `HasEventData`.
+- Runtime singleton cache очищается общим `SingletonRuntimeReset`.
+- Встроенной блокировки ввода поверх UI через `EventSystem` нет; если она нужна, добавляйте отдельный фильтр поверх событий.
 
 ## См. также
 
 - [MouseEffect](./MouseEffect.md)
 - [README](./README.md)
-
-
-## Дополнительные поля
-
-| Поле | Описание |
-|------|----------|
-| `10f` | 10f. |
-| `drawGizmos` | Draw Gizmos. |
-| `enableClick` | Enable Click. |
-| `enableHold` | Enable Hold. |
-| `enablePress` | Enable Press. |
-| `enableRelease` | Enable Release. |
-| `gizmoBaseFontSize` | Gizmo Base Font Size. |
-| `gizmoColor` | Gizmo Color. |
-| `gizmoDrawText` | Gizmo Draw Text. |
-| `gizmoRadius` | Gizmo Radius. |
-| `gizmoTextColor` | Gizmo Text Color. |
-| `gizmoTextOffset` | Gizmo Text Offset. |
-| `gizmoTextScale` | Gizmo Text Scale. |

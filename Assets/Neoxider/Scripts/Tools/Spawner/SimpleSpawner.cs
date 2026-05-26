@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Tools
 {
@@ -15,14 +15,14 @@ namespace Neo.Tools
         [Header("Behavior")] public bool useParent = true;
 
         [Tooltip(
-            "If true, uses pool when PoolManager is in the scene; otherwise Instantiate. Pool can be added later — spawn always works.")]
+            "If true, uses pool when PoolManager is in the scene; otherwise Instantiate. Pool can be added later  - spawn always works.")]
         public bool useObjectPool = true;
 
         public void Spawn()
         {
             if (prefab == null)
             {
-                Debug.LogError("Prefab is not assigned on SimpleSpawner!", this);
+                NeoDiagnostics.LogError("Prefab is not assigned on SimpleSpawner!", this);
                 return;
             }
 

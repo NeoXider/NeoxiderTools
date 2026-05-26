@@ -96,7 +96,7 @@ namespace Neo.Tests.Play
             root.SetActive(false);
 
             ShopBehaviour shop = root.AddComponent<ShopBehaviour>();
-            ShopItemBehaviour[] shopItems = new ShopItemBehaviour[datas.Length];
+            var shopItems = new ShopItemBehaviour[datas.Length];
             for (int i = 0; i < datas.Length; i++)
             {
                 GameObject child = new($"Item_{i}");
@@ -156,7 +156,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { free }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { free },
+                moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -178,7 +179,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -199,7 +201,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                moneySource: walletGo);
             built.root.SetActive(true);
             yield return null;
 
@@ -227,11 +230,12 @@ namespace Neo.Tests.Play
         {
             SaveProvider.SetProvider(new MemorySaveProvider());
 
-            ShopItemDataAsset item = MakeItem("hat", 10, singlePurchase: true);
+            ShopItemDataAsset item = MakeItem("hat", 10, true);
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -252,7 +256,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -278,7 +283,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { a, b }, new[] { bundle }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { a, b },
+                new[] { bundle }, moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -303,7 +309,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { a, b }, new[] { bundle }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { a, b },
+                new[] { bundle }, moneySource: walletGo);
             built.root.SetActive(true);
             yield return null;
 
@@ -332,7 +339,8 @@ namespace Neo.Tests.Play
             SetPrivateField(gems, "_persistMoney", false);
             gems.SetMoney(25);
 
-            var built = BuildShop(new[] { gemmedItem }, moneySource: defaultGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { gemmedItem },
+                moneySource: defaultGo);
             built.root.SetActive(true);
             yield return null;
 
@@ -353,7 +361,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { a, b }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { a, b },
+                moneySource: walletGo);
             built.root.SetActive(true);
             yield return null;
 
@@ -376,7 +385,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, flow: ShopPurchaseFlowEnum.Browse, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                flow: ShopPurchaseFlowEnum.Browse, moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -396,7 +406,8 @@ namespace Neo.Tests.Play
             GameObject walletGo = Track(new GameObject("Wallet"));
             FakeMoney wallet = walletGo.AddComponent<FakeMoney>();
 
-            var built = BuildShop(new[] { item }, flow: ShopPurchaseFlowEnum.EquipOnly, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { item },
+                flow: ShopPurchaseFlowEnum.EquipOnly, moneySource: walletGo);
             built.root.SetActive(true);
 
             yield return null;
@@ -431,7 +442,8 @@ namespace Neo.Tests.Play
             SetPrivateField(inventory, "_autoSave", false);
             SetPrivateField(inventory, "_saveKey", "ShopPlayTests_Inventory");
 
-            var built = BuildShop(new[] { shopItem }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { shopItem },
+                moneySource: walletGo);
 
             ShopInventoryGrantBridge bridge = built.root.AddComponent<ShopInventoryGrantBridge>();
             SetPrivateField(bridge, "_shop", built.shop);
@@ -487,7 +499,8 @@ namespace Neo.Tests.Play
             SetPrivateField(inventory, "_autoSave", false);
             SetPrivateField(inventory, "_saveKey", "ShopPlayTests_InventoryBundle");
 
-            var built = BuildShop(new[] { itemA, itemB }, new[] { bundle }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { itemA, itemB },
+                new[] { bundle }, moneySource: walletGo);
 
             ShopInventoryGrantBridge bridge = built.root.AddComponent<ShopInventoryGrantBridge>();
             SetPrivateField(bridge, "_shop", built.shop);
@@ -524,7 +537,8 @@ namespace Neo.Tests.Play
 
             GameObject walletGo = Track(new GameObject("Wallet"));
             walletGo.AddComponent<FakeMoney>();
-            var built = BuildShop(new[] { sword, axe, hat }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built =
+                BuildShop(new[] { sword, axe, hat }, moneySource: walletGo);
             SetPrivateField(built.shop, "_autoSpawnItems", false);
 
             GameObject viewRoot = Track(new GameObject("ShopListViewRoot"));
@@ -572,7 +586,8 @@ namespace Neo.Tests.Play
 
             GameObject walletGo = Track(new GameObject("Wallet"));
             walletGo.AddComponent<FakeMoney>();
-            var built = BuildShop(new[] { sword, hat }, moneySource: walletGo);
+            (GameObject root, ShopBehaviour shop, ShopItemBehaviour[] items) built = BuildShop(new[] { sword, hat },
+                moneySource: walletGo);
 
             GameObject viewRoot = Track(new GameObject("ShopListViewRoot"));
             GameObject listRoot = new("ItemsRoot");
@@ -660,11 +675,30 @@ namespace Neo.Tests.Play
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool HasKey(string key) => _store.ContainsKey(key);
-            public void DeleteKey(string key) => _store.Remove(key);
-            public void DeleteAll() => _store.Clear();
-            public void Save() => OnDataSaved?.Invoke();
-            public void Load() => OnDataLoaded?.Invoke();
+            public bool HasKey(string key)
+            {
+                return _store.ContainsKey(key);
+            }
+
+            public void DeleteKey(string key)
+            {
+                _store.Remove(key);
+            }
+
+            public void DeleteAll()
+            {
+                _store.Clear();
+            }
+
+            public void Save()
+            {
+                OnDataSaved?.Invoke();
+            }
+
+            public void Load()
+            {
+                OnDataLoaded?.Invoke();
+            }
         }
     }
 }

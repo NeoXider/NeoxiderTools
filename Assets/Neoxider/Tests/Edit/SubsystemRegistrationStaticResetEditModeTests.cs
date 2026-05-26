@@ -13,7 +13,7 @@ namespace Neo.Tools.Tests
             PropertyInfo isLoadProp = typeof(SaveManager).GetProperty(
                 nameof(SaveManager.IsLoad),
                 BindingFlags.Public | BindingFlags.Static);
-            MethodInfo setIsLoad = isLoadProp?.GetSetMethod(nonPublic: true);
+            MethodInfo setIsLoad = isLoadProp?.GetSetMethod(true);
             Assume.That(setIsLoad, Is.Not.Null);
             setIsLoad!.Invoke(null, new object[] { true });
             Assume.That(SaveManager.IsLoad, Is.True);
@@ -27,6 +27,8 @@ namespace Neo.Tools.Tests
     public sealed class MouseInputManagerSubsystemCachesEditModeTests
     {
         private bool _savedCreateInstance;
+        private GameObject _cameraObject;
+        private GameObject _managerObject;
 
         [SetUp]
         public void SetUp()
@@ -39,6 +41,16 @@ namespace Neo.Tools.Tests
         {
             MouseInputManager.CreateInstance = _savedCreateInstance;
             MouseInputManager.ResetSubsystemPollingState();
+
+            if (_managerObject != null)
+            {
+                Object.DestroyImmediate(_managerObject);
+            }
+
+            if (_cameraObject != null)
+            {
+                Object.DestroyImmediate(_cameraObject);
+            }
         }
 
         [Test]
@@ -62,6 +74,19 @@ namespace Neo.Tools.Tests
             MouseInputManager.EnableAutoCreateForRuntime();
 
             Assert.That(MouseInputManager.CreateInstance, Is.True);
+        }
+
+        [Test]
+        public void SetTargetCamera_StoresExplicitCameraReference()
+        {
+            _managerObject = new GameObject("MouseInputManagerTest");
+            MouseInputManager manager = _managerObject.AddComponent<MouseInputManager>();
+            _cameraObject = new GameObject("MouseInputCamera");
+            Camera camera = _cameraObject.AddComponent<Camera>();
+
+            manager.SetTargetCamera(camera);
+
+            Assert.That(manager.TargetCamera, Is.SameAs(camera));
         }
     }
 

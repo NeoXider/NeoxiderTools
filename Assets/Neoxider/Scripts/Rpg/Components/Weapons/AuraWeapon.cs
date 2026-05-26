@@ -16,10 +16,12 @@ namespace Neo.Rpg.Components.Weapons
         {
             _auraCollider = GetComponent<SphereCollider>();
             _auraCollider.isTrigger = true;
-            
-            var timer = GetComponent<TimerObject>();
+
+            TimerObject timer = GetComponent<TimerObject>();
             if (timer != null)
+            {
                 timer.OnTimerCompleted.AddListener(ApplyAuraDamage);
+            }
         }
 
         /// <summary>
@@ -29,11 +31,16 @@ namespace Neo.Rpg.Components.Weapons
         public void ApplyAuraDamage()
         {
             // Use physics overlap to find all colliders in the aura radius
-            Collider[] hits = Physics.OverlapSphere(transform.position, _auraCollider.radius * Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
-            
-            foreach (var hit in hits)
+            Collider[] hits = Physics.OverlapSphere(transform.position,
+                _auraCollider.radius *
+                Mathf.Max(transform.lossyScale.x, transform.lossyScale.y, transform.lossyScale.z));
+
+            foreach (Collider hit in hits)
             {
-                if (hit == null || hit.gameObject == this.gameObject) continue;
+                if (hit == null || hit.gameObject == gameObject)
+                {
+                    continue;
+                }
 
                 if (IsValidTarget(hit))
                 {

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -59,7 +59,7 @@ namespace Neo.Tools
             {
                 if (!IsFontValid(dialogueText))
                 {
-                    Debug.LogError(
+                    NeoDiagnostics.LogError(
                         $"[DialogueUI] dialogueText '{dialogueText.name}' has invalid font! Please assign a valid TMP Font Asset.",
                         dialogueText);
                     HasFontError = true;
@@ -75,7 +75,7 @@ namespace Neo.Tools
             {
                 if (!IsFontValid(characterNameText))
                 {
-                    Debug.LogError(
+                    NeoDiagnostics.LogError(
                         $"[DialogueUI] characterNameText '{characterNameText.name}' has invalid font! Please assign a valid TMP Font Asset.",
                         characterNameText);
                     HasFontError = true;
@@ -130,7 +130,7 @@ namespace Neo.Tools
                 TMP_FontAsset fallbackFont = fallbackList[i];
                 if (fallbackFont == null || fallbackFont.material == null)
                 {
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         $"[DialogueUI] Fallback font at index {i} in '{tmpText.font.name}' has no material! Removing from list to prevent errors.",
                         tmpText);
                     fallbackList.RemoveAt(i);

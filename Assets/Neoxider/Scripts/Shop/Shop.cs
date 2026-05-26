@@ -37,8 +37,7 @@ namespace Neo.Shop
         [SerializeField]
         private ShopPurchaseFlow _purchaseFlow = ShopPurchaseFlow.BuyAndEquip;
 
-        [Header("Items / Bundles")]
-        [SerializeField]
+        [Header("Items / Bundles")] [SerializeField]
         private ShopItemData[] _shopItemDatas;
 
         [Tooltip("Optional list of bundles. Each bundle grants its items on purchase.")] [SerializeField]
@@ -57,30 +56,32 @@ namespace Neo.Shop
         [SerializeField]
         private ShopItem _prefab;
 
-        [Tooltip("When enabled, Shop fills its own _shopItems list from Prefab. Disable when using external views such as ShopListView.")]
+        [Tooltip(
+            "When enabled, Shop fills its own _shopItems list from Prefab. Disable when using external views such as ShopListView.")]
         [SerializeField]
         private bool _autoSpawnItems = true;
 
         [Header("Save")]
-        [Tooltip("Single SaveProvider key. ShopProfileData JSON is stored here. Wipe-friendly: deleting the key resets the whole shop.")]
+        [Tooltip(
+            "Single SaveProvider key. ShopProfileData JSON is stored here. Wipe-friendly: deleting the key resets the whole shop.")]
         [SerializeField]
         private string _keySave = "Shop";
 
         [Header("Currency")]
-        [Tooltip("Default IMoneySpend source. When null, Money.I is used. Per-item / per-bundle Currency Override Save Key takes precedence.")]
+        [Tooltip(
+            "Default IMoneySpend source. When null, Money.I is used. Per-item / per-bundle Currency Override Save Key takes precedence.")]
         [FormerlySerializedAs("IMoneySpend")]
         [SerializeField]
         public GameObject moneySpendSource;
 
-        [Header("Advanced")]
-        [Tooltip("Auto-subscribe ShopItem.buttonBuy.onClick to Buy(itemIndex).")]
-        [SerializeField]
+        [Header("Advanced")] [Tooltip("Auto-subscribe ShopItem.buttonBuy.onClick to Buy(itemIndex).")] [SerializeField]
         private bool _autoSubscribe = true;
 
         [Tooltip("On failed purchase, switch the preview to the item the player tried to buy.")] [SerializeField]
         private bool _changePreviewOnPurchaseFailed;
 
-        [Tooltip("Propagate selection to ShopItem.Select(bool) on every list entry. Set false if your UI does its own highlighting.")]
+        [Tooltip(
+            "Propagate selection to ShopItem.Select(bool) on every list entry. Set false if your UI does its own highlighting.")]
         [FormerlySerializedAs("_useSetItem")]
         [SerializeField]
         private bool _propagateSelectionVisual = true;
@@ -91,24 +92,26 @@ namespace Neo.Shop
         private bool _activateSavedEquipped = true;
 
         [Header("Legacy (deprecated)")]
-        [Tooltip("Устарело — цены теперь берутся из ShopItemData.price + runtime overrides из ShopProfileData. Поле сохранено для совместимости со старыми сценами и игнорируется в рантайме.")]
+        [Tooltip(
+            "Устарело — цены теперь берутся из ShopItemData.price + runtime overrides из ShopProfileData. Поле сохранено для совместимости со старыми сценами и игнорируется в рантайме.")]
         [SerializeField]
         private int[] _prices;
 
 #pragma warning disable 0414
-        [Tooltip("Устарело — теперь весь сейв магазина живёт в едином ключе Save Key (JSON ShopProfileData). Поле игнорируется в рантайме.")]
+        [Tooltip(
+            "Устарело — теперь весь сейв магазина живёт в едином ключе Save Key (JSON ShopProfileData). Поле игнорируется в рантайме.")]
         [SerializeField]
         private string _keySaveEquipped = "ShopEquipped";
 #pragma warning restore 0414
 
         [Space] [Header("Events (int — legacy)")]
         public UnityEvent<int> OnSelect = new();
+
         public UnityEvent<int> OnPurchased = new();
         public UnityEvent<int> OnPurchaseFailed = new();
         public UnityEvent OnLoad = new();
 
-        [Header("Events (string)")]
-        public ShopStringEvent OnSelectId = new();
+        [Header("Events (string)")] public ShopStringEvent OnSelectId = new();
         public ShopStringEvent OnPurchasedId = new();
         public ShopStringEvent OnPurchaseFailedId = new();
         public ShopBundleEvent OnPurchasedBundle = new();

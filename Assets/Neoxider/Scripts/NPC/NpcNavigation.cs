@@ -1,4 +1,4 @@
-using Neo.NPC.Navigation;
+﻿using Neo.NPC.Navigation;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Events;
@@ -485,7 +485,7 @@ namespace Neo.NPC
 
             if (debugMode)
             {
-                Debug.Log(line, this);
+                NeoDiagnostics.Log(line, this);
             }
         }
 

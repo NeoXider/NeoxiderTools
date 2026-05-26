@@ -16,39 +16,52 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerEventDispatcherTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager =
+                NetworkTestHelper.CreateTestNetworkManager("NetworkManagerEventDispatcherTest", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 88101);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
         }
 
         [UnityTest]
         public IEnumerator DispatchGlobalEvent_Host_FiresOnce()
         {
             var dispatcherObj = new GameObject("NetworkEventDispatcher");
-            var dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
+            NetworkEventDispatcher dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
 
-            var id = dispatcherObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = dispatcherObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88110);
             NetworkClient.RegisterPrefab(dispatcherObj);
             NetworkServer.Spawn(dispatcherObj);
@@ -69,10 +82,10 @@ namespace Neo.Tests.Play
         public IEnumerator DispatchGlobalEvent_DefaultAuthorityNone_AllowsSceneObject()
         {
             var dispatcherObj = new GameObject("NetworkEventDispatcherNone");
-            var dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
+            NetworkEventDispatcher dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
             dispatcher.AuthorityMode = NetworkAuthorityMode.None;
 
-            var id = dispatcherObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = dispatcherObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88111);
             NetworkClient.RegisterPrefab(dispatcherObj);
             NetworkServer.Spawn(dispatcherObj);
@@ -96,7 +109,7 @@ namespace Neo.Tests.Play
             yield return null;
 
             var dispatcherObj = new GameObject("NetworkEventDispatcherOffline");
-            var dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
+            NetworkEventDispatcher dispatcher = dispatcherObj.AddComponent<NetworkEventDispatcher>();
 
             int firedCount = 0;
             dispatcher.onNetworkEvent.AddListener(() => firedCount++);

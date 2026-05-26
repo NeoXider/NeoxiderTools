@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using DG.Tweening;
@@ -66,7 +66,8 @@ namespace Neo
         [Tooltip("Where spawned fly objects should be animated. Canvas is recommended for UI coin/currency effects.")]
         public AnimationFlySpawnSpace spawnSpace = AnimationFlySpawnSpace.Auto;
 
-        [Tooltip("Camera used for world/screen/canvas conversion. Falls back to Canvas.worldCamera, then Camera.main.")]
+        [Tooltip(
+            "Camera used for world/screen/canvas conversion. Falls back to Canvas.worldCamera, then a cached Camera.main lookup.")]
         public Camera animationCamera;
 
         [Tooltip("If true, UI fly objects use RectTransform.anchoredPosition instead of world DOMove.")]
@@ -81,8 +82,7 @@ namespace Neo
         [Tooltip("Destroy spawned objects after the fly reaches the target.")]
         public bool destroyOnComplete = true;
 
-        [Header("Motion")]
-        [Tooltip("Random offset applied to every start position.")]
+        [Header("Motion")] [Tooltip("Random offset applied to every start position.")]
         public Vector3 startRandomOffset;
 
         [Tooltip("Random offset applied to every end position.")]
@@ -98,6 +98,7 @@ namespace Neo
 
         public bool useUnscaledTime;
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
+        private Camera _cachedFallbackCamera;
 
         protected override void Init()
         {
@@ -137,7 +138,7 @@ namespace Neo
         {
             if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
             {
-                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -150,7 +151,7 @@ namespace Neo
         {
             if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
             {
-                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -163,7 +164,7 @@ namespace Neo
         {
             if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
             {
-                Debug.LogError($"[AnimationBonus] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationBonus] No prefab for bonus type {type}");
                 return;
             }
 
@@ -196,7 +197,8 @@ namespace Neo
                 AnimationFlyCoordinateSpace.Canvas);
         }
 
-        public void PlayByTypeCanvasToCanvas(int type, int bonusCount, RectTransform canvasStart, RectTransform canvasEnd)
+        public void PlayByTypeCanvasToCanvas(int type, int bonusCount, RectTransform canvasStart,
+            RectTransform canvasEnd)
         {
             PlayByType(type, bonusCount, canvasStart, canvasEnd, AnimationFlyCoordinateSpace.Canvas,
                 AnimationFlyCoordinateSpace.Canvas);
@@ -220,7 +222,7 @@ namespace Neo
         {
             if (!_prefabDict.TryGetValue(type, out BonusPrefabData data))
             {
-                Debug.LogError($"[AnimationFly] No prefab for bonus type {type}");
+                NeoDiagnostics.LogError($"[AnimationFly] No prefab for bonus type {type}");
                 return;
             }
 
@@ -233,7 +235,7 @@ namespace Neo
         {
             if (start == null || end == null)
             {
-                Debug.LogWarning("[AnimationFly] Start or end transform is missing.", this);
+                NeoDiagnostics.LogWarning("[AnimationFly] Start or end transform is missing.", this);
                 return;
             }
 
@@ -247,7 +249,7 @@ namespace Neo
         {
             if (end == null)
             {
-                Debug.LogWarning("[AnimationFly] End transform is missing.", this);
+                NeoDiagnostics.LogWarning("[AnimationFly] End transform is missing.", this);
                 return;
             }
 
@@ -268,7 +270,7 @@ namespace Neo
         {
             if (prefab == null)
             {
-                Debug.LogWarning("[AnimationFly] Prefab is missing.", this);
+                NeoDiagnostics.LogWarning("[AnimationFly] Prefab is missing.", this);
                 return;
             }
 
@@ -411,8 +413,10 @@ namespace Neo
 
                 return sourceSpace switch
                 {
-                    AnimationFlyCoordinateSpace.World => WorldToCanvasLocalPosition(position, canvas, ResolveCamera(canvas)),
-                    AnimationFlyCoordinateSpace.Screen => ScreenToCanvasLocalPosition(position, canvas, ResolveCamera(canvas)),
+                    AnimationFlyCoordinateSpace.World => WorldToCanvasLocalPosition(position, canvas,
+                        ResolveCamera(canvas)),
+                    AnimationFlyCoordinateSpace.Screen => ScreenToCanvasLocalPosition(position, canvas,
+                        ResolveCamera(canvas)),
                     AnimationFlyCoordinateSpace.Canvas => CanvasLocalPosition(position, canvas, sourceTransform),
                     _ => position
                 };
@@ -420,7 +424,8 @@ namespace Neo
 
             return sourceSpace switch
             {
-                AnimationFlyCoordinateSpace.Canvas => CanvasToWorldPosition(position, sourceTransform, ResolveCanvas(parent)),
+                AnimationFlyCoordinateSpace.Canvas => CanvasToWorldPosition(position, sourceTransform,
+                    ResolveCanvas(parent)),
                 AnimationFlyCoordinateSpace.Screen => ScreenToWorldPosition(position, ResolveCamera(null)),
                 _ => position
             };
@@ -434,7 +439,7 @@ namespace Neo
                 return configured;
             }
 
-            return source is RectTransform || source != null && source.GetComponentInParent<Canvas>() != null
+            return source is RectTransform || (source != null && source.GetComponentInParent<Canvas>() != null)
                 ? AnimationFlyCoordinateSpace.Canvas
                 : AnimationFlyCoordinateSpace.World;
         }
@@ -487,7 +492,17 @@ namespace Neo
                 return canvas.worldCamera;
             }
 
-            return Camera.main;
+            return ResolveFallbackCamera();
+        }
+
+        private Camera ResolveFallbackCamera()
+        {
+            if (_cachedFallbackCamera == null)
+            {
+                _cachedFallbackCamera = Camera.main;
+            }
+
+            return _cachedFallbackCamera;
         }
 
         private static Vector3 RandomOffset(Vector3 maxAbs)
@@ -551,7 +566,7 @@ namespace Neo
                 return screenPosition;
             }
 
-            RectTransform canvasRect = canvas.transform as RectTransform;
+            var canvasRect = canvas.transform as RectTransform;
             Camera eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : camera;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, eventCamera,
                 out Vector2 localPoint);
@@ -581,7 +596,7 @@ namespace Neo
                 return data.prefab;
             }
 
-            Debug.LogWarning($"[AnimationBonus] No prefab for bonus type {type}");
+            NeoDiagnostics.LogWarning($"[AnimationBonus] No prefab for bonus type {type}");
             return null;
         }
 
@@ -592,7 +607,7 @@ namespace Neo
                 return data.endPos;
             }
 
-            Debug.LogWarning($"[AnimationBonus] No spawn point for bonus type {type}");
+            NeoDiagnostics.LogWarning($"[AnimationBonus] No spawn point for bonus type {type}");
             return null;
         }
 
@@ -601,7 +616,7 @@ namespace Neo
             canvas = canvas ?? I.parentCanvas;
             if (canvas == null)
             {
-                Debug.LogError(
+                NeoDiagnostics.LogError(
                     "[AnimationFly] Canvas is not set and parentCanvas is not assigned!");
                 return Vector3.zero;
             }
@@ -612,7 +627,7 @@ namespace Neo
             }
             else if (camera == null)
             {
-                camera = Camera.main;
+                camera = ResolveStaticFallbackCamera();
             }
 
             Vector3 worldPos = Vector3.zero;
@@ -636,7 +651,7 @@ namespace Neo
             canvas = canvas ?? I.parentCanvas;
             if (canvas == null)
             {
-                Debug.LogError(
+                NeoDiagnostics.LogError(
                     "[AnimationFly] Canvas is not set and parentCanvas is not assigned!");
                 return Vector2.zero;
             }
@@ -647,11 +662,16 @@ namespace Neo
             }
             else if (camera == null)
             {
-                camera = Camera.main;
+                camera = ResolveStaticFallbackCamera();
             }
 
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);
             return screenPoint;
+        }
+
+        private static Camera ResolveStaticFallbackCamera()
+        {
+            return HasInstance ? I.ResolveFallbackCamera() : Camera.main;
         }
 
         [Serializable]

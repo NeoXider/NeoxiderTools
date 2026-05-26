@@ -29,6 +29,8 @@ namespace Neo.Tests.Play
         [SetUp]
         public void SetUp()
         {
+            DestroyExistingEventSystemsImmediate();
+
             // Camera (tagged MainCamera so InteractiveObject.Awake finds it)
             _camObj = new GameObject("MainCamera");
             _cam = _camObj.AddComponent<Camera>();
@@ -42,21 +44,23 @@ namespace Neo.Tests.Play
             esObj.AddComponent<StandaloneInputModule>();
         }
 
-        [TearDown]
-        public void TearDown()
+        [UnityTearDown]
+        public IEnumerator TearDown()
         {
             // Destroy everything in the scene
-            foreach (var go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
+            foreach (GameObject go in Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None))
             {
                 Object.Destroy(go);
             }
+
+            yield return null;
         }
 
         // ─── Reflection helpers to poke private serialized fields ───
 
         private static void SetPrivateField(object target, string fieldName, object value)
         {
-            var fi = target.GetType().GetField(fieldName,
+            FieldInfo fi = target.GetType().GetField(fieldName,
                 BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(fi, $"Field '{fieldName}' not found on {target.GetType().Name}");
             fi.SetValue(target, value);
@@ -64,7 +68,7 @@ namespace Neo.Tests.Play
 
         private static T GetPrivateField<T>(object target, string fieldName)
         {
-            var fi = target.GetType().GetField(fieldName,
+            FieldInfo fi = target.GetType().GetField(fieldName,
                 BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(fi, $"Field '{fieldName}' not found on {target.GetType().Name}");
             return (T)fi.GetValue(target);
@@ -72,7 +76,7 @@ namespace Neo.Tests.Play
 
         private static bool InvokeIsInRange(InteractiveObject obj)
         {
-            var mi = typeof(InteractiveObject).GetMethod("IsInRange",
+            MethodInfo mi = typeof(InteractiveObject).GetMethod("IsInRange",
                 BindingFlags.NonPublic | BindingFlags.Instance, null,
                 System.Type.EmptyTypes, null);
             Assert.IsNotNull(mi, "Method 'IsInRange()' not found");
@@ -81,10 +85,22 @@ namespace Neo.Tests.Play
 
         private static bool InvokeIsInViewForKeyboardInteraction(InteractiveObject obj)
         {
-            var mi = typeof(InteractiveObject).GetMethod("IsInViewForKeyboardInteraction",
+            MethodInfo mi = typeof(InteractiveObject).GetMethod("IsInViewForKeyboardInteraction",
                 BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.IsNotNull(mi, "Method 'IsInViewForKeyboardInteraction()' not found");
             return (bool)mi.Invoke(obj, null);
+        }
+
+        private static void DestroyExistingEventSystemsImmediate()
+        {
+            foreach (EventSystem eventSystem in Object.FindObjectsByType<EventSystem>(
+                         FindObjectsInactive.Include, FindObjectsSortMode.None))
+            {
+                if (eventSystem != null)
+                {
+                    Object.DestroyImmediate(eventSystem.gameObject);
+                }
+            }
         }
 
         /// <summary>
@@ -99,10 +115,10 @@ namespace Neo.Tests.Play
         {
             var go = new GameObject("Interactive");
             go.transform.position = position;
-            var col = go.AddComponent<SphereCollider>();
+            SphereCollider col = go.AddComponent<SphereCollider>();
             col.radius = 0.5f;
 
-            var io = go.AddComponent<InteractiveObject>();
+            InteractiveObject io = go.AddComponent<InteractiveObject>();
             io.interactable = true;
 
             // Initialize events to avoid null refs in callbacks
@@ -137,7 +153,7 @@ namespace Neo.Tests.Play
             var wall = new GameObject("Wall");
             wall.transform.position = position;
             wall.transform.localScale = scale;
-            var box = wall.AddComponent<BoxCollider>();
+            BoxCollider box = wall.AddComponent<BoxCollider>();
             box.isTrigger = false;
             return wall;
         }
@@ -148,7 +164,7 @@ namespace Neo.Tests.Play
             var trigger = new GameObject("TriggerZone");
             trigger.transform.position = position;
             trigger.transform.localScale = scale;
-            var box = trigger.AddComponent<BoxCollider>();
+            BoxCollider box = trigger.AddComponent<BoxCollider>();
             box.isTrigger = true;
             return trigger;
         }
@@ -165,8 +181,8 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at (0,0,3), distance=5  → 3 < 5 → in range
-            var io = CreateInteractive(new Vector3(0, 0, 3f),
-                interactionDistance: 5f, checkObstacles: false,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
+                5f, false,
                 distanceCheckPoint: checkPoint.transform);
 
             yield return new WaitForFixedUpdate();
@@ -184,8 +200,8 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at (0,0,8), distance=5  → 8 > 5 → NOT in range
-            var io = CreateInteractive(new Vector3(0, 0, 8f),
-                interactionDistance: 5f, checkObstacles: false,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 8f),
+                5f, false,
                 distanceCheckPoint: checkPoint.transform);
 
             yield return new WaitForFixedUpdate();
@@ -202,8 +218,8 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("CheckPoint");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 999f),
-                interactionDistance: 0f, checkObstacles: false,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 999f),
+                0f, false,
                 distanceCheckPoint: checkPoint.transform);
 
             yield return new WaitForFixedUpdate();
@@ -227,8 +243,8 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at z=4
-            var io = CreateInteractive(new Vector3(0, 0, 4f),
-                interactionDistance: 10f, checkObstacles: true,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
+                10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
             // Wall at z=2 (between player and object)
@@ -252,8 +268,8 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 4f),
-                interactionDistance: 10f, checkObstacles: false,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
+                10f, false,
                 distanceCheckPoint: checkPoint.transform);
 
             CreateWall(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
@@ -276,8 +292,8 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at z=3, wall at z=6 (behind the object)
-            var io = CreateInteractive(new Vector3(0, 0, 3f),
-                interactionDistance: 10f, checkObstacles: true,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
+                10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
             CreateWall(new Vector3(0, 0, 6f), new Vector3(5, 5, 0.2f));
@@ -304,10 +320,10 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at z=4
-            var io = CreateInteractive(new Vector3(0, 0, 4f),
-                interactionDistance: 10f, checkObstacles: true,
-                includeTriggerInObstacle: false,
-                distanceCheckPoint: checkPoint.transform);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
+                10f, true,
+                false,
+                checkPoint.transform);
 
             // Trigger zone at z=2 (between player and object)
             CreateTriggerZone(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
@@ -330,10 +346,10 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 4f),
-                interactionDistance: 10f, checkObstacles: true,
-                includeTriggerInObstacle: true,
-                distanceCheckPoint: checkPoint.transform);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
+                10f, true,
+                true,
+                checkPoint.transform);
 
             CreateTriggerZone(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
 
@@ -360,13 +376,13 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at z=3
-            var io = CreateInteractive(new Vector3(0, 0, 3f),
-                interactionDistance: 10f, checkObstacles: true,
-                includeTriggerInObstacle: false,
-                distanceCheckPoint: checkPoint.transform);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
+                10f, true,
+                false,
+                checkPoint.transform);
 
             // Wrap object in a big trigger zone
-            var triggerWrap = CreateTriggerZone(new Vector3(0, 0, 3f), new Vector3(4, 4, 4f));
+            GameObject triggerWrap = CreateTriggerZone(new Vector3(0, 0, 3f), new Vector3(4, 4, 4f));
 
             yield return new WaitForFixedUpdate();
             yield return new WaitForFixedUpdate();
@@ -388,11 +404,11 @@ namespace Neo.Tests.Play
             // Create object manually with trigger collider
             var go = new GameObject("InteractiveTrigger");
             go.transform.position = new Vector3(0, 0, 3f);
-            var col = go.AddComponent<SphereCollider>();
+            SphereCollider col = go.AddComponent<SphereCollider>();
             col.radius = 0.5f;
             col.isTrigger = true; // Object itself is a trigger!
 
-            var io = go.AddComponent<InteractiveObject>();
+            InteractiveObject io = go.AddComponent<InteractiveObject>();
             io.interactable = true;
             io.onInteractDown = new UnityEngine.Events.UnityEvent();
             io.onInteractUp = new UnityEngine.Events.UnityEvent();
@@ -425,8 +441,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator KeyboardView_DoesNotFallbackToDistance_WhenDistancePointMissing()
         {
-            var io = CreateInteractive(new Vector3(3f, 0, 3f),
-                interactionDistance: 10f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(3f, 0, 3f),
+                10f, false);
 
             SetPrivateField(io, "distanceCheckPoint", null);
             SetPrivateField(io, "viewCheckPoint", null);
@@ -451,10 +467,10 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 6f),
-                interactionDistance: 15f, checkObstacles: true,
-                includeTriggerInObstacle: false,
-                distanceCheckPoint: checkPoint.transform);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 6f),
+                15f, true,
+                false,
+                checkPoint.transform);
 
             // Trigger at z=1
             CreateTriggerZone(new Vector3(0, 0, 1f), new Vector3(5, 5, 0.2f));
@@ -477,8 +493,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator HoverEnter_FiresEvent_WhenInteractable()
         {
-            var io = CreateInteractive(new Vector3(0, 0, 2f),
-                interactionDistance: 0f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+                0f, false);
 
             bool hovered = false;
             io.onHoverEnter.AddListener(() => hovered = true);
@@ -496,8 +512,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator HoverEnter_DoesNotFire_WhenNotInteractable()
         {
-            var io = CreateInteractive(new Vector3(0, 0, 2f),
-                interactionDistance: 0f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+                0f, false);
             io.interactable = false;
 
             bool hovered = false;
@@ -516,8 +532,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator HoverExit_FiresEvent()
         {
-            var io = CreateInteractive(new Vector3(0, 0, 2f),
-                interactionDistance: 0f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+                0f, false);
 
             bool exited = false;
             io.onHoverExit.AddListener(() => exited = true);
@@ -536,8 +552,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator HoverChanged_PassesCorrectBool()
         {
-            var io = CreateInteractive(new Vector3(0, 0, 2f),
-                interactionDistance: 0f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+                0f, false);
 
             bool? lastHoverState = null;
             io.onHoverChanged.AddListener(state => lastHoverState = state);
@@ -565,8 +581,8 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = new Vector3(0, 0, 0);
 
-            var io = CreateInteractive(new Vector3(0, 0, 3f),
-                interactionDistance: 5f, checkObstacles: false,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 3f),
+                5f, false,
                 distanceCheckPoint: checkPoint.transform);
 
             bool entered = false;
@@ -596,7 +612,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator PublicAPI_InteractionDistance_GetSet()
         {
-            var io = CreateInteractive(Vector3.zero, interactionDistance: 5f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(Vector3.zero, 5f, false);
             yield return null;
 
             Assert.AreEqual(5f, io.InteractionDistance, 0.01f);
@@ -612,7 +628,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator PublicAPI_DistanceCheckPoint_GetSet()
         {
-            var io = CreateInteractive(Vector3.zero, interactionDistance: 5f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(Vector3.zero, 5f, false);
 
             var newPoint = new GameObject("NewCheckPoint");
             newPoint.transform.position = new Vector3(1, 2, 3);
@@ -626,7 +642,7 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator PublicAPI_ToggleFlags()
         {
-            var io = CreateInteractive(Vector3.zero, interactionDistance: 5f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(Vector3.zero, 5f, false);
             yield return null;
 
             io.UseMouseInteraction = false;
@@ -655,15 +671,15 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 4f),
-                interactionDistance: 10f, checkObstacles: true,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 4f),
+                10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
             // Set obstacleLayers to only layer 8 (some custom layer)
             SetPrivateField(io, "obstacleLayers", (LayerMask)(1 << 8));
 
             // Wall on default layer (0) — NOT included in obstacleLayers
-            var wall = CreateWall(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
+            GameObject wall = CreateWall(new Vector3(0, 0, 2f), new Vector3(5, 5, 0.2f));
             wall.layer = 0; // Default layer
 
             yield return new WaitForFixedUpdate();
@@ -688,8 +704,8 @@ namespace Neo.Tests.Play
             var checkPoint = new GameObject("Player");
             checkPoint.transform.position = Vector3.zero;
 
-            var io = CreateInteractive(new Vector3(0, 0, 8f),
-                interactionDistance: 15f, checkObstacles: true,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 8f),
+                15f, true,
                 distanceCheckPoint: checkPoint.transform);
 
             CreateWall(new Vector3(0, 0, 3f), new Vector3(5, 5, 0.2f));
@@ -718,8 +734,8 @@ namespace Neo.Tests.Play
             checkPoint.transform.position = Vector3.zero;
 
             // Object at z=0.005 (essentially overlapping)
-            var io = CreateInteractive(new Vector3(0, 0, 0.005f),
-                interactionDistance: 10f, checkObstacles: true,
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 0.005f),
+                10f, true,
                 distanceCheckPoint: checkPoint.transform);
 
             yield return new WaitForFixedUpdate();
@@ -736,8 +752,8 @@ namespace Neo.Tests.Play
         [UnityTest]
         public IEnumerator Disabled_Interactable_DoesNotFireClick()
         {
-            var io = CreateInteractive(new Vector3(0, 0, 2f),
-                interactionDistance: 0f, checkObstacles: false);
+            InteractiveObject io = CreateInteractive(new Vector3(0, 0, 2f),
+                0f, false);
 
             bool clicked = false;
             io.onClick.AddListener(() => clicked = true);

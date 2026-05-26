@@ -119,6 +119,19 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!134 &25660015
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: ' (Instance) (Instance) (Instance) (Instance) (Instance)'
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &35561186
 GameObject:
   m_ObjectHideFlags: 0
@@ -336,11 +349,10 @@ GameObject:
   - component: {fileID: 508171211}
   - component: {fileID: 508171210}
   - component: {fileID: 508171209}
-  - component: {fileID: 508171215}
   - component: {fileID: 508171213}
-  - component: {fileID: 508171216}
   - component: {fileID: 508171217}
   - component: {fileID: 508171218}
+  - component: {fileID: 508171219}
   m_Layer: 0
   m_Name: first Person Controller
   m_TagString: Player
@@ -456,6 +468,8 @@ MonoBehaviour:
   _disableLookOnPause: 1
   _toggleCursorOnEscape: 1
   _externalCursorLockController: {fileID: 0}
+  _logSetupWarnings: 1
+  _logInputFallbackWarnings: 0
   _onJumped:
     m_PersistentCalls:
       m_Calls: []
@@ -503,7 +517,7 @@ CapsuleCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 508171207}
-  m_Material: {fileID: 1548897041}
+  m_Material: {fileID: 25660015}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -585,30 +599,6 @@ MonoBehaviour:
   _onProfileReset:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &508171215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 508171207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75d4cdefd4d40874a9897c1f406ca356, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &508171216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 508171207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0dde4ac34d5a3dd44bdf468ca7633183, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &508171217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -674,6 +664,75 @@ MonoBehaviour:
   serverOnly: 0
   visibility: 0
   hasSpawned: 0
+--- !u!114 &508171219
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 508171207}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c8fcfd82523d1d4d8c8bbd3370684b1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.Components.RpgCharacter
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
+  _template: {fileID: 11400000, guid: 88c071218c9c949419a908431913307b, type: 2}
+  _applyTemplateOnAwake: 1
+  _resources: []
+  _stats: []
+  _knownBuffs: []
+  _inlineBuffs: []
+  _knownStatuses: []
+  _progression: {fileID: 0}
+  _levelProvider: {fileID: 0}
+  _saveKey: 
+  _loadOnAwake: 0
+  _autoSave: 0
+  _authorityMode: 0
+  _allowClientStateCommands: 0
+  _onDamaged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onHealed:
+    m_PersistentCalls:
+      m_Calls: []
+  _onDeath:
+    m_PersistentCalls:
+      m_Calls: []
+  _onRevived:
+    m_PersistentCalls:
+      m_Calls: []
+  _onBuffApplied:
+    m_PersistentCalls:
+      m_Calls: []
+  _onBuffExpired:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatusApplied:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatusExpired:
+    m_PersistentCalls:
+      m_Calls: []
+  _onLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onResourceChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileSaved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileLoaded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!1 &590631626
 GameObject:
   m_ObjectHideFlags: 0
@@ -1291,6 +1350,91 @@ Transform:
   - {fileID: 909081605}
   m_Father: {fileID: 508171208}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1120230279
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1120230281}
+  - component: {fileID: 1120230280}
+  - component: {fileID: 1120230282}
+  m_Layer: 0
+  m_Name: VampireSurvivorDemoController
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1120230280
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120230279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 986d10c38b610d64f8d6071e5ca10401, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Rpg.Demo.VampireSurvivorDemoController
+  _player: {fileID: 0}
+  _spawners: []
+  _startSpawnersOnPlay: 1
+  _configureSpawnedEnemies: 1
+  _scanInterval: 0.5
+  _enemyContactDamage: 12
+  _fallbackCloseRangeDamage: 1
+  _fallbackDamageRange: 8
+  _fallbackDamageInterval: 0.8
+  _disablePlayerControlOnDeath: 1
+--- !u!4 &1120230281
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120230279}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1120230282
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1120230279}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ef3869eccda5bc489a0aab72a954d91, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Neo.Rpg.Demo::Neo.Rpg.Demo.RpgWorldHealthBars
+  _targetTag: Enemy
+  _includeInactiveTargets: 0
+  _hideDeadTargets: 1
+  _scanInterval: 0.25
+  _maxBars: 96
+  _canvas: {fileID: 0}
+  _barRoot: {fileID: 0}
+  _createCanvasIfMissing: 1
+  _sortingOrder: 40
+  _worldCamera: {fileID: 0}
+  _worldOffset: {x: 0, y: 2.1, z: 0}
+  _hideOffscreen: 1
+  _drawNames: 0
+  _barSize: {x: 58, y: 6}
+  _backgroundColor: {r: 0.05, g: 0.05, b: 0.05, a: 0.9}
+  _healthColor: {r: 0.85, g: 0.16, b: 0.12, a: 1}
+  _borderColor: {r: 0, g: 0, b: 0, a: 0.95}
+  _nameColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!134 &1312266583
 PhysicsMaterial:
   m_ObjectHideFlags: 0
@@ -1311,19 +1455,6 @@ PhysicsMaterial:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: ' (Instance)'
-  serializedVersion: 2
-  m_DynamicFriction: 0.6
-  m_StaticFriction: 0.6
-  m_Bounciness: 0
-  m_FrictionCombine: 0
-  m_BounceCombine: 0
---- !u!134 &1548897041
-PhysicsMaterial:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: ' (Instance) (Instance) (Instance) (Instance)'
   serializedVersion: 2
   m_DynamicFriction: 0.6
   m_StaticFriction: 0.6
@@ -1886,6 +2017,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6641656352386739003, guid: 7acc62464f0a98a4a993be11be82c867, type: 3}
+      propertyPath: sceneId
+      value: 4153275701
+      objectReference: {fileID: 0}
     - target: {fileID: 6866284234529158041, guid: 7acc62464f0a98a4a993be11be82c867, type: 3}
       propertyPath: m_Name
       value: CubeEnemy
@@ -1913,3 +2048,4 @@ SceneRoots:
   - {fileID: 2744614000972002589}
   - {fileID: 548080486064727929}
   - {fileID: 2135699896923802772}
+  - {fileID: 1120230281}

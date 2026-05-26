@@ -14,8 +14,8 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgConditionAdapter))]
     public sealed class RpgConditionAdapter : MonoBehaviour, IConditionEvaluator
     {
-        [Tooltip("Character to query. If empty, searches the context GameObject's hierarchy.")]
-        [SerializeField] private RpgCharacter _character;
+        [Tooltip("Character to query. If empty, searches the context GameObject's hierarchy.")] [SerializeField]
+        private RpgCharacter _character;
 
         [SerializeField] private RpgEvadeController _evadeController;
         [SerializeField] private RpgAttackController _attackController;
@@ -74,18 +74,36 @@ namespace Neo.Rpg
 
             LastResult = _invert ? !result : result;
             _onEvaluated?.Invoke(LastResult);
-            if (LastResult) _onTrue?.Invoke();
-            else _onFalse?.Invoke();
+            if (LastResult)
+            {
+                _onTrue?.Invoke();
+            }
+            else
+            {
+                _onFalse?.Invoke();
+            }
+
             return LastResult;
         }
 
         [Button]
-        public bool EvaluateCurrent() => Evaluate(gameObject);
+        public bool EvaluateCurrent()
+        {
+            return Evaluate(gameObject);
+        }
 
         private RpgCharacter ResolveCharacter(GameObject context)
         {
-            if (_character != null) return _character;
-            if (context == null) return null;
+            if (_character != null)
+            {
+                return _character;
+            }
+
+            if (context == null)
+            {
+                return null;
+            }
+
             return context.TryGetComponent(out RpgCharacter c) ? c : context.GetComponentInParent<RpgCharacter>();
         }
 

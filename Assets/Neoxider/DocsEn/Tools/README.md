@@ -4,7 +4,6 @@
 
 ## Recommended entry points
 
-- [Tools audit: runtime / editor / deprecated](./TOOLS_AUDIT.md)
 - [Inventory](./Inventory/README.md)
 - [Spawner](./Spawner/README.md)
 - [Move](./Move/README.md)
@@ -38,6 +37,6 @@
 
 - **Runtime:** user-facing scene/runtime components live under `Assets/Neoxider/Scripts/Tools/*` and are split by asmdef-backed submodule.
 - **Editor tools:** windows and inspectors live under `Assets/Neoxider/Editor/Tools/*` and must not be referenced by runtime asmdefs.
-- **Deprecated / compatibility:** old `AttackSystem` and `AiNavigation` remain for compatibility. New projects should use `Rpg` and `NPC`. Full status: [`TOOLS_AUDIT.md`](./TOOLS_AUDIT.md).
+- **Deprecated / compatibility:** old `AttackSystem` and `AiNavigation` remain for compatibility. New projects should use `Rpg` and `NPC`.
 
 For the full Russian index, see [`../../Docs/Tools/README.md`](../../Docs/Tools/README.md).

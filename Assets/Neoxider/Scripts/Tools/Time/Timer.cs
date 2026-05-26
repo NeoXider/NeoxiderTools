@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
@@ -25,10 +25,10 @@ namespace Neo.Tools
     /// Timer timer = new Timer(5f, 0.1f);
     /// 
     /// // Subscribe to events
-    /// timer.OnTimerStart.AddListener(() => Debug.Log("Timer started"));
-    /// timer.OnTimerEnd.AddListener(() => Debug.Log("Timer ended"));
+    /// timer.OnTimerStart.AddListener(() => global::NeoDiagnostics.Log("Timer started"));
+    /// timer.OnTimerEnd.AddListener(() => global::NeoDiagnostics.Log("Timer ended"));
     /// timer.OnTimerUpdate.AddListener((time, progress) => {
-    ///     Debug.Log($"Time left: {time:F1}s, Progress: {progress:P0}");
+    ///     global::NeoDiagnostics.Log($"Time left: {time:F1}s, Progress: {progress:P0}");
     /// });
     /// 
     /// // Start the timer (UniTask)
@@ -245,7 +245,7 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Sets the timer progress (0–1). 0 = start, 1 = end.
+        ///     Sets the timer progress (0-1). 0 = start, 1 = end.
         /// </summary>
         /// <param name="progress">Progress value.</param>
         public void SetProgress(float progress)

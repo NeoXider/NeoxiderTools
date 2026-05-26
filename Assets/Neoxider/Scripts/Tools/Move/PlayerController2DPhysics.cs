@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Network;
 using UnityEngine;
 using UnityEngine.Events;
@@ -71,6 +71,11 @@ namespace Neo.Tools
         [SerializeField] private string _horizontalAxis = "Horizontal";
         [SerializeField] private string _jumpButton = "Jump";
         [SerializeField] private KeyCode _runKey = KeyCode.LeftShift;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logSetupWarnings = true;
+
+        [SerializeField] private bool _logInputFallbackWarnings;
 
         [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
 
@@ -147,15 +152,15 @@ namespace Neo.Tools
                 _followCamera = Camera.main;
             }
 
-            if (_groundCheck == null)
+            if (_groundCheck == null && _logSetupWarnings)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[PlayerController2DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
                     this);
             }
 
 #if MIRROR
-            var netRb = GetComponent<NetworkRigidbodyUnreliable2D>();
+            NetworkRigidbodyUnreliable2D netRb = GetComponent<NetworkRigidbodyUnreliable2D>();
             if (netRb != null && netRb.target != _rigidbody.transform)
             {
                 netRb.target = _rigidbody.transform;
@@ -344,9 +349,10 @@ namespace Neo.Tools
             }
 
             if ((_inputBackend == InputBackend.NewInputSystem || _inputBackend == InputBackend.AutoPreferNew) &&
+                _logInputFallbackWarnings &&
                 !_newInputUnavailableWarningShown)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[PlayerController2DPhysics] New Input System is not available. Falling back to Legacy Input Manager.");
                 _newInputUnavailableWarningShown = true;
             }
@@ -423,12 +429,12 @@ namespace Neo.Tools
 
         private void WarnLegacyInputUnavailable()
         {
-            if (_legacyInputUnavailableWarningShown)
+            if (_legacyInputUnavailableWarningShown || !_logInputFallbackWarnings)
             {
                 return;
             }
 
-            Debug.LogWarning(
+            NeoDiagnostics.LogWarning(
                 "[PlayerController2DPhysics] Legacy Input Manager is unavailable in current Player Settings. Falling back to New Input System where possible.",
                 this);
             _legacyInputUnavailableWarningShown = true;
@@ -470,7 +476,10 @@ namespace Neo.Tools
 
         private void TryConsumeJump()
         {
-            if (!HasInputAuthority) return;
+            if (!HasInputAuthority)
+            {
+                return;
+            }
 
             if (!_canJump)
             {

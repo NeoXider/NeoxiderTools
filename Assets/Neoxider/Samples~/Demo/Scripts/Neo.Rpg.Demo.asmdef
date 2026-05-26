@@ -21,6 +21,7 @@
         "Neo.Quest",
         "Neo.Tools.Input",
         "Neo.Core",
+        "Neo.Tools.Spawner",
         "Mirror"
     ],
     "includePlatforms": [],

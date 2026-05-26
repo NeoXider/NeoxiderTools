@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -85,7 +85,7 @@ namespace Neo.Tools
 
                 if (!seen.Add(item.ItemId))
                 {
-                    Debug.LogWarning($"[InventoryDatabase] Duplicate item id: {item.ItemId}", item);
+                    NeoDiagnostics.LogWarning($"[InventoryDatabase] Duplicate item id: {item.ItemId}", item);
                 }
             }
 #endif

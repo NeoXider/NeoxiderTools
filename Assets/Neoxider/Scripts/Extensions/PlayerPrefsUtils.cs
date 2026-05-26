@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 using System.Linq;
 using UnityEngine;
@@ -11,7 +11,7 @@ namespace Neo.Extensions
     /// </summary>
     public static class PlayerPrefsUtils
     {
-        [System.Serializable]
+        [Serializable]
         private class StringArrayData
         {
             public string[] Value;
@@ -59,7 +59,8 @@ namespace Neo.Extensions
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Error loading int array for key '{key}': {ex.Message}. Returning default value.");
+                NeoDiagnostics.LogWarning(
+                    $"Error loading int array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new int[0];
             }
         }
@@ -107,7 +108,8 @@ namespace Neo.Extensions
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Error loading float array for key '{key}': {ex.Message}. Returning default value.");
+                NeoDiagnostics.LogWarning(
+                    $"Error loading float array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new float[0];
             }
         }
@@ -167,7 +169,8 @@ namespace Neo.Extensions
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Error loading string array for key '{key}': {ex.Message}. Returning default value.");
+                NeoDiagnostics.LogWarning(
+                    $"Error loading string array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new string[0];
             }
         }
@@ -213,7 +216,8 @@ namespace Neo.Extensions
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Error loading bool array for key '{key}': {ex.Message}. Returning default value.");
+                NeoDiagnostics.LogWarning(
+                    $"Error loading bool array for key '{key}': {ex.Message}. Returning default value.");
                 return defaultValue ?? new bool[0];
             }
         }

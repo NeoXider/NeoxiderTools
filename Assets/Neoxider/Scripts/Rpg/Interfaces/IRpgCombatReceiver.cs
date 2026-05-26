@@ -16,6 +16,7 @@ namespace Neo.Rpg
             Source = source;
         }
     }
+
     /// <summary>
     ///     Common combat receiver contract used by RPG attacks, projectiles, and abilities.
     /// </summary>

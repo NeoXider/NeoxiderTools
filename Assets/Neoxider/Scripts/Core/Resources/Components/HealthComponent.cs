@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo;
 using Neo.Save;
@@ -42,7 +42,7 @@ namespace Neo.Core.Resources
         /// <summary>Current HP (for NeoCondition); reads from the HP pool.</summary>
         public float HpCurrentValue => GetPoolCurrentValue(RpgResourceId.Hp);
 
-        /// <summary>HP fraction 0–1 (for NeoCondition); reads from the HP pool.</summary>
+        /// <summary>HP fraction 0-1 (for NeoCondition); reads from the HP pool.</summary>
         public float HpPercentValue => GetPoolPercentValue(RpgResourceId.Hp);
 
         /// <summary>Max HP (for NeoCondition); reads from the HP pool.</summary>
@@ -51,7 +51,7 @@ namespace Neo.Core.Resources
         /// <summary>Current mana (for NeoCondition); reads from the Mana pool.</summary>
         public float ManaCurrentValue => GetPoolCurrentValue(RpgResourceId.Mana);
 
-        /// <summary>Mana fraction 0–1 (for NeoCondition); reads from the Mana pool.</summary>
+        /// <summary>Mana fraction 0-1 (for NeoCondition); reads from the Mana pool.</summary>
         public float ManaPercentValue => GetPoolPercentValue(RpgResourceId.Mana);
 
         /// <summary>Max mana (for NeoCondition); reads from the Mana pool.</summary>
@@ -295,7 +295,7 @@ namespace Neo.Core.Resources
             }
             catch (Exception e)
             {
-                Debug.LogWarning($"[HealthComponent] Load failed: {e.Message}");
+                NeoDiagnostics.LogWarning($"[HealthComponent] Load failed: {e.Message}");
             }
         }
 

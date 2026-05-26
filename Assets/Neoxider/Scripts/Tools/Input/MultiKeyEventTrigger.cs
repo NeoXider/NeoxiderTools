@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -34,7 +34,7 @@ namespace Neo.Tools
                 {
                     if (_debug)
                     {
-                        Debug.Log($"[MultiKeyEventTrigger] Key pressed: {pair.key}");
+                        NeoDiagnostics.Log($"[MultiKeyEventTrigger] Key pressed: {pair.key}");
                     }
 
                     pair.onKeyPressed?.Invoke();

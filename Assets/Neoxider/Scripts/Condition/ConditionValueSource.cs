@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -200,7 +200,8 @@ namespace Neo.Condition
             {
                 if (!_hasLoggedMissingMemberWarning)
                 {
-                    Debug.LogWarning($"[NeoCondition] Component '{componentTypeName}' not found on '{target.name}'.");
+                    NeoDiagnostics.LogWarning(
+                        $"[NeoCondition] Component '{componentTypeName}' not found on '{target.name}'.");
                     _hasLoggedMissingMemberWarning = true;
                 }
 
@@ -243,7 +244,7 @@ namespace Neo.Condition
 
             if (!_hasLoggedMissingMemberWarning)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     $"[NeoCondition] Property/field/method '{propertyName}' not found on '{componentTypeName}' on '{target.name}'.");
                 _hasLoggedMissingMemberWarning = true;
             }
@@ -313,7 +314,7 @@ namespace Neo.Condition
 
             if (!_hasLoggedMissingMemberWarning)
             {
-                Debug.LogWarning($"[NeoCondition] Property '{propertyName}' not found on GameObject.");
+                NeoDiagnostics.LogWarning($"[NeoCondition] Property '{propertyName}' not found on GameObject.");
                 _hasLoggedMissingMemberWarning = true;
             }
 
@@ -336,7 +337,7 @@ namespace Neo.Condition
         {
             if (!_hasLoggedDestroyedWarning)
             {
-                Debug.LogWarning($"[NeoCondition] {message}. Condition will evaluate to false.");
+                NeoDiagnostics.LogWarning($"[NeoCondition] {message}. Condition will evaluate to false.");
                 _hasLoggedDestroyedWarning = true;
             }
         }

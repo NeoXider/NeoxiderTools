@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -57,10 +57,10 @@ namespace Neo.Cards.Editor
             DrawBackSprite();
             EditorGUILayout.Space(10);
 
-            DrawSuitSection("♥ Hearts", _hearts, Color.red, ref _showHearts);
-            DrawSuitSection("♦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
-            DrawSuitSection("♣ Clubs", _clubs, Color.black, ref _showClubs);
-            DrawSuitSection("♠ Spades", _spades, Color.black, ref _showSpades);
+            DrawSuitSection("в™Ґ Hearts", _hearts, Color.red, ref _showHearts);
+            DrawSuitSection("в™¦ Diamonds", _diamonds, Color.red, ref _showDiamonds);
+            DrawSuitSection("в™Ј Clubs", _clubs, Color.black, ref _showClubs);
+            DrawSuitSection("в™  Spades", _spades, Color.black, ref _showSpades);
 
             EditorGUILayout.Space(10);
             DrawJokers();
@@ -71,7 +71,7 @@ namespace Neo.Cards.Editor
             serializedObject.ApplyModifiedProperties();
         }
 
-        private void DrawHeader()
+        private new void DrawHeader()
         {
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
             GUIStyle headerStyle = new(EditorStyles.boldLabel)
@@ -113,7 +113,7 @@ namespace Neo.Cards.Editor
             else
             {
                 EditorGUILayout.HelpBox(
-                    $"⚠ GameDeckType ({gameType}) needs ranks that DeckType ({spriteType}) does not include",
+                    $"вљ  GameDeckType ({gameType}) needs ranks that Neo.Cards.DeckType ({spriteType}) does not include",
                     MessageType.Error);
             }
 
@@ -188,7 +188,7 @@ namespace Neo.Cards.Editor
             EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
             bool isRequired = (DeckType)_deckType.enumValueIndex == DeckType.Standard54;
-            string title = isRequired ? "🃏 Jokers (required for 54-card deck)" : "🃏 Jokers (optional)";
+            string title = isRequired ? "рџѓЏ Jokers (required for 54-card deck)" : "рџѓЏ Jokers (optional)";
 
             _showJokers = EditorGUILayout.Foldout(_showJokers, title, true, EditorStyles.foldoutHeader);
 
@@ -250,7 +250,7 @@ namespace Neo.Cards.Editor
 
             if (isValid && warnings.Count == 0)
             {
-                EditorGUILayout.HelpBox("✓ Configuration is valid", MessageType.Info);
+                EditorGUILayout.HelpBox("вњ“ Configuration is valid", MessageType.Info);
             }
             else
             {
@@ -280,12 +280,12 @@ namespace Neo.Cards.Editor
             if (isValid)
             {
                 GUI.backgroundColor = new Color(0.5f, 1f, 0.5f);
-                EditorGUILayout.HelpBox($"✓ {actual}/{expected} sprites", MessageType.None);
+                EditorGUILayout.HelpBox($"вњ“ {actual}/{expected} sprites", MessageType.None);
             }
             else
             {
                 GUI.backgroundColor = new Color(1f, 0.5f, 0.5f);
-                EditorGUILayout.HelpBox($"✗ {actual}/{expected} sprites", MessageType.Warning);
+                EditorGUILayout.HelpBox($"вњ— {actual}/{expected} sprites", MessageType.Warning);
             }
 
             GUI.backgroundColor = oldBgColor;

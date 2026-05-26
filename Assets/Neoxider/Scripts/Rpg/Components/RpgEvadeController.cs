@@ -15,7 +15,8 @@ namespace Neo.Rpg
     {
         [Header("Setup")]
         [Tooltip("Character to drive invulnerability while evading. If empty, searches this GO.")]
-        [SerializeField] private RpgCharacter _character;
+        [SerializeField]
+        private RpgCharacter _character;
 
         [Header("Built-in Input")] [SerializeField]
         private bool _enableBuiltInInput = true;
@@ -147,7 +148,11 @@ namespace Neo.Rpg
 
         private IRpgCombatReceiver ResolveReceiver()
         {
-            if (_character != null) return _character;
+            if (_character != null)
+            {
+                return _character;
+            }
+
             return GetComponent<RpgCharacter>() ?? GetComponentInParent<RpgCharacter>();
         }
     }

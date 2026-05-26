@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using System.Threading;
 using Cysharp.Threading.Tasks;
@@ -121,7 +121,7 @@ namespace Neo.Tools
 
             if (dialogues == null || dialogues.Length == 0)
             {
-                Debug.LogWarning("[DialogueController] No dialogues configured.", this);
+                NeoDiagnostics.LogWarning("[DialogueController] No dialogues configured.", this);
                 return;
             }
 
@@ -213,7 +213,7 @@ namespace Neo.Tools
             Dialogue currentDialogue = dialogues[CurrentDialogueId];
             if (currentDialogue?.monologues == null || CurrentMonologId >= currentDialogue.monologues.Length)
             {
-                // End of dialogue — go to next dialogue
+                // End of dialogue  - go to next dialogue
                 GoToNextDialogue();
                 return;
             }
@@ -221,7 +221,7 @@ namespace Neo.Tools
             Monolog currentMonolog = currentDialogue.monologues[CurrentMonologId];
             if (currentMonolog?.sentences == null || CurrentSentenceId >= currentMonolog.sentences.Length - 1)
             {
-                // End of monolog — go to next monolog
+                // End of monolog  - go to next monolog
                 GoToNextMonolog();
                 return;
             }
@@ -329,7 +329,7 @@ namespace Neo.Tools
             var windowType = Type.GetType("Neo.Tools.Editor.DialogueEditorWindow, Neo.Editor");
             if (windowType == null)
             {
-                Debug.LogError(
+                NeoDiagnostics.LogError(
                     "[DialogueController] DialogueEditorWindow not found. Ensure Neo.Editor assembly is compiled.",
                     this);
                 return;
@@ -341,7 +341,7 @@ namespace Neo.Tools
 
             if (showForMethod == null)
             {
-                Debug.LogError("[DialogueController] DialogueEditorWindow.ShowFor method not found.", this);
+                NeoDiagnostics.LogError("[DialogueController] DialogueEditorWindow.ShowFor method not found.", this);
                 return;
             }
 
@@ -407,7 +407,7 @@ namespace Neo.Tools
             Dialogue currentDialogue = GetCurrentDialogue();
             if (currentDialogue == null)
             {
-                Debug.LogWarning($"[DialogueController] Dialogue [{CurrentDialogueId}] is null.", this);
+                NeoDiagnostics.LogWarning($"[DialogueController] Dialogue [{CurrentDialogueId}] is null.", this);
                 return;
             }
 
@@ -422,7 +422,8 @@ namespace Neo.Tools
             Monolog currentMonolog = GetCurrentMonolog();
             if (currentMonolog == null)
             {
-                Debug.LogWarning($"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
+                NeoDiagnostics.LogWarning(
+                    $"[DialogueController] Monolog [{CurrentDialogueId}][{CurrentMonologId}] is null.",
                     this);
                 return;
             }
@@ -438,7 +439,7 @@ namespace Neo.Tools
             Sentence sentence = GetCurrentSentence();
             if (sentence == null)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     $"[DialogueController] Sentence [{CurrentDialogueId}][{CurrentMonologId}][{CurrentSentenceId}] is null.",
                     this);
                 return;

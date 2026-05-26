@@ -1,4 +1,4 @@
-﻿# Progression вЂ” Internal Types
+﻿# Progression - Internal Types
 
 | Type | Description |
 |------|-------------|
@@ -12,4 +12,4 @@
 
 ## See Also
 - [ProgressionComponent](ProgressionManager.md)
-- в†ђ [Progression](README.md)
+- <- [Progression](README.md)

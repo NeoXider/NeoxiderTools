@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using Neo.Network;
@@ -58,14 +58,14 @@ namespace Neo.Condition
     [AddComponentMenu("Neoxider/Condition/NeoCondition")]
     public class NeoCondition : NeoNetworkComponent
     {
-        [Tooltip("ServerRevalidate: server evaluates conditions itself (secure). TrustClient: server trusts client result (for client-local conditions like UI/input).")]
+        [Tooltip(
+            "ServerRevalidate: server evaluates conditions itself (secure). TrustClient: server trusts client result (for client-local conditions like UI/input).")]
         [SerializeField]
         private ConditionAuthority _authority = ConditionAuthority.ServerRevalidate;
 
 #if MIRROR
         /// <summary>Server-authoritative last result, synced to late-joining clients.</summary>
-        [SyncVar]
-        private bool _syncResult;
+        [SyncVar] private bool _syncResult;
 #endif
 
         [Header("Logic")] [Tooltip("Combine logic: AND (all true) or OR (at least one true).")] [SerializeField]
@@ -170,7 +170,11 @@ namespace Neo.Condition
             if (_checkMode == CheckMode.EveryFrame)
             {
                 // Throttle EveryFrame to avoid per-frame reflection overhead (min ~60hz)
-                if (Time.time < _nextEveryFrameCheck) return;
+                if (Time.time < _nextEveryFrameCheck)
+                {
+                    return;
+                }
+
                 _nextEveryFrameCheck = Time.time + 0.016f;
                 Check();
             }
@@ -205,9 +209,14 @@ namespace Neo.Condition
                 if (NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
                 {
                     if (_authority == ConditionAuthority.TrustClient)
+                    {
                         CmdClientResult(result); // Client sends its result (for client-local conditions)
+                    }
                     else
-                        CmdRequestCheck();        // Client asks server to re-evaluate (secure)
+                    {
+                        CmdRequestCheck(); // Client asks server to re-evaluate (secure)
+                    }
+
                     return;
                 }
             }
@@ -244,14 +253,20 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdRequestCheck(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
 
-            // Server evaluates conditions itself — never trust client-provided result
+            // Server evaluates conditions itself  - never trust client-provided result
             bool result = Evaluate();
             bool changed = !_lastResult.HasValue || _lastResult.Value != result;
             _lastResult = result;
 
-            if (_onlyOnChange && !changed) return;
+            if (_onlyOnChange && !changed)
+            {
+                return;
+            }
 
             _syncResult = result;
             InvokeEvents(result);
@@ -262,12 +277,18 @@ namespace Neo.Condition
         [Command(requiresAuthority = false)]
         private void CmdClientResult(bool result, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
 
             bool changed = !_lastResult.HasValue || _lastResult.Value != result;
             _lastResult = result;
 
-            if (_onlyOnChange && !changed) return;
+            if (_onlyOnChange && !changed)
+            {
+                return;
+            }
 
             _syncResult = result;
             InvokeEvents(result);
@@ -277,7 +298,11 @@ namespace Neo.Condition
         [ClientRpc(includeOwner = true)]
         private void RpcInvokeEvents(bool result)
         {
-            if (isServer) return; // Prevent double invocation on host
+            if (isServer)
+            {
+                return; // Prevent double invocation on host
+            }
+
             _lastResult = result;
             InvokeEvents(result);
         }
@@ -345,7 +370,7 @@ namespace Neo.Condition
             {
                 if (!_loggedEntryErrors.Contains(index))
                 {
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         $"[NeoCondition] Condition #{index} on '{name}': object or component was destroyed. " +
                         "Condition evaluates to false.");
                     _loggedEntryErrors.Add(index);
@@ -358,8 +383,9 @@ namespace Neo.Condition
             {
                 if (!_loggedEntryErrors.Contains(index))
                 {
-                    Debug.LogWarning($"[NeoCondition] Condition #{index} on '{name}': error — {ex.Message}. " +
-                                     "Condition evaluates to false.");
+                    NeoDiagnostics.LogWarning(
+                        $"[NeoCondition] Condition #{index} on '{name}': error  - {ex.Message}. " +
+                        "Condition evaluates to false.");
                     _loggedEntryErrors.Add(index);
                 }
 
@@ -427,4 +453,3 @@ namespace Neo.Condition
         }
     }
 }
-

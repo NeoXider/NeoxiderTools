@@ -45,7 +45,11 @@ namespace Neo.Network
         /// </summary>
         protected bool RateLimitCheck()
         {
-            if (Time.time - _lastCmdTime < NetworkRateLimit) return true;
+            if (Time.time - _lastCmdTime < NetworkRateLimit)
+            {
+                return true;
+            }
+
             _lastCmdTime = Time.time;
             return false;
         }
@@ -63,7 +67,9 @@ namespace Neo.Network
         {
             base.OnStartClient();
             if (isNetworked && !isServer)
+            {
                 ApplyNetworkState();
+            }
         }
 
         /// <summary>

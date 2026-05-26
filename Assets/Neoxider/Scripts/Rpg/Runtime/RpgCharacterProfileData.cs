@@ -44,15 +44,44 @@ namespace Neo.Rpg.Runtime
             _upgradePoints = Mathf.Max(0, _upgradePoints);
 
             for (int i = _resources.Count - 1; i >= 0; i--)
-                if (string.IsNullOrWhiteSpace(_resources[i].Id)) _resources.RemoveAt(i);
+            {
+                if (string.IsNullOrWhiteSpace(_resources[i].Id))
+                {
+                    _resources.RemoveAt(i);
+                }
+            }
+
             for (int i = _stats.Count - 1; i >= 0; i--)
-                if (string.IsNullOrWhiteSpace(_stats[i].Id)) _stats.RemoveAt(i);
+            {
+                if (string.IsNullOrWhiteSpace(_stats[i].Id))
+                {
+                    _stats.RemoveAt(i);
+                }
+            }
+
             for (int i = _upgrades.Count - 1; i >= 0; i--)
-                if (string.IsNullOrWhiteSpace(_upgrades[i].StatId)) _upgrades.RemoveAt(i);
+            {
+                if (string.IsNullOrWhiteSpace(_upgrades[i].StatId))
+                {
+                    _upgrades.RemoveAt(i);
+                }
+            }
+
             for (int i = _activeBuffs.Count - 1; i >= 0; i--)
-                if (string.IsNullOrWhiteSpace(_activeBuffs[i].BuffId)) _activeBuffs.RemoveAt(i);
+            {
+                if (string.IsNullOrWhiteSpace(_activeBuffs[i].BuffId))
+                {
+                    _activeBuffs.RemoveAt(i);
+                }
+            }
+
             for (int i = _activeStatuses.Count - 1; i >= 0; i--)
-                if (string.IsNullOrWhiteSpace(_activeStatuses[i].StatusId)) _activeStatuses.RemoveAt(i);
+            {
+                if (string.IsNullOrWhiteSpace(_activeStatuses[i].StatusId))
+                {
+                    _activeStatuses.RemoveAt(i);
+                }
+            }
         }
 
         public RpgCharacterProfileData Clone()
@@ -62,18 +91,33 @@ namespace Neo.Rpg.Runtime
                 _version = _version, _level = _level, _xp = _xp, _upgradePoints = _upgradePoints
             };
             foreach (RpgResourceSaveEntry e in _resources)
+            {
                 copy._resources.Add(new RpgResourceSaveEntry { Id = e.Id, Current = e.Current, Max = e.Max });
+            }
+
             foreach (RpgStatSaveEntry e in _stats)
+            {
                 copy._stats.Add(new RpgStatSaveEntry { Id = e.Id, Base = e.Base });
+            }
+
             foreach (RpgUpgradeSaveEntry e in _upgrades)
+            {
                 copy._upgrades.Add(new RpgUpgradeSaveEntry { StatId = e.StatId, Count = e.Count });
+            }
+
             foreach (ActiveBuffEntry e in _activeBuffs)
+            {
                 copy._activeBuffs.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
+            }
+
             foreach (ActiveStatusEntry e in _activeStatuses)
+            {
                 copy._activeStatuses.Add(new ActiveStatusEntry
                 {
                     StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
                 });
+            }
+
             return copy;
         }
     }

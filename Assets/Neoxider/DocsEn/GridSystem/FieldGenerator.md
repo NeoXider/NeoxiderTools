@@ -1,24 +1,54 @@
-﻿# FieldGenerator
+# FieldGenerator
 
-**Purpose:** See Inspector fields below for configuration.
+**Purpose:** GridSystem core. This component generates and stores the runtime grid, shape, coordinates, and cell state. Gameplay layers work on top of `FieldGenerator`.
 
-## Setup
+## Cell State
 
-- Add the component via the Unity menu.
+`FieldCell` contains:
 
-## Key Fields (Inspector)
+- `Position` - logical coordinates.
+- `IsEnabled` - cell belongs to the active board shape.
+- `IsWalkable` - cell can be used by pathfinding/gameplay rules.
+- `IsOccupied` - cell is occupied by a runtime object.
+- `ContentId` - gameplay content: Match3 tile, X/O mark, 2048 value, item id.
+- `Type` - custom cell/tile type.
+- `Flags` - optional markers.
+- `UserData` - optional custom C# payload.
 
-| Field | Description |
-|-------|-------------|
-| `Cells` | Cells. |
-| `Cells2D` | Cells2D. |
-| `Config` | Config. |
-| `DebugEnabled` | Debug Enabled. |
-| `OnCellChanged` | On Cell Changed. |
-| `OnCellStateChanged` | On Cell State Changed. |
-| `OnFieldGenerated` | On Field Generated. |
-| `UnityGrid` | Unity Grid. |
+## Config
+
+- `Size` - backing 3D cell array size.
+- `GridType` - `Rectangular`, `Hexagonal`, `Custom`.
+- `MovementRule` - neighbor direction set.
+- `ShapeMask` - ScriptableObject shape mask.
+- `DisabledCells` / `ForcedEnabledCells` - shape overrides.
+- `BlockedCells` / `ForcedWalkableCells` - walkability overrides.
+- `PassabilityMode` - how pathfinding treats occupied cells.
+- `Origin2D`, `OriginDepth`, `OriginOffset` - logical-to-Unity Grid anchoring.
+
+## Main API
+
+- `GenerateField(config)` - create/recreate cells.
+- `GetCell(...)` - get a cell.
+- `GetAllCells(includeDisabled)` - enumerate cells.
+- `SetWalkable(...)`, `SetEnabled(...)`, `SetOccupied(...)`, `SetContentId(...)` - mutate state.
+- `GetNeighbors(...)` - get neighbors from `MovementRule` or override directions.
+- `FindPathDetailed(...)` - pathfinding with failure reason diagnostics.
+- `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
+
+## Events
+
+- `OnFieldGenerated`
+- `OnCellChanged`
+- `OnCellStateChanged`
+
+## Architectural Role
+
+`FieldGenerator` should not own game-specific rules. Match3, TicTacToe, SlidingMerge, inventory grids, and custom games attach focused services that read/write cell state.
 
 ## See Also
 
-- [Module Root](../README.md)
+- [GridGameBuilder](GridGameBuilder.md)
+- [GridShapeMask](GridShapeMask.md)
+- [FieldDebugDrawer](FieldDebugDrawer.md)
+- [SlidingMerge](SlidingMerge/SlidingMergeBoardService.md)

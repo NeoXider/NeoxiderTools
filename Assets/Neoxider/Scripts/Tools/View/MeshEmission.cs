@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Tools.View
 {
@@ -43,6 +43,8 @@ namespace Neo.Tools.View
         [Header("Diagnostics")] [SerializeField]
         private bool debugLog;
 
+        [SerializeField] private bool _logWarnings;
+
         private Material _material;
 
         private MeshRenderer _meshRenderer;
@@ -63,7 +65,7 @@ namespace Neo.Tools.View
             _meshRenderer = GetComponent<MeshRenderer>();
             if (_meshRenderer == null)
             {
-                Debug.LogError("MeshEmission: No MeshRenderer found on this GameObject!", this);
+                NeoDiagnostics.LogError("MeshEmission: No MeshRenderer found on this GameObject!", this);
                 enabled = false;
                 return;
             }
@@ -132,6 +134,7 @@ namespace Neo.Tools.View
                 {
                     DestroyImmediate(_material);
                 }
+
                 _material = null;
             }
         }
@@ -169,7 +172,7 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // Below cutoff — full off
+            // Below cutoff  - full off
             if (intensity <= emissionCutoff)
             {
                 if (_material.HasProperty(EmissionColorID))
@@ -187,7 +190,7 @@ namespace Neo.Tools.View
                 return;
             }
 
-            // Normal path — enable emission
+            // Normal path  - enable emission
             _material.EnableKeyword(EmissionKW);
 
             if (_material.HasProperty(EmissionColorID))
@@ -232,12 +235,15 @@ namespace Neo.Tools.View
             {
                 if (debugLog)
                 {
-                    Debug.Log($"[{gameObject.name}] Found Light: {targetLight.gameObject.name}", this);
+                    NeoDiagnostics.Log($"[{gameObject.name}] Found Light: {targetLight.gameObject.name}", this);
                 }
             }
             else
             {
-                Debug.LogWarning($"[{gameObject.name}] No Light found on self or children!");
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning($"[{gameObject.name}] No Light found on self or children!", this);
+                }
             }
         }
     }

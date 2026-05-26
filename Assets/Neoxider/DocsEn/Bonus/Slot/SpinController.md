@@ -32,27 +32,27 @@
 | `BetSelectionIndex` | Index into `betsData.bets`. |
 | `DelayBetweenColumnSpins` | Delay between column spin starts. |
 | `CurrentSpinPrice` | Price basis for next `StartSpin`. |
-| `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (в€’1 / в€’1 = full visible window). Ignored while spinning (`IsStop()` required). |
+| `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (-1 / -1 = full visible window). Ignored while spinning (`IsStop()` required). |
 | `WinLinePlayback` | Mutable `WinLineRendererPlayback` settings. |
 | `GetRuntimeSnapshot(refresh)` | `SpinRuntimeSnapshot` struct (idle, sizes, prices, fallback resolved, win copy). |
 
-**CheckSpin:** `LinesDataAsset`, `SpritesMultiplierData`, `SequenceLength`, `SetSequenceLength`, `GetEffectiveLines`, `GetPaylineDefinitionCount`, `GetResolvedFallbackWindowRowRange`, `UsesFallbackPaylinesOnly`, `SetFallbackPaylineWindowRows`, `ClearLegacyFallbackSingleRowBinding` вЂ” see [CheckSpin.md](../CheckSpin.md).
+**CheckSpin:** `LinesDataAsset`, `SpritesMultiplierData`, `SequenceLength`, `SetSequenceLength`, `GetEffectiveLines`, `GetPaylineDefinitionCount`, `GetResolvedFallbackWindowRowRange`, `UsesFallbackPaylinesOnly`, `SetFallbackPaylineWindowRows`, `ClearLegacyFallbackSingleRowBinding` - see [CheckSpin.md](../CheckSpin.md).
 
 ##### `SpinRuntimeSnapshot` (fields)
 
 | Field | Meaning |
 |-------|---------|
 | `IsIdle` | All `Row` stopped (`IsStop`). |
-| `WindowHeight`, `ColumnCount` | Visible rows Г— columns. |
+| `WindowHeight`, `ColumnCount` | Visible rows x columns. |
 | `ActivePaylineCount` | Inspector `countLine`. |
 | `EvaluatedPaylineCount` | Lines actually checked (`min(countLine, defs)`). |
 | `TotalPaylineDefinitionCount` | All line definitions (asset or fallback). |
 | `BetIndex`, `SpinPrice` | Current bet index and `CurrentSpinPrice`. |
 | `CheckSpinActive` | `checkSpin.isActive`. |
 | `UsesFallbackPaylinesOnly` | No valid Lines Data for this window size. |
-| `FallbackMinRaw` / `FallbackMaxRaw` | Serialized в€’1 or row index from `CheckSpin`. |
+| `FallbackMinRaw` / `FallbackMaxRaw` | Serialized -1 or row index from `CheckSpin`. |
 | `FallbackResolvedMinRow` / `FallbackResolvedMaxRow` | Resolved inclusive window rows (0 = bottom). |
-| `LastWinningPaylineIndicesCopy` | Copy of last spinвЂ™s winning line indices (may be empty). |
+| `LastWinningPaylineIndicesCopy` | Copy of last spin's winning line indices (may be empty). |
 
 Full RU details: [SpinController.md](../../../Docs/Bonus/Slot/SpinController.md).
 
@@ -65,7 +65,7 @@ Typical layout mirrors the RU page ([SpinController.md](../../../Docs/Bonus/Slot
 | **General** | **`checkSpin`** (lines + multipliers), **`betsData`**, **`allSpritesData`**, **`ChanceWin`** ([0-1], YAML alias `chanseWin`), **`moneySpend`**, column refs **`_rows`**, window **`_space`** / **`_setSpace`**, timings **`timeSpin`**, **`_delaySpinRoll`**, **`offsetY`**. |
 | **Bet / lines UI** | **`_betsId`**, **`_textCountLine`**, **`_moneyGameObject`**, **`_firstWin`**, **`_logFinalVisuals`**, **`_debugLogWarnings`**. |
 | **Runtime matrices** | **`Elements`**, **`finalVisuals`**, **`FinalElementIDs`** (filled after reels stop; column `x`, row `y=0` bottom). |
-| **Visual в†’ Win Line Playback** | **`_winLinePlayback`** (`WinLineRendererPlayback`): optional **LineRenderer** paths, color modes, timing. |
+| **Visual -> Win Line Playback** | **`_winLinePlayback`** (`WinLineRendererPlayback`): optional **LineRenderer** paths, color modes, timing. |
 
 ## Unity Events
 

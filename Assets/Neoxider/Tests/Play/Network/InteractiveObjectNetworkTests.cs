@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using Mirror;
 using Neo.Network;
 using Neo.Tools;
@@ -30,24 +31,24 @@ namespace Neo.Tests.Play
             _cameraObj.AddComponent<Camera>();
 
             // Setup NetworkManager
-            _managerObj = new GameObject("NetworkManager");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             // Setup Interactive Object
             _objInteractive = new GameObject("InteractiveObject");
-            
+
             // Add NetworkBehaviour FIRST so NetworkIdentity.Awake() wires the netIdentity property
             _interactiveObject = _objInteractive.AddComponent<InteractiveObject>();
-            if (_interactiveObject.onInteractDown == null) _interactiveObject.onInteractDown = new UnityEngine.Events.UnityEvent();
+            if (_interactiveObject.onInteractDown == null)
+            {
+                _interactiveObject.onInteractDown = new UnityEngine.Events.UnityEvent();
+            }
 
             NetworkIdentity identity = _objInteractive.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(identity, 12345);
@@ -56,11 +57,18 @@ namespace Neo.Tests.Play
 
             // Start Host
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
             // Spawn Singleton on server
             NetworkServer.Spawn(_objInteractive);
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
             yield return null;
         }
@@ -68,12 +76,27 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
 
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
-            if (_objInteractive != null) Object.DestroyImmediate(_objInteractive);
-            if (_cameraObj != null) Object.DestroyImmediate(_cameraObj);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
+
+            if (_objInteractive != null)
+            {
+                Object.DestroyImmediate(_objInteractive);
+            }
+
+            if (_cameraObj != null)
+            {
+                Object.DestroyImmediate(_cameraObj);
+            }
         }
 
         [UnityTest]
@@ -89,11 +112,12 @@ namespace Neo.Tests.Play
                 eventCount++;
             });
 
-            var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return new WaitForSeconds(0.1f);
-            
+
             Assert.IsTrue(_eventFired, "Host should execute the networked interaction.");
             Assert.AreEqual(1, eventCount, "Host should not receive duplicate local + RPC interaction events.");
         }
@@ -106,7 +130,8 @@ namespace Neo.Tests.Play
             int eventCount = 0;
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
-            var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return null;
@@ -123,7 +148,8 @@ namespace Neo.Tests.Play
             int eventCount = 0;
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
-            var triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return new WaitForSeconds(0.1f);
@@ -137,7 +163,8 @@ namespace Neo.Tests.Play
             var remoteSender = new NetworkConnectionToClient(42, "remote");
 
             Assert.IsTrue(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.None));
-            Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.ServerOnly));
+            Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender,
+                NetworkAuthorityMode.ServerOnly));
             Assert.IsFalse(NeoNetworkState.IsAuthorized(_objInteractive, remoteSender, NetworkAuthorityMode.OwnerOnly));
 
             yield return null;

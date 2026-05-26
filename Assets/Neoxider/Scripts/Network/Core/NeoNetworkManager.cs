@@ -25,26 +25,35 @@ namespace Neo.Network
     {
         [Header("Neo Events")]
         [Tooltip("Triggered when the server is started locally (Host or Dedicated server).")]
-        [SerializeField] private UnityEvent _onServerStarted = new();
-        [Tooltip("Triggered when the server is stopped.")]
-        [SerializeField] private UnityEvent _onServerStopped = new();
-        [Tooltip("Triggered when the client successfully connects to the server.")]
-        [SerializeField] private UnityEvent _onClientConnected = new();
-        [Tooltip("Triggered when the client disconnects from the server.")]
-        [SerializeField] private UnityEvent _onClientDisconnected = new();
+        [SerializeField]
+        private UnityEvent _onServerStarted = new();
 
-        [Header("Diagnostics")]
-        [SerializeField] private bool _debugLifecycleLog;
+        [Tooltip("Triggered when the server is stopped.")] [SerializeField]
+        private UnityEvent _onServerStopped = new();
+
+        [Tooltip("Triggered when the client successfully connects to the server.")] [SerializeField]
+        private UnityEvent _onClientConnected = new();
+
+        [Tooltip("Triggered when the client disconnects from the server.")] [SerializeField]
+        private UnityEvent _onClientDisconnected = new();
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLifecycleLog;
 
 #if MIRROR
         [Header("Scene Player Template")]
         [Tooltip("Use a player object configured in the scene as the NoCode template instead of a prefab asset.")]
-        [SerializeField] private bool _useScenePlayerTemplate;
+        [SerializeField]
+        private bool _useScenePlayerTemplate;
+
         [Tooltip("Disabled scene object that contains NetworkIdentity and all NoCode references for the player.")]
-        [SerializeField] private GameObject _scenePlayerTemplate;
-        [Tooltip("Disable the scene template at runtime so only spawned network copies are active.")]
-        [SerializeField] private bool _disableScenePlayerTemplate = true;
-        [SerializeField, HideInInspector] private string _scenePlayerTemplateSpawnId;
+        [SerializeField]
+        private GameObject _scenePlayerTemplate;
+
+        [Tooltip("Disable the scene template at runtime so only spawned network copies are active.")] [SerializeField]
+        private bool _disableScenePlayerTemplate = true;
+
+        [SerializeField] [HideInInspector] private string _scenePlayerTemplateSpawnId;
 
         private uint _scenePlayerTemplateAssetId;
         private uint _registeredScenePlayerTemplateAssetId;
@@ -134,7 +143,10 @@ namespace Neo.Network
             EnsureScenePlayerTemplateSpawnId();
 
             if (_scenePlayerTemplate != null && !_scenePlayerTemplate.TryGetComponent(out NetworkIdentity _))
-                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.", this);
+            {
+                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.",
+                    this);
+            }
         }
 
         public override void Awake()
@@ -195,7 +207,9 @@ namespace Neo.Network
             RegisterScenePlayerTemplateSpawnHandler();
             PrepareScenePlayerTemplate(true);
             if (!NetworkServer.active)
+            {
                 DisableScenePlayerTemplateInstance();
+            }
         }
 
         public override void OnStartHost()
@@ -281,11 +295,17 @@ namespace Neo.Network
         public void StopNetwork()
         {
             if (IsHost)
+            {
                 StopHost();
+            }
             else if (IsServer)
+            {
                 StopServer();
+            }
             else if (IsClient)
+            {
                 StopClient();
+            }
         }
 
         private uint ScenePlayerTemplateAssetId
@@ -293,7 +313,9 @@ namespace Neo.Network
             get
             {
                 if (_scenePlayerTemplateAssetId == 0)
+                {
                     _scenePlayerTemplateAssetId = CalculateStableAssetId(GetEffectiveScenePlayerTemplateSpawnId());
+                }
 
                 return _scenePlayerTemplateAssetId;
             }
@@ -304,12 +326,16 @@ namespace Neo.Network
             NormalizeScenePlayerTemplateMode();
 
             if (!_useScenePlayerTemplate)
+            {
                 return;
+            }
 
             ApplyScenePlayerTemplateMode();
 
             if (!allowDisableTemplate || _scenePlayerTemplate == null || !_disableScenePlayerTemplate)
+            {
                 return;
+            }
 
             DisableScenePlayerTemplateInstance();
         }
@@ -317,22 +343,32 @@ namespace Neo.Network
         private void DisableScenePlayerTemplateInstance()
         {
             if (!_useScenePlayerTemplate || !_disableScenePlayerTemplate || _scenePlayerTemplate == null)
+            {
                 return;
+            }
 
             if (_scenePlayerTemplate.activeSelf)
+            {
                 _scenePlayerTemplate.SetActive(false);
+            }
         }
 
         private void NormalizeScenePlayerTemplateMode()
         {
             if (_useScenePlayerTemplate)
+            {
                 return;
+            }
 
             if (playerPrefab == null)
+            {
                 return;
+            }
 
             if (!playerPrefab.TryGetComponent(out NetworkIdentity identity) || identity.sceneId == 0)
+            {
                 return;
+            }
 
             _useScenePlayerTemplate = true;
             _scenePlayerTemplate = playerPrefab;
@@ -344,7 +380,9 @@ namespace Neo.Network
         private void ApplyScenePlayerTemplateMode()
         {
             if (!_useScenePlayerTemplate)
+            {
                 return;
+            }
 
             autoCreatePlayer = false;
             playerPrefab = null;
@@ -353,10 +391,14 @@ namespace Neo.Network
         private void TryAddSceneTemplatePlayer()
         {
             if (!_useScenePlayerTemplate || NetworkClient.localPlayer != null)
+            {
                 return;
+            }
 
             if (!NetworkClient.ready)
+            {
                 NetworkClient.Ready();
+            }
 
             NetworkClient.AddPlayer();
         }
@@ -366,14 +408,19 @@ namespace Neo.Network
             player = null;
 
             if (!_useScenePlayerTemplate)
+            {
                 return false;
+            }
 
             if (!IsScenePlayerTemplateValid())
+            {
                 return false;
+            }
 
             Transform startPosition = GetStartPosition();
             Vector3 position = startPosition != null ? startPosition.position : _scenePlayerTemplate.transform.position;
-            Quaternion rotation = startPosition != null ? startPosition.rotation : _scenePlayerTemplate.transform.rotation;
+            Quaternion rotation =
+                startPosition != null ? startPosition.rotation : _scenePlayerTemplate.transform.rotation;
 
             player = InstantiateScenePlayerTemplate(position, rotation);
             player.name = conn != null
@@ -386,11 +433,15 @@ namespace Neo.Network
         private void RegisterScenePlayerTemplateSpawnHandler()
         {
             if (!_useScenePlayerTemplate || !IsScenePlayerTemplateValid())
+            {
                 return;
+            }
 
             uint assetId = ScenePlayerTemplateAssetId;
             if (_scenePlayerTemplateSpawnHandlerRegistered && _registeredScenePlayerTemplateAssetId == assetId)
+            {
                 return;
+            }
 
             UnregisterScenePlayerTemplateSpawnHandler();
             NetworkClient.RegisterSpawnHandler(assetId, SpawnScenePlayerTemplate, UnspawnScenePlayerTemplate);
@@ -401,7 +452,9 @@ namespace Neo.Network
         private void UnregisterScenePlayerTemplateSpawnHandler()
         {
             if (!_scenePlayerTemplateSpawnHandlerRegistered)
+            {
                 return;
+            }
 
             NetworkClient.UnregisterSpawnHandler(_registeredScenePlayerTemplateAssetId);
             _registeredScenePlayerTemplateAssetId = 0;
@@ -478,13 +531,15 @@ namespace Neo.Network
         {
             if (_scenePlayerTemplate == null)
             {
-                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template is enabled, but no template object is assigned.", this);
+                NetworkDiagnostics.LogError(
+                    "[NeoNetworkManager] Scene Player Template is enabled, but no template object is assigned.", this);
                 return false;
             }
 
             if (!_scenePlayerTemplate.TryGetComponent(out NetworkIdentity _))
             {
-                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.", this);
+                NetworkDiagnostics.LogError("[NeoNetworkManager] Scene Player Template must have a NetworkIdentity.",
+                    this);
                 return false;
             }
 
@@ -494,7 +549,9 @@ namespace Neo.Network
         private string GetEffectiveScenePlayerTemplateSpawnId()
         {
             if (!string.IsNullOrWhiteSpace(_scenePlayerTemplateSpawnId))
+            {
                 return _scenePlayerTemplateSpawnId;
+            }
 
             string scenePath = gameObject.scene.IsValid() ? gameObject.scene.path : string.Empty;
             string templateName = _scenePlayerTemplate != null ? _scenePlayerTemplate.name : "ScenePlayerTemplate";
@@ -505,7 +562,9 @@ namespace Neo.Network
         {
 #if UNITY_EDITOR
             if (string.IsNullOrWhiteSpace(_scenePlayerTemplateSpawnId))
+            {
                 _scenePlayerTemplateSpawnId = System.Guid.NewGuid().ToString("N");
+            }
 #endif
             _scenePlayerTemplateAssetId = 0;
         }

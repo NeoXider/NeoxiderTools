@@ -2,6 +2,7 @@ using System;
 using Mirror;
 using Neo.Network;
 using UnityEngine;
+using NeoNetworkDiagnostics = Neo.Network.NetworkDiagnostics;
 
 /// <summary>
 /// Demo helper: a UI button calls <see cref="StartGame"/>, the client sends
@@ -25,7 +26,7 @@ public class TestStart : NetworkBehaviour
     {
         if (!NetworkClient.active)
         {
-            NetworkDiagnostics.LogWarning(
+            NeoNetworkDiagnostics.LogWarning(
                 "[TestStart] StartGame: no active client. Is this running on a dedicated server UI?",
                 this,
                 _logConnectionWarnings);
@@ -34,7 +35,10 @@ public class TestStart : NetworkBehaviour
 
         if (!NetworkClient.ready)
         {
-            NetworkDiagnostics.LogWarning("[TestStart] StartGame: client is not ready yet.", this, _logConnectionWarnings);
+            NeoNetworkDiagnostics.LogWarning(
+                "[TestStart] StartGame: client is not ready yet.",
+                this,
+                _logConnectionWarnings);
             return;
         }
 

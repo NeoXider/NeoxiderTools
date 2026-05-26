@@ -5,17 +5,22 @@
         "Neo.Editor",
         "Neo.Tools.Time",
         "Neo.StateMachine",
-        "Neo.Condition"
+        "Neo.Condition",
+        "GUID:699bb923824f1724b91c66f5ba9ace74"
     ],
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": [],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
     "noEngineReferences": false
 }

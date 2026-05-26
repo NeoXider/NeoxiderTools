@@ -14,8 +14,7 @@ namespace Neo.Network
     [AddComponentMenu("Neoxider/Network/Neo Lobby Player")]
     public class NeoLobbyPlayer : NetworkRoomPlayer
     {
-        [Header("Player Events")]
-        [Tooltip("Fired when this player's ready state changes. Bool = isReady.")]
+        [Header("Player Events")] [Tooltip("Fired when this player's ready state changes. Bool = isReady.")]
         public UnityEvent<bool> OnReadyChanged = new();
 
         [Tooltip("Fired when this player becomes the local player.")]
@@ -63,14 +62,22 @@ namespace Neo.Network
         [Button]
         public void ToggleReady()
         {
-            if (!isLocalPlayer) return;
+            if (!isLocalPlayer)
+            {
+                return;
+            }
+
             CmdChangeReadyState(!readyToBegin);
         }
 
         /// <summary>Set ready state explicitly. Wire to VisualToggle or similar.</summary>
         public void SetReady(bool ready)
         {
-            if (!isLocalPlayer) return;
+            if (!isLocalPlayer)
+            {
+                return;
+            }
+
             CmdChangeReadyState(ready);
         }
     }

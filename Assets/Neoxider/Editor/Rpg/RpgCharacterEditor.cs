@@ -37,7 +37,11 @@ namespace Neo.Editor.Rpg
 
         protected override void ProcessAttributeAssignments()
         {
-            if (target is not MonoBehaviour targetObject) return;
+            if (target is not MonoBehaviour targetObject)
+            {
+                return;
+            }
+
             ComponentDrawer.ProcessComponentAttributes(targetObject);
             ResourceDrawer.ProcessResourceAttributes(targetObject);
         }
@@ -79,7 +83,10 @@ namespace Neo.Editor.Rpg
 
         private void DrawRuntimeSummary()
         {
-            if (targets.Length != 1 || target is not RpgCharacter character) return;
+            if (targets.Length != 1 || target is not RpgCharacter character)
+            {
+                return;
+            }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
@@ -87,14 +94,19 @@ namespace Neo.Editor.Rpg
                 EditorGUILayout.LabelField("HP", $"{character.HpValue:0.##} / {character.MaxHpValue:0.##}");
                 EditorGUILayout.LabelField("Level", character.LevelValue.ToString());
                 EditorGUILayout.LabelField("Dead", character.IsDead ? "Yes" : "No");
-                EditorGUILayout.LabelField("Resources / Stats", $"{character.Resources.Count} / {character.Stats.Count}");
+                EditorGUILayout.LabelField("Resources / Stats",
+                    $"{character.Resources.Count} / {character.Stats.Count}");
             }
         }
 
         private void DrawTemplateSection()
         {
             _showTemplate = EditorGUILayout.Foldout(_showTemplate, "Template", true);
-            if (!_showTemplate) return;
+            if (!_showTemplate)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_template);
             EditorGUILayout.PropertyField(_applyTemplateOnAwake);
             EditorGUILayout.Space(4f);
@@ -103,7 +115,11 @@ namespace Neo.Editor.Rpg
         private void DrawResourcesSection()
         {
             _showResources = EditorGUILayout.Foldout(_showResources, "Resources", true);
-            if (!_showResources) return;
+            if (!_showResources)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_resources, true);
             EditorGUILayout.Space(4f);
         }
@@ -111,7 +127,11 @@ namespace Neo.Editor.Rpg
         private void DrawStatsSection()
         {
             _showStats = EditorGUILayout.Foldout(_showStats, "Stats", true);
-            if (!_showStats) return;
+            if (!_showStats)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_stats, true);
             EditorGUILayout.Space(4f);
         }
@@ -119,7 +139,11 @@ namespace Neo.Editor.Rpg
         private void DrawEffectsSection()
         {
             _showEffects = EditorGUILayout.Foldout(_showEffects, "Buffs And Statuses", true);
-            if (!_showEffects) return;
+            if (!_showEffects)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_knownBuffs, true);
             EditorGUILayout.PropertyField(_inlineBuffs, true);
             EditorGUILayout.PropertyField(_knownStatuses, true);
@@ -129,7 +153,11 @@ namespace Neo.Editor.Rpg
         private void DrawProgressionSection()
         {
             _showProgression = EditorGUILayout.Foldout(_showProgression, "Progression", true);
-            if (!_showProgression) return;
+            if (!_showProgression)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_progression);
             EditorGUILayout.PropertyField(_levelProvider);
             EditorGUILayout.Space(4f);
@@ -138,7 +166,11 @@ namespace Neo.Editor.Rpg
         private void DrawPersistenceSection()
         {
             _showPersistence = EditorGUILayout.Foldout(_showPersistence, "Persistence", true);
-            if (!_showPersistence) return;
+            if (!_showPersistence)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_saveKey);
             EditorGUILayout.PropertyField(_loadOnAwake);
             EditorGUILayout.PropertyField(_autoSave);
@@ -148,7 +180,11 @@ namespace Neo.Editor.Rpg
         private void DrawNetworkSection()
         {
             _showNetwork = EditorGUILayout.Foldout(_showNetwork, "Network", true);
-            if (!_showNetwork) return;
+            if (!_showNetwork)
+            {
+                return;
+            }
+
             EditorGUILayout.PropertyField(_isNetworked);
             EditorGUILayout.PropertyField(_authorityMode);
             EditorGUILayout.HelpBox(
@@ -160,7 +196,10 @@ namespace Neo.Editor.Rpg
         private void DrawEventsSection()
         {
             _showEvents = EditorGUILayout.Foldout(_showEvents, "Events", true);
-            if (!_showEvents) return;
+            if (!_showEvents)
+            {
+                return;
+            }
 
             SerializedProperty iterator = serializedObject.GetIterator();
             bool enterChildren = true;
@@ -168,7 +207,9 @@ namespace Neo.Editor.Rpg
             {
                 enterChildren = false;
                 if (iterator.name.StartsWith("_on"))
+                {
                     EditorGUILayout.PropertyField(iterator, true);
+                }
             }
         }
     }

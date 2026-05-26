@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -45,7 +45,7 @@ namespace Neo.Cards
         [SerializeField] private float _warContinueDelay = 0.5f;
         [SerializeField] private float _cardReturnDelay = 0.1f;
 
-        [Header("Game Rules")] [Tooltip("If true — player moves first; if false — opponent")] [SerializeField]
+        [Header("Game Rules")] [Tooltip("If true - player moves first; if false - opponent")] [SerializeField]
         private bool _playerGoesFirst = true;
 
         [Header("Events - Card Count")] [SerializeField]
@@ -129,18 +129,18 @@ namespace Neo.Cards
         {
             if (_deckComponent == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent is not assigned!");
+                LogError("[DrunkardGame] DeckComponent is not assigned!");
                 return;
             }
 
             if (_deckComponent.Config == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent has no DeckConfig assigned!");
+                LogError("[DrunkardGame] DeckComponent has no DeckConfig assigned!");
             }
 
             if (_deckComponent.CardPrefab == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent has no CardPrefab assigned!");
+                LogError("[DrunkardGame] DeckComponent has no CardPrefab assigned!");
             }
 
             if (!_debugWarnings)
@@ -150,28 +150,43 @@ namespace Neo.Cards
 
             if (_cardsParent == null)
             {
-                Debug.LogWarning("[DrunkardGame] CardsParent is not set — cards parent to DrunkardGame.");
+                LogWarning("[DrunkardGame] CardsParent is not set - cards parent to DrunkardGame.");
             }
 
             if (_playerDeckPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] PlayerDeckPosition is not assigned.");
+                LogWarning("[DrunkardGame] PlayerDeckPosition is not assigned.");
             }
 
             if (_playerCardPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] PlayerCardPosition is not assigned.");
+                LogWarning("[DrunkardGame] PlayerCardPosition is not assigned.");
             }
 
             if (_opponentDeckPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] OpponentDeckPosition is not assigned.");
+                LogWarning("[DrunkardGame] OpponentDeckPosition is not assigned.");
             }
 
             if (_opponentCardPosition == null)
             {
-                Debug.LogWarning("[DrunkardGame] OpponentCardPosition is not assigned.");
+                LogWarning("[DrunkardGame] OpponentCardPosition is not assigned.");
             }
+        }
+
+        private void Log(string message)
+        {
+            NeoDiagnostics.Log(message, this, _debug);
+        }
+
+        private void LogWarning(string message)
+        {
+            NeoDiagnostics.LogWarning(message, this, _debugWarnings);
+        }
+
+        private void LogError(string message)
+        {
+            NeoDiagnostics.LogError(message, this);
         }
 
         /// <summary>
@@ -182,7 +197,7 @@ namespace Neo.Cards
         {
             if (_debug)
             {
-                Debug.Log("[DrunkardGame] Play() invoked.");
+                Log("[DrunkardGame] Play() invoked.");
             }
 
             PlayRound().Forget();
@@ -364,7 +379,7 @@ namespace Neo.Cards
                     Destroy(cardComponent.gameObject);
                     if (_debug)
                     {
-                        Debug.Log($"[DrunkardGame] Drew player hand card: {data}");
+                        Log($"[DrunkardGame] Drew player hand card: {data}");
                     }
 
                     return data;
@@ -388,7 +403,7 @@ namespace Neo.Cards
                     Destroy(cardComponent.gameObject);
                     if (_debug)
                     {
-                        Debug.Log($"[DrunkardGame] Drew opponent hand card: {data}");
+                        Log($"[DrunkardGame] Drew opponent hand card: {data}");
                     }
 
                     return data;
@@ -667,14 +682,14 @@ namespace Neo.Cards
         {
             if (_debug)
             {
-                Debug.Log($"[DrunkardGame] ShowOpponentCard: {opponentCard}");
+                Log($"[DrunkardGame] ShowOpponentCard: {opponentCard}");
             }
 
             if (_opponentCardView == null)
             {
                 if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
                 {
-                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
+                    LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
                     return;
                 }
 
@@ -683,7 +698,7 @@ namespace Neo.Cards
                 _opponentCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
-                    Debug.Log(
+                    Log(
                         $"[DrunkardGame] Spawned opponent card: {_opponentCardView.name} under {_cardsParent?.name}");
                 }
             }
@@ -713,7 +728,7 @@ namespace Neo.Cards
             {
                 if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
                 {
-                    Debug.LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
+                    LogError("[DrunkardGame] CardPrefab/DeckConfig are not set up!");
                     return;
                 }
 
@@ -722,7 +737,7 @@ namespace Neo.Cards
                 _playerCardView.Config = _deckComponent.Config;
                 if (_debug)
                 {
-                    Debug.Log($"[DrunkardGame] Spawned player card: {_playerCardView.name} under {_cardsParent?.name}");
+                    Log($"[DrunkardGame] Spawned player card: {_playerCardView.name} under {_cardsParent?.name}");
                 }
             }
 
@@ -792,7 +807,7 @@ namespace Neo.Cards
 
             if (_debug)
             {
-                Debug.Log($"[DrunkardGame] NotifyCardCountChanged: Player={playerCount}, Opponent={opponentCount}");
+                Log($"[DrunkardGame] NotifyCardCountChanged: Player={playerCount}, Opponent={opponentCount}");
             }
 
             _onPlayerCardCountChanged?.Invoke(playerCount);
@@ -800,9 +815,9 @@ namespace Neo.Cards
 
             if (_debug)
             {
-                Debug.Log(
+                Log(
                     $"[DrunkardGame] OnPlayerCardCountChanged listeners: {_onPlayerCardCountChanged?.GetPersistentEventCount() ?? 0}");
-                Debug.Log(
+                Log(
                     $"[DrunkardGame] OnOpponentCardCountChanged listeners: {_onOpponentCardCountChanged?.GetPersistentEventCount() ?? 0}");
             }
         }
@@ -863,7 +878,7 @@ namespace Neo.Cards
         {
             if (_deckComponent == null || _deckComponent.Config == null || _deckComponent.CardPrefab == null)
             {
-                Debug.LogError("[DrunkardGame] DeckComponent is not ready (needs Config and CardPrefab).");
+                LogError("[DrunkardGame] DeckComponent is not ready (needs Config and CardPrefab).");
                 return;
             }
 
@@ -960,7 +975,7 @@ namespace Neo.Cards
 
             if (_debug)
             {
-                Debug.Log(
+                Log(
                     $"[DrunkardGame] Game restarted. Player cards: {playerCount}, opponent: {opponentCount}");
             }
 
@@ -998,7 +1013,7 @@ namespace Neo.Cards
 
             if (_debug && _initialBoard != null)
             {
-                Debug.Log($"[DrunkardGame] Cards spawned on board: {allCards.Count}");
+                Log($"[DrunkardGame] Cards spawned on board: {allCards.Count}");
             }
 
             return allCards;
@@ -1008,7 +1023,7 @@ namespace Neo.Cards
         {
             if (_deckComponent == null || _deckComponent.CardPrefab == null || _deckComponent.Config == null)
             {
-                Debug.LogError("[DrunkardGame] Cannot spawn card: prefab/config missing.");
+                LogError("[DrunkardGame] Cannot spawn card: prefab/config missing.");
                 return null;
             }
 

@@ -66,7 +66,7 @@ namespace Neo.Demo.GridSystem
             generator.GenerateField();
             board.ResetBoard();
 
-            Debug.Log("[GridSystemTicTacToeDemoSetup] Scene is ready.");
+            global::Neo.Demo.SampleDiagnostics.Log("[GridSystemTicTacToeDemoSetup] Scene is ready.", this);
         }
 
         private static void EnsureCamera()

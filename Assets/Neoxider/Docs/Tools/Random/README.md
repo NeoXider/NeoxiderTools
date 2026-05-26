@@ -8,7 +8,7 @@
 
 ## Примеры
 
-- **Демо-сцена:** `Samples/Demo/Scenes/Tools/ChanceSystemExample.unity` (импорт через Package Manager → Neoxider Tools → Samples → Demo Scenes).
+- **Демо-сцена:** `Samples/Demo/Scenes/Tools/ChanceSystemExample.unity` (импорт через Package Manager → NeoxiderTools → Samples → Demo Scenes).
 - **Инспектор:** кнопка «Крутить» → **ChanceSystemBehaviour.GenerateVoid**; в **Events By Index** по одному действию на каждый исход. Подробно: [ChanceSystemBehaviour — примеры](./ChanceSystemBehaviour.md#примеры).
 - **Код:** `GenerateId()` / `EvaluateAndNotify()`, `LastSelectedIndex`, `LastSelectedEntry`, подписка на `OnIndexSelected` / `OnRollComplete`. Сниппеты: [ChanceSystemBehaviour — примеры](./ChanceSystemBehaviour.md#примеры).
 

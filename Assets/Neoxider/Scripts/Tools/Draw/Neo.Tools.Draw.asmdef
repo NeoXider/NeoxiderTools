@@ -8,13 +8,18 @@
         "GUID:6164c446845493941856ab4fc67d0de7",
         "GUID:fc2c2e8c20e00494ea983f7a9158e1a2"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
     "noEngineReferences": false
 }

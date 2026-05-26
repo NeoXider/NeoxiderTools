@@ -1,4 +1,4 @@
-using Neo.Reactive;
+﻿using Neo.Reactive;
 using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
@@ -8,7 +8,7 @@ namespace Neo.Rpg
     /// <summary>
     ///     Deals melee/contact damage to nearby <see cref="RpgCharacter"/> targets on a cooldown.
     ///     Uses proximity check (not physics collisions), compatible with NavMeshAgent.
-    ///     Fully NoCode — configure via Inspector, wire UnityEvents.
+    ///     Fully NoCode  - configure via Inspector, wire UnityEvents.
     /// </summary>
     [NeoDoc("Rpg/RpgContactDamage.md")]
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgContactDamage))]
@@ -16,55 +16,55 @@ namespace Neo.Rpg
     {
         [Header("Targeting")]
         [Tooltip("Tag of the target to damage. Leave empty to damage any RpgCharacter in range.")]
-        [SerializeField] private string targetTag = "Player";
+        [SerializeField]
+        private string targetTag = "Player";
 
-        [Tooltip("If set, uses this specific transform as the target instead of searching by tag.")]
-        [SerializeField] private Transform targetOverride;
+        [Tooltip("If set, uses this specific transform as the target instead of searching by tag.")] [SerializeField]
+        private Transform targetOverride;
 
-        [Tooltip("If set, bypasses search and uses this specific combat receiver directly.")]
-        [SerializeField] private Component targetReceiverOverride;
-        [Tooltip("How often to retry searching for target when target is missing.")]
-        [SerializeField] [Min(0.1f)] private float targetFindInterval = 0.5f;
+        [Tooltip("If set, bypasses search and uses this specific combat receiver directly.")] [SerializeField]
+        private Component targetReceiverOverride;
 
-        [Header("Damage")]
-        [Tooltip("Damage dealt per hit.")]
-        [SerializeField] [Min(1)] private int damage = 5;
+        [Tooltip("How often to retry searching for target when target is missing.")] [SerializeField] [Min(0.1f)]
+        private float targetFindInterval = 0.5f;
 
-        [Tooltip("Distance at which damage is applied.")]
-        [SerializeField] [Min(0.1f)] private float damageRange = 1.8f;
+        [Header("Damage")] [Tooltip("Damage dealt per hit.")] [SerializeField] [Min(1)]
+        private int damage = 5;
 
-        [Tooltip("Cooldown between hits in seconds.")]
-        [SerializeField] [Min(0.1f)] private float cooldown = 1f;
+        [Tooltip("Distance at which damage is applied.")] [SerializeField] [Min(0.1f)]
+        private float damageRange = 1.8f;
 
-        [Tooltip("Damage type string (passed to RpgDamageInfo for buff/resistance calculations).")]
-        [SerializeField] private string damageType = "Contact";
+        [Tooltip("Cooldown between hits in seconds.")] [SerializeField] [Min(0.1f)]
+        private float cooldown = 1f;
 
-        [Header("Self")]
-        [Tooltip("Optional — if set, stops attacking when own character is dead.")]
-        [SerializeField] private RpgCharacter selfCharacter;
+        [Tooltip("Damage type string (passed to RpgDamageInfo for buff/resistance calculations).")] [SerializeField]
+        private string damageType = "Contact";
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLog;
+        [Header("Self")] [Tooltip("Optional  - if set, stops attacking when own character is dead.")] [SerializeField]
+        private RpgCharacter selfCharacter;
 
-        [Header("Reactive State")]
-        [Tooltip("Whether this weapon is currently active and dealing damage.")]
+        [Header("Debug")] [SerializeField] private bool debugLog;
+
+        [Header("Reactive State")] [Tooltip("Whether this weapon is currently active and dealing damage.")]
         public ReactivePropertyBool IsAttacking = new(false);
 
         [Tooltip("Whether a valid target is in range.")]
         public ReactivePropertyBool TargetInRange = new(false);
 
-        [Header("Events")]
-        [SerializeField] private UnityEventFloat _onDamageDealt = new();
+        [Header("Events")] [SerializeField] private UnityEventFloat _onDamageDealt = new();
         [SerializeField] private UnityEvent _onTargetFound = new();
         [SerializeField] private UnityEvent _onTargetLost = new();
         [SerializeField] private UnityEvent _onAttack = new();
 
-        /// <summary>Raised when damage is dealt — parameter is the amount.</summary>
+        /// <summary>Raised when damage is dealt  - parameter is the amount.</summary>
         public UnityEventFloat OnDamageDealt => _onDamageDealt;
+
         /// <summary>Raised when a valid target is first found.</summary>
         public UnityEvent OnTargetFound => _onTargetFound;
+
         /// <summary>Raised when the target is lost (destroyed, deactivated).</summary>
         public UnityEvent OnTargetLost => _onTargetLost;
+
         /// <summary>Raised each time an attack occurs.</summary>
         public UnityEvent OnAttack => _onAttack;
 
@@ -77,7 +77,10 @@ namespace Neo.Rpg
         private void Start()
         {
             if (selfCharacter == null)
+            {
                 selfCharacter = GetComponent<RpgCharacter>();
+            }
+
             CacheTarget();
             _nextTargetFindTime = Time.time + targetFindInterval;
         }
@@ -90,7 +93,8 @@ namespace Neo.Rpg
                 return;
             }
 
-            if ((_cachedTarget == null || !_cachedTarget.gameObject.activeInHierarchy) && targetReceiverOverride == null)
+            if ((_cachedTarget == null || !_cachedTarget.gameObject.activeInHierarchy) &&
+                targetReceiverOverride == null)
             {
                 if (_hadTarget)
                 {
@@ -98,7 +102,10 @@ namespace Neo.Rpg
                     TargetInRange.Value = false;
                     IsAttacking.Value = false;
                     _onTargetLost?.Invoke();
-                    if (debugLog) Debug.Log($"[RpgContactDamage] Target lost on {name}");
+                    if (debugLog)
+                    {
+                        NeoDiagnostics.Log($"[RpgContactDamage] Target lost on {name}");
+                    }
                 }
 
                 if (Time.time >= _nextTargetFindTime)
@@ -107,7 +114,10 @@ namespace Neo.Rpg
                     _nextTargetFindTime = Time.time + targetFindInterval;
                 }
 
-                if (_cachedTarget == null) return;
+                if (_cachedTarget == null)
+                {
+                    return;
+                }
             }
 
             float dist = damageRange; // Default to in-range if we have a direct override without a transform
@@ -115,7 +125,7 @@ namespace Neo.Rpg
             {
                 dist = Vector3.Distance(transform.position, _cachedTarget.position);
             }
-            
+
             bool inRange = dist <= damageRange;
             TargetInRange.Value = inRange;
 
@@ -129,12 +139,21 @@ namespace Neo.Rpg
             {
                 _hadTarget = true;
                 _onTargetFound?.Invoke();
-                if (debugLog) Debug.Log($"[RpgContactDamage] Target found on {name}");
+                if (debugLog)
+                {
+                    NeoDiagnostics.Log($"[RpgContactDamage] Target found on {name}");
+                }
             }
 
-            if (Time.time - _lastHitTime < cooldown) return;
+            if (Time.time - _lastHitTime < cooldown)
+            {
+                return;
+            }
 
-            if (_cachedTargetCombatant == null || _cachedTargetCombatant.IsDead) return;
+            if (_cachedTargetCombatant == null || _cachedTargetCombatant.IsDead)
+            {
+                return;
+            }
 
             float dealt = _cachedTargetCombatant.TakeDamage(new RpgDamageInfo(damage, damageType, selfCharacter));
             _lastHitTime = Time.time;
@@ -142,7 +161,10 @@ namespace Neo.Rpg
 
             _onAttack?.Invoke();
             _onDamageDealt?.Invoke(dealt);
-            if (debugLog) Debug.Log($"[RpgContactDamage] {name} dealt {dealt} damage to target!");
+            if (debugLog)
+            {
+                NeoDiagnostics.Log($"[RpgContactDamage] {name} dealt {dealt} damage to target!");
+            }
         }
 
         /// <summary>Sets the attack target at runtime (code API).</summary>
@@ -160,7 +182,10 @@ namespace Neo.Rpg
         }
 
         /// <summary>Sets the damage value at runtime.</summary>
-        public void SetDamage(int newDamage) => damage = Mathf.Max(1, newDamage);
+        public void SetDamage(int newDamage)
+        {
+            damage = Mathf.Max(1, newDamage);
+        }
 
         /// <summary>Gets the current damage value.</summary>
         public int Damage => damage;

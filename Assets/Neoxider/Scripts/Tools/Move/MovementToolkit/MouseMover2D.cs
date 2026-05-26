@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -40,7 +40,7 @@ namespace Neo.Tools
         [Header("Speed")] [Tooltip("Units per second.")] [SerializeField]
         private float speed = 5f;
 
-        [Header("Δ-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
+        [Header("О”-sensitivity")] [Tooltip("Pixel to world unit conversion factor.")] [SerializeField]
         private float pxToWorld = .01f;
 
         [Header("Mouse")] [Tooltip("Mouse button index (0=left, 1=right, 2=middle).")] [SerializeField]
@@ -51,10 +51,10 @@ namespace Neo.Tools
         [SerializeField]
         private bool deltaOnlyWhenButtonHeld = true;
 
-        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")] [SerializeField]
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right -> move left).")] [SerializeField]
         private bool invertDeltaX;
 
-        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")] [SerializeField]
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up -> move down).")] [SerializeField]
         private bool invertDeltaY;
 
         [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
@@ -65,6 +65,9 @@ namespace Neo.Tools
 
         public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logMissingCameraWarning;
 
         private bool _cameraWarningShown;
 
@@ -85,10 +88,10 @@ namespace Neo.Tools
                 cam = Camera.main;
             }
 
-            if (cam == null && !_cameraWarningShown)
+            if (cam == null && _logMissingCameraWarning && !_cameraWarningShown)
             {
                 _cameraWarningShown = true;
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[MouseMover2D] No camera assigned and Camera.main is null. ScreenToWorld will return screen coordinates.",
                     this);
             }

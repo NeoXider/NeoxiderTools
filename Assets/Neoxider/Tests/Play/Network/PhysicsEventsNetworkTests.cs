@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using Mirror;
 using Neo.Network;
 using Neo.Tools;
@@ -28,20 +29,21 @@ namespace Neo.Tests.Play
             _eventFired = false;
 
             // Setup NetworkManager
-            _managerObj = new GameObject("NetworkManager");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManager", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99999);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
             yield return null;
 
             _objTrigger = new GameObject("Trigger");
@@ -59,34 +61,53 @@ namespace Neo.Tests.Play
             NetworkTestHelper.SetAssetId(identity, 11111);
             NetworkClient.RegisterPrefab(_objTrigger);
             NetworkServer.Spawn(_objTrigger);
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
 
             _objActor = new GameObject("Actor");
             _objActor.transform.position = Vector3.up * 5f; // Away from trigger
             _actorCollider = _objActor.AddComponent<BoxCollider>();
-            
+
             // Add Rigidbody to actor so movement triggers physics engine natively
-            var rb = _objActor.AddComponent<Rigidbody>();
+            Rigidbody rb = _objActor.AddComponent<Rigidbody>();
             rb.isKinematic = true;
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
 
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
-            if (_objTrigger != null) Object.DestroyImmediate(_objTrigger);
-            if (_objActor != null) Object.DestroyImmediate(_objActor);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
+
+            if (_objTrigger != null)
+            {
+                Object.DestroyImmediate(_objTrigger);
+            }
+
+            if (_objActor != null)
+            {
+                Object.DestroyImmediate(_objActor);
+            }
         }
 
         [UnityTest]
         public IEnumerator PhysicsEvents3D_Networked_FiresIfServer()
         {
             _physicsEvents3D.isNetworked = true;
-            
-            var m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            MethodInfo m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             m.Invoke(_physicsEvents3D, new object[] { _actorCollider });
 
             yield return new WaitForSeconds(0.1f);
@@ -98,8 +119,9 @@ namespace Neo.Tests.Play
         public IEnumerator PhysicsEvents3D_NotNetworked_FiresLocally()
         {
             _physicsEvents3D.isNetworked = false;
-            
-            var m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+            MethodInfo m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             m.Invoke(_physicsEvents3D, new object[] { _actorCollider });
 
             yield return null;

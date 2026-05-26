@@ -7,7 +7,7 @@ using UnityEditor;
 #endif
 
 /// <summary>
-///     Optimised mouse input manager – zero GC allocations per frame.
+///     Optimised mouse input manager - zero GC allocations per frame.
 ///     Provides Press, Hold, Release, Click events with MouseEventData struct.
 /// </summary>
 [CreateFromMenu("Neoxider/Tools/Input/MouseInputManager")]
@@ -42,11 +42,28 @@ public class MouseInputManager : Singleton<MouseInputManager>
     [Header("Raycast Settings")] [SerializeField]
     private Camera targetCamera;
 
+    [Tooltip(
+        "Resolve Camera.main only when Target Camera is empty. Disable when the camera is injected by scene setup.")]
+    [SerializeField]
+    private bool useMainCameraFallback = true;
+
+    [Tooltip("Seconds between Camera.main fallback attempts while Target Camera is still empty.")]
+    [SerializeField]
+    [Min(0f)]
+    private float cameraFallbackRetryInterval = 1f;
+
+    [Tooltip(
+        "Log missing camera through NeoDiagnostics. Warnings are still controlled by the global diagnostics gate.")]
+    [SerializeField]
+    private bool logMissingCamera;
+
     [SerializeField] private LayerMask interactableLayers = ~0;
     [SerializeField] private float fallbackDepth = 10f;
     private bool _hasData;
     private GameObject _lastHitObj;
     private Vector3 _lastWorldPos;
+    private float _nextCameraFallbackTime;
+    private bool _missingCameraLogged;
 
     private bool _pressed;
     private GameObject _pressedObj;
@@ -57,13 +74,9 @@ public class MouseInputManager : Singleton<MouseInputManager>
 
     private void Update()
     {
-        if (targetCamera == null)
+        if (ResolveTargetCamera() == null)
         {
-            targetCamera = Camera.main;
-            if (targetCamera == null)
-            {
-                return;
-            }
+            return;
         }
 
         if (enablePress && Input.GetMouseButtonDown(0))
@@ -109,10 +122,16 @@ public class MouseInputManager : Singleton<MouseInputManager>
     protected override void Init()
     {
         base.Init();
-        if (!targetCamera)
-        {
-            targetCamera = Camera.main;
-        }
+        ResolveTargetCamera();
+    }
+
+    public Camera TargetCamera => targetCamera;
+
+    public void SetTargetCamera(Camera camera)
+    {
+        targetCamera = camera;
+        _nextCameraFallbackTime = 0f;
+        _missingCameraLogged = false;
     }
 
     /// <seealso cref="MouseInputManagerSubsystemRegistration"/>
@@ -136,7 +155,37 @@ public class MouseInputManager : Singleton<MouseInputManager>
         _hasData = true;
     }
 
-    /*────────────────── helpers ──────────────────*/
+    /* helpers */
+    private Camera ResolveTargetCamera()
+    {
+        if (targetCamera != null)
+        {
+            return targetCamera;
+        }
+
+        if (useMainCameraFallback)
+        {
+            float now = Time.realtimeSinceStartup;
+            if (cameraFallbackRetryInterval <= 0f || now >= _nextCameraFallbackTime)
+            {
+                targetCamera = Camera.main;
+                _nextCameraFallbackTime = now + Mathf.Max(0f, cameraFallbackRetryInterval);
+            }
+        }
+
+        if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
+        {
+            _missingCameraLogged = true;
+            NeoDiagnostics.LogWarningThrottled(
+                $"{nameof(MouseInputManager)}.{GetInstanceID()}.MissingCamera",
+                $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
+                this,
+                5f);
+        }
+
+        return targetCamera;
+    }
+
     private void BuildEventData(out MouseEventData data)
     {
         Vector2 screenPos = Input.mousePosition;

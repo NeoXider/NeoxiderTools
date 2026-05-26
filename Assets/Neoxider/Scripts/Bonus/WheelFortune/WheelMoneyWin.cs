@@ -1,4 +1,4 @@
-using Neo.Shop;
+﻿using Neo.Shop;
 using TMPro;
 using UnityEngine;
 
@@ -22,7 +22,10 @@ namespace Neo
                 {
                     if (_debugLogWarnings && wins != null)
                     {
-                        Debug.LogWarning($"[WheelMoneyWin] Win(id={id}) out of range [0, {wins.Length}).", this);
+                        NeoDiagnostics.LogWarning(
+                            $"[WheelMoneyWin] Win(id={id}) out of range [0, {wins.Length}).",
+                            this,
+                            true);
                     }
 
                     return;

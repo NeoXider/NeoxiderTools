@@ -1,30 +1,40 @@
-# Совместимость пакета
+# Совместимость Пакета
 
-Дата проверки: 2026-05-25
+Дата проверки: 2026-05-26
 
 ## Unity
 
 | Источник | Версия |
-|---|---|
-| Пакет `Assets/Neoxider/package.json` | `version: 8.6.0`, `unity: 2022.1` |
+| --- | --- |
+| Пакет `Assets/Neoxider/package.json` | `version: 9.0.0`, `unity: 2022.1` |
 | Локальный проект `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
-Минимальная версия UPM-пакета не повышена до Unity 6: пакет должен оставаться пригодным для проектов на Unity 2022.1+. Текущий репозиторий и проверки выполняются на Unity `6000.3.14f1`.
+Минимальная версия UPM-пакета остается Unity 2022.1. Проект разработки сейчас открыт и проверяется на Unity `6000.3.14f1`, но это не должно автоматически поднимать минимальную версию пакета.
 
 ## Package Dependencies
 
-| Dependency | package.json | Project manifest | Status |
-|---|---|---|---|
-| `com.unity.textmeshpro` | `3.0.6` | доступен через Unity UI stack | Нужен TMP/UI компонентам. |
-| `com.unity.ai.navigation` | `1.1.7` | `2.0.11` | В проекте Unity 6 стоит более новая версия; пакет сохраняет нижний минимум для Unity 2022. |
+| Dependency | `package.json` | Project manifest | Статус |
+| --- | --- | --- | --- |
+| `com.unity.textmeshpro` | `3.0.6` | доступен через Unity UI stack | Нужен TMP/UI-компонентам. |
+| `com.unity.ai.navigation` | `1.1.7` | `2.0.11` | В Unity 6 проекте стоит более новая версия; пакет сохраняет нижний минимум для Unity 2022. |
 | `com.unity.inputsystem` | `1.14.2` | `1.19.0` | Runtime использует optional adapters/fallback, чтобы поддерживать Legacy Input Manager и New Input System. |
 
-## Внешние интеграции
+## Внешние Интеграции
 
-- DOTween используется несколькими модулями (`Cards`, `UI`, `Tools/View`, `Tools/Text`, samples). Это не UPM dependency пакета; хост-проект подключает его при необходимости.
-- Mirror опционален. Network-код загейтирован define `MIRROR`; проект разработки получает Mirror через scoped registry/OpenUPM.
-- URP опционален. URP-specific поведение используется только когда хост-проект предоставляет нужные package/types.
+- DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и samples. Это не UPM dependency пакета; host-проект подключает его при необходимости.
+- Mirror опционален и нужен для `Neo.Network` / multiplayer flows. В проекте разработки Mirror доступен через scoped registry/OpenUPM.
+- URP опционален. URP-specific поведение используется только когда host-проект предоставляет нужные package/types.
 
-## Текущее решение
+## Samples
 
-В релизе `8.6.0` версия пакета повышена, но минимальная Unity-совместимость и package dependencies не повышались. Пакет остается совместимым с текущим Unity 6 проектом и сохраняет заявленное окно поддержки Unity 2022.1+.
+- Во время активной разработки sample-сцены находятся в `Assets/Neoxider/Samples`.
+- Перед UPM-релизом папка возвращается в `Assets/Neoxider/Samples~`.
+- После импорта через Unity Package Manager sample копируется в `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`.
+- `package.json.samples[].path` должен оставаться release-facing и указывать на `Samples~/...`.
+- Validation-тесты поддерживают dev root `Samples`, package source root `Samples~`, imported root `Assets/Samples/NeoxiderTools` и legacy imported root `Assets/Samples/Neoxider Tools`.
+
+## Политика
+
+- Не поднимать `unity` в `package.json` только из-за того, что текущий проект разработки использует Unity 6.
+- Optional third-party интеграции держать guarded/fallback-friendly, чтобы package-only проекты не ломались без необязательных зависимостей.
+- Обновлять эту страницу при изменениях `package.json`, `Packages/manifest.json`, sample layout или install requirements.

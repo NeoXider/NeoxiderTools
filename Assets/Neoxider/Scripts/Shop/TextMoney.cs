@@ -13,8 +13,7 @@ namespace Neo.Shop
             "Value source. If not set, Money.I (global singleton) is used. Set for energy or another separate counter display.")]
         private Money _moneySource;
 
-        [SerializeField]
-        [Tooltip("Optional Money.SaveKey to display. Empty = use Money Source, then Money.I.")]
+        [SerializeField] [Tooltip("Optional Money.SaveKey to display. Empty = use Money Source, then Money.I.")]
         private string _moneySaveKey = "";
 
         public float amount;
@@ -102,7 +101,7 @@ namespace Neo.Shop
         {
             if (!string.IsNullOrEmpty(_moneySaveKey))
             {
-                Money keyedMoney = Money.FindBySaveKey(_moneySaveKey);
+                var keyedMoney = Money.FindBySaveKey(_moneySaveKey);
                 if (keyedMoney != null)
                 {
                     return keyedMoney;

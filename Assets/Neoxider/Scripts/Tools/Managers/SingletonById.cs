@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -35,7 +35,8 @@ namespace Neo.Tools
         {
             if (string.IsNullOrEmpty(_id))
             {
-                Debug.LogWarning($"[SingletonById] Id is not set on {gameObject.name}; instance is not registered.",
+                NeoDiagnostics.LogWarning(
+                    $"[SingletonById] Id is not set on {gameObject.name}; instance is not registered.",
                     this);
                 return;
             }

@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!1 &1549036682492879710
 GameObject:
@@ -85,7 +85,6 @@ GameObject:
   m_Component:
   - component: {fileID: 8077330033892665999}
   - component: {fileID: 6882196468198157347}
-  - component: {fileID: 4776978149020919493}
   m_Layer: 5
   m_Name: Load
   m_TagString: Untagged
@@ -123,57 +122,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3536637247789823214}
   m_CullTransparentMesh: 1
---- !u!114 &4776978149020919493
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3536637247789823214}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75c89741e095dd247a8504ea8c025f0a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _loadOnAwake: 1
-  timeLoad: {x: 1.5, y: 2}
-  isLoadOne: 1
-  OnStart:
-    m_PersistentCalls:
-      m_Calls: []
-  OnFinisLoad:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3536637247789823214}
-        m_TargetAssemblyTypeName: UnityEngine.GameObject, UnityEngine
-        m_MethodName: SetActive
-        m_Mode: 6
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-  OnChangePercent:
-    m_PersistentCalls:
-      m_Calls: []
-  OnChange:
-    m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 3195551851166705641}
-        m_TargetAssemblyTypeName: UnityEngine.UI.Image, UnityEngine.UI
-        m_MethodName: set_fillAmount
-        m_Mode: 0
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
 --- !u!1 &5670994330818985209
 GameObject:
   m_ObjectHideFlags: 0

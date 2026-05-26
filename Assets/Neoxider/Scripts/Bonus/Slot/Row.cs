@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -39,40 +39,39 @@ namespace Neo.Bonus
         public float windowStartY = 1f; // mirror of offsetY (not used directly in math)
 
         [Header("Hidden Paddings")]
-        [Tooltip("How far below window element appears when wrapping from top (recomm. ≥ 0.6 * spaceY)")]
+        [Tooltip("How far below window element appears when wrapping from top (recommended >= 0.6 * spaceY).")]
         public float hiddenPaddingBottom = 0.6f;
 
-        [Tooltip("How far above window element appears when wrapping from bottom (recomm. ≥ 0.6 * spaceY)")]
+        [Tooltip("How far above window element appears when wrapping from bottom (recommended >= 0.6 * spaceY).")]
         public float hiddenPaddingTop = 0.6f;
 
         [Header("Stop look&feel")] [Tooltip("Min extra whole steps to target when auto-braking (inertia)")]
         public int extraStepsAtDecel = 3;
 
-        [Tooltip("|a| limit when braking (units/s²). 0 = no limit (ideal formula)")]
+        [Tooltip("|a| limit when braking (units/s^2). 0 = no limit (ideal formula).")]
         public float maxDecel;
 
-        [Tooltip("Использовать AnimationCurve для деселерации вместо чисто кинематической формулы. " +
-                 "Даёт более «мягкую» остановку без резкого края.")]
+        [Tooltip(
+            "Use AnimationCurve for deceleration instead of a pure kinematic formula. Gives a softer stop without a sharp edge.")]
         public bool useEasingDecel = true;
 
-        [Tooltip("Кривая фазы остановки: X=время 0..1, Y=прогресс перемещения 0..1. По умолчанию ease-out.")]
+        [Tooltip("Stop phase curve: X=time 0..1, Y=movement progress 0..1. Defaults to ease-out.")]
         public AnimationCurve decelCurve = new(
             new Keyframe(0f, 0f, 0f, 2f),
             new Keyframe(1f, 1f, 0f, 0f));
 
         [Header("Motion blur (visual)")]
-        [Tooltip("Растягивать SlotElement по Y при высокой скорости — даёт ощущение «motion blur» без шейдера.")]
+        [Tooltip("Stretch SlotElement on Y at high speed for a shader-free motion blur feel.")]
         public bool motionStretch;
 
-        [Tooltip("Скорость, при которой stretch достигает максимума.")]
-        [Min(0.01f)]
+        [Tooltip("Speed at which stretch reaches maximum.")] [Min(0.01f)]
         public float motionStretchVelRef = 30f;
 
         public UnityEvent OnStop = new();
         [SerializeField] private bool _debugLogWarnings;
-        private float _acc; // units/s²
+        private float _acc; // units/s^2
 
-        /// <summary>Desired visible symbol ids bottom→top when the reel stops; cleared after apply.</summary>
+        /// <summary>Desired visible symbol ids bottom -> top when the reel stops; cleared after apply.</summary>
         private int[] _spinTargetIdsBottomUp;
 
         /// <summary>Per physical-element preassigned id (used on wrap or directly when hidden); -1 = random.</summary>
@@ -308,7 +307,7 @@ namespace Neo.Bonus
             }
 
             // Randomize ONLY hidden-zone elements (outside the visible window).
-            // Visible window keeps its current ids — no jarring start-of-spin flicker.
+            // Visible window keeps its current ids  - no jarring start-of-spin flicker.
             if (_allSpritesData?.visuals != null && _allSpritesData.visuals.Length > 0)
             {
                 for (int i = 0; i < SlotElements.Length; i++)
@@ -434,7 +433,7 @@ namespace Neo.Bonus
             _acc = -_decelSign * aMag;
 
             // Easing decel: derive expected duration from kinematic distance & current speed.
-            // duration = 2*s/v0 for ideal v→0 with linear decel; ease curve reshapes within same window.
+            // duration = 2*s/v0 for ideal v->0 with linear decel; ease curve reshapes within same window.
             _decelStartOffset = _offset;
             _decelStartTime = Time.time;
             _decelDuration = Mathf.Max(0.05f, 2f * sGrid / Mathf.Max(0.01f, v0));
@@ -462,14 +461,15 @@ namespace Neo.Bonus
             }
 
             if (_spinTargetIdsBottomUp == null || _spinTargetIdsBottomUp.Length != countSlotElement
-                || _allSpritesData?.visuals == null || _allSpritesData.visuals.Length == 0
-                || _step <= 0f)
+                                               || _allSpritesData?.visuals == null ||
+                                               _allSpritesData.visuals.Length == 0
+                                               || _step <= 0f)
             {
                 return;
             }
 
             // Classify each physical element's final position into a window slot via the same
-            // RoundToInt rule used by GetVisibleTopDown — one-to-one and consistent.
+            // RoundToInt rule used by GetVisibleTopDown  - one-to-one and consistent.
             for (int i = 0; i < SlotElements.Length; i++)
             {
                 if (SlotElements[i] == null)
@@ -511,12 +511,12 @@ namespace Neo.Bonus
 
                 if (!fullyHiddenBottom && !fullyHiddenTop)
                 {
-                    continue; // visible or partially visible — never swap here; wait for wrap
+                    continue; // visible or partially visible  - never swap here; wait for wrap
                 }
 
                 bool willEnterWithoutWrap = _decelSign >= 0
                     ? fullyHiddenBottom // moving up: enters from bottom directly
-                    : fullyHiddenTop;   // moving down: enters from top directly
+                    : fullyHiddenTop; // moving down: enters from top directly
 
                 if (!willEnterWithoutWrap)
                 {
@@ -628,7 +628,7 @@ namespace Neo.Bonus
                 SlotVisualData v = FindVisualById(id);
                 if (el != null && v != null)
                 {
-                    // Smooth crossfade as safety net — predictive mapping should already match,
+                    // Smooth crossfade as safety net  - predictive mapping should already match,
                     // so this is a NO-OP for the sprite when in sync.
                     bool needSwap = el.id != id;
                     el.SetVisuals(v, needSwap);
@@ -805,7 +805,7 @@ namespace Neo.Bonus
                 }
             }
 
-            // Return Top→Down order: k = count-1 .. 0
+            // Return Top->Down order: k = count-1 .. 0
             var result = new SlotElement[countSlotElement];
             for (int dst = 0, k = countSlotElement - 1; k >= 0; k--, dst++)
             {
@@ -853,7 +853,7 @@ namespace Neo.Bonus
 
             // If this physical element has a predictive target, assign it (no random override).
             if (_pendingTargetIdByIndex != null && i < _pendingTargetIdByIndex.Length
-                && _pendingTargetIdByIndex[i] >= 0)
+                                                && _pendingTargetIdByIndex[i] >= 0)
             {
                 SlotVisualData target = FindVisualById(_pendingTargetIdByIndex[i]);
                 if (target != null)
@@ -934,7 +934,7 @@ namespace Neo.Bonus
         public SlotElement[] GetVisibleBottomUp()
         {
             SlotElement[] topDown = GetVisibleTopDown();
-            Array.Reverse(topDown); // now Bottom→Top
+            Array.Reverse(topDown); // now Bottom->Top
             return topDown;
         }
 
@@ -942,7 +942,7 @@ namespace Neo.Bonus
         {
             if (_debugLogWarnings)
             {
-                Debug.LogWarning($"[{nameof(Row)}] {message}", this);
+                NeoDiagnostics.LogWarning($"[{nameof(Row)}] {message}", this, true);
             }
         }
 

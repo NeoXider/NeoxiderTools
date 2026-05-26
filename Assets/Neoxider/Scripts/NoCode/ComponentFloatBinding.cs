@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using Neo.Condition;
 using Neo.Reactive;
@@ -13,12 +13,12 @@ namespace Neo.NoCode
     [Serializable]
     public sealed class ComponentFloatBinding
     {
-        [Tooltip("When set, use GameObject.Find (same as NeoCondition «Find By Name») instead of Source Root when resolving the source object.")]
+        [Tooltip(
+            "When set, use GameObject.Find (same as NeoCondition \"Find By Name\") instead of Source Root when resolving the source object.")]
         [SerializeField]
         private bool _useSceneSearch;
 
-        [Tooltip("Name passed to GameObject.Find when Use Scene Search is on.")]
-        [SerializeField]
+        [Tooltip("Name passed to GameObject.Find when Use Scene Search is on.")] [SerializeField]
         private string _searchObjectName = "";
 
         [Tooltip("If true, do not log a warning when the object is not found (e.g. prefab or late spawn).")]
@@ -204,7 +204,8 @@ namespace Neo.NoCode
             {
                 if (!_hasLoggedMissing)
                 {
-                    Debug.LogWarning($"[Neo.NoCode] Component '{_componentTypeName}' not found on '{root.name}'.");
+                    NeoDiagnostics.LogWarning(
+                        $"[Neo.NoCode] Component '{_componentTypeName}' not found on '{root.name}'.");
                     _hasLoggedMissing = true;
                 }
 
@@ -222,7 +223,7 @@ namespace Neo.NoCode
 
             if (!_hasLoggedMissing)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     $"[Neo.NoCode] Property/field '{_memberName}' not found on '{_componentTypeName}' on '{root.name}'.");
                 _hasLoggedMissing = true;
             }
@@ -295,7 +296,7 @@ namespace Neo.NoCode
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[Neo.NoCode] Failed to read member: {ex.Message}");
+                NeoDiagnostics.LogWarning($"[Neo.NoCode] Failed to read member: {ex.Message}");
                 Invalidate();
                 return false;
             }

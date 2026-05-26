@@ -1,3 +1,4 @@
+﻿using System.Collections.Generic;
 using Neo.Shop;
 using UnityEngine;
 
@@ -26,7 +27,10 @@ namespace Neo.Tools
         [Button]
         public void Execute()
         {
-            if (string.IsNullOrEmpty(targetSaveKey)) return;
+            if (string.IsNullOrEmpty(targetSaveKey))
+            {
+                return;
+            }
 
             // Check if Money singleton matches the save key
             if (Money.HasInstance && Money.Instance != null && Money.Instance.SaveKey == targetSaveKey)
@@ -36,19 +40,20 @@ namespace Neo.Tools
             }
 
             // Otherwise, look for a Counter registered with this save key
-            if (Counter.Registry.TryGetValue(targetSaveKey, out var counters) && counters != null && counters.Count > 0)
+            if (Counter.Registry.TryGetValue(targetSaveKey, out List<Counter> counters) && counters != null &&
+                counters.Count > 0)
             {
                 Counter targetCounter = null;
 
 #if MIRROR
-                if (Neo.Network.NeoNetworkState.IsClient)
+                if (Network.NeoNetworkState.IsClient)
                 {
                     // If running as a client and there are multiple counters (e.g. one per player),
                     // find the one we have authority over (our own wallet).
                     targetCounter = counters.Find(c => c.isOwned);
                 }
 #endif
-                
+
                 if (targetCounter == null)
                 {
                     targetCounter = counters[0]; // Fallback
@@ -61,7 +66,8 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning($"[ModifyCounterByKey] No Counter or Money component found with SaveKey: '{targetSaveKey}'");
+                NeoDiagnostics.LogWarning(
+                    $"[ModifyCounterByKey] No Counter or Money component found with SaveKey: '{targetSaveKey}'");
             }
         }
 
@@ -82,7 +88,11 @@ namespace Neo.Tools
                     money.SetMoney(money.money * value);
                     break;
                 case CounterModifyOperation.Divide:
-                    if (value != 0) money.SetMoney(money.money / value);
+                    if (value != 0)
+                    {
+                        money.SetMoney(money.money / value);
+                    }
+
                     break;
             }
         }
@@ -104,7 +114,11 @@ namespace Neo.Tools
                     counter.Multiply(value);
                     break;
                 case CounterModifyOperation.Divide:
-                    if (value != 0) counter.Divide(value);
+                    if (value != 0)
+                    {
+                        counter.Divide(value);
+                    }
+
                     break;
             }
         }

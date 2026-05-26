@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -63,32 +63,27 @@ namespace Neo.Tools
         /// <summary>Rotation range around Z (roll), degrees.</summary>
         [SerializeField] private Vector2 _rotationZ = Vector2.zero; // roll
 
-        [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false — in world space.")]
+        [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false  - in world space.")]
         private bool _useLocalRotation = true;
 
         [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
         private bool _useParentRotation;
 
-        [Header("Mode & Wave Settings")]
-        [SerializeField]
-        [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
+        [Header("Mode & Wave Settings")] [SerializeField] [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
         public SpawnMode spawnMode = SpawnMode.Loop;
-        
-        [SerializeField]
-        [Tooltip("Number of objects to spawn in the first wave.")]
+
+        [SerializeField] [Tooltip("Number of objects to spawn in the first wave.")]
         private int _baseWaveCount = 3;
-        
-        [SerializeField]
-        [Tooltip("How many MORE objects to spawn each subsequent wave.")]
+
+        [SerializeField] [Tooltip("How many MORE objects to spawn each subsequent wave.")]
         private int _countPerWave = 2;
-        
-        [SerializeField]
-        [Tooltip("Time to wait after a wave finishes before starting the next one.")]
+
+        [SerializeField] [Tooltip("Time to wait after a wave finishes before starting the next one.")]
         private float _timeBetweenWaves = 5f;
-        
+
         [Tooltip("Maximum allowed waves limit. 0 for infinite waves.")]
         public int maxWaves;
-        
+
         /// <summary>
         /// Invoked when a new wave starts. Passes the current wave number.
         /// </summary>
@@ -107,7 +102,7 @@ namespace Neo.Tools
 
         [SerializeField] private bool _spawnOnAwake;
 
-        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null — spawn without parent.")]
+        [Header("Parenting")] [SerializeField] [Tooltip("Parent for spawned objects. If null  - spawn without parent.")]
         /// <summary>
         /// Parent for spawned objects. If null, spawned objects have no parent.
         /// </summary>
@@ -174,7 +169,7 @@ namespace Neo.Tools
                 {
                     if (_prefabs[i] == null)
                     {
-                        Debug.LogWarning($"[Spawner] Prefab at index {i} is null on {gameObject.name}!", this);
+                        NeoDiagnostics.LogWarning($"[Spawner] Prefab at index {i} is null on {gameObject.name}!", this);
                     }
                 }
             }
@@ -243,18 +238,21 @@ namespace Neo.Tools
                         RpcNotifyWaveStarted(CurrentWave);
                     }
 #endif
-                    int spawnAmount = _baseWaveCount + ((CurrentWave - 1) * _countPerWave);
-                    
+                    int spawnAmount = _baseWaveCount + (CurrentWave - 1) * _countPerWave;
+
                     for (int i = 0; i < spawnAmount; i++)
                     {
-                        if (!isSpawning) break;
-                        
+                        if (!isSpawning)
+                        {
+                            break;
+                        }
+
                         GameObject obj = SpawnRandomObject();
                         // Delay between individual spawns within a wave
                         float delay = Random.Range(minSpawnDelay, maxSpawnDelay);
                         yield return new WaitForSeconds(delay);
                     }
-                    
+
                     if (isSpawning && (maxWaves == 0 || CurrentWave < maxWaves))
                     {
                         CurrentWave++;
@@ -290,7 +288,11 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                if (_prefabs == null || _prefabs.Length == 0) return null;
+                if (_prefabs == null || _prefabs.Length == 0)
+                {
+                    return null;
+                }
+
                 int rIndex = _prefabs.GetRandomIndex();
                 CmdSpawnById(rIndex, GetSpawnPosition(), GetSpawnRotation());
                 return null;
@@ -298,7 +300,8 @@ namespace Neo.Tools
 #endif
             if (_prefabs == null || _prefabs.Length == 0)
             {
-                Debug.LogWarning($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
+                NeoDiagnostics.LogWarning(
+                    $"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
                 return null;
             }
 
@@ -307,7 +310,8 @@ namespace Neo.Tools
 
             if (prefabToSpawn == null)
             {
-                Debug.LogWarning($"[Spawner] Prefab at index {randomIndex} is null on {gameObject.name}.", this);
+                NeoDiagnostics.LogWarning($"[Spawner] Prefab at index {randomIndex} is null on {gameObject.name}.",
+                    this);
                 return null;
             }
 
@@ -333,13 +337,14 @@ namespace Neo.Tools
 #endif
             if (_prefabs == null || _prefabs.Length == 0)
             {
-                Debug.LogError($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.", this);
+                NeoDiagnostics.LogError($"[Spawner] Prefabs array is null or empty on {gameObject.name}. Cannot spawn.",
+                    this);
                 return null;
             }
 
             if (prefabId < 0 || prefabId >= _prefabs.Length)
             {
-                Debug.LogError(
+                NeoDiagnostics.LogError(
                     $"[Spawner] Prefab ID {prefabId} is out of range. Max ID is {_prefabs.Length - 1} on {gameObject.name}.",
                     this);
                 return null;
@@ -348,7 +353,7 @@ namespace Neo.Tools
             GameObject prefabToSpawn = _prefabs[prefabId];
             if (prefabToSpawn == null)
             {
-                Debug.LogError($"[Spawner] Prefab at index {prefabId} is null on {gameObject.name}.", this);
+                NeoDiagnostics.LogError($"[Spawner] Prefab at index {prefabId} is null on {gameObject.name}.", this);
                 return null;
             }
 
@@ -368,7 +373,9 @@ namespace Neo.Tools
 #if MIRROR
             if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
             {
-                Debug.LogWarning("[Spawner] Client cannot explicitly SpawnObject with a direct GameObject reference. Please use SpawnById or SpawnRandomObject which are safely routed to the Server.", this);
+                NeoDiagnostics.LogWarning(
+                    "[Spawner] Client cannot explicitly SpawnObject with a direct GameObject reference. Please use SpawnById or SpawnRandomObject which are safely routed to the Server.",
+                    this);
                 return null;
             }
 #endif
@@ -396,7 +403,9 @@ namespace Neo.Tools
                 }
                 else
                 {
-                    Debug.LogWarning($"[Spawner] Spawned object {spawnedObject.name} has no NetworkIdentity. Mirror cannot replicate it.", this);
+                    NeoDiagnostics.LogWarning(
+                        $"[Spawner] Spawned object {spawnedObject.name} has no NetworkIdentity. Mirror cannot replicate it.",
+                        this);
                 }
             }
 #endif
@@ -414,7 +423,7 @@ namespace Neo.Tools
             }
 
             OnObjectSpawned?.Invoke(spawnedObject);
-            
+
             if (spawnMode == SpawnMode.Waves)
             {
                 OnWaveObjectSpawned?.Invoke(spawnedObject, CurrentWave);
@@ -438,7 +447,11 @@ namespace Neo.Tools
         [ClientRpc]
         private void RpcNotifyWaveStarted(int wave)
         {
-            if (isServerOnly) return;
+            if (isServerOnly)
+            {
+                return;
+            }
+
             CurrentWave = wave;
             OnWaveStarted?.Invoke(wave);
         }
@@ -446,16 +459,20 @@ namespace Neo.Tools
         [ClientRpc]
         private void RpcNotifyObjectSpawned(GameObject netObj, int wave)
         {
-            if (isServerOnly || netObj == null) return;
-            
+            if (isServerOnly || netObj == null)
+            {
+                return;
+            }
+
             if (SpawnedObjects.Capacity > 0 && SpawnedObjects.Count % 10 == 0)
             {
                 SpawnedObjects.RemoveAll(obj => obj == null);
             }
+
             SpawnedObjects.Add(netObj);
 
             OnObjectSpawned?.Invoke(netObj);
-            
+
             if (spawnMode == SpawnMode.Waves)
             {
                 OnWaveObjectSpawned?.Invoke(netObj, wave);
@@ -592,7 +609,11 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSpawnById(int prefabId, Vector3 position, Quaternion rotation)
         {
-            if (_prefabs == null || prefabId < 0 || prefabId >= _prefabs.Length) return;
+            if (_prefabs == null || prefabId < 0 || prefabId >= _prefabs.Length)
+            {
+                return;
+            }
+
             GameObject prefabToSpawn = _prefabs[prefabId];
             if (prefabToSpawn != null)
             {
@@ -629,7 +650,7 @@ namespace Neo.Tools
                 return circleCollider.transform.TransformPoint(randomPoint);
             }
 
-            Debug.LogWarning("Unsupported 2D collider type for spawning.");
+            NeoDiagnostics.LogWarning("Unsupported 2D collider type for spawning.");
             return _spawnTransform.position;
         }
 
@@ -665,9 +686,8 @@ namespace Neo.Tools
                 return capsuleCollider.transform.TransformPoint(randomPoint);
             }
 
-            Debug.LogWarning("Unsupported 3D collider type for spawning.");
+            NeoDiagnostics.LogWarning("Unsupported 3D collider type for spawning.");
             return _spawnTransform.position;
         }
     }
 }
-

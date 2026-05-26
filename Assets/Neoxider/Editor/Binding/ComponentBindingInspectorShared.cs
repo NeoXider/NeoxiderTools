@@ -415,7 +415,7 @@ namespace Neo.Editor.Binding
             if (useSearch != null && useSearch.boolValue && searchName != null &&
                 !string.IsNullOrEmpty(searchName.stringValue))
             {
-                GameObject found = GameObject.Find(searchName.stringValue);
+                var found = GameObject.Find(searchName.stringValue);
                 if (found != null)
                 {
                     return found;
@@ -430,7 +430,7 @@ namespace Neo.Editor.Binding
             }
 
             SerializedProperty sourceProp = bindingProperty.FindPropertyRelative("_sourceRoot");
-            GameObject root = sourceProp.objectReferenceValue as GameObject;
+            var root = sourceProp.objectReferenceValue as GameObject;
             if (root != null)
             {
                 return root;

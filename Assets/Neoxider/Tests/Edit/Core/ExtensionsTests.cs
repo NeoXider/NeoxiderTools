@@ -181,10 +181,10 @@ namespace Neo.Editor.Tests
             string result2 = 999.999m.ToPrettyString(new NumberFormatOptions(NumberNotation.IdleShort, 2));
             Assert.AreEqual("1K", result);
             Assert.AreEqual("1K", result2);
-            
+
             // Testing exactly 1000
             Assert.AreEqual("1K", 1000d.ToIdleString(2));
-            
+
             // Test with trimTrailingZeros = false
             string resultNoTrim = 999.999d.ToIdleString(2, NumberRoundingMode.ToEven, false);
             Assert.AreEqual("1.00K", resultNoTrim);
@@ -214,7 +214,7 @@ namespace Neo.Editor.Tests
             var opts = new NumberFormatOptions(NumberNotation.Scientific, 2);
             string result = 1234567.ToPrettyString(opts);
             Assert.AreEqual("1.23e6", result);
-            
+
             string resultSmall = 0.00123.ToPrettyString(opts);
             Assert.AreEqual("1.23e-3", resultSmall);
         }
@@ -251,9 +251,9 @@ namespace Neo.Editor.Tests
 
             Assert.AreEqual("1.5", 1.5000.ToPrettyString(trimTrue));
             Assert.AreEqual("1.5000", 1.5000.ToPrettyString(trimFalse));
-            
+
             // Should completely remove decimal point
-            Assert.AreEqual("2", 2.0.ToPrettyString(trimTrue)); 
+            Assert.AreEqual("2", 2.0.ToPrettyString(trimTrue));
         }
 
         [Test]
@@ -261,7 +261,7 @@ namespace Neo.Editor.Tests
         {
             var opts = new NumberFormatOptions(NumberNotation.IdleShort, 1);
             Assert.AreEqual("-1.5K", (-1500).ToPrettyString(opts));
-            
+
             var optsGrouped = new NumberFormatOptions(NumberNotation.Grouped, 0);
             Assert.AreEqual("-1,234,567", (-1234567).ToPrettyString(optsGrouped));
         }
@@ -278,7 +278,8 @@ namespace Neo.Editor.Tests
             float tinyFloat = 0.000456f;
             Assert.AreEqual("4.56e-4", tinyFloat.ToPrettyString(optsSci));
             // Due to floating point precision and decimal casting rules, this formats as 4.56e-4 
-            Assert.AreEqual("4.560e-4", tinyFloat.ToPrettyString(optsSciNoTrim).PadRight(8, '0').Replace("0e", "0e")); // temp fix
+            Assert.AreEqual("4.560e-4",
+                tinyFloat.ToPrettyString(optsSciNoTrim).PadRight(8, '0').Replace("0e", "0e")); // temp fix
             Assert.AreEqual("0.00046", tinyFloat.ToPrettyString(optsPlain));
 
             double largeDouble = 123456789.12345;
@@ -295,9 +296,10 @@ namespace Neo.Editor.Tests
             double negInf = double.NegativeInfinity;
 
             Assert.AreEqual("NaN", nan.ToPrettyString(opts));
-            Assert.AreEqual("Infinity", posInf.ToPrettyString(opts)); // System.Globalization.NumberFormatInfo Invariant defaults to "Infinity"
+            Assert.AreEqual("Infinity",
+                posInf.ToPrettyString(opts)); // System.Globalization.NumberFormatInfo Invariant defaults to "Infinity"
             Assert.AreEqual("-Infinity", negInf.ToPrettyString(opts));
-            
+
             // Decimals are clamped to 12 maximum in ClampDecimals!
             // 1e-12 is 0.000000000001
             double verySmall = 1e-12;
@@ -309,7 +311,7 @@ namespace Neo.Editor.Tests
         public void NumberFormat_BigInteger_VeryLarge()
         {
             var optsIdle = new NumberFormatOptions(NumberNotation.IdleShort, 1);
-            
+
             var oneThousand = new System.Numerics.BigInteger(1000);
             var oneMillion = new System.Numerics.BigInteger(1_000_000);
             var oneBillion = new System.Numerics.BigInteger(1_000_000_000);
@@ -322,11 +324,11 @@ namespace Neo.Editor.Tests
             // BaseSuffixes.Length = 12 (Tiers 0 to 11). Tier 11 is "Dc" (10^33)
             // Tier 12 is 10^36 -> 'a'. 
             // Tier 13 is 10^39 -> 'b'.
-            var massive = System.Numerics.BigInteger.Pow(10, 36); 
-            Assert.AreEqual("1a", massive.ToPrettyString(optsIdle)); 
-            
-            var evenBigger = System.Numerics.BigInteger.Pow(10, 39); 
-            Assert.AreEqual("1b", evenBigger.ToPrettyString(optsIdle)); 
+            var massive = System.Numerics.BigInteger.Pow(10, 36);
+            Assert.AreEqual("1a", massive.ToPrettyString(optsIdle));
+
+            var evenBigger = System.Numerics.BigInteger.Pow(10, 39);
+            Assert.AreEqual("1b", evenBigger.ToPrettyString(optsIdle));
         }
 
         [Test]
@@ -737,17 +739,18 @@ namespace Neo.Editor.Tests
         public void NumberFormat_Double_RoundsCorrectly()
         {
             var opts = new NumberFormatOptions(NumberNotation.IdleShort, 2, NumberRoundingMode.ToEven, false);
-            
-            // Expected bug check:
-            string val1 = (999.995d).ToPrettyString(opts);
-            string val2 = (999.999d).ToPrettyString(opts);
-            string val3 = (1000d).ToPrettyString(opts);
-            string val4 = (999999.995d).ToPrettyString(opts);
-            string val5 = (999999.999d).ToPrettyString(opts);
-            string val6 = (1000000d).ToPrettyString(opts);
-            string val7 = (999999999.999d).ToPrettyString(opts);
 
-            UnityEngine.Debug.Log($"val1: {val1}, val2: {val2}, val3: {val3}, val4: {val4}, val5: {val5}, val6: {val6}, val7: {val7}");
+            // Expected bug check:
+            string val1 = 999.995d.ToPrettyString(opts);
+            string val2 = 999.999d.ToPrettyString(opts);
+            string val3 = 1000d.ToPrettyString(opts);
+            string val4 = 999999.995d.ToPrettyString(opts);
+            string val5 = 999999.999d.ToPrettyString(opts);
+            string val6 = 1000000d.ToPrettyString(opts);
+            string val7 = 999999999.999d.ToPrettyString(opts);
+
+            Debug.Log(
+                $"val1: {val1}, val2: {val2}, val3: {val3}, val4: {val4}, val5: {val5}, val6: {val6}, val7: {val7}");
 
             Assert.AreEqual("1.00K", val1);
             Assert.AreEqual("1.00K", val2);
@@ -789,7 +792,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void PlayerPrefsUtils_IntArray_EmptyOrMissing_ReturnsDefault()
         {
-            CollectionAssert.AreEqual(new[] { 7, 8 }, PlayerPrefsUtils.GetIntArray("missing.int.array", new[] { 7, 8 }));
+            CollectionAssert.AreEqual(new[] { 7, 8 },
+                PlayerPrefsUtils.GetIntArray("missing.int.array", new[] { 7, 8 }));
             PlayerPrefs.SetString(IntArrayKey, "1,2,NaN");
             CollectionAssert.AreEqual(new[] { 7, 8 }, PlayerPrefsUtils.GetIntArray(IntArrayKey, new[] { 7, 8 }));
         }
@@ -809,11 +813,11 @@ namespace Neo.Editor.Tests
             string[] source = new[] { "alpha", "beta", "gamma" };
             PlayerPrefsUtils.SetStringArray(StringArrayKey, source);
             Assert.AreEqual("alpha,beta,gamma", PlayerPrefs.GetString(StringArrayKey));
-            var jsonResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
+            string[] jsonResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
             CollectionAssert.AreEqual(source, jsonResult);
 
             PlayerPrefs.SetString(StringArrayKey, "left,right");
-            var splitResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
+            string[] splitResult = PlayerPrefsUtils.GetStringArray(StringArrayKey, new string[] { "x" });
             CollectionAssert.AreEqual(new[] { "left", "right" }, splitResult);
         }
 
@@ -856,8 +860,6 @@ namespace Neo.Editor.Tests
         public void Random_GetRandomElements_CountExceedsSize_Throws()
         {
             var list = new List<int> { 1, 2 };
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Error,
-                new System.Text.RegularExpressions.Regex("Collection of type"));
             Assert.Throws<ArgumentException>(() => list.GetRandomElements(5).ToList());
         }
 

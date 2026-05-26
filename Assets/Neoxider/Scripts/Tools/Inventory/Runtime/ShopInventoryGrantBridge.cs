@@ -25,12 +25,12 @@ namespace Neo.Tools
         [SerializeField]
         private Shop.Shop _shop;
 
-        [Tooltip("Target inventory. When null, falls back to InventoryComponent.Instance singleton if Use Inventory Singleton is on.")]
+        [Tooltip(
+            "Target inventory. When null, falls back to InventoryComponent.Instance singleton if Use Inventory Singleton is on.")]
         [SerializeField]
         private InventoryComponent _inventory;
 
-        [Tooltip("If true and Inventory is null, fall back to InventoryComponent.Instance singleton.")]
-        [SerializeField]
+        [Tooltip("If true and Inventory is null, fall back to InventoryComponent.Instance singleton.")] [SerializeField]
         private bool _useInventorySingleton = true;
 
         [Header("Mappings (shop item id → inventory item)")]
@@ -39,8 +39,7 @@ namespace Neo.Tools
         [SerializeField]
         private List<GrantMapping> _mappings = new();
 
-        [Header("Events")]
-        public ShopInventoryGrantEvent OnGranted = new();
+        [Header("Events")] public ShopInventoryGrantEvent OnGranted = new();
 
         private bool _subscribed;
 
@@ -189,8 +188,7 @@ namespace Neo.Tools
             [Tooltip("Shop item id (from ShopItemData.Id). Match is case-sensitive.")]
             public string ShopItemId;
 
-            [Tooltip("Inventory item to add.")]
-            public InventoryItemData InventoryItem;
+            [Tooltip("Inventory item to add.")] public InventoryItemData InventoryItem;
 
             [Tooltip("Amount granted per purchase (minimum 1 at runtime).")]
             public int Amount;

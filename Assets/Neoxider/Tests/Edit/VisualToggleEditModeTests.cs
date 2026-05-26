@@ -12,7 +12,7 @@ namespace Neo.Editor.Tests.Edit
             var go = new GameObject("VT");
             try
             {
-                var vt = go.AddComponent<VisualToggle>();
+                VisualToggle vt = go.AddComponent<VisualToggle>();
                 vt.Set(true);
                 Assert.That(vt.ValueBool, Is.True);
                 vt.Set(false);

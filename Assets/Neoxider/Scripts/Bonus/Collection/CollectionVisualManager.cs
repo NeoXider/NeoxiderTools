@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using Neo.Tools;
 using UnityEngine;
@@ -236,7 +236,7 @@ namespace Neo.Bonus
         {
             if (_debugLogWarnings)
             {
-                Debug.LogWarning($"[{nameof(CollectionVisualManager)}] {message}", this);
+                NeoDiagnostics.LogWarning($"[{nameof(CollectionVisualManager)}] {message}", this, true);
             }
         }
     }

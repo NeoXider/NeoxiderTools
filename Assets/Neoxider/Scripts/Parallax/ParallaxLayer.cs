@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -17,6 +17,16 @@ namespace Neo
     {
         [Header("Camera Binding")] [SerializeField]
         private Camera targetCamera;
+
+        [Tooltip(
+            "Resolve Camera.main only when Target Camera is empty. Disable when the camera is injected by scene setup.")]
+        [SerializeField]
+        private bool useMainCameraFallback = true;
+
+        [Tooltip(
+            "Log missing camera through NeoDiagnostics. Warnings are still controlled by the global diagnostics gate.")]
+        [SerializeField]
+        private bool logMissingCamera;
 
         [Tooltip("0 - layer sticks to the camera, 1 - moves in the opposite direction with the same magnitude.")]
         [SerializeField]
@@ -72,6 +82,7 @@ namespace Neo
         private Vector3 initialCameraPosition;
         private Vector3 initialLayerPosition;
         private bool isInitialised;
+        private bool missingCameraLogged;
         private Vector2 spacingLocal;
         private Vector2 spacingWorld;
         private Vector3 templateBaseScale;
@@ -82,9 +93,12 @@ namespace Neo
         private int tilesX = 1;
         private int tilesY = 1;
 
+#if UNITY_EDITOR
+        private bool editorPreviewRefreshQueued;
+#endif
+
         private void Awake()
         {
-            targetCamera ??= Camera.main;
             templateRenderer ??= GetComponent<SpriteRenderer>();
 
 #if UNITY_EDITOR
@@ -164,21 +178,7 @@ namespace Neo
 #if UNITY_EDITOR
             if (!Application.isPlaying)
             {
-                if (!isActiveAndEnabled)
-                {
-                    Cleanup(true);
-                    return;
-                }
-
-                if (generateInEditor)
-                {
-                    Initialise();
-                }
-                else
-                {
-                    Cleanup(true);
-                }
-
+                QueueEditorPreviewRefresh();
                 return;
             }
 #endif
@@ -188,6 +188,59 @@ namespace Neo
                 Initialise();
             }
         }
+
+        public Camera TargetCamera => targetCamera;
+
+        public void SetTargetCamera(Camera camera)
+        {
+            targetCamera = camera;
+            missingCameraLogged = false;
+
+            if (isActiveAndEnabled)
+            {
+                Initialise();
+            }
+        }
+
+#if UNITY_EDITOR
+        private void QueueEditorPreviewRefresh()
+        {
+            if (editorPreviewRefreshQueued)
+            {
+                return;
+            }
+
+            editorPreviewRefreshQueued = true;
+            UnityEditor.EditorApplication.delayCall += RefreshEditorPreviewDelayed;
+        }
+
+        private void RefreshEditorPreviewDelayed()
+        {
+            editorPreviewRefreshQueued = false;
+
+            if (this == null || Application.isPlaying)
+            {
+                return;
+            }
+
+            if (!isActiveAndEnabled)
+            {
+                Cleanup(true);
+                return;
+            }
+
+            if (generateInEditor)
+            {
+                Initialise();
+            }
+            else
+            {
+                Cleanup(true);
+            }
+
+            UnityEditor.EditorUtility.SetDirty(this);
+        }
+#endif
 
         private void Initialise()
         {
@@ -204,14 +257,10 @@ namespace Neo
                 tiles.Clear();
             }
 
-            if (targetCamera == null)
-            {
-                targetCamera = Camera.main;
-            }
+            targetCamera = ResolveTargetCamera();
 
             if (targetCamera == null)
             {
-                Debug.LogWarning($"[{nameof(ParallaxLayer)}] Camera not assigned and no MainCamera found.", this);
                 return;
             }
 
@@ -222,13 +271,13 @@ namespace Neo
 
             if (templateRenderer == null)
             {
-                Debug.LogWarning($"[{nameof(ParallaxLayer)}] SpriteRenderer template is missing.", this);
+                NeoDiagnostics.LogWarning($"[{nameof(ParallaxLayer)}] SpriteRenderer template is missing.", this);
                 return;
             }
 
             if (templateRenderer.sprite == null && (spriteVariants == null || spriteVariants.Length == 0))
             {
-                Debug.LogWarning($"[{nameof(ParallaxLayer)}] No sprites defined for tiling.", this);
+                NeoDiagnostics.LogWarning($"[{nameof(ParallaxLayer)}] No sprites defined for tiling.", this);
                 return;
             }
 
@@ -249,6 +298,31 @@ namespace Neo
             initialLayerPosition = currentPosition;
             accumulatedScroll = Vector2.zero;
             isInitialised = true;
+        }
+
+        private Camera ResolveTargetCamera()
+        {
+            if (targetCamera != null)
+            {
+                return targetCamera;
+            }
+
+            if (useMainCameraFallback)
+            {
+                targetCamera = Camera.main;
+            }
+
+            if (targetCamera == null && logMissingCamera && !missingCameraLogged)
+            {
+                missingCameraLogged = true;
+                NeoDiagnostics.LogWarningThrottled(
+                    $"{nameof(ParallaxLayer)}.{GetInstanceID()}.MissingCamera",
+                    $"[{nameof(ParallaxLayer)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
+                    this,
+                    5f);
+            }
+
+            return targetCamera;
         }
 
         private void ComputeCellSize()

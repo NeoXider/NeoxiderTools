@@ -60,7 +60,7 @@ namespace Neo.Editor.Tests
         {
             // Force manual mode through reflection so we can call Explode
             FieldInfo field = typeof(ExplosiveForce).GetField("activationMode",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             field.SetValue(_explosive, ExplosiveForce.ActivationMode.Manual);
 
             _explosive.Explode();

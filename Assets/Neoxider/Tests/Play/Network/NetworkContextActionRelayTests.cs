@@ -19,10 +19,8 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkContextActionRelayTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
-            Transport.active = transport;
+            _networkManager =
+                NetworkTestHelper.CreateTestNetworkManager("NetworkContextActionRelayTest", out _managerObj);
 
             _scenePlayerTemplate = new GameObject("ScenePlayerTemplate");
             _scenePlayerTemplate.AddComponent<NetworkIdentity>().sceneId = 54321;
@@ -137,7 +135,8 @@ namespace Neo.Tests.Play
             _relay.Trigger(firstCollider);
             yield return null;
 
-            Assert.IsTrue(firstSphere.gameObject.activeSelf, "Pickup should enable Sphere on the entered player clone.");
+            Assert.IsTrue(firstSphere.gameObject.activeSelf,
+                "Pickup should enable Sphere on the entered player clone.");
             Assert.IsFalse(secondSphere.gameObject.activeSelf, "Other player Sphere must stay inactive.");
             Assert.IsFalse(templateSphere.gameObject.activeSelf, "Scene template Sphere must not be toggled.");
 

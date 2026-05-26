@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Tools
 {
@@ -22,8 +22,11 @@ namespace Neo.Tools
         [SerializeField] private Vector3 customDirection = Vector3.forward;
 
         [Header("Fallback")]
-        [Tooltip("Resolve Camera.main only when Target Camera is empty. Disable when the camera is injected by scene setup.")]
-        [SerializeField] private bool useMainCameraFallback = true;
+        [Tooltip(
+            "Resolve Camera.main only when Target Camera is empty. Disable when the camera is injected by scene setup.")]
+        [SerializeField]
+        private bool useMainCameraFallback = true;
+
         [SerializeField] private bool logMissingCamera;
         private bool _missingCameraLogged;
 
@@ -114,7 +117,7 @@ namespace Neo.Tools
             if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
             {
                 _missingCameraLogged = true;
-                Debug.LogWarning($"[{nameof(BillboardUniversal)}] Target camera is not assigned.", this);
+                NeoDiagnostics.LogWarning($"[{nameof(BillboardUniversal)}] Target camera is not assigned.", this);
             }
 
             return targetCamera;

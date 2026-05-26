@@ -3,6 +3,7 @@ using System.Reflection;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Neo.Editor.Tests
 {
@@ -85,6 +86,19 @@ namespace Neo.Editor.Tests
 
             // Since we released instance1, instance2 should be exactly the same object being re-used
             Assert.AreEqual(instance1, instance2, "Pool should re-use the previously released instance");
+        }
+
+        [Test]
+        public void NeoObjectPool_ClearInEditMode_DestroysPrewarmedObjectsWithoutDestroyWarning()
+        {
+            var pool = new NeoObjectPool(_prefab, 2, true);
+
+            Assert.That(pool.CountInactive, Is.EqualTo(2));
+
+            pool.Clear();
+
+            LogAssert.NoUnexpectedReceived();
+            Assert.That(pool.CountInactive, Is.EqualTo(0));
         }
     }
 }

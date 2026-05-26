@@ -1,4 +1,4 @@
-using DG.Tweening;
+﻿using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -29,6 +29,11 @@ namespace Neo.Tools
         [Space] public bool useSortEnable = true;
         public UnityEvent Enable;
 
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLogging;
+
+        [SerializeField] private bool _logWarnings;
+
         private Tweener _moveTween;
         private Tweener _scaleTween;
 
@@ -45,10 +50,9 @@ namespace Neo.Tools
 
             int idPlayer = lb.GetIdPlayer();
 
-            if (idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
+            if (_debugLogging && idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
             {
-                print("move to " + idPlayer + " pos");
-                LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
+                NeoDiagnostics.Log($"[LeaderboardMove] Move to player item {idPlayer}.", this);
             }
         }
 
@@ -88,7 +92,11 @@ namespace Neo.Tools
             Leaderboard lb = GetLeaderboard();
             if (lb == null)
             {
-                Debug.LogWarning("Leaderboard not found");
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning("[LeaderboardMove] Leaderboard not found.", this);
+                }
+
                 return;
             }
 
@@ -96,7 +104,11 @@ namespace Neo.Tools
 
             if (idPlayer >= 0 && idPlayer < lb.leaderboardItems.Count)
             {
-                print("move to " + idPlayer + " pos");
+                if (_debugLogging)
+                {
+                    NeoDiagnostics.Log($"[LeaderboardMove] Move to player item {idPlayer}.", this);
+                }
+
                 LeaderboardItem targetItem = lb.leaderboardItems[idPlayer];
 
                 // Reset scale of the previously highlighted card if it is no longer current.
@@ -129,7 +141,10 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning("Not Find player in leaderboards");
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning("[LeaderboardMove] Player item was not found in leaderboard.", this);
+                }
             }
         }
 

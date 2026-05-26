@@ -10,7 +10,8 @@ namespace Neo.Tools
     public sealed class GameTimeController : MonoBehaviour
     {
         [Tooltip("If true, automatically resets timeScale to 1 when this component is destroyed/Awake.")]
-        [SerializeField] private bool resetOnAwake = true;
+        [SerializeField]
+        private bool resetOnAwake = true;
 
         private void Awake()
         {

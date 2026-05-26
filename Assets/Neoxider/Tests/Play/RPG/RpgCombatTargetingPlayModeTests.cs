@@ -12,14 +12,14 @@ namespace Neo.Tests.Play.RPG
     {
         private static T GetPrivateField<T>(object target, string fieldName) where T : class
         {
-            var field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(field);
             return field.GetValue(target) as T;
         }
 
         private static void SetPrivateField<T>(object target, string fieldName, T value)
         {
-            var field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.NonPublic | BindingFlags.Instance);
             Assert.NotNull(field);
             field.SetValue(target, value);
         }
@@ -29,7 +29,7 @@ namespace Neo.Tests.Play.RPG
         {
             var attacker = new GameObject("RpgAutoAttackTargetFinder");
             attacker.AddComponent<RpgAttackController>();
-            var autoAttack = attacker.AddComponent<RpgAutoAttackController>();
+            RpgAutoAttackController autoAttack = attacker.AddComponent<RpgAutoAttackController>();
             SetPrivateField(autoAttack, "targetTag", "Player");
             SetPrivateField(autoAttack, "targetFindInterval", 0.05f);
             SetPrivateField(autoAttack, "attackInterval", 1000f);
@@ -58,10 +58,10 @@ namespace Neo.Tests.Play.RPG
         public IEnumerator RpgContactDamage_TargetReceiver_DealsDamageOverCooldown()
         {
             var targetObject = new GameObject("DamageTarget");
-            var targetReceiver = targetObject.AddComponent<TestCombatReceiver>();
+            TestCombatReceiver targetReceiver = targetObject.AddComponent<TestCombatReceiver>();
 
             var sourceObject = new GameObject("DamageSource");
-            var contact = sourceObject.AddComponent<RpgContactDamage>();
+            RpgContactDamage contact = sourceObject.AddComponent<RpgContactDamage>();
             SetPrivateField(contact, "cooldown", 0.05f);
 
             int attackCount = 0;

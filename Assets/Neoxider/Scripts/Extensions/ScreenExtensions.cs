@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Neo.Extensions
 {
@@ -115,7 +115,7 @@ namespace Neo.Extensions
 
             if (camera == null)
             {
-                Debug.LogError("No camera available!");
+                NeoDiagnostics.LogError("No camera available!");
                 return Vector3.zero;
             }
 

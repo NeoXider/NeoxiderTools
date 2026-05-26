@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 
@@ -74,7 +74,7 @@ namespace Neo.Extensions
         {
             if (!gameObjects.IsValidIndex(index))
             {
-                Debug.LogWarning($"Invalid index {index} for GameObject collection.");
+                NeoDiagnostics.LogWarning($"Invalid index {index} for GameObject collection.");
                 return null;
             }
 
@@ -95,7 +95,7 @@ namespace Neo.Extensions
         {
             if (!components.IsValidIndex(index))
             {
-                Debug.LogWarning($"Invalid index {index} for component collection.");
+                NeoDiagnostics.LogWarning($"Invalid index {index} for component collection.");
                 return null;
             }
 

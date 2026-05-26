@@ -18,7 +18,7 @@ namespace Neo.Bonus
             ///     Если выигрышных линий не больше числа назначенных LineRenderer — рисуем их параллельно;
             ///     иначе откат к последовательному режиму на первом рендерере.
             /// </summary>
-            ParallelWhenPossible,
+            ParallelWhenPossible
         }
 
         [Tooltip("Включить анимацию линий выплат после выигрыша.")]
@@ -27,7 +27,8 @@ namespace Neo.Bonus
         [Tooltip("Один или несколько LineRenderer на сцене / префабе.")]
         public LineRenderer[] renderers;
 
-        [Tooltip("SequentialSingle — всегда один рендерер по очереди; ParallelWhenPossible — несколько линий одновременно при достаточном числе рендереров.")]
+        [Tooltip(
+            "SequentialSingle — всегда один рендерер по очереди; ParallelWhenPossible — несколько линий одновременно при достаточном числе рендереров.")]
         public LayoutMode layout = LayoutMode.ParallelWhenPossible;
 
         public enum WinLineColorStyle
@@ -42,15 +43,17 @@ namespace Neo.Bonus
             LinearGradient,
 
             /// <summary>Свой градиент Unity в инспекторе (по нормализованной длине 0…1).</summary>
-            CustomGradient,
+            CustomGradient
         }
 
         [Space]
         [Header("Colors")]
-        [Tooltip("AccentGlow — края темнее по RGB, альфа как у color; SolidFlat — один color; LinearGradient — от colorLineStart к colorLineEnd; CustomGradient — поле customLineGradient (альфа только из инспектора).")]
+        [Tooltip(
+            "AccentGlow — края темнее по RGB, альфа как у color; SolidFlat — один color; LinearGradient — от colorLineStart к colorLineEnd; CustomGradient — поле customLineGradient (альфа только из инспектора).")]
         public WinLineColorStyle colorStyle = WinLineColorStyle.AccentGlow;
 
-        [Tooltip("Базовый цвет (RGBA из инспектора): AccentGlow / SolidFlat / блик при travel; LinearGradient в статике не использует это поле.")]
+        [Tooltip(
+            "Базовый цвет (RGBA из инспектора): AccentGlow / SolidFlat / блик при travel; LinearGradient в статике не использует это поле.")]
         public Color color = new(1f, 0.88f, 0.18f, 1f);
 
         [Tooltip("Цвет у первой точки линии (режим LinearGradient).")]
@@ -62,37 +65,29 @@ namespace Neo.Bonus
         [Tooltip("Пользовательский градиент по длине линии (только при colorStyle = CustomGradient).")]
         public Gradient customLineGradient = new();
 
-        [Min(0.001f)]
-        public float width = 0.055f;
+        [Min(0.001f)] public float width = 0.055f;
 
-        [Tooltip("Пульсация толщины (мультипликатор к базовой ширине).")]
-        [Min(0f)]
+        [Tooltip("Пульсация толщины (мультипликатор к базовой ширине).")] [Min(0f)]
         public float widthPulseSpeed = 2.8f;
 
-        [Tooltip("Минимальный множитель ширины при пульсации.")]
-        [Range(0.35f, 2f)]
+        [Tooltip("Минимальный множитель ширины при пульсации.")] [Range(0.35f, 2f)]
         public float widthPulseMinScale = 0.72f;
 
-        [Tooltip("Максимальный множитель ширины при пульсации.")]
-        [Range(0.35f, 2f)]
+        [Tooltip("Максимальный множитель ширины при пульсации.")] [Range(0.35f, 2f)]
         public float widthPulseMaxScale = 1.28f;
 
-        [Tooltip("Скорость движения яркого участка вдоль линии. 0 — без «бегущего» эффекта (только пульсация ширины и статичный режим цвета).")]
+        [Tooltip(
+            "Скорость движения яркого участка вдоль линии. 0 — без «бегущего» эффекта (только пульсация ширины и статичный режим цвета).")]
         [Min(0f)]
         public float travelSpeed;
 
-        [Space]
-        [Header("Timing")]
-        [Tooltip("Длительность показа каждой выигрышной линии (сек).")]
-        [Min(0.05f)]
+        [Space] [Header("Timing")] [Tooltip("Длительность показа каждой выигрышной линии (сек).")] [Min(0.05f)]
         public float holdSeconds = 1.05f;
 
-        [Tooltip("Пауза между линиями в последовательном режиме.")]
-        [Min(0f)]
+        [Tooltip("Пауза между линиями в последовательном режиме.")] [Min(0f)]
         public float stepGapSeconds = 0.12f;
 
-        [Tooltip("Пауза между полными циклами (если зацикливание включено).")]
-        [Min(0f)]
+        [Tooltip("Пауза между полными циклами (если зацикливание включено).")] [Min(0f)]
         public float cycleGapSeconds = 0.4f;
 
         [Tooltip("Повторять до следующего спина (останавливается при новом спине).")]
@@ -101,8 +96,7 @@ namespace Neo.Bonus
         [Tooltip("Дополнительный сдвиг каждой точки линии в мировых координатах (чуть «перед» символами).")]
         public Vector3 worldOffset = new(0f, 0f, -0.025f);
 
-        [Tooltip("Сглаживание изгибов полилинии.")]
-        [Min(0)]
+        [Tooltip("Сглаживание изгибов полилинии.")] [Min(0)]
         public int cornerVertices = 4;
 
         public bool IsActive
@@ -297,7 +291,7 @@ namespace Neo.Bonus
 
                 case WinLineColorStyle.LinearGradient:
                     bright = Color.Lerp(colorLineStart, colorLineEnd, phase);
-                    Color baseDim = Color.Lerp(colorLineStart, colorLineEnd, Mathf.Repeat(phase + 0.5f, 1f));
+                    var baseDim = Color.Lerp(colorLineStart, colorLineEnd, Mathf.Repeat(phase + 0.5f, 1f));
                     dim = DarkenRgbKeepAlpha(baseDim, 0.55f);
                     break;
 
@@ -323,7 +317,7 @@ namespace Neo.Bonus
         private static void ApplyTravelSpotlightGradient(LineRenderer lr, float phase, Color dim, Color bright,
             float band = 0.14f)
         {
-            Gradient travelGrad = new Gradient();
+            var travelGrad = new Gradient();
             travelGrad.SetKeys(
                 new[]
                 {
@@ -331,7 +325,7 @@ namespace Neo.Bonus
                     new GradientColorKey(dim, Mathf.Clamp01(phase - band)),
                     new GradientColorKey(bright, Mathf.Clamp01(phase)),
                     new GradientColorKey(dim, Mathf.Clamp01(phase + band)),
-                    new GradientColorKey(dim, 1f),
+                    new GradientColorKey(dim, 1f)
                 },
                 new[]
                 {
@@ -339,14 +333,14 @@ namespace Neo.Bonus
                     new GradientAlphaKey(dim.a, Mathf.Clamp01(phase - band)),
                     new GradientAlphaKey(bright.a, Mathf.Clamp01(phase)),
                     new GradientAlphaKey(dim.a, Mathf.Clamp01(phase + band)),
-                    new GradientAlphaKey(dim.a, 1f),
+                    new GradientAlphaKey(dim.a, 1f)
                 });
             lr.colorGradient = travelGrad;
         }
 
         private static void ApplyUniformColorGradient(LineRenderer lr, Color c)
         {
-            Gradient g = new Gradient();
+            var g = new Gradient();
             g.SetKeys(
                 new[] { new GradientColorKey(c, 0f), new GradientColorKey(c, 1f) },
                 new[] { new GradientAlphaKey(c.a, 0f), new GradientAlphaKey(c.a, 1f) });
@@ -356,19 +350,19 @@ namespace Neo.Bonus
         private void ApplyAccentGlowStatic(LineRenderer lr)
         {
             Color edge = DarkenRgbKeepAlpha(color, 0.52f);
-            Gradient g = new Gradient();
+            var g = new Gradient();
             g.SetKeys(
                 new[]
                 {
                     new GradientColorKey(edge, 0f),
                     new GradientColorKey(color, 0.5f),
-                    new GradientColorKey(edge, 1f),
+                    new GradientColorKey(edge, 1f)
                 },
                 new[]
                 {
                     new GradientAlphaKey(edge.a, 0f),
                     new GradientAlphaKey(color.a, 0.5f),
-                    new GradientAlphaKey(edge.a, 1f),
+                    new GradientAlphaKey(edge.a, 1f)
                 });
             lr.colorGradient = g;
         }
@@ -385,7 +379,7 @@ namespace Neo.Bonus
 
         private static void ApplyLinearColorGradient(LineRenderer lr, Color lineStart, Color lineEnd)
         {
-            Gradient g = new Gradient();
+            var g = new Gradient();
             g.SetKeys(
                 new[] { new GradientColorKey(lineStart, 0f), new GradientColorKey(lineEnd, 1f) },
                 new[] { new GradientAlphaKey(lineStart.a, 0f), new GradientAlphaKey(lineEnd.a, 1f) });

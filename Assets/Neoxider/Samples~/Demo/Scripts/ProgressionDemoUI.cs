@@ -21,7 +21,7 @@ namespace Neo.Samples
         {
             if (_levelComponent == null)
             {
-                _levelComponent = FindObjectOfType<LevelComponent>();
+                _levelComponent = FindFirstObjectByType<LevelComponent>();
             }
 
             if (_levelComponent != null)
@@ -52,7 +52,7 @@ namespace Neo.Samples
 
             GUILayout.BeginArea(rect, "", GUI.skin.window);
             GUILayout.Space(20);
-            GUILayout.Label("✨ Progression (Level System) Demo ✨", mainTitleStyle);
+            GUILayout.Label("Progression (Level System) Demo", mainTitleStyle);
             GUILayout.Space(30);
 
             if (_levelComponent == null)
@@ -74,21 +74,16 @@ namespace Neo.Samples
 
             if (_levelComponent.LevelCurveDefinition != null)
             {
-                int reqCurrent = _levelComponent.LevelCurveDefinition.GetRequiredXpForLevel(_levelComponent.Level);
-                int reqNext = _levelComponent.LevelCurveDefinition.GetRequiredXpForLevel(_levelComponent.Level + 1);
-                int range = reqNext - reqCurrent;
-                float progress = range > 0 ? (float)(_levelComponent.TotalXp - reqCurrent) / range : 1f;
+                XpProgressSnapshot progressSnapshot = GetXpProgressSnapshot(_levelComponent);
 
                 GUILayout.Space(20);
                 GUILayout.Label("<b>XP Progress:</b>", labelStyle);
+                GUILayout.Label(
+                    $"<b>Current Level XP:</b> {progressSnapshot.CurrentLevelXp} / {progressSnapshot.RequiredForCurrentLevel}",
+                    labelStyle);
 
                 Rect barRect = GUILayoutUtility.GetRect(18, 35);
-                GUI.Box(barRect, "");
-                GUI.color = new Color(0.15f, 0.15f, 0.15f, 1f);
-                GUI.Box(barRect, ""); // background
-                GUI.color = Color.green;
-                GUI.Box(new Rect(barRect.x, barRect.y, barRect.width * progress, barRect.height), "");
-                GUI.color = Color.white;
+                DrawProgressBar(barRect, progressSnapshot.Progress01);
                 GUILayout.Space(20);
             }
 
@@ -159,7 +154,7 @@ namespace Neo.Samples
 
         private void OnLevelUp(int newLevel)
         {
-            Log($"<color=yellow>★ LEVEL UP! You are now Level {newLevel}</color>");
+            Log($"<color=yellow>LEVEL UP! You are now Level {newLevel}</color>");
         }
 
         private void OnXpGained() { }
@@ -171,6 +166,59 @@ namespace Neo.Samples
             {
                 _log = _log.Substring(0, 2000);
             }
+        }
+
+        private static XpProgressSnapshot GetXpProgressSnapshot(LevelComponent levelComponent)
+        {
+            LevelCurveDefinition curve = levelComponent.LevelCurveDefinition;
+            int currentLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level);
+            int nextLevelRequired = curve.GetRequiredXpForLevel(levelComponent.Level + 1);
+            int currentLevelXp = Mathf.Max(0, levelComponent.TotalXp - currentLevelRequired);
+            int requiredForCurrentLevel = nextLevelRequired > currentLevelRequired
+                ? nextLevelRequired - currentLevelRequired
+                : currentLevelXp + Mathf.Max(0, levelComponent.XpToNextLevel);
+
+            if (requiredForCurrentLevel <= 0)
+            {
+                return new XpProgressSnapshot(1f, currentLevelXp, 0);
+            }
+
+            int clampedCurrentLevelXp = Mathf.Clamp(currentLevelXp, 0, requiredForCurrentLevel);
+            float progress = Mathf.Clamp01(clampedCurrentLevelXp / (float)requiredForCurrentLevel);
+            return new XpProgressSnapshot(progress, clampedCurrentLevelXp, requiredForCurrentLevel);
+        }
+
+        private static void DrawProgressBar(Rect rect, float progress01)
+        {
+            float clampedProgress = Mathf.Clamp01(progress01);
+            Color previousColor = GUI.color;
+
+            GUI.color = new Color(0.05f, 0.05f, 0.05f, 1f);
+            GUI.DrawTexture(rect, Texture2D.whiteTexture);
+
+            if (clampedProgress > 0f)
+            {
+                var fillRect = new Rect(rect.x, rect.y, rect.width * clampedProgress, rect.height);
+                GUI.color = new Color(0.2f, 0.75f, 0.25f, 1f);
+                GUI.DrawTexture(fillRect, Texture2D.whiteTexture);
+            }
+
+            GUI.color = previousColor;
+            GUI.Box(rect, GUIContent.none);
+        }
+
+        private readonly struct XpProgressSnapshot
+        {
+            public XpProgressSnapshot(float progress01, int currentLevelXp, int requiredForCurrentLevel)
+            {
+                Progress01 = progress01;
+                CurrentLevelXp = currentLevelXp;
+                RequiredForCurrentLevel = requiredForCurrentLevel;
+            }
+
+            public float Progress01 { get; }
+            public int CurrentLevelXp { get; }
+            public int RequiredForCurrentLevel { get; }
         }
     }
 }

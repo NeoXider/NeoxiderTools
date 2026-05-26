@@ -45,7 +45,10 @@ namespace Neo.Rpg.Runtime
                 for (int i = 0; i < activeBuffMods.Count; i++)
                 {
                     BuffStatModifierApplication mod = activeBuffMods[i];
-                    if (mod.TargetId != stat.Id) continue;
+                    if (mod.TargetId != stat.Id)
+                    {
+                        continue;
+                    }
 
                     switch (mod.Type)
                     {
@@ -63,9 +66,14 @@ namespace Neo.Rpg.Runtime
 
             // Min / Max clamps.
             if (stat.Definition.minValue >= 0f && value < stat.Definition.minValue)
+            {
                 value = stat.Definition.minValue;
+            }
+
             if (stat.Definition.maxValue >= 0f && value > stat.Definition.maxValue)
+            {
                 value = stat.Definition.maxValue;
+            }
 
             return value;
         }
@@ -87,14 +95,28 @@ namespace Neo.Rpg.Runtime
             {
                 foreach (KeyValuePair<string, RpgStatRuntime> kv in stats)
                 {
-                    if (kv.Value.UpgradeCount <= 0) continue;
-                    if (!upgradeRules.TryGetValue(kv.Key, out RpgStatUpgradeRule rule) || rule == null) continue;
-                    if (rule.derivedResourceModifiers == null) continue;
+                    if (kv.Value.UpgradeCount <= 0)
+                    {
+                        continue;
+                    }
+
+                    if (!upgradeRules.TryGetValue(kv.Key, out RpgStatUpgradeRule rule) || rule == null)
+                    {
+                        continue;
+                    }
+
+                    if (rule.derivedResourceModifiers == null)
+                    {
+                        continue;
+                    }
 
                     for (int i = 0; i < rule.derivedResourceModifiers.Length; i++)
                     {
                         RpgResourceModifier r = rule.derivedResourceModifiers[i];
-                        if (r == null || r.resourceId != resource.Id) continue;
+                        if (r == null || r.resourceId != resource.Id)
+                        {
+                            continue;
+                        }
 
                         switch (r.kind)
                         {
@@ -117,7 +139,11 @@ namespace Neo.Rpg.Runtime
                 for (int i = 0; i < activeBuffMods.Count; i++)
                 {
                     BuffStatModifierApplication mod = activeBuffMods[i];
-                    if (mod.TargetId != resource.Id) continue;
+                    if (mod.TargetId != resource.Id)
+                    {
+                        continue;
+                    }
+
                     int stacks = Mathf.Max(1, mod.Stacks);
 
                     switch (mod.Type)
@@ -135,7 +161,9 @@ namespace Neo.Rpg.Runtime
             }
 
             if (resource.Definition.maxCap > 0f && value > resource.Definition.maxCap)
+            {
                 value = resource.Definition.maxCap;
+            }
 
             return Mathf.Max(0f, value);
         }
@@ -149,7 +177,10 @@ namespace Neo.Rpg.Runtime
             IReadOnlyList<BuffStatModifierApplication> activeBuffMods)
         {
             RpgRegenDefinition r = resource.Definition.regen;
-            if (r == null || !r.enabled) return BuffOnlyRegen(resource.Id, activeBuffMods);
+            if (r == null || !r.enabled)
+            {
+                return BuffOnlyRegen(resource.Id, activeBuffMods);
+            }
 
             float baseRate = r.mode switch
             {
@@ -170,7 +201,11 @@ namespace Neo.Rpg.Runtime
                 for (int i = 0; i < activeBuffMods.Count; i++)
                 {
                     BuffStatModifierApplication mod = activeBuffMods[i];
-                    if (mod.TargetId != resource.Id) continue;
+                    if (mod.TargetId != resource.Id)
+                    {
+                        continue;
+                    }
+
                     int stacks = Mathf.Max(1, mod.Stacks);
 
                     switch (mod.Type)
@@ -190,20 +225,36 @@ namespace Neo.Rpg.Runtime
 
         private static float BuffOnlyRegen(string resourceId, IReadOnlyList<BuffStatModifierApplication> mods)
         {
-            if (mods == null) return 0f;
+            if (mods == null)
+            {
+                return 0f;
+            }
+
             float flat = 0f;
             for (int i = 0; i < mods.Count; i++)
             {
                 BuffStatModifierApplication m = mods[i];
-                if (m.TargetId != resourceId) continue;
-                if (m.Type == BuffStatType.RegenFlat) flat += m.Value * Mathf.Max(1, m.Stacks);
+                if (m.TargetId != resourceId)
+                {
+                    continue;
+                }
+
+                if (m.Type == BuffStatType.RegenFlat)
+                {
+                    flat += m.Value * Mathf.Max(1, m.Stacks);
+                }
             }
+
             return flat;
         }
 
         private static float GetStatValue(IReadOnlyDictionary<string, RpgStatRuntime> stats, string id)
         {
-            if (stats == null || string.IsNullOrEmpty(id)) return 0f;
+            if (stats == null || string.IsNullOrEmpty(id))
+            {
+                return 0f;
+            }
+
             return stats.TryGetValue(id, out RpgStatRuntime s) ? s.CurrentValue : 0f;
         }
     }

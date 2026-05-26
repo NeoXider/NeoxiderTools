@@ -1,4 +1,4 @@
-using System.Numerics;
+﻿using System.Numerics;
 using DG.Tweening;
 using Neo.Extensions;
 using TMPro;
@@ -80,6 +80,9 @@ namespace Neo.Tools
 
         [Tooltip("Offset to add to integer values")] [SerializeField]
         protected int indexOffset;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logWarnings;
 
         [Space] [Header("Anim")] [SerializeField]
         private float _timeAnim = 0.25f;
@@ -198,7 +201,7 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
@@ -214,7 +217,7 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
@@ -252,7 +255,7 @@ namespace Neo.Tools
         {
             if (this.text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
@@ -270,7 +273,7 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
@@ -289,7 +292,7 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
@@ -318,7 +321,11 @@ namespace Neo.Tools
 
             if (!BigInteger.TryParse(value, out BigInteger parsed))
             {
-                Debug.LogWarning($"SetText: Cannot parse BigInteger from '{value}'");
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning($"[SetText] Cannot parse BigInteger from '{value}'.", this);
+                }
+
                 return;
             }
 
@@ -348,12 +355,20 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("SetText: Text component is not assigned");
+                LogMissingTextWarning();
                 return;
             }
 
             text.text = "";
             OnTextUpdated?.Invoke("");
+        }
+
+        private void LogMissingTextWarning()
+        {
+            if (_logWarnings)
+            {
+                NeoDiagnostics.LogWarning("[SetText] Text component is not assigned.", this);
+            }
         }
 
         #endregion

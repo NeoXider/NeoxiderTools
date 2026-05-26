@@ -12,7 +12,7 @@ namespace Neo.Editor.Tests.Edit
             var go = new GameObject("Dlg");
             try
             {
-                var dc = go.AddComponent<DialogueController>();
+                DialogueController dc = go.AddComponent<DialogueController>();
                 dc.useTypewriterEffect = false;
                 dc.dialogues = new[]
                 {

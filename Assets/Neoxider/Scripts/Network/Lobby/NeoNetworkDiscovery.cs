@@ -18,18 +18,16 @@ namespace Neo.Network
     [RequireComponent(typeof(NetworkDiscovery))]
     public class NeoNetworkDiscovery : MonoBehaviour
     {
-        [Header("Settings")]
-        [Tooltip("Automatically start advertising when hosting.")]
-        [SerializeField] private bool _autoAdvertiseOnHost = true;
+        [Header("Settings")] [Tooltip("Automatically start advertising when hosting.")] [SerializeField]
+        private bool _autoAdvertiseOnHost = true;
 
-        [Tooltip("Automatically start discovery when not hosting.")]
-        [SerializeField] private bool _autoDiscoverOnClient = true;
+        [Tooltip("Automatically start discovery when not hosting.")] [SerializeField]
+        private bool _autoDiscoverOnClient = true;
 
-        [Tooltip("How often to refresh the server list (seconds).")]
-        [SerializeField] private float _refreshInterval = 2f;
+        [Tooltip("How often to refresh the server list (seconds).")] [SerializeField]
+        private float _refreshInterval = 2f;
 
-        [Header("Events")]
-        [Tooltip("Fired when a new server is found on the LAN. String = server address.")]
+        [Header("Events")] [Tooltip("Fired when a new server is found on the LAN. String = server address.")]
         public UnityEvent<string> OnServerFound = new();
 
         [Tooltip("Fired when the server list is updated. Int = total server count.")]
@@ -59,13 +57,16 @@ namespace Neo.Network
                 NetworkDiagnostics.LogError("[NeoNetworkDiscovery] Missing NetworkDiscovery component.", this);
                 return;
             }
+
             _discovery.OnServerFound.AddListener(OnDiscoveredServer);
         }
 
         private void OnDestroy()
         {
             if (_discovery != null)
+            {
                 _discovery.OnServerFound.RemoveListener(OnDiscoveredServer);
+            }
         }
 
         private void Start()
@@ -100,7 +101,11 @@ namespace Neo.Network
         [Button]
         public void StartAdvertising()
         {
-            if (_discovery == null) return;
+            if (_discovery == null)
+            {
+                return;
+            }
+
             _discovery.AdvertiseServer();
             OnAdvertisingStarted?.Invoke();
         }
@@ -109,7 +114,11 @@ namespace Neo.Network
         [Button]
         public void StartDiscovery()
         {
-            if (_discovery == null) return;
+            if (_discovery == null)
+            {
+                return;
+            }
+
             _servers.Clear();
             _discovery.StartDiscovery();
             OnDiscoveryStarted?.Invoke();
@@ -119,7 +128,11 @@ namespace Neo.Network
         [Button]
         public void StopDiscovery()
         {
-            if (_discovery == null) return;
+            if (_discovery == null)
+            {
+                return;
+            }
+
             _discovery.StopDiscovery();
         }
 
@@ -135,14 +148,15 @@ namespace Neo.Network
         [Button]
         public void ConnectToFirstServer()
         {
-            foreach (var kvp in _servers)
+            foreach (KeyValuePair<long, ServerResponse> kvp in _servers)
             {
-                var uri = kvp.Value.uri;
+                Uri uri = kvp.Value.uri;
                 StopDiscovery();
                 NetworkManager.singleton.networkAddress = uri.Host;
                 NetworkManager.singleton.StartClient();
                 return;
             }
+
             NetworkDiagnostics.LogWarning("[NeoNetworkDiscovery] No servers found to connect to.", this);
         }
 
@@ -158,6 +172,7 @@ namespace Neo.Network
             {
                 OnServerFound?.Invoke(info.uri.Host);
             }
+
             OnServerListUpdated?.Invoke(_servers.Count);
         }
     }

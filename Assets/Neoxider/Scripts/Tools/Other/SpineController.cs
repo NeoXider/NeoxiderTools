@@ -1,4 +1,4 @@
-#if SPINE_UNITY
+﻿#if SPINE_UNITY
 using System.Collections.Generic;
 using System.Linq;
 using Neo;
@@ -108,7 +108,7 @@ public sealed class SpineController : MonoBehaviour
     {
         if (!IsValidIndex(animationIndex, animationNames.Count))
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Animation index '{animationIndex}' is out of range.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation index '{animationIndex}' is out of range.", this);
             return null;
         }
 
@@ -145,14 +145,14 @@ public sealed class SpineController : MonoBehaviour
 
         if (string.IsNullOrEmpty(animationName))
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Animation name is empty.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation name is empty.", this);
             return null;
         }
 
         var state = skeletonAnimation.AnimationState;
         if (state == null)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Animation state is missing.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Animation state is missing.", this);
             return null;
         }
 
@@ -201,7 +201,7 @@ public sealed class SpineController : MonoBehaviour
     {
         if (!IsValidIndex(animationIndex, animationNames.Count))
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Cannot set idle animation by index '{animationIndex}'.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Cannot set idle animation by index '{animationIndex}'.", this);
             return;
         }
 
@@ -223,7 +223,7 @@ public sealed class SpineController : MonoBehaviour
     {
         if (string.IsNullOrEmpty(animationName))
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Default animation name is empty.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Default animation name is empty.", this);
             return;
         }
 
@@ -305,7 +305,7 @@ public sealed class SpineController : MonoBehaviour
         int logicalIndex = GetLogicalSkinIndex(skinName);
         if (logicalIndex < 0)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found.", this);
             return;
         }
 
@@ -364,14 +364,14 @@ public sealed class SpineController : MonoBehaviour
         var skeletonData = skeleton?.Data ?? skeletonDataAsset?.GetSkeletonData(true);
         if (skeletonData == null)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Unable to access skeleton data.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Unable to access skeleton data.", this);
             return;
         }
 
         var skin = skeletonData.FindSkin(skinName);
         if (skin == null)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found in skeleton data.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] Skin '{skinName}' not found in skeleton data.", this);
             return;
         }
 
@@ -413,7 +413,7 @@ public sealed class SpineController : MonoBehaviour
 
         if (skeletonAnimation == null)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] {nameof(SkeletonAnimation)} reference is missing.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] {nameof(SkeletonAnimation)} reference is missing.", this);
             return;
         }
 
@@ -526,7 +526,7 @@ public sealed class SpineController : MonoBehaviour
         EnsureInitialized();
         if (skinNames == null || skinNames.Count == 0)
         {
-            Debug.LogWarning($"[{nameof(SpineController)}] No skins available for skeleton.", this);
+            global::NeoDiagnostics.LogWarning($"[{nameof(SpineController)}] No skins available for skeleton.", this);
             return false;
         }
         return true;
@@ -550,7 +550,7 @@ public sealed class SpineController : MonoBehaviour
 
     private void Awake()
     {
-        Debug.LogWarning(message, this);
+        NeoDiagnostics.LogWarning(message, this);
         enabled = false;
     }
 }

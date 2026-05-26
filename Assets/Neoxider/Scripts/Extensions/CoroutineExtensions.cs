@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -273,7 +273,7 @@ namespace Neo.Extensions
 
             if (owner == null)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "Attempting to start coroutine on null MonoBehaviour. Falling back to CoroutineHelper instance.");
                 owner = Instance;
             }
@@ -345,7 +345,7 @@ namespace Neo.Extensions
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing delayed action: {e}");
+                NeoDiagnostics.LogError($"Error executing delayed action: {e}");
             }
         }
 
@@ -372,7 +372,7 @@ namespace Neo.Extensions
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing delayed frames action: {e}");
+                NeoDiagnostics.LogError($"Error executing delayed frames action: {e}");
             }
         }
 
@@ -385,7 +385,7 @@ namespace Neo.Extensions
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing WaitUntil action: {e}");
+                NeoDiagnostics.LogError($"Error executing WaitUntil action: {e}");
             }
         }
 
@@ -398,7 +398,7 @@ namespace Neo.Extensions
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing WaitWhile action: {e}");
+                NeoDiagnostics.LogError($"Error executing WaitWhile action: {e}");
             }
         }
 
@@ -411,7 +411,7 @@ namespace Neo.Extensions
             }
             catch (Exception e)
             {
-                Debug.LogError($"Error executing EndOfFrame action: {e}");
+                NeoDiagnostics.LogError($"Error executing EndOfFrame action: {e}");
             }
         }
 
@@ -425,7 +425,7 @@ namespace Neo.Extensions
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"Error executing RepeatUntil action: {e}");
+                    NeoDiagnostics.LogError($"Error executing RepeatUntil action: {e}");
                     yield break;
                 }
 

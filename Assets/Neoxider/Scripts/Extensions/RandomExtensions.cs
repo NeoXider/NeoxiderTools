@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -76,15 +76,13 @@ namespace Neo.Extensions
             ValidateCollection(collection);
             if (count <= 0)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     $"[RandomExtensions] Requested {count} random elements (<=0) from collection of type {typeof(T).Name}");
                 return Enumerable.Empty<T>();
             }
 
             if (collection.Count < count)
             {
-                Debug.LogError(
-                    $"[RandomExtensions] Collection of type {typeof(T).Name} with length {collection.Count} is less than required count {count}");
                 throw new ArgumentException(
                     $"Collection count ({collection.Count}) is less than required count ({count})", nameof(count));
             }
@@ -178,7 +176,7 @@ namespace Neo.Extensions
             {
                 if (weight < 0f)
                 {
-                    Debug.LogError("[RandomExtensions] Weights cannot contain negative values.");
+                    NeoDiagnostics.LogError("[RandomExtensions] Weights cannot contain negative values.");
                     return -1;
                 }
 
@@ -187,7 +185,7 @@ namespace Neo.Extensions
 
             if (totalWeight <= 0f)
             {
-                Debug.LogWarning("[RandomExtensions] Total weight must be greater than zero.");
+                NeoDiagnostics.LogWarning("[RandomExtensions] Total weight must be greater than zero.");
                 return -1;
             }
 

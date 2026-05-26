@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Audio;
 using UnityEngine.Serialization;
 
@@ -45,7 +45,7 @@ namespace Neo.Audio
             TryMigrateLegacyParameter();
         }
 
-        /// <summary>Sets volume in dB (−80…20). For UnityEvent and dB slider.</summary>
+        /// <summary>Sets volume in dB (-80..20). For UnityEvent and dB slider.</summary>
         public void SetVolumeDb(float volumeDb)
         {
             string parameterName = ParameterName;
@@ -57,14 +57,14 @@ namespace Neo.Audio
             audioMixer.SetFloat(parameterName, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
-        /// <summary>Sets volume in dB (−80…20) for the given parameter. If name is empty, parameterName is used.</summary>
+        /// <summary>Sets volume in dB (-80..20) for the given parameter. If name is empty, parameterName is used.</summary>
         /// <param name="name">Mixer parameter name, or empty to use parameterName.</param>
         /// <param name="volumeDb">Volume in dB.</param>
         public void SetVolumeDb(string name, float volumeDb)
         {
             if (audioMixer == null)
             {
-                Debug.LogWarning("[SettingMixer] AudioMixer is not assigned.");
+                NeoDiagnostics.LogWarning("[SettingMixer] AudioMixer is not assigned.");
                 return;
             }
 
@@ -77,7 +77,7 @@ namespace Neo.Audio
             audioMixer.SetFloat(param, Mathf.Clamp(volumeDb, MinDb, MaxDb));
         }
 
-        /// <summary>Normalized volume 0–1. For slider and UnityEvent. Zero sets mute (−80 dB).</summary>
+        /// <summary>Normalized volume 0-1. For slider and UnityEvent. Zero sets mute (-80 dB).</summary>
         /// <param name="normalizedVolume">Volume from 0 to 1.</param>
         public void SetVolume(float normalizedVolume)
         {
@@ -98,7 +98,7 @@ namespace Neo.Audio
             SetVolume(enabled ? 1f : 0f);
         }
 
-        /// <summary>Returns normalized volume (0–1) of the current mixer parameter.</summary>
+        /// <summary>Returns normalized volume (0-1) of the current mixer parameter.</summary>
         /// <returns>Volume from 0 to 1.</returns>
         public float GetVolume()
         {

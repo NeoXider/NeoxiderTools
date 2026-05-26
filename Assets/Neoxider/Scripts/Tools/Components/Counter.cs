@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Neo.Reactive;
 using Neo.Save;
 using Neo.Shop;
@@ -42,8 +43,7 @@ namespace Neo.Tools
     {
 #if MIRROR
         /// <summary>Server-authoritative value, synced to late-joining clients.</summary>
-        [SyncVar]
-        private float _syncValue;
+        [SyncVar] private float _syncValue;
 #endif
 
         [SerializeField] [Tooltip("Mode: integer (Int) or float (Float).")]
@@ -139,17 +139,19 @@ namespace Neo.Tools
             }
         }
 
-        public static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<Counter>> Registry = new();
+        public static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<Counter>>
+            Registry = new();
 
         protected virtual void OnEnable()
         {
             if (!string.IsNullOrEmpty(_saveKey))
             {
-                if (!Registry.TryGetValue(_saveKey, out var list))
+                if (!Registry.TryGetValue(_saveKey, out List<Counter> list))
                 {
                     list = new System.Collections.Generic.List<Counter>();
                     Registry[_saveKey] = list;
                 }
+
                 if (!list.Contains(this))
                 {
                     list.Add(this);
@@ -159,7 +161,7 @@ namespace Neo.Tools
 
         protected virtual void OnDisable()
         {
-            if (!string.IsNullOrEmpty(_saveKey) && Registry.TryGetValue(_saveKey, out var list))
+            if (!string.IsNullOrEmpty(_saveKey) && Registry.TryGetValue(_saveKey, out List<Counter> list))
             {
                 list.Remove(this);
             }
@@ -405,7 +407,10 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdSetValue(float newValue, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
 
             _syncValue = newValue;
             ApplyValueLocally(newValue);
@@ -415,14 +420,21 @@ namespace Neo.Tools
         [ClientRpc(includeOwner = true)]
         private void RpcSetValue(float newValue)
         {
-            if (isServerOnly) return;
+            if (isServerOnly)
+            {
+                return;
+            }
+
             ApplyValueLocally(newValue);
         }
 
         /// <summary>
         ///     Late-join: when a new client connects, apply the server's authoritative value.
         /// </summary>
-        protected override void ApplyNetworkState() => ApplyValueLocally(_syncValue);
+        protected override void ApplyNetworkState()
+        {
+            ApplyValueLocally(_syncValue);
+        }
 #endif
 
         private void InvokeValueChanged()
@@ -475,4 +487,3 @@ namespace Neo.Tools
         }
     }
 }
-

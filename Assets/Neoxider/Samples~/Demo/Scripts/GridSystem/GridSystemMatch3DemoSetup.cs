@@ -16,6 +16,16 @@ namespace Neo.Demo.GridSystem
     [AddComponentMenu("Neoxider/Demo/GridSystem/GridSystemMatch3DemoSetup")]
     public class GridSystemMatch3DemoSetup : MonoBehaviour
     {
+        [SerializeField] private bool _repairSceneOnStart = true;
+
+        private void Start()
+        {
+            if (Application.isPlaying && _repairSceneOnStart)
+            {
+                RepairRuntimeScene();
+            }
+        }
+
 #if UNITY_EDITOR
         [Button("Setup Scene")]
         public void SetupScene()
@@ -51,11 +61,13 @@ namespace Neo.Demo.GridSystem
             SetRef(ui, "_match3", match3);
             SetRef(ui, "_debugDrawer", drawer);
             SetRef(ui, "_statusText", status);
+            ui.Configure(generator, match3, drawer, status);
 
             SetRef(boardView, "_generator", generator);
             SetRef(boardView, "_match3", match3);
             SetRef(boardView, "_camera", Camera.main);
             SetRef(boardView, "_statusText", status);
+            boardView.Configure(generator, match3, Camera.main, status);
 
             float y = -20f;
             float spacing = 45f;
@@ -71,7 +83,7 @@ namespace Neo.Demo.GridSystem
             generator.GenerateField();
             match3.InitializeBoard();
 
-            Debug.Log("[GridSystemMatch3DemoSetup] Scene is ready.");
+            global::Neo.Demo.SampleDiagnostics.Log("[GridSystemMatch3DemoSetup] Scene is ready.", this);
         }
 
         private static void EnsureCamera()
@@ -185,5 +197,225 @@ namespace Neo.Demo.GridSystem
             }
         }
 #endif
+
+        private void RepairRuntimeScene()
+        {
+            Camera sceneCamera = EnsureRuntimeCamera();
+            EnsureRuntimeEventSystem();
+
+            Match3BoardService match3 = FindFirstObjectByType<Match3BoardService>();
+            FieldGenerator generator = match3 != null
+                ? match3.GetComponent<FieldGenerator>()
+                : FindFirstObjectByType<FieldGenerator>();
+
+            if (generator == null)
+            {
+                GameObject root = CreateRuntimeGO("GridSystem_Match3");
+                root.AddComponent<Grid>();
+                generator = root.AddComponent<FieldGenerator>();
+                generator.Config.Size = new Vector3Int(8, 8, 1);
+                generator.Config.GridType = GridType.Rectangular;
+                generator.Config.MovementRule = MovementRule.FourDirections2D;
+                generator.Config.PassabilityMode = CellPassabilityMode.WalkableEnabledAndUnoccupied;
+            }
+
+            FieldDebugDrawer drawer = generator.GetComponent<FieldDebugDrawer>();
+            if (drawer == null)
+            {
+                drawer = generator.gameObject.AddComponent<FieldDebugDrawer>();
+            }
+
+            match3 = generator.GetComponent<Match3BoardService>();
+            if (match3 == null)
+            {
+                match3 = generator.gameObject.AddComponent<Match3BoardService>();
+            }
+
+            GridSystemMatch3BoardView boardView = generator.GetComponent<GridSystemMatch3BoardView>();
+            if (boardView == null)
+            {
+                boardView = generator.gameObject.AddComponent<GridSystemMatch3BoardView>();
+            }
+
+            RectTransform canvas = EnsureRuntimeCanvas();
+            TMP_Text title = EnsureRuntimeText("Text_GridSystem_Match3_Demo", "GridSystem Match3 Demo", canvas,
+                new Vector2(0, 326), 30, Color.white);
+            TMP_Text status = EnsureRuntimeText("Text_Ready", "Ready", canvas, new Vector2(0, 180), 20,
+                new Color(0.7f, 0.9f, 1f));
+
+            GridSystemMatch3DemoUI ui = FindFirstObjectByType<GridSystemMatch3DemoUI>();
+            if (ui == null)
+            {
+                ui = CreateRuntimeGO("GridSystemMatch3DemoUI").AddComponent<GridSystemMatch3DemoUI>();
+            }
+
+            _ = title;
+            ui.Configure(generator, match3, drawer, status);
+            boardView.Configure(generator, match3, sceneCamera, status);
+
+            float y = 50f;
+            float spacing = 45f;
+            EnsureRuntimeButton("Btn_Generate_Rect", "Generate Rect", canvas, new Vector2(-150, y), ui.GenerateRectBoard);
+            EnsureRuntimeButton("Btn_Generate_Diamond", "Generate Diamond", canvas, new Vector2(150, y),
+                ui.GenerateDiamondBoard);
+            EnsureRuntimeButton("Btn_Toggle_Blocked", "Toggle Blocked", canvas, new Vector2(-150, y - spacing),
+                ui.ToggleRandomBlocked);
+            EnsureRuntimeButton("Btn_Disable_Cell", "Disable Cell", canvas, new Vector2(150, y - spacing),
+                ui.ToggleRandomDisabled);
+            EnsureRuntimeButton("Btn_Toggle_Occupied", "Toggle Occupied", canvas, new Vector2(-150, y - spacing * 2),
+                ui.ToggleRandomOccupied);
+            EnsureRuntimeButton("Btn_Run_Path_Demo", "Run Path Demo", canvas, new Vector2(150, y - spacing * 2),
+                ui.RunPathDemo);
+            EnsureRuntimeButton("Btn_Swap_Random", "Swap Valid", canvas, new Vector2(-150, y - spacing * 3),
+                ui.SwapRandom);
+            EnsureRuntimeButton("Btn_Restart_Board", "Restart Board", canvas, new Vector2(150, y - spacing * 3),
+                ui.RestartBoard);
+
+            if (generator.Cells == null || generator.Cells.Length == 0)
+            {
+                generator.GenerateField();
+            }
+
+            match3.InitializeBoard();
+            boardView.Rebuild();
+        }
+
+        private static Camera EnsureRuntimeCamera()
+        {
+            if (Camera.main != null)
+            {
+                return Camera.main;
+            }
+
+            GameObject obj = CreateRuntimeGO("Main Camera");
+            obj.tag = "MainCamera";
+            Camera cam = obj.AddComponent<Camera>();
+            cam.orthographic = true;
+            cam.orthographicSize = 6;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.15f, 0.16f, 0.2f);
+            obj.transform.position = new Vector3(3.5f, 3.5f, -10f);
+            obj.AddComponent<AudioListener>();
+            return cam;
+        }
+
+        private static void EnsureRuntimeEventSystem()
+        {
+            if (FindFirstObjectByType<EventSystem>() != null)
+            {
+                return;
+            }
+
+            GameObject obj = CreateRuntimeGO("EventSystem");
+            obj.AddComponent<EventSystem>();
+            obj.AddComponent<StandaloneInputModule>();
+        }
+
+        private static RectTransform EnsureRuntimeCanvas()
+        {
+            Canvas canvas = FindFirstObjectByType<Canvas>();
+            if (canvas == null)
+            {
+                GameObject obj = CreateRuntimeGO("Canvas");
+                obj.layer = LayerMask.NameToLayer("UI");
+                canvas = obj.AddComponent<Canvas>();
+                canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+                CanvasScaler scaler = obj.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler.referenceResolution = new Vector2(1280, 720);
+                obj.AddComponent<GraphicRaycaster>();
+            }
+
+            RectTransform rect = canvas.GetComponent<RectTransform>();
+            rect.localScale = Vector3.one;
+            return rect;
+        }
+
+        private static TMP_Text EnsureRuntimeText(
+            string objectName,
+            string text,
+            RectTransform parent,
+            Vector2 pos,
+            int size,
+            Color color)
+        {
+            GameObject obj = GameObject.Find(objectName);
+            if (obj == null)
+            {
+                obj = CreateRuntimeGO(objectName);
+                obj.transform.SetParent(parent, false);
+                obj.layer = LayerMask.NameToLayer("UI");
+                RectTransform rect = obj.AddComponent<RectTransform>();
+                rect.sizeDelta = new Vector2(850, size + 16);
+                obj.AddComponent<TextMeshProUGUI>();
+            }
+
+            RectTransform textRect = obj.GetComponent<RectTransform>();
+            textRect.SetParent(parent, false);
+            textRect.anchoredPosition = pos;
+            textRect.sizeDelta = new Vector2(850, size + 16);
+            textRect.localScale = Vector3.one;
+
+            TMP_Text tmp = obj.GetComponent<TMP_Text>();
+            tmp.text = text;
+            tmp.fontSize = size;
+            tmp.color = color;
+            tmp.alignment = TextAlignmentOptions.Center;
+            return tmp;
+        }
+
+        private static void EnsureRuntimeButton(
+            string objectName,
+            string label,
+            RectTransform parent,
+            Vector2 pos,
+            UnityEngine.Events.UnityAction action)
+        {
+            GameObject obj = GameObject.Find(objectName);
+            if (obj == null)
+            {
+                obj = CreateRuntimeGO(objectName);
+                obj.transform.SetParent(parent, false);
+                obj.layer = LayerMask.NameToLayer("UI");
+                obj.AddComponent<RectTransform>();
+                Image image = obj.AddComponent<Image>();
+                image.color = new Color(0.2f, 0.45f, 0.7f, 0.95f);
+                obj.AddComponent<Button>();
+            }
+
+            RectTransform rect = obj.GetComponent<RectTransform>();
+            rect.SetParent(parent, false);
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = new Vector2(220, 38);
+            rect.localScale = Vector3.one;
+
+            Button button = obj.GetComponent<Button>();
+            button.onClick = new Button.ButtonClickedEvent();
+            button.onClick.AddListener(action);
+
+            TMP_Text text = obj.GetComponentInChildren<TMP_Text>(true);
+            if (text == null)
+            {
+                GameObject labelObject = CreateRuntimeGO("Label");
+                labelObject.transform.SetParent(obj.transform, false);
+                labelObject.layer = LayerMask.NameToLayer("UI");
+                RectTransform labelRect = labelObject.AddComponent<RectTransform>();
+                labelRect.anchorMin = Vector2.zero;
+                labelRect.anchorMax = Vector2.one;
+                labelRect.offsetMin = Vector2.zero;
+                labelRect.offsetMax = Vector2.zero;
+                text = labelObject.AddComponent<TextMeshProUGUI>();
+            }
+
+            text.text = label;
+            text.fontSize = 16;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = Color.white;
+        }
+
+        private static GameObject CreateRuntimeGO(string name)
+        {
+            return new GameObject(name);
+        }
     }
 }

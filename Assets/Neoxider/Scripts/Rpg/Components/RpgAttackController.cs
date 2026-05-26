@@ -23,9 +23,12 @@ namespace Neo.Rpg
         [SerializeField] private RpgAttackPreset[] _presets = Array.Empty<RpgAttackPreset>();
         [SerializeField] private Transform _origin;
         [SerializeField] private Transform _projectileSpawnPoint;
+
         [Tooltip("Optional RpgCharacter providing damage multipliers, level, and outgoing buff bonuses. " +
                  "When empty the controller searches the parent hierarchy.")]
-        [SerializeField] private RpgCharacter _characterSource;
+        [SerializeField]
+        private RpgCharacter _characterSource;
+
         [SerializeField] private RpgTargetSelector _targetSelector;
 
         [Header("Built-in Input")] [SerializeField]
@@ -607,9 +610,17 @@ namespace Neo.Rpg
         private static bool TryResolveReceiver(GameObject target, out IRpgCombatReceiver receiver)
         {
             receiver = null;
-            if (target == null) return false;
+            if (target == null)
+            {
+                return false;
+            }
+
             receiver = target.GetComponent<RpgCharacter>();
-            if (receiver == null) receiver = target.GetComponentInParent<RpgCharacter>();
+            if (receiver == null)
+            {
+                receiver = target.GetComponentInParent<RpgCharacter>();
+            }
+
             return receiver != null;
         }
 

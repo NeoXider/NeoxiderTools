@@ -1,26 +1,47 @@
-﻿# GridSystem module
+# GridSystem module
 
 ## Purpose
 
-Grid-system utilities: field generation, spawning, visualization, and board-services for match-based mini-games.
+GridSystem is the base constructor module for grid-based games and tools. It separates the generic field core from optional gameplay layers, so the same grid can power Match3, TicTacToe, 2048-like games, tactical boards, inventory grids, puzzle fields, and custom board games.
 
-## Contents
+## Architecture
 
-- [FieldSpawner](./FieldSpawner.md)
-- [FieldObjectSpawner](./FieldObjectSpawner.md)
+- `FieldGenerator` - core field generation, shape, cells, coordinates, state, and pathfinding facade.
+- `GridGameBuilder` - scene/Inspector helper that assembles selected modules.
+- `GridShapeMask` - reusable ScriptableObject shape masks.
+- `FieldSpawner` / `FieldObjectSpawner` - object placement on cells.
+- `FieldDebugDrawer` - Gizmos diagnostics.
+- `Match3BoardService` - swap/match/resolve/refill gameplay layer.
+- `TicTacToeBoardService` - turn-based board-game layer.
+- `SlidingMergeBoardService` - 2048, Threes, block-merge, and drop-and-merge layer.
+
+## Documentation
+
 - [FieldGenerator](./FieldGenerator.md)
+- [GridGameBuilder](./GridGameBuilder.md)
 - [GridShapeMask](./GridShapeMask.md)
 - [FieldDebugDrawer](./FieldDebugDrawer.md)
+- [FieldSpawner](./FieldSpawner.md)
+- [FieldObjectSpawner](./FieldObjectSpawner.md)
 - [InternalTypes](./InternalTypes.md)
+- [SlidingMerge](./SlidingMerge/SlidingMergeBoardService.md)
 - [Match3](./Match3/Match3BoardService.md)
 - [TicTacToe](./TicTacToe/TicTacToeBoardService.md)
 
-## Notes
+## Quick Start
 
-Russian docs remain the primary source for some implementation details:
-
-- [GridSystem (RU)](../GridSystem/README.md)
+1. Add `GridGameBuilder` to a GameObject.
+2. Select features, for example `DebugDrawer + SlidingMerge` for a 2048-like game.
+3. Configure `FieldGenerator.Config`: `Size`, `GridType`, `MovementRule`, origin, and shape overrides.
+4. Press `Ensure Grid Components` or enter Play Mode.
+5. Connect your own view/UI to the selected gameplay service events.
 
 ## Samples
 
-The active UPM sample path is `Assets/Neoxider/Samples~/Demo/`. GridSystem scenes are in `Scenes/GridSystem/`, and their setup/view scripts are in `Scripts/GridSystem/`.
+Current active sample path: `Assets/Neoxider/Samples/Demo/`.
+
+GridSystem scenes live in `Scenes/GridSystem/`; setup/view scripts live in `Scripts/GridSystem/`.
+
+## Russian
+
+See Russian docs: [`../../Docs/GridSystem/README.md`](../../Docs/GridSystem/README.md).

@@ -52,7 +52,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void FileSaveEncryptionConfig_OnlyCustomIvFilled_ReturnsFalse()
         {
-            Assert.That(FileSaveEncryptionConfig.TryCreate(true, string.Empty, Iv16, out _, out string error), Is.False);
+            Assert.That(FileSaveEncryptionConfig.TryCreate(true, string.Empty, Iv16, out _, out string error),
+                Is.False);
             Assert.That(error, Is.Not.Null.And.Not.Empty);
         }
 
@@ -244,7 +245,8 @@ namespace Neo.Editor.Tests.Edit
             try
             {
                 File.WriteAllText(Path.Combine(tempDir, fileName), string.Empty);
-                var provider = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                var provider =
+                    new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("any"), Is.False);
                 Assert.That(provider.GetInt("k", 7), Is.EqualTo(7));
             }
@@ -264,7 +266,8 @@ namespace Neo.Editor.Tests.Edit
             try
             {
                 File.WriteAllText(Path.Combine(tempDir, fileName), "{not valid json");
-                var provider = new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
+                var provider =
+                    new FileSaveProvider(fileName, new FileSaveProviderOptions { PersistenceRoot = tempDir });
                 Assert.That(provider.HasKey("gold"), Is.False);
                 Assert.That(provider.GetFloat("gold", 3.5f), Is.EqualTo(3.5f));
             }

@@ -107,8 +107,9 @@ namespace Neo.Pages
             }
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
             UIKit.OnShowPage.RemoveListener(ChangePage);
             UIKit.OnShowPageByName.RemoveListener(ChangePageByName);
             StopGMIntegration();

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,8 +33,7 @@ namespace Neo.Reactive
         ///     Code subscriptions (via <see cref="AddListener"/>). Invoked directly so notifications work in Edit Mode;
         ///     <see cref="UnityEvent{T}.Invoke"/> can skip runtime listeners outside Play Mode.
         /// </summary>
-        [NonSerialized]
-        private List<UnityAction<T>> _codeListeners;
+        [NonSerialized] private List<UnityAction<T>> _codeListeners;
 
         protected ReactivePropertyBase()
         {
@@ -128,7 +127,11 @@ namespace Neo.Reactive
                 for (int i = 0; i < count; i++)
                 {
                     // Guard: list may have shrunk if a listener removed itself
-                    if (i >= _codeListeners.Count) break;
+                    if (i >= _codeListeners.Count)
+                    {
+                        break;
+                    }
+
                     UnityAction<T> listener = _codeListeners[i];
                     try
                     {
@@ -136,7 +139,7 @@ namespace Neo.Reactive
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogException(ex);
+                        NeoDiagnostics.LogException(ex);
                     }
                 }
             }
@@ -147,7 +150,7 @@ namespace Neo.Reactive
             }
             catch (Exception ex)
             {
-                Debug.LogException(ex);
+                NeoDiagnostics.LogException(ex);
             }
         }
     }

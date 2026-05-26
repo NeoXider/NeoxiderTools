@@ -197,7 +197,8 @@ namespace Neo.StateMachine
         {
             if (stateMachineData == null)
             {
-                StateMachineLog.Warning("[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
+                StateMachineLog.Warning(
+                    "[StateMachineBehaviour] Cannot change state by name: StateMachineData is null.",
                     this);
                 return;
             }

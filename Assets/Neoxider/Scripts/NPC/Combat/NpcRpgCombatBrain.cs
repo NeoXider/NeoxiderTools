@@ -1,4 +1,4 @@
-using Neo.Rpg;
+﻿using Neo.Rpg;
 using Neo.Rpg.Components;
 using UnityEngine;
 using UnityEngine.Events;
@@ -329,7 +329,11 @@ namespace Neo.NPC.Combat
 
         private IRpgCombatReceiver ResolveActor()
         {
-            if (_character != null) return _character;
+            if (_character != null)
+            {
+                return _character;
+            }
+
             return GetComponent<IRpgCombatReceiver>();
         }
 
@@ -372,7 +376,7 @@ namespace Neo.NPC.Combat
 
             if (_debugMode)
             {
-                Debug.Log($"[NpcRpgCombatBrain] {line}", this);
+                NeoDiagnostics.Log($"[NpcRpgCombatBrain] {line}", this);
             }
         }
 
@@ -383,7 +387,7 @@ namespace Neo.NPC.Combat
 
             if (_debugMode)
             {
-                Debug.LogWarning($"[NpcRpgCombatBrain] {message}", this);
+                NeoDiagnostics.LogWarning($"[NpcRpgCombatBrain] {message}", this);
             }
         }
     }

@@ -3,3 +3,12 @@ url = "http://127.0.0.1:8040/mcp"
 
 [mcp_servers.UnityMCP.tools.execute_code]
 approval_mode = "approve"
+
+[mcp_servers.UnityMCP.tools.manage_asset]
+approval_mode = "approve"
+
+[mcp_servers.UnityMCP.tools.read_console]
+approval_mode = "approve"
+
+[mcp_servers.UnityMCP.tools.manage_editor]
+approval_mode = "approve"

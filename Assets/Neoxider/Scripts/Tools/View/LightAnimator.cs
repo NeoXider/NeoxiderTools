@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using Neo.Animations;
 using Neo.Reactive;
@@ -221,7 +221,7 @@ namespace Neo.Tools.View
                     ? AnimationUtils.GetPerlinNoiseValue(animationTime, animationSpeed,
                         randomOffset, noiseOffset, noiseScale, use2DNoise)
                     : 0f;
-                Debug.Log(
+                NeoDiagnostics.Log(
                     $"[{gameObject.name}] Impl: {_light.ImplName}, Intensity: {_light.Intensity:F2}, Time: {animationTime:F2}, Speed: {animationSpeed:F2}, Noise: {dbgNoise:F2}");
             }
         }
@@ -358,12 +358,12 @@ namespace Neo.Tools.View
 
                 if (enableDebugging)
                 {
-                    Debug.Log($"[{gameObject.name}] Using {_light.ImplName}");
+                    NeoDiagnostics.Log($"[{gameObject.name}] Using {_light.ImplName}");
                 }
             }
             else
             {
-                Debug.LogError("No Light or Light2D component found on this GameObject!", this);
+                NeoDiagnostics.LogError("No Light or Light2D component found on this GameObject!", this);
                 enabled = false;
             }
         }

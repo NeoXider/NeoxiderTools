@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo.Condition;
 using Neo.Save;
@@ -119,7 +119,7 @@ namespace Neo.Quest
                 }
                 catch (Exception e)
                 {
-                    Debug.LogError($"[QuestManager] Failed to load save data: {e.Message}");
+                    NeoDiagnostics.LogError($"[QuestManager] Failed to load save data: {e.Message}");
                 }
             }
         }
@@ -403,7 +403,7 @@ namespace Neo.Quest
             return quest == null ? null : GetState(quest.Id);
         }
 
-        /// <summary>Fail quest by ID (status → Failed). Invokes OnQuestFailed.</summary>
+        /// <summary>Fail quest by ID (status -> Failed). Invokes OnQuestFailed.</summary>
         public void FailQuest(string questId)
         {
             QuestState state = GetState(questId);

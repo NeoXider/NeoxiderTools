@@ -18,7 +18,8 @@ namespace Neo.Tools
     [AddComponentMenu("Neoxider/Tools/Network/Network Event Dispatcher")]
     public class NetworkEventDispatcher : NeoNetworkComponent
     {
-        [Tooltip("Who may trigger this event over the network. Default None lets NoCode scene objects work without ownership.")]
+        [Tooltip(
+            "Who may trigger this event over the network. Default None lets NoCode scene objects work without ownership.")]
         [SerializeField]
         [FormerlySerializedAs("requiresAuthority")]
         private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
@@ -61,6 +62,7 @@ namespace Neo.Tools
                 {
                     CmdDispatchEvent();
                 }
+
                 return;
             }
 #endif

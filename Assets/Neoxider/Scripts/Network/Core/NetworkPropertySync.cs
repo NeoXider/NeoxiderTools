@@ -23,6 +23,7 @@ namespace Neo.Network
     {
         /// <summary>Server owns the value, replicates to all clients.</summary>
         ServerToClients = 0,
+
         /// <summary>Owner client sends value to server, server replicates to others.</summary>
         OwnerToServer = 1
     }
@@ -37,28 +38,25 @@ namespace Neo.Network
     [AddComponentMenu("Neoxider/Network/Network Property Sync")]
     public class NetworkPropertySync : NeoNetworkComponent
     {
-        [Header("Target")]
-        [Tooltip("The component whose field/property will be synchronized.")]
-        [SerializeField] private Component _targetComponent;
+        [Header("Target")] [Tooltip("The component whose field/property will be synchronized.")] [SerializeField]
+        private Component _targetComponent;
 
-        [Tooltip("Name of the field or property to synchronize.")]
-        [SerializeField] private string _fieldName;
+        [Tooltip("Name of the field or property to synchronize.")] [SerializeField]
+        private string _fieldName;
 
-        [Header("Sync Settings")]
-        [Tooltip("Value type to synchronize.")]
-        [SerializeField] private SyncValueType _valueType = SyncValueType.Float;
+        [Header("Sync Settings")] [Tooltip("Value type to synchronize.")] [SerializeField]
+        private SyncValueType _valueType = SyncValueType.Float;
 
-        [Tooltip("Who writes the authoritative value.")]
-        [SerializeField] private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
+        [Tooltip("Who writes the authoritative value.")] [SerializeField]
+        private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
 
-        [Tooltip("How often to check for changes and synchronize (seconds).")]
-        [SerializeField] private float _syncInterval = 0.1f;
+        [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField]
+        private float _syncInterval = 0.1f;
 
-        [Tooltip("Minimum change threshold before syncing (for Float/Int/Vector3).")]
-        [SerializeField] private float _threshold = 0.01f;
+        [Tooltip("Minimum change threshold before syncing (for Float/Int/Vector3).")] [SerializeField]
+        private float _threshold = 0.01f;
 
-        [Header("Events")]
-        [Tooltip("Fired when the synced value changes on this client.")]
+        [Header("Events")] [Tooltip("Fired when the synced value changes on this client.")]
         public UnityEvent onValueChanged = new();
 
         // Reflection cache
@@ -75,11 +73,17 @@ namespace Neo.Network
 
 #if MIRROR
         // SyncVars for each type — only one is used per instance based on _valueType.
-        [SyncVar(hook = nameof(OnFloatSynced))]  private float _syncFloat;
-        [SyncVar(hook = nameof(OnIntSynced))]    private int _syncInt;
-        [SyncVar(hook = nameof(OnBoolSynced))]   private bool _syncBool;
-        [SyncVar(hook = nameof(OnStringSynced))]  private string _syncString = "";
-        [SyncVar(hook = nameof(OnVector3Synced))] private Vector3 _syncVector3;
+        [SyncVar(hook = nameof(OnFloatSynced))]
+        private float _syncFloat;
+
+        [SyncVar(hook = nameof(OnIntSynced))] private int _syncInt;
+        [SyncVar(hook = nameof(OnBoolSynced))] private bool _syncBool;
+
+        [SyncVar(hook = nameof(OnStringSynced))]
+        private string _syncString = "";
+
+        [SyncVar(hook = nameof(OnVector3Synced))]
+        private Vector3 _syncVector3;
 #endif
 
         // ────────────────────── Unity ──────────────────────
@@ -87,16 +91,37 @@ namespace Neo.Network
         private void Update()
         {
 #if MIRROR
-            if (!isNetworked || _targetComponent == null || string.IsNullOrEmpty(_fieldName)) return;
-            if (Time.time - _lastSyncTime < _syncInterval) return;
+            if (!isNetworked || _targetComponent == null || string.IsNullOrEmpty(_fieldName))
+            {
+                return;
+            }
+
+            if (Time.time - _lastSyncTime < _syncInterval)
+            {
+                return;
+            }
 
             bool canWrite = false;
-            if (_direction == SyncPropertyDirection.ServerToClients && isServer) canWrite = true;
-            if (_direction == SyncPropertyDirection.OwnerToServer && isOwned) canWrite = true;
-            if (!canWrite) return;
+            if (_direction == SyncPropertyDirection.ServerToClients && isServer)
+            {
+                canWrite = true;
+            }
+
+            if (_direction == SyncPropertyDirection.OwnerToServer && isOwned)
+            {
+                canWrite = true;
+            }
+
+            if (!canWrite)
+            {
+                return;
+            }
 
             ResolveMember();
-            if (_cachedMember == null) return;
+            if (_cachedMember == null)
+            {
+                return;
+            }
 
             switch (_valueType)
             {
@@ -106,11 +131,17 @@ namespace Neo.Network
                     {
                         _lastFloat = f;
                         if (_direction == SyncPropertyDirection.ServerToClients)
+                        {
                             _syncFloat = f;
+                        }
                         else
+                        {
                             CmdSyncFloat(f);
+                        }
+
                         _lastSyncTime = Time.time;
                     }
+
                     break;
 
                 case SyncValueType.Int:
@@ -119,11 +150,17 @@ namespace Neo.Network
                     {
                         _lastInt = i;
                         if (_direction == SyncPropertyDirection.ServerToClients)
+                        {
                             _syncInt = i;
+                        }
                         else
+                        {
                             CmdSyncInt(i);
+                        }
+
                         _lastSyncTime = Time.time;
                     }
+
                     break;
 
                 case SyncValueType.Bool:
@@ -132,11 +169,17 @@ namespace Neo.Network
                     {
                         _lastBool = b;
                         if (_direction == SyncPropertyDirection.ServerToClients)
+                        {
                             _syncBool = b;
+                        }
                         else
+                        {
                             CmdSyncBool(b);
+                        }
+
                         _lastSyncTime = Time.time;
                     }
+
                     break;
 
                 case SyncValueType.String:
@@ -145,11 +188,17 @@ namespace Neo.Network
                     {
                         _lastString = s;
                         if (_direction == SyncPropertyDirection.ServerToClients)
+                        {
                             _syncString = s;
+                        }
                         else
+                        {
                             CmdSyncString(s);
+                        }
+
                         _lastSyncTime = Time.time;
                     }
+
                     break;
 
                 case SyncValueType.Vector3:
@@ -158,11 +207,17 @@ namespace Neo.Network
                     {
                         _lastVector3 = v;
                         if (_direction == SyncPropertyDirection.ServerToClients)
+                        {
                             _syncVector3 = v;
+                        }
                         else
+                        {
                             CmdSyncVector3(v);
+                        }
+
                         _lastSyncTime = Time.time;
                     }
+
                     break;
             }
 #endif
@@ -174,55 +229,103 @@ namespace Neo.Network
         [Command(requiresAuthority = true)]
         private void CmdSyncFloat(float v)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
             _syncFloat = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncInt(int v)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
             _syncInt = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncBool(bool v)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
             _syncBool = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncString(string v)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
             _syncString = v;
         }
 
         [Command(requiresAuthority = true)]
         private void CmdSyncVector3(Vector3 v)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
             _syncVector3 = v;
         }
 
-        private void OnFloatSynced(float _, float newVal) { WriteFloat(newVal); onValueChanged?.Invoke(); }
-        private void OnIntSynced(int _, int newVal) { WriteInt(newVal); onValueChanged?.Invoke(); }
-        private void OnBoolSynced(bool _, bool newVal) { WriteBool(newVal); onValueChanged?.Invoke(); }
-        private void OnStringSynced(string _, string newVal) { WriteString(newVal); onValueChanged?.Invoke(); }
-        private void OnVector3Synced(Vector3 _, Vector3 newVal) { WriteVector3(newVal); onValueChanged?.Invoke(); }
+        private void OnFloatSynced(float _, float newVal)
+        {
+            WriteFloat(newVal);
+            onValueChanged?.Invoke();
+        }
+
+        private void OnIntSynced(int _, int newVal)
+        {
+            WriteInt(newVal);
+            onValueChanged?.Invoke();
+        }
+
+        private void OnBoolSynced(bool _, bool newVal)
+        {
+            WriteBool(newVal);
+            onValueChanged?.Invoke();
+        }
+
+        private void OnStringSynced(string _, string newVal)
+        {
+            WriteString(newVal);
+            onValueChanged?.Invoke();
+        }
+
+        private void OnVector3Synced(Vector3 _, Vector3 newVal)
+        {
+            WriteVector3(newVal);
+            onValueChanged?.Invoke();
+        }
 
         protected override void ApplyNetworkState()
         {
             ResolveMember();
-            if (_cachedMember == null) return;
+            if (_cachedMember == null)
+            {
+                return;
+            }
+
             switch (_valueType)
             {
-                case SyncValueType.Float:   WriteFloat(_syncFloat); break;
-                case SyncValueType.Int:      WriteInt(_syncInt); break;
-                case SyncValueType.Bool:     WriteBool(_syncBool); break;
-                case SyncValueType.String:   WriteString(_syncString); break;
-                case SyncValueType.Vector3:  WriteVector3(_syncVector3); break;
+                case SyncValueType.Float: WriteFloat(_syncFloat); break;
+                case SyncValueType.Int: WriteInt(_syncInt); break;
+                case SyncValueType.Bool: WriteBool(_syncBool); break;
+                case SyncValueType.String: WriteString(_syncString); break;
+                case SyncValueType.Vector3: WriteVector3(_syncVector3); break;
             }
         }
 #endif
@@ -231,7 +334,11 @@ namespace Neo.Network
 
         private void ResolveMember()
         {
-            if (_cacheResolved) return;
+            if (_cacheResolved)
+            {
+                return;
+            }
+
             _cacheResolved = true;
 
             if (_targetComponent == null || string.IsNullOrEmpty(_fieldName))
@@ -245,48 +352,95 @@ namespace Neo.Network
 
             // Try field first, then property
             FieldInfo fi = type.GetField(_fieldName, flags);
-            if (fi != null) { _cachedMember = fi; return; }
+            if (fi != null)
+            {
+                _cachedMember = fi;
+                return;
+            }
 
             PropertyInfo pi = type.GetProperty(_fieldName, flags);
-            if (pi != null) { _cachedMember = pi; return; }
+            if (pi != null)
+            {
+                _cachedMember = pi;
+                return;
+            }
 
-            NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Field/Property '{_fieldName}' not found on {type.Name}.", this);
+            NetworkDiagnostics.LogWarning(
+                $"[NetworkPropertySync] Field/Property '{_fieldName}' not found on {type.Name}.", this);
         }
 
         private object ReadValue()
         {
-            if (_cachedMember is FieldInfo fi) return fi.GetValue(_targetComponent);
-            if (_cachedMember is PropertyInfo pi) return pi.GetValue(_targetComponent);
+            if (_cachedMember is FieldInfo fi)
+            {
+                return fi.GetValue(_targetComponent);
+            }
+
+            if (_cachedMember is PropertyInfo pi)
+            {
+                return pi.GetValue(_targetComponent);
+            }
+
             return null;
         }
 
         private void WriteValue(object value)
         {
-            if (_cachedMember is FieldInfo fi) fi.SetValue(_targetComponent, value);
-            else if (_cachedMember is PropertyInfo pi && pi.CanWrite) pi.SetValue(_targetComponent, value);
+            if (_cachedMember is FieldInfo fi)
+            {
+                fi.SetValue(_targetComponent, value);
+            }
+            else if (_cachedMember is PropertyInfo pi && pi.CanWrite)
+            {
+                pi.SetValue(_targetComponent, value);
+            }
         }
 
         private float ReadFloat()
         {
             object v = ReadValue();
-            if (v is float f) return f;
-            if (v is int i) return i;
-            if (v is double d) return (float)d;
+            if (v is float f)
+            {
+                return f;
+            }
+
+            if (v is int i)
+            {
+                return i;
+            }
+
+            if (v is double d)
+            {
+                return (float)d;
+            }
+
             return 0f;
         }
 
         private int ReadInt()
         {
             object v = ReadValue();
-            if (v is int i) return i;
-            if (v is float f) return Mathf.RoundToInt(f);
+            if (v is int i)
+            {
+                return i;
+            }
+
+            if (v is float f)
+            {
+                return Mathf.RoundToInt(f);
+            }
+
             return 0;
         }
 
         private bool ReadBool()
         {
             object v = ReadValue();
-            if (v is bool b) return b;
+            if (v is bool b)
+            {
+                return b;
+            }
+
             return false;
         }
 
@@ -299,14 +453,42 @@ namespace Neo.Network
         private Vector3 ReadVector3()
         {
             object v = ReadValue();
-            if (v is Vector3 vec) return vec;
+            if (v is Vector3 vec)
+            {
+                return vec;
+            }
+
             return Vector3.zero;
         }
 
-        private void WriteFloat(float val) { WriteValue(val); _lastFloat = val; }
-        private void WriteInt(int val) { WriteValue(val); _lastInt = val; }
-        private void WriteBool(bool val) { WriteValue(val); _lastBool = val; }
-        private void WriteString(string val) { WriteValue(val); _lastString = val; }
-        private void WriteVector3(Vector3 val) { WriteValue(val); _lastVector3 = val; }
+        private void WriteFloat(float val)
+        {
+            WriteValue(val);
+            _lastFloat = val;
+        }
+
+        private void WriteInt(int val)
+        {
+            WriteValue(val);
+            _lastInt = val;
+        }
+
+        private void WriteBool(bool val)
+        {
+            WriteValue(val);
+            _lastBool = val;
+        }
+
+        private void WriteString(string val)
+        {
+            WriteValue(val);
+            _lastString = val;
+        }
+
+        private void WriteVector3(Vector3 val)
+        {
+            WriteValue(val);
+            _lastVector3 = val;
+        }
     }
 }

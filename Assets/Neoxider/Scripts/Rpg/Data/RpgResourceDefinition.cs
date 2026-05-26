@@ -18,12 +18,11 @@ namespace Neo.Rpg
         [Tooltip("Optional human-readable label for UI. Falls back to id.Value when empty.")]
         public string displayName;
 
-        [Header("Start Values")]
-        [Tooltip("Starting current value when the character is initialized.")]
-        [Min(0f)] public float startCurrent = 100f;
+        [Header("Start Values")] [Tooltip("Starting current value when the character is initialized.")] [Min(0f)]
+        public float startCurrent = 100f;
 
-        [Tooltip("Starting maximum value.")]
-        [Min(0f)] public float startMax = 100f;
+        [Tooltip("Starting maximum value.")] [Min(0f)]
+        public float startMax = 100f;
 
         [Tooltip("Reset current to startCurrent (or to max when restoreToFull is true) every Awake.")]
         public bool restoreOnAwake = true;
@@ -31,11 +30,9 @@ namespace Neo.Rpg
         [Tooltip("If true and restoreOnAwake is on, current is set to Max instead of startCurrent.")]
         public bool restoreToFull = true;
 
-        [Header("Regeneration")]
-        public RpgRegenDefinition regen = new();
+        [Header("Regeneration")] public RpgRegenDefinition regen = new();
 
-        [Header("Limits")]
-        [Tooltip("If true, current can dip below 0 (for buffer mechanics).")]
+        [Header("Limits")] [Tooltip("If true, current can dip below 0 (for buffer mechanics).")]
         public bool canGoBelowZero;
 
         [Tooltip("If true, current can exceed Max (for over-shield mechanics).")]

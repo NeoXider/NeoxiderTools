@@ -290,6 +290,38 @@ namespace Neo.Core.Tests
             }
         }
 
+        [Test]
+        public void LevelComponent_AddXp_UsesIncreasingCurveRequirements()
+        {
+            var curve = new AnimationCurve(
+                new Keyframe(1f, 0f),
+                new Keyframe(2f, 100f),
+                new Keyframe(3f, 250f),
+                new Keyframe(4f, 500f));
+            LevelCurveDefinition def = ScriptableObject.CreateInstance<LevelCurveDefinition>();
+            var host = new GameObject("LevelComponent_AddXp_UsesIncreasingCurveRequirements");
+            SetPrivateField(def, "_mode", LevelCurveMode.Curve);
+            SetPrivateField(def, "_animationCurve", curve);
+
+            try
+            {
+                LevelComponent component = host.AddComponent<LevelComponent>();
+                component.LevelCurveDefinition = def;
+                SetPrivateField(component, "_loadOnAwake", false);
+
+                component.AddXp(175);
+
+                Assert.That(component.TotalXp, Is.EqualTo(175));
+                Assert.That(component.Level, Is.EqualTo(2));
+                Assert.That(component.XpToNextLevel, Is.EqualTo(75));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+                Object.DestroyImmediate(def);
+            }
+        }
+
         // --- Consistency: EvaluateLevel(GetRequiredXpForLevel(L)) >= L ---
         [Test]
         public void Formula_Linear_Consistency_RequiredXpRoundTrip()

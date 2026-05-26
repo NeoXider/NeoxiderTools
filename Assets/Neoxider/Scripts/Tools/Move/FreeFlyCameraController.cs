@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -26,27 +26,22 @@ namespace Neo.Tools
             World
         }
 
-        [Header("Mode")]
-        [SerializeField] private bool _controllerEnabled = true;
+        [Header("Mode")] [SerializeField] private bool _controllerEnabled = true;
 
-        [Tooltip("Scene View style: look is active only while the configured mouse button is held.")]
-        [SerializeField]
+        [Tooltip("Scene View style: look is active only while the configured mouse button is held.")] [SerializeField]
         private bool _requireLookButton = true;
 
-        [Tooltip("0 = left, 1 = right, 2 = middle. Default is right mouse button.")]
-        [SerializeField]
+        [Tooltip("0 = left, 1 = right, 2 = middle. Default is right mouse button.")] [SerializeField]
         private int _lookMouseButton = 1;
 
-        [Tooltip("When enabled, keyboard movement is ignored until look mode is active.")]
-        [SerializeField]
+        [Tooltip("When enabled, keyboard movement is ignored until look mode is active.")] [SerializeField]
         private bool _moveOnlyWhileLooking = true;
 
         [Tooltip("Lock and hide cursor while look mode is active. The previous cursor state is restored on exit.")]
         [SerializeField]
         private bool _lockCursorWhileLooking = true;
 
-        [Header("Input")]
-        [SerializeField] private InputBackend _inputBackend = InputBackend.AutoPreferNew;
+        [Header("Input")] [SerializeField] private InputBackend _inputBackend = InputBackend.AutoPreferNew;
         [SerializeField] private KeyCode _forwardKey = KeyCode.W;
         [SerializeField] private KeyCode _backKey = KeyCode.S;
         [SerializeField] private KeyCode _leftKey = KeyCode.A;
@@ -59,34 +54,29 @@ namespace Neo.Tools
         [SerializeField] private string _mouseYAxis = "Mouse Y";
         [SerializeField] private float _newLookDeltaScale = 0.02f;
 
-        [Tooltip("When enabled, logs one-time warnings if the selected input backend must fall back.")]
-        [SerializeField]
+        [Tooltip("When enabled, logs one-time warnings if the selected input backend must fall back.")] [SerializeField]
         private bool _logInputFallbackWarnings;
 
-        [Header("Movement")]
-        [SerializeField] private MovementSpace _movementSpace = MovementSpace.Local;
+        [Header("Movement")] [SerializeField] private MovementSpace _movementSpace = MovementSpace.Local;
         [SerializeField] private float _baseSpeed = 8f;
         [SerializeField] private float _fastMultiplier = 4f;
         [SerializeField] private float _slowMultiplier = 0.25f;
         [SerializeField] private bool _normalizeDiagonalMovement = true;
         [SerializeField] private bool _useUnscaledTime = true;
 
-        [Tooltip("Mouse wheel changes Base Speed while this component is enabled.")]
-        [SerializeField]
+        [Tooltip("Mouse wheel changes Base Speed while this component is enabled.")] [SerializeField]
         private bool _allowMouseWheelSpeed = true;
 
         [SerializeField] private float _mouseWheelSpeedStep = 2f;
         [SerializeField] private float _minBaseSpeed = 0.05f;
         [SerializeField] private float _maxBaseSpeed = 100f;
 
-        [Header("Look")]
-        [SerializeField] private float _lookSensitivity = 2f;
+        [Header("Look")] [SerializeField] private float _lookSensitivity = 2f;
         [SerializeField] private bool _invertY;
         [SerializeField] private float _minPitch = -89f;
         [SerializeField] private float _maxPitch = 89f;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onLookStart = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onLookStart = new();
         [SerializeField] private UnityEvent _onLookStop = new();
         [SerializeField] private UnityEvent _onFlyStart = new();
         [SerializeField] private UnityEvent _onFlyStop = new();
@@ -362,7 +352,7 @@ namespace Neo.Tools
                 _logInputFallbackWarnings &&
                 !_newInputUnavailableWarningShown)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[FreeFlyCameraController] New Input System is not available. Falling back to Legacy Input Manager.",
                     this);
                 _newInputUnavailableWarningShown = true;
@@ -391,7 +381,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Debug.LogWarning(
+            NeoDiagnostics.LogWarning(
                 "[FreeFlyCameraController] Legacy Input Manager is not available. Falling back to New Input System when possible.",
                 this);
             _legacyInputUnavailableWarningShown = true;

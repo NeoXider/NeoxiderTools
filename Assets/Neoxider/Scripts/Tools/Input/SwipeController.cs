@@ -1,4 +1,4 @@
-//v.1.0.4
+﻿//v.1.0.4
 
 using UnityEngine;
 using UnityEngine.Events;
@@ -33,7 +33,7 @@ namespace Neo.Tools
     /// <example>
     ///     <code>
     ///  <![CDATA[
-    /// public void SubscribeToSwipe(SwipeData swipeData) => Debug.Log(swipeData.Direction);
+    /// public void SubscribeToSwipe(SwipeData swipeData) => global::NeoDiagnostics.Log(swipeData.Direction);
     ///  ]]>
     /// </code>
     /// </example>
@@ -69,13 +69,7 @@ namespace Neo.Tools
 
         private bool swipeDetected;
 
-        public static SwipeController Instance
-        {
-            get
-            {
-                return instance;
-            }
-        }
+        public static SwipeController Instance => instance;
 
         private void Awake()
         {

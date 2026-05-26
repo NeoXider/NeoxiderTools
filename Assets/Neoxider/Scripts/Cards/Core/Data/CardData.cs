@@ -171,7 +171,8 @@ namespace Neo.Cards
                     return false;
                 }
 
-                bool sameGroup = string.IsNullOrEmpty(Group) || string.IsNullOrEmpty(other.Group) || Group == other.Group;
+                bool sameGroup = string.IsNullOrEmpty(Group) || string.IsNullOrEmpty(other.Group) ||
+                                 Group == other.Group;
                 return sameGroup && SortValue > other.SortValue;
             }
 

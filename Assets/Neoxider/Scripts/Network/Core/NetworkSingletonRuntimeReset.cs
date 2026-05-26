@@ -26,13 +26,23 @@ namespace Neo.Network
                     continue;
                 }
 
-                if (types == null) continue;
+                if (types == null)
+                {
+                    continue;
+                }
 
                 for (int j = 0; j < types.Length; j++)
                 {
                     Type candidate = types[j];
-                    if (candidate == null || candidate.IsAbstract || candidate.ContainsGenericParameters) continue;
-                    if (!IsSubclassOfRawGeneric(candidate, typeof(NetworkSingleton<>))) continue;
+                    if (candidate == null || candidate.IsAbstract || candidate.ContainsGenericParameters)
+                    {
+                        continue;
+                    }
+
+                    if (!IsSubclassOfRawGeneric(candidate, typeof(NetworkSingleton<>)))
+                    {
+                        continue;
+                    }
 
                     Type closedGenericType = typeof(NetworkSingleton<>).MakeGenericType(candidate);
                     MethodInfo resetMethod = closedGenericType.GetMethod(
@@ -50,7 +60,11 @@ namespace Neo.Network
             while (current != null && current != typeof(object))
             {
                 Type candidate = current.IsGenericType ? current.GetGenericTypeDefinition() : current;
-                if (candidate == rawGeneric) return true;
+                if (candidate == rawGeneric)
+                {
+                    return true;
+                }
+
                 current = current.BaseType;
             }
 

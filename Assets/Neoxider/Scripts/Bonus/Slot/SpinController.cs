@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -23,7 +23,7 @@ namespace Neo.Bonus
     ///     - Exposes payline queries: window-row matrix, symbol IDs per line, <see cref="SlotElement"/> chains,
     ///       and last-spin winning indices / element lists for animations
     ///     - Optional win-line playback via assigned LineRenderer(s) after a winning spin
-    ///     No spin animation here — rotation/braking lives in Row.
+    ///     No spin animation here - rotation/braking lives in Row.
     /// </summary>
     [NeoDoc("Bonus/Slot/SpinController.md")]
     [CreateFromMenu("Neoxider/Bonus/SpinController", "Prefabs/Bonus/Slot/SlotUI.prefab")]
@@ -39,8 +39,7 @@ namespace Neo.Bonus
 
         [SerializeField] private bool _priceOnLine = true;
 
-        [Tooltip("Visible window height in symbol rows (maps to Row.countSlotElement).")]
-        [SerializeField]
+        [Tooltip("Visible window height in symbol rows (maps to Row.countSlotElement).")] [SerializeField]
         private int _countVerticalElements = 3;
 
         [SerializeField] private Row[] _rows;
@@ -50,7 +49,7 @@ namespace Neo.Bonus
         [FormerlySerializedAs("chanseWin")] [Range(0f, 1f)] [SerializeField]
         private float chanceWin = 0.5f;
 
-        /// <summary>Probability [0–1] that the spin plan favors a win when CheckSpin is active.</summary>
+        /// <summary>Probability [0..1] that the spin plan favors a win when CheckSpin is active.</summary>
         public float ChanceWin
         {
             get => chanceWin;
@@ -101,7 +100,8 @@ namespace Neo.Bonus
         [Space] [Header("Debug")] [SerializeField]
         private bool _firstWin;
 
-        [Tooltip("How many paylines are active for betting and evaluation (first N definitions from Lines Data or fallback).")]
+        [Tooltip(
+            "How many paylines are active for betting and evaluation (first N definitions from Lines Data or fallback).")]
         [SerializeField]
         [Min(1)]
         private int _countLine = 1;
@@ -113,16 +113,15 @@ namespace Neo.Bonus
         [Tooltip("From which index to print coordinates in Debug: 0 (default) or 1, etc.")] [SerializeField]
         private int _gridIndexBase = 1;
 
-        [Tooltip("Общий выключатель отладочных гизмо слота в Scene (линии выплат и подписи ячеек).")]
-        [SerializeField]
+        [Tooltip("Master Scene view debug toggle for slot overlays (paylines and cell labels).")] [SerializeField]
         private bool _slotSceneDebugEnabled = true;
 
-        [Tooltip("Гизмо линий выплат при выделении этого объекта (если общий выключатель включён).")]
+        [Tooltip(
+            "Draw payline gizmos in Scene view when this object is selected and the master debug toggle is enabled.")]
         [SerializeField]
         private bool _drawPaylineGizmos = true;
 
-        [Tooltip("Подписи и маркеры SlotElement ([col,row]) для барабанов этого контроллера.")]
-        [SerializeField]
+        [Tooltip("Draw SlotElement labels and markers ([col,row]) for this controller's reels.")] [SerializeField]
         private bool _drawSlotElementGizmos = true;
 
         [SerializeField] private Color _gizmoPaylineColor = new(0.2f, 1f, 0.4f, 0.85f);
@@ -135,36 +134,25 @@ namespace Neo.Bonus
         [Min(0.02f)]
         private float _gizmoJointRadiusMultiplier = 0.16f;
 
-        [Tooltip("Payline banner: vertical lift × HandleUtility.GetHandleSize(SpinController transform).")]
+        [Tooltip("Payline banner: vertical lift x HandleUtility.GetHandleSize(SpinController transform).")]
         [SerializeField]
         [Min(0.05f)]
         private float _gizmoBannerRaiseHandles = 2.45f;
 
-        [SerializeField]
-        [Min(8)]
-        private int _gizmoBannerFontSize = 18;
+        [SerializeField] [Min(8)] private int _gizmoBannerFontSize = 18;
 
-        [SerializeField]
-        private Color _gizmoBannerTextColor = new(0.95f, 1f, 0.72f, 1f);
+        [SerializeField] private Color _gizmoBannerTextColor = new(0.95f, 1f, 0.72f, 1f);
 
-        [SerializeField]
-        [Min(8)]
-        private int _gizmoPaylineCaptionFontSize = 13;
+        [SerializeField] [Min(8)] private int _gizmoPaylineCaptionFontSize = 13;
 
-        [SerializeField]
-        private Color _gizmoPaylineCaptionColor = new(1f, 1f, 1f, 1f);
+        [SerializeField] private Color _gizmoPaylineCaptionColor = new(1f, 1f, 1f, 1f);
 
-        [Tooltip("Per-line «Линия N» label lift × GetHandleSize(midpoint).")]
-        [SerializeField]
-        [Min(0.02f)]
+        [Tooltip("Per-line \"Line N\" label lift x GetHandleSize(midpoint).")] [SerializeField] [Min(0.02f)]
         private float _gizmoPaylineCaptionRaiseHandles = 0.4f;
 
-        [SerializeField]
-        private Color _gizmoPaylineWarningColor = new(1f, 0.52f, 0.32f, 1f);
+        [SerializeField] private Color _gizmoPaylineWarningColor = new(1f, 0.52f, 0.32f, 1f);
 
-        [Tooltip("Warning label offset below banner × GetHandleSize(SpinController).")]
-        [SerializeField]
-        [Min(0.05f)]
+        [Tooltip("Warning label offset below banner x GetHandleSize(SpinController).")] [SerializeField] [Min(0.05f)]
         private float _gizmoBannerWarningDownHandles = 0.7f;
 
         public SlotVisualData[,] finalVisuals; // filled from the screen after stop
@@ -238,7 +226,7 @@ namespace Neo.Bonus
         /// </summary>
         public int EvaluatedPaylineDefinitionCount => ComputeEvaluatedPaylineDefinitionCount();
 
-        /// <summary>Assigned reel columns (left→right). Replace only while idle.</summary>
+        /// <summary>Assigned reel columns (left->right). Replace only while idle.</summary>
         public Row[] Rows
         {
             get => _rows;
@@ -717,7 +705,7 @@ namespace Neo.Bonus
                 return Array.Empty<SlotElement[]>();
             }
 
-            SlotElement[][] rows = new SlotElement[_lastWinningPaylineIndices.Length][];
+            var rows = new SlotElement[_lastWinningPaylineIndices.Length][];
             for (int i = 0; i < _lastWinningPaylineIndices.Length; i++)
             {
                 int defIx = _lastWinningPaylineIndices[i];
@@ -960,7 +948,7 @@ namespace Neo.Bonus
                 return planIds;
             }
 
-            // Forced outcome path — bypasses random plan & CheckSpin shaping.
+            // Forced outcome path  - bypasses random plan & CheckSpin shaping.
             if (_forcedNextOutcome != null
                 && _forcedNextOutcome.GetLength(0) == cols
                 && _forcedNextOutcome.GetLength(1) == vr)
@@ -1033,7 +1021,7 @@ namespace Neo.Bonus
                     sb.AppendLine(string.Join(", ", parts));
                 }
 
-                Debug.Log(sb.ToString());
+                NeoDiagnostics.Log(sb.ToString(), this, true);
             }
 
             bool hasWon = false;
@@ -1335,7 +1323,7 @@ namespace Neo.Bonus
                 row.ApplyLayout();
 
                 if (row.SlotElements != null && row.SlotElements.Length > 0
-                    && row.SlotElements.Length < _countVerticalElements + 1)
+                                             && row.SlotElements.Length < _countVerticalElements + 1)
                 {
                     LogWarning(
                         $"Row '{row.name}' has only {row.SlotElements.Length} SlotElement(s) " +
@@ -1464,7 +1452,7 @@ namespace Neo.Bonus
         private IEnumerator PlayWinLinesParallel(int[] winningLineIndices, LinesData.InnerArray[] defs)
         {
             int n = winningLineIndices.Length;
-            LineRenderer[] active = new LineRenderer[n];
+            var active = new LineRenderer[n];
             float phaseSkew = 0.09f;
 
             for (int i = 0; i < n; i++)
@@ -1513,7 +1501,7 @@ namespace Neo.Bonus
                 return null;
             }
 
-            Vector3[] pts = new Vector3[line.corY.Length];
+            var pts = new Vector3[line.corY.Length];
             Vector3 off = _winLinePlayback.worldOffset;
 
             for (int col = 0; col < line.corY.Length; col++)
@@ -1534,7 +1522,10 @@ namespace Neo.Bonus
         {
             if (_debugLogWarnings)
             {
-                Debug.LogWarning($"[{nameof(SpinController)}] {message}", context != null ? context : this);
+                NeoDiagnostics.LogWarning(
+                    $"[{nameof(SpinController)}] {message}",
+                    context != null ? context : this,
+                    true);
             }
         }
 
@@ -1570,18 +1561,19 @@ namespace Neo.Bonus
             hdrStyle.normal.textColor = _gizmoBannerTextColor;
 
             string fbRowsTxt = fbMin == fbMax
-                ? "ряд <b>Y=" + fbMin + "</b>"
-                : "ряды <b>Y=" + fbMin + "–" + fbMax + "</b>";
+                ? "row <b>Y=" + fbMin + "</b>"
+                : "rows <b>Y=" + fbMin + "-" + fbMax + "</b>";
 
             string srcLine = fbOnly
-                ? "<color=#FFF59D>Fallback:</color> горизонталь · " + fbRowsTxt +
-                  " <i>(0 = низ окна)</i>"
+                ? "<color=#FFF59D>Fallback:</color> horizontal - " + fbRowsTxt +
+                  " <i>(0 = bottom row)</i>"
                 : "<color=#A8E7FF>Lines Data</color> (ScriptableObject)";
 
-            string hdr = "<size=14><b>Neo.Bonus — линии выплат</b></size>\n" +
-                         "Гизмо: <b>" + eval + "</b> из <b>" + defs.Length + "</b> определений · активных в ставке: <b>" +
-                         _countLine + "</b> · подряд символов: " + checkSpin.SequenceLength + "\n" +
-                         "<i>Число линий на сцене = min(активных, определений); fallback даёт столько горизонталей, сколько рядов в диапазоне после clamp к окну.</i>\n" +
+            string hdr = "<size=14><b>Neo.Bonus - paylines</b></size>\n" +
+                         "Gizmos: <b>" + eval + "</b> of <b>" + defs.Length +
+                         "</b> definitions - active bet lines: <b>" +
+                         _countLine + "</b> - sequence length: " + checkSpin.SequenceLength + "\n" +
+                         "<i>Scene line count = min(active lines, definitions). Fallback creates one horizontal payline per clamped visible row.</i>\n" +
                          srcLine;
 
             Handles.Label(hdrPos + Vector3.up * (hdrScale * _gizmoBannerRaiseHandles), hdr, hdrStyle);
@@ -1602,7 +1594,7 @@ namespace Neo.Bonus
                     continue;
                 }
 
-                Color hsl = Color.HSVToRGB((li * 0.17f) % 1f, 0.92f, 1f);
+                var hsl = Color.HSVToRGB(li * 0.17f % 1f, 0.92f, 1f);
                 Color lineCol = _gizmoPaylineColor;
                 lineCol.r = hsl.r;
                 lineCol.g = hsl.g;
@@ -1647,14 +1639,14 @@ namespace Neo.Bonus
 
                 string corDesc = string.Join(", ", line.corY.Select(y => y.ToString()));
                 string hex = ColorUtility.ToHtmlStringRGBA(lineCol);
-                string caption = "<color=#" + hex + ">Линия " + li + "</color>\n" + "corY: [" + corDesc + "]";
+                string caption = "<color=#" + hex + ">Line " + li + "</color>\n" + "corY: [" + corDesc + "]";
                 if (fbOnly && defs.Length == 1 && li == 0)
                 {
-                    caption += "\n<i>Одна fallback-линия (нет Lines Data)</i>";
+                    caption += "\n<i>Single fallback line (no Lines Data).</i>";
                 }
                 else if (fbOnly && defs.Length > 1 && li == 0)
                 {
-                    caption += "\n<i>Fallback: несколько горизонталей по диапазону рядов</i>";
+                    caption += "\n<i>Fallback: several horizontal lines from the configured row range.</i>";
                 }
 
                 Handles.Label(
@@ -1675,8 +1667,8 @@ namespace Neo.Bonus
                 warn.normal.textColor = _gizmoPaylineWarningColor;
                 Handles.Label(
                     hdrPos + Vector3.down * (hdrScale * _gizmoBannerWarningDownHandles),
-                    "<b>Внимание:</b> ожидалось нарисовать " + eval + " линий, фактически " + drawn +
-                    " — проверьте null у <b>Row</b> в массиве колонок или длину <b>corY</b>.",
+                    "<b>Warning:</b> expected to draw " + eval + " paylines, actually drew " + drawn +
+                    " - check null Row entries or corY length.",
                     warn);
             }
         }

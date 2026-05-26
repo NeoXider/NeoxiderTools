@@ -1,4 +1,4 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -33,6 +33,11 @@ namespace Neo.Tools
         [SerializeField]
         private ScreenEdge _screenEdge = ScreenEdge.BottomLeft;
 
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logMissingCameraWarnings = true;
+
+        private bool _missingCameraWarningShown;
+
         private void Start()
         {
             InitializeComponents();
@@ -66,7 +71,7 @@ namespace Neo.Tools
         {
             if (_targetCamera == null)
             {
-                Debug.LogError("Camera reference is missing!");
+                ReportMissingCamera();
                 return;
             }
 
@@ -77,7 +82,7 @@ namespace Neo.Tools
         {
             if (_targetCamera == null)
             {
-                Debug.LogError("[ScreenPositioner] Camera reference is missing. Cannot apply position.", this);
+                ReportMissingCamera();
                 return;
             }
 
@@ -114,6 +119,17 @@ namespace Neo.Tools
             _offsetScreen = offset;
             _depth = depth;
             UpdatePositionAndRotation();
+        }
+
+        private void ReportMissingCamera()
+        {
+            if (!_logMissingCameraWarnings || _missingCameraWarningShown)
+            {
+                return;
+            }
+
+            _missingCameraWarningShown = true;
+            NeoDiagnostics.LogWarning("[ScreenPositioner] Camera reference is missing. Cannot apply position.", this);
         }
     }
 }

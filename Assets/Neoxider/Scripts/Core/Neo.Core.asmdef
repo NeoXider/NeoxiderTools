@@ -5,15 +5,21 @@
         "Neo.Condition",
         "Neo.Reactive",
         "Neo.Save",
-        "Neo.PropertyAttribute"
+        "Neo.PropertyAttribute",
+        "GUID:699bb923824f1724b91c66f5ba9ace74"
     ],
-    "includePlatforms": [],
-    "excludePlatforms": [],
+    "includePlatforms": [
+    ],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [],
+    "precompiledReferences": [
+    ],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+    ],
+    "versionDefines": [
+    ],
     "noEngineReferences": false
 }

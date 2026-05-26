@@ -1,111 +1,68 @@
-﻿# CardData
+# CardData
 
-**Р§С‚Рѕ СЌС‚Рѕ:** РЅРµРёР·РјРµРЅСЏРµРјР°СЏ СЃС‚СЂСѓРєС‚СѓСЂР° РґР°РЅРЅС‹С… РѕРґРЅРѕР№ РєР°СЂС‚С‹ (readonly struct): Suit, Rank, IsJoker, IsRedJoker. РџРѕРґРґРµСЂР¶РєР° СЃСЂР°РІРЅРµРЅРёСЏ Рё РїСЂРѕРІРµСЂРєРё РЅР° РєРѕР·С‹СЂСЊ. РџСЂРѕСЃС‚СЂР°РЅСЃС‚РІРѕ РёРјС‘РЅ/С„Р°Р№Р» РІ РјРѕРґСѓР»Рµ Cards.
+**Что это:** неизменяемая `readonly struct` одной карты. Поддерживает классические карты (`Suit` + `Rank`), джокеров и custom-карты для TCG/декбилдеров/настольных игр.
 
-**РљР°Рє РёСЃРїРѕР»СЊР·РѕРІР°С‚СЊ:** СЃРѕР·РґР°РІР°С‚СЊ С‡РµСЂРµР· РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ РёР»Рё РёР· DeckConfig; РїРµСЂРµРґР°РІР°С‚СЊ РІ ICardView.SetData(CardData, faceUp). РЎРј. В«РЎРІРѕР№СЃС‚РІР°В» Рё В«РЎРѕР·РґР°РЅРёРµВ» РЅРёР¶Рµ.
+Файл: `Assets/Neoxider/Scripts/Cards/Core/Data/CardData.cs`
 
----
+## Поля
 
-## РћРїРёСЃР°РЅРёРµ
+| Поле | Описание |
+|------|----------|
+| `Suit` | Масть классической карты. |
+| `Rank` | Ранг классической карты. |
+| `IsJoker`, `IsRedJoker` | Джокер и его цвет. |
+| `IsCustom` | Карта создана через custom-id модель. |
+| `CustomId` | Стабильный id для нестандартных игр. |
+| `DisplayName` | Отображаемое имя custom-карты. |
+| `SortValue` | Универсальное сравнимое значение: сила, стоимость, rarity order и т.д. |
+| `Group` | Группа custom-карты: фракция, класс, цвет, suit-like ключ. |
 
-`CardData` вЂ” readonly struct, РїСЂРµРґСЃС‚Р°РІР»СЏСЋС‰РёР№ РѕРґРЅСѓ РєР°СЂС‚Сѓ. РџРѕРґРґРµСЂР¶РёРІР°РµС‚ СЃСЂР°РІРЅРµРЅРёРµ, РїСЂРѕРІРµСЂРєСѓ РЅР° РєРѕР·С‹СЂСЊ Рё СЂР°Р±РѕС‚Сѓ СЃ РґР¶РѕРєРµСЂР°РјРё.
-
----
-
-## РЎРІРѕР№СЃС‚РІР°
-
-| РЎРІРѕР№СЃС‚РІРѕ | РўРёРї | РћРїРёСЃР°РЅРёРµ |
-|----------|-----|----------|
-| `Suit` | `Suit` | РњР°СЃС‚СЊ РєР°СЂС‚С‹ |
-| `Rank` | `Rank` | Р Р°РЅРі (РґРѕСЃС‚РѕРёРЅСЃС‚РІРѕ) РєР°СЂС‚С‹ |
-| `IsJoker` | `bool` | РЇРІР»СЏРµС‚СЃСЏ Р»Рё РєР°СЂС‚РѕР№ РґР¶РѕРєРµСЂРѕРј |
-| `IsRedJoker` | `bool` | РљСЂР°СЃРЅС‹Р№ РґР¶РѕРєРµСЂ (true) РёР»Рё С‡С‘СЂРЅС‹Р№ (false) |
-
----
-
-## РЎРѕР·РґР°РЅРёРµ
+## Создание
 
 ```csharp
-// РћР±С‹С‡РЅР°СЏ РєР°СЂС‚Р°
 var aceOfSpades = new CardData(Suit.Spades, Rank.Ace);
 
-// Р”Р¶РѕРєРµСЂ
 var redJoker = CardData.CreateJoker(isRed: true);
-var blackJoker = CardData.CreateJoker(isRed: false);
+
+var fireball = CardData.CreateCustom(
+    customId: "spell.fireball",
+    displayName: "Fireball",
+    sortValue: 4,
+    group: "Mage");
 ```
 
----
+`CreateCustom` требует непустой стабильный `customId`. Это основной путь для Hearthstone-like, ability cards, board-game cards и других нестандартных колод.
 
-## РњРµС‚РѕРґС‹ СЃСЂР°РІРЅРµРЅРёСЏ
+## Сравнение
 
-### CompareTo (РґР»СЏ В«РџСЊСЏРЅРёС†С‹В»)
+`CompareTo`:
+
+- для классических карт сравнивает `Rank`;
+- джокер старше обычной карты;
+- для custom-карт сначала сравнивает `SortValue`, затем `CustomId`.
+
+`Beats(other, trump)`:
+
+- для классических карт работает как Durak-style покрытие с optional trump;
+- для custom-карт обе карты должны быть custom, `Group` должен совпадать или быть пустым, а `SortValue` должен быть выше;
+- смешивание custom и classic возвращает `false`.
 
 ```csharp
-int result = card1.CompareTo(card2);
-// > 0 вЂ” card1 СЃС‚Р°СЂС€Рµ
-// < 0 вЂ” card1 РјР»Р°РґС€Рµ
-// = 0 вЂ” СЂР°РІРЅС‹
+bool canCover = defendCard.CanCover(attackCard, trump: Suit.Hearts);
+bool stronger = customCard.Beats(otherCustomCard, trump: null);
 ```
 
-### Beats (РґР»СЏ В«Р”СѓСЂР°РєР°В»)
+## Использование во views
+
+`CardData` передается в card views и board/hand/deck компоненты как универсальная модель:
 
 ```csharp
-bool beats = defendCard.Beats(attackCard, trump: Suit.Hearts);
+cardView.SetData(cardData, faceUp: true);
 ```
 
-**Р›РѕРіРёРєР°:**
-- РљРѕР·С‹СЂСЊ Р±СЊС‘С‚ РЅРµ-РєРѕР·С‹СЂСЊ
-- РќРµ-РєРѕР·С‹СЂСЊ РЅРµ Р±СЊС‘С‚ РєРѕР·С‹СЂСЊ
-- РћРґРёРЅР°РєРѕРІР°СЏ РјР°СЃС‚СЊ вЂ” СЃСЂР°РІРЅРµРЅРёРµ РїРѕ СЂР°РЅРіСѓ
-- Р Р°Р·РЅС‹Рµ РјР°СЃС‚Рё Р±РµР· РєРѕР·С‹СЂСЏ вЂ” false
+Для production card games держите правила игры отдельно от view: `CardData` описывает карту, а игровые сервисы решают, как она ходит, атакует, покупается или комбинируется.
 
-### CanCover
+## См. также
 
-РђР»РёР°СЃ РґР»СЏ `Beats()`:
-
-```csharp
-bool canCover = card.CanCover(attackCard, trump);
-```
-
-### HasSameRank / HasSameSuit
-
-```csharp
-// Р”Р»СЏ РїРѕРґРєРёРґС‹РІР°РЅРёСЏ РІ В«Р”СѓСЂР°РєРµВ»
-if (card.HasSameRank(tableCard))
-    Debug.Log("РњРѕР¶РЅРѕ РїРѕРґРєРёРЅСѓС‚СЊ");
-```
-
----
-
-## РћРїРµСЂР°С‚РѕСЂС‹
-
-```csharp
-// РЎСЂР°РІРЅРµРЅРёРµ РїРѕ СЂР°РЅРіСѓ
-if (card1 > card2) { }
-if (card1 >= card2) { }
-if (card1 < card2) { }
-if (card1 <= card2) { }
-
-// Р Р°РІРµРЅСЃС‚РІРѕ
-if (card1 == card2) { }
-if (card1 != card2) { }
-```
-
----
-
-## РЎС‚СЂРѕРєРѕРІРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ
-
-```csharp
-var card = new CardData(Suit.Hearts, Rank.Queen);
-
-card.ToString();              // "Qв™Ґ"
-card.ToLongEnglishString();   // "Queen of Hearts"
-```
-
----
-
-## РЎРј. С‚Р°РєР¶Рµ
-
-- [Suit / Rank](./InternalTypes.md)
-- [DeckModel](./DeckComponent.md)
-
+- [DeckComponent](./DeckComponent.md)
+- [Cards README](./README.md)

@@ -25,9 +25,12 @@ namespace Neo.Network
 
         [Header("Singleton")]
         [Tooltip("When enabled, the singleton object will not be destroyed on scene load.")]
-        [SerializeField] protected bool _dontDestroyOnLoad;
+        [SerializeField]
+        protected bool _dontDestroyOnLoad;
+
         [Tooltip("When enabled, the script will automatically assign itself as the singleton instance during Awake.")]
-        [SerializeField] protected bool _setInstanceOnAwake = true;
+        [SerializeField]
+        protected bool _setInstanceOnAwake = true;
 
         private bool _isInitialized;
 

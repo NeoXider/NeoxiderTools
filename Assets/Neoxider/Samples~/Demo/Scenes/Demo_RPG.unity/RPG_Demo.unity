@@ -1,4 +1,4 @@
-%YAML 1.1
+﻿%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!29 &1
 OcclusionCullingSettings:
@@ -131,7 +131,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 888536604}
-  - component: {fileID: 888536603}
   m_Layer: 0
   m_Name: DemoUI
   m_TagString: Untagged
@@ -139,23 +138,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &888536603
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 888536602}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fd25e5f96ebbae34ca13db9d32c19c35, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _player: {fileID: 990503852}
-  _enemy: {fileID: 1147267559}
-  _attackDamage: 25
-  _healAmount: 30
-  _hpUpgradeAmount: 50
 --- !u!4 &888536604
 Transform:
   m_ObjectHideFlags: 0
@@ -180,6 +162,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 990503853}
+  - component: {fileID: 990503854}
   - component: {fileID: 990503852}
   m_Layer: 0
   m_Name: PlayerCombatant
@@ -197,39 +180,53 @@ MonoBehaviour:
   m_GameObject: {fileID: 990503851}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5657cb29e168c7f4ca93b902d36c055f, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c8fcfd82523d1d4d8c8bbd3370684b1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  _healthProvider: {fileID: 0}
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.Components.RpgCharacter
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
+  _template: {fileID: 0}
+  _applyTemplateOnAwake: 1
+  _resources:
+  - id:
+      preset: 1
+      customId: 
+    displayName: 
+    startCurrent: 100
+    startMax: 100
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 0
+      mode: 0
+      value: 0
+      tickInterval: 0
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 0
+      onlyWhenNotFull: 0
+      onlyWhenAlive: 0
+      pauseAfterSpend: 0
+      pauseAfterSpendSeconds: 0
+      pauseAfterDamage: 0
+      pauseAfterDamageSeconds: 0
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: 0
+  _stats: []
+  _knownBuffs: []
+  _inlineBuffs: []
+  _knownStatuses: []
+  _progression: {fileID: 0}
   _levelProvider: {fileID: 0}
-  _maxHp: 100
-  _currentHp: 100
-  _level: 1
-  _buffDefinitions: []
-  _statusDefinitions: []
-  _restoreOnAwake: 1
-  _hpRegenPerSecond: 0
-  _regenInterval: 0.2
-  HpState:
-    _value: 100
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  HpPercentState:
-    _value: 1
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  LevelState:
-    _value: 1
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  InvulnerableState:
-    _value: 0
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
+  _saveKey: 
+  _loadOnAwake: 0
+  _autoSave: 0
+  _authorityMode: 1
   _onDamaged:
     m_PersistentCalls:
       m_Calls: []
@@ -251,6 +248,21 @@ MonoBehaviour:
   _onStatusExpired:
     m_PersistentCalls:
       m_Calls: []
+  _onLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onResourceChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileSaved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileLoaded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &990503853
 Transform:
   m_ObjectHideFlags: 0
@@ -266,6 +278,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &990503854
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 990503851}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &1021336120
 GameObject:
   m_ObjectHideFlags: 0
@@ -346,6 +375,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 1147267560}
+  - component: {fileID: 1147267561}
   - component: {fileID: 1147267559}
   m_Layer: 0
   m_Name: EnemyCombatant
@@ -363,39 +393,53 @@ MonoBehaviour:
   m_GameObject: {fileID: 1147267558}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5657cb29e168c7f4ca93b902d36c055f, type: 3}
+  m_Script: {fileID: 11500000, guid: 7c8fcfd82523d1d4d8c8bbd3370684b1, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
-  _healthProvider: {fileID: 0}
+  m_EditorClassIdentifier: Neo.Rpg::Neo.Rpg.Components.RpgCharacter
+  syncDirection: 0
+  syncMode: 0
+  syncInterval: 0
+  isNetworked: 0
+  _template: {fileID: 0}
+  _applyTemplateOnAwake: 1
+  _resources:
+  - id:
+      preset: 1
+      customId: 
+    displayName: 
+    startCurrent: 250
+    startMax: 250
+    restoreOnAwake: 1
+    restoreToFull: 1
+    regen:
+      enabled: 0
+      mode: 0
+      value: 0
+      tickInterval: 0
+      scalingStat:
+        preset: 0
+        customId: 
+      scalingMultiplier: 0
+      onlyWhenNotFull: 0
+      onlyWhenAlive: 0
+      pauseAfterSpend: 0
+      pauseAfterSpendSeconds: 0
+      pauseAfterDamage: 0
+      pauseAfterDamageSeconds: 0
+    canGoBelowZero: 0
+    canOverfill: 0
+    minValue: 0
+    maxCap: 0
+  _stats: []
+  _knownBuffs: []
+  _inlineBuffs: []
+  _knownStatuses: []
+  _progression: {fileID: 0}
   _levelProvider: {fileID: 0}
-  _maxHp: 250
-  _currentHp: 250
-  _level: 1
-  _buffDefinitions: []
-  _statusDefinitions: []
-  _restoreOnAwake: 1
-  _hpRegenPerSecond: 0
-  _regenInterval: 0.2
-  HpState:
-    _value: 100
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  HpPercentState:
-    _value: 1
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  LevelState:
-    _value: 1
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
-  InvulnerableState:
-    _value: 0
-    _onChanged:
-      m_PersistentCalls:
-        m_Calls: []
+  _saveKey: 
+  _loadOnAwake: 0
+  _autoSave: 0
+  _authorityMode: 1
   _onDamaged:
     m_PersistentCalls:
       m_Calls: []
@@ -417,6 +461,21 @@ MonoBehaviour:
   _onStatusExpired:
     m_PersistentCalls:
       m_Calls: []
+  _onLevelChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onResourceChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onStatChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileSaved:
+    m_PersistentCalls:
+      m_Calls: []
+  _onProfileLoaded:
+    m_PersistentCalls:
+      m_Calls: []
 --- !u!4 &1147267560
 Transform:
   m_ObjectHideFlags: 0
@@ -432,6 +491,23 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1147267561
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1147267558}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b91ecbcc199f4492b9a91e820070131, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Mirror::Mirror.NetworkIdentity
+  sceneId: 0
+  _assetId: 0
+  serverOnly: 0
+  visibility: 0
+  hasSpawned: 0
 --- !u!1 &1388675048
 GameObject:
   m_ObjectHideFlags: 0

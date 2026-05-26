@@ -222,6 +222,7 @@ namespace Neo.Progression.Tests
             {
                 manager.EnsureInitialized();
 
+                NeoDiagnostics.Configure(warnings: true);
                 LogAssert.Expect(LogType.Warning,
                     "[ProgressionManager] Level Provider is not assigned. XP was not added.");
                 manager.AddXp(100);
@@ -232,6 +233,7 @@ namespace Neo.Progression.Tests
             }
             finally
             {
+                NeoDiagnostics.ResetStaticState();
                 Object.DestroyImmediate(managerObject);
             }
         }
@@ -441,8 +443,15 @@ namespace Neo.Progression.Tests
             finally
             {
                 Object.DestroyImmediate(managerObject);
-                if (levelCurve != null) Object.DestroyImmediate(levelCurve);
-                if (coreCurve != null) Object.DestroyImmediate(coreCurve);
+                if (levelCurve != null)
+                {
+                    Object.DestroyImmediate(levelCurve);
+                }
+
+                if (coreCurve != null)
+                {
+                    Object.DestroyImmediate(coreCurve);
+                }
             }
         }
 

@@ -17,10 +17,14 @@ namespace Neo.Editor.Tests.Edit
     public sealed class NoCodeBindEditModeFloatSource : MonoBehaviour
     {
         public float Score = 40f;
-        public ReactivePropertyFloat ReactiveScore = new ReactivePropertyFloat(0.25f);
-        public ReactivePropertyInt ReactiveLevel = new ReactivePropertyInt(1);
+        public ReactivePropertyFloat ReactiveScore = new(0.25f);
+        public ReactivePropertyInt ReactiveLevel = new(1);
         public float ScoreProperty => Score;
-        public float GetScore() => Score;
+
+        public float GetScore()
+        {
+            return Score;
+        }
     }
 
     /// <summary>
@@ -32,7 +36,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void WireBinding(NoCodeFloatBindingBehaviour target, GameObject sourceRoot, string memberName)
         {
-            SerializedObject so = new SerializedObject(target);
+            var so = new SerializedObject(target);
             SerializedProperty binding = so.FindProperty("_binding");
             Assert.IsNotNull(binding, "_binding");
             binding.FindPropertyRelative("_sourceRoot").objectReferenceValue = sourceRoot;
@@ -43,7 +47,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void SetUpdateMode(NoCodeFloatBindingBehaviour target, NoCodeFloatUpdateMode mode)
         {
-            SerializedObject so = new SerializedObject(target);
+            var so = new SerializedObject(target);
             SerializedProperty p = so.FindProperty("_updateMode");
             Assert.IsNotNull(p, "_updateMode");
             p.enumValueIndex = (int)mode;
@@ -53,14 +57,16 @@ namespace Neo.Editor.Tests.Edit
         private static void InvokeBindingOnValidate(NoCodeFloatBindingBehaviour target)
         {
             typeof(NoCodeFloatBindingBehaviour)
-                .GetMethod("OnValidate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .GetMethod("OnValidate",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.Invoke(target, null);
         }
 
         private static void InvokeFormattedTextOnValidate(NoCodeFormattedText target)
         {
             typeof(NoCodeFormattedText)
-                .GetMethod("OnValidate", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+                .GetMethod("OnValidate",
+                    System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
                 ?.Invoke(target, null);
         }
 
@@ -82,22 +88,23 @@ namespace Neo.Editor.Tests.Edit
 
         private static void AssignSlider(SetProgress progress, Slider slider)
         {
-            SerializedObject so = new SerializedObject(progress);
+            var so = new SerializedObject(progress);
             so.FindProperty("_slider").objectReferenceValue = slider;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void AssignRange(SetProgress progress, float min, float max)
         {
-            SerializedObject so = new SerializedObject(progress);
+            var so = new SerializedObject(progress);
             so.FindProperty("_minValue").floatValue = min;
             so.FindProperty("_maxValue").floatValue = max;
             so.ApplyModifiedPropertiesWithoutUndo();
         }
 
-        private static void WireFormattedText(NoCodeFormattedText target, GameObject sourceRoot, params string[] members)
+        private static void WireFormattedText(NoCodeFormattedText target, GameObject sourceRoot,
+            params string[] members)
         {
-            SerializedObject so = new SerializedObject(target);
+            var so = new SerializedObject(target);
             SerializedProperty values = so.FindProperty("_values");
             Assert.IsNotNull(values, "_values");
             values.arraySize = members.Length;
@@ -116,7 +123,7 @@ namespace Neo.Editor.Tests.Edit
         private static void ConfigureFormattedText(NoCodeFormattedText target, string format,
             NoCodeFloatUpdateMode mode)
         {
-            SerializedObject so = new SerializedObject(target);
+            var so = new SerializedObject(target);
             so.FindProperty("_format").stringValue = format;
             so.FindProperty("_updateMode").enumValueIndex = (int)mode;
             so.ApplyModifiedPropertiesWithoutUndo();
@@ -125,8 +132,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NoCodeBindText_TMPFallback_ShowsInvariantFloat()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -152,8 +159,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void SetProgress_InverseLerp_SetsSliderNormalized()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -181,8 +188,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void SetProgress_ImageFill_InverseLerp()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -192,7 +199,7 @@ namespace Neo.Editor.Tests.Edit
                 SetProgress prog = dst.AddComponent<SetProgress>();
                 WireBinding(prog, src, nameof(NoCodeBindEditModeFloatSource.Score));
 
-                SerializedObject so = new SerializedObject(prog);
+                var so = new SerializedObject(prog);
                 so.FindProperty("_image").objectReferenceValue = image;
                 so.FindProperty("_minValue").floatValue = 0f;
                 so.FindProperty("_maxValue").floatValue = 200f;
@@ -214,8 +221,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void SetProgress_Reactive_UpdatesSliderWhenReactiveChanges()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -247,8 +254,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NoCodeBindText_Reactive_UpdatesTMPWhenIntReactiveChanges()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -278,8 +285,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NoCodeBindText_Reactive_PollsWhenMemberIsNotReactive()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -310,11 +317,11 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NoCodeBindings_PollInterval_DefaultsTo016AndClampsTo0016()
         {
-            GameObject dst = new GameObject("dst");
+            var dst = new GameObject("dst");
             try
             {
                 SetProgress progress = dst.AddComponent<SetProgress>();
-                SerializedObject so = new SerializedObject(progress);
+                var so = new SerializedObject(progress);
                 SerializedProperty interval = so.FindProperty("_pollIntervalSeconds");
                 Assert.IsNotNull(interval, "_pollIntervalSeconds");
                 Assert.That(interval.floatValue, Is.EqualTo(0.16f).Within(1e-6f));
@@ -328,7 +335,7 @@ namespace Neo.Editor.Tests.Edit
                 Assert.That(interval.floatValue, Is.EqualTo(0.016f).Within(1e-6f));
 
                 NoCodeFormattedText formatted = dst.AddComponent<NoCodeFormattedText>();
-                SerializedObject formattedSo = new SerializedObject(formatted);
+                var formattedSo = new SerializedObject(formatted);
                 SerializedProperty formattedInterval = formattedSo.FindProperty("_pollIntervalSeconds");
                 Assert.IsNotNull(formattedInterval, "NoCodeFormattedText._pollIntervalSeconds");
                 Assert.That(formattedInterval.floatValue, Is.EqualTo(0.16f).Within(1e-6f));
@@ -350,8 +357,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void NoCodeFormattedText_FormatsMultipleValuesAndSubscribesToIntReactive()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -390,8 +397,8 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void SetProgress_SceneSearchByName_InverseLerp()
         {
-            GameObject src = new GameObject("BindByName");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("BindByName");
+            var dst = new GameObject("dst");
             dst.SetActive(false);
             try
             {
@@ -399,7 +406,7 @@ namespace Neo.Editor.Tests.Edit
                 fs.Score = 40f;
                 Slider slider = dst.AddComponent<Slider>();
                 SetProgress prog = dst.AddComponent<SetProgress>();
-                SerializedObject so = new SerializedObject(prog);
+                var so = new SerializedObject(prog);
                 SerializedProperty binding = so.FindProperty("_binding");
                 Assert.IsNotNull(binding);
                 binding.FindPropertyRelative("_useSceneSearch").boolValue = true;
@@ -452,14 +459,15 @@ namespace Neo.Editor.Tests.Edit
         [Test]
         public void ComponentFloatBinding_MethodName_DoesNotInvokeHiddenBehaviour()
         {
-            GameObject src = new GameObject("src");
-            GameObject dst = new GameObject("dst");
+            var src = new GameObject("src");
+            var dst = new GameObject("dst");
             try
             {
                 NoCodeBindEditModeFloatSource fs = src.AddComponent<NoCodeBindEditModeFloatSource>();
                 fs.Score = 55f;
                 SetProgress progress = dst.AddComponent<SetProgress>();
                 WireBinding(progress, src, nameof(NoCodeBindEditModeFloatSource.GetScore));
+                NeoDiagnostics.Configure(warnings: true);
                 LogAssert.Expect(LogType.Warning,
                     $"[Neo.NoCode] Property/field '{nameof(NoCodeBindEditModeFloatSource.GetScore)}' not found on '{SourceTypeFullName}' on '{src.name}'.");
 
@@ -470,6 +478,7 @@ namespace Neo.Editor.Tests.Edit
             }
             finally
             {
+                NeoDiagnostics.ResetStaticState();
                 Object.DestroyImmediate(dst);
                 Object.DestroyImmediate(src);
             }

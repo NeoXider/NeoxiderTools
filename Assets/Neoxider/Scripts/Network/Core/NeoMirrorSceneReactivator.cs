@@ -38,42 +38,86 @@ namespace Neo.Network
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
 
-        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode) => ReactivateScene(scene);
+        private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            ReactivateScene(scene);
+        }
 
         /// <summary>Reactivate eligible scene objects in <paramref name="scene"/>.</summary>
         public static void ReactivateScene(Scene scene)
         {
-            if (!Enabled) return;
-            if (NetworkServer.active || NetworkClient.active) return;
-            if (!scene.IsValid() || !scene.isLoaded) return;
+            if (!Enabled)
+            {
+                return;
+            }
+
+            if (NetworkServer.active || NetworkClient.active)
+            {
+                return;
+            }
+
+            if (!scene.IsValid() || !scene.isLoaded)
+            {
+                return;
+            }
 
             NetworkIdentity[] all = Resources.FindObjectsOfTypeAll<NetworkIdentity>();
             for (int i = 0; i < all.Length; i++)
             {
                 NetworkIdentity identity = all[i];
-                if (identity == null) continue;
+                if (identity == null)
+                {
+                    continue;
+                }
 
                 GameObject go = identity.gameObject;
-                if (go == null || go.scene != scene) continue;
-                if (identity.sceneId == 0) continue;
-                if (go.activeSelf) continue;
+                if (go == null || go.scene != scene)
+                {
+                    continue;
+                }
+
+                if (identity.sceneId == 0)
+                {
+                    continue;
+                }
+
+                if (go.activeSelf)
+                {
+                    continue;
+                }
 
                 HideFlags flags = go.hideFlags;
-                if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave) continue;
-                if ((flags & HideFlags.NotEditable) != 0) continue;
+                if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)
+                {
+                    continue;
+                }
 
-                if (ShouldReactivate(go)) go.SetActive(true);
+                if ((flags & HideFlags.NotEditable) != 0)
+                {
+                    continue;
+                }
+
+                if (ShouldReactivate(go))
+                {
+                    go.SetActive(true);
+                }
             }
         }
 
         private static bool ShouldReactivate(GameObject go)
         {
             INeoOptionalNetworked[] candidates = go.GetComponentsInChildren<INeoOptionalNetworked>(true);
-            if (candidates.Length == 0) return false;
+            if (candidates.Length == 0)
+            {
+                return false;
+            }
 
             for (int i = 0; i < candidates.Length; i++)
             {
-                if (candidates[i] != null && candidates[i].IsNetworked) return false;
+                if (candidates[i] != null && candidates[i].IsNetworked)
+                {
+                    return false;
+                }
             }
 
             return true;

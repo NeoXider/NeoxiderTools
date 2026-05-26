@@ -44,39 +44,57 @@ namespace Neo.Editor
 
     [CustomEditor(typeof(Neo.Tools.Counter), true)]
     [CanEditMultipleObjects]
-    public class CounterNeoEditor : NeoCustomEditor { }
+    public class CounterNeoEditor : NeoCustomEditor
+    {
+    }
 
-    [CustomEditor(typeof(Neo.Shop.Money), true)]
+    [CustomEditor(typeof(Shop.Money), true)]
     [CanEditMultipleObjects]
-    public class MoneyNeoEditor : NeoCustomEditor { }
+    public class MoneyNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.PhysicsEvents3D), true)]
     [CanEditMultipleObjects]
-    public class PhysicsEvents3DNeoEditor : NeoCustomEditor { }
+    public class PhysicsEvents3DNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.PhysicsEvents2D), true)]
     [CanEditMultipleObjects]
-    public class PhysicsEvents2DNeoEditor : NeoCustomEditor { }
+    public class PhysicsEvents2DNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.Spawner), true)]
     [CanEditMultipleObjects]
-    public class SpawnerNeoEditor : NeoCustomEditor { }
+    public class SpawnerNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.InteractiveObject), true)]
     [CanEditMultipleObjects]
-    public class InteractiveObjectNeoEditor : NeoCustomEditor { }
+    public class InteractiveObjectNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.Selector), true)]
     [CanEditMultipleObjects]
-    public class SelectorNeoEditor : NeoCustomEditor { }
+    public class SelectorNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Network.NeoNetworkPlayer), true)]
     [CanEditMultipleObjects]
-    public class NeoNetworkPlayerNeoEditor : NeoCustomEditor { }
+    public class NeoNetworkPlayerNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.RandomRange), true)]
     [CanEditMultipleObjects]
-    public class RandomRangeNeoEditor : NeoCustomEditor { }
+    public class RandomRangeNeoEditor : NeoCustomEditor
+    {
+    }
 
     // NOTE: NetworkContextActionRelay has its OWN dedicated editor (NetworkContextActionRelayEditor)
     // that inherits from CustomEditorBase and draws a fully custom NoCode-style inspector.
@@ -84,18 +102,26 @@ namespace Neo.Editor
 
     [CustomEditor(typeof(Neo.Network.NetworkActionRelay), true)]
     [CanEditMultipleObjects]
-    public class NetworkActionRelayNeoEditor : NeoCustomEditor { }
+    public class NetworkActionRelayNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Network.NetworkPropertySync), true)]
     [CanEditMultipleObjects]
-    public class NetworkPropertySyncNeoEditor : NeoCustomEditor { }
+    public class NetworkPropertySyncNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Network.NetworkOwnerFilter), true)]
     [CanEditMultipleObjects]
-    public class NetworkOwnerFilterNeoEditor : NeoCustomEditor { }
+    public class NetworkOwnerFilterNeoEditor : NeoCustomEditor
+    {
+    }
 
     [CustomEditor(typeof(Neo.Tools.NetworkEventDispatcher), true)]
     [CanEditMultipleObjects]
-    public class NetworkEventDispatcherNeoEditor : NeoCustomEditor { }
+    public class NetworkEventDispatcherNeoEditor : NeoCustomEditor
+    {
+    }
 #endif
 }

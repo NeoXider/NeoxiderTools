@@ -44,6 +44,7 @@ namespace Neo.Tools
 
         /// <inheritdoc cref="PhysicsEvents3D.TriggerEnterOccurred"/>
         public event Action<Collider2D> TriggerEnterOccurred;
+
         public event Action<Collider2D> TriggerStayOccurred;
         public event Action<Collider2D> TriggerExitOccurred;
         public event Action<Collision2D> CollisionEnterOccurred;
@@ -95,8 +96,11 @@ namespace Neo.Tools
         /* Collision -------------------------------------------------- */
         private void OnCollisionEnter2D(Collision2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchCollisionEnter(c);
@@ -105,7 +109,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchCollisionEnter(c);
-                var netId = c.gameObject.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionEnter(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -113,8 +117,11 @@ namespace Neo.Tools
 
         private void OnCollisionExit2D(Collision2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchCollisionExit(c);
@@ -123,7 +130,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchCollisionExit(c);
-                var netId = c.gameObject.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionExit(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -131,8 +138,11 @@ namespace Neo.Tools
 
         private void OnCollisionStay2D(Collision2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchCollisionStay(c);
@@ -141,7 +151,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchCollisionStay(c);
-                var netId = c.gameObject.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.gameObject.GetComponent<NetworkIdentity>();
                 RpcCollisionStay(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -150,8 +160,11 @@ namespace Neo.Tools
         /* Trigger ---------------------------------------------------- */
         private void OnTriggerEnter2D(Collider2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchTriggerEnter(c);
@@ -160,7 +173,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchTriggerEnter(c);
-                var netId = c.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerEnter(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -168,8 +181,11 @@ namespace Neo.Tools
 
         private void OnTriggerExit2D(Collider2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchTriggerExit(c);
@@ -178,7 +194,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchTriggerExit(c);
-                var netId = c.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerExit(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -186,8 +202,11 @@ namespace Neo.Tools
 
         private void OnTriggerStay2D(Collider2D c)
         {
-            if (!interactable || !PassFilter(c.gameObject)) return;
-            
+            if (!interactable || !PassFilter(c.gameObject))
+            {
+                return;
+            }
+
             if (!isNetworked)
             {
                 DispatchTriggerStay(c);
@@ -196,7 +215,7 @@ namespace Neo.Tools
             else if (NeoNetworkState.IsServer)
             {
                 DispatchTriggerStay(c);
-                var netId = c.GetComponent<NetworkIdentity>();
+                NetworkIdentity netId = c.GetComponent<NetworkIdentity>();
                 RpcTriggerStay(netId != null ? netId.gameObject : null);
             }
 #endif
@@ -208,48 +227,72 @@ namespace Neo.Tools
         [ClientRpc]
         private void RpcCollisionEnter(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
-            DispatchCollisionEnter(null); 
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
+            DispatchCollisionEnter(null);
         }
-        
+
         [ClientRpc]
         private void RpcCollisionExit(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
             DispatchCollisionExit(null);
         }
 
         [ClientRpc]
         private void RpcCollisionStay(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
             DispatchCollisionStay(null);
         }
 
         [ClientRpc]
         private void RpcTriggerEnter(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
-            var col = target != null ? target.GetComponent<Collider2D>() : null;
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
+            Collider2D col = target != null ? target.GetComponent<Collider2D>() : null;
             DispatchTriggerEnter(col);
         }
 
         [ClientRpc]
         private void RpcTriggerExit(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
-            var col = target != null ? target.GetComponent<Collider2D>() : null;
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
+            Collider2D col = target != null ? target.GetComponent<Collider2D>() : null;
             DispatchTriggerExit(col);
         }
 
         [ClientRpc]
         private void RpcTriggerStay(GameObject target)
         {
-            if (NeoNetworkState.IsServer) return;
-            var col = target != null ? target.GetComponent<Collider2D>() : null;
+            if (NeoNetworkState.IsServer)
+            {
+                return;
+            }
+
+            Collider2D col = target != null ? target.GetComponent<Collider2D>() : null;
             DispatchTriggerStay(col);
         }
-        
+
         protected override void OnValidate()
         {
             if (isNetworked)

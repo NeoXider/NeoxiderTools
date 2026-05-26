@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Events;
@@ -7,7 +7,7 @@ namespace Neo.Tools
 {
     /// <summary>
     ///     Scene wrapper over <see cref="ChanceManager" /> with UnityEvents and optional ScriptableObject source.
-    ///     Use for drop tables, random events, loot — configure in Inspector and subscribe without code.
+    ///     Use for drop tables, random events, loot  - configure in Inspector and subscribe without code.
     /// </summary>
     [NeoDoc("Tools/Random/ChanceSystemBehaviour.md")]
     [CreateFromMenu("Neoxider/Tools/Random/ChanceSystemBehaviour")]
@@ -81,13 +81,13 @@ namespace Neo.Tools
                 {
                     int index = manager.Entries.ToList().IndexOf(entry);
                     float normalized = index >= 0 ? manager.GetNormalizedWeight(index) : 0f;
-                    Debug.Log(
+                    NeoDiagnostics.Log(
                         $"[ChanceSystem] Sampled entry id={entry.CustomId}, weight={entry.Weight:F4}, normalized={normalized:F4}",
                         this);
                 }
                 else
                 {
-                    Debug.LogWarning("[ChanceSystem] No entries to sample", this);
+                    NeoDiagnostics.LogWarning("[ChanceSystem] No entries to sample", this);
                 }
             }
 #endif

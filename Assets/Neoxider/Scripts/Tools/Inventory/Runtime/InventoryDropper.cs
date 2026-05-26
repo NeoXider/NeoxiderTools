@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.Events;
 using Random = UnityEngine.Random;
@@ -373,7 +373,8 @@ namespace Neo.Tools
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[InventoryDropper] Failed to spawn dropped item {fallbackItemId}: {ex.Message}", this);
+                NeoDiagnostics.LogError(
+                    $"[InventoryDropper] Failed to spawn dropped item {fallbackItemId}: {ex.Message}", this);
             }
 
             if (dropped == null)

@@ -19,43 +19,48 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerMoneyTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerMoneyTest", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99997);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
 
             _moneyObj = new GameObject("MoneySingleton");
-            
+
             // Money inherits NetworkSingleton → NetworkBehaviour → NetworkIdentity is auto-added
-            var id = _moneyObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = _moneyObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10005);
             NetworkClient.RegisterPrefab(_moneyObj);
-            
+
             _money = _moneyObj.AddComponent<Money>();
             _money.isNetworked = true;
-            
+
             // Re-initialize so Money is registered in NetworkBehaviours array
             // InitializeNetworkBehaviours is internal — call via reflection
             typeof(NetworkIdentity).GetMethod("InitializeNetworkBehaviours",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
                 .Invoke(id, null);
             NetworkServer.Spawn(_moneyObj);
-            
+
             yield return null;
             yield return null;
-            
+
             // Clean state — local only to avoid RPC before full spawn
             _money.isNetworked = false;
             _money.SetMoney(0);
@@ -67,11 +72,22 @@ namespace Neo.Tests.Play
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
-            if (_moneyObj != null) Object.DestroyImmediate(_moneyObj);
-            
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
+
+            if (_moneyObj != null)
+            {
+                Object.DestroyImmediate(_moneyObj);
+            }
+
             // Delete save
             PlayerPrefs.DeleteKey("Money");
             PlayerPrefs.DeleteKey("MoneyAllMoney");
@@ -81,7 +97,7 @@ namespace Neo.Tests.Play
         public IEnumerator Money_Shared_AddMoneyUpdatesGlobally()
         {
             _money.isNetworked = true;
-            
+
             _money.Add(150);
 
             yield return new WaitForSeconds(0.1f);
@@ -108,10 +124,10 @@ namespace Neo.Tests.Play
         public IEnumerator Money_Personal_ChangesRemainLocal()
         {
             _money.isNetworked = false;
-            
+
             _money.Add(100);
             yield return new WaitForSeconds(0.1f);
-            
+
             Assert.AreEqual(100, _money.money);
         }
     }

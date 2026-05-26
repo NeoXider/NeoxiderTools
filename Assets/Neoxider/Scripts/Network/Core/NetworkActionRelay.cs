@@ -31,11 +31,9 @@ namespace Neo.Network
         [Tooltip("Human-readable name for this channel (for TriggerByName).")]
         public string channelName;
 
-        [Tooltip("Who receives this action.")]
-        public NetworkActionScope scope = NetworkActionScope.AllClients;
+        [Tooltip("Who receives this action.")] public NetworkActionScope scope = NetworkActionScope.AllClients;
 
-        [Space]
-        [Tooltip("Fired when the action is triggered (no payload).")]
+        [Space] [Tooltip("Fired when the action is triggered (no payload).")]
         public UnityEvent onTriggered = new();
 
         [Tooltip("Fired when the action is triggered with a float payload.")]
@@ -59,11 +57,14 @@ namespace Neo.Network
     {
         [Header("Channels")]
         [Tooltip("Define one or more action channels, each with its own scope and events.")]
-        [SerializeField] private NetworkActionChannel[] _channels = new NetworkActionChannel[1];
+        [SerializeField]
+        private NetworkActionChannel[] _channels = new NetworkActionChannel[1];
 
         [Header("Authority")]
-        [Tooltip("Who may trigger relay channels over the network. Default None lets NoCode scene objects work without ownership.")]
-        [SerializeField] private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
+        [Tooltip(
+            "Who may trigger relay channels over the network. Default None lets NoCode scene objects work without ownership.")]
+        [SerializeField]
+        private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
         /// <summary>Number of configured channels.</summary>
         public int ChannelCount => _channels?.Length ?? 0;
@@ -80,30 +81,51 @@ namespace Neo.Network
         /// <summary>Trigger channel at index (no payload). Wire from UnityEvent / Button OnClick.</summary>
         public void Trigger(int channelIndex)
         {
-            if (!ValidateIndex(channelIndex)) return;
+            if (!ValidateIndex(channelIndex))
+            {
+                return;
+            }
+
             DispatchVoid(channelIndex);
         }
 
         /// <summary>Trigger channel 0 (no payload). Convenience for single-channel use.</summary>
-        public void Trigger() => Trigger(0);
+        public void Trigger()
+        {
+            Trigger(0);
+        }
 
         /// <summary>Trigger channel at index with a float payload.</summary>
-        public void TriggerFloat(float value) => TriggerFloatAt(0, value);
+        public void TriggerFloat(float value)
+        {
+            TriggerFloatAt(0, value);
+        }
 
         /// <summary>Trigger channel at index with a float payload.</summary>
         public void TriggerFloatAt(int channelIndex, float value)
         {
-            if (!ValidateIndex(channelIndex)) return;
+            if (!ValidateIndex(channelIndex))
+            {
+                return;
+            }
+
             DispatchFloat(channelIndex, value);
         }
 
         /// <summary>Trigger channel at index with a string payload.</summary>
-        public void TriggerString(string value) => TriggerStringAt(0, value);
+        public void TriggerString(string value)
+        {
+            TriggerStringAt(0, value);
+        }
 
         /// <summary>Trigger channel at index with a string payload.</summary>
         public void TriggerStringAt(int channelIndex, string value)
         {
-            if (!ValidateIndex(channelIndex)) return;
+            if (!ValidateIndex(channelIndex))
+            {
+                return;
+            }
+
             DispatchString(channelIndex, value);
         }
 
@@ -111,7 +133,10 @@ namespace Neo.Network
         public void TriggerByName(string channelName)
         {
             int idx = FindChannelIndex(channelName);
-            if (idx >= 0) DispatchVoid(idx);
+            if (idx >= 0)
+            {
+                DispatchVoid(idx);
+            }
         }
 
         // ────────────────────── Dispatch Logic ──────────────────────
@@ -183,12 +208,14 @@ namespace Neo.Network
         // ────────────────────── Mirror Cmd / Rpc ──────────────────────
 
 #if MIRROR
-        private bool AuthorizedSender(NetworkConnectionToClient sender) =>
-            NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        private bool AuthorizedSender(NetworkConnectionToClient sender)
+        {
+            return NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        }
 
         private void DispatchVoidOnServer(int idx, NetworkConnectionToClient sender)
         {
-            var ch = _channels[idx];
+            NetworkActionChannel ch = _channels[idx];
             if (ch.scope == NetworkActionScope.ServerOnly)
             {
                 ch.onTriggered?.Invoke();
@@ -212,7 +239,7 @@ namespace Neo.Network
 
         private void DispatchFloatOnServer(int idx, float value, NetworkConnectionToClient sender)
         {
-            var ch = _channels[idx];
+            NetworkActionChannel ch = _channels[idx];
             if (ch.scope == NetworkActionScope.ServerOnly)
             {
                 ch.onTriggeredFloat?.Invoke(value);
@@ -236,7 +263,7 @@ namespace Neo.Network
 
         private void DispatchStringOnServer(int idx, string value, NetworkConnectionToClient sender)
         {
-            var ch = _channels[idx];
+            NetworkActionChannel ch = _channels[idx];
             if (ch.scope == NetworkActionScope.ServerOnly)
             {
                 ch.onTriggeredString?.Invoke(value);
@@ -271,7 +298,8 @@ namespace Neo.Network
             }
         }
 
-        private void TargetTriggerFloatForOthers(NetworkConnectionToClient sender, int idx, float value, bool skipHostSender)
+        private void TargetTriggerFloatForOthers(NetworkConnectionToClient sender, int idx, float value,
+            bool skipHostSender)
         {
             foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
             {
@@ -284,7 +312,8 @@ namespace Neo.Network
             }
         }
 
-        private void TargetTriggerStringForOthers(NetworkConnectionToClient sender, int idx, string value, bool skipHostSender)
+        private void TargetTriggerStringForOthers(NetworkConnectionToClient sender, int idx, string value,
+            bool skipHostSender)
         {
             foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
             {
@@ -302,7 +331,8 @@ namespace Neo.Network
             return NeoNetworkState.IsHost && (sender == null || sender == NetworkServer.localConnection);
         }
 
-        private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender, bool skipHostSender)
+        private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender,
+            bool skipHostSender)
         {
             if (connection == null)
             {
@@ -322,9 +352,20 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerVoid(int idx, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!ValidateIndex(idx)) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             DispatchVoidOnServer(idx, sender);
         }
@@ -332,9 +373,20 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerFloat(int idx, float value, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!ValidateIndex(idx)) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             DispatchFloatOnServer(idx, value, sender);
         }
@@ -342,9 +394,20 @@ namespace Neo.Network
         [Command(requiresAuthority = false)]
         private void CmdTriggerString(int idx, string value, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!ValidateIndex(idx)) return;
-            if (!AuthorizedSender(sender)) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
 
             DispatchStringOnServer(idx, value, sender);
         }
@@ -352,45 +415,81 @@ namespace Neo.Network
         [ClientRpc]
         private void RpcTriggerVoid(int idx, bool skipHostLocal)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             _channels[idx].onTriggered?.Invoke();
         }
 
         [ClientRpc]
         private void RpcTriggerFloat(int idx, float value, bool skipHostLocal)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             _channels[idx].onTriggeredFloat?.Invoke(value);
         }
 
         [ClientRpc]
         private void RpcTriggerString(int idx, string value, bool skipHostLocal)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             _channels[idx].onTriggeredString?.Invoke(value);
         }
 
         [TargetRpc]
         private void TargetTriggerVoid(NetworkConnectionToClient target, int idx)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
             _channels[idx].onTriggered?.Invoke();
         }
 
         [TargetRpc]
         private void TargetTriggerFloat(NetworkConnectionToClient target, int idx, float value)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
             _channels[idx].onTriggeredFloat?.Invoke(value);
         }
 
         [TargetRpc]
         private void TargetTriggerString(NetworkConnectionToClient target, int idx, string value)
         {
-            if (isServerOnly || !ValidateIndex(idx)) return;
+            if (isServerOnly || !ValidateIndex(idx))
+            {
+                return;
+            }
+
             _channels[idx].onTriggeredString?.Invoke(value);
         }
 #endif
@@ -404,17 +503,25 @@ namespace Neo.Network
                 NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Invalid channel index {idx} on '{name}'.", this);
                 return false;
             }
+
             return true;
         }
 
         private int FindChannelIndex(string channelName)
         {
-            if (_channels == null || string.IsNullOrEmpty(channelName)) return -1;
+            if (_channels == null || string.IsNullOrEmpty(channelName))
+            {
+                return -1;
+            }
+
             for (int i = 0; i < _channels.Length; i++)
             {
                 if (string.Equals(_channels[i]?.channelName, channelName, System.StringComparison.Ordinal))
+                {
                     return i;
+                }
             }
+
             NetworkDiagnostics.LogWarning($"[NetworkActionRelay] Channel '{channelName}' not found on '{name}'.", this);
             return -1;
         }

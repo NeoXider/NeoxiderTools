@@ -86,7 +86,10 @@ namespace Neo.Rpg.Runtime
 
         public bool IsDepleted => Current <= 0f && !Definition.canGoBelowZero;
 
-        public override string ToString() => $"{Id} {Current:0.##}/{Max:0.##}";
+        public override string ToString()
+        {
+            return $"{Id} {Current:0.##}/{Max:0.##}";
+        }
 
         private static void PushFloat(ReactivePropertyFloat property, float value, bool forceNotify)
         {

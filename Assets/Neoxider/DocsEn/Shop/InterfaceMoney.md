@@ -11,4 +11,4 @@
 
 ## See Also
 - [ShopManager](Shop.md)
-- в†ђ [Shop](README.md)
+- <- [Shop](README.md)

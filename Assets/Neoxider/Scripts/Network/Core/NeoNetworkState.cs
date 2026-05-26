@@ -122,7 +122,9 @@ namespace Neo.Network
             {
                 return identity.isLocalPlayer || identity.isOwned;
             }
-            return false; // In multiplayer, if it lacks NetworkIdentity, NO ONE has authority to trigger LocalPlayer events from it.
+
+            return
+                false; // In multiplayer, if it lacks NetworkIdentity, NO ONE has authority to trigger LocalPlayer events from it.
 #else
             return true;
 #endif

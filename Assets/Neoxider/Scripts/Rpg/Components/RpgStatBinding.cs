@@ -23,22 +23,56 @@ namespace Neo.Rpg.Components
         public float Value =>
             _character != null ? _character.GetStat(_statId.Value) : 0f;
 
-        public RpgCharacter Character { get => _character; set { Unsubscribe(); _character = value; SubscribeIfReady(); } }
-        public RpgStatId StatId { get => _statId; set { Unsubscribe(); _statId = value; SubscribeIfReady(); } }
+        public RpgCharacter Character
+        {
+            get => _character;
+            set
+            {
+                Unsubscribe();
+                _character = value;
+                SubscribeIfReady();
+            }
+        }
+
+        public RpgStatId StatId
+        {
+            get => _statId;
+            set
+            {
+                Unsubscribe();
+                _statId = value;
+                SubscribeIfReady();
+            }
+        }
 
         private void OnEnable()
         {
-            if (_character == null) _character = GetComponentInParent<RpgCharacter>();
+            if (_character == null)
+            {
+                _character = GetComponentInParent<RpgCharacter>();
+            }
+
             SubscribeIfReady();
         }
 
-        private void OnDisable() => Unsubscribe();
+        private void OnDisable()
+        {
+            Unsubscribe();
+        }
 
         private void SubscribeIfReady()
         {
-            if (_subscribed || _character == null || !isActiveAndEnabled) return;
+            if (_subscribed || _character == null || !isActiveAndEnabled)
+            {
+                return;
+            }
+
             ReactivePropertyFloat state = _character.GetStatState(_statId.Value);
-            if (state == null) return;
+            if (state == null)
+            {
+                return;
+            }
+
             state.AddListener(HandleValue);
             _onValue?.Invoke(state.CurrentValue);
             _subscribed = true;
@@ -46,11 +80,19 @@ namespace Neo.Rpg.Components
 
         private void Unsubscribe()
         {
-            if (!_subscribed || _character == null) { _subscribed = false; return; }
+            if (!_subscribed || _character == null)
+            {
+                _subscribed = false;
+                return;
+            }
+
             _character.GetStatState(_statId.Value)?.RemoveListener(HandleValue);
             _subscribed = false;
         }
 
-        private void HandleValue(float v) => _onValue?.Invoke(v);
+        private void HandleValue(float v)
+        {
+            _onValue?.Invoke(v);
+        }
     }
 }

@@ -15,12 +15,10 @@ namespace Neo.Network
     [AddComponentMenu("Neoxider/Network/Neo Lobby Manager")]
     public class NeoLobbyManager : NetworkRoomManager
     {
-        [Header("Lobby Settings")]
-        [Tooltip("Minimum players required before the game can start.")]
-        [SerializeField] private int _minPlayersToStart = 1;
+        [Header("Lobby Settings")] [Tooltip("Minimum players required before the game can start.")] [SerializeField]
+        private int _minPlayersToStart = 1;
 
-        [Header("Lobby Events")]
-        [Tooltip("Fired when a new player enters the room.")]
+        [Header("Lobby Events")] [Tooltip("Fired when a new player enters the room.")]
         public UnityEvent<NetworkConnectionToClient> OnPlayerJoinedRoom = new();
 
         [Tooltip("Fired when a player leaves the room.")]
@@ -51,7 +49,10 @@ namespace Neo.Network
 
         public override void OnRoomServerPlayersReady()
         {
-            if (roomSlots.Count < _minPlayersToStart) return;
+            if (roomSlots.Count < _minPlayersToStart)
+            {
+                return;
+            }
 
             OnAllPlayersReady?.Invoke();
             base.OnRoomServerPlayersReady();
@@ -119,11 +120,17 @@ namespace Neo.Network
         public void LeaveLobby()
         {
             if (NetworkServer.active && NetworkClient.isConnected)
+            {
                 StopHost();
+            }
             else if (NetworkClient.isConnected)
+            {
                 StopClient();
+            }
             else if (NetworkServer.active)
+            {
                 StopServer();
+            }
         }
 
         /// <summary>Check if enough players and all are ready.</summary>
@@ -134,12 +141,24 @@ namespace Neo.Network
 
         private bool AreAllPlayersReady()
         {
-            if (roomSlots.Count == 0) return false;
-            foreach (var slot in roomSlots)
+            if (roomSlots.Count == 0)
             {
-                if (slot == null) continue;
-                if (!slot.readyToBegin) return false;
+                return false;
             }
+
+            foreach (NetworkRoomPlayer slot in roomSlots)
+            {
+                if (slot == null)
+                {
+                    continue;
+                }
+
+                if (!slot.readyToBegin)
+                {
+                    return false;
+                }
+            }
+
             return true;
         }
     }

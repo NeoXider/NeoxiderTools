@@ -37,8 +37,16 @@ namespace Neo.Rpg.Runtime
         {
             float min = Definition.minValue >= 0f ? Definition.minValue : float.MinValue;
             float max = Definition.maxValue >= 0f ? Definition.maxValue : float.MaxValue;
-            if (value < min) value = min;
-            if (value > max) value = max;
+            if (value < min)
+            {
+                value = min;
+            }
+
+            if (value > max)
+            {
+                value = max;
+            }
+
             CurrentValue = value;
 
             if (forceNotify)
@@ -52,6 +60,9 @@ namespace Neo.Rpg.Runtime
             }
         }
 
-        public override string ToString() => $"{Id}={CurrentValue:0.##} (base {BaseValue:0.##}+{UpgradeCount})";
+        public override string ToString()
+        {
+            return $"{Id}={CurrentValue:0.##} (base {BaseValue:0.##}+{UpgradeCount})";
+        }
     }
 }

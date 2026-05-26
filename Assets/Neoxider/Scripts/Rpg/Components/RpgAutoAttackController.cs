@@ -11,16 +11,19 @@ namespace Neo.Rpg
     [AddComponentMenu("Neoxider/RPG/" + nameof(RpgAutoAttackController))]
     public sealed class RpgAutoAttackController : MonoBehaviour
     {
-        [Tooltip("Tag of the target to find and attack.")]
-        [SerializeField] private string targetTag = "Player";
+        [Tooltip("Tag of the target to find and attack.")] [SerializeField]
+        private string targetTag = "Player";
 
-        [Tooltip("Distance at which to start attacking.")]
-        [SerializeField] [Min(1f)] private float attackRange = 10f;
+        [Tooltip("Distance at which to start attacking.")] [SerializeField] [Min(1f)]
+        private float attackRange = 10f;
 
-        [Tooltip("How often to attempt an attack (in seconds).")]
-        [SerializeField] [Min(0.1f)] private float attackInterval = 1f;
+        [Tooltip("How often to attempt an attack (in seconds).")] [SerializeField] [Min(0.1f)]
+        private float attackInterval = 1f;
+
         [Tooltip("How often to retry searching for target when current target is missing (in seconds).")]
-        [SerializeField] [Min(0.1f)] private float targetFindInterval = 0.5f;
+        [SerializeField]
+        [Min(0.1f)]
+        private float targetFindInterval = 0.5f;
 
         private RpgAttackController _attackController;
         private Transform _target;
@@ -48,10 +51,16 @@ namespace Neo.Rpg
                     _nextTargetFindTime = Time.time + targetFindInterval;
                 }
 
-                if (_target == null) return;
+                if (_target == null)
+                {
+                    return;
+                }
             }
 
-            if (Time.time - _lastAttackTime < attackInterval) return;
+            if (Time.time - _lastAttackTime < attackInterval)
+            {
+                return;
+            }
 
             float dist = Vector3.Distance(transform.position, _target.position);
             if (dist <= attackRange)
@@ -62,7 +71,7 @@ namespace Neo.Rpg
                 {
                     // Success, the controller handled it. Or if it fails, it just waits for next interval.
                 }
-                
+
                 // We update last attack time regardless so it doesn't spam every frame on failure 
                 _lastAttackTime = Time.time;
             }

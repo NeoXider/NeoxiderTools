@@ -9,5 +9,6 @@
 | [Level.md](./Level.md) | LevelComponent, ILevelProvider, кривая уровня, NoCode-мосты |
 | [LevelCurveDefinition.md](./LevelCurveDefinition.md) | LevelCurveDefinition (SO): режимы Formula / Curve / Custom, типы формул, API |
 | [HealthComponent.md](./HealthComponent.md) | HealthComponent, пулы HP/Mana, события, связь с RPG |
+| [Diagnostics.md](./Diagnostics.md) | Общий gate для runtime-логов пакета |
 
 **Навигация:** [← К Docs](../README.md)

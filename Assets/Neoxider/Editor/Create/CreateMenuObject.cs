@@ -136,7 +136,7 @@ namespace Neo
             GameObject myObject = new(componentType.Name);
             Undo.RegisterCreatedObjectUndo(myObject, $"Create {componentType.Name}");
             myObject.transform.SetParent(parentObject?.transform);
-            MonoBehaviour component = myObject.AddComponent(componentType) as MonoBehaviour;
+            var component = myObject.AddComponent(componentType) as MonoBehaviour;
             Selection.activeGameObject = myObject;
             return component;
         }
@@ -146,13 +146,14 @@ namespace Neo
             GameObject prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
             if (prefab == null)
             {
-                Debug.LogWarning($"CreateMenuObject: prefab not found at '{assetPath}'. Creating empty {componentType.Name}.");
+                Debug.LogWarning(
+                    $"CreateMenuObject: prefab not found at '{assetPath}'. Creating empty {componentType.Name}.");
                 return null;
             }
 
             GameObject parentObject = Selection.activeGameObject;
             Object createdObject = PrefabUtility.InstantiatePrefab(prefab, parentObject?.transform);
-            GameObject instance = createdObject as GameObject;
+            var instance = createdObject as GameObject;
             if (instance == null)
             {
                 instance = Object.Instantiate(prefab, parentObject?.transform);

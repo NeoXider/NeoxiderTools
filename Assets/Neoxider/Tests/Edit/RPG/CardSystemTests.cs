@@ -40,15 +40,16 @@ namespace Neo.Editor.Tests
         [Test]
         public void CardData_CustomCards_SupportGenericGames()
         {
-            CardData wolf = CardData.CreateCustom("beast_wolf", "Wolf", 2, "Beast");
-            CardData bear = CardData.CreateCustom("beast_bear", "Bear", 5, "Beast");
-            CardData fireball = CardData.CreateCustom("spell_fireball", "Fireball", 5, "Spell");
+            var wolf = CardData.CreateCustom("beast_wolf", "Wolf", 2, "Beast");
+            var bear = CardData.CreateCustom("beast_bear", "Bear", 5, "Beast");
+            var fireball = CardData.CreateCustom("spell_fireball", "Fireball", 5, "Spell");
 
             Assert.IsTrue(wolf.IsCustom);
             Assert.AreEqual("beast_wolf", wolf.CustomId);
             Assert.AreEqual("Wolf", wolf.ToString());
             Assert.IsTrue(bear.Beats(wolf, null), "Higher SortValue in same custom group should beat lower card.");
-            Assert.IsFalse(fireball.Beats(wolf, null), "Different custom groups should not beat each other by default.");
+            Assert.IsFalse(fireball.Beats(wolf, null),
+                "Different custom groups should not beat each other by default.");
             Assert.IsTrue(bear.HasSameRank(fireball), "SortValue is the generic rank equivalent for custom games.");
             Assert.IsFalse(bear.HasSameSuit(fireball), "Group is the generic suit/faction equivalent.");
         }
@@ -111,17 +112,17 @@ namespace Neo.Editor.Tests
         public void CardViewApis_AllowStandaloneCustomCardsWithoutDeckConfig()
         {
             var texture = new Texture2D(2, 2);
-            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f);
+            var sprite = Sprite.Create(texture, new Rect(0, 0, 2, 2), Vector2.one * 0.5f);
             var cardObject = new GameObject("StandaloneCard");
             var viewObject = new GameObject("StandaloneView");
             var universalObject = new GameObject("StandaloneUniversalView");
 
             try
             {
-                var card = cardObject.AddComponent<CardComponent>();
-                var view = viewObject.AddComponent<CardView>();
-                var universal = universalObject.AddComponent<CardViewUniversal>();
-                CardData custom = CardData.CreateCustom("minion_custom", "Custom Minion", 4, "Neutral");
+                CardComponent card = cardObject.AddComponent<CardComponent>();
+                CardView view = viewObject.AddComponent<CardView>();
+                CardViewUniversal universal = universalObject.AddComponent<CardViewUniversal>();
+                var custom = CardData.CreateCustom("minion_custom", "Custom Minion", 4, "Neutral");
 
                 Assert.DoesNotThrow(() => card.SetSpriteOverrides(sprite));
                 Assert.DoesNotThrow(() => card.SetData(custom));
@@ -153,8 +154,8 @@ namespace Neo.Editor.Tests
 
             try
             {
-                var board = boardObject.AddComponent<BoardComponent>();
-                var card = cardObject.AddComponent<CardComponent>();
+                BoardComponent board = boardObject.AddComponent<BoardComponent>();
+                CardComponent card = cardObject.AddComponent<CardComponent>();
 
                 board.SetCapacity(1, false);
                 board.SetFaceUp(false);
@@ -207,7 +208,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PokerEvaluator_RejectsHandsWithFewerThanFiveNonJokers()
         {
-            var cards = new[]
+            CardData[] cards = new[]
             {
                 new CardData(Suit.Hearts, Rank.Ace),
                 new CardData(Suit.Clubs, Rank.King),
@@ -222,7 +223,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PokerEvaluator_WheelStraight_UsesFiveAsHighCard()
         {
-            var cards = new[]
+            CardData[] cards = new[]
             {
                 new CardData(Suit.Hearts, Rank.Ace),
                 new CardData(Suit.Clubs, Rank.Two),
@@ -256,7 +257,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void PokerRules_TexasHoldem_ReturnsSplitPotWinners()
         {
-            var board = new[]
+            CardData[] board = new[]
             {
                 new CardData(Suit.Hearts, Rank.Ace),
                 new CardData(Suit.Clubs, Rank.King),

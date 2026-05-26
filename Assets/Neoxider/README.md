@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-8.6.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -118,12 +118,12 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 
 ## Samples
 
-Import samples via `Package Manager > Neoxider Tools > Samples`.
+Import samples via `Package Manager > NeoxiderTools > Samples`.
 
 | Sample | Path | Purpose |
 |--------|------|---------|
-| **Demo Scenes** | `Assets/Neoxider/Samples~/Demo/` | Integration scenes for core modules and gameplay features |
-| **NeoxiderPages** | `Assets/Neoxider/Samples~/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) — requires `DOTween Pro` |
+| **Demo Scenes** | dev: `Assets/Neoxider/Samples/Demo/`; UPM source: `Assets/Neoxider/Samples~/Demo/`; imported: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` | Integration scenes for core modules and gameplay features |
+| **NeoxiderPages** | dev: `Assets/Neoxider/Samples/NeoxiderPages/`; UPM source: `Assets/Neoxider/Samples~/NeoxiderPages/`; imported: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) — requires `DOTween Pro` |
 
 ## Documentation
 
@@ -146,7 +146,8 @@ Assets/Neoxider/
   Tests/         # EditMode and PlayMode tests for package runtime/editor-critical flows
   Docs/          # User-facing documentation (RU)
   DocsEn/        # English onboarding and mirrored docs
-  Samples~/      # UPM samples
+  Samples/       # Active development samples and smoke scenes
+  Samples~/      # UPM sample source path before release packaging
   Prefabs/       # Ready-to-use prefabs
   Resources/     # Settings and assets
 ```

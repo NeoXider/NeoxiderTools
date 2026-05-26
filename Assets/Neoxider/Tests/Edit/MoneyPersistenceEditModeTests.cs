@@ -161,14 +161,20 @@ namespace Neo.Editor.Tests.Edit
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool HasKey(string key) => Store.ContainsKey(key);
+            public bool HasKey(string key)
+            {
+                return Store.ContainsKey(key);
+            }
 
             public void DeleteKey(string key)
             {
                 Store.Remove(key);
             }
 
-            public void DeleteAll() => Store.Clear();
+            public void DeleteAll()
+            {
+                Store.Clear();
+            }
 
             public void Save()
             {

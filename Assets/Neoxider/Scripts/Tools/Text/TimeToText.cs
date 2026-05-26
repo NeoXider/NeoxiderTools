@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Extensions;
 using TMPro;
 using UnityEngine;
@@ -63,7 +63,9 @@ namespace Neo.Tools
         [Tooltip("The format to use when displaying time (Clock mode, and Compact mode if enabled)")] [SerializeField]
         private TimeFormat timeFormat = TimeFormat.MinutesSeconds;
 
-        [Tooltip("If true, Compact mode forces the units specified in Time Format. If false, it dynamically skips zero units.")] [SerializeField]
+        [Tooltip(
+            "If true, Compact mode forces the units specified in Time Format. If false, it dynamically skips zero units.")]
+        [SerializeField]
         private bool _compactUseTimeFormat = true;
 
         [Tooltip("Include seconds in compact output (Compact mode only)")] [SerializeField]
@@ -80,6 +82,9 @@ namespace Neo.Tools
 
         [Tooltip("Character to use as separator between time units")] [SerializeField]
         private string separator = ":";
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logWarnings;
 
         #endregion
 
@@ -229,7 +234,11 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogWarning("TimeToText: Text component is not assigned");
+                if (_logWarnings)
+                {
+                    NeoDiagnostics.LogWarning("[TimeToText] Text component is not assigned.", this);
+                }
+
                 return;
             }
 
@@ -247,9 +256,9 @@ namespace Neo.Tools
             {
                 float displayValue = _allowNegative && time < 0 ? Mathf.Abs(time) : time;
                 string formatted = _displayMode == TimeDisplayMode.Compact
-                    ? (_compactUseTimeFormat 
-                        ? TimeSpan.FromSeconds(displayValue).ToCompactString(timeFormat) 
-                        : TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts))
+                    ? _compactUseTimeFormat
+                        ? TimeSpan.FromSeconds(displayValue).ToCompactString(timeFormat)
+                        : TimeSpan.FromSeconds(displayValue).ToCompactString(_compactIncludeSeconds, _compactMaxParts)
                     : displayValue.FormatTime(timeFormat, separator);
                 if (_allowNegative && time < 0)
                 {

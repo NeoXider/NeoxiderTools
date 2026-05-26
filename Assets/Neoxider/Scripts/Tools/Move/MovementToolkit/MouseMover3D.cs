@@ -1,19 +1,19 @@
-/*  MouseMover3D.cs
+﻿/*  MouseMover3D.cs
  *  Legacy-Input universal **3-D** mouse mover
  *  (physics-friendly, no jitter)
  *
- *  Modes ───────────────────────────────────────────────────────────
- *  • DeltaNormalized / DeltaRaw  – move from mouse delta
- *  • MoveToPointHold             – hold LMB → move toward cursor
- *  • ClickToPoint                – click sets target, move until arrival
- *  • Direction                   – click sets point, mouse sets direction vector
+ *  Modes -----------------------------------------------------------
+ *  - DeltaNormalized / DeltaRaw  - move from mouse delta
+ *  - MoveToPointHold             - hold LMB -> move toward cursor
+ *  - ClickToPoint                - click sets target, move until arrival
+ *  - Direction                   - click sets point, mouse sets direction vector
  *
  *  AxisPlane locks motion to a plane (XZ = top-down, XY, YZ)
  *  or a single axis X / Y / Z.
  *
  *  Movement runs once per physics tick:
  *  _desiredVel from Update (delta modes only),
- *  FixedUpdate → Rigidbody.MovePosition → stable motion.
+ *  FixedUpdate -> Rigidbody.MovePosition -> stable motion.
  */
 
 using UnityEngine;
@@ -37,7 +37,7 @@ namespace Neo.Tools
             Z
         }
 
-        // ── PUBLIC CONFIG ───────────────────────────────────────────────
+        // -- PUBLIC CONFIG -----------------------------------------------
         public enum MoveMode
         {
             DeltaNormalized,
@@ -55,8 +55,8 @@ namespace Neo.Tools
         [Header("Speed (u/s)")] [SerializeField]
         private float speed = 6f;
 
-        [Header("Δ-sensitivity")] [SerializeField]
-        private float pxToWorld = 0.01f; // 1 px → m
+        [Header("О”-sensitivity")] [SerializeField]
+        private float pxToWorld = 0.01f; // 1 px -> m
 
         [Header("Raycast mask (optional ground)")] [SerializeField]
         private LayerMask groundMask;
@@ -69,10 +69,10 @@ namespace Neo.Tools
         [SerializeField]
         private bool deltaOnlyWhenButtonHeld = true;
 
-        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right → move left).")] [SerializeField]
+        [Tooltip("Invert horizontal axis in Delta modes (e.g. mouse right -> move left).")] [SerializeField]
         private bool invertDeltaX;
 
-        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up → move down).")] [SerializeField]
+        [Tooltip("Invert vertical axis in Delta modes (e.g. mouse up -> move down).")] [SerializeField]
         private bool invertDeltaY;
 
         [Tooltip("Distance to target below which movement is considered arrived.")] [SerializeField]
@@ -80,6 +80,10 @@ namespace Neo.Tools
 
         public UnityEvent OnMoveStart;
         public UnityEvent OnMoveStop;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logMissingCameraWarning;
+
         private bool _cameraWarningShown;
 
         private Camera cam;
@@ -92,7 +96,7 @@ namespace Neo.Tools
         private Vector3 targetPoint; // ClickToPoint-mode
         private bool wasMoving;
 
-        // ── UNITY ───────────────────────────────────────────────────────
+        // -- UNITY -------------------------------------------------------
         private void Awake()
         {
             if (cam == null)
@@ -100,10 +104,10 @@ namespace Neo.Tools
                 cam = Camera.main;
             }
 
-            if (cam == null && !_cameraWarningShown)
+            if (cam == null && _logMissingCameraWarning && !_cameraWarningShown)
             {
                 _cameraWarningShown = true;
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[MouseMover3D] No camera assigned and Camera.main is null. Raycast and plane projection may fail.",
                     this);
             }
@@ -123,10 +127,10 @@ namespace Neo.Tools
             ApplyStep(step);
         }
 
-        // ── STATE ───────────────────────────────────────────────────────
+        // -- STATE -------------------------------------------------------
         public bool IsMoving { get; private set; }
 
-        // ── IMover ──────────────────────────────────────────────────────
+        // -- IMover ------------------------------------------------------
         public void MoveDelta(Vector2 delta)
         {
             Vector3 d = MapVector2ToPlaneDelta(delta);
@@ -153,7 +157,7 @@ namespace Neo.Tools
             }
         }
 
-        // ── INPUT --------------------------------------------------------
+        // -- INPUT --------------------------------------------------------
         private void ReadInput()
         {
             if (Input.GetMouseButtonDown(mouseButton))
@@ -206,7 +210,7 @@ namespace Neo.Tools
             }
         }
 
-        // ── STEP CALCULATION --------------------------------------------
+        // -- STEP CALCULATION --------------------------------------------
         private Vector3 ComputeStep(float dt)
         {
             switch (mode)
@@ -261,7 +265,7 @@ namespace Neo.Tools
             return Vector3.zero;
         }
 
-        // ── APPLY STEP ---------------------------------------------------
+        // -- APPLY STEP ---------------------------------------------------
         private void ApplyStep(Vector3 delta)
         {
             bool movingNow = delta.sqrMagnitude > 1e-4f;
@@ -293,7 +297,7 @@ namespace Neo.Tools
             }
         }
 
-        // ── HELPERS ------------------------------------------------------
+        // -- HELPERS ------------------------------------------------------
         private Vector3 MoveTowards(Vector3 target, float dt)
         {
             Vector3 diff = RestrictAxes(target - transform.position);

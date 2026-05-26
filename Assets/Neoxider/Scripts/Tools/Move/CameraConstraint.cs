@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -131,7 +131,7 @@ namespace Neo.Tools
                 if (!_failureWarningShown)
                 {
                     _failureWarningShown = true;
-                    Debug.LogWarning("CameraConstraint: No camera found. Disabling.", this);
+                    NeoDiagnostics.LogWarning("CameraConstraint: No camera found. Disabling.", this);
                 }
 
                 onConstraintFailed?.Invoke();
@@ -144,7 +144,8 @@ namespace Neo.Tools
                 if (!_failureWarningShown)
                 {
                     _failureWarningShown = true;
-                    Debug.LogWarning($"CameraConstraint: Bounds source not set for type {boundsType}. Disabling.",
+                    NeoDiagnostics.LogWarning(
+                        $"CameraConstraint: Bounds source not set for type {boundsType}. Disabling.",
                         this);
                 }
 

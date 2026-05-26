@@ -35,22 +35,48 @@ namespace Neo.Tests.Play.RPG
         [TearDown]
         public void TearDown()
         {
-            if (_player != null) Object.DestroyImmediate(_player);
-            if (_npc != null) Object.DestroyImmediate(_npc);
+            if (_player != null)
+            {
+                Object.DestroyImmediate(_player);
+            }
+
+            if (_npc != null)
+            {
+                Object.DestroyImmediate(_npc);
+            }
 
             // Clean up any spawned projectile clones (active or inactive) before the template
             // so we don't accidentally kill the template earlier than intended.
             foreach (RpgProjectile leftover in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (_projectileTemplate != null && leftover.gameObject == _projectileTemplate) continue;
+                if (_projectileTemplate != null && leftover.gameObject == _projectileTemplate)
+                {
+                    continue;
+                }
+
                 Object.DestroyImmediate(leftover.gameObject);
             }
 
-            if (_projectileTemplate != null) Object.DestroyImmediate(_projectileTemplate);
-            if (_attackDefinition != null) Object.DestroyImmediate(_attackDefinition);
-            if (_projectileDefinition != null) Object.DestroyImmediate(_projectileDefinition);
-            if (_projectilePreset != null) Object.DestroyImmediate(_projectilePreset);
+            if (_projectileTemplate != null)
+            {
+                Object.DestroyImmediate(_projectileTemplate);
+            }
+
+            if (_attackDefinition != null)
+            {
+                Object.DestroyImmediate(_attackDefinition);
+            }
+
+            if (_projectileDefinition != null)
+            {
+                Object.DestroyImmediate(_projectileDefinition);
+            }
+
+            if (_projectilePreset != null)
+            {
+                Object.DestroyImmediate(_projectilePreset);
+            }
 
             _player = null;
             _npc = null;
@@ -63,14 +89,14 @@ namespace Neo.Tests.Play.RPG
         [UnityTest]
         public IEnumerator PlayerDirectAttack_DealsDamageToNpc()
         {
-            _player = BuildCharacter("Player", new Vector3(0f, 0f, 0f), PlayerStartHp, addCollider: false);
-            _npc = BuildCharacter("MeleeDummy", new Vector3(0f, 0f, 2f), NpcStartHp, addCollider: true);
+            _player = BuildCharacter("Player", new Vector3(0f, 0f, 0f), PlayerStartHp, false);
+            _npc = BuildCharacter("MeleeDummy", new Vector3(0f, 0f, 2f), NpcStartHp, true);
 
             RpgAttackController controller = _player.AddComponent<RpgAttackController>();
             controller.EnableBuiltInInput = false;
             SetPrivate(controller, "_characterSource", _player.GetComponent<RpgCharacter>());
 
-            _attackDefinition = CreateDirectAttack(power: 35f, range: 5f, radius: 0.6f);
+            _attackDefinition = CreateDirectAttack(35f, 5f, 0.6f);
             SetPrivate(controller, "_attacks", new[] { _attackDefinition });
 
             yield return null;
@@ -90,8 +116,8 @@ namespace Neo.Tests.Play.RPG
         [UnityTest]
         public IEnumerator MeleeNpc_ContactDamage_DrainsPlayerHp()
         {
-            _player = BuildCharacter("Player", new Vector3(0f, 0f, 0f), PlayerStartHp, addCollider: true);
-            _npc = BuildCharacter("MeleeNpc", new Vector3(0f, 0f, 1.2f), NpcStartHp, addCollider: true);
+            _player = BuildCharacter("Player", new Vector3(0f, 0f, 0f), PlayerStartHp, true);
+            _npc = BuildCharacter("MeleeNpc", new Vector3(0f, 0f, 1.2f), NpcStartHp, true);
 
             RpgContactDamage contact = _npc.AddComponent<RpgContactDamage>();
             SetPrivate(contact, "damage", 7);
@@ -116,8 +142,8 @@ namespace Neo.Tests.Play.RPG
         [UnityTest]
         public IEnumerator RangedNpc_ProjectileAttack_DealsDamageToPlayer()
         {
-            _player = BuildCharacter("Player", new Vector3(0f, 0f, 3.5f), PlayerStartHp, addCollider: true);
-            _npc = BuildCharacter("RangedNpc", new Vector3(0f, 0f, 0f), NpcStartHp, addCollider: false);
+            _player = BuildCharacter("Player", new Vector3(0f, 0f, 3.5f), PlayerStartHp, true);
+            _npc = BuildCharacter("RangedNpc", new Vector3(0f, 0f, 0f), NpcStartHp, false);
 
             RpgAttackController controller = _npc.AddComponent<RpgAttackController>();
             controller.EnableBuiltInInput = false;
@@ -130,7 +156,7 @@ namespace Neo.Tests.Play.RPG
             _projectileTemplate.SetActive(false);
             RpgProjectile projectile = _projectileTemplate.AddComponent<RpgProjectile>();
 
-            _projectileDefinition = CreateProjectileAttack(power: 22f, projectilePrefab: projectile);
+            _projectileDefinition = CreateProjectileAttack(22f, projectile);
             _projectilePreset = ScriptableObject.CreateInstance<RpgAttackPreset>();
             _projectilePreset.name = "TestRangedPreset";
             SetPrivate(_projectilePreset, "_attackDefinition", _projectileDefinition);
@@ -152,7 +178,11 @@ namespace Neo.Tests.Play.RPG
             while (waited < 2.0f)
             {
                 waited += Time.deltaTime;
-                if (_player.GetComponent<RpgCharacter>().HpValue < beforeHp) break;
+                if (_player.GetComponent<RpgCharacter>().HpValue < beforeHp)
+                {
+                    break;
+                }
+
                 yield return null;
             }
 
@@ -170,8 +200,15 @@ namespace Neo.Tests.Play.RPG
             foreach (RpgProjectile p in Object.FindObjectsByType<RpgProjectile>(
                          FindObjectsInactive.Include, FindObjectsSortMode.None))
             {
-                if (p.gameObject == _projectileTemplate) continue;
-                if (!p.gameObject.activeSelf) p.gameObject.SetActive(true);
+                if (p.gameObject == _projectileTemplate)
+                {
+                    continue;
+                }
+
+                if (!p.gameObject.activeSelf)
+                {
+                    p.gameObject.SetActive(true);
+                }
             }
         }
 

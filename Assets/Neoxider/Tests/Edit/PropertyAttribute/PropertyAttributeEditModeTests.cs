@@ -106,7 +106,8 @@ namespace Neo.Editor.Tests
                 validGameObject.AddComponent<TestContractComponent>();
 
                 Assert.That(RequireInterfaceDrawer.IsReferenceValid(validGameObject, typeof(ITestContract)), Is.True);
-                Assert.That(RequireInterfaceDrawer.IsReferenceValid(invalidGameObject, typeof(ITestContract)), Is.False);
+                Assert.That(RequireInterfaceDrawer.IsReferenceValid(invalidGameObject, typeof(ITestContract)),
+                    Is.False);
                 Assert.That(RequireInterfaceDrawer.IsReferenceValid(validSo, typeof(ITestContract)), Is.True);
                 Assert.That(RequireInterfaceDrawer.IsReferenceValid(invalidSo, typeof(ITestContract)), Is.False);
                 Assert.That(RequireInterfaceDrawer.IsReferenceValid(null, typeof(ITestContract)), Is.True);
@@ -158,7 +159,8 @@ namespace Neo.Editor.Tests
                 BindingFlags.Public | BindingFlags.Static);
             ButtonAttribute attribute = method.GetCustomAttribute<ButtonAttribute>();
 
-            Assert.That(ButtonAttributeDrawer.GetButtonText(method, attribute), Is.EqualTo(nameof(ButtonTarget.SecondButton)));
+            Assert.That(ButtonAttributeDrawer.GetButtonText(method, attribute),
+                Is.EqualTo(nameof(ButtonTarget.SecondButton)));
         }
 
         [Test]

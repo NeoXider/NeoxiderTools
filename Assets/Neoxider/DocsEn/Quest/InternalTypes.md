@@ -1,4 +1,4 @@
-﻿# Quest вЂ” Internal Types
+﻿# Quest - Internal Types
 
 | Type | Description |
 |------|-------------|
@@ -6,4 +6,4 @@
 | `QuestNoCodeAction` | No-Code action for the quest system. |
 
 ## See Also
-- [QuestComponent](QuestBridge.md) вЂ” в†ђ [Quest](README.md)
+- [QuestComponent](QuestBridge.md) - <- [Quest](README.md)

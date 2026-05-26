@@ -77,8 +77,10 @@ namespace Neo.Editor.Tests.Edit
             public event System.Action<string> OnKeyChanged;
 #pragma warning restore CS0067
 
-            public int GetInt(string key, int defaultValue = 0) =>
-                _store.TryGetValue(key, out string s) && int.TryParse(s, out int v) ? v : defaultValue;
+            public int GetInt(string key, int defaultValue = 0)
+            {
+                return _store.TryGetValue(key, out string s) && int.TryParse(s, out int v) ? v : defaultValue;
+            }
 
             public void SetInt(string key, int value)
             {
@@ -86,8 +88,10 @@ namespace Neo.Editor.Tests.Edit
                 OnKeyChanged?.Invoke(key);
             }
 
-            public float GetFloat(string key, float defaultValue = 0f) =>
-                _store.TryGetValue(key, out string s) && float.TryParse(s, out float v) ? v : defaultValue;
+            public float GetFloat(string key, float defaultValue = 0f)
+            {
+                return _store.TryGetValue(key, out string s) && float.TryParse(s, out float v) ? v : defaultValue;
+            }
 
             public void SetFloat(string key, float value)
             {
@@ -95,8 +99,10 @@ namespace Neo.Editor.Tests.Edit
                 OnKeyChanged?.Invoke(key);
             }
 
-            public string GetString(string key, string defaultValue = "") =>
-                _store.TryGetValue(key, out string s) ? s : defaultValue;
+            public string GetString(string key, string defaultValue = "")
+            {
+                return _store.TryGetValue(key, out string s) ? s : defaultValue;
+            }
 
             public void SetString(string key, string value)
             {
@@ -104,8 +110,10 @@ namespace Neo.Editor.Tests.Edit
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool GetBool(string key, bool defaultValue = false) =>
-                _store.TryGetValue(key, out string s) && bool.TryParse(s, out bool v) ? v : defaultValue;
+            public bool GetBool(string key, bool defaultValue = false)
+            {
+                return _store.TryGetValue(key, out string s) && bool.TryParse(s, out bool v) ? v : defaultValue;
+            }
 
             public void SetBool(string key, bool value)
             {
@@ -113,11 +121,20 @@ namespace Neo.Editor.Tests.Edit
                 OnKeyChanged?.Invoke(key);
             }
 
-            public bool HasKey(string key) => _store.ContainsKey(key);
+            public bool HasKey(string key)
+            {
+                return _store.ContainsKey(key);
+            }
 
-            public void DeleteKey(string key) => _store.Remove(key);
+            public void DeleteKey(string key)
+            {
+                _store.Remove(key);
+            }
 
-            public void DeleteAll() => _store.Clear();
+            public void DeleteAll()
+            {
+                _store.Clear();
+            }
 
             public void Save()
             {

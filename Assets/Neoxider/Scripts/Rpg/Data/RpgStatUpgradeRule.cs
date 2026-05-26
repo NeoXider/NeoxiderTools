@@ -17,8 +17,8 @@ namespace Neo.Rpg
         [Tooltip("How much the stat increases per upgrade point spent.")]
         public float increasePerPoint = 1f;
 
-        [Tooltip("How many upgrade points one purchase consumes. 0 = invalid, 1 = standard.")]
-        [Min(1)] public int costPerUpgrade = 1;
+        [Tooltip("How many upgrade points one purchase consumes. 0 = invalid, 1 = standard.")] [Min(1)]
+        public int costPerUpgrade = 1;
 
         [Tooltip("Maximum number of times this stat can be upgraded. -1 = unlimited.")]
         public int maxUpgradeCount = -1;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
@@ -16,15 +16,29 @@ namespace Neo.Tools
         private static readonly Type InputSystemUiInputModuleType =
             ResolveType("UnityEngine.InputSystem.UI.InputSystemUIInputModule");
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticState()
+        {
+            _physicsRaycasterEnsured3D = false;
+            _physicsRaycasterEnsured2D = false;
+            _eventSystemChecked = false;
+        }
+
         public static void EnsureEventSystem(MonoBehaviour owner, bool autoCheckEventSystem,
             bool autoCreateEventSystemIfMissing)
         {
-            if (!autoCheckEventSystem || _eventSystemChecked)
+            if (!autoCheckEventSystem)
             {
                 return;
             }
 
             EventSystem eventSystem = EventSystem.current ?? Object.FindFirstObjectByType<EventSystem>();
+            if (_eventSystemChecked && eventSystem != null)
+            {
+                EnsureInputModule(eventSystem.gameObject);
+                return;
+            }
+
             if (eventSystem == null)
             {
                 if (autoCreateEventSystemIfMissing)
@@ -33,7 +47,7 @@ namespace Neo.Tools
                 }
                 else if (owner != null)
                 {
-                    Debug.LogWarning("InteractiveObject: EventSystem not found in scene", owner);
+                    NeoDiagnostics.LogWarning("InteractiveObject: EventSystem not found in scene", owner);
                 }
             }
 
@@ -94,9 +108,6 @@ namespace Neo.Tools
             GameObject eventSystemObject = new("EventSystem", typeof(EventSystem));
             EventSystem eventSystem = eventSystemObject.GetComponent<EventSystem>();
             EnsureInputModule(eventSystemObject);
-            Debug.LogWarning(
-                "InteractiveObject: EventSystem not found in scene. Created EventSystem automatically.",
-                eventSystemObject);
             return eventSystem;
         }
 
@@ -122,7 +133,7 @@ namespace Neo.Tools
                     return;
                 }
 
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "InteractiveObject: Input System is active, but InputSystemUIInputModule type is unavailable. StandaloneInputModule was removed to avoid InvalidOperationException.",
                     eventSystemObject);
                 return;

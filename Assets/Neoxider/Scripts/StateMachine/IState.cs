@@ -1,4 +1,4 @@
-namespace Neo.StateMachine
+﻿namespace Neo.StateMachine
 {
     /// <summary>
     ///     Contract for states used with StateMachine.
@@ -14,7 +14,7 @@ namespace Neo.StateMachine
     /// {
     ///     public void OnEnter()
     ///     {
-    ///         Debug.Log("Entered Idle State");
+    ///         global::NeoDiagnostics.Log("Entered Idle State");
     ///     }
     ///     
     ///     public void OnUpdate()
@@ -24,7 +24,7 @@ namespace Neo.StateMachine
     ///     
     ///     public void OnExit()
     ///     {
-    ///         Debug.Log("Exited Idle State");
+    ///         global::NeoDiagnostics.Log("Exited Idle State");
     ///     }
     ///     
     ///     public void OnFixedUpdate()

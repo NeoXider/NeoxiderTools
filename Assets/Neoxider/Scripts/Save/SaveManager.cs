@@ -22,8 +22,8 @@ namespace Neo.Save
         private static readonly Dictionary<string, (MonoBehaviour instance, List<FieldInfo> fields)> _saveableComponents
             = new();
 
-        [Header("Diagnostics")]
-        [SerializeField] private bool _debugLog;
+        [Header("Diagnostics")] [SerializeField]
+        private bool _debugLog;
 
         private static bool DebugLogEnabled => HasInstance && I._debugLog;
 
@@ -73,6 +73,7 @@ namespace Neo.Save
             {
                 SaveProvider.Log("[SaveManager] Initialized and Loaded", this);
             }
+
             IsLoad = true;
             SceneManager.sceneLoaded += OnSceneLoaded;
         }
@@ -201,6 +202,7 @@ namespace Neo.Save
             {
                 SaveProvider.Log($"[SaveManager] saveable count: {_saveableComponents.Count}", I);
             }
+
             return newlyRegisteredComponents;
         }
 

@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Reflection;
 using Mirror;
 using Neo.Network;
 using NUnit.Framework;
@@ -16,30 +17,42 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerRelayTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerRelayTest", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 88001);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
         }
 
         // ────────────── Void Trigger ──────────────
@@ -48,11 +61,11 @@ namespace Neo.Tests.Play
         public IEnumerator Trigger_Void_FiresOnAllClients()
         {
             var relayObj = new GameObject("Relay");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
             // Configure channel via reflection (serialized field)
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
@@ -62,7 +75,7 @@ namespace Neo.Tests.Play
             };
             channelsField.SetValue(relay, new[] { channel });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88010);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -85,10 +98,10 @@ namespace Neo.Tests.Play
         public IEnumerator TriggerFloat_FiresWithPayload()
         {
             var relayObj = new GameObject("RelayFloat");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
@@ -98,7 +111,7 @@ namespace Neo.Tests.Play
             };
             channelsField.SetValue(relay, new[] { channel });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88011);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -121,10 +134,10 @@ namespace Neo.Tests.Play
         public IEnumerator TriggerString_FiresWithPayload()
         {
             var relayObj = new GameObject("RelayString");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
@@ -134,7 +147,7 @@ namespace Neo.Tests.Play
             };
             channelsField.SetValue(relay, new[] { channel });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88012);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -157,10 +170,10 @@ namespace Neo.Tests.Play
         public IEnumerator ServerOnly_Scope_FiresOnServer()
         {
             var relayObj = new GameObject("RelayServerOnly");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
@@ -170,7 +183,7 @@ namespace Neo.Tests.Play
             };
             channelsField.SetValue(relay, new[] { channel });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88013);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -191,10 +204,10 @@ namespace Neo.Tests.Play
         public IEnumerator OthersOnly_Scope_DoesNotEchoToHostSender()
         {
             var relayObj = new GameObject("RelayOthersOnly");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
@@ -204,7 +217,7 @@ namespace Neo.Tests.Play
             };
             channelsField.SetValue(relay, new[] { channel });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88016);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -227,16 +240,18 @@ namespace Neo.Tests.Play
         public IEnumerator TriggerByName_FindsCorrectChannel()
         {
             var relayObj = new GameObject("RelayByName");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var channelsField = typeof(NetworkActionRelay).GetField("_channels",
+            FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            var ch0 = new NetworkActionChannel { channelName = "alpha", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
-            var ch1 = new NetworkActionChannel { channelName = "beta", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
+            var ch0 = new NetworkActionChannel
+                { channelName = "alpha", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
+            var ch1 = new NetworkActionChannel
+                { channelName = "beta", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
             channelsField.SetValue(relay, new[] { ch0, ch1 });
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88014);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);
@@ -261,10 +276,10 @@ namespace Neo.Tests.Play
         public IEnumerator Trigger_InvalidIndex_DoesNotThrow()
         {
             var relayObj = new GameObject("RelayInvalid");
-            var relay = relayObj.AddComponent<NetworkActionRelay>();
+            NetworkActionRelay relay = relayObj.AddComponent<NetworkActionRelay>();
             relay.isNetworked = true;
 
-            var id = relayObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = relayObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 88015);
             NetworkClient.RegisterPrefab(relayObj);
             NetworkServer.Spawn(relayObj);

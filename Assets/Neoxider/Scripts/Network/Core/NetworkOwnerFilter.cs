@@ -30,12 +30,10 @@ namespace Neo.Network
     [AddComponentMenu("Neoxider/Network/Network Owner Filter")]
     public class NetworkOwnerFilter : NeoNetworkComponent
     {
-        [Header("Filter")]
-        [Tooltip("Which network role is allowed to pass.")]
-        [SerializeField] private OwnerFilterMode _mode = OwnerFilterMode.LocalPlayerOnly;
+        [Header("Filter")] [Tooltip("Which network role is allowed to pass.")] [SerializeField]
+        private OwnerFilterMode _mode = OwnerFilterMode.LocalPlayerOnly;
 
-        [Header("Events")]
-        [Tooltip("Fired when the current role matches the filter.")]
+        [Header("Events")] [Tooltip("Fired when the current role matches the filter.")]
         public UnityEvent onAllowed = new();
 
         [Tooltip("Fired when the current role does NOT match the filter.")]
@@ -49,9 +47,13 @@ namespace Neo.Network
         public void Filter()
         {
             if (IsAllowed())
+            {
                 onAllowed?.Invoke();
+            }
             else
+            {
                 onDenied?.Invoke();
+            }
         }
 
         /// <summary>

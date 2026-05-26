@@ -30,10 +30,18 @@ namespace Neo.Rpg.Runtime
         public void RegisterBuffLibrary(IEnumerable<BuffDefinition> defs)
         {
             _buffLibrary.Clear();
-            if (defs == null) return;
+            if (defs == null)
+            {
+                return;
+            }
+
             foreach (BuffDefinition def in defs)
             {
-                if (def == null || string.IsNullOrWhiteSpace(def.Id)) continue;
+                if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                {
+                    continue;
+                }
+
                 _buffLibrary[def.Id] = def;
             }
         }
@@ -41,10 +49,18 @@ namespace Neo.Rpg.Runtime
         public void RegisterStatusLibrary(IEnumerable<StatusEffectDefinition> defs)
         {
             _statusLibrary.Clear();
-            if (defs == null) return;
+            if (defs == null)
+            {
+                return;
+            }
+
             foreach (StatusEffectDefinition def in defs)
             {
-                if (def == null || string.IsNullOrWhiteSpace(def.Id)) continue;
+                if (def == null || string.IsNullOrWhiteSpace(def.Id))
+                {
+                    continue;
+                }
+
                 _statusLibrary[def.Id] = def;
             }
         }
@@ -53,22 +69,36 @@ namespace Neo.Rpg.Runtime
         public void RegisterInlineBuffs(IEnumerable<InlineBuffEntry> entries)
         {
             _inlineLibrary.Clear();
-            if (entries == null) return;
+            if (entries == null)
+            {
+                return;
+            }
+
             foreach (InlineBuffEntry entry in entries)
             {
-                if (entry == null || string.IsNullOrWhiteSpace(entry.Id)) continue;
+                if (entry == null || string.IsNullOrWhiteSpace(entry.Id))
+                {
+                    continue;
+                }
+
                 _inlineLibrary[entry.Id] = entry;
             }
         }
 
-        public bool TryGetBuff(string id, out BuffDefinition def) =>
-            _buffLibrary.TryGetValue(id ?? string.Empty, out def);
+        public bool TryGetBuff(string id, out BuffDefinition def)
+        {
+            return _buffLibrary.TryGetValue(id ?? string.Empty, out def);
+        }
 
-        public bool TryGetStatus(string id, out StatusEffectDefinition def) =>
-            _statusLibrary.TryGetValue(id ?? string.Empty, out def);
+        public bool TryGetStatus(string id, out StatusEffectDefinition def)
+        {
+            return _statusLibrary.TryGetValue(id ?? string.Empty, out def);
+        }
 
-        public bool TryGetInlineBuff(string id, out InlineBuffEntry entry) =>
-            _inlineLibrary.TryGetValue(id ?? string.Empty, out entry);
+        public bool TryGetInlineBuff(string id, out InlineBuffEntry entry)
+        {
+            return _inlineLibrary.TryGetValue(id ?? string.Empty, out entry);
+        }
 
         // ── Apply / remove ──
 
@@ -76,7 +106,9 @@ namespace Neo.Rpg.Runtime
         public ApplyResult<ActiveBuffEntry> ApplyBuff(BuffDefinition def)
         {
             if (def == null || string.IsNullOrWhiteSpace(def.Id))
+            {
                 return ApplyResult<ActiveBuffEntry>.Failed("Definition is null or has empty Id.");
+            }
 
             _buffLibrary[def.Id] = def; // ensure library lookup works for buffs applied at runtime
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
@@ -86,19 +118,21 @@ namespace Neo.Rpg.Runtime
             {
                 // Refresh — push the timer forward, that's the usual expectation.
                 existing.ExpiresAtUtc = expiresAt;
-                return ApplyResult<ActiveBuffEntry>.Ok(existing, isNew: false);
+                return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
             }
 
             ActiveBuffEntry entry = new() { BuffId = def.Id, ExpiresAtUtc = expiresAt };
             _activeBuffs.Add(entry);
-            return ApplyResult<ActiveBuffEntry>.Ok(entry, isNew: true);
+            return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
         }
 
         /// <summary>Applies an inline (non-SO) buff. Same lifecycle as the SO variant.</summary>
         public ApplyResult<ActiveBuffEntry> ApplyInlineBuff(InlineBuffEntry inline)
         {
             if (inline == null || string.IsNullOrWhiteSpace(inline.Id))
+            {
                 return ApplyResult<ActiveBuffEntry>.Failed("InlineBuffEntry is null or has empty Id.");
+            }
 
             _inlineLibrary[inline.Id] = inline;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, inline.Duration);
@@ -107,28 +141,37 @@ namespace Neo.Rpg.Runtime
             if (existing != null)
             {
                 existing.ExpiresAtUtc = expiresAt;
-                return ApplyResult<ActiveBuffEntry>.Ok(existing, isNew: false);
+                return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
             }
 
             ActiveBuffEntry entry = new() { BuffId = inline.Id, ExpiresAtUtc = expiresAt };
             _activeBuffs.Add(entry);
-            return ApplyResult<ActiveBuffEntry>.Ok(entry, isNew: true);
+            return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
         }
 
         public bool RemoveBuff(string id)
         {
             ActiveBuffEntry entry = FindBuff(id);
-            if (entry == null) return false;
+            if (entry == null)
+            {
+                return false;
+            }
+
             _activeBuffs.Remove(entry);
             return true;
         }
 
-        public void ClearAllBuffs() => _activeBuffs.Clear();
+        public void ClearAllBuffs()
+        {
+            _activeBuffs.Clear();
+        }
 
         public ApplyResult<ActiveStatusEntry> ApplyStatus(StatusEffectDefinition def)
         {
             if (def == null || string.IsNullOrWhiteSpace(def.Id))
+            {
                 return ApplyResult<ActiveStatusEntry>.Failed("Definition is null or has empty Id.");
+            }
 
             _statusLibrary[def.Id] = def;
             double expiresAt = RpgTimeUtility.GetCurrentUnixTimestamp() + Mathf.Max(0.01f, def.Duration);
@@ -140,19 +183,24 @@ namespace Neo.Rpg.Runtime
                 {
                     existing.Stacks++;
                 }
+
                 existing.ExpiresAtUtc = expiresAt;
-                return ApplyResult<ActiveStatusEntry>.Ok(existing, isNew: false);
+                return ApplyResult<ActiveStatusEntry>.Ok(existing, false);
             }
 
             ActiveStatusEntry entry = new() { StatusId = def.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
             _activeStatuses.Add(entry);
-            return ApplyResult<ActiveStatusEntry>.Ok(entry, isNew: true);
+            return ApplyResult<ActiveStatusEntry>.Ok(entry, true);
         }
 
         public bool RemoveStatus(string id)
         {
             ActiveStatusEntry entry = FindStatus(id);
-            if (entry == null) return false;
+            if (entry == null)
+            {
+                return false;
+            }
+
             _activeStatuses.Remove(entry);
             _statusTickAccumulators.Remove(entry.StatusId);
             return true;
@@ -164,8 +212,15 @@ namespace Neo.Rpg.Runtime
             _statusTickAccumulators.Clear();
         }
 
-        public bool HasBuff(string id) => FindBuff(id) != null;
-        public bool HasStatus(string id) => FindStatus(id) != null;
+        public bool HasBuff(string id)
+        {
+            return FindBuff(id) != null;
+        }
+
+        public bool HasStatus(string id)
+        {
+            return FindStatus(id) != null;
+        }
 
         // ── Tick ──
 
@@ -180,7 +235,11 @@ namespace Neo.Rpg.Runtime
 
             for (int i = _activeBuffs.Count - 1; i >= 0; i--)
             {
-                if (_activeBuffs[i].ExpiresAtUtc > now) continue;
+                if (_activeBuffs[i].ExpiresAtUtc > now)
+                {
+                    continue;
+                }
+
                 string id = _activeBuffs[i].BuffId;
                 _activeBuffs.RemoveAt(i);
                 onBuffExpired?.Invoke(id);
@@ -194,7 +253,11 @@ namespace Neo.Rpg.Runtime
                     TryGetStatus(entry.StatusId, out StatusEffectDefinition def) &&
                     def != null && def.TickDamagePerSecond > 0f && def.Duration > 0f)
                 {
-                    if (!_statusTickAccumulators.TryGetValue(entry.StatusId, out float acc)) acc = 0f;
+                    if (!_statusTickAccumulators.TryGetValue(entry.StatusId, out float acc))
+                    {
+                        acc = 0f;
+                    }
+
                     acc += deltaTime;
                     float interval = def.TickInterval;
                     while (acc >= interval)
@@ -202,6 +265,7 @@ namespace Neo.Rpg.Runtime
                         statusDamageCallback(def, def.TickDamagePerSecond * interval * Mathf.Max(1, entry.Stacks));
                         acc -= interval;
                     }
+
                     _statusTickAccumulators[entry.StatusId] = acc;
                 }
 
@@ -249,13 +313,17 @@ namespace Neo.Rpg.Runtime
             for (int j = 0; j < mods.Length; j++)
             {
                 BuffStatModifier m = mods[j];
-                if (m == null) continue;
+                if (m == null)
+                {
+                    continue;
+                }
+
                 buffer.Add(new BuffStatModifierApplication(
                     m.StatType,
                     m.TargetIdValue,
                     m.SpecificDamageType,
                     m.Value,
-                    stacks: 1));
+                    1));
             }
         }
 
@@ -268,13 +336,17 @@ namespace Neo.Rpg.Runtime
             statuses?.Clear();
 
             foreach (ActiveBuffEntry e in _activeBuffs)
+            {
                 buffs?.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
+            }
 
             foreach (ActiveStatusEntry e in _activeStatuses)
+            {
                 statuses?.Add(new ActiveStatusEntry
                 {
                     StatusId = e.StatusId, ExpiresAtUtc = e.ExpiresAtUtc, Stacks = e.Stacks
                 });
+            }
         }
 
         /// <summary>Restores active entries from save/snapshot collections.</summary>
@@ -283,25 +355,52 @@ namespace Neo.Rpg.Runtime
             _activeBuffs.Clear();
             _activeStatuses.Clear();
             _statusTickAccumulators.Clear();
-            if (buffs != null) _activeBuffs.AddRange(buffs);
-            if (statuses != null) _activeStatuses.AddRange(statuses);
+            if (buffs != null)
+            {
+                _activeBuffs.AddRange(buffs);
+            }
+
+            if (statuses != null)
+            {
+                _activeStatuses.AddRange(statuses);
+            }
         }
 
         // ── Internals ──
 
         private ActiveBuffEntry FindBuff(string id)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
             for (int i = 0; i < _activeBuffs.Count; i++)
-                if (_activeBuffs[i].BuffId == id) return _activeBuffs[i];
+            {
+                if (_activeBuffs[i].BuffId == id)
+                {
+                    return _activeBuffs[i];
+                }
+            }
+
             return null;
         }
 
         private ActiveStatusEntry FindStatus(string id)
         {
-            if (string.IsNullOrWhiteSpace(id)) return null;
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return null;
+            }
+
             for (int i = 0; i < _activeStatuses.Count; i++)
-                if (_activeStatuses[i].StatusId == id) return _activeStatuses[i];
+            {
+                if (_activeStatuses[i].StatusId == id)
+                {
+                    return _activeStatuses[i];
+                }
+            }
+
             return null;
         }
 
@@ -314,11 +413,21 @@ namespace Neo.Rpg.Runtime
 
             private ApplyResult(T entry, bool success, bool isNew, string failureReason)
             {
-                Entry = entry; Success = success; IsNew = isNew; FailureReason = failureReason;
+                Entry = entry;
+                Success = success;
+                IsNew = isNew;
+                FailureReason = failureReason;
             }
 
-            public static ApplyResult<T> Ok(T entry, bool isNew) => new(entry, true, isNew, null);
-            public static ApplyResult<T> Failed(string reason) => new(null, false, false, reason);
+            public static ApplyResult<T> Ok(T entry, bool isNew)
+            {
+                return new ApplyResult<T>(entry, true, isNew, null);
+            }
+
+            public static ApplyResult<T> Failed(string reason)
+            {
+                return new ApplyResult<T>(null, false, false, reason);
+            }
         }
     }
 }

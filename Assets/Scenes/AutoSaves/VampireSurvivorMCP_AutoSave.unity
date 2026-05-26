@@ -336,9 +336,7 @@ GameObject:
   - component: {fileID: 508171211}
   - component: {fileID: 508171210}
   - component: {fileID: 508171209}
-  - component: {fileID: 508171215}
   - component: {fileID: 508171213}
-  - component: {fileID: 508171216}
   - component: {fileID: 508171217}
   - component: {fileID: 508171218}
   m_Layer: 0
@@ -456,6 +454,8 @@ MonoBehaviour:
   _disableLookOnPause: 1
   _toggleCursorOnEscape: 1
   _externalCursorLockController: {fileID: 0}
+  _logSetupWarnings: 1
+  _logInputFallbackWarnings: 0
   _onJumped:
     m_PersistentCalls:
       m_Calls: []
@@ -585,30 +585,6 @@ MonoBehaviour:
   _onProfileReset:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &508171215
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 508171207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75d4cdefd4d40874a9897c1f406ca356, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!114 &508171216
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 508171207}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 0dde4ac34d5a3dd44bdf468ca7633183, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &508171217
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1885,6 +1861,10 @@ PrefabInstance:
     - target: {fileID: 5799285930700904068, guid: 7acc62464f0a98a4a993be11be82c867, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6641656352386739003, guid: 7acc62464f0a98a4a993be11be82c867, type: 3}
+      propertyPath: sceneId
+      value: 4153275701
       objectReference: {fileID: 0}
     - target: {fileID: 6866284234529158041, guid: 7acc62464f0a98a4a993be11be82c867, type: 3}
       propertyPath: m_Name

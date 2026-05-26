@@ -38,37 +38,61 @@ namespace Neo.Rpg
         /// <summary>Canonical id string used at runtime / network / save.</summary>
         public string Value =>
             preset == RpgStatPreset.Custom
-                ? (string.IsNullOrWhiteSpace(customId) ? string.Empty : customId.Trim())
+                ? string.IsNullOrWhiteSpace(customId) ? string.Empty : customId.Trim()
                 : PresetToId(preset);
 
         public bool IsValid => !string.IsNullOrEmpty(Value);
 
-        public override string ToString() => Value;
+        public override string ToString()
+        {
+            return Value;
+        }
 
-        public bool Equals(RpgStatId other) =>
-            string.Equals(Value, other.Value, StringComparison.Ordinal);
+        public bool Equals(RpgStatId other)
+        {
+            return string.Equals(Value, other.Value, StringComparison.Ordinal);
+        }
 
-        public override bool Equals(object obj) => obj is RpgStatId other && Equals(other);
+        public override bool Equals(object obj)
+        {
+            return obj is RpgStatId other && Equals(other);
+        }
 
-        public override int GetHashCode() => Value?.GetHashCode() ?? 0;
+        public override int GetHashCode()
+        {
+            return Value?.GetHashCode() ?? 0;
+        }
 
-        public static bool operator ==(RpgStatId a, RpgStatId b) => a.Equals(b);
-        public static bool operator !=(RpgStatId a, RpgStatId b) => !a.Equals(b);
+        public static bool operator ==(RpgStatId a, RpgStatId b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(RpgStatId a, RpgStatId b)
+        {
+            return !a.Equals(b);
+        }
 
         /// <summary>Implicit conversion from preset for convenient construction.</summary>
-        public static implicit operator RpgStatId(RpgStatPreset preset) => new(preset);
+        public static implicit operator RpgStatId(RpgStatPreset preset)
+        {
+            return new RpgStatId(preset);
+        }
 
         /// <summary>Implicit conversion to the runtime id string.</summary>
-        public static implicit operator string(RpgStatId id) => id.Value;
+        public static implicit operator string(RpgStatId id)
+        {
+            return id.Value;
+        }
 
         private static string PresetToId(RpgStatPreset value)
         {
             return value switch
             {
-                RpgStatPreset.Hp => Neo.Core.Resources.RpgResourceId.Hp,
-                RpgStatPreset.Mana => Neo.Core.Resources.RpgResourceId.Mana,
-                RpgStatPreset.Stamina => Neo.Core.Resources.RpgResourceId.Stamina,
-                RpgStatPreset.Shield => Neo.Core.Resources.RpgResourceId.Shield,
+                RpgStatPreset.Hp => Core.Resources.RpgResourceId.Hp,
+                RpgStatPreset.Mana => Core.Resources.RpgResourceId.Mana,
+                RpgStatPreset.Stamina => Core.Resources.RpgResourceId.Stamina,
+                RpgStatPreset.Shield => Core.Resources.RpgResourceId.Shield,
                 _ => value.ToString()
             };
         }

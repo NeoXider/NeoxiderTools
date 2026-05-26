@@ -12,7 +12,7 @@ namespace Neo.Editor.Rpg
             SerializedProperty preset = property.FindPropertyRelative("preset");
             bool custom = preset != null && preset.enumValueIndex == (int)RpgStatPreset.Custom;
             return custom
-                ? (EditorGUIUtility.singleLineHeight * 2f) + EditorGUIUtility.standardVerticalSpacing
+                ? EditorGUIUtility.singleLineHeight * 2f + EditorGUIUtility.standardVerticalSpacing
                 : EditorGUIUtility.singleLineHeight;
         }
 

@@ -25,7 +25,7 @@ namespace Neo.Tests.Edit
         [TearDown]
         public void TearDown()
         {
-            UnityEngine.Object.DestroyImmediate(_go);
+            Object.DestroyImmediate(_go);
         }
 
         [Test]
@@ -41,7 +41,7 @@ namespace Neo.Tests.Edit
             _setText.NumberNotationStyle = NumberNotation.Grouped;
             _setText.Separator = ",";
             _setText.SetBigInteger(new BigInteger(1500000));
-            
+
             Assert.AreEqual("1,500,000", _textMesh.text);
         }
 
@@ -49,9 +49,9 @@ namespace Neo.Tests.Edit
         public void SetPercentage_UpdatesTextWithSuffix()
         {
             _setText.DecimalPlaces = 1;
-            
+
             _setText.SetPercentage(50.5f, true);
-            
+
             Assert.IsTrue(_textMesh.text.Contains("%"));
             Assert.IsTrue(_textMesh.text.Contains("50"));
         }
@@ -62,7 +62,7 @@ namespace Neo.Tests.Edit
             _setText.DecimalPlaces = 2;
 
             _setText.SetCurrency(99.99f, "$");
-            
+
             Assert.IsTrue(_textMesh.text.Contains("$"));
             Assert.IsTrue(_textMesh.text.Contains("99"));
         }
@@ -72,7 +72,7 @@ namespace Neo.Tests.Edit
         {
             _setText.Set("Initial");
             Assert.IsNotEmpty(_textMesh.text);
-            
+
             _setText.Clear();
             Assert.IsEmpty(_textMesh.text);
         }

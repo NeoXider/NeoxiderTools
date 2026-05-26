@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Neo.StateMachine;
 using Neo.StateMachine.NoCode;
 using NUnit.Framework;
@@ -85,7 +86,12 @@ namespace Neo.Editor.Tests.Edit
             public int ExitCount;
 
             public void OnEnter() { }
-            public void OnExit() => ExitCount++;
+
+            public void OnExit()
+            {
+                ExitCount++;
+            }
+
             public void OnUpdate() { }
             public void OnFixedUpdate() { }
             public void OnLateUpdate() { }
@@ -441,7 +447,7 @@ namespace Neo.Editor.Tests.Edit
             var go = new GameObject("StateMachineHost");
             try
             {
-                var behaviour = go.AddComponent<StateMachineBehaviourBase>();
+                StateMachineBehaviourBase behaviour = go.AddComponent<StateMachineBehaviourBase>();
                 behaviour.ChangeState<ExitCountingState>();
 
                 var state = (ExitCountingState)behaviour.CurrentState;
@@ -480,7 +486,7 @@ namespace Neo.Editor.Tests.Edit
 
         private static void InvokePrivate(object target, string methodName)
         {
-            var method = target.GetType().GetMethod(methodName,
+            MethodInfo method = target.GetType().GetMethod(methodName,
                 System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, methodName);
             method.Invoke(target, null);

@@ -16,8 +16,7 @@ namespace Neo.Rpg
     [CreateAssetMenu(menuName = "Neoxider/RPG/Character Template", fileName = "CharacterTemplate")]
     public sealed class RpgCharacterTemplate : ScriptableObject
     {
-        [Header("Resources (HP / Mana / Stamina / custom …)")]
-        [Tooltip("Resource pools this character has at start.")]
+        [Header("Resources (HP / Mana / Stamina / custom …)")] [Tooltip("Resource pools this character has at start.")]
         public RpgResourceDefinition[] resources = Array.Empty<RpgResourceDefinition>();
 
         [Header("Stats (Strength / Defense / FireResist / custom …)")]
@@ -36,8 +35,7 @@ namespace Neo.Rpg
         [Tooltip("Level-up flow. Leave empty to disable progression entirely.")]
         public RpgProgressionDefinition progression;
 
-        [Header("Display (optional)")]
-        public string displayName;
+        [Header("Display (optional)")] public string displayName;
 
         [TextArea(2, 4)] public string description;
 

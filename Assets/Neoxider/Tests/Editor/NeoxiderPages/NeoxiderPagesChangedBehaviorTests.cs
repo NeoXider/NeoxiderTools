@@ -45,12 +45,12 @@ namespace Neo.Tests
             GameObject pmObject = new("PM");
             object pm = pmObject.AddComponent(PMType);
 
-            object mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
-            object popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
+            object mainPage = CreateUiPage(pmObject, "PageMenu", false, true);
+            object popupPage = CreateUiPage(pmObject, "PopupPage", true, true);
             object mainPageId = GetPrivateField(mainPage, "pageId");
 
             SetPrivateField(pm, "allPages", CreateArray(UIPageType, mainPage, popupPage));
-            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, null));
+            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, (object)null));
             SetPrivateField(pm, "closePopupsOnExclusivePageChange", false);
 
             InvokeInstanceMethod(pm, "SetPage", mainPageId);
@@ -67,12 +67,12 @@ namespace Neo.Tests
             GameObject pmObject = new("PM");
             object pm = pmObject.AddComponent(PMType);
 
-            object mainPage = CreateUiPage(pmObject, "PageMenu", false, active: true);
-            object popupPage = CreateUiPage(pmObject, "PopupPage", true, active: true);
+            object mainPage = CreateUiPage(pmObject, "PageMenu", false, true);
+            object popupPage = CreateUiPage(pmObject, "PopupPage", true, true);
             object mainPageId = GetPrivateField(mainPage, "pageId");
 
             SetPrivateField(pm, "allPages", CreateArray(UIPageType, mainPage, popupPage));
-            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, null));
+            SetPrivateField(pm, "ignoredPageIds", CreateArray(PageIdType, (object)null));
             SetPrivateField(pm, "closePopupsOnExclusivePageChange", true);
 
             InvokeInstanceMethod(pm, "SetPage", mainPageId);
@@ -103,7 +103,7 @@ namespace Neo.Tests
             GameObject pageObject = new("UI Page");
             object page = pageObject.AddComponent(UIPageType);
 
-            IEnumerator hideRoutine = (IEnumerator)InvokeInstanceMethod(page, "WaitForHideAnimation");
+            var hideRoutine = (IEnumerator)InvokeInstanceMethod(page, "WaitForHideAnimation");
 
             Assert.IsFalse(hideRoutine.MoveNext());
         }
@@ -113,7 +113,7 @@ namespace Neo.Tests
             GameObject pageObject = new(pageIdName);
             pageObject.transform.SetParent(parent.transform);
             object page = pageObject.AddComponent(UIPageType);
-            ScriptableObject pageId = (ScriptableObject)ScriptableObject.CreateInstance(PageIdType);
+            var pageId = (ScriptableObject)ScriptableObject.CreateInstance(PageIdType);
             pageId.name = pageIdName;
 
             SetPrivateField(page, "pageId", pageId);
@@ -139,7 +139,8 @@ namespace Neo.Tests
 
         private static object GetPropertyValue(object target, string propertyName)
         {
-            PropertyInfo property = target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
+            PropertyInfo property =
+                target.GetType().GetProperty(propertyName, BindingFlags.Instance | BindingFlags.Public);
             Assert.IsNotNull(property, $"Property '{propertyName}' should exist on {target.GetType().Name}");
             return property.GetValue(target);
         }
@@ -153,11 +154,12 @@ namespace Neo.Tests
 
         private static object CreateArray(Type elementType, params object[] values)
         {
-            Array array = Array.CreateInstance(elementType, values.Length);
+            var array = Array.CreateInstance(elementType, values.Length);
             for (int i = 0; i < values.Length; i++)
             {
                 array.SetValue(values[i], i);
             }
+
             return array;
         }
 
@@ -179,7 +181,8 @@ namespace Neo.Tests
             PageIdType = GetTypeOrNull("Neo.Pages.PageId");
             UIPageAnimationModeType = GetTypeOrNull("Neo.Pages.UIPageAnimationMode");
 
-            _pagesTypesAvailable = PMType != null && UIPageType != null && PageIdType != null && UIPageAnimationModeType != null;
+            _pagesTypesAvailable = PMType != null && UIPageType != null && PageIdType != null &&
+                                   UIPageAnimationModeType != null;
             if (!_pagesTypesAvailable)
             {
                 string message = $"Required Neoxider Pages types are missing. Missing: " +

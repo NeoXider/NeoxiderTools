@@ -5,17 +5,19 @@
 
 ## Где находится модуль
 
-После импорта sample через `Package Manager > Neoxider Tools > Samples` модуль находится в:
+После импорта sample через `Package Manager > NeoxiderTools > Samples` модуль находится в:
 
 ```text
-Assets/Neoxider/Samples~/NeoxiderPages/
+Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/
 ```
 
 Ключевые артефакты:
 
 - документация: `Assets/Neoxider/Docs/NeoxiderPages/README.md`
-- demo-сцена: `Assets/Neoxider/Samples~/NeoxiderPages/Demo/Scenes/UI.unity`
-- runtime/editor код: внутри `Assets/Neoxider/Samples~/NeoxiderPages/Runtime` и `Editor`
+- dev path: `Assets/Neoxider/Samples/NeoxiderPages/`
+- UPM source path перед релизом: `Assets/Neoxider/Samples~/NeoxiderPages/`
+- demo-сцена после импорта: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/Demo/Scenes/UI.unity`
+- runtime/editor код: внутри `Runtime` и `Editor` sample-модуля
 
 ## Что это
 

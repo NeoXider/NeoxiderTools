@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Save;
 using UnityEngine;
 
@@ -76,13 +76,14 @@ namespace Neo.Settings
         {
             if (component == null)
             {
-                Debug.LogError("[GameSettings] Attach called with null.");
+                NeoDiagnostics.LogError("[GameSettings] Attach called with null.");
                 return;
             }
 
             if (s_context != null && s_context != component)
             {
-                Debug.LogWarning("[GameSettings] Replacing existing GameSettingsComponent context.", component);
+                NeoDiagnostics.LogWarning("[GameSettings] Replacing existing GameSettingsComponent context.",
+                    component);
             }
 
             s_context = component;
@@ -108,7 +109,10 @@ namespace Neo.Settings
         }
 
         /// <summary>Alias for tests that need to reset state explicitly.</summary>
-        internal static void ResetStaticStateForTesting() => ResetStaticState();
+        internal static void ResetStaticStateForTesting()
+        {
+            ResetStaticState();
+        }
 
         /// <summary>Releases context when the service is destroyed.</summary>
         public static void Detach(GameSettingsComponent component)
@@ -129,7 +133,7 @@ namespace Neo.Settings
         {
             if (s_context == null)
             {
-                Debug.LogWarning("[GameSettings] LoadState: no GameSettingsComponent attached.");
+                NeoDiagnostics.LogWarning("[GameSettings] LoadState: no GameSettingsComponent attached.");
                 return;
             }
 
@@ -238,7 +242,7 @@ namespace Neo.Settings
         {
             if (s_context == null)
             {
-                Debug.LogWarning("[GameSettings] SetGraphicsPreset: no context.");
+                NeoDiagnostics.LogWarning("[GameSettings] SetGraphicsPreset: no context.");
                 return;
             }
 
@@ -261,7 +265,7 @@ namespace Neo.Settings
         {
             if (s_context == null)
             {
-                Debug.LogWarning("[GameSettings] SetQualityLevel: no context.");
+                NeoDiagnostics.LogWarning("[GameSettings] SetQualityLevel: no context.");
                 return;
             }
 
@@ -464,7 +468,7 @@ namespace Neo.Settings
 
             if (!TryGetRuntimeResolution(s_resolutionIndex, out int w, out int h))
             {
-                Debug.LogWarning("[GameSettings] Invalid resolution index; skipping SetResolution.");
+                NeoDiagnostics.LogWarning("[GameSettings] Invalid resolution index; skipping SetResolution.");
                 return;
             }
 
@@ -476,13 +480,13 @@ namespace Neo.Settings
             int max = QualitySettings.names.Length - 1;
             if (max < 0)
             {
-                Debug.LogWarning("[GameSettings] No quality levels in project.");
+                NeoDiagnostics.LogWarning("[GameSettings] No quality levels in project.");
                 return 0;
             }
 
             if (index < 0 || index > max)
             {
-                Debug.LogWarning($"[GameSettings] Quality level {index} clamped to [0,{max}].");
+                NeoDiagnostics.LogWarning($"[GameSettings] Quality level {index} clamped to [0,{max}].");
                 return Mathf.Clamp(index, 0, max);
             }
 
@@ -499,7 +503,7 @@ namespace Neo.Settings
             int max = s_context.RuntimeResolutions.Count - 1;
             if (index < 0 || index > max)
             {
-                Debug.LogWarning($"[GameSettings] Resolution index {index} clamped.");
+                NeoDiagnostics.LogWarning($"[GameSettings] Resolution index {index} clamped.");
                 return Mathf.Clamp(index, 0, max);
             }
 

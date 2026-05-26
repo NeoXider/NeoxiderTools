@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Neo.Bonus;
 using Neo.Quest;
 using Neo.Shop;
@@ -14,7 +14,8 @@ namespace Neo.Progression
         /// <summary>
         ///     Dispatches all supplied rewards. If premiumOnly is true, only premium rewards are dispatched.
         /// </summary>
-        public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager, bool premiumOnly = false)
+        public static void DispatchRewards(IEnumerable<ProgressionReward> rewards, ProgressionManager manager,
+            bool premiumOnly = false)
         {
             if (rewards == null || manager == null)
             {
@@ -66,7 +67,7 @@ namespace Neo.Progression
                     }
                     else
                     {
-                        Debug.LogWarning(
+                        NeoDiagnostics.LogWarning(
                             "[ProgressionRewardDispatcher] Money reward skipped because no Money target was found.");
                     }
 
@@ -81,7 +82,7 @@ namespace Neo.Progression
                     }
                     else
                     {
-                        Debug.LogWarning(
+                        NeoDiagnostics.LogWarning(
                             "[ProgressionRewardDispatcher] Collection reward skipped because collection or item is missing.");
                     }
 
@@ -98,14 +99,15 @@ namespace Neo.Progression
                     }
                     else
                     {
-                        Debug.LogWarning(
+                        NeoDiagnostics.LogWarning(
                             "[ProgressionRewardDispatcher] Quest reward skipped because QuestManager or QuestConfig is missing.");
                     }
 
                     return;
                 }
                 default:
-                    Debug.LogWarning($"[ProgressionRewardDispatcher] Unsupported reward type: {reward.RewardType}");
+                    NeoDiagnostics.LogWarning(
+                        $"[ProgressionRewardDispatcher] Unsupported reward type: {reward.RewardType}");
                     return;
             }
         }

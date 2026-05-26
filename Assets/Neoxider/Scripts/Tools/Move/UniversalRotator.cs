@@ -157,6 +157,7 @@ namespace Neo.Tools
         private AimSource currentAim = AimSource.None;
 
         private Vector3 initialLocalEuler;
+        private Camera cachedFallbackCamera;
 
         private Vector3 manualWorldPoint;
 
@@ -524,14 +525,14 @@ namespace Neo.Tools
                 return targetCamera;
             }
 
-            return Camera.main;
+            return ResolveFallbackCamera();
         }
 
         private void TryAssignMainCameraIfNull()
         {
             if (targetCamera == null)
             {
-                Camera cam = Camera.main;
+                Camera cam = ResolveFallbackCamera();
                 if (cam != null)
                 {
                     targetCamera = cam;
@@ -541,11 +542,21 @@ namespace Neo.Tools
 
         private void UseMainCamera()
         {
-            Camera cam = Camera.main;
+            Camera cam = ResolveFallbackCamera();
             if (cam != null)
             {
                 targetCamera = cam;
             }
+        }
+
+        private Camera ResolveFallbackCamera()
+        {
+            if (cachedFallbackCamera == null)
+            {
+                cachedFallbackCamera = Camera.main;
+            }
+
+            return cachedFallbackCamera;
         }
 
         private void OnUseMouseToggled()

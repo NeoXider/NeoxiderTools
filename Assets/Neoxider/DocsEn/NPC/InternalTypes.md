@@ -1,4 +1,4 @@
-﻿# NPC Module вЂ” Core Types
+﻿# NPC Module - Core Types
 
 | Type | Description |
 |------|-------------|
@@ -13,4 +13,4 @@
 
 ## See Also
 - [NpcNavigation](Navigation/NPCNavigation.md)
-- в†ђ [NPC](README.md)
+- <- [NPC](README.md)

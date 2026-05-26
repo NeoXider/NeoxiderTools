@@ -1086,7 +1086,7 @@ MonoBehaviour:
   _scope: 0
   _authorityMode: 0
   _triggerOnlyForLocalContext: 1
-  _verboseLogging: 1
+  _verboseLogging: 0
   _editorPreviewTarget: {fileID: 1654441183}
   _onNetworkTriggered:
     m_PersistentCalls:
@@ -1132,7 +1132,7 @@ MonoBehaviour:
   _scope: 0
   _authorityMode: 0
   _triggerOnlyForLocalContext: 1
-  _verboseLogging: 1
+  _verboseLogging: 0
   _editorPreviewTarget: {fileID: 1654441183}
   _onNetworkTriggered:
     m_PersistentCalls:

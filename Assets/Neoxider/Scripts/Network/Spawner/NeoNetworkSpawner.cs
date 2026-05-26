@@ -22,7 +22,8 @@ namespace Neo.Network
         /// <param name="rotation">World rotation.</param>
         /// <param name="parent">Optional parent transform (null by default).</param>
         /// <returns>The spawned GameObject.</returns>
-        public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation, Transform parent = null)
+        public static GameObject Spawn(GameObject prefab, Vector3 position, Quaternion rotation,
+            Transform parent = null)
         {
             if (prefab == null)
             {

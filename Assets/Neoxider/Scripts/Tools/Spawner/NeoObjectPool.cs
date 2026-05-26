@@ -126,7 +126,24 @@ namespace Neo.Tools
         {
             // Drop cache when instance is destroyed
             _cachedComponents.Remove(instance);
-            Object.Destroy(instance);
+            DestroyPoolObject(instance);
+        }
+
+        private static void DestroyPoolObject(GameObject instance)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Object.Destroy(instance);
+            }
+            else
+            {
+                Object.DestroyImmediate(instance);
+            }
         }
 
         public GameObject GetObject(Vector3 position, Quaternion rotation)

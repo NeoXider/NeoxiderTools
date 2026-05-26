@@ -14,13 +14,28 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private FieldDebugDrawer _debugDrawer;
         [SerializeField] private TMP_Text _statusText;
 
+        public void Configure(
+            FieldGenerator generator,
+            Match3BoardService match3,
+            FieldDebugDrawer debugDrawer,
+            TMP_Text statusText)
+        {
+            _generator = generator;
+            _match3 = match3;
+            _debugDrawer = debugDrawer;
+            _statusText = statusText;
+        }
+
         public void GenerateRectBoard()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             _generator.Config.Size = new Vector3Int(8, 8, 1);
             _generator.Config.GridType = GridType.Rectangular;
-            _generator.Config.ShapeMask = null;
-            _generator.Config.DisabledCells.Clear();
-            _generator.Config.BlockedCells.Clear();
+            ClearShapeOverrides();
             _generator.GenerateField();
             _match3.InitializeBoard();
             SetStatus("Rect 8x8 generated");
@@ -28,11 +43,14 @@ namespace Neo.Demo.GridSystem
 
         public void GenerateDiamondBoard()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             _generator.Config.Size = new Vector3Int(8, 8, 1);
             _generator.Config.GridType = GridType.Custom;
-            _generator.Config.ShapeMask = null;
-            _generator.Config.DisabledCells.Clear();
-            _generator.Config.ForcedEnabledCells.Clear();
+            ClearShapeOverrides();
 
             Vector3Int center = new(3, 3, 0);
             int radius = 3;
@@ -53,6 +71,11 @@ namespace Neo.Demo.GridSystem
 
         public void ToggleRandomBlocked()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             FieldCell cell = GetRandomEnabledCell();
             if (cell == null)
             {
@@ -65,6 +88,11 @@ namespace Neo.Demo.GridSystem
 
         public void ToggleRandomDisabled()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             FieldCell cell = GetRandomEnabledCell();
             if (cell == null)
             {
@@ -77,6 +105,11 @@ namespace Neo.Demo.GridSystem
 
         public void ToggleRandomOccupied()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             FieldCell cell = GetRandomEnabledCell();
             if (cell == null)
             {
@@ -89,8 +122,17 @@ namespace Neo.Demo.GridSystem
 
         public void RunPathDemo()
         {
-            Vector3Int start = new(0, 0, 0);
-            Vector3Int end = new(_generator.Config.Size.x - 1, _generator.Config.Size.y - 1, 0);
+            if (!HasRequiredServices() || _debugDrawer == null)
+            {
+                return;
+            }
+
+            if (!TryGetPathEndpoints(out Vector3Int start, out Vector3Int end))
+            {
+                SetStatus("Path not found: no usable endpoints");
+                return;
+            }
+
             GridPathResult result = _generator.FindPathDetailed(start, end);
             _debugDrawer.DrawPath = true;
             _debugDrawer.DebugPath.Clear();
@@ -112,19 +154,29 @@ namespace Neo.Demo.GridSystem
 
         public void SwapRandom()
         {
-            FieldCell a = GetRandomEnabledCell();
-            FieldCell b = GetRandomEnabledCell();
-            if (a == null || b == null)
+            if (!HasRequiredServices())
             {
                 return;
             }
 
-            bool resolved = _match3.TrySwapAndResolve(a.Position, b.Position);
-            SetStatus(resolved ? "Swap resolved with matches" : "Swap reverted (no matches)");
+            if (!_match3.TryFindValidSwap(out Vector3Int a, out Vector3Int b))
+            {
+                bool shuffled = _match3.ShuffleIfNoMoves();
+                SetStatus(shuffled ? "Board shuffled: try swap again" : "No valid swaps available");
+                return;
+            }
+
+            bool resolved = _match3.TrySwapAndResolve(a, b);
+            SetStatus(resolved ? $"Swap resolved: {a.x},{a.y} -> {b.x},{b.y}" : "Swap reverted");
         }
 
         public void RestartBoard()
         {
+            if (!HasRequiredServices())
+            {
+                return;
+            }
+
             _match3.InitializeBoard();
             SetStatus("Board restarted");
         }
@@ -143,6 +195,50 @@ namespace Neo.Demo.GridSystem
             }
 
             return cells[Random.Range(0, cells.Count)];
+        }
+
+        private bool TryGetPathEndpoints(out Vector3Int start, out Vector3Int end)
+        {
+            start = default;
+            end = default;
+
+            List<FieldCell> cells = new();
+            foreach (FieldCell cell in _generator.GetAllCells(false))
+            {
+                if (cell.IsEnabled && cell.IsWalkable && !cell.IsOccupied)
+                {
+                    cells.Add(cell);
+                }
+            }
+
+            if (cells.Count < 2)
+            {
+                return false;
+            }
+
+            start = cells[0].Position;
+            end = cells[cells.Count - 1].Position;
+            return true;
+        }
+
+        private void ClearShapeOverrides()
+        {
+            _generator.Config.ShapeMask = null;
+            _generator.Config.DisabledCells.Clear();
+            _generator.Config.ForcedEnabledCells.Clear();
+            _generator.Config.BlockedCells.Clear();
+            _generator.Config.ForcedWalkableCells.Clear();
+        }
+
+        private bool HasRequiredServices()
+        {
+            if (_generator != null && _match3 != null)
+            {
+                return true;
+            }
+
+            SetStatus("Demo is not wired");
+            return false;
         }
 
         private void SetStatus(string text)

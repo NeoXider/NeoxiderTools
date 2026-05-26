@@ -38,7 +38,8 @@ namespace Neo.Tools
         [Tooltip("Create EventSystem automatically if it is missing in scene.")] [SerializeField]
         private bool _autoCreateEventSystemIfMissing = true;
 
-        [Tooltip("Who may trigger this interaction over the network. Default None lets NoCode scene objects work without ownership.")]
+        [Tooltip(
+            "Who may trigger this interaction over the network. Default None lets NoCode scene objects work without ownership.")]
         [SerializeField]
         [FormerlySerializedAs("requireAuthority")]
         private NetworkAuthorityMode authorityMode = NetworkAuthorityMode.None;
@@ -62,7 +63,8 @@ namespace Neo.Tools
         [Tooltip("Require looking at object when interacting with keyboard.")] [SerializeField]
         private bool requireViewForKeyboardInteraction = true;
 
-        [Tooltip("For keyboard: require a forward ray from the view source to hit this object's collider. Not tied to checkObstacles (walls still use checkObstacles on the distance ray in IsInRange).")]
+        [Tooltip(
+            "For keyboard: require a forward ray from the view source to hit this object's collider. Not tied to checkObstacles (walls still use checkObstacles on the distance ray in IsInRange).")]
         [SerializeField]
         private bool requireDirectLookRay = true;
 
@@ -73,7 +75,8 @@ namespace Neo.Tools
         [SerializeField]
         private bool includeTriggerCollidersInMouseRaycast = true;
 
-        [Tooltip("Per-object override: use screen center ray. Prefer adding InteractionRayProvider to the camera instead.")]
+        [Tooltip(
+            "Per-object override: use screen center ray. Prefer adding InteractionRayProvider to the camera instead.")]
         [SerializeField]
         private bool useScreenCenterRay;
 
@@ -142,12 +145,12 @@ namespace Neo.Tools
         public UnityEvent onExitRange;
 
         [Header("Debug")]
-        [Tooltip("Draw a debug ray every frame (always visible while selected or in play mode). Color changes based on state: gray=no target, cyan=in range, yellow=hovered, green=interacting.")]
+        [Tooltip(
+            "Draw a debug ray every frame (always visible while selected or in play mode). Color changes based on state: gray=no target, cyan=in range, yellow=hovered, green=interacting.")]
         [SerializeField]
         private bool drawDebugRay;
 
-        [Tooltip("Legacy: draw ray briefly on interaction only.")]
-        [SerializeField]
+        [Tooltip("Legacy: draw ray briefly on interaction only.")] [SerializeField]
         private bool drawInteractionRayForOneSecond;
 
         [SerializeField] private float interactionRayDrawDuration = 1f;
@@ -160,6 +163,7 @@ namespace Neo.Tools
         private Collider2D cachedCollider2D;
         private Collider cachedCollider3D;
         private float clickTime;
+        private bool hasClickTime;
         private Vector3 currentMouseHitPoint;
         private bool hasCurrentMouseHit;
         private bool keyHeldPrev;
@@ -263,7 +267,7 @@ namespace Neo.Tools
                 Gizmos.DrawWireSphere(transform.position, interactionDistance);
             }
 
-            bool showLegacy = drawInteractionRayForOneSecond && lastDebugRayUntilTime > 0f;
+            bool showLegacy = drawInteractionRayForOneSecond && Time.realtimeSinceStartup <= lastDebugRayUntilTime;
             if (drawDebugRay || showLegacy)
             {
                 Gizmos.color = lastDebugRayColor;
@@ -718,7 +722,7 @@ namespace Neo.Tools
             {
                 Vector2 origin2D = new(origin.x, origin.y);
                 Vector3 fwd = lookSource.forward;
-                Vector2 dir2D = new Vector2(fwd.x, fwd.y);
+                var dir2D = new Vector2(fwd.x, fwd.y);
                 if (dir2D.sqrMagnitude < 1e-6f)
                 {
                     dir2D = new Vector2(toTarget.x, toTarget.y);
@@ -756,7 +760,9 @@ namespace Neo.Tools
                 }
 
                 bool hasTargetHit = nearestCollider2D != null && IsTargetHierarchyCollider(nearestCollider2D);
-                Vector3 debugEnd = hasTargetHit ? (Vector3)nearestCollider2D.bounds.center : origin + (Vector3)(dir2D * maxRay2D);
+                Vector3 debugEnd = hasTargetHit
+                    ? (Vector3)nearestCollider2D.bounds.center
+                    : origin + (Vector3)(dir2D * maxRay2D);
                 CacheDebugRay(origin, debugEnd, hasTargetHit ? Color.green : Color.red);
                 return hasTargetHit;
             }
@@ -799,9 +805,11 @@ namespace Neo.Tools
 
             if (button == PointerEventData.InputButton.Left)
             {
-                bool isDouble = doubleClickThreshold > 0f && Time.time - clickTime < doubleClickThreshold;
+                bool isDouble = hasClickTime && doubleClickThreshold > 0f &&
+                                Time.time - clickTime < doubleClickThreshold;
                 TriggerClick(button, isDouble);
                 clickTime = Time.time;
+                hasClickTime = true;
             }
             else
             {
@@ -824,6 +832,7 @@ namespace Neo.Tools
                 {
                     CmdInteractDown();
                 }
+
                 return;
             }
 #endif
@@ -845,6 +854,7 @@ namespace Neo.Tools
                 {
                     CmdInteractUp();
                 }
+
                 return;
             }
 #endif
@@ -866,6 +876,7 @@ namespace Neo.Tools
                 {
                     CmdClick((int)button, isDouble);
                 }
+
                 return;
             }
 #endif
@@ -876,8 +887,14 @@ namespace Neo.Tools
         {
             if (button == PointerEventData.InputButton.Left)
             {
-                if (isDouble) onDoubleClick?.Invoke();
-                else onClick?.Invoke();
+                if (isDouble)
+                {
+                    onDoubleClick?.Invoke();
+                }
+                else
+                {
+                    onClick?.Invoke();
+                }
             }
             else if (button == PointerEventData.InputButton.Right)
             {
@@ -898,48 +915,96 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdInteractDown(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
-            if (isServerOnly) onInteractDown?.Invoke();
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                onInteractDown?.Invoke();
+            }
+
             RpcInteractDown(false);
         }
 
         [ClientRpc(includeOwner = true)]
         private void RpcInteractDown(bool skipHostLocal)
         {
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             onInteractDown?.Invoke();
         }
 
         [Command(requiresAuthority = false)]
         private void CmdInteractUp(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
-            if (isServerOnly) onInteractUp?.Invoke();
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                onInteractUp?.Invoke();
+            }
+
             RpcInteractUp(false);
         }
 
         [ClientRpc(includeOwner = true)]
         private void RpcInteractUp(bool skipHostLocal)
         {
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             onInteractUp?.Invoke();
         }
 
         [Command(requiresAuthority = false)]
         private void CmdClick(int buttonInt, bool isDouble, NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
-            if (!AuthorizedSender(sender)) return;
-            if (isServerOnly) InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+            if (RateLimitCheck())
+            {
+                return;
+            }
+
+            if (!AuthorizedSender(sender))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
+            }
+
             RpcClick(buttonInt, isDouble, false);
         }
 
         [ClientRpc(includeOwner = true)]
         private void RpcClick(int buttonInt, bool isDouble, bool skipHostLocal)
         {
-            if (skipHostLocal && NeoNetworkState.IsHost) return;
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
             InvokeClick((PointerEventData.InputButton)buttonInt, isDouble);
         }
 #endif
@@ -975,7 +1040,7 @@ namespace Neo.Tools
             }
 
             Ray ray;
-            InteractionRayProvider provider = InteractionRayProvider.FindOnMainCamera();
+            var provider = InteractionRayProvider.FindOnMainCamera();
             bool useCenterRay = useScreenCenterRay || (provider != null && provider.UseScreenCenterForHover);
 
             if (useCenterRay)
@@ -1166,7 +1231,9 @@ namespace Neo.Tools
             lastDebugRayStart = start;
             lastDebugRayEnd = end;
             lastDebugRayColor = color;
-            lastDebugRayUntilTime = float.PositiveInfinity;
+            lastDebugRayUntilTime = drawDebugRay
+                ? float.PositiveInfinity
+                : Time.realtimeSinceStartup + Mathf.Max(0f, interactionRayDrawDuration);
         }
 
         /// <summary>
@@ -1194,7 +1261,7 @@ namespace Neo.Tools
             Color rayColor;
             if (isInteractingThisFrame)
             {
-                rayColor = Color.green;  // actively pressing
+                rayColor = Color.green; // actively pressing
             }
             else if (IsHovered)
             {
@@ -1202,11 +1269,11 @@ namespace Neo.Tools
             }
             else if (wasInRange)
             {
-                rayColor = Color.cyan;   // in range, not hovered
+                rayColor = Color.cyan; // in range, not hovered
             }
             else
             {
-                rayColor = Color.gray;   // out of range / no target
+                rayColor = Color.gray; // out of range / no target
             }
 
             lastDebugRayStart = origin;
@@ -1338,4 +1405,3 @@ namespace Neo.Tools
         #endregion
     }
 }
-

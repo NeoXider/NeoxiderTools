@@ -1,4 +1,4 @@
-using TMPro;
+﻿using TMPro;
 using UnityEngine;
 
 namespace Neo.Tools
@@ -60,7 +60,7 @@ namespace Neo.Tools
         {
             if (text == null)
             {
-                Debug.LogError($"[{nameof(FPS)}] No text component assigned!");
+                NeoDiagnostics.LogError($"[{nameof(FPS)}] No text component assigned!");
                 enabled = false;
                 return;
             }

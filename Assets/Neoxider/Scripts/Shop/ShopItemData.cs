@@ -31,8 +31,7 @@ namespace Neo.Shop
         [Tooltip("Item icon (e.g. for list display)")] [SerializeField]
         private Sprite _icon;
 
-        [Tooltip("Optional grouping label. Used by Shop.GetItemsInCategory(...) and UI filters.")]
-        [SerializeField]
+        [Tooltip("Optional grouping label. Used by Shop.GetItemsInCategory(...) and UI filters.")] [SerializeField]
         private string _category = "";
 
         [Tooltip("Optional Money.SaveKey used for this item currency. Empty = use Shop default currency.")]

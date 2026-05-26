@@ -28,8 +28,7 @@ namespace Neo.Tools
     {
 #if MIRROR
         /// <summary>Server-authoritative last random value, synced to late-joining clients.</summary>
-        [SyncVar]
-        private float _syncValue;
+        [SyncVar] private float _syncValue;
 #endif
 
         [Header("Mode")] [Tooltip("Generate integer (inclusive min..max) or float (min..max).")] [SerializeField]
@@ -91,7 +90,7 @@ namespace Neo.Tools
                     CmdGenerate();
                     return;
                 }
-                
+
                 // Server generates and multicasts
                 float val = RollRandomValue();
                 _syncValue = val;
@@ -116,8 +115,10 @@ namespace Neo.Tools
                     minI = maxI;
                     maxI = t;
                 }
+
                 return Random.Range(minI, maxI + 1);
             }
+
             return _min < _max ? Random.Range(_min, _max) : _min;
         }
 
@@ -132,7 +133,10 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdGenerate(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck()) return;
+            if (RateLimitCheck())
+            {
+                return;
+            }
 
             float val = RollRandomValue();
             _syncValue = val;
@@ -143,7 +147,11 @@ namespace Neo.Tools
         [ClientRpc(includeOwner = true)]
         private void RpcReceiveValue(float val)
         {
-            if (isServer) return; // Server already applied
+            if (isServer)
+            {
+                return; // Server already applied
+            }
+
             ApplyValueLocally(val);
         }
 
@@ -156,7 +164,10 @@ namespace Neo.Tools
         }
 
         /// <summary>Late-join: apply server-authoritative value to newly connected client.</summary>
-        protected override void ApplyNetworkState() => ApplyValueLocally(_syncValue);
+        protected override void ApplyNetworkState()
+        {
+            ApplyValueLocally(_syncValue);
+        }
 #endif
 
         /// <summary>Sets minimum bound (int).</summary>

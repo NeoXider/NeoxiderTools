@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo.Condition;
 using Neo.Core.Level;
@@ -66,7 +66,7 @@ namespace Neo.Progression
         /// <summary>
         ///     Gets a backwards-compatible singleton alias.
         /// </summary>
-        public static new ProgressionManager Instance => I;
+        public new static ProgressionManager Instance => I;
 
         /// <summary>
         ///     Gets or sets the level curve definition.
@@ -507,7 +507,7 @@ namespace Neo.Progression
         public void ResetProgression()
         {
             EnsureInitialized();
-            
+
             if (_levelProvider != null)
             {
                 _levelProvider.Reset();
@@ -519,6 +519,7 @@ namespace Neo.Progression
             {
                 SaveProfile();
             }
+
             _onProfileReset?.Invoke();
         }
 
@@ -545,7 +546,7 @@ namespace Neo.Progression
                 {
                     if (_levelCurve.TryGetDefinition(level, out ProgressionLevelDefinition definition))
                     {
-                        ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, premiumOnly: true);
+                        ProgressionRewardDispatcher.DispatchRewards(definition.Rewards, this, true);
                     }
                 }
             }
@@ -620,7 +621,7 @@ namespace Neo.Progression
                 }
                 catch (Exception exception)
                 {
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         $"[ProgressionManager] Failed to deserialize profile '{_saveKey}': {exception.Message}");
                 }
             }
@@ -770,6 +771,7 @@ namespace Neo.Progression
             {
                 SaveProfile();
             }
+
             RefreshRuntimeState(true);
         }
 
@@ -805,7 +807,7 @@ namespace Neo.Progression
             }
 
             _warnedMissingLevelProvider = true;
-            Debug.LogWarning($"[ProgressionManager] Level Provider is not assigned. {suffix}", this);
+            NeoDiagnostics.LogWarning($"[ProgressionManager] Level Provider is not assigned. {suffix}", this);
         }
 
         protected override void OnDestroy()

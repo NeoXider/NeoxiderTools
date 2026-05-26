@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -75,54 +76,72 @@ namespace Neo.Network
     [AddComponentMenu("Neoxider/Network/Network Context Action Relay")]
     public class NetworkContextActionRelay : NeoNetworkComponent
     {
-        [Header("Context")]
-        [SerializeField] private NetworkContextSourceMode _contextSource = NetworkContextSourceMode.Self;
+        [Header("Context")] [SerializeField]
+        private NetworkContextSourceMode _contextSource = NetworkContextSourceMode.Self;
+
         [SerializeField] private NetworkContextRootMode _rootMode = NetworkContextRootMode.NetworkIdentityInParents;
         [SerializeField] private GameObject _explicitContext;
 
-        [Header("Target")]
-        [SerializeField] private NetworkContextTargetMode _targetMode = NetworkContextTargetMode.Root;
+        [Header("Target")] [SerializeField]
+        private NetworkContextTargetMode _targetMode = NetworkContextTargetMode.Root;
+
         [SerializeField] private string _targetName;
         [SerializeField] private string _targetPath;
         [SerializeField] private string _targetComponentType;
         [SerializeField] private bool _includeInactive = true;
 
-        [Header("Action")]
-        [SerializeField] private NetworkContextActionType _action = NetworkContextActionType.InvokeEventsOnly;
+        [Header("Action")] [SerializeField]
+        private NetworkContextActionType _action = NetworkContextActionType.InvokeEventsOnly;
+
         [SerializeField] private bool _boolValue = true;
         [SerializeField] private float _floatValue = 1f;
         [SerializeField] private string _stringValue;
         [SerializeField] private string _messageName;
         [SerializeField] private string _methodComponentType;
         [SerializeField] private string _methodName;
-        [SerializeField] private NetworkContextMethodArgumentMode _methodArgumentMode = NetworkContextMethodArgumentMode.None;
 
-        [Header("Networking")]
-        [SerializeField] private NetworkActionScope _scope = NetworkActionScope.AllClients;
+        [SerializeField]
+        private NetworkContextMethodArgumentMode _methodArgumentMode = NetworkContextMethodArgumentMode.None;
+
+        [Header("Networking")] [SerializeField]
+        private NetworkActionScope _scope = NetworkActionScope.AllClients;
+
         [SerializeField] private NetworkAuthorityMode _authorityMode = NetworkAuthorityMode.None;
 
         [Tooltip("When ON, the relay fires only when the resolved context belongs to the local player. " +
                  "Recommended for physics triggers: every client runs physics on every replicated collider, " +
                  "so without this filter the same trigger fires on every client and the server gets duplicate messages. " +
                  "With this ON, only the player who really walked into the trigger sends the action.")]
-        [SerializeField] private bool _triggerOnlyForLocalContext = true;
+        [SerializeField]
+        private bool _triggerOnlyForLocalContext = true;
 
         [Header("Diagnostics")]
-        [Tooltip("Print trace logs at every step (Trigger → Send → Server → Client). Use to debug why a relay does not replicate to other clients.")]
-        [SerializeField] private bool _verboseLogging;
-        [Tooltip("Print static Mirror handler registration logs. Usually needed only while diagnosing transport setup.")]
-        [SerializeField] private bool _verboseRegistrationLogging;
+        [Tooltip(
+            "Print trace logs at every step (Trigger → Send → Server → Client). Use to debug why a relay does not replicate to other clients.")]
+        [SerializeField]
+        private bool _verboseLogging;
+
+        [Tooltip(
+            "Print static Mirror handler registration logs. Usually needed only while diagnosing transport setup.")]
+        [SerializeField]
+        private bool _verboseRegistrationLogging;
 
         private static bool s_verboseRegistrationLogging;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStaticDiagnosticsState()
+        {
+            s_verboseRegistrationLogging = false;
+        }
 
         [Header("Editor Helpers")]
         [Tooltip("Optional reference GameObject used by the custom inspector to build component/method dropdowns. " +
                  "It is NOT used at runtime — runtime always resolves the target via Context + Target Mode. " +
                  "Drag a representative object (e.g., the player prefab/template) to enable the dropdown pickers.")]
-        [SerializeField] private GameObject _editorPreviewTarget;
+        [SerializeField]
+        private GameObject _editorPreviewTarget;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent _onNetworkTriggered = new();
+        [Header("Events")] [SerializeField] private UnityEvent _onNetworkTriggered = new();
         [SerializeField] private GameObjectEvent _onContextResolved = new();
         [SerializeField] private GameObjectEvent _onTargetResolved = new();
 
@@ -293,7 +312,11 @@ namespace Neo.Network
 
         private void LogVerbose(string message)
         {
-            if (!_verboseLogging) return;
+            if (!_verboseLogging)
+            {
+                return;
+            }
+
             NetworkDiagnostics.Log($"[NetworkContextActionRelay] {message}", this, true);
         }
 
@@ -323,7 +346,7 @@ namespace Neo.Network
         /// </summary>
         public static void RegisterMirrorHandlers()
         {
-            ushort msgId = Mirror.NetworkMessageId<NetworkContextActionMessage>.Id;
+            ushort msgId = NetworkMessageId<NetworkContextActionMessage>.Id;
             bool didServer = false;
             bool didClient = false;
 
@@ -421,7 +444,8 @@ namespace Neo.Network
             {
                 if (!TryGetNetworkIdentity(root, out NetworkIdentity identity))
                 {
-                    NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Context root '{root.name}' has no NetworkIdentity.", root);
                     return;
                 }
 
@@ -429,7 +453,9 @@ namespace Neo.Network
                 NetworkContextActionMessage message = CreateMessage(contextNetId);
                 if (message.relayNetId == NoNetId)
                 {
-                    NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.", this);
+                    NetworkDiagnostics.LogWarning(
+                        $"[NetworkContextActionRelay] Relay '{name}' must be on or under a spawned NetworkIdentity.",
+                        this);
                     return;
                 }
 
@@ -440,7 +466,8 @@ namespace Neo.Network
                 {
                     EnsureMessageHandlers();
                     NetworkClient.Send(message);
-                    LogVerbose($"Client → Server: NetworkClient.Send dispatched (relayNetId={message.relayNetId}, contextNetId={contextNetId})");
+                    LogVerbose(
+                        $"Client → Server: NetworkClient.Send dispatched (relayNetId={message.relayNetId}, contextNetId={contextNetId})");
                     return;
                 }
 
@@ -494,7 +521,7 @@ namespace Neo.Network
                     return source;
                 case NetworkContextRootMode.NetworkIdentityInParents:
 #if MIRROR
-                    if (TryGetNetworkIdentity(source, out var identity))
+                    if (TryGetNetworkIdentity(source, out NetworkIdentity identity))
                     {
                         return identity.gameObject;
                     }
@@ -538,7 +565,8 @@ namespace Neo.Network
             GameObject target = ResolveTarget(root);
             if (target == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
+                NetworkDiagnostics.LogWarning(
+                    $"[NetworkContextActionRelay] Target not found for root '{root.name}' on '{name}'.", this);
                 return;
             }
 
@@ -565,6 +593,7 @@ namespace Neo.Network
                     {
                         target.SendMessage(_messageName, SendMessageOptions.DontRequireReceiver);
                     }
+
                     return;
                 case NetworkContextActionType.InvokeComponentMethod:
                     TryInvokeConfiguredComponentMethod(target, context);
@@ -612,7 +641,8 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(root, componentTypeName);
             if (component == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
+                NetworkDiagnostics.LogWarning(
+                    $"[NetworkContextActionRelay] Component type '{componentTypeName}' not found.", this);
                 return null;
             }
 
@@ -624,19 +654,23 @@ namespace Neo.Network
             Component component = FindComponentByTypeName(target, _methodComponentType);
             if (component == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.", target);
+                NetworkDiagnostics.LogWarning(
+                    $"[NetworkContextActionRelay] Component '{_methodComponentType}' not found on '{target.name}'.",
+                    target);
                 return false;
             }
 
             object argument = GetConfiguredArgument(target, context);
             Type argumentType = argument?.GetType();
-            var method = argumentType != null
+            MethodInfo method = argumentType != null
                 ? component.GetType().GetMethod(_methodName, new[] { argumentType })
                 : component.GetType().GetMethod(_methodName, Type.EmptyTypes);
 
             if (method == null)
             {
-                NetworkDiagnostics.LogWarning($"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.", component);
+                NetworkDiagnostics.LogWarning(
+                    $"[NetworkContextActionRelay] Method '{_methodName}' not found on '{component.GetType().Name}'.",
+                    component);
                 return false;
             }
 
@@ -687,13 +721,13 @@ namespace Neo.Network
                 return null;
             }
 
-            Type type = Type.GetType(typeName);
+            var type = Type.GetType(typeName);
             if (type != null)
             {
                 return type;
             }
 
-            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
             {
                 type = assembly.GetType(typeName);
                 if (type != null)
@@ -753,8 +787,10 @@ namespace Neo.Network
             return identity != null;
         }
 
-        private bool AuthorizedSender(NetworkConnectionToClient sender) =>
-            NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        private bool AuthorizedSender(NetworkConnectionToClient sender)
+        {
+            return NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode);
+        }
 
         private NetworkContextActionMessage CreateMessage(uint contextNetId)
         {
@@ -822,7 +858,7 @@ namespace Neo.Network
             {
                 // Sender is excluded by definition. On host, the host's local connection is the sender
                 // (or stand-in for it) when the trigger fired on the host — so skip it as well.
-                int sent = SendToOthers(sender, message, skipHostSender: senderIsHostLocal);
+                int sent = SendToOthers(sender, message, senderIsHostLocal);
                 LogVerbose($"OthersOnly broadcast complete on '{name}': sent to {sent} connection(s)");
                 return;
             }
@@ -832,13 +868,14 @@ namespace Neo.Network
             if (isHost)
             {
                 ApplyResolved(root);
-                int sent = SendToClients(message, skipHostLocal: true);
-                LogVerbose($"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
+                int sent = SendToClients(message, true);
+                LogVerbose(
+                    $"AllClients broadcast complete on '{name}' (host): applied locally + sent to {sent} remote connection(s)");
             }
             else
             {
                 // Dedicated server: do not call ApplyResolved (no client view here) — just relay to all clients.
-                int sent = SendToClients(message, skipHostLocal: false);
+                int sent = SendToClients(message, false);
                 LogVerbose($"AllClients broadcast complete on '{name}' (dedicated): sent to {sent} connection(s)");
             }
         }
@@ -857,7 +894,11 @@ namespace Neo.Network
                 return;
             }
 
-            if (relay.RateLimitCheck()) return;
+            if (relay.RateLimitCheck())
+            {
+                return;
+            }
+
             if (!relay.AuthorizedSender(sender))
             {
                 NetworkDiagnostics.LogWarning(
@@ -865,7 +906,10 @@ namespace Neo.Network
                 return;
             }
 
-            if (message.contextNetId == NoNetId) return;
+            if (message.contextNetId == NoNetId)
+            {
+                return;
+            }
 
             relay.LogVerbose(
                 $"OnServerMessage on '{relay.name}#{message.relayComponentIndex}': from connId={(sender != null ? sender.connectionId.ToString() : "null")}, relayNetId={message.relayNetId}, contextNetId={message.contextNetId}");
@@ -955,7 +999,8 @@ namespace Neo.Network
             return sent;
         }
 
-        private int SendToOthers(NetworkConnectionToClient sender, NetworkContextActionMessage message, bool skipHostSender)
+        private int SendToOthers(NetworkConnectionToClient sender, NetworkContextActionMessage message,
+            bool skipHostSender)
         {
             int sent = 0;
             foreach (NetworkConnectionToClient connection in NetworkServer.connections.Values)
@@ -1011,7 +1056,8 @@ namespace Neo.Network
             return NeoNetworkState.IsHost && (sender == null || sender == NetworkServer.localConnection);
         }
 
-        private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender, bool skipHostSender)
+        private static bool IsSenderConnection(NetworkConnectionToClient connection, NetworkConnectionToClient sender,
+            bool skipHostSender)
         {
             if (connection == null)
             {

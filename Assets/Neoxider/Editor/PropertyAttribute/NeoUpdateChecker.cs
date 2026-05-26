@@ -450,7 +450,8 @@ namespace Neo.Editor
                     }
 
                     string text = asset.text;
-                    if (text.Contains("\"displayName\": \"Neoxider Tools\"") ||
+                    if (text.Contains("\"displayName\": \"NeoxiderTools\"") ||
+                        text.Contains("\"displayName\": \"Neoxider Tools\"") ||
                         text.Contains("\"name\": \"com.neoxider.tools\""))
                     {
                         string url = TryExtractRepoUrlFromJson(text);

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
@@ -50,6 +50,9 @@ namespace Neo.Tools
 
         [Tooltip("Input Manager axis name for vertical (e.g. Vertical).")] [SerializeField]
         private string verticalAxis = "Vertical";
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logInputFallbackWarnings;
 
         public UnityEvent OnMoveStart;
 
@@ -110,10 +113,11 @@ namespace Neo.Tools
                 return true;
             }
 
-            if ((inputBackend == InputBackend.NewInputSystem || inputBackend == InputBackend.AutoPreferNew) &&
+            if (_logInputFallbackWarnings &&
+                (inputBackend == InputBackend.NewInputSystem || inputBackend == InputBackend.AutoPreferNew) &&
                 !_newInputUnavailableWarningShown)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[KeyboardMover] New Input System is not available. Falling back to Legacy Input Manager.", this);
                 _newInputUnavailableWarningShown = true;
             }
@@ -125,7 +129,7 @@ namespace Neo.Tools
         {
             _cachedDelta = ComputeDelta(Time.deltaTime);
 
-            // If kinematic (no Rigidbody2D) – move right away
+            // If kinematic (no Rigidbody2D) - move right away
             if (!_rb)
             {
                 ApplyDelta(_cachedDelta);

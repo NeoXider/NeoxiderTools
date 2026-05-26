@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
@@ -170,9 +170,18 @@ namespace Neo.GridSystem
             }
 
             Vector3Int size = Config != null ? Config.Size : Vector3Int.one;
-            if (size.x <= 0 || size.y <= 0 || size.z <= 0)
+            if (size.z == 0)
             {
-                Debug.LogError("FieldGenerator: Invalid field size! Size: " + size);
+                size.z = 1;
+                if (Config != null)
+                {
+                    Config.Size = size;
+                }
+            }
+
+            if (size.x <= 0 || size.y <= 0 || size.z < 0)
+            {
+                NeoDiagnostics.LogError("FieldGenerator: Invalid field size! Size: " + size);
                 Cells = null;
                 return;
             }

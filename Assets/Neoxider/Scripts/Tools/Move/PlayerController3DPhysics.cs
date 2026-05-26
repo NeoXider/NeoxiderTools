@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Neo.Network;
 using Neo.Settings;
 using UnityEngine;
@@ -19,7 +19,7 @@ namespace Neo.Tools
     ///     Add <see cref="Mirror.NetworkRigidbodyUnreliable"/> on the same GameObject yourself when you need replication;
     ///     typical settings: <c>syncDirection = ClientToServer</c>, <c>Coordinate Space = World</c> if needed.
     ///     Leave <c>NetworkRigidbodyUnreliable.useFixedUpdate</c> disabled on stock Mirror: when it is on, the rigidbody
-    ///     component’s <c>FixedUpdate</c> shadows the transform’s pending snapshot apply, so remote proxies may not move.
+    ///     component's <c>FixedUpdate</c> shadows the transform's pending snapshot apply, so remote proxies may not move.
     ///     <see cref="Awake"/> assigns <c>NetworkRigidbodyUnreliable.target</c> to this character's <see cref="Rigidbody"/> transform
     ///     so a wrong child target in the Inspector cannot break replication.
     ///     Uses <see cref="DefaultExecutionOrderAttribute"/> so this <c>Awake</c> runs before <c>NetworkRigidbodyUnreliable.Awake</c>,
@@ -96,7 +96,8 @@ namespace Neo.Tools
         [SerializeField]
         private bool _enableCursorControl = true;
 
-        [Tooltip("Lock and hide cursor in Start() when Enable Cursor Control is on and no external CursorLockController.")]
+        [Tooltip(
+            "Lock and hide cursor in Start() when Enable Cursor Control is on and no external CursorLockController.")]
         [SerializeField]
         private bool _lockCursorOnStart = true;
 
@@ -122,6 +123,11 @@ namespace Neo.Tools
             "Optional external cursor controller (for menu/pause pages or a shared UI root). If assigned and active, this controller becomes the authoritative cursor source instead of a same-object CursorLockController.")]
         [SerializeField]
         private CursorLockController _externalCursorLockController;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logSetupWarnings = true;
+
+        [SerializeField] private bool _logInputFallbackWarnings;
 
         [Header("Events")] [SerializeField] private UnityEvent _onJumped = new();
         [SerializeField] private UnityEvent _onLanded = new();
@@ -220,9 +226,9 @@ namespace Neo.Tools
                 _cameraPivot = Camera.main.transform;
             }
 
-            if (_groundCheck == null)
+            if (_groundCheck == null && _logSetupWarnings)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[PlayerController3DPhysics] Ground Check transform is not set. Ground detection will use transform position.",
                     this);
             }
@@ -237,7 +243,7 @@ namespace Neo.Tools
             }
 
 #if MIRROR
-            var netRb = GetComponent<NetworkRigidbodyUnreliable>();
+            NetworkRigidbodyUnreliable netRb = GetComponent<NetworkRigidbodyUnreliable>();
             if (netRb != null && netRb.target != _rigidbody.transform)
             {
                 netRb.target = _rigidbody.transform;
@@ -285,6 +291,7 @@ namespace Neo.Tools
             {
                 HandleLookInput();
             }
+
             bool movingNow = _movementEnabled && _moveInput.sqrMagnitude > 0.001f;
             if (movingNow != _wasMoving)
             {
@@ -303,7 +310,10 @@ namespace Neo.Tools
         private void FixedUpdate()
         {
             UpdateGroundState();
-            if (!HasInputAuthority) return;
+            if (!HasInputAuthority)
+            {
+                return;
+            }
 
             UpdateJumpTimers(Time.fixedDeltaTime);
             ApplyLookRotation();
@@ -642,13 +652,13 @@ namespace Neo.Tools
 
         private void WarnKinematicMovementOnce()
         {
-            if (_kinematicMovementWarningShown)
+            if (_kinematicMovementWarningShown || !_logSetupWarnings)
             {
                 return;
             }
 
             _kinematicMovementWarningShown = true;
-            Debug.LogWarning(
+            NeoDiagnostics.LogWarning(
                 "[PlayerController3DPhysics] Rigidbody is kinematic, so velocity-based movement is skipped. Disable Is Kinematic for the local player.",
                 this);
         }
@@ -758,9 +768,10 @@ namespace Neo.Tools
             }
 
             if ((_inputBackend == InputBackend.NewInputSystem || _inputBackend == InputBackend.AutoPreferNew) &&
+                _logInputFallbackWarnings &&
                 !_newInputUnavailableWarningShown)
             {
-                Debug.LogWarning(
+                NeoDiagnostics.LogWarning(
                     "[PlayerController3DPhysics] New Input System is not available. Falling back to Legacy Input Manager.");
                 _newInputUnavailableWarningShown = true;
             }
@@ -875,12 +886,12 @@ namespace Neo.Tools
 
         private void WarnLegacyInputUnavailable()
         {
-            if (_legacyInputUnavailableWarningShown)
+            if (_legacyInputUnavailableWarningShown || !_logInputFallbackWarnings)
             {
                 return;
             }
 
-            Debug.LogWarning(
+            NeoDiagnostics.LogWarning(
                 "[PlayerController3DPhysics] Legacy Input Manager is unavailable in current Player Settings. Falling back to New Input System where possible.",
                 this);
             _legacyInputUnavailableWarningShown = true;

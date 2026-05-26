@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 
@@ -63,7 +63,7 @@ namespace Neo.Condition
     }
 
     /// <summary>
-    ///     One condition entry: GameObject → Component/GameObject → field/property, compare op and threshold.
+    ///     One condition entry: GameObject -> Component/GameObject -> field/property, compare op and threshold.
     ///     At runtime reads the value via reflection (cached) and compares.
     /// </summary>
     [Serializable]
@@ -92,7 +92,7 @@ namespace Neo.Condition
         [SerializeField]
         private GameObject _prefabPreview;
 
-        [Tooltip("GameObject on which to find the component. If empty — NeoCondition's object is used.")]
+        [Tooltip("GameObject on which to find the component. If empty - NeoCondition's object is used.")]
         [SerializeField]
         private GameObject _sourceObject;
 
@@ -128,9 +128,12 @@ namespace Neo.Condition
         [SerializeField] private bool _otherUseSceneSearch;
         [SerializeField] private string _otherSearchObjectName = "";
         [SerializeField] private bool _otherWaitForObject;
-        [Tooltip("Other-object branch: seconds between Find retries when Other Find By Name finds nothing. 0 = every check.")]
+
+        [Tooltip(
+            "Other-object branch: seconds between Find retries when Other Find By Name finds nothing. 0 = every check.")]
         [SerializeField]
         private float _otherFindRetryIntervalSeconds = BindingSourceGameObjectResolver.DefaultFindRetryIntervalSeconds;
+
         [SerializeField] private GameObject _otherSourceObject;
         [SerializeField] private int _otherComponentIndex;
         [SerializeField] private string _otherComponentTypeName = "";
@@ -465,7 +468,7 @@ namespace Neo.Condition
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[NeoCondition] Error reading value ({_propertyName}): {ex.Message}");
+                NeoDiagnostics.LogWarning($"[NeoCondition] Error reading value ({_propertyName}): {ex.Message}");
                 left.InvalidateCache();
                 return false;
             }
@@ -495,7 +498,7 @@ namespace Neo.Condition
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         $"[NeoCondition] Error reading second variable ({_otherPropertyName}): {ex.Message}");
                     right.InvalidateCache();
                     return false;
@@ -543,7 +546,7 @@ namespace Neo.Condition
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[NeoCondition] Comparison error: {ex.Message}");
+                NeoDiagnostics.LogWarning($"[NeoCondition] Comparison error: {ex.Message}");
                 return false;
             }
         }

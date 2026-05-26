@@ -17,7 +17,7 @@ namespace Neo.Editor.Tests
         [Test]
         public void GetEffectiveLines_WithoutLinesData_DefaultUsesFullWindowHorizontalLines()
         {
-            LinesData.InnerArray[] lines = _spin.GetEffectiveLines(columnCount: 3, windowRowCount: 3);
+            LinesData.InnerArray[] lines = _spin.GetEffectiveLines(3, 3);
             Assert.That(lines.Length, Is.EqualTo(3));
             Assert.That(lines[0].corY, Is.EqualTo(new[] { 0, 0, 0 }));
             Assert.That(lines[1].corY, Is.EqualTo(new[] { 1, 1, 1 }));
@@ -65,7 +65,7 @@ namespace Neo.Editor.Tests
                 { 5, 0, 0 }
             };
 
-            int[] wins = _spin.GetWinningLines(ids, countLine: 1);
+            int[] wins = _spin.GetWinningLines(ids, 1);
             Assert.That(wins.Length, Is.GreaterThanOrEqualTo(1));
             Assert.That(wins, Does.Contain(0));
         }
@@ -97,7 +97,7 @@ namespace Neo.Editor.Tests
             }
             finally
             {
-                UnityEngine.Object.DestroyImmediate(go);
+                Object.DestroyImmediate(go);
             }
         }
     }

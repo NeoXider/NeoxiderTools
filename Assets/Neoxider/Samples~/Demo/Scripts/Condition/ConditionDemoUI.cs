@@ -2,6 +2,8 @@ using Neo.Tools;
 using TMPro;
 using UnityEngine;
 
+#pragma warning disable CS0618 // Condition demo keeps the legacy Health sample contract until the scene is migrated.
+
 namespace Neo.Demo.Condition
 {
     /// <summary>

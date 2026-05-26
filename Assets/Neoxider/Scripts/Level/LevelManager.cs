@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Events;
@@ -74,7 +74,7 @@ namespace Neo
 
                 if (!HasMapsConfigured())
                 {
-                    Debug.LogWarning("[LevelManager] No maps configured.", this);
+                    NeoDiagnostics.LogWarning("[LevelManager] No maps configured.", this);
                     return;
                 }
 
@@ -294,13 +294,13 @@ namespace Neo
             {
                 if (!HasMapsConfigured())
                 {
-                    Debug.LogWarning("[LevelManager] Cannot set map. No maps configured.", this);
+                    NeoDiagnostics.LogWarning("[LevelManager] Cannot set map. No maps configured.", this);
                     return false;
                 }
 
                 if (id < 0 || id >= _maps.Length)
                 {
-                    Debug.LogWarning($"[LevelManager] Map index {id} is out of range.", this);
+                    NeoDiagnostics.LogWarning($"[LevelManager] Map index {id} is out of range.", this);
                     return false;
                 }
 

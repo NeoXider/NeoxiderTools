@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -89,7 +89,7 @@ namespace Neo.Tools
         {
             if (I == null)
             {
-                Debug.LogError("PoolManager not found in the scene!");
+                NeoDiagnostics.LogError("PoolManager not found in the scene!");
                 return null;
             }
 
@@ -112,7 +112,7 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning($"Object {instance.name} is not from a pool. It will be destroyed.",
+                NeoDiagnostics.LogWarning($"Object {instance.name} is not from a pool. It will be destroyed.",
                     instance);
                 Destroy(instance);
             }

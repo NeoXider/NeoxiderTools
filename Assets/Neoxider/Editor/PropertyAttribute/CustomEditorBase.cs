@@ -194,7 +194,8 @@ namespace Neo.Editor
                     {
                         string json = File.ReadAllText(packagePath);
 
-                        if (json.Contains("\"displayName\": \"Neoxider Tools\"") ||
+                        if (json.Contains("\"displayName\": \"NeoxiderTools\"") ||
+                            json.Contains("\"displayName\": \"Neoxider Tools\"") ||
                             json.Contains("\"name\": \"com.neoxider.tools\""))
                         {
                             if (string.IsNullOrEmpty(_cachedNeoxiderRootPath))

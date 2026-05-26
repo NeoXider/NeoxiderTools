@@ -18,10 +18,8 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerScenePlayerTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
-            Transport.active = transport;
+            _networkManager =
+                NetworkTestHelper.CreateTestNetworkManager("NetworkManagerScenePlayerTest", out _managerObj);
 
             _scenePlayerTemplate = new GameObject("ScenePlayerTemplate");
             _scenePlayerTemplate.AddComponent<NetworkIdentity>().sceneId = 12345;
@@ -51,15 +49,21 @@ namespace Neo.Tests.Play
         public IEnumerator TearDown()
         {
             if (_networkManager != null)
+            {
                 _networkManager.StopNetwork();
+            }
 
             yield return null;
 
             if (_managerObj != null)
+            {
                 Object.DestroyImmediate(_managerObj);
+            }
 
             if (_scenePlayerTemplate != null)
+            {
                 Object.DestroyImmediate(_scenePlayerTemplate);
+            }
 
             NetworkClient.ClearSpawners();
         }
@@ -70,16 +74,20 @@ namespace Neo.Tests.Play
             _networkManager.StartHost();
 
             while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            {
                 yield return null;
+            }
 
             yield return null;
 
             GameObject spawnedPlayer = NetworkClient.localPlayer.gameObject;
 
             Assert.IsFalse(_scenePlayerTemplate.activeSelf, "Scene template should stay disabled at runtime.");
-            Assert.AreNotSame(_scenePlayerTemplate, spawnedPlayer, "Network player should be a spawned copy, not the scene template.");
+            Assert.AreNotSame(_scenePlayerTemplate, spawnedPlayer,
+                "Network player should be a spawned copy, not the scene template.");
             Assert.IsTrue(spawnedPlayer.activeSelf, "Spawned player copy should be active.");
-            Assert.AreEqual(0UL, spawnedPlayer.GetComponent<NetworkIdentity>().sceneId, "Spawned copy must not keep the template sceneId.");
+            Assert.AreEqual(0UL, spawnedPlayer.GetComponent<NetworkIdentity>().sceneId,
+                "Spawned copy must not keep the template sceneId.");
             Assert.AreEqual(12345UL, _scenePlayerTemplate.GetComponent<NetworkIdentity>().sceneId,
                 "Scene template should keep its sceneId after cloning.");
         }
@@ -94,7 +102,9 @@ namespace Neo.Tests.Play
             _networkManager.StartHost();
 
             while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            {
                 yield return null;
+            }
 
             yield return null;
 
@@ -114,7 +124,9 @@ namespace Neo.Tests.Play
             _networkManager.StartHost();
 
             while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            {
                 yield return null;
+            }
 
             yield return null;
 
@@ -124,13 +136,16 @@ namespace Neo.Tests.Play
 
             Assert.IsNotNull(templateCounter, "Scene template should contain the configured NoCode counter.");
             Assert.IsNotNull(spawnedCounter, "Spawned player should receive a cloned NoCode counter.");
-            Assert.AreNotSame(templateCounter, spawnedCounter, "Spawned player must not reuse the template counter instance.");
+            Assert.AreNotSame(templateCounter, spawnedCounter,
+                "Spawned player must not reuse the template counter instance.");
 
             spawnedCounter.Set(10);
             yield return null;
 
-            Assert.AreEqual(10, spawnedCounter.ValueInt, "Changing the spawned player's counter should affect that player clone.");
-            Assert.AreEqual(0, templateCounter.ValueInt, "Changing the spawned player must not mutate the disabled scene template.");
+            Assert.AreEqual(10, spawnedCounter.ValueInt,
+                "Changing the spawned player's counter should affect that player clone.");
+            Assert.AreEqual(0, templateCounter.ValueInt,
+                "Changing the spawned player must not mutate the disabled scene template.");
         }
 
         [UnityTest]
@@ -139,13 +154,15 @@ namespace Neo.Tests.Play
             _networkManager.StartHost();
 
             while (!NetworkServer.active || !NetworkClient.isConnected || NetworkClient.localPlayer == null)
+            {
                 yield return null;
+            }
 
             yield return null;
 
             GameObject firstPlayer = NetworkClient.localPlayer.gameObject;
             GameObject secondPlayer = CreateScenePlayerCopyForTest();
-            var pickup = new GameObject("WeaponPickup").AddComponent<WeaponPickupTrigger>();
+            WeaponPickupTrigger pickup = new GameObject("WeaponPickup").AddComponent<WeaponPickupTrigger>();
 
             WeaponMarker firstWeapon = firstPlayer.GetComponentInChildren<WeaponMarker>(true);
             WeaponMarker secondWeapon = secondPlayer.GetComponentInChildren<WeaponMarker>(true);
@@ -158,16 +175,20 @@ namespace Neo.Tests.Play
             pickup.Pickup(firstPlayer.GetComponent<Collider>());
             yield return null;
 
-            Assert.IsTrue(firstWeapon.gameObject.activeSelf, "Pickup should enable weapon on the entered first player.");
-            Assert.IsFalse(secondWeapon.gameObject.activeSelf, "First pickup must not enable weapon on the second player.");
+            Assert.IsTrue(firstWeapon.gameObject.activeSelf,
+                "Pickup should enable weapon on the entered first player.");
+            Assert.IsFalse(secondWeapon.gameObject.activeSelf,
+                "First pickup must not enable weapon on the second player.");
             Assert.IsFalse(templateWeapon.gameObject.activeSelf, "Pickup must not mutate the disabled scene template.");
 
             pickup.Pickup(secondPlayer.GetComponent<Collider>());
             yield return null;
 
             Assert.IsTrue(firstWeapon.gameObject.activeSelf, "First player should keep the picked weapon.");
-            Assert.IsTrue(secondWeapon.gameObject.activeSelf, "Second player should enable its own cloned weapon after entering.");
-            Assert.IsFalse(templateWeapon.gameObject.activeSelf, "Scene template weapon should remain a clean template.");
+            Assert.IsTrue(secondWeapon.gameObject.activeSelf,
+                "Second player should enable its own cloned weapon after entering.");
+            Assert.IsFalse(templateWeapon.gameObject.activeSelf,
+                "Scene template weapon should remain a clean template.");
 
             Object.DestroyImmediate(pickup.gameObject);
             Object.DestroyImmediate(secondPlayer);
@@ -194,11 +215,15 @@ namespace Neo.Tests.Play
             public void Pickup(Collider enteredCollider)
             {
                 if (enteredCollider == null)
+                {
                     return;
+                }
 
                 WeaponMarker weapon = enteredCollider.GetComponentInChildren<WeaponMarker>(true);
                 if (weapon != null)
+                {
                     weapon.gameObject.SetActive(true);
+                }
             }
         }
     }

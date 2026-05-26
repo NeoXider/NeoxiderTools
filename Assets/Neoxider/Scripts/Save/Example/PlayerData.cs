@@ -25,6 +25,7 @@ namespace Neo.Save.Examples
             {
                 SaveProvider.Log($"PlayerData for {gameObject.name} loaded. Position set to {playerPosition}", this);
             }
+
             IsLoad = true;
         }
     }

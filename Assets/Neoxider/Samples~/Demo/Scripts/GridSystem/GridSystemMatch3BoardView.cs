@@ -22,6 +22,18 @@ namespace Neo.Demo.GridSystem
         private readonly Dictionary<Vector3Int, CellView> _views = new();
         private Vector3Int? _selected;
 
+        public void Configure(
+            FieldGenerator generator,
+            Match3BoardService match3,
+            Camera sceneCamera,
+            TMP_Text statusText)
+        {
+            _generator = generator;
+            _match3 = match3;
+            _camera = sceneCamera;
+            _statusText = statusText;
+        }
+
         private void Awake()
         {
             if (_camera == null)
@@ -233,15 +245,21 @@ namespace Neo.Demo.GridSystem
 
         private void ClearAll()
         {
+            List<GameObject> children = new();
             foreach (Transform child in transform)
+            {
+                children.Add(child.gameObject);
+            }
+
+            foreach (GameObject child in children)
             {
                 if (Application.isPlaying)
                 {
-                    Destroy(child.gameObject);
+                    Destroy(child);
                 }
                 else
                 {
-                    DestroyImmediate(child.gameObject);
+                    DestroyImmediate(child);
                 }
             }
 

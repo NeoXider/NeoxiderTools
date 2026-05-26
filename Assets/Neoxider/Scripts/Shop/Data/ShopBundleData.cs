@@ -11,8 +11,7 @@ namespace Neo.Shop
     [CreateAssetMenu(fileName = "Shop Bundle Data", menuName = "Neoxider/Shop/Shop Bundle Data", order = 33)]
     public class ShopBundleData : ScriptableObject
     {
-        [Tooltip("Stable identifier used for save state. Auto-filled from name on validate.")]
-        [SerializeField]
+        [Tooltip("Stable identifier used for save state. Auto-filled from name on validate.")] [SerializeField]
         private string _id = "";
 
         [Tooltip("Bundle display name shown in shop.")] [SerializeField]

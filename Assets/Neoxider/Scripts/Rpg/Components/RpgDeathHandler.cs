@@ -1,11 +1,11 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Rpg
 {
     /// <summary>
     ///     Handles death of an <see cref="Components.RpgCharacter"/> by performing a configurable action.
-    ///     Attach alongside any Components.RpgCharacter — fully NoCode, no additional scripts required.
+    ///     Attach alongside any Components.RpgCharacter  - fully NoCode, no additional scripts required.
     /// </summary>
     [NeoDoc("Rpg/RpgDeathHandler.md")]
     [RequireComponent(typeof(Components.RpgCharacter))]
@@ -16,30 +16,31 @@ namespace Neo.Rpg
         {
             /// <summary>Deactivate the GameObject (can be pooled/reactivated).</summary>
             Deactivate,
+
             /// <summary>Destroy the GameObject immediately.</summary>
             Destroy,
+
             /// <summary>Destroy the GameObject after a delay (for death animations).</summary>
             DestroyDelayed
         }
 
-        [Header("Death Settings")]
-        [SerializeField] private DeathAction action = DeathAction.Deactivate;
+        [Header("Death Settings")] [SerializeField]
+        private DeathAction action = DeathAction.Deactivate;
 
-        [Tooltip("Delay before destruction (only used with DestroyDelayed).")]
-        [SerializeField] [Min(0f)] private float destroyDelay = 2f;
+        [Tooltip("Delay before destruction (only used with DestroyDelayed).")] [SerializeField] [Min(0f)]
+        private float destroyDelay = 2f;
 
-        [Header("Debug")]
-        [SerializeField] private bool debugLog;
+        [Header("Debug")] [SerializeField] private bool debugLog;
 
-        [Header("Events")]
-        [Tooltip("Raised when death handling begins (before action is performed).")]
-        [SerializeField] private UnityEvent _onDeathBegin = new();
-        
-        [Tooltip("Raised after the death action is performed.")]
-        [SerializeField] private UnityEvent _onDeathComplete = new();
+        [Header("Events")] [Tooltip("Raised when death handling begins (before action is performed).")] [SerializeField]
+        private UnityEvent _onDeathBegin = new();
+
+        [Tooltip("Raised after the death action is performed.")] [SerializeField]
+        private UnityEvent _onDeathComplete = new();
 
         /// <summary>Raised when death handling begins.</summary>
         public UnityEvent OnDeathBegin => _onDeathBegin;
+
         /// <summary>Raised after death action is performed.</summary>
         public UnityEvent OnDeathComplete => _onDeathComplete;
 
@@ -54,12 +55,18 @@ namespace Neo.Rpg
         private void OnDestroy()
         {
             if (_combatant != null)
+            {
                 _combatant.OnDeathEvent.RemoveListener(HandleDeath);
+            }
         }
 
         private void HandleDeath()
         {
-            if (debugLog) Debug.Log($"[RpgDeathHandler] {name} died — action: {action}");
+            if (debugLog)
+            {
+                NeoDiagnostics.Log($"[RpgDeathHandler] {name} died  - action: {action}");
+            }
+
             _onDeathBegin?.Invoke();
 
             switch (action)

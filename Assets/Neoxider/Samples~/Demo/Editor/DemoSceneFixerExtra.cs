@@ -1,8 +1,13 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.AI;
 using Neo.Rpg;
+using Neo.Rpg.Components;
 using Neo.Tools;
+#if MIRROR
+using Mirror;
+#endif
 
 namespace Neo.Editor.Rpg
 {
@@ -11,6 +16,9 @@ namespace Neo.Editor.Rpg
         [MenuItem("Tools/Neoxider/RPG/Fix All")]
         public static void FixAll()
         {
+            const string meleeTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/MeleeNpcCharacterTemplate.asset";
+            const string rangedTemplatePath = "Assets/Neoxider/Samples/Demo/Data/RpgCombatNpcDemo/Assets/RangedNpcCharacterTemplate.asset";
+
             // 1. Definition
             var def = AssetDatabase.LoadAssetAtPath<RpgAttackDefinition>("Assets/Neoxider/Samples/Demo/Data/EnemyRangedAttack.asset");
             var proj = AssetDatabase.LoadAssetAtPath<RpgProjectile>("Assets/Neoxider/Samples/Demo/Prefabs/EnemyEnergySphere.prefab");
@@ -28,6 +36,9 @@ namespace Neo.Editor.Rpg
             using (var scope = new PrefabUtility.EditPrefabContentsScope(rangedPath))
             {
                 var r = scope.prefabContentsRoot;
+                RemoveMissingScripts(r);
+                EnsureRpgCharacter(r, rangedTemplatePath);
+
                 var ac = r.GetComponent<RpgAttackController>();
                 if (ac != null && def != null)
                 {
@@ -68,6 +79,9 @@ namespace Neo.Editor.Rpg
             using (var scope = new PrefabUtility.EditPrefabContentsScope(meleePath))
             {
                 var r = scope.prefabContentsRoot;
+                RemoveMissingScripts(r);
+                EnsureRpgCharacter(r, meleeTemplatePath);
+
                 var nav = r.GetComponent<NavMeshAgent>();
                 if (nav) nav.stoppingDistance = 1.5f;
 
@@ -124,8 +138,164 @@ namespace Neo.Editor.Rpg
                 Debug.Log("Fixed Spawners");
             }
 
+            // 5. Sample asset validation fixes
+            RepairRpgEnemyPrefab("Assets/Neoxider/Samples/Demo/Prefabs/CubeEnemy.prefab", meleeTemplatePath);
+            RepairRpgEnemyPrefab(meleePath, meleeTemplatePath);
+            RepairRpgEnemyPrefab(rangedPath, rangedTemplatePath);
+#if MIRROR
+            EnsureNetworkIdentity(rangedPath);
+            EnsureNetworkIdentity(meleePath);
+#endif
+            var cleanedTerrainCount = CleanMissingTreePrototypes();
+            if (cleanedTerrainCount > 0)
+            {
+                Debug.Log($"Cleaned missing terrain tree prototypes in {cleanedTerrainCount} TerrainData asset(s).");
+            }
+
             AssetDatabase.SaveAssets();
             Debug.Log("All fixes applied successfully.");
+        }
+
+        private static void RepairRpgEnemyPrefab(string prefabPath, string templatePath)
+        {
+            using var scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
+            var root = scope.prefabContentsRoot;
+            if (root == null) return;
+
+            RemoveMissingScripts(root);
+            EnsureRpgCharacter(root, templatePath);
+#if MIRROR
+            EnsureNetworkIdentity(root, prefabPath);
+#endif
+            EditorUtility.SetDirty(root);
+        }
+
+        private static void RemoveMissingScripts(GameObject root)
+        {
+            if (root == null) return;
+
+            foreach (Transform transform in root.GetComponentsInChildren<Transform>(true))
+            {
+                int removed = GameObjectUtility.RemoveMonoBehavioursWithMissingScript(transform.gameObject);
+                if (removed > 0)
+                {
+                    Debug.Log($"Removed {removed} missing script(s) from {transform.gameObject.name}.");
+                    EditorUtility.SetDirty(transform.gameObject);
+                }
+            }
+        }
+
+        private static void EnsureRpgCharacter(GameObject root, string templatePath)
+        {
+            if (root == null) return;
+
+            var character = root.GetComponent<RpgCharacter>();
+            if (character == null)
+            {
+                character = root.AddComponent<RpgCharacter>();
+                Debug.Log($"Added RpgCharacter to {root.name}.");
+            }
+
+            var template = AssetDatabase.LoadAssetAtPath<RpgCharacterTemplate>(templatePath);
+            if (template != null && character.Template != template)
+            {
+                character.Template = template;
+            }
+
+            character.isNetworked = false;
+            EditorUtility.SetDirty(character);
+        }
+
+#if MIRROR
+        private static void EnsureNetworkIdentity(string prefabPath)
+        {
+            using var scope = new PrefabUtility.EditPrefabContentsScope(prefabPath);
+            var root = scope.prefabContentsRoot;
+            if (root == null) return;
+
+            RemoveMissingScripts(root);
+            EnsureNetworkIdentity(root, prefabPath);
+            EditorUtility.SetDirty(root);
+        }
+
+        private static void EnsureNetworkIdentity(GameObject root, string prefabPath)
+        {
+            var identity = root.GetComponent<NetworkIdentity>();
+            if (identity == null)
+            {
+                identity = root.AddComponent<NetworkIdentity>();
+                Debug.Log($"Added NetworkIdentity to {prefabPath}");
+            }
+
+            _ = identity.assetId;
+            EditorUtility.SetDirty(root);
+            EditorUtility.SetDirty(identity);
+        }
+#endif
+
+        private static int CleanMissingTreePrototypes()
+        {
+            var cleanedCount = 0;
+            string[] terrainGuids = AssetDatabase.FindAssets("t:TerrainData", new[] { "Assets/Neoxider/Samples" });
+
+            foreach (string guid in terrainGuids)
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                var terrain = AssetDatabase.LoadAssetAtPath<TerrainData>(path);
+                if (terrain == null) continue;
+
+                TreePrototype[] prototypes = terrain.treePrototypes ?? new TreePrototype[0];
+                TreeInstance[] instances = terrain.treeInstances ?? new TreeInstance[0];
+                var validPrototypes = new List<TreePrototype>(prototypes.Length);
+                var indexMap = new Dictionary<int, int>(prototypes.Length);
+                var changed = false;
+
+                for (int i = 0; i < prototypes.Length; i++)
+                {
+                    if (prototypes[i].prefab == null)
+                    {
+                        changed = true;
+                        continue;
+                    }
+
+                    indexMap[i] = validPrototypes.Count;
+                    validPrototypes.Add(prototypes[i]);
+                }
+
+                if (!changed)
+                {
+                    foreach (TreeInstance instance in instances)
+                    {
+                        if (instance.prototypeIndex < 0 || instance.prototypeIndex >= prototypes.Length)
+                        {
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!changed) continue;
+
+                var validInstances = new List<TreeInstance>(instances.Length);
+                foreach (TreeInstance instance in instances)
+                {
+                    if (!indexMap.TryGetValue(instance.prototypeIndex, out int newIndex))
+                    {
+                        continue;
+                    }
+
+                    TreeInstance remapped = instance;
+                    remapped.prototypeIndex = newIndex;
+                    validInstances.Add(remapped);
+                }
+
+                terrain.treeInstances = validInstances.ToArray();
+                terrain.treePrototypes = validPrototypes.ToArray();
+                EditorUtility.SetDirty(terrain);
+                cleanedCount++;
+            }
+
+            return cleanedCount;
         }
     }
 }

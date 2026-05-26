@@ -14,7 +14,8 @@ namespace Neo.Tools
     public sealed class RpgStatsDamageableBridge : MonoBehaviour, IDamageable, IHealable
     {
         [Tooltip("Character to forward damage/heal to. When empty, searches this GameObject's parents.")]
-        [SerializeField] private RpgCharacter _character;
+        [SerializeField]
+        private RpgCharacter _character;
 
         [SerializeField] [Min(0f)] private float _damageMultiplier = 1f;
         [SerializeField] [Min(0f)] private float _healMultiplier = 1f;
@@ -34,16 +35,24 @@ namespace Neo.Tools
         public void TakeDamage(int amount)
         {
             RpgCharacter ch = ResolveCharacter();
-            if (ch != null && amount > 0) ch.Damage(amount * _damageMultiplier);
+            if (ch != null && amount > 0)
+            {
+                ch.Damage(amount * _damageMultiplier);
+            }
         }
 
         public void Heal(int amount)
         {
             RpgCharacter ch = ResolveCharacter();
-            if (ch != null && amount > 0) ch.Heal(amount * _healMultiplier);
+            if (ch != null && amount > 0)
+            {
+                ch.Heal(amount * _healMultiplier);
+            }
         }
 
-        private RpgCharacter ResolveCharacter() =>
-            _character != null ? _character : (_character = GetComponentInParent<RpgCharacter>());
+        private RpgCharacter ResolveCharacter()
+        {
+            return _character != null ? _character : _character = GetComponentInParent<RpgCharacter>();
+        }
     }
 }

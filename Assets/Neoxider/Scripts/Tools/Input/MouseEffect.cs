@@ -1,13 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Events;
 
 namespace Neo.Tools
 {
     /// <summary>
     ///     Visual mouse effects driven by MouseInputManager.
-    ///     • TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="holdInterval" />
+    ///     - TrailRenderer or follower GameObject tracks the cursor; position is updated every <see cref="holdInterval" />
     ///     seconds.
-    ///     • Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
+    ///     - Prefab spawns on chosen trigger (Press / Hold / Release / Click) and, optionally, periodically while holding.
     /// </summary>
     [NeoDoc("Tools/Input/MouseEffect.md")]
     [CreateFromMenu("Neoxider/Tools/Input/MouseEffect")]
@@ -55,9 +55,28 @@ namespace Neo.Tools
         [Header("Follow Settings")] [Tooltip("Depth (world Z) used to place the trail / follower")]
         public float followDepth = 10f;
 
+        [Tooltip(
+            "Camera used to convert screen cursor position to world position. If empty, MouseInputManager.TargetCamera is used before the optional MainCamera fallback.")]
+        [SerializeField]
+        private Camera targetCamera;
+
+        [Tooltip("Resolve Camera.main only when Target Camera and MouseInputManager.TargetCamera are empty.")]
+        [SerializeField]
+        private bool useMainCameraFallback = true;
+
+        [Tooltip("Seconds between Camera.main fallback attempts while no camera is available.")]
+        [SerializeField]
+        [Min(0f)]
+        private float cameraFallbackRetryInterval = 1f;
+
         [Header("Spawn Parent (optional)")]
         [Tooltip("Parent for spawned prefabs; if null, spawns under this GameObject")]
         public Transform spawnParent;
+
+        [Header("Diagnostics")] [SerializeField]
+        private bool _logMissingManagerWarning;
+
+        [SerializeField] private bool _logMissingCameraWarning;
 
         public UnityEvent onStartFollow;
         public UnityEvent onStopFollow;
@@ -69,11 +88,24 @@ namespace Neo.Tools
         private float _lastFollowUpdate;
 
         private float _lastHoldSpawn;
+        private float _nextCameraFallbackTime;
+        private bool _missingCameraWarningShown;
+        private bool _missingManagerWarningShown;
         private MouseInputManager _mim;
+
+        public Camera TargetCamera => targetCamera;
+
+        public void SetTargetCamera(Camera camera)
+        {
+            targetCamera = camera;
+            _cam = camera;
+            _nextCameraFallbackTime = 0f;
+            _missingCameraWarningShown = false;
+        }
 
         private void Awake()
         {
-            _cam = Camera.main;
+            ResolveTargetCamera(true);
             if (trail)
             {
                 trail.enabled = true; // keep component enabled, control emission instead
@@ -127,8 +159,8 @@ namespace Neo.Tools
 
         private void OnEnable()
         {
-            _cam = _cam != null ? _cam : Camera.main;
             _mim = MouseInputManager.I;
+            ResolveTargetCamera(true);
 
             if (_mim != null)
             {
@@ -139,7 +171,11 @@ namespace Neo.Tools
             }
             else
             {
-                Debug.LogWarning("MouseInputManager is null");
+                if (_logMissingManagerWarning && !_missingManagerWarningShown)
+                {
+                    _missingManagerWarningShown = true;
+                    NeoDiagnostics.LogWarning("[MouseEffect] MouseInputManager is missing.", this);
+                }
             }
         }
 
@@ -172,7 +208,8 @@ namespace Neo.Tools
         private bool TryGetCursorWorld(out Vector3 worldPos)
         {
             worldPos = Vector3.zero;
-            if (_cam == null)
+            Camera camera = ResolveTargetCamera(false);
+            if (camera == null)
             {
                 return false;
             }
@@ -181,11 +218,53 @@ namespace Neo.Tools
             mp.x = Mathf.Clamp(mp.x, 0f, Screen.width);
             mp.y = Mathf.Clamp(mp.y, 0f, Screen.height);
 
-            worldPos = _cam.ScreenToWorldPoint(new Vector3(mp.x, mp.y, followDepth));
+            worldPos = camera.ScreenToWorldPoint(new Vector3(mp.x, mp.y, followDepth));
             return true;
         }
 
-        /* ────────────── event handlers ────────────── */
+        private Camera ResolveTargetCamera(bool forceFallback)
+        {
+            if (targetCamera != null)
+            {
+                _cam = targetCamera;
+                return _cam;
+            }
+
+            if (_mim != null && _mim.TargetCamera != null)
+            {
+                _cam = _mim.TargetCamera;
+                return _cam;
+            }
+
+            if (_cam != null)
+            {
+                return _cam;
+            }
+
+            if (useMainCameraFallback)
+            {
+                float now = Time.realtimeSinceStartup;
+                if (forceFallback || cameraFallbackRetryInterval <= 0f || now >= _nextCameraFallbackTime)
+                {
+                    _cam = Camera.main;
+                    _nextCameraFallbackTime = now + Mathf.Max(0f, cameraFallbackRetryInterval);
+                }
+            }
+
+            if (_cam == null && _logMissingCameraWarning && !_missingCameraWarningShown)
+            {
+                _missingCameraWarningShown = true;
+                NeoDiagnostics.LogWarningThrottled(
+                    $"{nameof(MouseEffect)}.{GetInstanceID()}.MissingCamera",
+                    "[MouseEffect] Target Camera is not assigned and no fallback camera is available.",
+                    this,
+                    5f);
+            }
+
+            return _cam;
+        }
+
+        /* event handlers */
 
         private void OnPress(MouseInputManager.MouseEventData data)
         {

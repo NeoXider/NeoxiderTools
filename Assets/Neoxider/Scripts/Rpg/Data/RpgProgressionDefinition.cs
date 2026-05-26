@@ -13,8 +13,8 @@ namespace Neo.Rpg
         [Tooltip("Which level-up flow is active.")]
         public RpgLevelGrowthMode growthMode = RpgLevelGrowthMode.AllStatsEveryLevel;
 
-        [Tooltip("Upgrade points granted on every level-up when growthMode = ManualUpgradePoints or Hybrid.")]
-        [Min(0)] public int upgradePointsPerLevel = 1;
+        [Tooltip("Upgrade points granted on every level-up when growthMode = ManualUpgradePoints or Hybrid.")] [Min(0)]
+        public int upgradePointsPerLevel = 1;
 
         [Tooltip("Auto-apply stat growth on level-up. Set to false to defer growth (turn-based combat, " +
                  "tutorials).")]

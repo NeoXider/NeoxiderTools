@@ -20,43 +20,59 @@ namespace Neo.Tests.Play
         [UnitySetUp]
         public IEnumerator SetUp()
         {
-            _managerObj = new GameObject("NetworkManagerToolsTest");
-            Transport transport = _managerObj.AddComponent<DummyTransport>();
-            _networkManager = _managerObj.AddComponent<TestNetworkManager>();
+            _networkManager = NetworkTestHelper.CreateTestNetworkManager("NetworkManagerToolsTest", out _managerObj);
 
-            GameObject dummyPlayer = new GameObject("DummyPlayer");
+            var dummyPlayer = new GameObject("DummyPlayer");
             NetworkIdentity dummyId = dummyPlayer.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(dummyId, 99998);
             _networkManager.playerPrefab = dummyPlayer;
 
-            Transport.active = transport;
             yield return null;
 
             _testContext = new GameObject("TestContext");
 
             _networkManager.StartHost();
-            while (!NetworkServer.active || !NetworkClient.isConnected) yield return null;
-            if (!NetworkClient.ready) NetworkClient.Ready();
+            while (!NetworkServer.active || !NetworkClient.isConnected)
+            {
+                yield return null;
+            }
+
+            if (!NetworkClient.ready)
+            {
+                NetworkClient.Ready();
+            }
+
             yield return null;
         }
 
         [UnityTearDown]
         public IEnumerator TearDown()
         {
-            if (_networkManager != null) _networkManager.StopHost();
+            if (_networkManager != null)
+            {
+                _networkManager.StopHost();
+            }
+
             yield return null;
-            if (_managerObj != null) Object.DestroyImmediate(_managerObj);
-            if (_testContext != null) Object.DestroyImmediate(_testContext);
+            if (_managerObj != null)
+            {
+                Object.DestroyImmediate(_managerObj);
+            }
+
+            if (_testContext != null)
+            {
+                Object.DestroyImmediate(_testContext);
+            }
         }
 
         [UnityTest]
         public IEnumerator Counter_CmdSetValue_UpdatesGlobally()
         {
             var counterObj = new GameObject("Counter");
-            var counter = counterObj.AddComponent<Counter>();
+            Counter counter = counterObj.AddComponent<Counter>();
             counter.isNetworked = true;
-            
-            var id = counterObj.AddComponent<NetworkIdentity>();
+
+            NetworkIdentity id = counterObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10001);
             NetworkClient.RegisterPrefab(counterObj);
             NetworkServer.Spawn(counterObj);
@@ -80,16 +96,16 @@ namespace Neo.Tests.Play
         public IEnumerator Selector_CmdSyncState_UpdatesGlobally()
         {
             var selectorObj = new GameObject("Selector");
-            var selector = selectorObj.AddComponent<Selector>();
+            Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
-            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10002);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
             yield return null;
-            
+
             selector.Count = 5;
 
             int invokedValue = -1;
@@ -109,10 +125,10 @@ namespace Neo.Tests.Play
         public IEnumerator Selector_NetworkedHostSet_FiresSelectionChangedOnce()
         {
             var selectorObj = new GameObject("SelectorHostOnce");
-            var selector = selectorObj.AddComponent<Selector>();
+            Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
-            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10006);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
@@ -151,11 +167,11 @@ namespace Neo.Tests.Play
             second.transform.SetParent(selectorObj.transform);
             third.transform.SetParent(selectorObj.transform);
 
-            var selector = selectorObj.AddComponent<Selector>();
+            Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
             selector.startOnAwake = false;
 
-            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10007);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
@@ -180,10 +196,10 @@ namespace Neo.Tests.Play
         public IEnumerator Selector_NetworkedExcludeInclude_UpdatesPool()
         {
             var selectorObj = new GameObject("SelectorExcludeNetworked");
-            var selector = selectorObj.AddComponent<Selector>();
+            Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
-            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10008);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
@@ -212,11 +228,14 @@ namespace Neo.Tests.Play
         public IEnumerator NeoCondition_CmdCheckResult_FiresGlobalEvents()
         {
             var condObj = new GameObject("Condition");
-            var condition = condObj.AddComponent<NeoCondition>();
+            NeoCondition condition = condObj.AddComponent<NeoCondition>();
             condition.isNetworked = true;
-            typeof(NeoCondition).GetField("_onlyOnChange", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(condition, false);
+            typeof(NeoCondition)
+                .GetField("_onlyOnChange",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(condition, false);
 
-            var id = condObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = condObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10003);
             NetworkClient.RegisterPrefab(condObj);
             NetworkServer.Spawn(condObj);
@@ -239,12 +258,12 @@ namespace Neo.Tests.Play
         public IEnumerator RandomRange_CmdGenerate_UpdatesGlobally()
         {
             var randObj = new GameObject("RandomRange");
-            var randomRange = randObj.AddComponent<RandomRange>();
+            RandomRange randomRange = randObj.AddComponent<RandomRange>();
             randomRange.isNetworked = true;
             randomRange.SetMin(1);
             randomRange.SetMax(100);
 
-            var id = randObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = randObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10004);
             NetworkClient.RegisterPrefab(randObj);
             NetworkServer.Spawn(randObj);
@@ -287,18 +306,21 @@ namespace Neo.Tests.Play
         public IEnumerator Selector_CmdSetRandom_UpdatesGlobally()
         {
             var selectorObj = new GameObject("Selector");
-            var selector = selectorObj.AddComponent<Selector>();
+            Selector selector = selectorObj.AddComponent<Selector>();
             selector.isNetworked = true;
 
-            var id = selectorObj.AddComponent<NetworkIdentity>();
+            NetworkIdentity id = selectorObj.AddComponent<NetworkIdentity>();
             NetworkTestHelper.SetAssetId(id, 10005);
             NetworkClient.RegisterPrefab(selectorObj);
             NetworkServer.Spawn(selectorObj);
 
             yield return null;
-            
+
             selector.Count = 5;
-            typeof(Selector).GetField("_useRandomSelection", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)?.SetValue(selector, true);
+            typeof(Selector)
+                .GetField("_useRandomSelection",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                ?.SetValue(selector, true);
 
             int invokedValue = -1;
             selector.OnSelectionChanged.AddListener(v => invokedValue = v);

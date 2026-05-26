@@ -52,7 +52,10 @@ namespace Neo.Editor.Rpg
 
         private void DrawLevelsPreview()
         {
-            if (serializedObject.isEditingMultipleObjects) return;
+            if (serializedObject.isEditingMultipleObjects)
+            {
+                return;
+            }
 
             var definition = (RpgStatGrowthDefinition)target;
             int previewCount = EditorPrefs.GetInt(PreviewCountKey, PreviewCountDefault);
@@ -60,7 +63,7 @@ namespace Neo.Editor.Rpg
 
             EditorGUILayout.Space(12f);
             EditorGUILayout.LabelField("Level Preview", EditorStyles.boldLabel);
-            
+
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.PrefixLabel("Levels in preview");
             int newCount = EditorGUILayout.IntSlider(previewCount, PreviewCountMin, PreviewCountMax);
@@ -68,6 +71,7 @@ namespace Neo.Editor.Rpg
             {
                 EditorPrefs.SetInt(PreviewCountKey, newCount);
             }
+
             EditorGUILayout.EndHorizontal();
 
             EditorGUILayout.Space(4f);
@@ -75,31 +79,53 @@ namespace Neo.Editor.Rpg
             // Draw header
             Rect headerRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
             float colWidth = headerRect.width / 6f; // Reduced from 5 to 6 for XP column
-            
-            EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, colWidth * 0.5f, headerRect.height), "Lvl", EditorStyles.boldLabel);
-            EditorGUI.LabelField(new Rect(headerRect.x + colWidth * 0.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Hp", EditorStyles.boldLabel);
-            EditorGUI.LabelField(new Rect(headerRect.x + colWidth * 1.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Reg", EditorStyles.boldLabel);
-            EditorGUI.LabelField(new Rect(headerRect.x + colWidth * 2.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Dmg", EditorStyles.boldLabel);
-            EditorGUI.LabelField(new Rect(headerRect.x + colWidth * 3.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Def", EditorStyles.boldLabel);
-            EditorGUI.LabelField(new Rect(headerRect.x + colWidth * 4.5f, headerRect.y, colWidth * 1.5f, headerRect.height), "XP Rew", EditorStyles.boldLabel);
+
+            EditorGUI.LabelField(new Rect(headerRect.x, headerRect.y, colWidth * 0.5f, headerRect.height), "Lvl",
+                EditorStyles.boldLabel);
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + colWidth * 0.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Hp",
+                EditorStyles.boldLabel);
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + colWidth * 1.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Reg",
+                EditorStyles.boldLabel);
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + colWidth * 2.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Dmg",
+                EditorStyles.boldLabel);
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + colWidth * 3.5f, headerRect.y, colWidth * 1.0f, headerRect.height), "Def",
+                EditorStyles.boldLabel);
+            EditorGUI.LabelField(
+                new Rect(headerRect.x + colWidth * 4.5f, headerRect.y, colWidth * 1.5f, headerRect.height), "XP Rew",
+                EditorStyles.boldLabel);
 
             // Draw table rows
             for (int level = 1; level <= previewCount; level++)
             {
                 Rect lineRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight);
-                
+
                 float hp = definition.MaxHp.Evaluate(level);
                 float regen = definition.HpRegen.Evaluate(level);
                 float dmg = definition.DamagePercent.Evaluate(level);
                 float def = definition.DefensePercent.Evaluate(level);
                 float xp = definition.XpReward.Evaluate(level);
 
-                EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, colWidth * 0.5f, lineRect.height), level.ToString());
-                EditorGUI.LabelField(new Rect(lineRect.x + colWidth * 0.5f, lineRect.y, colWidth * 1.0f, lineRect.height), hp.ToString("F0"));
-                EditorGUI.LabelField(new Rect(lineRect.x + colWidth * 1.5f, lineRect.y, colWidth * 1.0f, lineRect.height), regen.ToString("F1"));
-                EditorGUI.LabelField(new Rect(lineRect.x + colWidth * 2.5f, lineRect.y, colWidth * 1.0f, lineRect.height), dmg.ToString("F0") + "%");
-                EditorGUI.LabelField(new Rect(lineRect.x + colWidth * 3.5f, lineRect.y, colWidth * 1.0f, lineRect.height), def.ToString("F0") + "%");
-                EditorGUI.LabelField(new Rect(lineRect.x + colWidth * 4.5f, lineRect.y, colWidth * 1.5f, lineRect.height), xp.ToString("F0"));
+                EditorGUI.LabelField(new Rect(lineRect.x, lineRect.y, colWidth * 0.5f, lineRect.height),
+                    level.ToString());
+                EditorGUI.LabelField(
+                    new Rect(lineRect.x + colWidth * 0.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
+                    hp.ToString("F0"));
+                EditorGUI.LabelField(
+                    new Rect(lineRect.x + colWidth * 1.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
+                    regen.ToString("F1"));
+                EditorGUI.LabelField(
+                    new Rect(lineRect.x + colWidth * 2.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
+                    dmg.ToString("F0") + "%");
+                EditorGUI.LabelField(
+                    new Rect(lineRect.x + colWidth * 3.5f, lineRect.y, colWidth * 1.0f, lineRect.height),
+                    def.ToString("F0") + "%");
+                EditorGUI.LabelField(
+                    new Rect(lineRect.x + colWidth * 4.5f, lineRect.y, colWidth * 1.5f, lineRect.height),
+                    xp.ToString("F0"));
             }
         }
     }

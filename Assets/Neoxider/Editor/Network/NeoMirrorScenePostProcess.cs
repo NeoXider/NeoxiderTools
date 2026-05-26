@@ -37,18 +37,47 @@ namespace Neo.Editor.Network
             for (int i = 0; i < all.Length; i++)
             {
                 NetworkIdentity identity = all[i];
-                if (identity == null) continue;
+                if (identity == null)
+                {
+                    continue;
+                }
 
                 GameObject go = identity.gameObject;
-                if (go == null) continue;
-                if (identity.sceneId == 0) continue;
-                if (go.activeSelf) continue;
-                if (go.scene.name == "DontDestroyOnLoad") continue;
-                if (Utils.IsPrefab(go)) continue;
+                if (go == null)
+                {
+                    continue;
+                }
+
+                if (identity.sceneId == 0)
+                {
+                    continue;
+                }
+
+                if (go.activeSelf)
+                {
+                    continue;
+                }
+
+                if (go.scene.name == "DontDestroyOnLoad")
+                {
+                    continue;
+                }
+
+                if (Utils.IsPrefab(go))
+                {
+                    continue;
+                }
 
                 HideFlags flags = go.hideFlags;
-                if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave) continue;
-                if ((flags & HideFlags.NotEditable) != 0) continue;
+                if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)
+                {
+                    continue;
+                }
+
+                if ((flags & HideFlags.NotEditable) != 0)
+                {
+                    continue;
+                }
 
                 if (ShouldReactivate(go))
                 {
@@ -60,11 +89,17 @@ namespace Neo.Editor.Network
         private static bool ShouldReactivate(GameObject go)
         {
             INeoOptionalNetworked[] candidates = go.GetComponentsInChildren<INeoOptionalNetworked>(true);
-            if (candidates.Length == 0) return false;
+            if (candidates.Length == 0)
+            {
+                return false;
+            }
 
             for (int i = 0; i < candidates.Length; i++)
             {
-                if (candidates[i] != null && candidates[i].IsNetworked) return false;
+                if (candidates[i] != null && candidates[i].IsNetworked)
+                {
+                    return false;
+                }
             }
 
             return true;

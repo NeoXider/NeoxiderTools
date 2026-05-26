@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Neo.Extensions;
 using Neo.Reactive;
@@ -9,23 +9,23 @@ using UnityEngine.Serialization;
 namespace Neo.Tools
 {
     /// <summary>
-    ///     ✏️  Universal line-drawing component.
-    ///     • Draws a <see cref="LineRenderer" /> with the mouse / first touch,
-    ///     • Chaikin-smooths the polyline *live* as you draw,
-    ///     • Optional 2-D collider & timed self-destruct,
-    ///     • Can clone most settings from a “template” <see cref="LineRenderer" />.
+    ///       Universal line-drawing component.
+    ///     - Draws a <see cref="LineRenderer" /> with the mouse / first touch,
+    ///     - Chaikin-smooths the polyline *live* as you draw,
+    ///     - Optional 2-D collider & timed self-destruct,
+    ///     - Can clone most settings from a "template" <see cref="LineRenderer" />.
     /// </summary>
     [NeoDoc("Tools/Draw/Drawer.md")]
     [CreateFromMenu("Neoxider/Tools/Other/Drawer")]
     [AddComponentMenu("Neoxider/" + "Tools/" + nameof(Drawer))]
     public sealed class Drawer : MonoBehaviour
     {
-        /* ───────── INPUT ───────────────────────────────────────────────── */
+        /* --------- INPUT ------------------------------------------------- */
 
         [Header("Input")] [Tooltip("If OFF, component ignores all input completely.")]
         public bool isActive = true;
 
-        /* ───────── TEMPLATE (OPTIONAL) ─────────────────────────────────── */
+        /* --------- TEMPLATE (OPTIONAL) ----------------------------------- */
 
         [Header("Template (Optional)")]
         [Tooltip("When ON and a template is assigned, most visual parameters "
@@ -34,7 +34,7 @@ namespace Neo.Tools
 
         public LineRenderer templateRenderer;
 
-        /* ───────── LOOK & FEEL (fallbacks if template not used) ────────── */
+        /* --------- LOOK & FEEL (fallbacks if template not used) ---------- */
 
         [Header("Line Visual")]
         [Tooltip("If set, this material is used. Otherwise Sprite, else Texture2D, else default.")]
@@ -73,7 +73,7 @@ namespace Neo.Tools
         public string sortingLayerName = "Default";
         public int sortingOrder;
 
-        /* ───────── ALGORITHMS ──────────────────────────────────────────── */
+        /* --------- ALGORITHMS -------------------------------------------- */
 
         [Header("Algorithms")] public bool useFolow = true;
 
@@ -90,7 +90,7 @@ namespace Neo.Tools
         [Tooltip("Minimum distance (world units) between raw points.")] [Min(0f)]
         public float minPointDistance = 1f;
 
-        /* ───────── LIFECYCLE & PHYSICS ─────────────────────────────────── */
+        /* --------- LIFECYCLE & PHYSICS ----------------------------------- */
 
         [Header("Lifecycle")]
         [Tooltip("0 = keep forever; otherwise the finished line is destroyed after N seconds.")]
@@ -115,7 +115,7 @@ namespace Neo.Tools
 
         [Tooltip("LineRenderer prefab for pooling. If not set, created automatically")]
         public LineRenderer poolPrefab;
-        /* ───────── EVENTS ──────────────────────────────────────────────── */
+        /* --------- EVENTS ------------------------------------------------ */
 
         public LineCreatedEvent OnLineCreated = new();
 
@@ -142,7 +142,7 @@ namespace Neo.Tools
         private float _timer;
         private Camera cam;
 
-        /* ───────── INTERNAL ────────────────────────────────────────────── */
+        /* --------- INTERNAL ---------------------------------------------- */
 
         public float DistanceValue => Distance.CurrentValue;
 
@@ -169,7 +169,7 @@ namespace Neo.Tools
 
         public List<Vector3> rawPoints { get; } = new();
 
-        /* ───────── UNITY LIFECYCLE ─────────────────────────────────────── */
+        /* --------- UNITY LIFECYCLE --------------------------------------- */
 
         private void Awake()
         {
@@ -179,7 +179,8 @@ namespace Neo.Tools
                 cam = FindFirstObjectByType<Camera>();
                 if (cam == null)
                 {
-                    Debug.LogError($"[Drawer] Camera not found on {gameObject.name}. Component will be disabled.",
+                    NeoDiagnostics.LogError(
+                        $"[Drawer] Camera not found on {gameObject.name}. Component will be disabled.",
                         this);
                     enabled = false;
                     return;
@@ -240,7 +241,7 @@ namespace Neo.Tools
             _currentLR.SetPosition(_currentLR.positionCount - 1, pos);
         }
 
-        /* ───────── CORE LOGIC ──────────────────────────────────────────── */
+        /* --------- CORE LOGIC -------------------------------------------- */
 
         /// <summary>
         ///     Initializes a new line by creating the LineRenderer and setting up initial conditions.
@@ -489,8 +490,8 @@ namespace Neo.Tools
         }
 
         /// <summary>
-        ///     Evenly selects ≤ Max points from the list.
-        ///     0 or 1 → returns the source list (without restriction).
+        ///     Evenly selects <= Max points from the list.
+        ///     0 or 1 -> returns the source list (without restriction).
         /// </summary>
         public static List<Vector3> LimitPoints(List<Vector3> pts, int max)
         {
@@ -527,7 +528,7 @@ namespace Neo.Tools
             }
 
             if (rawPoints.Count < minCountCreate ||
-                (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate)) // too short – discard
+                (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate)) // too short - discard
             {
                 Destroy(_currentLR.gameObject);
                 return;
@@ -642,7 +643,7 @@ namespace Neo.Tools
             rawPoints.Clear();
         }
 
-        /* ───────── HELPERS ──────────────────────────────────────────────── */
+        /* --------- HELPERS ------------------------------------------------ */
 
         /// <summary>
         ///     Converts a screen position to world coordinates based on the main camera's Z position.

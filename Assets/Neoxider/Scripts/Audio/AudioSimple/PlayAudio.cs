@@ -1,4 +1,4 @@
-using Neo.Extensions;
+﻿using Neo.Extensions;
 using UnityEngine;
 
 namespace Neo
@@ -54,7 +54,7 @@ namespace Neo
                     }
                     else
                     {
-                        Debug.LogWarning("[PlayAudio] Selected clip is null.");
+                        NeoDiagnostics.LogWarning("[PlayAudio] Selected clip is null.");
                     }
                 }
                 else

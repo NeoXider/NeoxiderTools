@@ -22,16 +22,16 @@ namespace Neo.NoCode
         private const float DefaultPollIntervalSeconds = 0.16f;
         private const float MinPollIntervalSeconds = 0.016f;
 
-        [Header("Sources")]
-        [SerializeField] private ComponentFloatBinding[] _values = Array.Empty<ComponentFloatBinding>();
+        [Header("Sources")] [SerializeField]
+        private ComponentFloatBinding[] _values = Array.Empty<ComponentFloatBinding>();
 
         [SerializeField] private NoCodeFloatUpdateMode _updateMode = NoCodeFloatUpdateMode.Reactive;
 
-        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")]
-        [SerializeField]
+        [Tooltip("When Update Mode is Poll, refreshes in LateUpdate using Poll Interval.")] [SerializeField]
         private bool _pollInLateUpdate = true;
 
-        [Tooltip("Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
+        [Tooltip(
+            "Seconds between refreshes in Poll mode and Reactive fallback for ordinary fields. Default 0.16; minimum 0.016.")]
         [Min(MinPollIntervalSeconds)]
         [SerializeField]
         private float _pollIntervalSeconds = DefaultPollIntervalSeconds;
@@ -41,20 +41,16 @@ namespace Neo.NoCode
         [SerializeField]
         private string _format = "{0}";
 
-        [Tooltip("If set, formatting is pushed through SetText.")]
-        [SerializeField]
+        [Tooltip("If set, formatting is pushed through SetText.")] [SerializeField]
         private SetText _setText;
 
-        [Tooltip("Used when SetText is missing.")]
-        [SerializeField]
+        [Tooltip("Used when SetText is missing.")] [SerializeField]
         private TMP_Text _tmpText;
 
-        [Tooltip("Optional legacy uGUI Text target.")]
-        [SerializeField]
+        [Tooltip("Optional legacy uGUI Text target.")] [SerializeField]
         private Text _uiText;
 
-        [Header("Events")]
-        [SerializeField] private UnityEvent<string> _onTextChanged = new();
+        [Header("Events")] [SerializeField] private UnityEvent<string> _onTextChanged = new();
 
         private readonly List<ReactivePropertyFloat> _subscribedFloats = new();
         private readonly List<ReactivePropertyInt> _subscribedInts = new();
@@ -227,9 +223,20 @@ namespace Neo.NoCode
             _reactiveSourcesSubscribed = false;
         }
 
-        private void OnReactiveFloatChanged(float _) => RefreshFromSource();
-        private void OnReactiveIntChanged(int _) => RefreshFromSource();
-        private void OnReactiveBoolChanged(bool _) => RefreshFromSource();
+        private void OnReactiveFloatChanged(float _)
+        {
+            RefreshFromSource();
+        }
+
+        private void OnReactiveIntChanged(int _)
+        {
+            RefreshFromSource();
+        }
+
+        private void OnReactiveBoolChanged(bool _)
+        {
+            RefreshFromSource();
+        }
 
         public void RefreshFromSource()
         {
@@ -292,7 +299,10 @@ namespace Neo.NoCode
         /// <summary>
         ///     Edit Mode tests / editor utilities: apply binding when OnEnable did not run or after serialized rewiring.
         /// </summary>
-        internal void EditorInvokeRefreshFromSource() => RefreshFromSource();
+        internal void EditorInvokeRefreshFromSource()
+        {
+            RefreshFromSource();
+        }
 #endif
     }
 }

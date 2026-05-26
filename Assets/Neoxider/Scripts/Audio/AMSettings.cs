@@ -1,4 +1,4 @@
-using Neo.Reactive;
+﻿using Neo.Reactive;
 using Neo.Save;
 using Neo.Tools;
 using UnityEngine;
@@ -114,7 +114,7 @@ namespace Neo.Audio
 
             if (_am == null)
             {
-                Debug.LogError("[AMSettings] Audio manager (AM) is not assigned!");
+                NeoDiagnostics.LogError("[AMSettings] Audio manager (AM) is not assigned!");
                 return;
             }
 
@@ -294,16 +294,16 @@ namespace Neo.Audio
         }
 
         /// <summary>
-        ///     Sets volume for any mixer exposed parameter by name (normalized 0–1).
+        ///     Sets volume for any mixer exposed parameter by name (normalized 0-1).
         /// </summary>
         /// <param name="parameterName">Exposed parameter name on the mixer.</param>
-        /// <param name="normalizedVolume">Normalized volume (0–1).</param>
+        /// <param name="normalizedVolume">Normalized volume (0-1).</param>
         [Button]
         public void SetMixerParameter(string parameterName, float normalizedVolume)
         {
             if (string.IsNullOrEmpty(parameterName))
             {
-                Debug.LogWarning("[AMSettings] Mixer parameter name is empty.");
+                NeoDiagnostics.LogWarning("[AMSettings] Mixer parameter name is empty.");
                 return;
             }
 
@@ -314,19 +314,19 @@ namespace Neo.Audio
         ///     Sets any mixer exposed parameter directly in decibels.
         /// </summary>
         /// <param name="parameterName">Exposed parameter name on the mixer.</param>
-        /// <param name="dbValue">Volume in decibels (−80 to 20).</param>
+        /// <param name="dbValue">Volume in decibels (-80 to 20).</param>
         [Button]
         public void SetMixerParameterDB(string parameterName, float dbValue)
         {
             if (audioMixer == null)
             {
-                Debug.LogWarning("[AMSettings] AudioMixer is not assigned.");
+                NeoDiagnostics.LogWarning("[AMSettings] AudioMixer is not assigned.");
                 return;
             }
 
             if (string.IsNullOrEmpty(parameterName))
             {
-                Debug.LogWarning("[AMSettings] Mixer parameter name is empty.");
+                NeoDiagnostics.LogWarning("[AMSettings] Mixer parameter name is empty.");
                 return;
             }
 
@@ -448,7 +448,7 @@ namespace Neo.Audio
                     ToggleEfx();
                     break;
                 default:
-                    Debug.LogWarning(
+                    NeoDiagnostics.LogWarning(
                         $"[AMSettings] ToggleAudio: unknown group {group}. Use 0=Master, 1=Music, 2=Sfx.");
                     break;
             }

@@ -231,7 +231,8 @@ namespace Neo.StateMachine.NoCode
             {
                 if (!silent)
                 {
-                    StateMachineLog.Warning($"[StateMachineData] Initial state '{initialStateName}' not found in states.",
+                    StateMachineLog.Warning(
+                        $"[StateMachineData] Initial state '{initialStateName}' not found in states.",
                         this);
                 }
 

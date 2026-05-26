@@ -33,8 +33,7 @@ namespace Neo.Bonus
         [Min(0f)]
         public float crossfadeSeconds = 0.08f;
 
-        [Tooltip("Максимальный множитель Y-stretch при «motion-blur» (1 = нет растяжения).")]
-        [Range(1f, 2f)]
+        [Tooltip("Максимальный множитель Y-stretch при «motion-blur» (1 = нет растяжения).")] [Range(1f, 2f)]
         public float motionStretchMaxY = 1.0f;
 
         private float _crossfadeStart = -1f;
@@ -74,8 +73,7 @@ namespace Neo.Bonus
 
         [Tooltip("Outline color")] public Color gizmoOutlineColor = new(0f, 0f, 0f, 1f);
 
-        [Tooltip("Outline thickness in screen pixels (Scene view GUI).")]
-        [Min(0)]
+        [Tooltip("Outline thickness in screen pixels (Scene view GUI).")] [Min(0)]
         public int gizmoOutlineScreenPixels = 1;
 
         [Tooltip("Row label mode for Auto Detect.")]
@@ -297,7 +295,7 @@ namespace Neo.Bonus
 
                 GUIContent content = new(label);
                 Vector2 size = style.CalcSize(content);
-                Rect rect = new Rect(
+                var rect = new Rect(
                     Mathf.Round(gui.x - size.x * 0.5f),
                     Mathf.Round(gui.y - size.y),
                     size.x,
@@ -350,7 +348,7 @@ namespace Neo.Bonus
         /// </summary>
         private Vector3 GetVisualAnchorWorld()
         {
-            RectTransform rt = transform as RectTransform;
+            var rt = transform as RectTransform;
             if (rt == null && image != null)
             {
                 rt = image.rectTransform;
@@ -358,7 +356,7 @@ namespace Neo.Bonus
 
             if (rt != null)
             {
-                Vector3[] wc = new Vector3[4];
+                var wc = new Vector3[4];
                 rt.GetWorldCorners(wc);
                 Vector3 center = (wc[0] + wc[1] + wc[2] + wc[3]) * 0.25f;
                 return center + gizmoLabelOffset;

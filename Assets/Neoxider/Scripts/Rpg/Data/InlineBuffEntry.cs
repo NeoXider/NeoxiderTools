@@ -12,7 +12,8 @@ namespace Neo.Rpg
     public sealed class InlineBuffEntry
     {
         [Tooltip("Unique id. If empty, displayName is used. NoCode triggers can apply by index OR by id.")]
-        [SerializeField] private string _id = string.Empty;
+        [SerializeField]
+        private string _id = string.Empty;
 
         [SerializeField] private string _displayName = "Inline Buff";
         [SerializeField] [Min(0.01f)] private float _duration = 10f;
@@ -21,7 +22,7 @@ namespace Neo.Rpg
         [SerializeField] private BuffStatModifier[] _modifiers = Array.Empty<BuffStatModifier>();
 
         public string Id => string.IsNullOrWhiteSpace(_id)
-            ? (string.IsNullOrWhiteSpace(_displayName) ? "InlineBuff" : _displayName)
+            ? string.IsNullOrWhiteSpace(_displayName) ? "InlineBuff" : _displayName
             : _id;
 
         public string DisplayName => _displayName;

@@ -23,6 +23,7 @@
         "GUID:9834a790bd826c4449125155ed09b637",
         "GUID:2a2f30532c56439469034d4a07bcb431",
         "GUID:7ba292f38c37fc2499e1a73c8e343103",
+        "GUID:59ca296fa20ed2e478f4446c733b5d55",
         "GUID:6164c446845493941856ab4fc67d0de7",
         "GUID:c4e3ca8dc710d5440b6cd2f90408487f",
         "GUID:842f6375cd6d40948977c2762ea3e65f",
@@ -47,7 +48,8 @@
     "includePlatforms": [
         "Editor"
     ],
-    "excludePlatforms": [],
+    "excludePlatforms": [
+    ],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
@@ -57,6 +59,7 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+    ],
     "noEngineReferences": false
 }

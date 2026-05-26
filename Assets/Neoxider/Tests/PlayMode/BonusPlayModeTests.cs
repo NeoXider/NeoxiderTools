@@ -13,7 +13,7 @@ namespace Neo.Tests.PlayMode
         public IEnumerator Row_Spin_AppliesTargetIdsAtStop()
         {
             var root = new GameObject("SlotRoot");
-            var row = root.AddComponent<Row>();
+            Row row = root.AddComponent<Row>();
             row.countSlotElement = 3;
             row.spaceY = 100f;
             row.offsetY = 0f;
@@ -29,8 +29,8 @@ namespace Neo.Tests.PlayMode
 
             row.ApplyLayout();
 
-            var so = ScriptableObject.CreateInstance<SpritesData>();
-            var visuals = new[]
+            SpritesData so = ScriptableObject.CreateInstance<SpritesData>();
+            SlotVisualData[] visuals = new[]
             {
                 new SlotVisualData { id = 0 },
                 new SlotVisualData { id = 1 },
@@ -69,7 +69,7 @@ namespace Neo.Tests.PlayMode
 
             var wheelGo = new GameObject("Wheel");
             wheelGo.transform.SetParent(root.transform, false);
-            var wheelRt = wheelGo.AddComponent<RectTransform>();
+            RectTransform wheelRt = wheelGo.AddComponent<RectTransform>();
 
             var arrowGo = new GameObject("Arrow");
             arrowGo.transform.SetParent(root.transform, false);
@@ -84,7 +84,7 @@ namespace Neo.Tests.PlayMode
                 items[i].AddComponent<RectTransform>();
             }
 
-            var wf = root.AddComponent<WheelFortune>();
+            WheelFortune wf = root.AddComponent<WheelFortune>();
 
             SetPrivate(wf, "_wheelTransform", wheelRt);
             SetPrivate(wf, "_arrow", arrowGo.GetComponent<RectTransform>());

@@ -13,16 +13,16 @@ namespace Neo.Editor.NoCode
     [CustomPropertyDrawer(typeof(ComponentFloatBinding))]
     public sealed class ComponentFloatBindingDrawer : PropertyDrawer
     {
-        private static readonly GUIContent FindByNameContent = new GUIContent("Find By Name",
+        private static readonly GUIContent FindByNameContent = new("Find By Name",
             "Find a GameObject by name in the scene (GameObject.Find). Cached while the object exists.");
 
         private static readonly GUIContent ObjectNameContent =
-            new GUIContent("Object Name", "GameObject name to resolve via GameObject.Find().");
+            new("Object Name", "GameObject name to resolve via GameObject.Find().");
 
-        private static readonly GUIContent WaitForObjectContent = new GUIContent("Wait For Object",
+        private static readonly GUIContent WaitForObjectContent = new("Wait For Object",
             "Wait until the object appears in the scene (no warning). Useful for prefabs spawned later.");
 
-        private static readonly GUIContent PrefabPreviewContent = new GUIContent("Prefab Preview",
+        private static readonly GUIContent PrefabPreviewContent = new("Prefab Preview",
             "Drag a prefab from Project to configure components/properties before the instance exists.");
 
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
@@ -44,7 +44,7 @@ namespace Neo.Editor.NoCode
                     h += (line + sp) * 3;
                     if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                     {
-                        GameObject found = GameObject.Find(searchNameProp.stringValue);
+                        var found = GameObject.Find(searchNameProp.stringValue);
                         if (found != null)
                         {
                             h += line + sp;
@@ -101,7 +101,7 @@ namespace Neo.Editor.NoCode
             float sp = EditorGUIUtility.standardVerticalSpacing;
             float y = position.y;
 
-            Rect row = new Rect(position.x, y, position.width, line);
+            var row = new Rect(position.x, y, position.width, line);
             EditorGUI.LabelField(row, label, EditorStyles.boldLabel);
             y += line + sp;
 
@@ -140,7 +140,7 @@ namespace Neo.Editor.NoCode
 
                     if (!Application.isPlaying && !string.IsNullOrEmpty(searchNameProp.stringValue))
                     {
-                        GameObject found = GameObject.Find(searchNameProp.stringValue);
+                        var found = GameObject.Find(searchNameProp.stringValue);
                         if (found != null)
                         {
                             row = new Rect(position.x, y, position.width, line);
