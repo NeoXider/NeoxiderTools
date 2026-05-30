@@ -2,7 +2,7 @@
 
 [Русский](README_RU.md) | [English](README.md)
 
-[![Version](https://img.shields.io/badge/version-8.6.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 `NeoxiderTools` — Unity-пакет для быстрой сборки игровых систем без скрытой магии. Внутри: no-code компоненты для Inspector, runtime-модули, editor-инструменты, samples и документация по точкам расширения.
 
@@ -19,25 +19,34 @@
 
 ## Установка
 
-### Unity Package Manager
+Установите **NeoxiderTools** и обязательные сторонние пакеты ниже. В Unity: `Window > Package Manager > + > Add package from git URL` (для DOTween — импорт из Asset Store).
 
-Git URL:
+### NeoxiderTools (Git URL)
 
 ```text
 https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 ```
 
-В Unity: `Window > Package Manager > + > Add package from git URL`.
+### DOTween (обязательно)
 
-### Ручная установка
+Установите из [Unity Asset Store — DOTween (HOTween v2)](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), затем выполните настройку: `Tools > Demigiant > DOTween Utility Panel`.
 
-Скопируйте `Assets/Neoxider` в свой Unity-проект.
+### UniTask (обязательно)
+
+```text
+https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
+```
+
+### Ручная установка (только NeoxiderTools)
+
+Скопируйте `Assets/Neoxider` в свой Unity-проект. DOTween и UniTask всё равно нужно установить отдельно.
 
 ## Требования
 
 - Unity `2022.1+`.
-- Автоматически через UPM: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`.
-- Сторонние зависимости подключаются только по сценарию: `UniTask`, `DOTween`, `Mirror`, `Spine Unity Runtime`, `Odin Inspector`, `MarkdownRenderer`.
+- Автоматически через UPM вместе с NeoxiderTools: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`.
+- **Обязательно (host-проект):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), [UniTask](https://github.com/Cysharp/UniTask) — см. [Установка](#установка).
+- **Опционально:** `DOTween Pro` (sample NeoxiderPages), `Mirror`, `Spine Unity Runtime`, `Odin Inspector`, `MarkdownRenderer`.
 - URP опционален. Пакет больше не зависит от `com.unity.render-pipelines.universal`; добавляйте URP отдельно только если проект использует URP-specific rendering features или 2D lights.
 
 ## Что внутри
@@ -72,7 +81,7 @@ https://github.com/NeoXider/NeoxiderTools.git?path=Assets/Neoxider
 
 ## Чеклист первой сцены
 
-1. Импортируйте пакет.
+1. Установите NeoxiderTools, DOTween и UniTask (см. [Установка](#установка)).
 2. Добавьте `Assets/Neoxider/Prefabs/--System--.prefab`, если сцена использует встроенные менеджеры или UI bootstrap.
 3. Добавляйте компоненты через `Add Component > Neoxider`.
 4. Начните с нужного модуля: [Shop](Assets/Neoxider/Docs/Shop/README.md), [RPG](Assets/Neoxider/Docs/Rpg/README.md), [Condition](Assets/Neoxider/Docs/Condition/NeoCondition.md), [Tools](Assets/Neoxider/Docs/Tools/README.md).
