@@ -262,7 +262,7 @@ namespace Neo.Tools
             transform.position = worldPosition;
             if (resetVelocity)
             {
-                _rigidbody.velocity = Vector2.zero;
+                _rigidbody.linearVelocity = Vector2.zero;
             }
         }
 
@@ -491,13 +491,13 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector2 velocity = _rigidbody.velocity;
+            Vector2 velocity = _rigidbody.linearVelocity;
             if (velocity.y < 0f)
             {
                 velocity.y = 0f;
             }
 
-            _rigidbody.velocity = velocity;
+            _rigidbody.linearVelocity = velocity;
             _rigidbody.AddForce(Vector2.up * _jumpImpulse, ForceMode2D.Impulse);
             _coyoteTimer = 0f;
             _jumpBufferTimer = 0f;
@@ -509,11 +509,11 @@ namespace Neo.Tools
             float maxSpeed = IsRunning ? _runSpeed : _walkSpeed;
             float targetSpeedX = _moveInputX * maxSpeed;
 
-            float currentSpeedX = _rigidbody.velocity.x;
+            float currentSpeedX = _rigidbody.linearVelocity.x;
             float acceleration = Mathf.Abs(_moveInputX) > 0.01f ? _acceleration : _deceleration;
             float nextSpeedX = Mathf.MoveTowards(currentSpeedX, targetSpeedX, acceleration * deltaTime);
 
-            _rigidbody.velocity = new Vector2(nextSpeedX, _rigidbody.velocity.y);
+            _rigidbody.linearVelocity = new Vector2(nextSpeedX, _rigidbody.linearVelocity.y);
 
             if (_flipByVelocityX && Mathf.Abs(nextSpeedX) > 0.01f)
             {

@@ -125,7 +125,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector3 planarVelocity = _rigidbody.velocity;
+            Vector3 planarVelocity = _rigidbody.linearVelocity;
             planarVelocity.y = 0f;
             float speed = planarVelocity.magnitude;
             bool isMoving = speed > _movingThreshold;
@@ -143,7 +143,7 @@ namespace Neo.Tools
                 SetIntSafe(_locomotionStateParam, state);
             }
 
-            if (_useJumpTrigger && _wasGrounded && !isGrounded && _rigidbody.velocity.y > 0.05f)
+            if (_useJumpTrigger && _wasGrounded && !isGrounded && _rigidbody.linearVelocity.y > 0.05f)
             {
                 SetTriggerSafe(_jumpTriggerParam);
             }

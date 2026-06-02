@@ -119,7 +119,7 @@ namespace Neo.Tools
                 return;
             }
 
-            Vector2 velocity = _rigidbody.velocity;
+            Vector2 velocity = _rigidbody.linearVelocity;
             float speed = velocity.magnitude;
             bool isMoving = speed > _movingThreshold;
             bool isGrounded = _controller.IsGrounded;
@@ -136,7 +136,7 @@ namespace Neo.Tools
                 SetIntSafe(_locomotionStateParam, state);
             }
 
-            if (_useJumpTrigger && _wasGrounded && !isGrounded && _rigidbody.velocity.y > 0.05f)
+            if (_useJumpTrigger && _wasGrounded && !isGrounded && _rigidbody.linearVelocity.y > 0.05f)
             {
                 SetTriggerSafe(_jumpTriggerParam);
             }

@@ -457,7 +457,7 @@ namespace Neo.Tools
             transform.position = worldPosition;
             if (_rigidbody != null)
             {
-                _rigidbody.velocity = Vector3.zero;
+                _rigidbody.linearVelocity = Vector3.zero;
                 _rigidbody.angularVelocity = Vector3.zero;
             }
         }
@@ -604,13 +604,13 @@ namespace Neo.Tools
             float speed = IsRunning ? _runSpeed : _walkSpeed;
             Vector3 desiredVelocity = desiredDirection * speed;
 
-            Vector3 currentHorizontalVelocity = new(_rigidbody.velocity.x, 0f, _rigidbody.velocity.z);
+            Vector3 currentHorizontalVelocity = new(_rigidbody.linearVelocity.x, 0f, _rigidbody.linearVelocity.z);
             float acceleration = IsGrounded ? _groundAcceleration : _airAcceleration;
             var nextHorizontalVelocity =
                 Vector3.MoveTowards(currentHorizontalVelocity, desiredVelocity, acceleration * deltaTime);
 
-            _rigidbody.velocity =
-                new Vector3(nextHorizontalVelocity.x, _rigidbody.velocity.y, nextHorizontalVelocity.z);
+            _rigidbody.linearVelocity =
+                new Vector3(nextHorizontalVelocity.x, _rigidbody.linearVelocity.y, nextHorizontalVelocity.z);
         }
 
         private void HandleJump()
@@ -628,13 +628,13 @@ namespace Neo.Tools
 
             _jumpBufferTimer = 0f;
             _coyoteTimer = 0f;
-            Vector3 velocity = _rigidbody.velocity;
+            Vector3 velocity = _rigidbody.linearVelocity;
             if (velocity.y < 0f)
             {
                 velocity.y = 0f;
             }
 
-            _rigidbody.velocity = velocity;
+            _rigidbody.linearVelocity = velocity;
             _rigidbody.AddForce(Vector3.up * _jumpImpulse, ForceMode.Impulse);
             IsGrounded = false;
             _onJumped?.Invoke();
