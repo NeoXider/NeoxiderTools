@@ -2,12 +2,14 @@
 
 ## Назначение
 
-GridSystem - базовый конструктор сеточных игр и систем. Модуль разделен на универсальное ядро поля и подключаемые игровые слои, чтобы один и тот же grid можно было использовать для Match3, TicTacToe, 2048-like игр, тактических полей, inventory grids и custom board games.
+GridSystem - базовый конструктор сеточных игр и систем. Модуль разделяет универсальное ядро поля и подключаемые игровые слои, чтобы один и тот же grid можно было использовать для Match3, TicTacToe, 2048-like игр, Dice Merge, тактических полей, inventory grids и custom board games.
 
 ## Архитектура
 
-- `FieldGenerator` - ядро: размер, форма, клетки, координаты, состояние, pathfinding facade.
-- `GridGameBuilder` - удобная scene/Inspector сборка нужных модулей.
+- `FieldGenerator` - ядро: размер, форма, клетки, координаты, состояние и pathfinding facade.
+- `GridMergeResolver` - adapter из универсального `Neo.Merge` connected-group resolver к `FieldGenerator` / `FieldCell.ContentId`.
+- `DiceBoardService` - reusable слой размещения dice pieces и dice merge.
+- `GridGameBuilder` - scene/Inspector сборка нужных модулей.
 - `GridShapeMask` - ScriptableObject для reusable формы поля.
 - `FieldSpawner` / `FieldObjectSpawner` - размещение объектов по клеткам.
 - `FieldDebugDrawer` - Gizmos-отладка.
@@ -24,16 +26,18 @@ GridSystem - базовый конструктор сеточных игр и с
 - [FieldSpawner](./FieldSpawner.md)
 - [FieldObjectSpawner](./FieldObjectSpawner.md)
 - [InternalTypes](./InternalTypes.md)
+- [Dice](./Dice/README.md)
+- [Generic Merge](../Merge/README.md)
 - [SlidingMerge](./SlidingMerge/SlidingMergeBoardService.md)
 - [Match3](./Match3/Match3BoardService.md)
 - [TicTacToe](./TicTacToe/TicTacToeBoardService.md)
 
 ## Быстрый старт
 
-1. Добавьте `GridGameBuilder` на GameObject.
-2. Выберите `Features`: например `DebugDrawer + SlidingMerge` для 2048-like игры.
-3. Настройте `FieldGenerator.Config`: `Size`, `GridType`, `MovementRule`, origin и shape overrides.
-4. Нажмите `Ensure Grid Components` или запустите сцену.
+1. Добавьте `GridGameBuilder` или `FieldGenerator` на GameObject.
+2. Настройте `FieldGenerator.Config`: `Size`, `GridType`, `MovementRule`, origin и shape overrides.
+3. Для connected-group merge используйте `GridMergeResolver`.
+4. Для Dice Merge добавьте `DiceBoardService` и управляйте score/progression/game-over в своем контроллере.
 5. Подключите собственный view/UI к событиям выбранного gameplay service.
 
 ## Samples

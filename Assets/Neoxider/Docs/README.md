@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Канонический вход в пользовательскую документацию пакета **NeoxiderTools** `v9.0.0`.
+Канонический вход в пользовательскую документацию пакета **NeoxiderTools** `v9.1.0`.
 
 ## Быстрый вход
 
@@ -24,6 +24,7 @@
 | **Extensions** | Extension-методы для C# и Unity API | [Extensions](./Extensions/README.md) |
 | **GridSystem** | Конструктор сеточных игр: field generation, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, загрузка сцен, карта прогресса | [Level](./Level/README.md) |
+| **Merge** | Universal pure C# merge engine for connected groups | [Merge](./Merge/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
 | **NoCode** | Сценовые C#-контракты и inspector-обертки без ссылок из SO на объекты сцены | [NoCode](./NoCode/README.md) |
 | **NPC** | Навигация, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |

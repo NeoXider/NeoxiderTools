@@ -11,6 +11,8 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 - `GridShapeMask` - reusable ScriptableObject shape masks.
 - `FieldSpawner` / `FieldObjectSpawner` - object placement on cells.
 - `FieldDebugDrawer` - Gizmos diagnostics.
+- `GridMergeResolver` - adapter from generic `Neo.Merge` connected-group rules to `FieldGenerator` cells.
+- `DiceBoardService` - reusable dice placement and dice merge layer.
 - `Match3BoardService` - swap/match/resolve/refill gameplay layer.
 - `TicTacToeBoardService` - turn-based board-game layer.
 - `SlidingMergeBoardService` - 2048, Threes, block-merge, and drop-and-merge layer.
@@ -24,6 +26,8 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 - [FieldSpawner](./FieldSpawner.md)
 - [FieldObjectSpawner](./FieldObjectSpawner.md)
 - [InternalTypes](./InternalTypes.md)
+- [Dice](./Dice/README.md)
+- [Generic Merge](../Merge/README.md)
 - [SlidingMerge](./SlidingMerge/SlidingMergeBoardService.md)
 - [Match3](./Match3/Match3BoardService.md)
 - [TicTacToe](./TicTacToe/TicTacToeBoardService.md)

@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -111,7 +111,8 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 | **Save** | `PlayerPrefs`, JSON files, provider-based save flow, scene/global data, save attributes | [Save](./Docs/Save/README.md) |
 | **UI** | UI panels, button animations, toggles, and presentation helpers | [UI](./Docs/UI/README.md) |
 | **Cards** | MVP architecture, poker, "Drunkard", and deck/hand runtime flow | [Cards](./Docs/Cards/README.md) |
-| **GridSystem** | Grid generation, origin anchor, pathfinding, Match3, and TicTacToe | [GridSystem](./Docs/GridSystem.md) |
+| **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Docs/Merge/README.md) |
+| **GridSystem** | Grid generation, origin anchor, pathfinding, GridMerge, Dice, Match3, and TicTacToe | [GridSystem](./Docs/GridSystem.md) |
 | **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
 | **Network** | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery | [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md) · [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) |
 | **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [Editor](./Docs/Editor/README.md) |

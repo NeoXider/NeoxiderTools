@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v9.0.0`.
+Canonical English entry point for **NeoxiderTools** `v9.1.0`.
 
 ## Start here
 
@@ -24,6 +24,7 @@ Canonical English entry point for **NeoxiderTools** `v9.0.0`.
 | **Extensions** | Extension methods for C# and Unity APIs | [Extensions](./Extensions/README.md) |
 | **GridSystem** | Grid-game constructor: field generation, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
+| **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
 | **NoCode** | Scene-only C# contracts and inspector wrappers; ScriptableObjects do not hold scene object references | [NoCode](./NoCode/README.md) |
 | **NPC** | Navigation, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |

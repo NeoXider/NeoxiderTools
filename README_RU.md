@@ -2,7 +2,7 @@
 
 [Русский](README_RU.md) | [English](README.md)
 
-[![Version](https://img.shields.io/badge/version-9.0.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.1.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 `NeoxiderTools` — Unity-пакет для быстрой сборки игровых систем без скрытой магии. Внутри: no-code компоненты для Inspector, runtime-модули, editor-инструменты, samples и документация по точкам расширения.
 

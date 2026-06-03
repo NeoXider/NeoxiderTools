@@ -43,7 +43,9 @@
         "GUID:8d381d1cc9d17434d8639fca19b57c5b",
         "Neo.Audio",
         "Neo.Parallax",
-        "Neo.PropertyAttribute"
+        "Neo.PropertyAttribute",
+        "Neo.Merge",
+        "Neo.GridSystem.Dice"
     ],
     "includePlatforms": [
         "Editor"

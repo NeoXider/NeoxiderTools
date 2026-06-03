@@ -15,6 +15,8 @@ namespace Neo.Tests.Play
     {
         private const string ProgressionScene = "Assets/Neoxider/Samples/Demo/Scenes/Progression_Demo.unity";
         private const string Match3Scene = "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity";
+        private const string DiceMergeScene =
+            "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemDiceMergeDemo.unity";
 
         private const string TicTacToeScene =
             "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity";
@@ -66,6 +68,37 @@ namespace Neo.Tests.Play
             FindRequiredComponent("Neo.GridSystem.TicTacToe.TicTacToeBoardService", "TicTacToe board service");
             FindRequiredComponent("Neo.Demo.GridSystem.GridSystemTicTacToeBoardView", "TicTacToe board view");
             Assert.That(GetProperty<Array>(field, "Cells"), Is.Not.Null, "TicTacToe demo should generate field cells.");
+        }
+
+        [UnityTest]
+        public IEnumerator DiceMergeDemo_PlacesMergesScoresAndCanReachGameOver()
+        {
+            yield return LoadScene(DiceMergeScene);
+            yield return WaitFrames(12);
+
+            object controller = FindRequiredComponent(
+                "Neo.Demo.GridSystem.DiceMergeDemoController",
+                "Dice merge demo controller");
+            object field = FindRequiredComponent("Neo.GridSystem.FieldGenerator", "Dice field generator");
+            FindRequiredComponent("Neo.GridSystem.Dice.DiceBoardService", "Dice board service");
+
+            Type dicePieceType = FindType("Neo.GridSystem.Dice.DicePiece");
+            Assert.That(dicePieceType, Is.Not.Null);
+            object piece = dicePieceType.GetMethod("Single", BindingFlags.Public | BindingFlags.Static)
+                ?.Invoke(null, new object[] { 1 });
+            Invoke(controller, "ForceCurrentPieceForTest", piece);
+
+            SetCellContent(field, 1, 0, 1);
+            SetCellContent(field, 0, 1, 1);
+            Invoke(controller, "TryPlaceCurrentPiece", new Vector3Int(0, 0, 0));
+            yield return WaitFrames(2);
+
+            Assert.That(GetProperty<int>(controller, "Score"), Is.GreaterThan(0));
+
+            Invoke(controller, "FillBoardForGameOverTest");
+            yield return null;
+
+            Assert.That(GetProperty<bool>(controller, "GameOver"), Is.True);
         }
 
         [UnityTest]
@@ -209,6 +242,21 @@ namespace Neo.Tests.Play
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, $"{target.GetType().Name}.{methodName} method was not found.");
             method.Invoke(target, args);
+        }
+
+        private static void SetCellContent(object field, int x, int y, int value)
+        {
+            MethodInfo getCell = field.GetType().GetMethod(
+                "GetCell",
+                BindingFlags.Instance | BindingFlags.Public,
+                null,
+                new[] { typeof(int), typeof(int) },
+                null);
+            Assert.That(getCell, Is.Not.Null);
+            object cell = getCell.Invoke(field, new object[] { x, y });
+            Assert.That(cell, Is.Not.Null);
+            cell.GetType().GetField("ContentId")?.SetValue(cell, value);
+            cell.GetType().GetField("IsOccupied")?.SetValue(cell, value != 0);
         }
     }
 }

@@ -26,8 +26,14 @@ namespace Neo.Editor.Tests.GridSystem
 
         private FieldGenerator CreateGenerator(int width, int height)
         {
+            return CreateGenerator(width, height, GridOrigin2D.Center);
+        }
+
+        private FieldGenerator CreateGenerator(int width, int height, GridOrigin2D origin)
+        {
             var owner = new GameObject("FieldGeneratorCoverage");
             _createdObjects.Add(owner);
+            owner.AddComponent<Grid>();
             FieldGenerator generator = owner.AddComponent<FieldGenerator>();
             var config = new FieldGeneratorConfig
             {
@@ -35,6 +41,7 @@ namespace Neo.Editor.Tests.GridSystem
                 GridType = GridType.Rectangular,
                 MovementRule = MovementRule.FourDirections2D,
                 PassabilityMode = CellPassabilityMode.WalkableEnabledAndUnoccupied,
+                Origin2D = origin,
                 BlockedCells = new List<Vector3Int>(),
                 DisabledCells = new List<Vector3Int>(),
                 ForcedEnabledCells = new List<Vector3Int>(),
@@ -101,6 +108,47 @@ namespace Neo.Editor.Tests.GridSystem
             Assert.AreEqual(false, cell.IsEnabled);
             Assert.IsFalse(generator.IsCellPassable(cell));
             Assert.IsTrue(generator.IsCellPassable(cell, true, true, true));
+        }
+
+        [Test]
+        public void CenterOrigin_OddSizedField_IsCenteredAroundTransform()
+        {
+            FieldGenerator generator = CreateGenerator(5, 5, GridOrigin2D.Center);
+
+            Vector3 first = generator.GetCellWorldCenter(new Vector3Int(0, 0, 0));
+            Vector3 last = generator.GetCellWorldCenter(new Vector3Int(4, 4, 0));
+            Vector3 boardCenter = (first + last) * 0.5f;
+
+            Assert.That(boardCenter.x, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(boardCenter.y, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(generator.GetCellFromWorld(first).Position, Is.EqualTo(new Vector3Int(0, 0, 0)));
+            Assert.That(generator.GetCellFromWorld(last).Position, Is.EqualTo(new Vector3Int(4, 4, 0)));
+        }
+
+        [Test]
+        public void CenterOrigin_EvenSizedField_RemainsCenteredAroundTransform()
+        {
+            FieldGenerator generator = CreateGenerator(4, 4, GridOrigin2D.Center);
+
+            Vector3 first = generator.GetCellWorldCenter(new Vector3Int(0, 0, 0));
+            Vector3 last = generator.GetCellWorldCenter(new Vector3Int(3, 3, 0));
+            Vector3 boardCenter = (first + last) * 0.5f;
+
+            Assert.That(boardCenter.x, Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(boardCenter.y, Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
+        public void BottomLeftOrigin_KeepsPositiveBoardOffset()
+        {
+            FieldGenerator generator = CreateGenerator(5, 5, GridOrigin2D.BottomLeft);
+
+            Vector3 first = generator.GetCellWorldCenter(new Vector3Int(0, 0, 0));
+            Vector3 last = generator.GetCellWorldCenter(new Vector3Int(4, 4, 0));
+            Vector3 boardCenter = (first + last) * 0.5f;
+
+            Assert.That(boardCenter.x, Is.EqualTo(2.5f).Within(0.0001f));
+            Assert.That(boardCenter.y, Is.EqualTo(2.5f).Within(0.0001f));
         }
     }
 }

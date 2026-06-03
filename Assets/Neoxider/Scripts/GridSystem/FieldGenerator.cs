@@ -2,6 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace Neo.GridSystem
 {
@@ -17,6 +20,7 @@ namespace Neo.GridSystem
         [Header("Settings")] public FieldGeneratorConfig Config = new();
 
         [Header("Debug")] public bool DebugEnabled = true;
+        public FieldGizmoSettings GizmoSettings = new();
 
         /// <summary>
         ///     Invoked after field generation is completed.
@@ -112,6 +116,11 @@ namespace Neo.GridSystem
 
                 GenerateField();
             }
+        }
+
+        private void OnDrawGizmos()
+        {
+            DrawFieldGizmos();
         }
 
         [Button("Regenerate Field")]
@@ -272,7 +281,7 @@ namespace Neo.GridSystem
                 return null;
             }
 
-            Vector3Int gridPos = UnityGrid.WorldToCell(worldPosition);
+            Vector3Int gridPos = UnityGrid.WorldToCell(worldPosition - GetOriginWorldCorrection());
             Vector3Int logicalPos = GridToLogicalPosition(gridPos);
             return GetCell(logicalPos);
         }
@@ -635,7 +644,7 @@ namespace Neo.GridSystem
             }
 
             Vector3Int gridPos = LogicalToGridPosition(cellPos);
-            return UnityGrid.GetCellCenterWorld(gridPos);
+            return UnityGrid.GetCellCenterWorld(gridPos) + GetOriginWorldCorrection();
         }
 
         /// <summary>
@@ -649,7 +658,7 @@ namespace Neo.GridSystem
             }
 
             Vector3Int gridPos = LogicalToGridPosition(cellPos);
-            return UnityGrid.CellToWorld(gridPos);
+            return UnityGrid.CellToWorld(gridPos) + GetOriginWorldCorrection();
         }
 
         /// <summary>
@@ -658,6 +667,90 @@ namespace Neo.GridSystem
         public Vector3 GetCellCornerWorld(Vector2Int cellPos)
         {
             return GetCellCornerWorld(new Vector3Int(cellPos.x, cellPos.y, 0));
+        }
+
+        private void DrawFieldGizmos()
+        {
+            FieldGizmoSettings settings = GizmoSettings;
+            if (!DebugEnabled || settings == null || !settings.DrawGizmos || Cells == null || Config == null ||
+                UnityGrid == null)
+            {
+                return;
+            }
+
+            Vector3Int size = Config.Size;
+            if (settings.DrawGrid)
+            {
+                Gizmos.color = settings.GridColor;
+                for (int x = 0; x <= size.x; x++)
+                for (int y = 0; y <= size.y; y++)
+                {
+                    Vector3 from = GetCellCornerWorld(new Vector3Int(x, 0, 0));
+                    Vector3 to = GetCellCornerWorld(new Vector3Int(x, size.y, 0));
+                    Gizmos.DrawLine(from, to);
+                    from = GetCellCornerWorld(new Vector3Int(0, y, 0));
+                    to = GetCellCornerWorld(new Vector3Int(size.x, y, 0));
+                    Gizmos.DrawLine(from, to);
+                }
+            }
+
+            if (settings.DrawCells)
+            {
+                Vector3 fillSize = UnityGrid.cellSize * Mathf.Clamp01(settings.CellFillScale);
+                for (int x = 0; x < size.x; x++)
+                for (int y = 0; y < size.y; y++)
+                for (int z = 0; z < size.z; z++)
+                {
+                    FieldCell cell = Cells[x, y, z];
+                    if (cell == null)
+                    {
+                        continue;
+                    }
+
+                    Vector3 pos = GetCellWorldCenter(cell.Position);
+                    Gizmos.color = ResolveGizmoCellColor(cell, settings);
+                    Gizmos.DrawCube(pos, fillSize);
+
+#if UNITY_EDITOR
+                    if (settings.DrawCoordinates)
+                    {
+                        var style = new GUIStyle
+                        {
+                            alignment = TextAnchor.MiddleCenter,
+                            fontSize = settings.TextFontSize
+                        };
+                        style.normal.textColor = settings.TextColor;
+                        Handles.Label(pos, $"x:{cell.Position.x} y:{cell.Position.y} z:{cell.Position.z}", style);
+                    }
+#endif
+                }
+            }
+
+            if (settings.DrawPath && settings.DebugPath != null && settings.DebugPath.Count > 1)
+            {
+                Gizmos.color = settings.PathColor;
+                for (int i = 1; i < settings.DebugPath.Count; i++)
+                {
+                    Vector3 a = GetCellWorldCenter(settings.DebugPath[i - 1]);
+                    Vector3 b = GetCellWorldCenter(settings.DebugPath[i]);
+                    Gizmos.DrawLine(a, b);
+                }
+            }
+        }
+
+        private static Color ResolveGizmoCellColor(FieldCell cell, FieldGizmoSettings settings)
+        {
+            if (!cell.IsEnabled)
+            {
+                return settings.DisabledCellColor;
+            }
+
+            if (cell.IsOccupied)
+            {
+                return settings.OccupiedCellColor;
+            }
+
+            return cell.IsWalkable ? settings.WalkableCellColor : settings.BlockedCellColor;
         }
 
         private bool ResolveCellEnabled(Vector3Int pos)
@@ -767,6 +860,27 @@ namespace Neo.GridSystem
             int offsetZ = GetAxisOffset(size.z, GetOriginZ());
 
             return new Vector3Int(offsetX, offsetY, offsetZ) + Config.OriginOffset;
+        }
+
+        private Vector3 GetOriginWorldCorrection()
+        {
+            if (Config == null || UnityGrid == null)
+            {
+                return Vector3.zero;
+            }
+
+            Vector3Int size = Config.Size;
+            var localCorrection = new Vector3(
+                GetCenterAxisCorrection(size.x, GetOriginX()) * UnityGrid.cellSize.x,
+                GetCenterAxisCorrection(size.y, GetOriginY()) * UnityGrid.cellSize.y,
+                GetCenterAxisCorrection(size.z, GetOriginZ()) * UnityGrid.cellSize.z);
+
+            return UnityGrid.transform.TransformVector(localCorrection);
+        }
+
+        private static float GetCenterAxisCorrection(int size, int anchor)
+        {
+            return anchor == 0 && size > 0 && size % 2 != 0 ? -0.5f : 0f;
         }
 
         private int GetAxisOffset(int size, int anchor)
