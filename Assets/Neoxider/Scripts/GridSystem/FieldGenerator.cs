@@ -287,6 +287,134 @@ namespace Neo.GridSystem
         }
 
         /// <summary>
+        ///     Resolves the logical cell position nearest to a world-space point using this generator's grid conversion.
+        ///     Useful for drag/drop placement, cursor previews, and board picking.
+        /// </summary>
+        public bool TryGetCellPositionFromWorld(Vector3 worldPosition, out Vector3Int position)
+        {
+            FieldCell cell = GetNearestCellFromWorld(worldPosition, false);
+            if (cell == null)
+            {
+                position = default;
+                return false;
+            }
+
+            position = cell.Position;
+            return true;
+        }
+
+        /// <summary>
+        ///     Snaps a world-space point to the center of the nearest valid cell.
+        /// </summary>
+        public bool TrySnapWorldToCellCenter(Vector3 worldPosition, out Vector3 snappedWorldPosition)
+        {
+            FieldCell cell = GetNearestCellFromWorld(worldPosition, false);
+            if (cell == null)
+            {
+                snappedWorldPosition = worldPosition;
+                return false;
+            }
+
+            snappedWorldPosition = GetCellWorldCenter(cell.Position);
+            return true;
+        }
+
+        /// <summary>
+        ///     Snaps a world-space point to a cell center when possible, otherwise returns the original point.
+        /// </summary>
+        public Vector3 SnapWorldToCellCenter(Vector3 worldPosition)
+        {
+            return TrySnapWorldToCellCenter(worldPosition, out Vector3 snappedWorldPosition)
+                ? snappedWorldPosition
+                : worldPosition;
+        }
+
+        /// <summary>
+        ///     Finds the nearest generated cell center to a world-space point.
+        ///     This is intended for cursor previews, touch drag/drop and shape placement.
+        /// </summary>
+        public FieldCell GetNearestCellFromWorld(Vector3 worldPosition, bool includeDisabled = false)
+        {
+            FieldCell nearest = null;
+            float nearestDistance = float.PositiveInfinity;
+            foreach (FieldCell cell in GetAllCells(includeDisabled))
+            {
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                float distance = (GetCellWorldCenter(cell.Position) - worldPosition).sqrMagnitude;
+                if (distance < nearestDistance)
+                {
+                    nearestDistance = distance;
+                    nearest = cell;
+                }
+            }
+
+            return nearest;
+        }
+
+        /// <summary>
+        ///     Checks whether a multi-cell content footprint can be placed at the anchor position.
+        /// </summary>
+        public bool CanPlaceContentFootprint(
+            Vector3Int anchor,
+            IEnumerable<GridPlacementEntry> entries,
+            bool requireEnabled = true,
+            bool requireWalkable = true,
+            bool requireUnoccupied = true)
+        {
+            return ValidateContentFootprint(
+                anchor,
+                entries,
+                requireEnabled,
+                requireWalkable,
+                requireUnoccupied,
+                out _);
+        }
+
+        /// <summary>
+        ///     Writes a multi-cell content footprint into FieldCell state.
+        /// </summary>
+        public GridPlacementResult PlaceContentFootprint(
+            Vector3Int anchor,
+            IEnumerable<GridPlacementEntry> entries,
+            bool requireEnabled = true,
+            bool requireWalkable = true,
+            bool requireUnoccupied = true,
+            bool notify = true)
+        {
+            var result = new GridPlacementResult();
+            if (!ValidateContentFootprint(
+                    anchor,
+                    entries,
+                    requireEnabled,
+                    requireWalkable,
+                    requireUnoccupied,
+                    out List<GridPlacementResolvedEntry> resolved))
+            {
+                result.FailureReason = "Footprint contains invalid cells.";
+                return result;
+            }
+
+            foreach (GridPlacementResolvedEntry entry in resolved)
+            {
+                entry.Cell.ContentId = entry.Entry.ContentId;
+                entry.Cell.IsOccupied = entry.Entry.OccupiesCell;
+                result.Cells.Add(entry.Cell);
+                result.Positions.Add(entry.Cell.Position);
+                if (notify)
+                {
+                    OnCellStateChanged.Invoke(entry.Cell);
+                }
+            }
+
+            result.Placed = true;
+            return result;
+        }
+
+        /// <summary>
         ///     Enumerates all cells in backing array.
         /// </summary>
         /// <param name="includeDisabled">Include disabled cells when true.</param>
@@ -669,6 +797,61 @@ namespace Neo.GridSystem
             return GetCellCornerWorld(new Vector3Int(cellPos.x, cellPos.y, 0));
         }
 
+        private bool ValidateContentFootprint(
+            Vector3Int anchor,
+            IEnumerable<GridPlacementEntry> entries,
+            bool requireEnabled,
+            bool requireWalkable,
+            bool requireUnoccupied,
+            out List<GridPlacementResolvedEntry> resolved)
+        {
+            resolved = new List<GridPlacementResolvedEntry>();
+            if (entries == null)
+            {
+                return false;
+            }
+
+            var occupiedPositions = new HashSet<Vector3Int>();
+            foreach (GridPlacementEntry entry in entries)
+            {
+                if (entry == null)
+                {
+                    return false;
+                }
+
+                Vector3Int position = anchor + entry.Offset;
+                if (!occupiedPositions.Add(position))
+                {
+                    return false;
+                }
+
+                FieldCell cell = GetCell(position);
+                if (cell == null)
+                {
+                    return false;
+                }
+
+                if (requireEnabled && !cell.IsEnabled)
+                {
+                    return false;
+                }
+
+                if (requireWalkable && !cell.IsWalkable)
+                {
+                    return false;
+                }
+
+                if (requireUnoccupied && cell.IsOccupied)
+                {
+                    return false;
+                }
+
+                resolved.Add(new GridPlacementResolvedEntry(entry, cell));
+            }
+
+            return resolved.Count > 0;
+        }
+
         private void DrawFieldGizmos()
         {
             FieldGizmoSettings settings = GizmoSettings;
@@ -989,6 +1172,18 @@ namespace Neo.GridSystem
         [Serializable]
         public class CellStateChangedEvent : UnityEvent<FieldCell>
         {
+        }
+
+        private readonly struct GridPlacementResolvedEntry
+        {
+            public readonly GridPlacementEntry Entry;
+            public readonly FieldCell Cell;
+
+            public GridPlacementResolvedEntry(GridPlacementEntry entry, FieldCell cell)
+            {
+                Entry = entry;
+                Cell = cell;
+            }
         }
     }
 }

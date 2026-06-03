@@ -2,6 +2,8 @@
 
 **Что это:** gameplay service для Match3-полей поверх `FieldGenerator`. Отвечает за генерацию фишек, поиск валидного swap, resolve совпадений, collapse, refill и shuffle при отсутствии ходов.
 
+---
+
 ## API
 
 - `InitializeBoard()` - заполнить enabled клетки стартовыми фишками.

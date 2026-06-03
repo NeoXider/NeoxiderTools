@@ -23,6 +23,8 @@ GridSystem - модуль-конструктор для сеточных игр 
 ## Основные компоненты
 
 - `FieldGenerator` - ядро поля: генерация, shape, cell state, координаты, world/grid conversion.
+- `FieldGenerator` также дает origin-aware drag/drop helpers: `TryGetCellPositionFromWorld`, `TrySnapWorldToCellCenter`, `SnapWorldToCellCenter`.
+- `FieldGenerator` также умеет reusable multi-cell placement через `CanPlaceContentFootprint` и `PlaceContentFootprint`.
 - `GridMergeResolver` - connected-group merge adapter для `FieldCell.ContentId`.
 - `DiceBoardService` - dice placement и dice merge service.
 - `GridGameBuilder` - scene-конструктор, который добавляет выбранные runtime-модули.
@@ -38,6 +40,8 @@ GridSystem - модуль-конструктор для сеточных игр 
 
 - [GridSystem README](GridSystem/README.md)
 - [FieldGenerator](GridSystem/FieldGenerator.md)
+- [GridPlacementEntry](GridSystem/GridPlacementEntry.md)
+- [GridPlacementResult](GridSystem/GridPlacementResult.md)
 - [GridGameBuilder](GridSystem/GridGameBuilder.md)
 - [Dice](GridSystem/Dice/README.md)
 - [Generic Merge](Merge/README.md)

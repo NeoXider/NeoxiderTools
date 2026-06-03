@@ -24,6 +24,8 @@ GridSystem is a constructor module for grid-based games and Unity systems. It pr
 ## Main Components
 
 - `FieldGenerator` - field core: generation, shape, cell state, coordinates, world/grid conversion.
+- `FieldGenerator` - also provides origin-aware drag/drop helpers: `TryGetCellPositionFromWorld`, `TrySnapWorldToCellCenter`, `SnapWorldToCellCenter`.
+- `FieldGenerator` - also provides reusable multi-cell placement through `CanPlaceContentFootprint` and `PlaceContentFootprint`.
 - `GridGameBuilder` - scene constructor that adds selected runtime modules.
 - `GridShapeMask` - reusable ScriptableObject shape mask.
 - `GridPathfinder` - pure pathfinding service with reason diagnostics.
@@ -47,6 +49,8 @@ GridSystem demo scenes live under `Scenes/GridSystem/`; setup/view scripts live 
 
 - [GridSystem README](GridSystem/README.md)
 - [FieldGenerator](GridSystem/FieldGenerator.md)
+- [GridPlacementEntry](GridSystem/GridPlacementEntry.md)
+- [GridPlacementResult](GridSystem/GridPlacementResult.md)
 - [GridGameBuilder](GridSystem/GridGameBuilder.md)
 - [Dice](GridSystem/Dice/README.md)
 - [Generic Merge](Merge/README.md)

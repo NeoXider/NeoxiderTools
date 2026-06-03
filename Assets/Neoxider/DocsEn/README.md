@@ -22,7 +22,7 @@ Canonical English entry point for **NeoxiderTools** `v9.1.0`.
 | **Core** | Level/XP helpers and core resources | [Core](./Core/README.md) |
 | **Editor** | Editor windows, missing-script scan, settings, maintenance tools | [Editor](./Editor/README.md) |
 | **Extensions** | Extension methods for C# and Unity APIs | [Extensions](./Extensions/README.md) |
-| **GridSystem** | Grid-game constructor: field generation, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
+| **GridSystem** | Grid-game constructor: field generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, scene loading, level map flow | [Level](./Level/README.md) |
 | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Merge/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
@@ -53,6 +53,8 @@ Canonical English entry point for **NeoxiderTools** `v9.1.0`.
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
+| **TODO** | [TODO](./TODO.md) |
+| **Ideas** | [Ideas](./IDEAS.md) |
 
 ## Guides
 

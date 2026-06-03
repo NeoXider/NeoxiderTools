@@ -20,6 +20,8 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 ## Documentation
 
 - [FieldGenerator](./FieldGenerator.md)
+- [GridPlacementEntry](./GridPlacementEntry.md)
+- [GridPlacementResult](./GridPlacementResult.md)
 - [GridGameBuilder](./GridGameBuilder.md)
 - [GridShapeMask](./GridShapeMask.md)
 - [FieldDebugDrawer](./FieldDebugDrawer.md)

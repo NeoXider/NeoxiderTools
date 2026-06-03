@@ -19,6 +19,8 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private Sprite[] _diceSprites = new Sprite[9];
         [SerializeField] private Vector2 _cellSize = new(0.68f, 0.68f);
         [SerializeField] private Vector3 _trayPosition = new(0f, -3.15f, 0f);
+        [SerializeField] private Vector3 _dragWorldOffset = new(0f, 0.5f, 0f);
+        [SerializeField] private bool _snapDragPreviewToGrid = true;
 
         private readonly Dictionary<Vector3Int, CellView> _cells = new();
         private Transform _boardRoot;
@@ -306,7 +308,7 @@ namespace Neo.Demo.GridSystem
 
             if (_dragging && Input.GetMouseButton(0) && _dragRoot != null)
             {
-                _dragRoot.position = ScreenToWorld(Input.mousePosition);
+                _dragRoot.position = ResolveDragPreviewPosition();
             }
 
             if (_dragging && Input.GetMouseButtonUp(0))
@@ -322,8 +324,9 @@ namespace Neo.Demo.GridSystem
             _dragStartTime = Time.time;
             _dragRoot = new GameObject("DiceDragPreview").transform;
             _dragRoot.SetParent(transform, false);
-            _dragRoot.position = world;
+            _dragRoot.position = ResolveDragPreviewPosition();
             CreatePieceView(_controller.CurrentPiece, _dragRoot, Vector3.zero, 50);
+            SetTrayVisible(false);
         }
 
         private void FinishDrag()
@@ -332,27 +335,27 @@ namespace Neo.Demo.GridSystem
             float dragDistance = Vector2.Distance(_dragStartWorld, ScreenToWorld(Input.mousePosition));
             bool tap = dragDistance < 0.18f && Time.time - _dragStartTime < 0.35f;
 
-            if (_dragRoot != null)
-            {
-                DestroyImmediateSafe(_dragRoot.gameObject);
-                _dragRoot = null;
-            }
-
             if (tap)
             {
+                DestroyDragPreview();
+                SetTrayVisible(true);
                 _controller.RotateCurrentPiece();
                 return;
             }
 
-            Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
-            if (Physics.Raycast(ray, out RaycastHit hit))
+            Vector3 releaseWorld = ResolveDragPreviewPosition();
+            if (_dragRoot != null)
             {
-                GridCellMarker marker = hit.collider.GetComponent<GridCellMarker>();
-                if (marker != null)
-                {
-                    _controller.TryPlaceCurrentPiece(marker.Position);
-                }
+                _dragRoot.position = releaseWorld;
             }
+
+            if (TryResolveDragAnchor(releaseWorld, out Vector3Int anchor))
+            {
+                _controller.TryPlaceCurrentPiece(anchor);
+            }
+
+            DestroyDragPreview();
+            SetTrayVisible(true);
         }
 
         private void CreatePieceView(DicePiece piece, Transform parent, Vector3 basePosition, int sortingOrder)
@@ -380,10 +383,64 @@ namespace Neo.Demo.GridSystem
             GameObject root = dieView.gameObject;
             root.name = "Dice_" + value;
             root.transform.localPosition = localPosition;
+            ApplyDieWorldScale(root.transform);
 
             dieView.Initialize(value, ResolveDieSprite(value), sortingOrder);
 
             return root;
+        }
+
+        private Vector3 ResolveDragPreviewPosition()
+        {
+            Vector3 targetWorld = ScreenToWorld(Input.mousePosition) + _dragWorldOffset;
+            if (_snapDragPreviewToGrid && _generator != null)
+            {
+                return _generator.SnapWorldToCellCenter(targetWorld);
+            }
+
+            return targetWorld;
+        }
+
+        private bool TryResolveDragAnchor(Vector3 targetWorld, out Vector3Int anchor)
+        {
+            anchor = default;
+            return _generator != null && _generator.TryGetCellPositionFromWorld(targetWorld, out anchor);
+        }
+
+        private void ApplyDieWorldScale(Transform die)
+        {
+            Vector3 desiredWorldScale = _diePrefab.transform.localScale;
+            Transform parent = die.parent;
+            if (parent == null)
+            {
+                die.localScale = desiredWorldScale;
+                return;
+            }
+
+            Vector3 parentScale = parent.lossyScale;
+            die.localScale = new Vector3(
+                DivideScale(desiredWorldScale.x, parentScale.x),
+                DivideScale(desiredWorldScale.y, parentScale.y),
+                DivideScale(desiredWorldScale.z, parentScale.z));
+        }
+
+        private void SetTrayVisible(bool visible)
+        {
+            if (_trayRoot != null)
+            {
+                _trayRoot.gameObject.SetActive(visible);
+            }
+        }
+
+        private void DestroyDragPreview()
+        {
+            if (_dragRoot == null)
+            {
+                return;
+            }
+
+            DestroyImmediateSafe(_dragRoot.gameObject);
+            _dragRoot = null;
         }
 
         private Sprite ResolveDieSprite(int value)
@@ -452,6 +509,11 @@ namespace Neo.Demo.GridSystem
             {
                 DestroyImmediate(obj);
             }
+        }
+
+        private static float DivideScale(float value, float divisor)
+        {
+            return Mathf.Abs(divisor) > 0.0001f ? value / divisor : value;
         }
 
         private static Sprite CreateSolidSprite()

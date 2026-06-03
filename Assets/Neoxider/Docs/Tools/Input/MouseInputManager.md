@@ -2,6 +2,8 @@
 
 **Что это:** singleton-компонент для мышиного ввода без лишних аллокаций в кадре. Он собирает `Press`, `Hold`, `Release`, `Click`, делает 2D/3D raycast по слоям и сохраняет последнее событие в `MouseEventData`.
 
+---
+
 Файл: `Assets/Neoxider/Scripts/Tools/Input/MouseInputManager.cs`
 
 ## Принцип модуля

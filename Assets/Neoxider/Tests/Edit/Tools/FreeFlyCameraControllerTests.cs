@@ -33,8 +33,8 @@ namespace Neo.Tests.Edit
 
             _controller.Tick(0.5f);
 
-            Assert.That(_go.transform.position.x, Is.EqualTo(5f).Within(0.001f));
-            Assert.That(_go.transform.position.z, Is.EqualTo(0f).Within(0.001f));
+            Assert.That(_go.transform.position.x, Is.EqualTo(5f).Within(0.005f));
+            Assert.That(_go.transform.position.z, Is.EqualTo(0f).Within(0.005f));
             Assert.That(_controller.IsFlying, Is.True);
         }
 

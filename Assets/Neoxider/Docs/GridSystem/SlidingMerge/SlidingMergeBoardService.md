@@ -2,6 +2,8 @@
 
 **Что это:** runtime-сервис для 2048-like игр на базе `FieldGenerator`: сдвиг линии, merge одинаковых значений, spawn новых значений и события для UI/score.
 
+---
+
 **Подходит для:** 2048, Threes-like прототипов, block merge, drop-and-merge, puzzle boards с контентом в `FieldCell.ContentId`.
 
 ## Компоненты

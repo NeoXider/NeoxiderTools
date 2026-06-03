@@ -22,7 +22,7 @@
 | **Core** | Level/XP и базовые ресурсы | [Core](./Core/README.md) |
 | **Editor** | Editor windows, missing scripts scan, настройки, сервисные утилиты | [Editor](./Editor/README.md) |
 | **Extensions** | Extension-методы для C# и Unity API | [Extensions](./Extensions/README.md) |
-| **GridSystem** | Конструктор сеточных игр: field generation, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
+| **GridSystem** | Конструктор сеточных игр: field generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, загрузка сцен, карта прогресса | [Level](./Level/README.md) |
 | **Merge** | Universal pure C# merge engine for connected groups | [Merge](./Merge/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
@@ -53,6 +53,8 @@
 | **Examples** | [Examples](./Examples/README.md) |
 | **NeoxiderPages** | [NeoxiderPages](./NeoxiderPages/README.md) |
 | **UI Extension** | [UI Extension](./UI%20Extension/README.md) |
+| **TODO** | [TODO](./TODO.md) |
+| **Ideas** | [Ideas](./IDEAS.md) |
 
 ## Гайды
 

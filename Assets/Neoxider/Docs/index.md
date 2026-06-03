@@ -28,5 +28,7 @@
 
 ## Быстрые разделы
 - [Package Compatibility](./PackageCompatibility.md)
+- [TODO](./TODO.md)
+- [Ideas](./IDEAS.md)
 - [NeoxiderPages](./NeoxiderPages/README.md)
 

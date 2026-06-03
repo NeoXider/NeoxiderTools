@@ -2,6 +2,8 @@
 
 **Что это:** ядро GridSystem. Компонент генерирует и хранит runtime-сетку, форму, координаты и состояние клеток. Все игровые слои работают поверх `FieldGenerator`.
 
+---
+
 ## Что хранит клетка
 
 `FieldCell` содержит:
@@ -35,6 +37,33 @@
 - `GetNeighbors(...)` - получить соседей по `MovementRule` или override-направлениям.
 - `FindPathDetailed(...)` - pathfinding с диагностикой причины.
 - `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
+- `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers для drag/drop, cursor preview и snap-to-cell placement.
+- `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API для multi-cell placement: фигуры, предметы, dice pairs, inventory blocks.
+
+## Placement API example
+
+```csharp
+Vector3Int anchor;
+if (!field.TryGetCellPositionFromWorld(pointerWorldPosition, out anchor))
+    return;
+
+var entries = new[]
+{
+    new GridPlacementEntry(Vector3Int.zero, firstValue),
+    new GridPlacementEntry(Vector3Int.right, secondValue)
+};
+
+if (!field.CanPlaceContentFootprint(anchor, entries))
+    return;
+
+GridPlacementResult result = field.PlaceContentFootprint(anchor, entries);
+
+foreach (Vector3Int position in result.Positions)
+{
+    FieldCell cell = field.GetCell(position);
+    // Spawn or update your view for cell.ContentId.
+}
+```
 
 ## События
 
@@ -49,6 +78,8 @@
 ## См. также
 
 - [GridGameBuilder](GridGameBuilder.md)
+- [GridPlacementEntry](GridPlacementEntry.md)
+- [GridPlacementResult](GridPlacementResult.md)
 - [GridShapeMask](GridShapeMask.md)
 - [FieldDebugDrawer](FieldDebugDrawer.md)
 - [SlidingMerge](SlidingMerge/SlidingMergeBoardService.md)

@@ -52,42 +52,29 @@ namespace Neo.GridSystem.Dice
                 return false;
             }
 
-            foreach (DicePieceCell pieceCell in piece.Cells)
-            {
-                FieldCell cell = Generator.GetCell(anchor + pieceCell.Offset);
-                if (!CanUsePlacementCell(cell))
-                {
-                    return false;
-                }
-            }
-
-            return true;
+            return Generator.CanPlaceContentFootprint(anchor, CreatePlacementEntries(piece));
         }
 
         public DicePlacementResult Place(DicePiece piece, Vector3Int anchor, bool resolveMerges = true)
         {
             var result = new DicePlacementResult();
-            if (!CanPlace(piece, anchor))
+            if (piece == null || Generator == null)
             {
                 return result;
             }
 
-            var seeds = new List<Vector3Int>();
-            foreach (DicePieceCell pieceCell in piece.Cells)
+            GridPlacementResult placement = Generator.PlaceContentFootprint(anchor, CreatePlacementEntries(piece));
+            result.Placed = placement.Placed;
+            result.PlacedPositions.AddRange(placement.Positions);
+
+            if (!placement.Placed)
             {
-                Vector3Int position = anchor + pieceCell.Offset;
-                FieldCell cell = Generator.GetCell(position);
-                cell.ContentId = pieceCell.Value;
-                cell.IsOccupied = true;
-                Generator.OnCellStateChanged.Invoke(cell);
-                result.PlacedPositions.Add(position);
-                seeds.Add(position);
+                return result;
             }
 
-            result.Placed = true;
             if (resolveMerges)
             {
-                result.MergeResult = ResolveMerges(seeds);
+                result.MergeResult = ResolveMerges(placement.Positions);
             }
 
             OnBoardChanged.Invoke();
@@ -143,12 +130,15 @@ namespace Neo.GridSystem.Dice
             OnBoardChanged.Invoke();
         }
 
-        private bool CanUsePlacementCell(FieldCell cell)
+        private static List<GridPlacementEntry> CreatePlacementEntries(DicePiece piece)
         {
-            return cell != null &&
-                   cell.IsEnabled &&
-                   cell.IsWalkable &&
-                   !cell.IsOccupied;
+            var entries = new List<GridPlacementEntry>();
+            foreach (DicePieceCell pieceCell in piece.Cells)
+            {
+                entries.Add(new GridPlacementEntry(pieceCell.Offset, pieceCell.Value));
+            }
+
+            return entries;
         }
     }
 }

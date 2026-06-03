@@ -35,6 +35,33 @@
 - `GetNeighbors(...)` - get neighbors from `MovementRule` or override directions.
 - `FindPathDetailed(...)` - pathfinding with failure reason diagnostics.
 - `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
+- `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers for drag/drop, cursor previews, and snap-to-cell placement.
+- `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API for multi-cell placement such as shapes, items, dice pairs, and inventory blocks.
+
+## Placement API Example
+
+```csharp
+Vector3Int anchor;
+if (!field.TryGetCellPositionFromWorld(pointerWorldPosition, out anchor))
+    return;
+
+var entries = new[]
+{
+    new GridPlacementEntry(Vector3Int.zero, firstValue),
+    new GridPlacementEntry(Vector3Int.right, secondValue)
+};
+
+if (!field.CanPlaceContentFootprint(anchor, entries))
+    return;
+
+GridPlacementResult result = field.PlaceContentFootprint(anchor, entries);
+
+foreach (Vector3Int position in result.Positions)
+{
+    FieldCell cell = field.GetCell(position);
+    // Spawn or update your view for cell.ContentId.
+}
+```
 
 ## Events
 
@@ -46,9 +73,13 @@
 
 `FieldGenerator` should not own game-specific rules. Match3, TicTacToe, SlidingMerge, inventory grids, and custom games attach focused services that read/write cell state.
 
+Grid input and view layers should also reuse `FieldGenerator` conversion helpers instead of duplicating grid math in demos. For example, a drag/drop view can apply its own pointer offset, then call `SnapWorldToCellCenter` for a snapped preview and `TryGetCellPositionFromWorld` for final placement. Rule layers can use `PlaceContentFootprint` to write multi-cell pieces into `FieldCell.ContentId` without duplicating bounds/occupied checks.
+
 ## See Also
 
 - [GridGameBuilder](GridGameBuilder.md)
+- [GridPlacementEntry](GridPlacementEntry.md)
+- [GridPlacementResult](GridPlacementResult.md)
 - [GridShapeMask](GridShapeMask.md)
 - [FieldDebugDrawer](FieldDebugDrawer.md)
 - [SlidingMerge](SlidingMerge/SlidingMergeBoardService.md)

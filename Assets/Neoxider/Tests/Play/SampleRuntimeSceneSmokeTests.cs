@@ -96,6 +96,7 @@ namespace Neo.Tests.Play
             yield return WaitFrames(2);
 
             Assert.That(GetProperty<int>(controller, "Score"), Is.GreaterThan(0));
+            AssertDiceDieViewsKeepConsistentWorldScale();
 
             Invoke(controller, "FillBoardForGameOverTest");
             yield return null;
@@ -225,6 +226,25 @@ namespace Neo.Tests.Play
             {
                 Assert.That(marker.GetComponent<Collider>(), Is.Not.Null,
                     $"{marker.name} should have a Collider so drag/drop release can raycast the target cell.");
+            }
+        }
+
+        private static void AssertDiceDieViewsKeepConsistentWorldScale()
+        {
+            Type dieViewType = FindType("Neo.Demo.GridSystem.DiceDieView");
+            Assert.That(dieViewType, Is.Not.Null, "Dice die view type was not found.");
+
+            List<Component> views = FindActiveComponents(dieViewType);
+            Assert.That(views.Count, Is.GreaterThanOrEqualTo(2),
+                "Dice demo should have at least one placed die and one tray die after placement.");
+
+            Vector3 expected = views[0].transform.lossyScale;
+            foreach (Component view in views)
+            {
+                Vector3 actual = view.transform.lossyScale;
+                Assert.That(actual.x, Is.EqualTo(expected.x).Within(0.0001f), view.name);
+                Assert.That(actual.y, Is.EqualTo(expected.y).Within(0.0001f), view.name);
+                Assert.That(actual.z, Is.EqualTo(expected.z).Within(0.0001f), view.name);
             }
         }
 

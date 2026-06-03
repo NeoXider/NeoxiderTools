@@ -150,5 +150,59 @@ namespace Neo.Editor.Tests.GridSystem
             Assert.That(boardCenter.x, Is.EqualTo(2.5f).Within(0.0001f));
             Assert.That(boardCenter.y, Is.EqualTo(2.5f).Within(0.0001f));
         }
+
+        [Test]
+        public void TryGetCellPositionFromWorld_UsesGeneratorOriginAndGridConversion()
+        {
+            FieldGenerator generator = CreateGenerator(5, 5, GridOrigin2D.Center);
+            Vector3Int expected = new(3, 1, 0);
+            Vector3 world = generator.GetCellWorldCenter(expected) + new Vector3(0.2f, -0.2f, 0f);
+
+            bool found = generator.TryGetCellPositionFromWorld(world, out Vector3Int position);
+
+            Assert.That(found, Is.True);
+            Assert.That(position, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void TrySnapWorldToCellCenter_ReturnsNearestCellCenter()
+        {
+            FieldGenerator generator = CreateGenerator(5, 5, GridOrigin2D.Center);
+            Vector3Int expectedPosition = new(1, 4, 0);
+            Vector3 expectedCenter = generator.GetCellWorldCenter(expectedPosition);
+            Vector3 pointerWorld = expectedCenter + new Vector3(-0.3f, 0.25f, 0f);
+
+            bool snapped = generator.TrySnapWorldToCellCenter(pointerWorld, out Vector3 snappedWorld);
+
+            Assert.That(snapped, Is.True);
+            Assert.That(snappedWorld.x, Is.EqualTo(expectedCenter.x).Within(0.0001f));
+            Assert.That(snappedWorld.y, Is.EqualTo(expectedCenter.y).Within(0.0001f));
+            Assert.That(snappedWorld.z, Is.EqualTo(expectedCenter.z).Within(0.0001f));
+        }
+
+        [Test]
+        public void PlaceContentFootprint_WritesMultiCellContentAndRejectsInvalidCells()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3, GridOrigin2D.Center);
+            var entries = new[]
+            {
+                new GridPlacementEntry(Vector3Int.zero, 2),
+                new GridPlacementEntry(Vector3Int.right, 4)
+            };
+
+            GridPlacementResult result = generator.PlaceContentFootprint(new Vector3Int(1, 1, 0), entries);
+
+            Assert.That(result.Placed, Is.True);
+            Assert.That(result.Positions, Is.EquivalentTo(new[]
+            {
+                new Vector3Int(1, 1, 0),
+                new Vector3Int(2, 1, 0)
+            }));
+            Assert.That(generator.GetCell(1, 1).ContentId, Is.EqualTo(2));
+            Assert.That(generator.GetCell(2, 1).ContentId, Is.EqualTo(4));
+            Assert.That(generator.GetCell(1, 1).IsOccupied, Is.True);
+            Assert.That(generator.CanPlaceContentFootprint(new Vector3Int(1, 1, 0), entries), Is.False);
+            Assert.That(generator.CanPlaceContentFootprint(new Vector3Int(2, 2, 0), entries), Is.False);
+        }
     }
 }

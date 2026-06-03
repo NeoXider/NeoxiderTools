@@ -2,6 +2,8 @@
 
 **Что это:** совместимый мост из legacy `AttackSystem` в новый RPG combat layer. Файл: `Scripts/Tools/Components/AttackSystem/RpgStatsDamageableBridge.cs`.
 
+---
+
 **Навигация:** [← AttackSystem](./README.md) · [RPG](../../../Rpg/README.md)
 
 ## Назначение

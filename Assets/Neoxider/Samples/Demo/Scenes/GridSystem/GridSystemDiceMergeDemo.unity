@@ -395,6 +395,8 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 2f82d1d5b6db1794fbd84f01ff7791fc, type: 3}
   _cellSize: {x: 0.68, y: 0.68}
   _trayPosition: {x: 0, y: -3.15, z: 0}
+  _dragWorldOffset: {x: 0, y: 0.5, z: 0}
+  _snapDragPreviewToGrid: 1
 --- !u!114 &104693892
 MonoBehaviour:
   m_ObjectHideFlags: 0

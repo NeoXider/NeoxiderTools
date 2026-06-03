@@ -20,6 +20,8 @@ GridSystem - базовый конструктор сеточных игр и с
 ## Документация
 
 - [FieldGenerator](./FieldGenerator.md)
+- [GridPlacementEntry](./GridPlacementEntry.md)
+- [GridPlacementResult](./GridPlacementResult.md)
 - [GridGameBuilder](./GridGameBuilder.md)
 - [GridShapeMask](./GridShapeMask.md)
 - [FieldDebugDrawer](./FieldDebugDrawer.md)
