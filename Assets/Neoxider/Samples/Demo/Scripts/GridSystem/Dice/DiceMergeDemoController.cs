@@ -78,7 +78,7 @@ namespace Neo.Demo.GridSystem
 
         public void RotateCurrentPiece()
         {
-            if (_currentPiece == null || !_currentPiece.IsPair || _gameOver)
+            if (_currentPiece == null || _currentPiece.CellCount < 2 || _gameOver)
             {
                 return;
             }
@@ -212,7 +212,7 @@ namespace Neo.Demo.GridSystem
         private static IEnumerable<DicePiece> EnumerateOrientations(DicePiece piece)
         {
             DicePiece current = piece;
-            int count = piece.IsPair ? 4 : 1;
+            int count = piece.CellCount > 1 ? 4 : 1;
             for (int i = 0; i < count; i++)
             {
                 yield return current;

@@ -87,23 +87,42 @@ namespace Neo.Tests.Play
 
             Type dicePieceType = FindType("Neo.GridSystem.Dice.DicePiece");
             Assert.That(dicePieceType, Is.Not.Null);
+            object pair = dicePieceType.GetMethod("Pair", BindingFlags.Public | BindingFlags.Static)
+                ?.Invoke(null, new object[] { 4, 2 });
+            Invoke(controller, "ForceCurrentPieceForTest", pair);
+
+            Vector3 releaseWorld = GetCellWorldCenter(field, 2, 2);
+            object placed = Invoke(view, "SimulateDragDropForTest", releaseWorld);
+            Assert.That(placed, Is.EqualTo(true), "Dice demo drag/drop simulation should place a pair on an empty board.");
+            yield return WaitFrames(3);
+            AssertDicePlacedPiecesRootHasDieView(2);
+            AssertDicePlacedViewsRenderAboveCells();
+            SetField(view, "_diceBoard", null);
+            Invoke(view, "RefreshAll");
+            yield return WaitFrames(2);
+            AssertDicePlacedPiecesRootHasDieView(2);
+
+            Invoke(controller, "RestartDemo");
+            yield return WaitFrames(2);
+
             object piece = dicePieceType.GetMethod("Single", BindingFlags.Public | BindingFlags.Static)
                 ?.Invoke(null, new object[] { 1 });
             Invoke(controller, "ForceCurrentPieceForTest", piece);
 
             SetCellContent(field, 1, 0, 1);
             SetCellContent(field, 0, 1, 1);
-            Vector3 releaseWorld = GetCellWorldCenter(field, 0, 0);
-            object placed = Invoke(view, "SimulateDragDropForTest", releaseWorld);
+            releaseWorld = GetCellWorldCenter(field, 0, 0);
+            placed = Invoke(view, "SimulateDragDropForTest", releaseWorld);
             Assert.That(placed, Is.EqualTo(true), "Dice demo drag/drop simulation should place the current piece.");
             yield return WaitFrames(2);
 
             Assert.That(GetProperty<int>(controller, "Score"), Is.GreaterThan(0));
-            AssertDicePlacedPiecesRootHasDieView();
+            AssertDicePlacedPiecesRootHasDieView(1);
             Invoke(view, "RefreshAll");
             Invoke(view, "RefreshAll");
             yield return WaitFrames(3);
-            AssertDicePlacedPiecesRootHasDieView();
+            AssertDicePlacedPiecesRootHasDieView(1);
+            AssertDicePlacedViewsRenderAboveCells();
             AssertDiceDieViewsKeepConsistentWorldScale();
 
             Invoke(controller, "FillBoardForGameOverTest");
@@ -256,12 +275,13 @@ namespace Neo.Tests.Play
             }
         }
 
-        private static void AssertDicePlacedPiecesRootHasDieView()
+        private static void AssertDicePlacedPiecesRootHasDieView(int minCount)
         {
             Type dieViewType = FindType("Neo.Demo.GridSystem.DiceDieView");
             Assert.That(dieViewType, Is.Not.Null, "Dice die view type was not found.");
 
             List<Component> views = FindActiveComponents(dieViewType);
+            int placedCount = 0;
             foreach (Component view in views)
             {
                 Transform current = view.transform;
@@ -269,15 +289,63 @@ namespace Neo.Tests.Play
                 {
                     if (current.name == "DicePlacedPiecesView")
                     {
-                        return;
+                        placedCount++;
+                        break;
                     }
 
                     current = current.parent;
                 }
             }
 
-            Assert.Fail(
-                "Dice demo should create at least one persistent placed die visual under DicePlacedPiecesView after placement.");
+            Assert.That(placedCount, Is.GreaterThanOrEqualTo(minCount),
+                "Dice demo should create persistent placed die visuals under DicePlacedPiecesView after placement.");
+        }
+
+        private static void AssertDicePlacedViewsRenderAboveCells()
+        {
+            Type dieViewType = FindType("Neo.Demo.GridSystem.DiceDieView");
+            Type markerType = FindType("Neo.GridSystem.GridCellMarker");
+            Assert.That(dieViewType, Is.Not.Null, "Dice die view type was not found.");
+            Assert.That(markerType, Is.Not.Null, "Grid cell marker type was not found.");
+
+            int maxCellOrder = int.MinValue;
+            foreach (Component marker in FindActiveComponents(markerType))
+            {
+                SpriteRenderer renderer = marker.GetComponent<SpriteRenderer>();
+                if (renderer != null)
+                {
+                    maxCellOrder = Mathf.Max(maxCellOrder, renderer.sortingOrder);
+                }
+            }
+
+            foreach (Component view in FindActiveComponents(dieViewType))
+            {
+                if (!HasParentNamed(view.transform, "DicePlacedPiecesView"))
+                {
+                    continue;
+                }
+
+                SpriteRenderer renderer = view.GetComponent<SpriteRenderer>();
+                Assert.That(renderer, Is.Not.Null, view.name);
+                Assert.That(renderer.sortingOrder, Is.GreaterThan(maxCellOrder),
+                    "Placed dice visuals must render above board cells.");
+            }
+        }
+
+        private static bool HasParentNamed(Transform transform, string parentName)
+        {
+            Transform current = transform;
+            while (current != null)
+            {
+                if (current.name == parentName)
+                {
+                    return true;
+                }
+
+                current = current.parent;
+            }
+
+            return false;
         }
 
         private static List<Component> FindActiveComponents(Type type)
@@ -329,6 +397,15 @@ namespace Neo.Tests.Play
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, $"{target.GetType().Name}.{methodName} method was not found.");
             return method.Invoke(target, args);
+        }
+
+        private static void SetField(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(
+                fieldName,
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null, $"{target.GetType().Name}.{fieldName} field was not found.");
+            field.SetValue(target, value);
         }
 
         private static Vector3 GetCellWorldCenter(object field, int x, int y)

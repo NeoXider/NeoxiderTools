@@ -22,5 +22,11 @@ namespace Neo.Merge
         public int MinGroupSize = 3;
         public MergeCascadeMode CascadeMode = MergeCascadeMode.None;
         public bool Mutate;
+
+        /// <summary>
+        ///     Safety limit for chained cascades from a single seed. When the limit is reached the resolver stops and
+        ///     flags <see cref="MergeResult{TItem,TValue}.CascadeLimitReached" /> instead of looping forever.
+        /// </summary>
+        public int MaxCascadeIterations = 128;
     }
 }

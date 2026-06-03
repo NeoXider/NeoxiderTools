@@ -8,9 +8,9 @@ namespace Neo.GridSystem.Merge
     /// </summary>
     public sealed class GridMergeGroupResult
     {
-        public List<FieldCell> Cells = new();
-        public List<Vector3Int> Positions = new();
-        public List<FieldCell> ClearedCells = new();
+        public List<FieldCell> Cells { get; } = new();
+        public List<Vector3Int> Positions { get; } = new();
+        public List<FieldCell> ClearedCells { get; } = new();
         public FieldCell SeedCell;
         public FieldCell ResultCell;
         public int SourceContentId;

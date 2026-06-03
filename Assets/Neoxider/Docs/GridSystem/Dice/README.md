@@ -4,11 +4,11 @@
 
 ## Runtime API
 
-- `DicePiece` описывает одиночный кубик или пару с local offsets и методами поворота.
+- `DicePiece` описывает одиночный кубик, пару или фигуру большего размера через local offsets; есть `CellCount` и методы поворота, работающие для любого числа клеток (поворот вокруг якоря).
 - `DicePieceGenerator` создает одиночные/парные фишки из пула значений, с равными шансами и без одинаковых значений в паре.
-- `DiceBoardService` проверяет размещение, пишет значения в `FieldCell.ContentId` и запускает dice merge через `GridMergeResolver`.
+- `DiceBoardService` проверяет размещение, пишет значения в `FieldCell.ContentId` и запускает dice merge через `GridMergeResolver`. Правила merge настраиваются: `MinMergeGroupSize`, `MergeStep`, `MaxContentId` (0 = без ограничения), `RequireWalkable`.
 
-Модуль отвечает только за размещение и merge: 3+ одинаковых значения, касание гранями, результат `old + 1`, cascade от result cell. Очки, progression пула, win/loss и UI остаются в игре или sample-сцене.
+По умолчанию модуль: размещает кубики, сливает 3+ одинаковых значения, касающихся гранями, результат `old + step`, cascade от result cell. Сервис сам выставляет occupancy и шлёт одно согласованное `OnCellStateChanged` на клетку и одно `OnBoardChanged` на размещение. Очки, progression пула, win/loss и UI остаются в игре или sample-сцене.
 
 ## Sample
 

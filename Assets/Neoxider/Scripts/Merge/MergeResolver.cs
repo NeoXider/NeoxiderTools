@@ -40,9 +40,9 @@ namespace Neo.Merge
             Dictionary<TItem, TValue> valueOverrides)
         {
             TItem currentSeed = seed;
-            int guard = 0;
+            int maxIterations = request.MaxCascadeIterations > 0 ? request.MaxCascadeIterations : 1;
 
-            while (guard++ < 128)
+            for (int guard = 0; guard < maxIterations; guard++)
             {
                 List<TItem> group = FindGroup(request, currentSeed, valueOverrides);
                 if (group.Count < request.MinGroupSize)
@@ -92,6 +92,9 @@ namespace Neo.Merge
 
                 currentSeed = resultItem;
             }
+
+            // Falling out of the loop means the cascade kept producing mergeable groups until the safety limit.
+            result.CascadeLimitReached = true;
         }
 
         private static List<TItem> FindGroup<TItem, TValue>(

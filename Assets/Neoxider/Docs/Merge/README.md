@@ -6,9 +6,10 @@
 
 ## Runtime API
 
-- `MergeRequest<TItem, TValue>` задает items, seeds, чтение/запись value, соседей, правила совпадения, выбор result item, новое значение, cascade mode и dry-run/apply режим.
+- `MergeRequest<TItem, TValue>` задает items, seeds, чтение/запись value, соседей, правила совпадения, выбор result item, новое значение, cascade mode, `MaxCascadeIterations` и dry-run/apply режим.
 - `MergeResolver.Resolve(request)` возвращает `MergeResult<TItem, TValue>`.
-- `MergeResult` содержит группы и измененные элементы.
+- `MergeResult` содержит группы, измененные элементы и `CascadeLimitReached` (выставляется, если cascade упёрся в лимит безопасности).
+- Для сеток есть готовый пресет `GridMergeRequest.Increment(...)` под частое правило «слить одинаковый content в content+step на seed, cascade от результата».
 
 ## Примеры
 

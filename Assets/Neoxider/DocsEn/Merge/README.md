@@ -6,9 +6,10 @@ Use it when a mechanic needs to find equivalent connected items, choose the resu
 
 ## Runtime API
 
-- `MergeRequest<TItem, TValue>` defines items, seeds, value access, neighbors, match rules, result selection, merged value, cascade mode, and mutate/dry-run mode.
+- `MergeRequest<TItem, TValue>` defines items, seeds, value access, neighbors, match rules, result selection, merged value, cascade mode, `MaxCascadeIterations`, and mutate/dry-run mode.
 - `MergeResolver.Resolve(request)` returns `MergeResult<TItem, TValue>`.
-- `MergeResult` contains resolved groups and changed items.
+- `MergeResult` contains resolved groups, changed items, and `CascadeLimitReached` (set when a cascade hit the safety limit).
+- For grids, `GridMergeRequest.Increment(...)` is a ready-made preset for the common "merge equal content into content+step at the seed, cascade from result" rule.
 
 ## Examples
 

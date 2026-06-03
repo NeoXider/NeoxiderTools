@@ -18,7 +18,6 @@ namespace Neo.GridSystem.Merge
             }
 
             request ??= new GridMergeRequest();
-            List<FieldCell> items = new(generator.GetAllCells(true));
             List<FieldCell> seeds = ResolveSeedCells(generator, request);
             IEnumerable<Vector3Int> directions = request.Directions ??
                                                  generator.Config?.MovementRule?.Directions ??
@@ -26,13 +25,18 @@ namespace Neo.GridSystem.Merge
 
             var mergeRequest = new MergeRequest<FieldCell, int>
             {
-                Items = items,
+                // The generic core only uses Items as a fallback seed source; since we always supply explicit seeds we
+                // pass the same list instead of allocating a copy of the whole board on every resolve.
+                Items = seeds,
                 Seeds = seeds,
                 GetValue = cell => cell.ContentId,
                 SetValue = (cell, value) =>
                 {
                     cell.ContentId = value;
-                    generator.OnCellStateChanged.Invoke(cell);
+                    if (request.NotifyOnContentChanged)
+                    {
+                        generator.OnCellStateChanged.Invoke(cell);
+                    }
                 },
                 GetNeighbors = cell => GetNeighbors(generator, cell, directions),
                 CanUseItem = cell => CanUseCell(cell, request),
@@ -45,10 +49,12 @@ namespace Neo.GridSystem.Merge
                 EmptyValue = request.EmptyContentId,
                 MinGroupSize = request.MinGroupSize,
                 CascadeMode = request.CascadeMode,
-                Mutate = request.Mutate
+                Mutate = request.Mutate,
+                MaxCascadeIterations = request.MaxCascadeIterations
             };
 
             MergeResult<FieldCell, int> mergeResult = MergeResolver.Resolve(mergeRequest);
+            result.CascadeLimitReached = mergeResult.CascadeLimitReached;
             foreach (MergeGroupResult<FieldCell, int> group in mergeResult.Groups)
             {
                 var gridGroup = new GridMergeGroupResult
@@ -56,11 +62,11 @@ namespace Neo.GridSystem.Merge
                     SeedCell = group.SeedItem,
                     ResultCell = group.ResultItem,
                     SourceContentId = group.SourceValue,
-                    ResultContentId = group.ResultValue,
-                    Cells = new List<FieldCell>(group.Items),
-                    ClearedCells = new List<FieldCell>(group.ClearedItems)
+                    ResultContentId = group.ResultValue
                 };
 
+                gridGroup.Cells.AddRange(group.Items);
+                gridGroup.ClearedCells.AddRange(group.ClearedItems);
                 foreach (FieldCell cell in gridGroup.Cells)
                 {
                     gridGroup.Positions.Add(cell.Position);

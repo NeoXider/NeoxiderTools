@@ -9,6 +9,10 @@ namespace Neo.Demo.GridSystem
     [AddComponentMenu("Neoxider/Demo/GridSystem/DiceMergeDemoView")]
     public sealed class DiceMergeDemoView : MonoBehaviour
     {
+        private const int PlacedDiceSortingOrder = 200;
+        private const int TrayDiceSortingOrder = 300;
+        private const int DragDiceSortingOrder = 400;
+
         [SerializeField] private FieldGenerator _generator;
         [SerializeField] private DiceBoardService _diceBoard;
         [SerializeField] private DiceMergeDemoController _controller;
@@ -22,12 +26,18 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private Vector3 _dragWorldOffset = new(0f, 0.5f, 0f);
         [SerializeField] private bool _snapDragPreviewToGrid = true;
 
+        [Tooltip("Empty-cell content id used only as a fallback when the DiceBoardService reference is missing. " +
+                 "Keep this in sync with DiceBoardService.EmptyContentId (default -1).")]
+        [SerializeField] private int _emptyContentId = -1;
+
         private readonly Dictionary<Vector3Int, CellView> _cells = new();
+        private Sprite _fallbackSprite;
         private Transform _boardRoot;
         private Transform _piecesRoot;
         private Transform _trayRoot;
         private Transform _dragRoot;
         private bool _dragging;
+        private bool _rebuilding;
         private Vector3 _dragStartWorld;
         private float _dragStartTime;
 
@@ -55,6 +65,7 @@ namespace Neo.Demo.GridSystem
 
         private void Awake()
         {
+            ResolveReferences();
             if (_camera == null)
             {
                 _camera = Camera.main;
@@ -63,8 +74,9 @@ namespace Neo.Demo.GridSystem
 
         private void OnEnable()
         {
+            ResolveReferences();
             Subscribe();
-            RegisterExistingCells();
+            EnsureCellViews();
         }
 
         private void OnDisable()
@@ -93,76 +105,50 @@ namespace Neo.Demo.GridSystem
 
         public void Rebuild()
         {
-            ClearChildren();
-            _cells.Clear();
-            _boardRoot = new GameObject("DiceBoardView").transform;
-            _boardRoot.SetParent(transform, false);
-            _piecesRoot = new GameObject("DicePlacedPiecesView").transform;
-            _piecesRoot.SetParent(transform, false);
-            _trayRoot = new GameObject("DiceTrayView").transform;
-            _trayRoot.SetParent(transform, false);
+            if (_rebuilding)
+            {
+                return;
+            }
+
+            _rebuilding = true;
+            try
+            {
+                ResolveReferences();
+                ClearChildren();
+                _cells.Clear();
+
+                // Drop references to the just-destroyed roots. In play mode Destroy is deferred, so the old objects
+                // still live for the rest of the frame; by holding only the fresh instances (never re-finding by name)
+                // we cannot accidentally parent placed dice under a root that is about to be destroyed.
+                _boardRoot = null;
+                _piecesRoot = null;
+                _trayRoot = null;
+                _dragRoot = null;
+                EnsureRoots();
+
+                if (_generator == null)
+                {
+                    return;
+                }
+
+                CreateBoardBackdrop();
+                foreach (FieldCell cell in _generator.GetAllCells(true))
+                {
+                    CreateCell(cell);
+                }
+            }
+            finally
+            {
+                _rebuilding = false;
+            }
 
             if (_generator == null)
             {
                 return;
             }
 
-            CreateBoardBackdrop();
-            foreach (FieldCell cell in _generator.GetAllCells(true))
-            {
-                CreateCell(cell);
-            }
-
             RefreshAll();
             RefreshTray();
-        }
-
-        private void RegisterExistingCells()
-        {
-            if (_generator == null || _cells.Count > 0)
-            {
-                return;
-            }
-
-            _boardRoot = transform.Find("DiceBoardView");
-            _piecesRoot = transform.Find("DicePlacedPiecesView");
-            _trayRoot = transform.Find("DiceTrayView");
-
-            if (_boardRoot == null)
-            {
-                Rebuild();
-                return;
-            }
-
-            foreach (GridCellMarker marker in _boardRoot.GetComponentsInChildren<GridCellMarker>(true))
-            {
-                FieldCell cell = _generator.GetCell(marker.Position);
-                if (cell == null)
-                {
-                    continue;
-                }
-
-                SpriteRenderer renderer = marker.GetComponent<SpriteRenderer>();
-                if (renderer == null)
-                {
-                    renderer = marker.gameObject.AddComponent<SpriteRenderer>();
-                    renderer.sprite = _cellSprite != null ? _cellSprite : CreateSolidSprite();
-                }
-
-                _cells[marker.Position] = new CellView
-                {
-                    Root = marker.transform,
-                    CellRenderer = renderer
-                };
-            }
-
-            if (_trayRoot == null)
-            {
-                _trayRoot = new GameObject("DiceTrayView").transform;
-                _trayRoot.SetParent(transform, false);
-            }
-
-            EnsurePiecesRoot();
         }
 
         private void CreateBoardBackdrop()
@@ -184,11 +170,13 @@ namespace Neo.Demo.GridSystem
 
         public void RefreshAll()
         {
+            ResolveReferences();
             if (_generator == null)
             {
                 return;
             }
 
+            EnsureCellViews();
             EnsurePiecesRoot();
             foreach (FieldCell cell in _generator.GetAllCells(true))
             {
@@ -196,15 +184,32 @@ namespace Neo.Demo.GridSystem
             }
         }
 
+        private void EnsureCellViews()
+        {
+            if (_generator == null || _cells.Count > 0 || _rebuilding)
+            {
+                return;
+            }
+
+            // Only rebuild once the generator actually has cells, otherwise Rebuild would loop on an empty board.
+            if (_generator.Cells == null || _generator.Cells.Length == 0)
+            {
+                return;
+            }
+
+            Rebuild();
+        }
+
         public void RefreshTray()
         {
+            EnsureTrayRoot();
             ClearTransform(_trayRoot);
             if (_controller == null || _controller.CurrentPiece == null || _trayRoot == null)
             {
                 return;
             }
 
-            CreatePieceView(_controller.CurrentPiece, _trayRoot, _trayPosition, 20);
+            CreatePieceView(_controller.CurrentPiece, _trayRoot, _trayPosition, TrayDiceSortingOrder);
         }
 
 #if UNITY_EDITOR
@@ -214,12 +219,17 @@ namespace Neo.Demo.GridSystem
             _dragRoot = new GameObject("DiceDragPreview").transform;
             _dragRoot.SetParent(transform, false);
             _dragRoot.position = releaseWorld;
-            CreatePieceView(_controller != null ? _controller.CurrentPiece : null, _dragRoot, Vector3.zero, 50);
+            CreatePieceView(_controller != null ? _controller.CurrentPiece : null, _dragRoot, Vector3.zero, DragDiceSortingOrder);
             SetTrayVisible(false);
 
             bool placed = TryPlaceCurrentPieceAtWorld(releaseWorld);
             DestroyDragPreview();
             SetTrayVisible(true);
+            if (placed)
+            {
+                RefreshAll();
+            }
+
             return placed;
         }
 #endif
@@ -305,7 +315,7 @@ namespace Neo.Demo.GridSystem
             view.CellRenderer.color = cell.IsEnabled
                 ? new Color(0.72f, 0.72f, 0.68f, 1f)
                 : new Color(0.35f, 0.35f, 0.35f, 0.45f);
-            if (!cell.IsEnabled || cell.ContentId <= _diceBoard.EmptyContentId)
+            if (!cell.IsEnabled || IsEmptyCellContent(cell.ContentId))
             {
                 if (view.DiceRoot != null)
                 {
@@ -327,7 +337,7 @@ namespace Neo.Demo.GridSystem
                     view.DiceRoot.localPosition = localPosition;
                     view.DiceRoot.name = "Dice_" + cell.ContentId;
                     ApplyDieWorldScale(view.DiceRoot);
-                    existing.Initialize(cell.ContentId, ResolveDieSprite(cell.ContentId), 10);
+                    existing.Initialize(cell.ContentId, ResolveDieSprite(cell.ContentId), PlacedDiceSortingOrder);
                     return;
                 }
 
@@ -335,12 +345,13 @@ namespace Neo.Demo.GridSystem
                 view.DiceRoot = null;
             }
 
-            GameObject die = CreateDieView(cell.ContentId, _piecesRoot, localPosition, 10);
+            GameObject die = CreateDieView(cell.ContentId, _piecesRoot, localPosition, PlacedDiceSortingOrder);
             view.DiceRoot = die != null ? die.transform : null;
         }
 
         private void HandleInput()
         {
+            ResolveReferences();
             if (_camera == null || _controller == null || _controller.GameOver)
             {
                 return;
@@ -376,10 +387,11 @@ namespace Neo.Demo.GridSystem
             _dragging = true;
             _dragStartWorld = world;
             _dragStartTime = Time.time;
+            DestroyDragPreview();
             _dragRoot = new GameObject("DiceDragPreview").transform;
             _dragRoot.SetParent(transform, false);
             _dragRoot.position = ResolveDragPreviewPosition();
-            CreatePieceView(_controller.CurrentPiece, _dragRoot, Vector3.zero, 50);
+            CreatePieceView(_controller.CurrentPiece, _dragRoot, Vector3.zero, DragDiceSortingOrder);
             SetTrayVisible(false);
         }
 
@@ -403,17 +415,35 @@ namespace Neo.Demo.GridSystem
                 _dragRoot.position = releaseWorld;
             }
 
-            TryPlaceCurrentPieceAtWorld(releaseWorld);
+            bool placed = TryPlaceCurrentPieceAtWorld(releaseWorld);
 
-            DestroyDragPreview();
             SetTrayVisible(true);
+
+            // On success the preview dice were promoted into the board (reused as the placed visuals); only a failed
+            // drop leaves a stray preview to discard.
+            if (!placed)
+            {
+                DestroyDragPreview();
+            }
         }
 
         public bool TryPlaceCurrentPieceAtWorld(Vector3 releaseWorld)
         {
-            if (_controller == null || !TryResolveDragAnchor(releaseWorld, out Vector3Int anchor))
+            ResolveReferences();
+            if (_controller == null || _diceBoard == null ||
+                !TryResolveDragAnchor(releaseWorld, out Vector3Int anchor))
             {
                 return false;
+            }
+
+            DicePiece piece = _controller.CurrentPiece;
+            if (piece != null && _diceBoard.CanPlace(piece, anchor))
+            {
+                // Reuse the very objects the player dragged as the placed dice. We register them on their target cells
+                // BEFORE mutating the model, so the model's OnCellStateChanged -> RefreshCell reuses (and merges) these
+                // exact dice instead of destroying the preview and recreating fresh visuals.
+                PromotePreviewToCells(anchor, piece);
+                DestroyDragPreview();
             }
 
             bool placed = _controller.TryPlaceCurrentPiece(anchor);
@@ -425,9 +455,81 @@ namespace Neo.Demo.GridSystem
             return placed;
         }
 
+        // Hands the dragged preview dice over to their destination cells so they become the persistent placed visuals.
+        private void PromotePreviewToCells(Vector3Int anchor, DicePiece piece)
+        {
+            if (_dragRoot == null || piece == null || _generator == null)
+            {
+                return;
+            }
+
+            EnsurePiecesRoot();
+
+            var previewDice = new List<Transform>(_dragRoot.childCount);
+            foreach (Transform child in _dragRoot)
+            {
+                previewDice.Add(child);
+            }
+
+            IReadOnlyList<DicePieceCell> cells = piece.Cells;
+            int count = Mathf.Min(cells.Count, previewDice.Count);
+            for (int i = 0; i < count; i++)
+            {
+                Vector3Int position = anchor + cells[i].Offset;
+                if (!_cells.TryGetValue(position, out CellView view))
+                {
+                    continue;
+                }
+
+                Transform die = previewDice[i];
+                if (view.DiceRoot != null && view.DiceRoot != die)
+                {
+                    DestroyImmediateSafe(view.DiceRoot.gameObject);
+                }
+
+                die.SetParent(_piecesRoot, false);
+                die.localPosition = _piecesRoot.InverseTransformPoint(_generator.GetCellWorldCenter(position));
+                ApplyDieWorldScale(die);
+                view.DiceRoot = die;
+            }
+        }
+
+        private void ResolveReferences()
+        {
+            // Resolve siblings/parents only. A global FindObjectOfType would bind to an arbitrary board in scenes that
+            // host more than one dice demo, so we deliberately stay local to this view's hierarchy.
+            if (_generator == null)
+            {
+                _generator = GetComponentInParent<FieldGenerator>();
+            }
+
+            if (_diceBoard == null)
+            {
+                _diceBoard = GetComponentInParent<DiceBoardService>();
+            }
+
+            if (_controller == null)
+            {
+                _controller = GetComponentInParent<DiceMergeDemoController>();
+            }
+
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+        }
+
+        private bool IsEmptyCellContent(int contentId)
+        {
+            // Keep the empty threshold consistent with the board service; fall back to the serialized default when the
+            // board reference is temporarily unavailable so placed dice never flicker as "empty".
+            int emptyContentId = _diceBoard != null ? _diceBoard.EmptyContentId : _emptyContentId;
+            return contentId <= emptyContentId;
+        }
+
         private void CreatePieceView(DicePiece piece, Transform parent, Vector3 basePosition, int sortingOrder)
         {
-            if (piece == null)
+            if (piece == null || parent == null || piece.Cells == null || piece.Cells.Count == 0)
             {
                 return;
             }
@@ -499,25 +601,47 @@ namespace Neo.Demo.GridSystem
             }
         }
 
-        private void EnsurePiecesRoot()
+        // Cached-root management. We never recover roots via transform.Find: a saved scene can persist these objects
+        // and, in play mode, Destroy is deferred, so Find could return a stale/duplicate root and orphan placed dice.
+        private void EnsureRoots()
         {
-            if (_piecesRoot != null)
+            _boardRoot = CreateRootIfMissing(_boardRoot, "DiceBoardView");
+            _piecesRoot = CreateRootIfMissing(_piecesRoot, "DicePlacedPiecesView");
+            _trayRoot = CreateRootIfMissing(_trayRoot, "DiceTrayView");
+        }
+
+        private Transform CreateRootIfMissing(Transform current, string rootName)
+        {
+            if (current != null)
             {
-                return;
+                return current;
             }
 
-            _piecesRoot = transform.Find("DicePlacedPiecesView");
-            if (_piecesRoot == null)
-            {
-                _piecesRoot = new GameObject("DicePlacedPiecesView").transform;
-                _piecesRoot.SetParent(transform, false);
-            }
+            Transform root = new GameObject(rootName).transform;
+            root.SetParent(transform, false);
+            return root;
+        }
+
+        private void EnsurePiecesRoot()
+        {
+            _piecesRoot = CreateRootIfMissing(_piecesRoot, "DicePlacedPiecesView");
+        }
+
+        private void EnsureTrayRoot()
+        {
+            _trayRoot = CreateRootIfMissing(_trayRoot, "DiceTrayView");
         }
 
         private void DestroyDragPreview()
         {
             if (_dragRoot == null)
             {
+                return;
+            }
+
+            if (_dragRoot == _boardRoot || _dragRoot == _piecesRoot || _dragRoot == _trayRoot)
+            {
+                _dragRoot = null;
                 return;
             }
 
@@ -598,10 +722,16 @@ namespace Neo.Demo.GridSystem
             return Mathf.Abs(divisor) > 0.0001f ? value / divisor : value;
         }
 
-        private static Sprite CreateSolidSprite()
+        private Sprite CreateSolidSprite()
         {
-            Texture2D tex = Texture2D.whiteTexture;
-            return Sprite.Create(tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            if (_fallbackSprite == null)
+            {
+                Texture2D tex = Texture2D.whiteTexture;
+                _fallbackSprite = Sprite.Create(
+                    tex, new Rect(0, 0, tex.width, tex.height), new Vector2(0.5f, 0.5f), tex.width);
+            }
+
+            return _fallbackSprite;
         }
 
         private sealed class CellView

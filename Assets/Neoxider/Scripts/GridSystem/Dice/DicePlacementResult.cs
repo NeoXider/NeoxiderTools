@@ -10,7 +10,7 @@ namespace Neo.GridSystem.Dice
     public sealed class DicePlacementResult
     {
         public bool Placed;
-        public List<Vector3Int> PlacedPositions = new();
-        public GridMergeResult MergeResult = new();
+        public List<Vector3Int> PlacedPositions { get; } = new();
+        public GridMergeResult MergeResult { get; set; } = new();
     }
 }

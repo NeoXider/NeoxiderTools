@@ -5,21 +5,35 @@ using UnityEngine;
 namespace Neo.GridSystem.Dice
 {
     /// <summary>
-    ///     Describes a one-cell or two-cell dice piece before placement.
+    ///     Describes a multi-cell dice piece (single, pair or larger footprint) before placement.
     /// </summary>
     [Serializable]
     public sealed class DicePiece
     {
-        private readonly List<DicePieceCell> _cells = new();
+        [SerializeField] private List<DicePieceCell> _cells = new();
 
-        public IReadOnlyList<DicePieceCell> Cells => _cells;
-        public bool IsPair => _cells.Count == 2;
+        public IReadOnlyList<DicePieceCell> Cells => MutableCells;
+        public int CellCount => MutableCells.Count;
+        public bool IsPair => MutableCells.Count == 2;
+
+        private List<DicePieceCell> MutableCells
+        {
+            get
+            {
+                if (_cells == null)
+                {
+                    _cells = new List<DicePieceCell>();
+                }
+
+                return _cells;
+            }
+        }
 
         public DicePiece(IEnumerable<DicePieceCell> cells)
         {
             if (cells != null)
             {
-                _cells.AddRange(cells);
+                MutableCells.AddRange(cells);
             }
         }
 
@@ -40,35 +54,30 @@ namespace Neo.GridSystem.Dice
             });
         }
 
+        /// <summary>Rotates the footprint 90° clockwise around the anchor. Works for any cell count.</summary>
         public DicePiece RotateClockwise()
         {
-            if (!IsPair)
-            {
-                return Clone();
-            }
-
-            var rotated = new List<DicePieceCell>(_cells.Count);
-            foreach (DicePieceCell cell in _cells)
-            {
-                Vector3Int offset = cell.Offset;
-                rotated.Add(new DicePieceCell(new Vector3Int(offset.y, -offset.x, offset.z), cell.Value));
-            }
-
-            return new DicePiece(rotated);
+            return Rotate(offset => new Vector3Int(offset.y, -offset.x, offset.z));
         }
 
+        /// <summary>Rotates the footprint 90° counter-clockwise around the anchor. Works for any cell count.</summary>
         public DicePiece RotateCounterClockwise()
         {
-            if (!IsPair)
+            return Rotate(offset => new Vector3Int(-offset.y, offset.x, offset.z));
+        }
+
+        private DicePiece Rotate(Func<Vector3Int, Vector3Int> rotateOffset)
+        {
+            if (CellCount < 2)
             {
                 return Clone();
             }
 
-            var rotated = new List<DicePieceCell>(_cells.Count);
-            foreach (DicePieceCell cell in _cells)
+            IReadOnlyList<DicePieceCell> cells = Cells;
+            var rotated = new List<DicePieceCell>(cells.Count);
+            foreach (DicePieceCell cell in cells)
             {
-                Vector3Int offset = cell.Offset;
-                rotated.Add(new DicePieceCell(new Vector3Int(-offset.y, offset.x, offset.z), cell.Value));
+                rotated.Add(new DicePieceCell(rotateOffset(cell.Offset), cell.Value));
             }
 
             return new DicePiece(rotated);
@@ -76,7 +85,7 @@ namespace Neo.GridSystem.Dice
 
         public DicePiece Clone()
         {
-            return new DicePiece(_cells);
+            return new DicePiece(Cells);
         }
     }
 }

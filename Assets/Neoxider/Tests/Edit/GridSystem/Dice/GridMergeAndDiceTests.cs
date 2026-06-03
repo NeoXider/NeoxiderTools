@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Reflection;
 using Neo.GridSystem;
 using Neo.GridSystem.Dice;
 using Neo.GridSystem.Merge;
@@ -132,6 +133,23 @@ namespace Neo.Editor.Tests.GridSystem
             Assert.That(pair.IsPair, Is.True);
             Assert.That(pair.Cells[0].Value, Is.EqualTo(1));
             Assert.That(pair.Cells[1].Value, Is.EqualTo(2));
+        }
+
+        [Test]
+        public void DiceBoardService_IgnoresPieceWithMissingCellsWithoutThrowing()
+        {
+            FieldGenerator generator = CreateGenerator(2, 2);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            DicePiece piece = DicePiece.Single(1);
+            typeof(DicePiece)
+                .GetField("_cells", BindingFlags.Instance | BindingFlags.NonPublic)
+                ?.SetValue(piece, null);
+
+            Assert.That(piece.Cells, Is.Not.Null);
+            Assert.That(piece.Cells.Count, Is.EqualTo(0));
+            Assert.That(dice.CanPlace(piece, Vector3Int.zero), Is.False);
+            Assert.DoesNotThrow(() => dice.Place(piece, Vector3Int.zero, false));
+            Assert.That(generator.GetCell(0, 0).IsOccupied, Is.False);
         }
 
         [Test]
@@ -292,6 +310,102 @@ namespace Neo.Editor.Tests.GridSystem
             Assert.That(result.MergeResult.Groups[1].ResultContentId, Is.EqualTo(3));
             Assert.That(generator.GetCell(1, 0).ContentId, Is.EqualTo(3));
             Assert.That(generator.GetCell(2, 0).ContentId, Is.EqualTo(dice.EmptyContentId));
+        }
+
+        [Test]
+        public void DicePiece_RotatesLargerFootprintAroundAnchor()
+        {
+            var piece = new DicePiece(new[]
+            {
+                new DicePieceCell(Vector3Int.zero, 1),
+                new DicePieceCell(Vector3Int.right, 2),
+                new DicePieceCell(new Vector3Int(0, 1, 0), 3)
+            });
+
+            DicePiece rotated = piece.RotateClockwise();
+
+            Assert.That(rotated.CellCount, Is.EqualTo(3));
+            Assert.That(rotated.Cells[0].Offset, Is.EqualTo(Vector3Int.zero));
+            Assert.That(rotated.Cells[1].Offset, Is.EqualTo(Vector3Int.down));
+            Assert.That(rotated.Cells[1].Value, Is.EqualTo(2));
+            Assert.That(rotated.Cells[2].Offset, Is.EqualTo(Vector3Int.right));
+            Assert.That(rotated.Cells[2].Value, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void GridMerge_FlagsCascadeLimitWhenStoppedEarly()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            Set(generator, 2, 0, 3);
+            Set(generator, 2, 1, 3);
+            Set(generator, 2, 2, 3);
+            Set(generator, 1, 0, 4);
+            Set(generator, 0, 0, 4);
+
+            GridMergeRequest request = GridMergeRequest.Increment(new[] { new Vector3Int(2, 0, 0) }, 0);
+            request.MaxCascadeIterations = 1;
+
+            GridMergeResult result = GridMergeResolver.Resolve(generator, request);
+
+            Assert.That(result.CascadeLimitReached, Is.True);
+            Assert.That(result.Groups.Count, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DiceBoardService_NotifiesCellsWithConsistentOccupancy()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 0, 1);
+            Set(generator, 0, 1, 1);
+
+            bool consistent = true;
+            generator.OnCellStateChanged.AddListener(cell =>
+            {
+                bool expectedOccupied = cell.ContentId != dice.EmptyContentId;
+                if (cell.IsOccupied != expectedOccupied)
+                {
+                    consistent = false;
+                }
+            });
+
+            dice.Place(DicePiece.Single(1), Vector3Int.zero, true);
+
+            Assert.That(consistent, Is.True,
+                "Every OnCellStateChanged notification must carry matching ContentId/IsOccupied state.");
+        }
+
+        [Test]
+        public void DiceBoardService_RaisesBoardChangedOncePerMergingPlacement()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 0, 1);
+            Set(generator, 0, 1, 1);
+
+            int boardChanged = 0;
+            dice.OnBoardChanged.AddListener(() => boardChanged++);
+
+            DicePlacementResult result = dice.Place(DicePiece.Single(1), Vector3Int.zero, true);
+
+            Assert.That(result.MergeResult.Groups.Count, Is.EqualTo(1));
+            Assert.That(boardChanged, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void DiceBoardService_MergeStepAndCapAreConfigurable()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            dice.MergeStep = 2;
+            dice.MaxContentId = 2;
+            Set(generator, 1, 0, 1);
+            Set(generator, 0, 1, 1);
+
+            dice.Place(DicePiece.Single(1), Vector3Int.zero, true);
+
+            Assert.That(generator.GetCell(0, 0).ContentId, Is.EqualTo(2),
+                "1 + step(2) = 3 must be capped to MaxContentId(2).");
         }
 
         private FieldGenerator CreateGenerator(int width, int height)
