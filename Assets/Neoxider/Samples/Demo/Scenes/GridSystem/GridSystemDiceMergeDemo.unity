@@ -382,6 +382,7 @@ MonoBehaviour:
   _camera: {fileID: 1002}
   _cellSprite: {fileID: 21300000, guid: a2506bb6638763342acd31e0616c9e80, type: 3}
   _cellPrefab: {fileID: 2212904014336529143, guid: 7ddfb0ce755bf1b44a3cec9666dad698, type: 3}
+  _diePrefab: {fileID: 8748740648250572114, guid: e0c80a1a3d1543b1a5782517608dd02f, type: 3}
   _diceSprites:
   - {fileID: 21300000, guid: edcd94355bb05544091383a00736b604, type: 3}
   - {fileID: 21300000, guid: 5090186394f351248855cb68082aa88e, type: 3}

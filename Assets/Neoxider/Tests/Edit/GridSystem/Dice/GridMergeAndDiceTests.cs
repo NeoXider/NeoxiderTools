@@ -173,6 +173,106 @@ namespace Neo.Editor.Tests.GridSystem
         }
 
         [Test]
+        public void DiceBoardService_OrthogonalChainMergePlacesResultAtPlacedCell()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 2, 3);
+            Set(generator, 2, 2, 3);
+            Set(generator, 2, 1, 3);
+
+            DicePlacementResult result = dice.Place(DicePiece.Single(3), new Vector3Int(2, 0, 0), true);
+
+            Assert.That(result.Placed, Is.True);
+            Assert.That(result.MergeResult.Groups.Count, Is.EqualTo(1));
+            Assert.That(result.MergeResult.Groups[0].Positions, Is.EquivalentTo(new[]
+            {
+                new Vector3Int(2, 0, 0),
+                new Vector3Int(2, 1, 0),
+                new Vector3Int(2, 2, 0),
+                new Vector3Int(1, 2, 0)
+            }));
+            Assert.That(result.MergeResult.Groups[0].ResultCell.Position, Is.EqualTo(new Vector3Int(2, 0, 0)));
+            Assert.That(generator.GetCell(2, 0).ContentId, Is.EqualTo(4));
+            Assert.That(generator.GetCell(2, 1).ContentId, Is.EqualTo(dice.EmptyContentId));
+            Assert.That(generator.GetCell(2, 2).ContentId, Is.EqualTo(dice.EmptyContentId));
+            Assert.That(generator.GetCell(1, 2).ContentId, Is.EqualTo(dice.EmptyContentId));
+        }
+
+        [Test]
+        public void DiceBoardService_OrthogonalClusterMergeIncludesAllConnectedCells()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 2, 3);
+            Set(generator, 2, 2, 3);
+            Set(generator, 1, 1, 3);
+            Set(generator, 2, 1, 3);
+
+            DicePlacementResult result = dice.Place(DicePiece.Single(3), new Vector3Int(2, 0, 0), true);
+
+            Assert.That(result.Placed, Is.True);
+            Assert.That(result.MergeResult.Groups.Count, Is.EqualTo(1));
+            Assert.That(result.MergeResult.Groups[0].Positions, Is.EquivalentTo(new[]
+            {
+                new Vector3Int(2, 0, 0),
+                new Vector3Int(2, 1, 0),
+                new Vector3Int(2, 2, 0),
+                new Vector3Int(1, 2, 0),
+                new Vector3Int(1, 1, 0)
+            }));
+            Assert.That(generator.GetCell(2, 0).ContentId, Is.EqualTo(4));
+            Assert.That(generator.GetCell(1, 1).ContentId, Is.EqualTo(dice.EmptyContentId));
+            Assert.That(generator.GetCell(1, 2).ContentId, Is.EqualTo(dice.EmptyContentId));
+        }
+
+        [Test]
+        public void DiceBoardService_DiagonalOnlyNeighborsDoNotMerge()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 1, 3);
+            Set(generator, 2, 2, 3);
+
+            DicePlacementResult result = dice.Place(DicePiece.Single(3), Vector3Int.zero, true);
+
+            Assert.That(result.Placed, Is.True);
+            Assert.That(result.MergeResult.Groups.Count, Is.EqualTo(0));
+            Assert.That(generator.GetCell(0, 0).ContentId, Is.EqualTo(3));
+            Assert.That(generator.GetCell(1, 1).ContentId, Is.EqualTo(3));
+            Assert.That(generator.GetCell(2, 2).ContentId, Is.EqualTo(3));
+        }
+
+        [Test]
+        public void DiceBoardService_CascadeContinuesFromPlacedResultCell()
+        {
+            FieldGenerator generator = CreateGenerator(3, 3);
+            DiceBoardService dice = generator.gameObject.AddComponent<DiceBoardService>();
+            Set(generator, 1, 2, 3);
+            Set(generator, 2, 2, 3);
+            Set(generator, 2, 1, 3);
+            Set(generator, 0, 0, 4);
+            Set(generator, 1, 0, 4);
+
+            DicePlacementResult result = dice.Place(DicePiece.Single(3), new Vector3Int(2, 0, 0), true);
+
+            Assert.That(result.Placed, Is.True);
+            Assert.That(result.MergeResult.Groups.Count, Is.EqualTo(2));
+            Assert.That(result.MergeResult.Groups[0].ResultCell.Position, Is.EqualTo(new Vector3Int(2, 0, 0)));
+            Assert.That(result.MergeResult.Groups[0].ResultContentId, Is.EqualTo(4));
+            Assert.That(result.MergeResult.Groups[1].ResultCell.Position, Is.EqualTo(new Vector3Int(2, 0, 0)));
+            Assert.That(result.MergeResult.Groups[1].Positions, Is.EquivalentTo(new[]
+            {
+                new Vector3Int(2, 0, 0),
+                new Vector3Int(1, 0, 0),
+                new Vector3Int(0, 0, 0)
+            }));
+            Assert.That(generator.GetCell(2, 0).ContentId, Is.EqualTo(5));
+            Assert.That(generator.GetCell(1, 0).ContentId, Is.EqualTo(dice.EmptyContentId));
+            Assert.That(generator.GetCell(0, 0).ContentId, Is.EqualTo(dice.EmptyContentId));
+        }
+
+        [Test]
         public void DiceBoardService_PairPlacementSeedsBothDiceDeterministically()
         {
             FieldGenerator generator = CreateGenerator(4, 3);

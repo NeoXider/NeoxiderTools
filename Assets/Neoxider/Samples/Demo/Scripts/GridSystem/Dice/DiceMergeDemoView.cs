@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using Neo.GridSystem;
 using Neo.GridSystem.Dice;
-using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -15,7 +14,8 @@ namespace Neo.Demo.GridSystem
         [SerializeField] private DiceMergeDemoController _controller;
         [SerializeField] private Camera _camera;
         [SerializeField] private Sprite _cellSprite;
-        [SerializeField] private DiceCellMarker _cellPrefab;
+        [SerializeField] private GridCellMarker _cellPrefab;
+        [SerializeField] private DiceDieView _diePrefab;
         [SerializeField] private Sprite[] _diceSprites = new Sprite[9];
         [SerializeField] private Vector2 _cellSize = new(0.68f, 0.68f);
         [SerializeField] private Vector3 _trayPosition = new(0f, -3.15f, 0f);
@@ -34,7 +34,8 @@ namespace Neo.Demo.GridSystem
             DiceMergeDemoController controller,
             Camera sceneCamera,
             Sprite cellSprite,
-            DiceCellMarker cellPrefab,
+            GridCellMarker cellPrefab,
+            DiceDieView diePrefab,
             Sprite[] diceSprites)
         {
             _generator = generator;
@@ -43,6 +44,7 @@ namespace Neo.Demo.GridSystem
             _camera = sceneCamera;
             _cellSprite = cellSprite;
             _cellPrefab = cellPrefab;
+            _diePrefab = diePrefab;
             _diceSprites = diceSprites;
             Subscribe();
             Rebuild();
@@ -121,7 +123,7 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            foreach (DiceCellMarker marker in _boardRoot.GetComponentsInChildren<DiceCellMarker>(true))
+            foreach (GridCellMarker marker in _boardRoot.GetComponentsInChildren<GridCellMarker>(true))
             {
                 FieldCell cell = _generator.GetCell(marker.Position);
                 if (cell == null)
@@ -213,7 +215,7 @@ namespace Neo.Demo.GridSystem
             Vector3 center = _generator.GetCellWorldCenter(cell.Position);
             GameObject root;
             SpriteRenderer cellRenderer;
-            DiceCellMarker marker;
+            GridCellMarker marker;
 
             if (_cellPrefab != null)
             {
@@ -236,7 +238,7 @@ namespace Neo.Demo.GridSystem
 
                 BoxCollider collider = root.AddComponent<BoxCollider>();
                 collider.size = Vector3.one;
-                marker = root.AddComponent<DiceCellMarker>();
+                marker = root.AddComponent<GridCellMarker>();
             }
 
             if (cellRenderer == null)
@@ -247,7 +249,7 @@ namespace Neo.Demo.GridSystem
             }
 
             cellRenderer.color = new Color(0.72f, 0.72f, 0.68f, 1f);
-            marker.Position = cell.Position;
+            marker.Bind(_generator, cell.Position);
 
             _cells[cell.Position] = new CellView
             {
@@ -277,7 +279,8 @@ namespace Neo.Demo.GridSystem
                 return;
             }
 
-            view.DiceRoot = CreateDieView(cell.ContentId, view.Root, Vector3.zero, 10).transform;
+            GameObject die = CreateDieView(cell.ContentId, view.Root, Vector3.zero, 10);
+            view.DiceRoot = die != null ? die.transform : null;
         }
 
         private void HandleInput()
@@ -344,7 +347,7 @@ namespace Neo.Demo.GridSystem
             Ray ray = _camera.ScreenPointToRay(Input.mousePosition);
             if (Physics.Raycast(ray, out RaycastHit hit))
             {
-                DiceCellMarker marker = hit.collider.GetComponent<DiceCellMarker>();
+                GridCellMarker marker = hit.collider.GetComponent<GridCellMarker>();
                 if (marker != null)
                 {
                     _controller.TryPlaceCurrentPiece(marker.Position);
@@ -368,31 +371,17 @@ namespace Neo.Demo.GridSystem
 
         private GameObject CreateDieView(int value, Transform parent, Vector3 localPosition, int sortingOrder)
         {
-            GameObject root = new("Dice_" + value);
-            root.transform.SetParent(parent, false);
-            root.transform.localPosition = localPosition;
-            root.transform.localScale = Vector3.one * 0.72f;
-
-            SpriteRenderer renderer = root.AddComponent<SpriteRenderer>();
-            renderer.sprite = ResolveDieSprite(value);
-            renderer.sortingOrder = sortingOrder;
-
-            if (value >= 10)
+            if (_diePrefab == null)
             {
-                GameObject label = new("Value");
-                label.transform.SetParent(root.transform, false);
-                label.transform.localPosition = new Vector3(0f, 0.02f, -0.01f);
-                TextMeshPro tmp = label.AddComponent<TextMeshPro>();
-                tmp.text = value.ToString();
-                tmp.fontSize = 4.5f;
-                tmp.alignment = TextAlignmentOptions.Center;
-                tmp.color = Color.white;
-                Renderer labelRenderer = tmp.GetComponent<Renderer>();
-                if (labelRenderer != null)
-                {
-                    labelRenderer.sortingOrder = sortingOrder + 1;
-                }
+                return null;
             }
+
+            DiceDieView dieView = Instantiate(_diePrefab, parent);
+            GameObject root = dieView.gameObject;
+            root.name = "Dice_" + value;
+            root.transform.localPosition = localPosition;
+
+            dieView.Initialize(value, ResolveDieSprite(value), sortingOrder);
 
             return root;
         }

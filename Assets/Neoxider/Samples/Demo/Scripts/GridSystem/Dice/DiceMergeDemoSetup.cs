@@ -82,7 +82,15 @@ namespace Neo.Demo.GridSystem
             TMP_Text status = EnsureText("DiceStatusText", "Drag dice onto the board", canvas, new Vector2(0, -390), 20);
 
             controller.Configure(generator, diceBoard, score, pool, status);
-            view.Configure(generator, diceBoard, controller, sceneCamera, LoadSprite("cell"), LoadCellPrefab(), LoadDiceSprites());
+            view.Configure(
+                generator,
+                diceBoard,
+                controller,
+                sceneCamera,
+                LoadSprite("cell"),
+                LoadCellPrefab(),
+                LoadDiePrefab(),
+                LoadDiceSprites());
 
             ModuleDemoSceneInfo info = FindFirstObjectByType<ModuleDemoSceneInfo>();
             if (info == null)
@@ -204,14 +212,27 @@ namespace Neo.Demo.GridSystem
             return null;
         }
 
-        private static DiceCellMarker LoadCellPrefab()
+        private static GridCellMarker LoadCellPrefab()
         {
 #if UNITY_EDITOR
             GameObject prefab =
                 AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Neoxider/Samples/Demo/Prefabs/Dice/DiceCell.prefab");
-            if (prefab != null && prefab.TryGetComponent(out DiceCellMarker marker))
+            if (prefab != null && prefab.TryGetComponent(out GridCellMarker marker))
             {
                 return marker;
+            }
+#endif
+            return null;
+        }
+
+        private static DiceDieView LoadDiePrefab()
+        {
+#if UNITY_EDITOR
+            GameObject prefab =
+                AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Neoxider/Samples/Demo/Prefabs/Dice/Dice.prefab");
+            if (prefab != null && prefab.TryGetComponent(out DiceDieView view))
+            {
+                return view;
             }
 #endif
             return null;

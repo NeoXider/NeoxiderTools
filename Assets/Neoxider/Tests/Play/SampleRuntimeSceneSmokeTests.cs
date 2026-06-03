@@ -1,6 +1,7 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -81,6 +82,7 @@ namespace Neo.Tests.Play
                 "Dice merge demo controller");
             object field = FindRequiredComponent("Neo.GridSystem.FieldGenerator", "Dice field generator");
             FindRequiredComponent("Neo.GridSystem.Dice.DiceBoardService", "Dice board service");
+            AssertDiceDropCellsReadyForRaycast();
 
             Type dicePieceType = FindType("Neo.GridSystem.Dice.DicePiece");
             Assert.That(dicePieceType, Is.Not.Null);
@@ -209,6 +211,39 @@ namespace Neo.Tests.Play
 
             Assert.Fail($"Scene is missing active {label} ({typeName}).");
             return null;
+        }
+
+        private static void AssertDiceDropCellsReadyForRaycast()
+        {
+            Type markerType = FindType("Neo.GridSystem.GridCellMarker");
+            Assert.That(markerType, Is.Not.Null, "Grid cell marker type was not found.");
+
+            List<Component> markers = FindActiveComponents(markerType);
+            Assert.That(markers.Count, Is.EqualTo(25), "Dice demo should expose one raycast marker per 5x5 cell.");
+
+            foreach (Component marker in markers)
+            {
+                Assert.That(marker.GetComponent<Collider>(), Is.Not.Null,
+                    $"{marker.name} should have a Collider so drag/drop release can raycast the target cell.");
+            }
+        }
+
+        private static List<Component> FindActiveComponents(Type type)
+        {
+            var result = new List<Component>();
+            Object[] objects = Resources.FindObjectsOfTypeAll(type);
+            for (int i = 0; i < objects.Length; i++)
+            {
+                if (objects[i] is Component component &&
+                    component.gameObject.scene.IsValid() &&
+                    component.gameObject.scene.isLoaded &&
+                    component.gameObject.activeInHierarchy)
+                {
+                    result.Add(component);
+                }
+            }
+
+            return result;
         }
 
         private static Type FindType(string fullName)
