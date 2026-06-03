@@ -9,7 +9,7 @@
 
 ### Fixed
 - **Samples / Dice:** fixed drag preview/drop behavior so the tray dice is hidden while dragging, the preview can be offset above the pointer, optional snap preview uses `FieldGenerator`, final release uses the current snapped/nearest grid cell, and placed dice keep the prefab world scale instead of shrinking under scaled cell prefabs.
-- **Samples / Dice:** fixed placed dice visuals disappearing after drag/drop by syncing the demo board view from `DiceBoardService.OnBoardChanged` and refreshing board visuals after successful placement.
+- **Samples / Dice:** fixed placed dice visuals disappearing after drag/drop by syncing from `DiceBoardService.OnBoardChanged`, keeping board dice under a dedicated `DicePlacedPiecesView` root, and reusing placed die views across refreshes instead of destroying/recreating them every frame.
 - **Docs:** updated `PROJECT_SUMMARY.md` as a compact module/reuse map and linked it more prominently from the main README entry points.
 
 ## [9.1.0] - 2026-06-02

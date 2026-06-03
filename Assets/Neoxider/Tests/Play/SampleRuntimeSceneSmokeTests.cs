@@ -81,6 +81,7 @@ namespace Neo.Tests.Play
                 "Neo.Demo.GridSystem.DiceMergeDemoController",
                 "Dice merge demo controller");
             object field = FindRequiredComponent("Neo.GridSystem.FieldGenerator", "Dice field generator");
+            object view = FindRequiredComponent("Neo.Demo.GridSystem.DiceMergeDemoView", "Dice merge demo view");
             FindRequiredComponent("Neo.GridSystem.Dice.DiceBoardService", "Dice board service");
             AssertDiceDropCellsReadyForRaycast();
 
@@ -92,11 +93,17 @@ namespace Neo.Tests.Play
 
             SetCellContent(field, 1, 0, 1);
             SetCellContent(field, 0, 1, 1);
-            Invoke(controller, "TryPlaceCurrentPiece", new Vector3Int(0, 0, 0));
+            Vector3 releaseWorld = GetCellWorldCenter(field, 0, 0);
+            object placed = Invoke(view, "SimulateDragDropForTest", releaseWorld);
+            Assert.That(placed, Is.EqualTo(true), "Dice demo drag/drop simulation should place the current piece.");
             yield return WaitFrames(2);
 
             Assert.That(GetProperty<int>(controller, "Score"), Is.GreaterThan(0));
-            AssertDiceBoardHasPlacedDieView();
+            AssertDicePlacedPiecesRootHasDieView();
+            Invoke(view, "RefreshAll");
+            Invoke(view, "RefreshAll");
+            yield return WaitFrames(3);
+            AssertDicePlacedPiecesRootHasDieView();
             AssertDiceDieViewsKeepConsistentWorldScale();
 
             Invoke(controller, "FillBoardForGameOverTest");
@@ -249,7 +256,7 @@ namespace Neo.Tests.Play
             }
         }
 
-        private static void AssertDiceBoardHasPlacedDieView()
+        private static void AssertDicePlacedPiecesRootHasDieView()
         {
             Type dieViewType = FindType("Neo.Demo.GridSystem.DiceDieView");
             Assert.That(dieViewType, Is.Not.Null, "Dice die view type was not found.");
@@ -260,7 +267,7 @@ namespace Neo.Tests.Play
                 Transform current = view.transform;
                 while (current != null)
                 {
-                    if (current.name == "DiceBoardView")
+                    if (current.name == "DicePlacedPiecesView")
                     {
                         return;
                     }
@@ -269,7 +276,8 @@ namespace Neo.Tests.Play
                 }
             }
 
-            Assert.Fail("Dice demo should create at least one placed die visual under DiceBoardView after placement.");
+            Assert.Fail(
+                "Dice demo should create at least one persistent placed die visual under DicePlacedPiecesView after placement.");
         }
 
         private static List<Component> FindActiveComponents(Type type)
@@ -314,13 +322,25 @@ namespace Neo.Tests.Play
             return (T)property.GetValue(target);
         }
 
-        private static void Invoke(object target, string methodName, params object[] args)
+        private static object Invoke(object target, string methodName, params object[] args)
         {
             MethodInfo method = target.GetType().GetMethod(
                 methodName,
                 BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, $"{target.GetType().Name}.{methodName} method was not found.");
-            method.Invoke(target, args);
+            return method.Invoke(target, args);
+        }
+
+        private static Vector3 GetCellWorldCenter(object field, int x, int y)
+        {
+            MethodInfo method = field.GetType().GetMethod(
+                "GetCellWorldCenter",
+                BindingFlags.Instance | BindingFlags.Public,
+                null,
+                new[] { typeof(Vector3Int) },
+                null);
+            Assert.That(method, Is.Not.Null);
+            return (Vector3)method.Invoke(field, new object[] { new Vector3Int(x, y, 0) });
         }
 
         private static void SetCellContent(object field, int x, int y, int value)
