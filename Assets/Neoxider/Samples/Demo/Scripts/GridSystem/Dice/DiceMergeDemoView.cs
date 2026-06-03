@@ -74,6 +74,11 @@ namespace Neo.Demo.GridSystem
                 _generator.OnCellStateChanged.RemoveListener(RefreshCell);
             }
 
+            if (_diceBoard != null)
+            {
+                _diceBoard.OnBoardChanged.RemoveListener(RefreshAll);
+            }
+
             if (_controller != null)
             {
                 _controller.OnDemoStateChanged.RemoveListener(RefreshTray);
@@ -203,6 +208,12 @@ namespace Neo.Demo.GridSystem
                 _generator.OnCellStateChanged.RemoveListener(RefreshCell);
                 _generator.OnFieldGenerated.AddListener(Rebuild);
                 _generator.OnCellStateChanged.AddListener(RefreshCell);
+            }
+
+            if (_diceBoard != null)
+            {
+                _diceBoard.OnBoardChanged.RemoveListener(RefreshAll);
+                _diceBoard.OnBoardChanged.AddListener(RefreshAll);
             }
 
             if (_controller != null)
@@ -349,9 +360,15 @@ namespace Neo.Demo.GridSystem
                 _dragRoot.position = releaseWorld;
             }
 
+            bool placed = false;
             if (TryResolveDragAnchor(releaseWorld, out Vector3Int anchor))
             {
-                _controller.TryPlaceCurrentPiece(anchor);
+                placed = _controller.TryPlaceCurrentPiece(anchor);
+            }
+
+            if (placed)
+            {
+                RefreshAll();
             }
 
             DestroyDragPreview();

@@ -96,6 +96,7 @@ namespace Neo.Tests.Play
             yield return WaitFrames(2);
 
             Assert.That(GetProperty<int>(controller, "Score"), Is.GreaterThan(0));
+            AssertDiceBoardHasPlacedDieView();
             AssertDiceDieViewsKeepConsistentWorldScale();
 
             Invoke(controller, "FillBoardForGameOverTest");
@@ -246,6 +247,29 @@ namespace Neo.Tests.Play
                 Assert.That(actual.y, Is.EqualTo(expected.y).Within(0.0001f), view.name);
                 Assert.That(actual.z, Is.EqualTo(expected.z).Within(0.0001f), view.name);
             }
+        }
+
+        private static void AssertDiceBoardHasPlacedDieView()
+        {
+            Type dieViewType = FindType("Neo.Demo.GridSystem.DiceDieView");
+            Assert.That(dieViewType, Is.Not.Null, "Dice die view type was not found.");
+
+            List<Component> views = FindActiveComponents(dieViewType);
+            foreach (Component view in views)
+            {
+                Transform current = view.transform;
+                while (current != null)
+                {
+                    if (current.name == "DiceBoardView")
+                    {
+                        return;
+                    }
+
+                    current = current.parent;
+                }
+            }
+
+            Assert.Fail("Dice demo should create at least one placed die visual under DiceBoardView after placement.");
         }
 
         private static List<Component> FindActiveComponents(Type type)

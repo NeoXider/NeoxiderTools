@@ -8,12 +8,14 @@
 
 Пакет подходит для прототипов, game jam проектов и production-игр: условия, сохранения, магазин, RPG-бой, инвентарь, квесты, state machine, UI, сетевые мосты и набор утилит, которые убирают повторяющийся glue-code.
 
+Перед разработкой новой механики начните со [сводки проекта](Assets/Neoxider/PROJECT_SUMMARY.md): она быстро показывает, какие системы уже есть и что не нужно писать с нуля.
+
 ## Быстрые ссылки
 
 - [Русская документация](Assets/Neoxider/Docs/README.md)
 - [English docs](Assets/Neoxider/DocsEn/README.md)
 - [README пакета](Assets/Neoxider/README.md)
-- [Сводка проекта](Assets/Neoxider/PROJECT_SUMMARY.md)
+- [Сводка проекта: модули и карта переиспользования](Assets/Neoxider/PROJECT_SUMMARY.md)
 - [Changelog](Assets/Neoxider/CHANGELOG.md)
 - [Multiplayer guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)
 
@@ -89,7 +91,7 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 
 ## Samples
 
-Samples лежат в `Assets/Neoxider/Samples~/` и импортируются через Package Manager при UPM-установке.
+Во время активной разработки samples видны в `Assets/Neoxider/Samples/`. Перед release packaging они переводятся в UPM source path `Assets/Neoxider/Samples~/`, а Package Manager импортирует их в `Assets/Samples/NeoxiderTools/<version>/<sample>/`.
 
 | Sample | Назначение |
 |--------|------------|
@@ -115,7 +117,8 @@ Assets/Neoxider/
   Tests/         EditMode и PlayMode тесты пакета
   Docs/          Русская документация
   DocsEn/        Английская документация
-  Samples~/      UPM samples
+  Samples/       Активные developer samples
+  Samples~/      UPM sample source path перед release packaging
   Prefabs/       Готовые префабы
   Resources/     Настройки и assets пакета
 ```

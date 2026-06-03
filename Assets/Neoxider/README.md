@@ -10,7 +10,7 @@
 - [Documentation Index](./Docs/README.md)
 - [English Docs Entry](./DocsEn/README.md)
 - [Changelog](./CHANGELOG.md)
-- [Project Summary](./PROJECT_SUMMARY.md)
+- [Project Summary: existing modules and reuse map](./PROJECT_SUMMARY.md)
 
 ---
 
@@ -31,6 +31,8 @@
 ---
 
 ## What You Get
+
+Start with the [Project Summary](./PROJECT_SUMMARY.md) when you need a compact map of what already exists in the package and what should be reused instead of rebuilt.
 
 - **RPG module** - unified `RpgCharacter` runtime for players, NPCs, mobs, pets, and destructibles: universal resources/stats, level/XP/upgrades, buffs/statuses, regen, save/load, Mirror multiplayer sync, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors, evade (`RpgEvadeController`), UI bindings, and no-code bridges.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.

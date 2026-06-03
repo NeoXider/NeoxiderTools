@@ -6,6 +6,7 @@
 
 - [README пакета](../README.md)
 - [English docs](../DocsEn/README.md)
+- [Сводка проекта](../PROJECT_SUMMARY.md)
 - [Полезные компоненты](./UsefulComponents.md)
 - [Совместимость пакета](./PackageCompatibility.md)
 - [Sample-сцены](./Samples.md)

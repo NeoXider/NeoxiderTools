@@ -8,12 +8,14 @@
 
 Use it when you want production-oriented building blocks for prototypes, jam games, and larger Unity projects: conditions, save/load, shop, RPG combat, inventory, quests, state machines, UI helpers, networking bridges, and many small tools that remove repetitive glue code.
 
+For a fast map of existing systems before building something from scratch, start with the [Project summary](Assets/Neoxider/PROJECT_SUMMARY.md).
+
 ## Quick links
 
 - [Package docs index](Assets/Neoxider/DocsEn/README.md)
 - [Russian docs index](Assets/Neoxider/Docs/README.md)
 - [Package README](Assets/Neoxider/README.md)
-- [Project summary](Assets/Neoxider/PROJECT_SUMMARY.md)
+- [Project summary: existing modules and reuse map](Assets/Neoxider/PROJECT_SUMMARY.md)
 - [Changelog](Assets/Neoxider/CHANGELOG.md)
 - [Multiplayer guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md)
 
@@ -91,7 +93,7 @@ Read more: [NeoCondition docs](Assets/Neoxider/DocsEn/Condition/NeoCondition.md)
 
 ## Samples
 
-Samples are under `Assets/Neoxider/Samples~/` and can be imported from Package Manager when installed as a UPM package.
+During active development samples are visible under `Assets/Neoxider/Samples/`. Before release packaging they are moved to the UPM sample source path `Assets/Neoxider/Samples~/`, then imported by Package Manager into `Assets/Samples/NeoxiderTools/<version>/<sample>/`.
 
 | Sample | Purpose |
 |--------|---------|
@@ -117,7 +119,8 @@ Assets/Neoxider/
   Tests/         EditMode and PlayMode package tests
   Docs/          Russian documentation
   DocsEn/        English documentation
-  Samples~/      UPM samples
+  Samples/       Active development samples
+  Samples~/      UPM sample source path before release packaging
   Prefabs/       Ready-to-use prefabs
   Resources/     Settings and package assets
 ```
