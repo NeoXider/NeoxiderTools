@@ -21,7 +21,7 @@
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
 
-## РРіСЂРѕРІС‹Рµ Рё РёРЅС‚РµРіСЂР°С†РёРѕРЅРЅС‹Рµ СЃС†РµРЅС‹
+## Игровые и интеграционные сцены
 
 | Область | Сцены | Ручная проверка |
 |---------|-------|-----------------|

@@ -4,7 +4,7 @@
 
 ## Unity
 
-| РСЃС‚РѕС‡РЅРёРє | Р’РµСЂСЃРёСЏ |
+| Источник | Версия |
 | --- | --- |
 | Пакет `Assets/Neoxider/package.json` | `version: 9.2.0`, `unity: 2022.1` |
 | Локальный проект `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
@@ -19,7 +19,7 @@
 | `com.unity.ai.navigation` | `1.1.7` | `2.0.11` | В Unity 6 проекте стоит более новая версия; пакет сохраняет нижний минимум для Unity 2022. |
 | `com.unity.inputsystem` | `1.14.2` | `1.19.0` | Runtime использует optional adapters/fallback, чтобы поддерживать Legacy Input Manager и New Input System. |
 
-## Р’РЅРµС€РЅРёРµ РРЅС‚РµРіСЂР°С†РёРё
+## Внешние интеграции
 
 - DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и samples. Это не UPM dependency пакета; host-проект подключает его при необходимости.
 - Mirror опционален и нужен для `Neo.Network` / multiplayer flows. В проекте разработки Mirror доступен через scoped registry/OpenUPM.

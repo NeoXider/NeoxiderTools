@@ -108,5 +108,5 @@ Assets/Neoxider/
 - Пользовательский обзор пакета: [`README.md`](./README.md)
 - Пользовательская навигация по модулям: [`Docs/README.md`](./Docs/README.md)
 - Англоязычный вход: [`DocsEn/README.md`](./DocsEn/README.md)
-- РСЃС‚РѕСЂРёСЏ РёР·РјРµРЅРµРЅРёР№: [`CHANGELOG.md`](./CHANGELOG.md)
+- История изменений: [`CHANGELOG.md`](./CHANGELOG.md)
 - Правила структуры модулей (папки, asmdef, неймспейсы): [`MODULE_STRUCTURE.md`](./MODULE_STRUCTURE.md)
