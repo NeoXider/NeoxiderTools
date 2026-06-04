@@ -10,13 +10,14 @@
 - объект из мира летит к объекту в мире.
 - можно передать не только prefab, но и `Sprite` через `AnimationFlyRequest` / `PlaySprite...`;
 - можно выбрать, когда начислять награду: вручную, при каждом прилёте или один раз после прилёта всех визуалов;
+- можно выбрать motion preset: обычная дуга, fountain pop, magnet pull, fountain+magnet или scatter burst;
 - есть встроенный completion policy: destroy, keep alive или disable-and-pool.
 
 ## Demo-сцена
 
 Активный путь во время разработки: `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
 
-Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, реального sample sprite asset, старта из screen point и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
+Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, реального sample sprite asset, старта из screen point, fountain, magnet, fountain+magnet, scatter и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
 
 ## Подключение
 
@@ -75,6 +76,33 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 
 Для world -> UI начислений визуал создаётся в Canvas, но стартовая позиция считается через экранную позицию world-объекта и локальные координаты `Parent`. Это важно, если `Parent` — не root Canvas, а смещённый/масштабированный контейнер.
 
+### Fountain от сундука и magnet у UI
+
+```csharp
+AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
+{
+    Sprite = coinSprite,
+    Count = 16,
+    StartTransform = chestTransform,
+    EndTransform = moneyCounterRect,
+    StartSpace = AnimationFlyCoordinateSpace.World,
+    EndSpace = AnimationFlyCoordinateSpace.Canvas,
+    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+    Parent = flyContainer,
+    MotionPreset = AnimationFlyMotionPreset.FountainMagnet,
+    BurstOffset = new Vector3(0f, 220f, 0f),
+    BurstRandomOffset = new Vector3(170f, 90f, 0f),
+    BurstDurationRatio = 0.3f,
+    BurstHoldDuration = 0.06f,
+    MagnetDistance = 120f,
+    MagnetDurationRatio = 0.28f,
+    RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+    OnReward = () => wallet.Add(16)
+});
+```
+
+`BurstOffset` / `BurstRandomOffset` задаются в уже выбранном `SpawnSpace`. Для UI-эффектов это обычно Canvas units, поэтому fountain можно делать высоким и широким без создания отдельного ParticleSystem.
+
 ## Основные поля (Inspector)
 
 | Поле | Описание |
@@ -104,6 +132,13 @@ AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
 | `middleRandomOffset` | Случайный разброс средней точки дуги. |
 | `rotateDuringFlight` | Вращать объект во время полёта. |
 | `rotationDegrees` | Угол вращения за полёт. |
+| `motionPreset` | Дефолтная траектория typed API: `Arc`, `Fountain`, `Magnet`, `FountainMagnet`, `Scatter`. |
+| `burstOffset` | Смещение первой pop-точки для fountain-пресетов. |
+| `burstRandomOffset` | Разброс первой pop/scatter-точки. |
+| `burstDurationRatio` | Доля `flyDuration`, занятая первым pop/scatter этапом. |
+| `burstHoldDuration` | Небольшая пауза после pop перед полётом к цели. |
+| `magnetDistance` | Расстояние до цели, с которого начинается финальное притягивание. |
+| `magnetDurationRatio` | Доля `flyDuration`, занятая финальным magnet pull. |
 | `setAsLastSibling` | Поднимать созданный UI-объект поверх соседей. |
 | `destroyOnComplete` | Уничтожать объект после прилёта. Выключите для ручного пула через `onEnd`. |
 | `defaultCompletionMode` | Что делать с объектом после прилёта в typed request API: destroy, keep alive или disable-and-pool. |

@@ -49,7 +49,7 @@ Assets/Neoxider/
 | Merge одинаковых связанных элементов | `Neo.Merge.MergeResolver`, `MergeRequest<TItem,TValue>`, `GridMergeRequest.Increment(...)` | [`Docs/Merge/README.md`](./Docs/Merge/README.md) |
 | Dice Merge / drop-and-merge на сетке | `DicePiece`, `DicePieceGenerator`, `DiceBoardService` | [`Docs/GridSystem/Dice/README.md`](./Docs/GridSystem/Dice/README.md) |
 | Match3, TicTacToe, 2048-like movement | `Match3BoardService`, `TicTacToeBoardService`, `SlidingMergeBoardService` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
-| Полет наград/монет между world/canvas точками | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
+| Полет наград/монет между world/canvas точками | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing, fountain/magnet/scatter motion presets | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
 | Сохранение scene objects и global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
 | Деньги, магазин, мультивалюта | `Money`, `IMoneySpend`, `Shop`, `ShopItemData.CurrencyOverrideSaveKey` | [`Docs/Shop/README.md`](./Docs/Shop/README.md) |
 | HP/Mana/resources, уровни и XP | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [`Docs/Core/README.md`](./Docs/Core/README.md) |
@@ -60,7 +60,7 @@ Assets/Neoxider/
 ## Recent stabilization notes
 
 - `GridSystem`, `Merge` и `Dice` уже имеют reusable placement/merge APIs, configurable dice rules, cascade-limit reporting, consistent board notifications и active Dice Merge sample.
-- `AnimationFly` уже поддерживает typed request/result, prefab или sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete и reward timing callbacks.
+- `AnimationFly` уже поддерживает typed request/result, prefab или sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete, reward timing callbacks и reusable motion presets для fountain, magnet, fountain+magnet и scatter reward effects.
 - `SaveManager.Save()` сохраняет shared container read-modify-write и не удаляет данные выгруженных scene objects.
 - `Core`/`RPG` fixes covered edge cases around XP-backed level sync, duplicate death/resource events, regen-from-zero, target resolution, projectile hits, buff stacks and persistence.
 - `Shop`/`Money` reject negative spends and avoid optimistic client-only network success before authority confirms balance.
@@ -93,7 +93,7 @@ Assets/Neoxider/
 
 ## Samples
 
-- `Samples/Demo` содержит активные developer-сцены для модулей пакета, включая `Scenes/UI/AnimationFlyDemo.unity` для ручной проверки fly-эффекта с кнопками и подписанными слайдерами.
+- `Samples/Demo` содержит активные developer-сцены для модулей пакета, включая `Scenes/UI/AnimationFlyDemo.unity` для ручной проверки fly-эффекта с кнопками, motion presets и подписанными слайдерами.
 - `Samples/NeoxiderPages` содержит активный опциональный sample-модуль навигации по страницам.
 - Перед release packaging эти sample roots переводятся в UPM paths `Samples~/Demo` и `Samples~/NeoxiderPages`, как указано в `package.json.samples`.
 

@@ -155,6 +155,101 @@ namespace Neo.Tests.Play
                 "Pooled AnimationFly visuals should reset to their base scale before applying scaleMult again.");
         }
 
+        [UnityTest]
+        public IEnumerator Play_FountainPreset_PopsAboveStartBeforeFlyingToTarget()
+        {
+            TestRig rig = BuildRig();
+            GameObject prefab = CreateUiPrefab("FountainFlyVisualPrefab");
+            RectTransform start = CreateUiPoint("CanvasStart", rig.Canvas.transform, new Vector2(-180f, -120f));
+            RectTransform end = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(160f, 96f));
+
+            rig.Fly.flyDuration = 0.3f;
+            RectTransform startedRect = null;
+            float startY = 0f;
+
+            AnimationFly.AnimationFlyResult result = rig.Fly.Play(new AnimationFly.AnimationFlyRequest
+            {
+                Prefab = prefab,
+                Count = 1,
+                StartTransform = start,
+                EndTransform = end,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = rig.SpawnParent,
+                CompletionMode = AnimationFlyCompletionMode.KeepAlive,
+                MotionPreset = AnimationFlyMotionPreset.Fountain,
+                StartRandomOffset = Vector3.zero,
+                EndRandomOffset = Vector3.zero,
+                BurstOffset = new Vector3(0f, 120f, 0f),
+                BurstRandomOffset = Vector3.zero,
+                BurstDurationRatio = 0.4f,
+                BurstHoldDuration = 0f,
+                OnItemStarted = item =>
+                {
+                    startedRect = item.GetComponent<RectTransform>();
+                    startY = startedRect.anchoredPosition.y;
+                }
+            });
+
+            yield return null;
+            yield return new WaitForSeconds(0.08f);
+
+            Assert.That(startedRect, Is.Not.Null);
+            Assert.That(startedRect.anchoredPosition.y, Is.GreaterThan(startY + 20f),
+                "Fountain preset should visibly pop rewards upward before flying to the UI target.");
+
+            yield return WaitUntilCompleted(result);
+        }
+
+        [UnityTest]
+        public IEnumerator Play_FountainMagnetPreset_ReachesTargetAndRewardsOnce()
+        {
+            TestRig rig = BuildRig();
+            GameObject prefab = CreateUiPrefab("FountainMagnetFlyVisualPrefab");
+            RectTransform start = CreateUiPoint("CanvasStart", rig.Canvas.transform, new Vector2(-220f, -130f));
+            RectTransform end = CreateUiPoint("CanvasEnd", rig.Canvas.transform, new Vector2(180f, 105f));
+            int rewardCount = 0;
+
+            rig.Fly.flyDuration = 0.08f;
+
+            AnimationFly.AnimationFlyResult result = rig.Fly.Play(new AnimationFly.AnimationFlyRequest
+            {
+                Prefab = prefab,
+                Count = 2,
+                StartTransform = start,
+                EndTransform = end,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = rig.SpawnParent,
+                CompletionMode = AnimationFlyCompletionMode.KeepAlive,
+                RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+                MotionPreset = AnimationFlyMotionPreset.FountainMagnet,
+                StartRandomOffset = Vector3.zero,
+                EndRandomOffset = Vector3.zero,
+                BurstOffset = new Vector3(0f, 80f, 0f),
+                BurstRandomOffset = Vector3.zero,
+                BurstDurationRatio = 0.25f,
+                BurstHoldDuration = 0f,
+                MagnetDistance = 60f,
+                MagnetDurationRatio = 0.35f,
+                OnReward = () => rewardCount++
+            });
+
+            yield return WaitUntilCompleted(result);
+
+            foreach (GameObject item in result.ActiveItems)
+            {
+                RectTransform rect = item.GetComponent<RectTransform>();
+                Assert.That(rect.anchoredPosition.x, Is.EqualTo(end.anchoredPosition.x).Within(0.1f));
+                Assert.That(rect.anchoredPosition.y, Is.EqualTo(end.anchoredPosition.y).Within(0.1f));
+            }
+
+            Assert.That(rewardCount, Is.EqualTo(1),
+                "FountainMagnet should keep OnAllArrived reward timing deterministic.");
+        }
+
         private TestRig BuildRig()
         {
             Camera camera = Track(new GameObject("AnimationFlyTestCamera")).AddComponent<Camera>();

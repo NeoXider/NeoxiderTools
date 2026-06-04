@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using Neo;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -165,6 +166,114 @@ namespace Neo.Samples
             });
         }
 
+        public void PlayChestFountain()
+        {
+            ApplySliderSettings();
+            PlayRequest("Chest fountain -> wallet", new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = _coinSprite,
+                Count = CurrentCount,
+                StartTransform = _worldChest,
+                EndTransform = _walletTarget,
+                Parent = _flyRoot,
+                StartSpace = AnimationFlyCoordinateSpace.World,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                CompletionMode = AnimationFlyCompletionMode.DisableAndPool,
+                RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+                MotionPreset = AnimationFlyMotionPreset.Fountain,
+                BurstOffset = new Vector3(0f, 220f, 0f),
+                BurstRandomOffset = new Vector3(170f, 90f, 0f),
+                BurstDurationRatio = 0.34f,
+                BurstHoldDuration = 0.08f,
+                BurstEase = Ease.OutBack,
+                CruiseEase = Ease.InQuad,
+                OnReward = AddReward,
+                OnItemStarted = _ => _startedCounter++
+            });
+        }
+
+        public void PlayMagnetToWallet()
+        {
+            ApplySliderSettings();
+            PlayRequest("Magnet pull -> wallet", new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = _coinSprite,
+                Count = CurrentCount,
+                StartTransform = _worldPickup,
+                EndTransform = _walletTarget,
+                Parent = _flyRoot,
+                StartSpace = AnimationFlyCoordinateSpace.World,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                CompletionMode = AnimationFlyCompletionMode.DisableAndPool,
+                RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+                MotionPreset = AnimationFlyMotionPreset.Magnet,
+                MagnetDistance = 130f,
+                MagnetDurationRatio = 0.32f,
+                CruiseEase = Ease.OutQuad,
+                MagnetEase = Ease.InCubic,
+                EndRandomOffset = Vector3.zero,
+                OnReward = AddReward,
+                OnItemStarted = _ => _startedCounter++
+            });
+        }
+
+        public void PlayFountainMagnet()
+        {
+            ApplySliderSettings();
+            PlayRequest("Fountain + magnet -> gems", new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = _sampleSprite != null ? _sampleSprite : _gemSprite,
+                Count = CurrentCount,
+                StartTransform = _worldChest,
+                EndTransform = _gemTarget,
+                Parent = _flyRoot,
+                StartSpace = AnimationFlyCoordinateSpace.World,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                CompletionMode = AnimationFlyCompletionMode.DisableAndPool,
+                RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+                MotionPreset = AnimationFlyMotionPreset.FountainMagnet,
+                BurstOffset = new Vector3(0f, 240f, 0f),
+                BurstRandomOffset = new Vector3(190f, 100f, 0f),
+                BurstDurationRatio = 0.30f,
+                BurstHoldDuration = 0.06f,
+                MagnetDistance = 120f,
+                MagnetDurationRatio = 0.28f,
+                BurstEase = Ease.OutBack,
+                CruiseEase = Ease.InOutQuad,
+                MagnetEase = Ease.InCubic,
+                OnReward = AddReward,
+                OnItemStarted = _ => _startedCounter++
+            });
+        }
+
+        public void PlayScatterBurst()
+        {
+            ApplySliderSettings();
+            PlayRequest("Scatter burst -> gems", new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = _gemSprite,
+                Count = CurrentCount,
+                StartTransform = _sourceButton,
+                EndTransform = _gemTarget,
+                Parent = _flyRoot,
+                StartSpace = AnimationFlyCoordinateSpace.Canvas,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                CompletionMode = AnimationFlyCompletionMode.Destroy,
+                RewardTiming = AnimationFlyRewardTiming.OnEachArrived,
+                MotionPreset = AnimationFlyMotionPreset.Scatter,
+                BurstRandomOffset = new Vector3(220f, 150f, 0f),
+                BurstDurationRatio = 0.22f,
+                BurstEase = Ease.OutQuad,
+                CruiseEase = Ease.InOutQuad,
+                OnReward = AddReward,
+                OnItemStarted = _ => _startedCounter++
+            });
+        }
+
         public void ResetCounters()
         {
             _rewardCounter = 0;
@@ -252,7 +361,7 @@ namespace Neo.Samples
 
             RectTransform panel = CreatePanel(_canvas.transform, "Controls", new Vector2(0f, 1f),
                 new Vector2(24f, -24f), new Vector2(0f, 1f), new Vector2(0f, 1f), new Color(0.08f, 0.09f, 0.11f, 0.88f));
-            panel.sizeDelta = new Vector2(460f, 610f);
+            panel.sizeDelta = new Vector2(460f, 712f);
 
             CreateText(panel, "Title", "AnimationFly Demo", 24, TextAnchor.MiddleLeft, new Vector2(18f, -20f),
                 new Vector2(386f, 36f));
@@ -277,10 +386,14 @@ namespace Neo.Samples
             _sourceButton = CreateButton(panel, "World -> Wallet", new Vector2(18f, -438f), PlayWorldToWallet);
             CreateButton(panel, "UI Burst -> Gems", new Vector2(18f, -486f), PlayUiToUiBurst);
             CreateButton(panel, "Pooled Prefab", new Vector2(18f, -534f), PlayPrefabPooled);
+            CreateButton(panel, "Fountain", new Vector2(18f, -582f), PlayChestFountain);
+            CreateButton(panel, "Fountain + Magnet", new Vector2(18f, -630f), PlayFountainMagnet);
             CreateButton(panel, "Screen Point", new Vector2(216f, -438f), PlayScreenToUi);
             CreateButton(panel, "Reset", new Vector2(216f, -486f), ResetCounters);
             CreateButton(panel, "Sample Sprite", new Vector2(216f, -534f), PlaySampleSpriteToUi);
-            DemoButtonCount = 6;
+            CreateButton(panel, "Magnet", new Vector2(216f, -582f), PlayMagnetToWallet);
+            CreateButton(panel, "Scatter", new Vector2(216f, -630f), PlayScatterBurst);
+            DemoButtonCount = 10;
             DemoSliderCount = 6;
             RefreshSliderLabels();
 

@@ -39,6 +39,15 @@ namespace Neo
         OnAllArrived = 2
     }
 
+    public enum AnimationFlyMotionPreset
+    {
+        Arc = 0,
+        Fountain = 1,
+        Magnet = 2,
+        FountainMagnet = 3,
+        Scatter = 4
+    }
+
     [CreateFromMenu("Neoxider/UI/AnimationFly")]
     [AddComponentMenu("Neoxider/UI/" + nameof(AnimationFly))]
     [NeoDoc("UI/AnimationFly.md")]
@@ -121,6 +130,32 @@ namespace Neo
         public bool rotateDuringFlight;
 
         public float rotationDegrees = 360f;
+
+        [Header("Advanced Motion")]
+        [Tooltip("Default trajectory preset for typed AnimationFlyRequest calls.")]
+        public AnimationFlyMotionPreset motionPreset = AnimationFlyMotionPreset.Arc;
+
+        [Tooltip("Initial pop offset used by Fountain and FountainMagnet presets, in resolved spawn-space units.")]
+        public Vector3 burstOffset = new(0f, 180f, 0f);
+
+        [Tooltip("Random spread around the initial pop point used by Fountain, FountainMagnet and Scatter presets.")]
+        public Vector3 burstRandomOffset = new(120f, 60f, 0f);
+
+        [Range(0.05f, 0.85f)]
+        [Tooltip("Part of flyDuration reserved for the initial pop stage.")]
+        public float burstDurationRatio = 0.28f;
+
+        [Min(0f)]
+        [Tooltip("Optional pause after the initial pop before items fly to the target.")]
+        public float burstHoldDuration = 0.04f;
+
+        [Min(0f)]
+        [Tooltip("Distance from the target where Magnet presets switch to the final pull.")]
+        public float magnetDistance = 90f;
+
+        [Range(0.05f, 0.85f)]
+        [Tooltip("Part of flyDuration reserved for the final magnet pull.")]
+        public float magnetDurationRatio = 0.25f;
 
         public bool useUnscaledTime;
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
@@ -514,34 +549,27 @@ namespace Neo
                 result.RegisterStarted(bonus);
                 request.OnItemStarted?.Invoke(bonus);
 
-                Vector3 arcPoint = BuildArcPoint(startPos, endPos, request.MiddleRandomOffset ?? middleRandomOffset);
-                Tween moveTween = CreateMoveTween(bonus.transform, arcPoint, flyDuration / 2f, resolvedSpawnSpace);
-                moveTween.SetEase(easyStart).SetUpdate(useUnscaledTime)
-                    .OnComplete(() =>
+                Tween flightTween = CreateFlightTween(bonus.transform, startPos, endPos, request, resolvedSpawnSpace);
+                flightTween.OnComplete(() =>
+                {
+                    request.OnItemArrived?.Invoke(bonus);
+                    if (request.RewardTiming == AnimationFlyRewardTiming.OnEachArrived)
                     {
-                        Tween endTween = CreateMoveTween(bonus.transform, endPos, flyDuration / 2f, resolvedSpawnSpace);
-                        endTween.SetEase(easyEnd).SetUpdate(useUnscaledTime)
-                            .OnComplete(() =>
-                            {
-                                request.OnItemArrived?.Invoke(bonus);
-                                if (request.RewardTiming == AnimationFlyRewardTiming.OnEachArrived)
-                                {
-                                    request.OnReward?.Invoke();
-                                }
+                        request.OnReward?.Invoke();
+                    }
 
-                                result.RegisterCompleted(bonus);
-                                CompleteVisual(bonus, poolKey, completionMode);
-                                if (result.IsCompleted)
-                                {
-                                    if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
-                                    {
-                                        request.OnReward?.Invoke();
-                                    }
+                    result.RegisterCompleted(bonus);
+                    CompleteVisual(bonus, poolKey, completionMode);
+                    if (result.IsCompleted)
+                    {
+                        if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
+                        {
+                            request.OnReward?.Invoke();
+                        }
 
-                                    request.OnAllArrived?.Invoke();
-                                }
-                            });
-                    });
+                        request.OnAllArrived?.Invoke();
+                    }
+                });
 
                 if (rotateDuringFlight)
                 {
@@ -569,6 +597,142 @@ namespace Neo
                 Random.Range(-arcStrength, arcStrength));
             arcPoint += RandomOffset(randomOffset);
             return arcPoint;
+        }
+
+        private Tween CreateFlightTween(Transform target, Vector3 startPos, Vector3 endPos,
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            AnimationFlyMotionPreset preset = request.MotionPreset ?? motionPreset;
+            switch (preset)
+            {
+                case AnimationFlyMotionPreset.Fountain:
+                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, false);
+                case AnimationFlyMotionPreset.Magnet:
+                    return CreateMagnetTween(target, startPos, endPos, request, resolvedSpawnSpace);
+                case AnimationFlyMotionPreset.FountainMagnet:
+                    return CreateFountainTween(target, startPos, endPos, request, resolvedSpawnSpace, true);
+                case AnimationFlyMotionPreset.Scatter:
+                    return CreateScatterTween(target, startPos, endPos, request, resolvedSpawnSpace);
+                default:
+                    return CreateArcTween(target, startPos, endPos, request, resolvedSpawnSpace);
+            }
+        }
+
+        private Tween CreateArcTween(Transform target, Vector3 startPos, Vector3 endPos,
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            Vector3 arcPoint = BuildArcPoint(startPos, endPos, request.MiddleRandomOffset ?? middleRandomOffset);
+            Sequence sequence = DOTween.Sequence()
+                .SetUpdate(useUnscaledTime)
+                .SetTarget(target)
+                .SetLink(target.gameObject);
+            sequence.Append(CreateMoveTween(target, arcPoint, flyDuration / 2f, resolvedSpawnSpace)
+                .SetEase(request.CruiseEase ?? easyStart));
+            sequence.Append(CreateMoveTween(target, endPos, flyDuration / 2f, resolvedSpawnSpace)
+                .SetEase(request.MagnetEase ?? easyEnd));
+            return sequence;
+        }
+
+        private Tween CreateFountainTween(Transform target, Vector3 startPos, Vector3 endPos,
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace, bool useMagnetFinish)
+        {
+            Vector3 launchPoint = startPos + (request.BurstOffset ?? burstOffset) +
+                                  RandomOffset(request.BurstRandomOffset ?? burstRandomOffset);
+            if (ignoreZ)
+            {
+                launchPoint.z = 0f;
+            }
+
+            float popDuration = flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
+            float holdDuration = Mathf.Max(0f, request.BurstHoldDuration ?? burstHoldDuration);
+            float remaining = Mathf.Max(0.01f, flyDuration - popDuration);
+
+            Sequence sequence = DOTween.Sequence()
+                .SetUpdate(useUnscaledTime)
+                .SetTarget(target)
+                .SetLink(target.gameObject);
+            sequence.Append(CreateMoveTween(target, launchPoint, popDuration, resolvedSpawnSpace)
+                .SetEase(request.BurstEase ?? Ease.OutBack));
+            if (holdDuration > 0f)
+            {
+                sequence.AppendInterval(holdDuration);
+            }
+
+            if (useMagnetFinish)
+            {
+                AppendMagnetStages(sequence, target, launchPoint, endPos, remaining, request, resolvedSpawnSpace);
+            }
+            else
+            {
+                sequence.Append(CreateMoveTween(target, endPos, remaining, resolvedSpawnSpace)
+                    .SetEase(request.CruiseEase ?? easyEnd));
+            }
+
+            return sequence;
+        }
+
+        private Tween CreateMagnetTween(Transform target, Vector3 startPos, Vector3 endPos,
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            Sequence sequence = DOTween.Sequence()
+                .SetUpdate(useUnscaledTime)
+                .SetTarget(target)
+                .SetLink(target.gameObject);
+            AppendMagnetStages(sequence, target, startPos, endPos, flyDuration, request, resolvedSpawnSpace);
+            return sequence;
+        }
+
+        private Tween CreateScatterTween(Transform target, Vector3 startPos, Vector3 endPos,
+            AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            Vector3 spread = request.BurstRandomOffset ?? burstRandomOffset;
+            Vector3 launchPoint = startPos + new Vector3(
+                Random.Range(-spread.x, spread.x),
+                Random.Range(-spread.y * 0.25f, spread.y),
+                Random.Range(-spread.z, spread.z));
+            if (ignoreZ)
+            {
+                launchPoint.z = 0f;
+            }
+
+            float scatterDuration = flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio,
+                0.05f, 0.85f);
+            float remaining = Mathf.Max(0.01f, flyDuration - scatterDuration);
+            Sequence sequence = DOTween.Sequence()
+                .SetUpdate(useUnscaledTime)
+                .SetTarget(target)
+                .SetLink(target.gameObject);
+            sequence.Append(CreateMoveTween(target, launchPoint, scatterDuration, resolvedSpawnSpace)
+                .SetEase(request.BurstEase ?? Ease.OutQuad));
+            sequence.Append(CreateMoveTween(target, endPos, remaining, resolvedSpawnSpace)
+                .SetEase(request.CruiseEase ?? Ease.InOutQuad));
+            return sequence;
+        }
+
+        private void AppendMagnetStages(Sequence sequence, Transform target, Vector3 startPos, Vector3 endPos,
+            float duration, AnimationFlyRequest request, AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            float magnetRatio = Mathf.Clamp(request.MagnetDurationRatio ?? magnetDurationRatio, 0.05f, 0.85f);
+            float magnetDuration = Mathf.Max(0.01f, duration * magnetRatio);
+            float approachDuration = Mathf.Max(0.01f, duration - magnetDuration);
+            Vector3 approachPoint = BuildMagnetApproachPoint(startPos, endPos,
+                request.MagnetDistance ?? magnetDistance);
+
+            sequence.Append(CreateMoveTween(target, approachPoint, approachDuration, resolvedSpawnSpace)
+                .SetEase(request.CruiseEase ?? Ease.OutQuad));
+            sequence.Append(CreateMoveTween(target, endPos, magnetDuration, resolvedSpawnSpace)
+                .SetEase(request.MagnetEase ?? Ease.InQuad));
+        }
+
+        private static Vector3 BuildMagnetApproachPoint(Vector3 startPos, Vector3 endPos, float distance)
+        {
+            Vector3 direction = startPos - endPos;
+            if (direction.sqrMagnitude < 0.0001f || distance <= 0f)
+            {
+                return Vector3.Lerp(startPos, endPos, 0.85f);
+            }
+
+            return endPos + direction.normalized * distance;
         }
 
         private Tween CreateMoveTween(Transform target, Vector3 position, float duration,
@@ -1108,6 +1272,16 @@ namespace Neo
             public Vector3? EndRandomOffset;
             public Vector3? MiddleRandomOffset;
             public float? ScaleMultiplier;
+            public AnimationFlyMotionPreset? MotionPreset;
+            public Vector3? BurstOffset;
+            public Vector3? BurstRandomOffset;
+            public float? BurstDurationRatio;
+            public float? BurstHoldDuration;
+            public float? MagnetDistance;
+            public float? MagnetDurationRatio;
+            public Ease? BurstEase;
+            public Ease? CruiseEase;
+            public Ease? MagnetEase;
 
             public static AnimationFlyRequest FromPrefab(GameObject prefab, int count, Transform start, Transform end)
             {
