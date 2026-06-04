@@ -299,7 +299,7 @@ namespace Neo.NoCode
         /// <summary>
         ///     Edit Mode tests / editor utilities: apply binding when OnEnable did not run or after serialized rewiring.
         /// </summary>
-        internal void EditorInvokeRefreshFromSource()
+        public void EditorInvokeRefreshFromSource()
         {
             RefreshFromSource();
         }

@@ -17,6 +17,7 @@
 - Registers all active and inactive `MonoBehaviour` instances that implement `ISaveableComponent`.
 - Caches only fields marked with `[SaveField]`.
 - Writes a single JSON container through `SaveProvider`.
+- `Save()` uses read-modify-write: it replaces entries for currently registered components while preserving entries for components that are not loaded right now.
 - Calls `OnDataLoaded()` after successful restore.
 - Re-registers newly loaded scene objects and removes stale registrations before save/load passes.
 
@@ -45,6 +46,8 @@ This makes save keys stable across application restarts as long as the object ke
 3. `Init()` loads all registered components.
 4. `OnApplicationQuit()` saves all registered components.
 5. When a new scene loads, only newly discovered saveable components are loaded.
+
+The global `SaveManager.Save()` is safe for additive and multi-scene flows: data for unloaded scene objects remains in the shared container until those objects are saved again or explicitly removed by a higher-level migration.
 
 ## Notes
 - Domain reload (`SubsystemRegistration`): static save registration caches are cleared by `SaveManagerSubsystemRegistration`, which calls `SaveManager.ClearSubsystemCaches()`. Hooks are intentionally **not** on `SaveManager` itself because Unity disallows `[RuntimeInitializeOnLoadMethod]` on types that inherit generic bases such as `Singleton<T>`.

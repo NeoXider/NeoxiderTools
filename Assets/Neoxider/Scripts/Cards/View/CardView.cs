@@ -34,6 +34,8 @@ namespace Neo.Cards
         [SerializeField] private float _hoverYOffset = 20f;
         private DeckConfig _config;
         private Tween _currentTween;
+        private Tween _hoverMoveTween;
+        private Tween _hoverScaleTween;
 
         private bool _isInteractable = true;
         private Vector3 _originalPosition;
@@ -47,6 +49,7 @@ namespace Neo.Cards
         private void OnDestroy()
         {
             _currentTween?.Kill();
+            KillHoverTweens();
         }
 
         /// <inheritdoc />
@@ -146,8 +149,13 @@ namespace Neo.Cards
             OnHovered?.Invoke(this);
 
             _originalPosition = transform.position;
-            transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration);
-            transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration);
+            KillHoverTweens();
+            _hoverScaleTween = transform.DOScale(_originalScale * (1f + _hoverScale), _hoverDuration)
+                .SetTarget(transform)
+                .SetLink(gameObject);
+            _hoverMoveTween = transform.DOMove(_originalPosition + Vector3.up * _hoverYOffset, _hoverDuration)
+                .SetTarget(transform)
+                .SetLink(gameObject);
         }
 
         void IPointerExitHandler.OnPointerExit(PointerEventData eventData)
@@ -159,8 +167,13 @@ namespace Neo.Cards
 
             OnUnhovered?.Invoke(this);
 
-            transform.DOScale(_originalScale, _hoverDuration);
-            transform.DOMove(_originalPosition, _hoverDuration);
+            KillHoverTweens();
+            _hoverScaleTween = transform.DOScale(_originalScale, _hoverDuration)
+                .SetTarget(transform)
+                .SetLink(gameObject);
+            _hoverMoveTween = transform.DOMove(_originalPosition, _hoverDuration)
+                .SetTarget(transform)
+                .SetLink(gameObject);
         }
 
         /// <summary>
@@ -275,6 +288,14 @@ namespace Neo.Cards
             }
 
             return _config != null ? _config.BackSprite : null;
+        }
+
+        private void KillHoverTweens()
+        {
+            _hoverScaleTween?.Kill();
+            _hoverMoveTween?.Kill();
+            _hoverScaleTween = null;
+            _hoverMoveTween = null;
         }
     }
 }

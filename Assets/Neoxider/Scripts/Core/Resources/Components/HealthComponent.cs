@@ -133,11 +133,6 @@ namespace Neo.Core.Resources
                 {
                     entryDecrease.OnDamage?.Invoke(actual);
                 }
-
-                if (_model.IsDepleted(resourceId))
-                {
-                    entryDecrease.OnDeath?.Invoke();
-                }
             }
 
             return actual;
@@ -390,8 +385,7 @@ namespace Neo.Core.Resources
 
         private void HandleResourceDepleted(string id)
         {
-            if (string.Equals(id, RpgResourceId.Hp, StringComparison.OrdinalIgnoreCase) &&
-                TryGetPoolEntry(id, out ResourceEntryInspector entry))
+            if (TryGetPoolEntry(id, out ResourceEntryInspector entry))
             {
                 entry.OnDeath?.Invoke();
             }

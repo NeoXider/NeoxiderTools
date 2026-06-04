@@ -87,7 +87,6 @@ GameObject:
   - component: {fileID: 3584667670291894742}
   - component: {fileID: 8891946442021320148}
   - component: {fileID: 2732604253919957405}
-  - component: {fileID: 2236209856371237140}
   m_Layer: 5
   m_Name: ButtonPageSwitch
   m_TagString: Untagged
@@ -198,25 +197,6 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &2236209856371237140
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6271894678689706946}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d3d1f256c5140fa4199338874bb9cf2d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _button: {fileID: 2732604253919957405}
-  _pageType: 0
-  _change: 1
-  _switchLastPage: 0
-  _textPage: {fileID: 136332695205865800}
-  _changeText: 1
-  _pagesManager: {fileID: 0}
 --- !u!1 &6883723865799756586
 GameObject:
   m_ObjectHideFlags: 0

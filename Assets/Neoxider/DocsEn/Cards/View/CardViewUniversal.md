@@ -26,6 +26,8 @@
 | `_moveEase` | Move Ease. |
 | `_spriteRenderer` | Sprite Renderer. |
 
+Hover tweens are owned by the view: repeated hover/exit kills previous tweens, and `OnDestroy` clears hover, current, and looped animations.
+
 ## See Also
 
 - [Module Root](../README.md)

@@ -135,14 +135,14 @@ public class MouseInputManager : Singleton<MouseInputManager>
     }
 
     /// <seealso cref="MouseInputManagerSubsystemRegistration"/>
-    internal static void ResetSubsystemPollingState()
+    public static void ResetSubsystemPollingState()
     {
         LastEventData = default;
         HasEventData = false;
     }
 
     /// <seealso cref="MouseInputManagerSubsystemRegistration"/>
-    internal static void EnableAutoCreateForRuntime()
+    public static void EnableAutoCreateForRuntime()
     {
         CreateInstance = true;
     }

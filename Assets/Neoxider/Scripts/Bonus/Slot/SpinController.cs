@@ -437,12 +437,25 @@ namespace Neo.Bonus
 
             SetPrice();
 
-            if (moneySpend == null || moneySpend.Spend(price))
+            if (TryPayForSpin())
             {
                 OnChangeMoneyWin?.Invoke("");
                 StartCoroutine(StartSpinCoroutine());
                 OnStartSpin?.Invoke();
             }
+        }
+
+        /// <summary>
+        ///     Pays the current spin price. Price 0 or lower is explicit free mode; positive prices require a wallet.
+        /// </summary>
+        public bool TryPayForSpin()
+        {
+            if (price <= 0)
+            {
+                return true;
+            }
+
+            return moneySpend != null && moneySpend.Spend(price);
         }
 
         private IEnumerator StartSpinCoroutine()

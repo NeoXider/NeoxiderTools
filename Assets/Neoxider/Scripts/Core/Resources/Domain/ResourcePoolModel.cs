@@ -69,6 +69,7 @@ namespace Neo.Core.Resources
                 return false;
             }
 
+            float previous = e.Current;
             float actual = ClampDecrease(e, amount);
             e.Current -= actual;
             if (e.Current < 0f)
@@ -77,7 +78,7 @@ namespace Neo.Core.Resources
             }
 
             NotifyChanged(resourceId, e);
-            if (e.Current <= 0f)
+            if (previous > 0f && e.Current <= 0f)
             {
                 OnResourceDepleted?.Invoke(resourceId);
             }
@@ -92,6 +93,7 @@ namespace Neo.Core.Resources
                 return 0f;
             }
 
+            float previous = e.Current;
             float actual = ClampDecrease(e, amount);
             e.Current -= actual;
             if (e.Current < 0f)
@@ -100,7 +102,7 @@ namespace Neo.Core.Resources
             }
 
             NotifyChanged(resourceId, e);
-            if (e.Current <= 0f)
+            if (previous > 0f && e.Current <= 0f)
             {
                 OnResourceDepleted?.Invoke(resourceId);
             }

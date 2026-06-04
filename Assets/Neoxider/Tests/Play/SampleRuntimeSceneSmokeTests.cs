@@ -2,6 +2,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Reflection;
 using NUnit.Framework;
 using UnityEditor.SceneManagement;
@@ -14,28 +15,32 @@ namespace Neo.Tests.Play
 {
     public sealed class SampleRuntimeSceneSmokeTests
     {
-        private const string ProgressionScene = "Assets/Neoxider/Samples/Demo/Scenes/Progression_Demo.unity";
-        private const string Match3Scene = "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemMatch3Demo.unity";
-        private const string DiceMergeScene =
-            "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemDiceMergeDemo.unity";
-
-        private const string TicTacToeScene =
-            "Assets/Neoxider/Samples/Demo/Scenes/GridSystem/GridSystemTicTacToeDemo.unity";
-
-        private const string RpgCombatScene = "Assets/Neoxider/Samples/Demo/Scenes/RpgCombatNpcDemo.unity";
-        private const string VampireScene = "Assets/Neoxider/Samples/Demo/Scenes/VampireSurvivorMCP.unity";
+        private const string ProgressionScene = "Scenes/Progression_Demo.unity";
+        private const string Match3Scene = "Scenes/GridSystem/GridSystemMatch3Demo.unity";
+        private const string DiceMergeScene = "Scenes/GridSystem/GridSystemDiceMergeDemo.unity";
+        private const string TicTacToeScene = "Scenes/GridSystem/GridSystemTicTacToeDemo.unity";
+        private const string RpgCombatScene = "Scenes/RpgCombatNpcDemo.unity";
+        private const string VampireScene = "Scenes/VampireSurvivorMCP.unity";
 
         private static readonly string[] CoreModuleScenes =
         {
-            "Assets/Neoxider/Samples/Demo/Scenes/Audio/AudioDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Level/LevelFlowDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Quests/QuestDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Save/SaveDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Settings/SettingsDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/NoCode/NoCodeBindingDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/StateMachine/StateMachineDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Parallax/ParallaxDemo.unity",
-            "Assets/Neoxider/Samples/Demo/Scenes/Network/NetworkDemo.unity"
+            "Scenes/Audio/AudioDemo.unity",
+            "Scenes/Level/LevelFlowDemo.unity",
+            "Scenes/Quests/QuestDemo.unity",
+            "Scenes/Save/SaveDemo.unity",
+            "Scenes/Settings/SettingsDemo.unity",
+            "Scenes/NoCode/NoCodeBindingDemo.unity",
+            "Scenes/StateMachine/StateMachineDemo.unity",
+            "Scenes/Parallax/ParallaxDemo.unity",
+            "Scenes/Network/NetworkDemo.unity"
+        };
+
+        private static readonly string[] SampleRootCandidates =
+        {
+            "Assets/Neoxider/Samples",
+            "Assets/Neoxider/Samples~",
+            "Assets/Samples/NeoxiderTools",
+            "Assets/Samples/Neoxider Tools"
         };
 
         [UnityTest]
@@ -187,7 +192,7 @@ namespace Neo.Tests.Play
         {
             for (int i = 0; i < CoreModuleScenes.Length; i++)
             {
-                string scenePath = CoreModuleScenes[i];
+                string scenePath = ResolveScenePath(CoreModuleScenes[i]);
                 yield return LoadScene(scenePath);
                 yield return WaitFrames(12);
 
@@ -199,6 +204,7 @@ namespace Neo.Tests.Play
 
         private static IEnumerator LoadScene(string scenePath)
         {
+            scenePath = ResolveScenePath(scenePath);
             Scene scene =
                 EditorSceneManager.LoadSceneInPlayMode(scenePath, new LoadSceneParameters(LoadSceneMode.Single));
             while (!scene.isLoaded)
@@ -207,6 +213,79 @@ namespace Neo.Tests.Play
             }
 
             yield return null;
+        }
+
+        private static string ResolveScenePath(string relativeOrAbsolutePath)
+        {
+            if (IsHiddenSampleRoot(relativeOrAbsolutePath))
+            {
+                Assert.Ignore(
+                    "Runtime sample scene smoke requires development/imported samples because Unity does not compile hidden Samples~ scripts. Samples~ wiring is covered by SampleSceneCoverageTests.");
+            }
+
+            if (File.Exists(relativeOrAbsolutePath))
+            {
+                return relativeOrAbsolutePath;
+            }
+
+            string root = GetActiveSampleDemoRoot();
+            if (IsHiddenSampleRoot(root))
+            {
+                Assert.Ignore(
+                    "Runtime sample scene smoke requires development/imported samples because Unity does not compile hidden Samples~ scripts. Samples~ wiring is covered by SampleSceneCoverageTests.");
+            }
+
+            string relativePath = relativeOrAbsolutePath.StartsWith("Demo/", StringComparison.Ordinal)
+                ? relativeOrAbsolutePath.Substring("Demo/".Length)
+                : relativeOrAbsolutePath;
+            string path = root + "/" + relativePath;
+            Assert.That(File.Exists(path), Is.True, "Sample scene was not found: " + path);
+            return path;
+        }
+
+        private static string GetActiveSampleDemoRoot()
+        {
+            foreach (string root in SampleRootCandidates)
+            {
+                if (Directory.Exists(root + "/Demo"))
+                {
+                    return root + "/Demo";
+                }
+
+                if (Directory.Exists(root + "/Demo Scenes"))
+                {
+                    return root + "/Demo Scenes";
+                }
+
+                if (!Directory.Exists(root))
+                {
+                    continue;
+                }
+
+                foreach (string childPathRaw in Directory.EnumerateDirectories(root))
+                {
+                    string childPath = childPathRaw.Replace('\\', '/');
+                    if (Directory.Exists(childPath + "/Demo Scenes"))
+                    {
+                        return childPath + "/Demo Scenes";
+                    }
+
+                    if (Directory.Exists(childPath + "/Demo"))
+                    {
+                        return childPath + "/Demo";
+                    }
+                }
+            }
+
+            Assert.Fail(
+                "No Neoxider Demo sample root found. Expected Assets/Neoxider/Samples/Demo during development, " +
+                "Assets/Neoxider/Samples~/Demo for UPM packaging, or Assets/Samples/NeoxiderTools/<version>/Demo Scenes after import.");
+            return SampleRootCandidates[0];
+        }
+
+        private static bool IsHiddenSampleRoot(string root)
+        {
+            return root.Replace('\\', '/').Contains("/Samples~/");
         }
 
         private static IEnumerator WaitFrames(int frameCount)

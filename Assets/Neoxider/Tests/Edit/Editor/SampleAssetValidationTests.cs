@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -33,11 +34,15 @@ namespace Neo.Editor.Tests
         private static readonly Regex MissingMonoScriptReferenceRegex =
             new(@"m_Script:\s*\{fileID:\s*0\}", RegexOptions.Compiled);
 
+        private static readonly Regex CurveKeyRegex =
+            new(@"time:\s*(?<time>-?\d+(?:\.\d+)?)\s*\r?\n\s*value:\s*(?<value>-?\d+(?:\.\d+)?)",
+                RegexOptions.Compiled);
+
         [Test]
         public void SamplePrefabs_WithNetworkBehaviours_HaveNetworkIdentityInParents()
         {
             var failures = new List<string>();
-            string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", GetExistingSampleRoots());
+            string[] prefabGuids = FindAssetsInAssetDatabaseSampleRoots("t:Prefab");
 
             foreach (string guid in prefabGuids)
             {
@@ -65,7 +70,7 @@ namespace Neo.Editor.Tests
         public void SamplePrefabs_HaveNoMissingMonoBehaviours()
         {
             var failures = new List<string>();
-            string[] prefabGuids = AssetDatabase.FindAssets("t:Prefab", GetExistingSampleRoots());
+            string[] prefabGuids = FindAssetsInAssetDatabaseSampleRoots("t:Prefab");
 
             foreach (string guid in prefabGuids)
             {
@@ -126,7 +131,7 @@ namespace Neo.Editor.Tests
                 foreach (Match match in MonoScriptReferenceRegex.Matches(text))
                 {
                     string guid = match.Groups[1].Value;
-                    if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)))
+                    if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) && !GuidExistsInHiddenSampleMeta(guid))
                     {
                         failures.Add($"{path}: references missing MonoScript guid {guid}.");
                     }
@@ -140,7 +145,7 @@ namespace Neo.Editor.Tests
         public void SampleTerrainData_HasNoMissingTreePrefabs()
         {
             var failures = new List<string>();
-            string[] terrainGuids = AssetDatabase.FindAssets("t:TerrainData", GetExistingSampleRoots());
+            string[] terrainGuids = FindAssetsInAssetDatabaseSampleRoots("t:TerrainData");
 
             foreach (string guid in terrainGuids)
             {
@@ -183,6 +188,11 @@ namespace Neo.Editor.Tests
             {
                 foreach (string path in EnumerateSampleScenes())
                 {
+                    if (IsHiddenSamplePath(path))
+                    {
+                        continue;
+                    }
+
                     Scene scene = EditorSceneManager.OpenScene(path, OpenSceneMode.Single);
                     GameObject[] roots = scene.GetRootGameObjects();
                     int missingScriptCount = 0;
@@ -216,8 +226,10 @@ namespace Neo.Editor.Tests
         public void ProgressionDemo_LevelCurveUsesIncreasingXpRequirements()
         {
             var failures = new List<string>();
-            string[] guids = AssetDatabase.FindAssets("DemoLevelCurve", GetExistingSampleRoots());
-            Assert.That(guids, Is.Not.Empty, "DemoLevelCurve asset was not found in active sample roots.");
+            string[] guids = FindAssetsInAssetDatabaseSampleRoots("DemoLevelCurve");
+            List<string> hiddenCurvePaths = FindHiddenSampleAssets("DemoLevelCurve.asset");
+            Assert.That(guids.Length + hiddenCurvePaths.Count, Is.GreaterThan(0),
+                "DemoLevelCurve asset was not found in active sample roots.");
 
             foreach (string guid in guids)
             {
@@ -253,6 +265,11 @@ namespace Neo.Editor.Tests
                 {
                     failures.Add($"{path}: expected 2675 XP to be level 8 with 925 XP to next level.");
                 }
+            }
+
+            foreach (string path in hiddenCurvePaths)
+            {
+                ValidateHiddenDemoLevelCurve(path, failures);
             }
 
             AssertNoFailures(failures);
@@ -322,7 +339,7 @@ namespace Neo.Editor.Tests
             var roots = new List<string>();
             foreach (string root in SampleRootCandidates)
             {
-                if (AssetDatabase.IsValidFolder(root))
+                if (AssetDatabase.IsValidFolder(root) || Directory.Exists(root))
                 {
                     roots.Add(root);
                 }
@@ -332,6 +349,115 @@ namespace Neo.Editor.Tests
                 "No Neoxider sample root found. Expected Assets/Neoxider/Samples during development, " +
                 "Assets/Neoxider/Samples~ for UPM packaging, or Assets/Samples/NeoxiderTools after importing package samples.");
             return roots.ToArray();
+        }
+
+        private static string[] GetExistingAssetDatabaseSampleRoots()
+        {
+            var roots = new List<string>();
+            foreach (string root in GetExistingSampleRoots())
+            {
+                if (AssetDatabase.IsValidFolder(root))
+                {
+                    roots.Add(root);
+                }
+            }
+
+            return roots.ToArray();
+        }
+
+        private static string[] FindAssetsInAssetDatabaseSampleRoots(string filter)
+        {
+            string[] roots = GetExistingAssetDatabaseSampleRoots();
+            return roots.Length == 0 ? Array.Empty<string>() : AssetDatabase.FindAssets(filter, roots);
+        }
+
+        private static List<string> FindHiddenSampleAssets(string fileName)
+        {
+            var paths = new List<string>();
+            foreach (string root in GetExistingSampleRoots())
+            {
+                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(root))
+                {
+                    continue;
+                }
+
+                foreach (string path in Directory.EnumerateFiles(root, fileName, SearchOption.AllDirectories))
+                {
+                    paths.Add(path.Replace('\\', '/'));
+                }
+            }
+
+            return paths;
+        }
+
+        private static void ValidateHiddenDemoLevelCurve(string path, List<string> failures)
+        {
+            string text = File.ReadAllText(path);
+            if (!Regex.IsMatch(text, @"^\s*_mode:\s*1\s*$", RegexOptions.Multiline))
+            {
+                failures.Add($"{path}: expected Curve mode so the demo uses increasing XP requirements.");
+            }
+
+            var levels = new Dictionary<int, int>();
+            foreach (Match match in CurveKeyRegex.Matches(text))
+            {
+                int time = Mathf.RoundToInt(float.Parse(match.Groups["time"].Value, System.Globalization.CultureInfo.InvariantCulture));
+                int value = Mathf.RoundToInt(float.Parse(match.Groups["value"].Value, System.Globalization.CultureInfo.InvariantCulture));
+                levels[time] = value;
+            }
+
+            if (!levels.TryGetValue(1, out int level1) ||
+                !levels.TryGetValue(2, out int level2) ||
+                !levels.TryGetValue(3, out int level3) ||
+                !levels.TryGetValue(8, out int level8) ||
+                !levels.TryGetValue(9, out int level9))
+            {
+                failures.Add($"{path}: expected curve keys for levels 1, 2, 3, 8 and 9.");
+                return;
+            }
+
+            int firstStep = level2 - level1;
+            int secondStep = level3 - level2;
+            if (firstStep <= 0 || secondStep <= firstStep)
+            {
+                failures.Add($"{path}: expected increasing XP steps, got {firstStep} then {secondStep}.");
+            }
+
+            if (level2 > 175 || level3 <= 175 || level3 - 175 != 75)
+            {
+                failures.Add($"{path}: expected 175 XP to be level 2 with 75 XP to next level.");
+            }
+
+            if (level8 > 2675 || level9 <= 2675 || level9 - 2675 != 925)
+            {
+                failures.Add($"{path}: expected 2675 XP to be level 8 with 925 XP to next level.");
+            }
+        }
+
+        private static bool IsHiddenSamplePath(string path)
+        {
+            return path.Replace('\\', '/').StartsWith("Assets/Neoxider/Samples~/", StringComparison.Ordinal);
+        }
+
+        private static bool GuidExistsInHiddenSampleMeta(string guid)
+        {
+            foreach (string root in GetExistingSampleRoots())
+            {
+                if (AssetDatabase.IsValidFolder(root) || !Directory.Exists(root))
+                {
+                    continue;
+                }
+
+                foreach (string metaPath in Directory.EnumerateFiles(root, "*.meta", SearchOption.AllDirectories))
+                {
+                    if (File.ReadAllText(metaPath).Contains("guid: " + guid))
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
 
         private static string[] GetExistingPackagePrefabRoots()

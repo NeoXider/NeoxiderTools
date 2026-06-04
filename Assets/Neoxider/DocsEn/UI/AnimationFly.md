@@ -8,6 +8,9 @@ Supported flows:
 - UI object to UI;
 - UI object to world object;
 - world object to world object.
+- prefab or `Sprite` visuals through `AnimationFlyRequest` / `PlaySprite...`;
+- reward callbacks can be manual, per arrived visual, or once after all visuals arrive;
+- completion policy can destroy, keep alive, or disable-and-pool visuals.
 
 ## Setup
 
@@ -46,6 +49,26 @@ AnimationFly.I.PlayByTypeCanvasToWorld(0, amount, sourceRectTransform, worldTarg
 AnimationFly.I.PlayByTypeWorldToWorld(0, amount, startTransform, endTransform);
 ```
 
+### Sprite without prefab and grant once after arrival
+
+```csharp
+AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
+{
+    Sprite = coinSprite,
+    Count = 10,
+    StartTransform = worldPickup,
+    EndTransform = moneyCounterRect,
+    StartSpace = AnimationFlyCoordinateSpace.World,
+    EndSpace = AnimationFlyCoordinateSpace.Canvas,
+    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+    Parent = flyContainer,
+    RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+    OnReward = () => money.Add(10)
+});
+```
+
+For world -> UI rewards, the visual is spawned under the Canvas, but its start position is calculated from the world object's screen position into the actual `Parent` local space. This matters when `Parent` is an offset/scaled container rather than the root Canvas.
+
 ## Key Fields (Inspector)
 
 | Field | Description |
@@ -77,6 +100,8 @@ AnimationFly.I.PlayByTypeWorldToWorld(0, amount, startTransform, endTransform);
 | `rotationDegrees` | Rotation amount during the flight. |
 | `setAsLastSibling` | Moves spawned UI objects above their siblings. |
 | `destroyOnComplete` | Destroys the object after arrival. Disable it for manual pooling through `onEnd`. |
+| `defaultCompletionMode` | Completion behavior for typed requests: destroy, keep alive, or disable-and-pool. |
+| `maxPoolPerKey` | Maximum pooled objects per prefab/sprite key. |
 | `scaleMult` | Spawned object scale multiplier. |
 | `ignoreZ` | Zeroes start and end Z values. |
 | `useUnscaledTime` | Uses unscaled time for pause/menu effects. |
@@ -114,6 +139,18 @@ AnimationFly.I.Play(
 ```
 
 `Auto` detects Canvas by `RectTransform` or a parent `Canvas`. For predictable behavior, set `World` / `Canvas` explicitly.
+
+New typed API:
+
+- `Play(AnimationFlyRequest request)` - one universal entry point for prefab, sprite, type, parent, spaces, pooling, and reward timing.
+- `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` - quick helpers for icon-only effects without prefab authoring.
+- `AnimationFlyResult` - exposes `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted`, and active visuals.
+
+## Fixed Limitations
+
+- World/UI and UI/UI conversion now resolves positions in the actual `spawnParent` local space instead of the root Canvas.
+- `OnReward` can run once after all visuals arrive, avoiding accidental per-coin reward grants.
+- `DisableAndPool` returns completed visuals to a built-in pool for the next request.
 
 ## See Also
 

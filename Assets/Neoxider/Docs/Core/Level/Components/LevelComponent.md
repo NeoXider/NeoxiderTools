@@ -39,6 +39,14 @@
 | `_startXp` | Start Xp. |
 | `true` | True. |
 
+## Runtime контракт
+
+- `AddXp(amount)` увеличивает общий XP, пересчитывает уровень по `LevelCurveDefinition` и вызывает `OnLevelUp` только если уровень действительно изменился.
+- `SetLevel(level)` в режиме `UseXp = true` синхронизирует `TotalXp` с минимальным XP для указанного уровня, чтобы следующий пересчет кривой не откатывал уровень назад.
+- `SetLevel(level)` в режиме `UseXp = false` работает как прямое выставление уровня без XP-прогресса.
+- `LevelState`, `XpState` и `XpToNextLevelState` обновляются после изменений модели и подходят для UI/NoCode binding.
+- `LevelNoCodeAction` использует тот же runtime API: действие `AddXp` вызывает событие level-up только при реальном повышении уровня.
+
 ## См. также
 
 - [Корень модуля](../../README.md)

@@ -97,13 +97,14 @@ namespace Neo.Cards
                 return;
             }
 
-            if (!_cardPresenters.Contains(cardPresenter))
+            int index = _cardPresenters.IndexOf(cardPresenter);
+            if (index < 0)
             {
                 return;
             }
 
-            Model.Remove(cardPresenter.Data);
-            _cardPresenters.Remove(cardPresenter);
+            Model.RemoveAt(index);
+            _cardPresenters.RemoveAt(index);
 
             cardPresenter.OnClicked -= HandleCardClicked;
 

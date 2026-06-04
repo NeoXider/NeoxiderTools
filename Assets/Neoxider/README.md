@@ -35,6 +35,8 @@
 Start with the [Project Summary](./PROJECT_SUMMARY.md) when you need a compact map of what already exists in the package and what should be reused instead of rebuilt.
 
 - **RPG module** - unified `RpgCharacter` runtime for players, NPCs, mobs, pets, and destructibles: universal resources/stats, level/XP/upgrades, buffs/statuses, regen, save/load, Mirror multiplayer sync, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors, evade (`RpgEvadeController`), UI bindings, and no-code bridges.
+- **Grid/Merge modules** - `FieldGenerator`, reusable multi-cell placement, `Neo.Merge`, `GridMergeResolver`, `DiceBoardService`, Match3, TicTacToe, and SlidingMerge services for grid games and board-like systems.
+- **UI reward motion** - `AnimationFly` has a typed request/result API for prefab or sprite visuals, world/canvas conversions, pooling, and reward timing callbacks.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
 - Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
 - **Multiplayer (optional Mirror)** — `Neo.Network` NoCode bridges (`NetworkPropertySync`, `NetworkActionRelay`, lobby/discovery wrappers). Without Mirror, the same scripts compile for offline/solo flows.
@@ -114,7 +116,7 @@ Shipping and jam titles that use this package for gameplay (no-code + modules). 
 | **UI** | UI panels, button animations, toggles, and presentation helpers | [UI](./Docs/UI/README.md) |
 | **Cards** | MVP architecture, poker, "Drunkard", and deck/hand runtime flow | [Cards](./Docs/Cards/README.md) |
 | **Merge** | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](./Docs/Merge/README.md) |
-| **GridSystem** | Grid generation, origin anchor, pathfinding, GridMerge, Dice, Match3, and TicTacToe | [GridSystem](./Docs/GridSystem.md) |
+| **GridSystem** | Grid generation, origin anchor, pathfinding, placement, GridMerge, Dice, Match3, TicTacToe, and SlidingMerge | [GridSystem](./Docs/GridSystem/README.md) |
 | **NPC** | NPC navigation, patrol, chase, animator driver, and modular RPG-ready combat | [NPC](./Docs/NPC/README.md) |
 | **Network** | Mirror-based multiplayer: `NeoNetworkManager`, NoCode sync (`NetworkPropertySync`, `NetworkActionRelay`), lobby/discovery | [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md) · [NoCode_Network_Spec](./Docs/Network/NoCode_Network_Spec.md) |
 | **Editor** | Settings windows, missing-script finder, auto-build, and maintenance tools | [Editor](./Docs/Editor/README.md) |

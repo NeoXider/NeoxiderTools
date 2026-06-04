@@ -12,6 +12,8 @@
 - **Flip Duration / Move Duration** — длительность анимаций переворота и перемещения.
 - **Hover Scale / Hover Duration / Hover Y Offset** — эффект при наведении.
 
+Hover-твины принадлежат самой `CardView`: повторный hover/exit убивает предыдущие tweens, а уничтожение объекта автоматически очищает активные hover-анимации.
+
 См. также [CardComponent](../CardComponent.md), [CardViewUniversal](./CardViewUniversal.md), [CustomCardViewGuide](./CustomCardViewGuide.md).
 
 

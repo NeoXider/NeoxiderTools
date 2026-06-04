@@ -66,6 +66,8 @@ Copy `Assets/Neoxider` into your project. You still need DOTween and UniTask ins
 | StateMachine | Runtime state machine plus no-code transition predicates | [StateMachine](Assets/Neoxider/DocsEn/StateMachine/README.md) |
 | Merge | Pure C# connected-group merge engine for grids, inventories, lists, and custom graphs | [Merge](Assets/Neoxider/DocsEn/Merge/README.md) |
 | GridSystem | Field generation, grid merge adapter, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](Assets/Neoxider/DocsEn/GridSystem/README.md) |
+| Cards | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/DocsEn/Cards/README.md) |
+| UI | UI panels, button animations, toggles, `AnimationFly` reward motion | [UI](Assets/Neoxider/DocsEn/UI/README.md) |
 | Network | Optional Mirror wrappers and no-code network action/sync bridges | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) |
 | Tools | Movement, free-fly camera, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/DocsEn/Tools/README.md) |
 | Extensions | 300+ C# and Unity API extension methods | [Extensions](Assets/Neoxider/DocsEn/Extensions/README.md) |

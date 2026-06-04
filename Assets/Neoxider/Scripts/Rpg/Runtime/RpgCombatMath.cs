@@ -116,12 +116,13 @@ namespace Neo.Rpg
                 }
 
                 BuffStatModifier[] modifiers = definition.Modifiers;
+                int stacks = GetClampedStacks(entry, definition);
                 for (int i = 0; i < modifiers.Length; i++)
                 {
                     BuffStatModifier modifier = modifiers[i];
                     if (modifier != null && modifier.StatType == statType)
                     {
-                        total += modifier.Value;
+                        total += modifier.Value * stacks;
                     }
                 }
             }
@@ -152,18 +153,30 @@ namespace Neo.Rpg
                 }
 
                 BuffStatModifier[] modifiers = definition.Modifiers;
+                int stacks = GetClampedStacks(entry, definition);
                 for (int i = 0; i < modifiers.Length; i++)
                 {
                     BuffStatModifier modifier = modifiers[i];
                     if (modifier != null && modifier.StatType == statType && string.Equals(modifier.SpecificDamageType,
                             specificType, StringComparison.OrdinalIgnoreCase))
                     {
-                        total += modifier.Value;
+                        total += modifier.Value * stacks;
                     }
                 }
             }
 
             return total;
+        }
+
+        private static int GetClampedStacks(ActiveBuffEntry entry, BuffDefinition definition)
+        {
+            int stacks = Mathf.Max(1, entry.Stacks);
+            if (definition == null)
+            {
+                return stacks;
+            }
+
+            return definition.Stackable ? Mathf.Min(stacks, Mathf.Max(1, definition.MaxStacks)) : 1;
         }
     }
 }

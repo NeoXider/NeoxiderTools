@@ -106,7 +106,7 @@ namespace Neo.Cards
             }
 
             CardData card = _cards.Mutable[index];
-            _cards.Remove(card);
+            _cards.Mutable.RemoveAt(index);
             OnCardRemoved?.Invoke(card);
             OnHandChanged?.Invoke();
             return card;

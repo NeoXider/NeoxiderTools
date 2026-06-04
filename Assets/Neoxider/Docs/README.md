@@ -1,15 +1,31 @@
 # NeoxiderTools Docs
 
-Канонический вход в пользовательскую документацию пакета **NeoxiderTools** `v9.1.0`.
+Канонический вход в русскую документацию **NeoxiderTools** `v9.1.0`. Это карта переиспользования: перед новой реализацией проверьте, нет ли уже готового runtime API, MonoBehaviour-обертки или sample-сцены.
 
 ## Быстрый вход
 
 - [README пакета](../README.md)
 - [English docs](../DocsEn/README.md)
-- [Сводка проекта](../PROJECT_SUMMARY.md)
+- [Сводка проекта и reuse map](../PROJECT_SUMMARY.md)
 - [Полезные компоненты](./UsefulComponents.md)
 - [Совместимость пакета](./PackageCompatibility.md)
 - [Sample-сцены](./Samples.md)
+
+## Не писать с нуля
+
+| Задача | Готовые блоки | Вход |
+|--------|---------------|------|
+| Сеточное поле, координаты, shape masks, pathfinding | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [GridSystem](./GridSystem/README.md) |
+| Multi-cell pieces/items, drag/drop placement | `GridPlacementEntry`, `GridPlacementResult`, `PlaceContentFootprint` | [FieldGenerator](./GridSystem/FieldGenerator.md) |
+| Merge связанных одинаковых элементов | `Neo.Merge`, `MergeResolver`, `GridMergeRequest.Increment(...)` | [Merge](./Merge/README.md) |
+| Dice Merge, 2048-like, Match3, TicTacToe | `DiceBoardService`, `SlidingMergeBoardService`, `Match3BoardService`, `TicTacToeBoardService` | [GridSystem](./GridSystem/README.md) |
+| Деньги, магазин, мультивалюта | `Money`, `IMoneySpend`, `Shop`, `TextMoney` | [Shop](./Shop/README.md) |
+| Scene/global save | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [Save](./Save/README.md) |
+| HP/Mana/resources, XP/levels | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [Core](./Core/README.md) |
+| RPG бой, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile` | [Rpg](./Rpg/README.md) |
+| Reward fly animation между world/canvas | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing | [AnimationFly](./UI/AnimationFly.md) |
+| NoCode условия, действия, state transitions | `NeoCondition`, `ConditionEntryPredicate`, NoCode bridges | [Condition](./Condition/README.md) |
+| Movement, free-fly camera, pooling, timers, input | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [Tools](./Tools/README.md) |
 
 ## Модули
 
@@ -18,16 +34,16 @@
 | **Animations** | Runtime-анимации значений: `float`, `Color`, `Vector3` | [Animations](./Animations/README.md) |
 | **Audio** | Audio manager, mixer helpers, random music, audio UI | [Audio](./Audio/README.md) |
 | **Bonus** | Слоты, колесо фортуны, коллекции, timed rewards | [Bonus](./Bonus/README.md) |
-| **Cards** | Deck/hand/board runtime, card views, custom decks, Drunkard sample | [Cards](./Cards/README.md) |
-| **Condition** | No-code условия, reflection-проверки, AND/OR, события | [Condition](./Condition/README.md) |
-| **Core** | Level/XP и базовые ресурсы | [Core](./Core/README.md) |
+| **Cards** | Deck/hand/board runtime, card views, custom decks, poker, Drunkard sample | [Cards](./Cards/README.md) |
+| **Condition** | NoCode-условия, reflection-проверки, AND/OR, события | [Condition](./Condition/README.md) |
+| **Core** | Level/XP и базовые ресурсы HP/Mana-style | [Core](./Core/README.md) |
 | **Editor** | Editor windows, missing scripts scan, настройки, сервисные утилиты | [Editor](./Editor/README.md) |
 | **Extensions** | Extension-методы для C# и Unity API | [Extensions](./Extensions/README.md) |
-| **GridSystem** | Конструктор сеточных игр: field generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
+| **GridSystem** | Конструктор сеточных игр: generation, placement, Dice, GridMerge, Match3, TicTacToe, SlidingMerge | [GridSystem](./GridSystem/README.md) |
 | **Level** | Level manager, загрузка сцен, карта прогресса | [Level](./Level/README.md) |
 | **Merge** | Universal pure C# merge engine for connected groups | [Merge](./Merge/README.md) |
 | **Network** | Mirror wrappers, no-code sync, lobby, discovery | [Network](./Network/README.md) |
-| **NoCode** | Сценовые C#-контракты и inspector-обертки без ссылок из SO на объекты сцены | [NoCode](./NoCode/README.md) |
+| **NoCode** | Сценовые C# contracts и inspector wrappers; SO не хранят scene object references | [NoCode](./NoCode/README.md) |
 | **NPC** | Навигация, target finder, patrol/chase, RPG combat brain | [NPC](./NPC/README.md) |
 | **Parallax** | Parallax layers and camera-following background tiles | [Parallax](./Parallax/README.md) |
 | **Progression** | XP, уровни, unlock tree, perk tree | [Progression](./Progression/README.md) |
@@ -40,7 +56,7 @@
 | **Shop** | Typed shop API, purchases, bundles, currency UI | [Shop](./Shop/README.md) |
 | **StateMachine** | Runtime state machine, C# core и scene/NoCode wrappers | [StateMachine](./StateMachine/README.md) |
 | **Tools** | Movement, free-fly camera, input, physics, spawn, timers, UI helpers | [Tools](./Tools/README.md) |
-| **UI** | UI panels, button animations, toggles, presentation helpers | [UI](./UI/README.md) |
+| **UI** | UI panels, button animations, toggles, AnimationFly, presentation helpers | [UI](./UI/README.md) |
 
 ## Владение Gameplay
 

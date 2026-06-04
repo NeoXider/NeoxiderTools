@@ -32,3 +32,8 @@
 ## AI / skills / spells
 
 Use `RpgAttackPreset` together with `RpgTargetSelector` when the controller should resolve targets automatically instead of relying only on forward casts.
+
+## Runtime contracts
+
+- When `RpgAttackPreset.RequireTarget` is enabled, target resolution happens before `CostAmount` is spent, so a failed target lookup does not consume resources.
+- Direct and area attacks resolve targets through `IRpgCombatReceiver` and deduplicate hits by receiver within one physics query, even when a target has multiple child colliders.

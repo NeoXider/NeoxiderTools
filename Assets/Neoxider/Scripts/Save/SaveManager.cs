@@ -34,7 +34,7 @@ namespace Neo.Save
         ///     Unity forbids runtime-init hooks on inheritance chains rooted in generics such as
         ///     <c>Neo.Tools.Singleton&lt;T&gt;</c>.
         /// </summary>
-        internal static void ClearSubsystemCaches()
+        public static void ClearSubsystemCaches()
         {
             _saveableComponents.Clear();
             IsLoad = false;
@@ -226,7 +226,10 @@ namespace Neo.Save
         public static void Save()
         {
             CleanupDestroyedRegistrations();
-            SaveDataContainer container = new();
+            SaveDataContainer container = ReadAllSaveDataContainer();
+            HashSet<string> currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+            container.AllSavedComponents.RemoveAll(component =>
+                component == null || currentComponentKeys.Contains(component.ComponentKey));
 
             foreach (KeyValuePair<string, (MonoBehaviour instance, List<FieldInfo> fields)> kvp in _saveableComponents)
             {
@@ -263,6 +266,27 @@ namespace Neo.Save
 
             string jsonData = JsonUtility.ToJson(container, true);
             SaveProvider.SetString($"{saveDataKeyPrefix}All", jsonData);
+        }
+
+        private static SaveDataContainer ReadAllSaveDataContainer()
+        {
+            string currentJsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
+            if (string.IsNullOrEmpty(currentJsonData))
+            {
+                return new SaveDataContainer();
+            }
+
+            try
+            {
+                SaveDataContainer container = JsonUtility.FromJson<SaveDataContainer>(currentJsonData);
+                container ??= new SaveDataContainer();
+                container.AllSavedComponents ??= new List<SavedComponent>();
+                return container;
+            }
+            catch
+            {
+                return new SaveDataContainer();
+            }
         }
 
         /// <summary>
@@ -486,17 +510,7 @@ namespace Neo.Save
 
             (MonoBehaviour instance, List<FieldInfo> fieldsToSave) = reg;
 
-            // read container (valid default)
-            string currentJsonData = SaveProvider.GetString($"{saveDataKeyPrefix}All", DefaultJson);
-            SaveDataContainer container;
-            try
-            {
-                container = JsonUtility.FromJson<SaveDataContainer>(currentJsonData) ?? new SaveDataContainer();
-            }
-            catch
-            {
-                container = new SaveDataContainer();
-            }
+            SaveDataContainer container = ReadAllSaveDataContainer();
 
             SavedComponent savedComponent =
                 container.AllSavedComponents.FirstOrDefault(c => c.ComponentKey == componentKey);

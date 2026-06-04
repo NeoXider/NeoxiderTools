@@ -32,12 +32,16 @@ namespace Neo.Core.Level
                 return;
             }
 
+            int previousLevel = provider.Level;
             switch (_actionType)
             {
                 case LevelNoCodeActionType.AddXp:
                     provider.AddXp(_xpAmount);
                     _onSuccess?.Invoke();
-                    _onLevelUp?.Invoke(provider.Level);
+                    if (provider.Level != previousLevel)
+                    {
+                        _onLevelUp?.Invoke(provider.Level);
+                    }
                     break;
                 case LevelNoCodeActionType.SetLevel:
                     provider.SetLevel(_level);

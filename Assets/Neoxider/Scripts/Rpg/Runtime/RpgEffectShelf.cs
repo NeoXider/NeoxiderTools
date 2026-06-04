@@ -116,12 +116,15 @@ namespace Neo.Rpg.Runtime
             ActiveBuffEntry existing = FindBuff(def.Id);
             if (existing != null)
             {
+                int maxStacks = Mathf.Max(1, def.MaxStacks);
+                existing.Stacks = def.Stackable ? Mathf.Min(existing.Stacks + 1, maxStacks) : 1;
+
                 // Refresh — push the timer forward, that's the usual expectation.
                 existing.ExpiresAtUtc = expiresAt;
                 return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
             }
 
-            ActiveBuffEntry entry = new() { BuffId = def.Id, ExpiresAtUtc = expiresAt };
+            ActiveBuffEntry entry = new() { BuffId = def.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
             _activeBuffs.Add(entry);
             return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
         }
@@ -140,11 +143,14 @@ namespace Neo.Rpg.Runtime
             ActiveBuffEntry existing = FindBuff(inline.Id);
             if (existing != null)
             {
+                int maxStacks = Mathf.Max(1, inline.MaxStacks);
+                existing.Stacks = inline.Stackable ? Mathf.Min(existing.Stacks + 1, maxStacks) : 1;
+
                 existing.ExpiresAtUtc = expiresAt;
                 return ApplyResult<ActiveBuffEntry>.Ok(existing, false);
             }
 
-            ActiveBuffEntry entry = new() { BuffId = inline.Id, ExpiresAtUtc = expiresAt };
+            ActiveBuffEntry entry = new() { BuffId = inline.Id, ExpiresAtUtc = expiresAt, Stacks = 1 };
             _activeBuffs.Add(entry);
             return ApplyResult<ActiveBuffEntry>.Ok(entry, true);
         }
@@ -296,19 +302,20 @@ namespace Neo.Rpg.Runtime
                 // SO buff
                 if (TryGetBuff(id, out BuffDefinition def) && def != null && def.Modifiers != null)
                 {
-                    AppendModifiers(buffer, def.Modifiers);
+                    AppendModifiers(buffer, def.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
                     continue;
                 }
 
                 // Inline buff (rare but matters for one-off scene effects)
                 if (TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null && inline.Modifiers != null)
                 {
-                    AppendModifiers(buffer, inline.Modifiers);
+                    AppendModifiers(buffer, inline.Modifiers, ClampBuffStacks(id, _activeBuffs[i].Stacks));
                 }
             }
         }
 
-        private static void AppendModifiers(List<BuffStatModifierApplication> buffer, BuffStatModifier[] mods)
+        private static void AppendModifiers(List<BuffStatModifierApplication> buffer, BuffStatModifier[] mods,
+            int stacks)
         {
             for (int j = 0; j < mods.Length; j++)
             {
@@ -323,7 +330,7 @@ namespace Neo.Rpg.Runtime
                     m.TargetIdValue,
                     m.SpecificDamageType,
                     m.Value,
-                    1));
+                    stacks));
             }
         }
 
@@ -337,7 +344,12 @@ namespace Neo.Rpg.Runtime
 
             foreach (ActiveBuffEntry e in _activeBuffs)
             {
-                buffs?.Add(new ActiveBuffEntry { BuffId = e.BuffId, ExpiresAtUtc = e.ExpiresAtUtc });
+                buffs?.Add(new ActiveBuffEntry
+                {
+                    BuffId = e.BuffId,
+                    ExpiresAtUtc = e.ExpiresAtUtc,
+                    Stacks = ClampBuffStacks(e.BuffId, e.Stacks)
+                });
             }
 
             foreach (ActiveStatusEntry e in _activeStatuses)
@@ -357,13 +369,55 @@ namespace Neo.Rpg.Runtime
             _statusTickAccumulators.Clear();
             if (buffs != null)
             {
-                _activeBuffs.AddRange(buffs);
+                foreach (ActiveBuffEntry e in buffs)
+                {
+                    if (e == null || string.IsNullOrWhiteSpace(e.BuffId))
+                    {
+                        continue;
+                    }
+
+                    _activeBuffs.Add(new ActiveBuffEntry
+                    {
+                        BuffId = e.BuffId,
+                        ExpiresAtUtc = e.ExpiresAtUtc,
+                        Stacks = ClampBuffStacks(e.BuffId, e.Stacks)
+                    });
+                }
             }
 
             if (statuses != null)
             {
-                _activeStatuses.AddRange(statuses);
+                foreach (ActiveStatusEntry e in statuses)
+                {
+                    if (e == null || string.IsNullOrWhiteSpace(e.StatusId))
+                    {
+                        continue;
+                    }
+
+                    _activeStatuses.Add(new ActiveStatusEntry
+                    {
+                        StatusId = e.StatusId,
+                        ExpiresAtUtc = e.ExpiresAtUtc,
+                        Stacks = e.Stacks
+                    });
+                }
             }
+        }
+
+        private int ClampBuffStacks(string id, int stacks)
+        {
+            int safeStacks = Mathf.Max(1, stacks);
+            if (TryGetBuff(id, out BuffDefinition def) && def != null)
+            {
+                return def.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, def.MaxStacks)) : 1;
+            }
+
+            if (TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null)
+            {
+                return inline.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, inline.MaxStacks)) : 1;
+            }
+
+            return safeStacks;
         }
 
         // ── Internals ──

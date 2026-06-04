@@ -23,6 +23,13 @@
 | `restoreOnAwake` | Restore On Awake. |
 | `true` | True. |
 
+## Runtime контракт
+
+- `Decrease(resourceId, amount)` уменьшает выбранный ресурс, вызывает `OnDamage` при фактическом уроне и `OnDeath` ровно один раз при переходе ресурса из `> 0` в `<= 0`.
+- `OnDeath` работает для любого пула ресурсов, не только для `HP`, поэтому Mana/Stamina/Shield могут иметь собственные depleted-события.
+- `Increase(resourceId, amount)` не лечит ресурс с нуля, если у пула не включен `ignoreCanHeal`.
+- `ResourcePoolModel` остается pure C# ядром без зависимости от Unity scene; `HealthComponent` только синхронизирует inspector-пулы, события и reactive states.
+
 ## См. также
 
 - [Корень модуля](../../README.md)

@@ -1,9 +1,18 @@
-﻿# Documentation Summary (EN)
+# Documentation summary (EN)
 
-- Modules: 25
-- Markdown files in Docs: 464
-- Markdown files in DocsEn: 413
-- Module README mapping: OK (no missing `Docs/*/README.md`, `DocsEn/*/README.md`)
-- Internal markdown links check: OK (broken links: 0)
+Compact navigation for AI agents and programmers:
 
-Checked on: 2026-06-03
+- main EN entry: [README.md](./README.md);
+- main RU entry: [../Docs/README.md](../Docs/README.md);
+- project quick map: [../PROJECT_SUMMARY.md](../PROJECT_SUMMARY.md);
+- before adding a mechanic, check the reuse-first map in those entry files.
+
+Common blocks that already exist:
+
+- `GridSystem` + `Merge` + `Dice` for grids, placement, connected-group merge, and Dice Merge;
+- `AnimationFly` for reward fly UI/world animations;
+- `Cards` for deck/hand/card view workflows, including duplicate-safe operations and lifecycle;
+- `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
+- `Tools` for movement, spawners, timers, input, physics, and view helpers.
+
+Check status: `NeoDoc` links and mojibake scan were refreshed on 2026-06-04.

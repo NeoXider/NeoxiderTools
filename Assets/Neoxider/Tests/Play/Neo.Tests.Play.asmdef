@@ -18,7 +18,8 @@
         "Neo.Tools.View",
         "Neo.Shop",
         "Neo.Reactive",
-        "Neo.Rpg"
+        "Neo.Rpg",
+        "Neo.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

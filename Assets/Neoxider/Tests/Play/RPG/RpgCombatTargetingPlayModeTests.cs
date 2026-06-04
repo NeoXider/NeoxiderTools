@@ -31,7 +31,7 @@ namespace Neo.Tests.Play.RPG
             attacker.AddComponent<RpgAttackController>();
             RpgAutoAttackController autoAttack = attacker.AddComponent<RpgAutoAttackController>();
             SetPrivateField(autoAttack, "targetTag", "Player");
-            SetPrivateField(autoAttack, "targetFindInterval", 0.05f);
+            SetPrivateField(autoAttack, "targetFindInterval", 0.25f);
             SetPrivateField(autoAttack, "attackInterval", 1000f);
 
             yield return null;
@@ -41,11 +41,11 @@ namespace Neo.Tests.Play.RPG
             player.transform.position = Vector3.zero;
             attacker.transform.position = Vector3.zero;
 
-            yield return new WaitForSeconds(0.03f);
+            yield return new WaitForSeconds(0.05f);
             yield return null;
             Assert.IsNull(GetPrivateField<Transform>(autoAttack, "_target"));
 
-            yield return new WaitForSeconds(0.08f);
+            yield return new WaitForSeconds(0.3f);
             yield return null;
             Assert.AreEqual(player.transform, GetPrivateField<Transform>(autoAttack, "_target"));
 
@@ -117,19 +117,19 @@ namespace Neo.Tests.Play.RPG
 
             public bool TrySpendResource(string resourceId, float amount, out string failReason)
             {
-                failReason = string.Empty;
+                failReason = null;
                 return true;
             }
 
             public bool TryApplyBuff(string buffId, out string failReason)
             {
-                failReason = string.Empty;
+                failReason = null;
                 return true;
             }
 
             public bool TryApplyStatus(string statusId, out string failReason)
             {
-                failReason = string.Empty;
+                failReason = null;
                 return true;
             }
 

@@ -53,6 +53,8 @@ MonoBehaviour:
   _music: {fileID: 3241006007560494323}
   _musicClips: []
   _sounds: []
+  _useRandomMusic: 0
+  _randomMusicTracks: []
 --- !u!114 &4442224029750033861
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -71,12 +73,25 @@ MonoBehaviour:
   EfxVolume: EfxVolume
   MasterVolume: MasterVolume
   MusicVolume: MusicVolume
-  OnMuteEfx:
-    m_PersistentCalls:
-      m_Calls: []
-  OnMuteMusic:
-    m_PersistentCalls:
-      m_Calls: []
+  MuteEfx:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  MuteMusic:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  MuteMaster:
+    _value: 0
+    _onChanged:
+      m_PersistentCalls:
+        m_Calls: []
+  persistVolume: 1
+  saveKeyMaster: Neo.Audio.AMSettings.MasterVolume
+  saveKeyMusic: Neo.Audio.AMSettings.MusicVolume
+  saveKeyEfx: Neo.Audio.AMSettings.EfxVolume
   startEfxVolume: 1
   startMusicVolume: 0.5
 --- !u!1 &8035219944115291451
@@ -122,6 +137,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: -7671028037875789662, guid: 0754ed7d80b973b409d9564a9a20dbea, type: 2}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 1
   m_Volume: 0.7
   m_Pitch: 1
@@ -250,6 +266,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 6154996088633166871, guid: 0754ed7d80b973b409d9564a9a20dbea, type: 2}
   m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
   m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1

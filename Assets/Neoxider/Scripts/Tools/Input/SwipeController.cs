@@ -84,7 +84,7 @@ namespace Neo.Tools
             }
         }
 
-        internal static void ResetStaticStateForRuntime()
+        public static void ResetStaticStateForRuntime()
         {
             instance = null;
         }

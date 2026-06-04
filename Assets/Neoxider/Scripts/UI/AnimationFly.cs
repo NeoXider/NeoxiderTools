@@ -5,6 +5,7 @@ using DG.Tweening;
 using Neo.Tools;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 namespace Neo
@@ -22,6 +23,20 @@ namespace Neo
         Auto = 0,
         World = 1,
         Canvas = 2
+    }
+
+    public enum AnimationFlyCompletionMode
+    {
+        Destroy = 0,
+        DisableAndPool = 1,
+        KeepAlive = 2
+    }
+
+    public enum AnimationFlyRewardTiming
+    {
+        Manual = 0,
+        OnEachArrived = 1,
+        OnAllArrived = 2
     }
 
     [CreateFromMenu("Neoxider/UI/AnimationFly")]
@@ -73,6 +88,10 @@ namespace Neo
         [Tooltip("If true, UI fly objects use RectTransform.anchoredPosition instead of world DOMove.")]
         public bool useAnchoredPositionForUI = true;
 
+        [Tooltip("Depth used when converting screen/canvas points to world positions and no target depth is known.")]
+        [Min(0.01f)]
+        public float defaultScreenToWorldDepth = 10f;
+
         [Header("Spawn")] [Tooltip("Parent object for bonus spawn")]
         public Transform spawnParent;
 
@@ -81,6 +100,13 @@ namespace Neo
 
         [Tooltip("Destroy spawned objects after the fly reaches the target.")]
         public bool destroyOnComplete = true;
+
+        [Tooltip("Default completion behavior for the typed request API.")]
+        public AnimationFlyCompletionMode defaultCompletionMode = AnimationFlyCompletionMode.Destroy;
+
+        [Tooltip("Maximum pooled objects retained per prefab/sprite key when using DisableAndPool.")]
+        [Min(0)]
+        public int maxPoolPerKey = 64;
 
         [Header("Motion")] [Tooltip("Random offset applied to every start position.")]
         public Vector3 startRandomOffset;
@@ -98,6 +124,7 @@ namespace Neo
 
         public bool useUnscaledTime;
         private readonly Dictionary<int, BonusPrefabData> _prefabDict = new();
+        private readonly Dictionary<UnityEngine.Object, Stack<GameObject>> _pool = new();
         private Camera _cachedFallbackCamera;
 
         protected override void Init()
@@ -131,6 +158,92 @@ namespace Neo
         public void RefreshPrefabCache()
         {
             FillDictionary();
+        }
+
+        public AnimationFlyResult Play(AnimationFlyRequest request)
+        {
+            if (request == null)
+            {
+                NeoDiagnostics.LogWarning("[AnimationFly] Request is missing.", this);
+                return AnimationFlyResult.Empty;
+            }
+
+            if (!TryResolveVisual(request, out GameObject prefab, out Sprite sprite, out UnityEngine.Object poolKey))
+            {
+                return AnimationFlyResult.Empty;
+            }
+
+            Transform parent = request.Parent ?? spawnParent;
+            AnimationFlySpawnSpace resolvedSpawnSpace = ResolveSpawnSpace(parent, prefab, sprite, request.SpawnSpace);
+            AnimationFlyCoordinateSpace startSpace = ResolveCoordinateSpace(request.StartSpace, request.StartTransform);
+            AnimationFlyCoordinateSpace endSpace = ResolveCoordinateSpace(request.EndSpace, request.EndTransform);
+
+            Vector3 rawStart = request.StartTransform != null ? request.StartTransform.position : request.StartPosition;
+            Vector3 rawEnd = request.EndTransform != null ? request.EndTransform.position : request.EndPosition;
+
+            float? startDepth = null;
+            float? endDepth = null;
+            Camera camera = ResolveCamera(ResolveCanvas(parent));
+            if (camera != null)
+            {
+                if (endSpace == AnimationFlyCoordinateSpace.World)
+                {
+                    startDepth = Mathf.Max(0.01f, camera.WorldToScreenPoint(rawEnd).z);
+                }
+
+                if (startSpace == AnimationFlyCoordinateSpace.World)
+                {
+                    endDepth = Mathf.Max(0.01f, camera.WorldToScreenPoint(rawStart).z);
+                }
+            }
+
+            Vector3 resolvedStart = ResolvePosition(rawStart, startSpace, resolvedSpawnSpace, parent,
+                request.StartTransform, startDepth);
+            Vector3 resolvedEnd = ResolvePosition(rawEnd, endSpace, resolvedSpawnSpace, parent,
+                request.EndTransform, endDepth);
+
+            int finalCount = Mathf.CeilToInt(request.Count * request.CountMultiplier * countMultiplier);
+            finalCount = Mathf.Clamp(finalCount, 0, request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
+            if (finalCount <= 0)
+            {
+                return AnimationFlyResult.Empty;
+            }
+
+            var result = new AnimationFlyResult(finalCount);
+            StartCoroutine(AnimationRoutine(request, prefab, sprite, poolKey, finalCount, resolvedStart, resolvedEnd,
+                parent, resolvedSpawnSpace, result));
+            return result;
+        }
+
+        public AnimationFlyResult PlaySprite(Sprite sprite, int count, Transform start, Transform end,
+            Transform parent = null, Action onReward = null)
+        {
+            return Play(new AnimationFlyRequest
+            {
+                Sprite = sprite,
+                Count = count,
+                StartTransform = start,
+                EndTransform = end,
+                Parent = parent,
+                OnReward = onReward
+            });
+        }
+
+        public AnimationFlyResult PlaySpriteWorldToCanvas(Sprite sprite, int count, Transform worldStart,
+            RectTransform canvasEnd, Transform parent = null, Action onReward = null)
+        {
+            return Play(new AnimationFlyRequest
+            {
+                Sprite = sprite,
+                Count = count,
+                StartTransform = worldStart,
+                EndTransform = canvasEnd,
+                StartSpace = AnimationFlyCoordinateSpace.World,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                Parent = parent,
+                OnReward = onReward
+            });
         }
 
         public void Execute(int type, int bonusCount, Vector3 start, Action<GameObject> onStart = null,
@@ -313,6 +426,7 @@ namespace Neo
                 Vector3 endPos = end + RandomOffset(endRandomOffset);
 
                 GameObject bonus = Instantiate(prefab, parent);
+                ResetVisualForFlight(bonus);
                 SetInitialPosition(bonus.transform, startPos, resolvedSpawnSpace);
                 if (setAsLastSibling)
                 {
@@ -356,7 +470,9 @@ namespace Neo
                             RotateMode.FastBeyond360)
                         .SetRelative()
                         .SetEase(Ease.Linear)
-                        .SetUpdate(useUnscaledTime);
+                        .SetUpdate(useUnscaledTime)
+                        .SetTarget(bonus.transform)
+                        .SetLink(bonus);
                 }
 
                 if (useUnscaledTime)
@@ -370,6 +486,91 @@ namespace Neo
             }
         }
 
+        private IEnumerator AnimationRoutine(AnimationFlyRequest request, GameObject prefab, Sprite sprite,
+            UnityEngine.Object poolKey, int bonusCount, Vector3 start, Vector3 end, Transform parent,
+            AnimationFlySpawnSpace resolvedSpawnSpace, AnimationFlyResult result)
+        {
+            if (ignoreZ)
+            {
+                start.z = 0f;
+                end.z = 0f;
+            }
+
+            AnimationFlyCompletionMode completionMode = request.CompletionMode ?? defaultCompletionMode;
+            for (int i = 0; i < bonusCount; i++)
+            {
+                Vector3 startPos = start + RandomOffset(request.StartRandomOffset ?? startRandomOffset);
+                Vector3 endPos = end + RandomOffset(request.EndRandomOffset ?? endRandomOffset);
+
+                GameObject bonus = SpawnVisual(prefab, sprite, poolKey, parent, resolvedSpawnSpace);
+                ResetVisualForFlight(bonus);
+                SetInitialPosition(bonus.transform, startPos, resolvedSpawnSpace);
+                if (setAsLastSibling)
+                {
+                    bonus.transform.SetAsLastSibling();
+                }
+
+                bonus.transform.localScale *= request.ScaleMultiplier ?? scaleMult;
+                result.RegisterStarted(bonus);
+                request.OnItemStarted?.Invoke(bonus);
+
+                Vector3 arcPoint = BuildArcPoint(startPos, endPos, request.MiddleRandomOffset ?? middleRandomOffset);
+                Tween moveTween = CreateMoveTween(bonus.transform, arcPoint, flyDuration / 2f, resolvedSpawnSpace);
+                moveTween.SetEase(easyStart).SetUpdate(useUnscaledTime)
+                    .OnComplete(() =>
+                    {
+                        Tween endTween = CreateMoveTween(bonus.transform, endPos, flyDuration / 2f, resolvedSpawnSpace);
+                        endTween.SetEase(easyEnd).SetUpdate(useUnscaledTime)
+                            .OnComplete(() =>
+                            {
+                                request.OnItemArrived?.Invoke(bonus);
+                                if (request.RewardTiming == AnimationFlyRewardTiming.OnEachArrived)
+                                {
+                                    request.OnReward?.Invoke();
+                                }
+
+                                result.RegisterCompleted(bonus);
+                                CompleteVisual(bonus, poolKey, completionMode);
+                                if (result.IsCompleted)
+                                {
+                                    if (request.RewardTiming == AnimationFlyRewardTiming.OnAllArrived)
+                                    {
+                                        request.OnReward?.Invoke();
+                                    }
+
+                                    request.OnAllArrived?.Invoke();
+                                }
+                            });
+                    });
+
+                if (rotateDuringFlight)
+                {
+                    bonus.transform.DORotate(new Vector3(0f, 0f, rotationDegrees), flyDuration,
+                            RotateMode.FastBeyond360)
+                        .SetRelative()
+                        .SetEase(Ease.Linear)
+                        .SetUpdate(useUnscaledTime)
+                        .SetTarget(bonus.transform)
+                        .SetLink(bonus);
+                }
+
+                yield return useUnscaledTime
+                    ? new WaitForSecondsRealtime(delayBetweenBonuses)
+                    : new WaitForSeconds(delayBetweenBonuses);
+            }
+        }
+
+        private Vector3 BuildArcPoint(Vector3 startPos, Vector3 endPos, Vector3 randomOffset)
+        {
+            var arcPoint = Vector3.Lerp(startPos, endPos, middlePoint);
+            arcPoint += new Vector3(
+                Random.Range(-arcStrength, arcStrength),
+                Random.Range(arcStrength * multY, arcStrength),
+                Random.Range(-arcStrength, arcStrength));
+            arcPoint += RandomOffset(randomOffset);
+            return arcPoint;
+        }
+
         private Tween CreateMoveTween(Transform target, Vector3 position, float duration,
             AnimationFlySpawnSpace resolvedSpawnSpace)
         {
@@ -377,13 +578,17 @@ namespace Neo
                 target is RectTransform rect)
             {
                 return DOTween.To(
-                    () => rect.anchoredPosition,
-                    value => rect.anchoredPosition = value,
-                    new Vector2(position.x, position.y),
-                    duration);
+                        () => rect.anchoredPosition,
+                        value => rect.anchoredPosition = value,
+                        new Vector2(position.x, position.y),
+                        duration)
+                    .SetTarget(rect)
+                    .SetLink(rect.gameObject);
             }
 
-            return target.DOMove(position, duration);
+            return target.DOMove(position, duration)
+                .SetTarget(target)
+                .SetLink(target.gameObject);
         }
 
         private void SetInitialPosition(Transform target, Vector3 position, AnimationFlySpawnSpace resolvedSpawnSpace)
@@ -398,8 +603,43 @@ namespace Neo
             target.position = position;
         }
 
+        private static void ResetVisualForFlight(GameObject instance)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            KillVisualTweens(instance);
+            AnimationFlyVisualState state = instance.GetComponent<AnimationFlyVisualState>();
+            if (state == null)
+            {
+                state = instance.AddComponent<AnimationFlyVisualState>();
+                state.BaseLocalScale = instance.transform.localScale;
+                state.BaseLocalRotation = instance.transform.localRotation;
+            }
+
+            instance.transform.localScale = state.BaseLocalScale;
+            instance.transform.localRotation = state.BaseLocalRotation;
+        }
+
+        private static void KillVisualTweens(GameObject instance)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            instance.transform.DOKill();
+            if (instance.transform is RectTransform rect)
+            {
+                rect.DOKill();
+            }
+        }
+
         private Vector3 ResolvePosition(Vector3 position, AnimationFlyCoordinateSpace sourceSpace,
-            AnimationFlySpawnSpace targetSpace, Transform parent, Transform sourceTransform = null)
+            AnimationFlySpawnSpace targetSpace, Transform parent, Transform sourceTransform = null,
+            float? worldDepth = null)
         {
             sourceSpace = ResolveCoordinateSpace(sourceSpace, sourceTransform);
 
@@ -414,10 +654,11 @@ namespace Neo
                 return sourceSpace switch
                 {
                     AnimationFlyCoordinateSpace.World => WorldToCanvasLocalPosition(position, canvas,
-                        ResolveCamera(canvas)),
+                        ResolveCamera(canvas), parent),
                     AnimationFlyCoordinateSpace.Screen => ScreenToCanvasLocalPosition(position, canvas,
-                        ResolveCamera(canvas)),
-                    AnimationFlyCoordinateSpace.Canvas => CanvasLocalPosition(position, canvas, sourceTransform),
+                        ResolveCamera(canvas), parent),
+                    AnimationFlyCoordinateSpace.Canvas => CanvasLocalPosition(position, canvas, sourceTransform,
+                        parent),
                     _ => position
                 };
             }
@@ -425,8 +666,8 @@ namespace Neo
             return sourceSpace switch
             {
                 AnimationFlyCoordinateSpace.Canvas => CanvasToWorldPosition(position, sourceTransform,
-                    ResolveCanvas(parent)),
-                AnimationFlyCoordinateSpace.Screen => ScreenToWorldPosition(position, ResolveCamera(null)),
+                    ResolveCanvas(parent), worldDepth),
+                AnimationFlyCoordinateSpace.Screen => ScreenToWorldPosition(position, ResolveCamera(null), worldDepth),
                 _ => position
             };
         }
@@ -446,9 +687,16 @@ namespace Neo
 
         private AnimationFlySpawnSpace ResolveSpawnSpace(Transform parent, GameObject prefab)
         {
-            if (spawnSpace != AnimationFlySpawnSpace.Auto)
+            return ResolveSpawnSpace(parent, prefab, null, AnimationFlySpawnSpace.Auto);
+        }
+
+        private AnimationFlySpawnSpace ResolveSpawnSpace(Transform parent, GameObject prefab, Sprite sprite,
+            AnimationFlySpawnSpace configured)
+        {
+            AnimationFlySpawnSpace requested = configured != AnimationFlySpawnSpace.Auto ? configured : spawnSpace;
+            if (requested != AnimationFlySpawnSpace.Auto)
             {
-                return spawnSpace;
+                return requested;
             }
 
             if (parent != null && parent.GetComponentInParent<Canvas>() != null)
@@ -456,7 +704,7 @@ namespace Neo
                 return AnimationFlySpawnSpace.Canvas;
             }
 
-            return prefab != null && prefab.GetComponent<RectTransform>() != null
+            return sprite != null || prefab != null && prefab.GetComponent<RectTransform>() != null
                 ? AnimationFlySpawnSpace.Canvas
                 : AnimationFlySpawnSpace.World;
         }
@@ -513,7 +761,8 @@ namespace Neo
                 Random.Range(-Mathf.Abs(maxAbs.z), Mathf.Abs(maxAbs.z)));
         }
 
-        private Vector3 CanvasLocalPosition(Vector3 position, Canvas canvas, Transform sourceTransform)
+        private Vector3 CanvasLocalPosition(Vector3 position, Canvas canvas, Transform sourceTransform,
+            Transform targetParent)
         {
             if (!(sourceTransform is RectTransform rect) || canvas == null)
             {
@@ -521,7 +770,8 @@ namespace Neo
             }
 
             Canvas sourceCanvas = rect.GetComponentInParent<Canvas>();
-            if (sourceCanvas == canvas)
+            RectTransform targetRect = ResolveTargetRect(canvas, targetParent);
+            if (sourceCanvas == canvas && rect.parent == targetRect)
             {
                 return rect.anchoredPosition3D;
             }
@@ -530,10 +780,11 @@ namespace Neo
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(
                 sourceCanvas != null && sourceCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : sourceCamera,
                 rect.position);
-            return ScreenToCanvasLocalPosition(screenPoint, canvas, ResolveCamera(canvas));
+            return ScreenToCanvasLocalPosition(screenPoint, canvas, ResolveCamera(canvas), targetParent);
         }
 
-        private Vector3 CanvasToWorldPosition(Vector3 position, Transform sourceTransform, Canvas fallbackCanvas)
+        private Vector3 CanvasToWorldPosition(Vector3 position, Transform sourceTransform, Canvas fallbackCanvas,
+            float? worldDepth = null)
         {
             if (sourceTransform is RectTransform rect)
             {
@@ -542,13 +793,14 @@ namespace Neo
                 Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(
                     sourceCanvas != null && sourceCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : camera,
                     rect.position);
-                return ScreenToWorldPosition(screenPoint, camera);
+                return ScreenToWorldPosition(screenPoint, camera, worldDepth);
             }
 
-            return CanvasToWorldPosition(position, fallbackCanvas, ResolveCamera(fallbackCanvas));
+            return CanvasToWorldPosition(position, fallbackCanvas, ResolveCamera(fallbackCanvas), worldDepth);
         }
 
-        private static Vector3 WorldToCanvasLocalPosition(Vector3 worldPosition, Canvas canvas, Camera camera)
+        private static Vector3 WorldToCanvasLocalPosition(Vector3 worldPosition, Canvas canvas, Camera camera,
+            Transform targetParent = null)
         {
             if (canvas == null)
             {
@@ -556,37 +808,186 @@ namespace Neo
             }
 
             Vector2 screenPoint = RectTransformUtility.WorldToScreenPoint(camera, worldPosition);
-            return ScreenToCanvasLocalPosition(screenPoint, canvas, camera);
+            return ScreenToCanvasLocalPosition(screenPoint, canvas, camera, targetParent);
         }
 
-        private static Vector3 ScreenToCanvasLocalPosition(Vector3 screenPosition, Canvas canvas, Camera camera)
+        private static Vector3 ScreenToCanvasLocalPosition(Vector3 screenPosition, Canvas canvas, Camera camera,
+            Transform targetParent = null)
         {
             if (canvas == null)
             {
                 return screenPosition;
             }
 
-            var canvasRect = canvas.transform as RectTransform;
+            RectTransform canvasRect = ResolveTargetRect(canvas, targetParent);
             Camera eventCamera = canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : camera;
             RectTransformUtility.ScreenPointToLocalPointInRectangle(canvasRect, screenPosition, eventCamera,
                 out Vector2 localPoint);
             return localPoint;
         }
 
-        private static Vector3 ScreenToWorldPosition(Vector3 screenPosition, Camera camera)
+        private static RectTransform ResolveTargetRect(Canvas canvas, Transform targetParent)
+        {
+            if (targetParent is RectTransform targetRect)
+            {
+                return targetRect;
+            }
+
+            return canvas != null ? canvas.transform as RectTransform : null;
+        }
+
+        private static Vector3 ScreenToWorldPosition(Vector3 screenPosition, Camera camera, float? worldDepth = null)
         {
             if (camera == null)
             {
                 return screenPosition;
             }
 
-            float z = screenPosition.z;
+            float z = worldDepth ?? screenPosition.z;
             if (Mathf.Approximately(z, 0f))
             {
-                z = Mathf.Abs(camera.transform.position.z);
+                z = HasInstance ? I.defaultScreenToWorldDepth : Mathf.Abs(camera.transform.position.z);
             }
 
             return camera.ScreenToWorldPoint(new Vector3(screenPosition.x, screenPosition.y, z));
+        }
+
+        private bool TryResolveVisual(AnimationFlyRequest request, out GameObject prefab, out Sprite sprite,
+            out UnityEngine.Object poolKey)
+        {
+            prefab = request.Prefab;
+            sprite = request.Sprite;
+
+            if (prefab == null && request.Type.HasValue)
+            {
+                if (_prefabDict.TryGetValue(request.Type.Value, out BonusPrefabData data))
+                {
+                    prefab = data.prefab;
+                    if (request.EndTransform == null && data.endPos != null)
+                    {
+                        request.EndTransform = data.endPos;
+                    }
+                }
+                else
+                {
+                    NeoDiagnostics.LogWarning($"[AnimationFly] No prefab for bonus type {request.Type.Value}", this);
+                }
+            }
+
+            poolKey = prefab != null ? prefab : sprite;
+            if (poolKey != null)
+            {
+                return true;
+            }
+
+            NeoDiagnostics.LogWarning("[AnimationFly] Request has neither prefab, sprite, nor known type.", this);
+            return false;
+        }
+
+        private GameObject SpawnVisual(GameObject prefab, Sprite sprite, UnityEngine.Object poolKey, Transform parent,
+            AnimationFlySpawnSpace resolvedSpawnSpace)
+        {
+            if (TryTakeFromPool(poolKey, parent, out GameObject pooled))
+            {
+                pooled.SetActive(true);
+                return pooled;
+            }
+
+            if (prefab != null)
+            {
+                return Instantiate(prefab, parent);
+            }
+
+            GameObject go = new("AnimationFlySprite");
+            if (parent != null)
+            {
+                go.transform.SetParent(parent, false);
+            }
+
+            if (resolvedSpawnSpace == AnimationFlySpawnSpace.Canvas)
+            {
+                var rect = go.AddComponent<RectTransform>();
+                rect.sizeDelta = sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
+                Image image = go.AddComponent<Image>();
+                image.sprite = sprite;
+                image.raycastTarget = false;
+            }
+            else
+            {
+                SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
+                renderer.sprite = sprite;
+            }
+
+            return go;
+        }
+
+        private bool TryTakeFromPool(UnityEngine.Object key, Transform parent, out GameObject instance)
+        {
+            instance = null;
+            if (key == null || !_pool.TryGetValue(key, out Stack<GameObject> stack))
+            {
+                return false;
+            }
+
+            while (stack.Count > 0)
+            {
+                instance = stack.Pop();
+                if (instance == null)
+                {
+                    continue;
+                }
+
+                if (parent != null)
+                {
+                    instance.transform.SetParent(parent, false);
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
+        private void CompleteVisual(GameObject instance, UnityEngine.Object poolKey, AnimationFlyCompletionMode mode)
+        {
+            if (instance == null)
+            {
+                return;
+            }
+
+            switch (mode)
+            {
+                case AnimationFlyCompletionMode.KeepAlive:
+                    break;
+                case AnimationFlyCompletionMode.DisableAndPool:
+                    KillVisualTweens(instance);
+                    instance.SetActive(false);
+                    if (poolKey == null || maxPoolPerKey <= 0)
+                    {
+                        Destroy(instance);
+                        break;
+                    }
+
+                    if (!_pool.TryGetValue(poolKey, out Stack<GameObject> stack))
+                    {
+                        stack = new Stack<GameObject>();
+                        _pool.Add(poolKey, stack);
+                    }
+
+                    if (stack.Count < maxPoolPerKey)
+                    {
+                        stack.Push(instance);
+                    }
+                    else
+                    {
+                        Destroy(instance);
+                    }
+
+                    break;
+                default:
+                    Destroy(instance);
+                    break;
+            }
         }
 
         public GameObject GetPrefab(int type)
@@ -611,7 +1012,8 @@ namespace Neo
             return null;
         }
 
-        public static Vector3 CanvasToWorldPosition(Vector2 uiPosition, Canvas canvas = null, Camera camera = null)
+        public static Vector3 CanvasToWorldPosition(Vector2 uiPosition, Canvas canvas = null, Camera camera = null,
+            float? worldDepth = null)
         {
             canvas = canvas ?? I.parentCanvas;
             if (canvas == null)
@@ -636,6 +1038,11 @@ namespace Neo
                 uiPosition,
                 camera,
                 out worldPos);
+            if (camera != null && worldDepth.HasValue)
+            {
+                worldPos = camera.ScreenToWorldPoint(new Vector3(uiPosition.x, uiPosition.y, worldDepth.Value));
+            }
+
             return worldPos;
         }
 
@@ -672,6 +1079,95 @@ namespace Neo
         private static Camera ResolveStaticFallbackCamera()
         {
             return HasInstance ? I.ResolveFallbackCamera() : Camera.main;
+        }
+
+        [Serializable]
+        public sealed class AnimationFlyRequest
+        {
+            public int? Type;
+            public GameObject Prefab;
+            public Sprite Sprite;
+            public int Count = 1;
+            public int MaxCount;
+            public float CountMultiplier = 1f;
+            public Transform StartTransform;
+            public Transform EndTransform;
+            public Vector3 StartPosition;
+            public Vector3 EndPosition;
+            public AnimationFlyCoordinateSpace StartSpace = AnimationFlyCoordinateSpace.Auto;
+            public AnimationFlyCoordinateSpace EndSpace = AnimationFlyCoordinateSpace.Auto;
+            public AnimationFlySpawnSpace SpawnSpace = AnimationFlySpawnSpace.Auto;
+            public Transform Parent;
+            public AnimationFlyCompletionMode? CompletionMode;
+            public AnimationFlyRewardTiming RewardTiming = AnimationFlyRewardTiming.OnAllArrived;
+            public Action<GameObject> OnItemStarted;
+            public Action<GameObject> OnItemArrived;
+            public Action OnAllArrived;
+            public Action OnReward;
+            public Vector3? StartRandomOffset;
+            public Vector3? EndRandomOffset;
+            public Vector3? MiddleRandomOffset;
+            public float? ScaleMultiplier;
+
+            public static AnimationFlyRequest FromPrefab(GameObject prefab, int count, Transform start, Transform end)
+            {
+                return new AnimationFlyRequest
+                {
+                    Prefab = prefab,
+                    Count = count,
+                    StartTransform = start,
+                    EndTransform = end
+                };
+            }
+
+            public static AnimationFlyRequest FromSprite(Sprite sprite, int count, Transform start, Transform end)
+            {
+                return new AnimationFlyRequest
+                {
+                    Sprite = sprite,
+                    Count = count,
+                    StartTransform = start,
+                    EndTransform = end
+                };
+            }
+        }
+
+        public sealed class AnimationFlyResult
+        {
+            public static readonly AnimationFlyResult Empty = new(0);
+            private readonly List<GameObject> _activeItems = new();
+
+            public AnimationFlyResult(int totalCount)
+            {
+                TotalCount = Mathf.Max(0, totalCount);
+            }
+
+            public int TotalCount { get; }
+            public int StartedCount { get; private set; }
+            public int CompletedCount { get; private set; }
+            public bool IsCompleted => CompletedCount >= TotalCount;
+            public IReadOnlyList<GameObject> ActiveItems => _activeItems;
+
+            internal void RegisterStarted(GameObject item)
+            {
+                StartedCount++;
+                if (item != null)
+                {
+                    _activeItems.Add(item);
+                }
+            }
+
+            internal void RegisterCompleted(GameObject item)
+            {
+                CompletedCount++;
+                _activeItems.Remove(item);
+            }
+        }
+
+        private sealed class AnimationFlyVisualState : MonoBehaviour
+        {
+            public Vector3 BaseLocalScale = Vector3.one;
+            public Quaternion BaseLocalRotation = Quaternion.identity;
         }
 
         [Serializable]

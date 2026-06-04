@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using Neo.Cards;
 using Neo.Cards.Poker;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.Events;
 
 namespace Neo.Editor.Tests
 {
@@ -206,6 +209,214 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void HandModel_RemoveAt_WithDuplicateData_RemovesIndexedCardAndKeepsOrder()
+        {
+            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            var middle = new CardData(Suit.Clubs, Rank.Seven);
+            var hand = new HandModel();
+            hand.Add(duplicate);
+            hand.Add(middle);
+            hand.Add(duplicate);
+
+            CardData removed = hand.RemoveAt(2);
+
+            Assert.AreEqual(duplicate, removed);
+            CollectionAssert.AreEqual(new[] { duplicate, middle }, hand.Cards.ToList());
+        }
+
+        [Test]
+        public void HandPresenter_RemoveAt_WithDuplicateData_RemovesIndexedPresenterAndKeepsOrder()
+        {
+            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            var middle = new CardData(Suit.Clubs, Rank.Seven);
+            DeckConfig config = ScriptableObject.CreateInstance<DeckConfig>();
+            var handViewObject = new GameObject("HandView");
+            var firstObject = new GameObject("FirstPresenterView");
+            var secondObject = new GameObject("MiddlePresenterView");
+            var thirdObject = new GameObject("IndexedPresenterView");
+
+            try
+            {
+                HandView handView = handViewObject.AddComponent<HandView>();
+                var presenter = new HandPresenter(new HandModel(), handView);
+                CardPresenter first = CreatePresenter(duplicate, config, firstObject);
+                CardPresenter second = CreatePresenter(middle, config, secondObject);
+                CardPresenter third = CreatePresenter(duplicate, config, thirdObject);
+
+                InvokeUniTaskMethod(presenter, nameof(HandPresenter.AddCardAsync), first, false);
+                InvokeUniTaskMethod(presenter, nameof(HandPresenter.AddCardAsync), second, false);
+                InvokeUniTaskMethod(presenter, nameof(HandPresenter.AddCardAsync), third, false);
+
+                InvokeUniTaskMethod(presenter, nameof(HandPresenter.RemoveAtAsync), 2, false);
+
+                Assert.AreSame(first, presenter.CardPresenters[0]);
+                Assert.AreSame(second, presenter.CardPresenters[1]);
+                CollectionAssert.AreEqual(new[] { duplicate, middle }, presenter.Model.Cards.ToList());
+                CollectionAssert.AreEqual(new[] { first.View, second.View }, handView.CardViews.ToList());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(thirdObject);
+                UnityEngine.Object.DestroyImmediate(secondObject);
+                UnityEngine.Object.DestroyImmediate(firstObject);
+                UnityEngine.Object.DestroyImmediate(handViewObject);
+                UnityEngine.Object.DestroyImmediate(config);
+            }
+        }
+
+        [Test]
+        public void HandComponent_RemoveAt_WithDuplicateData_RemovesIndexedComponentAndKeepsOrder()
+        {
+            var duplicate = new CardData(Suit.Hearts, Rank.Ace);
+            var middle = new CardData(Suit.Clubs, Rank.Seven);
+            var handObject = new GameObject("Hand");
+            var firstObject = new GameObject("FirstDuplicate");
+            var secondObject = new GameObject("Middle");
+            var thirdObject = new GameObject("IndexedDuplicate");
+
+            try
+            {
+                HandComponent hand = handObject.AddComponent<HandComponent>();
+                SetPrivateField(hand, "_maxCards", 36);
+                CardComponent first = firstObject.AddComponent<CardComponent>();
+                CardComponent second = secondObject.AddComponent<CardComponent>();
+                CardComponent third = thirdObject.AddComponent<CardComponent>();
+                InitializeCardEvents(first);
+                InitializeCardEvents(second);
+                InitializeCardEvents(third);
+                first.SetData(duplicate);
+                second.SetData(middle);
+                third.SetData(duplicate);
+
+                InvokeUniTaskMethod(hand, nameof(HandComponent.AddCardAsync), first, false);
+                InvokeUniTaskMethod(hand, nameof(HandComponent.AddCardAsync), second, false);
+                InvokeUniTaskMethod(hand, nameof(HandComponent.AddCardAsync), third, false);
+
+                Assert.AreEqual(3, hand.Count, "Test setup should add all cards before removing by index.");
+
+                InvokeUniTaskMethod(hand, nameof(HandComponent.RemoveAtAsync), 2, false);
+
+                Assert.AreSame(first, hand.Cards[0]);
+                Assert.AreSame(second, hand.Cards[1]);
+                CollectionAssert.AreEqual(new[] { duplicate, middle }, hand.Model.Cards.ToList());
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(thirdObject);
+                UnityEngine.Object.DestroyImmediate(secondObject);
+                UnityEngine.Object.DestroyImmediate(firstObject);
+                UnityEngine.Object.DestroyImmediate(handObject);
+            }
+        }
+
+        [Test]
+        public void HandComponent_RemoveCard_PreservesExternalCardClickListeners()
+        {
+            var handObject = new GameObject("Hand");
+            var cardObject = new GameObject("CardWithExternalListener");
+
+            try
+            {
+                HandComponent hand = handObject.AddComponent<HandComponent>();
+                CardComponent card = cardObject.AddComponent<CardComponent>();
+                InitializeCardEvents(card);
+                card.SetData(new CardData(Suit.Spades, Rank.Queen));
+
+                int externalClicks = 0;
+                int handClicks = 0;
+                card.OnClick.AddListener(() => externalClicks++);
+                hand.OnCardClicked.AddListener(_ => handClicks++);
+
+                InvokeUniTaskMethod(hand, nameof(HandComponent.AddCardAsync), card, false);
+                card.OnClick.Invoke();
+
+                Assert.AreEqual(1, externalClicks);
+                Assert.AreEqual(1, handClicks);
+
+                InvokeUniTaskMethod(hand, nameof(HandComponent.RemoveCardAsync), card, false);
+                card.OnClick.Invoke();
+
+                Assert.AreEqual(2, externalClicks, "Removing from a hand must not clear user-owned listeners.");
+                Assert.AreEqual(1, handClicks, "The hand should remove only its own click listener.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(cardObject);
+                UnityEngine.Object.DestroyImmediate(handObject);
+            }
+        }
+
+        [Test]
+        public void DeckComponent_InitializeTwice_UnsubscribesOldModelEmptyEvent()
+        {
+            var deckObject = new GameObject("Deck");
+            DeckConfig config = ScriptableObject.CreateInstance<DeckConfig>();
+
+            try
+            {
+                DeckComponent deck = deckObject.AddComponent<DeckComponent>();
+                SetPrivateField(deck, "_config", config);
+                SetPrivateField(deck, "_shuffleOnStart", false);
+
+                int emptyEvents = 0;
+                deck.OnDeckEmpty = new UnityEvent();
+                deck.OnDeckEmpty.AddListener(() => emptyEvents++);
+
+                deck.Initialize();
+                DeckModel oldModel = deck.Model;
+                Assert.That(oldModel, Is.Not.Null);
+
+                deck.Initialize();
+                Assert.That(deck.Model, Is.Not.SameAs(oldModel));
+
+                oldModel.Draw(oldModel.RemainingCount);
+
+                Assert.That(emptyEvents, Is.EqualTo(0),
+                    "Replacing DeckComponent.Model must detach events from the old model.");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(config);
+                UnityEngine.Object.DestroyImmediate(deckObject);
+            }
+        }
+
+        [Test]
+        public void CardViews_HoverTweens_AreOwnedAndClearedOnExit()
+        {
+            var viewObject = new GameObject("CardView");
+            var universalObject = new GameObject("CardViewUniversal");
+
+            try
+            {
+                CardView view = viewObject.AddComponent<CardView>();
+                CardViewUniversal universal = universalObject.AddComponent<CardViewUniversal>();
+                var pointer = new PointerEventData(null);
+
+                ((IPointerEnterHandler)view).OnPointerEnter(pointer);
+                Assert.That(GetPrivateField<object>(view, "_hoverScaleTween"), Is.Not.Null);
+                Assert.That(GetPrivateField<object>(view, "_hoverMoveTween"), Is.Not.Null);
+
+                ((IPointerExitHandler)view).OnPointerExit(pointer);
+                Assert.That(GetPrivateField<object>(view, "_hoverScaleTween"), Is.Not.Null);
+                Assert.That(GetPrivateField<object>(view, "_hoverMoveTween"), Is.Not.Null);
+
+                ((IPointerEnterHandler)universal).OnPointerEnter(pointer);
+                Assert.That(GetPrivateField<object>(universal, "_hoverScaleTween"), Is.Not.Null);
+                Assert.That(GetPrivateField<object>(universal, "_hoverMoveTween"), Is.Not.Null);
+
+                ((IPointerExitHandler)universal).OnPointerExit(pointer);
+                Assert.That(GetPrivateField<object>(universal, "_hoverScaleTween"), Is.Not.Null);
+                Assert.That(GetPrivateField<object>(universal, "_hoverMoveTween"), Is.Not.Null);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(universalObject);
+                UnityEngine.Object.DestroyImmediate(viewObject);
+            }
+        }
+
+        [Test]
         public void PokerEvaluator_RejectsHandsWithFewerThanFiveNonJokers()
         {
             CardData[] cards = new[]
@@ -272,6 +483,49 @@ namespace Neo.Editor.Tests
             };
 
             CollectionAssert.AreEqual(new[] { 0, 1 }, PokerRules.GetWinnersTexasHoldem(board, players));
+        }
+
+        private static CardPresenter CreatePresenter(CardData data, DeckConfig config, GameObject viewObject)
+        {
+            CardView view = viewObject.AddComponent<CardView>();
+            var presenter = new CardPresenter(view, config);
+            presenter.SetData(data);
+            return presenter;
+        }
+
+        private static void InvokeUniTaskMethod(object target, string methodName, params object[] arguments)
+        {
+            MethodInfo method = target.GetType().GetMethod(methodName);
+            Assert.IsNotNull(method, $"{target.GetType().Name}.{methodName} should exist.");
+            Assert.DoesNotThrow(() =>
+            {
+                object task = method.Invoke(target, arguments);
+                object awaiter = task.GetType().GetMethod("GetAwaiter").Invoke(task, null);
+                awaiter.GetType().GetMethod("GetResult").Invoke(awaiter, null);
+            });
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, $"{target.GetType().Name}.{fieldName} should exist.");
+            return (T)field.GetValue(target);
+        }
+
+        private static void SetPrivateField(object target, string fieldName, object value)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.IsNotNull(field, $"{target.GetType().Name}.{fieldName} should exist.");
+            field.SetValue(target, value);
+        }
+
+        private static void InitializeCardEvents(CardComponent card)
+        {
+            card.OnClick = new UnityEvent();
+            card.OnFlip = new UnityEvent();
+            card.OnMoveComplete = new UnityEvent();
+            card.OnHoverEnter = new UnityEvent();
+            card.OnHoverExit = new UnityEvent();
         }
     }
 }

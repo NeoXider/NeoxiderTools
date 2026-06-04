@@ -64,6 +64,9 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 | Progression | XP, уровни, perk tree, unlock tree, persistent progression | [Progression](Assets/Neoxider/Docs/Progression/README.md) |
 | Quest | Конфиги квестов, цели, менеджер, no-code actions, runtime state | [Quest](Assets/Neoxider/Docs/Quest/README.md) |
 | StateMachine | Runtime state machine и no-code transition predicates | [StateMachine](Assets/Neoxider/Docs/StateMachine/README.md) |
+| Merge | Pure C# connected-group merge engine для сеток, инвентарей, списков и custom graphs | [Merge](Assets/Neoxider/Docs/Merge/README.md) |
+| GridSystem | Field generation, placement, Dice, Match3, TicTacToe, SlidingMerge | [GridSystem](Assets/Neoxider/Docs/GridSystem/README.md) |
+| Cards | Deck/hand/board runtime, custom decks/views, poker, Drunkard sample | [Cards](Assets/Neoxider/Docs/Cards/README.md) |
 | Network | Опциональные Mirror wrappers и no-code network action/sync bridges | [Network guide](Assets/Neoxider/Docs/Network/Multiplayer_Guide.md) |
 | Tools | Movement, свободный полет камеры, physics, timers, spawners, interaction, text, managers, view helpers | [Tools](Assets/Neoxider/Docs/Tools/README.md) |
 | Extensions | 300+ extension-методов для C# и Unity API | [Extensions](Assets/Neoxider/Docs/Extensions/README.md) |

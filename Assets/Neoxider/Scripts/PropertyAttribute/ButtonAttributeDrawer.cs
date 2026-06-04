@@ -1,4 +1,5 @@
-﻿using System;
+#if UNITY_EDITOR
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using UnityEditor;
@@ -7,7 +8,6 @@ using Object = UnityEngine.Object;
 
 namespace Neo
 {
-#if UNITY_EDITOR
     [CustomPropertyDrawer(typeof(ButtonAttribute))]
     public class ButtonAttributeDrawer : PropertyDrawer
     {
@@ -16,21 +16,17 @@ namespace Neo
 
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Get the method info
             MethodInfo methodInfo = GetMethodInfo(property);
             if (methodInfo == null)
             {
                 return;
             }
 
-            // Get the attribute
             var buttonAttribute = (ButtonAttribute)attribute;
 
-            // Calculate button height
             float buttonHeight = EditorGUIUtility.singleLineHeight;
             float totalHeight = buttonHeight;
 
-            // Draw parameter fields
             ParameterInfo[] parameters = methodInfo.GetParameters();
             foreach (ParameterInfo param in parameters)
             {
@@ -38,27 +34,23 @@ namespace Neo
                 Rect paramRect = new(position.x, position.y + buttonHeight, position.width,
                     EditorGUIUtility.singleLineHeight);
 
-                // Initialize default value if not set
                 if (!_parameterValues.ContainsKey(param.Name))
                 {
                     _parameterValues[param.Name] = GetDefaultValue(param.ParameterType);
                     _parameterTypes[param.Name] = param.ParameterType;
                 }
 
-                // Draw appropriate field based on parameter type
                 _parameterValues[param.Name] = DrawParameterField(paramRect, param.Name, _parameterValues[param.Name],
                     param.ParameterType);
                 buttonHeight += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             }
 
-            // Draw the button
             Rect buttonRect = new(position.x, position.y + totalHeight - buttonHeight, position.width,
                 buttonHeight);
             string buttonText = GetButtonText(methodInfo, buttonAttribute);
 
             if (GUI.Button(buttonRect, buttonText))
             {
-                // Call the method with parameters
                 object[] paramValues = new object[parameters.Length];
                 for (int i = 0; i < parameters.Length; i++)
                 {
@@ -172,7 +164,5 @@ namespace Neo
             return null;
         }
     }
-#else
-    public class ButtonAttributeDrawer : MonoBehaviour { }
-#endif
 }
+#endif

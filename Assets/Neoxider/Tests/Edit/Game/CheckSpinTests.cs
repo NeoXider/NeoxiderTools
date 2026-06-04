@@ -1,5 +1,6 @@
 using Neo.Bonus;
 using NUnit.Framework;
+using System.Reflection;
 using UnityEngine;
 
 namespace Neo.Editor.Tests
@@ -98,6 +99,81 @@ namespace Neo.Editor.Tests
             finally
             {
                 Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void SpinController_PaidSpinWithoutMoneySpend_IsRejected()
+        {
+            GameObject go = new("SpinControllerPaidWithoutMoney");
+            try
+            {
+                SpinController controller = go.AddComponent<SpinController>();
+                SetSpinPrice(controller, 10);
+
+                Assert.That(controller.TryPayForSpin(), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void SpinController_PaidSpinWithMoneySpend_Spends()
+        {
+            GameObject go = new("SpinControllerPaidWithMoney");
+            try
+            {
+                SpinController controller = go.AddComponent<SpinController>();
+                var money = new FakeMoneySpend();
+                controller.moneySpend = money;
+                SetSpinPrice(controller, 15);
+
+                Assert.That(controller.TryPayForSpin(), Is.True);
+                Assert.That(money.SpendCalls, Is.EqualTo(1));
+                Assert.That(money.LastAmount, Is.EqualTo(15f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        [Test]
+        public void SpinController_FreeSpinWithoutMoneySpend_IsAllowed()
+        {
+            GameObject go = new("SpinControllerFreeWithoutMoney");
+            try
+            {
+                SpinController controller = go.AddComponent<SpinController>();
+                SetSpinPrice(controller, 0);
+
+                Assert.That(controller.TryPayForSpin(), Is.True);
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+            }
+        }
+
+        private static void SetSpinPrice(SpinController controller, int price)
+        {
+            typeof(SpinController)
+                .GetField("price", BindingFlags.NonPublic | BindingFlags.Instance)
+                ?.SetValue(controller, price);
+        }
+
+        private sealed class FakeMoneySpend : IMoneySpend
+        {
+            public int SpendCalls { get; private set; }
+            public float LastAmount { get; private set; }
+
+            public bool Spend(float count)
+            {
+                SpendCalls++;
+                LastAmount = count;
+                return true;
             }
         }
     }

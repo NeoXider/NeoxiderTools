@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using Neo.Core.Level;
+using Neo.Reactive;
 using NUnit.Framework;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -322,6 +323,57 @@ namespace Neo.Core.Tests
             }
         }
 
+        [Test]
+        public void LevelComponent_SetLevel_WhenUseXp_SyncsTotalXpToLevelThreshold()
+        {
+            var host = new GameObject("LevelComponent_SetLevel_WhenUseXp_SyncsTotalXpToLevelThreshold");
+            try
+            {
+                LevelComponent component = host.AddComponent<LevelComponent>();
+                SetPrivateField(component, "_loadOnAwake", false);
+
+                component.SetLevel(5);
+
+                Assert.That(component.Level, Is.EqualTo(5));
+                Assert.That(component.TotalXp, Is.EqualTo(400));
+                Assert.That(component.XpToNextLevel, Is.EqualTo(200));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
+        [Test]
+        public void LevelNoCodeAction_AddXp_DoesNotRaiseLevelUpWhenLevelUnchanged()
+        {
+            var host = new GameObject("LevelNoCodeAction_AddXp_DoesNotRaiseLevelUpWhenLevelUnchanged");
+            try
+            {
+                LevelComponent component = host.AddComponent<LevelComponent>();
+                SetPrivateField(component, "_loadOnAwake", false);
+                component.EnsureInitialized();
+
+                LevelNoCodeAction action = host.AddComponent<LevelNoCodeAction>();
+                SetPrivateField(action, "_levelProvider", component);
+                SetPrivateField(action, "_actionType", LevelNoCodeActionType.AddXp);
+                SetPrivateField(action, "_xpAmount", 1);
+
+                int levelUpCount = 0;
+                UnityEventInt onLevelUp = GetPrivateField<UnityEventInt>(action, "_onLevelUp");
+                onLevelUp.AddListener(_ => levelUpCount++);
+
+                action.Execute();
+
+                Assert.That(component.Level, Is.EqualTo(1));
+                Assert.That(levelUpCount, Is.EqualTo(0));
+            }
+            finally
+            {
+                Object.DestroyImmediate(host);
+            }
+        }
+
         // --- Consistency: EvaluateLevel(GetRequiredXpForLevel(L)) >= L ---
         [Test]
         public void Formula_Linear_Consistency_RequiredXpRoundTrip()
@@ -386,6 +438,13 @@ namespace Neo.Core.Tests
             FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(fieldInfo, Is.Not.Null, $"Field '{fieldName}' not found on {target.GetType().Name}");
             fieldInfo.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo fieldInfo = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(fieldInfo, Is.Not.Null, $"Field '{fieldName}' not found on {target.GetType().Name}");
+            return (T)fieldInfo.GetValue(target);
         }
     }
 }

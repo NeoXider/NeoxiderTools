@@ -4,6 +4,7 @@ using System.Reflection;
 using Neo.Core.Resources;
 using Neo.Rpg;
 using Neo.Rpg.Components;
+using Neo.Rpg.Runtime;
 using Neo.Tools;
 using NUnit.Framework;
 using UnityEngine;
@@ -118,6 +119,187 @@ namespace Neo.Tests.Edit.RPG
             }
         }
 
+        [Test]
+        public void EffectShelf_StackableBuff_ClampsProjectsAndCopiesStacks()
+        {
+            BuffDefinition buff = CreateBuff("rage", new[]
+            {
+                CreateModifier(BuffStatType.DamagePercent, 10f)
+            });
+
+            try
+            {
+                SetPrivateField(buff, "_stackable", true);
+                SetPrivateField(buff, "_maxStacks", 2);
+
+                var shelf = new RpgEffectShelf();
+                shelf.ApplyBuff(buff);
+                shelf.ApplyBuff(buff);
+                shelf.ApplyBuff(buff);
+                shelf.ActiveBuffs[0].Stacks = 99;
+                shelf.ApplyBuff(buff);
+
+                Assert.That(shelf.ActiveBuffs, Has.Count.EqualTo(1));
+                Assert.That(shelf.ActiveBuffs[0].Stacks, Is.EqualTo(2));
+
+                var modifiers = new List<BuffStatModifierApplication>();
+                shelf.BuildModifierApplications(modifiers);
+                Assert.That(modifiers, Has.Count.EqualTo(1));
+                Assert.That(modifiers[0].Stacks, Is.EqualTo(2));
+
+                float multiplier = RpgCombatMath.GetOutgoingDamageMultiplier(shelf.ActiveBuffs, Resolve(buff));
+                Assert.That(multiplier, Is.EqualTo(1.2f).Within(0.001f));
+
+                var copiedBuffs = new List<ActiveBuffEntry>();
+                shelf.CopyActiveEffectsTo(copiedBuffs, null);
+                Assert.That(copiedBuffs[0].Stacks, Is.EqualTo(2));
+                copiedBuffs[0].Stacks = 1;
+                Assert.That(shelf.ActiveBuffs[0].Stacks, Is.EqualTo(2));
+
+                var restored = new RpgEffectShelf();
+                restored.RegisterBuffLibrary(new[] { buff });
+                restored.RestoreActiveEffects(new[]
+                {
+                    new ActiveBuffEntry { BuffId = "rage", ExpiresAtUtc = 123d, Stacks = 99 }
+                }, null);
+                Assert.That(restored.ActiveBuffs[0].Stacks, Is.EqualTo(2));
+
+                float restoredMultiplier = RpgCombatMath.GetOutgoingDamageMultiplier(restored.ActiveBuffs,
+                    Resolve(buff));
+                Assert.That(restoredMultiplier, Is.EqualTo(1.2f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(buff);
+            }
+        }
+
+        [Test]
+        public void AttackController_PresetWithoutRequiredTarget_DoesNotSpendCost()
+        {
+            GameObject source = new("RpgPresetSource");
+            RpgAttackDefinition attack = CreateAttack("costly", 5f);
+            RpgAttackPreset preset = CreatePreset("requires-target", attack, true);
+
+            try
+            {
+                var receiver = source.AddComponent<TestCombatReceiver>();
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+
+                bool used = controller.TryUsePreset(preset, out string failReason);
+
+                Assert.That(used, Is.False);
+                Assert.That(failReason, Is.Not.Null);
+                Assert.That(receiver.SpendCalls, Is.EqualTo(0));
+            }
+            finally
+            {
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(attack);
+                Object.DestroyImmediate(preset);
+            }
+        }
+
+        [Test]
+        public void AttackController_ApplyHit_UsesCustomCombatReceiver()
+        {
+            GameObject source = new("RpgHitSource");
+            GameObject target = new("RpgHitTarget");
+            RpgAttackDefinition attack = CreateAttack("direct", 0f);
+
+            try
+            {
+                source.AddComponent<TestCombatReceiver>();
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+                var receiver = target.AddComponent<TestCombatReceiver>();
+                SetPrivateField(attack, "_power", 3f);
+
+                bool applied = InvokeInternal<bool>(controller, "ApplyHitToGameObject", target, attack);
+
+                Assert.That(applied, Is.True);
+                Assert.That(receiver.DamageCalls, Is.EqualTo(1));
+                Assert.That(receiver.CurrentHp, Is.EqualTo(7f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(target);
+                Object.DestroyImmediate(attack);
+            }
+        }
+
+        [Test]
+        public void Projectile_InitializeAgain_ResetsLifetimeAndHitDedupeState()
+        {
+            GameObject ownerObject = new("ProjectileOwner");
+            GameObject projectileObject = new("ReusableProjectile");
+            GameObject targetObject = new("PreviousTarget");
+            RpgAttackDefinition attack = CreateAttack("projectile", 0f);
+
+            try
+            {
+                RpgAttackController owner = ownerObject.AddComponent<RpgAttackController>();
+                RpgProjectile projectile = projectileObject.AddComponent<RpgProjectile>();
+                TestCombatReceiver receiver = targetObject.AddComponent<TestCombatReceiver>();
+                SetPrivateField(attack, "_projectileLifetime", 3.5f);
+                SetPrivateField(attack, "_projectileMaxHits", 2);
+
+                SetPrivateField(projectile, "_elapsed", 99f);
+                GetPrivateField<HashSet<GameObject>>(projectile, "_hitTargets").Add(targetObject);
+                GetPrivateField<HashSet<IRpgCombatReceiver>>(projectile, "_hitReceivers").Add(receiver);
+
+                projectile.Initialize(owner, attack, null, Vector3.right);
+
+                Assert.That(GetPrivateField<float>(projectile, "_elapsed"), Is.EqualTo(0f));
+                Assert.That(GetPrivateField<HashSet<GameObject>>(projectile, "_hitTargets"), Is.Empty);
+                Assert.That(GetPrivateField<HashSet<IRpgCombatReceiver>>(projectile, "_hitReceivers"), Is.Empty);
+                Assert.That(GetPrivateField<int>(projectile, "_remainingHits"), Is.EqualTo(2));
+                Assert.That(GetPrivateField<float>(projectile, "_lifetime"), Is.EqualTo(3.5f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(targetObject);
+                Object.DestroyImmediate(projectileObject);
+                Object.DestroyImmediate(ownerObject);
+                Object.DestroyImmediate(attack);
+            }
+        }
+
+        [Test]
+        public void AttackController_ApplyHit_DeduplicatesByCombatReceiver()
+        {
+            GameObject source = new("RpgHitSource");
+            GameObject root = new("RpgHitTargetRoot");
+            GameObject child = new("RpgHitTargetChild");
+            RpgAttackDefinition attack = CreateAttack("direct", 0f);
+            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
+
+            try
+            {
+                source.AddComponent<TestCombatReceiver>();
+                RpgAttackController controller = source.AddComponent<RpgAttackController>();
+                var receiver = root.AddComponent<TestCombatReceiver>();
+                child.transform.SetParent(root.transform);
+                SetPrivateField(attack, "_power", 3f);
+
+                bool firstApplied = InvokeInternal<bool>(controller, "ApplyHitToGameObject", root, attack,
+                    affectedReceivers);
+                bool secondApplied = InvokeInternal<bool>(controller, "ApplyHitToGameObject", child, attack,
+                    affectedReceivers);
+
+                Assert.That(firstApplied, Is.True);
+                Assert.That(secondApplied, Is.False);
+                Assert.That(receiver.DamageCalls, Is.EqualTo(1));
+                Assert.That(receiver.CurrentHp, Is.EqualTo(7f).Within(0.001f));
+            }
+            finally
+            {
+                Object.DestroyImmediate(source);
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(attack);
+            }
+        }
+
         private static Func<string, BuffDefinition> Resolve(params BuffDefinition[] buffs)
         {
             return id => Array.Find(buffs, buff => buff != null && buff.Id == id);
@@ -163,12 +345,125 @@ namespace Neo.Tests.Edit.RPG
             return go.AddComponent<RpgCharacter>();
         }
 
+        private static RpgAttackDefinition CreateAttack(string id, float cost)
+        {
+            RpgAttackDefinition attack = ScriptableObject.CreateInstance<RpgAttackDefinition>();
+            SetPrivateField(attack, "_id", id);
+            SetPrivateField(attack, "_costAmount", cost);
+            SetPrivateField(attack, "_costResourceId", "Mana");
+            SetPrivateField(attack, "_cooldown", 0f);
+            return attack;
+        }
+
+        private static RpgAttackPreset CreatePreset(string id, RpgAttackDefinition attack, bool requireTarget)
+        {
+            RpgAttackPreset preset = ScriptableObject.CreateInstance<RpgAttackPreset>();
+            SetPrivateField(preset, "_id", id);
+            SetPrivateField(preset, "_attackDefinition", attack);
+            SetPrivateField(preset, "_requireTarget", requireTarget);
+            SetPrivateField(preset, "_useSelectorComponentWhenAvailable", false);
+            return preset;
+        }
+
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null,
                 $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
             field.SetValue(target, value);
+        }
+
+        private static T GetPrivateField<T>(object target, string fieldName)
+        {
+            FieldInfo field = target.GetType().GetField(fieldName, BindingFlags.Instance | BindingFlags.NonPublic);
+            Assert.That(field, Is.Not.Null,
+                $"Field '{fieldName}' was not found on type '{target.GetType().Name}'.");
+            return (T)field.GetValue(target);
+        }
+
+        private static T InvokeInternal<T>(object target, string methodName, params object[] args)
+        {
+            Type[] argumentTypes = new Type[args.Length];
+            for (int i = 0; i < args.Length; i++)
+            {
+                argumentTypes[i] = args[i].GetType();
+            }
+
+            MethodInfo method = target.GetType().GetMethod(
+                methodName,
+                BindingFlags.Instance | BindingFlags.NonPublic,
+                null,
+                argumentTypes,
+                null);
+            Assert.That(method, Is.Not.Null,
+                $"{target.GetType().Name}.{methodName} method was not found.");
+            return (T)method.Invoke(target, args);
+        }
+
+        private sealed class TestCombatReceiver : MonoBehaviour, IRpgCombatReceiver
+        {
+            private float _currentHp = 10f;
+
+            public int SpendCalls { get; private set; }
+            public int DamageCalls { get; private set; }
+            public float CurrentHp => _currentHp;
+            public float MaxHp => 10f;
+            public int Level => 1;
+            public bool IsDead => _currentHp <= 0f;
+            public bool IsInvulnerable => false;
+            public bool CanPerformActions => true;
+
+            public float TakeDamage(RpgDamageInfo info)
+            {
+                DamageCalls++;
+                float amount = Mathf.Max(0f, info.Amount);
+                _currentHp = Mathf.Max(0f, _currentHp - amount);
+                return amount;
+            }
+
+            public float Heal(float amount)
+            {
+                float healed = Mathf.Max(0f, amount);
+                _currentHp = Mathf.Min(MaxHp, _currentHp + healed);
+                return healed;
+            }
+
+            public bool TrySpendResource(string resourceId, float amount, out string failReason)
+            {
+                SpendCalls++;
+                failReason = null;
+                return true;
+            }
+
+            public bool TryApplyBuff(string buffId, out string failReason)
+            {
+                failReason = null;
+                return true;
+            }
+
+            public bool TryApplyStatus(string statusId, out string failReason)
+            {
+                failReason = null;
+                return true;
+            }
+
+            public void AddInvulnerabilityLock()
+            {
+            }
+
+            public void RemoveInvulnerabilityLock()
+            {
+            }
+
+            public float GetOutgoingDamageMultiplier()
+            {
+                return 1f;
+            }
+
+            public float GetMovementSpeedMultiplier()
+            {
+                return 1f;
+            }
         }
     }
 }

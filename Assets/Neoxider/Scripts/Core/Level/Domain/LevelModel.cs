@@ -116,7 +116,7 @@ namespace Neo.Core.Level
             CurrentLevel = level;
             if (UseXp)
             {
-                // Optionally sync totalXp to match level (e.g. set to required for this level)
+                TotalXp = FindMinimumXpForLevel(level);
                 RecomputeLevelAndXpToNext();
             }
             else
@@ -128,6 +128,59 @@ namespace Neo.Core.Level
             {
                 OnLevelChanged?.Invoke(previous, CurrentLevel);
             }
+        }
+
+        private int FindMinimumXpForLevel(int level)
+        {
+            if (level <= 1)
+            {
+                return 0;
+            }
+
+            int high = Math.Max(1, TotalXp);
+            while (EvaluateLevelForXp(high) < level && high < int.MaxValue / 2)
+            {
+                high *= 2;
+            }
+
+            if (EvaluateLevelForXp(high) < level)
+            {
+                high = int.MaxValue;
+            }
+
+            int low = 0;
+            while (low < high)
+            {
+                int mid = low + (high - low) / 2;
+                if (EvaluateLevelForXp(mid) >= level)
+                {
+                    high = mid;
+                }
+                else
+                {
+                    low = mid + 1;
+                }
+            }
+
+            return low;
+        }
+
+        private int EvaluateLevelForXp(int totalXp)
+        {
+            if (_curveDefinition != null)
+            {
+                return _curveDefinition.EvaluateLevel(totalXp, MaxLevel);
+            }
+
+            return LevelCurveEvaluator.EvaluateLevel(
+                totalXp,
+                _curveType,
+                _xpPerLevel,
+                _quadraticBase,
+                _expBase,
+                _expFactor,
+                _customEntries,
+                MaxLevel);
         }
 
         public void SetLevelDirect(int level)

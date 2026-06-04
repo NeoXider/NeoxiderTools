@@ -170,7 +170,7 @@ namespace Neo.Core.Level
         public void SetLevel(int level)
         {
             EnsureInitialized();
-            _model.SetLevelDirect(level);
+            _model.SetLevel(level);
             SyncReactiveFromModel();
         }
 

@@ -1,9 +1,18 @@
-﻿# Сводка документации (RU)
+# Сводка документации (RU)
 
-- Количество модулей: 25
-- Количество Markdown-файлов в Docs: 456
-- Количество Markdown-файлов в DocsEn: 402
-- Маппинг `Docs/*/README.md`: OK (нет пропущенных)
-- Проверка внутренних ссылок: OK (broken links: 0)
+Краткая навигация для AI-агентов и программистов:
 
-Проверка выполнена: 2026-05-26
+- главный вход RU: [README.md](./README.md);
+- главный вход EN: [../DocsEn/README.md](../DocsEn/README.md);
+- компактная карта проекта: [../PROJECT_SUMMARY.md](../PROJECT_SUMMARY.md);
+- перед новой механикой проверяйте reuse map в этих входных файлах.
+
+Особенно часто уже есть готовые блоки:
+
+- `GridSystem` + `Merge` + `Dice` для сеток, placement, connected-group merge и Dice Merge;
+- `AnimationFly` для reward fly UI/world animations;
+- `Cards` для deck/hand/card view workflows, включая duplicate-safe операции и lifecycle;
+- `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` для типовых gameplay systems;
+- `Tools` для movement, spawners, timers, input, physics и view helpers.
+
+Статус проверки: `NeoDoc` ссылки и mojibake scan обновлены на 2026-06-04.

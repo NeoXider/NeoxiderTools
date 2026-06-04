@@ -8,6 +8,9 @@
 - UI-объект летит в UI;
 - UI-объект летит к объекту в мире;
 - объект из мира летит к объекту в мире.
+- можно передать не только prefab, но и `Sprite` через `AnimationFlyRequest` / `PlaySprite...`;
+- можно выбрать, когда начислять награду: вручную, при каждом прилёте или один раз после прилёта всех визуалов;
+- есть встроенный completion policy: destroy, keep alive или disable-and-pool.
 
 ## Подключение
 
@@ -46,6 +49,26 @@ AnimationFly.I.PlayByTypeCanvasToWorld(0, amount, sourceRectTransform, worldTarg
 AnimationFly.I.PlayByTypeWorldToWorld(0, amount, startTransform, endTransform);
 ```
 
+### Sprite без prefab и начисление один раз после прилёта
+
+```csharp
+AnimationFly.I.Play(new AnimationFly.AnimationFlyRequest
+{
+    Sprite = coinSprite,
+    Count = 10,
+    StartTransform = worldPickup,
+    EndTransform = moneyCounterRect,
+    StartSpace = AnimationFlyCoordinateSpace.World,
+    EndSpace = AnimationFlyCoordinateSpace.Canvas,
+    SpawnSpace = AnimationFlySpawnSpace.Canvas,
+    Parent = flyContainer,
+    RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+    OnReward = () => money.Add(10)
+});
+```
+
+Для world -> UI начислений визуал создаётся в Canvas, но стартовая позиция считается через экранную позицию world-объекта и локальные координаты `Parent`. Это важно, если `Parent` — не root Canvas, а смещённый/масштабированный контейнер.
+
 ## Основные поля (Inspector)
 
 | Поле | Описание |
@@ -77,6 +100,8 @@ AnimationFly.I.PlayByTypeWorldToWorld(0, amount, startTransform, endTransform);
 | `rotationDegrees` | Угол вращения за полёт. |
 | `setAsLastSibling` | Поднимать созданный UI-объект поверх соседей. |
 | `destroyOnComplete` | Уничтожать объект после прилёта. Выключите для ручного пула через `onEnd`. |
+| `defaultCompletionMode` | Что делать с объектом после прилёта в typed request API: destroy, keep alive или disable-and-pool. |
+| `maxPoolPerKey` | Максимум объектов в пуле на prefab/sprite key. |
 | `scaleMult` | Множитель масштаба созданного объекта. |
 | `ignoreZ` | Обнулять Z у старта и цели. |
 | `useUnscaledTime` | Использовать unscaled time для паузы/меню. |
@@ -114,6 +139,18 @@ AnimationFly.I.Play(
 ```
 
 `Auto` определяет Canvas по `RectTransform` или наличию `Canvas` в родителях. Если важна предсказуемость, задавайте `World` / `Canvas` явно.
+
+Новый typed API:
+
+- `Play(AnimationFlyRequest request)` — один универсальный вход для prefab, sprite, type, parent, spaces, pooling и reward timing.
+- `PlaySprite(...)` / `PlaySpriteWorldToCanvas(...)` — быстрые методы для иконок без prefab.
+- `AnimationFlyResult` — хранит `TotalCount`, `StartedCount`, `CompletedCount`, `IsCompleted` и активные визуалы.
+
+## Исправленные ограничения
+
+- World/UI и UI/UI конверсия теперь считает позицию в локальном пространстве фактического `spawnParent`, а не root Canvas.
+- `OnReward` может вызываться один раз после всех визуалов, чтобы не начислять награду по числу монет.
+- При `DisableAndPool` объект возвращается во встроенный пул и может переиспользоваться следующим запросом.
 
 ## См. также
 

@@ -49,10 +49,20 @@ def build_tokens(encoding: str) -> set[str]:
 CP1251_TOKENS = build_tokens("cp1251")
 LATIN1_TOKENS = build_tokens("latin1")
 ALL_TOKENS = CP1251_TOKENS | LATIN1_TOKENS
+SYMBOL_MOJIBAKE_TOKENS = {
+    "вЂ",
+    "в„",
+    "в”",
+    "в•",
+    "в–",
+    "в—",
+    "в™",
+    "вњ",
+}
 
 
 def mojibake_score(text: str) -> int:
-    return sum(text.count(token) for token in ALL_TOKENS)
+    return sum(text.count(token) for token in ALL_TOKENS | SYMBOL_MOJIBAKE_TOKENS)
 
 
 def cyrillic_count(text: str) -> int:
@@ -85,7 +95,9 @@ def repair_line_once(line: str) -> tuple[str, bool]:
         candidate_cyrillic = cyrillic_count(candidate)
         improves = candidate_score < best_score
         keeps_language = candidate_cyrillic >= max(1, best_cyrillic // 2)
-        if improves and keeps_language:
+        has_symbol_mojibake = any(token in line for token in SYMBOL_MOJIBAKE_TOKENS)
+        fixes_symbol_mojibake = has_symbol_mojibake and candidate_score < best_score
+        if improves and (keeps_language or fixes_symbol_mojibake):
             best = candidate
             best_score = candidate_score
             best_cyrillic = candidate_cyrillic

@@ -30,6 +30,7 @@ namespace Neo.Tests.Edit
         {
             _controller.SetRotationAngles(90f, 0f);
             _controller.SetExternalMoveInput(Vector3.forward);
+            _controller.SetExternalLookInput(Vector2.zero);
 
             _controller.Tick(0.5f);
 

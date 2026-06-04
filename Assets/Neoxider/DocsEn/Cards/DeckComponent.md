@@ -5,6 +5,7 @@
 ## Setup
 
 - Add the component via the Unity menu.
+- Calling `Initialize()` more than once is safe: the component detaches `OnDeckEmpty` from the previous `DeckModel` before replacing it.
 
 ## Key Fields (Inspector)
 

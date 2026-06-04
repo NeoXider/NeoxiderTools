@@ -27,6 +27,7 @@
 
 #### Публичные методы
 - **`StartSpin()`**: Основной метод для запуска вращения. Проверяет, остановлены ли барабаны, списывает стоимость спина и запускает корутину `StartSpinCoroutine`.
+- **`TryPayForSpin()`**: Проверяет оплату текущей цены. `CurrentSpinPrice <= 0` считается явным бесплатным режимом; положительная цена требует `moneySpend` и успешный `Spend`.
 - **`IsStop()`**: Возвращает `true`, если все барабаны (`Row`) завершили вращение.
 - **`AddLine()` / `RemoveLine()`**: Увеличивает или уменьшает количество активных выигрышных линий.
 - **`SetMaxBet()`**: Устанавливает максимальный размер ставки из `betsData`.
@@ -47,6 +48,7 @@
 - **`Rows`**: ссылки на колонки-барабаны (`Row[]`).
 - **`ActivePaylineCount`** / **`VisibleWindowRows`** / **`BetSelectionIndex`** / **`DelayBetweenColumnSpins`**: управление без инспектора; при смене высоты окна вызываются **`SetSpace()`**, пересчитывается цена (**`SetPrice`**).
 - **`CurrentSpinPrice`**: цена следующего **`StartSpin()`** (после последнего **`SetPrice`**).
+- **Оплата спина**: бесплатный режим задаётся ценой **`0`** или меньше. Если цена положительная, отсутствие **`IMoneySpend`** блокирует запуск, а не превращает спин в бесплатный.
 - **`ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)`**: одним вызовом высота окна, число активных линий и fallback в **`checkSpin`** (**−1** / **−1** у Min/Max = все ряды окна). Внутри вызывает **`CheckSpin.SetFallbackPaylineWindowRows`**.
 - **`WinLinePlayback`**: ссылка на **`WinLineRendererPlayback`** (поля можно менять из кода).
 - **`GetRuntimeSnapshot(refreshMatrices)`**: возвращает **`SpinRuntimeSnapshot`** (см. таблицу ниже). При **`refreshMatrices == true`** и простое барабанов пересобирает **`Elements`** / **`finalVisuals`** перед чтением.

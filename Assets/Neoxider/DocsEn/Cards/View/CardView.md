@@ -29,6 +29,8 @@
 
 Call `SetSpriteOverrides(faceSprite, backSprite)` when the card art comes from a custom TCG/deckbuilder data model instead of `DeckConfig`. `ClearSpriteOverrides()` returns lookup to the assigned `DeckConfig`.
 
+Hover tweens are owned by the view: repeated hover/exit kills previous tweens, and destroying the GameObject clears active hover motion.
+
 ## See Also
 
 - [Module Root](../README.md)

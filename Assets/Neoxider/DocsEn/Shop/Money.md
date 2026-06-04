@@ -44,6 +44,11 @@ if (success) {
     // Purchase successful
 }
 
+MoneySpendResult result = Money.I.TrySpend(50f);
+if (result.IsConfirmed) {
+    // The spend has already been applied.
+}
+
 // Set balance (persists when persistence is on)
 Money.I.SetMoney(500f);
 // Alias for UnityEvent / buttons:
@@ -62,6 +67,10 @@ Money.I.ReloadBalanceFromSave();
 To display the balance in the UI, it is recommended to use the `TextMoney` component.
 
 **NoCode / UnityEvent:** wire `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()`, and `ReloadBalanceFromSave()` to `UnityEvent`. `Spend(float)` returns `bool`, so regular `Button.onClick` does not list it; use `SpendFromButton(float)` for buttons. Use `Spend(float)` from code when you need the success/fail result.
+
+`Spend(float)` rejects negative amounts. Use `TrySpend(float)` when code needs the exact reason: it returns `MoneySpendResult` with `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds`, or `RequestedServerAuthority`.
+
+In Mirror networked client-only mode, local code must not treat a spend as a confirmed purchase. `CanSpend(float)` is a local snapshot/precheck, not an authority decision. `Shop` grants items/bundles only when the spend is confirmed locally/server-side; pending server authority is not treated as a local failure and does not run a local grant.
 
 ## See Also
 

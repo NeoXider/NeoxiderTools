@@ -407,7 +407,7 @@ namespace Neo.Shop
             }
 
             IMoneySpend money = ResolveCurrency(data.CurrencyOverrideSaveKey);
-            if (money != null && money.Spend(price))
+            if (TrySpendCurrency(money, price, out bool pendingServerAuthority))
             {
                 if (data.isSinglePurchase)
                 {
@@ -425,6 +425,11 @@ namespace Neo.Shop
                 }
 
                 ShowPreview(itemId);
+                return;
+            }
+
+            if (pendingServerAuthority)
+            {
                 return;
             }
 
@@ -471,8 +476,13 @@ namespace Neo.Shop
             IMoneySpend money = ResolveCurrency(bundle.CurrencyOverrideSaveKey);
 
             bool needsSpend = price > 0f;
-            if (needsSpend && (money == null || !money.Spend(price)))
+            if (needsSpend && !TrySpendCurrency(money, price, out bool pendingServerAuthority))
             {
+                if (pendingServerAuthority)
+                {
+                    return;
+                }
+
                 OnPurchaseFailedId?.Invoke(bundleId);
                 return;
             }
@@ -917,6 +927,30 @@ namespace Neo.Shop
             }
 
             return _defaultMoney ?? Money.I;
+        }
+
+        private static bool TrySpendCurrency(IMoneySpend money, float price, out bool pendingServerAuthority)
+        {
+            pendingServerAuthority = false;
+            if (money == null)
+            {
+                return false;
+            }
+
+            if (money is IMoneySpendWithResult moneyWithResult)
+            {
+                if (money is IMoneySpendAuthority authority && !authority.CanConfirmSpendNow(price))
+                {
+                    pendingServerAuthority = true;
+                    return false;
+                }
+
+                MoneySpendResult result = moneyWithResult.TrySpend(price);
+                pendingServerAuthority = result.IsPendingServerAuthority;
+                return result.IsConfirmed;
+            }
+
+            return money.Spend(price);
         }
 
         private ShopItemData ResolveItemDataById(string itemId)

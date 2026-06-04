@@ -21,6 +21,7 @@ namespace Neo.Rpg
     {
         [SerializeField] private string _buffId = string.Empty;
         [SerializeField] private double _expiresAtUtc;
+        [SerializeField] private int _stacks = 1;
 
         public string BuffId
         {
@@ -32,6 +33,12 @@ namespace Neo.Rpg
         {
             get => _expiresAtUtc;
             set => _expiresAtUtc = value;
+        }
+
+        public int Stacks
+        {
+            get => _stacks;
+            set => _stacks = Mathf.Max(1, value);
         }
 
         public double RemainingSeconds => Math.Max(0, _expiresAtUtc - RpgTimeUtility.GetCurrentUnixTimestamp());

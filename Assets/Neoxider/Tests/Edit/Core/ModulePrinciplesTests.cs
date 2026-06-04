@@ -105,6 +105,46 @@ namespace Neo.Editor.Tests
             Assert.That(offenders, Is.Empty, "Package text files must stay valid UTF-8 without mojibake.");
         }
 
+        [Test]
+        public void RuntimeModules_DoNotImportUnityEditorOutsideEditorGuards()
+        {
+            List<string> offenders = new();
+
+            foreach (string file in Directory.GetFiles(RuntimeRoot, "*.cs", SearchOption.AllDirectories))
+            {
+                string normalized = file.Replace('\\', '/');
+                if (normalized.Contains("/Editor/"))
+                {
+                    continue;
+                }
+
+                string[] lines = File.ReadAllLines(file);
+                int editorGuardDepth = 0;
+
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    string trimmed = lines[i].Trim();
+                    if (trimmed.StartsWith("#if") && trimmed.Contains("UNITY_EDITOR"))
+                    {
+                        editorGuardDepth++;
+                    }
+                    else if (trimmed.StartsWith("#endif") && editorGuardDepth > 0)
+                    {
+                        editorGuardDepth--;
+                    }
+
+                    if (editorGuardDepth == 0 &&
+                        (trimmed.Contains("using UnityEditor") || trimmed.Contains("UnityEditor.")))
+                    {
+                        offenders.Add($"{normalized}:{i + 1}: {trimmed}");
+                    }
+                }
+            }
+
+            Assert.That(offenders, Is.Empty,
+                "Runtime modules must guard UnityEditor API behind #if UNITY_EDITOR or move code to an Editor asmdef.");
+        }
+
         private static bool IsTrackedTextExtension(string extension)
         {
             foreach (string tracked in TextFileExtensions)

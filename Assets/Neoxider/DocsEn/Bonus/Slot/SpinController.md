@@ -32,6 +32,7 @@
 | `BetSelectionIndex` | Index into `betsData.bets`. |
 | `DelayBetweenColumnSpins` | Delay between column spin starts. |
 | `CurrentSpinPrice` | Price basis for next `StartSpin`. |
+| `TryPayForSpin()` | Pays the current spin price. Price `<= 0` is explicit free mode; positive prices require `moneySpend` and a successful `Spend`. |
 | `ConfigureSlotRuntime(visibleWindowRows, activePaylineCount, fallbackMin, fallbackMax)` | Batch: window height + active lines + fallback row range in `checkSpin` (-1 / -1 = full visible window). Ignored while spinning (`IsStop()` required). |
 | `WinLinePlayback` | Mutable `WinLineRendererPlayback` settings. |
 | `GetRuntimeSnapshot(refresh)` | `SpinRuntimeSnapshot` struct (idle, sizes, prices, fallback resolved, win copy). |

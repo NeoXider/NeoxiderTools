@@ -19,7 +19,7 @@ namespace Neo.Shop
 #if MIRROR
     [RequireComponent(typeof(NetworkIdentity))]
 #endif
-    public class Money : NetworkSingleton<Money>, IMoneySpend, IMoneyAdd, INeoOptionalNetworked
+    public class Money : NetworkSingleton<Money>, IMoneySpendAuthority, IMoneyAdd, INeoOptionalNetworked
     {
         /// <inheritdoc />
         bool INeoOptionalNetworked.IsNetworked => isNetworked;
@@ -160,27 +160,42 @@ namespace Neo.Shop
         [Button]
         public bool Spend(float amount)
         {
-            if (CanSpend(amount))
+            return TrySpend(amount).IsConfirmed;
+        }
+
+        public MoneySpendResult TrySpend(float amount)
+        {
+            float balanceBefore = CurrentMoney.CurrentValue;
+            if (amount < 0f)
             {
-#if MIRROR
-                if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
-                {
-                    CmdMoneyOp(MoneyOp.Spend, amount);
-                    return true;
-                }
-#endif
-                SpendLocal(amount);
-#if MIRROR
-                if (isNetworked && NeoNetworkState.IsServer)
-                {
-                    SyncBalance();
-                    RpcMoneyOp(MoneyOp.Spend, amount);
-                }
-#endif
-                return true;
+                return new MoneySpendResult(MoneySpendStatus.RejectedInvalidAmount, amount, balanceBefore,
+                    balanceBefore);
             }
 
-            return false;
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsClient && !NeoNetworkState.IsServer)
+            {
+                CmdMoneyOp(MoneyOp.Spend, amount);
+                return new MoneySpendResult(MoneySpendStatus.RequestedServerAuthority, amount, balanceBefore,
+                    balanceBefore);
+            }
+#endif
+            if (!CanSpend(amount))
+            {
+                return new MoneySpendResult(MoneySpendStatus.RejectedInsufficientFunds, amount, balanceBefore,
+                    balanceBefore);
+            }
+
+            SpendLocal(amount);
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsServer)
+            {
+                SyncBalance();
+                RpcMoneyOp(MoneyOp.Spend, amount);
+            }
+#endif
+
+            return new MoneySpendResult(MoneySpendStatus.Confirmed, amount, balanceBefore, CurrentMoney.CurrentValue);
         }
 
         public void SpendFromButton(float amount)
@@ -391,7 +406,21 @@ namespace Neo.Shop
 
         public bool CanSpend(float count)
         {
-            return CurrentMoney.CurrentValue >= count;
+            return count >= 0f && CurrentMoney.CurrentValue >= count;
+        }
+
+        public bool CanConfirmSpendNow(float count)
+        {
+            if (!CanSpend(count))
+            {
+                return false;
+            }
+
+#if MIRROR
+            return !isNetworked || !NeoNetworkState.IsClientOnly;
+#else
+            return true;
+#endif
         }
 
         private void ApplyMoneyToText()

@@ -184,6 +184,11 @@ namespace Neo.Cards
                 return;
             }
 
+            if (Model != null)
+            {
+                Model.OnDeckEmpty -= HandleDeckEmpty;
+            }
+
             Model = new DeckModel();
             Model.OnDeckEmpty += HandleDeckEmpty;
             Model.Initialize(_config.GenerateDeck(), _shuffleOnStart);

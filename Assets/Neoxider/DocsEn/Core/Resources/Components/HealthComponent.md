@@ -23,6 +23,13 @@
 | `restoreOnAwake` | Restore On Awake. |
 | `true` | True. |
 
+## Runtime Contract
+
+- `Decrease(resourceId, amount)` reduces the selected pool, raises `OnDamage` for actual damage, and raises `OnDeath` exactly once when the resource crosses from `> 0` to `<= 0`.
+- `OnDeath` works for any resource pool, not only `HP`, so Mana/Stamina/Shield can have their own depleted events.
+- `Increase(resourceId, amount)` does not heal a zero-value resource unless the pool has `ignoreCanHeal` enabled.
+- `ResourcePoolModel` remains the pure C# core; `HealthComponent` synchronizes inspector pools, UnityEvents, and reactive states.
+
 ## See Also
 
 - [Module Root](../../README.md)

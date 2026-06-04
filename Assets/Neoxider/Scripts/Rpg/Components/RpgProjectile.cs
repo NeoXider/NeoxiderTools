@@ -18,6 +18,7 @@ namespace Neo.Rpg
         [SerializeField] private UnityEvent _onExpired = new();
 
         private readonly HashSet<GameObject> _hitTargets = new();
+        private readonly HashSet<IRpgCombatReceiver> _hitReceivers = new();
         private RpgAttackDefinition _definition;
         private Vector3 _direction = Vector3.forward;
         private float _elapsed;
@@ -61,6 +62,9 @@ namespace Neo.Rpg
             _definition = definition;
             _sourceReceiver = sourceReceiver;
             _direction = direction.sqrMagnitude > 0f ? direction.normalized : Vector3.forward;
+            _elapsed = 0f;
+            _hitTargets.Clear();
+            _hitReceivers.Clear();
             _speed = definition.ProjectileSpeed;
             _lifetime = definition.ProjectileLifetime;
             _remainingHits = definition.ProjectileMaxHits;
@@ -109,7 +113,19 @@ namespace Neo.Rpg
 
         private void TryHitTarget(GameObject target)
         {
-            if (target == null || !_hitTargets.Add(target))
+            if (target == null)
+            {
+                return;
+            }
+
+            if (RpgAttackController.TryResolveReceiver(target, out IRpgCombatReceiver receiver))
+            {
+                if (!_hitReceivers.Add(receiver))
+                {
+                    return;
+                }
+            }
+            else if (!_hitTargets.Add(target))
             {
                 return;
             }

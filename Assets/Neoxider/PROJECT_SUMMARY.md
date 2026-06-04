@@ -1,6 +1,6 @@
-﻿# NeoxiderTools Project Summary
+# NeoxiderTools Project Summary
 
-Краткая актуальная сводка по пакету `NeoxiderTools` для разработчика и мейнтейнера.
+Краткая карта пакета `NeoxiderTools` для разработчика, мейнтейнера и AI-агента. Цель: быстро понять, какие готовые runtime API, MonoBehaviour-обертки, sample-сцены и docs уже есть, прежде чем писать новую механику.
 
 ## Статус пакета
 
@@ -34,9 +34,36 @@ Assets/Neoxider/
 - **Grid games**: `FieldGenerator` для формы/координат/cell state/pathfinding, `GridPlacementEntry` / `GridPlacementResult` / `PlaceContentFootprint` для multi-cell placement, `GridMergeResolver` для connected-group merge, `DiceBoardService` для Dice Merge, плюс Match3, TicTacToe и SlidingMerge слои.
 - **Generic merge**: `Neo.Merge` - pure C# connected-group merge engine без привязки к Unity scene/Grid.
 - **General-purpose tools**: `Tools/Inventory`, `Tools/Spawner`, `Tools/Move` (включая `FreeFlyCameraController`), `Tools/Dialogue`, `Tools/Input`, `Tools/Time`.
-- **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `SetProgress` → TMP / Slider / Image), `PropertyAttribute`, UnityEvent-driven components.
+- **No-code / Inspector workflows**: `Condition`, **`Neo.NoCode`** (`NoCodeBindText`, `SetProgress` -> TMP / Slider / Image), `PropertyAttribute`, UnityEvent-driven components.
 - **Editor support**: custom inspectors, creation menus, maintenance windows.
 - **Optional sample module**: `Samples~/NeoxiderPages`.
+
+## Reuse-first map
+
+Перед новой реализацией проверьте эти готовые блоки:
+
+| Если нужно | Уже есть | Где смотреть |
+|------------|----------|--------------|
+| Сетка, shape mask, координаты, disabled/walkable/occupied cells | `FieldGenerator`, `GridShapeMask`, `FieldDebugDrawer` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
+| Multi-cell размещение фигур/предметов | `GridPlacementEntry`, `GridPlacementResult`, `FieldGenerator.CanPlaceContentFootprint`, `PlaceContentFootprint` | [`Docs/GridSystem/FieldGenerator.md`](./Docs/GridSystem/FieldGenerator.md) |
+| Merge одинаковых связанных элементов | `Neo.Merge.MergeResolver`, `MergeRequest<TItem,TValue>`, `GridMergeRequest.Increment(...)` | [`Docs/Merge/README.md`](./Docs/Merge/README.md) |
+| Dice Merge / drop-and-merge на сетке | `DicePiece`, `DicePieceGenerator`, `DiceBoardService` | [`Docs/GridSystem/Dice/README.md`](./Docs/GridSystem/Dice/README.md) |
+| Match3, TicTacToe, 2048-like movement | `Match3BoardService`, `TicTacToeBoardService`, `SlidingMergeBoardService` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
+| Полет наград/монет между world/canvas точками | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
+| Сохранение scene objects и global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
+| Деньги, магазин, мультивалюта | `Money`, `IMoneySpend`, `Shop`, `ShopItemData.CurrencyOverrideSaveKey` | [`Docs/Shop/README.md`](./Docs/Shop/README.md) |
+| HP/Mana/resources, уровни и XP | `HealthComponent`, `ResourcePoolModel`, `LevelComponent`, `LevelCurveDefinition` | [`Docs/Core/README.md`](./Docs/Core/README.md) |
+| RPG бой, projectiles, buffs/statuses | `RpgCharacter`, `RpgAttackController`, `RpgProjectile`, `RpgCombatMath` | [`Docs/Rpg/README.md`](./Docs/Rpg/README.md) |
+| Inspector/no-code условия и действия | `NeoCondition`, `ConditionEntryPredicate`, module NoCode bridges | [`Docs/Condition/README.md`](./Docs/Condition/README.md) |
+| Debug/spectator movement, pooling, timers, input helpers | `Tools/Move`, `Tools/Spawner`, `Tools/Time`, `Tools/Input` | [`Docs/Tools/README.md`](./Docs/Tools/README.md) |
+
+## Recent stabilization notes
+
+- `GridSystem`, `Merge` и `Dice` уже имеют reusable placement/merge APIs, configurable dice rules, cascade-limit reporting, consistent board notifications и active Dice Merge sample.
+- `AnimationFly` уже поддерживает typed request/result, prefab или sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete и reward timing callbacks.
+- `SaveManager.Save()` сохраняет shared container read-modify-write и не удаляет данные выгруженных scene objects.
+- `Core`/`RPG` fixes covered edge cases around XP-backed level sync, duplicate death/resource events, regen-from-zero, target resolution, projectile hits, buff stacks and persistence.
+- `Shop`/`Money` reject negative spends and avoid optimistic client-only network success before authority confirms balance.
 
 ## Зависимости
 
@@ -62,7 +89,7 @@ Assets/Neoxider/
 - Для новых пользовательских entry points сначала обновляйте `README.md` и `Docs/README.md`.
 - Для multi-instance систем предпочитайте явные ссылки вместо неявного auto-find.
 - Для editor-only логики держите код в `Editor/` или в отдельных `Editor`-папках под правильными `asmdef`.
-- **Структура модулей:** папки (Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums), asmdef, неймспейсы и принцип «один тип — один файл» описаны в [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
+- **Структура модулей:** папки (Interfaces, Domain, Data, Components, Bridge, Runtime, Events, Enums), asmdef, неймспейсы и принцип "один тип - один файл" описаны в [MODULE_STRUCTURE.md](./MODULE_STRUCTURE.md).
 
 ## Samples
 
@@ -72,7 +99,7 @@ Assets/Neoxider/
 
 ## Тесты и качество
 
-- В пакете подключён `com.unity.test-framework`.
+- В пакете подключен `com.unity.test-framework`.
 - Тесты пакета лежат в `Assets/Neoxider/Tests/` (`Edit`, `Play`, `PlayMode`, `Editor`).
 - На текущий момент покрыты критичные сценарии `Save`, `Level`, `Bootstrap`, `Audio`, `Parallax`, `PropertyAttribute`, `Tools/Move`, `Cards`, `GridSystem`, `Merge`, `Dice`, `Rpg`, `Settings`, `Quest`, `Progression`, `StateMachine` и часть legacy/editor-регрессий.
 

@@ -41,6 +41,8 @@
 - Для урона учитывается `GetOutgoingDamageMultiplier()`.
 - Дополнительные эффекты берутся из `RpgAttackDefinition.Effects`.
 - Для AI/skills/spells можно использовать `RpgAttackPreset` и `RpgTargetSelector`.
+- Если `RpgAttackPreset.RequireTarget = true`, цель проверяется до списания `CostAmount`, поэтому неуспешный target resolution не тратит ресурс.
+- Direct/Area атаки резолвят цель через `IRpgCombatReceiver` и в рамках одного physics query бьют один receiver только один раз, даже если у него несколько child colliders.
 - Для новых проектов это основной replacement для `AttackExecution` и `AdvancedAttackCollider`.
 
 

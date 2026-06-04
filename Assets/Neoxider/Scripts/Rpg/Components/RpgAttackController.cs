@@ -187,6 +187,13 @@ namespace Neo.Rpg
                 return false;
             }
 
+            GameObject target = forcedTarget;
+            if (!TryResolveTargetForPreset(preset, ref target, out failReason))
+            {
+                EmitFailure(failReason);
+                return false;
+            }
+
             if (definition.CostAmount > 0f)
             {
                 IRpgCombatReceiver source = ResolveSourceReceiver();
@@ -196,13 +203,6 @@ namespace Neo.Rpg
                     EmitFailure(failReason ?? "Not enough resource.");
                     return false;
                 }
-            }
-
-            GameObject target = forcedTarget;
-            if (!TryResolveTargetForPreset(preset, ref target, out failReason))
-            {
-                EmitFailure(failReason);
-                return false;
             }
 
             if (target != null)
@@ -286,6 +286,7 @@ namespace Neo.Rpg
             Vector3 origin = GetOriginPosition();
             Vector3 direction = GetAttackDirection(origin, forcedTarget, aimAtTarget);
             int hits = 0;
+            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
 
             if (definition.Use3D)
             {
@@ -293,12 +294,12 @@ namespace Neo.Rpg
                 {
                     RaycastHit[] hitBuffer = Physics.SphereCastAll(origin, definition.Radius, direction,
                         definition.Range, definition.TargetLayers);
-                    hits += ApplyHits3D(hitBuffer, definition, definition.MaxTargets);
+                    hits += ApplyHits3D(hitBuffer, definition, definition.MaxTargets, affectedReceivers);
                 }
                 else if (Physics.Raycast(origin, direction, out RaycastHit hit, definition.Range,
                              definition.TargetLayers))
                 {
-                    hits += ApplyHitToGameObject(hit.collider.gameObject, definition) ? 1 : 0;
+                    hits += ApplyHitToGameObject(hit.collider.gameObject, definition, affectedReceivers) ? 1 : 0;
                 }
             }
 
@@ -313,7 +314,7 @@ namespace Neo.Rpg
                     ? Physics2D.CircleCastAll(origin, definition.Radius, direction, definition.Range,
                         definition.TargetLayers)
                     : Physics2D.RaycastAll(origin, direction, definition.Range, definition.TargetLayers);
-                ApplyHits2D(hitBuffer, definition, definition.MaxTargets - hits);
+                ApplyHits2D(hitBuffer, definition, definition.MaxTargets - hits, affectedReceivers);
             }
         }
 
@@ -324,12 +325,13 @@ namespace Neo.Rpg
                 : GetOriginPosition() + GetAttackDirection(GetOriginPosition(), forcedTarget, aimAtTarget) *
                 definition.Range;
             int hits = 0;
+            var affectedReceivers = new HashSet<IRpgCombatReceiver>();
 
             if (definition.Use3D)
             {
                 Collider[] colliders = Physics.OverlapSphere(center, Mathf.Max(0.01f, definition.Radius),
                     definition.TargetLayers);
-                hits += ApplyColliders3D(colliders, definition, definition.MaxTargets);
+                hits += ApplyColliders3D(colliders, definition, definition.MaxTargets, affectedReceivers);
             }
 
             if (hits >= definition.MaxTargets)
@@ -341,7 +343,7 @@ namespace Neo.Rpg
             {
                 Collider2D[] colliders2D = Physics2D.OverlapCircleAll(center, Mathf.Max(0.01f, definition.Radius),
                     definition.TargetLayers);
-                ApplyColliders2D(colliders2D, definition, definition.MaxTargets - hits);
+                ApplyColliders2D(colliders2D, definition, definition.MaxTargets - hits, affectedReceivers);
             }
         }
 
@@ -378,13 +380,29 @@ namespace Neo.Rpg
 
         internal bool ApplyHitToGameObject(GameObject target, RpgAttackDefinition definition)
         {
+            return ApplyHitToGameObject(target, definition, null);
+        }
+
+        internal bool ApplyHitToGameObject(GameObject target, RpgAttackDefinition definition,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
+        {
             if (!TryResolveReceiver(target, out IRpgCombatReceiver receiver))
             {
                 return false;
             }
 
             IRpgCombatReceiver sourceReceiver = ResolveSourceReceiver();
+            if (ReferenceEquals(sourceReceiver, receiver))
+            {
+                return false;
+            }
+
             if (sourceReceiver is Component sourceComponent && sourceComponent.gameObject == target)
+            {
+                return false;
+            }
+
+            if (affectedReceivers != null && !affectedReceivers.Add(receiver))
             {
                 return false;
             }
@@ -607,7 +625,7 @@ namespace Neo.Rpg
             return GetForwardDirection();
         }
 
-        private static bool TryResolveReceiver(GameObject target, out IRpgCombatReceiver receiver)
+        internal static bool TryResolveReceiver(GameObject target, out IRpgCombatReceiver receiver)
         {
             receiver = null;
             if (target == null)
@@ -621,21 +639,30 @@ namespace Neo.Rpg
                 receiver = target.GetComponentInParent<RpgCharacter>();
             }
 
+            if (receiver == null)
+            {
+                receiver = target.GetComponent<IRpgCombatReceiver>() ??
+                           target.GetComponentInChildren<IRpgCombatReceiver>() ??
+                           target.GetComponentInParent<IRpgCombatReceiver>();
+            }
+
             return receiver != null;
         }
 
-        private int ApplyHits3D(RaycastHit[] hits, RpgAttackDefinition definition, int remainingTargets)
+        private int ApplyHits3D(RaycastHit[] hits, RpgAttackDefinition definition, int remainingTargets,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
             for (int i = 0; i < hits.Length && applied < remainingTargets; i++)
             {
-                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition) ? 1 : 0;
+                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition, affectedReceivers) ? 1 : 0;
             }
 
             return applied;
         }
 
-        private int ApplyHits2D(RaycastHit2D[] hits, RpgAttackDefinition definition, int remainingTargets)
+        private int ApplyHits2D(RaycastHit2D[] hits, RpgAttackDefinition definition, int remainingTargets,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
             for (int i = 0; i < hits.Length && applied < remainingTargets; i++)
@@ -645,13 +672,14 @@ namespace Neo.Rpg
                     continue;
                 }
 
-                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition) ? 1 : 0;
+                applied += ApplyHitToGameObject(hits[i].collider.gameObject, definition, affectedReceivers) ? 1 : 0;
             }
 
             return applied;
         }
 
-        private int ApplyColliders3D(Collider[] colliders, RpgAttackDefinition definition, int remainingTargets)
+        private int ApplyColliders3D(Collider[] colliders, RpgAttackDefinition definition, int remainingTargets,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
             for (int i = 0; i < colliders.Length && applied < remainingTargets; i++)
@@ -661,13 +689,14 @@ namespace Neo.Rpg
                     continue;
                 }
 
-                applied += ApplyHitToGameObject(colliders[i].gameObject, definition) ? 1 : 0;
+                applied += ApplyHitToGameObject(colliders[i].gameObject, definition, affectedReceivers) ? 1 : 0;
             }
 
             return applied;
         }
 
-        private int ApplyColliders2D(Collider2D[] colliders, RpgAttackDefinition definition, int remainingTargets)
+        private int ApplyColliders2D(Collider2D[] colliders, RpgAttackDefinition definition, int remainingTargets,
+            HashSet<IRpgCombatReceiver> affectedReceivers)
         {
             int applied = 0;
             for (int i = 0; i < colliders.Length && applied < remainingTargets; i++)
@@ -677,7 +706,7 @@ namespace Neo.Rpg
                     continue;
                 }
 
-                applied += ApplyHitToGameObject(colliders[i].gameObject, definition) ? 1 : 0;
+                applied += ApplyHitToGameObject(colliders[i].gameObject, definition, affectedReceivers) ? 1 : 0;
             }
 
             return applied;

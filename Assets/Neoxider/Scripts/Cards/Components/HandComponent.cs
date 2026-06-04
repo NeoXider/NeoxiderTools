@@ -31,21 +31,22 @@ namespace Neo.Cards
 
         [Header("Limits")] [SerializeField] private int _maxCards = 36;
 
-        [Header("Card Order")] [Tooltip("If true — new cards are added at bottom (sibling index 0)")] [SerializeField]
+        [Header("Card Order")] [Tooltip("If true, new cards are added at bottom (sibling index 0)")] [SerializeField]
         private bool _addToBottom;
 
         [Header("Animation")] [SerializeField] private float _arrangeDuration = 0.3f;
 
         [SerializeField] private Ease _arrangeEase = Ease.OutQuad;
 
-        [SerializeField] private UnityEvent<int> _onCardCountChanged;
+        [SerializeField] private UnityEvent<int> _onCardCountChanged = new();
 
-        [SerializeField] private UnityEvent<CardComponent> _onCardAdded;
-        [SerializeField] private UnityEvent<CardComponent> _onCardRemoved;
-        [SerializeField] private UnityEvent<CardComponent> _onCardClicked;
-        [SerializeField] private UnityEvent _onHandChanged;
+        [SerializeField] private UnityEvent<CardComponent> _onCardAdded = new();
+        [SerializeField] private UnityEvent<CardComponent> _onCardRemoved = new();
+        [SerializeField] private UnityEvent<CardComponent> _onCardClicked = new();
+        [SerializeField] private UnityEvent _onHandChanged = new();
 
         private readonly List<CardComponent> _cards = new();
+        private readonly Dictionary<CardComponent, UnityAction> _cardClickHandlers = new();
 
         /// <summary>
         ///     Invoked when the card count changes; carries the new count.
@@ -129,6 +130,11 @@ namespace Neo.Cards
             EnsureModelInitialized();
         }
 
+        private void OnDestroy()
+        {
+            UnsubscribeAllCardClickHandlers();
+        }
+
         private void EnsureModelInitialized()
         {
             if (Model == null)
@@ -154,7 +160,7 @@ namespace Neo.Cards
             Vector3 startPosition = card.transform.position;
 
             card.transform.SetParent(transform, true);
-            card.OnClick.AddListener(() => HandleCardClick(card));
+            SubscribeCardClickHandler(card);
 
             if (_addToBottom)
             {
@@ -262,13 +268,14 @@ namespace Neo.Cards
             }
 
             EnsureModelInitialized();
+            int index = _cards.IndexOf(card);
 
-            card.OnClick.RemoveAllListeners();
+            UnsubscribeCardClickHandler(card);
             card.ResetHover();
             card.transform.SetParent(null, true);
 
-            _cards.Remove(card);
-            Model.Remove(card.Data);
+            _cards.RemoveAt(index);
+            Model.RemoveAt(index);
 
             await ArrangeCardsAsync(animate);
 
@@ -403,7 +410,7 @@ namespace Neo.Cards
             {
                 if (card != null)
                 {
-                    card.OnClick.RemoveAllListeners();
+                    UnsubscribeCardClickHandler(card);
                     Destroy(card.gameObject);
                 }
             }
@@ -465,6 +472,46 @@ namespace Neo.Cards
             _onCardClicked?.Invoke(card);
         }
 
+        private void SubscribeCardClickHandler(CardComponent card)
+        {
+            if (card == null || card.OnClick == null)
+            {
+                return;
+            }
+
+            UnsubscribeCardClickHandler(card);
+            UnityAction handler = () => HandleCardClick(card);
+            _cardClickHandlers[card] = handler;
+            card.OnClick.AddListener(handler);
+        }
+
+        private void UnsubscribeCardClickHandler(CardComponent card)
+        {
+            if (card == null)
+            {
+                return;
+            }
+
+            if (_cardClickHandlers.TryGetValue(card, out UnityAction handler))
+            {
+                card.OnClick?.RemoveListener(handler);
+                _cardClickHandlers.Remove(card);
+            }
+        }
+
+        private void UnsubscribeAllCardClickHandlers()
+        {
+            foreach (KeyValuePair<CardComponent, UnityAction> pair in _cardClickHandlers)
+            {
+                if (pair.Key != null)
+                {
+                    pair.Key.OnClick?.RemoveListener(pair.Value);
+                }
+            }
+
+            _cardClickHandlers.Clear();
+        }
+
         private List<Vector3> CalculatePositions()
         {
             return CardLayoutCalculator.CalculatePositions(_layoutType, _cards.Count, BuildLayoutSettings());
@@ -496,9 +543,15 @@ namespace Neo.Cards
         private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation)
         {
             TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
-                card.transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
+                card.transform.DOLocalMove(position, _arrangeDuration)
+                    .SetEase(_arrangeEase)
+                    .SetTarget(card.transform)
+                    .SetLink(card.gameObject);
             TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
-                card.transform.DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
+                card.transform.DOLocalRotateQuaternion(rotation, _arrangeDuration)
+                    .SetEase(_arrangeEase)
+                    .SetTarget(card.transform)
+                    .SetLink(card.gameObject);
 
             await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive());
         }

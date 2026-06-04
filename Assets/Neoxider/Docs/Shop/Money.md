@@ -44,6 +44,11 @@ if (success) {
     // Покупка прошла успешно
 }
 
+MoneySpendResult result = Money.I.TrySpend(50f);
+if (result.IsConfirmed) {
+    // Списание уже применено.
+}
+
 // Установить баланс (с сохранением, если persist включён)
 Money.I.SetMoney(500f);
 // Алиас для UnityEvent / кнопок:
@@ -62,6 +67,10 @@ Money.I.ReloadBalanceFromSave();
 Для вывода баланса в UI рекомендуется использовать готовый компонент `TextMoney`.
 
 **NoCode / UnityEvent:** `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()` и `ReloadBalanceFromSave()` можно подключать к `UnityEvent`. `Spend(float)` возвращает `bool`, поэтому обычный `Button.onClick` его не показывает; для кнопок используйте `SpendFromButton(float)`. Если нужно узнать результат списания из кода, вызывайте `Spend(float)`.
+
+`Spend(float)` отклоняет отрицательные суммы. Для кода, которому важна причина результата, используйте `TrySpend(float)`: он возвращает `MoneySpendResult` со статусами `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds` и `RequestedServerAuthority`.
+
+В сетевом Mirror-режиме клиент без server authority не должен считать локальный вызов подтверждённой покупкой. `CanSpend(float)` — это локальный snapshot/precheck, а не authority decision. `Shop` выдаёт item/bundle только когда списание подтверждено локально/server-side; pending server-authority не считается failure и не запускает локальный grant.
 
 ## См. также
 

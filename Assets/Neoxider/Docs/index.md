@@ -1,15 +1,28 @@
-﻿# Документация Neoxider
+# Документация Neoxider
+
+Основной вход: [Docs/README.md](./README.md). Он содержит краткую карту модулей и список готовых блоков, которые стоит проверить перед новой реализацией.
+
+## Быстрые разделы
+
+- [Сводка проекта](../PROJECT_SUMMARY.md)
+- [Полезные компоненты](./UsefulComponents.md)
+- [Package Compatibility](./PackageCompatibility.md)
+- [Samples](./Samples.md)
+- [NeoxiderPages](./NeoxiderPages/README.md)
 
 ## Модули
+
 - [Animations](./Animations/README.md)
 - [Audio](./Audio/README.md)
 - [Bonus](./Bonus/README.md)
 - [Cards](./Cards/README.md)
 - [Condition](./Condition/README.md)
 - [Core](./Core/README.md)
+- [Editor](./Editor/README.md)
 - [Extensions](./Extensions/README.md)
 - [GridSystem](./GridSystem/README.md)
 - [Level](./Level/README.md)
+- [Merge](./Merge/README.md)
 - [Network](./Network/README.md)
 - [NoCode](./NoCode/README.md)
 - [NPC](./NPC/README.md)
@@ -25,10 +38,3 @@
 - [StateMachine](./StateMachine/README.md)
 - [Tools](./Tools/README.md)
 - [UI](./UI/README.md)
-
-## Быстрые разделы
-- [Package Compatibility](./PackageCompatibility.md)
-- [TODO](./TODO.md)
-- [Ideas](./IDEAS.md)
-- [NeoxiderPages](./NeoxiderPages/README.md)
-

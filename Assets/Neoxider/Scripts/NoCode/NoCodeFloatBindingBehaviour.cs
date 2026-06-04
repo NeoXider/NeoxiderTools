@@ -174,7 +174,7 @@ namespace Neo.NoCode
         /// <summary>
         ///     Edit Mode tests / editor utilities: apply binding when <see cref="OnEnable"/> did not run or after wiring via serialized object.
         /// </summary>
-        internal void EditorInvokeRefreshFromSource()
+        public void EditorInvokeRefreshFromSource()
         {
             RefreshFromSource();
         }
