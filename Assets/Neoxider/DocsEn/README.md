@@ -1,6 +1,6 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v9.1.0`.
+Canonical English entry point for **NeoxiderTools** `v9.2.0`.
 
 ## Start here
 

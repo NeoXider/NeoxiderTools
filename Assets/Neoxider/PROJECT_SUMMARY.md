@@ -5,7 +5,7 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `9.1.0`
+- **Текущая версия**: `9.2.0`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
@@ -108,5 +108,5 @@ Assets/Neoxider/
 - Пользовательский обзор пакета: [`README.md`](./README.md)
 - Пользовательская навигация по модулям: [`Docs/README.md`](./Docs/README.md)
 - Англоязычный вход: [`DocsEn/README.md`](./DocsEn/README.md)
-- История изменений: [`CHANGELOG.md`](./CHANGELOG.md)
+- РСЃС‚РѕСЂРёСЏ РёР·РјРµРЅРµРЅРёР№: [`CHANGELOG.md`](./CHANGELOG.md)
 - Правила структуры модулей (папки, asmdef, неймспейсы): [`MODULE_STRUCTURE.md`](./MODULE_STRUCTURE.md)

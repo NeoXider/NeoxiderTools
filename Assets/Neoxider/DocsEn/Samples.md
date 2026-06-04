@@ -4,7 +4,7 @@ Current active sample path during development: `Assets/Neoxider/Samples/Demo/`.
 
 Before release/UPM packaging the folder is moved back to `Assets/Neoxider/Samples~/Demo/`, and `Assets/Neoxider/package.json` must point to `Samples~/...`.
 
-After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/9.1.0/Demo Scenes/...`.
+After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/9.2.0/Demo Scenes/...`.
 
 These scenes are smoke coverage and manual entry points for modules. They do not replace tests: public C# contracts stay covered by EditMode/PlayMode tests, while scenes show the minimal MonoBehaviour wrapper setup.
 

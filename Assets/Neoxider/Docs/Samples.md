@@ -4,7 +4,7 @@
 
 Перед релизом/UPM-упаковкой папка возвращается в `Assets/Neoxider/Samples~/Demo/`, а `Assets/Neoxider/package.json` должен ссылаться на `Samples~/...`.
 
-После импорта через Unity Package Manager sample попадает в проект не в пакетную папку, а в `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии ожидаемый путь: `Assets/Samples/NeoxiderTools/9.1.0/Demo Scenes/...`.
+После импорта через Unity Package Manager sample попадает в проект не в пакетную папку, а в `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. Для текущей версии ожидаемый путь: `Assets/Samples/NeoxiderTools/9.2.0/Demo Scenes/...`.
 
 Эти сцены служат smoke-покрытием и точками входа для ручной проверки модулей. Они не заменяют тесты: публичные C# контракты проверяются EditMode/PlayMode тестами, а сцены показывают минимальную сборку через MonoBehaviour wrappers.
 
@@ -21,7 +21,7 @@
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
 
-## Игровые и интеграционные сцены
+## РРіСЂРѕРІС‹Рµ Рё РёРЅС‚РµРіСЂР°С†РёРѕРЅРЅС‹Рµ СЃС†РµРЅС‹
 
 | Область | Сцены | Ручная проверка |
 |---------|-------|-----------------|
