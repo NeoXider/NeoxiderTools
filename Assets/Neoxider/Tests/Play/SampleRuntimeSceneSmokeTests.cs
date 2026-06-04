@@ -213,7 +213,11 @@ namespace Neo.Tests.Play
             object controller = FindRequiredComponent(
                 "Neo.Samples.AnimationFlyDemoController",
                 "AnimationFly demo controller");
+            object eventSystem = FindRequiredComponent("UnityEngine.EventSystems.EventSystem", "EventSystem");
+            object canvasScaler = FindRequiredComponent("UnityEngine.UI.CanvasScaler", "AnimationFly demo canvas scaler");
 
+            Assert.That(eventSystem, Is.Not.Null);
+            Assert.That(GetProperty<Vector2>(canvasScaler, "referenceResolution"), Is.EqualTo(new Vector2(1920f, 1080f)));
             Assert.That(GetProperty<int>(controller, "DemoButtonCount"), Is.GreaterThanOrEqualTo(6));
             Assert.That(GetProperty<int>(controller, "DemoSliderCount"), Is.GreaterThanOrEqualTo(6));
             Invoke(controller, "ResetCounters");

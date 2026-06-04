@@ -244,7 +244,7 @@ MonoBehaviour:
   _runtimeApi: Use AnimationFly.Play(AnimationFlyRequest) with prefab or sprite visuals, spaces, pooling and reward timing.
   _sceneWorkflow: Use the generated on-screen buttons and sliders to tune count, duration, delay, arc, scale and rotation.
   _verification: Enter Play Mode, press each button, and adjust sliders to inspect the effect.
-  _showRuntimeOverlay: 1
+  _showRuntimeOverlay: 0
 --- !u!114 &200003
 MonoBehaviour:
   m_ObjectHideFlags: 0
