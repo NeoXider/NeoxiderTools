@@ -45,6 +45,9 @@ namespace Neo.Samples
         public int StartedCounter => _startedCounter;
         public int DemoButtonCount { get; private set; }
         public int DemoSliderCount { get; private set; }
+        public bool FlyRootBlocksRaycasts => _flyRoot != null &&
+                                             _flyRoot.TryGetComponent(out Image image) &&
+                                             image.raycastTarget;
 
         private void Awake()
         {
@@ -233,6 +236,11 @@ namespace Neo.Samples
 
             _flyRoot = CreatePanel(canvasObject.transform, "FlyRoot", new Vector2(0.5f, 0.5f), Vector2.zero,
                 new Vector2(0f, 0f), new Vector2(1f, 1f), new Color(0f, 0f, 0f, 0f));
+            if (_flyRoot.TryGetComponent(out Image flyRootImage))
+            {
+                flyRootImage.raycastTarget = false;
+            }
+
             _flyRoot.SetAsLastSibling();
         }
 
@@ -459,6 +467,7 @@ namespace Neo.Samples
             Image image = prefab.AddComponent<Image>();
             image.sprite = _gemSprite;
             image.color = Color.white;
+            image.raycastTarget = false;
             prefab.transform.SetParent(transform, false);
             return prefab;
         }
