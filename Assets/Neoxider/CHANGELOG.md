@@ -2,7 +2,7 @@
 ## [Unreleased]
 
 ### Added
-- **Samples / UI:** added an `AnimationFlyDemo` scene with runtime buttons and labeled sliders for count, duration, delay, arc, scale, and rotation so fly-effect flows can be inspected without manual scene editing.
+- **Samples / UI:** added an `AnimationFlyDemo` scene with runtime buttons, a real sample sprite asset example, and labeled sliders for count, duration, delay, arc, scale, and rotation so fly-effect flows can be inspected without manual scene editing.
 
 ## [9.2.0] - 2026-06-04
 

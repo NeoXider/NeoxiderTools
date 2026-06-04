@@ -16,7 +16,7 @@ Supported flows:
 
 The active development sample is `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
 
-It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, screen-point starts, and reset. The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
+It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, a real sample sprite asset, screen-point starts, and reset. The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
 
 ## Setup
 

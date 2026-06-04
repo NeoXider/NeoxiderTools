@@ -214,7 +214,7 @@ namespace Neo.Tests.Play
                 "Neo.Samples.AnimationFlyDemoController",
                 "AnimationFly demo controller");
 
-            Assert.That(GetProperty<int>(controller, "DemoButtonCount"), Is.GreaterThanOrEqualTo(5));
+            Assert.That(GetProperty<int>(controller, "DemoButtonCount"), Is.GreaterThanOrEqualTo(6));
             Assert.That(GetProperty<int>(controller, "DemoSliderCount"), Is.GreaterThanOrEqualTo(6));
             Invoke(controller, "ResetCounters");
             Invoke(controller, "PlayWorldToWallet");
@@ -222,6 +222,11 @@ namespace Neo.Tests.Play
 
             Assert.That(GetProperty<int>(controller, "StartedCounter"), Is.GreaterThan(0),
                 "AnimationFly demo should start visual items through its runtime controls.");
+            Invoke(controller, "ResetCounters");
+            Invoke(controller, "PlaySampleSpriteToUi");
+            yield return WaitFrames(3);
+            Assert.That(GetProperty<int>(controller, "StartedCounter"), Is.GreaterThan(0),
+                "AnimationFly demo should start visual items with a real sample sprite asset.");
         }
 
         private static IEnumerator LoadScene(string scenePath)

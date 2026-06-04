@@ -16,7 +16,7 @@
 
 Активный путь во время разработки: `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
 
-Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, старта из screen point и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
+Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, реального sample sprite asset, старта из screen point и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
 
 ## Подключение
 

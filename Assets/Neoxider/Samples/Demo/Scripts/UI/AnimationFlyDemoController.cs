@@ -11,6 +11,8 @@ namespace Neo.Samples
     {
         private const int ButtonHeight = 42;
 
+        [SerializeField] private Sprite _sampleSprite;
+
         private AnimationFly _fly;
         private Canvas _canvas;
         private RectTransform _flyRoot;
@@ -140,6 +142,26 @@ namespace Neo.Samples
             });
         }
 
+        public void PlaySampleSpriteToUi()
+        {
+            ApplySliderSettings();
+            PlayRequest("Demo sprite asset -> gems", new AnimationFly.AnimationFlyRequest
+            {
+                Sprite = _sampleSprite != null ? _sampleSprite : _gemSprite,
+                Count = CurrentCount,
+                StartTransform = _worldChest,
+                EndTransform = _gemTarget,
+                Parent = _flyRoot,
+                StartSpace = AnimationFlyCoordinateSpace.World,
+                EndSpace = AnimationFlyCoordinateSpace.Canvas,
+                SpawnSpace = AnimationFlySpawnSpace.Canvas,
+                CompletionMode = AnimationFlyCompletionMode.DisableAndPool,
+                RewardTiming = AnimationFlyRewardTiming.OnAllArrived,
+                OnReward = AddReward,
+                OnItemStarted = _ => _startedCounter++
+            });
+        }
+
         public void ResetCounters()
         {
             _rewardCounter = 0;
@@ -246,7 +268,8 @@ namespace Neo.Samples
             CreateButton(panel, "Pooled Prefab", new Vector2(18f, -534f), PlayPrefabPooled);
             CreateButton(panel, "Screen Point", new Vector2(216f, -438f), PlayScreenToUi);
             CreateButton(panel, "Reset", new Vector2(216f, -486f), ResetCounters);
-            DemoButtonCount = 5;
+            CreateButton(panel, "Sample Sprite", new Vector2(216f, -534f), PlaySampleSpriteToUi);
+            DemoButtonCount = 6;
             DemoSliderCount = 6;
             RefreshSliderLabels();
 
