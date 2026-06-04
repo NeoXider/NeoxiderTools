@@ -94,6 +94,20 @@ namespace Neo.Editor.Tests
             Assert.That(type.GetCustomAttribute<CreateFromMenuAttribute>(), Is.Null);
             Assert.That(type.GetCustomAttribute<AddComponentMenu>(), Is.Null);
         }
+
+        [Test]
+        public void VisualSlotLines_LineActiv_IgnoresMissingLineReferences()
+        {
+            var lines = new VisualSlotLines();
+
+            Assert.DoesNotThrow(() => lines.LineActiv(false));
+            Assert.DoesNotThrow(() => lines.LineActiv((int[])null));
+
+            lines.lines = new GameObject[2];
+
+            Assert.DoesNotThrow(() => lines.LineActiv(true));
+            Assert.DoesNotThrow(() => lines.LineActiv(new[] { 0, 1 }));
+        }
     }
 }
 #pragma warning restore CS0618

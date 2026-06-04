@@ -269,8 +269,9 @@ namespace Neo.Bonus
 
             // Label text
             (int col, int row) = gizmoAutoDetect ? AutoDetectColRow() : (gizmoManualCol, gizmoManualRow);
+            int labelIndexOffset = owner != null ? owner.GridIndexBase : gizmoLabelIndexOffset;
             string label =
-                $"[{col + gizmoLabelIndexOffset},{row + gizmoLabelIndexOffset}] id:{id}";
+                $"[{col + labelIndexOffset},{row + labelIndexOffset}] id:{id}";
 
             // Style
             GUIStyle style = new(EditorStyles.boldLabel)

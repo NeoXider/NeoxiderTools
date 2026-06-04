@@ -172,6 +172,9 @@ namespace Neo.Bonus
         /// <summary>Visible window height (at least 1).</summary>
         public int WindowHeight => Mathf.Max(1, _countVerticalElements);
 
+        /// <summary>Display offset applied to debug grid coordinates in console and scene gizmos.</summary>
+        public int GridIndexBase => _gridIndexBase;
+
         /// <summary>
         ///     2D matrix of references to actual visible elements:
         ///     Elements[x,y] with y=0 bottom. Filled after spin stops.
@@ -1018,7 +1021,7 @@ namespace Neo.Bonus
             if (_logFinalVisuals && finalVisuals != null)
             {
                 StringBuilder sb = new();
-                sb.AppendLine("--- Final Visuals Table ---");
+                sb.Append("--- Final Visuals Table (top -> bottom, y=0 bottom) --- ");
                 int cols = finalVisuals.GetLength(0);
                 int rows = finalVisuals.GetLength(1);
 
@@ -1031,7 +1034,15 @@ namespace Neo.Bonus
                         parts.Add($"[{x + _gridIndexBase},{y + _gridIndexBase}] = {id}");
                     }
 
-                    sb.AppendLine(string.Join(", ", parts));
+                    if (y < rows - 1)
+                    {
+                        sb.Append(" | ");
+                    }
+
+                    sb.Append("Y=");
+                    sb.Append(y + _gridIndexBase);
+                    sb.Append(": ");
+                    sb.Append(string.Join(", ", parts));
                 }
 
                 NeoDiagnostics.Log(sb.ToString(), this, true);
@@ -1543,7 +1554,26 @@ namespace Neo.Bonus
         }
 
 #if UNITY_EDITOR
+        private void OnDrawGizmos()
+        {
+            if (IsThisOrChildSelectedInEditor())
+            {
+                DrawPaylineGizmosScene();
+            }
+        }
+
         private void OnDrawGizmosSelected()
+        {
+            DrawPaylineGizmosScene();
+        }
+
+        private bool IsThisOrChildSelectedInEditor()
+        {
+            Transform selected = Selection.activeTransform;
+            return selected != null && (selected == transform || selected.IsChildOf(transform));
+        }
+
+        private void DrawPaylineGizmosScene()
         {
             if (!DrawPaylineGizmosInScene || _rows == null || _rows.Length == 0 || checkSpin == null)
             {
