@@ -93,7 +93,7 @@ Assets/Neoxider/
 
 ## Samples
 
-- `Samples/Demo` содержит активные developer-сцены для модулей пакета.
+- `Samples/Demo` содержит активные developer-сцены для модулей пакета, включая `Scenes/UI/AnimationFlyDemo.unity` для ручной проверки fly-эффекта с кнопками и подписанными слайдерами.
 - `Samples/NeoxiderPages` содержит активный опциональный sample-модуль навигации по страницам.
 - Перед release packaging эти sample roots переводятся в UPM paths `Samples~/Demo` и `Samples~/NeoxiderPages`, как указано в `package.json.samples`.
 

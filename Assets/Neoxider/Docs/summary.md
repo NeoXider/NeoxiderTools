@@ -10,7 +10,7 @@
 Особенно часто уже есть готовые блоки:
 
 - `GridSystem` + `Merge` + `Dice` для сеток, placement, connected-group merge и Dice Merge;
-- `AnimationFly` для reward fly UI/world animations;
+- `AnimationFly` для reward fly UI/world animations, включая sample-сцену `AnimationFlyDemo` с кнопками и подписанными слайдерами;
 - `Cards` для deck/hand/card view workflows, включая duplicate-safe операции и lifecycle;
 - `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` для типовых gameplay systems;
 - `Tools` для movement, spawners, timers, input, physics и view helpers.

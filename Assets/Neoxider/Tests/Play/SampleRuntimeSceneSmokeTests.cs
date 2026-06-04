@@ -21,6 +21,7 @@ namespace Neo.Tests.Play
         private const string TicTacToeScene = "Scenes/GridSystem/GridSystemTicTacToeDemo.unity";
         private const string RpgCombatScene = "Scenes/RpgCombatNpcDemo.unity";
         private const string VampireScene = "Scenes/VampireSurvivorMCP.unity";
+        private const string AnimationFlyScene = "Scenes/UI/AnimationFlyDemo.unity";
 
         private static readonly string[] CoreModuleScenes =
         {
@@ -32,7 +33,8 @@ namespace Neo.Tests.Play
             "Scenes/NoCode/NoCodeBindingDemo.unity",
             "Scenes/StateMachine/StateMachineDemo.unity",
             "Scenes/Parallax/ParallaxDemo.unity",
-            "Scenes/Network/NetworkDemo.unity"
+            "Scenes/Network/NetworkDemo.unity",
+            "Scenes/UI/AnimationFlyDemo.unity"
         };
 
         private static readonly string[] SampleRootCandidates =
@@ -200,6 +202,26 @@ namespace Neo.Tests.Play
                 Assert.That(activeScene.path, Is.EqualTo(scenePath));
                 Assert.That(activeScene.rootCount, Is.GreaterThan(0), scenePath);
             }
+        }
+
+        [UnityTest]
+        public IEnumerator AnimationFlyDemo_ExposesButtonsSlidersAndStartsVisuals()
+        {
+            yield return LoadScene(AnimationFlyScene);
+            yield return WaitFrames(3);
+
+            object controller = FindRequiredComponent(
+                "Neo.Samples.AnimationFlyDemoController",
+                "AnimationFly demo controller");
+
+            Assert.That(GetProperty<int>(controller, "DemoButtonCount"), Is.GreaterThanOrEqualTo(5));
+            Assert.That(GetProperty<int>(controller, "DemoSliderCount"), Is.GreaterThanOrEqualTo(6));
+            Invoke(controller, "ResetCounters");
+            Invoke(controller, "PlayWorldToWallet");
+            yield return WaitFrames(3);
+
+            Assert.That(GetProperty<int>(controller, "StartedCounter"), Is.GreaterThan(0),
+                "AnimationFly demo should start visual items through its runtime controls.");
         }
 
         private static IEnumerator LoadScene(string scenePath)

@@ -20,6 +20,7 @@
 | Save | `Scenes/Save/SaveDemo.unity` | `SaveProviderSettingsComponent` + `SaveManager` |
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
+| UI / AnimationFly | `Scenes/UI/AnimationFlyDemo.unity` | fly-эффект в разных пространствах, sprite/prefab visuals, pooling, reward callbacks и подписанные слайдеры количества, тайминга, дуги, масштаба и вращения |
 
 ## Игровые и интеграционные сцены
 

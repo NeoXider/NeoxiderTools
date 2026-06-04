@@ -23,7 +23,8 @@
         "Neo.Core",
         "Neo.Tools.Spawner",
         "Mirror",
-        "Neo.GridSystem.Dice"
+        "Neo.GridSystem.Dice",
+        "Neo.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

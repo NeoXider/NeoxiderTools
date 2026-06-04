@@ -12,6 +12,12 @@ Supported flows:
 - reward callbacks can be manual, per arrived visual, or once after all visuals arrive;
 - completion policy can destroy, keep alive, or disable-and-pool visuals.
 
+## Demo Scene
+
+The active development sample is `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
+
+It contains runtime buttons for world -> UI, UI -> UI, prefab pooling, screen-point starts, and reset. The panel also exposes labeled sliders for `Count`, `Duration`, `Delay`, `Arc`, `Scale`, and `Rotation` so programmers and agents can quickly inspect the main parameters without changing scene fields by hand.
+
 ## Setup
 
 1. Add `Neoxider > UI > AnimationFly` to a scene object.

@@ -20,6 +20,7 @@ These scenes are smoke coverage and manual entry points for modules. They do not
 | Save | `Scenes/Save/SaveDemo.unity` | `SaveProviderSettingsComponent` + `SaveManager` |
 | Settings | `Scenes/Settings/SettingsDemo.unity` | `GameSettingsComponent` defaults |
 | StateMachine | `Scenes/StateMachine/StateMachineDemo.unity` | `StateMachineBehaviourBase` lifecycle entry |
+| UI / AnimationFly | `Scenes/UI/AnimationFlyDemo.unity` | fly-effect coordinate spaces, sprite/prefab visuals, pooling, reward callbacks, and labeled sliders for count/timing/arc/scale/rotation |
 
 ## Gameplay And Integration Scenes
 

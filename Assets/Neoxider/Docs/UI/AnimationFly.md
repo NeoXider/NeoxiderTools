@@ -12,6 +12,12 @@
 - можно выбрать, когда начислять награду: вручную, при каждом прилёте или один раз после прилёта всех визуалов;
 - есть встроенный completion policy: destroy, keep alive или disable-and-pool.
 
+## Demo-сцена
+
+Активный путь во время разработки: `Assets/Neoxider/Samples/Demo/Scenes/UI/AnimationFlyDemo.unity`.
+
+Сцена содержит runtime-кнопки для world -> UI, UI -> UI, prefab pooling, старта из screen point и сброса. На панели также есть подписанные слайдеры `Count`, `Duration`, `Delay`, `Arc`, `Scale` и `Rotation`, чтобы программист или агент мог быстро посмотреть основные параметры без ручного изменения полей сцены.
+
 ## Подключение
 
 1. Добавьте компонент `Neoxider > UI > AnimationFly` на объект сцены.

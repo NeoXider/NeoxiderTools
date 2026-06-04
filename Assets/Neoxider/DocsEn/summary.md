@@ -10,7 +10,7 @@ Compact navigation for AI agents and programmers:
 Common blocks that already exist:
 
 - `GridSystem` + `Merge` + `Dice` for grids, placement, connected-group merge, and Dice Merge;
-- `AnimationFly` for reward fly UI/world animations;
+- `AnimationFly` for reward fly UI/world animations, including the `AnimationFlyDemo` sample scene with buttons and labeled sliders;
 - `Cards` for deck/hand/card view workflows, including duplicate-safe operations and lifecycle;
 - `Save`, `Core`, `Shop`, `Money`, `Rpg`, `Progression`, `Quest`, `StateMachine` for common gameplay systems;
 - `Tools` for movement, spawners, timers, input, physics, and view helpers.

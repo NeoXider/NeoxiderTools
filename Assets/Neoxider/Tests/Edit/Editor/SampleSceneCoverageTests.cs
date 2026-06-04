@@ -33,7 +33,8 @@ namespace Neo.Editor.Tests
             "Demo/Scenes/Parallax/ParallaxDemo.unity",
             "Demo/Scenes/Save/SaveDemo.unity",
             "Demo/Scenes/Settings/SettingsDemo.unity",
-            "Demo/Scenes/StateMachine/StateMachineDemo.unity"
+            "Demo/Scenes/StateMachine/StateMachineDemo.unity",
+            "Demo/Scenes/UI/AnimationFlyDemo.unity"
         };
 
         [Test]
