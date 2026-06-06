@@ -143,7 +143,7 @@ namespace Neo.Tests.Edit
             // We can call ApplyFloat via reflection since it's protected.
 
             MethodInfo applyFloatMethod = typeof(NoCodeFloatBindingBehaviour).GetMethod("ApplyFloat",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             if (applyFloatMethod != null)
             {
                 applyFloatMethod.Invoke(noCodeBind, new object[] { 3600f }); // 1 hour

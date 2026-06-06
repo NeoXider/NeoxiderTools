@@ -88,7 +88,7 @@ namespace Neo.Tests.Edit
         private static void SetPrivateField(object target, string fieldName, object value)
         {
             FieldInfo field = target.GetType().GetField(fieldName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(field, Is.Not.Null, fieldName);
             field.SetValue(target, value);
         }
@@ -96,7 +96,7 @@ namespace Neo.Tests.Edit
         private static void InvokePrivate(object target, string methodName)
         {
             MethodInfo method = target.GetType().GetMethod(methodName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, methodName);
             method.Invoke(target, null);
         }

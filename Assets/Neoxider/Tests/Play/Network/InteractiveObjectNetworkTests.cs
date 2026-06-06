@@ -113,7 +113,7 @@ namespace Neo.Tests.Play
             });
 
             MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return new WaitForSeconds(0.1f);
@@ -131,7 +131,7 @@ namespace Neo.Tests.Play
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
             MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return null;
@@ -149,7 +149,7 @@ namespace Neo.Tests.Play
             _interactiveObject.onInteractDown.AddListener(() => eventCount++);
 
             MethodInfo triggerMethod = typeof(InteractiveObject).GetMethod("TriggerInteractDown",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             triggerMethod.Invoke(_interactiveObject, null);
 
             yield return new WaitForSeconds(0.1f);

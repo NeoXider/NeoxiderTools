@@ -103,7 +103,7 @@ namespace Neo.Editor.Tests.Edit
         {
             var shopObject = new GameObject("Shop");
             var walletObject = new GameObject("PendingWallet");
-            var item = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
 
             try
             {
@@ -111,8 +111,8 @@ namespace Neo.Editor.Tests.Edit
                 SetSerialized(item, "_nameItem", "Sword");
                 SetSerialized(item, "_price", 50);
 
-                var pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
-                var shop = shopObject.AddComponent<Neo.Shop.Shop>();
+                PendingAuthorityMoneySpend pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
+                Shop.Shop shop = shopObject.AddComponent<Neo.Shop.Shop>();
                 shop.AutoSpawnItems = false;
                 shop.SetItems(new[] { item });
                 shop.SetMoneySpendSource(walletObject);
@@ -143,8 +143,8 @@ namespace Neo.Editor.Tests.Edit
         {
             var shopObject = new GameObject("Shop");
             var walletObject = new GameObject("PendingWallet");
-            var item = ScriptableObject.CreateInstance<ShopItemData>();
-            var bundle = ScriptableObject.CreateInstance<ShopBundleData>();
+            ShopItemData item = ScriptableObject.CreateInstance<ShopItemData>();
+            ShopBundleData bundle = ScriptableObject.CreateInstance<ShopBundleData>();
 
             try
             {
@@ -156,8 +156,8 @@ namespace Neo.Editor.Tests.Edit
                 SetSerialized(bundle, "_bundlePrice", 100);
                 SetSerialized(bundle, "_items", new[] { item });
 
-                var pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
-                var shop = shopObject.AddComponent<Neo.Shop.Shop>();
+                PendingAuthorityMoneySpend pendingWallet = walletObject.AddComponent<PendingAuthorityMoneySpend>();
+                Shop.Shop shop = shopObject.AddComponent<Neo.Shop.Shop>();
                 shop.AutoSpawnItems = false;
                 shop.SetItems(new[] { item });
                 shop.SetBundles(new[] { bundle });

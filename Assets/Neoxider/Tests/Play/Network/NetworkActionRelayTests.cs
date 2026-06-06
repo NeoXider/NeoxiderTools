@@ -66,7 +66,7 @@ namespace Neo.Tests.Play
 
             // Configure channel via reflection (serialized field)
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "test",
@@ -102,7 +102,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "hp",
@@ -138,7 +138,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "chat",
@@ -174,7 +174,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "serverCmd",
@@ -208,7 +208,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var channel = new NetworkActionChannel
             {
                 channelName = "others",
@@ -244,7 +244,7 @@ namespace Neo.Tests.Play
             relay.isNetworked = true;
 
             FieldInfo channelsField = typeof(NetworkActionRelay).GetField("_channels",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             var ch0 = new NetworkActionChannel
                 { channelName = "alpha", scope = NetworkActionScope.AllClients, onTriggered = new UnityEvent() };
             var ch1 = new NetworkActionChannel

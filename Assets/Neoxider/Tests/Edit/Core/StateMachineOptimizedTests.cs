@@ -487,7 +487,7 @@ namespace Neo.Editor.Tests.Edit
         private static void InvokePrivate(object target, string methodName)
         {
             MethodInfo method = target.GetType().GetMethod(methodName,
-                System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+                BindingFlags.Instance | BindingFlags.NonPublic);
             Assert.That(method, Is.Not.Null, methodName);
             method.Invoke(target, null);
         }

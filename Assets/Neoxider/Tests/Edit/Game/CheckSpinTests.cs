@@ -29,10 +29,10 @@ namespace Neo.Editor.Tests
         public void GetEffectiveLines_FallbackRowRange_SingleBottomRow()
         {
             typeof(CheckSpin).GetField("_fallbackWindowRowMin",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 0);
             typeof(CheckSpin).GetField("_fallbackWindowRowMax",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 0);
 
             LinesData.InnerArray[] lines = _spin.GetEffectiveLines(4, 3);
@@ -44,10 +44,10 @@ namespace Neo.Editor.Tests
         public void GetEffectiveLines_FallbackRowRange_InclusiveMiddleRows()
         {
             typeof(CheckSpin).GetField("_fallbackWindowRowMin",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 1);
             typeof(CheckSpin).GetField("_fallbackWindowRowMax",
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+                    BindingFlags.NonPublic | BindingFlags.Instance)
                 ?.SetValue(_spin, 2);
 
             LinesData.InnerArray[] lines = _spin.GetEffectiveLines(3, 4);

@@ -107,7 +107,7 @@ namespace Neo.Tests.Play
             _physicsEvents3D.isNetworked = true;
 
             MethodInfo m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             m.Invoke(_physicsEvents3D, new object[] { _actorCollider });
 
             yield return new WaitForSeconds(0.1f);
@@ -121,7 +121,7 @@ namespace Neo.Tests.Play
             _physicsEvents3D.isNetworked = false;
 
             MethodInfo m = typeof(PhysicsEvents3D).GetMethod("OnTriggerEnter",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             m.Invoke(_physicsEvents3D, new object[] { _actorCollider });
 
             yield return null;

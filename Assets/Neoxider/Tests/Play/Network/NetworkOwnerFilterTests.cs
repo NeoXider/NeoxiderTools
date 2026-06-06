@@ -61,7 +61,7 @@ namespace Neo.Tests.Play
             NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
             FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.ServerOnly);
 
             NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();
@@ -89,7 +89,7 @@ namespace Neo.Tests.Play
             NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
             FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.Everyone);
 
             NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();
@@ -115,7 +115,7 @@ namespace Neo.Tests.Play
             NetworkOwnerFilter filter = filterObj.AddComponent<NetworkOwnerFilter>();
 
             FieldInfo modeField = typeof(NetworkOwnerFilter).GetField("_mode",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                BindingFlags.NonPublic | BindingFlags.Instance);
             modeField.SetValue(filter, OwnerFilterMode.ServerOnly);
 
             NetworkIdentity id = filterObj.AddComponent<NetworkIdentity>();

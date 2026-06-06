@@ -131,7 +131,8 @@ namespace Neo.Tests.PlayMode
             }
 
             Assert.That(ended, Is.True, "SpinController did not finish in time.");
-            Assert.That(won, Is.True, "Top fallback payline should win when forced outcome sets top row to the same id.");
+            Assert.That(won, Is.True,
+                "Top fallback payline should win when forced outcome sets top row to the same id.");
 
             int[,] finalIds = controller.GetElementIDsMatrix(false);
             Assert.That(finalIds.GetLength(0), Is.EqualTo(3));

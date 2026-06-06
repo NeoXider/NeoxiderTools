@@ -131,7 +131,8 @@ namespace Neo.Editor.Tests
                 foreach (Match match in MonoScriptReferenceRegex.Matches(text))
                 {
                     string guid = match.Groups[1].Value;
-                    if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) && !GuidExistsInHiddenSampleMeta(guid))
+                    if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) &&
+                        !GuidExistsInHiddenSampleMeta(guid))
                     {
                         failures.Add($"{path}: references missing MonoScript guid {guid}.");
                     }
@@ -401,8 +402,10 @@ namespace Neo.Editor.Tests
             var levels = new Dictionary<int, int>();
             foreach (Match match in CurveKeyRegex.Matches(text))
             {
-                int time = Mathf.RoundToInt(float.Parse(match.Groups["time"].Value, System.Globalization.CultureInfo.InvariantCulture));
-                int value = Mathf.RoundToInt(float.Parse(match.Groups["value"].Value, System.Globalization.CultureInfo.InvariantCulture));
+                int time = Mathf.RoundToInt(float.Parse(match.Groups["time"].Value,
+                    System.Globalization.CultureInfo.InvariantCulture));
+                int value = Mathf.RoundToInt(float.Parse(match.Groups["value"].Value,
+                    System.Globalization.CultureInfo.InvariantCulture));
                 levels[time] = value;
             }
 

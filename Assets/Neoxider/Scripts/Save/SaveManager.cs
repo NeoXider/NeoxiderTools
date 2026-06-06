@@ -227,7 +227,7 @@ namespace Neo.Save
         {
             CleanupDestroyedRegistrations();
             SaveDataContainer container = ReadAllSaveDataContainer();
-            HashSet<string> currentComponentKeys = _saveableComponents.Keys.ToHashSet();
+            var currentComponentKeys = _saveableComponents.Keys.ToHashSet();
             container.AllSavedComponents.RemoveAll(component =>
                 component == null || currentComponentKeys.Contains(component.ComponentKey));
 

@@ -100,7 +100,8 @@ namespace Neo.Tests.Play
 
             Vector3 releaseWorld = GetCellWorldCenter(field, 2, 2);
             object placed = Invoke(view, "SimulateDragDropForTest", releaseWorld);
-            Assert.That(placed, Is.EqualTo(true), "Dice demo drag/drop simulation should place a pair on an empty board.");
+            Assert.That(placed, Is.EqualTo(true),
+                "Dice demo drag/drop simulation should place a pair on an empty board.");
             yield return WaitFrames(3);
             AssertDicePlacedPiecesRootHasDieView(2);
             AssertDicePlacedViewsRenderAboveCells();
@@ -214,10 +215,12 @@ namespace Neo.Tests.Play
                 "Neo.Samples.AnimationFlyDemoController",
                 "AnimationFly demo controller");
             object eventSystem = FindRequiredComponent("UnityEngine.EventSystems.EventSystem", "EventSystem");
-            object canvasScaler = FindRequiredComponent("UnityEngine.UI.CanvasScaler", "AnimationFly demo canvas scaler");
+            object canvasScaler =
+                FindRequiredComponent("UnityEngine.UI.CanvasScaler", "AnimationFly demo canvas scaler");
 
             Assert.That(eventSystem, Is.Not.Null);
-            Assert.That(GetProperty<Vector2>(canvasScaler, "referenceResolution"), Is.EqualTo(new Vector2(1920f, 1080f)));
+            Assert.That(GetProperty<Vector2>(canvasScaler, "referenceResolution"),
+                Is.EqualTo(new Vector2(1920f, 1080f)));
             Assert.That(GetProperty<bool>(controller, "FlyRootBlocksRaycasts"), Is.False,
                 "AnimationFly demo fly root must not block button and slider raycasts.");
             Assert.That(GetProperty<int>(controller, "DemoButtonCount"), Is.GreaterThanOrEqualTo(6));

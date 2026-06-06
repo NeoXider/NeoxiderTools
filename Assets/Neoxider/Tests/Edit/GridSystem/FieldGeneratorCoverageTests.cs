@@ -184,7 +184,7 @@ namespace Neo.Editor.Tests.GridSystem
         public void PlaceContentFootprint_WritesMultiCellContentAndRejectsInvalidCells()
         {
             FieldGenerator generator = CreateGenerator(3, 3, GridOrigin2D.Center);
-            var entries = new[]
+            GridPlacementEntry[] entries = new[]
             {
                 new GridPlacementEntry(Vector3Int.zero, 2),
                 new GridPlacementEntry(Vector3Int.right, 4)

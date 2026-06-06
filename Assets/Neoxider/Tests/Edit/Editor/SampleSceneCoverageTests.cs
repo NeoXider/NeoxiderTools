@@ -11,9 +11,10 @@ namespace Neo.Editor.Tests
 {
     public sealed class SampleSceneCoverageTests
     {
-        private static readonly Regex MonoScriptReferenceRegex = new Regex(
+        private static readonly Regex MonoScriptReferenceRegex = new(
             @"m_Script:\s*\{fileID:\s*11500000,\s*guid:\s*([0-9a-fA-F]{32}),\s*type:\s*3\}",
             RegexOptions.Compiled);
+
         private static Dictionary<string, string> _guidToAssetPath;
 
         private static readonly string[] SampleRootCandidates =
@@ -58,7 +59,9 @@ namespace Neo.Editor.Tests
             string originalScenePath = EditorSceneManager.GetActiveScene().path;
             var failures = new List<string>();
             System.Type demoInfoType = FindType("Neo.Samples.ModuleDemoSceneInfo");
-            string demoInfoScriptGuid = demoInfoType == null ? FindScriptGuidFromTypeName("Neo.Samples.ModuleDemoSceneInfo") : string.Empty;
+            string demoInfoScriptGuid = demoInfoType == null
+                ? FindScriptGuidFromTypeName("Neo.Samples.ModuleDemoSceneInfo")
+                : string.Empty;
 
             try
             {
@@ -72,7 +75,8 @@ namespace Neo.Editor.Tests
 
                     if (IsHiddenSamplePath(path))
                     {
-                        CheckHiddenSampleSceneYaml(path, "Neo.Samples.ModuleDemoSceneInfo", demoInfoScriptGuid, failures);
+                        CheckHiddenSampleSceneYaml(path, "Neo.Samples.ModuleDemoSceneInfo", demoInfoScriptGuid,
+                            failures);
                         continue;
                     }
 
@@ -376,7 +380,8 @@ namespace Neo.Editor.Tests
             foreach (Match match in MonoScriptReferenceRegex.Matches(text))
             {
                 string guid = match.Groups[1].Value;
-                if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) && string.IsNullOrEmpty(FindAssetPathByGuid(guid)))
+                if (string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(guid)) &&
+                    string.IsNullOrEmpty(FindAssetPathByGuid(guid)))
                 {
                     failures.Add(path + ": references unknown MonoScript guid " + guid + ".");
                 }
@@ -396,7 +401,8 @@ namespace Neo.Editor.Tests
 
         private static string FindScriptGuid(string scriptFileName)
         {
-            foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", scriptFileName + ".meta", SearchOption.AllDirectories))
+            foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", scriptFileName + ".meta",
+                         SearchOption.AllDirectories))
             {
                 string guid = ReadGuidFromMeta(metaPathRaw);
                 if (!string.IsNullOrEmpty(guid))
@@ -420,7 +426,8 @@ namespace Neo.Editor.Tests
             if (_guidToAssetPath == null)
             {
                 _guidToAssetPath = new Dictionary<string, string>();
-                foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", "*.meta", SearchOption.AllDirectories))
+                foreach (string metaPathRaw in Directory.EnumerateFiles("Assets/Neoxider", "*.meta",
+                             SearchOption.AllDirectories))
                 {
                     string metaGuid = ReadGuidFromMeta(metaPathRaw);
                     if (!string.IsNullOrEmpty(metaGuid) && !_guidToAssetPath.ContainsKey(metaGuid))

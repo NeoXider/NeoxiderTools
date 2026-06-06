@@ -864,7 +864,7 @@ namespace Neo
                 return AnimationFlySpawnSpace.Canvas;
             }
 
-            return sprite != null || prefab != null && prefab.GetComponent<RectTransform>() != null
+            return sprite != null || (prefab != null && prefab.GetComponent<RectTransform>() != null)
                 ? AnimationFlySpawnSpace.Canvas
                 : AnimationFlySpawnSpace.World;
         }
@@ -1066,7 +1066,7 @@ namespace Neo
 
             if (resolvedSpawnSpace == AnimationFlySpawnSpace.Canvas)
             {
-                var rect = go.AddComponent<RectTransform>();
+                RectTransform rect = go.AddComponent<RectTransform>();
                 rect.sizeDelta =
                     sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
                 Image image = go.AddComponent<Image>();
