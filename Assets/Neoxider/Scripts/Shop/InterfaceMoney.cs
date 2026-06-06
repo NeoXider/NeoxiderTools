@@ -23,7 +23,10 @@ namespace Neo.Shop
         public float BalanceBefore { get; }
         public float BalanceAfter { get; }
         public bool IsConfirmed => Status == MoneySpendStatus.Confirmed;
-        public bool IsRejected => Status is MoneySpendStatus.RejectedInvalidAmount or MoneySpendStatus.RejectedInsufficientFunds;
+
+        public bool IsRejected =>
+            Status is MoneySpendStatus.RejectedInvalidAmount or MoneySpendStatus.RejectedInsufficientFunds;
+
         public bool IsPendingServerAuthority => Status == MoneySpendStatus.RequestedServerAuthority;
     }
 }

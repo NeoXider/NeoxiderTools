@@ -1365,7 +1365,7 @@ namespace Neo.Rpg.Components
         public float GetResourcePercent(string id)
         {
             return _resourceRuntime.TryGetValue(id, out RpgResourceRuntime r)
-                ? (r.Max > 0f ? Mathf.Clamp01(r.Current / r.Max) : 0f)
+                ? r.Max > 0f ? Mathf.Clamp01(r.Current / r.Max) : 0f
                 : 0f;
         }
 
@@ -2312,7 +2312,7 @@ namespace Neo.Rpg.Components
                 ActiveBuffEntry e = _effects.ActiveBuffs[i];
                 sb.Append("B:").Append(EscapeSnapshotId(e.BuffId)).Append('=')
                     .Append(e.ExpiresAtUtc.ToString("R", System.Globalization.CultureInfo.InvariantCulture))
-                    .Append('|').Append(ClampSnapshotBuffStacks(e.BuffId, e.Stacks)).Append(';');
+                    .Append(';');
             }
 
             for (int i = 0; i < _effects.ActiveStatuses.Count; i++)
@@ -2496,26 +2496,22 @@ namespace Neo.Rpg.Components
             }
         }
 
-        private void ApplyBuffSnap(string id, string rhs)
+        private void ApplyBuffSnap(string id, string expiresAt)
         {
             if (string.IsNullOrEmpty(id))
             {
                 return;
             }
 
-            int pipe = rhs.IndexOf('|');
-            double expires = ParseDouble(pipe >= 0 ? rhs.Substring(0, pipe) : rhs);
-            int stacks = pipe >= 0 ? Mathf.Max(1, ParseInt(rhs.Substring(pipe + 1))) : 1;
+            double expires = ParseDouble(expiresAt);
 
             if (_effects.TryGetBuff(id, out BuffDefinition def) && def != null)
             {
                 _effects.ApplyBuff(def);
-                stacks = def.Stackable ? Mathf.Min(stacks, Mathf.Max(1, def.MaxStacks)) : 1;
             }
             else if (_effects.TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null)
             {
                 _effects.ApplyInlineBuff(inline);
-                stacks = inline.Stackable ? Mathf.Min(stacks, Mathf.Max(1, inline.MaxStacks)) : 1;
             }
 
             foreach (ActiveBuffEntry e in _effects.ActiveBuffs)
@@ -2523,26 +2519,9 @@ namespace Neo.Rpg.Components
                 if (e.BuffId == id)
                 {
                     e.ExpiresAtUtc = expires;
-                    e.Stacks = stacks;
                     break;
                 }
             }
-        }
-
-        private int ClampSnapshotBuffStacks(string id, int stacks)
-        {
-            int safeStacks = Mathf.Max(1, stacks);
-            if (_effects.TryGetBuff(id, out BuffDefinition def) && def != null)
-            {
-                return def.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, def.MaxStacks)) : 1;
-            }
-
-            if (_effects.TryGetInlineBuff(id, out InlineBuffEntry inline) && inline != null)
-            {
-                return inline.Stackable ? Mathf.Min(safeStacks, Mathf.Max(1, inline.MaxStacks)) : 1;
-            }
-
-            return safeStacks;
         }
 
         private void ApplyStatusSnap(string id, string rhs)

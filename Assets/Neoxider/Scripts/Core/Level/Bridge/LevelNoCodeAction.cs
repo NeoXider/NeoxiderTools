@@ -42,6 +42,7 @@ namespace Neo.Core.Level
                     {
                         _onLevelUp?.Invoke(provider.Level);
                     }
+
                     break;
                 case LevelNoCodeActionType.SetLevel:
                     provider.SetLevel(_level);

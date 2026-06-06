@@ -113,8 +113,7 @@ namespace Neo
         [Tooltip("Default completion behavior for the typed request API.")]
         public AnimationFlyCompletionMode defaultCompletionMode = AnimationFlyCompletionMode.Destroy;
 
-        [Tooltip("Maximum pooled objects retained per prefab/sprite key when using DisableAndPool.")]
-        [Min(0)]
+        [Tooltip("Maximum pooled objects retained per prefab/sprite key when using DisableAndPool.")] [Min(0)]
         public int maxPoolPerKey = 64;
 
         [Header("Motion")] [Tooltip("Random offset applied to every start position.")]
@@ -131,8 +130,7 @@ namespace Neo
 
         public float rotationDegrees = 360f;
 
-        [Header("Advanced Motion")]
-        [Tooltip("Default trajectory preset for typed AnimationFlyRequest calls.")]
+        [Header("Advanced Motion")] [Tooltip("Default trajectory preset for typed AnimationFlyRequest calls.")]
         public AnimationFlyMotionPreset motionPreset = AnimationFlyMotionPreset.Arc;
 
         [Tooltip("Initial pop offset used by Fountain and FountainMagnet presets, in resolved spawn-space units.")]
@@ -141,20 +139,16 @@ namespace Neo
         [Tooltip("Random spread around the initial pop point used by Fountain, FountainMagnet and Scatter presets.")]
         public Vector3 burstRandomOffset = new(120f, 60f, 0f);
 
-        [Range(0.05f, 0.85f)]
-        [Tooltip("Part of flyDuration reserved for the initial pop stage.")]
+        [Range(0.05f, 0.85f)] [Tooltip("Part of flyDuration reserved for the initial pop stage.")]
         public float burstDurationRatio = 0.28f;
 
-        [Min(0f)]
-        [Tooltip("Optional pause after the initial pop before items fly to the target.")]
+        [Min(0f)] [Tooltip("Optional pause after the initial pop before items fly to the target.")]
         public float burstHoldDuration = 0.04f;
 
-        [Min(0f)]
-        [Tooltip("Distance from the target where Magnet presets switch to the final pull.")]
+        [Min(0f)] [Tooltip("Distance from the target where Magnet presets switch to the final pull.")]
         public float magnetDistance = 90f;
 
-        [Range(0.05f, 0.85f)]
-        [Tooltip("Part of flyDuration reserved for the final magnet pull.")]
+        [Range(0.05f, 0.85f)] [Tooltip("Part of flyDuration reserved for the final magnet pull.")]
         public float magnetDurationRatio = 0.25f;
 
         public bool useUnscaledTime;
@@ -238,7 +232,8 @@ namespace Neo
                 request.EndTransform, endDepth);
 
             int finalCount = Mathf.CeilToInt(request.Count * request.CountMultiplier * countMultiplier);
-            finalCount = Mathf.Clamp(finalCount, 0, request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
+            finalCount = Mathf.Clamp(finalCount, 0,
+                request.MaxCount > 0 ? Mathf.Min(request.MaxCount, maxBonusCount) : maxBonusCount);
             if (finalCount <= 0)
             {
                 return AnimationFlyResult.Empty;
@@ -643,7 +638,8 @@ namespace Neo
                 launchPoint.z = 0f;
             }
 
-            float popDuration = flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
+            float popDuration =
+                flyDuration * Mathf.Clamp(request.BurstDurationRatio ?? burstDurationRatio, 0.05f, 0.85f);
             float holdDuration = Mathf.Max(0f, request.BurstHoldDuration ?? burstHoldDuration);
             float remaining = Mathf.Max(0.01f, flyDuration - popDuration);
 
@@ -1071,7 +1067,8 @@ namespace Neo
             if (resolvedSpawnSpace == AnimationFlySpawnSpace.Canvas)
             {
                 var rect = go.AddComponent<RectTransform>();
-                rect.sizeDelta = sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
+                rect.sizeDelta =
+                    sprite != null ? new Vector2(sprite.rect.width, sprite.rect.height) : Vector2.one * 32f;
                 Image image = go.AddComponent<Image>();
                 image.sprite = sprite;
                 image.raycastTarget = false;

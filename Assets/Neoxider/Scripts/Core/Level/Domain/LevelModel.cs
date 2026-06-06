@@ -130,68 +130,196 @@ namespace Neo.Core.Level
             }
         }
 
-        private int FindMinimumXpForLevel(int level)
+        private
+        int
+        FindMinimumXpForLevel(int level)
         {
             if (level <= 1)
-            {
-                return 0;
-            }
-
-            int high = Math.Max(1, TotalXp);
-            while (EvaluateLevelForXp(high) < level && high < int.MaxValue / 2)
-            {
-                high *= 2;
-            }
-
-            if (EvaluateLevelForXp(high) < level)
-            {
-                high = int.MaxValue;
-            }
-
-            int low = 0;
-            while (low < high)
-            {
-                int mid = low + (high - low) / 2;
-                if (EvaluateLevelForXp(mid) >= level)
-                {
-                    high = mid;
-                }
-                else
-                {
-                    low = mid + 1;
-                }
-            }
-
-            return low;
+   
+{
+        return 0;
         }
-
-        private int EvaluateLevelForXp(int totalXp)
+        int
+        high
+        =
+        Math
+        .
+        Max
+        (
+        1
+        ,
+        TotalXp
+        )
+        ;
+        while
+        (
+        EvaluateLevelForXp
+        (
+        high
+        )
+        <
+        level
+        &&
+        high
+        <
+        int
+        .
+        MaxValue
+        /
+        2
+        )
         {
-            if (_curveDefinition != null)
-            {
-                return _curveDefinition.EvaluateLevel(totalXp, MaxLevel);
-            }
-
-            return LevelCurveEvaluator.EvaluateLevel(
-                totalXp,
-                _curveType,
-                _xpPerLevel,
-                _quadraticBase,
-                _expBase,
-                _expFactor,
-                _customEntries,
-                MaxLevel);
+        high
+        *=
+        2
+        ;
         }
-
-        public void SetLevelDirect(int level)
+        if
+        (
+        EvaluateLevelForXp
+        (
+        high
+        )
+        <
+        level
+        )
         {
-            level = level < 1 ? 1 : level;
-            if (MaxLevel > 0 && level > MaxLevel)
+        high
+        =
+        int
+        .
+        MaxValue
+        ;
+        }
+        int
+        low
+        =
+        0
+        ;
+        while
+        (
+        low
+        <
+        high
+        )
             {
-                level = MaxLevel;
+                int mid = low + (high - low) / 2
+        ;
+        if
+        (
+        EvaluateLevelForXp
+        (
+        mid
+        )
+        >=
+        level
+        )
+        {
+        high
+        =
+        mid
+        ;
+        }
+        else
+        {
+        low
+        =
+        mid
+        +
+        1
+        ;
+        }
+        }
+        return
+        low
+        ;
+        }
+        private
+        int
+        EvaluateLevelForXp
+        (
+        int
+        totalXp
+        )
+        {
+        if
+        (
+        _curveDefinition
+        !=
+        null
+        )
+        {
+        return
+        _curveDefinition
+        .
+        EvaluateLevel
+        (
+        totalXp
+        ,
+        MaxLevel
+        )
+        ;
+        }
+        return
+        LevelCurveEvaluator
+        .
+        EvaluateLevel
+        (
+        totalXp
+        ,
+        _curveType
+        ,
+        _xpPerLevel
+        ,
+        _quadraticBase
+        ,
+        _expBase
+        ,
+        _expFactor
+        ,
+        _customEntries
+        ,
+        MaxLevel
+        )
+        ;
+        }
+        public
+        void
+        SetLevelDirect
+        (
+        int
+        level
+        )
+        {
+        level
+        =
+        level
+        <
+        1
+        ?
+        1
+        :
+        level
+        ;
+        if
+        (
+        MaxLevel
+        >
+        0
+        &&
+        level
+        >
+        MaxLevel
+        )
+        {
+        level
+        =
+        MaxLevel
+        ;
             }
 
-            int previous = CurrentLevel;
+ 
+          int previous = CurrentLevel;
             CurrentLevel = level;
             XpToNextLevel = 0;
             if (CurrentLevel != previous)

@@ -139,7 +139,7 @@ namespace Neo.Tools
             }
         }
 
-        public static readonly System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<Counter>>
+        public static readonly Dictionary<string, List<Counter>>
             Registry = new();
 
         protected virtual void OnEnable()
@@ -148,7 +148,7 @@ namespace Neo.Tools
             {
                 if (!Registry.TryGetValue(_saveKey, out List<Counter> list))
                 {
-                    list = new System.Collections.Generic.List<Counter>();
+                    list = new List<Counter>();
                     Registry[_saveKey] = list;
                 }
 
