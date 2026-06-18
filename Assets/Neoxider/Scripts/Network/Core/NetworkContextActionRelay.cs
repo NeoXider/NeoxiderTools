@@ -570,8 +570,15 @@ namespace Neo.Network
                 return;
             }
 
+#if UNITY_6000_5_OR_NEWER
+            string rootId = root.GetEntityId().ToString();
+            string targetId = target.GetEntityId().ToString();
+#else
+            string rootId = root.GetInstanceID().ToString();
+            string targetId = target.GetInstanceID().ToString();
+#endif
             LogVerbose(
-                $"ApplyResolved on '{name}': root='{root.name}' (id={root.GetInstanceID()}) → target='{target.name}' (id={target.GetInstanceID()}, was active={target.activeSelf}) → action={_action}");
+                $"ApplyResolved on '{name}': root='{root.name}' (id={rootId}) → target='{target.name}' (id={targetId}, was active={target.activeSelf}) → action={_action}");
 
             _onNetworkTriggered?.Invoke();
             _onContextResolved?.Invoke(root);

@@ -173,15 +173,19 @@ public class MouseInputManager : Singleton<MouseInputManager>
             }
         }
 
-        if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
-        {
-            _missingCameraLogged = true;
-            NeoDiagnostics.LogWarningThrottled(
-                $"{nameof(MouseInputManager)}.{GetInstanceID()}.MissingCamera",
-                $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
-                this,
-                5f);
-        }
+            if (targetCamera == null && logMissingCamera && !_missingCameraLogged)
+            {
+                _missingCameraLogged = true;
+                NeoDiagnostics.LogWarningThrottled(
+#if UNITY_6000_5_OR_NEWER
+                    $"{nameof(MouseInputManager)}.{GetEntityId()}.MissingCamera",
+#else
+                    $"{nameof(MouseInputManager)}.{GetInstanceID()}.MissingCamera",
+#endif
+                    $"[{nameof(MouseInputManager)}] Target Camera is not assigned and MainCamera fallback is unavailable.",
+                    this,
+                    5f);
+            }
 
         return targetCamera;
     }
