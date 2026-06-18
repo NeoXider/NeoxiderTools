@@ -923,7 +923,6 @@ MonoBehaviour:
   pageId: {fileID: 0}
   popup: 0
   ignoreOnExclusiveChange: 0
-  _animation: {fileID: 8211126209374537711}
   _playBackward: 1
   _onlyPlayBackward: 0
 --- !u!1 &7513088814250329596

@@ -233,7 +233,6 @@ MonoBehaviour:
   pageId: {fileID: 11400000, guid: 920b78906a936bf4588712562ce828ec, type: 2}
   popup: 0
   ignoreOnExclusiveChange: 0
-  _animation: {fileID: 6298829328643137154}
   _animationMode: 0
   _legacyPlayBackward: 0
   _legacyOnlyPlayBackward: 0

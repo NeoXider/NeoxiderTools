@@ -12,7 +12,6 @@ namespace Neo.Pages.Editor
         private const float ModeButtonHeight = 22f;
         private const string SourceLabelAll = "Source: all project folders";
         private SerializedProperty animationModeProp;
-        private SerializedProperty animationProp;
 
         private string generateName = "Menu";
         private SerializedProperty ignoreOnExclusiveChangeProp;
@@ -27,7 +26,6 @@ namespace Neo.Pages.Editor
             pageIdProp = serializedObject.FindProperty("pageId");
             popupProp = serializedObject.FindProperty("popup");
             ignoreOnExclusiveChangeProp = serializedObject.FindProperty("ignoreOnExclusiveChange");
-            animationProp = serializedObject.FindProperty("_animation");
             animationModeProp = serializedObject.FindProperty("_animationMode");
         }
 
@@ -44,10 +42,9 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Anim", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(animationProp);
             EditorGUILayout.PropertyField(animationModeProp);
             EditorGUILayout.HelpBox(
-                "Page animations are restarted on every show/hide and forced to unscaled time. None disables page animation, ForwardOnly animates show only, BackwardOnly animates hide only, ForwardAndBackward animates both.",
+                "Compatibility setting for older scenes and project extensions. The base NeoxiderPages sample has no required tween dependency.",
                 MessageType.Info);
 
             serializedObject.ApplyModifiedProperties();
