@@ -37,12 +37,12 @@ namespace Neo.Pages.Editor
 
             EditorGUILayout.LabelField("Page", EditorStyles.boldLabel);
             DrawPageIdSelector(pageIdProp);
-            EditorGUILayout.PropertyField(popupProp);
-            EditorGUILayout.PropertyField(ignoreOnExclusiveChangeProp);
+            DrawPropertyIfAvailable(popupProp, "Popup");
+            DrawPropertyIfAvailable(ignoreOnExclusiveChangeProp, "Ignore On Exclusive Change");
 
             EditorGUILayout.Space(8);
             EditorGUILayout.LabelField("Anim", EditorStyles.boldLabel);
-            EditorGUILayout.PropertyField(animationModeProp);
+            DrawPropertyIfAvailable(animationModeProp, "Animation Mode");
             EditorGUILayout.HelpBox(
                 "Compatibility setting for older scenes and project extensions. The base NeoxiderPages sample has no required tween dependency.",
                 MessageType.Info);
@@ -57,6 +57,12 @@ namespace Neo.Pages.Editor
 
         private void DrawPageIdSelector(SerializedProperty pageId)
         {
+            if (pageId == null)
+            {
+                EditorGUILayout.HelpBox("Serialized field 'pageId' was not found on UIPage.", MessageType.Warning);
+                return;
+            }
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Page Id", EditorStyles.miniBoldLabel);
@@ -104,6 +110,17 @@ namespace Neo.Pages.Editor
             }
 
             DrawGenerateAndAssign(pageId);
+        }
+
+        private static void DrawPropertyIfAvailable(SerializedProperty property, string label)
+        {
+            if (property == null)
+            {
+                EditorGUILayout.HelpBox($"Serialized field for '{label}' was not found on UIPage.", MessageType.Warning);
+                return;
+            }
+
+            EditorGUILayout.PropertyField(property);
         }
 
         private static int DrawSegmentedMode(int value, GUIContent left, GUIContent right)
