@@ -1,4 +1,3 @@
-using DG.Tweening;
 using Neo;
 using System.Collections;
 using UnityEngine;
@@ -21,7 +20,7 @@ namespace Neo.Pages
     [NeoDoc("NeoxiderPages/UIPage.md")]
     /// <summary>
     /// UI page component for use with <see cref="PM"/>.
-    /// Plays animation via DOTween Animation when the component is present.
+    /// Handles page active state for the PM page controller.
     /// </summary>
     public class UIPage : MonoBehaviour
     {
@@ -36,9 +35,7 @@ namespace Neo.Pages
         [Tooltip("When enabled, PM will not deactivate this page on Exclusive switches.")] [SerializeField]
         private bool ignoreOnExclusiveChange;
 
-        [Space] [Header("Anim")] [SerializeField]
-        private DOTweenAnimation _animation;
-
+        [Space] [Header("Anim")]
         [Tooltip("None: no animation. ForwardOnly: animate only on show. BackwardOnly: animate only on hide. ForwardAndBackward: animate both show and hide.")]
         [SerializeField]
         private UIPageAnimationMode _animationMode = UIPageAnimationMode.ForwardAndBackward;
@@ -59,10 +56,10 @@ namespace Neo.Pages
         public UIPageAnimationMode AnimationMode => _animationMode;
 
         /// <summary>
-        ///     True when this page plays a DOTween show animation on <see cref="StartActive"/>.
+        ///     True when this page plays a show animation on <see cref="StartActive"/>.
         ///     Used by <see cref="PM"/> to keep the previous page visible until the incoming animation finishes.
         /// </summary>
-        public bool HasShowAnimation => CanPlayForward() && _animation != null;
+        public bool HasShowAnimation => false;
 
         /// <summary>Realtime seconds to wait for the show tween (duration + delay). Zero when <see cref="HasShowAnimation"/> is false.</summary>
         public float ShowAnimationDuration
@@ -74,9 +71,7 @@ namespace Neo.Pages
                     return 0f;
                 }
 
-                float fromTween = GetAnimationWaitSeconds();
-                float fromComponent = _animation.duration + _animation.delay;
-                return Mathf.Max(fromTween, fromComponent);
+                return 0f;
             }
         }
 
@@ -84,14 +79,7 @@ namespace Neo.Pages
         {
             get
             {
-                if (!CanPlayBackward() || _animation == null)
-                {
-                    return 0f;
-                }
-
-                float fromTween = GetAnimationWaitSeconds();
-                float fromComponent = _animation.duration + _animation.delay;
-                return Mathf.Max(fromTween, fromComponent);
+                return 0f;
             }
         }
 
@@ -102,9 +90,7 @@ namespace Neo.Pages
                 name = pageId.DisplayName + " Page";
             }
 
-            _animation ??= GetComponent<DOTweenAnimation>();
             MigrateLegacyAnimationModeIfNeeded();
-            ConfigureAnimation();
         }
 
 
@@ -127,7 +113,7 @@ namespace Neo.Pages
 
             if (CanPlayForward())
             {
-                PlayForwardRestart();
+                // Animation hooks are intentionally optional for the sample.
             }
         }
 
@@ -147,17 +133,7 @@ namespace Neo.Pages
 
             MigrateLegacyAnimationModeIfNeeded();
 
-            if (CanPlayBackward() && _animation != null)
-            {
-                if (PlayBackwardRestart())
-                {
-                    _deactivateRoutine = StartCoroutine(DeactivateAfterAnimationRealtime());
-                }
-            }
-            else
-            {
-                SetActive(false);
-            }
+            SetActive(false);
         }
 
         /// <summary>
@@ -202,67 +178,6 @@ namespace Neo.Pages
                    _animationMode == UIPageAnimationMode.ForwardAndBackward;
         }
 
-        private void ConfigureAnimation()
-        {
-            if (_animation == null)
-            {
-                return;
-            }
-
-            _animation.autoKill = false;
-            _animation.isIndependentUpdate = true;
-
-            if (_animation.tween != null && _animation.tween.active)
-            {
-                _animation.tween.SetAutoKill(false);
-                _animation.tween.SetUpdate(true);
-            }
-        }
-
-        private void EnsureAnimationTween()
-        {
-            if (_animation == null)
-            {
-                return;
-            }
-
-            ConfigureAnimation();
-            if (_animation.tween == null || !_animation.tween.active)
-            {
-                _animation.CreateTween(false, false);
-                ConfigureAnimation();
-            }
-        }
-
-        private void PlayForwardRestart()
-        {
-            EnsureAnimationTween();
-            if (_animation?.tween == null)
-            {
-                return;
-            }
-
-            _animation.tween.Pause();
-            _animation.tween.Rewind();
-            _animation.tween.PlayForward();
-        }
-
-        private bool PlayBackwardRestart()
-        {
-            EnsureAnimationTween();
-            if (_animation?.tween == null)
-            {
-                SetActive(false);
-                return false;
-            }
-
-            Tween tween = _animation.tween;
-            tween.Pause();
-            tween.Goto(tween.Duration(true), false);
-            tween.PlayBackwards();
-            return true;
-        }
-
         /// <summary>
         ///     Yields until the show tween completes (or immediately when there is no show animation).
         ///     Used by <see cref="PM"/> before deactivating other pages on exclusive switches.
@@ -271,14 +186,6 @@ namespace Neo.Pages
         {
             if (!HasShowAnimation)
             {
-                yield break;
-            }
-
-            EnsureAnimationTween();
-            Tween tween = _animation != null ? _animation.tween : null;
-            if (tween != null && tween.active && !tween.IsComplete())
-            {
-                yield return tween.WaitForCompletion(true);
                 yield break;
             }
 
@@ -296,33 +203,6 @@ namespace Neo.Pages
             {
                 yield return new WaitForSecondsRealtime(wait);
             }
-        }
-
-        private IEnumerator DeactivateAfterAnimationRealtime()
-        {
-            float wait = GetAnimationWaitSeconds();
-            if (wait > 0f)
-            {
-                yield return new WaitForSecondsRealtime(wait);
-            }
-
-            _deactivateRoutine = null;
-            SetActive(false);
-        }
-
-        private float GetAnimationWaitSeconds()
-        {
-            if (_animation == null)
-            {
-                return 0f;
-            }
-
-            if (_animation.tween != null)
-            {
-                return _animation.tween.Duration(true) + _animation.delay;
-            }
-
-            return _animation.duration + _animation.delay;
         }
 
         private void StopDeactivateRoutine()

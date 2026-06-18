@@ -1,5 +1,5 @@
-using DG.Tweening;
 using Neo;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -59,6 +59,7 @@ namespace Neo.Pages
         [SerializeField] private TMP_Text _textPage;
 
         public UnityEvent OnClick;
+        private Coroutine _scaleRoutine;
         private LayoutGroup _layoutGroup;
         private RectTransform rect;
 
@@ -136,11 +137,8 @@ namespace Neo.Pages
         {
             if (intecactable && _useAnimImage)
             {
-                if (intecactable && _useAnimImage)
-                {
-                    float scale = startScale.x * (_scaleAnim > 0 ? 1 + _scaleAnim : 1 + _scaleAnim);
-                    transform.DOScale(scale, _timeAnimImage).SetUpdate(true);
-                }
+                float scale = startScale.x * (1f + _scaleAnim);
+                AnimateScale(Vector3.one * scale);
             }
         }
 
@@ -151,8 +149,43 @@ namespace Neo.Pages
         {
             if (intecactable && _useAnimImage)
             {
-                transform.DOScale(startScale, _timeAnimImage).SetUpdate(true);
+                AnimateScale(startScale);
             }
+        }
+
+        private void AnimateScale(Vector3 targetScale)
+        {
+            if (_scaleRoutine != null)
+            {
+                StopCoroutine(_scaleRoutine);
+            }
+
+            _scaleRoutine = StartCoroutine(AnimateScaleRoutine(targetScale));
+        }
+
+        private IEnumerator AnimateScaleRoutine(Vector3 targetScale)
+        {
+            Vector3 from = transform.localScale;
+            float duration = Mathf.Max(0f, _timeAnimImage);
+
+            if (duration <= 0f)
+            {
+                transform.localScale = targetScale;
+                _scaleRoutine = null;
+                yield break;
+            }
+
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                transform.localScale = Vector3.LerpUnclamped(from, targetScale, t);
+                yield return null;
+            }
+
+            transform.localScale = targetScale;
+            _scaleRoutine = null;
         }
 
         /// <summary>

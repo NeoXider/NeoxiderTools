@@ -1,7 +1,7 @@
 ﻿# NeoxiderPages (`Neo.Pages`)
 
 `NeoxiderPages` — это sample-модуль навигации по страницам/экранам поверх Unity UI.
-Для корректной работы требуется **DOTween Pro** (и DOTween).
+Для импорта и базовой работы модуль не требует **DOTween** или **DOTween Pro**.
 
 ## Где находится модуль
 
@@ -61,13 +61,13 @@ Assets/Neoxider/Samples~/NeoxiderPages/
   - поле `pageId: PageId` (ассет-идентификатор страницы)
   - флаги: `popup`, `ignoreOnExclusiveChange`
   - `StartActive()/EndActive()`
-  - опциональная анимация через `DOTweenAnimation` на том же объекте
+  - базовое включение/выключение страницы без внешних tween-зависимостей
 
 - **`BtnChangePage`** (`Runtime/Scripts/Page/BtnChangePage.cs`)
   - компонент на UI-кнопку: `Action` = OpenPage/Cancel/CloseCurrent
   - для OpenPage использует `targetPageId: PageId`
   - может выполнить `GameState.State` (Start/Restart/Pause/…)
-  - опционально анимирует нажатие (DOTween)
+  - опционально анимирует нажатие через встроенную coroutine scale-анимацию
 
 - **`FakeLoad`** (`Runtime/Scripts/Page/FakeLoad.cs`)
   - фейковая загрузка с прогрессом и событиями
@@ -79,8 +79,7 @@ Assets/Neoxider/Samples~/NeoxiderPages/
 ## Поведение переходов
 
 - `ChangePage(pageId)` выбирает стратегию по целевой `UIPage`: обычная страница открывается через `SetPage`, popup-страница открывается через `ActivePage`.
-- `SetPage(pageId)` включает входящую страницу и, если у нее есть Forward-анимация, ждет `WaitForShowAnimation()` перед закрытием исходящих страниц. Это нужно, чтобы не показывать пустой фон между страницами.
-- Исходящие страницы закрываются через `UIPage.EndActive()`, поэтому Back-анимация воспроизводится в режимах `BackwardOnly` и `ForwardAndBackward`.
+- `SetPage(pageId)` включает входящую страницу и затем закрывает исходящие страницы через `UIPage.EndActive()`.
 - Активные popup-страницы по умолчанию закрываются при открытии обычной non-popup страницы. Настройка находится в `PM`: `closePopupsOnExclusivePageChange = true`.
 - Страницы с `Ignore On Exclusive Change` не закрываются при exclusive-переходах.
 - `BtnChangePage` не содержит логики ожидания/закрытия страниц: он вызывает `PM`, а управление переходом остается внутри `PM`.

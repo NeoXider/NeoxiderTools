@@ -6,7 +6,7 @@
 
 | Источник | Версия |
 | --- | --- |
-| Пакет `Assets/Neoxider/package.json` | `version: 9.2.0`, `unity: 2022.1` |
+| Пакет `Assets/Neoxider/package.json` | `version: 9.2.2`, `unity: 2022.1` |
 | Локальный проект `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 Минимальная версия UPM-пакета остается Unity 2022.1. Проект разработки сейчас открыт и проверяется на Unity `6000.3.14f1`, но это не должно автоматически поднимать минимальную версию пакета.
@@ -21,7 +21,7 @@
 
 ## Внешние интеграции
 
-- DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и samples. Это не UPM dependency пакета; host-проект подключает его при необходимости.
+- DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и некоторыми проектными UI workflow. Это не UPM dependency пакета; host-проект подключает его при необходимости. `NeoxiderPages` sample больше не требует DOTween/DOTween Pro для импорта.
 - Mirror опционален и нужен для `Neo.Network` / multiplayer flows. В проекте разработки Mirror доступен через scoped registry/OpenUPM.
 - URP опционален. URP-specific поведение используется только когда host-проект предоставляет нужные package/types.
 

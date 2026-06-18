@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.2.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.2.2-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -66,7 +66,7 @@ Copy `Assets/Neoxider` into your Unity project.
   - `UniTask` (for async-heavy modules such as cards, dialogue)
   - `DOTween` (for package runtime modules)
 - **Optional**:
-  - `DOTween Pro` (required for `NeoxiderPages` sample)
+  - `DOTween Pro` (optional for project-specific UI animation workflows)
   - `Spine Unity Runtime` (only for Spine integrations)
   - `Odin Inspector` (components work perfectly without it)
   - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
@@ -128,7 +128,7 @@ Import samples via `Package Manager > NeoxiderTools > Samples`.
 | Sample | Path | Purpose |
 |--------|------|---------|
 | **Demo Scenes** | dev: `Assets/Neoxider/Samples/Demo/`; UPM source: `Assets/Neoxider/Samples~/Demo/`; imported: `Assets/Samples/NeoxiderTools/<version>/Demo Scenes/` | Integration scenes for core modules and gameplay features |
-| **NeoxiderPages** | dev: `Assets/Neoxider/Samples/NeoxiderPages/`; UPM source: `Assets/Neoxider/Samples~/NeoxiderPages/`; imported: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) — requires `DOTween Pro` |
+| **NeoxiderPages** | dev: `Assets/Neoxider/Samples/NeoxiderPages/`; UPM source: `Assets/Neoxider/Samples~/NeoxiderPages/`; imported: `Assets/Samples/NeoxiderTools/<version>/NeoxiderPages/` | Page-navigation sample module (`PM`, `UIPage`, `BtnChangePage`, `UIKit`) |
 
 ## Documentation
 
