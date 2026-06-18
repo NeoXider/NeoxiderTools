@@ -161,7 +161,6 @@ GameObject:
   - component: {fileID: 8546086808161005031}
   - component: {fileID: 6158244576328748344}
   - component: {fileID: 4920555023303288386}
-  - component: {fileID: 6019055201618970965}
   m_Layer: 5
   m_Name: _Page base
   m_TagString: Untagged
@@ -597,7 +596,6 @@ GameObject:
   - component: {fileID: 9069176908719682421}
   - component: {fileID: 962209772720184331}
   - component: {fileID: 3037656400551465100}
-  - component: {fileID: 3363843510489268483}
   m_Layer: 5
   m_Name: popup
   m_TagString: Untagged

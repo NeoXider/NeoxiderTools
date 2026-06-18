@@ -86,7 +86,6 @@ GameObject:
   - component: {fileID: 949068685901589832}
   - component: {fileID: 3803705762762174172}
   - component: {fileID: 5788513174391304063}
-  - component: {fileID: 5666834519102523838}
   m_Layer: 5
   m_Name: Shop Page
   m_TagString: Untagged
@@ -230,7 +229,6 @@ GameObject:
   - component: {fileID: 7905684059872715619}
   - component: {fileID: 8033515317227275547}
   - component: {fileID: 4944389172882614602}
-  - component: {fileID: 1278404357424551884}
   m_Layer: 5
   m_Name: popup
   m_TagString: Untagged
