@@ -18,6 +18,10 @@ It does not own score, spawn-pool progression, game-over rules, UI, or input. Th
 | `MaxContentId` | Optional cap for merged values. |
 | `RequireWalkable` | Whether placement and merge checks require walkable cells. |
 
+## Weighted Dice Generation
+
+`DicePieceGenerator.GenerateWeighted(...)` accepts `DiceValueWeight` entries for designer-controlled dice faces. Entries with `Weight <= 0` are ignored. A pool without positive weights throws `ArgumentException`, so invalid dice configs fail loudly. Forced pair generation removes the first rolled value before rolling the second one, preventing duplicated pair values when at least two positive weighted values exist.
+
 ## Related
 
 - [Dice README](./README.md)

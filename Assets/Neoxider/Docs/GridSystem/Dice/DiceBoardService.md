@@ -29,6 +29,10 @@ Score, spawn-pool progression, game over rules, UI text, drag/drop input, and de
 | `MaxContentId` | Optional merged value cap, `0` means unlimited. |
 | `RequireWalkable` | Whether placement/merge requires walkable cells. |
 
+## Weighted Dice Generation
+
+`DicePieceGenerator.GenerateWeighted(...)` accepts `DiceValueWeight` entries for designer-controlled dice faces. Entries with `Weight <= 0` are ignored. A pool without positive weights throws `ArgumentException`, so invalid dice configs fail loudly. Forced pair generation removes the first rolled value before rolling the second one, preventing duplicated pair values when at least two positive weighted values exist.
+
 ## Merge Rule
 
 Dice merges are configured as: connected same-value cells, side adjacency, minimum group size, result at the seed/anchor cell, and result value `old + MergeStep` capped by `MaxContentId` when configured.
