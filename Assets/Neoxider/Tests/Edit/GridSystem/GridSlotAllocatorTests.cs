@@ -143,6 +143,42 @@ namespace Neo.Editor.Tests.GridSystem
         }
 
         [Test]
+        public void CapacityAndHasAvailableSlot_ReflectRectangularBoardState()
+        {
+            FieldGenerator field = CreateField(2, 2);
+            GridSlotAllocator allocator = new(field);
+
+            Assert.That(allocator.Capacity, Is.EqualTo(4));
+            Assert.That(allocator.HasAvailableSlot, Is.True);
+
+            allocator.Allocate(0, 10);
+            allocator.Allocate(1, 11);
+            allocator.Allocate(2, 12);
+            allocator.Allocate(3, 13);
+
+            Assert.That(allocator.HasAvailableSlot, Is.False);
+        }
+
+        [Test]
+        public void TryAllocateFirstAvailable_BySlotIndex_UsesPreferenceOrder()
+        {
+            FieldGenerator field = CreateField(3, 1);
+            GridSlotAllocator allocator = new(field);
+            allocator.Allocate(0, 7);
+
+            bool allocated = allocator.TryAllocateFirstAvailable(
+                new[] { 0, 2, 1 },
+                99,
+                out int slotIndex,
+                out GridPlacementResult result);
+
+            Assert.That(allocated, Is.True);
+            Assert.That(result.Placed, Is.True);
+            Assert.That(slotIndex, Is.EqualTo(2));
+            Assert.That(field.GetCell(new Vector3Int(2, 0, 0)).ContentId, Is.EqualTo(99));
+        }
+
+        [Test]
         public void Release_ClearsContentAndOccupancy()
         {
             FieldGenerator field = CreateField(2, 1);
@@ -156,6 +192,25 @@ namespace Neo.Editor.Tests.GridSystem
             Assert.That(field.GetCell(position).ContentId, Is.EqualTo(-1));
             Assert.That(field.GetCell(position).IsOccupied, Is.False);
             Assert.That(allocator.IsAvailable(position), Is.True);
+        }
+
+        [Test]
+        public void ReleaseBySlotIndexAndClear_ResetOccupiedSlots()
+        {
+            FieldGenerator field = CreateField(2, 2);
+            GridSlotAllocator allocator = new(field);
+            allocator.Allocate(0, 10);
+            allocator.Allocate(3, 30);
+
+            bool released = allocator.Release(3);
+            Assert.That(released, Is.True);
+            Assert.That(field.GetCell(new Vector3Int(1, 1, 0)).ContentId, Is.EqualTo(-1));
+            Assert.That(field.GetCell(new Vector3Int(1, 1, 0)).IsOccupied, Is.False);
+
+            allocator.Clear();
+            Assert.That(field.GetCell(new Vector3Int(0, 0, 0)).ContentId, Is.EqualTo(-1));
+            Assert.That(field.GetCell(new Vector3Int(0, 0, 0)).IsOccupied, Is.False);
+            Assert.That(allocator.HasAvailableSlot, Is.True);
         }
 
         [Test]

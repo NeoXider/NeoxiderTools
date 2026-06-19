@@ -23,6 +23,41 @@ namespace Neo.GridSystem
 
         public FieldGenerator Field => _field;
 
+        public int Capacity
+        {
+            get
+            {
+                if (!CanUseLinearSlots())
+                {
+                    return 0;
+                }
+
+                Vector3Int size = _field.Config.Size;
+                return size.x * size.y;
+            }
+        }
+
+        public bool HasAvailableSlot
+        {
+            get
+            {
+                if (_field == null)
+                {
+                    return false;
+                }
+
+                foreach (FieldCell cell in _field.GetAllCells(false))
+                {
+                    if (cell != null && cell.IsEnabled && cell.IsWalkable && !cell.IsOccupied)
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+        }
+
         public bool TryGetSlotPosition(int slotIndex, out Vector3Int position)
         {
             position = default;
@@ -126,6 +161,39 @@ namespace Neo.GridSystem
             return result != null && result.Placed;
         }
 
+        public bool TryAllocateFirstAvailable(
+            IEnumerable<int> preferredSlotIndices,
+            int contentId,
+            out int slotIndex,
+            out GridPlacementResult result)
+        {
+            slotIndex = -1;
+            result = null;
+            if (preferredSlotIndices == null)
+            {
+                return false;
+            }
+
+            foreach (int preferredSlotIndex in preferredSlotIndices)
+            {
+                if (!IsAvailable(preferredSlotIndex))
+                {
+                    continue;
+                }
+
+                result = Allocate(preferredSlotIndex, contentId);
+                if (result == null || !result.Placed)
+                {
+                    continue;
+                }
+
+                slotIndex = preferredSlotIndex;
+                return true;
+            }
+
+            return false;
+        }
+
         public GridPlacementResult Allocate(Vector3Int position, int contentId)
         {
             SingleCellEntry[0].ContentId = contentId;
@@ -157,6 +225,35 @@ namespace Neo.GridSystem
             }
 
             return true;
+        }
+
+        public bool Release(int slotIndex, int emptyContentId = -1, bool notify = true)
+        {
+            return TryGetSlotPosition(slotIndex, out Vector3Int position)
+                   && Release(position, emptyContentId, notify);
+        }
+
+        public void Clear(int emptyContentId = -1, bool notify = true)
+        {
+            if (_field == null)
+            {
+                return;
+            }
+
+            foreach (FieldCell cell in _field.GetAllCells(false))
+            {
+                if (cell == null)
+                {
+                    continue;
+                }
+
+                cell.ContentId = emptyContentId;
+                cell.IsOccupied = false;
+                if (notify)
+                {
+                    _field.OnCellStateChanged.Invoke(cell);
+                }
+            }
         }
     }
 }
