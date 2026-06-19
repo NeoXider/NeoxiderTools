@@ -23,10 +23,69 @@ namespace Neo.GridSystem
 
         public FieldGenerator Field => _field;
 
+        public bool TryGetSlotPosition(int slotIndex, out Vector3Int position)
+        {
+            position = default;
+            if (!CanUseLinearSlots() || slotIndex < 0)
+            {
+                return false;
+            }
+
+            Vector3Int size = _field.Config.Size;
+            int width = size.x;
+            int height = size.y;
+            if (width <= 0 || height <= 0)
+            {
+                return false;
+            }
+
+            int slotCount = width * height;
+            if (slotIndex >= slotCount)
+            {
+                return false;
+            }
+
+            position = new Vector3Int(slotIndex % width, slotIndex / width, 0);
+            return _field.InBounds(position);
+        }
+
+        public bool TryGetSlotIndex(Vector3Int position, out int slotIndex)
+        {
+            slotIndex = -1;
+            if (!CanUseLinearSlots() || position.z != 0 || !_field.InBounds(position))
+            {
+                return false;
+            }
+
+            Vector3Int size = _field.Config.Size;
+            if (size.x <= 0 || size.y <= 0)
+            {
+                return false;
+            }
+
+            slotIndex = position.y * size.x + position.x;
+            return true;
+        }
+
+        private bool CanUseLinearSlots()
+        {
+            return _field != null
+                   && _field.Config != null
+                   && _field.Config.GridType == GridType.Rectangular
+                   && _field.Config.Size.x > 0
+                   && _field.Config.Size.y > 0
+                   && _field.Config.Size.z == 1;
+        }
+
         public bool IsAvailable(Vector3Int position)
         {
             FieldCell cell = _field != null ? _field.GetCell(position) : null;
             return cell != null && cell.IsEnabled && cell.IsWalkable && !cell.IsOccupied;
+        }
+
+        public bool IsAvailable(int slotIndex)
+        {
+            return TryGetSlotPosition(slotIndex, out Vector3Int position) && IsAvailable(position);
         }
 
         public bool TryFindFirstAvailable(IEnumerable<Vector3Int> preferredPositions, out Vector3Int position)
@@ -73,6 +132,13 @@ namespace Neo.GridSystem
             return _field != null
                 ? _field.PlaceContentFootprint(position, SingleCellEntry)
                 : new GridPlacementResult { FailureReason = "Field is null." };
+        }
+
+        public GridPlacementResult Allocate(int slotIndex, int contentId)
+        {
+            return TryGetSlotPosition(slotIndex, out Vector3Int position)
+                ? Allocate(position, contentId)
+                : new GridPlacementResult { FailureReason = "Invalid slot index." };
         }
 
         public bool Release(Vector3Int position, int emptyContentId = -1, bool notify = true)

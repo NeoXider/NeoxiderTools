@@ -7,9 +7,13 @@
 ## Основной API
 
 - `IsAvailable(position)` - true, если клетка существует, enabled, walkable и не occupied.
+- `TryGetSlotPosition(slotIndex, out position)` - переводит линейный индекс слота в `Vector3Int` для прямоугольной 2D-доски в row-major порядке: `0=(0,0,0)`, `1=(1,0,0)`, `width=(0,1,0)`.
+- `TryGetSlotIndex(position, out slotIndex)` - переводит valid `z=0` позицию обратно в линейный индекс.
+- `IsAvailable(slotIndex)` - проверяет доступность слота по линейному индексу.
 - `TryFindFirstAvailable(preferredPositions, out position)` - ищет первый доступный слот в заданном порядке.
 - `TryAllocateFirstAvailable(preferredPositions, contentId, out position, out result)` - ищет и записывает одно-клеточный placement.
 - `Allocate(position, contentId)` - пишет занятую клетку через `FieldGenerator.PlaceContentFootprint`.
+- `Allocate(slotIndex, contentId)` - пишет занятую клетку по линейному индексу; invalid index возвращает `GridPlacementResult` с `Placed=false`.
 - `Release(position, emptyContentId, notify)` - очищает content и occupied state.
 
 ## Пример
@@ -28,6 +32,22 @@ if (allocator.TryAllocateFirstAvailable(warriorSlots, unitId, out Vector3Int slo
     // Поставить view юнита в slot.
 }
 ```
+
+## Linear slot index
+
+Для компактных 2D-досок, где UI уже работает с индексами (`0..5` для 3x2 autobattler board), можно не хранить собственный mapping:
+
+```csharp
+GridSlotAllocator allocator = new GridSlotAllocator(fieldGenerator);
+
+if (allocator.IsAvailable(4))
+{
+    GridPlacementResult result = allocator.Allocate(4, unitId);
+    // slot 4 на поле 3x2 соответствует позиции (1, 1, 0).
+}
+```
+
+Linear API намеренно работает только для `GridType.Rectangular` с `Size.z == 1`. Для hex/custom/3D полей используйте позиционный API через `Vector3Int`.
 
 ## Заметки
 
