@@ -136,6 +136,19 @@ namespace Neo.Editor.Tests.GridSystem
         }
 
         [Test]
+        public void DicePieceGenerator_CreateD6Pool_ReturnsClassicDiceFaces()
+        {
+            CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5, 6 }, DicePieceGenerator.CreateD6Pool());
+        }
+
+        [Test]
+        public void DicePieceGenerator_CreateSequentialPool_ValidatesRange()
+        {
+            CollectionAssert.AreEqual(new[] { 3, 4, 5 }, DicePieceGenerator.CreateSequentialPool(3, 5));
+            Assert.Throws<System.ArgumentException>(() => DicePieceGenerator.CreateSequentialPool(6, 1));
+        }
+
+        [Test]
         public void DiceBoardService_IgnoresPieceWithMissingCellsWithoutThrowing()
         {
             FieldGenerator generator = CreateGenerator(2, 2);

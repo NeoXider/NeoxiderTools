@@ -225,6 +225,41 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void HandModel_CapacityRejectsOverflowAndSupportsTryAdd()
+        {
+            var first = new CardData(Suit.Hearts, Rank.Ace);
+            var overflow = new CardData(Suit.Clubs, Rank.Seven);
+            var hand = new HandModel { Capacity = 1 };
+
+            Assert.IsTrue(hand.TryAdd(first));
+            Assert.IsTrue(hand.IsFull);
+            Assert.AreEqual(0, hand.RemainingCapacity);
+
+            Assert.IsFalse(hand.TryAdd(overflow));
+            Assert.Throws<InvalidOperationException>(() => hand.Add(overflow));
+            Assert.AreEqual(1, hand.Count);
+            Assert.AreEqual(first, hand.GetAt(0));
+        }
+
+        [Test]
+        public void HandModel_AddRangeUntilFullAddsOnlyAvailableSlots()
+        {
+            CardData[] cards =
+            {
+                new(Suit.Hearts, Rank.Ace),
+                new(Suit.Clubs, Rank.Seven),
+                new(Suit.Diamonds, Rank.Ten)
+            };
+            var hand = new HandModel { Capacity = 2 };
+
+            int added = hand.AddRangeUntilFull(cards);
+
+            Assert.AreEqual(2, added);
+            Assert.AreEqual(2, hand.Count);
+            CollectionAssert.AreEqual(cards.Take(2).ToArray(), hand.Cards.ToList());
+        }
+
+        [Test]
         public void HandPresenter_RemoveAt_WithDuplicateData_RemovesIndexedPresenterAndKeepsOrder()
         {
             var duplicate = new CardData(Suit.Hearts, Rank.Ace);

@@ -19,6 +19,12 @@ Cards are no longer limited to 36/52/54-card decks. Use `CardData.CreateCustom(.
 
 `BoardComponent` exposes `MaxCards`, `FaceUp`, `CanPlaceCard(...)`, `SetCapacity(...)`, and `SetFaceUp(...)` so one board component can support table rows, lanes, discard piles, market rows, or custom TCG zones.
 
+## Finite hands and backpack rails
+
+`HandModel` can now represent both unlimited card hands and finite card rails. Leave `Capacity` at `0` for the legacy unlimited behaviour, or set it to a positive value for CCG hand limits, autobattler benches, backpack rows, market rows, and draft trays.
+
+Use `CanAdd(...)` or `TryAdd(...)` for player-facing flows where overflow should be rejected without exceptions. `Add(...)` and `AddRange(...)` keep strict behaviour and throw if a finite hand would overflow. `RemainingCapacity`, `IsFull`, and `AddRangeUntilFull(...)` are intended for UI badges, reward overflow conversion, and bulk draw/recruit flows.
+
 ## Main entry (Russian)
 
 - [Cards README](../../Docs/Cards/README.md) — quick start, layout types, card comparison, dependencies

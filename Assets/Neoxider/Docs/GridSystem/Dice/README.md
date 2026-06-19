@@ -5,7 +5,7 @@
 ## Runtime API
 
 - `DicePiece` описывает одиночный кубик, пару или фигуру большего размера через local offsets; есть `CellCount` и методы поворота, работающие для любого числа клеток (поворот вокруг якоря).
-- `DicePieceGenerator` создает одиночные/парные фишки из пула значений, с равными шансами и без одинаковых значений в паре.
+- `DicePieceGenerator` создает одиночные/парные фишки из пула значений, с равными шансами и без одинаковых значений в паре. `CreateDefaultPool()` сохраняет исходный merge-пул 1-5, `CreateD6Pool()` дает классические грани 1-6, `CreateSequentialPool(minValue, maxValue)` подходит для кастомных numbered dice/progression-пулов.
 - `DiceBoardService` проверяет размещение, пишет значения в `FieldCell.ContentId` и запускает dice merge через `GridMergeResolver`. Правила merge настраиваются: `MinMergeGroupSize`, `MergeStep`, `MaxContentId` (0 = без ограничения), `RequireWalkable`.
 
 По умолчанию модуль: размещает кубики, сливает 3+ одинаковых значения, касающихся гранями, результат `old + step`, cascade от result cell. Сервис сам выставляет occupancy и шлёт одно согласованное `OnCellStateChanged` на клетку и одно `OnBoardChanged` на размещение. Очки, progression пула, win/loss и UI остаются в игре или sample-сцене.

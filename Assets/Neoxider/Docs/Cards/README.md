@@ -77,6 +77,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 
 В любых карточных играх (классика, CCG, deckbuilder) удобно переиспользовать:
 
+- **HandModel.Capacity / TryAdd / AddRangeUntilFull** — модель руки с опциональным лимитом. Подходит для CCG hand limit, лавки автобаттлера, нижнего рюкзака героев, draft tray и market row. `Capacity = 0` сохраняет старое поведение без лимита.
 - **CardViewAnimationTemplates** — готовые анимации (Bounce, Pulse, Shake, Highlight, FlyIn, Idle); вызывать из любой вью по [CardViewUniversal](View/CardViewUniversal.md#переиспользование-шаблонов).
 - **CardLayoutCalculator** и **CardLayoutSettings** — расчёт позиций и поворотов для Fan, Line, Grid, Stack и др.
 - **HandView / IHandView** — контейнер карт с раскладкой; для нескольких зон — несколько HandView.

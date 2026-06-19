@@ -41,7 +41,28 @@ namespace Neo.GridSystem.Dice
 
         public static List<int> CreateDefaultPool()
         {
-            return new List<int> { 1, 2, 3, 4, 5 };
+            return CreateSequentialPool(1, 5);
+        }
+
+        public static List<int> CreateD6Pool()
+        {
+            return CreateSequentialPool(1, 6);
+        }
+
+        public static List<int> CreateSequentialPool(int minValue, int maxValue)
+        {
+            if (maxValue < minValue)
+            {
+                throw new ArgumentException("Maximum value must be greater than or equal to minimum value.", nameof(maxValue));
+            }
+
+            List<int> values = new(maxValue - minValue + 1);
+            for (int value = minValue; value <= maxValue; value++)
+            {
+                values.Add(value);
+            }
+
+            return values;
         }
     }
 }
