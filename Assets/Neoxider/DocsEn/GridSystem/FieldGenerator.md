@@ -37,6 +37,7 @@
 - `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
 - `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers for drag/drop, cursor previews, and snap-to-cell placement.
 - `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API for multi-cell placement such as shapes, items, dice pairs, and inventory blocks.
+- `GridSlotAllocator` - optional helper for ordered one-cell slot allocation on top of this placement API.
 
 ## Placement API Example
 
@@ -80,6 +81,7 @@ Grid input and view layers should also reuse `FieldGenerator` conversion helpers
 - [GridGameBuilder](GridGameBuilder.md)
 - [GridPlacementEntry](GridPlacementEntry.md)
 - [GridPlacementResult](GridPlacementResult.md)
+- [GridSlotAllocator](GridSlotAllocator.md)
 - [GridShapeMask](GridShapeMask.md)
 - [FieldDebugDrawer](FieldDebugDrawer.md)
 - [SlidingMerge](SlidingMerge/SlidingMergeBoardService.md)

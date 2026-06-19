@@ -10,6 +10,7 @@ GridSystem - базовый конструктор сеточных игр и с
 - `GridMergeResolver` - adapter из универсального `Neo.Merge` connected-group resolver к `FieldGenerator` / `FieldCell.ContentId`.
 - `DiceBoardService` - reusable слой размещения dice pieces и dice merge.
 - `GridGameBuilder` - scene/Inspector сборка нужных модулей.
+- `GridSlotAllocator` - ordered one-cell slot allocation для benches, tactical rows и autobattler boards.
 - `GridShapeMask` - ScriptableObject для reusable формы поля.
 - `FieldSpawner` / `FieldObjectSpawner` - размещение объектов по клеткам.
 - `FieldDebugDrawer` - Gizmos-отладка.
@@ -22,6 +23,7 @@ GridSystem - базовый конструктор сеточных игр и с
 - [FieldGenerator](./FieldGenerator.md)
 - [GridPlacementEntry](./GridPlacementEntry.md)
 - [GridPlacementResult](./GridPlacementResult.md)
+- [GridSlotAllocator](./GridSlotAllocator.md)
 - [GridGameBuilder](./GridGameBuilder.md)
 - [GridShapeMask](./GridShapeMask.md)
 - [FieldDebugDrawer](./FieldDebugDrawer.md)

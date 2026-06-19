@@ -39,6 +39,7 @@
 - `GetCellWorldCenter(...)`, `GetCellCornerWorld(...)`, `GetCellFromWorld(...)` - conversion helpers.
 - `TryGetCellPositionFromWorld(...)`, `TrySnapWorldToCellCenter(...)`, `SnapWorldToCellCenter(...)` - origin-aware helpers для drag/drop, cursor preview и snap-to-cell placement.
 - `CanPlaceContentFootprint(...)`, `PlaceContentFootprint(...)` - reusable API для multi-cell placement: фигуры, предметы, dice pairs, inventory blocks.
+- `GridSlotAllocator` - optional helper для ordered one-cell slot allocation поверх placement API.
 
 ## Placement API example
 
@@ -80,6 +81,7 @@ foreach (Vector3Int position in result.Positions)
 - [GridGameBuilder](GridGameBuilder.md)
 - [GridPlacementEntry](GridPlacementEntry.md)
 - [GridPlacementResult](GridPlacementResult.md)
+- [GridSlotAllocator](GridSlotAllocator.md)
 - [GridShapeMask](GridShapeMask.md)
 - [FieldDebugDrawer](FieldDebugDrawer.md)
 - [SlidingMerge](SlidingMerge/SlidingMergeBoardService.md)

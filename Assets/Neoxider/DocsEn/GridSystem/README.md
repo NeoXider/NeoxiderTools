@@ -8,6 +8,7 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 
 - `FieldGenerator` - core field generation, shape, cells, coordinates, state, and pathfinding facade.
 - `GridGameBuilder` - scene/Inspector helper that assembles selected modules.
+- `GridSlotAllocator` - ordered one-cell slot allocation for benches, tactical rows, and autobattler boards.
 - `GridShapeMask` - reusable ScriptableObject shape masks.
 - `FieldSpawner` / `FieldObjectSpawner` - object placement on cells.
 - `FieldDebugDrawer` - Gizmos diagnostics.
@@ -22,6 +23,7 @@ GridSystem is the base constructor module for grid-based games and tools. It sep
 - [FieldGenerator](./FieldGenerator.md)
 - [GridPlacementEntry](./GridPlacementEntry.md)
 - [GridPlacementResult](./GridPlacementResult.md)
+- [GridSlotAllocator](./GridSlotAllocator.md)
 - [GridGameBuilder](./GridGameBuilder.md)
 - [GridShapeMask](./GridShapeMask.md)
 - [FieldDebugDrawer](./FieldDebugDrawer.md)
