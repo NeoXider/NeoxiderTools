@@ -1,6 +1,6 @@
 # Совместимость Пакета
 
-Дата проверки: 2026-06-04
+Дата проверки: 2026-06-19
 
 ## Unity
 
@@ -18,9 +18,11 @@
 | `com.unity.textmeshpro` | `3.0.6` | доступен через Unity UI stack | Нужен TMP/UI-компонентам. |
 | `com.unity.ai.navigation` | `1.1.7` | `2.0.11` | В Unity 6 проекте стоит более новая версия; пакет сохраняет нижний минимум для Unity 2022. |
 | `com.unity.inputsystem` | `1.14.2` | `1.19.0` | Runtime использует optional adapters/fallback, чтобы поддерживать Legacy Input Manager и New Input System. |
+| `com.unity.ugui` | `1.0.0` | `2.0.0` | Нужен импортированным uGUI sample-префабам и UI helpers; версия проекта выше из-за Unity 6. |
 
 ## Внешние интеграции
 
+- UniTask используется async-heavy модулями (`Cards`, `Dialogue`, `Timer` и др.). Это обязательная внешняя зависимость host-проекта, но не запись в `package.json.dependencies`.
 - DOTween используется модулями `Cards`, `UI`, `Tools/View`, `Tools/Text` и некоторыми проектными UI workflow. Это не UPM dependency пакета; host-проект подключает его при необходимости. `NeoxiderPages` sample больше не требует DOTween/DOTween Pro для импорта.
 - Mirror опционален и нужен для `Neo.Network` / multiplayer flows. В проекте разработки Mirror доступен через scoped registry/OpenUPM.
 - URP опционален. URP-specific поведение используется только когда host-проект предоставляет нужные package/types.

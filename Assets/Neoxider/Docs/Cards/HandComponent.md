@@ -4,6 +4,8 @@
 
 **Как использовать:** добавить на объект руки, задать Layout Type и параметры раскладки; добавлять/удалять карты через API компонента; привязать HandView для визуала. См. секции ниже.
 
+`HandComponent` управляет сценовыми `CardComponent` и ограничивает их через инспекторное поле **Max Cards**. Если нужна чистая C# модель без визуала, используйте `HandModel`: у него есть `Capacity` (0 = без лимита), `RemainingCapacity`, `IsFull`, `TryAdd(...)` и `AddRangeUntilFull(...)` для CCG hand limit, лавок, draft tray и market row.
+
 ---
 
 ## Настройки в инспекторе
@@ -130,9 +132,28 @@ public void Clear();
 | `Cards` | `IReadOnlyList<CardComponent>` | Карты в руке |
 | `Count` | `int` | Количество карт |
 | `IsEmpty` | `bool` | Пуста ли рука |
-| `IsFull` | `bool` | Заполнена ли рука |
+| `IsFull` | `bool` | Заполнена ли рука по инспекторному `Max Cards` компонента |
 | `LayoutType` | `CardLayoutType` | Тип раскладки |
 | `LegacyLayoutType` | `HandLayoutType` | Устаревшее свойство для совместимости со старыми сценами |
+
+### Runtime-модель HandModel
+
+```csharp
+var hand = new HandModel { Capacity = 5 };
+
+if (!hand.TryAdd(cardData))
+{
+    ConvertOverflowToDust(cardData);
+}
+
+int added = hand.AddRangeUntilFull(drawnCards);
+int overflow = drawnCards.Count - added;
+```
+
+- `Capacity = 0` сохраняет старое unlimited-поведение.
+- `TryAdd(...)` возвращает `false`, если рука заполнена.
+- `Add(...)` и `AddRange(...)` остаются строгими и бросают исключение при переполнении finite hand.
+- `RemainingCapacity` удобно показывать в UI или использовать при массовой выдаче наград.
 
 ---
 

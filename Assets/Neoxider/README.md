@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.2.4-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.2.5-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -37,6 +37,8 @@ Start with the [Project Summary](./PROJECT_SUMMARY.md) when you need a compact m
 - **RPG module** - unified `RpgCharacter` runtime for players, NPCs, mobs, pets, and destructibles: universal resources/stats, level/XP/upgrades, buffs/statuses, regen, save/load, Mirror multiplayer sync, melee/ranged/aoe attacks (`RpgAttackController` + `RpgAttackDefinition` + `RpgProjectile`), target selectors, evade (`RpgEvadeController`), UI bindings, and no-code bridges.
 - **Grid/Merge modules** - `FieldGenerator`, reusable multi-cell placement, `Neo.Merge`, `GridMergeResolver`, `DiceBoardService`, Match3, TicTacToe, and SlidingMerge services for grid games and board-like systems.
 - **UI reward motion** - `AnimationFly` has a typed request/result API for prefab or sprite visuals, world/canvas conversions, pooling, and reward timing callbacks.
+- **Cards runtime rails** - `HandModel` supports unlimited hands by default and optional finite capacity through `Capacity`, `TryAdd(...)`, `RemainingCapacity`, and `AddRangeUntilFull(...)`.
+- **Dice value pools** - `DicePieceGenerator` keeps the original merge pool through `CreateDefaultPool()`, adds `CreateD6Pool()`, and exposes `CreateSequentialPool(minValue, maxValue)` for custom numbered dice.
 - No-code gameplay building blocks such as `NeoCondition`, `Counter`, timers, interaction handlers, and UnityEvent-driven components.
 - Reusable runtime modules for inventory, save/load, dialogue, grid systems, cards, shop, progression, state machine, modular NPC navigation/combat composition, audio, and UI.
 - **Multiplayer (optional Mirror)** — `Neo.Network` NoCode bridges (`NetworkPropertySync`, `NetworkActionRelay`, lobby/discovery wrappers). Without Mirror, the same scripts compile for offline/solo flows.
@@ -61,7 +63,7 @@ Copy `Assets/Neoxider` into your Unity project.
 
 - **Unity 2022.1+**
 - Current compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md)
-- **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`
+- **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`
 - **Required (3rd party)**:
   - `UniTask` (for async-heavy modules such as cards, dialogue)
   - `DOTween` (for package runtime modules)

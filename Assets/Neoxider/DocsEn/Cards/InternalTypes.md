@@ -72,7 +72,7 @@
 **Purpose:** Deck logical model (card list, shuffle, deal).
 
 ### HandModel
-**Purpose:** Player hand logical model (add, remove, sort).
+**Purpose:** Player hand logical model (add, remove, sort). Supports `Capacity` (0 = unlimited), `RemainingCapacity`, `IsFull`, `TryAdd(...)`, and `AddRangeUntilFull(...)` for finite hands, benches, draft trays, and market rows.
 
 ## Poker
 

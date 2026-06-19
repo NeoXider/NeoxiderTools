@@ -2,6 +2,8 @@
 
 Compatibility notes for the package metadata, the local Unity project, and optional dependencies.
 
+Checked on: 2026-06-19.
+
 ## Unity
 
 | Source | Version |
@@ -15,10 +17,12 @@ The package keeps the lower UPM minimum at Unity 2022.1 so it can be consumed by
 
 | Dependency | Status |
 |------------|--------|
-| `com.unity.textmeshpro` | Required by UI/text helpers. |
-| `com.unity.ai.navigation` | Required by navigation-facing components. |
-| `com.cysharp.unitask` | Required by async modules. |
-| DOTween | Required by runtime modules; installed as a third-party package in this project. |
+| `com.unity.textmeshpro` | Package dependency `3.0.6`; required by TMP/UI helpers. |
+| `com.unity.ai.navigation` | Package dependency `1.1.7`; local Unity 6 project uses `2.0.11`. |
+| `com.unity.inputsystem` | Package dependency `1.14.2`; local Unity 6 project uses `1.19.0`. |
+| `com.unity.ugui` | Package dependency `1.0.0`; needed by imported uGUI samples and UI helpers. |
+| UniTask | Required external host-project dependency for async-heavy modules; not listed in `package.json.dependencies`. |
+| DOTween | Required external host-project dependency for tween-based runtime modules. |
 | DOTween Pro | Optional for project-specific UI animation workflows; `NeoxiderPages` imports without it. |
 | Mirror | Optional; required by `Neo.Network` multiplayer flows. |
 | URP | Optional; project/render-pipeline dependent. |

@@ -10,7 +10,7 @@
 
 - **Гибкая архитектура MVP** — Model, View, Presenter
 - **Компоненты** — настройка в инспекторе и UnityEvent
-- **Типы колод** — 36, 52, 54 карты
+- **Типы колод** — 36, 52, 54 карты и custom decks через `CardData.CreateCustom(...)`
 - **Сравнение карт** — по рангу, с учётом козыря
 - **Покерные комбинации** — от пары до роял-флеша
 - **Анимации** — переворот, перемещение через DOTween + UniTask
@@ -78,6 +78,7 @@ var validCards = playerHand.GetCardsThatCanBeat(attackCard.Data, trump);
 В любых карточных играх (классика, CCG, deckbuilder) удобно переиспользовать:
 
 - **HandModel.Capacity / TryAdd / AddRangeUntilFull** — модель руки с опциональным лимитом. Подходит для CCG hand limit, лавки автобаттлера, нижнего рюкзака героев, draft tray и market row. `Capacity = 0` сохраняет старое поведение без лимита.
+- **DeckConfig.Custom Cards / CardData.CreateCustom(...)** — кастомные карты для TCG, deckbuilder, board-game ability cards и item cards без привязки к классическим мастям/рангам.
 - **CardViewAnimationTemplates** — готовые анимации (Bounce, Pulse, Shake, Highlight, FlyIn, Idle); вызывать из любой вью по [CardViewUniversal](View/CardViewUniversal.md#переиспользование-шаблонов).
 - **CardLayoutCalculator** и **CardLayoutSettings** — расчёт позиций и поворотов для Fan, Line, Grid, Stack и др.
 - **HandView / IHandView** — контейнер карт с раскладкой; для нескольких зон — несколько HandView.

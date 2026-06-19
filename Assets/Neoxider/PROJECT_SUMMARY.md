@@ -5,7 +5,7 @@
 ## Статус пакета
 
 - **UPM пакет**: `Assets/Neoxider/package.json`
-- **Текущая версия**: `9.2.0`
+- **Текущая версия**: `9.2.5`
 - **Unity**: `2022.1+`
 - **Основной namespace**: `Neo`
 - **Главный пользовательский вход**: [`README.md`](./README.md)
@@ -48,6 +48,7 @@ Assets/Neoxider/
 | Multi-cell размещение фигур/предметов | `GridPlacementEntry`, `GridPlacementResult`, `FieldGenerator.CanPlaceContentFootprint`, `PlaceContentFootprint` | [`Docs/GridSystem/FieldGenerator.md`](./Docs/GridSystem/FieldGenerator.md) |
 | Merge одинаковых связанных элементов | `Neo.Merge.MergeResolver`, `MergeRequest<TItem,TValue>`, `GridMergeRequest.Increment(...)` | [`Docs/Merge/README.md`](./Docs/Merge/README.md) |
 | Dice Merge / drop-and-merge на сетке | `DicePiece`, `DicePieceGenerator`, `DiceBoardService` | [`Docs/GridSystem/Dice/README.md`](./Docs/GridSystem/Dice/README.md) |
+| Лимитированные руки, лавки, draft tray, market row | `HandModel.Capacity`, `TryAdd(...)`, `RemainingCapacity`, `AddRangeUntilFull(...)` | [`Docs/Cards/README.md`](./Docs/Cards/README.md) |
 | Match3, TicTacToe, 2048-like movement | `Match3BoardService`, `TicTacToeBoardService`, `SlidingMergeBoardService` | [`Docs/GridSystem/README.md`](./Docs/GridSystem/README.md) |
 | Полет наград/монет между world/canvas точками | `AnimationFly.Play(AnimationFlyRequest)`, sprite/prefab visuals, reward timing, fountain/magnet/scatter motion presets | [`Docs/UI/AnimationFly.md`](./Docs/UI/AnimationFly.md) |
 | Сохранение scene objects и global/profile data | `SaveManager`, `SaveProvider`, `GlobalSave`, `SaveableBehaviour` | [`Docs/Save/README.md`](./Docs/Save/README.md) |
@@ -60,6 +61,8 @@ Assets/Neoxider/
 ## Recent stabilization notes
 
 - `GridSystem`, `Merge` и `Dice` уже имеют reusable placement/merge APIs, configurable dice rules, cascade-limit reporting, consistent board notifications и active Dice Merge sample.
+- `DicePieceGenerator` поддерживает `CreateDefaultPool()` для исходного merge-пула 1-5, `CreateD6Pool()` для классических граней 1-6 и `CreateSequentialPool(minValue, maxValue)` для кастомных numbered dice/progression-пулов.
+- `Cards` поддерживает finite runtime hands через `HandModel.Capacity`; `Capacity = 0` оставляет старое unlimited-поведение, а `TryAdd(...)` / `AddRangeUntilFull(...)` дают безошибочный путь для UI overflow flows.
 - `AnimationFly` уже поддерживает typed request/result, prefab или sprite visuals, world/canvas coordinate conversion, pooling/disable-on-complete, reward timing callbacks и reusable motion presets для fountain, magnet, fountain+magnet и scatter reward effects.
 - `SaveManager.Save()` сохраняет shared container read-modify-write и не удаляет данные выгруженных scene objects.
 - `Core`/`RPG` fixes covered edge cases around XP-backed level sync, duplicate death/resource events, regen-from-zero, target resolution, projectile hits, buff stacks and persistence.
@@ -72,6 +75,7 @@ Assets/Neoxider/
 - `com.unity.textmeshpro`
 - `com.unity.ai.navigation`
 - `com.unity.inputsystem`
+- `com.unity.ugui`
 
 ### По сценариям использования
 

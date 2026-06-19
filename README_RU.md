@@ -46,7 +46,7 @@ https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask
 ## Требования
 
 - Unity `2022.1+`.
-- Автоматически через UPM вместе с NeoxiderTools: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`.
+- Автоматически через UPM вместе с NeoxiderTools: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`.
 - **Обязательно (host-проект):** [DOTween](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676), [UniTask](https://github.com/Cysharp/UniTask) — см. [Установка](#установка).
 - **Опционально:** `DOTween Pro` (sample NeoxiderPages), `Mirror`, `Spine Unity Runtime`, `Odin Inspector`, `MarkdownRenderer`.
 - URP опционален. Пакет больше не зависит от `com.unity.render-pipelines.universal`; добавляйте URP отдельно только если проект использует URP-specific rendering features или 2D lights.

@@ -9,6 +9,7 @@ Card game utilities: MVP (Model, View, Presenter), deck/hand/board components, p
 | [CardData](./CardData.md) | Core card value type and comparison helpers |
 | [DeckConfig](./DeckConfig.md) | Deck visuals, generation rules, and validation |
 | [CardComponent](./CardComponent.md) | Scene-facing card component, interaction, and animation |
+| [HandComponent](./HandComponent.md) | Scene-facing hand, layout, events, and finite-hand notes |
 | [Cards README](../../Docs/Cards/README.md) | Full Russian module documentation |
 
 ## Custom cards and standalone views
