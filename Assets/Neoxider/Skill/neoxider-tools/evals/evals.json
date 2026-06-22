@@ -1,0 +1,45 @@
+{
+  "skill_name": "neoxider-tools",
+  "evals": [
+    {
+      "id": 0,
+      "name": "coin-pickup-audio-money-save",
+      "prompt": "I'm building a 2D collector game in this Unity project. Add a CoinPickup MonoBehaviour: when the player enters its 2D trigger, play a pickup sound, add 10 to the player's coins/money, persist the new total so it survives an app restart, and remove the coin from the scene. Write the script.",
+      "expected_output": "A C# script that uses NeoxiderTools: AM for the sound, Money for coins, the Save system for persistence, code-first (no NeoCondition/NoCode components, no raw PlayerPrefs/PlayClipAtPoint).",
+      "files": [],
+      "assertions": [
+        "Plays the pickup sound through the NeoxiderTools audio manager (AM.I.Play...) rather than a raw AudioSource / AudioSource.PlayClipAtPoint",
+        "Adds coins through the NeoxiderTools Money manager (Money.I.Add...) rather than an ad-hoc int field with no manager",
+        "Persists the total through the NeoxiderTools save system ([SaveField] / SaveManager / SaveableBehaviour) rather than raw PlayerPrefs",
+        "Does NOT introduce a NeoCondition or any NoCode/*NoCodeAction inspector-wiring component",
+        "Removes the coin after pickup (Destroy, pool release, or Despawner)"
+      ]
+    },
+    {
+      "id": 1,
+      "name": "pooled-wave-spawner",
+      "prompt": "Write an EnemyWaveSpawner for this Unity project: each wave spawns `count` enemies from an enemy prefab, one every `spawnDelay` seconds, each at a random spawn point picked from a Transform[] spawnPoints. Enemies are spawned a lot, so don't thrash the GC. Expose a StartWave(int count) method.",
+      "expected_output": "A C# script that pools enemies via PoolManager.Get, picks the spawn point with a Neo.Extensions random helper, and times spawns with a Neo coroutine/delay extension or coroutine. Exposes StartWave(int).",
+      "files": [],
+      "assertions": [
+        "Spawns enemies via the NeoxiderTools pool (PoolManager.Get / NeoObjectPool) instead of plain Instantiate for the per-wave spawning",
+        "Picks the random spawn point using a Neo.Extensions helper (GetRandomElement / GetRandomIndex) rather than a hand-written Random.Range index",
+        "Times the spawnDelay using a Neo coroutine/delay helper (this.Delay / WaitUntil) or a coroutine, not a busy loop",
+        "Exposes a StartWave(int count) method as requested"
+      ]
+    },
+    {
+      "id": 2,
+      "name": "reactive-health-fly-damage",
+      "prompt": "In my action game (this Unity project), when the player takes damage I want the on-screen health bar to update automatically and a floating damage number to fly up from the hit point to a UI counter. Wire up the player health side and the damage-number effect in code.",
+      "expected_output": "A C# script using NeoxiderTools: HealthComponent or ReactiveProperty for health (subscribed in code via AddListener/OnChanged), AnimationFly for the flying damage number, code-first (no NeoCondition / NoCode binding).",
+      "files": [],
+      "assertions": [
+        "Drives health with a NeoxiderTools type (HealthComponent or ReactiveProperty*) rather than a plain float + manual event",
+        "Subscribes to health changes from code (AddListener / OnChanged += ...) rather than relying on inspector-only wiring",
+        "Uses AnimationFly (AnimationFly.I) for the flying damage number rather than a hand-rolled tween/coroutine mover",
+        "Does NOT introduce a NeoCondition or NoCodeBindText/SetProgress binding component for the health bar"
+      ]
+    }
+  ]
+}
