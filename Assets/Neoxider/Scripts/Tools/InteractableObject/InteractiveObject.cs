@@ -1015,11 +1015,20 @@ namespace Neo.Tools
                    (cachedCollider2D != null && cachedCollider2D.enabled);
         }
 
+        // Guard: colliders are resolved once in Awake (or on explicit invalidation) to avoid
+        // per-frame GetComponent calls. Camera uses the existing null-check guard already present here.
+        private bool _collidersResolved;
+
         private void RefreshCachedReferences()
         {
             if (cachedCamera == null)
             {
                 cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+            }
+
+            if (_collidersResolved)
+            {
+                return;
             }
 
             cachedCollider3D = targetCollider3D != null
@@ -1028,6 +1037,17 @@ namespace Neo.Tools
             cachedCollider2D = targetCollider2D != null
                 ? targetCollider2D
                 : GetComponent<Collider2D>() ?? GetComponentInChildren<Collider2D>(true);
+            _collidersResolved = true;
+        }
+
+        /// <summary>
+        ///     Forces collider references to be re-resolved on the next call to
+        ///     <see cref="RefreshCachedReferences"/>. Call this if a collider is added,
+        ///     removed, or replaced on the GameObject at runtime.
+        /// </summary>
+        public void InvalidateCachedColliders()
+        {
+            _collidersResolved = false;
         }
 
         private bool TryGetCurrentMouseTargetHit(Camera cam, out Vector3 hitPoint)
@@ -1203,9 +1223,15 @@ namespace Neo.Tools
                 return viewCheckPoint;
             }
 
-            if (Camera.main != null)
+            // Reuse the already-cached camera instead of calling Camera.main (tag search) every frame.
+            if (cachedCamera == null)
             {
-                return Camera.main.transform;
+                cachedCamera = Camera.main ?? FindFirstObjectByType<Camera>();
+            }
+
+            if (cachedCamera != null)
+            {
+                return cachedCamera.transform;
             }
 
             return distanceCheckPoint;

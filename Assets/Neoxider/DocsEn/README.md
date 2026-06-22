@@ -6,6 +6,7 @@ Canonical English entry point for **NeoxiderTools** `v9.2.6`.
 
 - [Package README](../README.md)
 - [Russian docs](../Docs/README.md)
+- [**Getting Started** — first scene in 5 minutes](./GettingStarted.md)
 - [Project summary](../PROJECT_SUMMARY.md)
 - [Useful components](../Docs/UsefulComponents.md)
 - [Package compatibility](./PackageCompatibility.md)

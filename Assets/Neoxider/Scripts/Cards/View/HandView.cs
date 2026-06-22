@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -32,6 +33,13 @@ namespace Neo.Cards
 
         private readonly List<ICardView> _cardViews = new();
 
+        private CancellationToken _ct;
+
+        private void Awake()
+        {
+            _ct = this.GetCancellationTokenOnDestroy();
+        }
+
         /// <summary>
         ///     Layout algorithm.
         /// </summary>
@@ -41,7 +49,7 @@ namespace Neo.Cards
             set
             {
                 _layoutType = value;
-                ArrangeCardsAsync().Forget();
+                ArrangeCardsAsync().SuppressCancellationThrow().Forget();
             }
         }
 
@@ -152,11 +160,17 @@ namespace Neo.Cards
         private async UniTask AnimateCard(ICardView cardView, Vector3 position, Quaternion rotation)
         {
             TweenerCore<Vector3, Vector3, VectorOptions> moveTween =
-                cardView.Transform.DOLocalMove(position, _arrangeDuration).SetEase(_arrangeEase);
+                cardView.Transform.DOLocalMove(position, _arrangeDuration)
+                    .SetEase(_arrangeEase)
+                    .SetTarget(cardView.Transform)
+                    .SetLink(cardView.Transform.gameObject);
             TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween = cardView.Transform
-                .DOLocalRotateQuaternion(rotation, _arrangeDuration).SetEase(_arrangeEase);
+                .DOLocalRotateQuaternion(rotation, _arrangeDuration)
+                .SetEase(_arrangeEase)
+                .SetTarget(cardView.Transform)
+                .SetLink(cardView.Transform.gameObject);
 
-            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive());
+            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(), cancellationToken: _ct);
         }
     }
 }

@@ -171,6 +171,9 @@ namespace Neo.Tools
 
         /* --------- UNITY LIFECYCLE --------------------------------------- */
 
+        // True when lineMaterial was created at runtime by this component (not assigned in the inspector).
+        private bool _ownedLineMaterial;
+
         private void Awake()
         {
             cam = Camera.main;
@@ -190,6 +193,16 @@ namespace Neo.Tools
             if (!lineMaterial)
             {
                 lineMaterial = new Material(Shader.Find("Sprites/Default"));
+                _ownedLineMaterial = true;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (_ownedLineMaterial && lineMaterial != null)
+            {
+                Destroy(lineMaterial);
+                lineMaterial = null;
             }
         }
 
@@ -530,6 +543,11 @@ namespace Neo.Tools
             if (rawPoints.Count < minCountCreate ||
                 (minDistanceCreate > 0 && Distance.CurrentValue < minDistanceCreate)) // too short - discard
             {
+                if (!usePooling)
+                {
+                    DestroyLineMaterial(_currentLR);
+                }
+
                 Destroy(_currentLR.gameObject);
                 return;
             }
@@ -574,6 +592,35 @@ namespace Neo.Tools
         }
 
         /// <summary>
+        ///     Destroys the instance material owned by a line renderer (if any) to prevent a native memory leak.
+        ///     Only call this for non-pooled lines whose material was created at runtime by this component.
+        /// </summary>
+        private static void DestroyLineMaterial(LineRenderer lr)
+        {
+            if (lr == null)
+            {
+                return;
+            }
+
+            // sharedMaterial returns the actual assigned material without cloning (unlike .material).
+            // We only destroy it when it is a runtime instance, not a persistent project asset.
+            Material mat = lr.sharedMaterial;
+            if (mat == null)
+            {
+                return;
+            }
+
+#if UNITY_EDITOR
+            // In the editor, guard against accidentally destroying shared project assets.
+            if (UnityEditor.AssetDatabase.Contains(mat))
+            {
+                return;
+            }
+#endif
+            Destroy(mat);
+        }
+
+        /// <summary>
         ///     Destroys the provided LineRenderer and removes it from the list of lines.
         /// </summary>
         public void Delete(LineRenderer lr)
@@ -591,6 +638,7 @@ namespace Neo.Tools
             }
             else
             {
+                DestroyLineMaterial(lr);
                 Destroy(lr.gameObject);
             }
         }
@@ -629,13 +677,26 @@ namespace Neo.Tools
         {
             foreach (LineRenderer lr in new List<LineRenderer>(lines))
             {
-                Destroy(lr.gameObject);
+                if (usePooling)
+                {
+                    PoolManager.Release(lr.gameObject);
+                }
+                else
+                {
+                    DestroyLineMaterial(lr);
+                    Destroy(lr.gameObject);
+                }
             }
 
             lines.Clear();
             // Remove in-progress line if not yet in lines list
             if (_currentLR != null)
             {
+                if (!usePooling)
+                {
+                    DestroyLineMaterial(_currentLR);
+                }
+
                 Destroy(_currentLR.gameObject);
                 _currentLR = null;
             }

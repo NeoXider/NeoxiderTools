@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -40,9 +41,11 @@ namespace Neo.Cards
         private bool _isInteractable = true;
         private Vector3 _originalPosition;
         private Vector3 _originalScale;
+        private CancellationToken _ct;
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
             _originalScale = transform.localScale;
         }
 
@@ -99,15 +102,17 @@ namespace Neo.Cards
             float halfDuration = duration / 2f;
 
             TweenerCore<Vector3, Vector3, VectorOptions>
-                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween1.IsActive());
+                tween1 = transform.DOScaleX(0, halfDuration).SetEase(_flipEase).SetLink(gameObject);
+            _currentTween = tween1;
+            await UniTask.WaitUntil(() => !tween1.IsActive(), cancellationToken: _ct);
 
             IsFaceUp = !IsFaceUp;
             UpdateVisual();
 
             TweenerCore<Vector3, Vector3, VectorOptions> tween2 =
-                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase);
-            await UniTask.WaitUntil(() => !tween2.IsActive());
+                transform.DOScaleX(_originalScale.x, halfDuration).SetEase(_flipEase).SetLink(gameObject);
+            _currentTween = tween2;
+            await UniTask.WaitUntil(() => !tween2.IsActive(), cancellationToken: _ct);
         }
 
         /// <inheritdoc />
@@ -120,8 +125,8 @@ namespace Neo.Cards
             }
 
             _currentTween?.Kill();
-            _currentTween = transform.DOMove(position, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            _currentTween = transform.DOMove(position, duration).SetEase(_moveEase).SetLink(gameObject);
+            await UniTask.WaitUntil(() => !_currentTween.IsActive(), cancellationToken: _ct);
             _originalPosition = position;
         }
 
@@ -228,8 +233,8 @@ namespace Neo.Cards
             }
 
             _currentTween?.Kill();
-            _currentTween = transform.DOLocalMove(localPosition, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !_currentTween.IsActive());
+            _currentTween = transform.DOLocalMove(localPosition, duration).SetEase(_moveEase).SetLink(gameObject);
+            await UniTask.WaitUntil(() => !_currentTween.IsActive(), cancellationToken: _ct);
             _originalPosition = transform.position;
         }
 
@@ -247,8 +252,9 @@ namespace Neo.Cards
             }
 
             TweenerCore<Quaternion, Quaternion, NoOptions> rotateTween =
-                transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase);
-            await UniTask.WaitUntil(() => !rotateTween.IsActive());
+                transform.DORotateQuaternion(rotation, duration).SetEase(_moveEase).SetLink(gameObject);
+            _currentTween = rotateTween;
+            await UniTask.WaitUntil(() => !rotateTween.IsActive(), cancellationToken: _ct);
         }
 
         private void UpdateVisual()

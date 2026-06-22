@@ -6,6 +6,7 @@
 
 - [README пакета](../README.md)
 - [English docs](../DocsEn/README.md)
+- [**Getting Started** — первая сцена за 5 минут](./GettingStarted.md)
 - [Сводка проекта и reuse map](../PROJECT_SUMMARY.md)
 - [Полезные компоненты](./UsefulComponents.md)
 - [Совместимость пакета](./PackageCompatibility.md)

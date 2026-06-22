@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using DG.Tweening.Core;
@@ -47,6 +48,8 @@ namespace Neo.Cards
 
         private readonly List<CardComponent> _cards = new();
         private readonly Dictionary<CardComponent, UnityAction> _cardClickHandlers = new();
+
+        private CancellationToken _ct;
 
         /// <summary>
         ///     Invoked when the card count changes; carries the new count.
@@ -107,7 +110,7 @@ namespace Neo.Cards
             set
             {
                 _layoutType = value;
-                ArrangeCardsAsync().Forget();
+                ArrangeCardsAsync().SuppressCancellationThrow().Forget();
             }
         }
 
@@ -121,12 +124,13 @@ namespace Neo.Cards
             set
             {
                 _layoutType = (CardLayoutType)(int)value;
-                ArrangeCardsAsync().Forget();
+                ArrangeCardsAsync().SuppressCancellationThrow().Forget();
             }
         }
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
             EnsureModelInitialized();
         }
 
@@ -219,7 +223,7 @@ namespace Neo.Cards
         /// <param name="card">Card.</param>
         public void AddCard(CardComponent card)
         {
-            AddCardAsync(card, false).Forget();
+            AddCardAsync(card, false).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -290,7 +294,7 @@ namespace Neo.Cards
         /// <param name="card">Card.</param>
         public void RemoveCard(CardComponent card)
         {
-            RemoveCardAsync(card, false).Forget();
+            RemoveCardAsync(card, false).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -318,7 +322,7 @@ namespace Neo.Cards
         [Button]
         public void SortByRank(bool ascending = true)
         {
-            SortByRankAsync(ascending).Forget();
+            SortByRankAsync(ascending).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -348,7 +352,7 @@ namespace Neo.Cards
         [Button]
         public void SortBySuit(bool ascending = true)
         {
-            SortBySuitAsync(ascending).Forget();
+            SortBySuitAsync(ascending).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -537,7 +541,7 @@ namespace Neo.Cards
         [Button("Arrange")]
         private void ArrangeByButton()
         {
-            ArrangeCardsAsync().Forget();
+            ArrangeCardsAsync().SuppressCancellationThrow().Forget();
         }
 
         private async UniTask AnimateCard(CardComponent card, Vector3 position, Quaternion rotation)
@@ -553,7 +557,7 @@ namespace Neo.Cards
                     .SetTarget(card.transform)
                     .SetLink(card.gameObject);
 
-            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive());
+            await UniTask.WaitUntil(() => !moveTween.IsActive() && !rotateTween.IsActive(), cancellationToken: _ct);
         }
     }
 }

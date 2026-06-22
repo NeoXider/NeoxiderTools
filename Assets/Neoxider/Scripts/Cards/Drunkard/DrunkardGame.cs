@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -79,9 +80,11 @@ namespace Neo.Cards
         private bool _isInitialized;
         private CardComponent _opponentCardView;
         private CardComponent _playerCardView;
+        private CancellationToken _ct;
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
             CacheHands();
         }
 
@@ -200,7 +203,7 @@ namespace Neo.Cards
                 Log("[DrunkardGame] Play() invoked.");
             }
 
-            PlayRound().Forget();
+            PlayRound().SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -235,13 +238,13 @@ namespace Neo.Cards
             if (_playerGoesFirst)
             {
                 await ShowPlayerCard(playerCard);
-                await UniTask.Delay((int)(_turnDelay * 1000));
+                await UniTask.Delay((int)(_turnDelay * 1000), _ct);
                 await ShowOpponentCard(opponentCard);
             }
             else
             {
                 await ShowOpponentCard(opponentCard);
-                await UniTask.Delay((int)(_turnDelay * 1000));
+                await UniTask.Delay((int)(_turnDelay * 1000), _ct);
                 await ShowPlayerCard(playerCard);
             }
 
@@ -249,13 +252,13 @@ namespace Neo.Cards
 
             if (comparison > 0)
             {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
                 await MoveCardsToWinnerAsync(true, playerCard, opponentCard);
                 _onPlayerWonRound?.Invoke();
             }
             else if (comparison < 0)
             {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
                 await MoveCardsToWinnerAsync(false, playerCard, opponentCard);
                 _onOpponentWonRound?.Invoke();
             }
@@ -278,7 +281,7 @@ namespace Neo.Cards
                 _onWarEnded?.Invoke();
             }
 
-            await UniTask.Delay((int)(_roundDelay * 1000));
+            await UniTask.Delay((int)(_roundDelay * 1000), _ct);
 
             if (_warCards.Count == 0)
             {
@@ -335,13 +338,13 @@ namespace Neo.Cards
                 if (_playerGoesFirst)
                 {
                     await ShowAdditionalPlayerCard(playerWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000));
+                    await UniTask.Delay((int)(_turnDelay * 1000), _ct);
                     await ShowAdditionalOpponentCard(opponentWarCard);
                 }
                 else
                 {
                     await ShowAdditionalOpponentCard(opponentWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000));
+                    await UniTask.Delay((int)(_turnDelay * 1000), _ct);
                     await ShowAdditionalPlayerCard(playerWarCard);
                 }
 
@@ -361,7 +364,7 @@ namespace Neo.Cards
                     return;
                 }
 
-                await UniTask.Delay((int)(_warContinueDelay * 1000));
+                await UniTask.Delay((int)(_warContinueDelay * 1000), _ct);
             }
         }
 
@@ -460,7 +463,7 @@ namespace Neo.Cards
                         {
                             await PlayerHand.AddCardAsync(card);
                             card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                            await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
                         }
                     }
 
@@ -504,7 +507,7 @@ namespace Neo.Cards
                         {
                             await OpponentHand.AddCardAsync(card);
                             card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                            await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
                         }
                     }
 
@@ -587,7 +590,7 @@ namespace Neo.Cards
                         card.IsFaceUp = false;
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
 
                     if (_opponentCardView != null)
                     {
@@ -610,7 +613,7 @@ namespace Neo.Cards
                         card.IsFaceUp = false;
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000));
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
 
                     if (_playerCardView != null)
                     {
@@ -774,7 +777,7 @@ namespace Neo.Cards
                 _opponentCardView = null;
             }
 
-            await UniTask.Yield();
+            await UniTask.Yield(_ct);
         }
 
         /// <summary>
@@ -794,7 +797,7 @@ namespace Neo.Cards
             _playerCardView = null;
             _opponentCardView = null;
 
-            await UniTask.Yield();
+            await UniTask.Yield(_ct);
         }
 
         /// <summary>
@@ -868,7 +871,7 @@ namespace Neo.Cards
         [Button]
         public void RestartGame()
         {
-            RestartGameAsync().Forget();
+            RestartGameAsync().SuppressCancellationThrow().Forget();
         }
 
         /// <summary>

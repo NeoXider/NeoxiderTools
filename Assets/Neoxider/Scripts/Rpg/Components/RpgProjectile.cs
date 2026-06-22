@@ -17,8 +17,13 @@ namespace Neo.Rpg
         [SerializeField] private RpgGameObjectEvent _onHit = new();
         [SerializeField] private UnityEvent _onExpired = new();
 
+        [Header("Performance")] [Tooltip("Maximum hits resolved per cast (reusable buffer size).")] [Min(1)]
+        [SerializeField] private int _maxHitsPerCast = 16;
+
         private readonly HashSet<GameObject> _hitTargets = new();
         private readonly HashSet<IRpgCombatReceiver> _hitReceivers = new();
+        private RaycastHit[] _hitBuffer;
+        private RaycastHit2D[] _hit2DBuffer;
         private RpgAttackDefinition _definition;
         private Vector3 _direction = Vector3.forward;
         private float _elapsed;
@@ -84,11 +89,16 @@ namespace Neo.Rpg
             Vector3 direction = delta / distance;
             if (_definition.Use3D)
             {
-                RaycastHit[] hits = Physics.SphereCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                    distance, _definition.TargetLayers);
-                for (int i = 0; i < hits.Length; i++)
+                if (_hitBuffer == null || _hitBuffer.Length != _maxHitsPerCast)
                 {
-                    TryHitTarget(hits[i].collider != null ? hits[i].collider.gameObject : null);
+                    _hitBuffer = new RaycastHit[Mathf.Max(1, _maxHitsPerCast)];
+                }
+
+                int hitCount = Physics.SphereCastNonAlloc(from, Mathf.Max(0.01f, _definition.Radius), direction,
+                    _hitBuffer, distance, _definition.TargetLayers);
+                for (int i = 0; i < hitCount; i++)
+                {
+                    TryHitTarget(_hitBuffer[i].collider != null ? _hitBuffer[i].collider.gameObject : null);
                     if (_remainingHits <= 0)
                     {
                         return;
@@ -98,11 +108,16 @@ namespace Neo.Rpg
 
             if (_definition.Use2D)
             {
-                RaycastHit2D[] hits2D = Physics2D.CircleCastAll(from, Mathf.Max(0.01f, _definition.Radius), direction,
-                    distance, _definition.TargetLayers);
-                for (int i = 0; i < hits2D.Length; i++)
+                if (_hit2DBuffer == null || _hit2DBuffer.Length != _maxHitsPerCast)
                 {
-                    TryHitTarget(hits2D[i].collider != null ? hits2D[i].collider.gameObject : null);
+                    _hit2DBuffer = new RaycastHit2D[Mathf.Max(1, _maxHitsPerCast)];
+                }
+
+                int hit2DCount = Physics2D.CircleCastNonAlloc(from, Mathf.Max(0.01f, _definition.Radius), direction,
+                    _hit2DBuffer, distance, _definition.TargetLayers);
+                for (int i = 0; i < hit2DCount; i++)
+                {
+                    TryHitTarget(_hit2DBuffer[i].collider != null ? _hit2DBuffer[i].collider.gameObject : null);
                     if (_remainingHits <= 0)
                     {
                         return;

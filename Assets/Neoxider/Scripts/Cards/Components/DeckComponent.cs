@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -88,6 +89,8 @@ namespace Neo.Cards
 
         private readonly List<CardComponent> _activeCards = new();
 
+        private CancellationToken _ct;
+
         /// <summary>
         ///     Deck model.
         /// </summary>
@@ -152,6 +155,11 @@ namespace Neo.Cards
             Model?.Reset(_shuffleOnStart);
         }
 
+        private void Awake()
+        {
+            _ct = this.GetCancellationTokenOnDestroy();
+        }
+
         private void Start()
         {
             if (_setAnimationConfigAsGlobal && _animationConfig != null)
@@ -207,7 +215,7 @@ namespace Neo.Cards
 
             if (_spawnVisualOnInitialize)
             {
-                BuildVisualStackAsync().Forget();
+                BuildVisualStackAsync().SuppressCancellationThrow().Forget();
             }
         }
 
@@ -227,7 +235,7 @@ namespace Neo.Cards
         [Button("Build Visual Stack")]
         public void BuildVisualStack()
         {
-            BuildVisualStackAsync().Forget();
+            BuildVisualStackAsync().SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -264,7 +272,7 @@ namespace Neo.Cards
         [Button("Shuffle Visual")]
         public void ShuffleVisual(ShuffleVisualType type = ShuffleVisualType.Shake)
         {
-            ShuffleVisualAsync(type).Forget();
+            ShuffleVisualAsync(type).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -304,13 +312,13 @@ namespace Neo.Cards
                     case ShuffleVisualType.Cut:
                         await UniTask.Delay(
                             (int)((duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)) *
-                                  1000f));
+                                  1000f), _ct);
                         break;
                     case ShuffleVisualType.Riffle:
                         await UniTask.Delay((int)((duration ??
                                                    (_animationConfig != null
                                                        ? _animationConfig.RiffleDuration
-                                                       : 1.2f)) * 1000f));
+                                                       : 1.2f)) * 1000f), _ct);
                         break;
                 }
             }
@@ -325,7 +333,7 @@ namespace Neo.Cards
         [Button("Deal To Hand")]
         public void DealToHand(HandComponent hand, bool faceUp = true)
         {
-            DealToHandAsync(hand, faceUp).Forget();
+            DealToHandAsync(hand, faceUp).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -588,7 +596,7 @@ namespace Neo.Cards
                     }
                 }
 
-                await UniTask.Delay((int)(duration * 1000f / frames));
+                await UniTask.Delay((int)(duration * 1000f / frames), _ct);
             }
 
             for (int i = 0; i < cards.Count; i++)

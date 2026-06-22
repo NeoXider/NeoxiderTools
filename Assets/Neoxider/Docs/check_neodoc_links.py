@@ -2,12 +2,15 @@
 """
 Проверка: все атрибуты [NeoDoc("path")] в .cs ссылаются на существующие .md в Docs.
 Путь в атрибуте — относительно Assets/Neoxider/Docs (например Tools/Input/SwipeController.md).
+
+Дополнительно проверяется наличие зеркального EN-файла в DocsEn/ для каждой RU-ссылки.
 """
 import os
 import re
 
 root_docs = os.path.dirname(os.path.abspath(__file__))
 root_neoxider = os.path.normpath(os.path.join(root_docs, ".."))
+root_docs_en = os.path.normpath(os.path.join(root_neoxider, "DocsEn"))
 pattern = re.compile(r'NeoDoc\s*\(\s*"([^"]+)"\s*\)', re.IGNORECASE)
 
 
@@ -35,17 +38,29 @@ def collect_neodoc_paths():
 
 def main():
     collected = collect_neodoc_paths()
-    missing = []
+    missing_ru = []
+    missing_en = []
     for cs_rel, doc_rel in collected:
         doc_full = os.path.normpath(os.path.join(root_docs, doc_rel))
         if not os.path.isfile(doc_full):
-            missing.append((cs_rel, doc_rel))
-    for cs_rel, doc_rel in sorted(missing, key=lambda x: (x[1], x[0])):
-        print("MISSING\t{}\t->\t{}".format(cs_rel, doc_rel))
-    if missing:
-        print("\nTotal: {} broken NeoDoc link(s)".format(len(missing)))
+            missing_ru.append((cs_rel, doc_rel))
+        doc_en_full = os.path.normpath(os.path.join(root_docs_en, doc_rel))
+        if not os.path.isfile(doc_en_full):
+            missing_en.append((cs_rel, doc_rel))
+
+    for cs_rel, doc_rel in sorted(missing_ru, key=lambda x: (x[1], x[0])):
+        print("MISSING_RU\t{}\t->\t{}".format(cs_rel, doc_rel))
+    for cs_rel, doc_rel in sorted(missing_en, key=lambda x: (x[1], x[0])):
+        print("MISSING_EN\t{}\t->\tDocsEn/{}".format(cs_rel, doc_rel))
+
+    total_missing = len(missing_ru) + len(missing_en)
+    if total_missing:
+        if missing_ru:
+            print("\nTotal RU broken: {}".format(len(missing_ru)))
+        if missing_en:
+            print("Total EN missing: {}".format(len(missing_en)))
         return 1
-    print("OK: all {} NeoDoc link(s) point to existing .md".format(len(collected)))
+    print("OK: all {} NeoDoc link(s) point to existing RU and EN .md".format(len(collected)))
     return 0
 
 

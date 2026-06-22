@@ -32,8 +32,19 @@ namespace Neo
             private RandomMusicController _randomMusicController;
             private bool _runtimeInitialized;
 
-            public float startVolumeEfx { get; set; } = 1f;
-            public float startVolumeMusic { get; set; } = 1f;
+            /// <summary>Initial volume applied to the sound-effects AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
+            public float StartVolumeEfx { get; set; } = 1f;
+
+            /// <summary>Initial volume applied to the music AudioSource via <see cref="ApplyStartVolumes"/>.</summary>
+            public float StartVolumeMusic { get; set; } = 1f;
+
+            /// <inheritdoc cref="StartVolumeEfx"/>
+            [Obsolete("Use StartVolumeEfx")]
+            public float startVolumeEfx { get => StartVolumeEfx; set => StartVolumeEfx = value; }
+
+            /// <inheritdoc cref="StartVolumeMusic"/>
+            [Obsolete("Use StartVolumeMusic")]
+            public float startVolumeMusic { get => StartVolumeMusic; set => StartVolumeMusic = value; }
 
 #if UNITY_EDITOR
             private bool _editorEnsureSourcesQueued;
@@ -436,6 +447,18 @@ namespace Neo
             }
 
             /// <summary>
+            ///     Sets the music AudioSource volume. Convenience wrapper for <see cref="SetVolume(float, bool)"/>.
+            /// </summary>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetMusicVolume(float volume) => SetVolume(volume, false);
+
+            /// <summary>
+            ///     Sets the sound-effects AudioSource volume. Convenience wrapper for <see cref="SetVolume(float, bool)"/>.
+            /// </summary>
+            /// <param name="volume">Volume (0-1).</param>
+            public void SetEfxVolume(float volume) => SetVolume(volume, true);
+
+            /// <summary>
             ///     Applies startup volumes to the AudioSources.
             /// </summary>
             public void ApplyStartVolumes()
@@ -444,12 +467,12 @@ namespace Neo
 
                 if (_efx != null)
                 {
-                    _efx.volume = startVolumeEfx;
+                    _efx.volume = StartVolumeEfx;
                 }
 
                 if (_music != null)
                 {
-                    _music.volume = startVolumeMusic;
+                    _music.volume = StartVolumeMusic;
                 }
             }
 

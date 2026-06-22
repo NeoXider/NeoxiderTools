@@ -117,9 +117,16 @@ namespace Neo.Tools
         [Tooltip("Invoked when mode changes (for Toggle)")]
         public UnityEvent<bool> OnModeChanged = new();
 
+        [Header("Performance")] [Tooltip("Maximum colliders detected per overlap query (reusable buffer size).")]
+        [Min(1)] [SerializeField]
+        private int _maxOverlapColliders = 64;
+
         private readonly Dictionary<GameObject, Rigidbody> cachedRigidbodies = new();
 
         private readonly HashSet<GameObject> objectsInField = new();
+        private readonly HashSet<GameObject> currentObjects = new();
+        private readonly List<GameObject> toRemove = new();
+        private Collider[] _colliderBuffer;
         private float lastUpdateTime;
         private float toggleStartTime;
 
@@ -331,11 +338,17 @@ namespace Neo.Tools
             lastUpdateTime = Time.time;
 
             Vector3 fieldCenter = GetFieldCenter();
-            Collider[] colliders = Physics.OverlapSphere(fieldCenter, radius, affectedLayers);
-            HashSet<GameObject> currentObjects = new();
-
-            foreach (Collider col in colliders)
+            if (_colliderBuffer == null || _colliderBuffer.Length != _maxOverlapColliders)
             {
+                _colliderBuffer = new Collider[Mathf.Max(1, _maxOverlapColliders)];
+            }
+
+            int colliderCount = Physics.OverlapSphereNonAlloc(fieldCenter, radius, _colliderBuffer, affectedLayers);
+            currentObjects.Clear();
+
+            for (int i = 0; i < colliderCount; i++)
+            {
+                Collider col = _colliderBuffer[i];
                 if (col == null || col.gameObject == gameObject)
                 {
                     continue;
@@ -353,7 +366,7 @@ namespace Neo.Tools
                 ApplyMagneticForce(obj, col);
             }
 
-            List<GameObject> toRemove = new();
+            toRemove.Clear();
             foreach (GameObject obj in objectsInField)
             {
                 if (!currentObjects.Contains(obj))

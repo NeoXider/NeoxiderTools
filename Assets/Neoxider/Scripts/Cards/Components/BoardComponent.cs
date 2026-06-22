@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
@@ -62,6 +63,8 @@ namespace Neo.Cards
 
         [SerializeField] private List<CardComponent> _cards = new();
 
+        private CancellationToken _ct;
+
         /// <summary>
         ///     Cards on this board.
         /// </summary>
@@ -99,6 +102,8 @@ namespace Neo.Cards
 
         private void Awake()
         {
+            _ct = this.GetCancellationTokenOnDestroy();
+
             if (_autoGenerateSlots && (_cardSlots == null || _cardSlots.Length == 0))
             {
                 GenerateSlots();
@@ -159,7 +164,7 @@ namespace Neo.Cards
         /// <param name="card">Card.</param>
         public void PlaceCard(CardComponent card)
         {
-            PlaceCardAsync(card, false).Forget();
+            PlaceCardAsync(card, false).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -215,7 +220,7 @@ namespace Neo.Cards
         [Button("Arrange Cards")]
         public void ArrangeCards()
         {
-            ArrangeCardsInternalAsync(true).Forget();
+            ArrangeCardsInternalAsync(true).SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -280,7 +285,7 @@ namespace Neo.Cards
 
                 if (delayBetweenCards > 0)
                 {
-                    await UniTask.Delay((int)(delayBetweenCards * 1000));
+                    await UniTask.Delay((int)(delayBetweenCards * 1000), _ct);
                 }
             }
         }
@@ -303,7 +308,7 @@ namespace Neo.Cards
                 card.transform.SetParent(null, true);
                 if (!ShouldUseSlotPlacement())
                 {
-                    ArrangeCardsInternalAsync(false).Forget();
+                    ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
                 }
             }
 
@@ -327,7 +332,7 @@ namespace Neo.Cards
             card.transform.SetParent(null, true);
             if (!ShouldUseSlotPlacement())
             {
-                ArrangeCardsInternalAsync(false).Forget();
+                ArrangeCardsInternalAsync(false).SuppressCancellationThrow().Forget();
             }
 
             return card;
@@ -379,7 +384,7 @@ namespace Neo.Cards
         [Button]
         public void FlipAll()
         {
-            FlipAllAsync().Forget();
+            FlipAllAsync().SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -388,7 +393,7 @@ namespace Neo.Cards
         [Button]
         public void RestoreAllSourcesToBoard()
         {
-            RestoreAllSourcesToBoardAsync().Forget();
+            RestoreAllSourcesToBoardAsync().SuppressCancellationThrow().Forget();
         }
 
         /// <summary>
@@ -486,7 +491,7 @@ namespace Neo.Cards
 
                 if (delayBetweenCards > 0)
                 {
-                    await UniTask.Delay((int)(delayBetweenCards * 1000));
+                    await UniTask.Delay((int)(delayBetweenCards * 1000), _ct);
                 }
             }
         }
