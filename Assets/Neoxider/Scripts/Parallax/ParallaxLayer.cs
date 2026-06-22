@@ -237,8 +237,6 @@ namespace Neo
             {
                 Cleanup(true);
             }
-
-            UnityEditor.EditorUtility.SetDirty(this);
         }
 #endif
 
@@ -487,6 +485,7 @@ namespace Neo
         private Tile CreateTile()
         {
             GameObject go = new($"Tile_{tiles.Count}");
+            go.hideFlags = HideFlags.HideAndDontSave;
             go.transform.SetParent(transform, false);
             SpriteRenderer renderer = go.AddComponent<SpriteRenderer>();
             CopyRendererSettings(templateRenderer, renderer);

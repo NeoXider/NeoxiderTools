@@ -25,12 +25,24 @@
 // Play sound by index 0 from the _sounds array
 AM.I.Play(0);
 
-// Play a specific AudioClip at 0.5 volume
+// Play a specific AudioClip (effect) at 0.5 volume
 AM.I.Play(myClip, 0.5f);
+
+// Play a specific AudioClip (effect) at default volume (1)
+AM.I.Play(myClip);
+
+// Play music from a specific AudioClip at 0.7 volume
+AM.I.PlayMusicByClip(myMusicClip, 0.7f);
+
+// Play music from a specific AudioClip at default volume (1)
+AM.I.PlayMusicByClip(myMusicClip);
 
 // Enable random music
 AM.I.EnableRandomMusic();
 ```
+
+> The `Play(AudioClip)` and `PlayMusicByClip(AudioClip)` overloads play the passed clip directly,
+> without needing to add it to the `_sounds` / `_musicClips` arrays first.
 
 ## See Also
 - [AMSettings](AMSettings.md) - Audio settings and saving.

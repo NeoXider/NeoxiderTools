@@ -110,7 +110,12 @@ namespace Neo.Tools
         /// </summary>
         private void Update()
         {
-            if ((Application.isPlaying && updateInRuntime) || (!Application.isPlaying && updateInEditor))
+            // Only drive the camera continuously at runtime. In edit mode the camera is a
+            // serialized sibling object, so writing its properties every frame would dirty the
+            // scene whenever the Game/Scene-view aspect differs from the reference aspect and would
+            // fight manual edits. Edit-mode preview is applied on demand instead (OnValidate / the
+            // "Apply Camera Scale" button), gated by updateInEditor.
+            if (Application.isPlaying && updateInRuntime)
             {
                 ApplyCameraScale();
             }
@@ -119,6 +124,15 @@ namespace Neo.Tools
         private void OnEnable()
         {
             EnsureInitialized();
+
+            // Avoid driving the camera on every edit-mode enable (scene load / domain reload),
+            // which would otherwise dirty the scene. Runtime always applies; edit-mode preview is
+            // opt-in via updateInEditor.
+            if (!Application.isPlaying && !updateInEditor)
+            {
+                return;
+            }
+
             ApplyCameraScale(true);
         }
 
@@ -141,6 +155,15 @@ namespace Neo.Tools
             minSize = Mathf.Max(0.01f, minSize);
             maxSize = Mathf.Max(minSize, maxSize);
             scaleMultiplier = Mathf.Max(0.01f, scaleMultiplier);
+
+            // Apply on-demand only when explicitly opted in. This still writes the camera (and may
+            // dirty the scene if the editor aspect differs from the reference), but it is a discrete
+            // user-driven change rather than a continuous per-frame mutation.
+            if (!Application.isPlaying && !updateInEditor)
+            {
+                return;
+            }
+
             ApplyCameraScale(true);
         }
 

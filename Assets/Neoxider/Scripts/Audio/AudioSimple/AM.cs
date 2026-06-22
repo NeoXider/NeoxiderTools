@@ -77,6 +77,12 @@ namespace Neo
                 EnsureRuntimeInitialized();
             }
 
+            protected override void OnDestroy()
+            {
+                _randomMusicController?.Stop();
+                base.OnDestroy();
+            }
+
             private void EnsureRuntimeInitialized()
             {
                 if (_runtimeInitialized)
@@ -104,17 +110,23 @@ namespace Neo
                 }
             }
 
-            private void EnsureSources()
+            private bool EnsureSources()
             {
+                bool created = false;
+
                 if (_music == null)
                 {
                     CreateMusic();
+                    created = true;
                 }
 
                 if (_efx == null)
                 {
                     CreateEfx();
+                    created = true;
                 }
+
+                return created;
             }
 
 #if UNITY_EDITOR
@@ -139,8 +151,10 @@ namespace Neo
                     return;
                 }
 
-                EnsureSources();
-                UnityEditor.EditorUtility.SetDirty(this);
+                if (EnsureSources())
+                {
+                    UnityEditor.EditorUtility.SetDirty(this);
+                }
             }
 #endif
 
@@ -215,6 +229,15 @@ namespace Neo
                 }
 
                 _efx.PlayOneShot(clip, Mathf.Clamp(volume, 0f, 1f));
+            }
+
+            /// <summary>
+            ///     Plays a sound effect from an <see cref="AudioClip"/> at full volume (1).
+            /// </summary>
+            /// <param name="clip">Clip to play.</param>
+            public void Play(AudioClip clip)
+            {
+                Play(clip, 1f);
             }
 
             /// <summary>
@@ -303,6 +326,16 @@ namespace Neo
                 _music.Play();
 
                 OnMusicStarted?.Invoke(clip);
+            }
+
+            /// <summary>
+            ///     Plays music from an <see cref="AudioClip"/> at full volume (1).
+            ///     Stops random music if it was active.
+            /// </summary>
+            /// <param name="clip">Clip to play.</param>
+            public void PlayMusicByClip(AudioClip clip)
+            {
+                PlayMusicByClip(clip, 1f);
             }
 
             /// <summary>

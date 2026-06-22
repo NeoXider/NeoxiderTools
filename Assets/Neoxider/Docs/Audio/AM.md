@@ -25,12 +25,24 @@
 // Проиграть звук по индексу 0 из массива _sounds
 AM.I.Play(0);
 
-// Проиграть конкретный AudioClip с громкостью 0.5
+// Проиграть конкретный AudioClip (эффект) с громкостью 0.5
 AM.I.Play(myClip, 0.5f);
+
+// Проиграть конкретный AudioClip (эффект) с громкостью по умолчанию (1)
+AM.I.Play(myClip);
+
+// Проиграть музыку из конкретного AudioClip с громкостью 0.7
+AM.I.PlayMusicByClip(myMusicClip, 0.7f);
+
+// Проиграть музыку из конкретного AudioClip с громкостью по умолчанию (1)
+AM.I.PlayMusicByClip(myMusicClip);
 
 // Включить случайную музыку
 AM.I.EnableRandomMusic();
 ```
+
+> Перегрузки `Play(AudioClip)` и `PlayMusicByClip(AudioClip)` проигрывают переданный клип напрямую,
+> без необходимости заранее добавлять его в массивы `_sounds` / `_musicClips`.
 
 ## См. также
 - [AMSettings](AMSettings.md) - Настройки звука и сохранение.
