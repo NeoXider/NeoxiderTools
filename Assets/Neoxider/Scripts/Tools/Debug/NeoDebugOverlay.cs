@@ -1,13 +1,17 @@
+using System;
+using System.Reflection;
+using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Neo.Audio;
 
 namespace Neo.Tools
 {
     /// <summary>
     ///     Drop-in on-screen debug panel rendered with IMGUI.
     ///     Shows FPS, frame time, active scene, time scale, and known manager states (AM, SaveManager).
-    ///     Toggle visibility with <see cref="_toggleKey"/> (default F3). No scene or prefab dependencies.
+    ///     Manager state is read via reflection so this overlay carries no assembly dependency on the
+    ///     Audio / Save modules (avoids circular asmdef references). Toggle visibility with
+    ///     <see cref="_toggleKey"/> (default F3). No scene or prefab dependencies.
     /// </summary>
     [AddComponentMenu("Neoxider/Tools/Debug/" + nameof(NeoDebugOverlay))]
     public class NeoDebugOverlay : MonoBehaviour
@@ -50,6 +54,16 @@ namespace Neo.Tools
         private GUIStyle _boxStyle;
         private GUIStyle _labelStyle;
         private bool _stylesReady;
+
+        // ── Manager reflection cache (resolved once, no hard asmdef deps) ──────
+
+        private bool _managerReflectionReady;
+        private PropertyInfo _amInstanceProp;
+        private PropertyInfo _amMusicProp;
+        private MethodInfo _amIsRandomMethod;
+        private MethodInfo _amGetClipMethod;
+        private PropertyInfo _saveHasInstanceProp;
+        private PropertyInfo _saveIsLoadProp;
 
         // ── Unity messages ────────────────────────────────────────────────────
 
@@ -98,7 +112,7 @@ namespace Neo.Tools
 
             // ── Build content string (OnGUI allocations are fine) ──────────
 
-            System.Text.StringBuilder sb = new System.Text.StringBuilder(256);
+            StringBuilder sb = new StringBuilder(256);
 
             if (_showFps)
             {
@@ -135,17 +149,24 @@ namespace Neo.Tools
 
         // ── Helpers ───────────────────────────────────────────────────────────
 
-        private void AppendManagerInfo(System.Text.StringBuilder sb)
+        private void AppendManagerInfo(StringBuilder sb)
         {
+            EnsureManagerReflection();
+
             sb.AppendLine("── Managers ──");
 
-            // AM (Audio Manager)
-            AM am = AM.I;
-            if (am != null)
+            // AM (Audio Manager) — resolved via reflection; instance read through its static "I".
+            UnityEngine.Object amObj = _amInstanceProp != null
+                ? _amInstanceProp.GetValue(null) as UnityEngine.Object
+                : null;
+
+            if (amObj != null)
             {
-                bool musicPlaying = am.Music != null && am.Music.isPlaying;
-                bool randomMusic  = am.IsRandomMusicEnabled();
-                AudioClip currentClip = am.GetCurrentMusicClip();
+                object am = amObj;
+                AudioSource music = _amMusicProp != null ? _amMusicProp.GetValue(am) as AudioSource : null;
+                bool musicPlaying = music != null && music.isPlaying;
+                bool randomMusic  = _amIsRandomMethod != null && (bool)_amIsRandomMethod.Invoke(am, null);
+                AudioClip currentClip = _amGetClipMethod != null ? _amGetClipMethod.Invoke(am, null) as AudioClip : null;
                 string clipName = currentClip != null ? currentClip.name : "—";
 
                 sb.AppendLine(string.Format("AM  music={0}  random={1}  clip={2}",
@@ -158,15 +179,68 @@ namespace Neo.Tools
                 sb.AppendLine("AM  —");
             }
 
-            // SaveManager
-            if (Neo.Save.SaveManager.HasInstance)
+            // SaveManager — static HasInstance / IsLoad read via reflection.
+            bool hasSave = _saveHasInstanceProp != null && (bool)_saveHasInstanceProp.GetValue(null);
+            if (hasSave)
             {
-                sb.AppendLine(string.Format("SaveManager  loaded={0}", Neo.Save.SaveManager.IsLoad ? "yes" : "no"));
+                bool loaded = _saveIsLoadProp != null && (bool)_saveIsLoadProp.GetValue(null);
+                sb.AppendLine(string.Format("SaveManager  loaded={0}", loaded ? "yes" : "no"));
             }
             else
             {
                 sb.AppendLine("SaveManager  —");
             }
+        }
+
+        private void EnsureManagerReflection()
+        {
+            if (_managerReflectionReady)
+            {
+                return;
+            }
+
+            _managerReflectionReady = true;
+
+            Type amType = ResolveType("Neo.Audio.AM");
+            if (amType != null)
+            {
+                _amInstanceProp = amType.GetProperty("I",
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                _amMusicProp = amType.GetProperty("Music", BindingFlags.Public | BindingFlags.Instance);
+                _amIsRandomMethod = amType.GetMethod("IsRandomMusicEnabled",
+                    BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+                _amGetClipMethod = amType.GetMethod("GetCurrentMusicClip",
+                    BindingFlags.Public | BindingFlags.Instance, null, Type.EmptyTypes, null);
+            }
+
+            Type saveType = ResolveType("Neo.Save.SaveManager");
+            if (saveType != null)
+            {
+                _saveHasInstanceProp = saveType.GetProperty("HasInstance",
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+                _saveIsLoadProp = saveType.GetProperty("IsLoad",
+                    BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy);
+            }
+        }
+
+        private static Type ResolveType(string fullName)
+        {
+            Type t = Type.GetType(fullName);
+            if (t != null)
+            {
+                return t;
+            }
+
+            foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                t = asm.GetType(fullName);
+                if (t != null)
+                {
+                    return t;
+                }
+            }
+
+            return null;
         }
 
         private void EnsureStyles()

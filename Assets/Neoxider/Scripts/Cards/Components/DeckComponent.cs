@@ -312,13 +312,13 @@ namespace Neo.Cards
                     case ShuffleVisualType.Cut:
                         await UniTask.Delay(
                             (int)((duration ?? (_animationConfig != null ? _animationConfig.CutDuration : 0.8f)) *
-                                  1000f), _ct);
+                                  1000f), cancellationToken: _ct);
                         break;
                     case ShuffleVisualType.Riffle:
                         await UniTask.Delay((int)((duration ??
                                                    (_animationConfig != null
                                                        ? _animationConfig.RiffleDuration
-                                                       : 1.2f)) * 1000f), _ct);
+                                                       : 1.2f)) * 1000f), cancellationToken: _ct);
                         break;
                 }
             }
@@ -596,7 +596,7 @@ namespace Neo.Cards
                     }
                 }
 
-                await UniTask.Delay((int)(duration * 1000f / frames), _ct);
+                await UniTask.Delay((int)(duration * 1000f / frames), cancellationToken: _ct);
             }
 
             for (int i = 0; i < cards.Count; i++)

@@ -238,13 +238,13 @@ namespace Neo.Cards
             if (_playerGoesFirst)
             {
                 await ShowPlayerCard(playerCard);
-                await UniTask.Delay((int)(_turnDelay * 1000), _ct);
+                await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
                 await ShowOpponentCard(opponentCard);
             }
             else
             {
                 await ShowOpponentCard(opponentCard);
-                await UniTask.Delay((int)(_turnDelay * 1000), _ct);
+                await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
                 await ShowPlayerCard(playerCard);
             }
 
@@ -252,13 +252,13 @@ namespace Neo.Cards
 
             if (comparison > 0)
             {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
                 await MoveCardsToWinnerAsync(true, playerCard, opponentCard);
                 _onPlayerWonRound?.Invoke();
             }
             else if (comparison < 0)
             {
-                await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
                 await MoveCardsToWinnerAsync(false, playerCard, opponentCard);
                 _onOpponentWonRound?.Invoke();
             }
@@ -281,7 +281,7 @@ namespace Neo.Cards
                 _onWarEnded?.Invoke();
             }
 
-            await UniTask.Delay((int)(_roundDelay * 1000), _ct);
+            await UniTask.Delay((int)(_roundDelay * 1000), cancellationToken: _ct);
 
             if (_warCards.Count == 0)
             {
@@ -338,13 +338,13 @@ namespace Neo.Cards
                 if (_playerGoesFirst)
                 {
                     await ShowAdditionalPlayerCard(playerWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000), _ct);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
                     await ShowAdditionalOpponentCard(opponentWarCard);
                 }
                 else
                 {
                     await ShowAdditionalOpponentCard(opponentWarCard);
-                    await UniTask.Delay((int)(_turnDelay * 1000), _ct);
+                    await UniTask.Delay((int)(_turnDelay * 1000), cancellationToken: _ct);
                     await ShowAdditionalPlayerCard(playerWarCard);
                 }
 
@@ -364,7 +364,7 @@ namespace Neo.Cards
                     return;
                 }
 
-                await UniTask.Delay((int)(_warContinueDelay * 1000), _ct);
+                await UniTask.Delay((int)(_warContinueDelay * 1000), cancellationToken: _ct);
             }
         }
 
@@ -463,7 +463,7 @@ namespace Neo.Cards
                         {
                             await PlayerHand.AddCardAsync(card);
                             card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                            await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
                         }
                     }
 
@@ -507,7 +507,7 @@ namespace Neo.Cards
                         {
                             await OpponentHand.AddCardAsync(card);
                             card.IsFaceUp = false;
-                            await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                            await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
                         }
                     }
 
@@ -590,7 +590,7 @@ namespace Neo.Cards
                         card.IsFaceUp = false;
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
 
                     if (_opponentCardView != null)
                     {
@@ -613,7 +613,7 @@ namespace Neo.Cards
                         card.IsFaceUp = false;
                     }
 
-                    await UniTask.Delay((int)(_cardReturnDelay * 1000), _ct);
+                    await UniTask.Delay((int)(_cardReturnDelay * 1000), cancellationToken: _ct);
 
                     if (_playerCardView != null)
                     {

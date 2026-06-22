@@ -285,7 +285,7 @@ namespace Neo.Cards
 
                 if (delayBetweenCards > 0)
                 {
-                    await UniTask.Delay((int)(delayBetweenCards * 1000), _ct);
+                    await UniTask.Delay((int)(delayBetweenCards * 1000), cancellationToken: _ct);
                 }
             }
         }
@@ -491,7 +491,7 @@ namespace Neo.Cards
 
                 if (delayBetweenCards > 0)
                 {
-                    await UniTask.Delay((int)(delayBetweenCards * 1000), _ct);
+                    await UniTask.Delay((int)(delayBetweenCards * 1000), cancellationToken: _ct);
                 }
             }
         }
