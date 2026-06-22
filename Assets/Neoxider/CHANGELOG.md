@@ -1,7 +1,14 @@
 
 ## [Unreleased]
 
+## [9.3.0] - 2026-06-23
+
 ### Added
+- **Audio / AM:** `Play(AudioClip)` and `PlayMusicByClip(AudioClip)` convenience overloads; `SetMusicVolume`/`SetEfxVolume` (replacing the boolean-trap `SetVolume(volume, bool)`); `startVolumeEfx`/`startVolumeMusic` renamed to PascalCase with `[Obsolete]` forwarders.
+- **Bonus / Slot:** `SpinController.SpinResult` value type with `GetLastResult()` and `LastPayout` — one coherent spin outcome (symbol grid, winning lines, payout).
+- **Tools / Debug:** `NeoDebugOverlay` — drop-in IMGUI runtime overlay (FPS, active scene, time scale, AM/SaveManager status), toggled with F3.
+- **Tests:** `AmEditModeTests`, `SpinControllerPaylineTests`, and a public-PascalCase convention check in `ModulePrinciplesTests`.
+- **Docs:** EN parity for Quest and Tools, bilingual Getting Started, and a NeoDoc link checker that now verifies the DocsEn mirror.
 - **GridSystem / Dice:** added serializable `DiceValueWeight` and `DicePieceGenerator.GenerateWeighted(...)` for designer-controlled dice value pools, explicit invalid-weight validation, and non-duplicating weighted pairs.
 - **GridSystem:** expanded `GridSlotAllocator` with `Capacity`, `HasAvailableSlot`, slot-index preferred allocation, slot-index release, and `Clear(...)` for reusable autobattler benches, tactical rows, backpack rails, and compact board lifecycle management.
 - **GridSystem:** extended `GridSlotAllocator` with linear slot-index helpers (`TryGetSlotPosition`, `TryGetSlotIndex`, `IsAvailable(int)`, `Allocate(int, int)`) for rectangular 2D boards such as autobattler benches, tactical rows, hotbars, and card-game lanes.
@@ -12,6 +19,10 @@
 - **Samples / UI:** added an `AnimationFlyDemo` scene with runtime buttons, a real sample sprite asset example, and labeled sliders for count, duration, delay, arc, scale, and rotation so fly-effect flows can be inspected without manual scene editing.
 
 ### Fixed
+- **Editor scene-dirtying:** `ParallaxLayer`, `CameraAspectRatioScaler`, and `AM` no longer mark the open scene dirty on load (perpetual `*`): removed unconditional `SetDirty` in editor delay-calls, made preview generation transient (`HideAndDontSave`), and drive the aspect-ratio camera only at runtime.
+- **Runtime performance:** `RpgProjectile` and `MagneticField` now use NonAlloc physics queries + reused buffers instead of per-frame heap allocations; `Drawer` releases its owned/cloned Materials in `OnDestroy`; `InteractiveObject` caches colliders and reuses the cached camera; `Singleton.I` no longer re-runs `FindObjectsByType` on every access when no instance exists.
+- **Cards (async lifetime):** `DrunkardGame`, `BoardComponent`, `DeckComponent`, `HandComponent`, `HandView`, and `CardView` bind UniTask awaits to `GetCancellationTokenOnDestroy` and link tweens to the GameObject, preventing `MissingReferenceException` on scene change mid-animation.
+- **Audio / AM:** `OnDestroy` now stops `RandomMusicController` so its looping UniTask cannot run after teardown.
 - **Bonus / Slot:** aligned slot element scene gizmo coordinate labels with the `SpinController` console grid index base and guarded `VisualSlotLines` against missing line references.
 - **Tools / Compatibility:** switched `MouseInputManager`, `MouseEffect`, `ParallaxLayer`, and `NetworkContextActionRelay` debug IDs to `Object.GetEntityId()` under `UNITY_6000_5_OR_NEWER` (Unity 6.5+), while preserving `GetInstanceID()` for older versions.
 - **Samples / NeoxiderPages:** removed hard DOTween/DOTween Pro runtime dependencies from `UIPage` and `BtnChangePage`, stripped legacy `DOTweenAnimation` components from sample prefabs, and declared `com.unity.ugui` as a package dependency so imported page prefabs resolve standard uGUI scripts.
