@@ -185,6 +185,8 @@ namespace Neo.Bonus
 
         private int[] _lastWinningPaylineIndices = Array.Empty<int>();
 
+        private int _lastPayout;
+
         /// <summary>
         ///     If set, the next <see cref="StartSpin"/> uses this matrix as the outcome instead of randomized plan
         ///     (and bypasses CheckSpin shaping). Cleared after one spin.
@@ -223,6 +225,12 @@ namespace Neo.Bonus
         ///     Matches indices into <see cref="GetPaylineDefinitionsSnapshot"/>.
         /// </summary>
         public IReadOnlyList<int> LastWinningPaylineIndices => Array.AsReadOnly(_lastWinningPaylineIndices);
+
+        /// <summary>
+        ///     Coin payout awarded on the last completed spin (0 after a new spin starts or on lose).
+        ///     Same value as the one broadcast through <see cref="OnWin"/>.
+        /// </summary>
+        public int LastPayout => _lastPayout;
 
         /// <summary>
         ///     How many payline definitions participate in evaluation (<see cref="_countLine"/> capped by available definitions).
@@ -384,6 +392,29 @@ namespace Neo.Bonus
                 winCopy);
         }
 
+        /// <summary>
+        ///     One coherent, immutable summary of the last completed spin, assembled from the existing
+        ///     accessors (<see cref="GetElementIDsMatrix"/>, <see cref="LastWinningPaylineIndices"/>,
+        ///     <see cref="GetLastWinningPaylinesSymbolIds"/>, <see cref="LastPayout"/>).
+        ///     Returns an empty <see cref="SpinResult"/> before the first spin completes.
+        /// </summary>
+        /// <param name="refreshIfIdle">
+        ///     When true (default) and the reels are idle, the symbol matrices are rebuilt before sampling,
+        ///     matching the behaviour of the underlying matrix accessors.
+        /// </param>
+        public SpinResult GetLastResult(bool refreshIfIdle = true)
+        {
+            int[,] symbolIds = GetElementIDsMatrix(refreshIfIdle);
+
+            int[] winningLines = _lastWinningPaylineIndices.Length > 0
+                ? (int[])_lastWinningPaylineIndices.Clone()
+                : Array.Empty<int>();
+
+            int[,] winningLineSymbolIds = GetLastWinningPaylinesSymbolIds(refreshIfIdle);
+
+            return new SpinResult(symbolIds, winningLines, winningLineSymbolIds, _lastPayout);
+        }
+
         private void Awake()
         {
             if (_moneyGameObject != null)
@@ -465,6 +496,7 @@ namespace Neo.Bonus
         {
             WaitForSeconds delay = new(_delaySpinRoll);
             _lastWinningPaylineIndices = Array.Empty<int>();
+            _lastPayout = 0;
             StopWinLinePlayback();
             _lineSlot?.LineActiv(false);
 
@@ -1053,6 +1085,7 @@ namespace Neo.Bonus
             if (finalVisuals == null || checkSpin == null || !checkSpin.isActive)
             {
                 _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
                 Lose();
                 OnEndSpin?.Invoke();
                 OnEnd?.Invoke(false);
@@ -1074,6 +1107,7 @@ namespace Neo.Bonus
                 else
                 {
                     _lastWinningPaylineIndices = Array.Empty<int>();
+                    _lastPayout = 0;
                     Lose();
                 }
             }
@@ -1081,6 +1115,7 @@ namespace Neo.Bonus
             {
                 LogWarning($"Result evaluation failed: {ex.Message}");
                 _lastWinningPaylineIndices = Array.Empty<int>();
+                _lastPayout = 0;
                 Lose();
             }
 
@@ -1120,6 +1155,7 @@ namespace Neo.Bonus
             }
 
             int payout = Mathf.Max(0, Mathf.RoundToInt(moneyWin));
+            _lastPayout = payout;
 
             OnChangeMoneyWin?.Invoke(payout.ToString());
             OnWin?.Invoke(payout);
@@ -1716,6 +1752,39 @@ namespace Neo.Bonus
             }
         }
 #endif
+
+        /// <summary>
+        ///     Immutable, buyer-friendly summary of a completed spin from <see cref="GetLastResult"/>.
+        ///     Bundles the final symbol grid, the winning paylines, their per-line symbol ids and the
+        ///     coin payout into a single value so callers do not have to stitch the individual accessors together.
+        /// </summary>
+        public readonly struct SpinResult
+        {
+            public SpinResult(int[,] symbolIds, int[] winningLines, int[,] winningLineSymbolIds, int payout)
+            {
+                SymbolIds = symbolIds ?? new int[0, 0];
+                WinningLines = winningLines ?? Array.Empty<int>();
+                WinningLineSymbolIds = winningLineSymbolIds ?? new int[0, 0];
+                Payout = payout;
+            }
+
+            /// <summary>Final symbol-id grid, <c>[columns, rows]</c> with y=0 bottom (from <see cref="GetElementIDsMatrix"/>).</summary>
+            public int[,] SymbolIds { get; }
+
+            /// <summary>Definition indices of the paylines that won (from <see cref="LastWinningPaylineIndices"/>).</summary>
+            public int[] WinningLines { get; }
+
+            /// <summary>
+            ///     Per-winning-line symbol ids, <c>[lineIndex, column]</c> (from <see cref="GetLastWinningPaylinesSymbolIds"/>).
+            /// </summary>
+            public int[,] WinningLineSymbolIds { get; }
+
+            /// <summary>Coin payout awarded for this spin (from <see cref="LastPayout"/>).</summary>
+            public int Payout { get; }
+
+            /// <summary>True when at least one payline won on this spin.</summary>
+            public bool IsWin => WinningLines != null && WinningLines.Length > 0;
+        }
 
         /// <summary>Immutable snapshot from <see cref="GetRuntimeSnapshot"/>.</summary>
         public readonly struct SpinRuntimeSnapshot
