@@ -336,6 +336,13 @@ namespace Neo.Editor.Tests
                         continue;
 
                     string memberName = m.Groups[1].Value;
+
+                    // Operator overloads (e.g. "public static bool operator ==") are not named members:
+                    // the return type sits between "public" and the "operator" keyword, so the misplaced
+                    // lookahead lets "operator" be captured as the name. Skip them explicitly.
+                    if (memberName == "operator")
+                        continue;
+
                     offenders.Add($"{normalized}:{i + 1}: public member '{memberName}' should be PascalCase");
                 }
             }
