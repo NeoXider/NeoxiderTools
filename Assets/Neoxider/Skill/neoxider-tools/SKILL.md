@@ -45,6 +45,12 @@ high-signal examples (full catalogs are in the reference files below):
   `seconds.FormatTime(TimeFormat.MinutesSeconds)`.
 - Auto-wire a serialized reference? `[GetComponent]`, `[FindInScene]`, `[LoadFromResources("...")]`.
 - A button in the inspector to test a method? `[Button]` on the method.
+- A timer, camera shake, follow cam, score, loot table, dialogue, leaderboard, line drawing, mouse
+  picking, swipe, weighted chance…? The `Neo.Tools` module almost certainly has it — see
+  `references/tools.md` (it's a big catalog). Don't hand-roll a `Timer`/pool/`CameraShake`.
+- Multiplayer / co-op / PvP? Use `NetworkSingleton<T>` + `NeoNetworkState`/`NeoNetworkSpawner` (Mirror is
+  optional and the package degrades to solo-mode without it). Networking has a critical scene-object
+  pitfall — read `references/network.md` before touching `NetworkIdentity` scene objects.
 
 If you are unsure whether the package covers something, **check before writing it** (see "How to discover"
 below). Surfacing "NeoxiderTools already has `X` for this" is exactly the value this skill provides.
@@ -103,6 +109,13 @@ reference material — load the one that fits the task, don't read all of them u
 - **`references/modules.md`** — module-by-module inventory: managers (and their `.I` access), key
   entry-point components, the property-attribute family (`[Button]`, `[GetComponent]`, inject attributes,
   `[GUIColor]`, `[RequireInterface]`), and which optional deps (Mirror/DOTween/Spine/Odin) gate what.
+- **`references/tools.md`** — the `Neo.Tools` module is huge (the package's catch-all). This is the full
+  component catalog grouped by category: spawning/pool, score/counters, timers, move/camera, interaction/
+  physics, view/UI, text, input, debug, draw, dialogue, leaderboard, chance/loot — with key APIs and
+  code-first snippets. Open this for anything gameplay-systems-y that isn't its own module.
+- **`references/network.md`** — multiplayer (Mirror-optional). `NetworkSingleton<T>`, `NeoNetworkManager`,
+  `NeoNetworkState`, `NeoNetworkSpawner`, the `NetworkReactivePropertyBridge`, lobby, and the critical
+  scene-`NetworkIdentity` / `INeoOptionalNetworked` pitfall. Read this for any networked/co-op/PvP work.
 - **`references/idioms.md`** — copy-pasteable code-first snippets for the most-used systems: AM audio,
   Save, Reactive, PoolManager, Singletons/EM, StateMachine, RPG, Quest, Progression — each shown the
   correct (code) way, with the no-code anti-pattern called out.

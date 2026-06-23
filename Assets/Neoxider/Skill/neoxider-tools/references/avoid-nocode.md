@@ -30,6 +30,21 @@ no-code surface and the code-first replacement for each.
 These mostly live under each module's `Bridge/` or `NoCode/` subfolder, or the `Neo.Condition` /
 `Neo.NoCode` / `Neo.StateMachine.NoCode` assemblies — a useful tell when scanning source.
 
+### Also inspector-wiring-primary (Tools & Network)
+These are fine to *subscribe to* from code, but they exist to be wired in the Inspector; when writing code,
+do the thing directly rather than building a graph around them:
+
+| Component | Code-first instead |
+|---|---|
+| `EM` (event hub) | subscribe with `EM.I.OnWin.AddListener(...)` / fire via `GM.I.Win()` — fine; just don't treat it as your only control flow |
+| `UnityLifecycleEvents` | write the real `Awake/Start/Update` method |
+| `PhysicsEvents2D` / `PhysicsEvents3D` | subscribe from code (`pe.TriggerEnterOccurred += ...`) or write `OnTriggerEnter` directly |
+| `AnimatorParameterDriver` | call `animator.SetTrigger/SetBool` (or the driver's methods) from code |
+| `TextScore`, `StarView` | set the text / toggle stars in code from `ScoreManager.I` |
+| `NeoDebugOverlay`, `CameraAspectRatioScaler` | configuration-only; fine as-is, nothing to code |
+| `PlayerController2D/3DAnimatorDriver` | drive the Animator from your own controller code if you need logic |
+| `NetworkActionRelay`, `NetworkContextActionRelay`, `NetworkEventDispatcher` | for code-first networking write a `NetworkBehaviour` with `[Command]`/`[ClientRpc]`; these relays are zero-code Inspector buses |
+
 ## NOT no-code — these are normal code-first components
 A component having a `UnityEvent` does not make it no-code. These expose real C# APIs; their events are
 **output hooks** you may subscribe to from code with `AddListener(...)`:
