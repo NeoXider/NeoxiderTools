@@ -1,9 +1,7 @@
 # NeoxiderTools — game systems reference
 
 Dense API reference for gameplay modules. Verified against source in
-`Assets/Neoxider/Scripts/<Module>/`. Items marked `†` were inferred from
-callers and are likely-correct but source not read directly. Singletons
-expose `.I` (see tools.md).
+`Assets/Neoxider/Scripts/<Module>/`. Singletons expose `.I` (see tools.md).
 
 ---
 
@@ -111,7 +109,7 @@ UnityEvent<bool> OnChangeProgress
 ```csharp
 void SetEnabled(bool active)
 void SetData(ItemCollectionData data)
-void Unlock()                         // calls Collection.I.AddItem(ItemId) †
+void Unlock()                         // calls Collection.I.AddItem(ItemId)
 int ItemId
 bool IsEnabled
 UnityEvent<bool> OnChangeEnabled
@@ -119,7 +117,7 @@ UnityEvent OnActive
 UnityEvent OnDeactivated
 ```
 
-`Collection.I.GetPrize()` and `Collection.I.AddItem(int)` †
+`Collection` (MonoBehaviour, singleton `.I`) — manages an `ItemCollectionData[]`. Key API: `ItemCollectionData GetPrize()` (picks a random locked item, unlocks + saves it, fires `OnGetItem`; returns null if all items already unlocked), `void AddItem(int id)`, `bool TryAddItem(int id)`, `void AddItem(ItemCollectionData data)`, `void RemoveItem(int id)`, `bool HasItem(int id)`, `void ClearCollection()`, `void UnlockAllItems()`, `float GetCompletionPercentage()`, `string GetCompletionCountText()`, `int ItemCount`, `int UnlockedCount`. Events: `OnGetItem<int>`, `OnLoadItems`, `OnItemAdded<int>`, `OnItemRemoved<int>`, `OnCompletionChanged<int,int>`, `OnCompletionPercentageChanged<float>`.
 
 ---
 
@@ -296,20 +294,66 @@ static GridMergeResult Resolve(FieldGenerator generator, GridMergeRequest reques
 //   List<FieldCell> Cells, List<FieldCell> ClearedCells, List<Vector3Int> Positions
 ```
 
+### Sub-games — `Neo.GridSystem.*`
+
+#### `Match3BoardService` (MonoBehaviour) — `Neo.GridSystem.Match3`
+Full match-3 runtime on a `FieldGenerator`. Requires `FieldGenerator` on same object.
+
+```csharp
+void InitializeBoard()                            // fill board, optionally resolve spawn matches
+bool TrySwapAndResolve(Vector3Int a, Vector3Int b) // swap + cascade; returns false if no match
+List<List<FieldCell>> FindMatches()
+bool TryFindValidSwap(out Vector3Int a, out Vector3Int b)
+bool ShuffleIfNoMoves()                           // auto-shuffles if no swap creates a match
+// events
+UnityEvent OnBoardChanged, UnityEvent<int> OnMatchesResolved, UnityEvent OnBoardShuffled
+event Action<Match3ResolvePhase, int> OnResolvePhase   // Swap|Clear|Collapse|Refill|Completed
+```
+
+#### `TicTacToeBoardService` (MonoBehaviour) — `Neo.GridSystem.TicTacToe`
+Turn-based tic-tac-toe on a `FieldGenerator`. Tracks `CurrentPlayer` (X/O), `Winner`, `IsFinished`.
+
+```csharp
+void ResetBoard()
+bool TryMakeMove(Vector2Int pos)    // or (Vector3Int pos)
+bool IsBoardFull()
+TicTacToeCellState CurrentPlayer, Winner
+bool IsFinished
+// events
+UnityEvent<int> OnPlayerChanged, OnWinnerDetected
+UnityEvent OnDrawDetected, OnBoardReset
+```
+
+#### `DicePieceGenerator` (pure C# class) — `Neo.GridSystem.Dice`
+Generates single/pair dice pieces from a value pool, with uniform or weighted distribution.
+
+```csharp
+DicePieceGenerator(Func<int,int> range = null)         // optional RNG override
+DicePiece Generate(IReadOnlyList<int> pool, bool? forcePair = null)
+DicePiece GenerateWeighted(IReadOnlyList<DiceValueWeight> weights, bool? forcePair = null)
+static List<int> CreateD6Pool()                         // values 1–6
+static List<int> CreateSequentialPool(int min, int max) // [min..max] inclusive
+static List<int> CreateDefaultPool()                    // values 1–5
+// DicePiece: DicePiece.Single(value) / DicePiece.Pair(v1, v2)
+// DiceValueWeight: Value, Weight
+```
+
 ---
 
 ## Merge — `Neo.Merge`
 
-### `MergeResolver<TItem,TValue>` (generic static) †
+### `MergeResolver` (static class)
 Low-level merge engine used by `GridMergeResolver`; operate at GridSystem level for grid use.
 
 ```csharp
-static MergeResult<TItem,TValue> Resolve(MergeRequest<TItem,TValue> request)
-// MergeRequest fields: Seeds, Items, GetValue, SetValue, GetNeighbors,
+// Non-generic static class; method is generic:
+static MergeResult<TItem,TValue> Resolve<TItem,TValue>(MergeRequest<TItem,TValue> request)
+// MergeRequest<TItem,TValue> fields: Seeds, Items, GetValue, SetValue, GetNeighbors,
 //   CanUseItem, IsEmptyValue, AreValuesEqual, SelectResultItem, GetMergedValue,
-//   EmptyValue, MinGroupSize, CascadeMode, Mutate, MaxCascadeIterations
-// MergeResult: IEnumerable<MergeGroupResult<TItem,TValue>> Groups,
-//   IEnumerable<TItem> ChangedItems, bool CascadeLimitReached
+//   EmptyValue, MinGroupSize (default 3), CascadeMode, Mutate, MaxCascadeIterations (default 128)
+// MergeResult<TItem,TValue>: List<MergeGroupResult<TItem,TValue>> Groups,
+//   List<TItem> ChangedItems, bool CascadeLimitReached
+// MergeGroupResult<TItem,TValue>: Items, ClearedItems, SeedItem, ResultItem, SourceValue, ResultValue
 ```
 
 Prefer `GridMergeResolver.Resolve` when operating on a `FieldGenerator`.
@@ -326,9 +370,15 @@ NavMeshAgent wrapper with follow, patrol, and combined modes.
 NavigationMode: FollowTarget | Patrol | Combined
 RotationPolicy: Agent | ManualVelocity
 
-// key methods †
+// key methods
 void SetFollowTarget(Transform target)
+void SetCombinedTarget(Transform target)
 void SetMode(NavigationMode mode)
+void SetRunning(bool enable)
+void SetSpeed(float speed)
+bool SetDestination(Vector3 destination)
+void Stop()
+void Resume()
 // key inspector fields
 bool isActive
 float walkSpeed, runSpeed, stoppingDistance
@@ -370,6 +420,22 @@ Transform TargetOverride {get;set}   // skip search, use this
 ### `NpcAnimatorDriver` (MonoBehaviour)
 Reads `NavMeshAgent` speed → drives Animator `Speed` / `IsMoving` params.
 **[no-code]**: attach and configure param names in inspector (`speedParameter`, `isMovingParameter`, `dampTime`).
+
+### `NpcRpgCombatBrain` (MonoBehaviour) — `Neo.NPC.Combat`
+Combines `NpcNavigation`, `RpgTargetSelector`, and `RpgAttackController` into a decision loop (chase → hold → attack). Evaluates on a configurable `_decisionInterval` tick.
+
+```csharp
+GameObject CurrentTarget { get; }
+bool HasTarget { get; }
+void AutoResolveReferences()    // fills missing refs from same GameObject
+void EvaluateNow()              // force an immediate decision
+GameObject AcquireTarget()      // calls RpgTargetSelector.SelectTarget()
+void ClearCombatTarget()        // clears target, restores nav mode if AutoRestoreNavigationMode
+bool ForceAttack()              // execute configured NpcCombatPreset attack now
+// events: OnTargetAcquired<GameObject>, OnTargetLost<GameObject>,
+//         OnChaseStarted, OnHoldingPosition, OnAttackTriggered,
+//         OnAttackFailed<string>, OnDecisionChanged<string>
+```
 
 ---
 
@@ -425,7 +491,28 @@ shop.Buy(skinData);
 if (shop.IsOwned(skinData)) ApplySkin(shop.EquippedId);
 ```
 
-`ShopItemData` fields (†): `string Id`, `string nameItem`, `float price`, `bool isSinglePurchase`, `string Category`
+### `ShopItem` (MonoBehaviour)
+View cell for a single shop item or bundle.
+
+```csharp
+void Visual(ShopItemData data, int price)        // populate text/sprites/price
+void Visual(ShopBundleData data, int price)      // bundle variant
+void Select(bool active)                         // toggle selected visual state via ButtonPrice
+void Clear()
+string BoundItemId { get; }
+ShopItemData BoundItemData { get; }
+ShopBundleData BoundBundleData { get; }
+Button buttonBuy                                 // public; wired by ShopListView
+UnityEvent OnSelectItem, OnDeselectItem
+```
+
+### `ButtonPrice` (MonoBehaviour) — `Neo.UI`
+Buy/Select/Selected button that formats and displays a price. Calls `SetPrice(int)` to update text and auto-switch type (price==0 → Select state).
+
+### `ShopListView` (MonoBehaviour)
+Dynamic storefront view: spawns/recycles `ShopItem` rows, filters by category/owned state, auto-wires buy buttons to `Shop`. Key methods: `Refresh()`, `SetCategory(string)`, `SetShop(Shop)`, `SetButtonAction(ShopListButtonAction)`. Events: `OnCategoryChanged`, `OnRefreshed`.
+
+`ShopItemData` (ScriptableObject) public properties: `string Id`, `string nameItem`, `int price`, `bool isSinglePurchase`, `string Category`, `string description`, `Sprite sprite`, `Sprite icon`, `string CurrencyOverrideSaveKey`. Also `void AssignIdIfEmpty(string)` used internally by `Shop`.
 
 ---
 
@@ -446,9 +533,22 @@ static int ResolutionIndex
 static int FramerateCap
 static bool VSync
 
-// mutations (call SaveState after)
+// Set* mutations — each takes optional SettingsPersistMode (Immediate|Deferred|SkipUntilFlush)
+static void SetMouseSensitivity(float value, SettingsPersistMode mode = Immediate)
+static void SetGraphicsPreset(GraphicsPreset preset, SettingsPersistMode mode = Immediate)
+static void SetQualityLevel(int index, SettingsPersistMode mode = Immediate)
+static void SetFullScreen(bool fullScreen, SettingsPersistMode mode = Immediate)
+static void SetFullScreenMode(FullScreenMode mode, SettingsPersistMode persist = Immediate)
+static void SetResolutionAuto(bool auto, SettingsPersistMode mode = Immediate)
+static void SetResolutionIndex(int index, SettingsPersistMode mode = Immediate)
+static void SetFramerateCap(int targetFrameRate, SettingsPersistMode mode = Immediate)
+static void SetVSync(bool enabled, SettingsPersistMode mode = Immediate)
+static void ResetGroup(SettingsGroup group)  // Input|Graphics|Display|Performance
+
+// persist helpers
 static void LoadState()    // read from SaveProvider + apply to engine
 static void SaveState()    // write to SaveProvider
+static void FlushPendingSettingsSave()       // stop debounce coroutine, save now
 
 // events
 static event Action OnSettingsChanged        // after any Set* or LoadState
@@ -476,13 +576,16 @@ GameSettings.LoadState();
 GameSettings.OnSettingsChanged += RefreshGraphics;
 ```
 
-**[no-code]**: wire `SettingsView` sliders to `GameSettingsComponent` via inspector for standard settings UI. †
+### `SettingsView` (MonoBehaviour) — `Neo.Settings`
+Binds Unity UI controls (Slider, Dropdown, Toggle, Button) to `GameSettings`. Assign controls in inspector; handles population of preset/resolution/framerate dropdowns, and calls the matching `GameSettings.Set*` methods on change. Key public methods: `BindAll()`, `RefreshFromSettings()`. Commit mode: `DebouncedLive` (sliders use `Deferred` persist) or `ApplyButton`.
+
+**[no-code]**: assign UI controls to `SettingsView` in inspector — no code needed for a full settings panel.
 
 ---
 
 ## Animations — `Neo.Animations`
 
-All three animators share the same lifecycle API. `AnimationType` enum includes `PerlinNoise`, `CustomCurve`, and others.
+All three animators share the same lifecycle API. `AnimationType` enum (`Neo.Animations`): `RandomFlicker`, `Pulsing`, `SmoothTransition`, `PerlinNoise`, `SinWave`, `Exponential`, `BounceEase`, `ElasticEase`, `CustomCurve`.
 
 ### `ColorAnimator` (MonoBehaviour)
 Drives a color channel (typically on a `Renderer` or `Graphic`).
@@ -577,7 +680,7 @@ static int GetLoopLevel(int idLevel, int count)
 int CurrentLevel
 int MaxLevel
 int MapId
-Map Map                     // †
+Map Map                     // plain [Serializable] class (not a ScriptableObject/MonoBehaviour)
 // events
 UnityEvent<int> OnChangeLevel
 UnityEvent<int> OnChangeMap
@@ -587,6 +690,19 @@ UnityEvent<int> OnChangeMaxLevel
 ```csharp
 LevelManager.I.OnChangeLevel.AddListener(lvl => UpdateLevelUI(lvl));
 LevelManager.I.NextLevel();
+```
+
+### `LevelButton` (MonoBehaviour)
+UI button representing a level on a map screen. Calls `LevelManager.SetLevel(level)` on click only when `activ == true`.
+
+```csharp
+void Click()
+void SetLevelManager(LevelManager levelManager)
+void SetVisual(int idVisual, int level)   // idVisual: 0=locked, 1=current, 2=unlocked
+bool activ
+int level
+UnityEvent<int> OnChangeVisual            // fires idVisual value
+UnityEvent OnDisableVisual, OnEnableVisual, OnCurrentVisual
 ```
 
 ### `SceneFlowController` (MonoBehaviour)
@@ -621,6 +737,24 @@ flow.LoadScene("GameScene");
 ---
 
 ## UI — `Neo` / `Neo.UI`
+
+### `UI` (MonoBehaviour) — `Neo.UI`
+Page manager. Sets itself as `UI.I` (plain static field) in `Awake`.
+
+```csharp
+static UI I                           // set on Awake; last initialized instance
+void SetPage(int id)                  // deactivates all pages, activates page[id]
+void SetPage()                        // uses current serialized id field
+void SetOnePage(int id)               // activates only page[id] without touching others
+void SetPageAnim(int id)              // animated transition via Animator, then SetPage
+void SetOnePageAnim(int id)           // animated transition via Animator, then SetOnePage
+void SetPageDelay(int id)             // delayed SetPage via Invoke
+void SetCurrtentPage(bool active)     // toggle active page on/off
+int id                                // current page index (-1 = none)
+int startId                           // page activated on Awake
+UnityEvent<int> OnChangePage
+UnityEvent OnStartPage                // fired when id == 0
+```
 
 ### `AnimationFly` (MonoBehaviour, singleton `.I`)
 Fly animations: coins/XP/items flying from a source to a destination.
@@ -695,20 +829,3 @@ UnityEvent OnClick
 ### `AnchorMove` (MonoBehaviour) — `Neo.UI`
 **[no-code]**: sets anchor min/max in `OnValidate`. No runtime public API. Configure `x`/`y` (0–1) in inspector.
 
----
-
-## Unverified / inferred (†)
-
-- `ShopItemData` fields: `Id`, `nameItem`, `price`, `isSinglePurchase`, `Category` — referenced throughout `Shop.cs`; `ShopItemData.cs` not read
-- `ShopItem.Visual()`, `ShopItem.Select(bool)` — called in Shop.cs, ShopItem.cs not read
-- `ButtonPrice`, `ShopListView`, `SettingsView` — not read
-- `GameSettings.Set*(value, persistMode)` mutation methods — exist (called in `GameSettingsComponent`) but signatures not read
-- `Collection.I.GetPrize()` / `Collection.I.AddItem(int)` — referenced in `Box.cs` and `ItemCollection.cs`; `Collection.cs` not read
-- `NpcNavigation.SetMode()` / `SetFollowTarget()` — confirmed via `NpcTargetFinder` calls but not in the partial class header
-- `NpcRpgCombatBrain` — file exists, not read
-- `MergeResolver` generic — inferred from `GridMergeResolver` adapter; not read directly
-- `AnimationType` enum: only `PerlinNoise` and `CustomCurve` confirmed; other values not read
-- `Map` type (Level module) — not read
-- `LevelButton` — not read
-- `UI.I.SetPage(int)` / `SetPageAnim(int)` / `SetOnePage(int)` — called from `ButtonChangePage`; `UI.cs` not read
-- `DicePieceGenerator`, `Match3BoardService`, `TicTacToeBoardService` — GridSystem sub-game types; not read
