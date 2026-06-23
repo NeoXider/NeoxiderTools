@@ -116,6 +116,10 @@ reference material — load the one that fits the task, don't read all of them u
 - **`references/network.md`** — multiplayer (Mirror-optional). `NetworkSingleton<T>`, `NeoNetworkManager`,
   `NeoNetworkState`, `NeoNetworkSpawner`, the `NetworkReactivePropertyBridge`, lobby, and the critical
   scene-`NetworkIdentity` / `INeoOptionalNetworked` pitfall. Read this for any networked/co-op/PvP work.
+- **`references/game-systems.md`** — the gameplay modules that don't have their own deep file: Bonus
+  (Slot/Wheel of Fortune), Cards, GridSystem + Merge, NPC AI, Shop, Settings, Animations, Parallax, Level,
+  UI/AnimationFly. Purpose + key API + a code-first snippet per module. Open this for slot/card/grid/merge/
+  NPC/shop/level/settings work so you don't have to dig through source.
 - **`references/idioms.md`** — copy-pasteable code-first snippets for the most-used systems: AM audio,
   Save, Reactive, PoolManager, Singletons/EM, StateMachine, RPG, Quest, Progression — each shown the
   correct (code) way, with the no-code anti-pattern called out.

@@ -93,11 +93,9 @@ EM.I.OnStateChange.AddListener(s => Debug.Log(s));
 using Neo.StateMachine;
 
 var sm = new StateMachine<IState>();
-sm.RegisterTransition(new StateTransition {
-    FromStateType = typeof(IdleState),
-    ToStateType   = typeof(AttackState),
-    Predicate     = ctx => ctx.HasTarget
-});
+var transition = new StateTransition { FromStateType = typeof(IdleState), ToStateType = typeof(AttackState) };
+transition.AddPredicate(new CustomPredicate());   // attach a StatePredicate; see Docs/StateMachine for BoolPredicate/FloatComparisonPredicate/etc.
+sm.RegisterTransition(transition);
 sm.ChangeState<IdleState>();
 sm.Update();                  // CurrentState.OnUpdate()
 sm.EvaluateTransitions();     // auto-fire
@@ -116,7 +114,7 @@ c.Damage(25f);  c.Heal(10f);
 c.Spend("Mana", 20f);  c.ApplyBuffById("Regen");
 c.AddXp(100f);  c.SetLevel(5);
 float hp = c.GetResource("Hp");
-c.OnDeath.AddListener(HandleDeath);             // output event — fine from code
+c.OnDeathEvent.AddListener(HandleDeath);        // output event — fine from code
 ```
 Avoid `RpgNoCodeAction` (it just calls these methods from a UnityEvent).
 
@@ -140,7 +138,6 @@ using Neo.Core.Resources;
 var health = player.GetComponent<HealthComponent>();
 health.Decrease(RpgResourceId.Hp, 15f);
 if (health.IsDepleted(RpgResourceId.Hp)) HandleDeath();
-health.GetPool(RpgResourceId.Hp).OnDeath.AddListener(HandleDeath);
 ```
 Avoid putting a `NeoCondition` "Hp <= 0 → GameOver" on the object; write the `if` in code.
 
