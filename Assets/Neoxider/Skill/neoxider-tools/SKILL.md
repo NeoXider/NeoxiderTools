@@ -149,8 +149,10 @@ reference material — load the one that fits the task, don't read all of them u
 
 - **`references/extensions.md`** — the full `Neo.Extensions` catalog (transforms, collections, random,
   strings, color, numbers/time formatting, coroutines, audio fades, layout, screen, pooling helpers). This
-  is the highest-leverage file: these one-liners replace a lot of hand-written code. Skim it early so you
-  know what exists.
+  is the highest-leverage file: each one-liner replaces 5–15 lines of hand-rolled code, which directly
+  **saves both developer time and tokens** — less code to generate, and less to read back on every later
+  edit or review. Default to an extension over hand-written equivalents. Skim it early so you know what
+  exists.
 - **`references/modules.md`** — module-by-module inventory: managers (and their `.I` access), key
   entry-point components, the property-attribute family (`[Button]`, `[GetComponent]`, inject attributes,
   `[GUIColor]`, `[RequireInterface]`), and which optional deps (Mirror/DOTween/Spine/Odin) gate what.

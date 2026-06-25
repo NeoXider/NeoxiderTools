@@ -1,8 +1,10 @@
 # Neo.Extensions — full catalog
 
 `using Neo.Extensions;` (assembly `Neo.Extensions`). These are static extension methods — prefer them over
-hand-rolled helpers. Signatures below were read from source, but always re-verify against the actual file
-under `Assets/Neoxider/Scripts/Extensions/` before relying on an exact overload.
+hand-rolled helpers. Each call typically replaces 5–15 lines of boilerplate, so reaching for them **saves
+both time and tokens** (less code to write, and less to read back on later edits/reviews). Signatures below
+were read from source, but always re-verify against the actual file under
+`Assets/Neoxider/Scripts/Extensions/` before relying on an exact overload.
 
 ## Table of contents
 - Transforms · Collections · Random · Strings & rich text · Color · Primitives (number/time)
