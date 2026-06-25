@@ -432,5 +432,97 @@ namespace Neo.Extensions
         }
 
         #endregion
+
+        #region Math Extensions
+
+        /// <summary>
+        ///     Snaps a value to the nearest multiple of <paramref name="step" /> (e.g. grid/angle snapping).
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        /// </summary>
+        public static float Snap(this float value, float step)
+        {
+            if (step <= 0f)
+            {
+                return value;
+            }
+
+            return Mathf.Round(value / step) * step;
+        }
+
+        /// <summary>
+        ///     Snaps an integer to the nearest multiple of <paramref name="step" />.
+        ///     Returns the value unchanged when <paramref name="step" /> is zero or negative.
+        /// </summary>
+        public static int Snap(this int value, int step)
+        {
+            if (step <= 0)
+            {
+                return value;
+            }
+
+            return Mathf.RoundToInt((float)value / step) * step;
+        }
+
+        /// <summary>
+        ///     Wraps an integer into the half-open range [min, max) so it never falls outside (handles negatives),
+        ///     e.g. cycling a selection index. Returns <paramref name="min" /> when the range is empty.
+        /// </summary>
+        public static int Wrap(this int value, int min, int max)
+        {
+            int range = max - min;
+            if (range <= 0)
+            {
+                return min;
+            }
+
+            int offset = (value - min) % range;
+            if (offset < 0)
+            {
+                offset += range;
+            }
+
+            return min + offset;
+        }
+
+        /// <summary>
+        ///     Integer ping-pong over [0, length]: counts up then back down, like <see cref="Mathf.PingPong" />.
+        ///     Returns 0 when <paramref name="length" /> is zero or negative.
+        /// </summary>
+        public static int PingPong(this int value, int length)
+        {
+            if (length <= 0)
+            {
+                return 0;
+            }
+
+            int cycle = length * 2;
+            int t = value % cycle;
+            if (t < 0)
+            {
+                t += cycle;
+            }
+
+            return t <= length ? t : cycle - t;
+        }
+
+        /// <summary>
+        ///     Convenience wrapper over <see cref="Mathf.Approximately" /> — true when two floats are
+        ///     effectively equal (avoids the brittle <c>a == b</c> on floats).
+        /// </summary>
+        public static bool Approximately(this float a, float b)
+        {
+            return Mathf.Approximately(a, b);
+        }
+
+        /// <summary>
+        ///     Returns true when <paramref name="a" /> and <paramref name="b" /> differ by at most
+        ///     <paramref name="tolerance" />.
+        /// </summary>
+        public static bool Approximately(this float a, float b, float tolerance)
+        {
+            return Mathf.Abs(a - b) <= Mathf.Abs(tolerance);
+        }
+
+        #endregion
     }
 }

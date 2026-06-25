@@ -28,6 +28,15 @@ CopyFrom(transform, Transform source)
 DestroyChildren(transform)           // play: Destroy, editor: DestroyImmediate
 ```
 
+## DictionaryExtensions
+```
+GetOrCreate<TKey,TValue>(IDictionary, key) where TValue:new()     // get or new TValue(), stored
+GetOrCreate<TKey,TValue>(IDictionary, key, Func<TKey,TValue>)     // get or factory(key), stored
+Increment<TKey>(IDictionary<TKey,int>, key, int amount=1) : int   // counter, returns new total
+Increment<TKey>(IDictionary<TKey,float>, key, float amount=1) : float
+// GetValueOrDefault is the BCL one (System.Collections.Generic) — not re-added here
+```
+
 ## EnumerableExtensions
 ```
 ForEach<T>(IEnumerable<T>, Action<T>)            // null-safe
@@ -51,6 +60,8 @@ Random(this bool) : bool ; RandomBool() : bool   // 50/50
 RandomColor(float alpha=1f) : Color
 GetRandomEnumValue<T>() where T : Enum
 GetRandomWeightedIndex(IList<float> weights) : int
+GetRandomWeighted<T>(IList<T> items, IList<float> weights) : T       // weighted ELEMENT, not index; parallel lists
+GetRandomWeighted<T>(IList<T> items, Func<T,float> weightSelector) : T
 RandomizeBetween(this float/int)                 // [-v, v]
 RandomFromValue(this float/int, start) ; RandomToValue(this float/int, end)
 RandomRange(this Vector2) : float ; RandomRange(this Vector2Int) : int
@@ -83,6 +94,10 @@ FormatTime(this float seconds, TimeFormat format, string sep=":", bool trimLeadi
 FormatWithSeparator(this float/int, string sep, int decimalPlaces=2)
 NormalizeToUnit(min,max) [0,1] ; NormalizeToRange(min,max) [-1,1] ; Denormalize(min,max)
 Remap(this float, fromMin, fromMax, toMin, toMax)
+Snap(this float/int, step)           // nearest multiple of step (grid/angle); step<=0 -> unchanged
+Wrap(this int, min, max)             // wrap into [min,max), negative-safe (cyclic index)
+PingPong(this int, length)           // integer ping-pong over [0,length]
+Approximately(this float, b) ; Approximately(this float, b, tolerance)   // safe float equality
 // TimeFormat enum: Seconds, MinutesSeconds, HoursMinutesSeconds, DaysHoursMinutesSeconds, Milliseconds, ...
 ```
 

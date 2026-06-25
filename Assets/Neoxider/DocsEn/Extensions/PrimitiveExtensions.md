@@ -28,6 +28,15 @@
 | `float Denormalize(this float, float min, float max)` | `[0, 1]` → `[min, max]`. |
 | `float Remap(this float, float fromMin, float fromMax, float toMin, float toMax)` | Remap between two ranges. |
 
+### Math
+| Method | Description |
+|--------|-------------|
+| `float Snap(this float, float step)` / `int Snap(this int, int step)` | Snap to nearest multiple of `step` (grid/angle). `step <= 0` returns value unchanged. |
+| `int Wrap(this int, int min, int max)` | Wrap into `[min, max)` (handles negatives) — cycling indices. Empty range → `min`. |
+| `int PingPong(this int, int length)` | Integer ping-pong over `[0, length]` (up then down), like `Mathf.PingPong`. |
+| `bool Approximately(this float, float)` | Wrapper over `Mathf.Approximately` (safe float equality). |
+| `bool Approximately(this float, float, float tolerance)` | `true` when the difference is within `tolerance`. |
+
 ---
 
 ## Examples

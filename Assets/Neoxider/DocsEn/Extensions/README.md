@@ -5,7 +5,7 @@ Extension methods for C# and Unity API. No Inspector components; static helpers 
 ## Categories (see [Russian index](../../Docs/Extensions/README.md) for links)
 
 - **Base:** ObjectExtensions, ComponentExtensions, TransformExtensions, GameObjectArrayExtensions, PrefabPreviewExtensions
-- **Collections & data:** EnumerableExtensions, PrimitiveExtensions, DateTimeExtensions, TimeSpanExtensions, TimeParsingExtensions, StringExtension, ColorExtension, CooldownRewardExtensions
+- **Collections & data:** EnumerableExtensions, DictionaryExtensions, PrimitiveExtensions, DateTimeExtensions, TimeSpanExtensions, TimeParsingExtensions, StringExtension, ColorExtension, CooldownRewardExtensions
 - **Random:** RandomExtensions, RandomShapeExtensions, Shapes
 - **UnityEvent:** UnityEventDelegateCache
 - **System:** CoroutineExtensions, PlayerPrefsUtils, ScreenExtensions, UIUtils, AudioExtensions, DebugGizmos

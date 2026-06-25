@@ -36,3 +36,5 @@
 - `RandomColor(float alpha = 1f)`: Генерирует случайный цвет.
 - `GetRandomEnumValue<T>()`: Возвращает случайное значение из любого перечисления (`enum`).
 - `GetRandomWeightedIndex(this IList<float> weights)`: Возвращает случайный индекс из списка "весов", учитывая их значения (чем больше вес, тем выше шанс).
+- `GetRandomWeighted<T>(this IList<T> items, IList<float> weights)`: Возвращает сам случайный элемент (а не индекс) по параллельному списку весов. Длины списков должны совпадать; при пустых/несовпадающих данных возвращает `default`.
+- `GetRandomWeighted<T>(this IList<T> items, Func<T, float> weightSelector)`: То же, но вес каждого элемента вычисляется селектором.

@@ -1,6 +1,13 @@
 
 ## [Unreleased]
 
+## [9.4.0] - 2026-06-25
+
+### Added
+- **Extensions / Random:** `GetRandomWeighted<T>(items, weights)` and `GetRandomWeighted<T>(items, weightSelector)` — return the weighted random **element** directly instead of just the index (`GetRandomWeightedIndex`).
+- **Extensions / Dictionary:** new `DictionaryExtensions` with `GetOrCreate(key)`, `GetOrCreate(key, factory)`, and `Increment(key, amount = 1)` for `int`/`float` counters — replaces the repeated get-or-create and `dict[k] = dict.GetValueOrDefault(k) + 1` boilerplate. (`GetValueOrDefault` is intentionally left to the BCL to avoid overload ambiguity.)
+- **Extensions / Primitive (Math):** `Snap(step)` (float/int), `Wrap(min, max)` (negative-safe cyclic index), `PingPong(length)` (int), and `Approximately(b)` / `Approximately(b, tolerance)` float-equality helpers.
+
 ## [9.3.0] - 2026-06-23
 
 ### Added

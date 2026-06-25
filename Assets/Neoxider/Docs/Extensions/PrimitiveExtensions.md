@@ -33,3 +33,10 @@
 
 **Статические методы для `bool`**
 - `ToInt(this bool value)`: Конвертирует `bool` в `int` (`true` = `1`, `false` = `0`).
+
+**Математические методы**
+- `Snap(this float value, float step)` / `Snap(this int value, int step)`: Привязывает значение к ближайшему кратному `step` (сетка/углы). При `step <= 0` возвращает значение без изменений.
+- `Wrap(this int value, int min, int max)`: Заворачивает целое в полуинтервал `[min, max)` (корректно для отрицательных) — удобно для циклического индекса. При пустом диапазоне возвращает `min`.
+- `PingPong(this int value, int length)`: Целочисленный «пинг-понг» по `[0, length]` (туда-обратно), аналог `Mathf.PingPong`.
+- `Approximately(this float a, float b)`: Обёртка над `Mathf.Approximately` (надёжное сравнение float вместо хрупкого `a == b`).
+- `Approximately(this float a, float b, float tolerance)`: `true`, если разница не больше `tolerance`.

@@ -13,7 +13,8 @@
 
 ### Коллекции и типы данных
 - [**EnumerableExtensions**](./EnumerableExtensions.md): Утилиты для `IEnumerable` и `IList` (`ForEach`, `GetSafe` и др.).
-- [**PrimitiveExtensions**](./PrimitiveExtensions.md): Форматирование и конвертация для `float`, `int`, `bool`.
+- [**DictionaryExtensions**](./DictionaryExtensions.md): `GetOrCreate` и `Increment` для словарей-счётчиков/корзин.
+- [**PrimitiveExtensions**](./PrimitiveExtensions.md): Форматирование, конвертация и математика для `float`, `int`, `bool` (`Snap`, `Wrap`, `PingPong`, `Approximately`).
 - [**DateTimeExtensions**](./DateTimeExtensions.md): Сериализация UTC, парсинг round-trip, `GetSecondsSinceUtc`/`GetSecondsUntilUtc`.
 - [**TimeParsingExtensions**](./TimeParsingExtensions.md): Парсинг длительностей из строк (SS, MM:SS, HH:MM:SS, DD:HH:MM:SS).
 - [**TimeSpanExtensions**](./TimeSpanExtensions.md): `ToCompactString`, `ToClockString` для `TimeSpan`.

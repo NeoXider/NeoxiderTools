@@ -16,6 +16,8 @@
 | `RandomColor(float alpha = 1f)` | Random color. |
 | `GetRandomEnumValue<T>()` | Random enum value. |
 | `GetRandomWeightedIndex(this IList<float>)` | Weighted random index. |
+| `GetRandomWeighted<T>(this IList<T>, IList<float> weights)` | Weighted random **element** (not index); parallel weights list, same length. |
+| `GetRandomWeighted<T>(this IList<T>, Func<T,float> weightSelector)` | Weighted random element using a per-element weight selector. |
 
 ## See Also
 - ← [Extensions](README.md)

@@ -99,6 +99,60 @@ namespace Neo.Extensions
             return UnityEngine.Random.Range(0, collection.Count);
         }
 
+        /// <summary>
+        ///     Returns a random element chosen by a parallel list of weights (returns the element, not the index).
+        ///     Returns <c>default</c> when the collections are empty/mismatched or all weights are non-positive.
+        /// </summary>
+        /// <param name="items">Elements to choose from.</param>
+        /// <param name="weights">Weight per element; must be the same length as <paramref name="items" />.</param>
+        public static T GetRandomWeighted<T>(this IList<T> items, IList<float> weights)
+        {
+            if (items == null || items.Count == 0)
+            {
+                NeoDiagnostics.LogWarning("[RandomExtensions] GetRandomWeighted called on a null/empty collection.");
+                return default;
+            }
+
+            if (weights == null || weights.Count != items.Count)
+            {
+                NeoDiagnostics.LogError(
+                    "[RandomExtensions] GetRandomWeighted requires a weights list of the same length as the items.");
+                return default;
+            }
+
+            int index = weights.GetRandomWeightedIndex();
+            return index < 0 ? default : items[index];
+        }
+
+        /// <summary>
+        ///     Returns a random element using a weight selector (returns the element, not the index).
+        ///     Returns <c>default</c> when the collection is empty or all weights are non-positive.
+        /// </summary>
+        /// <param name="items">Elements to choose from.</param>
+        /// <param name="weightSelector">Maps each element to its (non-negative) weight.</param>
+        public static T GetRandomWeighted<T>(this IList<T> items, Func<T, float> weightSelector)
+        {
+            if (items == null || items.Count == 0)
+            {
+                NeoDiagnostics.LogWarning("[RandomExtensions] GetRandomWeighted called on a null/empty collection.");
+                return default;
+            }
+
+            if (weightSelector == null)
+            {
+                throw new ArgumentNullException(nameof(weightSelector));
+            }
+
+            var weights = new float[items.Count];
+            for (int i = 0; i < items.Count; i++)
+            {
+                weights[i] = weightSelector(items[i]);
+            }
+
+            int index = weights.GetRandomWeightedIndex();
+            return index < 0 ? default : items[index];
+        }
+
         #endregion
 
         #region Primitive Extensions
