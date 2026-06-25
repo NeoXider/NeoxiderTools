@@ -97,6 +97,51 @@ it — that's their chosen workflow. This is rare; default to code.
    `[CreateFromMenu("Neoxider/...")]`. Singleton managers are reached via `TypeName.I` (e.g. `AM.I`,
    `SaveManager.I`, `PoolManager.I`).
 
+## Namespaces & assemblies — get the `using` right (most common error)
+
+The single most frequent failure when using this package is a **missing `using` or assembly reference**,
+not a wrong API. The root namespace is `Neo`, but most APIs live in a `Neo.<Module>` sub-namespace, and
+the package is split into **assembly definitions (asmdef)** — so a type can be visible only after you both
+`using` its namespace *and* reference its assembly.
+
+Quick map of the highest-traffic types (verify others by grepping the source for `namespace`):
+
+| API / type | `using` | Assembly (asmdef) |
+|------------|---------|-------------------|
+| `AM` (audio manager) | `Neo.Audio` | `Neo.Audio` |
+| `EM`, `GM`, `Singleton<T>`, `PoolManager`, most of `Neo.Tools` | `Neo.Tools` | `Neo.Tools.*` (per sub-module, e.g. `Neo.Tools.Managers`, `Neo.Tools.Spawner`) |
+| `SwipeController`, `SwipeData`, `SwipeDirection` | `Neo.Tools` | `Neo.Tools.Input` |
+| `GetRandomElement()`, `Shuffle()`, `ToIdleString()`, all extension helpers | `Neo.Extensions` | `Neo.Extensions` |
+| `ReactivePropertyInt/Float/...` | `Neo.Reactive` | `Neo.Reactive` |
+| `SaveManager`, `[SaveField]`, `SaveableBehaviour` | `Neo.Save` | `Neo.Save` |
+| `LevelManager` | `Neo.Level` | `Neo.Level` |
+| `[Button]`, `[GetComponent]`, `[FindInScene]`, inject attributes | `Neo.` (root) | `Neo.PropertyAttribute` |
+| `G`, `PM`, `UIPage` (page-navigation facade) | `Neo.Pages` | **none — Sample**, see below |
+
+**asmdef gotcha:** code with **no asmdef** compiles into Unity's predefined `Assembly-CSharp`, which
+auto-references every auto-referenced asmdef — so a bare `using Neo.Audio;` just works there. But if your
+game code lives in its **own asmdef**, a `using` is not enough: add the module's assembly (e.g. `Neo.Audio`,
+`Neo.Tools.Input`, `Neo.Extensions`) to that asmdef's **Assembly Definition References**, or the type stays
+unresolved (`CS0246`). When you hit `CS0246`/`CS0103` on a `Neo.*` type, check the namespace first, then the
+asmdef reference — not the API name.
+
+## Samples — installed separately via Package Manager
+
+Two pieces ship as **samples** (under `Samples~/`, not compiled until imported). The user installs them from
+**Package Manager → NeoxiderTools → Samples → Import**, which copies them to
+`Assets/Samples/NeoxiderTools/<version>/<SampleName>/`.
+
+- **NeoxiderPages** — an optional page-navigation module that includes the **`G` static facade**
+  (namespace `Neo.Pages`), plus `PM`, `UIPage`, `BtnChangePage`, and UIKit helpers. `G` is the convenient
+  entry point many projects use for game flow/events: `G.OnStart` (→ `EM.I.OnGameStart`), `G.OnRestart`,
+  `G.Win()`, `G.Lose()`, `G.Pause`, `G.GoMenu()`, etc. It forwards to `EM`/`GM` under the hood. **If you see
+  `G.` in project code and it won't resolve, the fix is `using Neo.Pages;` *and* confirming the NeoxiderPages
+  sample is imported** — `G` does not exist in the core package, only in this sample. It has no asmdef, so
+  once imported it lands in `Assembly-CSharp` and needs no extra assembly reference.
+- **Demo Scenes** — sample scenes and integration examples for Condition, Tools, GridSystem, Shop, Merge,
+  TicTacToe/Match3, etc. Use these as **reference implementations** to copy idioms from; they are not meant
+  to be built on directly. The demo scripts have their own asmdef (`Neo.Rpg.Demo`).
+
 ## Reference files — read the one you need
 
 This SKILL.md is the overview. For exhaustive, verified catalogs, open the relevant file (they are dense
