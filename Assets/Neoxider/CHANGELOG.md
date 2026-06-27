@@ -1,6 +1,16 @@
 
 ## [Unreleased]
 
+## [9.6.0] - 2026-06-27
+
+### Added
+- **Shop / Money:** optional soft cap `_maxMoney` (0 = unlimited). `Add()` and `SetMoney()` now clamp to it; new `AddOverflow(float)` deposits **ignoring** the cap for bonus/overflow rewards allowed to exceed it. Enables capped resources (energy / stamina / lives) without custom code. Runtime get/set via `MaxMoney`.
+- **Bonus / CooldownReward:** `_autoClaim` option — automatically claims the reward the moment it becomes available (continuous regen) without manual `TakeReward()` / event wiring. Stays decoupled from wallets (no `Money` dependency); deposit via `OnRewardClaimed → Money.Add(...)`. Capped-regen recipe: `_autoClaim` + `OnRewardClaimed → Money.Add(1)` + `Money._maxMoney` cap (+ `AddOverflow` for sources allowed past the cap). Runtime get/set via `AutoClaim`, `CooldownSeconds`, `MaxRewardsPerTake`.
+
+### Docs
+- **Cookbook (new):** added a cross-module recipes page (RU + EN) consolidating end-to-end examples — capped energy + auto-regen, capped currency, daily reward, slot → wallet, shop buy/equip, reward fly — linked from the docs index.
+- **Shop / Money:** documented `_maxMoney` and `AddOverflow`. **Bonus / CooldownReward:** documented `_autoClaim` and the capped-regen recipe.
+
 ## [9.5.2] - 2026-06-27
 
 ### Fixed

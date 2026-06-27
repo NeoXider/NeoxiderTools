@@ -1,12 +1,13 @@
 # NeoxiderTools Docs
 
-Канонический вход в русскую документацию **NeoxiderTools** `v9.5.2`. Это карта переиспользования: перед новой реализацией проверьте, нет ли уже готового runtime API, MonoBehaviour-обертки или sample-сцены.
+Канонический вход в русскую документацию **NeoxiderTools** `v9.6.0`. Это карта переиспользования: перед новой реализацией проверьте, нет ли уже готового runtime API, MonoBehaviour-обертки или sample-сцены.
 
 ## Быстрый вход
 
 - [README пакета](../README.md)
 - [English docs](../DocsEn/README.md)
 - [**Getting Started** — первая сцена за 5 минут](./GettingStarted.md)
+- [**Cookbook** — рецепты и интересные примеры (кросс-модульные сборки)](./Cookbook.md)
 - [Сводка проекта и reuse map](../PROJECT_SUMMARY.md)
 - [Полезные компоненты](./UsefulComponents.md)
 - [Совместимость пакета](./PackageCompatibility.md)

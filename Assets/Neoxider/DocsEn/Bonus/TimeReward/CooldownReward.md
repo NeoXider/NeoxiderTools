@@ -27,6 +27,7 @@
 | `_onRewardsClaimed` | On Rewards Claimed. |
 | `_rewardAvailableOnStart` | Reward Available On Start. |
 | `_startTakeReward` | Start Take Reward. |
+| `_autoClaim` | Auto-claim the reward as soon as it becomes available (continuous regen), without manual `TakeReward()`. `OnRewardClaimed` stays the hook to deposit into a wallet/effect. Decoupled from `Money`. |
 | `_updateInterval` | Update Interval. |
 | `accumulated` | Accumulated. |
 | `true` | True. |

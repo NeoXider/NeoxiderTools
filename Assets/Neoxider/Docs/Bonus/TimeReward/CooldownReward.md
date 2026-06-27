@@ -16,6 +16,7 @@
 | `_maxRewardsPerTake` | `-1` = выдать все накопленные, `1` = одну, `N` = не больше N за раз. |
 | `_addKey` | Суффикс save key, чтобы несколько reward-компонентов не конфликтовали. |
 | `_startTakeReward` | Попробовать забрать награду в `Start`. |
+| `_autoClaim` | Автоматически забирать награду, как только она доступна (непрерывный реген), без ручного `TakeReward()`. `OnRewardClaimed` остаётся хуком для зачисления в кошелёк/эффект. Не зависит от `Money`. |
 | `_startTimerOnStart` | Запустить таймер в `Start`. |
 | `_saveTimeOnTakeReward` | Сохранять новое время при успешном `TakeReward`. |
 | `_saveTimeOnStartWhenSaveOnTakeDisabled` | При ручном старте сохранять время, если save-on-take выключен. |
@@ -56,6 +57,7 @@ reward.SetAdditionalKey("DailyLogin");
 - Классический cooldown: `_cooldownSeconds = 30`, `_rewardAvailableOnStart = false`, `_startTimerOnStart = true`.
 - Idle/clicker накопление: `_maxRewardsPerTake = -1`, UI показывает `GetClaimableCount()`.
 - Ручной cooldown: `_saveTimeOnTakeReward = false`, стартуйте ожидание через `StartTime()` после внешнего условия.
+- **Энергия/стамина с потолком (без своего кода):** `_cooldownSeconds = 120`, `_autoClaim = true`, `_startTakeReward = true`, `_maxRewardsPerTake = -1`; повесьте `OnRewardClaimed → Money.Add(1)` и задайте `_maxMoney` (cap) на этом `Money`. Награды из других источников (слоты) лейте через `Money.AddOverflow(...)`, чтобы превышать лимит.
 
 ## Save
 

@@ -30,6 +30,11 @@ namespace Neo.Bonus
 
         [SerializeField] private string _addKey = "Bonus1";
         [SerializeField] private bool _startTakeReward;
+
+        [Tooltip(
+            "Automatically claim the reward as soon as it becomes available (continuous regen). Wire OnRewardClaimed to a wallet/effect.")]
+        [SerializeField] private bool _autoClaim;
+
         [SerializeField] private bool _startTimerOnStart = true;
         [SerializeField] private bool _saveTimeOnTakeReward = true;
         [SerializeField] private bool _saveTimeOnStartWhenSaveOnTakeDisabled = true;
@@ -68,6 +73,31 @@ namespace Neo.Bonus
         {
             get => _saveTimeOnTakeReward;
             set => _saveTimeOnTakeReward = value;
+        }
+
+        /// <summary>Auto-claim the reward as soon as it becomes available (continuous regen).</summary>
+        public bool AutoClaim
+        {
+            get => _autoClaim;
+            set => _autoClaim = value;
+        }
+
+        /// <summary>Cooldown duration in seconds; also updates the underlying timer duration.</summary>
+        public float CooldownSeconds
+        {
+            get => _cooldownSeconds;
+            set
+            {
+                _cooldownSeconds = Mathf.Max(0f, value);
+                duration = _cooldownSeconds;
+            }
+        }
+
+        /// <summary>Max rewards granted per <see cref="TakeReward"/> (-1 = all accumulated).</summary>
+        public int MaxRewardsPerTake
+        {
+            get => _maxRewardsPerTake;
+            set => _maxRewardsPerTake = value;
         }
 
         private void Start()
@@ -138,6 +168,7 @@ namespace Neo.Bonus
         {
             _canTakeReward = true;
             OnRewardAvailable?.Invoke();
+            if (_autoClaim) TakeReward();
         }
 
         private void OnBaseTimeChanged(float _)

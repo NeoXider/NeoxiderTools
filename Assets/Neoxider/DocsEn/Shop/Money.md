@@ -26,6 +26,7 @@ If no key is selected, systems fall back to the usual `Money.I` singleton or the
 |-------|-------------|
 | `_moneySave` | The `SaveProvider` save key for the main balance. |
 | `_persistMoney` | When enabled (default), balance is loaded on start and written on changes. When disabled, balance stays in memory only (no load/setfloat for currency keys). |
+| `_maxMoney` | Soft cap for this wallet. `0` = unlimited. `Add()` and `SetMoney()` clamp to it; `AddOverflow(float)` ignores it (for bonus/overflow rewards allowed to exceed the cap). Lets you build capped resources (energy/stamina/lives) without custom code. |
 | `st_levelMoney` | References to `SetText` components for displaying current level earnings. |
 | `st_money` | References to `SetText` components for displaying the global balance. |
 | `t_levelMoney` | Direct references to `TMP_Text` components for level earnings. |
@@ -54,6 +55,9 @@ Money.I.SetMoney(500f);
 // Alias for UnityEvent / buttons:
 Money.I.SetCurrentMoney(500f);
 
+// Add ignoring the soft cap _maxMoney (bonus/overflow reward above the cap):
+Money.I.AddOverflow(5f);
+
 // For regular uGUI Button.onClick use the void wrapper:
 Money.I.SpendFromButton(50f);
 
@@ -66,7 +70,7 @@ Money.I.ReloadBalanceFromSave();
 
 To display the balance in the UI, it is recommended to use the `TextMoney` component.
 
-**NoCode / UnityEvent:** wire `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()`, and `ReloadBalanceFromSave()` to `UnityEvent`. `Spend(float)` returns `bool`, so regular `Button.onClick` does not list it; use `SpendFromButton(float)` for buttons. Use `Spend(float)` from code when you need the success/fail result.
+**NoCode / UnityEvent:** wire `Add(float)`, `AddOverflow(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()`, and `ReloadBalanceFromSave()` to `UnityEvent`. `Spend(float)` returns `bool`, so regular `Button.onClick` does not list it; use `SpendFromButton(float)` for buttons. Use `Spend(float)` from code when you need the success/fail result.
 
 `Spend(float)` rejects negative amounts. Use `TrySpend(float)` when code needs the exact reason: it returns `MoneySpendResult` with `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds`, or `RequestedServerAuthority`.
 

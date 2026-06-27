@@ -26,6 +26,7 @@ bool found = Money.TryFindBySaveKey("Gems", out Money wallet);
 |------|----------|
 | `_moneySave` | Ключ сохранения в `SaveProvider` для основного баланса. |
 | `_persistMoney` | Если включено (по умолчанию), баланс загружается при старте и пишется при изменениях. Если выключено — только в памяти сессии (без `Load`/`SetFloat` для денег). |
+| `_maxMoney` | Мягкий лимит кошелька. `0` = без лимита. `Add()` и `SetMoney()` клампят до него; `AddOverflow(float)` зачисляет, **игнорируя** лимит (бонусы/награды, которым можно превышать кап). Делает ресурсы с потолком (энергия/стамина/жизни) без своего кода. |
 | `st_levelMoney` | Ссылки на компоненты `SetText` для отображения заработка за текущий уровень. |
 | `st_money` | Ссылки на компоненты `SetText` для отображения общего баланса. |
 | `t_levelMoney` | Прямые ссылки на компоненты `TMP_Text` для баланса уровня. |
@@ -54,6 +55,9 @@ Money.I.SetMoney(500f);
 // Алиас для UnityEvent / кнопок:
 Money.I.SetCurrentMoney(500f);
 
+// Добавить, превышая мягкий лимит _maxMoney (бонус/награда сверх кап-а):
+Money.I.AddOverflow(5f);
+
 // Для обычного uGUI Button.onClick используйте void-обёртку:
 Money.I.SpendFromButton(50f);
 
@@ -66,7 +70,9 @@ Money.I.ReloadBalanceFromSave();
 
 Для вывода баланса в UI рекомендуется использовать готовый компонент `TextMoney`.
 
-**NoCode / UnityEvent:** `Add(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()` и `ReloadBalanceFromSave()` можно подключать к `UnityEvent`. `Spend(float)` возвращает `bool`, поэтому обычный `Button.onClick` его не показывает; для кнопок используйте `SpendFromButton(float)`. Если нужно узнать результат списания из кода, вызывайте `Spend(float)`.
+**Мягкий лимит (cap):** задайте `_maxMoney > 0`, и `Add()`/`SetMoney()` не дадут балансу превысить его. Когда награда должна превышать кап (например энергия из слотов), используйте `AddOverflow(float)` — он игнорирует лимит. Так делается капнутая энергия/стамина без отдельного скрипта: `CooldownReward.OnRewardClaimed → Money.Add(1)` плюс `_maxMoney` на этом кошельке.
+
+**NoCode / UnityEvent:** `Add(float)`, `AddOverflow(float)`, `SetCurrentMoney(float)`, `ClearSavedMoneyAndReset()` и `ReloadBalanceFromSave()` можно подключать к `UnityEvent`. `Spend(float)` возвращает `bool`, поэтому обычный `Button.onClick` его не показывает; для кнопок используйте `SpendFromButton(float)`. Если нужно узнать результат списания из кода, вызывайте `Spend(float)`.
 
 `Spend(float)` отклоняет отрицательные суммы. Для кода, которому важна причина результата, используйте `TrySpend(float)`: он возвращает `MoneySpendResult` со статусами `Confirmed`, `RejectedInvalidAmount`, `RejectedInsufficientFunds` и `RequestedServerAuthority`.
 
