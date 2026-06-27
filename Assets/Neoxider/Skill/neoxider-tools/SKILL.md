@@ -26,6 +26,29 @@ helper, a manager, a coroutine, a random picker, a number formatter, a pool, or 
 whether NeoxiderTools already has it. It almost always does, and using it makes the code shorter, idiomatic
 for this project, and consistent with the rest of the codebase.
 
+## ⛔ STOP — mandatory check before writing ANY component or helper
+
+The **#1 failure mode** with this package is hand-rolling something it already ships — e.g. writing a
+custom timer-text `MonoBehaviour` when **`TimeToText`** already exists, or a fixed list of `Slot_0..3`
+when a prefab + `HorizontalLayoutGroup` is the idiom. The SKILL.md examples below are **not** the catalog;
+the catalog is in the reference files, and **you will miss things if you rely on memory or skim only this
+file.**
+
+So this is a **blocking rule, not a suggestion**: the moment you are about to create a new `MonoBehaviour`,
+helper method, coroutine, formatter, binder, or "small utility", you must **first open and grep the
+matching reference file** for an existing component/API. Map by what you're building:
+
+| About to build… | grep FIRST (don't skip) |
+|---|---|
+| a UI/gameplay component — timer, bar, counter, list/slot view, mover, follow-cam, picker, score, dialogue, loot… | `references/tools.md` |
+| a helper/one-liner — random, shuffle, weighted, format number/time, transform, collection, color, coroutine/delay… | `references/extensions.md` |
+| a whole system — rpg, quest, shop, level, grid/merge, slot/wheel, npc, settings, parallax, animation/fly… | `references/game-systems.md` + `references/modules.md` |
+| a manager/attribute/`.I` access, or "does Neo have a component for X" | `references/modules.md` |
+
+Grep for the concept (`rg -i "timer\|countdown\|time" references/tools.md`), read the hit, use it. **Only
+after the grep genuinely comes up empty** may you write your own — and then say so explicitly ("not in the
+package, writing it"). "I didn't check tools.md" is never an acceptable reason for a hand-rolled component.
+
 ## The two rules that matter
 
 ### Rule 1 — Reach for the package first
@@ -43,8 +66,15 @@ high-signal examples (full catalogs are in the reference files below):
   `this.WaitUntil(() => ready, OnReady)`.
 - Idle/clicker number like `1.5M`, or a `mm:ss` timer string? `value.ToIdleString()`,
   `seconds.FormatTime(TimeFormat.MinutesSeconds)`.
+- A countdown/timer shown on a TMP label? The **`TimeToText`** component (`Neo.Tools`) — `Set(float)` (or
+  wire a `UnityEvent<float>` → `Set`); `TimeFormat`, Clock/Compact modes, prefix/suffix, auto-grabs the
+  `TMP_Text`. **Never hand-roll a timer-text MonoBehaviour.**
 - Auto-wire a serialized reference? `[GetComponent]`, `[FindInScene]`, `[LoadFromResources("...")]`.
-- A button in the inspector to test a method? `[Button]` on the method.
+- A button in the inspector to test/cheat a method? Put `[Button]` (or `[Button("Label")]`) on the method.
+  **It works on ANY MonoBehaviour — including your own scripts in the global namespace** — via the global
+  fallback inspector `NeoCustomEditor` (`[CustomEditor(typeof(MonoBehaviour), true, isFallback=true)]`).
+  **Do NOT write a custom `Editor` to add buttons** — a custom `[CustomEditor]` overrides the fallback and
+  your `[Button]`s disappear. Just `using Neo;` + the attribute.
 - A timer, camera shake, follow cam, score, loot table, dialogue, leaderboard, line drawing, mouse
   picking, swipe, weighted chance…? The `Neo.Tools` module almost certainly has it — see
   `references/tools.md` (it's a big catalog). Don't hand-roll a `Timer`/pool/`CameraShake`.
@@ -176,8 +206,10 @@ reference material — load the one that fits the task, don't read all of them u
 ## Default workflow for a Unity coding task in this project
 
 1. Decide what the task needs (audio? save? spawn? UI value binding? a utility?).
-2. Map each need to a NeoxiderTools API (use the references). If something genuinely isn't covered, write
-   it plainly — but say so, so the user knows it wasn't already in the package.
+2. For each need, **grep the matching reference file BEFORE writing anything** (see the ⛔ STOP table
+   above) — `tools.md` for components, `extensions.md` for helpers, `game-systems.md`/`modules.md` for
+   systems. Map the need to a NeoxiderTools API. Only if the grep genuinely comes up empty do you write it
+   plainly — and say so, so the user knows it wasn't already in the package.
 3. Write **code-first** C# against the real APIs, in the `Neo.*` idiom (singletons via `.I`, `using
    Neo.Extensions;` for helpers, attributes for wiring). Don't build no-code graphs.
 4. Verify signatures against the actual source/docs before finalizing. Prefer the package's existing

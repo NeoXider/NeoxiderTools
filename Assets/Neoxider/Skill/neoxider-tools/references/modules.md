@@ -62,7 +62,7 @@ Namespace `Neo` (the inject family is in the global namespace).
 
 | Attribute | On | Effect |
 |---|---|---|
-| `[Button]` / `[Button("Label")]` / `[Button(width:200)]` | method | shows an inspector button; method params render as fields |
+| `[Button]` / `[Button("Label")]` / `[Button(width:200)]` | method | shows an inspector button; method params render as fields. **Works on ANY MonoBehaviour (global namespace too)** via the global fallback inspector `NeoCustomEditor` (`[CustomEditor(typeof(MonoBehaviour), true, isFallback=true)]`). Don't write a custom `Editor` for test/cheat buttons — it overrides the fallback and hides the `[Button]`s. |
 | `[GUIColor(r,g,b,a?)]` | field | tints the field background |
 | `[RequireInterface(typeof(IFoo))]` | Object/GameObject field | constrains reference to objects implementing the interface; stackable with `[FindInScene]` |
 | `[GetComponent]` / `[GetComponent(true)]` | field | auto-assign from same GO / incl. children |

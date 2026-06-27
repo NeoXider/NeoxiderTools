@@ -51,7 +51,10 @@ primary — avoid building on them in code (see avoid-nocode.md).
 
 ## Text
 - **`SetText`** (DOTween for number anim) — `Set(int|float|string)`, `SetPercentage(v,addSign=true)`, `SetCurrency(v,sym="$")`, `SetBigInteger(v)`, `SetFormatted(v,NumberFormatOptions)`, `Clear()`; `OnTextUpdated(string)`.
-- **`TimeToText`** — `Set(float)`, static `FormatTime(t,TimeFormat,sep)`; `TimeDisplayMode{Clock,Compact}`.
+- **`TimeToText`** — THE component for showing seconds on a TMP label (countdown/elapsed). `Set(float)`
+  (or wire a `UnityEvent<float>` → `Set`); `TimeFormat` (e.g. `MinutesSeconds` → `mm:ss`),
+  `TimeDisplayMode{Clock,Compact}`, `startAddText`/`endAddText` prefix/suffix, auto-grabs `TMP_Text`;
+  static `FormatTime(t,TimeFormat,sep)`. **Don't write your own timer-text MonoBehaviour.**
 
 ## Input
 - **`MouseInputManager`** (`MouseInputManager.I`, DontDestroyOnLoad, zero-GC) — C# events `OnPress/OnHold/OnRelease/OnClick` with `MouseEventData{ScreenPosition,WorldPosition,HitObject,Hit3D,Hit2D}`; `SetTargetCamera(cam)`; static `LastEventData`.
