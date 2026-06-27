@@ -66,7 +66,7 @@ namespace Neo.Tools
         [SerializeField] [Tooltip("If true, rotation is relative to spawner (local). If false  - in world space.")]
         private bool _useLocalRotation = true;
 
-        [SerializeField] [Tooltip("If true, takes rotation from _spawnTransform")]
+        [SerializeField] [Tooltip("If true, takes rotation from the active spawn point")]
         private bool _useParentRotation;
 
         [Header("Mode & Wave Settings")] [SerializeField] [Tooltip("Spawn mode: Loop (classic continuous) or Waves.")]
@@ -95,10 +95,14 @@ namespace Neo.Tools
         public UnityEvent<GameObject, int> OnWaveObjectSpawned;
 
         [Space] [Header("Other Settings")] [SerializeField]
+        [Tooltip("Spawn points. Empty = use this spawner's own transform. With several, a random point is picked per spawn.")]
         /// <summary>
-        /// Spawn point. If unset, uses this spawner's transform.
+        /// Spawn points. If empty, uses this spawner's transform. If several, a random one is chosen per spawn.
         /// </summary>
-        private Transform _spawnTransform;
+        private Transform[] _spawnPoints;
+
+        // Point chosen for the current spawn (position and rotation must agree). Set in GetSpawnPosition.
+        private Transform _activeSpawnPoint;
 
         [SerializeField] private bool _spawnOnAwake;
 
@@ -112,6 +116,13 @@ namespace Neo.Tools
         private Collider _spawnAreaCollider;
 
         [SerializeField] private Collider2D _spawnAreaCollider2D;
+
+        // TODO: Deny zones — areas where spawning is NOT allowed.
+        //   Add `Collider[] _denyAreas` + `Collider2D[] _denyAreas2D` and `int _maxRejectionTries`.
+        //   In GetSpawnPosition(): after resolving a candidate (especially a random point inside
+        //   `_spawnAreaCollider`), reject it if it falls inside ANY deny zone and re-roll, up to
+        //   `_maxRejectionTries`. Expose `bool IsPositionAllowed(Vector3)`.
+        //   Net effect: "allow zone A (spawn points / spawn area), but forbid sub-region B".
 
         private int _spawnedCount;
 
@@ -149,8 +160,6 @@ namespace Neo.Tools
         private void OnValidate()
         {
 #endif
-            _spawnTransform ??= transform;
-
             // Validate delay range
             if (minSpawnDelay < 0)
             {
@@ -502,8 +511,29 @@ namespace Neo.Tools
         /// <summary>
         ///     Spawn position: random point in area collider if set, otherwise spawn transform position.
         /// </summary>
+        /// <summary>
+        ///     Resolves the spawn point for the current spawn: a random non-null entry from
+        ///     <see cref="_spawnPoints" />, or this spawner's transform when the list is empty.
+        /// </summary>
+        public Transform ResolveSpawnPoint()
+        {
+            if (_spawnPoints != null && _spawnPoints.Length > 0)
+            {
+                int start = Random.Range(0, _spawnPoints.Length);
+                for (int i = 0; i < _spawnPoints.Length; i++)
+                {
+                    Transform p = _spawnPoints[(start + i) % _spawnPoints.Length];
+                    if (p != null) return p;
+                }
+            }
+
+            return transform;
+        }
+
         public Vector3 GetSpawnPosition()
         {
+            _activeSpawnPoint = ResolveSpawnPoint();
+
             if (_spawnAreaCollider != null)
             {
                 return GetRandomPointInCollider(_spawnAreaCollider);
@@ -514,7 +544,7 @@ namespace Neo.Tools
                 return GetRandomPointInCollider2D(_spawnAreaCollider2D);
             }
 
-            return _spawnTransform != null ? _spawnTransform.position : transform.position;
+            return _activeSpawnPoint.position;
         }
 
         /// <summary>
@@ -523,16 +553,18 @@ namespace Neo.Tools
         /// </summary>
         private Quaternion GetSpawnRotation()
         {
+            Transform sp = _activeSpawnPoint != null ? _activeSpawnPoint : transform;
+
             if (_useParentRotation)
             {
-                return _spawnTransform.rotation;
+                return sp.rotation;
             }
 
             bool zeroX = _rotationX == Vector2.zero;
             bool zeroY = _rotationY == Vector2.zero;
             bool zeroZ = _rotationZ == Vector2.zero;
 
-            Quaternion baseRot = _spawnTransform != null ? _spawnTransform.rotation : Quaternion.identity;
+            Quaternion baseRot = sp.rotation;
 
             if (zeroX && zeroY && zeroZ)
             {
@@ -651,7 +683,7 @@ namespace Neo.Tools
             }
 
             NeoDiagnostics.LogWarning("Unsupported 2D collider type for spawning.");
-            return _spawnTransform.position;
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
         }
 
         private Vector3 GetRandomPointInCollider(Collider collider)
@@ -687,7 +719,7 @@ namespace Neo.Tools
             }
 
             NeoDiagnostics.LogWarning("Unsupported 3D collider type for spawning.");
-            return _spawnTransform.position;
+            return _activeSpawnPoint != null ? _activeSpawnPoint.position : transform.position;
         }
     }
 }

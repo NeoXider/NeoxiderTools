@@ -1,6 +1,16 @@
 
 ## [Unreleased]
 
+## [9.5.1] - 2026-06-27
+
+### Docs
+- **Tools / Spawner:** documented planned **deny zones** (areas where spawning is forbidden) as a TODO — `_denyAreas`/`_denyAreas2D` + `_maxRejectionTries` reject candidates inside a deny zone and re-roll, plus `IsPositionAllowed(Vector3)`. "Where allowed" = spawn points / spawn area; "where forbidden" is planned. (#3)
+
+## [9.5.0] - 2026-06-27
+
+### Changed
+- **Tools / Spawner:** the single `_spawnTransform` spawn point is now a `Transform[] _spawnPoints` array. Empty → spawn from the spawner's own transform (previous default); with one or more points, a random non-null point is picked per spawn (position and rotation stay consistent for that spawn). New public `ResolveSpawnPoint()`. ⚠ **Breaking:** scenes that referenced the old single `Spawn Transform` field lose that reference on upgrade and fall back to the spawner's own transform — re-assign points in `Spawn Points`. (#3)
+
 ## [9.4.0] - 2026-06-25
 
 ### Added

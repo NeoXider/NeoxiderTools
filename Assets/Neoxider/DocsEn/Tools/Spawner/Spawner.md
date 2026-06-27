@@ -15,6 +15,7 @@
 | **Base Wave Count** | Number of objects to spawn in the first wave. |
 | **Count Per Wave** | How many *more* objects to spawn in each subsequent wave. |
 | **Time Between Waves** | Pause duration between waves (in seconds). |
+| **Spawn Points** | Array of spawn points. Empty → spawn from the spawner's own transform; with several, a **random** point is chosen per spawn (position and rotation come from the same point). A `Spawn Area` collider takes priority over points. |
 
 ## API
 
@@ -24,6 +25,7 @@
 | `void StopSpawn()` | Stops the automatic spawn. Modifies `isSpawning`. |
 | `GameObject SpawnRandomObject()` | Instantly spawns a random prefab from the list and returns it. |
 | `GameObject SpawnById(int prefabId, Vector3 position)` | Instantly spawns a specific prefab by index at the given position. |
+| `Transform ResolveSpawnPoint()` | Returns the point for the current spawn: a random non-null entry from `Spawn Points`, or the spawner's own transform when the list is empty. |
 | `void Clear()` | Stops spawning and destroys (or pools) all objects previously created by this spawner. |
 
 ## Unity Events
@@ -52,6 +54,9 @@ public void StartBossFight()
     _enemySpawner.StartSpawn();
 }
 ```
+
+## Planned (TODO)
+- **Deny zones:** `_denyAreas` (`Collider[]`) and `_denyAreas2D` (`Collider2D[]`) fields + `_maxRejectionTries`. When resolving a position (especially a random point inside `Spawn Area`), a candidate inside any deny zone is rejected and re-rolled up to `_maxRejectionTries`; plus `bool IsPositionAllowed(Vector3)`. Idea: "spawn in zone A (points/area) but NOT in sub-region B". Today "where allowed" is set by spawn points/area; "where forbidden" is planned.
 
 ## See Also
 - [PoolManager](PoolManager.md)

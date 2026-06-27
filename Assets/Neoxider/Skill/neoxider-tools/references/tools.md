@@ -14,7 +14,7 @@ primary — avoid building on them in code (see avoid-nocode.md).
 ## Spawner / Pool (prefer these over Instantiate/Destroy)
 - **`SpawnUtility`** (static) — main entry: `Spawn(prefab[,pos][,rot][,parent])`, `Despawn(instance)`, `ClearFallbackPools()`. Uses `PoolManager` if present, else internal fallback pools.
 - **`PoolManager`** (`PoolManager.I`, DontDestroyOnLoad) — `static Get(prefab,pos,rot,parent=null)`, `static Release(instance)`; pre-warm via `_preconfiguredPools`.
-- **`Spawner`** — interval/wave area spawner. `StartSpawn()`/`StopSpawn()`/`Clear()`, `SpawnRandomObject()`, `SpawnById(int,pos)`; events `OnObjectSpawned`, `OnWaveStarted`. `SpawnMode.Loop|Waves`.
+- **`Spawner`** — interval/wave area spawner. `StartSpawn()`/`StopSpawn()`/`Clear()`, `SpawnRandomObject()`, `SpawnById(int,pos)`, `ResolveSpawnPoint()`; events `OnObjectSpawned`, `OnWaveStarted`. `SpawnMode.Loop|Waves`. Spawn location: `Spawn Points` (`Transform[]` — empty = own transform, else random point per spawn) or a `Spawn Area` collider (2D/3D).
 - **`SimpleSpawner`** — `Spawn()` single-shot. **`Despawner`** — `Despawn()`, `DespawnOther(go)`, static `DespawnObject(go)`, `OnDespawn`.
 - **`IPoolable`** {`OnPoolCreate/OnPoolGet/OnPoolRelease`}; **`PoolableBehaviour`** base (override these). **`PoolExtensions`**: `go.ReturnToPool()`, `go.SpawnFromPool(pos,rot,parent)`.
 
