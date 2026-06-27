@@ -1,5 +1,7 @@
 using System;
+#if MIRROR
 using Mirror;
+#endif
 using Neo.Network;
 using UnityEngine;
 using NeoNetworkDiagnostics = Neo.Network.NetworkDiagnostics;
@@ -8,8 +10,15 @@ using NeoNetworkDiagnostics = Neo.Network.NetworkDiagnostics;
 /// Demo helper: a UI button calls <see cref="StartGame"/>, the client sends
 /// <see cref="CmdStartGame"/> to the server, and the server calls
 /// <see cref="RpcShowStartPanel"/> on every client.
+/// Without Mirror installed, it runs in local solo mode so imported samples
+/// do not require the optional networking dependency.
 /// </summary>
-public class TestStart : NetworkBehaviour
+public class TestStart :
+#if MIRROR
+    NetworkBehaviour
+#else
+    MonoBehaviour
+#endif
 {
     public GameObject startPanel;
     public float time = 3;
@@ -24,6 +33,7 @@ public class TestStart : NetworkBehaviour
     /// <summary>Call from a UI button. The client must be connected and ready.</summary>
     public void StartGame()
     {
+#if MIRROR
         if (!NetworkClient.active)
         {
             NeoNetworkDiagnostics.LogWarning(
@@ -43,8 +53,12 @@ public class TestStart : NetworkBehaviour
         }
 
         CmdStartGame();
+#else
+        ShowStartPanelLocal();
+#endif
     }
 
+#if MIRROR
     /// <summary>
     /// Allows a scene object without client authority to relay the demo button action.
     /// For production, prefer an owned player command or server-side validation.
@@ -57,6 +71,12 @@ public class TestStart : NetworkBehaviour
 
     [ClientRpc]
     private void RpcShowStartPanel()
+    {
+        ShowStartPanelLocal();
+    }
+#endif
+
+    private void ShowStartPanelLocal()
     {
         if (startPanel != null)
         {

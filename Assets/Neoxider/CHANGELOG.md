@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [9.5.2] - 2026-06-27
+
+### Fixed
+- **Samples / Demo Scenes / Network:** imported Demo Scenes now compile in projects without the optional Mirror package. `TestStart` follows the `Neo.Network` optional-Mirror pattern: Mirror `NetworkBehaviour`/`Command`/`ClientRpc` code is compiled only under `MIRROR`, while non-Mirror projects get a local solo-mode fallback.
+
+### Docs
+- **Package docs:** synchronized package version references and sample import paths for `9.5.2`.
+
 ## [9.5.1] - 2026-06-27
 
 ### Docs

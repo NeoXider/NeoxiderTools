@@ -4,7 +4,9 @@ Current active sample path during development: `Assets/Neoxider/Samples/Demo/`.
 
 Before release/UPM packaging the folder is moved back to `Assets/Neoxider/Samples~/Demo/`, and `Assets/Neoxider/package.json` must point to `Samples~/...`.
 
-After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/9.2.6/Demo Scenes/...`.
+After importing through Unity Package Manager, Unity copies the sample into the project-level path `Assets/Samples/NeoxiderTools/<version>/<sample name>/...`. For the current version the expected imported path is `Assets/Samples/NeoxiderTools/9.5.2/Demo Scenes/...`.
+
+Network demo scripts must compile without Mirror installed. Mirror-specific code in imported Demo Scenes is optional and must be wrapped with the same `#if MIRROR` / solo-mode fallback pattern used by `Neo.Network`.
 
 These scenes are smoke coverage and manual entry points for modules. They do not replace tests: public C# contracts stay covered by EditMode/PlayMode tests, while scenes show the minimal MonoBehaviour wrapper setup.
 

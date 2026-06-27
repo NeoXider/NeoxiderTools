@@ -6,7 +6,7 @@
 
 | Источник | Версия |
 | --- | --- |
-| Пакет `Assets/Neoxider/package.json` | `version: 9.2.6`, `unity: 2022.1` |
+| Пакет `Assets/Neoxider/package.json` | `version: 9.5.2`, `unity: 2022.1` |
 | Локальный проект `ProjectSettings/ProjectVersion.txt` | Unity `6000.3.14f1` |
 
 Минимальная версия UPM-пакета остается Unity 2022.1. Проект разработки сейчас открыт и проверяется на Unity `6000.3.14f1`, но это не должно автоматически поднимать минимальную версию пакета.
