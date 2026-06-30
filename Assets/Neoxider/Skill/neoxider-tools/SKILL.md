@@ -11,6 +11,10 @@ description: >-
   (NeoCondition, `*NoCodeAction` bridges, `NoCode*` binding components) unless the user is already using it.
   Trigger for any substantive Unity coding task in a Neo / NeoxiderTools project, even if the user never
   names the package.
+metadata:
+  version: 9.6.0
+  author: Neoxider
+  homepage: https://github.com/NeoXider/NeoxiderTools
 ---
 
 # NeoxiderTools
