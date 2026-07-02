@@ -1,4 +1,5 @@
 #if MIRROR
+using Mirror;
 using Neo.Network;
 using NUnit.Framework;
 using UnityEngine;
@@ -23,7 +24,8 @@ namespace Neo.Editor.Tests
         [Test]
         public void SecondImmediateCommand_IsRateLimited()
         {
-            var go = new GameObject("NetworkRateLimitTests");
+            // NetworkBehaviour.OnValidate logs an error when the host object has no NetworkIdentity.
+            var go = new GameObject("NetworkRateLimitTests", typeof(NetworkIdentity));
             try
             {
                 var probe = go.AddComponent<RateLimitProbe>();

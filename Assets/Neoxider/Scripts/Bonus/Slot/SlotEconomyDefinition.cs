@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Neo.Bonus
 {
@@ -18,22 +19,28 @@ namespace Neo.Bonus
         public sealed class Symbol
         {
             [Tooltip("Display/design name (Empty, Cherry, Jackpot...).")]
-            public string name = "";
+            [FormerlySerializedAs("name")]
+            public string Name = "";
 
             [Tooltip("Unique symbol id; the value SpinController rows settle on.")]
-            public int id;
+            [FormerlySerializedAs("id")]
+            public int Id;
 
             [Tooltip("Primary currency payout when a line of this symbol wins.")]
-            public float moneyReward;
+            [FormerlySerializedAs("moneyReward")]
+            public float MoneyReward;
 
             [Tooltip("Secondary payout (energy, spins, tickets) when a line of this symbol wins.")]
-            public int bonusReward;
+            [FormerlySerializedAs("bonusReward")]
+            public int BonusReward;
 
             [Tooltip("Special symbol: with Force Line On Special, one hit converts the whole payline.")]
-            public bool isSpecial;
+            [FormerlySerializedAs("isSpecial")]
+            public bool IsSpecial;
 
             [Tooltip("Relative drop weight; 0 disables the symbol.")] [Min(0f)]
-            public float weight;
+            [FormerlySerializedAs("weight")]
+            public float Weight;
         }
 
         /// <summary>Result of evaluating one settled payline.</summary>
@@ -54,8 +61,8 @@ namespace Neo.Bonus
             /// <summary>True when the win came from the special-symbol conversion.</summary>
             public bool SpecialTriggered { get; }
 
-            public float MoneyReward => Symbol?.moneyReward ?? 0f;
-            public int BonusReward => Symbol?.bonusReward ?? 0;
+            public float MoneyReward => Symbol?.MoneyReward ?? 0f;
+            public int BonusReward => Symbol?.BonusReward ?? 0;
         }
 
         [SerializeField] private Symbol[] _symbols = Array.Empty<Symbol>();
@@ -73,7 +80,7 @@ namespace Neo.Bonus
         {
             for (int i = 0; i < _symbols.Length; i++)
             {
-                if (_symbols[i] != null && _symbols[i].id == id)
+                if (_symbols[i] != null && _symbols[i].Id == id)
                 {
                     return _symbols[i];
                 }
@@ -87,7 +94,7 @@ namespace Neo.Bonus
         {
             for (int i = 0; i < _symbols.Length; i++)
             {
-                if (_symbols[i] != null && _symbols[i].isSpecial)
+                if (_symbols[i] != null && _symbols[i].IsSpecial)
                 {
                     return _symbols[i];
                 }
@@ -102,15 +109,15 @@ namespace Neo.Bonus
             float total = 0f;
             for (int i = 0; i < _symbols.Length; i++)
             {
-                if (_symbols[i] != null && _symbols[i].weight > 0f)
+                if (_symbols[i] != null && _symbols[i].Weight > 0f)
                 {
-                    total += _symbols[i].weight;
+                    total += _symbols[i].Weight;
                 }
             }
 
             if (total <= 0f)
             {
-                return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].id : 0;
+                return _symbols.Length > 0 && _symbols[0] != null ? _symbols[0].Id : 0;
             }
 
             float roll = UnityEngine.Random.Range(0f, total);
@@ -118,15 +125,15 @@ namespace Neo.Bonus
             for (int i = 0; i < _symbols.Length; i++)
             {
                 Symbol symbol = _symbols[i];
-                if (symbol == null || symbol.weight <= 0f)
+                if (symbol == null || symbol.Weight <= 0f)
                 {
                     continue;
                 }
 
-                cursor += symbol.weight;
+                cursor += symbol.Weight;
                 if (roll <= cursor)
                 {
-                    return symbol.id;
+                    return symbol.Id;
                 }
             }
 
@@ -134,7 +141,7 @@ namespace Neo.Bonus
             {
                 if (_symbols[i] != null)
                 {
-                    return _symbols[i].id;
+                    return _symbols[i].Id;
                 }
             }
 
@@ -164,7 +171,7 @@ namespace Neo.Bonus
             for (int i = 0; i < lineIds.Length; i++)
             {
                 Symbol symbol = Get(lineIds[i]);
-                if (symbol != null && symbol.isSpecial)
+                if (symbol != null && symbol.IsSpecial)
                 {
                     hasSpecial = true;
                     break;
@@ -178,7 +185,7 @@ namespace Neo.Bonus
 
             for (int i = 0; i < lineIds.Length; i++)
             {
-                lineIds[i] = special.id;
+                lineIds[i] = special.Id;
             }
         }
 
@@ -202,7 +209,7 @@ namespace Neo.Bonus
                     for (int i = 0; i < lineIds.Length; i++)
                     {
                         Symbol symbol = Get(lineIds[i]);
-                        if (symbol != null && symbol.isSpecial)
+                        if (symbol != null && symbol.IsSpecial)
                         {
                             specialTriggered = true;
                             return new LineResult(special, true, true);
@@ -221,7 +228,7 @@ namespace Neo.Bonus
             }
 
             Symbol matched = Get(firstId);
-            bool isWin = matched != null && (matched.moneyReward > 0f || matched.bonusReward > 0);
+            bool isWin = matched != null && (matched.MoneyReward > 0f || matched.BonusReward > 0);
             return new LineResult(matched, isWin, specialTriggered);
         }
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Neo.Save;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Neo.Shop
@@ -27,19 +28,24 @@ namespace Neo.Shop
         public sealed class CategorySlot
         {
             [Tooltip("Category id matching EquipItemDefinition.CategoryId.")]
-            public string categoryId = "";
+            [FormerlySerializedAs("categoryId")]
+            public string CategoryId = "";
 
             [Tooltip("World-space visual for the equipped sprite (character layer).")]
-            public SpriteRenderer spriteTarget;
+            [FormerlySerializedAs("spriteTarget")]
+            public SpriteRenderer SpriteTarget;
 
             [Tooltip("uGUI visual for the equipped sprite (UI character).")]
-            public Image imageTarget;
+            [FormerlySerializedAs("imageTarget")]
+            public Image ImageTarget;
 
             [Tooltip("Call SetNativeSize() on the Image after assigning the sprite.")]
-            public bool setNativeSize = true;
+            [FormerlySerializedAs("setNativeSize")]
+            public bool ApplyNativeSize = true;
 
             [Tooltip("Item id equipped when nothing is saved. Empty = category starts empty.")]
-            public string defaultItemId = "";
+            [FormerlySerializedAs("defaultItemId")]
+            public string DefaultItemId = "";
         }
 
         [Header("Catalog")]
@@ -161,19 +167,19 @@ namespace Neo.Shop
             for (int i = 0; i < _slots.Length; i++)
             {
                 CategorySlot slot = _slots[i];
-                if (slot == null || string.IsNullOrEmpty(slot.categoryId))
+                if (slot == null || string.IsNullOrEmpty(slot.CategoryId))
                 {
                     continue;
                 }
 
                 string savedId = _persist
-                    ? SaveProvider.GetString(_saveKeyPrefix + slot.categoryId, slot.defaultItemId)
-                    : slot.defaultItemId;
+                    ? SaveProvider.GetString(_saveKeyPrefix + slot.CategoryId, slot.DefaultItemId)
+                    : slot.DefaultItemId;
 
                 if (string.IsNullOrEmpty(savedId))
                 {
                     ApplySprite(slot, null);
-                    _equipped[slot.categoryId] = "";
+                    _equipped[slot.CategoryId] = "";
                     continue;
                 }
 
@@ -181,12 +187,12 @@ namespace Neo.Shop
                 if (item != null)
                 {
                     ApplySprite(slot, item.Sprite);
-                    _equipped[slot.categoryId] = item.Id;
+                    _equipped[slot.CategoryId] = item.Id;
                 }
                 else
                 {
                     ApplySprite(slot, null);
-                    _equipped[slot.categoryId] = "";
+                    _equipped[slot.CategoryId] = "";
                 }
             }
         }
@@ -201,19 +207,19 @@ namespace Neo.Shop
 
         private static void ApplySprite(CategorySlot slot, Sprite sprite)
         {
-            if (slot.spriteTarget != null)
+            if (slot.SpriteTarget != null)
             {
-                slot.spriteTarget.sprite = sprite;
-                slot.spriteTarget.enabled = sprite != null;
+                slot.SpriteTarget.sprite = sprite;
+                slot.SpriteTarget.enabled = sprite != null;
             }
 
-            if (slot.imageTarget != null)
+            if (slot.ImageTarget != null)
             {
-                slot.imageTarget.sprite = sprite;
-                slot.imageTarget.enabled = sprite != null;
-                if (sprite != null && slot.setNativeSize)
+                slot.ImageTarget.sprite = sprite;
+                slot.ImageTarget.enabled = sprite != null;
+                if (sprite != null && slot.ApplyNativeSize)
                 {
-                    slot.imageTarget.SetNativeSize();
+                    slot.ImageTarget.SetNativeSize();
                 }
             }
         }
@@ -242,7 +248,7 @@ namespace Neo.Shop
             for (int i = 0; i < _slots.Length; i++)
             {
                 CategorySlot slot = _slots[i];
-                if (slot != null && string.Equals(slot.categoryId, categoryId, StringComparison.Ordinal))
+                if (slot != null && string.Equals(slot.CategoryId, categoryId, StringComparison.Ordinal))
                 {
                     return slot;
                 }

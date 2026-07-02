@@ -1,6 +1,7 @@
 using System;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace Neo.Shop
@@ -20,13 +21,16 @@ namespace Neo.Shop
         public sealed class Category
         {
             [Tooltip("Category id matching ShopItemData.Category. Empty = show all items.")]
-            public string id = "";
+            [FormerlySerializedAs("id")]
+            public string Id = "";
 
             [Tooltip("Label shown in the pill.")]
-            public string displayName = "";
+            [FormerlySerializedAs("displayName")]
+            public string DisplayName = "";
 
             [Tooltip("Optional icon shown next to the label.")]
-            public Sprite icon;
+            [FormerlySerializedAs("icon")]
+            public Sprite Icon;
         }
 
         [Header("Target")] [SerializeField] private ShopListView _listView;
@@ -45,7 +49,7 @@ namespace Neo.Shop
 
         /// <summary>Currently selected category id (empty when the list is empty).</summary>
         public string CurrentCategoryId =>
-            _categories.Length > 0 ? _categories[_index].id : "";
+            _categories.Length > 0 ? _categories[_index].Id : "";
 
         private void Start()
         {
@@ -107,7 +111,7 @@ namespace Neo.Shop
         {
             for (int i = 0; i < _categories.Length; i++)
             {
-                if (_categories[i] != null && string.Equals(_categories[i].id, categoryId, StringComparison.Ordinal))
+                if (_categories[i] != null && string.Equals(_categories[i].Id, categoryId, StringComparison.Ordinal))
                 {
                     _index = i;
                     Apply();
@@ -131,18 +135,18 @@ namespace Neo.Shop
 
             if (_iconImage != null)
             {
-                _iconImage.sprite = category.icon;
-                _iconImage.enabled = category.icon != null;
+                _iconImage.sprite = category.Icon;
+                _iconImage.enabled = category.Icon != null;
             }
 
             if (_nameText != null)
             {
-                _nameText.text = category.displayName;
+                _nameText.text = category.DisplayName;
             }
 
             if (_listView != null)
             {
-                _listView.SetCategory(category.id);
+                _listView.SetCategory(category.Id);
             }
         }
     }
