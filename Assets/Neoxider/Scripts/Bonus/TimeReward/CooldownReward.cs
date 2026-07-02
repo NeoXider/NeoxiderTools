@@ -228,6 +228,19 @@ namespace Neo.Bonus
                 SetTime(duration);
                 SaveState();
                 _waitingForManualStart = false;
+                _canTakeReward = false;
+
+                // The underlying timer is non-looping and stops after completion; without re-arming it
+                // here, auto-claim fires only once and RemainingTime stops ticking (mirrors RestartTime()).
+                if (!IsRunning)
+                {
+                    Play();
+                }
+                else
+                {
+                    RefreshTimeState();
+                }
+
                 return true;
             }
 

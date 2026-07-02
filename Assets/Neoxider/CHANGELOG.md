@@ -1,6 +1,14 @@
 
 ## [Unreleased]
 
+## [9.6.1] - 2026-07-02
+
+### Fixed
+- **Bonus / CooldownReward + Tools / TimerObject:** continuous auto-claim (`_autoClaim`) now re-arms after each grant. Previously the underlying non-looping timer deactivated itself right after the completion event, so auto-claim fired once and `RemainingTime` stopped ticking. `TimerObject` now deactivates a non-looping timer **before** invoking `OnTimerCompleted`, so completion handlers may restart it with `Play()`; `CooldownReward.TakeReward()` restarts the cooldown timer (mirroring `RestartTime()`) and resets the availability flag so `OnRewardAvailable` fires on every cycle.
+
+### Docs
+- Synchronized version references in `README.md` and `PROJECT_SUMMARY.md` (were still `9.5.2`).
+
 ## [9.6.0] - 2026-06-27
 
 ### Added

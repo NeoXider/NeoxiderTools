@@ -585,6 +585,14 @@ namespace Neo.Tools
             if (reachedEnd)
             {
                 currentTime = countUp ? duration : 0f;
+
+                if (!looping)
+                {
+                    // Deactivate BEFORE the completion event so a handler (e.g. CooldownReward auto-claim)
+                    // can re-arm the timer with Play(); deactivating after would overwrite that restart.
+                    isActive = false;
+                }
+
                 InvokeEvents();
                 OnTimerCompleted?.Invoke();
 
@@ -608,10 +616,6 @@ namespace Neo.Tools
 
                     OnTimerStarted?.Invoke();
                     InvokeEvents();
-                }
-                else
-                {
-                    isActive = false;
                 }
             }
             else
