@@ -829,3 +829,34 @@ UnityEvent OnClick
 ### `AnchorMove` (MonoBehaviour) — `Neo.UI`
 **[no-code]**: sets anchor min/max in `OnValidate`. No runtime public API. Configure `x`/`y` (0–1) in inspector.
 
+
+## New in 9.7.0
+
+### `EquipmentManager` + `EquipItemDefinition` (Neo.Shop) - dress-up / skins
+```csharp
+void EquipById(string itemId)       // NoCode entry: wire purchase/cell click here
+void Equip(EquipItemDefinition item)
+void Unequip(string categoryId)
+void ToggleById(string itemId)
+string GetEquippedId(string categoryId)
+bool IsEquipped(string itemId)
+UnityEvent<string,string> OnEquipChanged   // (categoryId, itemId)
+```
+One item per category, sprite applied to a `SpriteRenderer`/`Image` slot (optional SetNativeSize),
+persisted via `SaveProvider` (`Equip_<category>`). Catalog = `EquipItemDefinition[]` (SO: Id, CategoryId,
+Sprite; Id convention = ShopItemData id). Do NOT hand-roll wardrobes anymore.
+
+### `SlotEconomyDefinition` (Neo.Bonus) - slot symbol economy (SO)
+```csharp
+int PickWeightedId()                    // per reel, weighted drop
+void ApplySpecialRule(int[] lineIds)    // one special converts whole payline (ForceLineOnSpecial)
+LineResult EvaluateLine(int[] lineIds)  // .Symbol .IsWin .SpecialTriggered .MoneyReward .BonusReward
+```
+Create -> Neoxider -> Bonus -> Slot Economy. Pairs with `SpinController`; pay result into `Money`.
+
+### `ResourceRegen` (Neo.Bonus) - energy/lives in ONE component
+Couples `CooldownReward` (AutoClaim forced on) + capped `Money` (`Amount Per Claim` per cycle) +
+optional `TimeToText` countdown (0 while full). Over-cap sources call `Money.AddOverflow` themselves.
+
+### `ShopCategorySelector` (Neo.Shop) - prev/next category pill
+`Next()/Prev()/Select(id)`, drives `ShopListView.SetCategory`; tabs variant = `ShopCategoryButton`.

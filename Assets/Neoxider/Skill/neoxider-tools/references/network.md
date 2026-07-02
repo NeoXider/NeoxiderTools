@@ -133,3 +133,17 @@ public class ScenePowerUp : MonoBehaviour, INeoOptionalNetworked
 - Custom `NetworkManager` (not `NeoNetworkManager`)? Call
   `NetworkContextActionRelay.RegisterMirrorHandlers()` in your start hooks or context relays silently fail.
 - `NetworkDiagnostics.RuntimeLogsEnabled/RuntimeWarningsEnabled` default `false` — enable to trace.
+
+## New in 9.7.0
+
+- `NetworkReactiveSync` — NoCode replication of `ReactivePropertyFloat/Int/Bool` (e.g. `Money.CurrentMoney`)
+  from the inspector: target component + field name + direction. Inert without Mirror. Use instead of
+  hand-written SyncVar bridges for wallets/score/HP.
+- `NetworkPlayerName` — replicated nickname: `SetLocalName(v)` on the local player, `OnNameChanged(string)`
+  → TMP label; trimmed + length-capped server-side, rate-limited.
+- `NeoNetworkDiscovery.QuickPlay()` — one-button LAN: auto-join first found server or host after
+  `Host If None Found After` seconds; `OnQuickPlayResolved(bool becameHost)`.
+- `NetworkEventDispatcher` — payload variants `DispatchGlobalInt/Float/String` + matching UnityEvents;
+  all commands rate-limited per connection.
+- `NetworkPropertySync` — `Skip Hook On Owner` prevents rubber-band in OwnerToServer mode;
+  `Sync Interval` has a 0.1s floor.
