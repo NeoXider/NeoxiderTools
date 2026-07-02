@@ -35,6 +35,9 @@ namespace Neo.Reactive
         /// </summary>
         [NonSerialized] private List<UnityAction<T>> _codeListeners;
 
+        /// <summary>Reusable snapshot buffer for <see cref="NotifySubscribers"/> (no per-notify allocation).</summary>
+        [NonSerialized] private UnityAction<T>[] _notifyBuffer;
+
         protected ReactivePropertyBase()
         {
         }
@@ -122,17 +125,20 @@ namespace Neo.Reactive
         {
             if (_codeListeners is { Count: > 0 })
             {
-                // Snapshot: prevents ConcurrentModification if a listener calls Add/RemoveListener
+                // Real snapshot into a reusable buffer: listeners added/removed during notification
+                // do not shift indices, so every listener registered at notify time is invoked exactly
+                // once (a live-list iteration would skip the next listener when an earlier one is removed).
                 int count = _codeListeners.Count;
+                if (_notifyBuffer == null || _notifyBuffer.Length < count)
+                {
+                    _notifyBuffer = new UnityAction<T>[Mathf.NextPowerOfTwo(count)];
+                }
+
+                _codeListeners.CopyTo(_notifyBuffer, 0);
                 for (int i = 0; i < count; i++)
                 {
-                    // Guard: list may have shrunk if a listener removed itself
-                    if (i >= _codeListeners.Count)
-                    {
-                        break;
-                    }
-
-                    UnityAction<T> listener = _codeListeners[i];
+                    UnityAction<T> listener = _notifyBuffer[i];
+                    _notifyBuffer[i] = null;
                     try
                     {
                         listener?.Invoke(_value);

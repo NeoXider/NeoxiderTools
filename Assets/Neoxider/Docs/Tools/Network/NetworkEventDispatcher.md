@@ -33,3 +33,9 @@ Use `NetworkEventDispatcher` when a local event such as a UI click, trigger, or 
 
 - [NetworkActionRelay](../../Network/NetworkActionRelay.md)
 - [NetworkContextActionRelay](../../Network/NetworkContextActionRelay.md)
+
+## Рейт-лимит (9.6.2)
+
+`CmdDispatchEvent` защищён `RateLimitCheck()` из `NeoNetworkComponent` (по умолчанию не чаще одного
+раза в 0.05 с на объект): клиент не может спамить глобальный бродкаст. Слишком частые вызовы
+молча отбрасываются сервером.

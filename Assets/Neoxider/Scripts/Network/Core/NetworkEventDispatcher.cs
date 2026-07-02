@@ -74,6 +74,11 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchEvent(NetworkConnectionToClient sender = null)
         {
+            if (RateLimitCheck())
+            {
+                return; // Too frequent — protects against Cmd spam amplified by the RPC broadcast
+            }
+
             if (!NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
             {
                 return; // Unauthorized

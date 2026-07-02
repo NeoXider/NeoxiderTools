@@ -71,3 +71,9 @@ public class MyCounter : NeoNetworkComponent
 ## См. также
 - [NetworkSingleton](NetworkSingleton.md) — базовый класс для синглтон-менеджеров
 - [NoCode Network Spec](NoCode_Network_Spec.md) — стандарты (Правило 11)
+
+## Замечание о RateLimitCheck
+
+Лимит считается **на инстанс компонента** (один таймер на объект на сервере), а не на клиента.
+Для сценовых объектов с командами `requiresAuthority = false` частые команды одного клиента могут
+отбрасывать законные команды других. Для per-owner объектов ограничение не мешает.

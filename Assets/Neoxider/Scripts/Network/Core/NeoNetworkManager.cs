@@ -58,6 +58,7 @@ namespace Neo.Network
         private uint _scenePlayerTemplateAssetId;
         private uint _registeredScenePlayerTemplateAssetId;
         private bool _scenePlayerTemplateSpawnHandlerRegistered;
+        private bool _hasSpawnedFieldMissingLogged;
         private static readonly FieldInfo NetworkIdentityHasSpawnedField =
             typeof(NetworkIdentity).GetField("hasSpawned", BindingFlags.NonPublic | BindingFlags.Instance);
 #endif
@@ -472,6 +473,15 @@ namespace Neo.Network
 
         private GameObject InstantiateScenePlayerTemplate(Vector3 position, Quaternion rotation)
         {
+            if (NetworkIdentityHasSpawnedField == null && !_hasSpawnedFieldMissingLogged)
+            {
+                _hasSpawnedFieldMissingLogged = true;
+                NetworkDiagnostics.LogWarning(
+                    "[NeoNetworkManager] Mirror's private NetworkIdentity.hasSpawned field was not found " +
+                    "(Mirror version changed?). Scene Player Template copies may fail to spawn correctly.",
+                    this, true);
+            }
+
             NetworkIdentity[] templateIdentities = _scenePlayerTemplate.GetComponentsInChildren<NetworkIdentity>(true);
             ulong[] originalSceneIds = new ulong[templateIdentities.Length];
             bool[] originalHasSpawned = new bool[templateIdentities.Length];

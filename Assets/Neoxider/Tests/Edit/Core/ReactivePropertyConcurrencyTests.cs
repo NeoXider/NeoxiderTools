@@ -70,6 +70,34 @@ namespace Neo.Editor.Tests
         }
 
         [Test]
+        public void RemoveEarlierListenerInsideCallback_LaterListenerStillNotified()
+        {
+            var prop = new ReactivePropertyInt(0);
+            int aCalls = 0, cCalls = 0;
+
+            UnityAction<int> listenerA = v => aCalls++;
+            UnityAction<int> listenerB = null;
+            listenerB = v => prop.RemoveListener(listenerA); // removes an EARLIER listener mid-notification
+            UnityAction<int> listenerC = v => cCalls++;
+
+            prop.AddListener(listenerA);
+            prop.AddListener(listenerB);
+            prop.AddListener(listenerC);
+
+            prop.Value = 1;
+
+            // Snapshot semantics: every listener registered at notify time fires exactly once,
+            // even though B shrank the list while iterating (a live-list loop would skip C here).
+            Assert.AreEqual(1, aCalls);
+            Assert.AreEqual(1, cCalls);
+
+            // A is gone on the next notification.
+            prop.Value = 2;
+            Assert.AreEqual(1, aCalls);
+            Assert.AreEqual(2, cCalls);
+        }
+
+        [Test]
         public void RemoveAllListenersInsideCallback_DoesNotThrow()
         {
             var prop = new ReactivePropertyInt(0);

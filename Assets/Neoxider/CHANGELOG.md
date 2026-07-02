@@ -1,6 +1,18 @@
 
 ## [Unreleased]
 
+## [9.6.2] - 2026-07-02
+
+### Fixed
+- **Network / NetworkEventDispatcher:** `CmdDispatchEvent` is now rate-limited (`RateLimitCheck`), closing a spam-amplification hole — any client could flood the global RPC broadcast (the command is `requiresAuthority = false` with default authority `None` by design).
+- **Network / NetworkPropertySync:** `Sync Interval` gained a `[Min(0.1)]` floor. An interval below the server rate limit (0.05 s) caused silent Cmd drops in `OwnerToServer` mode: the owner marked the value as sent while every client stayed stuck on the stale value until the next change. Also: a missing target/field no longer poisons the reflection cache — a target assigned later at runtime is picked up (warning logged once).
+- **Reactive / ReactiveProperty:** `NotifySubscribers` now takes a real snapshot of code listeners (reusable buffer, no per-notify allocation). Previously removing an earlier listener inside a callback shifted indices and the next listener silently skipped that notification. New edit-mode test covers the case.
+- **Network / NetworkSingleton:** `IsInitialized` now actually reflects initialization instead of duplicating `HasInstance`.
+- **Network / NeoNetworkManager:** one-time warning when Mirror's private `NetworkIdentity.hasSpawned` field is missing (Mirror upgrade guard) instead of silent scene-player-template degradation.
+
+### Docs
+- RU/EN pages updated for the fixes: `NetworkPropertySync` (interval floor + owner rubber-band caveat), `NeoNetworkComponent` (rate limit is per object, not per client), `ReactiveProperty` (snapshot semantics, main-thread only), `NetworkEventDispatcher` (RU; command rate limit).
+
 ## [9.6.1] - 2026-07-02
 
 ### Fixed

@@ -71,7 +71,7 @@ namespace Neo.Network
         public static bool HasInstance => _instance != null;
 
         /// <summary>Gets whether the singleton has been resolved and initialized.</summary>
-        public static bool IsInitialized => _instance != null;
+        public static bool IsInitialized => _instance != null && _instance._isInitialized;
 
         /// <summary>Backwards-compatible singleton alias.</summary>
         public static T Instance => I;

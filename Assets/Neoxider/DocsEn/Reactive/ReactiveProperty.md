@@ -81,3 +81,10 @@ void LoadFromSave(int savedScore)
 
 ## See Also
 - ← [Reactive](README.md)
+
+## Notification semantics (9.6.2)
+
+`NotifySubscribers` takes a **real snapshot** of code listeners into a reusable buffer: every listener
+registered at notification time is invoked exactly once, even when another listener adds/removes
+subscriptions inside its callback. Listeners added during a notification only receive the next value.
+Not thread-safe — Unity main thread only.

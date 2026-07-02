@@ -50,7 +50,10 @@ namespace Neo.Network
         [Tooltip("Who writes the authoritative value.")] [SerializeField]
         private SyncPropertyDirection _direction = SyncPropertyDirection.ServerToClients;
 
-        [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField]
+        // Min must stay above NeoNetworkComponent.NetworkRateLimit (0.05s): an interval below the
+        // server-side rate limit makes the server silently drop Cmd updates the owner already
+        // marked as sent, leaving all clients stuck on a stale value until the next change.
+        [Tooltip("How often to check for changes and synchronize (seconds).")] [SerializeField] [Min(0.1f)]
         private float _syncInterval = 0.1f;
 
         [Tooltip("Minimum change threshold before syncing (for Float/Int/Vector3).")] [SerializeField]
@@ -62,6 +65,7 @@ namespace Neo.Network
         // Reflection cache
         private MemberInfo _cachedMember;
         private bool _cacheResolved;
+        private bool _missingTargetLogged;
         private float _lastSyncTime;
 
         // Last known values for dirty-checking
@@ -339,13 +343,19 @@ namespace Neo.Network
                 return;
             }
 
-            _cacheResolved = true;
-
             if (_targetComponent == null || string.IsNullOrEmpty(_fieldName))
             {
-                NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
+                // Do not cache the failure: target/field may be assigned later at runtime. Warn once.
+                if (!_missingTargetLogged)
+                {
+                    _missingTargetLogged = true;
+                    NetworkDiagnostics.LogWarning($"[NetworkPropertySync] Missing target or field on '{name}'.", this);
+                }
+
                 return;
             }
+
+            _cacheResolved = true;
 
             Type type = _targetComponent.GetType();
             const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
