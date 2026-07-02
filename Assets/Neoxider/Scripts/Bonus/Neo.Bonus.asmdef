@@ -14,20 +14,16 @@
         "GUID:b86d3b465747c5244a16a0298b3c8eb4",
         "GUID:e39216118ba4530449063f6f478fa729",
         "GUID:fada5146ea9de7e4c86a6e4307efdfbf",
-        "Mirror"
+        "Mirror",
+        "GUID:d06531eb44124d14385b705adce5c111"
     ],
-    "includePlatforms": [
-    ],
-    "excludePlatforms": [
-    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
-    "precompiledReferences": [
-    ],
+    "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-    ],
-    "versionDefines": [
-    ],
+    "defineConstraints": [],
+    "versionDefines": [],
     "noEngineReferences": false
 }
