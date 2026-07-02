@@ -7,6 +7,9 @@
 - **Naming:** new 9.7.0 public serialized fields renamed to PascalCase per package convention (`ShopCategorySelector.Category`: `Id/DisplayName/Icon`; `SlotEconomyDefinition.Symbol`: `Name/Id/MoneyReward/BonusReward/IsSpecial/Weight`; `EquipmentManager.CategorySlot`: `CategoryId/SpriteTarget/ImageTarget/ApplyNativeSize/DefaultItemId`). `[FormerlySerializedAs]` keeps existing scene/asset data intact.
 - **Tests:** `NetworkRateLimitTests` no longer triggers Mirror's "requires a NetworkIdentity" `OnValidate` error — the probe object now carries a `NetworkIdentity`.
 
+### Tests
+- Edit-mode coverage for the 9.7.0 additions: `SlotEconomyDefinition` (payline evaluation, special-line conversion, weighted picker), `EquipmentManager` (equip/unequip/toggle, category replacement, slot visuals), `ShopCategorySelector` (wrap-around cycling, select-by-id, empty-list safety), `Spawner` deny zones (3D/2D rejection, null entries).
+
 ## [9.7.0] - 2026-07-02
 
 ### Added
