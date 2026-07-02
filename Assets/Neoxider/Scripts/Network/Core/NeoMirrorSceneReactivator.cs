@@ -61,46 +61,51 @@ namespace Neo.Network
                 return;
             }
 
-            NetworkIdentity[] all = Resources.FindObjectsOfTypeAll<NetworkIdentity>();
-            for (int i = 0; i < all.Length; i++)
+            // Walk scene roots only: Resources.FindObjectsOfTypeAll also visited prefab assets on
+            // every scene load, which gets expensive in large projects.
+            GameObject[] roots = scene.GetRootGameObjects();
+            for (int r = 0; r < roots.Length; r++)
             {
-                NetworkIdentity identity = all[i];
-                if (identity == null)
+                if (roots[r] == null)
                 {
                     continue;
                 }
 
-                GameObject go = identity.gameObject;
-                if (go == null || go.scene != scene)
+                NetworkIdentity[] identities = roots[r].GetComponentsInChildren<NetworkIdentity>(true);
+                for (int i = 0; i < identities.Length; i++)
                 {
-                    continue;
+                    TryReactivate(identities[i]);
                 }
+            }
+        }
 
-                if (identity.sceneId == 0)
-                {
-                    continue;
-                }
+        private static void TryReactivate(NetworkIdentity identity)
+        {
+            if (identity == null)
+            {
+                return;
+            }
 
-                if (go.activeSelf)
-                {
-                    continue;
-                }
+            GameObject go = identity.gameObject;
+            if (go == null || identity.sceneId == 0 || go.activeSelf)
+            {
+                return;
+            }
 
-                HideFlags flags = go.hideFlags;
-                if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)
-                {
-                    continue;
-                }
+            HideFlags flags = go.hideFlags;
+            if ((flags & HideFlags.HideAndDontSave) == HideFlags.HideAndDontSave)
+            {
+                return;
+            }
 
-                if ((flags & HideFlags.NotEditable) != 0)
-                {
-                    continue;
-                }
+            if ((flags & HideFlags.NotEditable) != 0)
+            {
+                return;
+            }
 
-                if (ShouldReactivate(go))
-                {
-                    go.SetActive(true);
-                }
+            if (ShouldReactivate(go))
+            {
+                go.SetActive(true);
             }
         }
 

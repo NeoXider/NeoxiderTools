@@ -1,5 +1,6 @@
 using UnityEngine;
 #if MIRROR
+using System.Collections.Generic;
 using Mirror;
 #endif
 
@@ -51,6 +52,31 @@ namespace Neo.Network
             }
 
             _lastCmdTime = Time.time;
+            return false;
+        }
+
+        private Dictionary<int, float> _lastCmdTimePerConnection;
+
+        /// <summary>
+        ///     Per-connection variant for commands declared with <c>requiresAuthority = false</c> on
+        ///     shared scene objects: one spamming client cannot silently starve legitimate commands
+        ///     from other clients. Falls back to the instance-wide check for host/local calls.
+        /// </summary>
+        protected bool RateLimitCheck(NetworkConnectionToClient sender)
+        {
+            if (sender == null || sender == NetworkServer.localConnection)
+            {
+                return RateLimitCheck();
+            }
+
+            _lastCmdTimePerConnection ??= new Dictionary<int, float>();
+            if (_lastCmdTimePerConnection.TryGetValue(sender.connectionId, out float last)
+                && Time.time - last < NetworkRateLimit)
+            {
+                return true;
+            }
+
+            _lastCmdTimePerConnection[sender.connectionId] = Time.time;
             return false;
         }
 

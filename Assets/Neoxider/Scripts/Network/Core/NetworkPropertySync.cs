@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Reflection;
 using UnityEngine;
 using UnityEngine.Events;
@@ -58,6 +58,11 @@ namespace Neo.Network
 
         [Tooltip("Minimum change threshold before syncing (for Float/Int/Vector3).")] [SerializeField]
         private float _threshold = 0.01f;
+
+        [Tooltip("OwnerToServer only: the owner ignores the echo of its own values coming back from " +
+                 "the server (prevents rubber-banding while the local value keeps changing).")]
+        [SerializeField]
+        private bool _skipHookOnOwner;
 
         [Header("Events")] [Tooltip("Fired when the synced value changes on this client.")]
         public UnityEvent onValueChanged = new();
@@ -285,32 +290,62 @@ namespace Neo.Network
             _syncVector3 = v;
         }
 
+        // Owner echo suppression: in OwnerToServer mode the server's SyncVar write comes back to the
+        // owner too; when enabled, the owner keeps its local (newer) value instead of being rewound.
+        private bool SkipEcho =>
+            _skipHookOnOwner && _direction == SyncPropertyDirection.OwnerToServer && isOwned;
+
         private void OnFloatSynced(float _, float newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteFloat(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnIntSynced(int _, int newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteInt(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnBoolSynced(bool _, bool newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteBool(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnStringSynced(string _, string newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteString(newVal);
             onValueChanged?.Invoke();
         }
 
         private void OnVector3Synced(Vector3 _, Vector3 newVal)
         {
+            if (SkipEcho)
+            {
+                return;
+            }
+
             WriteVector3(newVal);
             onValueChanged?.Invoke();
         }

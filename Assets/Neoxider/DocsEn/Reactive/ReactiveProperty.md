@@ -88,3 +88,10 @@ void LoadFromSave(int savedScore)
 registered at notification time is invoked exactly once, even when another listener adds/removes
 subscriptions inside its callback. Listeners added during a notification only receive the next value.
 Not thread-safe — Unity main thread only.
+
+## Performance and naming notes
+
+- The `Value` setter compares via `EqualityComparer<T>.Default`: custom structs without
+  `IEquatable<T>` box on every set — implement `IEquatable<T>` for hot values.
+- "R3-style" means familiar naming (`OnNext`, `CurrentValue`, `ForceNotify`), not R3/IObservable
+  compatibility: there is no `Subscribe`/`IDisposable` here.

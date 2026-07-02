@@ -117,12 +117,18 @@ namespace Neo.Tools
 
         [SerializeField] private Collider2D _spawnAreaCollider2D;
 
-        // TODO: Deny zones — areas where spawning is NOT allowed.
-        //   Add `Collider[] _denyAreas` + `Collider2D[] _denyAreas2D` and `int _maxRejectionTries`.
-        //   In GetSpawnPosition(): after resolving a candidate (especially a random point inside
-        //   `_spawnAreaCollider`), reject it if it falls inside ANY deny zone and re-roll, up to
-        //   `_maxRejectionTries`. Expose `bool IsPositionAllowed(Vector3)`.
-        //   Net effect: "allow zone A (spawn points / spawn area), but forbid sub-region B".
+        [Tooltip("Areas where spawning is forbidden (3D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider[] _denyAreas = Array.Empty<Collider>();
+
+        [Tooltip("Areas where spawning is forbidden (2D). Candidates inside any deny zone are re-rolled.")]
+        [SerializeField]
+        private Collider2D[] _denyAreas2D = Array.Empty<Collider2D>();
+
+        [Tooltip("How many times to re-roll a candidate that landed inside a deny zone before giving up " +
+                 "and using the last candidate anyway.")]
+        [SerializeField] [Min(1)]
+        private int _maxRejectionTries = 8;
 
         private int _spawnedCount;
 
@@ -536,15 +542,61 @@ namespace Neo.Tools
 
             if (_spawnAreaCollider != null)
             {
-                return GetRandomPointInCollider(_spawnAreaCollider);
+                return ResolveAllowedPosition(() => GetRandomPointInCollider(_spawnAreaCollider));
             }
 
             if (_spawnAreaCollider2D != null)
             {
-                return GetRandomPointInCollider2D(_spawnAreaCollider2D);
+                return ResolveAllowedPosition(() => GetRandomPointInCollider2D(_spawnAreaCollider2D));
             }
 
             return _activeSpawnPoint.position;
+        }
+
+        /// <summary>
+        ///     Whether the position is outside every configured deny zone.
+        ///     With no deny zones configured, every position is allowed.
+        /// </summary>
+        public bool IsPositionAllowed(Vector3 position)
+        {
+            for (int i = 0; i < _denyAreas.Length; i++)
+            {
+                Collider deny = _denyAreas[i];
+                if (deny != null && deny.ClosestPoint(position) == position)
+                {
+                    return false;
+                }
+            }
+
+            for (int i = 0; i < _denyAreas2D.Length; i++)
+            {
+                Collider2D deny = _denyAreas2D[i];
+                if (deny != null && deny.OverlapPoint(position))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Re-rolls candidates that land inside a deny zone, up to _maxRejectionTries; the last
+        // candidate is used as-is when every try was denied (spawning must not silently stop).
+        private Vector3 ResolveAllowedPosition(Func<Vector3> candidateSource)
+        {
+            bool hasDenyZones = _denyAreas.Length > 0 || _denyAreas2D.Length > 0;
+            Vector3 candidate = candidateSource();
+            if (!hasDenyZones)
+            {
+                return candidate;
+            }
+
+            for (int attempt = 1; attempt < _maxRejectionTries && !IsPositionAllowed(candidate); attempt++)
+            {
+                candidate = candidateSource();
+            }
+
+            return candidate;
         }
 
         /// <summary>

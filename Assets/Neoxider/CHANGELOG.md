@@ -1,6 +1,33 @@
 
 ## [Unreleased]
 
+## [9.7.0] - 2026-07-02
+
+### Added
+- **Shop / ShopCategorySelector:** NoCode category pill with prev/next arrows cycling a serialized category list into `ShopListView.SetCategory` — complements `ShopCategoryButton` for shops browsed sequentially (pattern extracted from a shipped dress-up game).
+- **Shop / Equipment (new):** `EquipmentManager` + `EquipItemDefinition` — multi-category dress-up/skins: one item per category, sprite applied to a `SpriteRenderer`/`Image` slot (optional `SetNativeSize`), worn set persisted via `SaveProvider`, `OnEquipChanged` event, `EquipById/Unequip/ToggleById` NoCode API. Pairs with `Shop` ownership for buy-then-wear flows.
+- **Bonus / SlotEconomyDefinition:** slot-machine economy SO — weighted symbol table (money/bonus payouts, special flag), `PickWeightedId()`, `ApplySpecialRule()` (one special converts the payline) and `EvaluateLine()` returning a typed `LineResult`. Removes the per-game hand-rolled economy layer over `SpinController`.
+- **Bonus / ResourceRegen:** one-component regenerating resource — couples `CooldownReward` (auto-claim forced on) with a capped `Money` wallet and an optional `TimeToText` countdown (shows 0 while full).
+- **Network / NetworkReactiveSync:** NoCode replication for `ReactivePropertyFloat/Int/Bool` — inspector counterpart of `NetworkReactivePropertyBridge`; multiplayer wallets/score/HP without hand-written SyncVar code. Inert without Mirror.
+- **Network / NetworkPlayerName:** replicated player nickname (trimmed + length-capped server-side, rate-limited command, `OnNameChanged` for TMP labels). Works locally without Mirror.
+- **Network / NeoNetworkDiscovery Quick Play:** `QuickPlay()` — one-button LAN flow: auto-join the first server found, or host after `Host If None Found After` seconds; `OnQuickPlayResolved(bool becameHost)`.
+- **Network / NetworkEventDispatcher payloads:** `DispatchGlobalInt/Float/String` + matching UnityEvents (rate-limited, authority-checked like the parameterless event).
+- **Network / NeoNetworkComponent:** per-connection `RateLimitCheck(sender)` overload — one spamming client no longer starves other clients' commands on shared scene objects (used by `NetworkEventDispatcher`).
+- **Network / NetworkPropertySync:** `Skip Hook On Owner` option — the owner ignores the server echo of its own values in `OwnerToServer` mode (prevents rubber-banding).
+- **Network / NeoNetworkManager:** inspector toggles for gated `NetworkDiagnostics` runtime logs/warnings (NoCode network debugging).
+- **Tools / Spawner deny zones:** `_denyAreas`/`_denyAreas2D` + `Max Rejection Tries` + `IsPositionAllowed(Vector3)` — random points inside deny zones are re-rolled (closes the long-standing in-code TODO documented in 9.5.1).
+- **Pages (sample):** `PM.ChangePageByName` now falls back to the page GameObject name and lists known PageId names in its error; `UIPage` gained an inspector `Open` button.
+- **Editor / Package Health Check** (`Tools → Neoxider → Package Health Check`): verifies package version parity (package.json ↔ README ↔ PROJECT_SUMMARY ↔ CHANGELOG) and Docs/DocsEn parity — both drifts have shipped before.
+
+### Tests
+- `CooldownReward` auto-claim re-arm (covers the 9.6.1 fix), `Money` soft cap (`Add` clamps / `AddOverflow` ignores / 0 = unlimited), network command rate limit.
+
+### Performance
+- **Network / NeoMirrorSceneReactivator:** walks scene roots instead of `Resources.FindObjectsOfTypeAll` (no longer touches prefab assets on every scene load).
+
+### Docs
+- RU+EN pages for every new component; "Lobby on Neo.Pages" recipe in `Multiplayer_Guide`; deprecated types now have an explicit removal target (10.0); `ReactiveProperty` performance/naming notes; missing `Cookbook.md` metas restored.
+
 ## [9.6.2] - 2026-07-02
 
 ### Fixed

@@ -1,4 +1,4 @@
-using Neo;
+﻿using Neo;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Scripting.APIUpdating;
@@ -51,6 +51,17 @@ namespace Neo.Pages
         private Coroutine _deactivateRoutine;
 
         public PageId PageId => pageId;
+
+        /// <summary>Opens this page through the page system (handy inspector test button).</summary>
+        [Button("Open")]
+        public void OpenThisPage()
+        {
+            if (pageId != null)
+            {
+                UIKit.ShowPage(pageId);
+            }
+        }
+
         public bool Popup => popup;
         public bool IgnoreOnExclusiveChange => ignoreOnExclusiveChange;
         public UIPageAnimationMode AnimationMode => _animationMode;

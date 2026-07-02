@@ -40,6 +40,14 @@ namespace Neo.Network
         [Header("Diagnostics")] [SerializeField]
         private bool _debugLifecycleLog;
 
+        [Tooltip("Enable gated runtime info logs from Neo network components (NetworkDiagnostics).")]
+        [SerializeField]
+        private bool _enableRuntimeNetworkLogs;
+
+        [Tooltip("Enable gated runtime warnings from Neo network components (NetworkDiagnostics).")]
+        [SerializeField]
+        private bool _enableRuntimeNetworkWarnings;
+
 #if MIRROR
         [Header("Scene Player Template")]
         [Tooltip("Use a player object configured in the scene as the NoCode template instead of a prefab asset.")]
@@ -74,6 +82,20 @@ namespace Neo.Network
 
         /// <summary>Raised on the client when it disconnects from the server.</summary>
         public UnityEvent OnClientDisconnectedEvent => _onClientDisconnected;
+
+        // NoCode debugging: inspector checkboxes flip the global gated-log flags at startup.
+        private void ApplyDiagnosticsToggles()
+        {
+            if (_enableRuntimeNetworkLogs)
+            {
+                NetworkDiagnostics.RuntimeLogsEnabled = true;
+            }
+
+            if (_enableRuntimeNetworkWarnings)
+            {
+                NetworkDiagnostics.RuntimeWarningsEnabled = true;
+            }
+        }
 
 #if MIRROR
         /// <summary>
@@ -152,6 +174,7 @@ namespace Neo.Network
 
         public override void Awake()
         {
+            ApplyDiagnosticsToggles();
             PrepareScenePlayerTemplate();
             base.Awake();
         }
@@ -598,6 +621,11 @@ namespace Neo.Network
         public bool IsServer => true;
         public bool IsClient => true;
         public bool IsHost => true;
+
+        private void Awake()
+        {
+            ApplyDiagnosticsToggles();
+        }
 
         public void StartAsHost() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");
         public void StartAsClient() => NetworkDiagnostics.LogWarning("[NeoNetworkManager] Mirror is not installed. Running in solo mode.");

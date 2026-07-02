@@ -74,7 +74,7 @@ namespace Neo.Tools
         [Command(requiresAuthority = false)]
         private void CmdDispatchEvent(NetworkConnectionToClient sender = null)
         {
-            if (RateLimitCheck())
+            if (RateLimitCheck(sender))
             {
                 return; // Too frequent — protects against Cmd spam amplified by the RPC broadcast
             }
@@ -103,6 +103,168 @@ namespace Neo.Tools
             }
 
             onNetworkEvent?.Invoke();
+        }
+#endif
+
+        // ────────────────────── Payload variants ──────────────────────
+
+        [Space]
+        [Header("Payload Events")]
+        [Tooltip("Fired on all clients by DispatchGlobalInt(...).")]
+        public UnityEvent<int> onNetworkIntEvent = new();
+
+        [Tooltip("Fired on all clients by DispatchGlobalFloat(...).")]
+        public UnityEvent<float> onNetworkFloatEvent = new();
+
+        [Tooltip("Fired on all clients by DispatchGlobalString(...).")]
+        public UnityEvent<string> onNetworkStringEvent = new();
+
+        /// <summary>Broadcasts an int payload to everyone (fires <see cref="onNetworkIntEvent"/>).</summary>
+        public void DispatchGlobalInt(int value)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
+            {
+                if (NeoNetworkState.IsServer)
+                {
+                    onNetworkIntEvent?.Invoke(value);
+                    RpcDispatchInt(NeoNetworkState.IsClient, value);
+                }
+                else if (NeoNetworkState.IsClientOnly)
+                {
+                    CmdDispatchInt(value);
+                }
+
+                return;
+            }
+#endif
+            onNetworkIntEvent?.Invoke(value);
+        }
+
+        /// <summary>Broadcasts a float payload to everyone (fires <see cref="onNetworkFloatEvent"/>).</summary>
+        public void DispatchGlobalFloat(float value)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
+            {
+                if (NeoNetworkState.IsServer)
+                {
+                    onNetworkFloatEvent?.Invoke(value);
+                    RpcDispatchFloat(NeoNetworkState.IsClient, value);
+                }
+                else if (NeoNetworkState.IsClientOnly)
+                {
+                    CmdDispatchFloat(value);
+                }
+
+                return;
+            }
+#endif
+            onNetworkFloatEvent?.Invoke(value);
+        }
+
+        /// <summary>Broadcasts a string payload to everyone (fires <see cref="onNetworkStringEvent"/>).</summary>
+        public void DispatchGlobalString(string value)
+        {
+#if MIRROR
+            if (isNetworked && NeoNetworkState.IsNetworkActive)
+            {
+                if (NeoNetworkState.IsServer)
+                {
+                    onNetworkStringEvent?.Invoke(value);
+                    RpcDispatchString(NeoNetworkState.IsClient, value);
+                }
+                else if (NeoNetworkState.IsClientOnly)
+                {
+                    CmdDispatchString(value);
+                }
+
+                return;
+            }
+#endif
+            onNetworkStringEvent?.Invoke(value);
+        }
+
+#if MIRROR
+        [Command(requiresAuthority = false)]
+        private void CmdDispatchInt(int value, NetworkConnectionToClient sender = null)
+        {
+            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                onNetworkIntEvent?.Invoke(value);
+            }
+
+            RpcDispatchInt(false, value);
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdDispatchFloat(float value, NetworkConnectionToClient sender = null)
+        {
+            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                onNetworkFloatEvent?.Invoke(value);
+            }
+
+            RpcDispatchFloat(false, value);
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdDispatchString(string value, NetworkConnectionToClient sender = null)
+        {
+            if (RateLimitCheck(sender) || !NeoNetworkState.IsAuthorized(gameObject, sender, _authorityMode))
+            {
+                return;
+            }
+
+            if (isServerOnly)
+            {
+                onNetworkStringEvent?.Invoke(value);
+            }
+
+            RpcDispatchString(false, value);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcDispatchInt(bool skipHostLocal, int value)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
+            onNetworkIntEvent?.Invoke(value);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcDispatchFloat(bool skipHostLocal, float value)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
+            onNetworkFloatEvent?.Invoke(value);
+        }
+
+        [ClientRpc(includeOwner = true)]
+        private void RpcDispatchString(bool skipHostLocal, string value)
+        {
+            if (skipHostLocal && NeoNetworkState.IsHost)
+            {
+                return;
+            }
+
+            onNetworkStringEvent?.Invoke(value);
         }
 #endif
     }

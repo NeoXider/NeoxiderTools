@@ -27,6 +27,15 @@ namespace Neo.Network
         [Tooltip("How often to refresh the server list (seconds).")] [SerializeField]
         private float _refreshInterval = 2f;
 
+        [Header("Quick Play")]
+        [Tooltip("During QuickPlay(): connect to the first server found automatically.")]
+        [SerializeField]
+        private bool _autoJoinFirstFound = true;
+
+        [Tooltip("During QuickPlay(): host when no server was found within this many seconds. 0 = never host.")]
+        [SerializeField] [Min(0f)]
+        private float _hostIfNoneFoundAfter = 3f;
+
         [Header("Events")] [Tooltip("Fired when a new server is found on the LAN. String = server address.")]
         public UnityEvent<string> OnServerFound = new();
 
@@ -39,9 +48,14 @@ namespace Neo.Network
         [Tooltip("Fired when discovery starts (this machine is searching).")]
         public UnityEvent OnDiscoveryStarted = new();
 
+        [Tooltip("Fired when QuickPlay() resolves. True = this machine became the host, false = it joined a server.")]
+        public UnityEvent<bool> OnQuickPlayResolved = new();
+
         private NetworkDiscovery _discovery;
         private readonly Dictionary<long, ServerResponse> _servers = new();
         private float _lastRefreshTime;
+        private bool _quickPlayActive;
+        private float _quickPlayStartedAt;
 
         /// <summary>Currently discovered servers.</summary>
         public IReadOnlyDictionary<long, ServerResponse> DiscoveredServers => _servers;
@@ -83,6 +97,13 @@ namespace Neo.Network
 
         private void Update()
         {
+            if (_quickPlayActive && _hostIfNoneFoundAfter > 0f
+                                 && Time.time - _quickPlayStartedAt >= _hostIfNoneFoundAfter)
+            {
+                ResolveQuickPlayAsHost();
+                return;
+            }
+
             // Auto-refresh discovery periodically
             if (_discovery != null && !NetworkServer.active && _autoDiscoverOnClient)
             {
@@ -93,6 +114,42 @@ namespace Neo.Network
                     _discovery.StartDiscovery();
                 }
             }
+        }
+
+        /// <summary>
+        ///     One-button LAN quick play: searches for servers; joins the first one found
+        ///     (when auto-join is on) or becomes the host after the configured timeout.
+        /// </summary>
+        [Button]
+        public void QuickPlay()
+        {
+            if (NeoNetworkState.IsNetworkActive)
+            {
+                return;
+            }
+
+            _quickPlayActive = true;
+            _quickPlayStartedAt = Time.time;
+            StartDiscovery();
+        }
+
+        /// <summary>Cancels a pending QuickPlay() without joining or hosting.</summary>
+        public void CancelQuickPlay()
+        {
+            _quickPlayActive = false;
+        }
+
+        private void ResolveQuickPlayAsHost()
+        {
+            _quickPlayActive = false;
+            StopDiscovery();
+            NetworkManager.singleton.StartHost();
+            if (_autoAdvertiseOnHost)
+            {
+                StartAdvertising();
+            }
+
+            OnQuickPlayResolved?.Invoke(true);
         }
 
         // ────────────────────── Public API ──────────────────────
@@ -174,6 +231,13 @@ namespace Neo.Network
             }
 
             OnServerListUpdated?.Invoke(_servers.Count);
+
+            if (_quickPlayActive && _autoJoinFirstFound)
+            {
+                _quickPlayActive = false;
+                ConnectToServer(info.uri.Host);
+                OnQuickPlayResolved?.Invoke(false);
+            }
         }
     }
 }

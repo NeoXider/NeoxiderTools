@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -254,7 +254,8 @@ namespace Neo.Pages
             PageId id = TryFindPageIdByName(pageIdName);
             if (id == null)
             {
-                Debug.LogError($"[PM] PageId '{pageIdName}' not found in scene pages.");
+                Debug.LogError(
+                    $"[PM] PageId '{pageIdName}' not found in scene pages. Known PageId names: {DescribeKnownPageIdNames()}.");
                 return;
             }
 
@@ -284,7 +285,34 @@ namespace Neo.Pages
                 }
             }
 
+            // Fallback: match by the page GameObject name ("Game Page"), a common author mistake
+            // when the PageId asset is named differently ("PageGame").
+            foreach (UIPage page in allPages)
+            {
+                if (page != null && page.PageId != null && page.gameObject.name == pageIdName)
+                {
+                    return page.PageId;
+                }
+            }
+
             return null;
+        }
+
+        private string DescribeKnownPageIdNames()
+        {
+            var names = new List<string>();
+            if (allPages != null)
+            {
+                foreach (UIPage page in allPages)
+                {
+                    if (page != null && page.PageId != null)
+                    {
+                        names.Add(page.PageId.name);
+                    }
+                }
+            }
+
+            return string.Join(", ", names);
         }
 
         /// <summary>
