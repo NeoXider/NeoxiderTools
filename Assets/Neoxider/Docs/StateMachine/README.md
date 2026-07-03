@@ -15,7 +15,7 @@ State machine runtime (IState, transitions), no-code ScriptableObject config, an
 
 | Page | Description |
 |------|-------------|
- · Module overview and when to use code-first vs no-code
+| [README](./README.md) | Module overview and when to use code-first vs no-code |
 | [StateMachine](./StateMachine.md) | Core runtime API |
 | [StateMachineBehaviour](./StateMachineBehaviour.md), [StateMachineBehaviourBase](./StateMachineBehaviourBase.md) | MonoBehaviour integration |
 | [NoCode_StateMachine_Usage](./NoCode_StateMachine_Usage.md) | No-code workflow |

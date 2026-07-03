@@ -1,6 +1,21 @@
 
 ## [Unreleased]
 
+## [9.8.1] - 2026-07-03
+
+### Added
+- **`link.xml`** — preserves `Neo.*` assemblies and `Assembly-CSharp` from IL2CPP managed code stripping. `NeoCondition`, `ComponentFloatBinding`, `[SaveField]`, `NetworkPropertySync`, and `NetworkReactiveSync` all resolve members by name via reflection (including private, non-serialized fields) — under IL2CPP that member can be legally stripped if nothing else references it, silently breaking the NoCode binding in a release build while working fine in the Editor. See `Docs/IL2CPP.md` for the full explanation and the escape hatch for custom asmdef setups.
+- **`THIRD-PARTY-NOTICES.md`** — lists every optional/required third-party dependency (UniTask, DOTween, Mirror, Spine, Odin, MarkdownRenderer), why it's referenced, and where to find its license. None of them are bundled inside the package.
+
+### Changed
+- **Minimum Unity version raised to `6000.0`** (was `2022.1`). The package is now developed and validated against Unity 6 only; projects on Unity 2022 LTS should stay on the last `9.7.x` release.
+
+### Fixed
+- **`Docs/Tools/Spawner/Spawner.md`** described deny zones (`_denyAreas`/`_denyAreas2D`, `IsPositionAllowed`) as a "Planned (TODO)" feature — they shipped in `9.7.0`. Doc rewritten to match the current API (also documents `Spawn Area`, `Max Waves`, `Spawn On Awake`, `Parent Transform`, which were undocumented).
+- **`Docs/StateMachine/README.md`** had a malformed module table (missing separator row, a stray bullet line instead of the README's own entry) that broke rendering.
+- Six dead internal doc links fixed (`Bonus/Slot/*` cross-links and `GridSystem/Dice/DiceBoardService.md` → `Merge/README.md`), left over from the RU→EN docs folder reorganization.
+- **`Samples~/NeoxiderPages/Runtime/API/UIKitAPI.cs`** — removed unconditional `Debug.Log` calls on every `G.Pause/GoMenu/Start/Restart/Win/Lose/End` call. This is a reference-implementation sample meant to be copied into real projects; the logging was leftover debug instrumentation with no gate, so every game using the pattern verbatim would spam the console on every state transition.
+
 ## [9.8.0] - 2026-07-03
 
 ### Changed

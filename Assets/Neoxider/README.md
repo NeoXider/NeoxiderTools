@@ -4,7 +4,7 @@
 
 `NeoxiderTools` is a Unity package with ready-to-use gameplay systems, no-code components, UI helpers, editor utilities, and sample scenes for rapid prototyping and production workflows.
 
-[![Version](https://img.shields.io/badge/version-9.8.0-blue)]() [![Unity](https://img.shields.io/badge/Unity-2022.1+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
+[![Version](https://img.shields.io/badge/version-9.8.1-blue)]() [![Unity](https://img.shields.io/badge/Unity-6000.0+-green)]() [![Namespace](https://img.shields.io/badge/namespace-Neo-orange)]()
 
 - [GitHub](https://github.com/NeoXider/NeoxiderTools)
 - [Documentation Index](./Docs/README.md)
@@ -69,7 +69,7 @@ Copy `Assets/Neoxider` into your Unity project.
 
 ## Requirements
 
-- **Unity 2022.1+**
+- **Unity 6000.0+**
 - Current compatibility notes: [`Docs/PackageCompatibility.md`](./Docs/PackageCompatibility.md)
 - **Automatic via UPM**: `com.unity.textmeshpro`, `com.unity.ai.navigation`, `com.unity.inputsystem`, `com.unity.ugui`
 - **Required (3rd party)**:
@@ -82,6 +82,7 @@ Copy `Assets/Neoxider` into your Unity project.
   - `MarkdownRenderer` (install via `https://github.com/NeoXider/MarkdownRenderer.git` for enhanced markdown in Inspector)
   - **Mirror** (required only for `Neo.Network` / multiplayer; see [Multiplayer_Guide](./Docs/Network/Multiplayer_Guide.md))
   - **URP** (`com.unity.render-pipelines.universal`) only if your project uses URP-specific rendering features or 2D lights; the package no longer installs URP automatically.
+- None of the above are bundled inside this package — see [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for what's referenced, why, and license pointers.
 
 ## Quick Start
 

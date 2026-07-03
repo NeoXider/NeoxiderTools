@@ -1,16 +1,18 @@
 # NeoxiderTools Docs
 
-Canonical English entry point for **NeoxiderTools** `v9.6.0`.
+Canonical English entry point for **NeoxiderTools** `v9.8.1`.
 
 ## Start here
 
 - [Package README](../README.md)
 - [**Getting Started** — first scene in 5 minutes](./GettingStarted.md)
+- [**NoCode Getting Started** — build gameplay without writing code](./NoCode/GettingStarted.md)
 - [**Cookbook** — recipes & interesting examples (cross-module combos)](./Cookbook.md)
 - [Project summary](../PROJECT_SUMMARY.md)
 - [Useful components](./UsefulComponents.md)
 - [Package compatibility](./PackageCompatibility.md)
 - [Sample scenes](./Samples.md)
+- [IL2CPP and code stripping](./IL2CPP.md)
 
 ## Do not rebuild first
 

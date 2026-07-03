@@ -26,4 +26,4 @@ It does not own score, spawn-pool progression, game-over rules, UI, or input. Th
 
 - [Dice README](./README.md)
 - [FieldGenerator](../FieldGenerator.md)
-- [GridMerge README](../Merge/README.md)
+- [GridMerge README](../../Merge/README.md)

@@ -1,6 +1,6 @@
 ﻿# CheckSpin
 
-**Purpose:** Serializable helper on **`SpinController`**: resolve paylines, compute multipliers, force-win / force-lose planning (`SetWin` / `SetLose`). Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./Slot/SpinController.md).
+**Purpose:** Serializable helper on **`SpinController`**: resolve paylines, compute multipliers, force-win / force-lose planning (`SetWin` / `SetLose`). Matrices of symbols and gizmo helpers live on **`SpinController`** — see [SpinController.md](./SpinController.md).
 
 ## Fallback rows (no valid `Lines Data`)
 
@@ -28,5 +28,5 @@
 
 ## See Also
 
-- [SpinController (EN)](./Slot/SpinController.md)
+- [SpinController (EN)](./SpinController.md)
 - [Bonus module README](./README.md)

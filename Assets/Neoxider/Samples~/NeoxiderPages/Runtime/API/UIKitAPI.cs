@@ -29,14 +29,10 @@ namespace Neo.Pages
             {
                 if (value)
                 {
-                    Debug.Log("[G] " + nameof(Pause));
-
                     GM.I?.Pause();
                 }
                 else
                 {
-                    Debug.Log("[G] " + "UnPause");
-
                     GM.I?.Resume();
                 }
             }
@@ -47,8 +43,6 @@ namespace Neo.Pages
         /// </summary>
         public static void GoMenu()
         {
-            Debug.Log("[G] " + nameof(GoMenu));
-
             GM.I?.Menu();
         }
 
@@ -57,8 +51,6 @@ namespace Neo.Pages
         /// </summary>
         public static void Start()
         {
-            Debug.Log("[G] " + nameof(Start));
-
             GM.I?.StartGame();
         }
 
@@ -67,8 +59,6 @@ namespace Neo.Pages
         /// </summary>
         public static void Restart()
         {
-            Debug.Log("[G] " + nameof(Restart));
-
             GM.I?.StartGame(true);
         }
 
@@ -77,8 +67,6 @@ namespace Neo.Pages
         /// </summary>
         public static void Win()
         {
-            Debug.Log("[G] " + nameof(Win));
-
             GM.I?.Win();
         }
 
@@ -87,8 +75,6 @@ namespace Neo.Pages
         /// </summary>
         public static void Lose()
         {
-            Debug.Log("[G] " + nameof(Lose));
-
             GM.I?.Lose();
         }
 
@@ -97,8 +83,6 @@ namespace Neo.Pages
         /// </summary>
         public static void End()
         {
-            Debug.Log("[G] " + nameof(End));
-
             GM.I?.End();
         }
     }

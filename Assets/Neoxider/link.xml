@@ -1,0 +1,20 @@
+<linker>
+  <!--
+    NeoxiderTools reflects over arbitrary user MonoBehaviour fields/properties/methods at runtime
+    (NeoCondition, ComponentFloatBinding, SaveManager's [SaveField], NetworkPropertySync,
+    NetworkReactiveSync — see Docs/IL2CPP.md). IL2CPP code stripping can remove members that are
+    never referenced through a normal call path, breaking these NoCode bindings silently in
+    release builds while everything still works fine in the Editor.
+
+    This preserves the package's own assemblies (the reflection helpers themselves) and the
+    default Assembly-CSharp, where most Unity projects compile their gameplay scripts. If your
+    project puts gameplay scripts in a custom asmdef instead, add its full name below or in your
+    own project-level link.xml — see Docs/IL2CPP.md.
+  -->
+  <assembly fullname="Assembly-CSharp" preserve="all" />
+  <assembly fullname="Neo" preserve="all" />
+  <assembly fullname="Neo.Condition" preserve="all" />
+  <assembly fullname="Neo.NoCode" preserve="all" />
+  <assembly fullname="Neo.Save" preserve="all" />
+  <assembly fullname="Neo.Network" preserve="all" />
+</linker>
